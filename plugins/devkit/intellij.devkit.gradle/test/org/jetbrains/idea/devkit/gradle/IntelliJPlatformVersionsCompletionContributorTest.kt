@@ -11,12 +11,21 @@ import com.intellij.devkit.core.icons.DevkitCoreIcons
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.registerExtension
 import com.intellij.testFramework.replaceService
 import com.intellij.util.application
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+internal class IntelliJPlatformVersionsCompletionContributorTest {
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
   private var gradleData = IntelliJPlatformGradleData(
     dependencyHelperProductCodes = mapOf(
@@ -38,24 +47,25 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
   )
   private var modelRequestFile: PsiFile? = null
 
-  override fun setUp() {
-    super.setUp()
-    project.replaceService(
+  @BeforeEach
+  fun setUp() {
+    myFixture.project.replaceService(
       IntelliJPlatformGradleModelProvider::class.java,
       IntelliJPlatformGradleModelProvider { file ->
         modelRequestFile = file
         gradleData
       },
-      testRootDisposable,
+      myFixture.testRootDisposable,
     )
     val contributor = CompletionContributorEP(
       "kotlin",
       IntelliJPlatformVersionsCompletionContributor::class.java.name,
       DefaultPluginDescriptor("testIntelliJPlatformVersionsCompletion"),
     )
-    application.registerExtension(CompletionContributor.EP, contributor, testRootDisposable)
+    application.registerExtension(CompletionContributor.EP, contributor, myFixture.testRootDisposable)
   }
 
+  @Test
   fun testSuggestsPlatformVersionInKotlinStringLiteral() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -72,6 +82,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertSame(myFixture.file, modelRequestFile)
   }
 
+  @Test
   fun testSuggestsOnlyVersionsForDependencyHelperProductType() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -87,6 +98,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertPlatformVersions("2023.1", "2023.2")
   }
 
+  @Test
   fun testRendersProductDetailsAndPrioritizesDottedVersionsNewestFirst() {
     val versions = listOf("2025.2.6", "2025.2.6.3", "2025.2.6.2", "2025.2.6.1")
     gradleData = gradleData.copy(
@@ -131,6 +143,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertEquals(" EAP", eapPresentation.tailText)
   }
 
+  @Test
   fun testSuggestsPlatformVersionForCreateVersionArgument() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -146,6 +159,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertPlatformVersions("2023.2", "2024.1")
   }
 
+  @Test
   fun testSuggestsPlatformVersionForCreateNamedTypeArgument() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -161,6 +175,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertPlatformVersions("2023.1", "2023.2")
   }
 
+  @Test
   fun testDoesNotSuggestPlatformVersionForCreateTypeArgument() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -176,6 +191,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertNoPlatformVersions()
   }
 
+  @Test
   fun testDoesNotSuggestPlatformVersionForUnsupportedDependencyHelper() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -191,6 +207,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertNoPlatformVersions()
   }
 
+  @Test
   fun testDoesNotSuggestPlatformVersionWithoutImportedProductReleases() {
     gradleData = gradleData.copy(productReleases = emptyMap())
     myFixture.configureByText(
@@ -207,12 +224,14 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertNoPlatformVersions()
   }
 
+  @Test
   fun testDoesNotSuggestPlatformVersionOutsideKotlinStringLiteral() {
     myFixture.configureByText("build.gradle.kts", "val <caret>")
 
     assertNoPlatformVersions()
   }
 
+  @Test
   fun testDoesNotSuggestPlatformVersionOutsideGradleKotlinScript() {
     myFixture.configureByText(
       "Example.kt",
@@ -228,6 +247,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertNoPlatformVersions()
   }
 
+  @Test
   fun testSuggestsBundledPluginInKotlinStringLiteral() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -249,6 +269,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertEquals("Bundled Plugin", presentation.typeText)
   }
 
+  @Test
   fun testSuggestsBundledPluginsInVarargs() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -264,6 +285,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertBundledPlugins("com.intellij.java", "org.jetbrains.kotlin")
   }
 
+  @Test
   fun testSuggestsTestBundledPlugin() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -279,6 +301,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertBundledPlugins("com.intellij.java", "org.jetbrains.kotlin")
   }
 
+  @Test
   fun testSuggestsTestBundledPlugins() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -294,6 +317,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertBundledPlugins("com.intellij.java", "org.jetbrains.kotlin")
   }
 
+  @Test
   fun testSuggestsBundledModuleInKotlinStringLiteral() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -315,6 +339,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertEquals("Bundled Module", presentation.typeText)
   }
 
+  @Test
   fun testSuggestsBundledModulesInVarargs() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -330,6 +355,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertBundledModules("intellij.platform.vcs.impl", "intellij.java.psi")
   }
 
+  @Test
   fun testSuggestsTestBundledModule() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -345,6 +371,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertBundledModules("intellij.platform.vcs.impl", "intellij.java.psi")
   }
 
+  @Test
   fun testSuggestsTestBundledModules() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -360,6 +387,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertBundledModules("intellij.platform.vcs.impl", "intellij.java.psi")
   }
 
+  @Test
   fun testDoesNotSuggestBundledPluginsWithoutData() {
     gradleData = gradleData.copy(bundledPlugins = emptyList())
     myFixture.configureByText(
@@ -376,6 +404,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertNoBundledPlugins()
   }
 
+  @Test
   fun testDoesNotSuggestBundledModulesWithoutData() {
     gradleData = gradleData.copy(bundledModules = emptyList())
     myFixture.configureByText(
@@ -392,6 +421,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertNoBundledModules()
   }
 
+  @Test
   fun testSuggestsBundledPluginsCaseInsensitively() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -407,6 +437,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertBundledPlugins("com.intellij.java")
   }
 
+  @Test
   fun testSuggestsBundledModulesCaseInsensitively() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -422,6 +453,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
     assertBundledModules("intellij.platform.vcs.impl")
   }
 
+  @Test
   fun testSuggestsCreateHelperProductReleasesCaseInsensitively() {
     myFixture.configureByText(
       "build.gradle.kts",
@@ -454,7 +486,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
   }
 
   private fun assertNoPlatformVersions() {
-    assertDoesntContain(completeBasic(), *PLATFORM_VERSIONS.toTypedArray())
+    assertThat(completeBasic()).doesNotContain(*PLATFORM_VERSIONS.toTypedArray())
   }
 
   private fun assertPlatformVersions(vararg expected: String) {
@@ -462,7 +494,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
   }
 
   private fun assertNoBundledPlugins() {
-    assertDoesntContain(completeBasic(), *BUNDLED_PLUGINS.toTypedArray())
+    assertThat(completeBasic()).doesNotContain(*BUNDLED_PLUGINS.toTypedArray())
   }
 
   private fun assertBundledPlugins(vararg expected: String) {
@@ -470,7 +502,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
   }
 
   private fun assertNoBundledModules() {
-    assertDoesntContain(completeBasic(), *BUNDLED_MODULES.toTypedArray())
+    assertThat(completeBasic()).doesNotContain(*BUNDLED_MODULES.toTypedArray())
   }
 
   private fun assertBundledModules(vararg expected: String) {
@@ -478,6 +510,7 @@ internal class IntelliJPlatformVersionsCompletionContributorTest : LightJavaCode
   }
 
   companion object {
+    private val projectFixture = lightJavaProjectFixture()
     private val PLATFORM_VERSIONS = listOf("2023.1", "2023.2", "2024.1")
     private val BUNDLED_PLUGINS = listOf("com.intellij.java", "org.jetbrains.kotlin")
     private val BUNDLED_MODULES = listOf("intellij.platform.vcs.impl", "intellij.java.psi")

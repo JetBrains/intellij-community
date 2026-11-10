@@ -7,44 +7,61 @@ import com.intellij.refactoring.changeSignature.JavaMethodDescriptor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectProcessor;
 import com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectClassDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import junit.framework.TestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class IntroduceParameterObjectForJavaTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class IntroduceParameterObjectForJavaTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "/refactoring/introduceParameterObjectForJava/");
+  }
+
+  @Test
   public void testSimple() throws Exception {
     doTest();
   }
 
   protected void doTest() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass psiClass = myFixture.addClass("""
                                              class MyTest {
                                                void foo(String a, String b) {}
                                              }""");
     final PsiMethod method = psiClass.findMethodsByName("foo", false)[0];
-    TestCase.assertNotNull(method);
+    assertNotNull(method);
 
-    myFixture.configureByFile(getTestName(true) + ".groovy");
+    myFixture.configureByFile(myFixture.getTestName(true) + ".groovy");
 
-    List<ParameterInfoImpl> infos = new JavaMethodDescriptor(method).getParameters();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      List<ParameterInfoImpl> infos = new JavaMethodDescriptor(method).getParameters();
 
-    final JavaIntroduceParameterObjectClassDescriptor classDescriptor =
-      new JavaIntroduceParameterObjectClassDescriptor("Param", "", null, false, true, null, infos.toArray(new ParameterInfoImpl[0]), method,
-                                                      false);
-    final List<ParameterInfoImpl> parameters = new JavaMethodDescriptor(method).getParameters();
-    IntroduceParameterObjectProcessor<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor> processor =
-      new IntroduceParameterObjectProcessor<>(method,
-                                              classDescriptor,
-                                              parameters, false);
-    processor.run();
+      final JavaIntroduceParameterObjectClassDescriptor classDescriptor =
+        new JavaIntroduceParameterObjectClassDescriptor("Param", "", null, false, true, null, infos.toArray(new ParameterInfoImpl[0]), method,
+                                                        false);
+      final List<ParameterInfoImpl> parameters = new JavaMethodDescriptor(method).getParameters();
+      IntroduceParameterObjectProcessor<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor> processor =
+        new IntroduceParameterObjectProcessor<>(method,
+                                                classDescriptor,
+                                                parameters, false);
+      processor.run();
 
-    myFixture.checkResultByFile(getTestName(true) + "_after.groovy");
-  }
-
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "/refactoring/introduceParameterObjectForJava/";
+      myFixture.checkResultByFile(myFixture.getTestName(true) + "_after.groovy");
+    });
   }
 }

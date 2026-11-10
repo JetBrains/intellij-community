@@ -6,13 +6,27 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaFeatureTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class JavaFeatureTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testWithAssumedFeatureOverridesIsAvailable() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("Main.java", "class Main {}");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, () -> {
       assertFalse(PsiUtil.isAvailable(JavaFeature.INSTANCE_MAIN_METHOD, file));
       boolean result = JavaFeature.assumeAvailable(
         JavaFeature.INSTANCE_MAIN_METHOD,
@@ -22,9 +36,11 @@ public class JavaFeatureTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testWithAssumedFeatureDoesNotAffectOtherFeatures() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("Main.java", "class Main {}");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, () -> {
       boolean result = JavaFeature.assumeAvailable(
         JavaFeature.INSTANCE_MAIN_METHOD,
         () -> PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, file)
@@ -33,9 +49,11 @@ public class JavaFeatureTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testWithAssumedFeatureRestoresStateAfterExecution() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("Main.java", "class Main {}");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, () -> {
       JavaFeature.assumeAvailable(
         JavaFeature.INSTANCE_MAIN_METHOD,
         () -> {
@@ -48,9 +66,11 @@ public class JavaFeatureTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testNestedAssumeAvailableAccumulatesFeatures() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("Main.java", "class Main {}");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, () -> {
       JavaFeature.assumeAvailable(JavaFeature.INSTANCE_MAIN_METHOD, () -> {
         JavaFeature.assumeAvailable(JavaFeature.IMPLICIT_CLASSES, () -> {
           assertTrue(PsiUtil.isAvailable(JavaFeature.INSTANCE_MAIN_METHOD, file));

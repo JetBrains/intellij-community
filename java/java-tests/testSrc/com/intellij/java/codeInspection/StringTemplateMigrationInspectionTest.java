@@ -2,15 +2,28 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInspection.StringTemplateMigrationInspection;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @see StringTemplateMigrationInspection
  */
-public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class StringTemplateMigrationInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testSimple() {
     doTest("""
              class StringTemplateMigration {
@@ -27,6 +40,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testOverrideStringProcessor() {
     doTest("""
              class StringTemplateMigration {           
@@ -47,6 +61,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testNumberPlusString() {
     doTest("""
              class StringTemplateMigration {
@@ -61,6 +76,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testNumbersPlusString() {
     doTest("""
              class StringTemplateMigration {
@@ -75,6 +91,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testParenthesizedPlusString() {
     doTest("""
              class StringTemplateMigration {
@@ -89,6 +106,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testCharacterLiteral() {
     doTest("""
              class Test {
@@ -111,6 +129,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testDivide() {
     doTest("""
              class StringTemplateMigration {
@@ -125,6 +144,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testCallAMethod() {
     doTest("""
              class StringTemplateMigration {
@@ -149,6 +169,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testCallAStaticMethod() {
     doTest("""
              class StringTemplateMigration {
@@ -173,6 +194,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testKeepComments() {
     doTest("""
              class StringTemplateMigration {
@@ -211,6 +233,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testTernaryOperator() {
     doTest("""
              class StringTemplateMigration {
@@ -225,6 +248,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testNumberTypesBeforeString() {
     doTest("""
              class StringTemplateMigration {
@@ -239,6 +263,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testNumberTypesAfterString() {
     doTest("""
              class StringTemplateMigration {
@@ -253,7 +278,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
-
+  @Test
   public void testOnlyVars() {
     doTest("""
              class StringTemplateMigration {
@@ -270,6 +295,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testNewString() {
     doTest("""
              class StringTemplateMigration {
@@ -284,6 +310,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testIntVars() {
     doTest("""
              class StringTemplateMigration {
@@ -300,6 +327,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testEscapeChars() {
     doTest("""
              class StringTemplateMigration {
@@ -319,6 +347,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testAnnotationParameterIgnored() {
     assertNoHighlightNoQuickFix("""
       interface X {
@@ -328,6 +357,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
       }""");
   }
 
+  @Test
   public void testSwitchCaseLabelIgnored() {
     assertNoHighlightNoQuickFix("""
       class X {
@@ -340,6 +370,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
       }""");
   }
 
+  @Test
   public void testAnnotationMethodIgnored() {
     assertNoHighlightNoQuickFix("""
       @interface X {
@@ -348,6 +379,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
       """);
   }
 
+  @Test
   public void testNullValue() {
     doTest("""
              class StringTemplateMigration {
@@ -362,6 +394,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  @Test
   public void testTextBlocks() {
     doTest("""
              class TextBlock {
@@ -384,6 +417,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              """);
   }
 
+  @Test
   public void testFormatting() {
     doTest("""
              class StringTemplateMigration {
@@ -440,6 +474,7 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   }
 
   private void doTest(@NotNull @Language("Java") String before, @NotNull @Language("Java") String after) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Template.java", before);
 
     myFixture.enableInspections(new StringTemplateMigrationInspection());
@@ -449,16 +484,11 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   }
 
   private void assertNoHighlightNoQuickFix(@NotNull @Language("Java") String code) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Template.java", code);
 
     myFixture.enableInspections(new StringTemplateMigrationInspection());
     myFixture.testHighlighting(true, true, true);
-    assertEmpty("Quickfix is available but should not",
-                myFixture.filterAvailableIntentions("Replace with string template"));
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
+    assertThat(myFixture.filterAvailableIntentions("Replace with string template")).as("Quickfix is available but should not").isNullOrEmpty();
   }
 }

@@ -16,15 +16,29 @@
 package com.intellij.lang.properties;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class PropertiesWebReferenceContributorTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class PropertiesWebReferenceContributorTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(PluginPathManager.getPluginHomePath("properties") + "/tests/testData");
   }
 
+  @Test
   public void testSimple() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile("/propertiesFile/highlighting/web-urls.properties");
     myFixture.checkHighlighting(true, true, true);
   }

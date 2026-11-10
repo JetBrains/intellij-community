@@ -15,11 +15,15 @@
  */
 package com.intellij.xml;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.actions.validate.TestErrorReporter;
 import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
@@ -36,6 +40,7 @@ import org.apache.xerces.xni.grammars.XSGrammar;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
 import org.apache.xerces.xs.XSElementDeclaration;
 import org.apache.xerces.xs.XSModel;
+import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -45,12 +50,22 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 /**
  * @author Dmitry Avdeev
  */
 @SuppressWarnings({"UseOfObsoleteCollectionType"})
-public class XmlConstraintsTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class XmlConstraintsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/xml/tests/testData/constraints");
 
+  @Test
   public void testXercesGrammar() {
     XSModel xsModel = getXSModel("test.xml", "test.xsd");
     XSElementDeclaration elementDeclaration = xsModel.getElementDeclaration("a", "");
@@ -63,6 +78,7 @@ public class XmlConstraintsTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals("b", o.getName());
   }
 
+  @Test
   public void testXercesIncomplete() {
     XSModel xsModel = getXSModel("testIncomplete.xml", "test.xsd");
     XSElementDeclaration elementDeclaration = xsModel.getElementDeclaration("a", "");
@@ -75,23 +91,28 @@ public class XmlConstraintsTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals("b", o.getName());
   }
 
+  @Test
   public void testXercesForCompletion() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     XSModel xsModel = getXSModel("testCompletion.xml", "test.xsd");
-    PsiElement element = myFixture.getFile().findElementAt(getEditor().getCaretModel().getOffset());
-    XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+    ReadAction.runBlocking(() -> {
+      PsiElement element = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+      XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
 
-    assert tag != null;
-    XSElementDeclaration elementDeclaration = xsModel.getElementDeclaration(tag.getLocalName(), tag.getNamespace());
-    XSComplexTypeDefinition typeDefinition = (XSComplexTypeDefinition)elementDeclaration.getTypeDefinition();
-    CMBuilder cmBuilder = new CMBuilder(new CMNodeFactory());
-    XSCMValidator validator = cmBuilder.getContentModel((XSComplexTypeDecl)typeDefinition, true);
-    int[] ints = validator.startContentModel();
-    Vector vector = validator.whatCanGoHere(ints);
-    XSElementDecl o = (XSElementDecl)vector.get(0);
-    assertEquals("b", o.getName());
+      assert tag != null;
+      XSElementDeclaration elementDeclaration = xsModel.getElementDeclaration(tag.getLocalName(), tag.getNamespace());
+      XSComplexTypeDefinition typeDefinition = (XSComplexTypeDefinition)elementDeclaration.getTypeDefinition();
+      CMBuilder cmBuilder = new CMBuilder(new CMNodeFactory());
+      XSCMValidator validator = cmBuilder.getContentModel((XSComplexTypeDecl)typeDefinition, true);
+      int[] ints = validator.startContentModel();
+      Vector vector = validator.whatCanGoHere(ints);
+      XSElementDecl o = (XSElementDecl)vector.get(0);
+      assertEquals("b", o.getName());
+    });
   }
 
   private XSModel getXSModel(String... files) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFiles(files);
 
     XmlFile file = (XmlFile)myFixture.getFile();
@@ -104,7 +125,7 @@ public class XmlConstraintsTest extends LightJavaCodeInsightFixtureTestCase {
       }
     };
     handler.setErrorReporter(new TestErrorReporter(handler));
-    handler.doValidate(file);
+    ReadAction.runBlocking(() -> handler.doValidate(file));
     XMLGrammarPool grammarPool = ValidateXmlActionHandler.getGrammarPool(file);
     assert grammarPool != null;
     Grammar[] grammars = grammarPool.retrieveInitialGrammarSet(XMLGrammarDescription.XML_SCHEMA);
@@ -112,14 +133,15 @@ public class XmlConstraintsTest extends LightJavaCodeInsightFixtureTestCase {
     return grammar.toXSModel();
   }
 
+  @Test
   public void testXsdConstraints() {
     Map<String, XmlElementDescriptor> map = configure("test.xml", "test.xsd");
     XmlElementDescriptor a = map.get("a");
-    XmlElementsGroup topGroup = a.getTopGroup();
+    XmlElementsGroup topGroup = ReadAction.computeBlocking(() -> a.getTopGroup());
   }
 
+  @Test
   public void testDtdConstraints() {
-
     Map<String, XmlElementDescriptor> map = configure("testDtd.xml");
     XmlElementDescriptor a = map.get("a");
     XmlElementDescriptor b = map.get("b");
@@ -132,20 +154,18 @@ public class XmlConstraintsTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private Map<String, XmlElementDescriptor> configure(String... files) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFiles(files);
-    XmlTag tag = ((XmlFile)getFile()).getRootTag();
-    assertNotNull(tag);
-    XmlElementDescriptor descriptor = tag.getDescriptor();
-    assertNotNull(descriptor);
-    XmlElementDescriptor[] descriptors = descriptor.getElementsDescriptors(tag);
-    Map<String, XmlElementDescriptor> map =
-      new HashMap<>(ContainerUtil.newMapFromValues(Arrays.asList(descriptors).iterator(), o -> o.getName()));
-    map.put(tag.getName(), tag.getDescriptor());
-    return map;
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "/xml/tests/testData/constraints";
+    return ReadAction.computeBlocking(() -> {
+      XmlTag tag = ((XmlFile)myFixture.getFile()).getRootTag();
+      assertNotNull(tag);
+      XmlElementDescriptor descriptor = tag.getDescriptor();
+      assertNotNull(descriptor);
+      XmlElementDescriptor[] descriptors = descriptor.getElementsDescriptors(tag);
+      Map<String, XmlElementDescriptor> map =
+        new HashMap<>(ContainerUtil.newMapFromValues(Arrays.asList(descriptors).iterator(), o -> o.getName()));
+      map.put(tag.getName(), tag.getDescriptor());
+      return map;
+    });
   }
 }

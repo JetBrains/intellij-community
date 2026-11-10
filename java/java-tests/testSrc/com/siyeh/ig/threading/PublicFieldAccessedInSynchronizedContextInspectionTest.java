@@ -2,27 +2,34 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class PublicFieldAccessedInSynchronizedContextInspectionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/threading/public_field_accessed_in_synchronized_context";
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+@TestApplication
+public class PublicFieldAccessedInSynchronizedContextInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/threading/public_field_accessed_in_synchronized_context");
   }
 
   private void doTest() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new PublicFieldAccessedInSynchronizedContextInspection());
-    myFixture.testHighlighting(getTestName(false) + ".java");
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
   }
 
+  @Test
   public void testFoo() {
     doTest();
   }

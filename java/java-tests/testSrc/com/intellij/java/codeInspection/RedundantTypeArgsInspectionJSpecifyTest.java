@@ -3,21 +3,25 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection;
 import com.intellij.java.codeInsight.JSpecifyTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.java.codeInspection.DataFlowInspectionTestCase.setupTypeUseAnnotations;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-public class RedundantTypeArgsInspectionJSpecifyTest extends LightJavaCodeInsightFixtureTestCase {
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
+@TestApplication
+public class RedundantTypeArgsInspectionJSpecifyTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   private void doTest(@Language("JAVA") String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     JSpecifyTestUtil.addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     myFixture.enableInspections(new RedundantTypeArgsInspection());
@@ -25,6 +29,7 @@ public class RedundantTypeArgsInspectionJSpecifyTest extends LightJavaCodeInsigh
     myFixture.testHighlighting(true, false, false);
   }
 
+  @Test
   public void testExplicitTypeArgumentChangesNullability() {
     doTest("""
              import org.jspecify.annotations.NullMarked;
@@ -48,6 +53,7 @@ public class RedundantTypeArgsInspectionJSpecifyTest extends LightJavaCodeInsigh
              }""");
   }
 
+  @Test
   public void testExplicitTypeArgumentKeepsNullability() {
     doTest("""
              import org.jspecify.annotations.NullMarked;
@@ -70,6 +76,7 @@ public class RedundantTypeArgsInspectionJSpecifyTest extends LightJavaCodeInsigh
              }""");
   }
 
+  @Test
   public void testTypeArgumentInferredFromLocalVariable() {
     doTest("""
              import org.jspecify.annotations.NullMarked;
@@ -86,6 +93,7 @@ public class RedundantTypeArgsInspectionJSpecifyTest extends LightJavaCodeInsigh
              }""");
   }
 
+  @Test
   public void testAnnotatedTypeArgumentIsNeverReported() {
     doTest("""
              import org.jspecify.annotations.NullMarked;
@@ -108,6 +116,7 @@ public class RedundantTypeArgsInspectionJSpecifyTest extends LightJavaCodeInsigh
              }""");
   }
 
+  @Test
   public void testNullabilityChangeInDeeplyNestedTypeArgument() {
     doTest(nestedListTest(20));
   }

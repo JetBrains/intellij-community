@@ -3,22 +3,37 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class ContractInferenceFromSourceTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8_ANNOTATED);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void test_if_null_return_null() {
     String c = inferContract("""
        String smth(String s) {
@@ -28,6 +43,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals("null -> null", c);
   }
 
+  @Test
   public void test_if_not_null_return_true() {
     String c = inferContract("""
                                  boolean smth(int a, String s) {
@@ -37,6 +53,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals("_, !null -> true", c);
   }
 
+  @Test
   public void test_if_null_fail() {
     String c = inferContract("""
                                  boolean smth(int a, String s) {
@@ -46,6 +63,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals("_, null -> fail", c);
   }
 
+  @Test
   public void test_if_true_return_the_same() {
     String c = inferContract("""
                                  boolean smth(boolean b, int a) {
@@ -55,6 +73,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals("true, _ -> true", c);
   }
 
+  @Test
   public void test_if_false_return_negation() {
     String c = inferContract("""
                                  boolean smth(boolean b, int a) {
@@ -64,6 +83,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals("false, _ -> true", c);
   }
 
+  @Test
   public void test_nested_if() {
     String c = inferContract("""
                                  boolean smth(boolean b, Object o) {
@@ -73,6 +93,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals("false, !null -> true", c);
   }
 
+  @Test
   public void test_conjunction() {
     String c = inferContract("""
          boolean smth(boolean b, Object o) {
@@ -82,6 +103,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals("false, !null -> true", c);
   }
 
+  @Test
   public void test_disjunction() {
     List<String> c = inferContracts("""
         boolean smth(boolean b, Object o) {
@@ -91,6 +113,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(Arrays.asList("false, _ -> true", "true, !null -> true"), c);
   }
 
+  @Test
   public void test_ternary() {
     List<String> c = inferContracts("""
         boolean smth(boolean b, Object o, Object o1) {
@@ -99,6 +122,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(Arrays.asList("false, _, _ -> true", "true, !null, _ -> true", "true, null, null -> false"), c);
   }
 
+  @Test
   public void test_instanceof() {
     List<String> c = inferContracts("""
                                         boolean smth(Object o) {
@@ -107,6 +131,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> false"), c);
   }
 
+  @Test
   public void test_if_else() {
     List<String> c = inferContracts("""
                                         boolean smth(Object o) {
@@ -116,6 +141,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> true"), c);
   }
 
+  @Test
   public void test_if_return_without_else() {
     List<String> c = inferContracts("""
                                         boolean smth(Object o) {
@@ -125,6 +151,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> true"), c);
   }
 
+  @Test
   public void test_if_no_return_without_else() {
     List<String> c = inferContracts("""
                                         boolean smth(Object o) {
@@ -134,6 +161,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> true"), c);
   }
 
+  @Test
   public void test_assertion() {
     List<String> c = inferContracts("""
                                         boolean smth(Object o) {
@@ -143,6 +171,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> fail"), c);
   }
 
+  @Test
   public void test_no_return_value_NotNull_duplication() {
     List<String> c = inferContracts("""
                                         @org.jetbrains.annotations.NotNull String smth(Object o) {
@@ -151,6 +180,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void test_no_return_value_NotNull_duplication_with_branching() {
     List<String> c = inferContracts("""
                                         @org.jetbrains.annotations.NotNull static Object requireNotNull(Object o) {
@@ -162,6 +192,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> fail", "!null -> param1"), c);
   }
 
+  @Test
   public void test_plain_delegation() {
     List<String> c = inferContracts("""
                                         boolean delegating(Object o) {
@@ -174,6 +205,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> fail"), c);
   }
 
+  @Test
   public void test_arg_swapping_delegation() {
     List<String> c = inferContracts("""
                                         boolean delegating(Object o, Object o1) {
@@ -185,6 +217,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("_, !null -> false", "null, null -> false", "!null, null -> true"), c);
   }
 
+  @Test
   public void test_negating_delegation() {
     List<String> c = inferContracts("""
                                         boolean delegating(Object o) {
@@ -196,6 +229,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> false", "!null -> true"), c);
   }
 
+  @Test
   public void test_delegation_with_constant() {
     List<String> c = inferContracts("""
                                         boolean delegating(Object o) {
@@ -207,6 +241,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("_ -> true"), c);
   }
 
+  @Test
   public void test_boolean_autoboxing() {
     List<String> c = inferContracts("""
                                       static Object test1(Object o1) {
@@ -215,6 +250,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void test_return_boxed_integer() {
     List<String> c = inferContracts("""
                                        static Object test1(Object o1) {
@@ -226,6 +262,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> !null"), c);
   }
 
+  @Test
   public void test_return_boxed_boolean() {
     List<String> c = inferContracts("""
                                        static Object test1(Object o1) {
@@ -237,6 +274,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> !null"), c);
   }
 
+  @Test
   public void test_boolean_autoboxing_in_delegation() {
     List<String> c = inferContracts("""
                                        static Boolean test04(String s) {
@@ -249,6 +287,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void test_boolean_auto_unboxing() {
     List<String> c = inferContracts("""
                                          static boolean test02(String s) {
@@ -265,6 +304,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void test_double_constant_auto_unboxing() {
     List<String> c = inferContracts("""
                                          static double method() {
@@ -274,6 +314,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void test_non_returning_delegation() {
     List<String> c = inferContracts("""
                                        static void test2(Object o) {
@@ -290,6 +331,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> fail"), c);
   }
 
+  @Test
   public void test_instanceof_notnull() {
     List<String> c = inferContracts("""
                                        public boolean test2(Object o) {
@@ -306,6 +348,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void test_no_duplicates_in_delegation() {
     List<String> c = inferContracts("""
                                        static boolean test2(Object o1, Object o2) {
@@ -318,6 +361,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null, _ -> false", "!null, _ -> true"), c);
   }
 
+  @Test
   public void test_take_explicit_parameter_notnull_into_account() {
     List<String> c = inferContracts("""
                                        final Object foo(@org.jetbrains.annotations.NotNull Object bar) {
@@ -328,6 +372,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void test_skip_empty_declarations() {
     List<String> c = inferContracts("""
                                        final Object foo(Object bar) {
@@ -339,6 +384,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> null", "!null -> new"), c);
   }
 
+  @Test
   public void test_go_inside_do_while() {
     List<String> c = inferContracts("""
                                        final Object foo(Object bar) {
@@ -352,6 +398,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> null"), c);
   }
 
+  @Test
   public void test_while_instanceof() {
     List<String> c = inferContracts("""
                                        final Object foo(Object bar) {
@@ -366,6 +413,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> null"), c);
   }
 
+  @Test
   public void test_use_invoked_method_notnull() {
     List<String> c = inferContracts("""
                                        final Object foo(Object bar) {
@@ -378,6 +426,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> null", "!null -> !null"), c);
   }
 
+  @Test
   public void test_use_delegated_method_notnull() {
     List<String> c = inferContracts("""
                                        final Object foo(Object bar, boolean b) {
@@ -389,6 +438,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("_, true -> !null", "_, false -> null"), c);
   }
 
+  @Test
   public void test_use_delegated_method_notnull_with_contracts() {
     List<String> c = inferContracts("""
                                        final Object foo(Object bar, Object o2) {
@@ -403,6 +453,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("_, null -> fail"), c);
   }
 
+  @Test
   public void test_dig_into_type_cast() {
     List<String> c = inferContracts("""
                                       public static String cast(Object o) {
@@ -412,6 +463,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> null"), c);
   }
 
+  @Test
   public void test_string_concatenation() {
     List<String> c = inferContracts("""
                                       public static String test(String s1, String s2) {
@@ -421,6 +473,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("!null, _ -> !null"), c);
   }
 
+  @Test
   public void test_int_addition() {
     List<String> c = inferContracts("""
                                       public static int test(int a, int b) {
@@ -430,6 +483,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void test_compare_with_string_literal() {
     List<String> c = inferContracts("""
                                       String s(String s) {
@@ -439,6 +493,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> null"), c);
   }
 
+  @Test
   public void test_negative_compare_with_string_literal() {
     List<String> c = inferContracts("""
                                       String s(String s) {
@@ -448,6 +503,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> !null"), c);
   }
 
+  @Test
   public void test_primitive_return_type() {
     List<String> c = inferContracts("""
                                       String s(String s) {
@@ -457,6 +513,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> !null"), c);
   }
 
+  @Test
   public void test_return_after_if_without_else() {
     List<String> c = inferContracts("""
                                       public static boolean isBlank(String s) {
@@ -474,6 +531,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("null -> true"), c);
   }
 
+  @Test
   public void test_do_not_generate_too_many_contract_clauses() {
     List<String> c = inferContracts("""
                                       public static void validate(String p1, String p2, String p3, String p4, String p5, String
@@ -492,32 +550,44 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertTrue(c.size() <= JavaSourceInference.MAX_CONTRACT_COUNT);// there could be 74 of them in total
   }
 
+  @Test
   public void test_no_inference_for_unused_anonymous_class_methods_where_annotations_won_t_be_used_anyway() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @SuppressWarnings({"ClassInitializerMayBeStatic", "ResultOfObjectAllocationIgnored"}) 
-    PsiMethod method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+    PsiClass clazz = myFixture.addClass("""
       class Foo {{
         new Object() {
           Object foo() { return null;}
         };
-      }}"""), PsiAnonymousClass.class).getMethods()[0];
-    assertTrue(JavaSourceInference.inferContracts((PsiMethodImpl)method).isEmpty());
+      }}""");
+    ReadAction.runBlocking(() -> {
+      PsiMethod method = PsiTreeUtil.findChildOfType(clazz, PsiAnonymousClass.class).getMethods()[0];
+      assertTrue(JavaSourceInference.inferContracts((PsiMethodImpl)method).isEmpty());
+    });
   }
 
+  @Test
   public void test_inference_for_used_anonymous_class_methods() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @SuppressWarnings({"ClassInitializerMayBeStatic", "ResultOfObjectAllocationIgnored"})
-    PsiMethod method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+    PsiClass clazz = myFixture.addClass("""
       class Foo {{
         new Object() {
           Object foo(boolean b) { return b ? null : this;}
           Object bar(boolean b) { return foo(b);}
         };
-      }}"""), PsiAnonymousClass.class).getMethods()[0];
-    assertEquals(Arrays.asList("true -> null", "false -> this"),
-                 ContainerUtil.map(JavaSourceInference.inferContracts((PsiMethodImpl)method), Object::toString));
+      }}""");
+    ReadAction.runBlocking(() -> {
+      PsiMethod method = PsiTreeUtil.findChildOfType(clazz, PsiAnonymousClass.class).getMethods()[0];
+      assertEquals(Arrays.asList("true -> null", "false -> this"),
+                   ContainerUtil.map(JavaSourceInference.inferContracts((PsiMethodImpl)method), Object::toString));
+    });
   }
 
+  @Test
   public void test_anonymous_class_methods_potentially_used_from_outside() {
-    PsiMethod method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiClass clazz = myFixture.addClass("""
       @SuppressWarnings("ALL")
       class Foo {{
         Runnable r = new Runnable() {
@@ -525,10 +595,14 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
             throw new RuntimeException();
           }
         };
-      }}"""), PsiAnonymousClass.class).getMethods()[0];
-    assertEquals(List.of(" -> fail"), ContainerUtil.map(JavaSourceInference.inferContracts((PsiMethodImpl)method), Object::toString));
+      }}""");
+    ReadAction.runBlocking(() -> {
+      PsiMethod method = PsiTreeUtil.findChildOfType(clazz, PsiAnonymousClass.class).getMethods()[0];
+      assertEquals(List.of(" -> fail"), ContainerUtil.map(JavaSourceInference.inferContracts((PsiMethodImpl)method), Object::toString));
+    });
   }
 
+  @Test
   public void test_vararg_delegation() {
     List<String> c = inferContracts("""
       boolean delegating(Object o, Object o1) {
@@ -540,6 +614,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("!null, _ -> false", "null, _ -> true"), c);
   }
 
+  @Test
   public void test_no_universal_contradictory_contracts_for_nullable_method_delegating_to_notNull() {
     List<String> c = inferContracts("""
       @org.jetbrains.annotations.Nullable\s
@@ -553,6 +628,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void test_nullToEmpty() {
     List<String> c = inferContracts("""
                                         String nullToEmpty(String s) {
@@ -562,6 +638,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("!null -> param1"), c);
   }
 
+  @Test
   public void test_coalesce() {
     List<String> c = inferContracts("""
                                         <T> T coalesce(T t1, T t2, T t3) {
@@ -572,6 +649,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("!null, _, _ -> param1", "null, !null, _ -> param2", "null, null, _ -> param3"), c);
   }
 
+  @Test
   public void test_param_check() {
     List<String> c = inferContracts("""
                                       public static int atLeast(int min, int actual, String varName) {
@@ -581,6 +659,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("_, _, _ -> param2"), c);
   }
 
+  @Test
   public void test_param_reassigned() {
     List<String> c = inferContracts("""
                                       public static int atLeast(int min, int actual, String varName) {
@@ -591,6 +670,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void test_param_incremented() {
     List<String> c = inferContracts("""
                                       public static int atLeast(int min, int actual, String varName) {
@@ -601,6 +681,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void test_param_unary_minus() {
     List<String> c = inferContracts("""
                                       public static int atLeast(int min, int actual, String varName) {
@@ -611,6 +692,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("_, _, _ -> param2"), c);
   }
 
+  @Test
   public void test_delegate_to_coalesce() {
     List<String> c = inferContracts("""
                                       public static Object test(Object o1, Object o2) {
@@ -625,6 +707,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void test_delegate_to_coalesce_2() {
     List<String> c = inferContracts("""
                                       public static Object test(Object o1, Object o2) {
@@ -639,6 +722,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("_, !null -> !null"), c);
   }
 
+  @Test
   public void test_delegate_to_System_exit() {
     List<String> c = inferContracts("""
                                       public static void test(Object obj, int i) {
@@ -647,6 +731,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("_, _ -> fail"), c);
   }
 
+  @Test
   public void test_ternary_two_notnull() {
     List<String> c = inferContracts("""
                                       static String test(String v, boolean b, String s) { return b ? getFoo() : getBar(); }
@@ -656,6 +741,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("_, _, _ -> !null"), c);
   }
 
+  @Test
   public void test_not_collapsed() {
     List<String> c = inferContracts("""
                                       static String test(String a, String b) {\s
@@ -665,48 +751,56 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("_, null -> null", "null, !null -> null"), c);
   }
 
+  @Test
   public void test_primitive_cast_ignored() {
     List<String> c = inferContracts("""
                                       static int test(long x) {return (int)x;}""");
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void test_return_param_is_not_propagated() {
     List<String> c = inferContracts("""
                                       static String foo(Object x) {return String.class.cast(String.valueOf(x));}""");
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void test_return_param_propagated() {
     List<String> c = inferContracts("""
                                       static Object foo(Class<?> c, Object x) {return c.cast(x);}""");
     assertEquals(List.of("_, _ -> param2"), c);
   }
 
+  @Test
   public void test_return_param_propagated_to_this() {
     List<String> c = inferContracts("""
                                       Object foo(Class<?> c) {return c.cast(this);}""");
     assertEquals(List.of("_ -> this"), c);
   }
 
+  @Test
   public void test_return_param_propagated_new() {
     List<String> c = inferContracts("""
                                       static Object foo() {return java.util.Objects.requireNonNull(new Object());}""");
     assertEquals(List.of(" -> new"), c);
   }
 
+  @Test
   public void test_this_not_propagated() {
     List<String> c = inferContracts("""
                                       StringBuilder foo() {return new StringBuilder().append("foo");}""");
     assertEquals(List.of(" -> new"), c);
   }
 
+  @Test
   public void test_this_propagated_to_parameter() {
     List<String> c = inferContracts("""
                                       StringBuilder foo(StringBuilder sb) {return sb.append("foo");}""");
     assertEquals(List.of("_ -> param1"), c);
   }
 
+  @Test
   public void test_boxed_boolean_equals() {
     List<String> c = inferContracts("""
                                       public static boolean isFalse(@Nullable Boolean condition) {
@@ -715,6 +809,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("false -> true", "true -> false", "null -> false"), c);
   }
 
+  @Test
   public void test_boxed_boolean_equals1() {
     List<String> c = inferContracts("""
                                       public static boolean isFalse(boolean condition) {
@@ -723,6 +818,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("true -> true", "false -> false"), c);
   }
 
+  @Test
   public void test_boxed_boolean_equals2() {
     List<String> c = inferContracts("""
                                       public static boolean isFalse(@Nullable Boolean condition) {
@@ -731,6 +827,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertEquals(List.of("true -> true", "false -> false", "null -> false"), c);
   }
 
+  @Test
   public void test_boxed_boolean_equals3() {
     List<String> c = inferContracts("""
                                        \s
@@ -742,6 +839,7 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
     assertTrue(c.isEmpty());
   }
 
+  @Test
   public void testCommonOrderedEqualsOverloadCycleRepro() {
     // This test intentionally leaves BiPredicate unresolved (no import, no qualification) to reproduce
     // the overload mis-resolution cycle (3-arg <-> vararg) in contract inference.
@@ -768,20 +866,17 @@ public class ContractInferenceFromSourceTest extends LightJavaCodeInsightFixture
   }
 
   private String inferContract(String method) {
-    return UsefulTestCase.assertOneElement(inferContracts(method));
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8_ANNOTATED;
+    return assertThat(inferContracts(method)).singleElement().actual();
   }
 
   private List<String> inferContracts(String method) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass clazz = myFixture.addClass("final class Foo { " + method + " }");
-    assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
-    List<StandardMethodContract> contracts = JavaSourceInference.inferContracts((PsiMethodImpl)clazz.getMethods()[0]);
-    assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
-    return ContainerUtil.map(contracts, Object::toString);
+    return ReadAction.computeBlocking(() -> {
+      assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
+      List<StandardMethodContract> contracts = JavaSourceInference.inferContracts((PsiMethodImpl)clazz.getMethods()[0]);
+      assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
+      return ContainerUtil.map(contracts, Object::toString);
+    });
   }
 }

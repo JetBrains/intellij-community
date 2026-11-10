@@ -3,11 +3,24 @@ package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ThemeJsonDocumentationProviderTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestApplication
+public class ThemeJsonDocumentationProviderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testKeyWithDeprecation() {
     doTest("DebuggerTabs.selected<caret>Background",
            "<b>DebuggerTabs.selectedBackground</b>&nbsp;[IntelliJ Platform]<br/>" +
@@ -18,6 +31,7 @@ public class ThemeJsonDocumentationProviderTest extends LightJavaCodeInsightFixt
            "<table class=\"sections\"/>");
   }
 
+  @Test
   public void testKeyWithSinceAndNoDescription() {
     doTest("DebuggerTabs.underline<caret>Height",
            "<b>DebuggerTabs.underlineHeight</b>&nbsp;[IntelliJ Platform]<br/>",
@@ -28,6 +42,7 @@ public class ThemeJsonDocumentationProviderTest extends LightJavaCodeInsightFixt
   }
 
   private void doTest(final String keyText, String quickNavigateInfo, String doc) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("my.theme.json", "{" +
                                                "\"ui\": {" +
                                                "  \"*\": {" +
@@ -35,19 +50,22 @@ public class ThemeJsonDocumentationProviderTest extends LightJavaCodeInsightFixt
                                                "   }" +
                                                "  }" +
                                                "}");
-    final PsiElement docElement =
-      DocumentationManager.getInstance(getProject()).findTargetElement(myFixture.getEditor(),
-                                                                       myFixture.getFile());
-    DocumentationProvider provider = DocumentationManager.getProviderFromElement(docElement);
+    ReadAction.runBlocking(() -> {
+      final PsiElement docElement =
+        DocumentationManager.getInstance(myFixture.getProject()).findTargetElement(myFixture.getEditor(),
+                                                                         myFixture.getFile());
+      DocumentationProvider provider = DocumentationManager.getProviderFromElement(docElement);
 
-    assertEquals(quickNavigateInfo,
-                 provider.getQuickNavigateInfo(docElement, getOriginalElement()));
+      assertEquals(quickNavigateInfo,
+                   provider.getQuickNavigateInfo(docElement, getOriginalElement()));
 
-    assertEquals(doc,
-                 provider.generateDoc(docElement, getOriginalElement()));
+      assertEquals(doc,
+                   provider.generateDoc(docElement, getOriginalElement()));
+    });
   }
 
   private PsiElement getOriginalElement() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     return myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
   }
 }

@@ -18,37 +18,50 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.NumericOverflowInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class NumericOverflowInspectionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/numericOverflow";
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
 
+@TestApplication
+public class NumericOverflowInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testSimple() { doTest(); }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/numericOverflow");
     myFixture.enableInspections(new NumericOverflowInspection());
   }
 
   private void doTest() {
-    myFixture.testHighlighting(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
   }
 
+  @Test
   public void testUpdatesOnTyping() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String text = """
       class My {
       void d(long lower) {
               long upper =  lower + 1000<caret> * 31536000;
           }}""";
     myFixture.configureByText("My.java", text);
-    assertOneElement(myFixture.doHighlighting(HighlightSeverity.WARNING));
+    assertThat(myFixture.doHighlighting(HighlightSeverity.WARNING)).hasSize(1);
     myFixture.type('L');
-    assertEmpty(myFixture.doHighlighting(HighlightSeverity.WARNING));
+    assertThat(myFixture.doHighlighting(HighlightSeverity.WARNING)).isNullOrEmpty();
     myFixture.type('\b');
-    assertOneElement(myFixture.doHighlighting(HighlightSeverity.WARNING));
+    assertThat(myFixture.doHighlighting(HighlightSeverity.WARNING)).hasSize(1);
   }
 }

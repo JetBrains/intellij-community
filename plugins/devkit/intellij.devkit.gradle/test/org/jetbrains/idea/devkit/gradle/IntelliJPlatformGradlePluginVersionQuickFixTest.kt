@@ -3,27 +3,41 @@ package org.jetbrains.idea.devkit.gradle
 
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter
 import com.intellij.devkit.gradle.toml.TomlIntelliJPlatformVersionCatalogUpdater
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.registerOrReplaceServiceInstance
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class IntelliJPlatformGradlePluginVersionQuickFixTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class IntelliJPlatformGradlePluginVersionQuickFixTest {
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
-  override fun setUp() {
-    super.setUp()
-    project.registerOrReplaceServiceInstance(
+  @BeforeEach
+  fun setUp() {
+    myFixture.project.registerOrReplaceServiceInstance(
       IntelliJPlatformVersionCatalogUpdater::class.java,
       TomlIntelliJPlatformVersionCatalogUpdater(),
-      testRootDisposable,
+      myFixture.testRootDisposable,
     )
-    project.registerOrReplaceServiceInstance(
+    myFixture.project.registerOrReplaceServiceInstance(
       IntelliJPlatformGradleModelProvider::class.java,
       IntelliJPlatformGradleModelProvider {
         IntelliJPlatformGradleData(currentPluginVersion = CURRENT_VERSION, latestPluginVersion = LATEST_VERSION)
       },
-      testRootDisposable,
+      myFixture.testRootDisposable,
     )
     ExtensionTestUtil.maskExtensions(
       ProblemHighlightFilter.EP_NAME,
@@ -32,25 +46,27 @@ class IntelliJPlatformGradlePluginVersionQuickFixTest : LightJavaCodeInsightFixt
 
         override fun shouldProcessInBatch(file: PsiFile): Boolean = true
       }),
-      testRootDisposable,
+      myFixture.testRootDisposable,
     )
   }
 
+  @Test
   fun testUpdatesPluginVersion() {
     for ((fileName, before, after) in versionDeclarations()) {
       val file = myFixture.configureByText(fileName, before)
-      WriteCommandAction.runWriteCommandAction(project) {
+      WriteCommandAction.runWriteCommandAction(myFixture.project) {
         assertEquals(
-          "$fileName: $before",
           before != after,
           updateIntelliJPlatformGradlePluginVersion(file, CURRENT_VERSION, LATEST_VERSION),
+          "$fileName: $before",
         )
       }
       myFixture.checkResult(after)
     }
   }
 
-  fun testOffersQuickFixOnSettingsPluginVersion() {
+  @Test
+  fun testOffersQuickFixOnSettingsPluginVersion(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertQuickFix(
       "settings.gradle.kts",
       """plugins { id("org.jetbrains.intellij.platform.settings") version "2.1.0" }""",
@@ -58,7 +74,8 @@ class IntelliJPlatformGradlePluginVersionQuickFixTest : LightJavaCodeInsightFixt
     )
   }
 
-  fun testOffersQuickFixOnVersionCatalogPluginVersion() {
+  @Test
+  fun testOffersQuickFixOnVersionCatalogPluginVersion(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertQuickFix(
       "libs.versions.toml",
       """[plugins]
@@ -68,13 +85,14 @@ intellij-platform = { id = "org.jetbrains.intellij.platform", version = "2.2.1" 
     )
   }
 
-  fun testOffersQuickFixOnPreReleasePluginVersion() {
-    project.registerOrReplaceServiceInstance(
+  @Test
+  fun testOffersQuickFixOnPreReleasePluginVersion(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    myFixture.project.registerOrReplaceServiceInstance(
       IntelliJPlatformGradleModelProvider::class.java,
       IntelliJPlatformGradleModelProvider {
         IntelliJPlatformGradleData(currentPluginVersion = "2.0.0-beta9", latestPluginVersion = LATEST_VERSION)
       },
-      testRootDisposable,
+      myFixture.testRootDisposable,
     )
     assertQuickFix(
       "libs.versions.toml",
@@ -86,7 +104,7 @@ intellij-platform = { id = "org.jetbrains.intellij.platform", version = "2.2.1" 
     )
   }
 
-  private fun assertQuickFix(
+  private suspend fun assertQuickFix(
     fileName: String,
     before: String,
     after: String,
@@ -96,15 +114,18 @@ intellij-platform = { id = "org.jetbrains.intellij.platform", version = "2.2.1" 
     myFixture.enableInspections(inspection)
     val file = myFixture.configureByText(fileName, before)
     assertTrue(inspection.isAvailableForFile(file))
-    val problem = assertOneElement(myFixture.doHighlighting().filter { it.inspectionToolId == inspection.id })
+    val problem = assertThat(myFixture.doHighlighting().filter { it.inspectionToolId == inspection.id }).singleElement().actual()
 
     assertEquals("\"$expectedOldVersion\"", file.text.substring(problem.startOffset, problem.endOffset))
-    myFixture.editor.caretModel.moveToOffset(problem.startOffset + 1)
-    myFixture.launchAction(myFixture.findSingleIntention("Update to 2.2.1"))
-    myFixture.checkResult(after)
+    withContext(Dispatchers.EDT) {
+      myFixture.editor.caretModel.moveToOffset(problem.startOffset + 1)
+      myFixture.launchAction(myFixture.findSingleIntention("Update to 2.2.1"))
+      myFixture.checkResult(after)
+    }
   }
 
   companion object {
+    private val projectFixture = lightJavaProjectFixture()
     private const val CURRENT_VERSION = "2.1.0"
     private const val LATEST_VERSION = "2.2.1"
 

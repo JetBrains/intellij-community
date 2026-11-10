@@ -6,12 +6,27 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.ig.classlayout.UtilityClassWithoutPrivateConstructorInspection;
+import org.junit.jupiter.api.Test;
 
-public class CleanupInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
+@TestApplication
+public class CleanupInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testInjected() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new SillyAssignmentInspection());
     myFixture.configureByText("J.java", """
        import org.intellij.lang.annotations.Language;
@@ -62,7 +77,9 @@ public class CleanupInspectionTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testPartiallyApplied() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     UtilityClassWithoutPrivateConstructorInspection inspection = new UtilityClassWithoutPrivateConstructorInspection();
     myFixture.enableInspections(inspection);
     myFixture.configureByText("Utils.java", """
@@ -79,28 +96,30 @@ public class CleanupInspectionTest extends LightJavaCodeInsightFixtureTestCase {
       	}
       }""");
     IntentionAction intention = myFixture.findSingleIntention("Generate empty 'private' constructor");
-    IntentionAction fixAll = IntentionManager.getInstance().createFixAllIntention(new LocalInspectionToolWrapper(inspection), intention);
-    assertInstanceOf(fixAll, CleanupInspectionIntention.class);
-    String message = ((CleanupInspectionIntention)fixAll).findAndFix(getProject(), getFile());
-    assertEquals("""
-         Some quick-fixes haven't completed successfully:
-         2 of 3: Utility class has instantiations, private constructor will not be created
-         1 of 3: Action completed successfully""", message);
-    myFixture.checkResult("""
-                            final class Use {
-                            	public static void foo() {}
-                            }
-                            final class Use1 {
-                            	public static void foo() {}
-                            }
-                            final class Use2 {
-                                private Use2() {
-                                }
-                                                        
-                                public static void foo() {
-                            		new Use1();
-                            		new Use();
-                            	}
-                            }""");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      IntentionAction fixAll = IntentionManager.getInstance().createFixAllIntention(new LocalInspectionToolWrapper(inspection), intention);
+      assertInstanceOf(CleanupInspectionIntention.class, fixAll);
+      String message = ((CleanupInspectionIntention)fixAll).findAndFix(myFixture.getProject(), myFixture.getFile());
+      assertEquals("""
+           Some quick-fixes haven't completed successfully:
+           2 of 3: Utility class has instantiations, private constructor will not be created
+           1 of 3: Action completed successfully""", message);
+      myFixture.checkResult("""
+                              final class Use {
+                              	public static void foo() {}
+                              }
+                              final class Use1 {
+                              	public static void foo() {}
+                              }
+                              final class Use2 {
+                                  private Use2() {
+                                  }
+                                                          
+                                  public static void foo() {
+                              		new Use1();
+                              		new Use();
+                              	}
+                              }""");
+    });
   }
 }

@@ -67,6 +67,8 @@ jvm_library(
         "//platform/execution",
         "//java/java-frontback-psi-impl:frontback-psi-impl",
         "//java/java-frontback-psi-api:frontback-psi",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
     ],
 )
 ### auto-generated section `build intellij.java.testFramework.tests` end

@@ -3,19 +3,32 @@ package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.IdempotentLoopBodyInspection;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-public class IdempotentLoopBodyInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class IdempotentLoopBodyInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath()+"/inspection/idempotentLoopBody");
+  }
+
+  @Test
   public void testIdempotentLoopBody() { doTest(); }
 
   private void doTest() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new IdempotentLoopBodyInspection());
-    myFixture.testHighlighting(getTestName(false) + ".java");
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath()+"/inspection/idempotentLoopBody";
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
   }
 }

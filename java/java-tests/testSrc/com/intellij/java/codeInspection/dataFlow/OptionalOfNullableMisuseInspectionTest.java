@@ -3,23 +3,31 @@ package com.intellij.java.codeInspection.dataFlow;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.dataFlow.OptionalOfNullableMisuseInspection;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class OptionalOfNullableMisuseInspectionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/optionalOfNullable/";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class OptionalOfNullableMisuseInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/optionalOfNullable/");
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK;
-  }
-
+  @Test
   public void testOptionalOfNullableMisuse() {
-    myFixture.configureByFile(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
     myFixture.enableInspections(new OptionalOfNullableMisuseInspection());
     myFixture.checkHighlighting();
   }

@@ -16,16 +16,33 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class NotNullPostfixTemplateUndoTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class NotNullPostfixTemplateUndoTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testNnExpansionIsUndoneInOneStep() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       public class Foo {
           void m(Object o) {
@@ -33,29 +50,32 @@ public class NotNullPostfixTemplateUndoTest extends LightJavaCodeInsightFixtureT
           }
       }
       """);
-    FileEditor fileEditor = openEditorForUndo();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      FileEditor fileEditor = openEditorForUndo();
 
-    expandModPostfixTemplate();
+      expandModPostfixTemplate();
 
-    String expanded = myFixture.getEditor().getDocument().getText();
-    assertTrue("Template was not expanded, got:\n" + expanded, expanded.contains("if (o != null)"));
+      String expanded = myFixture.getEditor().getDocument().getText();
+      assertTrue(expanded.contains("if (o != null)"), "Template was not expanded, got:\n" + expanded);
 
-    UndoManager.getInstance(getProject()).undo(fileEditor);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      UndoManager.getInstance(myFixture.getProject()).undo(fileEditor);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
 
-    assertEquals("""
-                   public class Foo {
-                       void m(Object o) {
-                           o.nn
-                       }
-                   }
-                   """,
-                 myFixture.getEditor().getDocument().getText());
+      assertEquals("""
+                     public class Foo {
+                         void m(Object o) {
+                             o.nn
+                         }
+                     }
+                     """,
+                   myFixture.getEditor().getDocument().getText());
+    });
   }
 
   private void expandModPostfixTemplate() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    Registry.get("postfix.template.mod.completion.enabled").setValue(true, getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    TemplateManagerImpl.setTemplateTesting(myFixture.getTestRootDisposable());
+    Registry.get("postfix.template.mod.completion.enabled").setValue(true, myFixture.getTestRootDisposable());
     LookupElement[] elements = myFixture.completeBasic();
     String substring = myFixture.getFile().getFileDocument().getText().substring(0, myFixture.getCaretOffset());
     List<LookupElement> list = Arrays.stream(elements).filter(
@@ -68,28 +88,29 @@ public class NotNullPostfixTemplateUndoTest extends LightJavaCodeInsightFixtureT
       myFixture.type("\t");
     }
     else if (list.isEmpty()) {
-      LookupManager.getInstance(getProject()).hideActiveLookup();
+      LookupManager.getInstance(myFixture.getProject()).hideActiveLookup();
       myFixture.type("\t");
     }
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
     if (state != null) {
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> state.gotoEnd(false));
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> state.gotoEnd(false));
     }
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
   private FileEditor openEditorForUndo() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Ref<FileEditor> editor = Ref.create();
-    editor.set(FileEditorManager.getInstance(getProject()).openFile(myFixture.getFile().getVirtualFile(), false)[0]);
-    UndoManagerImpl manager = (UndoManagerImpl)UndoManager.getInstance(getProject());
+    editor.set(FileEditorManager.getInstance(myFixture.getProject()).openFile(myFixture.getFile().getVirtualFile(), false)[0]);
+    UndoManagerImpl manager = (UndoManagerImpl)UndoManager.getInstance(myFixture.getProject());
     manager.setOverriddenEditorProvider(new CurrentEditorProvider() {
       @Override
       public FileEditor getCurrentEditor(@Nullable Project project) {
         return editor.get();
       }
     });
-    disposeOnTearDown(() -> manager.setOverriddenEditorProvider(null));
+    Disposer.register(myFixture.getTestRootDisposable(), () -> manager.setOverriddenEditorProvider(null));
     return editor.get();
   }
 }

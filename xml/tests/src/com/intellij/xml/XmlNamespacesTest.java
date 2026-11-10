@@ -23,20 +23,36 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.PerformanceUnitTest;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Dmitry Avdeev
  */
-public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class XmlNamespacesTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/xml/tests/testData/unusedNs");
+
+  @Test
   public void testUnusedNamespaces() {
     doUnusedDeclarationTest(
       "<all xmlns=\"http://www.w3.org/2001/XMLSchema\" <warning descr=\"Namespace declaration is never used\">xmlns:xsi=\"http://www.w3.org/2001/XMLSc<caret>hema-instance\"</warning>/>",
       "<all xmlns=\"http://www.w3.org/2001/XMLSchema\"/>", XmlAnalysisBundle.message("xml.quickfix.remove.unused.namespace.decl"));
   }
 
+  @Test
   public void testUnusedDefaultNamespace() {
     doUnusedDeclarationTest("""
                               <schema:schema
@@ -60,6 +76,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
                               </schema:schema>""");
   }
 
+  @Test
   public void testDifferentPrefixes() {
     doUnusedDeclarationTest(
       """
@@ -79,6 +96,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
                             />""");
   }
 
+  @Test
   public void testUnusedLocation() {
     doUnusedDeclarationTest("""
                               <x:all
@@ -93,6 +111,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
                             XmlAnalysisBundle.message("xml.intention.remove.unused.namespace.location"));
   }
 
+  @Test
   public void testUnusedLocationOnly() {
     doUnusedDeclarationTest("""
                               <x:all
@@ -109,6 +128,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
                             XmlAnalysisBundle.message("xml.quickfix.remove.unused.namespace.decl"));
   }
 
+  @Test
   public void testUnusedDefaultLocation() {
     doUnusedDeclarationTest("""
                               <x:all
@@ -123,6 +143,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
                             XmlAnalysisBundle.message("xml.intention.remove.unused.namespace.location"));
   }
 
+  @Test
   public void testKeepFormatting() {
     doUnusedDeclarationTest("""
                               <xs:schema attributeFormDefault="unqualified"
@@ -148,7 +169,9 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
                             XmlAnalysisBundle.message("xml.quickfix.remove.unused.namespace.decl"));
   }
 
+  @Test
   public void testImplicitPrefixUsage() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.xml", """
       <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
                  xmlns:x2="http://www.w3.org/2001/XMLSchema"
@@ -158,7 +181,9 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
+  @Test
   public void testUnusedLocationDetection() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile("web-app_2_5.xsd");
     myFixture.configureByText("a.xml", """
       <web-app xmlns="http://java.sun.com/xml/ns/javaee"
@@ -171,7 +196,9 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
+  @Test
   public void testWSDD() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.xml",
                               """
                                 <deployment xmlns="http://xml.apache.org/axis/wsdd/" xmlns:java="http://xml.apache.org/axis/wsdd/providers/java">
@@ -180,7 +207,9 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
+  @Test
   public void testPrefixesInTagValues() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.xml",
                               """
                                 <<info descr="Namespace '' is not bound">nodeTypes</info> xmlns:nt="<error descr="URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)">http://www.jcp.org/jcr/nt/1.0</error>" xmlns:customns="<error descr="URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)">http://customurl</error>">
@@ -193,7 +222,9 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
+  @Test
   public void testLocallyUsedNamespace() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.xml", """
       <x:all
               xmlns:x="http://www.w3.org/2001/XMLSchema"
@@ -206,7 +237,9 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
+  @Test
   public void testLocallyUsedNamespaceWithPrefix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.xml", """
       <s:foo xmlns:s="<error descr="URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)">http://foo</error>"
              <warning descr="Namespace declaration is never used">xmlns:bar="<error descr="URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)">http://bar</error>"</warning>
@@ -219,11 +252,15 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
+  @Test
   public void testSubDirectory() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("moved.xml", "trg/move-def.xsd");
   }
 
+  @Test
   public void testSuppressedOptimize() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile("web-app_2_5.xsd");
     String text = """
       <!--suppress XmlUnusedNamespaceDeclaration -->
@@ -238,7 +275,9 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
     doOptimizeImportsTest(text);
   }
 
+  @Test
   public void testUsedInXmlns() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("spring.xml", "spring-beans-2.5.xsd", "spring-batch-2.1.xsd");
     IntentionAction action = myFixture.getAvailableIntention(XmlAnalysisBundle.message("xml.quickfix.remove.unused.namespace.decl"));
     assertNotNull(action);
@@ -246,18 +285,24 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile("spring_after.xml");
   }
 
+  @Test
   public void testXsiType() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("import.xml", "import.xsd");
   }
 
+  @Test
   public void testDoNotOptimizeWhenInspectionDisabled() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.disableInspections(new XmlUnusedNamespaceInspection());
     String text = "<all xmlns=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"/>";
     myFixture.configureByText(XmlFileType.INSTANCE, text);
     doOptimizeImportsTest(text);
   }
 
+  @Test
   public void testFixAll() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFiles("fixAll.xml", "spring-beans-2.5.xsd", "spring-batch-2.1.xsd");
     IntentionAction action = myFixture.findSingleIntention("Fix all");
     assertNotNull(action);
@@ -265,7 +310,9 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile("fixAll_after.xml");
   }
 
+  @Test
   public void testImplicitPrefixes() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(XmlFileType.INSTANCE, """
       <schema xmlns="http://www.w3.org/2001/XMLSchema"\s
               xmlns:x="http://www.w3.org/2001/XMLSchema"
@@ -275,7 +322,9 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
+  @Test
   public void testImplicitPrefixesPattern() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(XmlFileType.INSTANCE, """
       <html xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:xs="http://www.w3.org/2001/XMLSchema">
@@ -285,7 +334,9 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
+  @Test
   public void testHtml5Namespace() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("test.xslt",
                               """
                                 <?xml version="1.0" encoding="utf-8"?>
@@ -300,10 +351,12 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
+  @Test
   @PerformanceUnitTest
   public void testPatternPerformanceProblem() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile("idproblem.html");
-    Benchmark.newBenchmark(getTestName(false), () -> myFixture.doHighlighting()).start();
+    Benchmark.newBenchmark(myFixture.getTestName(false), () -> myFixture.doHighlighting()).start();
   }
 
   private void doUnusedDeclarationTest(String text, String after, String name) {
@@ -311,10 +364,11 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void doUnusedDeclarationTest(String text, String after, String name, boolean testOptimizeImports) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.xml", text);
     myFixture.testHighlighting();
     IntentionAction action = myFixture.getAvailableIntention(name);
-    assertNotNull(name + " not found", action);
+    assertNotNull(action, name + " not found");
     myFixture.launchAction(action);
     myFixture.checkResult(after);
 
@@ -325,25 +379,21 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void doOptimizeImportsTest(String after) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting();
-    WriteCommandAction.writeCommandAction(getProject(), getFile()).run(() -> new OptimizeImportsProcessor(getProject(), getFile()).runWithoutProgress());
+    WriteCommandAction.writeCommandAction(myFixture.getProject(), myFixture.getFile()).run(() -> new OptimizeImportsProcessor(myFixture.getProject(), myFixture.getFile()).runWithoutProgress());
     myFixture.checkResult(after);
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new XmlInspectionToolProvider());
     ExternalResourceManagerExBase.registerResourceTemporarily("http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd",
-                                                              getTestDataPath() + "/web-app_2_5.xsd", myFixture.getTestRootDisposable());
+                                                              myFixture.getTestDataPath() + "/web-app_2_5.xsd", myFixture.getTestRootDisposable());
     ExternalResourceManagerExBase.registerResourceTemporarily("http://xml.apache.org/axis/wsdd/",
-                                                              getTestDataPath() + "/wsdd.dtd", myFixture.getTestRootDisposable());
+                                                              myFixture.getTestDataPath() + "/wsdd.dtd", myFixture.getTestRootDisposable());
     ExternalResourceManagerExBase.registerResourceTemporarily("http://xml.apache.org/axis/wsdd/providers/java",
-                                                              getTestDataPath() + "/wsdd_provider_java.xsd", myFixture.getTestRootDisposable());
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "/xml/tests/testData/unusedNs";
+                                                              myFixture.getTestDataPath() + "/wsdd_provider_java.xsd", myFixture.getTestRootDisposable());
   }
 }

@@ -6,33 +6,46 @@ import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class UnusedImportsTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class UnusedImportsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/unusedImports/";
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + BASE_PATH;
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + BASE_PATH);
     myFixture.enableInspections(new UnusedImportInspection());
     myFixture.enableInspections(new UnusedDeclarationInspection());
   }
 
+  @Test
   public void test1() { doTest(); }
+  @Test
   public void test2() { doTest(); }
 
+  @Test
   public void testWithHighlightingOff() {
-    myFixture.configureByFile(getTestName(false) + ".java");
-    final PsiFile file = getFile();
-    final HighlightingSettingsPerFile settingsPerFile = HighlightingSettingsPerFile.getInstance(getProject());
-    final FileHighlightingSetting oldSetting = settingsPerFile.getHighlightingSettingForRoot(file);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
+    final PsiFile file = myFixture.getFile();
+    final HighlightingSettingsPerFile settingsPerFile = HighlightingSettingsPerFile.getInstance(myFixture.getProject());
+    final FileHighlightingSetting oldSetting = ReadAction.computeBlocking(() -> settingsPerFile.getHighlightingSettingForRoot(file));
     try {
       settingsPerFile.setHighlightingSettingForRoot(file, FileHighlightingSetting.NONE);
       myFixture.checkHighlighting(true, false, false);
@@ -42,13 +55,19 @@ public class UnusedImportsTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
+  @Test
   public void testUnclosed() { doTest(); }
 
+  @Test
   public void testQualified() { doTest(); }
 
+  @Test
   public void testInnersOnDemand1() { doTest(); }
+  @Test
   public void testInnersOnDemand2() { doTest(); }
+  @Test
   public void testStaticImportingInner() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package package1;
                          /** @noinspection ALL*/ public interface c
@@ -59,11 +78,13 @@ public class UnusedImportsTest extends LightJavaCodeInsightFixtureTestCase {
                                  int b = 2;
                              }
                          }""");
-    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
     myFixture.checkHighlighting(true, false, false);
   }
 
+  @Test
   public void testImportFromSamePackage1() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package package1;
                          import package1.*;class b {
@@ -72,7 +93,9 @@ public class UnusedImportsTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.configureByFile("/package1/a.java");
     myFixture.checkHighlighting(true,false, false);
   }
+  @Test
   public void testImportFromSamePackage2() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package package1;
                          import package1.b;
@@ -83,7 +106,9 @@ public class UnusedImportsTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.checkHighlighting(true,false, false);
   }
 
+  @Test
   public void testUnresolvedReferencesInsideAmbiguousCallToImportedMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package a; public class A {
                           public static void foo(Object o) {}
@@ -92,11 +117,14 @@ public class UnusedImportsTest extends LightJavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  @Test
   public void testUnresolvedReferenceAsVariableAndClass() {
     doTest();
   }
 
+  @Test
   public void testImportsForUsesAndProvidesInModuleInfo() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package pkg.main.api;
                          public interface Api {}
@@ -125,7 +153,8 @@ public class UnusedImportsTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void doTest() {
-    myFixture.configureByFile(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
     myFixture.checkHighlighting(true, false, false);
   }
 }

@@ -16,16 +16,32 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.testFramework.DumbModeTestUtils;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Test that "run class" is calculated correctly and is available in Dumb Mode.
  */
-public class ApplicationRunClassDumbModeTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class ApplicationRunClassDumbModeTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testNormalMain() {
     doTest("""
              public class Main {
@@ -34,6 +50,7 @@ public class ApplicationRunClassDumbModeTest extends LightJavaCodeInsightFixture
              """, "Main", "Main");
   }
 
+  @Test
   public void testNestedMain() {
     doTest("""
              class Main {
@@ -44,39 +61,41 @@ public class ApplicationRunClassDumbModeTest extends LightJavaCodeInsightFixture
              """, "Main.Nested", "Main$Nested");
   }
 
-
   private void doTest(@Language("JAVA") String code, String mainClassName, String runClassName) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Main.java", code);
 
-    List<GutterMark> marks = myFixture.findGuttersAtCaret();
-    assertEquals(1, marks.size());
-    GutterIconRenderer mark = (GutterIconRenderer)marks.getFirst();
-    ActionGroup group = mark.getPopupMenuActions();
-    assertNotNull(group);
-    PresentationFactory factory = new PresentationFactory();
-    List<AnAction> list = ContainerUtil.findAll(Utils.expandActionGroup(
-      group, factory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN, ActionUiKind.NONE), action -> {
-      String text = factory.getPresentation(action).getText();
-      return text != null && text.startsWith("Run '") && text.endsWith("'");
-    });
-    assertEquals(list.toString(), 1, list.size());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      GutterIconRenderer mark = (GutterIconRenderer)marks.getFirst();
+      ActionGroup group = mark.getPopupMenuActions();
+      assertNotNull(group);
+      PresentationFactory factory = new PresentationFactory();
+      List<AnAction> list = ContainerUtil.findAll(Utils.expandActionGroup(
+        group, factory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN, ActionUiKind.NONE), action -> {
+        String text = factory.getPresentation(action).getText();
+        return text != null && text.startsWith("Run '") && text.endsWith("'");
+      });
+      assertEquals(1, list.size(), list.toString());
 
-    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
-      myFixture.testAction(list.getFirst());
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    });
+      DumbModeTestUtils.runInDumbModeSynchronously(myFixture.getProject(), () -> {
+        myFixture.testAction(list.getFirst());
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      });
 
-    RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(getProject()).getSelectedConfiguration();
-    assertNotNull(selectedConfiguration);
-    RunConfiguration configuration = selectedConfiguration.getConfiguration();
-    assertInstanceOf(configuration, ApplicationConfiguration.class);
+      RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(myFixture.getProject()).getSelectedConfiguration();
+      assertNotNull(selectedConfiguration);
+      RunConfiguration configuration = selectedConfiguration.getConfiguration();
+      assertInstanceOf(ApplicationConfiguration.class, configuration);
 
-    ApplicationConfiguration applicationConfiguration = (ApplicationConfiguration)configuration;
+      ApplicationConfiguration applicationConfiguration = (ApplicationConfiguration)configuration;
 
-    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
-      assertEquals(mainClassName, applicationConfiguration.getMainClassName());
-      assertEquals(mainClassName, applicationConfiguration.getMainClass().getQualifiedName());
-      assertEquals(runClassName, applicationConfiguration.getRunClass());
+      DumbModeTestUtils.runInDumbModeSynchronously(myFixture.getProject(), () -> {
+        assertEquals(mainClassName, applicationConfiguration.getMainClassName());
+        assertEquals(mainClassName, applicationConfiguration.getMainClass().getQualifiedName());
+        assertEquals(runClassName, applicationConfiguration.getRunClass());
+      });
     });
   }
 }

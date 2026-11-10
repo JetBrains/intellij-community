@@ -15,39 +15,59 @@
  */
 package com.intellij.java.psi.impl.smartPointers;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.psi.xml.XmlToken;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class PsiAnchorTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
+@TestApplication
+public class PsiAnchorTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testSingleTokenAnchor() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("a.xml", "<");
-    PsiAnchor anchor = PsiAnchor.create(assertInstanceOf(file.findElementAt(0), XmlToken.class));
+    PsiAnchor anchor = ReadAction.computeBlocking(() -> PsiAnchor.create(assertInstanceOf(XmlToken.class, file.findElementAt(0))));
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> file.getViewProvider().getDocument().replaceString(0, 1, " "));
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> file.getViewProvider().getDocument().replaceString(0, 1, " "));
+    EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments());
 
-    assertInstanceOf(file.findElementAt(0), PsiWhiteSpace.class);
-    assertNull(anchor.retrieve());
+    assertInstanceOf(PsiWhiteSpace.class, file.findElementAt(0));
+    ReadAction.runBlocking(() -> assertNull(anchor.retrieve()));
   }
 
+  @Test
   public void testInjectedAnchor() {
-    new MyTestInjector(getPsiManager()).injectAll(myFixture.getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    new MyTestInjector(PsiManager.getInstance(myFixture.getProject())).injectAll(myFixture.getTestRootDisposable());
     myFixture.configureByText("a.java", "class X { String java=\"class <caret>Foo {}\"}");
-    PsiClass cls = (PsiClass)myFixture.getElementAtCaret();
-    assertEquals("Foo", cls.getName());
-    PsiAnchor anchor = PsiAnchor.create(cls);
+    PsiClass cls = ReadAction.computeBlocking(() -> (PsiClass)myFixture.getElementAtCaret());
+    ReadAction.runBlocking(() -> assertEquals("Foo", cls.getName()));
+    PsiAnchor anchor = ReadAction.computeBlocking(() -> PsiAnchor.create(cls));
 
     myFixture.type('\n');
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments());
 
-    anchor.retrieve(); // file is changed, so we probably can't restore. But this call shouldn't throw exceptions.
+    ReadAction.runBlocking(() -> anchor.retrieve()); // file is changed, so we probably can't restore. But this call shouldn't throw exceptions.
   }
 }

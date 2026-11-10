@@ -3,26 +3,35 @@ package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.java.codeInsight.AbstractParameterInfoTestCase
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class ExcludeListMethodIntentionTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class ExcludeListMethodIntentionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
   private val default = ParameterNameHintsSettings()
 
-  override fun tearDown() {
-    try {
-      ParameterNameHintsSettings.getInstance().loadState(default.state)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    ParameterNameHintsSettings.getInstance().loadState(default.state)
   }
   
-  fun `test add to blacklist by alt enter`() {
+  @Test
+  fun `test add to blacklist by alt enter`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.configureByText("a.java", """
 class Test {
   void test() {
@@ -34,7 +43,8 @@ class Test {
     assertHintExistsAndDisappearsAfterIntention()
   }
   
-  fun `test add elements which has inlays`() {
+  @Test
+  fun `test add elements which has inlays`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.configureByText("a.java", """
 class ParamHintsTest {
 
@@ -52,20 +62,22 @@ class ParamHintsTest {
     assertHintExistsAndDisappearsAfterIntention()
   }
   
-  private fun assertHintExistsAndDisappearsAfterIntention() {
+  private suspend fun assertHintExistsAndDisappearsAfterIntention() {
     myFixture.doHighlighting()
 
-    val caretOffset = editor.caretModel.offset
-    val before = editor.inlayModel.getInlineElementsInRange(caretOffset, caretOffset)
-    assertThat(before).isNotEmpty
+    withContext(Dispatchers.EDT) {
+      val caretOffset = myFixture.editor.caretModel.offset
+      val before = myFixture.editor.inlayModel.getInlineElementsInRange(caretOffset, caretOffset)
+      assertThat(before).isNotEmpty
 
-    val intention = myFixture.getAvailableIntention("Do not show hints for current method")
-    myFixture.launchAction(intention!!)
-    myFixture.doHighlighting()
-    AbstractParameterInfoTestCase.waitTillAnimationCompletes(editor)
+      val intention = myFixture.getAvailableIntention("Do not show hints for current method")
+      myFixture.launchAction(intention!!)
+      myFixture.doHighlighting()
+      AbstractParameterInfoTestCase.waitTillAnimationCompletes(myFixture.editor)
 
-    val after = editor.inlayModel.getInlineElementsInRange(caretOffset, caretOffset)
-    assertThat(after).isEmpty()
+      val after = myFixture.editor.inlayModel.getInlineElementsInRange(caretOffset, caretOffset)
+      assertThat(after).isEmpty()
+    }
   }
   
 }

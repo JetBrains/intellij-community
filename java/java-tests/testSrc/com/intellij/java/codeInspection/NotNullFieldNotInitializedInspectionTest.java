@@ -7,29 +7,58 @@ import com.intellij.codeInspection.nullable.NotNullFieldNotInitializedInspection
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class NotNullFieldNotInitializedInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class NotNullFieldNotInitializedInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8_ANNOTATED);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/notNullField/");
+  }
+
+  @Test
   public void testNotNullFieldNotInitialized() { doTest(); }
+  @Test
   public void testNotNullFieldInitializedIndirectly() { doTest(); }
+  @Test
   public void testNotNullFieldInitializedInLambda() { doTest(); }
+  @Test
   public void testNotNullFieldNotInitializedInOneConstructor() { doTest(); }
+  @Test
   public void testTypeUseNotNullField() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     DataFlowInspectionTestCase.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
+  @Test
   public void testSuppressNullAwayInit() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     doTest();
   }
+  @Test
   public void testNotNullByDefaultFieldNotInitialized() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     doTest();
   }
+  @Test
   public void testImplicit() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(@NotNull PsiElement element) {
@@ -45,34 +74,28 @@ public class NotNullFieldNotInitializedInspectionTest extends LightJavaCodeInsig
       public boolean isImplicitWrite(@NotNull PsiElement element) {
         return element instanceof PsiField && "implicit".equals(((PsiField)element).getName());
       }
-    }, getTestRootDisposable());
+    }, myFixture.getTestRootDisposable());
     doTest();
   }
+  @Test
   public void testSetupJunit() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package junit.framework; public class TestCase {}");
     doTest();
   }
 
+  @Test
   public void testNullableFieldWithBound() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     DataFlowInspectionTestCase.setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     DataFlowInspectionTestCase.addJSpecifyNullMarked(myFixture);
     doTest();
   }
 
   private void doTest() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new NotNullFieldNotInitializedInspection());
-    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8_ANNOTATED;
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/notNullField/";
+    myFixture.testHighlighting(true, false, true, myFixture.getTestName(false) + ".java");
   }
 
 }

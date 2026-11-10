@@ -2,18 +2,25 @@
 package com.intellij.java.psi;
 
 import com.intellij.idea.TestFor;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class DeclaredPackageMixModeResolveTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_25;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
+@TestApplication
+public class DeclaredPackageMixModeResolveTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_25);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   @TestFor(issues = "IDEA-393763")
   public void testWildcardImportOfDeclaredPackage() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("ClassA.java", """
       package org.classa;
 

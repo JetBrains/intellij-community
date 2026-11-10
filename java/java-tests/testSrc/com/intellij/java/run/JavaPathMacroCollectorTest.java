@@ -3,12 +3,17 @@ package com.intellij.java.run;
 
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
 import org.jdom.JDOMException;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-public class JavaPathMacroCollectorTest extends LightJavaCodeInsightFixtureTestCase {
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class JavaPathMacroCollectorTest {
+  @Test
   public void testJunitConfiguration() throws IOException, JDOMException {
     String text = """
         <component name="RunManager" selected="JUnit.FooWithComments.test$withDollar$2">

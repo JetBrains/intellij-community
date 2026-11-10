@@ -7,71 +7,103 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "groovy/completion/classNameCompletion";
+@TestApplication
+public class GroovyClassNameCompletionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "groovy/completion/classNameCompletion");
   }
 
   private void doTest() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClassToProject("a", "FooBar");
-    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
     complete();
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.groovy");
   }
 
   private void addClassToProject(@Nullable String packageName, @NotNull String name) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package " + packageName + "; public class " + name + " {}");
   }
 
+  @Test
   public void testInFieldDeclaration() { doTest(); }
 
+  @Test
   public void testInFieldDeclarationNoModifiers() { doTest(); }
 
+  @Test
   public void testInParameter() { doTest(); }
 
+  @Test
   public void testInImport() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClassToProject("a", "FooBar");
-    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
     complete();
     myFixture.type("\n");
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.groovy");
   }
 
+  @Test
   public void testInModuleImport() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", "import module j<caret>");
     complete();
     myFixture.type("\n");
     myFixture.checkResult("import module org.jetbrains.annotations");
   }
 
+  @Test
   public void testWhenClassExistsInSamePackage() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClassToProject("a", "FooBar");
-    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
     complete();
     LookupEx lookup = LookupManager.getActiveLookup(myFixture.getEditor());
-    lookup.setCurrentItem(lookup.getItems().get(1));
+    EdtTestUtil.runInEdtAndWait(() -> lookup.setCurrentItem(lookup.getItems().get(1)));
     myFixture.type("\n");
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.groovy");
   }
 
+  @Test
   public void testInComment() { doTest(); }
 
+  @Test
   public void testInTypeElementPlace() { doTest(); }
 
+  @Test
   public void testWhenImportExists() { doTest(); }
 
+  @Test
   public void testFinishByDot() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClassToProject("a", "FooBar");
     myFixture.configureByText("a.groovy", "FB<caret>a");
     complete();
@@ -83,10 +115,13 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
   }
 
   private LookupElement[] complete() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     return myFixture.complete(CompletionType.BASIC, 2);
   }
 
+  @Test
   public void testDelegateBasicToClassName() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClassToProject("a", "FooBarGooDoo");
     myFixture.configureByText("a.groovy", "FBGD<caret>a");
     myFixture.complete(CompletionType.BASIC, 2);
@@ -97,7 +132,9 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
                             FooBarGooDoo.<caret>a""");
   }
 
+  @Test
   public void testDelegateBasicToClassNameAutoinsert() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClassToProject("a", "FooBarGooDoo");
     myFixture.configureByText("a.groovy", "FBGD<caret>");
     myFixture.complete(CompletionType.BASIC, 2);
@@ -107,9 +144,11 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
                             FooBarGooDoo<caret>""");
   }
 
+  @Test
   public void testImportedStaticMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("b.groovy", """
-      
+    
       class Foo {
         static def abcmethod1(int a) {}
         static def abcmethod2(int a) {}
@@ -128,13 +167,15 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
     myFixture.type("\n");
     myFixture.checkResult("""
                             import static Foo.abcmethod1
-                            
+                          
                             def foo() {
                               abcmethod1(<caret>)
                             }""");
   }
 
+  @Test
   public void testImportedStaticField() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("b.groovy", """
       
       class Foo {
@@ -156,7 +197,9 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
                             }""");
   }
 
+  @Test
   public void testImportedInterfaceConstant() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("b.groovy", """
       
       interface Foo {
@@ -178,7 +221,9 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
                             }""");
   }
 
+  @Test
   public void testQualifiedStaticMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("foo/b.groovy", """
       package foo
       class Foo {
@@ -197,7 +242,9 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
                             }""");
   }
 
+  @Test
   public void testQualifiedStaticMethodIfThereAreAlreadyStaticImportsFromThatClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("foo/b.groovy", """
       package foo
       class Foo {
@@ -205,12 +252,12 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
         static def anotherMethod() {}
       }""");
     myFixture.configureByText("a.groovy", """
-      
+    
       import static foo.Foo.anotherMethod
-      
+    
       anotherMethod()
       abcme<caret>x""");
-    LookupElement element = UsefulTestCase.assertOneElement(new LookupElement[]{complete()[0]});
+    LookupElement element = assertThat(new LookupElement[]{complete()[0]}).singleElement().actual();
 
     LookupElementPresentation presentation = renderElement(element);
     assertEquals("abcMethod", presentation.getItemText());
@@ -220,16 +267,18 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
     myFixture.checkResult("""
                             import static foo.Foo.abcMethod
                             import static foo.Foo.anotherMethod
-                            
+                          
                             anotherMethod()
                             abcMethod()<caret>""");
   }
 
   private static LookupElementPresentation renderElement(LookupElement element) {
-    return LookupElementPresentation.renderElement(element);
+    return ReadAction.computeBlocking(() -> LookupElementPresentation.renderElement(element));
   }
 
+  @Test
   public void testNewClassName() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClassToProject("foo", "Fxoo");
     myFixture.configureByText("a.groovy", "new Fxo<caret>\n");
     myFixture.complete(CompletionType.BASIC, 2);
@@ -240,41 +289,53 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
                             """);
   }
 
+  @Test
   public void testNewImportedClassName() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", "new ArrayIndexOut<caret>\n");
     myFixture.completeBasic();
     myFixture.checkResult("new ArrayIndexOutOfBoundsException(<caret>)\n");
   }
 
+  @Test
   public void testOnlyAnnotationsAfterAt() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("class AbcdClass {}; @interface AbcdAnno {}");
     myFixture.configureByText("a.groovy", "@Abcd<caret>");
     complete();
     assertEquals("AbcdAnno", myFixture.getLookupElementStrings().get(0));
   }
 
+  @Test
   public void testOnlyExceptionsInCatch() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("class AbcdClass {}; class AbcdException extends Throwable {}");
     myFixture.configureByText("a.groovy", "try {} catch (Abcd<caret>");
     complete();
     assertEquals("AbcdException", myFixture.getLookupElementStrings().get(0));
   }
 
+  @Test
   public void testClassNameInMultilineString() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", "def s = \"\"\"a\nAIOOBE<caret>\na\"\"\"");
     complete();
     myFixture.checkResult("def s = \"\"\"a\njava.lang.ArrayIndexOutOfBoundsException<caret>\na\"\"\"");
   }
 
+  @Test
   public void testDoubleClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; public class Zooooooo {}");
     myFixture.configureByText("a.groovy", """
       import foo.Zooooooo
       Zoooo<caret>x""");
-    UsefulTestCase.assertOneElement(myFixture.completeBasic());
+    assertThat(myFixture.completeBasic()).hasSize(1);
   }
 
+  @Test
   public void testClassOnlyOnce() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("class FooBarGoo {}");
     myFixture.configureByText("a.groovy", "FoBaGo<caret>");
     assertNull(complete());
@@ -282,12 +343,14 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
                             FooBarGoo<caret>""");
   }
 
+  @Test
   public void testMethodFromTheSameClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
-      
+    
       class A {
         static void foo() {}
-      
+    
         static void goo() {
           f<caret>
         }
@@ -295,13 +358,13 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
       """);
     LookupElement[] items = complete();
     LookupElement fooItem = ContainerUtil.find(items, element -> renderElement(element).getItemText().equals("foo"));
-    LookupManager.getActiveLookup(myFixture.getEditor()).setCurrentItem(fooItem);
+    EdtTestUtil.runInEdtAndWait(() -> LookupManager.getActiveLookup(myFixture.getEditor()).setCurrentItem(fooItem));
     myFixture.type("\n");
     myFixture.checkResult("""
-                            
+                          
                             class A {
                               static void foo() {}
-                            
+                          
                               static void goo() {
                                 foo()<caret>
                               }
@@ -309,7 +372,9 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
                             """);
   }
 
+  @Test
   public void testInnerClassCompletion() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package foo;
                          
@@ -330,7 +395,9 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
                             """);
   }
 
+  @Test
   public void test_complete_class_within__in__package() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package in.foo.com;
                          public class Foooo {}
@@ -344,7 +411,9 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
                             Foooo<caret>""");
   }
 
+  @Test
   public void test_complete_class_within__def__package() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package def.foo.com;
                          public class Foooo {}
@@ -358,7 +427,9 @@ public class GroovyClassNameCompletionTest extends LightJavaCodeInsightFixtureTe
                             Foooo<caret>""");
   }
 
+  @Test
   public void test_complete_package_name() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package com.foo.bar; class C {}");
     myFixture.configureByText("_.groovy", "import com.<caret>\n");
     myFixture.complete(CompletionType.BASIC);

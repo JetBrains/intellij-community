@@ -15,16 +15,28 @@
  */
 package com.intellij.java.codeInsight.colors
 
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ui.ColorIcon
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 /**
  * @author Konstantin Bulenkov
  */
-class JavaColorProviderTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class JavaColorProviderTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
   @Throws(Exception::class)
-  public override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.addClass("package java.awt;" +
                        "public class Color {" +
                        "public Color(int rgb) {}" +
@@ -46,21 +58,25 @@ class JavaColorProviderTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   @Throws(Exception::class)
+  @Test
   fun testColorInFieldInitializer() {
     doTest(1, "Color c = new Color(12, 23, 123);")
   }
 
   @Throws(Exception::class)
+  @Test
   fun testHex() {
     doTest(1, "Color c = new Color(0x123abc);")
   }
 
   @Throws(Exception::class)
+  @Test
   fun testColorUIResourceInFieldInitializer() {
     doTest(1, "ColorUIResource c = new ColorUIResource(12, 23, 123);")
   }
 
   @Throws(Exception::class)
+  @Test
   fun testColorInVariableInitializer() {
     doTest(1, "void foo() {\n" +
               "  Color c = new Color(12, 23, 123);\n" +
@@ -68,6 +84,7 @@ class JavaColorProviderTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   @Throws(Exception::class)
+  @Test
   fun testColorInLambda() {
     doTest(1, "void foo() {\n" +
               "  new Runnable() {\n" +
@@ -77,7 +94,6 @@ class JavaColorProviderTest : LightJavaCodeInsightFixtureTestCase() {
               "  }\n" +
               "}")
   }
-
 
   private fun doTest(expectedGuttersCount: Int, code: String) {
     myFixture.configureByText("Foo.java",

@@ -1,62 +1,67 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.gradle
 
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.execution.ConsoleFolding
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class IdeLayoutWarningsCodeFoldingTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class IdeLayoutWarningsCodeFoldingTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
   private lateinit var console: ConsoleViewImpl
 
   private val consoleEditor: EditorEx
     get() = console.editor as EditorEx
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     ExtensionTestUtil.maskExtensions(
       ConsoleFolding.EP_NAME,
       listOf(IdeLayoutWarningsCodeFolding()),
-      testRootDisposable
+      myFixture.testRootDisposable
     )
-    console = ConsoleViewImpl(project, GlobalSearchScope.allScope(project), false, true)
-    console.component
-    val processHandler = NopProcessHandler()
-    processHandler.startNotify()
-    console.attachToProcess(processHandler)
-  }
-
-  override fun tearDown() {
-    var disposeException: Throwable? = null
-    try {
-      Disposer.dispose(console)
-    }
-    catch (e: Throwable) {
-      rethrowControlFlowException(e)
-      disposeException = e
-    }
-    finally {
-      try {
-        super.tearDown()
-      }
-      catch (e: Throwable) {
-        rethrowControlFlowException(e)
-        disposeException?.let(e::addSuppressed)
-        throw e
-      }
-      disposeException?.let { throw it }
+    withContext(Dispatchers.EDT) {
+      console = ConsoleViewImpl(myFixture.project, GlobalSearchScope.allScope(myFixture.project), false, true)
+      console.component
+      val processHandler = NopProcessHandler()
+      processHandler.startNotify()
+      console.attachToProcess(processHandler)
     }
   }
 
-  fun testSingleWarning() {
+  @AfterEach
+  fun tearDown() {
+    Disposer.dispose(console)
+  }
+
+
+  @Test
+  fun testSingleWarning(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     print(
       """
       > Task :buildPlugin
@@ -65,11 +70,12 @@ class IdeLayoutWarningsCodeFoldingTest : LightJavaCodeInsightFixtureTestCase() {
       """
     )
 
-    val region = assertOneElement(foldings())
+    val region = assertThat(foldings()).singleElement().actual()
     assertEquals("<1 layout component warning>", region.placeholderText)
   }
 
-  fun testConsecutiveWarningsAreFoldedTogether() {
+  @Test
+  fun testConsecutiveWarningsAreFoldedTogether(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     print(
       """
       Layout component 'vcs-log' has some nonexistent 'action' elements: 'Vcs.Log.Action'
@@ -79,11 +85,12 @@ class IdeLayoutWarningsCodeFoldingTest : LightJavaCodeInsightFixtureTestCase() {
       """
     )
 
-    val region = assertOneElement(foldings())
+    val region = assertThat(foldings()).singleElement().actual()
     assertEquals("<3 layout component warnings>", region.placeholderText)
   }
 
-  fun testWarningsAreFoldedSeparately() {
+  @Test
+  fun testWarningsAreFoldedSeparately(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     print(
       """
       Layout component 'vcs-log' has some nonexistent 'action' elements: 'Vcs.Log.Action'
@@ -96,7 +103,8 @@ class IdeLayoutWarningsCodeFoldingTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(2, foldings().size)
   }
 
-  fun testOrdinaryOutputIsNotFolded() {
+  @Test
+  fun testOrdinaryOutputIsNotFolded(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     print(
       """
       > Task :buildPlugin
@@ -105,13 +113,15 @@ class IdeLayoutWarningsCodeFoldingTest : LightJavaCodeInsightFixtureTestCase() {
       """
     )
 
-    assertEmpty(foldings())
+    assertThat(foldings()).isNullOrEmpty()
   }
 
-  private fun print(text: String) {
-    console.print(text.trimIndent(), ConsoleViewContentType.NORMAL_OUTPUT)
-    console.foldImmediately()
+  private suspend fun print(text: String) {
+    withContext(Dispatchers.EDT) {
+      console.print(text.trimIndent(), ConsoleViewContentType.NORMAL_OUTPUT)
+      console.foldImmediately()
+    }
   }
 
-  private fun foldings(): List<FoldRegion> = consoleEditor.foldingModel.allFoldRegions.toList()
+  private suspend fun foldings(): List<FoldRegion> = readAction { consoleEditor.foldingModel.allFoldRegions.toList() }
 }

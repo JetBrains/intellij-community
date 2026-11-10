@@ -13,47 +13,65 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorHandler;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "generate";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class GroovyGenerateMembersTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "generate");
   }
 
+  @Test
   public void testConstructorAtOffset() {
     doConstructorTest();
   }
 
+  @Test
   public void testConstructorAtEnd() {
     doConstructorTest();
   }
 
+  @Test
   public void testLonelyConstructor() {
     doConstructorTest();
   }
 
+  @Test
   public void testConstructorInJavaInheritor() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("GrBase.groovy", """
-      
+    
       abstract class GrBase {
           GrBase(int i) { }
       }
       """);
     myFixture.configureByText("Inheritor.java", """
-      
+    
       class Inheritor extends GrBase {
           <caret>
       }
       """);
     generateConstructor(true);
     myFixture.checkResult("""
-                            
+                          
                             class Inheritor extends GrBase {
                                 public Inheritor(int i) {
                                     super(i);
@@ -62,13 +80,15 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
                             """);
   }
 
+  @Test
   public void testExplicitArgumentTypes() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
-      
+    
       class Super {
         def Super(a, int b) {}
       }
-      
+    
       class Foo extends Super {
         int c
         Object d
@@ -78,16 +98,16 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
       """);
     generateConstructor();
     myFixture.checkResult("""
-                            
+                          
                             class Super {
                               def Super(a, int b) {}
                             }
-                            
+                          
                             class Foo extends Super {
                               int c
                               Object d
                               final e
-                            
+                          
                                 Foo(a, int b, int c, Object d, e) {
                                     super(a, b)
                                     this.c = c
@@ -98,28 +118,30 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
                             """);
   }
 
+  @Test
   public void testSubstitutionInConstructor() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
-      
+    
       class Super<E> {
         def Super(Collection<E> c) {}
       }
-      
+    
       class X {}
-      
+    
       class Foo extends Super<X> {
         <caret>
       }
       """);
     generateConstructor();
     myFixture.checkResult("""
-                            
+                          
                             class Super<E> {
                               def Super(Collection<E> c) {}
                             }
-                            
+                          
                             class X {}
-                            
+                          
                             class Foo extends Super<X> {
                                 Foo(Collection<X> c) {
                                     super(c)
@@ -128,9 +150,11 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
                             """);
   }
 
+  @Test
   public void testGetter1() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
-      
+    
       class Test {
           def foo
           <caret>
@@ -138,19 +162,21 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
     generateGetter();
 
     myFixture.checkResult("""
-                            
+                          
                             class Test {
                                 def foo
-                            
+                          
                                 def getFoo() {
                                     return foo
                                 }
                             }""");
   }
 
+  @Test
   public void testGetter2() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
-      
+    
         class Test {
             int foo
             <caret>
@@ -159,10 +185,10 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
     generateGetter();
 
     myFixture.checkResult("""
-                            
+                          
                               class Test {
                                   int foo
-                            
+                          
                                   int getFoo() {
                                       return foo
                                   }
@@ -170,9 +196,11 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
                             """);
   }
 
+  @Test
   public void testGetter3() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
-      
+    
         class Test {
             static foo
             <caret>
@@ -181,10 +209,10 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
     generateGetter();
 
     myFixture.checkResult("""
-                            
+                          
                               class Test {
                                   static foo
-                            
+                          
                                   static getFoo() {
                                       return foo
                                   }
@@ -192,14 +220,16 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
                             """);
   }
 
+  @Test
   public void testGetter4() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("org/jetbrains/annotations/Nullable.java",
                                "package org.jetbrains.annotations; public @interface Nullable {}");
 
     myFixture.configureByText("a.groovy", """
-      
+    
         import org.jetbrains.annotations.Nullable
-      
+    
         class Test {
             @Nullable
             def foo
@@ -209,13 +239,13 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
     generateGetter();
 
     myFixture.checkResult("""
-                            
+                          
                               import org.jetbrains.annotations.Nullable
-                            
+                          
                               class Test {
                                   @Nullable
                                   def foo
-                            
+                          
                                   @Nullable
                                   getFoo() {
                                       return foo
@@ -224,9 +254,11 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
                             """);
   }
 
+  @Test
   public void testSetter1() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
-      
+    
       class Test {
           def foo
           <caret>
@@ -235,19 +267,21 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
     generateSetter();
 
     myFixture.checkResult("""
-                            
+                          
                             class Test {
                                 def foo
-                            
+                          
                                 void setFoo(foo) {
                                     this.foo = foo
                                 }
                             }""");
   }
 
+  @Test
   public void testSetter2() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
-      
+    
       class Test {
           int foo
           <caret>
@@ -256,19 +290,21 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
     generateSetter();
 
     myFixture.checkResult("""
-                            
+                          
                             class Test {
                                 int foo
-                            
+                          
                                 void setFoo(int foo) {
                                     this.foo = foo
                                 }
                             }""");
   }
 
+  @Test
   public void testSetter3() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
-      
+    
       class Test {
           static foo
           <caret>
@@ -277,24 +313,26 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
     generateSetter();
 
     myFixture.checkResult("""
-                            
+                          
                             class Test {
                                 static foo
-                            
+                          
                                 static void setFoo(foo) {
                                     Test.foo = foo
                                 }
                             }""");
   }
 
+  @Test
   public void testSetter4() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("org/jetbrains/annotations/Nullable.java",
                                "package org.jetbrains.annotations; public @interface Nullable {}");
 
     myFixture.configureByText("a.groovy", """
-      
+    
       import org.jetbrains.annotations.Nullable
-      
+    
       class Test {
           @Nullable
           def foo
@@ -304,46 +342,48 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
     generateSetter();
 
     myFixture.checkResult("""
-                            
+                          
                             import org.jetbrains.annotations.Nullable
-                            
+                          
                             class Test {
                                 @Nullable
                                 def foo
-                            
+                          
                                 void setFoo(@Nullable foo) {
                                     this.foo = foo
                                 }
                             }""");
   }
 
+  @Test
   public void testConstructorInTheMiddle() {
     doConstructorTest("""
                         class Foo {
                             def foo() {}
-                        
+                      
                             <caret>
-                        
+                      
                             def bar() {}
                         }
                         """, """
                         class Foo {
                             def foo() {}
-                        
+                      
                             Foo() {
                             }
-                        
+                      
                             def bar() {}
                         }
                         """);
   }
 
+  @Test
   public void testConstructorWithOptionalParameter() {
     doConstructorTest("""
                         class Base {
                           Base(int x = 0){}
                         }
-                        
+                      
                         class Inheritor extends Base {
                           <caret>
                         }
@@ -351,7 +391,7 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
                         class Base {
                           Base(int x = 0){}
                         }
-                        
+                      
                         class Inheritor extends Base {
                             Inheritor(int x) {
                                 super(x)
@@ -360,13 +400,15 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
                         """);
   }
 
+  @Test
   public void testGetterInTheEnd() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
-      
+    
       class GrImportStatementStub {
           private final String myAlias;
           private final String mySymbolName;
-      
+    
           protected GrImportStatementStub(String symbolName, String alias) {
           }
           <caret>
@@ -375,18 +417,18 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
     generateGetter();
 
     myFixture.checkResult("""
-                            
+                          
                             class GrImportStatementStub {
                                 private final String myAlias;
                                 private final String mySymbolName;
-                            
+                          
                                 protected GrImportStatementStub(String symbolName, String alias) {
                                 }
-                            
+                          
                                 String getMyAlias() {
                                     return myAlias
                                 }
-                            
+                          
                                 String getMySymbolName() {
                                     return mySymbolName
                                 }
@@ -395,37 +437,44 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   private void generateGetter() {
-    new GenerateGetterHandler() {
-      @Override
-      protected ClassMember[] chooseMembers(ClassMember[] members,
-                                            boolean allowEmptySelection,
-                                            boolean copyJavadocCheckbox,
-                                            Project project,
-                                            Editor editor) {
-        return members;
-      }
-    }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      new GenerateGetterHandler() {
+        @Override
+        protected ClassMember[] chooseMembers(ClassMember[] members,
+                                              boolean allowEmptySelection,
+                                              boolean copyJavadocCheckbox,
+                                              Project project,
+                                              Editor editor) {
+          return members;
+        }
+      }.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+    });
   }
 
   private void generateSetter() {
-    new GenerateSetterHandler() {
-      @Override
-      protected ClassMember[] chooseMembers(ClassMember[] members,
-                                            boolean allowEmptySelection,
-                                            boolean copyJavadocCheckbox,
-                                            Project project,
-                                            Editor editor) {
-        return members;
-      }
-    }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      new GenerateSetterHandler() {
+        @Override
+        protected ClassMember[] chooseMembers(ClassMember[] members,
+                                              boolean allowEmptySelection,
+                                              boolean copyJavadocCheckbox,
+                                              Project project,
+                                              Editor editor) {
+          return members;
+        }
+      }.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+    });
   }
 
   private void doConstructorTest(String before, String after) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     if (before != null) {
       myFixture.configureByText("_a.groovy", before);
     }
     else {
-      myFixture.configureByFile(getTestName(false) + ".groovy");
+      myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
     }
 
     generateConstructor();
@@ -433,7 +482,7 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
       myFixture.checkResult(after);
     }
     else {
-      myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+      myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.groovy");
     }
   }
 
@@ -442,6 +491,7 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   private void generateConstructor(boolean javaHandler) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     GenerateMembersHandlerBase handler;
     if (javaHandler) {
       handler = new GenerateConstructorHandler() {
@@ -469,9 +519,10 @@ public class GroovyGenerateMembersTest extends LightJavaCodeInsightFixtureTestCa
       };
     }
 
-
-    handler.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      handler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+      PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
+    });
   }
 
   private void generateConstructor() {

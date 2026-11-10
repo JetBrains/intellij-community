@@ -3,9 +3,11 @@ package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import junit.framework.TestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
@@ -13,6 +15,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAss
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -20,17 +23,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_1_7;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class GroovyMapAttributeTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_1_7);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   private void doTestCompletion(String fileText, boolean exists) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", fileText);
     LookupElement[] res = myFixture.completeBasic();
 
-    TestCase.assertNotNull(res);
+    assertNotNull(res);
 
     Set<String> variants = new HashSet<String>();
 
@@ -38,17 +49,17 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
       variants.add(element.getLookupString());
     }
 
-
     if (exists) {
-      TestCase.assertTrue(variants.contains("sss1"));
-      TestCase.assertTrue(variants.contains("sss2"));
+      assertTrue(variants.contains("sss1"));
+      assertTrue(variants.contains("sss2"));
     }
     else {
-      TestCase.assertFalse(variants.contains("sss1"));
-      TestCase.assertFalse(variants.contains("sss2"));
+      assertFalse(variants.contains("sss1"));
+      assertFalse(variants.contains("sss2"));
     }
   }
 
+  @Test
   public void testEmptyConstructorCompletion() {
     doTestCompletion("""
                        
@@ -65,6 +76,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                        """, true);
   }
 
+  @Test
   public void testNoDefaultConstructor() {
     doTestCompletion("""
                        
@@ -81,6 +93,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                        """, false);
   }
 
+  @Test
   public void testDefaultConstructorAndNonDefault() {
     doTestCompletion("""
                        
@@ -99,6 +112,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                        """, true);
   }
 
+  @Test
   public void testHasMapConstructor() {
     doTestCompletion("""
                        
@@ -118,6 +132,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                        """, true);
   }
 
+  @Test
   public void testHasHashMapConstructor() {
     doTestCompletion("""
                        
@@ -137,6 +152,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                        """, true);
   }
 
+  @Test
   public void testMapNotFirstConstructor() {
     doTestCompletion("""
                        
@@ -155,6 +171,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                        """, true);
   }
 
+  @Test
   public void testCallOtherConstructor() {
     doTestCompletion("""
                        
@@ -171,6 +188,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                        """, false);
   }
 
+  @Test
   public void testWithMap() {
     doTestCompletion("""
                        
@@ -191,6 +209,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                        """, true);
   }
 
+  @Test
   public void testWithMap2() {
     doTestCompletion("""
                        
@@ -211,6 +230,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                        """, true);
   }
 
+  @Test
   public void testAlreadyHasNonMapParameter() {
     doTestCompletion("""
                        
@@ -227,6 +247,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                        """, false);
   }
 
+  @Test
   public void testAlreadyHasNonMapParameter1() {
     doTestCompletion("""
                        
@@ -244,7 +265,9 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                        """, false);
   }
 
+  @Test
   public void testConstructorInJavaClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Ccc.java", """
       
       public class Ccc {
@@ -265,33 +288,38 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
     myFixture.assertPreferredCompletionItems(0, "sss1", "sss2", "sss3", "sss4");
   }
 
+  @Test
   public void testRenameProperty() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile groovyFile = myFixture.addFileToProject("g.groovy", "new Aaa(sss: '1')");
     myFixture.configureByText("Aaa.java", """
-      
+    
       public class Aaa {
         public String sss<caret>;
       }
       """);
-    myFixture.renameElementAtCaret("field");
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.renameElementAtCaret("field"));
 
-    TestCase.assertEquals("new Aaa(field: '1')", groovyFile.getText());
+    assertEquals("new Aaa(field: '1')", groovyFile.getText());
   }
 
+  @Test
   public void testRenameMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile groovyFile = myFixture.addFileToProject("g.groovy", "new Aaa(sss: '1')");
     myFixture.configureByText("Aaa.java", """
-      
+    
       public class Aaa {
         public void setSss<caret>(String s){}
       }
       """);
-    myFixture.renameElementAtCaret("setField");
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.renameElementAtCaret("setField"));
 
-    TestCase.assertEquals("new Aaa(field: '1')", groovyFile.getText());
+    assertEquals("new Aaa(field: '1')", groovyFile.getText());
   }
 
   private void doTestHighlighting(String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(GroovyAssignabilityCheckInspection.class);
     myFixture.enableInspections(GroovyUncheckedAssignmentOfMemberOfRawTypeInspection.class);
 
@@ -299,6 +327,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
     myFixture.checkHighlighting(true, false, true);
   }
 
+  @Test
   public void testCheckingTypeString() {
     doTestHighlighting("""
                          
@@ -319,6 +348,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                          """);
   }
 
+  @Test
   public void testCheckingTypeInt() {
     doTestHighlighting("""
                          
@@ -342,6 +372,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                          """);
   }
 
+  @Test
   public void testCheckingTypeInteger() {
     doTestHighlighting("""
                          
@@ -365,6 +396,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                          """);
   }
 
+  @Test
   public void testCheckingTypeList() {
     doTestHighlighting("""
                          
@@ -384,7 +416,9 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                          """);
   }
 
+  @Test
   public void testCheckingTypeGeneric() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Ccc.groovy", """
       
       class Ccc<T> {
@@ -404,6 +438,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                          """);
   }
 
+  @Test
   public void testCompletionFieldClosureParam() {
     doTestCompletion("""
                        
@@ -419,6 +454,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                        """, true);
   }
 
+  @Test
   public void testCompletionVariableClosureParam() {
     doTestCompletion("""
                        
@@ -434,7 +470,9 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                        """, true);
   }
 
+  @Test
   public void testCompletionReturnMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Ccc.groovy", """
       
       class Ccc {
@@ -457,15 +495,18 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
                        """, true);
   }
 
+  @Test
   public void test_completion_within_some_map() {
     doTestCompletionWithinMap("[<caret>]", "[bar: <caret>]");
   }
 
+  @Test
   public void test_completion_within_map_in_argument_list() {
     doTestCompletionWithinMap("foo(1, 2, 3, [<caret>])", "foo(1, 2, 3, [bar: <caret>])");
   }
 
   private void doTestCompletionWithinMap(String text, String text2) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     GroovyNamedArgumentProvider.EP_NAME.getPoint().registerExtension(new GroovyNamedArgumentProvider() {
       @NotNull
       @Override
@@ -481,8 +522,8 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
     myFixture.completeBasic();
 
     List<String> lookUpStrings1 = myFixture.getLookupElementStrings();
-    assertContainsElements(lookUpStrings1, "foo");
-    assertContainsElements(lookUpStrings1, "bar");
+    assertThat(lookUpStrings1).contains("foo");
+    assertThat(lookUpStrings1).contains("bar");
 
     myFixture.type("ba\n");
     if (text2.isEmpty()) myFixture.checkResult(text2);
@@ -490,7 +531,7 @@ public class GroovyMapAttributeTest extends LightJavaCodeInsightFixtureTestCase 
     myFixture.type(",");
     myFixture.completeBasic();
     List<String> lookUpStrings2 = myFixture.getLookupElementStrings();
-    assertContainsElements(lookUpStrings2, "foo");
-    assertDoesntContain(lookUpStrings2, "bar");
+    assertThat(lookUpStrings2).contains("foo");
+    assertThat(lookUpStrings2).doesNotContain("bar");
   }
 }

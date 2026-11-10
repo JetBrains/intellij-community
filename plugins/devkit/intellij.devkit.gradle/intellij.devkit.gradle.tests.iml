@@ -52,6 +52,9 @@
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scratch.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.devkit.gradle" />
 </module>

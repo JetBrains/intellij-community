@@ -17,61 +17,82 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class SuspiciousCollectionMethodCallsTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class SuspiciousCollectionMethodCallsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/suspiciousCalls");
+  }
+
   private SuspiciousCollectionsMethodCallsInspection myTool = new SuspiciousCollectionsMethodCallsInspection();
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/suspiciousCalls";
-  }
-
   private void doTest() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(myTool);
-    myFixture.testHighlighting(getTestName(false) + ".java");
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     myTool = null;
-    super.tearDown();
   }
 
+  @Test
   public void testConcurrentHashMapCalls() { doTest(); }
+  @Test
   public void testRemoveAllCall() { doTest(); }
+  @Test
   public void testRetainAllCall() { doTest(); }
+  @Test
   public void testSetList() { doTest(); }
+  @Test
   public void testUseDfa() { doTest(); }
+  @Test
   public void testWildcard() { doTest(); }
+  @Test
   public void testGuava() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package com.google.common.cache;" +
                 "public interface Cache<K, V> {V getIfPresent(Object k);void invalidate(Object k);}");
     doTest();
   }
+  @Test
   public void testPolyConditionalExpressionPassedToMapGetCall() { doTest(); }
+  @Test
   public void testNewExpressionPassedToMapContains() { doTest(); }
+  @Test
   public void testIgnoreConvertible() {
     myTool.REPORT_CONVERTIBLE_METHOD_CALLS = false;
     doTest();
   }
 
+  @Test
   public void testNewMapMethods() {
     doTest();
   }
 
+  @Test
   public void testMethodReferenceWithCollectionCalls() { doTest(); }
+  @Test
   public void testSuspiciousSecondArg() { doTest(); }
 
+  @Test
   public void testNonClassArgTypes() {
     doTest();
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
   }
 }

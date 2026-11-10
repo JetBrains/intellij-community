@@ -3,36 +3,49 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.java18api.OptionalGetWithoutIsPresentInspection;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class OptionalGetWithoutIsPresentInspectionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/optionalGet";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class OptionalGetWithoutIsPresentInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/optionalGet");
   }
 
+  @Test
   public void testAbstractEnum() { doTest(); }
+  @Test
   public void testFinalInheritance() { doTest(); }
+  @Test
   public void testOptionalGet() { doTest(); }
+  @Test
   public void testOptionalGetInlineLambda() { doTest(); }
+  @Test
   public void testOptionalGetMethodReference() { doTest(); }
+  @Test
   public void testStreamGroupingBy() { doTest(); }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
-  }
-
   private void doTest() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     mockClasses();
     myFixture.enableInspections(new OptionalGetWithoutIsPresentInspection());
-    myFixture.testHighlighting(getTestName(false) + ".java");
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
   }
 
   private void mockClasses() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package org.junit;" +
                        "public class Assert {" +
                        "  public static void assertTrue(boolean b) {}" +

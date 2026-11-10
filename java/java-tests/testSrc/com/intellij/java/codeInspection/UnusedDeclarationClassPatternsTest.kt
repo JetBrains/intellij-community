@@ -21,17 +21,31 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.codeInspection.ex.InspectionManagerEx
 import com.intellij.codeInspection.reference.RefClass
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
 
-class UnusedDeclarationClassPatternsTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class UnusedDeclarationClassPatternsTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
   fun testClassPattern() {
     val unusedDeclarationInspection = UnusedDeclarationInspection(true)
     myFixture.enableInspections(unusedDeclarationInspection)
     val classPattern = EntryPointsManagerBase.ClassPattern()
     classPattern.hierarchically = true
     classPattern.pattern = "java.lang.Runnable"
-    val patterns = EntryPointsManagerBase.getInstance(project).patterns
+    val patterns = EntryPointsManagerBase.getInstance(myFixture.project).patterns
     try {
       patterns.add(classPattern)
       myFixture.configureByText("C.java", "public abstract class C implements Runnable {}")
@@ -43,13 +57,14 @@ class UnusedDeclarationClassPatternsTest : LightJavaCodeInsightFixtureTestCase()
     }
   }
 
+  @Test
   fun testMethodPattern() {
     val unusedDeclarationInspection = UnusedDeclarationInspection(true)
     myFixture.enableInspections(unusedDeclarationInspection)
     val classPattern = EntryPointsManagerBase.ClassPattern()
     classPattern.pattern = "C"
     classPattern.method = "*"
-    val patterns = EntryPointsManagerBase.getInstance(project).patterns
+    val patterns = EntryPointsManagerBase.getInstance(myFixture.project).patterns
     try {
       patterns.add(classPattern)
       myFixture.configureByText("C.java", "public abstract class C { void foo() {} public static void main(String[] args) {}}")
@@ -61,13 +76,14 @@ class UnusedDeclarationClassPatternsTest : LightJavaCodeInsightFixtureTestCase()
     }
   }
 
+  @Test
   fun testMethodPattern1() {
     val unusedDeclarationInspection = UnusedDeclarationInspection(true)
     myFixture.enableInspections(unusedDeclarationInspection)
     val classPattern = EntryPointsManagerBase.ClassPattern()
     classPattern.pattern = "C"
     classPattern.method = "foo*"
-    val patterns = EntryPointsManagerBase.getInstance(project).patterns
+    val patterns = EntryPointsManagerBase.getInstance(myFixture.project).patterns
     try {
       patterns.add(classPattern)
       myFixture.configureByText("C.java", "public abstract class C { void fooBar() {} public static void main() {}}")
@@ -79,6 +95,7 @@ class UnusedDeclarationClassPatternsTest : LightJavaCodeInsightFixtureTestCase()
     }
   }
 
+  @Test
   fun testNoClassPattern() {
     val unusedDeclarationInspection = UnusedDeclarationInspection(true)
     try {
@@ -91,22 +108,23 @@ class UnusedDeclarationClassPatternsTest : LightJavaCodeInsightFixtureTestCase()
     }
   }
 
+  @Test
   fun testAddEntryPoint() {
     val aClass = myFixture.addClass("public class Foo {}")
-    val entryPointsManager = EntryPointsManagerBase.getInstance(project)
-    val context = (InspectionManager.getInstance(project) as InspectionManagerEx).createNewGlobalContext()
-    context.currentScope =  AnalysisScope(project)
+    val entryPointsManager = EntryPointsManagerBase.getInstance(myFixture.project)
+    val context = (InspectionManager.getInstance(myFixture.project) as InspectionManagerEx).createNewGlobalContext()
+    context.currentScope =  AnalysisScope(myFixture.project)
     context.initializeTools(ArrayList(), ArrayList(), ArrayList())
     
     try {
       val refClass = context.refManager.getReference(aClass)
       assertNotNull(refClass)
       val patterns = entryPointsManager.patterns
-      assertEmpty(patterns)
+      assertThat(patterns).isNullOrEmpty()
 
       //add class as entry point
       entryPointsManager.addEntryPoint(refClass!!, true)
-      assertSize(1, patterns)
+      assertEquals(1, patterns.size)
       assertEquals("Foo", patterns.iterator().next().pattern)
 
       //remove class entry point with constructors - ensure nothing is left in the entries
@@ -115,37 +133,38 @@ class UnusedDeclarationClassPatternsTest : LightJavaCodeInsightFixtureTestCase()
         entryPointsManager.removeEntryPoint(constructor)
       }
 
-      assertEmpty(patterns)
-      assertEmpty(entryPointsManager.getEntryPoints(context.refManager))
+      assertThat(patterns).isNullOrEmpty()
+      assertThat(entryPointsManager.getEntryPoints(context.refManager)).isNullOrEmpty()
     }
     finally {
       context.cleanup()
     }
   }
 
+  @Test
   fun testAddRemoveMethodEntryPoint() {
     val aClass = myFixture.addClass("public class Foo {void foo(){}}")
-    val entryPointsManager = EntryPointsManagerBase.getInstance(project)
-    val context = (InspectionManager.getInstance(project) as InspectionManagerEx).createNewGlobalContext()
+    val entryPointsManager = EntryPointsManagerBase.getInstance(myFixture.project)
+    val context = (InspectionManager.getInstance(myFixture.project) as InspectionManagerEx).createNewGlobalContext()
     context.initializeTools(ArrayList(),ArrayList(),ArrayList())
     try {
-      val refMethod = context.refManager.getReference(aClass.methods[0])
+      val refMethod = context.refManager.getReference(runReadActionBlocking { aClass.methods[0] })
       assertNotNull(refMethod)
       val refClass = context.refManager.getReference(aClass)
       assertNotNull(refClass)
       val patterns = entryPointsManager.patterns
-      assertEmpty(patterns)
+      assertThat(patterns).isNullOrEmpty()
 
       entryPointsManager.addEntryPoint(refMethod!!, true)
-      assertSize(1, patterns)
+      assertEquals(1, patterns.size)
       val classPattern = patterns.iterator().next()
       assertEquals("Foo", classPattern.pattern)
       assertEquals("foo", classPattern.method)
 
       entryPointsManager.removeEntryPoint(refMethod)
 
-      assertEmpty(patterns)
-      assertEmpty(entryPointsManager.getEntryPoints(context.refManager))
+      assertThat(patterns).isNullOrEmpty()
+      assertThat(entryPointsManager.getEntryPoints(context.refManager)).isNullOrEmpty()
     }
     finally {
       context.cleanup()

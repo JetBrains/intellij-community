@@ -8,14 +8,28 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutionException;
 
-public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class StaticImportMethodHintTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testTheHintSkipsAMethodWithAnotherArgumentCount() {
     addHelperClass("""
                      package p;
@@ -32,6 +46,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                         """);
   }
 
+  @Test
   public void testTheHintShowsAMethodWithTheSameArgumentCount() {
     addHelperClass("""
                      package p;
@@ -48,6 +63,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                       """, "distance");
   }
 
+  @Test
   public void testTheHintSkipsAMethodWithAnotherParameterType() {
     addHelperClass("""
                      package p;
@@ -64,6 +80,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                         """);
   }
 
+  @Test
   public void testTheHintShowsAMethodWhenTheArgumentTypeIsUnknown() {
     addHelperClass("""
                      package p;
@@ -80,6 +97,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                       """, "greet");
   }
 
+  @Test
   public void testTheHintShowsAMethodWithALambdaArgument() {
     addHelperClass("""
                      package p;
@@ -96,6 +114,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                       """, "runIt");
   }
 
+  @Test
   public void testTheHintShowsAVarargsMethod() {
     addHelperClass("""
                      package p;
@@ -112,6 +131,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                       """, "sum");
   }
 
+  @Test
   public void testTheHintSkipsAVarargsMethodWithTooFewArguments() {
     addHelperClass("""
                      package p;
@@ -128,6 +148,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                         """);
   }
 
+  @Test
   public void testTheHintShowsAVarargsMethodWithoutAVarargsArgument() {
     addHelperClass("""
                      package p;
@@ -144,6 +165,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                       """, "sum");
   }
 
+  @Test
   public void testTheHintShowsAGenericMethodWithAMatchingArgument() {
     addHelperClass("""
                      package p;
@@ -160,6 +182,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                       """, "firstOf");
   }
 
+  @Test
   public void testTheHintSkipsAGenericMethodWithAnotherArgumentCount() {
     addHelperClass("""
                      package p;
@@ -176,6 +199,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                         """);
   }
 
+  @Test
   public void testTheHintSkipsAGenericMethodWhenAConcreteParameterConflicts() {
     addHelperClass("""
                      package p;
@@ -192,6 +216,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                         """);
   }
 
+  @Test
   public void testTheHintShowsAGenericVarargsMethod() {
     addHelperClass("""
                      package p;
@@ -208,6 +233,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                       """, "listOf");
   }
 
+  @Test
   public void testTheHintSkipsAGenericMethodWithABrokenTypeBound() {
     addHelperClass("""
                      package p;
@@ -224,6 +250,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                         """);
   }
 
+  @Test
   public void testTheHintShownBoxedTypeBound() {
     addHelperClass("""
                      package p;
@@ -240,6 +267,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                         """, "round");
   }
 
+  @Test
   public void testTheHintShowsAGenericMethodWithAMatchingTypeBound() {
     addHelperClass("""
                      package p;
@@ -256,6 +284,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                       """, "print");
   }
 
+  @Test
   public void testTheHintShowsAGenericMethodWithABoxedArgument() {
     addHelperClass("""
                      package p;
@@ -272,6 +301,7 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
                       """, "round");
   }
 
+  @Test
   public void testTheHintShowsAGenericMethodWithAnArgumentTheBoundCanCast() {
     addHelperClass("""
                      package p;
@@ -289,24 +319,27 @@ public class StaticImportMethodHintTest extends LightJavaCodeInsightFixtureTestC
   }
 
   private void addHelperClass(@Language("JAVA") @NotNull String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass(text);
   }
 
   private void assertNoHintButIntentionIsAvailable(@NotNull String text) {
-    assertEmpty(createFix(text).getHintCandidates());
+    assertThat(createFix(text).getHintCandidates()).isNullOrEmpty();
     assertIntentionIsAvailable();
   }
 
   private void assertHintShows(@NotNull String text, String @NotNull ... names) {
-    assertSameElements(ContainerUtil.map(createFix(text).getHintCandidates(), PsiMethod::getName), names);
+    assertThat(ContainerUtil.map(createFix(text).getHintCandidates(), PsiMethod::getName)).containsOnly(names);
     assertIntentionIsAvailable();
   }
 
   private void assertIntentionIsAvailable() {
-    assertNotEmpty(myFixture.filterAvailableIntentions(QuickFixBundle.message("static.import.method.text")));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    assertThat(myFixture.filterAvailableIntentions(QuickFixBundle.message("static.import.method.text"))).isNotEmpty();
   }
 
   private @NotNull StaticImportMethodFix createFix(@NotNull String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("X.java", text);
     PsiMethodCallExpression call = PsiTreeUtil.findChildOfType(myFixture.getFile(), PsiMethodCallExpression.class);
     assertNotNull(call);

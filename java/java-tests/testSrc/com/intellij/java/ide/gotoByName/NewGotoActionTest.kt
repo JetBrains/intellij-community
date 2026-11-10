@@ -10,12 +10,15 @@ import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.providers.mocks.SeItemsProviderMock
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Test
 
-class NewGotoActionTest: LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class NewGotoActionTest {
   private val defaultProvider: SeItemsProvider get() = SeItemsProviderMock(delayMillis = 1000, delayStep = 5, displayName = "Default")
 
+  @Test
   fun `test empty`() {}
 
   //@Suppress("unused")

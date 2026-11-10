@@ -3,30 +3,37 @@ package com.intellij.java.lomboktest;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.LombokTestUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static com.intellij.codeInsight.Nullability.NOT_NULL;
 import static com.intellij.codeInsight.Nullability.NULLABLE;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class LombokNonNullManagerTest extends LightJavaCodeInsightFixtureTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR;
-  }
+@TestApplication
+public class LombokNonNullManagerTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
+  @Test
   public void testTypeAnnotationNullabilityOnStubs() {
-    List<String> notNulls = NullableNotNullManager.getInstance(getProject()).getNotNulls();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    List<String> notNulls = NullableNotNullManager.getInstance(myFixture.getProject()).getNotNulls();
     assertTrue(notNulls.contains(LombokClassNames.NON_NULL));
 
     PsiClass clazz = myFixture.addClass("""
@@ -36,27 +43,34 @@ public class LombokNonNullManagerTest extends LightJavaCodeInsightFixtureTestCas
                                               private String test(@NonNull Integer param) {
                                                   return String.valueOf(param.hashCode());
                                               }}""");
-    assertEquals(NOT_NULL, DfaPsiUtil.getTypeNullability(clazz.getMethods()[0].getReturnType()));
-    assertEquals(NOT_NULL, DfaPsiUtil.getTypeNullability(clazz.getMethods()[0].getParameterList().getParameter(0).getType()));
+    ReadAction.runBlocking(() -> {
+      assertEquals(NOT_NULL, DfaPsiUtil.getTypeNullability(clazz.getMethods()[0].getReturnType()));
+      assertEquals(NOT_NULL, DfaPsiUtil.getTypeNullability(clazz.getMethods()[0].getParameterList().getParameter(0).getType()));
+    });
   }
 
+  @Test
   public void testLombokAddNullAnnotationJavaxConfigProperty() {
     doAddNullAnnotationTest("javax");
   }
 
+  @Test
   public void testLombokAddNullAnnotationJetbrainsConfigProperty() {
     doAddNullAnnotationTest("jetbrains");
   }
 
+  @Test
   public void testLombokAddNullAnnotationCustomConfigProperty() {
     doAddNullAnnotationTest("custom:lombok.NonNull:org.jetbrains.annotations.Nullable");
   }
 
+  @Test
   public void testLombokAddNullAnnotationJspecifyConfigProperty() {
     doAddNullAnnotationTest("jspecify");
   }
 
   private void doAddNullAnnotationTest(String addNullAnnotation) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("lombok.config", """
       lombok.addNullAnnotations = #PLACEHOLDER#
       config.stopBubbling = true
@@ -97,32 +111,33 @@ public class LombokNonNullManagerTest extends LightJavaCodeInsightFixtureTestCas
                              }
                          }""");
 
-    final PsiClass myObjectBClass = myFixture.findClass("App.MyObjectB");
-    final PsiClass myObjectBBuilderClass = myFixture.findClass("App.MyObjectB.MyObjectBBuilder");
+    ReadAction.runBlocking(() -> {
+      final PsiClass myObjectBClass = myFixture.findClass("App.MyObjectB");
+      final PsiClass myObjectBBuilderClass = myFixture.findClass("App.MyObjectB.MyObjectBBuilder");
 
-    assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectBClass, "builder")));
-    assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectBClass, "toString")));
+      assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectBClass, "builder")));
+      assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectBClass, "toString")));
 
-    assertEquals(NULLABLE, DfaPsiUtil.getElementNullabilityForRead(null, findMethodParam(myObjectBClass, "equals", 0)));
-    assertEquals(NULLABLE, DfaPsiUtil.getElementNullabilityForRead(null, findMethodParam(myObjectBClass, "canEqual", 0)));
+      assertEquals(NULLABLE, DfaPsiUtil.getElementNullabilityForRead(null, findMethodParam(myObjectBClass, "equals", 0)));
+      assertEquals(NULLABLE, DfaPsiUtil.getElementNullabilityForRead(null, findMethodParam(myObjectBClass, "canEqual", 0)));
 
-    assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectBBuilderClass, "nonNullString")));
-    assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectBBuilderClass, "myString")));
-    assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectBBuilderClass, "build")));
+      assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectBBuilderClass, "nonNullString")));
+      assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectBBuilderClass, "myString")));
+      assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectBBuilderClass, "build")));
 
+      final PsiClass myObjectSClass = myFixture.findClass("App.MyObjectS");
+      final PsiClass myObjectSBuilderClass = myFixture.findClass("App.MyObjectS.MyObjectSBuilder");
 
-    final PsiClass myObjectSClass = myFixture.findClass("App.MyObjectS");
-    final PsiClass myObjectSBuilderClass = myFixture.findClass("App.MyObjectS.MyObjectSBuilder");
+      assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectSClass, "builder")));
+      assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectSClass, "toString")));
 
-    assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectSClass, "builder")));
-    assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectSClass, "toString")));
+      assertEquals(NULLABLE, DfaPsiUtil.getElementNullabilityForWrite(null, findMethodParam(myObjectSClass, "equals", 0)));
+      assertEquals(NULLABLE, DfaPsiUtil.getElementNullabilityForWrite(null, findMethodParam(myObjectSClass, "canEqual", 0)));
 
-    assertEquals(NULLABLE, DfaPsiUtil.getElementNullabilityForWrite(null, findMethodParam(myObjectSClass, "equals", 0)));
-    assertEquals(NULLABLE, DfaPsiUtil.getElementNullabilityForWrite(null, findMethodParam(myObjectSClass, "canEqual", 0)));
-
-    assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectSBuilderClass, "nonNullString")));
-    assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectSBuilderClass, "myString")));
-    assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectSBuilderClass, "build")));
+      assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectSBuilderClass, "nonNullString")));
+      assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectSBuilderClass, "myString")));
+      assertEquals(NOT_NULL, DfaPsiUtil.getElementNullabilityForRead(null, findMethod(myObjectSBuilderClass, "build")));
+    });
   }
 
   private static PsiMethod findMethod(PsiClass myObjectBClass, String name) {

@@ -3,45 +3,80 @@ package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.duplicateExpressions.DuplicateExpressionsInspection
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class DuplicateExpressionsTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class DuplicateExpressionsTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = JavaTestUtil.getJavaTestDataPath() + "/inspection/duplicateExpressions"
+  }
+
   val inspection = DuplicateExpressionsInspection()
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(inspection)
   }
 
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/duplicateExpressions"
-
-  fun testUpdateInWhileLoop() = doTest(70)
-  fun testIntFloatMixedMath() = doTest(50)
-  fun testTernaryIf() = doTest(60)
-  fun testStringStartsWith() = doTest(60)
-  fun testFinalFieldsOfParameter() = doTest(100)
-  fun testStringCharAt() = doTest(60)
-  fun testEquals() = doTest(70)
-  fun testVariableModified() = doTest(50)
-  fun testVariableNotModified() = doTest(50)
-  fun testCompositeQualifier() = doTest(40)
-  fun testMethodCallWithSideEffect() = doTest(70)
-  fun testMathSin() = doTest(25)
-  fun testMathMax() = doTest(45)
-  fun testMathRandom() = doTest(1)
-  fun testVariable() = doTest(1)
-  fun testLambda() = doTest(20)
-  fun testFile() = doTest(1)
-  fun testCollections() = doTest(1)
-  fun testDeepNestedClass() = doTest(7)
-  fun testQualifier() = doTest(1)
-  fun testComplexPackage() = doTest(pkg="foo/bar/baz/")
+  @Test
+  fun testUpdateInWhileLoop(): Unit = doTest(70)
+  @Test
+  fun testIntFloatMixedMath(): Unit = doTest(50)
+  @Test
+  fun testTernaryIf(): Unit = doTest(60)
+  @Test
+  fun testStringStartsWith(): Unit = doTest(60)
+  @Test
+  fun testFinalFieldsOfParameter(): Unit = doTest(100)
+  @Test
+  fun testStringCharAt(): Unit = doTest(60)
+  @Test
+  fun testEquals(): Unit = doTest(70)
+  @Test
+  fun testVariableModified(): Unit = doTest(50)
+  @Test
+  fun testVariableNotModified(): Unit = doTest(50)
+  @Test
+  fun testCompositeQualifier(): Unit = doTest(40)
+  @Test
+  fun testMethodCallWithSideEffect(): Unit = doTest(70)
+  @Test
+  fun testMathSin(): Unit = doTest(25)
+  @Test
+  fun testMathMax(): Unit = doTest(45)
+  @Test
+  fun testMathRandom(): Unit = doTest(1)
+  @Test
+  fun testVariable(): Unit = doTest(1)
+  @Test
+  fun testLambda(): Unit = doTest(20)
+  @Test
+  fun testFile(): Unit = doTest(1)
+  @Test
+  fun testCollections(): Unit = doTest(1)
+  @Test
+  fun testDeepNestedClass(): Unit = doTest(7)
+  @Test
+  fun testQualifier(): Unit = doTest(1)
+  @Test
+  fun testComplexPackage(): Unit = doTest(pkg="foo/bar/baz/")
 
   private fun doTest(threshold: Int = 50, pkg: String = "") {
     val oldThreshold = inspection.complexityThreshold
     try {
       inspection.complexityThreshold = threshold
-      myFixture.testHighlighting("$pkg${getTestName(false)}.java")
+      myFixture.testHighlighting("$pkg${myFixture.getTestName(false)}.java")
     }
     finally {
       inspection.complexityThreshold = oldThreshold

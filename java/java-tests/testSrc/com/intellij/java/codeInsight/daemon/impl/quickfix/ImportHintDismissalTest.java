@@ -15,45 +15,70 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.ExecutionException;
 
-public class ImportHintDismissalTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class ImportHintDismissalTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   private static final String UNRESOLVED_NAME = "ArrayList";
 
   private EditorHintFixture myHintFixture;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     // a test shows no real hint window, so the Escape action stays disabled.
     // This fixture marks each new hint as visible, which enables the Escape action.
-    myHintFixture = new EditorHintFixture(getTestRootDisposable());
+    myHintFixture = new EditorHintFixture(myFixture.getTestRootDisposable());
   }
 
+  @Test
   public void testEscapeKeyKeepsTheImportHintHidden() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA")
     String text = "class X { ArrayList c; }";
     myFixture.configureByText("X.java", text);
     Editor editor = myFixture.getEditor();
     PsiJavaCodeReferenceElement reference = findReference(text.indexOf(UNRESOLVED_NAME));
-    assertFalse(ImportHintDismissalTracker.isDismissed(editor, reference, UNRESOLVED_NAME));
+    ReadAction.runBlocking(() -> assertFalse(ImportHintDismissalTracker.isDismissed(editor, reference, UNRESOLVED_NAME)));
 
-    showImportHint(editor, reference);
-    assertNotNull(myHintFixture.getCurrentHintText());
-    EditorTestUtil.executeAction(editor, IdeActions.ACTION_EDITOR_ESCAPE, true);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      showImportHint(editor, reference);
+      assertNotNull(myHintFixture.getCurrentHintText());
+      EditorTestUtil.executeAction(editor, IdeActions.ACTION_EDITOR_ESCAPE, true);
 
-    assertNull(myHintFixture.getCurrentHintText());
-    assertTrue(ImportHintDismissalTracker.isDismissed(editor, reference, UNRESOLVED_NAME));
+      assertNull(myHintFixture.getCurrentHintText());
+      assertTrue(ImportHintDismissalTracker.isDismissed(editor, reference, UNRESOLVED_NAME));
+    });
   }
 
+  @Test
   public void testEscapeKeyKeepsTheHintHiddenForOneReferenceOnly() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA")
     String text = "class X { ArrayList first; ArrayList second; }";
     myFixture.configureByText("X.java", text);
@@ -62,46 +87,58 @@ public class ImportHintDismissalTest extends LightJavaCodeInsightFixtureTestCase
     PsiJavaCodeReferenceElement secondReference = findReference(text.lastIndexOf(UNRESOLVED_NAME));
     assertNotSame(firstReference, secondReference);
 
-    showImportHint(editor, firstReference);
-    EditorTestUtil.executeAction(editor, IdeActions.ACTION_EDITOR_ESCAPE, true);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      showImportHint(editor, firstReference);
+      EditorTestUtil.executeAction(editor, IdeActions.ACTION_EDITOR_ESCAPE, true);
 
-    assertTrue(ImportHintDismissalTracker.isDismissed(editor, firstReference, UNRESOLVED_NAME));
-    assertFalse(ImportHintDismissalTracker.isDismissed(editor, secondReference, UNRESOLVED_NAME));
+      assertTrue(ImportHintDismissalTracker.isDismissed(editor, firstReference, UNRESOLVED_NAME));
+      assertFalse(ImportHintDismissalTracker.isDismissed(editor, secondReference, UNRESOLVED_NAME));
+    });
   }
 
+  @Test
   public void testTypingInTheReferenceNameShowsTheHintAgain() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA")
     String text = "class X { ArrayList<caret> c; }";
     myFixture.configureByText("X.java", text);
     Editor editor = myFixture.getEditor();
     PsiJavaCodeReferenceElement reference = findReference(myFixture.getFile().getText().indexOf(UNRESOLVED_NAME));
 
-    showImportHint(editor, reference);
-    EditorTestUtil.executeAction(editor, IdeActions.ACTION_EDITOR_ESCAPE, true);
-    assertTrue(ImportHintDismissalTracker.isDismissed(editor, reference, UNRESOLVED_NAME));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      showImportHint(editor, reference);
+      EditorTestUtil.executeAction(editor, IdeActions.ACTION_EDITOR_ESCAPE, true);
+      assertTrue(ImportHintDismissalTracker.isDismissed(editor, reference, UNRESOLVED_NAME));
 
-    myFixture.type("s");
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    String changedName = UNRESOLVED_NAME + "s";
-    PsiJavaCodeReferenceElement changedReference = findReference(myFixture.getFile().getText().indexOf(changedName));
+      myFixture.type("s");
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+      String changedName = UNRESOLVED_NAME + "s";
+      PsiJavaCodeReferenceElement changedReference = findReference(myFixture.getFile().getText().indexOf(changedName));
 
-    assertFalse(ImportHintDismissalTracker.isDismissed(editor, changedReference, changedName));
+      assertFalse(ImportHintDismissalTracker.isDismissed(editor, changedReference, changedName));
+    });
   }
 
+  @Test
   public void testHintWhichHidesWithoutTheEscapeKeyStaysAvailable() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA")
     String text = "class X { ArrayList c; }";
     myFixture.configureByText("X.java", text);
     Editor editor = myFixture.getEditor();
     PsiJavaCodeReferenceElement reference = findReference(text.indexOf(UNRESOLVED_NAME));
 
-    showImportHint(editor, reference);
-    HintManagerImpl.getInstanceImpl().hideAllHints();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      showImportHint(editor, reference);
+      HintManagerImpl.getInstanceImpl().hideAllHints();
 
-    assertFalse(ImportHintDismissalTracker.isDismissed(editor, reference, UNRESOLVED_NAME));
+      assertFalse(ImportHintDismissalTracker.isDismissed(editor, reference, UNRESOLVED_NAME));
+    });
   }
 
-  public void testClassImportHintIsNotShownAfterTheEscapeKey() throws ExecutionException, InterruptedException {
+  @Test
+  public void testClassImportHintIsNotShownAfterTheEscapeKey() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA")
     String text = "class X { ArrayList c; }";
     myFixture.configureByText("X.java", text);
@@ -109,36 +146,44 @@ public class ImportHintDismissalTest extends LightJavaCodeInsightFixtureTestCase
     PsiJavaCodeReferenceElement reference = findReference(text.indexOf(UNRESOLVED_NAME));
 
     ImportClassFix fix = createImportFix(reference);
-    assertEquals(ImportClassFixBase.Result.POPUP_SHOWN, fix.doFix(editor, true, true, false));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      assertEquals(ImportClassFixBase.Result.POPUP_SHOWN, fix.doFix(editor, true, true, false));
 
-    showImportHint(editor, reference);
-    EditorTestUtil.executeAction(editor, IdeActions.ACTION_EDITOR_ESCAPE, true);
+      showImportHint(editor, reference);
+      EditorTestUtil.executeAction(editor, IdeActions.ACTION_EDITOR_ESCAPE, true);
 
-    assertEquals(ImportClassFixBase.Result.POPUP_NOT_SHOWN, fix.doFix(editor, true, true, false));
+      assertEquals(ImportClassFixBase.Result.POPUP_NOT_SHOWN, fix.doFix(editor, true, true, false));
+    });
   }
 
+  @Test
   public void testTheClientReportOfTheEscapeKeyKeepsTheImportHintHidden() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA")
     String text = "class X { ArrayList c; }";
     myFixture.configureByText("X.java", text);
     Editor editor = myFixture.getEditor();
     PsiJavaCodeReferenceElement reference = findReference(text.indexOf(UNRESOLVED_NAME));
 
-    showImportHint(editor, reference);
-    HintManagerImpl.getInstanceImpl().dismissCurrentQuestionHint(editor);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      showImportHint(editor, reference);
+      HintManagerImpl.getInstanceImpl().dismissCurrentQuestionHint(editor);
 
-    assertNull(myHintFixture.getCurrentHintText());
-    assertTrue(ImportHintDismissalTracker.isDismissed(editor, reference, UNRESOLVED_NAME));
+      assertNull(myHintFixture.getCurrentHintText());
+      assertTrue(ImportHintDismissalTracker.isDismissed(editor, reference, UNRESOLVED_NAME));
+    });
   }
 
+  @Test
   public void testTheEscapeKeyKeepsTheHintHiddenAfterTheTooltipLeftTheScreen() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA")
     String text = "class X { ArrayList c; }";
     myFixture.configureByText("X.java", text);
     Editor editor = myFixture.getEditor();
     PsiJavaCodeReferenceElement reference = findReference(text.indexOf(UNRESOLVED_NAME));
     Ref<LightweightHint> shownHint = new Ref<>();
-    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable())
+    ApplicationManager.getApplication().getMessageBus().connect(myFixture.getTestRootDisposable())
       .subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
         @Override
         public void hintShown(@NotNull Editor hintEditor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
@@ -146,18 +191,21 @@ public class ImportHintDismissalTest extends LightJavaCodeInsightFixtureTestCase
         }
       });
 
-    showImportHint(editor, reference);
-    // the tooltip can leave the screen before the key press, and the hint then stays on the hint stack.
-    // The Escape action hides such a hint from its own enablement check
-    shownHint.get().putUserData(LightweightHint.SHOWN_AT_DEBUG, Boolean.FALSE);
-    EditorTestUtil.executeAction(editor, IdeActions.ACTION_EDITOR_ESCAPE, false);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      showImportHint(editor, reference);
+      // the tooltip can leave the screen before the key press, and the hint then stays on the hint stack.
+      // The Escape action hides such a hint from its own enablement check
+      shownHint.get().putUserData(LightweightHint.SHOWN_AT_DEBUG, Boolean.FALSE);
+      EditorTestUtil.executeAction(editor, IdeActions.ACTION_EDITOR_ESCAPE, false);
 
-    assertTrue(ImportHintDismissalTracker.isDismissed(editor, reference, UNRESOLVED_NAME));
+      assertTrue(ImportHintDismissalTracker.isDismissed(editor, reference, UNRESOLVED_NAME));
+    });
   }
 
   private @NotNull PsiJavaCodeReferenceElement findReference(int offset) {
-    PsiReference reference = myFixture.getFile().findReferenceAt(offset);
-    assertInstanceOf(reference, PsiJavaCodeReferenceElement.class);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiReference reference = ReadAction.computeBlocking(() -> myFixture.getFile().findReferenceAt(offset));
+    assertInstanceOf(PsiJavaCodeReferenceElement.class, reference);
     return (PsiJavaCodeReferenceElement)reference;
   }
 
@@ -165,10 +213,7 @@ public class ImportHintDismissalTest extends LightJavaCodeInsightFixtureTestCase
     ImportHintDismissalTracker.showHint(editor, "import?", 0, 1, () -> true, reference, reference.getReferenceName());
   }
 
-  private static @NotNull ImportClassFix createImportFix(@NotNull PsiJavaCodeReferenceElement reference)
-    throws ExecutionException, InterruptedException {
-    return ApplicationManager.getApplication()
-      .executeOnPooledThread(() -> ReadAction.computeBlocking(() -> new ImportClassFix(reference)))
-      .get();
+  private static @NotNull ImportClassFix createImportFix(@NotNull PsiJavaCodeReferenceElement reference) {
+    return ReadAction.computeBlocking(() -> new ImportClassFix(reference));
   }
 }

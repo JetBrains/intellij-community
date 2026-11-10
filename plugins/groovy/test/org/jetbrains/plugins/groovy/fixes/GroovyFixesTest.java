@@ -2,15 +2,28 @@
 package org.jetbrains.plugins.groovy.fixes;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyConstantIfStatementInspection;
 import org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.junit.jupiter.api.Test;
 
-public class GroovyFixesTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+
+@TestApplication
+public class GroovyFixesTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testRemoveUnnecessaryModifier() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("gr.groovy", """
       var <caret>var integers = [1, 2, 3]
       """);
@@ -20,7 +33,9 @@ public class GroovyFixesTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testSuppressForIfStatement() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new GroovyConstantIfStatementInspection());
     myFixture.configureByText("a.groovy", """
       <caret>if (true) {
@@ -34,7 +49,9 @@ public class GroovyFixesTest extends LightJavaCodeInsightFixtureTestCase {
                             }""");
   }
 
+  @Test
   public void testShallowChangeToGroovyStylePropertyAccess() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new JavaStylePropertiesInvocationInspection());
     myFixture.configureByText("a.groovy", """
       class GroovyClasss {
@@ -47,10 +64,12 @@ public class GroovyFixesTest extends LightJavaCodeInsightFixtureTestCase {
       }
       
       """);
-    UsefulTestCase.assertEmpty(myFixture.filterAvailableIntentions("Change to Groovy-style property reference"));
+    assertThat(myFixture.filterAvailableIntentions("Change to Groovy-style property reference")).isNullOrEmpty();
   }
 
+  @Test
   public void testSecondAnnotationSuppression() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new GrUnresolvedAccessInspection());
     myFixture.configureByText("a.groovy", """
       class FooBarGoo {
@@ -71,7 +90,9 @@ public class GroovyFixesTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testSecondAnnotationSuppression2() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new GrUnresolvedAccessInspection());
     myFixture.configureByText("a.groovy", """
       class FooBarGoo {
@@ -92,7 +113,9 @@ public class GroovyFixesTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testFixPackageName() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Foo.groovy", """
       #!/usr/bin/groovy
       

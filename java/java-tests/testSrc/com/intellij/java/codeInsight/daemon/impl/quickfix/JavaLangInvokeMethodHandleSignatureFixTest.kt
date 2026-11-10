@@ -10,60 +10,95 @@ import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatur
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection.DEFAULT_SIGNATURE
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection.POSSIBLE_SIGNATURES
 import com.intellij.java.JavaBundle.message
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveSignature
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_9
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
+import kotlin.time.Duration.Companion.minutes
 
-class JavaLangInvokeMethodHandleSignatureFixTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class JavaLangInvokeMethodHandleSignatureFixTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_9)
+  }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/methodHandle"
+  }
+
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(JavaLangInvokeHandleSignatureInspection())
   }
 
-  override fun getTestDataPath(): String = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/methodHandle"
+  @Test
+  fun testConstructor(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestConstructor(INT) }
+  @Test
+  fun testConstructor2(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestConstructor(INT) }
+  @Test
+  fun testConstructor3(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestConstructor() }
+  @Test
+  fun testConstructor4(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestConstructor() }
 
-  fun testConstructor(): Unit = doTestConstructor(INT)
-  fun testConstructor2(): Unit = doTestConstructor(INT)
-  fun testConstructor3(): Unit = doTestConstructor()
-  fun testConstructor4(): Unit = doTestConstructor()
+  @Test
+  fun testGenericMethod(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestMethod(OBJECT, OBJECT) }
+  @Test
+  fun testGenericMethod2(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestMethod(OBJECT, OBJECT, OBJECT_ARRAY) }
+  @Test
+  fun testGenericMethod3(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestMethod(OBJECT, OBJECT, STRING) }
+  @Test
+  fun testGenericMethod4(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestMethod(OBJECT, OBJECT) }
 
-  fun testGenericMethod(): Unit = doTestMethod(OBJECT, OBJECT)
-  fun testGenericMethod2(): Unit = doTestMethod(OBJECT, OBJECT, OBJECT_ARRAY)
-  fun testGenericMethod3(): Unit = doTestMethod(OBJECT, OBJECT, STRING)
-  fun testGenericMethod4(): Unit = doTestMethod(OBJECT, OBJECT)
+  @Test
+  fun testStaticMethod(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestMethod(VOID) }
+  @Test
+  fun testStaticMethod2(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestMethod(STRING, STRING) }
+  @Test
+  fun testStaticMethod3(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestMethod(STRING, STRING, STRING_ARRAY) }
+  @Test
+  fun testStaticMethod4(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestReplace("findStatic") }
 
-  fun testStaticMethod(): Unit = doTestMethod(VOID)
-  fun testStaticMethod2(): Unit = doTestMethod(STRING, STRING)
-  fun testStaticMethod3(): Unit = doTestMethod(STRING, STRING, STRING_ARRAY)
-  fun testStaticMethod4(): Unit = doTestReplace("findStatic")
+  @Test
+  fun testVirtualMethod(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestMethod(VOID) }
+  @Test
+  fun testVirtualMethod2(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestMethod(STRING, STRING) }
+  @Test
+  fun testVirtualMethod3(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestMethod(STRING, STRING, STRING_ARRAY) }
+  @Test
+  fun testVirtualMethod4(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestReplace("findVirtual") }
 
-  fun testVirtualMethod(): Unit = doTestMethod(VOID)
-  fun testVirtualMethod2(): Unit = doTestMethod(STRING, STRING)
-  fun testVirtualMethod3(): Unit = doTestMethod(STRING, STRING, STRING_ARRAY)
-  fun testVirtualMethod4(): Unit = doTestReplace("findVirtual")
+  private suspend fun doTestMethod(vararg withSignature: String) = doTest(USE_METHOD, *withSignature)
+  private suspend fun doTestConstructor(vararg withSignature: String) = doTest(USE_CONSTRUCTOR, VOID, *withSignature)
+  private suspend fun doTestReplace(replacement: String) = doTest(CommonQuickFixBundle.message("fix.replace.with.x", replacement))
 
-
-  private fun doTestMethod(vararg withSignature: String) = doTest(USE_METHOD, *withSignature)
-  private fun doTestConstructor(vararg withSignature: String) = doTest(USE_CONSTRUCTOR, VOID, *withSignature)
-  private fun doTestReplace(replacement: String) = doTest(CommonQuickFixBundle.message("fix.replace.with.x", replacement))
-
-  fun doTest(actionPrefix: String, vararg withSignature: String) {
-    val testName = getTestName(false)
+  suspend fun doTest(actionPrefix: String, vararg withSignature: String) {
+    val testName = myFixture.getTestName(false)
     val file = myFixture.configureByFile("before$testName.java")
 
     val action = findAction(actionPrefix)
     val signature = ReflectiveSignature.create(listOf(*withSignature)) ?: ReflectiveSignature.NO_ARGUMENT_CONSTRUCTOR_SIGNATURE
 
-    val lookupElements = launchAction(action, signature)
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-    checkLookupElements(file, lookupElements)
-    myFixture.checkResultByFile("after$testName.java")
+    withContext(Dispatchers.EDT) {
+      val lookupElements = launchAction(action, signature)
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+      checkLookupElements(file, lookupElements)
+      myFixture.checkResultByFile("after$testName.java")
+    }
   }
 
   private fun findAction(actionPrefix: String): IntentionAction {
@@ -71,7 +106,7 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightJavaCodeInsightFixtureTe
     if (actions.size == 1) {
       return actions[0]
     }
-    assertEquals("Too many actions", 0, actions.size)
+    assertEquals(0, actions.size, "Too many actions")
 
     val familyName = when (actionPrefix) {
       USE_CONSTRUCTOR -> message("inspection.handle.signature.use.constructor.fix.family.name")
@@ -81,7 +116,7 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightJavaCodeInsightFixtureTe
       }
     }
     val familyActions = myFixture.filterAvailableIntentions(familyName)
-    assertEquals("Family action", 1, familyActions.size)
+    assertEquals(1, familyActions.size, "Family action")
 
     return familyActions[0]
   }
@@ -99,7 +134,7 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightJavaCodeInsightFixtureTe
   }
 
   private fun checkLookupElements(file: PsiFile?, lookupElements: List<LookupElement>?) {
-    val expected = (file?.children ?: arrayOf())
+    val expected = (myFixture.file?.children ?: arrayOf())
       .filterIsInstance<PsiComment>()
       .map { it.text.removePrefix("//").trim() }
 
@@ -110,7 +145,7 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightJavaCodeInsightFixtureTe
         val typeText = presentation.typeText
         if (typeText != null) "${typeText} ${presentation.itemText}" else presentation.itemText
       }
-    assertEquals("Popup menu", expected, actual)
+    assertEquals(expected, actual, "Popup menu")
   }
 
   private val VOID = "void"

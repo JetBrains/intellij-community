@@ -4,37 +4,86 @@ package com.intellij.java.codeInsight.intention;
 import com.intellij.JavaTestUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInsight/surroundAutoCloseable/")
-public class SurroundAutoCloseableActionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/surroundAutoCloseable/";
+@TestApplication
+public class SurroundAutoCloseableActionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/surroundAutoCloseable/");
   }
 
-  public void testSimple() { doTest(); }
-  public void testSimplePast() { doTest(); }
-  public void testUsage() { doTest(); }
-  public void testMixedUsages() { doTest(); }
-  public void testLastDeclaration() { doTest(); }
-  public void testSplitVar() { doTest(); }
-  public void testExpression() { doTest(); }
-  public void testExpressionIncomplete() { doTest(); }
-  public void testUnrelatedVariable() { doTest(); }
-  public void testCommentsInVarDeclaration() {
-    JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_LOCALS = true;
+  @Test
+  public void testSimple() {
     doTest();
   }
-  public void testImplicitlyTypedDeclaration() { doTest(); }
+  @Test
+  public void testSimplePast() {
+    doTest();
+  }
+  @Test
+  public void testUsage() {
+    doTest();
+  }
+  @Test
+  public void testMixedUsages() {
+    doTest();
+  }
+  @Test
+  public void testLastDeclaration() {
+    doTest();
+  }
+  @Test
+  public void testSplitVar() {
+    doTest();
+  }
+  @Test
+  public void testExpression() {
+    doTest();
+  }
+  @Test
+  public void testExpressionIncomplete() {
+    doTest();
+  }
+  @Test
+  public void testUnrelatedVariable() {
+    doTest();
+  }
+  @Test
+  public void testCommentsInVarDeclaration() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    JavaCodeStyleSettings.getInstance(myFixture.getProject()).GENERATE_FINAL_LOCALS = true;
+    doTest();
+  }
+  @Test
+  public void testImplicitlyTypedDeclaration() {
+    doTest();
+  }
 
-  public void testNullTypeMovedVariable() { doTest(); }
+  @Test
+  public void testNullTypeMovedVariable() {
+    doTest();
+  }
 
   private void doTest() {
-    String name = getTestName(false);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    String name = myFixture.getTestName(false);
     String intention = JavaBundle.message("intention.surround.resource.with.ARM.block");
-    CodeInsightTestUtil.doIntentionTest(myFixture, intention, name + ".java", name + "_after.java");
+    EdtTestUtil.runInEdtAndWait(() -> CodeInsightTestUtil.doIntentionTest(myFixture, intention, name + ".java", name + "_after.java"));
   }
 }

@@ -1,11 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.idea.devkit.dom.index.PluginXIncludeIndex.XIncludeEntry;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -15,9 +20,19 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public class PluginXIncludeIndexTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestApplication
+public class PluginXIncludeIndexTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testKeysAndEntries() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFile file = myFixture.addFileToProject("META-INF/plugin.xml", """
       <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
         <xi:include href="/META-INF/whole.xml"/>
@@ -30,37 +45,45 @@ public class PluginXIncludeIndexTest extends LightJavaCodeInsightFixtureTestCase
         <xi:include href=" "/>
       </idea-plugin>
       """).getVirtualFile();
-    Map<String, List<XIncludeEntry>> data = FileBasedIndex.getInstance().getFileData(PluginXIncludeIndex.NAME, file, getProject());
+    Map<String, List<XIncludeEntry>> data = ReadAction.computeBlocking(() -> FileBasedIndex.getInstance().getFileData(PluginXIncludeIndex.NAME, file, myFixture.getProject()));
 
-    assertSameElements(data.keySet(), "whole.xml", "children.xml", "section.xml", "nested.xml");
-    assertSameElements(data.get("whole.xml"), new XIncludeEntry("/META-INF/whole.xml", true), new XIncludeEntry("sub/whole.xml", true));
-    assertSameElements(data.get("children.xml"), new XIncludeEntry("children.xml", true));
-    assertSameElements(data.get("section.xml"), new XIncludeEntry("section.xml", false));
-    assertSameElements(data.get("nested.xml"), new XIncludeEntry("nested.xml", false));
+    assertThat(data.keySet()).containsOnly("whole.xml", "children.xml", "section.xml", "nested.xml");
+    assertThat(data.get("whole.xml")).containsOnly(new XIncludeEntry("/META-INF/whole.xml", true), new XIncludeEntry("sub/whole.xml", true));
+    assertThat(data.get("children.xml")).containsOnly(new XIncludeEntry("children.xml", true));
+    assertThat(data.get("section.xml")).containsOnly(new XIncludeEntry("section.xml", false));
+    assertThat(data.get("nested.xml")).containsOnly(new XIncludeEntry("nested.xml", false));
   }
 
+  @Test
   public void testUnboundXiPrefix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFile file = myFixture.addFileToProject("META-INF/plugin.xml", """
       <idea-plugin>
         <xi:include href="target.xml"/>
       </idea-plugin>
       """).getVirtualFile();
-    Map<String, List<XIncludeEntry>> data = FileBasedIndex.getInstance().getFileData(PluginXIncludeIndex.NAME, file, getProject());
+    Map<String, List<XIncludeEntry>> data = ReadAction.computeBlocking(() -> FileBasedIndex.getInstance().getFileData(PluginXIncludeIndex.NAME, file, myFixture.getProject()));
 
-    assertSameElements(data.keySet(), "target.xml");
+    assertThat(data.keySet()).containsOnly("target.xml");
   }
 
+  @Test
   public void testNonPluginXmlIsNotIndexed() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFile file = myFixture.addFileToProject("META-INF/other.xml", """
       <root xmlns:xi="http://www.w3.org/2001/XInclude">
         <xi:include href="target.xml"/>
       </root>
       """).getVirtualFile();
 
-    assertEmpty(FileBasedIndex.getInstance().getFileData(PluginXIncludeIndex.NAME, file, getProject()).keySet());
+    ReadAction.runBlocking(() -> {
+      assertThat(FileBasedIndex.getInstance().getFileData(PluginXIncludeIndex.NAME, file, myFixture.getProject()).keySet()).isNullOrEmpty();
+    });
   }
 
+  @Test
   public void testGetIncludes() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFile includer = myFixture.addFileToProject("META-INF/plugin.xml", """
       <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
         <xi:include href="/META-INF/target.xml"/>
@@ -72,11 +95,12 @@ public class PluginXIncludeIndexTest extends LightJavaCodeInsightFixtureTestCase
       </idea-plugin>
       """);
 
-    Map<VirtualFile, List<XIncludeEntry>> includes = PluginXIncludeIndex.getIncludes("target.xml", GlobalSearchScope.projectScope(getProject()));
+    Map<VirtualFile, List<XIncludeEntry>> includes = ReadAction.computeBlocking(() -> PluginXIncludeIndex.getIncludes("target.xml", GlobalSearchScope.projectScope(myFixture.getProject())));
 
     assertEquals(Map.of(includer, List.of(new XIncludeEntry("/META-INF/target.xml", true))), includes);
   }
 
+  @Test
   public void testValueExternalizerRoundTrip() throws IOException {
     var externalizer = new PluginXIncludeIndex().getValueExternalizer();
     var value = List.of(new XIncludeEntry("/META-INF/a.xml", true), new XIncludeEntry("b.xml", false));

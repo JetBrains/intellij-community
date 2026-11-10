@@ -13,37 +13,54 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * @author Maxim.Medvedev
  */
-public class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "/refactoring/changeSignatureForJava/";
+@TestApplication
+public class ChangeSignatureForJavaTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "/refactoring/changeSignatureForJava/");
   }
 
+  @Test
   public void testSimple() throws Exception {
     doTest(null, new ArrayList<>(), new ArrayList<>(), false);
   }
 
+  @Test
   public void testParameterReorder() {
     doTest(null, List.of(ParameterInfoImpl.create(1), ParameterInfoImpl.create(0)), false);
   }
 
+  @Test
   public void testGenericTypes() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     doTest("T", method -> {
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(myFixture.getProject()).getElementFactory();
         return List.of(
           ParameterInfoImpl.createNew().withName("x").withType(factory.createTypeFromText("T", method.getParameterList()))
             .withDefaultValue("null"),
@@ -52,17 +69,21 @@ public class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestC
       });
   }
 
+  @Test
   public void testGenericTypesInOldParameters() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     doTest(null, method -> {
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(myFixture.getProject()).getElementFactory();
         return List.of(
           ParameterInfoImpl.create(0).withName("t").withType(factory.createTypeFromText("T", method)).withDefaultValue(null));
       });
   }
 
+  @Test
   public void testTypeParametersInMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     doTest(null, method -> {
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(myFixture.getProject()).getElementFactory();
         return List.of(
           ParameterInfoImpl.createNew().withName("t").withType(factory.createTypeFromText("T", method.getParameterList()))
             .withDefaultValue("null"),
@@ -73,36 +94,43 @@ public class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestC
       });
   }
 
+  @Test
   public void testDefaultConstructor() throws Exception {
     doTest(null, new ArrayList<>(
       Arrays.asList(ParameterInfoImpl.createNew().withName("j").withType(PsiTypes.intType()).withDefaultValue("27"))), false);
   }
 
+  @Test
   public void testGenerateDelegate() {
     doTest(null, new ArrayList<>(
       Arrays.asList(ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("27"))), true);
   }
 
+  @Test
   public void testGenerateDelegateDefaultConstructor() {
     doTest(null, new ArrayList<>(
       Arrays.asList(ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("27"))), true);
   }
 
+  @Test
   public void testVarargs1() {
     doTest(null, new ArrayList<>(
       Arrays.asList(ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType()).withDefaultValue("true"),
                     ParameterInfoImpl.create(0))), false);
   }
 
+  @Test
   public void testCovariantReturnType() {
     doTest(CommonClassNames.JAVA_LANG_RUNNABLE, new ArrayList<>(), false);
   }
 
+  @Test
   public void testReorderExceptions() {
     doTest(null, new ArrayList<>(),
            List.of(new JavaThrownExceptionInfo(1), new JavaThrownExceptionInfo(0)), false);
   }
 
+  @Test
   public void testAddException() {
     doTest(null, new SimpleParameterGen(List.of()), method -> {
         return List.of(new JavaThrownExceptionInfo(-1, JavaPsiFacade.getInstance(
@@ -110,18 +138,22 @@ public class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestC
       }, false);
   }
 
+  @Test
   public void testAddConstructorParameter() {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.configureByFile(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
     myFixture.launchAction(myFixture.findSingleIntention("Add 'int' as 2nd parameter"));
-    myFixture.checkResultByFile(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy", true);
+    myFixture.checkResultByFile(myFixture.getTestName(false) + ".groovy", myFixture.getTestName(false) + "_after.groovy", true);
   }
 
+  @Test
   public void testAddMethodParameter() {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.configureByFile(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
     myFixture.launchAction(myFixture.findSingleIntention("Add 'int' as 2nd parameter"));
-    myFixture.checkResultByFile(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy", true);
+    myFixture.checkResultByFile(myFixture.getTestName(false) + ".groovy", myFixture.getTestName(false) + "_after.groovy", true);
   }
 
   private void doTest(@Nullable String newReturnType, List<ParameterInfoImpl> parameterInfos, final boolean generateDelegate) {
@@ -145,17 +177,20 @@ public class ChangeSignatureForJavaTest extends LightJavaCodeInsightFixtureTestC
                       GenParams genParams,
                       GenExceptions genExceptions,
                       final boolean generateDelegate) {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.configureByFile(getTestName(false) + ".java");
-    final PsiElement targetElement = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
-    TestCase.assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
-    PsiMethod method = (PsiMethod)targetElement;
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-    PsiType newType = newReturnType != null ? factory.createTypeFromText(newReturnType, method) : method.getReturnType();
-    new ChangeSignatureProcessor(getProject(), method, generateDelegate, null, method.getName(),
-                                 newType, genParams.genParams(method).toArray(new ParameterInfoImpl[0]),
-                                 genExceptions.genExceptions(method).toArray(new ThrownExceptionInfo[0])).run();
-    myFixture.checkResultByFile(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy", true);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      final PsiElement targetElement = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+      assertTrue(targetElement instanceof PsiMethod, "<caret> is not on method name");
+      PsiMethod method = (PsiMethod)targetElement;
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(myFixture.getProject()).getElementFactory();
+      PsiType newType = newReturnType != null ? factory.createTypeFromText(newReturnType, method) : method.getReturnType();
+      new ChangeSignatureProcessor(myFixture.getProject(), method, generateDelegate, null, method.getName(),
+                                   newType, genParams.genParams(method).toArray(new ParameterInfoImpl[0]),
+                                   genExceptions.genExceptions(method).toArray(new ThrownExceptionInfo[0])).run();
+      myFixture.checkResultByFile(myFixture.getTestName(false) + ".groovy", myFixture.getTestName(false) + "_after.groovy", true);
+    });
   }
 
   @FunctionalInterface

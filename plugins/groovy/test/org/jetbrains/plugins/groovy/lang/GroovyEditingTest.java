@@ -6,18 +6,36 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.Contract;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class GroovyEditingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "editing/");
+  }
+
   private void doTest(@Nullable String before, final String chars, @Nullable String after) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     if (before != null) {
-      myFixture.configureByText(getTestName(false) + ".groovy", before);
+      myFixture.configureByText(myFixture.getTestName(false) + ".groovy", before);
     }
     else {
-      myFixture.configureByFile(getTestName(false) + ".groovy");
+      myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
     }
 
     myFixture.type(chars);
@@ -26,7 +44,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
       myFixture.checkResult(after);
     }
     else {
-      myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+      myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.groovy");
     }
   }
 
@@ -34,34 +52,47 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
     doTest(null, chars, null);
   }
 
+  @Test
   public void testCodeBlockRightBrace() { doTest("{"); }
 
+  @Test
   public void testInterpolationInsideStringRightBrace() { doTest("{"); }
 
+  @Test
   public void testStructuralInterpolationInsideStringRightBrace() { doTest("{"); }
 
+  @Test
   public void testEnterInMultilineString() { doTest("\n"); }
 
+  @Test
   public void testEnterInStringInRefExpr() { doTest("\n"); }
 
+  @Test
   public void testEnterInGStringInRefExpr() { doTest("\n"); }
 
+  @Test
   public void testPairAngleBracketAfterClassName() { doTest("<"); }
 
+  @Test
   public void testPairAngleBracketAfterClassNameOvertype() { doTest(">"); }
 
+  @Test
   public void testPairAngleBracketAfterClassNameBackspace() { doTest("\b"); }
 
+  @Test
   public void testNoPairLess() { doTest("<"); }
 
+  @Test
   public void testTripleString() {
     doTest("", "'''", "'''<caret>'''");
   }
 
+  @Test
   public void testTripleGString() {
     doTest("", "\"\"\"", "\"\"\"<caret>\"\"\"");
   }
 
+  @Test
   public void test_pair_brace_after_doc_with_mismatch() {
     doTest("""
              class Foo {
@@ -80,6 +111,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testRPareth() {
     doTest("""
                @Anno(
@@ -92,6 +124,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testQuote() {
     doTest("""
                print <caret>
@@ -100,6 +133,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testDoubleQuote() {
     doTest("""
                print <caret>
@@ -108,6 +142,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testTripleQuote() {
     doTest("""
                print ''<caret>
@@ -116,6 +151,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testDontInsertTripleQuote1() {
     doTest("""
                print '''<caret>'''
@@ -124,6 +160,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testDontInsertTripleQuote2() {
     doTest("""
                print ''' ''<caret>'
@@ -132,6 +169,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testDontInsertTripleQuote3() {
     doTest("""
                print ""\" ""<caret>
@@ -140,6 +178,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testDontInsertTripleQuote4() {
     doTest("""
                print ""\" ${} ""<caret>
@@ -148,6 +187,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testSkipQuoteAtLiteralEnd1() {
     doTest("""
                print ""\" <caret>""\"
@@ -156,6 +196,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testSkipQuoteAtLiteralEnd2() {
     doTest("""
                print ""\" "<caret>""
@@ -164,6 +205,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testSkipQuoteAtLiteralEnd3() {
     doTest("""
                print ""\" ""<caret>"
@@ -172,6 +214,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testSkipQuoteAtLiteralEnd4() {
     doTest("""
                print ''' <caret>'''
@@ -180,6 +223,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testSkipQuoteAtLiteralEnd5() {
     doTest("""
                print ''' '<caret>''
@@ -188,6 +232,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testSkipQuoteAtLiteralEnd6() {
     doTest("""
                print ''' ''<caret>'
@@ -196,6 +241,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testGroovyDoc() {
     doTest("""
                /**<caret>
@@ -208,6 +254,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testGroovyDoc2() {
     doTest("""
                /**<caret>
@@ -220,6 +267,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
                """);
   }
 
+  @Test
   public void testParenBeforeString() {
     doTest("foo <caret>''", "(", "foo (<caret>''");
     doTest("foo <caret>''''''", "(", "foo (<caret>''''''");
@@ -228,6 +276,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
     doTest("foo <caret>\"$a\"", "(", "foo (<caret>\"$a\"");
   }
 
+  @Test
   public void testBackspace() {
     doTest("'<caret>'", "\b", "<caret>");
     doTest("''<caret>", "\b", "'<caret>");
@@ -237,6 +286,7 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
     doTest("\"\"\"<caret>\"\"\"", "\b", "\"\"<caret>");
   }
 
+  @Test
   public void test_backslash_before_closing_quote() {
     doTest("'''<caret>'''", "\\", "'''\\<selection>\\</selection>'''");
     doTest("'''    <caret>'''", "\\", "'''    \\<selection>\\</selection>'''");
@@ -245,27 +295,25 @@ public class GroovyEditingTest extends LightJavaCodeInsightFixtureTestCase {
     doTest("'    <caret>'", "\\", "'    \\<selection>\\</selection>'");
   }
 
+  @Test
   public void testKeepMultilineStringTrailingSpaces() {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     String stripSpaces = editorSettings.getStripTrailingSpaces();
     try {
       editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-      Document doc = getEditor().getDocument();
-      EditorTestUtil.performTypingAction(getEditor(), ' ');
-      PsiDocumentManager.getInstance(getProject()).commitDocument(doc);
-      FileDocumentManager.getInstance().saveDocument(doc);
+      EdtTestUtil.runInEdtAndWait(() -> {
+        Document doc = myFixture.getEditor().getDocument();
+        EditorTestUtil.performTypingAction(myFixture.getEditor(), ' ');
+        PsiDocumentManager.getInstance(myFixture.getProject()).commitDocument(doc);
+        FileDocumentManager.getInstance().saveDocument(doc);
+      });
     }
     finally {
       editorSettings.setStripTrailingSpaces(stripSpaces);
     }
 
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
-  }
-
-  @Contract(pure = true)
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "editing/";
+    myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.groovy");
   }
 }

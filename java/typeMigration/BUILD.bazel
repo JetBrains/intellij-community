@@ -122,6 +122,8 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi",
         "//aether-dependency-resolver/plugin",
         "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
     ],
 )
 ### auto-generated section `build intellij.java.typeMigration.tests` end

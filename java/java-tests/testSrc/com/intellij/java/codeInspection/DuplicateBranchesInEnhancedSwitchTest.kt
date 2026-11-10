@@ -5,50 +5,91 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.DuplicateBranchesInSwitchInspection
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_19
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class DuplicateBranchesInEnhancedSwitchTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/duplicateBranchesInEnhancedSwitch"
-
-  fun testSimpleExpression() = doTest()
-  fun testSimpleStatement() = doTest()
-  fun testThrowInExpression() = doTest()
-  fun testThrowInStatement() = doTest()
-  fun testReturnInStatement() = doTest()
-  fun testExpressionParentheses() = doTest()
-  fun testStatementParentheses() = doTest()
-  fun testCaseLabelsExpression() = doTest()
-  fun testCaseLabelsExpressionDefaultFirst() = doTest()
-  fun testCaseLabelsExpressionDefaultLast() = doTest()
-  fun testCaseLabelsExpressionDifferentComments() = doTest()
-  fun testCaseLabelsExpressionSameComments() = doTest()
-  fun testEmptyBodiesCanBeMerge() = doTest()
-  fun testEmptyBodiesCannotBeMerge() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
-  fun testGuardedPatternMergeWithNull() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
-  fun testNullMergeWithGuardedPattern() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
-  fun testRecordPattern1() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
-  fun testRecordPattern2() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
-  fun testRecordPattern3() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
-  fun testTwoPatterns() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
-  fun testWhenClause1() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
-  fun testWhenClause2() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
-  fun testExpressionsWithComments() = doTest()
-  fun testNullDuplicatesPattern() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
-  fun testPatternDuplicatesNull() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
-  fun testNullDuplicatesDefault() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
-  fun testMixedCases() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21_PREVIEW) { doTest() }
-  fun testDominatedUnnamedVariables() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21_PREVIEW) { doTest() }
-  fun testDefaultWithDominated() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_25) { doTest() }
-  fun testNextDominated() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_25) { doTest() }
-
-  fun testSkipUnnamedForPreviousVersions() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
-  private fun doTest() {
-    myFixture.enableInspections(DuplicateBranchesInSwitchInspection())
-    myFixture.testHighlighting("${getTestName(false)}.java")
+@TestApplication
+class DuplicateBranchesInEnhancedSwitchTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_19)
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return JAVA_19
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = JavaTestUtil.getJavaTestDataPath() + "/inspection/duplicateBranchesInEnhancedSwitch"
+  }
+
+  @Test
+  fun testSimpleExpression(): Unit = doTest()
+  @Test
+  fun testSimpleStatement(): Unit = doTest()
+  @Test
+  fun testThrowInExpression(): Unit = doTest()
+  @Test
+  fun testThrowInStatement(): Unit = doTest()
+  @Test
+  fun testReturnInStatement(): Unit = doTest()
+  @Test
+  fun testExpressionParentheses(): Unit = doTest()
+  @Test
+  fun testStatementParentheses(): Unit = doTest()
+  @Test
+  fun testCaseLabelsExpression(): Unit = doTest()
+  @Test
+  fun testCaseLabelsExpressionDefaultFirst(): Unit = doTest()
+  @Test
+  fun testCaseLabelsExpressionDefaultLast(): Unit = doTest()
+  @Test
+  fun testCaseLabelsExpressionDifferentComments(): Unit = doTest()
+  @Test
+  fun testCaseLabelsExpressionSameComments(): Unit = doTest()
+  @Test
+  fun testEmptyBodiesCanBeMerge(): Unit = doTest()
+  @Test
+  fun testEmptyBodiesCannotBeMerge(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
+  @Test
+  fun testGuardedPatternMergeWithNull(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
+  @Test
+  fun testNullMergeWithGuardedPattern(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
+  @Test
+  fun testRecordPattern1(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
+  @Test
+  fun testRecordPattern2(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
+  @Test
+  fun testRecordPattern3(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
+  @Test
+  fun testTwoPatterns(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
+  @Test
+  fun testWhenClause1(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
+  @Test
+  fun testWhenClause2(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
+  @Test
+  fun testExpressionsWithComments(): Unit = doTest()
+  @Test
+  fun testNullDuplicatesPattern(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
+  @Test
+  fun testPatternDuplicatesNull(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
+  @Test
+  fun testNullDuplicatesDefault(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
+  @Test
+  fun testMixedCases(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21_PREVIEW) { doTest() }
+  @Test
+  fun testDominatedUnnamedVariables(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21_PREVIEW) { doTest() }
+  @Test
+  fun testDefaultWithDominated(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_25) { doTest() }
+  @Test
+  fun testNextDominated(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_25) { doTest() }
+
+  @Test
+  fun testSkipUnnamedForPreviousVersions(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
+  private fun doTest() {
+    myFixture.enableInspections(DuplicateBranchesInSwitchInspection())
+    myFixture.testHighlighting("${myFixture.getTestName(false)}.java")
   }
 }

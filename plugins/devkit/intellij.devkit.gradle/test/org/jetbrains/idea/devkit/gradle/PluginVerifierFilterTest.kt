@@ -3,13 +3,31 @@ package org.jetbrains.idea.devkit.gradle
 
 import com.intellij.execution.filters.Filter
 import com.intellij.ide.browsers.OpenUrlHyperlinkInfo
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.markup.EffectType
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.JBColor
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class PluginVerifierFilterTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class PluginVerifierFilterTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  fun testCodeLocationLinks() {
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
+  fun testCodeLocationLinks(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.addClass("""
       package x.y;
       
@@ -55,6 +73,7 @@ class PluginVerifierFilterTest : LightJavaCodeInsightFixtureTestCase() {
       "PsiClass:Z")
   }
 
+  @Test
   fun testFileOrDirectoryLink() {
     assertFileOrDirectoryLink("Verification reports directory: /a/b/dir",
                               32, 40)
@@ -69,11 +88,12 @@ class PluginVerifierFilterTest : LightJavaCodeInsightFixtureTestCase() {
                               90, 99)
   }
 
+  @Test
   fun testHighlighting() {
     val text = "Plugin a.b:0.1 against IC-221.6008.13: Compatible. 1 usage of deprecated API"
     val result = getResult(text)
 
-    val resultItem = assertOneElement(result.resultItems)
+    val resultItem = assertThat(result.resultItems).singleElement().actual()
     assertHighlightingRange(resultItem, text, 0, 38)
 
     val highlightAttributes = resultItem.highlightAttributes!!
@@ -81,6 +101,7 @@ class PluginVerifierFilterTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(EffectType.BOLD_DOTTED_LINE, highlightAttributes.effectType)
   }
 
+  @Test
   fun testColoredWebLinks() {
     assertColoredWebLink("  Plugin can probably be enabled or disabled without IDE restart",
                          2, 64,
@@ -93,10 +114,10 @@ class PluginVerifierFilterTest : LightJavaCodeInsightFixtureTestCase() {
 
   private fun assertColoredWebLink(text: String, expectedStartOffset: Int, expectedEndOffset: Int, expectedForegroundColor: JBColor) {
     val result = getResult(text)
-    val resultItem = assertOneElement(result.resultItems)
+    val resultItem = assertThat(result.resultItems).singleElement().actual()
     assertHighlightingRange(resultItem, text, expectedStartOffset, expectedEndOffset)
 
-    assertInstanceOf(result.firstHyperlinkInfo, OpenUrlHyperlinkInfo::class.java)
+    assertInstanceOf(OpenUrlHyperlinkInfo::class.java, result.firstHyperlinkInfo)
 
     val highlightAttributes = resultItem.highlightAttributes!!
     assertEquals(expectedForegroundColor, highlightAttributes.foregroundColor)
@@ -104,24 +125,25 @@ class PluginVerifierFilterTest : LightJavaCodeInsightFixtureTestCase() {
 
   private fun assertFileOrDirectoryLink(text: String, expectedStartOffset: Int, expectedEndOffset: Int) {
     val result = getResult(text)
-    val resultItem = assertOneElement(result.resultItems)
+    val resultItem = assertThat(result.resultItems).singleElement().actual()
     assertHighlightingRange(resultItem, text, expectedStartOffset, expectedEndOffset)
   }
 
-  private fun assertCodeLocationLink(text: String, expectedStartOffset: Int, expectedEndOffset: Int, navigationTargetToString: String?) {
+  private suspend fun assertCodeLocationLink(text: String, expectedStartOffset: Int, expectedEndOffset: Int, navigationTargetToString: String?) {
     val result = getResult(text)
-    val resultItem = assertOneElement(result.resultItems)
+    val resultItem = assertThat(result.resultItems).singleElement().actual()
     assertHighlightingRange(resultItem, text, expectedStartOffset, expectedEndOffset)
 
     val hyperlinkInfo = result.firstHyperlinkInfo
-    val codeLocationHyperlinkInfo = assertInstanceOf(hyperlinkInfo,
-                                                     PluginVerifierFilter.CodeLocationHyperlinkInfo::class.java)
-    val navigationTarget = codeLocationHyperlinkInfo.getNavigationTarget()
-    if (navigationTargetToString != null) {
-      assertEquals(navigationTargetToString, navigationTarget.toString())
-    }
-    else {
-      assertNull(navigationTarget)
+    val codeLocationHyperlinkInfo = assertInstanceOf(PluginVerifierFilter.CodeLocationHyperlinkInfo::class.java, hyperlinkInfo)
+    readAction {
+      val navigationTarget = codeLocationHyperlinkInfo.getNavigationTarget()
+      if (navigationTargetToString != null) {
+        assertEquals(navigationTargetToString, navigationTarget.toString())
+      }
+      else {
+        assertNull(navigationTarget)
+      }
     }
   }
 
@@ -129,12 +151,12 @@ class PluginVerifierFilterTest : LightJavaCodeInsightFixtureTestCase() {
     val highlightedText = text.substring(resultItem.highlightStartOffset, resultItem.highlightEndOffset)
     val expectedHighlightedText = text.substring(expectedStartOffset, expectedEndOffset)
     val assertionMessage = "Highlighted '$highlightedText', but expected '$expectedHighlightedText'"
-    assertEquals(assertionMessage, expectedStartOffset, resultItem.highlightStartOffset)
-    assertEquals(assertionMessage, expectedEndOffset, resultItem.highlightEndOffset)
+    assertEquals(expectedStartOffset, resultItem.highlightStartOffset, assertionMessage)
+    assertEquals(expectedEndOffset, resultItem.highlightEndOffset, assertionMessage)
   }
 
   private fun getResult(text: String): Filter.Result {
-    val filter: Filter = PluginVerifierFilter(project)
+    val filter: Filter = PluginVerifierFilter(myFixture.project)
     val result = filter.applyFilter(text, text.length)
     assertNotNull(result)
     return result!!

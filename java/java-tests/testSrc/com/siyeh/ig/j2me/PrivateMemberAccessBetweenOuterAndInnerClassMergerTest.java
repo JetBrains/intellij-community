@@ -18,28 +18,33 @@ package com.siyeh.ig.j2me;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-public class PrivateMemberAccessBetweenOuterAndInnerClassMergerTest extends LightJavaCodeInsightFixtureTestCase {
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class PrivateMemberAccessBetweenOuterAndInnerClassMergerTest {
   private InspectionProfileImpl myProfile;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     myProfile = new InspectionProfileImpl("Test", InspectionToolRegistrar.getInstance(), new InspectionProfileImpl("base"));
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     InspectionProfileImpl.INIT_INSPECTIONS = false;
-    super.tearDown();
   }
 
+  @Test
   public void testMerged() throws IOException, JDOMException {
     final Element in = JDOMUtil.load(
       """

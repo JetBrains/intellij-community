@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.LibrarySourcesMismatchSuppressor;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
@@ -23,11 +24,15 @@ import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.util.io.Compressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JComponent;
 import java.io.File;
@@ -37,7 +42,19 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class LibrarySourceNotificationProviderTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class LibrarySourceNotificationProviderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   private static final String SOURCE = """
     package lib;
@@ -53,25 +70,31 @@ public class LibrarySourceNotificationProviderTest extends LightJavaCodeInsightF
     }
     """;
 
+  @Test
   public void testAugmentedLibrarySourceDoesNotShowMismatchNotification() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiAugmentProvider.EP_NAME.getPoint().registerExtension(new GeneratedMembersAugmentProvider(), myFixture.getTestRootDisposable());
 
     PsiJavaFile librarySource = prepareLibrarySource(SOURCE, SOURCE_TO_COMPILE);
     assertNull(collectNotificationData(librarySource));
   }
 
+  @Test
   public void testMatchingLibrarySourceDoesNotShowNotification() throws IOException {
     PsiJavaFile sourceFile = prepareLibrarySource(SOURCE_TO_COMPILE, SOURCE_TO_COMPILE);
-    assertInstanceOf(sourceFile.getClasses()[0].getOriginalElement(), PsiCompiledElement.class);
+    ReadAction.runBlocking(() -> assertInstanceOf(PsiCompiledElement.class, sourceFile.getClasses()[0].getOriginalElement()));
     assertNull(collectNotificationData(sourceFile));
   }
 
+  @Test
   public void testMismatchingLibrarySourceShowsNotification() throws IOException {
     PsiJavaFile sourceFile = prepareLibrarySource(SOURCE, SOURCE_TO_COMPILE);
     assertNotNull(collectNotificationData(sourceFile));
   }
 
+  @Test
   public void testSuppressedLibrarySourceDoesNotShowMismatchNotification() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     LibrarySourcesMismatchSuppressor.EP_NAME.getPoint().registerExtension(sourceClass -> {
       assertEquals("lib.Foo", sourceClass.getQualifiedName());
       assertFalse(sourceClass instanceof PsiCompiledElement);
@@ -82,11 +105,13 @@ public class LibrarySourceNotificationProviderTest extends LightJavaCodeInsightF
     assertNull(collectNotificationData(sourceFile));
   }
 
+  @Test
   public void testAndroidSdkLibrarySourceDoesNotShowMismatchNotification() throws IOException {
     PsiJavaFile sourceFile = prepareLibrarySource(SOURCE, SOURCE_TO_COMPILE, "platforms/android-30/android.jar");
     assertNull(collectNotificationData(sourceFile));
   }
 
+  @Test
   public void testMismatchingLibrarySourceInOtherJarShowsNotification() throws IOException {
     PsiJavaFile sourceFile = prepareLibrarySource(SOURCE, SOURCE_TO_COMPILE, "platforms/android-30/other.jar");
     assertNotNull(collectNotificationData(sourceFile));
@@ -107,7 +132,8 @@ public class LibrarySourceNotificationProviderTest extends LightJavaCodeInsightF
    * @throws IOException if an error occurs during file creation or writing.
    */
   private PsiJavaFile prepareLibrarySource(String source, String sourceToCompile, @Nullable String jarRelativePath) throws IOException {
-    String libraryName = getTestName(true);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    String libraryName = myFixture.getTestName(true);
     File libraryRoot = FileUtil.createTempDirectory(libraryName, null);
     Disposer.register(myFixture.getTestRootDisposable(), () -> FileUtil.delete(libraryRoot));
 
@@ -129,12 +155,12 @@ public class LibrarySourceNotificationProviderTest extends LightJavaCodeInsightF
                               : packIntoJar(classesPath, new File(libraryRoot, jarRelativePath));
     VirtualFile sourcesDir = refreshAndFind(sourcesPath);
     VirtualFile librarySourceFile = refreshAndFind(librarySourcePath);
-    PsiTestUtil.addProjectLibrary(getModule(), libraryName, List.of(classesRoot), List.of(sourcesDir));
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    PsiTestUtil.addProjectLibrary(myFixture.getModule(), libraryName, List.of(classesRoot), List.of(sourcesDir));
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
 
-    PsiJavaFile librarySource = (PsiJavaFile)PsiManager.getInstance(getProject()).findFile(librarySourceFile);
+    PsiJavaFile librarySource = ReadAction.computeBlocking(() -> (PsiJavaFile)PsiManager.getInstance(myFixture.getProject()).findFile(librarySourceFile));
     assertNotNull(librarySource);
-    assertTrue(FileIndexFacade.getInstance(getProject()).isInLibrarySource(librarySource.getVirtualFile()));
+    assertTrue(FileIndexFacade.getInstance(myFixture.getProject()).isInLibrarySource(librarySource.getVirtualFile()));
     return librarySource;
   }
 
@@ -145,18 +171,18 @@ public class LibrarySourceNotificationProviderTest extends LightJavaCodeInsightF
     }
 
     VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(refreshAndFind(jarPath));
-    assertNotNull(jarPath.getPath(), jarRoot);
+    assertNotNull(jarRoot, jarPath.getPath());
     return jarRoot;
   }
 
   private static VirtualFile refreshAndFind(File path) {
     VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(path.getAbsolutePath());
-    assertNotNull(path.getPath(), file);
+    assertNotNull(file, path.getPath());
     return file;
   }
 
   private static Function<? super FileEditor, ? extends JComponent> collectNotificationData(PsiJavaFile librarySource) {
-    return createLibrarySourceNotificationProvider().collectNotificationData(librarySource.getProject(), librarySource.getVirtualFile());
+    return ReadAction.computeBlocking(() -> createLibrarySourceNotificationProvider().collectNotificationData(librarySource.getProject(), librarySource.getVirtualFile()));
   }
 
   private static final class GeneratedMembersAugmentProvider extends PsiAugmentProvider {

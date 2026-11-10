@@ -5,15 +5,30 @@ package com.intellij.java.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class RenameFieldMultiTest extends LightJavaCodeInsightFixtureTestCase {
-   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/renameField/multi/";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class RenameFieldMultiTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/refactoring/renameField/multi/");
   }
 
+  @Test
   public void testNonCodeUsages() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass aClass = myFixture.addClass("""
                                            package p;
                                            public class A {
@@ -23,9 +38,12 @@ public class RenameFieldMultiTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void doTest(PsiClass aClass, String ext) {
-    String suffix = getTestName(false);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    String suffix = myFixture.getTestName(false);
     myFixture.configureByFile("before" + suffix + "." + ext);
-    new RenameProcessor(getProject(), aClass.findFieldByName("myField", false), "myField1", true, true).run();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      new RenameProcessor(myFixture.getProject(), aClass.findFieldByName("myField", false), "myField1", true, true).run();
+    });
     myFixture.checkResultByFile("after" + suffix + "." + ext);
   }
 }

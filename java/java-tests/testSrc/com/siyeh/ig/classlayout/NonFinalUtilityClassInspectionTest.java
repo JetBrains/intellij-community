@@ -4,39 +4,43 @@ package com.siyeh.ig.classlayout;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.psi.PsiClass;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
-public class NonFinalUtilityClassInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class NonFinalUtilityClassInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   private final DedicatedClassNameImplicitSubclassProvider myImplicitSubclassProvider =
     new DedicatedClassNameImplicitSubclassProvider("ConcreteNoUtilityClass");
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/classlayout/non_final_utility_class";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ImplicitSubclassProvider.EP_NAME.getPoint().registerExtension(myImplicitSubclassProvider, getTestRootDisposable());
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/classlayout/non_final_utility_class");
+    ImplicitSubclassProvider.EP_NAME.getPoint().registerExtension(myImplicitSubclassProvider, myFixture.getTestRootDisposable());
   }
 
   private void doTest() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new NonFinalUtilityClassInspection());
-    myFixture.testHighlighting(getTestName(false) + ".java");
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
   }
 
+  @Test
   public void testNonFinalUtilityClass() {
     doTest();
   }

@@ -21,9 +21,13 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.light.LightFieldBuilder;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.VisibilityUtil;
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection;
@@ -31,13 +35,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.TemplatesManager;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.List;
 
-public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
+@TestApplication
+public class GenerateGetterSetterTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testDoNotStripIsOfNonBooleanFields() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("class YesNoRAMField {}");
     myFixture.configureByText("a.java", """
       class Foo {
@@ -58,7 +71,9 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             """);
   }
 
+  @Test
   public void testStripIsOfBooleanFields() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       class Foo {
           static final String CONST = "const";
@@ -86,7 +101,9 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             """);
   }
 
+  @Test
   public void testStripIsOfBooleanFieldsSetter() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       class Foo {
           boolean isStateForceMailField;
@@ -106,7 +123,9 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             """);
   }
 
+  @Test
   public void testBuilderSetterTemplate() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       class X<T extends String> {
          T field;
@@ -133,8 +152,10 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
     }
   }
 
+  @Test
   public void testStripFieldPrefix() {
-    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     settings.FIELD_NAME_PREFIX = "my";
     myFixture.configureByText("a.java", """
        class Foo {
@@ -155,7 +176,9 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             \s""");
   }
 
+  @Test
   public void testQualifiedThis() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(UnqualifiedFieldAccessInspection.class);
     myFixture.configureByText("a.java", """
       class Foo {
@@ -176,7 +199,9 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             """);
   }
 
+  @Test
   public void testNullableStuff() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package org.jetbrains.annotations;
                          public @interface NotNull {}""");
@@ -209,7 +234,9 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             """);
   }
 
+  @Test
   public void testNullableStuffTypeUse() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package org.jetbrains.annotations;
                          import java.lang.annotation.ElementType;
@@ -245,7 +272,9 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             """);
   }
 
+  @Test
   public void testNullableStuffWithDifferentTypeUse() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package org.jetbrains.annotations;
                          import java.lang.annotation.ElementType;
@@ -327,7 +356,9 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             """);
   }
 
+  @Test
   public void testNullableStuffWithDifferentTypeUseAllAnnotations() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package org.jetbrains.annotations;
                          import java.lang.annotation.ElementType;
@@ -409,7 +440,9 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             """);
   }
 
+  @Test
   public void testPrimitivesWithTypeUseAnnotations() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       import java.lang.annotation.ElementType;
       import java.lang.annotation.Target;
@@ -444,19 +477,21 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             """);
   }
 
+  @Test
   public void testLombokGeneratedFieldsWithoutContainingFile() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), GenerateAccessorProviderRegistrar.EP_NAME,
                                            new NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>() {
                                              @NotNull
                                              @Override
                                              public Collection<EncapsulatableClassMember> fun(PsiClass dom) {
                                                LightFieldBuilder builder =
-                                                 new LightFieldBuilder(PsiManager.getInstance(getProject()), "lombokGenerated",
+                                                 new LightFieldBuilder(PsiManager.getInstance(myFixture.getProject()), "lombokGenerated",
                                                                        PsiTypes.intType());
                                                builder.setContainingClass(dom);
                                                return List.of(new PsiFieldMember(builder));
                                              }
-                                           }, getTestRootDisposable());
+                                           }, myFixture.getTestRootDisposable());
     myFixture.configureByText("a.java", """
       class A {  \s
           private String myName;
@@ -464,32 +499,34 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
           <caret>
       }
       """);
-    new GenerateGetterHandler() {
-      @Override
-      protected ClassMember[] chooseMembers(ClassMember[] members,
-                                            boolean allowEmptySelection,
-                                            boolean copyJavadocCheckbox,
-                                            Project project,
-                                            @Nullable Editor editor) {
-        final MemberChooser<ClassMember> chooser = super.createMembersChooser(members, allowEmptySelection, copyJavadocCheckbox, project);
-        Disposer.register(getTestRootDisposable(), () -> chooser.close(DialogWrapper.OK_EXIT_CODE));
-        return members;
-      }
-    }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-    myFixture.checkResult("""
-                            class A {  \s
-                                private String myName;
-                            
-                                public String getMyName() {
-                                    return myName;
-                                }
-                            
-                                public int getLombokGenerated() {
-                                    return lombokGenerated;
-                                }
-                            }
-                            """);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      new GenerateGetterHandler() {
+        @Override
+        protected ClassMember[] chooseMembers(ClassMember[] members,
+                                              boolean allowEmptySelection,
+                                              boolean copyJavadocCheckbox,
+                                              Project project,
+                                              @Nullable Editor editor) {
+          final MemberChooser<ClassMember> chooser = super.createMembersChooser(members, allowEmptySelection, copyJavadocCheckbox, project);
+          Disposer.register(myFixture.getTestRootDisposable(), () -> chooser.close(DialogWrapper.OK_EXIT_CODE));
+          return members;
+        }
+      }.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      myFixture.checkResult("""
+                              class A {  \s
+                                  private String myName;
+                              
+                                  public String getMyName() {
+                                      return myName;
+                                  }
+                              
+                                  public int getLombokGenerated() {
+                                      return lombokGenerated;
+                                  }
+                              }
+                              """);
+    });
   }
 
   private void generateGetter() {
@@ -497,25 +534,30 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
   }
 
   private void generateGetter(boolean allAnnotations) {
-    new GenerateGetterHandler() {
-      @Override
-      protected ClassMember[] chooseMembers(ClassMember[] members,
-                                            boolean allowEmptySelection,
-                                            boolean copyJavadocCheckbox,
-                                            Project project,
-                                            @Nullable Editor editor) {
-        return members;
-      }
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      new GenerateGetterHandler() {
+        @Override
+        protected ClassMember[] chooseMembers(ClassMember[] members,
+                                              boolean allowEmptySelection,
+                                              boolean copyJavadocCheckbox,
+                                              Project project,
+                                              @Nullable Editor editor) {
+          return members;
+        }
 
-      @Override
-      protected @NotNull GetterSetterGenerationOptions getOptions() {
-        return allAnnotations ? new GetterSetterGenerationOptions(true) : super.getOptions();
-      }
-    }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        @Override
+        protected @NotNull GetterSetterGenerationOptions getOptions() {
+          return allAnnotations ? new GetterSetterGenerationOptions(true) : super.getOptions();
+        }
+      }.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    });
   }
 
+  @Test
   public void testStaticOrThisSetterWithSameNameParameter() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(UnqualifiedFieldAccessInspection.class);
     myFixture.configureByText("a.java", """
       class Foo {
@@ -542,7 +584,9 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             """);
   }
 
+  @Test
   public void testInvokeBetweenCommentAndMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(UnqualifiedFieldAccessInspection.class);
     myFixture.configureByText("a.java", """
       class Foo {
@@ -564,15 +608,18 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             }""");
   }
 
+  @Test
   public void testRecordAccessor() {
     doRecordAccessorTest(VisibilityUtil.ESCALATE_VISIBILITY);
     doRecordAccessorTest(PsiModifier.PRIVATE);
   }
 
+  @Test
   public void testIncorrectParameterMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     TemplatesManager setterTemplatesManager = SetterTemplatesManager.getInstance();
     TemplateResource template = setterTemplatesManager.getDefaultTemplate();
-    Disposer.register(getTestRootDisposable(), () -> {
+    Disposer.register(myFixture.getTestRootDisposable(), () -> {
       setterTemplatesManager.setDefaultTemplate(template);
     });
 
@@ -632,40 +679,43 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                                                      """, false);
     setterTemplatesManager.addTemplate(custom);
     setterTemplatesManager.setDefaultTemplate(custom);
-    new GenerateSetterHandler() {
-      @Override
-      protected ClassMember[] chooseMembers(ClassMember[] members,
-                                            boolean allowEmptySelection,
-                                            boolean copyJavadocCheckbox,
-                                            Project project,
-                                            @Nullable Editor editor) {
-        return members;
-      }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      new GenerateSetterHandler() {
+        @Override
+        protected ClassMember[] chooseMembers(ClassMember[] members,
+                                              boolean allowEmptySelection,
+                                              boolean copyJavadocCheckbox,
+                                              Project project,
+                                              @Nullable Editor editor) {
+          return members;
+        }
 
-      @Override
-      protected @NotNull GetterSetterGenerationOptions getOptions() {
-        return super.getOptions();
-      }
-    }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        @Override
+        protected @NotNull GetterSetterGenerationOptions getOptions() {
+          return super.getOptions();
+        }
+      }.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
 
-    myFixture.checkResult(
-                            """
-                              package foo;
-                            
-                              public class Sample<ID, T> {
-                                  private CustomClass<ID, T> fieldName;
-                            
-                                  public Sample fieldName(T fieldName) {
-                                      this.fieldName.setValue(fieldName);
-                                      return this;
-                                  }
-                              }
-                              """);
+      myFixture.checkResult(
+                              """
+                                package foo;
+                              
+                                public class Sample<ID, T> {
+                                    private CustomClass<ID, T> fieldName;
+                              
+                                    public Sample fieldName(T fieldName) {
+                                        this.fieldName.setValue(fieldName);
+                                        return this;
+                                    }
+                                }
+                                """);
+    });
   }
 
   private void doRecordAccessorTest(String visibility) {
-    JavaCodeStyleSettings.getInstance(getProject()).VISIBILITY = visibility;
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    JavaCodeStyleSettings.getInstance(myFixture.getProject()).VISIBILITY = visibility;
     myFixture.configureByText("a.java", """
       record Point(int x, int y) {
         <caret>
@@ -692,21 +742,24 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
   }
 
   private void generateSetter(boolean allAnnotations) {
-    new GenerateSetterHandler() {
-      @Override
-      protected ClassMember[] chooseMembers(ClassMember[] members,
-                                            boolean allowEmptySelection,
-                                            boolean copyJavadocCheckbox,
-                                            Project project,
-                                            @Nullable Editor editor) {
-        return members;
-      }
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      new GenerateSetterHandler() {
+        @Override
+        protected ClassMember[] chooseMembers(ClassMember[] members,
+                                              boolean allowEmptySelection,
+                                              boolean copyJavadocCheckbox,
+                                              Project project,
+                                              @Nullable Editor editor) {
+          return members;
+        }
 
-      @Override
-      protected @NotNull GetterSetterGenerationOptions getOptions() {
-        return allAnnotations ? new GetterSetterGenerationOptions(true) : super.getOptions();
-      }
-    }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        @Override
+        protected @NotNull GetterSetterGenerationOptions getOptions() {
+          return allAnnotations ? new GetterSetterGenerationOptions(true) : super.getOptions();
+        }
+      }.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    });
   }
 }

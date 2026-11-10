@@ -13,21 +13,32 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.regexp.inspection.DuplicateCharacterInClassInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
-public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11_ANNOTATED;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
+@TestApplication
+public class IntentionPreviewTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_11_ANNOTATED);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testIntentionPreview() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       class Test {
         public void test() {
@@ -44,7 +55,9 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
       }""");
   }
 
+  @Test
   public void testIntentionPreviewAfterFileChange() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       class Test {
           void f(Iterable<String> it) {
@@ -53,12 +66,14 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
         }""");
     IntentionAction action = myFixture.findSingleIntention("Iterate over Iterable<String>");
     myFixture.type("\b\b");
-    PsiDocumentManager.getInstance(getProject()).commitDocument(myFixture.getFile().getViewProvider().getDocument());
+    EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(myFixture.getProject()).commitDocument(myFixture.getFile().getViewProvider().getDocument()));
     // should not be available anymore
     assertPreviewText(action, null);
   }
 
+  @Test
   public void testStaticImportsIntentionPreview() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       class Computer {
           void f() {
@@ -76,9 +91,11 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
         }""");
   }
 
+  @Test
   public void testIntentionPreviewWithTemplate() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     // TEMPLATE_STARTED_TOPIC event should not fire for preview editor
-    getProject().getMessageBus().connect(getTestRootDisposable())
+    myFixture.getProject().getMessageBus().connect(myFixture.getTestRootDisposable())
       .subscribe(TemplateManager.TEMPLATE_STARTED_TOPIC, state -> fail());
     myFixture.configureByText("Test.java", """
       class Computer {
@@ -97,7 +114,9 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
         }""");
   }
 
+  @Test
   public void testIntentionPreviewIterate() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       class Test {
           void f(Iterable<String> it) {
@@ -117,7 +136,9 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
         }""");
   }
 
+  @Test
   public void testIntentionPreviewInjection() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.setCaresAboutInjection(false);
     myFixture.configureByText("Test.java", """
       import java.util.regex.Pattern;
@@ -135,7 +156,9 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
                    }""", myFixture.getIntentionPreviewText(action));
   }
 
+  @Test
   public void testBindFieldsFromParameters() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       public    class    Test {
           Test(int <caret>a, String b) {
@@ -157,7 +180,9 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
       """);
   }
 
+  @Test
   public void testAddRemoveException() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       import java.io.IOException;
 
@@ -207,7 +232,9 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
       }""");
   }
 
+  @Test
   public void testDefineDefaultValues() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java",
                               """
                                 public class Test {
@@ -231,22 +258,29 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void assertPreviewText(@NotNull IntentionAction action, @Language("JAVA") @Nullable String expectedText) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     assertEquals(expectedText, myFixture.getIntentionPreviewText(action));
   }
 
+  @Test
   public void testRenameFile() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", "public class <caret>Best {}");
     IntentionAction action = myFixture.findSingleIntention("Rename File");
     myFixture.checkIntentionPreviewHtml(action, "<p><icon src=\"file\"/>&nbsp;Test.java &rarr; <icon src=\"file\"/>&nbsp;Best.java</p>");
   }
 
+  @Test
   public void testNavigate() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", "public class Test {} class <caret>Test {}");
     IntentionAction action = myFixture.findSingleIntention("Navigate to duplicate class");
     myFixture.checkIntentionPreviewHtml(action, "<p>&rarr; <icon src=\"icon\"/>&nbsp;Test.java, line #1</p>");
   }
 
+  @Test
   public void testPreviewInjectionCaret() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.setCaresAboutInjection(false);
     myFixture.configureByText("Test.java",
                               """
@@ -259,7 +293,9 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals("<b></b>", myFixture.getIntentionPreviewText(action));
   }
 
+  @Test
   public void testModCommandFixPreviewWithCaretInInjection() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.setCaresAboutInjection(false);
     myFixture.enableInspections(new ReplaceLiteralInspection());
     myFixture.configureByText("Test.java",
@@ -277,12 +313,16 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
       }""");
   }
 
+  @Test
   public void testCaretOutsideOfProblem() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", "class Test { int foo() { return 1 } }<caret>");
     String expected = "class Test { int foo() { return 1; } }";
-    assertEquals(expected, myFixture.getIntentionPreviewText("Insert"));
-    myFixture.launchAction("Insert");
-    myFixture.checkResult(expected);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      assertEquals(expected, myFixture.getIntentionPreviewText("Insert"));
+      myFixture.launchAction("Insert");
+      myFixture.checkResult(expected);
+    });
   }
 
   private static final class ReplaceLiteralInspection extends LocalInspectionTool {

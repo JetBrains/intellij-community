@@ -8,6 +8,7 @@ import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -15,19 +16,35 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/overrideImplement";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class OverrideImplementTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/overrideImplement");
   }
 
   private void addRecordClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     //noinspection override
     myFixture.addClass("package java.lang;public abstract class Record {" +
                        "public abstract boolean equals(Object obj);" +
@@ -35,46 +52,93 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
                        "public abstract String toString();}");
   }
 
+  @Test
   public void testImplementRecordMethods() {
     addRecordClass();
     doTest(true);
   }
 
+  @Test
   public void testImplementInterfaceMethodsInRecord() {
     addRecordClass();
     doTest(true);
   }
 
+  @Test
   public void testOverrideRecordMethods() {
     addRecordClass();
     doTest(false);
   }
 
+  @Test
   public void testProtectedConstructorInFinalClass() {
     doTest(false);
   }
 
-  public void testOverrideForImplicitClass() { doTest(false); }
-  public void testOverrideForClassNestedInImplicitClass() { doTest(false); }
-  public void testImplementExtensionMethods() { doTest(true); }
-  public void testOverrideExtensionMethods() { doTest(false); }
-  public void testMultipleSuperMethodsThroughGenerics() { doTest(true); }
-  public void testDoNotImplementExtensionMethods() { doTest(true); }
-  public void testExtensionMethods1() { doTest(true); }
-  public void testExtensionMethods2() { doTest(true); }
-  public void testSkipUnknownAnnotations() { doTest(true); }
-  public void testMultipleInheritedThrows() { doTest(false); }
-  public void testOverrideInInterface() { doTest(false); }
-  public void testOverrideInEmptyEnum() { doTest(false); }
-  public void testMultipleInheritanceWithThrowables() { doTest(true); }
-
-  public void testBrokenMethodDeclaration() {
-    myFixture.addClass("interface A { m();}");
-    PsiClass psiClass = myFixture.addClass("class B implements A {<caret>}");
-    UsefulTestCase.assertEmpty(OverrideImplementExploreUtil.getMethodSignaturesToImplement(psiClass));
+  @Test
+  public void testOverrideForImplicitClass() {
+    doTest(false);
+  }
+  @Test
+  public void testOverrideForClassNestedInImplicitClass() {
+    doTest(false);
+  }
+  @Test
+  public void testImplementExtensionMethods() {
+    doTest(true);
+  }
+  @Test
+  public void testOverrideExtensionMethods() {
+    doTest(false);
+  }
+  @Test
+  public void testMultipleSuperMethodsThroughGenerics() {
+    doTest(true);
+  }
+  @Test
+  public void testDoNotImplementExtensionMethods() {
+    doTest(true);
+  }
+  @Test
+  public void testExtensionMethods1() {
+    doTest(true);
+  }
+  @Test
+  public void testExtensionMethods2() {
+    doTest(true);
+  }
+  @Test
+  public void testSkipUnknownAnnotations() {
+    doTest(true);
+  }
+  @Test
+  public void testMultipleInheritedThrows() {
+    doTest(false);
+  }
+  @Test
+  public void testOverrideInInterface() {
+    doTest(false);
+  }
+  @Test
+  public void testOverrideInEmptyEnum() {
+    doTest(false);
+  }
+  @Test
+  public void testMultipleInheritanceWithThrowables() {
+    doTest(true);
   }
 
+  @Test
+  public void testBrokenMethodDeclaration() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addClass("interface A { m();}");
+    PsiClass psiClass = myFixture.addClass("class B implements A {<caret>}");
+    ReadAction.runBlocking(() -> assertThat(OverrideImplementExploreUtil.getMethodSignaturesToImplement(psiClass)).isNullOrEmpty());
+  }
+
+  @Test
   public void testImplementInInterface() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass(
       """
         interface A {
@@ -90,7 +154,9 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
 
     Presentation presentation = new Presentation();
     presentation.setText(ActionsBundle.message("action.ImplementMethods.text"));
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> invokeAction(true), presentation.getText(), null);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> invokeAction(true), presentation.getText(), null);
+    });
 
     myFixture.checkResult(
       """
@@ -103,7 +169,9 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         """);
   }
 
+  @Test
   public void testImplementInAnnotation() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFile file = myFixture.addClass(
       """
         @interface A {
@@ -114,7 +182,9 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
 
     Presentation presentation = new Presentation();
     presentation.setText(ActionsBundle.message("action.ImplementMethods.text"));
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> invokeAction(true), presentation.getText(), null);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> invokeAction(true), presentation.getText(), null);
+    });
 
     myFixture.checkResult(
       """
@@ -123,8 +193,9 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         }""");
   }
 
-
+  @Test
   public void testImplementInterfaceWhenClassProvidesProtectedImplementation() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass(
       """
         interface A {
@@ -149,7 +220,9 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
 
     Presentation presentation = new Presentation();
     presentation.setText(ActionsBundle.message("action.ImplementMethods.text"));
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> invokeAction(true), presentation.getText(), null);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> invokeAction(true), presentation.getText(), null);
+    });
 
     myFixture.checkResult(
       """
@@ -163,7 +236,9 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
     );
   }
 
+  @Test
   public void testImplementSameNamedInterfaces() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass(
       """
         class Main1 {
@@ -191,7 +266,9 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
 
     Presentation presentation = new Presentation();
     presentation.setText(ActionsBundle.message("action.ImplementMethods.text"));
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> invokeAction(true), presentation.getText(), null);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> invokeAction(true), presentation.getText(), null);
+    });
 
     myFixture.checkResult(
       """
@@ -209,7 +286,9 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         """);
   }
 
+  @Test
   public void test_overriding_overloaded_method() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass(
       """
         package bar;
@@ -247,7 +326,9 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         """);
   }
 
+  @Test
   public void testOverrideLong() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass(
       """
         package bar;
@@ -279,12 +360,14 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         """);
   }
 
+  @Test
   public void testTypeAnnotationsInImplementedMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     OverrideImplementsAnnotationsHandler handler = new OverrideImplementsAnnotationsHandler() {
       @Override
       public String[] getAnnotations(@NotNull PsiFile file) { return new String[]{"TA"}; }
     };
-    OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, getTestRootDisposable());
+    OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, myFixture.getTestRootDisposable());
 
     myFixture.addClass(
       """
@@ -323,7 +406,9 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         }""".stripIndent());
   }
 
+  @Test
   public void testNoCustomOverrideImplementsHandler() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass(
       """
         package a;
@@ -362,7 +447,9 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         }""".stripIndent());
   }
 
+  @Test
   public void testCustomOverrideImplementsHandler() throws Exception {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass(
       """
         package a;
@@ -410,23 +497,29 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         }""".stripIndent());
   }
 
+  @Test
   public void test_invocation_before_orphan_type_parameters_does_not_lead_to_stub_AST_mismatches() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       public class Test implements Runnable{
           int i = ; <caret><X>
       }""");
 
     invokeAction(true);
-    PsiTestUtil.checkStubsMatchText(getFile());
-    assertTrue(getFile().getText().contains("run()"));
+    ReadAction.runBlocking(() -> {
+      PsiTestUtil.checkStubsMatchText(myFixture.getFile());
+      assertTrue(myFixture.getFile().getText().contains("run()"));
+    });
   }
 
+  @Test
   public void testTypeAnnotationsAfterKeyword() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     OverrideImplementsAnnotationsHandler handler = new OverrideImplementsAnnotationsHandler() {
       @Override
       public String[] getAnnotations(@NotNull PsiFile file) { return new String[]{"TA"}; }
     };
-    OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, getTestRootDisposable());
+    OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, myFixture.getTestRootDisposable());
 
     myFixture.addClass(
       """
@@ -467,8 +560,10 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         }""".stripIndent());
   }
 
+  @Test
   public void testTypeAnnotationsAfterKeywordWithGenerationBefore() {
-    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(getProject());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     boolean oldValue = instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE;
     instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = false;
 
@@ -477,7 +572,7 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         @Override
         public String[] getAnnotations(@NotNull PsiFile file) { return new String[]{"TA"}; }
       };
-      OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, getTestRootDisposable());
+      OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, myFixture.getTestRootDisposable());
 
       myFixture.addClass(
         """
@@ -522,12 +617,14 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
+  @Test
   public void testSeveralAnnotations() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     OverrideImplementsAnnotationsHandler handler = new OverrideImplementsAnnotationsHandler() {
       @Override
       public String[] getAnnotations(@NotNull PsiFile file) { return new String[]{"R1", "R2", "R3", "R4"}; }
     };
-    OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, getTestRootDisposable());
+    OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, myFixture.getTestRootDisposable());
 
     myFixture.configureByText("test.java", """
       import java.lang.annotation.*;
@@ -598,8 +695,10 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         }""".stripIndent());
   }
 
+  @Test
   public void testSeveralAnnotationsWithGenerationBefore() {
-    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(getProject());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     boolean oldValue = instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE;
     instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = false;
     try {
@@ -607,7 +706,7 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
         @Override
         public String[] getAnnotations(@NotNull PsiFile file) { return new String[]{"R1", "R2", "R3", "R4"}; }
       };
-      OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, getTestRootDisposable());
+      OverrideImplementsAnnotationsHandler.EP_NAME.getPoint().registerExtension(handler, myFixture.getTestRootDisposable());
 
       myFixture.configureByText("test.java", """
       import java.lang.annotation.*;
@@ -685,31 +784,38 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
+  @Test
   public void testDiamondInheritance() {
     doTest(true);
   }
 
+  @Test
   public void testDiamondInheritanceWithGenerics() {
     doTest(true);
   }
 
+  @Test
   public void testMarkdownComment() {
     doTest(true);
   }
 
   private void doTest(boolean toImplement) {
-    final String name = getTestName(false);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String name = myFixture.getTestName(false);
     myFixture.configureByFile("before" + name + ".java");
     invokeAction(toImplement);
     myFixture.checkResultByFile("after" + name + ".java");
   }
 
   private void invokeAction(boolean toImplement) {
-    Editor editor = myFixture.getEditor();
-    PsiFile file = myFixture.getFile();
-    PsiClass aClass = OverrideImplementUtil.getContextClass(getProject(), editor, file, true);
-    assertNotNull(aClass);
-    OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), editor, aClass, toImplement);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      Editor editor = myFixture.getEditor();
+      PsiFile file = myFixture.getFile();
+      PsiClass aClass = OverrideImplementUtil.getContextClass(myFixture.getProject(), editor, file, true);
+      assertNotNull(aClass);
+      OverrideImplementUtil.chooseAndOverrideOrImplementMethods(myFixture.getProject(), editor, aClass, toImplement);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    });
   }
 }

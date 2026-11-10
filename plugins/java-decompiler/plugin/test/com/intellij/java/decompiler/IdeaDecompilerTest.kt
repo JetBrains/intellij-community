@@ -14,7 +14,11 @@ import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
 import com.intellij.ide.structureView.impl.java.KindSorter
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
@@ -38,17 +42,41 @@ import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.BazelTestUtil
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.URLUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.java.decompiler.DecompilerPreset
 import org.jetbrains.java.decompiler.IDEA_DECOMPILER_BANNER
 import org.jetbrains.java.decompiler.IdeaDecompiler
 import org.jetbrains.java.decompiler.IdeaDecompilerSettings
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 import kotlin.io.path.absolutePathString
+import kotlin.time.Duration.Companion.minutes
 
-class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+class IdeaDecompilerTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+    private val LOG = logger<IdeaDecompilerTest>()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUp() {
     myFixture.testDataPath = if (BazelTestUtil.isUnderBazelTest) {
       val label = BazelLabel.fromString("@community//plugins/java-decompiler/plugin:testData")
       BazelTestUtil.getFileFromBazelRuntime(label).absolutePathString()
@@ -58,35 +86,30 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     }
   }
 
-  override fun tearDown() {
-    try {
-      FileEditorManagerEx.getInstanceEx(project).closeAllFiles()
-      EditorHistoryManager.getInstance(project).removeAllFiles()
+  @AfterEach
+  fun tearDown(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    withContext(Dispatchers.EDT) { FileEditorManagerEx.getInstanceEx(myFixture.project).closeAllFiles() }
+    EditorHistoryManager.getInstance(myFixture.project).removeAllFiles()
 
-      val defaultState = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.HIGH)
-      IdeaDecompilerSettings.getInstance().loadState(defaultState)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+    val defaultState = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.HIGH)
+    IdeaDecompilerSettings.getInstance().loadState(defaultState)
   }
 
+  @Test
   fun testSimple() {
     val file = getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang/String.class")
     val decompiled = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { IdeaDecompiler().getText(file).toString() }
-    assertTrue(decompiled, decompiled.startsWith("${IDEA_DECOMPILER_BANNER}package java.lang;\n"))
-    assertTrue(decompiled, decompiled.contains("public final class String"))
-    assertTrue(decompiled, decompiled.contains("@deprecated"))
-    assertTrue(decompiled, decompiled.contains("private static class CaseInsensitiveComparator"))
-    assertFalse(decompiled, decompiled.contains("/* compiled code */"))
-    assertFalse(decompiled, decompiled.contains("synthetic"))
-    assertFalse(decompiled, decompiled.contains("Limits for direct nodes are exceeded"))
-    assertFalse(decompiled, decompiled.contains("Limits for variable nodes are exceeded"))
+    assertTrue(decompiled.startsWith("${IDEA_DECOMPILER_BANNER}package java.lang;\n"), decompiled)
+    assertTrue(decompiled.contains("public final class String"), decompiled)
+    assertTrue(decompiled.contains("@deprecated"), decompiled)
+    assertTrue(decompiled.contains("private static class CaseInsensitiveComparator"), decompiled)
+    assertFalse(decompiled.contains("/* compiled code */"), decompiled)
+    assertFalse(decompiled.contains("synthetic"), decompiled)
+    assertFalse(decompiled.contains("Limits for direct nodes are exceeded"), decompiled)
+    assertFalse(decompiled.contains("Limits for variable nodes are exceeded"), decompiled)
   }
 
+  @Test
   fun testSimpleWithNodeLimit() {
     val advancedSetting = "decompiler.max.direct.nodes.count"
     val previousCount = AdvancedSettings.getInt(advancedSetting)
@@ -94,18 +117,19 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
       AdvancedSettings.setInt(advancedSetting, 5)
       val file = getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang/String.class")
       val decompiled = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { IdeaDecompiler().getText(file).toString() }
-      assertTrue(decompiled, decompiled.contains("Limits for direct nodes are exceeded"))
+      assertTrue(decompiled.contains("Limits for direct nodes are exceeded"), decompiled)
       //small methods are decompiled normally
-      assertTrue(decompiled, decompiled.contains("""
+      assertTrue(decompiled.contains("""
           public String(char[] var1) {
                   this.value = Arrays.copyOf(var1, var1.length);
-              }""".trimIndent()))
+              }""".trimIndent()), decompiled)
     }
     finally {
       AdvancedSettings.setInt(advancedSetting, previousCount)
     }
   }
 
+  @Test
   fun testSimpleWithVariableLimit() {
     val advancedSetting = "decompiler.max.variable.nodes.count"
     val previousCount = AdvancedSettings.getInt(advancedSetting)
@@ -113,22 +137,23 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
       AdvancedSettings.setInt(advancedSetting, 5)
       val file = getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang/String.class")
       val decompiled = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { IdeaDecompiler().getText(file).toString() }
-      assertTrue(decompiled, decompiled.contains("Limits for variable nodes are exceeded"))
+      assertTrue(decompiled.contains("Limits for variable nodes are exceeded"), decompiled)
       //small methods are decompiled normally
-      assertTrue(decompiled, decompiled.contains(
+      assertTrue(decompiled.contains(
         """
         public char[] toCharArray() {
                 char[] var1 = new char[this.value.length];
                 System.arraycopy(this.value, 0, var1, 0, this.value.length);
                 return var1;
-            }""".trimIndent()))
+            }""".trimIndent()), decompiled)
     }
     finally {
       AdvancedSettings.setInt(advancedSetting, previousCount)
     }
   }
 
-  fun testStubCompatibility() {
+  @Test
+  fun testStubCompatibility(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val classesPath = if (BazelTestUtil.isUnderBazelTest) {
       val label = BazelLabel.fromString("@community//plugins/java-decompiler/engine:testData")
       BazelTestUtil.getFileFromBazelRuntime(label).resolve("manual/classes").absolutePathString()
@@ -136,69 +161,91 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     else {
       "${PluginPathManager.getPluginHomePath("java-decompiler")}/engine/testData/manual/classes"
     }
-    val visitor = MyFileVisitor(psiManager)
-    Registry.get("decompiler.dump.original.lines").withValue(true) {
-      VfsUtilCore.visitChildrenRecursively(getTestFile("${JavaTestUtil.getJavaTestDataPath()}/psi/cls/mirror"), visitor)
-      VfsUtilCore.visitChildrenRecursively(getTestFile(classesPath), visitor)
-      VfsUtilCore.visitChildrenRecursively(getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang"), visitor)
+    val visitor = MyFileVisitor(PsiManager.getInstance(myFixture.project))
+    val roots = listOf(
+      getTestFile("${JavaTestUtil.getJavaTestDataPath()}/psi/cls/mirror"),
+      getTestFile(classesPath),
+      getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang"),
+    )
+    readActionBlocking {
+      Registry.get("decompiler.dump.original.lines").withValue(true) {
+        for (root in roots) {
+          VfsUtilCore.visitChildrenRecursively(root, visitor)
+        }
+      }
     }
   }
 
-  fun testSignatureWithMoreInterfacesThanClassFile() = doTestInterfaceSignatureMismatch("MoreInterfaces", "Runnable", "Serializable")
+  @Test
+  fun testSignatureWithMoreInterfacesThanClassFile(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestInterfaceSignatureMismatch("MoreInterfaces", "Runnable", "Serializable") }
 
-  fun testSignatureWithFewerInterfacesThanClassFile() = doTestInterfaceSignatureMismatch("FewerInterfaces", "Runnable")
+  @Test
+  fun testSignatureWithFewerInterfacesThanClassFile(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTestInterfaceSignatureMismatch("FewerInterfaces", "Runnable") }
 
-  private fun doTestInterfaceSignatureMismatch(name: String, vararg interfaces: String) {
-    val psiFile = psiManager.findFile(getTestFile("${JavaTestUtil.getJavaTestDataPath()}/psi/cls/mirror/pkg/$name.class")) as ClsFileImpl
-    val decompiled = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { psiFile.mirror.text }
-    assertTrue(decompiled, decompiled.contains("implements ${interfaces.joinToString(", ")} {"))
-    val psiClass = psiFile.classes.single()
-    assertEquals(interfaces.size, psiClass.implementsListTypes.size)
-    assertNotNull(psiClass.implementsList!!.referenceElements.last().textRange)
+  private suspend fun doTestInterfaceSignatureMismatch(name: String, vararg interfaces: String) {
+    val file = getTestFile("${JavaTestUtil.getJavaTestDataPath()}/psi/cls/mirror/pkg/$name.class")
+    readAction {
+      val psiFile = PsiManager.getInstance(myFixture.project).findFile(file) as ClsFileImpl
+      val decompiled = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { psiFile.mirror.text }
+      assertTrue(decompiled.contains("implements ${interfaces.joinToString(", ")} {"), decompiled)
+      val psiClass = psiFile.classes.single()
+      assertEquals(interfaces.size, psiClass.implementsListTypes.size)
+      assertNotNull(psiClass.implementsList!!.referenceElements.last().textRange)
+    }
   }
 
-  fun testNavigation_high() {
+  @Test
+  fun testNavigation_high(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.HIGH)
     IdeaDecompilerSettings.getInstance().loadState(state)
 
-    myFixture.openFileInEditor(getTestFile("Navigation.class"))
-    doTestNavigation(11, 14, 14, 10)  // to "m2()"
-    doTestNavigation(15, 21, 14, 17)  // to "int i"
-    doTestNavigation(16, 28, 15, 13)  // to "int r"
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(getTestFile("Navigation.class"))
+      doTestNavigation(11, 14, 14, 10)  // to "m2()"
+      doTestNavigation(15, 21, 14, 17)  // to "int i"
+      doTestNavigation(16, 28, 15, 13)  // to "int r"
+    }
   }
 
-  fun testNavigation_medium() {
+  @Test
+  fun testNavigation_medium(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.MEDIUM)
     IdeaDecompilerSettings.getInstance().loadState(state)
 
-    myFixture.openFileInEditor(getTestFile("Navigation.class"))
-    doTestNavigation(12, 14, 15, 10)  // to "m2()"
-    doTestNavigation(16, 21, 15, 17)  // to "int i"
-    doTestNavigation(17, 28, 16, 13)  // to "int r"
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(getTestFile("Navigation.class"))
+      doTestNavigation(12, 14, 15, 10)  // to "m2()"
+      doTestNavigation(16, 21, 15, 17)  // to "int i"
+      doTestNavigation(17, 28, 16, 13)  // to "int r"
+    }
   }
 
-  fun testNavigation_low() {
+  @Test
+  fun testNavigation_low(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.LOW)
     IdeaDecompilerSettings.getInstance().loadState(state)
 
-    myFixture.openFileInEditor(getTestFile("Navigation.class"))
-    doTestNavigation(12, 14, 15, 10)  // to "m2()"
-    doTestNavigation(16, 21, 15, 17)  // to "int i"
-    doTestNavigation(17, 28, 16, 13)  // to "int r"
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(getTestFile("Navigation.class"))
+      doTestNavigation(12, 14, 15, 10)  // to "m2()"
+      doTestNavigation(16, 21, 15, 17)  // to "int i"
+      doTestNavigation(17, 28, 16, 13)  // to "int r"
+    }
   }
 
+  @Test
   fun testUnicode_high() {
     val state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.HIGH)
     IdeaDecompilerSettings.getInstance().loadState(state)
 
     val file = getTestFile("UnicodeTest.class")
     val decompiled = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { IdeaDecompiler().getText(file).toString() }
-    assertTrue(decompiled, decompiled.contains("你好"))
-    assertFalse(decompiled, decompiled.contains("\\u4f60"))
+    assertTrue(decompiled.contains("你好"), decompiled)
+    assertFalse(decompiled.contains("\\u4f60"), decompiled)
   }
 
   private fun doTestNavigation(line: Int, column: Int, expectedLine: Int, expectedColumn: Int) {
-    val target = GotoDeclarationAction.findTargetElement(project, myFixture.editor, offset(line, column)) as Navigatable
+    val target = GotoDeclarationAction.findTargetElement(myFixture.project, myFixture.editor, offset(line, column)) as Navigatable
     target.navigate(true)
     val expected = offset(expectedLine, expectedColumn)
     assertEquals(expected, myFixture.caretOffset)
@@ -206,78 +253,81 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
 
   private fun offset(line: Int, column: Int): Int = myFixture.editor.document.getLineStartOffset(line - 1) + column - 1
 
-  fun testHighlighting() {
+  @Test
+  fun testHighlighting(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.setReadEditorMarkupModel(true)
-    IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(project, Runnable {
-      myFixture.openFileInEditor(getTestFile("Navigation.class"))
-      myFixture.editor.caretModel.moveToOffset(offset(11, 14))  // m2(): usage, declaration
-      assertEquals(2, highlightUnderCaret().size)
-      myFixture.editor.caretModel.moveToOffset(offset(14, 10))  // m2(): usage, declaration
-      assertEquals(2, highlightUnderCaret().size)
-      myFixture.editor.caretModel.moveToOffset(offset(14, 17))  // int i: usage, declaration
-      assertEquals(2, highlightUnderCaret().size)
-      myFixture.editor.caretModel.moveToOffset(offset(15, 21))  // int i: usage, declaration
-      assertEquals(2, highlightUnderCaret().size)
-      myFixture.editor.caretModel.moveToOffset(offset(15, 13))  // int r: usage, declaration
-      assertEquals(2, highlightUnderCaret().size)
-      myFixture.editor.caretModel.moveToOffset(offset(16, 28))  // int r: usage, declaration
-      assertEquals(2, highlightUnderCaret().size)
-      myFixture.editor.caretModel.moveToOffset(offset(19, 24))  // throws: declaration, m4() call
-      assertEquals(2, highlightUnderCaret().size)
-    })
+    withContext(Dispatchers.EDT) {
+      IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(myFixture.project, Runnable {
+        myFixture.openFileInEditor(getTestFile("Navigation.class"))
+        myFixture.editor.caretModel.moveToOffset(offset(11, 14))  // m2(): usage, declaration
+        assertEquals(2, highlightUnderCaret().size)
+        myFixture.editor.caretModel.moveToOffset(offset(14, 10))  // m2(): usage, declaration
+        assertEquals(2, highlightUnderCaret().size)
+        myFixture.editor.caretModel.moveToOffset(offset(14, 17))  // int i: usage, declaration
+        assertEquals(2, highlightUnderCaret().size)
+        myFixture.editor.caretModel.moveToOffset(offset(15, 21))  // int i: usage, declaration
+        assertEquals(2, highlightUnderCaret().size)
+        myFixture.editor.caretModel.moveToOffset(offset(15, 13))  // int r: usage, declaration
+        assertEquals(2, highlightUnderCaret().size)
+        myFixture.editor.caretModel.moveToOffset(offset(16, 28))  // int r: usage, declaration
+        assertEquals(2, highlightUnderCaret().size)
+        myFixture.editor.caretModel.moveToOffset(offset(19, 24))  // throws: declaration, m4() call
+        assertEquals(2, highlightUnderCaret().size)
+      })
+    }
   }
 
-  fun testNameHighlightingInsideCompiledFile() {
+  @Test
+  fun testNameHighlightingInsideCompiledFile(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.setReadEditorMarkupModel(true)
-    myFixture.openFileInEditor(getTestFile("NamesHighlightingInsideCompiledFile.class"))
-    IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(project, Runnable {
-      val infos = myFixture.doHighlighting()
-      assertTrue(infos.toString(), infos.all { info: HighlightInfo -> info.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY })
-      assertEquals(68, infos.size)
-    })
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(getTestFile("NamesHighlightingInsideCompiledFile.class"))
+      IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(myFixture.project, Runnable {
+        val infos = myFixture.doHighlighting()
+        assertTrue(infos.all { info: HighlightInfo -> info.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY }, infos.toString())
+        assertEquals(68, infos.size)
+      })
+    }
   }
 
-  fun testNameHighlightingInsideCompiledModuleFile() {
+  @Test
+  fun testNameHighlightingInsideCompiledModuleFile(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.setReadEditorMarkupModel(true)
-    myFixture.openFileInEditor(getTestFile("module-info.class"))
-    IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(project, Runnable {
-      val infos = myFixture.doHighlighting()
-        .filter { it.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY }
-      assertEquals(5, infos.size)
-      val texts = infos.map { it.text }.toSet()
-      assertContainsElements(
-        texts,
-        "module",
-        "requires",
-        "exports",
-      )
-    })
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(getTestFile("module-info.class"))
+      IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(myFixture.project, Runnable {
+        val infos = myFixture.doHighlighting()
+          .filter { it.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY }
+        assertEquals(5, infos.size)
+        val texts = infos.map { it.text }.toSet()
+        assertThat(texts).contains("module", "requires", "exports")
+      })
+    }
   }
 
-  fun testNameHighlightingInsideCompiledFileWithRecords() {
+  @Test
+  fun testNameHighlightingInsideCompiledFileWithRecords(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.setReadEditorMarkupModel(true)
     val testFile = getTestFile("RecordHighlighting.class")
     testFile.parent.children; testFile.parent.refresh(false, true)  // inner classes
-    myFixture.openFileInEditor(testFile)
-    IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(project, Runnable {
-      val infos = myFixture.doHighlighting()
-        .filter { it.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY }
-      val texts = infos.map { it.text }.toSet()
-      assertContainsElements(
-        texts,
-        "sealed",
-        "record",
-        "permits",
-      )
-    })
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(testFile)
+      IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(myFixture.project, Runnable {
+        val infos = myFixture.doHighlighting()
+          .filter { it.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY }
+        val texts = infos.map { it.text }.toSet()
+        assertThat(texts).contains("sealed", "record", "permits")
+      })
+    }
   }
 
   private fun highlightUnderCaret(): List<HighlightInfo> {
-    IdentifierHighlighterPassFactory.waitForIdentifierHighlighting(editor)
+    IdentifierHighlighterPassFactory.waitForIdentifierHighlighting(myFixture.editor)
     return myFixture.doHighlighting().filter { it.severity === HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY }
   }
 
-  fun testLineNumberMapping_high() = doTestLineMapping(DecompilerPreset.HIGH) { mapping ->
+  @Test
+  fun testLineNumberMapping_high(): Unit = doTestLineMapping(DecompilerPreset.HIGH) { mapping ->
     assertEquals(11, mapping.bytecodeToSource(3)) // Assert that line 8 in decompiled class file maps to line 3 in Java source file
     assertEquals(21, mapping.bytecodeToSource(13))
     assertEquals(13, mapping.sourceToBytecode(21)) // Assert that line 13 in Java source file maps to line 18 in Java class file
@@ -285,7 +335,8 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(-1, mapping.sourceToBytecode(1000))
   }
 
-  fun testLineNumberMapping_medium() = doTestLineMapping(DecompilerPreset.MEDIUM) { mapping ->
+  @Test
+  fun testLineNumberMapping_medium(): Unit = doTestLineMapping(DecompilerPreset.MEDIUM) { mapping ->
     assertEquals(12, mapping.bytecodeToSource(3)) // Assert that line 12 in decompiled class file maps to line 2 in Java source file
     assertEquals(3, mapping.sourceToBytecode(12))
     assertEquals(21, mapping.bytecodeToSource(12))
@@ -294,7 +345,8 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(-1, mapping.sourceToBytecode(1000))
   }
 
-  fun testLineNumberMapping_low() = doTestLineMapping(DecompilerPreset.LOW) { mapping ->
+  @Test
+  fun testLineNumberMapping_low(): Unit = doTestLineMapping(DecompilerPreset.LOW) { mapping ->
     assertEquals(12, mapping.bytecodeToSource(3)) // Assert that line 12 in decompiled class file maps to line 2 in Java source file
     assertEquals(3, mapping.sourceToBytecode(12))
     assertEquals(21, mapping.bytecodeToSource(12))
@@ -322,7 +374,8 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     }
   }
 
-  fun testStructureView() {
+  @Test
+  fun testStructureView(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val file = getTestFile("StructureView.class")
     file.parent.children; file.parent.refresh(false, true)  // inner classes
     checkStructure(file, """
@@ -336,7 +389,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
         setData(int): void
         data: int""")
 
-    (PsiManager.getInstance(project).findFile(file) as? PsiCompiledFile)?.decompiledPsiFile
+    readAction { (PsiManager.getInstance(myFixture.project).findFile(file) as? PsiCompiledFile)?.decompiledPsiFile }
 
     checkStructure(file, """
       -StructureView.java
@@ -352,15 +405,17 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
         data: int""")
   }
 
-  private fun checkStructure(file: VirtualFile, s: String) {
-    val editor = FileEditorManager.getInstance(project).openFile(file, false)[0]
-    val builder = StructureViewBuilder.getProvider().getStructureViewBuilder(JavaClassFileType.INSTANCE, file, project)!!
-    val svc = builder.createStructureView(editor, project) as StructureViewComponent
-    Disposer.register(myFixture.testRootDisposable, svc)
-    svc.setActionActive(KindSorter.ID, true)
-    svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true)
-    PlatformTestUtil.expandAll(svc.tree)
-    PlatformTestUtil.assertTreeEqual(svc.tree, s.trimIndent())
+  private suspend fun checkStructure(file: VirtualFile, s: String) {
+    withContext(Dispatchers.EDT) {
+      val editor = FileEditorManager.getInstance(myFixture.project).openFile(file, false)[0]
+      val builder = StructureViewBuilder.getProvider().getStructureViewBuilder(JavaClassFileType.INSTANCE, file, myFixture.project)!!
+      val svc = builder.createStructureView(editor, myFixture.project) as StructureViewComponent
+      Disposer.register(myFixture.testRootDisposable, svc)
+      svc.setActionActive(KindSorter.ID, true)
+      svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true)
+      PlatformTestUtil.expandAll(svc.tree)
+      PlatformTestUtil.assertTreeEqual(svc.tree, s.trimIndent())
+    }
   }
 
   private fun getTestFile(name: String): VirtualFile {
@@ -396,7 +451,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
         }
 
         val decompiled = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation { psiFile.mirror.text }
-        assertTrue(file.path, decompiled.startsWith(IDEA_DECOMPILER_BANNER) || file.name.endsWith("-info.class"))
+        assertTrue(decompiled.startsWith(IDEA_DECOMPILER_BANNER) || file.name.endsWith("-info.class"), file.path)
 
         // check that no mapped line number is on an empty line
         val prefix = "// "

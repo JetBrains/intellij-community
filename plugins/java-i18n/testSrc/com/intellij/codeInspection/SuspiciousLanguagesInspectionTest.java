@@ -16,30 +16,40 @@
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 /**
  * @author Dmitry Batkovich
  */
-public class SuspiciousLanguagesInspectionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("java-i18n") + "/testData/inspections/suspiciousLanguages";
-  }
+@TestApplication
+public class SuspiciousLanguagesInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, PluginPathManager.getPluginHomePathRelative("java-i18n") + "/testData/inspections/suspiciousLanguages");
 
+  @Test
   public void testSimple1() {
     doTest("p.properties", "p_en.properties");
   }
 
+  @Test
   public void testWithAdditionalLocales() {
     doTest("p.properties", "p_asd.properties", "asd");
   }
 
   private void doTest(final String file1, final String file2, final String... additionalLocales) {
-    myFixture.configureByFile(getTestName(true) + "/" + file1);
-    myFixture.configureByFile(getTestName(true) + "/" + file2);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(true) + "/" + file1);
+    myFixture.configureByFile(myFixture.getTestName(true) + "/" + file2);
     final SuspiciousLocalesLanguagesInspection inspection = new SuspiciousLocalesLanguagesInspection();
     if (additionalLocales.length != 0) {
       inspection.setAdditionalLanguages(List.of(additionalLocales));

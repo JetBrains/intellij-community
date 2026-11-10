@@ -172,6 +172,7 @@ jvm_library(
         "//java/java-impl-inspections:impl-inspections",
         "//platform/bazel-runfiles",
         "//platform/testFramework/junit5",
+        "//libraries/assertj-core",
     ],
 )
 ### auto-generated section `build intellij.lombok.tests` end

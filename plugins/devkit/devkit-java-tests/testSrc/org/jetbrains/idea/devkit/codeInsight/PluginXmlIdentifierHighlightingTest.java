@@ -4,35 +4,52 @@ package org.jetbrains.idea.devkit.codeInsight;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class PluginXmlIdentifierHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+@TestApplication
+public class PluginXmlIdentifierHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.setReadEditorMarkupModel(true);
   }
 
+  @Test
   public void test_ep_references() {
-    IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(getProject(), () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(myFixture.getProject(), () -> {
 
-      myFixture.configureByText("plugin.xml", """
-<idea-plugin>
-  <extensionPoints>
-    <extensionPoint name="foo<caret>.bar"/>
-  </extensionPoints>
-  <extensions>
-    <foo.bar/>
-  </extensions>
-</idea-plugin>
-""");
-      List<HighlightInfo> infos = myFixture.doHighlighting();
-      assertEquals(2, infos.stream().filter(it ->
-        it.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY
-      ).count());
+        myFixture.configureByText("plugin.xml", """
+  <idea-plugin>
+    <extensionPoints>
+      <extensionPoint name="foo<caret>.bar"/>
+    </extensionPoints>
+    <extensions>
+      <foo.bar/>
+    </extensions>
+  </idea-plugin>
+  """);
+        List<HighlightInfo> infos = myFixture.doHighlighting();
+        assertEquals(2, infos.stream().filter(it ->
+          it.getSeverity() == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY
+        ).count());
+      });
     });
   }
 }

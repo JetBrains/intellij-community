@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.index;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,7 +12,10 @@ import com.intellij.psi.impl.java.stubs.JavaStubDefinition;
 import com.intellij.psi.stubs.SerializedStubTree;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
@@ -19,16 +23,31 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaLanguageLevelTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class JavaLanguageLevelTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testSourceRootAddedForExistingFiles() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFile file = myFixture.addFileToProject("../src2/A.java", "class A {}").getVirtualFile();
     LanguageLevel level = JavaLanguageLevelPusher.getPushedLanguageLevel(file);
 
-    assertFalse(ProjectFileIndex.getInstance(getProject()).isInSourceContent(file));
+    assertFalse(ProjectFileIndex.getInstance(myFixture.getProject()).isInSourceContent(file));
     assertNull(level);
     assertFalse(JavaStubDefinition.shouldBuildStubForFile(file));
     assertNull(getIndexedStub(file));
@@ -37,7 +56,7 @@ public class JavaLanguageLevelTest extends LightJavaCodeInsightFixtureTestCase {
     try {
       LanguageLevel level2 = JavaLanguageLevelPusher.getPushedLanguageLevel(file);
 
-      assertTrue(ProjectFileIndex.getInstance(getProject()).isInSourceContent(file));
+      assertTrue(ProjectFileIndex.getInstance(myFixture.getProject()).isInSourceContent(file));
       assertEquals(LanguageLevel.HIGHEST, level2);
       assertTrue(JavaStubDefinition.shouldBuildStubForFile(file));
       assertNotNull(getIndexedStub(file));
@@ -47,8 +66,10 @@ public class JavaLanguageLevelTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
+  @Test
   public void testSourceRootOverlappedByCustomFileSet() {
-    WorkspaceFileIndexImpl.EP_NAME.getPoint().registerExtension(new CustomKindContentRootContributor(), getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    WorkspaceFileIndexImpl.EP_NAME.getPoint().registerExtension(new CustomKindContentRootContributor(), myFixture.getTestRootDisposable());
     List<VirtualFile> files = new ArrayList<>();
     for (int i = 0; i < 20; i++) {
       files.add(myFixture.addFileToProject("../src3/p" + i + "/q/A" + i + ".java", "package p" + i + ".q; class A" + i + " {}").getVirtualFile());
@@ -58,9 +79,9 @@ public class JavaLanguageLevelTest extends LightJavaCodeInsightFixtureTestCase {
     PsiTestUtil.addSourceContentToRoots(myFixture.getModule(), root);
     try {
       for (VirtualFile file : files) {
-        assertEquals(file.getPath(), LanguageLevel.HIGHEST, JavaLanguageLevelPusher.getPushedLanguageLevel(file));
-        assertTrue(file.getPath(), JavaStubDefinition.shouldBuildStubForFile(file));
-        assertNotNull(file.getPath(), getIndexedStub(file));
+        assertEquals(LanguageLevel.HIGHEST, JavaLanguageLevelPusher.getPushedLanguageLevel(file), file.getPath());
+        assertTrue(JavaStubDefinition.shouldBuildStubForFile(file), file.getPath());
+        assertNotNull(getIndexedStub(file), file.getPath());
       }
     }
     finally {
@@ -69,7 +90,8 @@ public class JavaLanguageLevelTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private SerializedStubTree getIndexedStub(VirtualFile file) {
-    return ContainerUtil.getFirstItem(FileBasedIndex.getInstance().getFileData(StubUpdatingIndex.INDEX_ID, file, getProject()).values());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    return ReadAction.computeBlocking(() -> ContainerUtil.getFirstItem(FileBasedIndex.getInstance().getFileData(StubUpdatingIndex.INDEX_ID, file, myFixture.getProject()).values()));
   }
 
   private static final class CustomKindContentRootContributor implements WorkspaceFileIndexContributor<ContentRootEntity> {

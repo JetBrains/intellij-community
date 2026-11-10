@@ -5,14 +5,31 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.DumbModeTestUtils;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public final class JavaLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public final class JavaLineMarkerTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testOverrideFunctionalInterface() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     // Gutter icons on used functional interfaces are always present, as function search can be slow
     myFixture.configureByText("Test.java", """
       interface Test {
@@ -28,7 +45,9 @@ public final class JavaLineMarkerTest extends LightJavaCodeInsightFixtureTestCas
     assertEquals(AllIcons.Gutter.ImplementedMethod, gutters.get(1).getIcon());
   }
 
+  @Test
   public void testOverrideFunctionalInterfaceUnused() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     // Gutter icons are absent if the interface is unused completely
     myFixture.configureByText("Test.java", """
       interface Test {
@@ -38,7 +57,9 @@ public final class JavaLineMarkerTest extends LightJavaCodeInsightFixtureTestCas
     assertTrue(gutters.isEmpty());
   }
 
+  @Test
   public void testOverrideNormalInterface() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     // Gutter icons on functional interfaces are always present, as function search can be slow
     myFixture.configureByText("Test.java", """
       interface Test {
@@ -49,7 +70,9 @@ public final class JavaLineMarkerTest extends LightJavaCodeInsightFixtureTestCas
     assertTrue(gutters.isEmpty());
   }
 
+  @Test
   public void testImplementedRecordMethodsInDumbMode() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       interface Test {
         void doSomething();
@@ -60,12 +83,14 @@ public final class JavaLineMarkerTest extends LightJavaCodeInsightFixtureTestCas
         public void do<caret>Something();
       }""");
     DumbModeTestUtils.runInDumbModeSynchronously(
-      getProject(),
+      myFixture.getProject(),
       () -> {
-        PsiElement psiElement = getFile().findElementAt(getEditor().getCaretModel().getOffset());
-        LineMarkerInfo<?> info = new JavaLineMarkerProvider().getLineMarkerInfo(psiElement);
-        assertNotNull(info);
-        assertEquals(AllIcons.Gutter.ImplementingMethod, info.getIcon());
+        ReadAction.runBlocking(() -> {
+          PsiElement psiElement = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+          LineMarkerInfo<?> info = new JavaLineMarkerProvider().getLineMarkerInfo(psiElement);
+          assertNotNull(info);
+          assertEquals(AllIcons.Gutter.ImplementingMethod, info.getIcon());
+        });
       });
   }
 }

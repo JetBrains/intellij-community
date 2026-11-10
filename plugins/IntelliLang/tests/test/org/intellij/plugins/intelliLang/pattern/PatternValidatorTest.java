@@ -2,17 +2,31 @@
 package org.intellij.plugins.intelliLang.pattern;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class PatternValidatorTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class PatternValidatorTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     var inspection = new PatternValidator();
     inspection.CHECK_NON_CONSTANT_VALUES = true;
     myFixture.enableInspections(inspection);
   }
 
+  @Test
   public void testPatternValidator() {
     highlightTest("""
       import org.intellij.lang.annotations.Pattern;
@@ -29,10 +43,11 @@ public class PatternValidatorTest extends LightJavaCodeInsightFixtureTestCase {
       }""");
   }
 
+  @Test
   public void testAddLocalVariableFix() {
     quickFixTest("""
     import org.intellij.lang.annotations.Pattern;
-      
+    
     class X {
       @Pattern("[0-9]+")
       public static String createValue(int i) {
@@ -41,7 +56,7 @@ public class PatternValidatorTest extends LightJavaCodeInsightFixtureTestCase {
     }
     """, """
     import org.intellij.lang.annotations.Pattern;
-    
+  
     class X {
       @Pattern("[0-9]+")
       public static String createValue(int i) {
@@ -53,14 +68,18 @@ public class PatternValidatorTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void highlightTest(String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("X.java", text);
     myFixture.testHighlighting();
   }
 
   public void quickFixTest(String before, String after, String hint) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("X.java", before);
     IntentionAction action = myFixture.findSingleIntention(hint);
-    myFixture.checkPreviewAndLaunchAction(action);
-    myFixture.checkResult(after);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.checkPreviewAndLaunchAction(action);
+      myFixture.checkResult(after);
+    });
   }
 }

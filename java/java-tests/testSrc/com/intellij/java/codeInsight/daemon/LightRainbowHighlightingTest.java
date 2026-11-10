@@ -17,11 +17,23 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.UsedColors;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class LightRainbowHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestApplication
+public class LightRainbowHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testRainbowOff() {
     checkRainbow(
       """
@@ -35,6 +47,7 @@ public class LightRainbowHighlightingTest extends LightJavaCodeInsightFixtureTes
         }""", false, false);
   }
 
+  @Test
   public void testRainbowSameColorsForSameIds() {
     checkRainbow(
       """
@@ -47,6 +60,7 @@ public class LightRainbowHighlightingTest extends LightJavaCodeInsightFixtureTes
         }""", true, true);
   }
 
+  @Test
   public void testRainbowHighlightingIds() {
     // check no coloring for [this] and etc.
     checkRainbow(
@@ -65,6 +79,7 @@ public class LightRainbowHighlightingTest extends LightJavaCodeInsightFixtureTes
         }""", true, false);
   }
 
+  @Test
   public void testRainbowParamsInJavadocHaveTheSameColorsAsInCode() {
     checkRainbow(
       """
@@ -82,12 +97,14 @@ public class LightRainbowHighlightingTest extends LightJavaCodeInsightFixtureTes
         }""", true, true);
   }
 
+  @Test
   public void testBadStringHashValue() {
     int color = UsedColors.getOrAddColorIndex(new UserDataHolderBase(), "JHZaWC", 5);
     assertEquals(3, color);
   }
 
   void checkRainbow(@NotNull String code, boolean isRainbowOn, boolean withColor) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testRainbow(
       "rainbow.java",
       code,

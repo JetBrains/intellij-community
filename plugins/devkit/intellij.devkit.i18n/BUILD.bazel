@@ -122,6 +122,8 @@ jvm_library(
         "//plugins/grazie/src:core",
         "//platform/editor-ui-api:editor-ui",
         "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
     ],
 )
 ### auto-generated section `build intellij.devkit.i18n.tests` end

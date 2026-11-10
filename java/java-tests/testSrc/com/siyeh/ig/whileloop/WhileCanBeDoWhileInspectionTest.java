@@ -1,11 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.whileloop;
 
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class WhileCanBeDoWhileInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testReplaceSingleStatement() {
     doTest("""
              class DoWhileClass {
@@ -27,6 +39,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
+  @Test
   public void testReplaceSingleStatementWithoutCodeBlock() {
     doTest("""
              class DoWhileClass {
@@ -46,6 +59,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
+  @Test
   public void testReplaceCodeBlock() {
     doTest("""
              class DoWhileClass {
@@ -84,6 +98,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
+  @Test
   public void testReplaceCodeWithComments() {
     doTest("""
              class DoWhileClass {
@@ -129,6 +144,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
+  @Test
   public void testDifferentBreaks() {
     doTest("""
              class DoWhileClass {
@@ -163,6 +179,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
+  @Test
   public void testEqBreaks() {
     doTest("""
              class DoWhileClass {
@@ -193,6 +210,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
+  @Test
   public void testDifferentBreaks2() {
     doTest("""
              class DoWhileClass {
@@ -232,6 +250,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
   
+  @Test
   public void testDifferentContinues() {
     doTest("""
              class DoWhileClass {
@@ -264,6 +283,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
+  @Test
   public void testTrue() {
     doTest("""
              class DoWhileClass {
@@ -288,6 +308,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
+  @Test
   public void testEmptyBlock() {
     doTest("""
              class DoWhileClass {
@@ -304,6 +325,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
+  @Test
   public void testInfiniteLoop() {
     doTest("""
              class DoWhileClass {
@@ -322,6 +344,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
+  @Test
   public void testSwitchCase() {
     doTest("""
              class DoWhileClass {
@@ -355,6 +378,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
+  @Test
   public void testNoBraces() {
     doTest("""
              class DoWhileClass {
@@ -378,6 +402,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
+  @Test
   public void testRegular() {
     doTest("""
              class DoWhileClass {
@@ -401,7 +426,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
              }""");
   }
 
-
+  @Test
   public void testDifferentComments() {
     testHighlighting("""
                        class DoWhileClass {
@@ -419,6 +444,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
                        }""");
   }
 
+  @Test
   public void testEqComments() {
     testHighlighting("""
                        class DoWhileClass {
@@ -436,8 +462,8 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
                        }""");
   }
 
-
   private void doTest(@NotNull @Language("Java") String before, @NotNull @Language("Java") String after) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("DoWhile.java", before);
 
     myFixture.enableInspections(new WhileCanBeDoWhileInspection());
@@ -447,6 +473,7 @@ public class WhileCanBeDoWhileInspectionTest extends LightJavaCodeInsightFixture
   }
 
   private void testHighlighting(@NotNull @Language("Java") String code) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("DoWhile.java", code);
 
     myFixture.enableInspections(new WhileCanBeDoWhileInspection());

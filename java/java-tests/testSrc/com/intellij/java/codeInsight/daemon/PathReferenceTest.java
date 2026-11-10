@@ -2,15 +2,31 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class PathReferenceTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@TestApplication
+public class PathReferenceTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testPathReference() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
 
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class Test {
@@ -21,13 +37,15 @@ public class PathReferenceTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(1, references.length);
   }
 
+  @Test
   public void testDeepPathDoesNotOverflowStack() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     // resolving reference #i used to recurse into #i-1, so a path with many segments blew the stack
     String path = "dir/".repeat(20_000) + "file.txt";
     PsiFile file = myFixture.configureByText("a.txt", path);
     FileReferenceSet set = new FileReferenceSet(path, file, 0, null, true);
     FileReference last = set.getLastReference();
     assertNotNull(last);
-    assertEmpty(last.multiResolve(false));
+    ReadAction.runBlocking(() -> assertThat(last.multiResolve(false)).isNullOrEmpty());
   }
 }

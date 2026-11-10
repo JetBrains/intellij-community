@@ -3,37 +3,42 @@ package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.MagicConstant;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class GroovyCopyPasteTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class GroovyCopyPasteTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   @MagicConstant(intValues = {CodeInsightSettings.YES, CodeInsightSettings.NO, CodeInsightSettings.ASK})
   private int myAddImportsOld;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
 
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     myAddImportsOld = settings.ADD_IMPORTS_ON_PASTE;
     settings.ADD_IMPORTS_ON_PASTE = CodeInsightSettings.YES;
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      CodeInsightSettings settings = CodeInsightSettings.getInstance();
-      settings.ADD_IMPORTS_ON_PASTE = myAddImportsOld;
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    settings.ADD_IMPORTS_ON_PASTE = myAddImportsOld;
   }
 
   private void doTest(String fromText, String toText, String expected) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("fromFileName.groovy", fromText);
     myFixture.performEditorAction(IdeActions.ACTION_COPY);
     myFixture.configureByText("b.groovy", toText);
@@ -41,7 +46,9 @@ public class GroovyCopyPasteTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.checkResult(expected);
   }
 
+  @Test
   public void testRestoreImports() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; public class Foo {}");
 
     doTest("""
@@ -51,6 +58,7 @@ public class GroovyCopyPasteTest extends LightJavaCodeInsightFixtureTestCase {
              Foo f""");
   }
 
+  @Test
   public void testGStringEolReplace() {
     doTest("""
              <selection>first
@@ -65,7 +73,9 @@ public class GroovyCopyPasteTest extends LightJavaCodeInsightFixtureTestCase {
              <caret>""\"""");
   }
 
+  @Test
   public void testPasteEnumConstant() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package pack;\nenum E {\n  CONST\n}\n");
     doTest("""
              import static pack.E.CONST
@@ -79,6 +89,7 @@ public class GroovyCopyPasteTest extends LightJavaCodeInsightFixtureTestCase {
              """);
   }
 
+  @Test
   public void testMultilinePasteIntoLineComment() {
     doTest("<selection>multiline\ntext</selection>", """
              class C {
@@ -91,6 +102,7 @@ public class GroovyCopyPasteTest extends LightJavaCodeInsightFixtureTestCase {
              }""");
   }
   
+  @Test
   public void testStaticImport() {
     doTest("""
              import static java.lang.annotation.RetentionPolicy.CLASS
@@ -111,6 +123,7 @@ public class GroovyCopyPasteTest extends LightJavaCodeInsightFixtureTestCase {
              """);
   }
 
+  @Test
   public void testPasteFakeDiamond() {
     doTest("<selection>void foo(Map<> a) {}</selection>", """
       class A {

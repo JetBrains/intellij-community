@@ -2,24 +2,34 @@
 package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.inspections.PluginXmlDynamicPluginInspection;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInsight/pluginXmlDynamicPluginInspection")
-public class PluginXmlDynamicPluginInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class PluginXmlDynamicPluginInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, DevkitJavaTestsUtil.TESTDATA_PATH + "codeInsight/pluginXmlDynamicPluginInspection");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "codeInsight/pluginXmlDynamicPluginInspection";
-  }
-
+  @Test
   public void testHighlighting() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new PluginXmlDynamicPluginInspection());
     myFixture.testHighlighting("pluginXmlDynamicPluginInspection-highlighting.xml");
   }
 
+  @Test
   public void testUsingExtensionPoints() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     final PluginXmlDynamicPluginInspection inspection = new PluginXmlDynamicPluginInspection();
     inspection.highlightNonDynamicEPUsages = true;
     myFixture.enableInspections(inspection);

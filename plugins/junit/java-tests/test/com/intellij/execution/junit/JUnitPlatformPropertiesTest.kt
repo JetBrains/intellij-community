@@ -2,15 +2,30 @@
 package com.intellij.execution.junit
 
 import com.intellij.lang.properties.codeInspection.unused.UnusedPropertyInspection
+import com.intellij.openapi.application.readAction
 import com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class JUnitPlatformPropertiesTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class JUnitPlatformPropertiesTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun setUp() {
-    super.setUp()
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUp() {
 
     // define property source class
     myFixture.addClass("""
@@ -28,6 +43,7 @@ class JUnitPlatformPropertiesTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
+  @Test
   fun testImplicitUsage() {
     myFixture.enableInspections(UnusedPropertyInspection::class.java)
 
@@ -39,6 +55,7 @@ class JUnitPlatformPropertiesTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testCompletion() {
     myFixture.configureByText("junit-platform.properties", """
        junit.jupiter.<caret>
@@ -53,47 +70,53 @@ class JUnitPlatformPropertiesTest : LightJavaCodeInsightFixtureTestCase() {
                                      "junit.jupiter.execution.parallel.mode.default")
   }
 
+  @Test
   fun testMetadataKeyCompletion() {
     addMetadata()
 
     myFixture.configureByText("junit-platform.properties", "junit.custom.<caret>")
     myFixture.completeBasic()
 
-    assertContainsElements(myFixture.lookupElementStrings!!, "junit.custom.enabled", "junit.custom.mode")
+    assertThat(myFixture.lookupElementStrings!!).contains("junit.custom.enabled", "junit.custom.mode")
   }
 
+  @Test
   fun testMetadataValueCompletion() {
     addMetadata()
 
     myFixture.configureByText("junit-platform.properties", "junit.custom.enabled=<caret>")
     myFixture.completeBasic()
 
-    assertContainsElements(myFixture.lookupElementStrings!!, "true", "false")
+    assertThat(myFixture.lookupElementStrings!!).contains("true", "false")
   }
 
-  fun testMetadataDocumentation() {
+  @Test
+  fun testMetadataDocumentation(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     addMetadata()
 
     // The plain-text description is escaped before it is shown as documentation HTML.
     assertEquals("Enables the &lt;b&gt;custom&lt;/b&gt; feature.", documentationForKey("junit.custom.enabled=true"))
   }
 
-  fun testMetadataMergesWithConstants() {
+  @Test
+  fun testMetadataMergesWithConstants(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     // A key known from `Constants` that is also described by metadata keeps navigation but gains docs and value hints.
     addMetadata()
 
     myFixture.configureByText("junit-platform.properties", "junit.jupiter.execution.parallel.enabled=<caret>")
     myFixture.completeBasic()
-    assertContainsElements(myFixture.lookupElementStrings!!, "true", "false")
+    assertThat(myFixture.lookupElementStrings!!).contains("true", "false")
 
     assertEquals("Runs tests in parallel.", documentationForKey("junit.jupiter.execution.parallel.enabled=true"))
   }
 
-  private fun documentationForKey(propertiesLine: String): String? {
+  private suspend fun documentationForKey(propertiesLine: String): String? {
     myFixture.configureByText("junit-platform.properties", propertiesLine)
-    val key = PsiUtilCore.getElementAtOffset(myFixture.file, 0)
-    val target = PsiDocumentationTargetProvider.EP_NAME.computeSafeIfAny { it.documentationTarget(key, key) } ?: return null
-    return computeDocumentationBlocking(target.createPointer())?.html
+    val pointer = readAction {
+      val key = PsiUtilCore.getElementAtOffset(myFixture.file, 0)
+      PsiDocumentationTargetProvider.EP_NAME.computeSafeIfAny { it.documentationTarget(key, key) }?.createPointer()
+    } ?: return null
+    return computeDocumentationBlocking(pointer)?.html
   }
 
   private fun addMetadata() {

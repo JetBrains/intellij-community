@@ -5,11 +5,24 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public final class RenameToIgnoredFixTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public final class RenameToIgnoredFixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testRenameToIgnoredSwitchRule() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
       myFixture.configureByText("Test.java", """
       class Scratch {
         void test(Object obj) {
@@ -36,8 +49,10 @@ public final class RenameToIgnoredFixTest extends LightJavaCodeInsightFixtureTes
     });
   }
 
+  @Test
   public void testRenameToIgnoredSwitch() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
       myFixture.configureByText("Test.java", """
        class Scratch {
          void test(Object obj) {
@@ -64,7 +79,9 @@ public final class RenameToIgnoredFixTest extends LightJavaCodeInsightFixtureTes
     });
   }
   
+  @Test
   public void testRenameToIgnoredMultiple() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       class X {
         void test(int[] data) {
@@ -88,8 +105,10 @@ public final class RenameToIgnoredFixTest extends LightJavaCodeInsightFixtureTes
                             """);
   }
 
+  @Test
   public void testRenameToIgnoredSwitch2() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
       myFixture.configureByText("Test.java", """
        class Scratch {
          void test(Object obj) {

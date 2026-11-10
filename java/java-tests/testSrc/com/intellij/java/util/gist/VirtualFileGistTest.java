@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.util.gist;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -19,9 +20,13 @@ import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
@@ -34,29 +39,49 @@ import com.intellij.util.io.IOUtil;
 import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static com.intellij.util.gist.storage.GistStorageImpl.MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class VirtualFileGistTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
+  @Test
   public void testGistGetData_ReturnsDataAsPerGistCalculator() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFileGist<String> gist = gistOfFirst3CharsFromFile();
 
     String file1Content = "foo bar";
-    assertEquals(
-      gist.getFileData(getProject(), fileWithContent("a.txt", file1Content)),
-      file1Content.substring(0, 3)
-    );
+    VirtualFile file1 = fileWithContent("a.txt", file1Content);
+    ReadAction.runBlocking(() -> {
+      assertEquals(
+        gist.getFileData(myFixture.getProject(), file1),
+        file1Content.substring(0, 3)
+      );
+    });
     String file2Content = "bar foo";
-    assertEquals(
-      gist.getFileData(getProject(), fileWithContent("b.txt", file2Content)),
-      file2Content.substring(0, 3)
-    );
+    VirtualFile file2 = fileWithContent("b.txt", file2Content);
+    ReadAction.runBlocking(() -> {
+      assertEquals(
+        gist.getFileData(myFixture.getProject(), file2),
+        file2Content.substring(0, 3)
+      );
+    });
   }
 
+  @Test
   public void testGistGetData_ReturnsDataAsPerGistCalculator_EvenForHugeDataSize() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     if (!assumeHugeGistsAreEnabledAndSafeToTest()) {
       return;
     }
@@ -65,23 +90,28 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
 
     VirtualFileGist<String> gist = gistOfFileContent();
 
-
     String hugeFile1Content = "a".repeat(hugeGistSize);
     VirtualFile file1 = fileWithContent("a.txt", hugeFile1Content);
-    assertEquals(
-      gist.getFileData(getProject(), file1),
-      hugeFile1Content
-    );
+    ReadAction.runBlocking(() -> {
+      assertEquals(
+        gist.getFileData(myFixture.getProject(), file1),
+        hugeFile1Content
+      );
+    });
 
     String hugeFile2Content = "b".repeat(hugeGistSize);
     VirtualFile file2 = fileWithContent("b.txt", hugeFile2Content);
-    assertEquals(
-      gist.getFileData(getProject(), file2),
-      hugeFile2Content
-    );
+    ReadAction.runBlocking(() -> {
+      assertEquals(
+        gist.getFileData(myFixture.getProject(), file2),
+        hugeFile2Content
+      );
+    });
   }
 
+  @Test
   public void testGistGetData_CachesDataSuccessfully_ForTransitionsBetweenHugeAndRegularGistSize() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     if (!assumeHugeGistsAreEnabledAndSafeToTest()) {
       return;
     }
@@ -100,181 +130,224 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
     for (int i = 0; i < enoughTries; i++) {
       {//Put 'huge' content into a file:
         WriteAction.run(() -> VfsUtil.saveText(file, hugeFileContent));
-        assertEquals(
-          "First invocation returns (huge) file content",
-          hugeFileContent,
-          gistOfFileContent.getFileData(getProject(), file)
-        );
+        ReadAction.runBlocking(() -> {
+          assertEquals(
+            hugeFileContent,
+            gistOfFileContent.getFileData(myFixture.getProject(), file),
+            "First invocation returns (huge) file content"
+          );
+        });
         int invocationsBefore = invocationCounter.get();
+        ReadAction.runBlocking(() -> {
+          assertEquals(
+            hugeFileContent,
+            gistOfFileContent.getFileData(myFixture.getProject(), file),
+            "Second invocation returns _same_ result"
+          );
+        });
         assertEquals(
-          "Second invocation returns _same_ result",
-          hugeFileContent,
-          gistOfFileContent.getFileData(getProject(), file)
-        );
-        assertEquals(
-          "...and second invocation returns _cached_ result",
           invocationsBefore,
-          invocationCounter.get()
+          invocationCounter.get(),
+          "...and second invocation returns _cached_ result"
         );
       }
 
       {//Now change file content to 'not huge':
         WriteAction.run(() -> VfsUtil.saveText(file, notHugeFileContent));
-        assertEquals(
-          "First invocation returns (not huge) file content",
-          notHugeFileContent,
-          gistOfFileContent.getFileData(getProject(), file)
-        );
+        ReadAction.runBlocking(() -> {
+          assertEquals(
+            notHugeFileContent,
+            gistOfFileContent.getFileData(myFixture.getProject(), file),
+            "First invocation returns (not huge) file content"
+          );
+        });
         int invocationsBefore = invocationCounter.get();
+        ReadAction.runBlocking(() -> {
+          assertEquals(
+            notHugeFileContent,
+            gistOfFileContent.getFileData(myFixture.getProject(), file),
+            "Second invocation returns _same_ result"
+          );
+        });
         assertEquals(
-          "Second invocation returns _same_ result",
-          notHugeFileContent,
-          gistOfFileContent.getFileData(getProject(), file)
-        );
-        assertEquals(
-          "...and second invocation returns _cached_ result",
           invocationsBefore,
-          invocationCounter.get()
+          invocationCounter.get(),
+          "...and second invocation returns _cached_ result"
         );
       }
     }
   }
 
+  @Test
   public void testGistData_IsNotReEvaluatedOnEachCall_ButCachedPerFile() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFileGist<Integer> gist = gistReturningCalculationsCount();
 
     VirtualFile file = fileWithContent("a.txt", "foo bar");
-    assertEquals(
-      "Gist evaluated only once on a same unchanged file",
-      Integer.valueOf(1),
-      gist.getFileData(getProject(), file)
-    );
-    assertEquals(
-      "Gist evaluated only once on a same unchanged file",
-      Integer.valueOf(1),
-      gist.getFileData(getProject(), file)
-    );
+    ReadAction.runBlocking(() -> {
+      assertEquals(
+        Integer.valueOf(1),
+        gist.getFileData(myFixture.getProject(), file),
+        "Gist evaluated only once on a same unchanged file"
+      );
+      assertEquals(
+        Integer.valueOf(1),
+        gist.getFileData(myFixture.getProject(), file),
+        "Gist evaluated only once on a same unchanged file"
+      );
+    });
 
-    assertEquals(
-      "Gist re-evaluated on another file",
-      Integer.valueOf(2),
-      gist.getFileData(getProject(), fileWithContent("b.txt", ""))
-    );
+    VirtualFile file2 = fileWithContent("b.txt", "");
+    ReadAction.runBlocking(() -> {
+      assertEquals(
+        Integer.valueOf(2),
+        gist.getFileData(myFixture.getProject(), file2),
+        "Gist re-evaluated on another file"
+      );
+    });
   }
 
+  @Test
   public void testGistData_IsRecalculated_OnFileChange() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFileGist<Integer> gist = gistReturningCalculationsCount();
     VirtualFile file = fileWithContent("a.txt", "foo bar");
 
-    assertEquals(
-      "Gist evaluated 1st time on a file",
-      Integer.valueOf(1),
-      gist.getFileData(getProject(), file)
-    );
+    ReadAction.runBlocking(() -> {
+      assertEquals(
+        Integer.valueOf(1),
+        gist.getFileData(myFixture.getProject(), file),
+        "Gist evaluated 1st time on a file"
+      );
+    });
 
     WriteAction.run(() -> VfsUtil.saveText(file, "x"));
-    assertEquals(
-      "Gist evaluated 2nd time since file content was changed",
-      Integer.valueOf(2),
-      gist.getFileData(getProject(), file)
-    );
+    ReadAction.runBlocking(() -> {
+      assertEquals(
+        Integer.valueOf(2),
+        gist.getFileData(myFixture.getProject(), file),
+        "Gist evaluated 2nd time since file content was changed"
+      );
+    });
 
     FileContentUtilCore.reparseFiles(file);
-    assertEquals(
-      "Gist evaluated 3rd time since file was reparsed forcibly",
-      Integer.valueOf(3),
-      gist.getFileData(getProject(), file)
-    );
+    ReadAction.runBlocking(() -> {
+      assertEquals(
+        Integer.valueOf(3),
+        gist.getFileData(myFixture.getProject(), file),
+        "Gist evaluated 3rd time since file was reparsed forcibly"
+      );
+    });
 
     // make sure the file is indexed
-    FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry("foo", true), file, (_, _) -> true, GlobalSearchScope.allScope(getProject()));
+    ReadAction.runBlocking(() -> {
+      FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry("foo", true), file, (_, _) -> true, GlobalSearchScope.allScope(myFixture.getProject()));
+    });
 
-    PushedFilePropertiesUpdater.getInstance(getProject()).filePropertiesChanged(file, Conditions.alwaysTrue());
-    assertEquals(
-      "Gist evaluated 4th time since file property was pushed",
-      Integer.valueOf(4),
-      gist.getFileData(getProject(), file)
-    );
+    ReadAction.runBlocking(() -> {
+      PushedFilePropertiesUpdater.getInstance(myFixture.getProject()).filePropertiesChanged(file, Conditions.alwaysTrue());
+      assertEquals(
+        Integer.valueOf(4),
+        gist.getFileData(myFixture.getProject(), file),
+        "Gist evaluated 4th time since file property was pushed"
+      );
+    });
   }
 
+  @Test
   public void testGistData_IsNotRecalculated_OnOtherFilesChanges() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFileGist<Integer> gist = gistReturningCalculationsCount();
     VirtualFile gistFile = fileWithContent("a.txt", "foo bar");
     VirtualFile otherFile = fileWithContent("b.txt", "foo bar");
 
-    assertEquals(
-      "Gist evaluated 1st time for gistFile",
-      Integer.valueOf(1),
-      gist.getFileData(getProject(), gistFile)
-    );
-    assertEquals(
-      "Gist re-evaluated 2nd time being requested for otherFile",
-      Integer.valueOf(2),
-      gist.getFileData(getProject(), otherFile)
-    );
+    ReadAction.runBlocking(() -> {
+      assertEquals(
+        Integer.valueOf(1),
+        gist.getFileData(myFixture.getProject(), gistFile),
+        "Gist evaluated 1st time for gistFile"
+      );
+      assertEquals(
+        Integer.valueOf(2),
+        gist.getFileData(myFixture.getProject(), otherFile),
+        "Gist re-evaluated 2nd time being requested for otherFile"
+      );
+    });
 
     WriteAction.run(() -> VfsUtil.saveText(otherFile, "x"));
-    assertEquals(
-      "Gist(gistFile) was cached, and was not re-evaluated on otherFile change",
-      Integer.valueOf(1),
-      gist.getFileData(getProject(), gistFile)
-    );
+    ReadAction.runBlocking(() -> {
+      assertEquals(
+        Integer.valueOf(1),
+        gist.getFileData(myFixture.getProject(), gistFile),
+        "Gist(gistFile) was cached, and was not re-evaluated on otherFile change"
+      );
+    });
   }
 
+  @Test
   public void testGistWorksWell_WithLightVirtualFiles() {
-    final VirtualFileGist<String> first3CharsGist = gistOfFirst3CharsFromFile();
-    final String fileContent = "goo goo";
-    final LightVirtualFile lightFile = new LightVirtualFile("a.txt", fileContent);
-    assertEquals(
-      fileContent.substring(0, 3),
-      first3CharsGist.getFileData(getProject(), lightFile)
-    );
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ReadAction.runBlocking(() -> {
+      final VirtualFileGist<String> first3CharsGist = gistOfFirst3CharsFromFile();
+      final String fileContent = "goo goo";
+      final LightVirtualFile lightFile = new LightVirtualFile("a.txt", fileContent);
+      assertEquals(
+        fileContent.substring(0, 3),
+        first3CharsGist.getFileData(myFixture.getProject(), lightFile)
+      );
+    });
   }
 
+  @Test
   public void testGistCalculatesData_PerProject() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     IntRef invocations = new IntRef(0);
     VirtualFileGist<String> gistProjectName =
-      GistManager.getInstance().newVirtualFileGist(getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, (p, f) -> {
+      GistManager.getInstance().newVirtualFileGist(myFixture.getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, (p, f) -> {
         invocations.inc();
         return (p == null ? null : p.getName());
       });
     VirtualFile file = fileWithContent("a.txt", "foo bar");
 
-    final Project project1 = getProject();
-    final Project project2 = ProjectManager.getInstance().getDefaultProject();
+    ReadAction.runBlocking(() -> {
+      final Project project1 = myFixture.getProject();
+      final Project project2 = ProjectManager.getInstance().getDefaultProject();
 
-    String project1Name = project1.getName();
-    String project2Name = project2.getName();
+      String project1Name = project1.getName();
+      String project2Name = project2.getName();
 
-    assertEquals(
-      "Gist calculated 1st time for project1",
-      project1Name,
-      gistProjectName.getFileData(project1, file)
-    );
-    assertEquals(1, invocations.get());
+      assertEquals(
+        project1Name,
+        gistProjectName.getFileData(project1, file),
+        "Gist calculated 1st time for project1"
+      );
+      assertEquals(1, invocations.get());
 
-    assertEquals(
-      "Gist DOES recalculated for project2",
-      project2Name,
-      gistProjectName.getFileData(project2, file)
-    );
-    assertEquals(2, invocations.get());
+      assertEquals(
+        project2Name,
+        gistProjectName.getFileData(project2, file),
+        "Gist DOES recalculated for project2"
+      );
+      assertEquals(2, invocations.get());
 
-    assertEquals(
-      "Gist does NOT recalculated for project1",
-      project1Name,
-      gistProjectName.getFileData(project1, file)
-    );
-    assertEquals(2, invocations.get());
+      assertEquals(
+        project1Name,
+        gistProjectName.getFileData(project1, file),
+        "Gist does NOT recalculated for project1"
+      );
+      assertEquals(2, invocations.get());
 
-    assertNull(
-      "Gist DOES recalculated for null project",
-      gistProjectName.getFileData(null, file)
-    );
-    assertEquals(3, invocations.get());
+      assertNull(
+        gistProjectName.getFileData(null, file),
+        "Gist DOES recalculated for null project"
+      );
+      assertEquals(3, invocations.get());
+    });
   }
 
+  @Test
   public void testGistCalculatesData_PerProject_EvenForHugeData() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     if (!assumeHugeGistsAreEnabledAndSafeToTest()) {
       return;
     }
@@ -283,54 +356,57 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
     String hugeFileContent = "a".repeat(hugeGistSize);
     VirtualFile file = fileWithContent("a.txt", hugeFileContent);
 
-    IntRef invocations = new IntRef(0);
-    VirtualFileGist.GistCalculator<String> fileContentPlusProjectNameCalculator = (p, f) -> {
-      final String content = LoadTextUtil.loadText(f).toString();
-      return content + "///" + (p == null ? null : p.getName());
-    };
-    VirtualFileGist<String> gistFileContentPlusProjectName = GistManager.getInstance().newVirtualFileGist(
-      getTestName(true), 0,
-      EnumeratorStringDescriptor.INSTANCE,
-      wrapWithCounter(
-        fileContentPlusProjectNameCalculator,
-        invocations
-      )
-    );
+    ReadAction.runBlocking(() -> {
+      IntRef invocations = new IntRef(0);
+      VirtualFileGist.GistCalculator<String> fileContentPlusProjectNameCalculator = (p, f) -> {
+        final String content = LoadTextUtil.loadText(f).toString();
+        return content + "///" + (p == null ? null : p.getName());
+      };
+      VirtualFileGist<String> gistFileContentPlusProjectName = GistManager.getInstance().newVirtualFileGist(
+        myFixture.getTestName(true), 0,
+        EnumeratorStringDescriptor.INSTANCE,
+        wrapWithCounter(
+          fileContentPlusProjectNameCalculator,
+          invocations
+        )
+      );
 
-    Project project1 = getProject();
-    Project project2 = ProjectManager.getInstance().getDefaultProject();
+      Project project1 = myFixture.getProject();
+      Project project2 = ProjectManager.getInstance().getDefaultProject();
 
-    assertEquals(
-      "Gist calculated 1st time for project1",
-      fileContentPlusProjectNameCalculator.calcData(project1, file),
-      gistFileContentPlusProjectName.getFileData(project1, file)
-    );
-    assertEquals(1, invocations.get());
+      assertEquals(
+        fileContentPlusProjectNameCalculator.calcData(project1, file),
+        gistFileContentPlusProjectName.getFileData(project1, file),
+        "Gist calculated 1st time for project1"
+      );
+      assertEquals(1, invocations.get());
 
-    assertEquals(
-      "Gist calculated 1st time for project2",
-      fileContentPlusProjectNameCalculator.calcData(project2, file),
-      gistFileContentPlusProjectName.getFileData(project2, file)
-    );
-    assertEquals(2, invocations.get());
+      assertEquals(
+        fileContentPlusProjectNameCalculator.calcData(project2, file),
+        gistFileContentPlusProjectName.getFileData(project2, file),
+        "Gist calculated 1st time for project2"
+      );
+      assertEquals(2, invocations.get());
 
-    assertEquals(
-      "Gist must have same value for project1",
-      fileContentPlusProjectNameCalculator.calcData(project1, file),
-      gistFileContentPlusProjectName.getFileData(project1, file)
-    );
-    assertEquals("Gist must NOT be recalculated for project1",
-                 2, invocations.get());
+      assertEquals(
+        fileContentPlusProjectNameCalculator.calcData(project1, file),
+        gistFileContentPlusProjectName.getFileData(project1, file),
+        "Gist must have same value for project1"
+      );
+      assertEquals(2,
+                   invocations.get(), "Gist must NOT be recalculated for project1");
 
-    assertEquals(
-      "Gist MUST be recalculated for null project",
-      fileContentPlusProjectNameCalculator.calcData(null, file),
-      gistFileContentPlusProjectName.getFileData(null, file)
-    );
-    assertEquals("Gist must NOT be recalculated for null project",
-                 3, invocations.get());
+      assertEquals(
+        fileContentPlusProjectNameCalculator.calcData(null, file),
+        gistFileContentPlusProjectName.getFileData(null, file),
+        "Gist MUST be recalculated for null project"
+      );
+      assertEquals(3,
+                   invocations.get(), "Gist must NOT be recalculated for null project");
+    });
   }
 
+  @Test
   public void testAttemptToCreateSecondGist_WithTheSameName_Fails() {
     gistOfFirst3CharsFromFile();
     try {
@@ -341,98 +417,138 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
+  @Test
   public void testGistSupportsNullData_AndStillCacheNullResultsWithoutReCalculation() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     IntRef invocationsHolder = new IntRef(0);
     VirtualFileGist<String> gist =
-      GistManager.getInstance().newVirtualFileGist(getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, (p, f) -> {
+      GistManager.getInstance().newVirtualFileGist(myFixture.getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, (p, f) -> {
         invocationsHolder.inc();
         return null;
       });
     VirtualFile file = fileWithContent("a.txt", "foo bar");
-    assertNull(gist.getFileData(getProject(), file));
-    assertNull(gist.getFileData(getProject(), file));
-    assertEquals(1, invocationsHolder.get());
+    ReadAction.runBlocking(() -> {
+      assertNull(gist.getFileData(myFixture.getProject(), file));
+      assertNull(gist.getFileData(myFixture.getProject(), file));
+      assertEquals(1, invocationsHolder.get());
+    });
   }
 
+  @Test
   public void testPsiGistUsesLastCommittedDocumentContent() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.addFileToProject("a.txt", "foo bar");
     PsiFileGist<String> gist =
-      GistManager.getInstance().newPsiFileGist(getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, p -> p.getText().substring(0, 3));
-    assert "foo".equals(gist.getFileData(file));
+      GistManager.getInstance().newPsiFileGist(myFixture.getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, p -> p.getText().substring(0, 3));
+    ReadAction.runBlocking(() -> {
+      assert "foo".equals(gist.getFileData(file));
+    });
 
     WriteAction.run(() -> {
       VfsUtil.saveText(file.getVirtualFile(), "bar foo");
       assert file.isValid();
-      assert PsiDocumentManager.getInstance(getProject()).isUncommited(file.getViewProvider().getDocument());
+      assert PsiDocumentManager.getInstance(myFixture.getProject()).isUncommited(file.getViewProvider().getDocument());
       assert "foo".equals(gist.getFileData(file));
     });
 
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    assert "bar".equals(gist.getFileData(file));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+      assert "bar".equals(gist.getFileData(file));
+    });
   }
 
+  @Test
   public void testPsiGistDoesNotLoadAST() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("a.java", "package bar;");
-    assert !file.isContentsLoaded();
+    ReadAction.runBlocking(() -> {
+      assert !file.isContentsLoaded();
 
-    assert GistManager.getInstance()
-      .newPsiFileGist(getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, p -> p.findElementAt(0).getText()).getFileData(file)
-      .equals("package");
-    assert !file.isContentsLoaded();
+      assert GistManager.getInstance()
+        .newPsiFileGist(myFixture.getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, p -> p.findElementAt(0).getText()).getFileData(file)
+        .equals("package");
+      assert !file.isContentsLoaded();
+    });
   }
 
+  @Test
   public void testPsiGistWorkForBinaryFiles() {
-    PsiFile objectClass =
-      JavaPsiFacade.getInstance(getProject()).findClass(Object.class.getName(), GlobalSearchScope.allScope(getProject()))
-        .getContainingFile();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ReadAction.runBlocking(() -> {
+      PsiFile objectClass =
+        JavaPsiFacade.getInstance(myFixture.getProject()).findClass(Object.class.getName(), GlobalSearchScope.allScope(myFixture.getProject()))
+          .getContainingFile();
 
-    assert GistManager.getInstance().newPsiFileGist(getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, p -> p.getName())
-      .getFileData(objectClass).equals("Object.class");
+      assert GistManager.getInstance().newPsiFileGist(myFixture.getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, p -> p.getName())
+        .getFileData(objectClass).equals("Object.class");
+    });
   }
 
+  @Test
   public void testPsiGistDoesNotLoadDocument() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFileGist<Integer> gist = psiGistReturningCalculationsCount();
     PsiFile file = myFixture.addFileToProject("a.xtt", "foo");
-    assert gist.getFileData(file) == 1;
+    ReadAction.runBlocking(() -> {
+      assert gist.getFileData(file) == 1;
 
-    GCWatcher.tracking(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file)).ensureCollected();
-    assert PsiDocumentManager.getInstance(getProject()).getCachedDocument(file) == null;
+      GCWatcher.tracking(PsiDocumentManager.getInstance(myFixture.getProject()).getCachedDocument(file)).ensureCollected();
+      assert PsiDocumentManager.getInstance(myFixture.getProject()).getCachedDocument(file) == null;
 
-    assert gist.getFileData(file) == 1;
-    assert PsiDocumentManager.getInstance(getProject()).getCachedDocument(file) == null;
+      assert gist.getFileData(file) == 1;
+      assert PsiDocumentManager.getInstance(myFixture.getProject()).getCachedDocument(file) == null;
+    });
   }
 
+  @Test
   public void testInvalidateDataWorksForNonPhysicalFiles() {
-    PsiFile psiFile = PsiFileFactory.getInstance(getProject()).createFileFromText("a.txt", PlainTextFileType.INSTANCE, "foo bar");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiFile psiFile = ReadAction.computeBlocking(() -> PsiFileFactory.getInstance(myFixture.getProject()).createFileFromText("a.txt", PlainTextFileType.INSTANCE, "foo bar"));
     VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
     VirtualFileGist<Integer> vfsGist = gistReturningCalculationsCount();
     PsiFileGist<Integer> psiGist = psiGistReturningCalculationsCount();
 
-    assert 1 == vfsGist.getFileData(getProject(), vFile);
-    assert 1 == psiGist.getFileData(psiFile) : psiGist.getFileData(psiFile);
+    ReadAction.runBlocking(() -> {
+      assert 1 == vfsGist.getFileData(myFixture.getProject(), vFile);
+    });
+    ReadAction.runBlocking(() -> {
+      assert 1 == psiGist.getFileData(psiFile) : psiGist.getFileData(psiFile);
+    });
 
     GistManager.getInstance().invalidateData();
-    assert 2 == vfsGist.getFileData(getProject(), vFile);
-    assert 2 == psiGist.getFileData(psiFile);
+    ReadAction.runBlocking(() -> {
+      assert 2 == vfsGist.getFileData(myFixture.getProject(), vFile);
+    });
+    ReadAction.runBlocking(() -> {
+      assert 2 == psiGist.getFileData(psiFile);
+    });
   }
 
+  @Test
   public void testDataIsRecalculatedWhenAncestorDirectoryChanges() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFileGist<Integer> gist = gistReturningCalculationsCount();
     VirtualFile file = fileWithContent("foo/bar/a.txt", "");
-    assert 1 == gist.getFileData(getProject(), file);
+    ReadAction.runBlocking(() -> {
+      assert 1 == gist.getFileData(myFixture.getProject(), file);
+    });
     WriteAction.run(() -> file.getParent().getParent().rename(this, "goo"));
-    assert 2 == gist.getFileData(getProject(), file);
+    ReadAction.runBlocking(() -> {
+      assert 2 == gist.getFileData(myFixture.getProject(), file);
+    });
   }
 
+  @Test
   public void testReindexCountDoesNotChangeOnReparse() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     int reindexCount = ((GistManagerImpl)GistManager.getInstance()).getReindexCount();
 
     PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("a.java", "package bar;");
 
     FileContentUtilCore.reparseFiles(file.getVirtualFile());
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    EdtTestUtil.runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
 
-    assertEquals("Reindex count must not change", reindexCount, ((GistManagerImpl)GistManager.getInstance()).getReindexCount());
+    assertEquals(reindexCount, ((GistManagerImpl)GistManager.getInstance()).getReindexCount(), "Reindex count must not change");
   }
 
   /* ========================= test infrastructure: ================================================== */
@@ -465,10 +581,10 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
     return gistOfFirstNCharsFromFile(Integer.MAX_VALUE, invocationCounter);
   }
 
-
   private @NotNull VirtualFileGist<String> gistOfFirstNCharsFromFile(int maxSize,
                                                                      @Nullable IntRef invocationCounter) {
-    String gistId = getTestName(true) + ".gistOfFirst" + maxSize + "CharsFromFile";
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    String gistId = myFixture.getTestName(true) + ".gistOfFirst" + maxSize + "CharsFromFile";
     int gistVersion = 0;
     VirtualFileGist.GistCalculator<String> calculator = (p, f) -> {
       final String content = LoadTextUtil.loadText(f).toString();
@@ -492,7 +608,8 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
 
   /** Gist calculator counts its invocations and return the number (starting from 1 on a first call) */
   private VirtualFileGist<Integer> gistReturningCalculationsCount() {
-    final String gistId = getTestName(true) + ".calculationsCount";
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String gistId = myFixture.getTestName(true) + ".calculationsCount";
     IntRef invocationsHolder = new IntRef(0);
     return GistManager.getInstance().newVirtualFileGist(
       gistId,
@@ -506,8 +623,9 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private PsiFileGist<Integer> psiGistReturningCalculationsCount() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     IntRef invocationsHolder = new IntRef(0);
-    String gistId = getTestName(true) + ".psiGistReturningCalculationsCount";
+    String gistId = myFixture.getTestName(true) + ".psiGistReturningCalculationsCount";
     return GistManager.getInstance().newPsiFileGist(
       gistId,
       /*version: */0,
@@ -519,22 +637,14 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
     );
   }
 
-
   private VirtualFile fileWithContent(@NotNull String fileName,
                                       @NotNull String fileContent) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     return myFixture.addFileToProject(fileName, fileContent).getVirtualFile();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      ((GistManagerImpl)GistManager.getInstance()).resetReindexCount();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    ((GistManagerImpl)GistManager.getInstance()).resetReindexCount();
   }
 }

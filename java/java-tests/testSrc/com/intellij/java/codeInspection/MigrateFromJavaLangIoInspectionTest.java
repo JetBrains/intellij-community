@@ -6,28 +6,37 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.MigrateFromJavaLangIoInspection;
 import com.intellij.java.JavaBundle;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class MigrateFromJavaLangIoInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK;
+@TestApplication
+public class MigrateFromJavaLangIoInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/migrateFromJavaLangIo/");
   }
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/migrateFromJavaLangIo/";
-  }
-
+  @Test
   public void testPrintlnResolved() {
     doTest("Replace with 'System.out.println()'");
   }
 
+  @Test
   public void testPrintArrayChar() {
     doNotFind(getFixAllMessage());
   }
@@ -37,23 +46,28 @@ public class MigrateFromJavaLangIoInspectionTest extends LightJavaCodeInsightFix
                                      JavaBundle.message("inspection.migrate.from.java.lang.io.name"));
   }
 
+  @Test
   public void testPartialQualifier() {
     doNotFind(
       getFixAllMessage());
   }
 
   private void doNotFind(String message) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     MigrateFromJavaLangIoInspection inspection = new MigrateFromJavaLangIoInspection();
     myFixture.enableInspections(inspection);
-    myFixture.testHighlighting(true, true, true, "before" + getTestName(false) + ".java");
+    myFixture.testHighlighting(true, true, true, "before" + myFixture.getTestName(false) + ".java");
     IntentionAction intention = myFixture.getAvailableIntention(message);
     assertNull(intention);
   }
 
   private void doTest(String message) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new MigrateFromJavaLangIoInspection());
-    myFixture.testHighlighting(true, true, true, "before" + getTestName(false) + ".java");
-    myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention(message));
-    myFixture.checkResultByFile("after" + getTestName(false) + ".java");
+    myFixture.testHighlighting(true, true, true, "before" + myFixture.getTestName(false) + ".java");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention(message));
+      myFixture.checkResultByFile("after" + myFixture.getTestName(false) + ".java");
+    });
   }
 }

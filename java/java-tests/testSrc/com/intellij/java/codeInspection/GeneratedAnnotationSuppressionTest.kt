@@ -2,22 +2,34 @@
 package com.intellij.java.codeInspection
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class GeneratedAnnotationSuppressionTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class GeneratedAnnotationSuppressionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun setUp() {
-    super.setUp()
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUp() {
     myFixture.addClass("package javax.annotation; public @interface Generated { String[] value(); }")
     myFixture.addClass("package javax.annotation.processing; public @interface Generated { String[] value(); }")
     myFixture.addClass("package jakarta.annotation; public @interface Generated { String[] value(); }")
     myFixture.enableInspections(UnusedDeclarationInspection(true))
   }
 
+  @Test
   fun testNotAnnotated() {
     doTest("public class <warning descr=\"Class 'MyController' is never used\">MyController</warning> {}")
   }
 
+  @Test
   fun testJavaxGenerated() {
     doTest("""
       @javax.annotation.Generated("Test")
@@ -25,6 +37,7 @@ class GeneratedAnnotationSuppressionTest : LightJavaCodeInsightFixtureTestCase()
     """.trimIndent())
   }
 
+  @Test
   fun testJavaxProcessingGenerated() {
     doTest("""
       @javax.annotation.processing.Generated("Test")
@@ -32,6 +45,7 @@ class GeneratedAnnotationSuppressionTest : LightJavaCodeInsightFixtureTestCase()
     """.trimIndent())
   }
 
+  @Test
   fun testJakartaGenerated() {
     doTest("""
       @jakarta.annotation.Generated("Test")

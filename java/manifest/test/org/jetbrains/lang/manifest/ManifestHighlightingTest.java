@@ -15,9 +15,21 @@
  */
 package org.jetbrains.lang.manifest;
 
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ManifestHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class ManifestHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testHeaders() {
     doTest(
       """
@@ -28,6 +40,7 @@ public class ManifestHighlightingTest extends LightJavaCodeInsightFixtureTestCas
         """);
   }
 
+  @Test
   public void testMainClass() {
     doTest(
       """
@@ -38,6 +51,7 @@ public class ManifestHighlightingTest extends LightJavaCodeInsightFixtureTestCas
         """);
   }
 
+  @Test
   public void testAgentHeaders() {
     doTest(
       """
@@ -49,6 +63,7 @@ public class ManifestHighlightingTest extends LightJavaCodeInsightFixtureTestCas
   }
 
   private void doTest(String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package pkg;\n\nclass C1 { public static void main(String... args) { } }");
     myFixture.addClass("package pkg;\n\nclass C2 { public static void premain() { } }");
     myFixture.addClass("package pkg;\n\nclass C3 { public static void agentmain() { } }");

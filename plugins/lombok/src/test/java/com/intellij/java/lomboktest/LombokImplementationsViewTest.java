@@ -3,24 +3,33 @@ package com.intellij.java.lomboktest;
 
 import com.intellij.codeInsight.ShowImplementationsTestUtil;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import de.plushnikov.intellij.plugin.LombokTestUtil;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class LombokImplementationsViewTest extends LightJavaCodeInsightFixtureTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR;
-  }
+@TestApplication
+public class LombokImplementationsViewTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
+  @Test
   public void testFromCompletionForBuilder() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA")
     final String text = """
       @lombok.Builder
@@ -33,15 +42,17 @@ public class LombokImplementationsViewTest extends LightJavaCodeInsightFixtureTe
     PsiFile file = myFixture.addFileToProject("Test.java", text);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-    PsiElement[] elements = ShowImplementationsTestUtil.getImplementations();
+    PsiElement[] elements = EdtTestUtil.runInEdtAndGet(() -> ShowImplementationsTestUtil.getImplementations());
     assertNotNull(elements);
     assertEquals(1, elements.length);
     assertTrue(elements[0] instanceof PsiField);
-    final String newText = ImplementationViewComponent.getNewText(elements[0]);
+    final String newText = ReadAction.computeBlocking(() -> ImplementationViewComponent.getNewText(elements[0]));
     assertEquals("    private int someInt;", newText);
   }
 
+  @Test
   public void testFromCompletionForData() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA")
     final String text = """
       @lombok.Data
@@ -54,11 +65,11 @@ public class LombokImplementationsViewTest extends LightJavaCodeInsightFixtureTe
     PsiFile file = myFixture.addFileToProject("Test.java", text);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-    PsiElement[] elements = ShowImplementationsTestUtil.getImplementations();
+    PsiElement[] elements = EdtTestUtil.runInEdtAndGet(() -> ShowImplementationsTestUtil.getImplementations());
     assertNotNull(elements);
     assertEquals(1, elements.length);
     assertTrue(elements[0] instanceof PsiField);
-    final String newText = ImplementationViewComponent.getNewText(elements[0]);
+    final String newText = ReadAction.computeBlocking(() -> ImplementationViewComponent.getNewText(elements[0]));
     assertEquals("    private String someString;", newText);
   }
 }

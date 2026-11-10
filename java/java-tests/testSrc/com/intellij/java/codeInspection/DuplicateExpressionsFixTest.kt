@@ -5,66 +5,97 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.duplicateExpressions.DuplicateExpressionsInspection
 import com.intellij.java.JavaBundle
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.ChooserInterceptor
 import com.intellij.ui.UiInterceptors
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.util.regex.Pattern
+import kotlin.time.Duration.Companion.minutes
 
-class DuplicateExpressionsFixTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class DuplicateExpressionsFixTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_11)
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = JavaTestUtil.getJavaTestDataPath() + "/inspection/duplicateExpressionsFix"
+  }
+
   val inspection = DuplicateExpressionsInspection()
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(inspection)
   }
 
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/duplicateExpressionsFix"
-
-  fun testIntroduceVariable() {
+  @Test
+  fun testIntroduceVariable(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     UiInterceptors.register(ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")))
     doTest(introduce("s.substring(s.length() - 9)"))
   }
-  fun testReuseVariable() = doTest(reuse("substr", "s.substring(s.length() - 9)"))
-  fun testReplaceOthers() = doTest(replace("substr", "s.substring(s.length() - 9)"))
-  fun testIntroduceVariableOtherVariableNotInScope() {
+  @Test
+  fun testReuseVariable(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest(reuse("substr", "s.substring(s.length() - 9)")) }
+  @Test
+  fun testReplaceOthers(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest(replace("substr", "s.substring(s.length() - 9)")) }
+  @Test
+  fun testIntroduceVariableOtherVariableNotInScope(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     UiInterceptors.register(ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")))
     doTest(introduce("s.substring(s.length() - 9)"))
   }
-  fun testVariableNotInScopeCantReplaceOthers() = doNegativeTest(replace("substr", "s.substring(s.length() - 9)"))
-  fun testIntroducePathVariableTwoPathOf() {
+  @Test
+  fun testVariableNotInScopeCantReplaceOthers(): Unit = doNegativeTest(replace("substr", "s.substring(s.length() - 9)"))
+  @Test
+  fun testIntroducePathVariableTwoPathOf(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     UiInterceptors.register(ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")))
     doTest(introduce("Path.of(fileName)"))
   }
-  fun testIntroducePathVariableTwoPathsGet() {
+  @Test
+  fun testIntroducePathVariableTwoPathsGet(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     UiInterceptors.register(ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")))
     doTest(introduce("Paths.get(fileName)"))
   }
-  fun testIntroducePathVariablePathOfPathsGet() {
+  @Test
+  fun testIntroducePathVariablePathOfPathsGet(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     UiInterceptors.register(ChooserInterceptor(null, Pattern.quote("Replace all 0 occurrences")))
     doTest(introduce("Paths.get(fileName)"))
   }
+  @Test
   fun testRandomUUIDIsNotReplaced() {
     doNegativeTest(replace("s1", "String.valueOf(UUID.randomUUID().getMostSignificantBits())"))
   }
 
-  private fun doTest(message: String, threshold: Int = 50) =
+  private suspend fun doTest(message: String, threshold: Int = 50) =
     withThreshold(threshold) {
-      myFixture.configureByFile("${getTestName(false)}.java")
-      myFixture.launchAction(myFixture.findSingleIntention(message))
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-      myFixture.checkResultByFile("${getTestName(false)}_after.java")
+      myFixture.configureByFile("${myFixture.getTestName(false)}.java")
+      withContext(Dispatchers.EDT) {
+        myFixture.launchAction(myFixture.findSingleIntention(message))
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+        myFixture.checkResultByFile("${myFixture.getTestName(false)}_after.java")
+      }
     }
 
   private fun doNegativeTest(message: String, threshold: Int = 50) =
     withThreshold(threshold) {
-      myFixture.configureByFile("${getTestName(false)}.java")
+      myFixture.configureByFile("${myFixture.getTestName(false)}.java")
       val intentions = myFixture.filterAvailableIntentions(message)
       assertEquals(emptyList<IntentionAction>(), intentions)
     }
 
-  private fun withThreshold(threshold: Int, block: () -> Unit) {
+  private inline fun withThreshold(threshold: Int, block: () -> Unit) {
     val oldThreshold = inspection.complexityThreshold
     try {
       inspection.complexityThreshold = threshold
@@ -73,10 +104,6 @@ class DuplicateExpressionsFixTest : LightJavaCodeInsightFixtureTestCase() {
     finally {
       inspection.complexityThreshold = oldThreshold
     }
-  }
-
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return JAVA_11
   }
 
   private fun introduce(expr: String) =

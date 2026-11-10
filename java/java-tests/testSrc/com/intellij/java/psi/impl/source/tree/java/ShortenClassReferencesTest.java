@@ -16,6 +16,7 @@
 package com.intellij.java.psi.impl.source.tree.java;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.CommonClassNames;
@@ -34,56 +35,89 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class ShortenClassReferencesTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(BASE_PATH);
+  }
+
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/shortenClassRefs";
 
-  @Override
-  protected String getTestDataPath() {
-    return BASE_PATH;
+  @Test
+  public void testSCR22368() {
+    doTest();
   }
-
-  public void testSCR22368() { doTest(); }
+  @Test
   public void testSCR22368_1() {
-    JavaPsiFacadeEx facade = JavaPsiFacadeEx.getInstanceEx(getProject());
-    PsiElementFactory factory = facade.getElementFactory();
-    PsiClass aClass = factory.createClass("X");
-    PsiMethod methodFromText = factory.createMethodFromText("""
-                                                              void method() {
-                                                                  IntelliJIDEARulezz<>
-                                                              }""", null);
-    PsiMethod method = (PsiMethod)aClass.add(methodFromText);
-    PsiCodeBlock body = method.getBody();
-    assertNotNull(body);
-    PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)body.getStatements()[0];
-    PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)declarationStatement.getFirstChild().getFirstChild();
-    PsiClass javaUtilListClass = facade.findClass(CommonClassNames.JAVA_UTIL_LIST);
-    assertNotNull(javaUtilListClass);
-    PsiElement resultingElement = referenceElement.bindToElement(javaUtilListClass);
-    assertEquals("List<>", resultingElement.getText());
-    assertEquals("""
-                   void method() {
-                       List<>
-                   }""", method.getText());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ReadAction.runBlocking(() -> {
+      JavaPsiFacadeEx facade = JavaPsiFacadeEx.getInstanceEx(myFixture.getProject());
+      PsiElementFactory factory = facade.getElementFactory();
+      PsiClass aClass = factory.createClass("X");
+      PsiMethod methodFromText = factory.createMethodFromText("""
+                                                                void method() {
+                                                                    IntelliJIDEARulezz<>
+                                                                }""", null);
+      PsiMethod method = (PsiMethod)aClass.add(methodFromText);
+      PsiCodeBlock body = method.getBody();
+      assertNotNull(body);
+      PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)body.getStatements()[0];
+      PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)declarationStatement.getFirstChild().getFirstChild();
+      PsiClass javaUtilListClass = facade.findClass(CommonClassNames.JAVA_UTIL_LIST);
+      assertNotNull(javaUtilListClass);
+      PsiElement resultingElement = referenceElement.bindToElement(javaUtilListClass);
+      assertEquals("List<>", resultingElement.getText());
+      assertEquals("""
+                     void method() {
+                         List<>
+                     }""", method.getText());
+    });
   }
 
-  public void testSCR37254() { doTest(); }
+  @Test
+  public void testSCR37254() {
+    doTest();
+  }
 
+  @Test
   public void testTypeAnnotatedRef() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile("pkg/TA.java");
     doTest();
-    for (PsiParameter parameter : PsiTreeUtil.findChildrenOfType(myFixture.getFile(), PsiParameter.class)) {
-      PsiTypeElement typeElement = parameter.getTypeElement();
-      assertNotNull(typeElement);
-      PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
-      assertNotNull(ref);
-      PsiAnnotation annotation = PsiTreeUtil.getChildOfType(ref, PsiAnnotation.class);
-      assertNull(annotation);
-    }
+    ReadAction.runBlocking(() -> {
+      for (PsiParameter parameter : PsiTreeUtil.findChildrenOfType(myFixture.getFile(), PsiParameter.class)) {
+        PsiTypeElement typeElement = parameter.getTypeElement();
+        assertNotNull(typeElement);
+        PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
+        assertNotNull(ref);
+        PsiAnnotation annotation = PsiTreeUtil.getChildOfType(ref, PsiAnnotation.class);
+        assertNull(annotation);
+      }
+    });
   }
 
+  @Test
   public void testOuterClassReferenceInInstanceof() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", "class Outer<T> {class Inner {} {boolean b = new Inner() instanceof Outer.Inner;}}\n" +
                                         "class Outer1 {class Inner {} {boolean b = new Inner() instanceof Outer1.Inner;}}");
     doShortenRefs();
@@ -91,7 +125,9 @@ public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestC
                           "class Outer1 {class Inner {} {boolean b = new Inner() instanceof Inner;}}");
   }
 
+  @Test
   public void testConflictingClassInSamePackage() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package p1; public class Outer{}");
     myFixture.addClass("package p2; public class Outer{}");
     myFixture.configureByText("a.java", "package p2; class Outer1 extends p1.Outer {}");
@@ -104,31 +140,37 @@ public class ShortenClassReferencesTest extends LightJavaCodeInsightFixtureTestC
                             class Outer1 extends Outer {}""");
   }
 
+  @Test
   public void testWhiteSpaceForMovedTypeAnnotations() {
-    myFixture.configureByFile(getTestName(false) + ".java");
-    PsiElement elementAtCaret = myFixture.getElementAtCaret();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
+    PsiElement elementAtCaret = ReadAction.computeBlocking(() -> myFixture.getElementAtCaret());
     assertTrue(elementAtCaret instanceof PsiParameter);
-    WriteCommandAction.runWriteCommandAction(getProject(),
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(),
                                              () -> {
-                                               PsiTypeElement typeElement = (PsiTypeElement)JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(((PsiParameter)elementAtCaret).getTypeElement());
+                                               PsiTypeElement typeElement = (PsiTypeElement)JavaCodeStyleManager.getInstance(myFixture.getProject()).shortenClassReferences(((PsiParameter)elementAtCaret).getTypeElement());
                                                assertTrue(typeElement.isValid());
                                                assertEquals("List<String>", typeElement.getText());
                                              });
 
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.java");
   }
 
   private void doTest() {
-    myFixture.configureByFile(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
     doShortenRefs();
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.java");
   }
 
   private void doShortenRefs() {
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> WriteCommandAction.runWriteCommandAction(null, () -> {
-      JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(myFixture.getFile());
-      PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    }), "", "");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> WriteCommandAction.runWriteCommandAction(null, () -> {
+        JavaCodeStyleManager.getInstance(myFixture.getProject()).shortenClassReferences(myFixture.getFile());
+        PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
+        PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+      }), "", "");
+    });
   }
 }

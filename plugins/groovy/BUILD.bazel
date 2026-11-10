@@ -261,6 +261,7 @@ jvm_library(
         "//libraries/junit6",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5/codeInsight",
+        "//libraries/kotlinx/coroutines/core",
     ],
 )
 ### auto-generated section `build intellij.groovy.tests` end

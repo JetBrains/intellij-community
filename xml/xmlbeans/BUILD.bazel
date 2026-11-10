@@ -103,11 +103,12 @@ jvm_library(
         "//platform/ide-core",
         "//platform/testFramework",
         "//xml/xmlbeans",
-        "//libraries/junit4",
         "//platform/structure-view-impl/plugin",
         "//platform/todo/plugin",
         "//java/plugin",
         "//aether-dependency-resolver/plugin",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
     ],
 )
 ### auto-generated section `build intellij.xml.xmlbeans.tests` end

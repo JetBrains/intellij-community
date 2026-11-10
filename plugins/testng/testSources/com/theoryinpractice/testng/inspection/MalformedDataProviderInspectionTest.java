@@ -17,53 +17,74 @@ package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class MalformedDataProviderInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class MalformedDataProviderInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testMissedDataProvider() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
 
     myFixture.testHighlighting(true, false, false, "MissedDataProvider.java");
   }
 
+  @Test
   public void testInstanceDataProviderFromForeignClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting(true, false, false, "InstanceDataProviderFromForeignClass.java");
   }
 
+  @Test
   public void testClassLevelDataProviderClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting(true, false, false, "ClassLevelDataProviderClass.java");
   }
 
+  @Test
   public void testAbstractClassProvider() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting(true, false, false, "AbstractClassProvider.java");
   }
 
+  @Test
   public void testInheritedClassLevelDataProviderClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting(true, false, false, "InheritedClassLevelDataProviderClass.java");
   }
 
+  @Test
   public void testSubclassInheritsDataProvider() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting(true, false, false, "testSubclassInheritsDataProvider.java");
   }
 
+  @Test
   public void testSubclassInheritsDataProviderQuickFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     List<IntentionAction> fixes = myFixture.getAllQuickFixes("testSubclassInheritsDataProviderFix.java");
-    IntentionAction fix = fixes.stream().filter(f -> f.getText().startsWith("Create method")).findFirst().orElseThrow();
+    IntentionAction fix = ReadAction.computeBlocking(() -> fixes.stream().filter(f -> f.getText().startsWith("Create method")).findFirst().orElseThrow());
     myFixture.launchAction(fix);
     myFixture.checkResultByFile("testSubclassInheritsDataProviderFix_after.java");
   }
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("testng") + "/testData/inspection/dataProvider/";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    codeInsightFixture.get().setTestDataPath(PluginPathManager.getPluginHomePath("testng") + "/testData/inspection/dataProvider/");
     myFixture.addClass("""
                          package org.testng.annotations;
                          public @interface DataProvider {

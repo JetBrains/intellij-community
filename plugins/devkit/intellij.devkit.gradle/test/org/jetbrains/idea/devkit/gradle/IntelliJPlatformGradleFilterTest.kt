@@ -3,30 +3,38 @@ package org.jetbrains.idea.devkit.gradle
 
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.ui.ConsoleViewContentType
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 
-class IntelliJPlatformGradleFilterTest : LightJavaCodeInsightFixtureTestCase() {
-
+@TestApplication
+class IntelliJPlatformGradleFilterTest {
+  @Test
   fun testFilterHighlightsPrefixAtStartOfLine() {
     val text = "[org.jetbrains.intellij.platform] Starting build"
     val result = applyFilter(text)
 
-    val item = assertOneElement(result.resultItems)
+    val item = assertThat(result.resultItems).singleElement().actual()
     assertHighlightingRange(item, text, 0, 33)
 
     assertEquals(ConsoleViewContentType.LOG_INFO_OUTPUT.attributes, item.highlightAttributes)
     assertEquals(Filter.NextAction.CONTINUE_FILTERING, result.nextAction)
   }
 
+  @Test
   fun testFilterHighlightsPrefixInMiddleOfLine() {
     val text = "12:34:56.789 [org.jetbrains.intellij.platform] Target IntelliJ Platform: 2026.1"
     val result = applyFilter(text)
 
-    val item = assertOneElement(result.resultItems)
+    val item = assertThat(result.resultItems).singleElement().actual()
     assertHighlightingRange(item, text, 13, 46)
     assertEquals(Filter.NextAction.CONTINUE_FILTERING, result.nextAction)
   }
 
+  @Test
   fun testFilterHighlightsMultiplePrefixes() {
     val text = "[org.jetbrains.intellij.platform] foo [org.jetbrains.intellij.platform] bar"
     val result = applyFilter(text)
@@ -36,6 +44,7 @@ class IntelliJPlatformGradleFilterTest : LightJavaCodeInsightFixtureTestCase() {
     assertHighlightingRange(result.resultItems[1], text, 38, 71)
   }
 
+  @Test
   fun testFilterIgnoresOtherLines() {
     val filter = IntelliJPlatformGradleFilter()
     val result = filter.applyFilter("BUILD SUCCESSFUL in 2s", 22)
@@ -53,7 +62,7 @@ class IntelliJPlatformGradleFilterTest : LightJavaCodeInsightFixtureTestCase() {
     val highlightedText = text.substring(resultItem.highlightStartOffset, resultItem.highlightEndOffset)
     val expectedHighlightedText = text.substring(expectedStartOffset, expectedEndOffset)
     val assertionMessage = "Highlighted '$highlightedText', but expected '$expectedHighlightedText'"
-    assertEquals(assertionMessage, expectedStartOffset, resultItem.highlightStartOffset)
-    assertEquals(assertionMessage, expectedEndOffset, resultItem.highlightEndOffset)
+    assertEquals(expectedStartOffset, resultItem.highlightStartOffset, assertionMessage)
+    assertEquals(expectedEndOffset, resultItem.highlightEndOffset, assertionMessage)
   }
 }

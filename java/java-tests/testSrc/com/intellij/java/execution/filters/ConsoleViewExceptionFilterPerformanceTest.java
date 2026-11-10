@@ -12,21 +12,28 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.StressTestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.DocumentUtil;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 @PerformanceUnitTest
-public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11;
-  }
+@StressTestApplication
+public class ConsoleViewExceptionFilterPerformanceTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_11);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
+  @Test
   public void testExceptionFilterPerformance() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String trace = """
       java.lang.RuntimeException
       \tat ExceptionTest.main(ExceptionTest.java:5)
@@ -47,8 +54,8 @@ public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsi
                          }""");
     Benchmark.newBenchmark("Many exceptions", () -> {
       // instantiate console with exception filters only to avoid failures due to Node/Ruby/etc dog-slow sloppy regex-based filters
-      TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getProject());
-      consoleBuilder.filters(ExceptionFilters.getFilters(GlobalSearchScope.allScope(getProject())));
+      TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(myFixture.getProject());
+      consoleBuilder.filters(ExceptionFilters.getFilters(GlobalSearchScope.allScope(myFixture.getProject())));
       ((TextConsoleBuilderImpl)consoleBuilder).setUsePredefinedMessageFilter(false);
       ConsoleViewImpl console = (ConsoleViewImpl)consoleBuilder.getConsole();
       console.getComponent(); // initConsoleEditor()

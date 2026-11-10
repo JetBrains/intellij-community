@@ -3,17 +3,26 @@
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestApplication
+public class ReplaceTypeWithWrongImportFixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testFixNewVariableAsArgument() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClasses();
     myFixture.configureByText("B.java",
                               """
@@ -52,7 +61,9 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
 
   }
 
+  @Test
   public void testFixVariableType() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClasses();
     myFixture.configureByText("B.java",
                               """
@@ -74,7 +85,9 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                             """);
   }
 
+  @Test
   public void testFixVariableTypeWithIncompatibleGenerics() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClasses();
     myFixture.addClass("""
                          package bar.p3;
@@ -95,10 +108,12 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                     B<? extends String> b = new A<caret><String>("1");
                                 }
                                 """);
-    assertEmpty(myFixture.filterAvailableIntentions("Replace a variable type to 'bar.p3.B<? extends java.lang.String>'"));
+    assertThat(myFixture.filterAvailableIntentions("Replace a variable type to 'bar.p3.B<? extends java.lang.String>'")).isNullOrEmpty();
   }
 
+  @Test
   public void testFixVariableTypeWithRawGeneric() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClasses();
     myFixture.configureByText("B.java",
                               """
@@ -120,7 +135,9 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                             """);
   }
 
+  @Test
   public void testFixVariableTypeFromMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClasses();
     myFixture.configureByText("B.java",
                               """
@@ -150,7 +167,9 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                             """);
   }
 
+  @Test
   public void testFixConstructorType() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClasses();
     myFixture.configureByText("B.java",
                               """
@@ -172,7 +191,9 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                             """);
   }
 
+  @Test
   public void testFixConstructorTypeClassNotInherited() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClasses();
     myFixture.addClass("""
                          package bar.p3;
@@ -194,10 +215,12 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                     B<? extends Object> b = new A<caret><String>("1");
                                 }
                                 """);
-    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'"));
+    assertThat(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'")).isNullOrEmpty();
   }
 
+  @Test
   public void testFixConstructorTypeClassNotAssignable() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClasses();
     myFixture.addClass("""
                          package bar.p3;
@@ -219,10 +242,12 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                     B<? extends Object> b = new A<caret><String>("1");
                                 }
                                 """);
-    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'"));
+    assertThat(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'")).isNullOrEmpty();
   }
 
+  @Test
   public void testFixConstructorTypeClassUnavailable() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClasses();
     myFixture.addClass("""
                          package bar.p3;
@@ -244,10 +269,12 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                     B<? extends Object> b = new A<caret><String>("1");
                                 }
                                 """);
-    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'"));
+    assertThat(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'")).isNullOrEmpty();
   }
 
+  @Test
   public void testFixConstructorTypeClassDefaultConstructor() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package bar.p3;
                          public class B <T>{}
@@ -286,7 +313,9 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                             }
                             """);  }
 
+  @Test
   public void testFixConstructorTypeClassInferredGenerics() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClasses();
     myFixture.configureByText("B.java",
                               """
@@ -308,7 +337,9 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                             }
                             """);  }
 
+  @Test
   public void testFixConstructorTypeWithIncompatibleConstructor() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClasses();
     myFixture.addClass("""
                          package bar.p3;
@@ -330,10 +361,12 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                     B<? extends Object> b = new A<caret><String>("1");
                                 }
                                 """);
-    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'"));
+    assertThat(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'")).isNullOrEmpty();
   }
 
+  @Test
   public void testFixConstructorTypeNoAvailableClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addClasses();
     myFixture.addClass("""
                          package bar.p3;
@@ -349,10 +382,11 @@ public class ReplaceTypeWithWrongImportFixTest extends LightJavaCodeInsightFixtu
                                     B<? extends Object> b = new A<caret><String>("1");
                                 }
                                 """);
-    assertEmpty(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'"));
+    assertThat(myFixture.filterAvailableIntentions("Replace a constructor call type with 'bar.p3.A<String>'")).isNullOrEmpty();
   }
 
   private void addClasses() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package bar.p2;
                          public class B <T>{}

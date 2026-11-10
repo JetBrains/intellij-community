@@ -18,23 +18,37 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 /**
  * @author Dmitry Avdeev
  */
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registerExtensionFix")
-public class RegisterExtensionFixProviderTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class RegisterExtensionFixProviderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/registerExtensionFix");
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package com.intellij.ui.components; public class JBList {}");
     myFixture.enableInspections(new UnusedDeclarationInspectionBase(true));
   }
 
+  @Test
   public void testCreateLocalInspectionMapping() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package com.intellij.codeInspection; public class LocalInspectionTool {} ");
 
     myFixture.testHighlighting("LocalInspection.java", "plugin.xml");
@@ -43,7 +57,9 @@ public class RegisterExtensionFixProviderTest extends LightJavaCodeInsightFixtur
     myFixture.checkResultByFile("plugin.xml", "localInspection.xml", true);
   }
 
+  @Test
   public void testCreateGlobalInspectionMapping() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package com.intellij.codeInspection; public class GlobalInspectionTool {} ");
 
     myFixture.testHighlighting("GlobalInspection.java", "plugin.xml");
@@ -52,7 +68,9 @@ public class RegisterExtensionFixProviderTest extends LightJavaCodeInsightFixtur
     myFixture.checkResultByFile("plugin.xml", "globalInspection.xml", true);
   }
 
+  @Test
   public void testCreateExtensionPointMapping() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("MyExtensionPoint.java",
                                "extensionPoint.xml",
                                "ExtensionPoint.java");
@@ -61,7 +79,9 @@ public class RegisterExtensionFixProviderTest extends LightJavaCodeInsightFixtur
     myFixture.checkResultByFile("extensionPoint.xml", "extensionPoint_after.xml", true);
   }
 
+  @Test
   public void testCreateExtensionPointMappingWithKnownRequiredAttribute() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package com.intellij.lang; public class LanguageExtensionPoint {}");
 
     myFixture.testHighlighting("MyLanguageExtensionPoint.java",
@@ -73,7 +93,9 @@ public class RegisterExtensionFixProviderTest extends LightJavaCodeInsightFixtur
                                 "extensionPointWithKnownRequiredAttribute_after.xml", true);
   }
 
+  @Test
   public void testCreateExtensionPointMappingWithKnownRequiredAttributeAndTag() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package com.intellij.lang; public class LanguageExtensionPoint {}");
 
     myFixture.testHighlighting("MyLanguageExtensionPoint.java",
@@ -85,7 +107,9 @@ public class RegisterExtensionFixProviderTest extends LightJavaCodeInsightFixtur
                                 "extensionPointWithKnownRequiredAttributeAndTag_after.xml", true);
   }
 
+  @Test
   public void testCreateExtensionPointMappingNoExtensionsTag() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("MyExtensionPoint.java",
                                "extensionPointNoExtensionsTag.xml",
                                "ExtensionPoint.java");
@@ -94,7 +118,9 @@ public class RegisterExtensionFixProviderTest extends LightJavaCodeInsightFixtur
     myFixture.checkResultByFile("extensionPointNoExtensionsTag.xml", "extensionPointNoExtensionsTag_after.xml", true);
   }
 
+  @Test
   public void testCreateExtensionPointMappingNoPluginId() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("MyExtensionPoint.java",
                                "extensionPointNoPluginId.xml",
                                "ExtensionPoint.java");
@@ -103,17 +129,14 @@ public class RegisterExtensionFixProviderTest extends LightJavaCodeInsightFixtur
     myFixture.checkResultByFile("extensionPointNoPluginId.xml", "extensionPointNoPluginId_after.xml", true);
   }
 
+  @Test
   public void testCreateExtensionPointQualifiedNameMapping() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("MyExtensionPoint.java",
                                "extensionPointQualifiedName.xml",
                                "ExtensionPoint.java");
     IntentionAction intention = myFixture.findSingleIntention("Register extension");
     myFixture.launchAction(intention);
     myFixture.checkResultByFile("extensionPointQualifiedName.xml", "extensionPointQualifiedName_after.xml", true);
-  }
-
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/registerExtensionFix";
   }
 }

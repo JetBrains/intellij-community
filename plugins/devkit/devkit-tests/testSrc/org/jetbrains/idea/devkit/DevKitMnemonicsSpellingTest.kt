@@ -5,10 +5,13 @@ import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.module.PluginModuleType
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 private val pluginProjectDescriptor: DefaultLightProjectDescriptor = object : DefaultLightProjectDescriptor() {
   override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
@@ -20,16 +23,21 @@ private val pluginProjectDescriptor: DefaultLightProjectDescriptor = object : De
   override fun getModuleTypeId(): String = PluginModuleType.ID
 }
 
-internal class DevKitMnemonicsSpellingTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+internal class DevKitMnemonicsSpellingTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(pluginProjectDescriptor)
+  }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = pluginProjectDescriptor
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
   @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(GrazieSpellCheckingInspection::class.java)
   }
 
+  @Test
   fun testMnemonics() {
     myFixture.configureByText("MyBundle.properties", """
       action.SwitchCoverage.text=Show Code Co_verage Data

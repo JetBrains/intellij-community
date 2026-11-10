@@ -19,53 +19,67 @@ import com.intellij.psi.PsiPackage
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import kotlin.test.assertIs
+import kotlin.time.Duration.Companion.minutes
 
-class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class JavaDocumentationTargetProviderTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  private fun collectTargets(): List<DocumentationTarget> {
-    val file = myFixture.file
-    val offset = myFixture.editor.caretModel.offset
-    return timeoutRunBlocking {
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  private suspend fun collectTargets(): List<DocumentationTarget> {
+    return readAction {
+      val file = myFixture.file
+      val offset = myFixture.editor.caretModel.offset
+      documentationTargets(file, offset)
+    }
+  }
+
+  private suspend fun singleJavaTarget(code: String): JavaDocumentationTarget? {
+    val targets = collectTargets()
+    assertEquals(1, targets.size, "`$code` has no target")
+    return targets.single() as? JavaDocumentationTarget
+  }
+
+  private suspend inline fun <reified T : PsiElement> assertTarget(vararg codeInClass: String, crossinline targetConsumer: (String, JavaDocumentationTarget, T) -> Unit) {
+    for (code in codeInClass) {
+      myFixture.configureByText("A.java", code)
+      val target = singleJavaTarget(code)
       readAction {
-        documentationTargets(file, offset)
+        assertNotNull(target, "null target: `$code`")
+        val element = target!!.element
+        assertIs<T>(element, "targeting $element: `$code`")
+        targetConsumer(code, target, element)
       }
     }
   }
 
-  private fun singleJavaTarget(code: String): JavaDocumentationTarget? {
-    val targets = collectTargets()
-    assertEquals("`$code` has no target", 1, targets.size)
-    return targets.single() as? JavaDocumentationTarget
-  }
-
-  private inline fun <reified T : PsiElement> assertTarget(vararg codeInClass: String, targetConsumer: (String, JavaDocumentationTarget, T) -> Unit) {
-    for (code in codeInClass) {
-      myFixture.configureByText("A.java", code)
-      val target = singleJavaTarget(code)
-      assertNotNull("null target: `$code`", target)
-      val element = target!!.element
-      assertIs<T>(element, "targeting $element: `$code`")
-      targetConsumer(code, target, element)
-    }
-  }
-
-  private inline fun <reified T : PsiElement> assertSingleTargetElement(vararg codeInClass: String): T {
+  private suspend inline fun <reified T : PsiElement> assertSingleTargetElement(vararg codeInClass: String): T {
     var last: T? = null
     for (code in codeInClass) {
       myFixture.configureByText("A.java", code)
       val element = singleJavaTarget(code)?.element
-      last = assertIs<T>(element, "`$code`: targeting $element.")
+      last = readAction { assertIs<T>(element, "`$code`: targeting $element.") }
     }
     return last!!
   }
 
-  private inline fun <reified T : PsiElement> assertSingleTargetElementWithPrefix(prefix: String, vararg code: String): T {
+  private suspend inline fun <reified T : PsiElement> assertSingleTargetElementWithPrefix(prefix: String, vararg code: String): T {
     return assertSingleTargetElement<T>(*code.map { "$prefix\n$it" }.toTypedArray())
   }
 
-  private fun assertNoTargetElement(vararg codeInClass: String) {
+  private suspend fun assertNoTargetElement(vararg codeInClass: String) {
     for (code in codeInClass) {
       myFixture.configureByText("A.java", code)
       val target = collectTargets().singleOrNull()
@@ -80,17 +94,18 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     }
   }
 
-  private inline fun <reified T : PsiElement> assertSingleTargetElementInFile(fileName: String, vararg code: String): T {
+  private suspend inline fun <reified T : PsiElement> assertSingleTargetElementInFile(fileName: String, vararg code: String): T {
     var last: T? = null
     for (text in code) {
       myFixture.configureByText(fileName, text)
       val element = singleJavaTarget(text)?.element
-      last = assertIs<T>(element, "`$text`: targeting $element.")
+      last = readAction { assertIs<T>(element, "`$text`: targeting $element.") }
     }
     return last!!
   }
 
-  fun testImportTarget() {
+  @Test
+  fun testImportTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val import = assertSingleTargetElementInFile<PsiPackage>(
       "Test.java",
       "import <caret>java.util.*;",
@@ -99,7 +114,8 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("java", import.qualifiedName)
   }
 
-  fun testImportTarget2() {
+  @Test
+  fun testImportTarget2(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val import = assertSingleTargetElementInFile<PsiPackage>(
       "Test.java",
       "import java.<caret>util.*;",
@@ -109,7 +125,8 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("java.util", import.qualifiedName)
   }
 
-  fun testMethodTarget() {
+  @Test
+  fun testMethodTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val method = assertSingleTargetElement<PsiMethod>(
       "public String <caret>foo(Object o) {}",
       "public String foo<caret>(Object o) {}",
@@ -119,7 +136,8 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("foo", method.name)
   }
 
-  fun testMethodCallTarget() {
+  @Test
+  fun testMethodCallTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val method = assertSingleTargetElement<PsiMethod>(
       "void foo(int a) {} void bar() { <caret>foo(); }",
       "void foo(int a) {} void bar() { foo<caret>(); }",
@@ -128,7 +146,8 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("foo", method.name)
   }
 
-  fun testMethodCallExpressionTarget() {
+  @Test
+  fun testMethodCallExpressionTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val callExpr = assertSingleTargetElement<PsiMethodCallExpression>(
       "void foo(int a) {} void bar() { foo(<caret>); }",
       "void foo(int a) {} void bar() { foo(12<caret>345); }",
@@ -138,13 +157,14 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("foo", callExpr.methodExpression.referenceName)
   }
 
-  fun testMethodForceCandidates() {
+  @Test
+  fun testMethodForceCandidates(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertTarget<PsiMethodCallExpression>(
       "void foo() { new StringBuilder().append(<caret>); }",
       "void foo() { new StringBuilder().append(1<caret>); }",
       "void foo() { new StringBuilder().append(tr<caret>ue); }",
     ) { code, target, callExpr ->
-      assertTrue("candidates not shown: `$code`", target.showAllCandidates)
+      assertTrue(target.showAllCandidates, "candidates not shown: `$code`")
       assertEquals("append", callExpr.methodExpression.referenceName)
     }
 
@@ -152,7 +172,7 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
       "void foo() { new StringBuilder().app<caret>end(); }",
       "void foo() { new StringBuilder().append<caret>(); }",
     ) { code, target, callExpr ->
-      assertFalse("candidates shown for $code", target.showAllCandidates)
+      assertFalse(target.showAllCandidates, "candidates shown for $code")
       assertEquals("append", callExpr.methodExpression.referenceName)
     }
 
@@ -160,30 +180,32 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
       "void foo() { new StringBuilder().app<caret>end(1); }",
       "void foo() { new StringBuilder().append<caret>(1); }",
     ) { code, target, method ->
-      assertFalse("candidates shown for $code", target.showAllCandidates)
+      assertFalse(target.showAllCandidates, "candidates shown for $code")
       assertEquals("append", method.name)
     }
   }
 
-  fun testNewExpressionCandidates() {
+  @Test
+  fun testNewExpressionCandidates(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertTarget<PsiNewExpression>(
       "void foo() { new StringBuilder(<caret>).append(1); }",
       "void foo() { new StringBuilder(<caret> }",
       "void foo() { new StringBuilder<caret>",
     ) { code, target, newExpr ->
-      assertTrue("candidates not shown: `$code`", target.showAllCandidates)
+      assertTrue(target.showAllCandidates, "candidates not shown: `$code`")
       assertEquals("java.lang.StringBuilder", newExpr.classReference?.qualifiedName)
     }
 
     assertTarget<PsiMethod>(
       "void foo() { new String<caret>Builder().append(1); }",
     ) { code, target, newExpr ->
-      assertFalse("candidates shown: `$code`", target.showAllCandidates)
+      assertFalse(target.showAllCandidates, "candidates shown: `$code`")
       assertEquals("java.lang.StringBuilder", newExpr.containingClass?.qualifiedName)
     }
   }
 
-  fun testAnnotationTarget() {
+  @Test
+  fun testAnnotationTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val ann = assertSingleTargetElement<PsiClass>(
       "public @D<caret>eprecated String foo(Object o) {}",
       "public @Deprecated<caret> String foo(Object o) {}",
@@ -191,7 +213,8 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("java.lang.Deprecated", ann.qualifiedName)
   }
 
-  fun testNameValuePairTarget() {
+  @Test
+  fun testNameValuePairTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val method = assertSingleTargetElementWithPrefix<PsiAnnotationMethod>(
       """
       @Target(value={METHOD})
@@ -202,7 +225,8 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("forRemoval", method.name)
   }
 
-  fun testReturnTypeTarget() {
+  @Test
+  fun testReturnTypeTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val cls = assertSingleTargetElement<PsiClass>(
       "public <caret>String foo(Object o) {}",
       "public Str<caret>ing foo(Object o) {}",
@@ -211,7 +235,8 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("java.lang.String", cls.qualifiedName)
   }
 
-  fun testParameterTypeTarget() {
+  @Test
+  fun testParameterTypeTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val cls = assertSingleTargetElement<PsiClass>(
       "public String foo(<caret>Object o) {}",
       "public String foo(Obj<caret>ect o) {}",
@@ -220,7 +245,8 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("java.lang.Object", cls.qualifiedName)
   }
 
-  fun testParameterNameTarget() {
+  @Test
+  fun testParameterNameTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val parameter = assertSingleTargetElement<PsiParameter>(
       "public String foo(Object <caret>bar) {}",
       "public String foo(Object b<caret>ar) {}",
@@ -230,14 +256,16 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("bar", parameter.name)
   }
 
-  fun testJavadocParameterTarget() {
+  @Test
+  fun testJavadocParameterTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val parameter = assertSingleTargetElement<PsiParameter>(
       "/** @param <caret>a description */ void foo(String a) {}",
     )
     assertEquals("a", parameter.name)
   }
 
-  fun testClassTarget() {
+  @Test
+  fun testClassTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val cls = assertSingleTargetElementInFile<PsiClass>(
       "A.java",
       "class <caret>A {}",
@@ -247,23 +275,26 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("A", cls.name)
   }
 
-  fun testNewExpressionTarget() {
+  @Test
+  fun testNewExpressionTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertSingleTargetElement<PsiNewExpression>(
       "class A { StringBuilder s = new StringBuilder(<caret>); }",
       "class A { StringBuilder s = new StringBuilder(12<caret>3); }",
     )
   }
 
-  fun testFieldTarget() {
+  @Test
+  fun testFieldTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val field = assertSingleTargetElement<PsiField>(
       "int <caret>xx;",
       "int x<caret>x;",
       "int xx<caret>;",
     )
-    assertEquals("xx", field.name)
+    readAction { assertEquals("xx", field.name) }
   }
 
-  fun testLocalVariableTarget() {
+  @Test
+  fun testLocalVariableTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val variable = assertSingleTargetElement<PsiLocalVariable>(
       "void foo() { var <caret>x = 1; }",
       "void foo() { var x = 1; <caret>x.hashCode(); }",
@@ -271,15 +302,17 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("x", variable.name)
   }
 
-  fun testTypeParameterTarget() {
+  @Test
+  fun testTypeParameterTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val tp = assertSingleTargetElementInFile<PsiTypeParameter>(
       "A.java",
       "class A<<caret>T> {}",
     )
-    assertEquals("T", tp.name)
+    readAction { assertEquals("T", tp.name) }
   }
 
-  fun testAnnotationMethodTarget() {
+  @Test
+  fun testAnnotationMethodTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val m = assertSingleTargetElementInFile<PsiAnnotationMethod>(
       "Ann.java",
       "@interface Ann { int <caret>value(); }",
@@ -288,24 +321,27 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("value", m.name)
   }
 
-  fun testEnumConstantTarget() {
+  @Test
+  fun testEnumConstantTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val constant = assertSingleTargetElementInFile<PsiEnumConstant>(
       "E.java",
       "enum E { <caret>RED; }",
     )
-    assertEquals("RED", constant.name)
+    readAction { assertEquals("RED", constant.name) }
   }
 
-  fun testEnumConstantInitializerTarget() {
+  @Test
+  fun testEnumConstantInitializerTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val init = assertSingleTargetElementInFile<PsiEnumConstant>(
       "E.java",
       "enum E { <caret>X{}; }",
       "enum E { X<caret>{}; }",
     )
-    assertEquals("X", init.name)
+    readAction { assertEquals("X", init.name) }
   }
 
-  fun testAnonymousClassTarget() {
+  @Test
+  fun testAnonymousClassTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val anon = assertSingleTargetElement<PsiClass>(
       "Runnable r = new Runn<caret>able() { public void run(){} };",
       "Runnable r = new Runnable<caret>() { public void run(){} };",
@@ -313,7 +349,8 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("java.lang.Runnable", anon.qualifiedName)
   }
 
-  fun testModuleTarget() {
+  @Test
+  fun testModuleTarget(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val module = assertSingleTargetElementInFile<PsiJavaModule>(
       "module-info.java",
       "module <caret>m { }",
@@ -323,7 +360,8 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("m", module.name)
   }
 
-  fun testClassAccessExpression() {
+  @Test
+  fun testClassAccessExpression(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val clazz = assertSingleTargetElement<PsiClass>(
       "class A { public A(String s) {} } void main() { new A(<caret>String.class.getName()); }",
       "class A { public A(String s) {} } void main() { new A(String<caret>.class.getName()); }",
@@ -331,28 +369,32 @@ class JavaDocumentationTargetProviderTest : LightJavaCodeInsightFixtureTestCase(
     assertEquals("java.lang.String", clazz.qualifiedName)
   }
 
-  fun testPackage() {
+  @Test
+  fun testPackage(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val pack = assertSingleTargetElement<PsiPackage>(
       "package java.ut<caret>il;",
     )
     assertEquals("java.util", pack.qualifiedName)
   }
 
-  fun testPackageInfo() {
+  @Test
+  fun testPackageInfo(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertSingleTargetElementInFile<PsiPackage>(
       "package-info.java",
       "/** test <caret> test */ package foo.bar;", // IJPL-32515
     )
   }
 
-  fun testSubPackage() {
+  @Test
+  fun testSubPackage(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val pack = assertSingleTargetElement<PsiPackage>(
       "package ja<caret>va.util;",
     )
     assertEquals("java", pack.qualifiedName)
   }
 
-  fun testNoTargets() {
+  @Test
+  fun testNoTargets(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertNoTargetElement(
       "class A { <caret> }",
       "void foo() <caret>{}",

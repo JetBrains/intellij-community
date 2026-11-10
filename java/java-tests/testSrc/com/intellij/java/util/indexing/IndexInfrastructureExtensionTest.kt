@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.util.indexing
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.DumbService
@@ -8,7 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.testFramework.loadExtensionWithText
 import com.intellij.psi.stubs.StubIndexKey
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.FileBasedIndexImpl
@@ -18,32 +22,46 @@ import com.intellij.util.indexing.FileBasedIndexTumbler
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.UpdatableIndex
-import org.junit.Assert
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.util.SortedMap
 import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
+import kotlin.time.Duration.Companion.minutes
 
-class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
-  fun `test infrastructure extension drops all indexes when it requires invalidation`() {
+@TestApplication
+class IndexInfrastructureExtensionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
+  fun `test infrastructure extension drops all indexes when it requires invalidation`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val text =
       "<fileBasedIndexInfrastructureExtension implementation=\"" + TestIndexInfrastructureExtensionRequiringIndexRebuild::class.java.name + "\"/>"
-    Disposer.register(testRootDisposable, loadExtensionWithText(text))
+    withContext(Dispatchers.EDT) { Disposer.register(myFixture.testRootDisposable, loadExtensionWithText(text)) }
 
     //[fileName:String -> lastModificationTimestampMs:Long]
     val before = listFilesInIndexFolder()
 
     val switcher = FileBasedIndexTumbler("IndexInfrastructureExtensionTest")
-    switcher.turnOff()
-    switcher.turnOn()
+    withContext(Dispatchers.EDT) {
+      switcher.turnOff()
+      switcher.turnOn()
+    }
 
     //We need to wait for indexes to re-initialize, and also to fill in with data, since some files will be re-created
     // only on demand:
     val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
     fileBasedIndex.waitUntilIndicesAreInitialized()
     //TODO RC: find better way to wait for indexes to re-initialize
-    DumbService.getInstance(project).waitForSmartMode(10_000)
+    DumbService.getInstance(myFixture.project).waitForSmartMode(10_000)
 
     val after = listFilesInIndexFolder()
 
@@ -51,15 +69,15 @@ class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
 
     val containsExtensionCaches = after.keys.any { it.endsWith(testInfraExtensionFileSuffix) }
 
-    Assert.assertTrue(
+    assertTrue(
+      unmatchedEntries.isEmpty(),
       "On index re-initialization, TestIndexInfrastructureExtensionRequiringIndexRebuild demands all index files to be re-created, " +
-      "hence it must be the same files, only with newer timestamps, but: \n$unmatchedEntries",
-      unmatchedEntries.isEmpty()
+      "hence it must be the same files, only with newer timestamps, but: \n$unmatchedEntries"
     )
-    Assert.assertTrue(
+    assertTrue(
+      containsExtensionCaches,
       "On re-initialization, TestIndexInfrastructureExtensionRequiringIndexRebuild must be called, " +
-      "and it must create files with [$testInfraExtensionFileSuffix] suffix",
-      containsExtensionCaches
+      "and it must create files with [$testInfraExtensionFileSuffix] suffix"
     )
   }
 

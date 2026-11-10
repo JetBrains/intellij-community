@@ -5,24 +5,33 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public final class UnsupportedVersionHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
-  }
-  
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public final class UnsupportedVersionHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_17);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testPatternInSwitch() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     //noinspection UsagesOfObsoleteApi
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_17_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_17_PREVIEW, () -> {
       doTestPatternInSwitch();
     });
   }
 
   private void doTestPatternInSwitch() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       class X {
         void test(Object obj) {
@@ -39,7 +48,7 @@ public final class UnsupportedVersionHighlightingTest extends LightJavaCodeInsig
     myFixture.checkHighlighting();
     JavaParameters javaParameters = new JavaParameters();
     try {
-      javaParameters.configureByModule(getModule(), JavaParameters.CLASSES_ONLY);
+      javaParameters.configureByModule(myFixture.getModule(), JavaParameters.CLASSES_ONLY);
     }
     catch (CantRunException e) {
       throw new RuntimeException(e);

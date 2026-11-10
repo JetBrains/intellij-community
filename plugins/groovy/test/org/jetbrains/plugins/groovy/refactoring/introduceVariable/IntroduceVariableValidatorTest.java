@@ -16,13 +16,17 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
-import junit.framework.Assert;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -33,32 +37,77 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyVariableValidator;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class IntroduceVariableValidatorTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "groovy/refactoring/introduceVariableValidator/";
+@TestApplication
+public class IntroduceVariableValidatorTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "groovy/refactoring/introduceVariableValidator/");
   }
 
-  public void testAll1() { doTest(); }
-  public void testAll2() { doTest(); }
-  public void testClass1() { doTest(); }
-  public void testClass2() { doTest(); }
-  public void testE() { doTest(); }
-  public void testFile1() { doTest(); }
-  public void testFile2() { doTest(); }
-  public void testLoop1() { doTest(); }
-  public void testLoop2() { doTest(); }
-  public void testLoop3() { doTest(); }
-  public void testSimple() { doTest(); }
+  @Test
+  public void testAll1() {
+    doTest();
+  }
+  @Test
+  public void testAll2() {
+    doTest();
+  }
+  @Test
+  public void testClass1() {
+    doTest();
+  }
+  @Test
+  public void testClass2() {
+    doTest();
+  }
+  @Test
+  public void testE() {
+    doTest();
+  }
+  @Test
+  public void testFile1() {
+    doTest();
+  }
+  @Test
+  public void testFile2() {
+    doTest();
+  }
+  @Test
+  public void testLoop1() {
+    doTest();
+  }
+  @Test
+  public void testLoop2() {
+    doTest();
+  }
+  @Test
+  public void testLoop3() {
+    doTest();
+  }
+  @Test
+  public void testSimple() {
+    doTest();
+  }
 
   protected static final String ALL_MARKER = "<all>";
   protected boolean replaceAllOccurences = false;
 
   private String processFile(String fileText) throws IncorrectOperationException, InvalidDataException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
     if (startOffset < 0) {
       startOffset = fileText.indexOf(ALL_MARKER);
@@ -74,25 +123,28 @@ public class IntroduceVariableValidatorTest extends LightJavaCodeInsightFixtureT
 
     Editor myEditor = myFixture.getEditor();
 
-    myEditor.getSelectionModel().setSelection(startOffset, endOffset);
+    int selectionStart = startOffset;
+    EdtTestUtil.runInEdtAndWait(() -> myEditor.getSelectionModel().setSelection(selectionStart, endOffset));
 
-    GrExpression selectedExpr = PsiImplUtil.findElementInRange(myFixture.getFile(), startOffset, endOffset, GrExpression.class);
+    return ReadAction.computeBlocking(() -> {
+      GrExpression selectedExpr = PsiImplUtil.findElementInRange(myFixture.getFile(), selectionStart, endOffset, GrExpression.class);
 
-    Assert.assertNotNull("Selected expression reference points to null", selectedExpr);
+      assertNotNull(selectedExpr, "Selected expression reference points to null");
 
-    final PsiElement tempContainer = GrIntroduceHandlerBase.getEnclosingContainer(selectedExpr);
-    Assert.assertTrue(tempContainer instanceof GroovyPsiElement);
+      final PsiElement tempContainer = GrIntroduceHandlerBase.getEnclosingContainer(selectedExpr);
+      assertTrue(tempContainer instanceof GroovyPsiElement);
 
-    PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
-    String varName = "preved";
-    GroovyVariableValidator validator =
-      new GroovyVariableValidator(new GrIntroduceContextImpl(getProject(), myEditor, selectedExpr, null, null, occurences, tempContainer));
-    return validator.isOKTest(varName, replaceAllOccurences);
+      PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
+      String varName = "preved";
+      GroovyVariableValidator validator =
+        new GroovyVariableValidator(new GrIntroduceContextImpl(myFixture.getProject(), myEditor, selectedExpr, null, null, occurences, tempContainer));
+      return validator.isOKTest(varName, replaceAllOccurences);
+    });
   }
 
-
   public void doTest() {
-    final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final List<String> data = TestUtils.readInput(myFixture.getTestDataPath() + myFixture.getTestName(true) + ".test");
     assertEquals(StringUtil.trimEnd(data.get(1), "\n"), processFile(data.get(0)));
   }
 

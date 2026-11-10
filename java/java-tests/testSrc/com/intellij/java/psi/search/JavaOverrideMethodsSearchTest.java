@@ -21,35 +21,45 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaOverrideMethodsSearchTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+@TestApplication
+public class JavaOverrideMethodsSearchTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testSearchHonorsLocalScope() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package pkg; public interface I {void m();}");
 
     PsiFileImpl anotherFile = (PsiFileImpl)myFixture.addFileToProject("pkg2/Another.java", "class Another implements pkg.I {public void m() {}}");
 
     myFixture.configureByText("a.java", "class Foo implements pkg.I {public void m<caret>(){}}");
 
-    PsiMethod method = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethod.class);
-    PsiMethod superMethod = method.findDeepestSuperMethods()[0];
+    ReadAction.runBlocking(() -> {
+      PsiMethod method = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset()), PsiMethod.class);
+      PsiMethod superMethod = method.findDeepestSuperMethods()[0];
 
-    assertNull(anotherFile.derefStub());
-    assertFalse(anotherFile.isContentsLoaded());
+      assertNull(anotherFile.derefStub());
+      assertFalse(anotherFile.isContentsLoaded());
 
-    assertOneElement(
-      ReadAction.computeBlocking(() -> OverridingMethodsSearch.search(superMethod, new LocalSearchScope(getFile()), true).findAll()));
+      assertThat(OverridingMethodsSearch.search(superMethod, new LocalSearchScope(myFixture.getFile()), true).findAll()).hasSize(1);
 
-    // check we didn't go to another file during search
-    assertNull(anotherFile.derefStub());
-    assertFalse(anotherFile.isContentsLoaded());
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+      // check we didn't go to another file during search
+      assertNull(anotherFile.derefStub());
+      assertFalse(anotherFile.isContentsLoaded());
+    });
   }
 }

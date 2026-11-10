@@ -3,13 +3,29 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiMethodImpl;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class PurityInferenceFromSourceTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void test_getter() {
     assertTransparent("""
                  Object getField() {
@@ -17,6 +33,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                  }""");
   }
 
+  @Test
   public void test_setter() {
     assertImpure("""
                    void setField(String s) {
@@ -24,6 +41,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                    }""");
   }
 
+  @Test
   public void test_unknown() {
     assertImpure("""
                    int random() {
@@ -32,6 +50,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                    }""");
   }
 
+  @Test
   public void test_print() {
     assertImpure("""
                    int random() {
@@ -40,6 +59,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                    }""");
   }
 
+  @Test
   public void test_local_var_assignment() {
     assertTransparent("""
                  int random(boolean b) {
@@ -53,6 +73,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                  }""");
   }
 
+  @Test
   public void test_local_array_var_assignment() {
     assertPure("""
                  int[] randomArray() {
@@ -63,6 +84,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                  int random() { return 2; }""");
   }
 
+  @Test
   public void test_field_array_assignment() {
     assertImpure("""
                    int[] randomArray() {
@@ -73,6 +95,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                    int[] i = new int[0];""");
   }
 
+  @Test
   public void test_field_array_assignment_as_local_var() {
     assertImpure("""
                    int[] randomArray() {
@@ -84,6 +107,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                    int[] i = new int[0];""");
   }
 
+  @Test
   public void test_use_explicit_pure_contract() {
     assertPure("""
                  int method() {
@@ -93,6 +117,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                  """);
   }
 
+  @Test
   public void test_don_t_analyze_more_than_one_call() {
     assertImpure("""
                    int method() {
@@ -103,12 +128,14 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                    """);
   }
 
+  @Test
   public void test_empty_constructor() {
     assertTransparent("""
                  public Foo() {
                  }""");
   }
 
+  @Test
   public void test_field_writes() {
     assertTransparent("""
                  int x;
@@ -120,6 +147,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                  }""");
   }
 
+  @Test
   public void test_constructor_calling() {
     // IDEA-192251
     assertPure("""
@@ -135,6 +163,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                  private int getConstant() {return 42;}""");
   }
 
+  @Test
   public void test_delegating_field_writes() {
     assertPure("""
                  int x;
@@ -150,6 +179,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                  }""");
   }
 
+  @Test
   public void test_delegating_unknown_writes() {
     assertImpure("""
                    int x;
@@ -165,6 +195,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                    }""");
   }
 
+  @Test
   public void test_static_field_writes() {
     assertImpure("""
                    int x;
@@ -176,6 +207,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                    }""");
   }
 
+  @Test
   public void test_calling_constructor_with_side_effects() {
     assertImpure("""
                     Object newExample() {
@@ -189,6 +221,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                     }""");
   }
 
+  @Test
   public void test_anonymous_class_initializer() {
     assertImpure("""
                     Object smth() {
@@ -200,6 +233,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                     interface I {}""");
   }
 
+  @Test
   public void test_simple_anonymous_class_creation() {
     assertPure("""
                   Object smth() {
@@ -209,6 +243,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                   interface I {}""");
   }
 
+  @Test
   public void test_anonymous_class_with_constructor_side_effect() {
     assertImpure("""
                     Object smth() {
@@ -222,6 +257,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                     }""");
   }
 
+  @Test
   public void test_anonymous_class_with_arguments() {
     assertImpure("""
                     Object smth() {
@@ -233,6 +269,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                     }""");
   }
 
+  @Test
   public void test_class_with_impure_initializer_creation() {
     assertImpure("""
                     Object smth() {
@@ -247,6 +284,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                     }""");
   }
 
+  @Test
   public void test_class_with_impure_static_initializer_creation() {
     assertPure("""
                   Object smth() {
@@ -261,6 +299,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                   }""");
   }
 
+  @Test
   public void test_class_with_pure_field_initializers() {
     assertPure("""
                   Object smth() {
@@ -273,6 +312,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                   }""");
   }
 
+  @Test
   public void test_class_with_impure_field_initializers() {
     assertImpure("""
                     Object smth() {
@@ -285,6 +325,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                     }""");
   }
 
+  @Test
   public void test_class_with_superclass() {
     assertImpure("""
                     Object smth() {
@@ -297,7 +338,9 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                     }""");
   }
 
+  @Test
   public void test_delegate_to_a_method_calling_local_class_constructor() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
       class Another {
         static Object method() {
@@ -313,16 +356,18 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                 }""");
   }
 
+  @Test
   public void test_increment_field() {
     assertMutatesThis("""   
        int x = 0;
-   
+ 
        private void increment() {
            x++;
        }
        """);
   }
 
+  @Test
   public void test_delegate_to_setter() {
     assertMutatesThis("""
        int x = 0;
@@ -336,6 +381,7 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
        }""");
   }
 
+  @Test
   public void test_setter_in_ctor() {
     assertPure("""
         int x = 0;
@@ -343,30 +389,33 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
         public Foo() {
             setX(2);
         }
-  
+
         private void setX(int x) {
             this.x = x;
         }""");
   }
 
+  @Test
   public void test_plain_field_read() {
     assertTransparent("""
       int x;
-      
+    
       int get() {
         return x;
       }""");
   }
 
+  @Test
   public void test_volatile_field_read() {
     assertImpure("""
       volatile int x;
-      
+    
       int get() {
         return x;
       }""");
   }
 
+  @Test
   public void test_assertNotNull_is_pure() {
     assertPure("""
                  static void assertNotNull(Object val) {
@@ -374,17 +423,20 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
                  }""");
   }
 
+  @Test
   public void test_recursive_factorial() {
     assertPure("int factorial(int n) { return n == 1 ? 1 : factorial(n - 1) * n;}");
   }
 
+  @Test
   public void test_calling_static_method_with_the_same_signature_in_the_subclass() {
-    RecursionManager.assertOnMissedCache(getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    RecursionManager.assertOnMissedCache(myFixture.getTestRootDisposable());
     PsiClass clazz = myFixture.addClass("""
       class Super {
         static void foo() { Sub.foo(); }
       }
-      
+    
       class Sub extends Super {
         static void foo() {
           unknown();
@@ -392,11 +444,13 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
         }
       }
       """);
-    assertFalse(JavaMethodContractUtil.isPure(clazz.getMethods()[0]));
+    ReadAction.runBlocking(() -> assertFalse(JavaMethodContractUtil.isPure(clazz.getMethods()[0])));
   }
 
+  @Test
   public void test_super_static_method_does_not_affect_purity() {
-    RecursionManager.assertOnMissedCache(getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    RecursionManager.assertOnMissedCache(myFixture.getTestRootDisposable());
     PsiClass clazz = myFixture.addClass("""
       class Sub extends Super {
         static void foo() {
@@ -404,39 +458,45 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
           unknown2();
         }
       }
-      
+    
       class Super {
         static void foo() { }
       }
       """);
-    assertFalse(JavaMethodContractUtil.isPure(clazz.getMethods()[0]));
-    assertTrue(JavaMethodContractUtil.isPure(clazz.getSuperClass().getMethods()[0]));
+    ReadAction.runBlocking(() -> {
+      assertFalse(JavaMethodContractUtil.isPure(clazz.getMethods()[0]));
+      assertTrue(JavaMethodContractUtil.isPure(clazz.getSuperClass().getMethods()[0]));
+    });
   }
 
+  @Test
   public void test_enum_method() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass clazz = myFixture.addClass("""
       enum X {
         A;
-      
+    
         Iterable<?> onXyz() {
           return java.util.Collections.emptyList();
         }
       }
       """);
-    assertTrue(JavaMethodContractUtil.isPure(clazz.getMethods()[0]));
+    ReadAction.runBlocking(() -> assertTrue(JavaMethodContractUtil.isPure(clazz.getMethods()[0])));
   }
 
+  @Test
   public void test_enum_method_with_subclass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass clazz = myFixture.addClass("""
       enum X {
         A, B {};
-      
+    
         Iterable<?> onXyz() {
           return java.util.Collections.emptyList();
         }
       }
       """);
-    assertFalse(JavaMethodContractUtil.isPure(clazz.getMethods()[0]));
+    ReadAction.runBlocking(() -> assertFalse(JavaMethodContractUtil.isPure(clazz.getMethods()[0])));
   }
 
   private void assertPure(String classBody) {
@@ -456,10 +516,13 @@ public class PurityInferenceFromSourceTest extends LightJavaCodeInsightFixtureTe
   }
 
   private void assertMutationSignature(String classBody, MutationSignature expected) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass clazz = myFixture.addClass("final class Foo { " + classBody + " }");
-    assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
-    MutationSignature signature = JavaSourceInference.inferMutationSignature((PsiMethodImpl)clazz.getMethods()[0]);
-    assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
-    assertEquals(expected, signature);
+    ReadAction.runBlocking(() -> {
+      assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
+      MutationSignature signature = JavaSourceInference.inferMutationSignature((PsiMethodImpl)clazz.getMethods()[0]);
+      assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
+      assertEquals(expected, signature);
+    });
   }
 }

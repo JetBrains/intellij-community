@@ -10,19 +10,26 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class FieldCanBeLocalTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/fieldCanBeLocal";
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+@TestApplication
+public class FieldCanBeLocalTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/fieldCanBeLocal");
   }
 
   private void doTest() {
@@ -30,44 +37,64 @@ public class FieldCanBeLocalTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void doTest(InspectionProfileEntry inspection) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(inspection);
-    myFixture.testHighlighting(getTestName(false) + ".java");
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
   }
 
+  @Test
   public void testFieldWrittenInAnonymousClassFieldInitializer() { doTest(); }
+  @Test
   public void testFieldUsedInAnotherMethodAsQualifier() { doTest(); }
+  @Test
   public void testFieldUsedForWritingInLambda() { doTest(); }
+  @Test
   public void testFieldUsedInConstantInitialization() { doTest(); }
+  @Test
   public void testLocalVar2InnerClass() { doTest(); }
+  @Test
   public void testFieldReferencedFromAnotherObject() { doTest(); }
+  @Test
   public void testDontSimplifyRuntimeConstants() { doTest(); }
+  @Test
   public void testInnerClassConstructor() { doTest(); }
+  @Test
   public void testAnonymousClassConstructor() { doTest(); }
+  @Test
   public void testStateField() { doTest(); }
+  @Test
   public void testConstructorThisRef() { doTest(); }
 
+  @Test
   public void testConstructorThisRef2() {
-    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_25, myFixture.getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.getModule(), LanguageLevel.JDK_25, myFixture.getTestRootDisposable());
     doTest();
   }
 
+  @Test
   public void testStaticQualifiedFieldAccessForWriting() { doTest(); }
 
+  @Test
   public void testIgnoreAnnotated() {
     final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
     inspection.EXCLUDE_ANNOS.add(Deprecated.class.getName());
     doTest(inspection);
   }
 
+  @Test
   public void testInnerClassFieldInitializer() { doTest(); }
+  @Test
   public void testFieldWithImmutableType() { doTest(); }
 
+  @Test
   public void testLambda() {
     final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
     inspection.IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = false;
     doTest(inspection);
   }
 
+  @Test
   public void testTwoMethodsNotIgnoreMultipleMethods () {
     final FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
     inspection.IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = false;
@@ -75,7 +102,9 @@ public class FieldCanBeLocalTest extends LightJavaCodeInsightFixtureTestCase {
     doTest(inspection);
   }
 
+  @Test
   public void testMockito() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package org.mockito;
                          public @interface Mock {}
@@ -91,18 +120,29 @@ public class FieldCanBeLocalTest extends LightJavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  @Test
   public void testStaticFinal() { doTest(); }
+  @Test
   public void testTwoMethods() { doTest(); }
+  @Test
   public void testNotConstantInitializer() { doTest(); }
+  @Test
   public void testLocalStateVar2InnerClass() { doTest(); }
+  @Test
   public void testSimple() { doTest(); }
+  @Test
   public void testStaticAccess() { doTest(); }
+  @Test
   public void testConstructor() { doTest(); }
+  @Test
   public void testReflection() { doTest(); }
+  @Test
   public void testArrayAccessAssignment() { doTest(); }
 
   /// Regression test for IDEA-386737.
+  @Test
   public void testSuppressAnnotationFixHasNoFixAll() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     FieldCanBeLocalInspection inspection = new FieldCanBeLocalInspection();
     myFixture.enableInspections(inspection);
     myFixture.configureByText("Test.java", """

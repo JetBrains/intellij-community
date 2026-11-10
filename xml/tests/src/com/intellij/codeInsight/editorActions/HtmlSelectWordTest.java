@@ -19,54 +19,57 @@ import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
 @TestDataPath("$CONTENT_ROOT/testData/selectWord")
-public class HtmlSelectWordTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class HtmlSelectWordTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   private boolean oldSelectWholeCssSelectorOptionValue;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    codeInsightFixture.get().setTestDataPath(PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/selectWord");
     oldSelectWholeCssSelectorOptionValue = WebEditorOptions.getInstance().isSelectWholeCssIdentifierOnDoubleClick();
   }
 
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      WebEditorOptions.getInstance().setSelectWholeCssIdentifierOnDoubleClick(oldSelectWholeCssSelectorOptionValue);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    WebEditorOptions.getInstance().setSelectWholeCssIdentifierOnDoubleClick(oldSelectWholeCssSelectorOptionValue);
   }
   
+  @Test
   public void testSelectClassNames() {
     WebEditorOptions.getInstance().setSelectWholeCssIdentifierOnDoubleClick(true);
     doTest();
   }
 
+  @Test
   public void testSelectClassNamesWithDisabledSelectSelectorOption() {
     WebEditorOptions.getInstance().setSelectWholeCssIdentifierOnDoubleClick(false);
     doTest();
   }
 
+  @Test
   public void testSelectTag() {
     doTest();
   }
 
   private void doTest() {
-    CodeInsightTestUtil.doWordSelectionTestOnDirectory(myFixture, getTestName(true), "html");
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/selectWord";
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    CodeInsightTestUtil.doWordSelectionTestOnDirectory(myFixture, myFixture.getTestName(true), "html");
   }
 }

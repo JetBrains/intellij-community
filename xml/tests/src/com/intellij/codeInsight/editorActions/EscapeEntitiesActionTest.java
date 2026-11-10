@@ -2,45 +2,64 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 /**
  * @author Dennis.Ushakov
  */
-public class EscapeEntitiesActionTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class EscapeEntitiesActionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   private static final String N_DASH = new String(new byte[]{-30, -128, -109}, StandardCharsets.UTF_8);
   private static final String COPY = new String(new byte[]{-62, -82}, StandardCharsets.UTF_8);
 
+  @Test
   public void testSimpleHtml() {
     doTest("<<<", "html", "&lt;&lt;&lt;");
   }
 
+  @Test
   public void testSimpleXml() {
     doTest(">>>", "xml", "&gt;&gt;&gt;");
   }
 
+  @Test
   public void testVeryWide() {
     doTest(N_DASH, "html", "&ndash;");
   }
 
+  @Test
   public void testWide() {
     doTest(COPY, "html", "&reg;");
   }
 
+  @Test
   public void testAttributeValue() {
     doTest("<a alt='" + N_DASH + "'></a>", "html", "<a alt='&ndash;'></a>");
   }
 
+  @Test
   public void testTag() {
     doTest("<a><</a>", "html", "<a>&lt;</a>");
   }
 
+  @Test
   public void testXmlStart() {
     doTest("<<<", "xml", "&lt;&lt;&lt;");
   }
 
+  @Test
   public void testDoctypeSystemPublic() {
     doTest("""
              <!DOCTYPE html
@@ -52,6 +71,7 @@ public class EscapeEntitiesActionTest extends LightJavaCodeInsightFixtureTestCas
                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">""");
   }
 
+  @Test
   public void testXmlAmp() {
     doTest("""
              <component>
@@ -63,6 +83,7 @@ public class EscapeEntitiesActionTest extends LightJavaCodeInsightFixtureTestCas
              </component>""");
   }
 
+  @Test
   public void testXmlLt() {
     doTest("""
              <component>
@@ -74,6 +95,7 @@ public class EscapeEntitiesActionTest extends LightJavaCodeInsightFixtureTestCas
              </component>""");
   }
 
+  @Test
   public void testMultiCaret() {
     doTest("""
              <a><selection><</selection></a>
@@ -88,9 +110,10 @@ public class EscapeEntitiesActionTest extends LightJavaCodeInsightFixtureTestCas
   }
 
   private void doTest(String text, final String extension, final String expected) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String finalText = !text.contains("<selection>") ? "<selection>" + text + "</selection>" : text;
     PlatformTestUtil.withEncoding(StandardCharsets.UTF_8, () -> {
-      myFixture.configureByText(getTestName(true) + "." + extension, finalText);
+      myFixture.configureByText(myFixture.getTestName(true) + "." + extension, finalText);
       myFixture.performEditorAction("EscapeEntities");
       myFixture.checkResult(expected);
     });

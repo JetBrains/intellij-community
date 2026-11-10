@@ -8,21 +8,35 @@ import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjec
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.nio.file.Files
 
-internal class IntelliJPlatformGradleModelProviderTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+internal class IntelliJPlatformGradleModelProviderTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
   private lateinit var provider: IntelliJPlatformGradleModelProviderImpl
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     provider = IntelliJPlatformGradleModelProviderImpl()
-    project.replaceService(IntelliJPlatformGradleModelProvider::class.java, provider, testRootDisposable)
+    myFixture.project.replaceService(IntelliJPlatformGradleModelProvider::class.java, provider, myFixture.testRootDisposable)
   }
 
+  @Test
   fun testImportsDataForModule() {
     val file = myFixture.addFileToProject("project/build.gradle.kts", "")
     val projectPath = file.virtualFile.parent.path
@@ -33,6 +47,7 @@ internal class IntelliJPlatformGradleModelProviderTest : LightJavaCodeInsightFix
     assertSame(data, provider.getModel(file))
   }
 
+  @Test
   fun testUsesClosestModulePath() {
     val file = myFixture.addFileToProject("project/nested/build.gradle.kts", "")
     val nestedProjectPath = file.virtualFile.parent.path
@@ -45,6 +60,7 @@ internal class IntelliJPlatformGradleModelProviderTest : LightJavaCodeInsightFix
     assertSame(nestedData, provider.getModel(file))
   }
 
+  @Test
   fun testEmptyImportClearsLinkedProjectData() {
     val file = myFixture.addFileToProject("project/build.gradle.kts", "")
     val projectPath = file.virtualFile.parent.path
@@ -55,6 +71,7 @@ internal class IntelliJPlatformGradleModelProviderTest : LightJavaCodeInsightFix
     assertNull(provider.getModel(file))
   }
 
+  @Test
   fun testUsesCachedExternalProjectDataBeforeCurrentSync() {
     val file = myFixture.addFileToProject("project/build.gradle.kts", "")
     val projectPath = file.virtualFile.parent.path
@@ -69,7 +86,7 @@ internal class IntelliJPlatformGradleModelProviderTest : LightJavaCodeInsightFix
       ModuleData("project", GradleConstants.SYSTEM_ID, "", "project", projectPath, projectPath),
     )
     moduleNode.createChild(IntelliJPlatformGradleData.KEY, data)
-    val externalProjectsManager = ExternalProjectsManagerImpl.getInstance(project)
+    val externalProjectsManager = ExternalProjectsManagerImpl.getInstance(myFixture.project)
     externalProjectsManager.updateExternalProjectData(
       InternalExternalProjectInfo(GradleConstants.SYSTEM_ID, projectPath, projectNode),
     )
@@ -82,6 +99,7 @@ internal class IntelliJPlatformGradleModelProviderTest : LightJavaCodeInsightFix
     }
   }
 
+  @Test
   fun testImportsDataProducedByModelFetch() {
     val file = myFixture.addFileToProject("project/build.gradle.kts", "")
     val projectPath = file.virtualFile.parent.path
@@ -112,6 +130,7 @@ internal class IntelliJPlatformGradleModelProviderTest : LightJavaCodeInsightFix
     }
   }
 
+  @Test
   fun testImportsDataWithoutProductReleases() {
     val file = myFixture.addFileToProject("project/build.gradle.kts", "")
     val projectPath = file.virtualFile.parent.path
@@ -135,6 +154,7 @@ internal class IntelliJPlatformGradleModelProviderTest : LightJavaCodeInsightFix
     )
   }
 
+  @Test
   fun testImportsBundledPluginsAndModulesData() {
     val file = myFixture.addFileToProject("project/build.gradle.kts", "")
     val projectPath = file.virtualFile.parent.path

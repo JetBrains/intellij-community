@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
@@ -19,25 +20,38 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_23;
-  }
+@TestApplication
+public class AddImportActionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_23);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
+  @Test
   public void testMap15() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_5, () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_5, () -> {
       myFixture.configureByText("a.java", """
         public class Foo {
             void foo() {
@@ -58,7 +72,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testMapLatestLanguageLevel() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       public class Foo {
           void foo() {
@@ -78,7 +94,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testClassNameResolvesToVariableName() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(JavaFileType.INSTANCE, """
       public class Base {
       	private <caret>URL URL;
@@ -98,7 +116,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                             }""");
   }
 
+  @Test
   public void testMethodReference() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(JavaFileType.INSTANCE, """
       public class Importing {
           void x(List<Object> list) {
@@ -116,7 +136,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                             }""");
   }
 
+  @Test
   public void testStringValue() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package java.lang; class StringValue {}");
     myFixture.addClass("package foo; public class StringValue {}");
     myFixture.configureByText("a.java", """
@@ -134,7 +156,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testInaccessibleInnerInSuper() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; class Super { private class Inner {}}");
     myFixture.configureByText("a.java", """
       package foo;
@@ -145,7 +169,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(myFixture.filterAvailableIntentions("Import class").isEmpty());
   }
 
+  @Test
   public void testUncommentInnerClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package bar; public class FooBar {}");
     PsiFile file =
       myFixture.configureByText("a.java", """
@@ -156,20 +182,24 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         }
         """);
 
-    List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Import class");
-    assertFalse(intentions.isEmpty());
-    int oldOffset = myFixture.getEditor().getCaretModel().getOffset();
-    int commentOffset = file.getText().indexOf("//");
-    myFixture.getEditor().getCaretModel().moveToOffset(commentOffset);
-    LightPlatformCodeInsightTestCase.delete(myFixture.getEditor(), myFixture.getProject());
-    LightPlatformCodeInsightTestCase.delete(myFixture.getEditor(), myFixture.getProject());
-    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-    myFixture.getEditor().getCaretModel().moveToOffset(oldOffset);
-    intentions = myFixture.filterAvailableIntentions("Import class");
-    assertTrue(intentions.isEmpty() || !intentions.get(0).isAvailable(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile()));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Import class");
+      assertFalse(intentions.isEmpty());
+      int oldOffset = myFixture.getEditor().getCaretModel().getOffset();
+      int commentOffset = file.getText().indexOf("//");
+      myFixture.getEditor().getCaretModel().moveToOffset(commentOffset);
+      LightPlatformCodeInsightTestCase.delete(myFixture.getEditor(), myFixture.getProject());
+      LightPlatformCodeInsightTestCase.delete(myFixture.getEditor(), myFixture.getProject());
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+      myFixture.getEditor().getCaretModel().moveToOffset(oldOffset);
+      intentions = myFixture.filterAvailableIntentions("Import class");
+      assertTrue(intentions.isEmpty() || !intentions.get(0).isAvailable(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile()));
+    });
   }
 
+  @Test
   public void testPackageLocalInner() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; class Outer { static class Inner {static String FOO = \"\";}}");
 
     myFixture.configureByText("a.java", """
@@ -193,7 +223,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testWrongTypeParams() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package f; public class Foo {}");
     myFixture.configureByText("a.java", """
       public class Bar {
@@ -210,7 +242,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testUseContext() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; public class Log {}");
     myFixture.addClass("package bar; public class Log {}");
     myFixture.addClass("package bar; public class LogFactory { public static Log log(){} }");
@@ -229,7 +263,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testUseInitializer() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; public class Map {}");
     myFixture.configureByText("a.java", """
       import java.util.HashMap;
@@ -240,11 +276,15 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
       """);
     ImportClassFix intention =
       (ImportClassFix)IntentionActionDelegate.unwrap(myFixture.findSingleIntention("Import class"));
-    assertTrue(ContainerUtil.exists(intention.getClassesToImport(), cls -> cls.getQualifiedName().equals(
-      CommonClassNames.JAVA_UTIL_MAP)));
+    ReadAction.runBlocking(() -> {
+      assertTrue(ContainerUtil.exists(intention.getClassesToImport(), cls -> cls.getQualifiedName().equals(
+        CommonClassNames.JAVA_UTIL_MAP)));
+    });
   }
 
+  @Test
   public void testUseOverrideContext() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; public class Log {}");
     myFixture.addClass("package bar; public class Log {}");
     myFixture.addClass("package goo; public class Super { public void foo(foo.Log log) {} }");
@@ -266,7 +306,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         """);
   }
 
+  @Test
   public void testImportFoldingWithConflicts() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
 
     myFixture.addClass("package p1; public class B {}");
     myFixture.addClass("package p1; public class A1 {}");
@@ -321,7 +363,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         """);
   }
 
+  @Test
   public void testImportFoldingWithConflictsToJavaLang() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
 
     myFixture.addClass("package p1; public class String {}");
     myFixture.addClass("package p1; public class A1 {}");
@@ -375,7 +419,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         """);
   }
 
+  @Test
   public void testImportFoldingWithConflictsWithAnotherPackage() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
 
     myFixture.addClass("package p3; public class Conflict {}");
     myFixture.addClass("package p1; public class Conflict {}");
@@ -434,8 +480,10 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         """);
   }
 
+  @Test
   public void testImportFoldingWithConflictsToJavaBaseModule() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.MODULE_IMPORT_DECLARATIONS.getStandardLevel(), () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.MODULE_IMPORT_DECLARATIONS.getStandardLevel(), () -> {
 
       myFixture.addClass("package p1; public class List {}");
       myFixture.addClass("package p1; public class A1 {}");
@@ -492,8 +540,10 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testImportFoldingWithConflictsToJavaBaseModuleImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.MODULE_IMPORT_DECLARATIONS.getStandardLevel(), () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.MODULE_IMPORT_DECLARATIONS.getStandardLevel(), () -> {
 
       myFixture.addClass("package p1; public class List {}");
       myFixture.addClass("package p1; public class A1 {}");
@@ -548,7 +598,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testImportFoldingWithConflictsToSamePackage() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
 
     myFixture.addClass("package p1; public class ConflictClass {}");
     myFixture.addClass("package p2; public class A1 {}");
@@ -599,8 +651,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         """);
   }
 
-
+  @Test
   public void testAnnotatedImport() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass(
       ("""
 
@@ -633,7 +686,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         .trim());
   }
 
+  @Test
   public void testAnnotatedQualifiedImport() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass(
       ("""
 
@@ -664,7 +719,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         .trim());
   }
 
+  @Test
   public void testUnresolvedAnnotatedImport() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", ("""
 
                                                  class Test {
@@ -687,7 +744,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         .trim());
   }
 
+  @Test
   public void testImportClassInClassReferenceExpression() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
 
       class Test {
@@ -708,7 +767,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testImportClassInQualifierExpression() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
 
       class Test {
@@ -729,7 +790,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testDoNotImportClassInMethodCallArgument() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
 
       class Test {
@@ -741,7 +804,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(myFixture.filterAvailableIntentions("Import class").isEmpty());
   }
 
+  @Test
   public void testDoNotImportClassIfQualifiedNameIsNotValid() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("\npackage a..p;\npublic class MMM {}\n");
     myFixture.configureByText("a.java", """
 
@@ -763,7 +828,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testDoNotImportClassInAssignment() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
 
       class Test {
@@ -775,7 +842,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(myFixture.filterAvailableIntentions("Import class").isEmpty());
   }
 
+  @Test
   public void testDoNotImportClassIfAlreadyImportedButNotAccessible() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("\npackage foo;\nclass Foo {}\n");
     myFixture.configureByText("a.java", """
 
@@ -789,7 +858,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(myFixture.filterAvailableIntentions("Import class").isEmpty());
   }
 
+  @Test
   public void testDoNotImportClassInQualifiedReferenceAtReferenceName() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
 
       class Test {
@@ -801,7 +872,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(myFixture.filterAvailableIntentions("Import class").isEmpty());
   }
 
+  @Test
   public void testDoNotImportClassInQualifiedReferenceAtForeignPlace() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java",
                               """
 
@@ -816,7 +889,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(myFixture.filterAvailableIntentions("Import class").isEmpty());
   }
 
+  @Test
   public void testAllowToAddImportFromJavadoc() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
 
       class Test {
@@ -832,7 +907,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.checkResult("import java.util.Map;\n\nclass Test {\n\n  /**\n   * {@link Map}\n   */\n  void run() {\n  }\n}\n");
   }
 
+  @Test
   public void testDoNotAddImportForDefaultPackage() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
 
       class Test {
@@ -859,12 +936,17 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void removeUnnecessaryQualification() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new UnnecessaryFullyQualifiedNameInspection());
-    myFixture.launchAction(myFixture.findSingleIntention("Remove unnecessary qualification"));
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.launchAction(myFixture.findSingleIntention("Remove unnecessary qualification"));
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    });
   }
 
+  @Test
   public void testDoNotAllowToAddImportInPackageInfoFile() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("package-info.java", """
 
 
@@ -876,7 +958,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(myFixture.filterAvailableIntentions("Replace qualified name").isEmpty());
   }
 
+  @Test
   public void testDoNotAllowToAddImportOnInaccessibleClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; class Foo {}");
     myFixture.configureByText("A.java", """
 
@@ -890,8 +974,10 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(myFixture.filterAvailableIntentions("Replace qualified name").isEmpty());
   }
 
+  @Test
   public void testKeepMethodsFormattingOnAddImport() {
-    CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    CommonCodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     boolean old = settings.ALIGN_GROUP_FIELD_DECLARATIONS;
     settings.ALIGN_GROUP_FIELD_DECLARATIONS = true;
 
@@ -938,29 +1024,30 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT;
   }
 
-  @Override
-  public void tearDown() throws Exception {
-    super.tearDown();
-  }
-
   private void importClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.launchAction(myFixture.findSingleIntention("Import class"));
   }
 
   private void reimportClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new UnnecessaryFullyQualifiedNameInspection());
-    myFixture.launchAction(myFixture.findSingleIntention("Replace qualified name with import"));
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.launchAction(myFixture.findSingleIntention("Replace qualified name with import"));
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    });
   }
 
+  @Test
   public void testDispreferDeprecatedClasses() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; public class Log {}");
     myFixture.addClass("package bar; @Deprecated public class Log {}");
     myFixture.configureByText("a.java", """
@@ -978,7 +1065,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testPreferFromImportedPackage() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; public class Log {}");
     myFixture.addClass("package foo; public class Imported {}");
     myFixture.addClass("package bar; public class Log {}");
@@ -1001,7 +1090,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testRememberChosenVariants() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable());
     myFixture.addClass("package foo; public class Log {}");
     myFixture.addClass("package bar; public class Log {}");
@@ -1023,7 +1114,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.checkResult(textAfter);
   }
 
+  @Test
   public void testIncompleteMethodReturningItsTypeParameter() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; public class Context {}");
     myFixture.configureByText("a.java", """
 
@@ -1034,7 +1127,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(myFixture.filterAvailableIntentions("Import class").isEmpty());
   }
 
+  @Test
   public void testEvenMoreIncompleteMethodReturningItsTypeParameter() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; public class Context {}");
     myFixture.configureByText("a.java", """
 
@@ -1045,7 +1140,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(myFixture.filterAvailableIntentions("Import class").isEmpty());
   }
 
+  @Test
   public void testInaccessibleClassFromTheProject() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; class Foo {}");
     myFixture.configureByText("a.java", """
 
@@ -1056,7 +1153,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertFalse(myFixture.filterAvailableIntentions("Import class").isEmpty());
   }
 
+  @Test
   public void testPreferTopLevelList() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; public interface Restore { interface List {}}");
 
     myFixture.configureByText("a.java", "class F implements Lis<caret>t {}");
@@ -1067,7 +1166,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                             class F implements List {}""");
   }
 
+  @Test
   public void testTypeUseAnnotation() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface AssertTrue {}");
     myFixture.configureByText("test.java",
                               """
@@ -1085,8 +1186,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         }""");
   }
 
-
+  @Test
   public void testImportOnlyClassWithMember() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
       package mypackages.package1;
       
@@ -1124,8 +1226,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         }""");
   }
 
-
+  @Test
   public void testImportClassWithoutMemberIfNothingLeft() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
       package mypackages.package1;
       
@@ -1156,8 +1259,10 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
         }""");
   }
 
+  @Test
   public void testNotImportFromImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, ()->{
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21_PREVIEW, ()->{
       myFixture.addClass("""
                                              enum E {A, B}
                                              
@@ -1176,8 +1281,10 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testModuleImportClassUnnecessaryQualifier() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
 
       myFixture.addClass("package a; public class List {}");
 
@@ -1207,8 +1314,10 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testModuleImportClassUnnecessaryQualifierAlreadyUsed() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
 
       myFixture.addClass("package a; public class List {}");
 
@@ -1228,8 +1337,10 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testModuleImportClassUnnecessaryQualifierImportFromDemand() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
 
       myFixture.addClass("package a; public class List {}");
 
@@ -1256,8 +1367,10 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testModuleImportUnnecessaryQualifierAlreadyImported() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
 
       myFixture.configureByText("Test.java", """
         import module java.base;
@@ -1280,8 +1393,10 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testImplicitClassUnnecessaryQualifier() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
 
       myFixture.addClass("package a; public class List {}");
 
@@ -1306,9 +1421,10 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testImplicitClassUnnecessaryQualifierAlreadyImported() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
 
       myFixture.configureByText("Test.java", """
         void main(){
@@ -1325,8 +1441,10 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testImportFoldingWithConflictsToJavaBaseModuleImplicitClassDemandsOverModule() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
 
       myFixture.addClass("package p1; public class List {}");
       myFixture.addClass("package p1; public class A1 {}");
@@ -1381,8 +1499,10 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testImportFoldingWithConflictsToJavaBaseModuleImplicitClassFromPackageDemandsOverModule() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
 
       myFixture.addClass("package p1; public class List {}");
       myFixture.addClass("package p1; public class A1 {}");
@@ -1436,7 +1556,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testActionRemainsAvailable() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; public class List1 {}");
     myFixture.addClass("package foo2; public class List1 {}");
 
@@ -1455,14 +1577,18 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
 
     //the import fix should be preserved, because only PsiWhitespace is changed
     myFixture.type("\n");
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
 
-    getEditor().getCaretModel().moveToOffset(getEditor().getDocument().getText().indexOf("List1"));
+      myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getText().indexOf("List1"));
 
-    assertEquals(1, myFixture.filterAvailableIntentions("Import class").size());
+      assertEquals(1, myFixture.filterAvailableIntentions("Import class").size());
+    });
   }
 
+  @Test
   public void testDoNotImportClassForAmbiguousStaticReference() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package amb; public enum Bar { CONST }");
     myFixture.addClass("package amb; public enum Foo { CONST }");
     myFixture.addClass("package amb; public class CONST {}");
@@ -1480,7 +1606,9 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(myFixture.filterAvailableIntentions("Import class").isEmpty());
   }
 
+  @Test
   public void testPreviewForFileTheReferenceDoesNotBelongTo() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       public class Foo {
           Ma<caret>p l;
@@ -1490,12 +1618,14 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
     ImportClassFix fix = (ImportClassFix)IntentionActionDelegate.unwrap(intention);
     String previewText = myFixture.getIntentionPreviewText(intention);
     assertNotNull(previewText);
-    assertTrue(previewText, previewText.contains("import java.util.Map;"));
+    assertTrue(previewText.contains("import java.util.Map;"), previewText);
 
     for (PsiFile foreignFile : List.of(myFixture.addFileToProject("other.txt", "some text"),
                                        myFixture.addFileToProject("Bar.java", "public class Bar {}"))) {
-      PsiFile foreignCopy = IntentionPreviewUtils.obtainCopyForPreview(foreignFile);
-      assertSame(foreignFile.getName(), IntentionPreviewInfo.EMPTY, fix.generatePreview(getProject(), getEditor(), foreignCopy));
+      ReadAction.runBlocking(() -> {
+        PsiFile foreignCopy = IntentionPreviewUtils.obtainCopyForPreview(foreignFile);
+        assertSame(IntentionPreviewInfo.EMPTY, fix.generatePreview(myFixture.getProject(), myFixture.getEditor(), foreignCopy), foreignFile.getName());
+      });
     }
   }
 }

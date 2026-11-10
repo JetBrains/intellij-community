@@ -13,19 +13,33 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnusedReturnValueQuickFixTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class UnusedReturnValueQuickFixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/unusedReturnValue/quickFix");
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
       @Override
       public boolean isImplicitUsage(@NotNull PsiElement element) {
@@ -41,7 +55,7 @@ public class UnusedReturnValueQuickFixTest extends LightJavaCodeInsightFixtureTe
       public boolean isImplicitWrite(@NotNull PsiElement element) {
         return false;
       }
-    }, getTestRootDisposable());
+    }, myFixture.getTestRootDisposable());
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), EntryPointsManagerBase.DEAD_CODE_EP_NAME, new EntryPoint() {
       @Override
       public void readExternal(Element element) throws InvalidDataException { }
@@ -72,36 +86,50 @@ public class UnusedReturnValueQuickFixTest extends LightJavaCodeInsightFixtureTe
 
       @Override
       public void setSelected(boolean selected) { }
-    }, getTestRootDisposable());
+    }, myFixture.getTestRootDisposable());
 
     myFixture.enableInspections(new UnusedReturnValue());
   }
 
-  public void testSideEffects() { doTest(); }
-  public void testSideEffectsComplex() { doTest(); }
-  public void testSideEffectsComplex2() { doTest(); }
-  public void testRedundantReturn() { doTest(); }
+  @Test
+  public void testSideEffects() {
+    doTest();
+  }
+  @Test
+  public void testSideEffectsComplex() {
+    doTest();
+  }
+  @Test
+  public void testSideEffectsComplex2() {
+    doTest();
+  }
+  @Test
+  public void testRedundantReturn() {
+    doTest();
+  }
+  @Test
   public void testNoChangeForImplicitRead() {
-    final String name = getTestName(false);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String name = myFixture.getTestName(false);
     myFixture.configureByFile(name + ".java");
-    assertEmpty(myFixture.filterAvailableIntentions(JavaBundle.message("inspection.unused.return.value.make.void.quickfix")));
+    assertThat(myFixture.filterAvailableIntentions(JavaBundle.message("inspection.unused.return.value.make.void.quickfix"))).isNullOrEmpty();
   }
 
+  @Test
   public void testNoChangeForEntryPoint() {
-    final String name = getTestName(false);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String name = myFixture.getTestName(false);
     myFixture.configureByFile(name + ".java");
-    assertEmpty(myFixture.filterAvailableIntentions(JavaBundle.message("inspection.unused.return.value.make.void.quickfix")));
+    assertThat(myFixture.filterAvailableIntentions(JavaBundle.message("inspection.unused.return.value.make.void.quickfix"))).isNullOrEmpty();
   }
 
   private void doTest() {
-    final String name = getTestName(false);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String name = myFixture.getTestName(false);
     myFixture.configureByFile(name + ".java");
-    myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention(JavaBundle.message("inspection.unused.return.value.make.void.quickfix")));
-    myFixture.checkResultByFile(name + ".after.java");
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/unusedReturnValue/quickFix";
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention(JavaBundle.message("inspection.unused.return.value.make.void.quickfix")));
+      myFixture.checkResultByFile(name + ".after.java");
+    });
   }
 }

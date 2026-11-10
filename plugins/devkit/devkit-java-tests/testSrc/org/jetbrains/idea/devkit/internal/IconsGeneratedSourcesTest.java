@@ -16,10 +16,25 @@
 package org.jetbrains.idea.devkit.internal;
 
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class IconsGeneratedSourcesTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class IconsGeneratedSourcesTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testGeneratedFile() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("MyIcons.java", """
       package icons;
       /**
@@ -30,7 +45,9 @@ public class IconsGeneratedSourcesTest extends LightJavaCodeInsightFixtureTestCa
     assertTrue(new IconsGeneratedSourcesFilter().isGeneratedSource(file.getVirtualFile(), myFixture.getProject()));
   }
 
+  @Test
   public void testNewGeneratedFile() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("MyIcons.java", """
       package icons;
       /**
@@ -41,7 +58,9 @@ public class IconsGeneratedSourcesTest extends LightJavaCodeInsightFixtureTestCa
     assertTrue(new IconsGeneratedSourcesFilter().isGeneratedSource(file.getVirtualFile(), myFixture.getProject()));
   }
 
+  @Test
   public void testFilterByName() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("MyIconsTest.java", """
       package icons;
       /**
@@ -52,7 +71,9 @@ public class IconsGeneratedSourcesTest extends LightJavaCodeInsightFixtureTestCa
     assertFalse(new IconsGeneratedSourcesFilter().isGeneratedSource(file.getVirtualFile(), myFixture.getProject()));
   }
 
+  @Test
   public void testFilterByComment() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("MyIcons.java", "package icons;\npublic class RubyIcons {}");
     assertFalse(new IconsGeneratedSourcesFilter().isGeneratedSource(file.getVirtualFile(), myFixture.getProject()));
   }

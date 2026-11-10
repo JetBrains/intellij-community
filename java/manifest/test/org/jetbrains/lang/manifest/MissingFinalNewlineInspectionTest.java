@@ -3,31 +3,53 @@ package org.jetbrains.lang.manifest;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.lang.manifest.highlighting.MissingFinalNewlineInspection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class MissingFinalNewlineInspectionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+
+@TestApplication
+public class MissingFinalNewlineInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new MissingFinalNewlineInspection());
   }
 
+  @Test
   public void testEmptyFile() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(ManifestFileType.INSTANCE, "");
-    assertEmpty(myFixture.filterAvailableIntentions(ManifestBundle.message("inspection.newline.fix")));
+    assertThat(myFixture.filterAvailableIntentions(ManifestBundle.message("inspection.newline.fix"))).isNullOrEmpty();
   }
 
+  @Test
   public void testNoProblem() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(ManifestFileType.INSTANCE, "Manifest-Version: 1.0\n");
-    assertEmpty(myFixture.filterAvailableIntentions(ManifestBundle.message("inspection.newline.fix")));
+    assertThat(myFixture.filterAvailableIntentions(ManifestBundle.message("inspection.newline.fix"))).isNullOrEmpty();
   }
 
+  @Test
   public void testFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(ManifestFileType.INSTANCE, "Manifest-Version: 1.0");
     IntentionAction intention = myFixture.findSingleIntention(ManifestBundle.message("inspection.newline.fix"));
-    myFixture.launchAction(intention);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    myFixture.checkResult("Manifest-Version: 1.0\n");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.launchAction(intention);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      myFixture.checkResult("Manifest-Version: 1.0\n");
+    });
   }
 }

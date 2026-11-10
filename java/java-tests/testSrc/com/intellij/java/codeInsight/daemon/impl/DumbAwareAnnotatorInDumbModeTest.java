@@ -12,19 +12,33 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.DumbModeTestUtils;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class DumbAwareAnnotatorInDumbModeTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class DumbAwareAnnotatorInDumbModeTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testDumbAwareAnnotatorHighlightsCodeInDumbMode() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("DumbAwareAnnotatorCheck.java", "class <error descr=\"null\">DumbAwareAnnotatorCheck</error> {}");
     Language javaLanguage = JavaFileType.INSTANCE.getLanguage();
     MyDumbAwareAnnotator dumbAwareAnnotator = new MyDumbAwareAnnotator();
     LanguageAnnotators.INSTANCE.addExplicitExtension(javaLanguage, dumbAwareAnnotator);
-    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, getTestRootDisposable());
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, myFixture.getTestRootDisposable());
     try {
-      DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
+      DumbModeTestUtils.runInDumbModeSynchronously(myFixture.getProject(), () -> {
         myFixture.testHighlighting();
       });
     }

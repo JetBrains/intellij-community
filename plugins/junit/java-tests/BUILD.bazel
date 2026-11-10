@@ -67,6 +67,7 @@ jvm_library(
         "//platform/statistics",
         "//libraries/junit4",
         "//libraries/junit6",
+        "//platform/testFramework/junit5",
     ],
 )
 ### auto-generated section `build intellij.junit.java.tests` end

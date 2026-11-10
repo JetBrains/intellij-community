@@ -8,11 +8,23 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import javax.swing.Icon
 
-internal class MarkdownCodeSpanConfigurationRunnerTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+internal class MarkdownCodeSpanConfigurationRunnerTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
   fun `test code span run marker is shown for existing run configuration`() {
     addRunConfiguration()
     configureMarkdown("`Smoke Tests Dev`")
@@ -22,6 +34,7 @@ internal class MarkdownCodeSpanConfigurationRunnerTest : LightJavaCodeInsightFix
     assertEquals(1, getPopupActionCount(markers))
   }
 
+  @Test
   fun `test code span run marker is shown for Java class with main method`() {
     addJavaClassWithMainMethod("JavaClass")
     configureMarkdown("`JavaClass`")
@@ -31,14 +44,16 @@ internal class MarkdownCodeSpanConfigurationRunnerTest : LightJavaCodeInsightFix
     assertEquals(1, getPopupActionCount(markers))
   }
 
+  @Test
   fun `test code span run marker is not shown for non-runnable Java class`() {
     myFixture.addClass("public class JavaClass {}")
     configureMarkdown("`JavaClass`")
 
     val markers = findRunMarkers()
-    assertEmpty(markers)
+    assertThat(markers).isNullOrEmpty()
   }
 
+  @Test
   fun `test duplicate code spans on one line produce one Java run action`() {
     addJavaClassWithMainMethod("JavaClass")
     configureMarkdown("`JavaClass` `JavaClass` `JavaClass`")
@@ -48,6 +63,7 @@ internal class MarkdownCodeSpanConfigurationRunnerTest : LightJavaCodeInsightFix
     assertEquals(1, getPopupActionCount(markers))
   }
 
+  @Test
   fun `test different code spans on one line produce separate Java run actions`() {
     addJavaClassWithMainMethod("JavaClass1")
     addJavaClassWithMainMethod("JavaClass2")
@@ -72,14 +88,14 @@ internal class MarkdownCodeSpanConfigurationRunnerTest : LightJavaCodeInsightFix
   }
 
   private fun addRunConfiguration() {
-    val runManager = RunManager.getInstance(project)
+    val runManager = RunManager.getInstance(myFixture.project)
     runManager.addConfiguration(
       runManager.createConfiguration("Smoke Tests Dev", ApplicationConfigurationType.getInstance().configurationFactories.single())
     )
   }
 
   private fun findRunMarkers(icon: Icon = AllIcons.RunConfigurations.TestState.Run_run): List<LineMarkerInfo<*>> {
-    return getDisplayedLineMarkers(myFixture.editor.document, project)
+    return getDisplayedLineMarkers(myFixture.editor.document, myFixture.project)
       .filter { it.icon == icon }
   }
 

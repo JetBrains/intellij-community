@@ -5,49 +5,92 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.DuplicateBranchesInSwitchInspection
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class DuplicateBranchesInSwitchTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class DuplicateBranchesInSwitchTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = JavaTestUtil.getJavaTestDataPath() + "/inspection/duplicateBranchesInSwitch"
+  }
+
   val inspection = DuplicateBranchesInSwitchInspection()
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(inspection)
   }
 
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/duplicateBranchesInSwitch"
-
-  fun testSimple() = doTest()
-  fun testReturn() = doTest()
-  fun testThrow() = doTest()
-  fun testContinue() = doTest()
-  fun testFallThrough() = doTest()
-  fun testFallThroughBefore() = doTest()
-  fun testAllFallThrough() = doTest()
-  fun testDuplicateFallThrough() = doTest()
-  fun testNoLastBreak() = doTest()
-  fun testFallThroughToBreak() = doTest()
-  fun testThreeDuplicates() = doTest()
-  fun testThreeDuplicatesDefault() = doTest()
-  fun testDuplicateAfterDefault() = doTest()
-  fun testTwoCaseLabels() = doTest()
-  fun testComplexBranches() = doTest()
-  fun testBreakWithLabel() = doTest()
-  fun testBreakAndReturnUnderIf() = doTest()
-  fun testReturnWithComments() = doTest()
-  fun testUnaryMinusInReturn() = doTest()
-  fun testMethodCallInReturn() = doTest()
-  fun testManySimilarBranches() = doTest()
-  fun testParentheses() = doTest()
-  fun testAssignment() = doTest()
-  fun testMethodReferences() = doTest()
-  fun testNoExceptionWhenFirstLabelIsMissing() = doTest()
-  fun testUnresolvedQualifier() = doTest()
-  fun testCatchTypeReference() = doTest()
-  fun testNullDuplicatesPattern() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
-  fun testPatternDuplicatesNull() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
+  @Test
+  fun testSimple(): Unit = doTest()
+  @Test
+  fun testReturn(): Unit = doTest()
+  @Test
+  fun testThrow(): Unit = doTest()
+  @Test
+  fun testContinue(): Unit = doTest()
+  @Test
+  fun testFallThrough(): Unit = doTest()
+  @Test
+  fun testFallThroughBefore(): Unit = doTest()
+  @Test
+  fun testAllFallThrough(): Unit = doTest()
+  @Test
+  fun testDuplicateFallThrough(): Unit = doTest()
+  @Test
+  fun testNoLastBreak(): Unit = doTest()
+  @Test
+  fun testFallThroughToBreak(): Unit = doTest()
+  @Test
+  fun testThreeDuplicates(): Unit = doTest()
+  @Test
+  fun testThreeDuplicatesDefault(): Unit = doTest()
+  @Test
+  fun testDuplicateAfterDefault(): Unit = doTest()
+  @Test
+  fun testTwoCaseLabels(): Unit = doTest()
+  @Test
+  fun testComplexBranches(): Unit = doTest()
+  @Test
+  fun testBreakWithLabel(): Unit = doTest()
+  @Test
+  fun testBreakAndReturnUnderIf(): Unit = doTest()
+  @Test
+  fun testReturnWithComments(): Unit = doTest()
+  @Test
+  fun testUnaryMinusInReturn(): Unit = doTest()
+  @Test
+  fun testMethodCallInReturn(): Unit = doTest()
+  @Test
+  fun testManySimilarBranches(): Unit = doTest()
+  @Test
+  fun testParentheses(): Unit = doTest()
+  @Test
+  fun testAssignment(): Unit = doTest()
+  @Test
+  fun testMethodReferences(): Unit = doTest()
+  @Test
+  fun testNoExceptionWhenFirstLabelIsMissing(): Unit = doTest()
+  @Test
+  fun testUnresolvedQualifier(): Unit = doTest()
+  @Test
+  fun testCatchTypeReference(): Unit = doTest()
+  @Test
+  fun testNullDuplicatesPattern(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
+  @Test
+  fun testPatternDuplicatesNull(): Unit = IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_21) { doTest() }
 
   private fun doTest() {
-    myFixture.testHighlighting(true, true, true,"${getTestName(false)}.java")
+    myFixture.testHighlighting(true, true, true,"${myFixture.getTestName(false)}.java")
   }
 }

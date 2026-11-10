@@ -12,79 +12,113 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import junit.framework.TestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * @author Maxim.Medvedev
  */
-public class FindOverridingMethodsAndClassesTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "overriding/findOverridingMethodsAndClasses";
+@TestApplication
+public class FindOverridingMethodsAndClassesTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "overriding/findOverridingMethodsAndClasses");
   }
 
+  @Test
   public void testSimpleCase() {
     doTest(1, 1);
   }
 
+  @Test
   public void testAnonymousClass() {
     doTest(2, 2);
   }
 
+  @Test
   public void testTraitImplementsInterface() {
     doTest(4, 4);
   }
 
+  @Test
   public void testClassExtendsTrait() {
     doTest(2, 2);
   }
 
-  public void testTraitExtendsTrait() { doTest(2, 2); }
+  @Test
+  public void testTraitExtendsTrait() {
+    doTest(2, 2);
+  }
 
-  public void testTraitImplementsTrait() { doTest(2, 2); }
+  @Test
+  public void testTraitImplementsTrait() {
+    doTest(2, 2);
+  }
 
   private void doTest(int methodCount, int classCount) {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    final GroovyFile groovyFile = (GroovyFile)myFixture.getFile();
-    final PsiClass psiClass = groovyFile.getClasses()[0];
-    final PsiMethod method = psiClass.getMethods()[0];
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
+    ReadAction.runBlocking(() -> {
+      final GroovyFile groovyFile = (GroovyFile)myFixture.getFile();
+      final PsiClass psiClass = groovyFile.getClasses()[0];
+      final PsiMethod method = psiClass.getMethods()[0];
 
-    final Collection<PsiMethod> methods = ReadAction.computeBlocking(()->OverridingMethodsSearch.search(method, psiClass.getResolveScope(), true).findAll());
-    TestCase.assertEquals("Method count is wrong", methodCount, methods.size());
+      final Collection<PsiMethod> methods = OverridingMethodsSearch.search(method, psiClass.getResolveScope(), true).findAll();
+      assertEquals(methodCount, methods.size(), "Method count is wrong");
 
-    final Collection<PsiClass> classes = ReadAction.computeBlocking(()->ClassInheritorsSearch.search(psiClass).findAll());
-    TestCase.assertEquals("Class count is wrong", classCount, classes.size());
+      final Collection<PsiClass> classes = ClassInheritorsSearch.search(psiClass).findAll();
+      assertEquals(classCount, classes.size(), "Class count is wrong");
+    });
   }
 
+  @Test
   public void test_find_java_functional_expression_passed_into_a_groovy_method() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("a.groovy", "interface I { void foo(); }; class C { static void bar(I i) {}}");
     myFixture.addFileToProject("a.java", "class D {{  C.bar(() -> {}); }");
-    UsefulTestCase.assertSize(1, ReadAction.computeBlocking(()->FunctionalExpressionSearch.search(myFixture.findClass("I")).findAll()));
+    assertThat(ReadAction.computeBlocking(()->FunctionalExpressionSearch.search(myFixture.findClass("I")).findAll())).hasSize(1);
   }
 
+  @Test
   public void test_find_sub_classes_works_even_in_local_scope() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile t = myFixture.addFileToProject("x/T.groovy", "package x; trait T {}");
     PsiFile t2 = myFixture.addFileToProject("x/T2.groovy", "package x; class T2 implements T {}");
 
-    PsiClass classT = ((GroovyFile)t).getClasses()[0];
-    PsiClass classT2 = ((GroovyFile)t2).getClasses()[0];
-    TestCase.assertTrue(Arrays.asList(classT2.getSupers()).contains(classT));
+    ReadAction.runBlocking(() -> {
+      PsiClass classT = ((GroovyFile)t).getClasses()[0];
+      PsiClass classT2 = ((GroovyFile)t2).getClasses()[0];
+      assertTrue(Arrays.asList(classT2.getSupers()).contains(classT));
 
-    PsiElement[] files = new PsiElement[]{t, t2};
-    SearchScope scope = new LocalSearchScope(files);
-    Collection<PsiClass> subClasses = ReadAction.computeBlocking(()->DirectClassInheritorsSearch.search(classT, scope).findAll());
-    PsiClass subClass = UsefulTestCase.assertOneElement(subClasses);
-    TestCase.assertEquals("T2", subClass.getName());
+      PsiElement[] files = new PsiElement[]{t, t2};
+      SearchScope scope = new LocalSearchScope(files);
+      Collection<PsiClass> subClasses = DirectClassInheritorsSearch.search(classT, scope).findAll();
+      PsiClass subClass = assertThat(subClasses).singleElement().actual();
+      assertEquals("T2", subClass.getName());
+    });
   }
 
+  @Test
   public void test_find_groovy_inheritor_of_java_class_in_local_scope() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass superClass = myFixture.addClass("class Super {}");
     PsiFile file = myFixture.addFileToProject("a.groovy", "class Foo extends Super {}");
 

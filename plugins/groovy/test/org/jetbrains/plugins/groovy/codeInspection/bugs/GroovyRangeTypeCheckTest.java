@@ -8,42 +8,66 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyRangeTypeCheckTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "groovy/inspections/rangeTypeCheck";
+@TestApplication
+public class GroovyRangeTypeCheckTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "groovy/inspections/rangeTypeCheck");
   }
 
   public void doTest() {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
 
-    final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    final PsiElement atCaret = myFixture.getFile().findElementAt(offset);
-    final GrRangeExpression range = PsiTreeUtil.getParentOfType(atCaret, GrRangeExpression.class);
-    final GroovyRangeTypeCheckInspection inspection = new GroovyRangeTypeCheckInspection();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      final int offset = myFixture.getEditor().getCaretModel().getOffset();
+      final PsiElement atCaret = myFixture.getFile().findElementAt(offset);
+      final GrRangeExpression range = PsiTreeUtil.getParentOfType(atCaret, GrRangeExpression.class);
+      final GroovyRangeTypeCheckInspection inspection = new GroovyRangeTypeCheckInspection();
 
-    final LocalQuickFix fix = inspection.buildFix(range);
+      final LocalQuickFix fix = inspection.buildFix(range);
 
-    LocalQuickFix[] fixes = {fix};
-    final ProblemDescriptor descriptor = InspectionManager.getInstance(getProject()).createProblemDescriptor(range, "bla-bla", false, fixes, ProblemHighlightType.WEAK_WARNING);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      fix.applyFix(myFixture.getProject(), descriptor);
+      LocalQuickFix[] fixes = {fix};
+      final ProblemDescriptor descriptor = InspectionManager.getInstance(myFixture.getProject()).createProblemDescriptor(range, "bla-bla", false, fixes, ProblemHighlightType.WEAK_WARNING);
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+        fix.applyFix(myFixture.getProject(), descriptor);
+      });
+
+      myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.groovy");
     });
-
-
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
-  public void testNotComparable() { doTest(); }
+  @Test
+  public void testNotComparable() {
+    doTest();
+  }
 
-  public void testNext() {doTest(); }
+  @Test
+  public void testNext() {
+    doTest();
+  }
 
-  public void testAll() {doTest(); }
+  @Test
+  public void testAll() {
+    doTest();
+  }
 }

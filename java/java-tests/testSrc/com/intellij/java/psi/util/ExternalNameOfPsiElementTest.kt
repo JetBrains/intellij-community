@@ -1,9 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.util
 
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.PsiFormatUtil
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Tests our expectations on which string presentation of PSI elements
@@ -12,8 +19,16 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
  * This format is used in external annotations files, "annotations.xml", to specify item names:
  * `<item name="org.jetbrains.some.Class void func()">...</item>`
  */
-class ExternalNameOfPsiElementTest : LightJavaCodeInsightFixtureTestCase() {
-  fun `test class qualified name`() {
+@TestApplication
+class ExternalNameOfPsiElementTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
+  fun `test class qualified name`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.addFileToProject("pkg/A.java", """
       package pkg;
 
@@ -35,13 +50,16 @@ class ExternalNameOfPsiElementTest : LightJavaCodeInsightFixtureTestCase() {
       "pkg.E.F" to "pkg.E.F"
     )
 
-    className2externalName.forEach { className, externalName ->
-      val psiClass = myFixture.findClass(className)
-      assertEquals(externalName, psiClass.getExternalName())
+    readAction {
+      className2externalName.forEach { className, externalName ->
+        val psiClass = myFixture.findClass(className)
+        assertEquals(externalName, psiClass.getExternalName())
+      }
     }
   }
 
-  fun `test method qualified name`() {
+  @Test
+  fun `test method qualified name`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.addFileToProject("pkg/A.java", """
       package pkg;
 
@@ -91,14 +109,17 @@ class ExternalNameOfPsiElementTest : LightJavaCodeInsightFixtureTestCase() {
       "m17" to "pkg.A void m17(java.lang.Class<?>, java.lang.Class<?>[][])"
     )
 
-    val psiClass = myFixture.findClass("pkg.A")
-    methodName2externalName.forEach { methodName, externalName ->
-      val psiMethod = psiClass.findMethodsByName(methodName, false).single()
-      assertEquals(externalName, psiMethod.getExternalName())
+    readAction {
+      val psiClass = myFixture.findClass("pkg.A")
+      methodName2externalName.forEach { methodName, externalName ->
+        val psiMethod = psiClass.findMethodsByName(methodName, false).single()
+        assertEquals(externalName, psiMethod.getExternalName())
+      }
     }
   }
 
-  fun `test inner class empty constructor qualified name`() {
+  @Test
+  fun `test inner class empty constructor qualified name`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.addFileToProject("pkg/A.java", """
       package pkg;
 
@@ -110,12 +131,15 @@ class ExternalNameOfPsiElementTest : LightJavaCodeInsightFixtureTestCase() {
 
     """.trimMargin())
 
-    val bClass = myFixture.findClass("pkg.A.B")
-    val emptyCtr = bClass.constructors[0]
-    assertEquals("pkg.A.B B()", emptyCtr.getExternalName())
+    readAction {
+      val bClass = myFixture.findClass("pkg.A.B")
+      val emptyCtr = bClass.constructors[0]
+      assertEquals("pkg.A.B B()", emptyCtr.getExternalName())
+    }
   }
 
-  fun `test field qualified name`() {
+  @Test
+  fun `test field qualified name`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.addFileToProject("pkg/A.java", """
       package pkg;
 
@@ -135,14 +159,17 @@ class ExternalNameOfPsiElementTest : LightJavaCodeInsightFixtureTestCase() {
       "f4" to "pkg.A f4"
     )
 
-    val psiClass = myFixture.findClass("pkg.A")
-    fieldName2externalName.forEach { fieldName, externalName ->
-      val psiField = psiClass.findFieldByName(fieldName, false)!!
-      assertEquals(externalName, psiField.getExternalName())
+    readAction {
+      val psiClass = myFixture.findClass("pkg.A")
+      fieldName2externalName.forEach { fieldName, externalName ->
+        val psiField = psiClass.findFieldByName(fieldName, false)!!
+        assertEquals(externalName, psiField.getExternalName())
+      }
     }
   }
 
-  fun `test annotation parameter qualified name`() {
+  @Test
+  fun `test annotation parameter qualified name`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.addFileToProject("pkg/A.java", """
       package pkg;
 
@@ -157,10 +184,12 @@ class ExternalNameOfPsiElementTest : LightJavaCodeInsightFixtureTestCase() {
       "p2" to "pkg.A java.lang.String p2()"
     )
 
-    val psiClass = myFixture.findClass("pkg.A")
-    paramName2externalName.forEach { paramName, externalName ->
-      val psiMethod = psiClass.findMethodsByName(paramName, false).single()
-      assertEquals(externalName, psiMethod.getExternalName())
+    readAction {
+      val psiClass = myFixture.findClass("pkg.A")
+      paramName2externalName.forEach { paramName, externalName ->
+        val psiMethod = psiClass.findMethodsByName(paramName, false).single()
+        assertEquals(externalName, psiMethod.getExternalName())
+      }
     }
   }
 

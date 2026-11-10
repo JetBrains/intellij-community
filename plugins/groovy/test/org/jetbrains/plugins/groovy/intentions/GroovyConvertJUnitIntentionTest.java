@@ -17,11 +17,24 @@ package org.jetbrains.plugins.groovy.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class GroovyConvertJUnitIntentionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+
+@TestApplication
+public class GroovyConvertJUnitIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testAssertFalse() {
     doTest("""
              class A extends junit.framework.Assert {
@@ -38,6 +51,7 @@ public class GroovyConvertJUnitIntentionTest extends LightJavaCodeInsightFixture
              """);
   }
 
+  @Test
   public void testAssertEquals() {
     doTest("""
              class A extends junit.framework.Assert {
@@ -54,6 +68,7 @@ public class GroovyConvertJUnitIntentionTest extends LightJavaCodeInsightFixture
              """);
   }
 
+  @Test
   public void testAssertNotSame() {
     doTest("""
              class A extends junit.framework.Assert {
@@ -70,6 +85,7 @@ public class GroovyConvertJUnitIntentionTest extends LightJavaCodeInsightFixture
              """);
   }
 
+  @Test
   public void testFail() {
     doTest("""
              class A extends junit.framework.Assert {
@@ -81,6 +97,7 @@ public class GroovyConvertJUnitIntentionTest extends LightJavaCodeInsightFixture
   }
 
   private void doTest(String before, String after) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("junit/framework/Assert.groovy", """
       package junit.framework;
       public class Assert {
@@ -96,12 +113,12 @@ public class GroovyConvertJUnitIntentionTest extends LightJavaCodeInsightFixture
     String hint = GroovyIntentionsBundle.message("convert.junit.assertion.to.assert.statement.intention.name");
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);
     if (after == null) {
-      assertEmpty(list);
+      assertThat(list).isNullOrEmpty();
       return;
     }
 
-    myFixture.launchAction(assertOneElement(list));
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    myFixture.launchAction(assertThat(list).singleElement().actual());
+    PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
 
     myFixture.checkResult(after);
   }

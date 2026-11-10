@@ -6,6 +6,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
@@ -16,14 +17,31 @@ import com.intellij.psi.impl.source.FileLocalResolver;
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class FileLocalResolverTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testUnknownVariable() {
     assertDoesNotResolve("class C {{ <caret>a = 2; }}");
   }
 
+  @Test
   public void testCodeBlockVariable() {
     assertResolves("""
                      class C {{
@@ -35,6 +53,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }}""");
   }
 
+  @Test
   public void testVariablesInTheSameDeclaration() {
     assertResolves("""
                      class C {{
@@ -42,6 +61,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }}""");
   }
 
+  @Test
   public void testInsideForLoopVar() {
     assertResolves("""
                      class C {{
@@ -49,6 +69,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }}""");
   }
 
+  @Test
   public void testForLoopVarInBody() {
     assertResolves("""
                      class C {{
@@ -56,6 +77,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }}""");
   }
 
+  @Test
   public void testForLoopVarInCondition() {
     assertResolves("""
                      class C {{
@@ -63,6 +85,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }}""");
   }
 
+  @Test
   public void testForLoopVarInModification() {
     assertResolves("""
                      class C {{
@@ -70,6 +93,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }}""");
   }
 
+  @Test
   public void testForeachLoopVarInBody() {
     assertResolves("""
                      class C {{
@@ -77,6 +101,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }}""");
   }
 
+  @Test
   public void testResourceVarInTryBody() {
     assertResolves("""
                      class C {{
@@ -84,6 +109,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }}""");
   }
 
+  @Test
   public void testResourceVarInSecondResourceVar() {
     assertResolves("""
                      class C {{
@@ -91,6 +117,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }}""");
   }
 
+  @Test
   public void testNoForwardReferencesInResourceList() {
     assertDoesNotResolve("""
                            class C {{
@@ -98,6 +125,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                            }}""");
   }
 
+  @Test
   public void testCatchParameter() {
     assertResolves("""
                      class C {{
@@ -105,6 +133,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }}""");
   }
 
+  @Test
   public void testSingleLambdaParameter() {
     assertResolves("""
                      class C {{
@@ -112,6 +141,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }}""");
   }
 
+  @Test
   public void testListedLambdaParameter() {
     assertResolves("""
                      class C {{
@@ -119,6 +149,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }}""");
   }
 
+  @Test
   public void testTypedLambdaParameter() {
     assertResolves("""
                      class C {{
@@ -126,6 +157,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }}""");
   }
 
+  @Test
   public void testMethodParameter() {
     assertResolves("""
                      class C { void foo(int param) {
@@ -133,6 +165,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }}""");
   }
 
+  @Test
   public void testField() {
     assertResolves("""
                      class C {
@@ -143,12 +176,16 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                      }""");
   }
 
+  @Test
   public void testRecordComponent() {
     LighterASTNode result = configureAndResolve("record A(String s) {{String other = <caret>s;}}").getTarget();
-    assertNotNull(result);
-    assertEquals(result.getStartOffset(), findReference().resolve().getNavigationElement().getTextRange().getStartOffset());
+    ReadAction.runBlocking(() -> {
+      assertNotNull(result);
+      assertEquals(result.getStartOffset(), findReference().resolve().getNavigationElement().getTextRange().getStartOffset());
+    });
   }
 
+  @Test
   public void testPossibleAnonymousSuperClassField() {
     assertEquals(FileLocalResolver.LightResolveResult.UNKNOWN, configureAndResolve("""
                                                                                      class C {
@@ -194,6 +231,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                                                                                        }"""));
   }
 
+  @Test
   public void testNoMethodResolving() {
     assertDoesNotResolve("""
                            class C {
@@ -203,6 +241,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                            """);
   }
 
+  @Test
   public void testNoQualifiedReferenceResolving() {
     assertDoesNotResolve("""
                            class C {
@@ -219,28 +258,33 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
 
   private void assertResolves(String fileText) {
     LighterASTNode result = configureAndResolve(fileText).getTarget();
-    assertNotNull(result);
-    assertEquals(findReference().resolve().getTextRange().getStartOffset(), result.getStartOffset());
+    ReadAction.runBlocking(() -> {
+      assertNotNull(result);
+      assertEquals(findReference().resolve().getTextRange().getStartOffset(), result.getStartOffset());
+    });
   }
 
   private FileLocalResolver.LightResolveResult configureAndResolve(String fileText) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", fileText);
 
-    TreeBackedLighterAST astTree = new TreeBackedLighterAST(myFixture.getFile().getNode());
-    LighterASTNode astRef = TreeBackedLighterAST.wrap(findReference().getElement().getNode());
-    FileLocalResolver.LightResolveResult astResult = new FileLocalResolver(astTree).resolveLocally(astRef);
+    return ReadAction.computeBlocking(() -> {
+      TreeBackedLighterAST astTree = new TreeBackedLighterAST(myFixture.getFile().getNode());
+      LighterASTNode astRef = TreeBackedLighterAST.wrap(findReference().getElement().getNode());
+      FileLocalResolver.LightResolveResult astResult = new FileLocalResolver(astTree).resolveLocally(astRef);
 
-    PsiFile file = PsiFileFactory.getInstance(getProject())
-      .createFileFromText("a.java", JavaLanguage.INSTANCE, myFixture.getFile().getText(), false, false);
-    file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
-    LighterAST fctsTree = file.getNode().getLighterAST();
+      PsiFile file = PsiFileFactory.getInstance(myFixture.getProject())
+        .createFileFromText("a.java", JavaLanguage.INSTANCE, myFixture.getFile().getText(), false, false);
+      file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
+      LighterAST fctsTree = file.getNode().getLighterAST();
 
-    assertTrue(fctsTree instanceof FCTSBackedLighterAST);
-    LighterASTNode fctsRef = findEquivalentNode(fctsTree, astRef);
-    FileLocalResolver.LightResolveResult fctsResult = new FileLocalResolver(fctsTree).resolveLocally(fctsRef);
-    assertTrue(fctsResult.equals(astResult) || nodesEqual(fctsResult.getTarget(), astResult.getTarget()));
+      assertTrue(fctsTree instanceof FCTSBackedLighterAST);
+      LighterASTNode fctsRef = findEquivalentNode(fctsTree, astRef);
+      FileLocalResolver.LightResolveResult fctsResult = new FileLocalResolver(fctsTree).resolveLocally(fctsRef);
+      assertTrue(fctsResult.equals(astResult) || nodesEqual(fctsResult.getTarget(), astResult.getTarget()));
 
-    return astResult;
+      return astResult;
+    });
   }
 
   private LighterASTNode findEquivalentNode(final LighterAST fctsTree, final LighterASTNode target) {
@@ -263,9 +307,11 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private PsiReference findReference() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     return myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
   }
 
+  @Test
   public void testShortFieldTypeName() {
     assertEquals("Bar", getShortClassTypeName("""
                                                 class Foo {
@@ -273,6 +319,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                                                 }"""));
   }
 
+  @Test
   public void testShortFieldTypeNameThatCoincidesWithATypeParameter() {
     assertEquals("Bar", getShortClassTypeName("""
                                                 class Foo<Bar> {
@@ -280,6 +327,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                                                 }"""));
   }
 
+  @Test
   public void testGenericFieldTypeName() {
     assertNull(getShortClassTypeName("""
                                        class Foo<Bar> {
@@ -287,6 +335,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                                        }"""));
   }
 
+  @Test
   public void testVariableTypeNameInAStaticMethod() {
     assertEquals("Bar", getShortClassTypeName("""
                                                 class Foo<Bar> {
@@ -294,6 +343,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                                                 }"""));
   }
 
+  @Test
   public void testVariableTypeNameInAnInstanceMethod() {
     assertNull(getShortClassTypeName("""
                                        class Foo<Bar> {
@@ -301,6 +351,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                                        }"""));
   }
 
+  @Test
   public void testParameterTypeNameInAGenericMethod() {
     assertNull(getShortClassTypeName("""
                                        class Foo<Bar> {
@@ -308,23 +359,27 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
                                        }"""));
   }
 
+  @Test
   public void testMissingLambdaParameterTypeName() {
     assertNull(getShortClassTypeName("class Foo {{ I i = <caret>a -> a }}"));
   }
 
+  @Test
   public void testPrimitiveVarTypeName() {
     assertNull(getShortClassTypeName("class Foo {{ int <caret>i = 2; }}"));
   }
 
+  @Test
   public void testArrayVarTypeName() {
     assertNull(getShortClassTypeName("class Foo {{ String[] <caret>i = 2; }}"));
   }
 
   private String getShortClassTypeName(String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", text);
     PsiVariable var =
-      PsiTreeUtil.findElementOfClassAtOffset(myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset(), PsiVariable.class,
-                                             false);
+      ReadAction.computeBlocking(() -> PsiTreeUtil.findElementOfClassAtOffset(myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset(), PsiVariable.class,
+                                             false));
     TreeBackedLighterAST tree = new TreeBackedLighterAST(myFixture.getFile().getNode());
     LighterASTNode varNode = TreeBackedLighterAST.wrap(var.getNode());
     return new FileLocalResolver(tree).getShortClassTypeName(varNode);

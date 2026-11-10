@@ -3,33 +3,44 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class PublicConstructorInspectionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/classlayout/public_constructor";
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+@TestApplication
+public class PublicConstructorInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/classlayout/public_constructor");
   }
 
   private void doTest() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new PublicConstructorInspection());
-    myFixture.testHighlighting(getTestName(false) + ".java");
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
   }
 
+  @Test
   public void testPublicAnnotation() {
     doTest();
   }
 
+  @Test
   public void testPublicConstructor() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     doTest();
     final IntentionAction intention = myFixture.getAvailableIntention(InspectionGadgetsBundle.message("public.constructor.quickfix"));
     assertNotNull(intention);
@@ -56,7 +67,9 @@ public class PublicConstructorInspectionTest extends LightJavaCodeInsightFixture
                    }""", text);
   }
 
+  @Test
   public void testPublicExplicitConstructor() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     doTest();
     final IntentionAction intention = myFixture.getAvailableIntention(InspectionGadgetsBundle.message("public.constructor.quickfix"));
     assertNotNull(intention);
@@ -73,10 +86,12 @@ public class PublicConstructorInspectionTest extends LightJavaCodeInsightFixture
                    }""", text);
   }
 
+  @Test
   public void testPublicEnum() {
     doTest();
   }
 
+  @Test
   public void testPublicInterface() {
     doTest();
   }

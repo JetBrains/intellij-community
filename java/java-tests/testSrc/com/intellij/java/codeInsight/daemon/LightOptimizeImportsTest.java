@@ -7,13 +7,25 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 @SuppressWarnings("ALL")
-public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class LightOptimizeImportsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
+  @Test
   public void testLayoutOnDemandImportsFromTheSamePackageFirst() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package a.a; public class A {}");
     myFixture.addClass("package a.a; public class C {}");
     myFixture.addClass("package a.b; public class A {}");
@@ -35,10 +47,10 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
       }""";
     myFixture.configureByText(JavaFileType.INSTANCE, code);
 
-    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     javaSettings.LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = true;
     javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> JavaCodeStyleManager.getInstance(myFixture.getProject()).optimizeImports(myFixture.getFile()));
 
     @Language("JAVA") String result = """
       package a;
@@ -57,7 +69,9 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult(result);
   }
 
+  @Test
   public void testImportLayoutStaticAndNonStaticImportsTogether() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package aaa; public class AAA {}");
     myFixture.addClass("package aaa; public class BBB {" +
                        "  public static void x() {}" +
@@ -86,7 +100,7 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
       """;
     myFixture.configureByText(JavaFileType.INSTANCE, text);
 
-    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     javaSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY = false;
     javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
     javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
@@ -94,7 +108,7 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
     javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
     javaSettings.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "aaa", true));
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> JavaCodeStyleManager.getInstance(myFixture.getProject()).optimizeImports(myFixture.getFile()));
 
     @Language("JAVA") String result = """
       package main;
@@ -121,7 +135,9 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult(result);
   }
   
+  @Test
   public void testImportLayoutWithoutSubpackages() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package aaa; public class AAA {}");
     myFixture.addClass("package bbb; public class BBB {}");
     myFixture.addClass("package ccc; public class CCC {}");
@@ -143,10 +159,10 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
       """;
     myFixture.configureByText(JavaFileType.INSTANCE, text);
 
-    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     //1 is module import
     javaSettings.IMPORT_LAYOUT_TABLE.insertEntryAt(new PackageEntry(false, "bbb", false), 1 + 1);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> JavaCodeStyleManager.getInstance(myFixture.getProject()).optimizeImports(myFixture.getFile()));
 
     @Language("JAVA") String result = """
       package main;
@@ -166,7 +182,9 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult(result);
   }
 
+  @Test
   public void testSingleImportConflictingWith2Others() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package p; public class A1 {}");
     myFixture.addClass("package p; public class A2 {}");
     myFixture.addClass("package p; public class ArrayList {}");
@@ -190,10 +208,10 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
       """;
     myFixture.configureByText(JavaFileType.INSTANCE, text);
     
-    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     // default import layout table is at com.intellij.psi.codeStyle.JavaCodeStyleSettings.initImportsByDefault()
     javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 2;
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> JavaCodeStyleManager.getInstance(myFixture.getProject()).optimizeImports(myFixture.getFile()));
 
     @Language("JAVA")
     String result = """
@@ -215,7 +233,9 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult(result);
   }
   
+  @Test
   public void testDontExpandOnDemandStaticImports() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package p; public class A1 {" +
                        "  public static void f() {}" +
                        "}");
@@ -235,14 +255,16 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
       """;
     myFixture.configureByText(JavaFileType.INSTANCE, text);
     
-    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 0;
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> JavaCodeStyleManager.getInstance(myFixture.getProject()).optimizeImports(myFixture.getFile()));
 
     myFixture.checkResult(text);
   }
 
+  @Test
   public void testStaticImportsOrder() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package p; public class C1 {
                              public static class Byte {}
@@ -271,10 +293,10 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
       }""";
     myFixture.configureByText(JavaFileType.INSTANCE, text);
     
-    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
     javaSettings.LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = false;
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> JavaCodeStyleManager.getInstance(myFixture.getProject()).optimizeImports(myFixture.getFile()));
 
     @Language("JAVA")
     String result = """
@@ -294,7 +316,9 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult(result);
   }
 
+  @Test
   public void testConflictInPackageWithImportInName() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package a.importb; public class A {}");
     myFixture.addClass("package a.importb; public class B {}");
     myFixture.addClass("package a.importb; public class Boolean {}"); // conflict with java.lang.Boolean
@@ -316,10 +340,10 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
       }""";
     myFixture.configureByText(JavaFileType.INSTANCE, text);
 
-    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
     javaSettings.LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = false;
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> JavaCodeStyleManager.getInstance(myFixture.getProject()).optimizeImports(myFixture.getFile()));
 
     @Language("JAVA")
     String result = """
@@ -338,7 +362,9 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult(result);
   }
 
+  @Test
   public void testStaticImportOnMethodFromSuperClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package p; public class A {
                            public static void m1() {}
@@ -368,9 +394,9 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
       }""";
     myFixture.configureByText(JavaFileType.INSTANCE, text);
     
-    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> JavaCodeStyleManager.getInstance(myFixture.getProject()).optimizeImports(myFixture.getFile()));
 
     @Language("JAVA")
     String result = """
@@ -388,7 +414,9 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult(result);
   }
 
+  @Test
   public void testConflictingSingleImportUsedInReferenceQualifier() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package p.p1; public class C {}");
     myFixture.addClass("package p.p1; public class D {}");
     myFixture.addClass("""
@@ -412,10 +440,10 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
       }""";
     myFixture.configureByText(JavaFileType.INSTANCE, text);
 
-    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     javaSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "p", true));
     javaSettings.LAYOUT_ON_DEMAND_IMPORT_FROM_SAME_PACKAGE_FIRST = false;
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> JavaCodeStyleManager.getInstance(myFixture.getProject()).optimizeImports(myFixture.getFile()));
 
     @Language("JAVA") String result = """
       package p.p2;
@@ -436,7 +464,9 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
     myFixture.checkResult(result);
   }
 
+  @Test
   public void testDontOptimizeIncompleteCode() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     @Language("JAVA") String fileText = """
       import java.util.ArrayList;
       public class A {
@@ -447,7 +477,7 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
       }""";
     myFixture.configureByText(JavaFileType.INSTANCE, fileText);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> JavaCodeStyleManager.getInstance(myFixture.getProject()).optimizeImports(myFixture.getFile()));
     myFixture.checkResult(fileText);
   }
 }

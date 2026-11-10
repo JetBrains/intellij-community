@@ -85,6 +85,8 @@ jvm_library(
         "//platform/lang-core",
         "//platform/code-style-api:codeStyle",
         "//libraries/fastutil",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
     ],
 )
 ### auto-generated section `build intellij.platform.langInjection.tests` end

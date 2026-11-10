@@ -3,40 +3,69 @@ package com.intellij.java.codeInsight.highlighting
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_8
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class AtomicReferenceImplicitUsageTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor() = JAVA_8
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/atomicReferenceImplicitUsage/"
+@TestApplication
+class AtomicReferenceImplicitUsageTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_8)
+  }
 
-  override fun setUp() {
-    super.setUp()
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/atomicReferenceImplicitUsage/"
+  }
+
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(UnusedDeclarationInspection())
   }
 
-  fun testReferenceGet() = doTest()
-  fun testIntegerGet() = doTest()
-  fun testLongGet() = doTest()
+  @Test
+  fun testReferenceGet(): Unit = doTest()
+  @Test
+  fun testIntegerGet(): Unit = doTest()
+  @Test
+  fun testLongGet(): Unit = doTest()
 
-  fun testReferenceCAS() = doTest()
-  fun testIntegerCAS() = doTest()
-  fun testLongCAS() = doTest()
+  @Test
+  fun testReferenceCAS(): Unit = doTest()
+  @Test
+  fun testIntegerCAS(): Unit = doTest()
+  @Test
+  fun testLongCAS(): Unit = doTest()
 
-  fun testReferenceGetAndSet() = doTest()
-  fun testIntegerGetAndSet() = doTest()
-  fun testLongGetAndSet() = doTest()
+  @Test
+  fun testReferenceGetAndSet(): Unit = doTest()
+  @Test
+  fun testIntegerGetAndSet(): Unit = doTest()
+  @Test
+  fun testLongGetAndSet(): Unit = doTest()
 
-  fun testReferenceSet() = doTest()
-  fun testIntegerSet() = doTest()
-  fun testLongSet() = doTest()
+  @Test
+  fun testReferenceSet(): Unit = doTest()
+  @Test
+  fun testIntegerSet(): Unit = doTest()
+  @Test
+  fun testLongSet(): Unit = doTest()
 
-  fun testIntegerIncrement() = doTest()
-  fun testLongIncrement() = doTest()
+  @Test
+  fun testIntegerIncrement(): Unit = doTest()
+  @Test
+  fun testLongIncrement(): Unit = doTest()
 
-  fun testNonVolatile() = doTest()
+  @Test
+  fun testNonVolatile(): Unit = doTest()
 
   private fun doTest() {
-    myFixture.configureByFile(getTestName(false) + ".java")
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java")
     myFixture.checkHighlighting()
   }
 }

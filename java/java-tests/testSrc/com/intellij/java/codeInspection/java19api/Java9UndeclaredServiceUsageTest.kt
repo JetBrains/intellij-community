@@ -4,43 +4,71 @@ package com.intellij.java.codeInspection.java19api
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInspection.java19api.Java9UndeclaredServiceUsageInspection
 import com.intellij.java.JavaBundle
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_9
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class Java9UndeclaredServiceUsageTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
+@TestApplication
+class Java9UndeclaredServiceUsageTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_9)
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
   private val message = JavaBundle.message("inspection.undeclared.service.usage.message", "com.example.MyService")
   private val fix = QuickFixBundle.message("module.info.add.uses.name", "com.example.MyService")
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(Java9UndeclaredServiceUsageInspection())
     myFixture.addFileToProject("com/example/MyService.java", "package com.example;\npublic interface MyService {}")
   }
 
-  fun testServiceDeclared() = highlightDeclared("load(MyService.class)")
-  fun testServiceDeclaredCL() = highlightDeclared("load(MyService.class, getClass().getClassLoader())")
-  fun testServiceDeclaredML() = highlightDeclared("load(getClass().getModule().getLayer(), MyService.class)")
-  fun testServiceDeclaredInstalled() = highlightDeclared("loadInstalled(MyService.class)")
+  @Test
+  fun testServiceDeclared(): Unit = highlightDeclared("load(MyService.class)")
+  @Test
+  fun testServiceDeclaredCL(): Unit = highlightDeclared("load(MyService.class, getClass().getClassLoader())")
+  @Test
+  fun testServiceDeclaredML(): Unit = highlightDeclared("load(getClass().getModule().getLayer(), MyService.class)")
+  @Test
+  fun testServiceDeclaredInstalled(): Unit = highlightDeclared("loadInstalled(MyService.class)")
 
-  fun testServiceNotDeclared() = highlightNotDeclared("load(<MyService.class>)")
-  fun testServiceNotDeclaredCL() = highlightNotDeclared("load(<MyService.class>, getClass().getClassLoader())")
-  fun testServiceNotDeclaredML() = highlightNotDeclared("load(getClass().getModule().getLayer(), <MyService.class>)")
-  fun testServiceNotDeclaredInstalled() = highlightNotDeclared("loadInstalled(<MyService.class>)")
+  @Test
+  fun testServiceNotDeclared(): Unit = highlightNotDeclared("load(<MyService.class>)")
+  @Test
+  fun testServiceNotDeclaredCL(): Unit = highlightNotDeclared("load(<MyService.class>, getClass().getClassLoader())")
+  @Test
+  fun testServiceNotDeclaredML(): Unit = highlightNotDeclared("load(getClass().getModule().getLayer(), <MyService.class>)")
+  @Test
+  fun testServiceNotDeclaredInstalled(): Unit = highlightNotDeclared("loadInstalled(<MyService.class>)")
 
-  fun testFix() = fix("load(<caret>MyService.class)")
-  fun testFixCL() = fix("load(<caret>MyService.class, getClass().getClassLoader())")
-  fun testFixML() = fix("load(getClass().getModule().getLayer(), <caret>MyService.class)")
-  fun testFixInstalled() = fix("loadInstalled(<caret>MyService.class)")
+  @Test
+  fun testFix(): Unit = timeoutRunBlocking(timeout = 2.minutes) { fix("load(<caret>MyService.class)") }
+  @Test
+  fun testFixCL(): Unit = timeoutRunBlocking(timeout = 2.minutes) { fix("load(<caret>MyService.class, getClass().getClassLoader())") }
+  @Test
+  fun testFixML(): Unit = timeoutRunBlocking(timeout = 2.minutes) { fix("load(getClass().getModule().getLayer(), <caret>MyService.class)") }
+  @Test
+  fun testFixInstalled(): Unit = timeoutRunBlocking(timeout = 2.minutes) { fix("loadInstalled(<caret>MyService.class)") }
 
-  fun testFixConstant() {
+  @Test
+  fun testFixConstant(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     addConst("")
     fix("load(<caret>Const.CLAZZ)")
   }
 
-  fun testFixRawConstant() {
+  @Test
+  fun testFixRawConstant(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     addConst("<MyService>")
     fix("load(<caret>Const.CLAZZ)")
   }
@@ -59,12 +87,14 @@ class Java9UndeclaredServiceUsageTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.checkHighlighting()
   }
 
-  private fun fix(call: String) {
+  private suspend fun fix(call: String) {
     configure(call, false)
-    myFixture.launchAction(myFixture.filterAvailableIntentions(fix).first())
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-    myFixture.checkHighlighting()  // no warning
-    myFixture.checkResult("module-info.java", moduleText(true), false)
+    withContext(Dispatchers.EDT) {
+      myFixture.launchAction(myFixture.filterAvailableIntentions(fix).first())
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+      myFixture.checkHighlighting()  // no warning
+      myFixture.checkResult("module-info.java", moduleText(true), false)
+    }
   }
 
   private fun configure(call: String, declared: Boolean) {

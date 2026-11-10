@@ -19,30 +19,48 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.reflectiveAccess.JavaReflectionInvocationInspection
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class JavaReflectionInvocationTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun setUp() {
-    super.setUp()
-    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_5)
+@TestApplication
+class JavaReflectionInvocationTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8)
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = JavaTestUtil.getJavaTestDataPath() + "/inspection/javaReflectionInvocation"
+  }
+
+  @BeforeEach
+  fun setUp() {
+    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_1_5)
     myFixture.enableInspections(JavaReflectionInvocationInspection())
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_8
+  @Test
+  fun testMethodParamCount(): Unit = doTest()
+  @Test
+  fun testMethodParamTypes(): Unit = doTest()
 
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/javaReflectionInvocation"
+  @Test
+  fun testConstructorParamCount(): Unit = doTest()
+  @Test
+  fun testConstructorParamTypes(): Unit = doTest()
+  @Test
+  fun testConstructorParamTypesTernary(): Unit = doTest()
 
-  fun testMethodParamCount() = doTest()
-  fun testMethodParamTypes() = doTest()
-
-  fun testConstructorParamCount() = doTest()
-  fun testConstructorParamTypes() = doTest()
-  fun testConstructorParamTypesTernary() = doTest()
-
-  fun testNonVarargCall() = doTest()
+  @Test
+  fun testNonVarargCall(): Unit = doTest()
 
   private fun doTest() {
-    myFixture.testHighlighting("${getTestName(false)}.java")
+    myFixture.testHighlighting("${myFixture.getTestName(false)}.java")
   }
 }

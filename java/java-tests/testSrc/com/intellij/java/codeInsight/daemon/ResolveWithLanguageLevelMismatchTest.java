@@ -4,17 +4,24 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.codeInspection.JavaApiUsageInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public final class ResolveWithLanguageLevelMismatchTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
+@TestApplication
+public final class ResolveWithLanguageLevelMismatchTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testRecord21() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package com.example; public final class Record {public static int x;}");
 
     myFixture.configureByText("MyClass.java", """
@@ -26,8 +33,10 @@ public final class ResolveWithLanguageLevelMismatchTest extends LightJavaCodeIns
     myFixture.checkHighlighting();
   }
   
+  @Test
   public void testRecord8() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, () -> {
       myFixture.addClass("package com.example; public final class Record {public static int x;}");
 
       myFixture.configureByText("MyClass.java", """
@@ -40,8 +49,10 @@ public final class ResolveWithLanguageLevelMismatchTest extends LightJavaCodeIns
     });
   }
   
+  @Test
   public void testRecord8Explicit() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, () -> {
       myFixture.addClass("package com.example; public final class Record {public static int x;}");
 
       myFixture.configureByText("MyClass.java", """

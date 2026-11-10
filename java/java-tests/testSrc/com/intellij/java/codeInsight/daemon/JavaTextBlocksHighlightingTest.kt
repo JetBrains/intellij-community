@@ -3,45 +3,70 @@ package com.intellij.java.codeInsight.daemon
 
 import com.intellij.JavaTestUtil
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class JavaTextBlocksHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getTestDataPath() = "${JavaTestUtil.getJavaTestDataPath()}/codeInsight/daemonCodeAnalyzer/textBlocks"
+@TestApplication
+class JavaTextBlocksHighlightingTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  fun testTextBlocks() = doTest()
-  fun testUnclosedTextBlock() = doTest()
-  fun testUnclosedTextBlock2() = doTest()
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = "${JavaTestUtil.getJavaTestDataPath()}/codeInsight/daemonCodeAnalyzer/textBlocks"
+  }
+
+  @Test
+  fun testTextBlocks(): Unit = doTest()
+  @Test
+  fun testUnclosedTextBlock(): Unit = doTest()
+  @Test
+  fun testUnclosedTextBlock2(): Unit = doTest()
+
+  @Test
   fun testTextBlockOpeningSpaces() {
-    myFixture.configureByText("${getTestName(false)}.java", "class C {\n  String spaces = \"\"\" \t \u000C \n    \"\"\";\n}")
+    myFixture.configureByText("${myFixture.getTestName(false)}.java", "class C {\n  String spaces = \"\"\" \t \u000C \n    \"\"\";\n}")
     myFixture.checkHighlighting()
   }
 
   private fun doTest() {
-    myFixture.configureByFile("${getTestName(false)}.java")
+    myFixture.configureByFile("${myFixture.getTestName(false)}.java")
     myFixture.checkHighlighting()
   }
 
-  fun testEscapeQuotes() = doTestPaste("\"\"\"\ntarget\"\"\"")
+  @Test
+  fun testEscapeQuotes(): Unit = doTestPaste("\"\"\"\ntarget\"\"\"")
 
-  fun testEscapeQuotes2() = doTestPaste("\"\ntarget\"")
+  @Test
+  fun testEscapeQuotes2(): Unit = doTestPaste("\"\ntarget\"")
 
-  fun testNoEscapeWhenNotInTextBlockContent() = doTestPaste("\\")
+  @Test
+  fun testNoEscapeWhenNotInTextBlockContent(): Unit = doTestPaste("\\")
 
-  fun testNoEscapeWhenInTextBlockPrefix() = doTestPaste("\\")
+  @Test
+  fun testNoEscapeWhenInTextBlockPrefix(): Unit = doTestPaste("\\")
 
-  fun testPasteNewline() = doTestPaste("\n\n")
+  @Test
+  fun testPasteNewline(): Unit = doTestPaste("\n\n")
 
-  fun testPasteMultilineText() = doTestPaste("<html>  \n  <body>\n  </body>\n</html>  ")
+  @Test
+  fun testPasteMultilineText(): Unit = doTestPaste("<html>  \n  <body>\n  </body>\n</html>  ")
 
-  fun testBadEscape() = doTestPaste("\\")
+  @Test
+  fun testBadEscape(): Unit = doTestPaste("\\")
 
   private fun doTestPaste(textToPaste: String) {
     myFixture.configureByText("plain.txt", "<selection>$textToPaste</selection>")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY)
-    myFixture.configureByFile("${getTestName(false)}.java")
+    myFixture.configureByFile("${myFixture.getTestName(false)}.java")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
-    myFixture.checkResultByFile("${getTestName(false)}.after.java")
+    myFixture.checkResultByFile("${myFixture.getTestName(false)}.after.java")
   }
 
 }

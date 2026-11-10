@@ -108,6 +108,8 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//java/java-frontback-psi-api:frontback-psi",
         "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
     ],
 )
 ### auto-generated section `build intellij.javaFX.community.tests` end

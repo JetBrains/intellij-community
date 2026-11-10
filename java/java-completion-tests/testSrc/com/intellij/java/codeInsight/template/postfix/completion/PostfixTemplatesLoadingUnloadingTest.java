@@ -11,24 +11,38 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class PostfixTemplatesLoadingUnloadingTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+
+@TestApplication
+public class PostfixTemplatesLoadingUnloadingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
   }
-  
-  
+
+  @Test
   public void testLoadUnload() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("dummy.java", """
       package templates;
 
@@ -40,20 +54,20 @@ public class PostfixTemplatesLoadingUnloadingTest extends LightJavaCodeInsightFi
       }""");
     LookupElement[] elements = myFixture.completeBasic();
     List<String> actual = ContainerUtil.map(elements, element -> element.getLookupString());
-    assertDoesntContain(actual, ".hello");
+    assertThat(actual).doesNotContain(".hello");
     
     //add extension
     MyPostfixTemplateProvider templateProvider = new MyPostfixTemplateProvider();
     LanguagePostfixTemplate.LANG_EP.addExplicitExtension(JavaLanguage.INSTANCE, templateProvider);
     elements = myFixture.completeBasic();
     actual = ContainerUtil.map(elements, element -> element.getLookupString());
-    assertContainsElements(actual, ".hello");
+    assertThat(actual).contains(".hello");
     
     //remove extension
     LanguagePostfixTemplate.LANG_EP.removeExplicitExtension(JavaLanguage.INSTANCE, templateProvider);
     elements = myFixture.completeBasic();
     actual = ContainerUtil.map(elements, element -> element.getLookupString());
-    assertDoesntContain(actual, ".hello");
+    assertThat(actual).doesNotContain(".hello");
   }
 
   private static class MyPostfixTemplateProvider implements PostfixTemplateProvider {

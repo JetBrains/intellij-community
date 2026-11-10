@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl.quickfix
 
-
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.actions.AnnotationAttributeValueRequest
 import com.intellij.lang.jvm.actions.AnnotationRequest
@@ -13,22 +12,35 @@ import com.intellij.lang.jvm.actions.createAddAnnotationActions
 import com.intellij.lang.jvm.actions.intAttribute
 import com.intellij.lang.jvm.actions.nestedAttribute
 import com.intellij.lang.jvm.actions.stringAttribute
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiJvmModifiersOwner
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class CreateAnnotationTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class CreateAnnotationTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  private fun createAnnotationAction(modifierListOwner: PsiJvmModifiersOwner, annotationRequest: AnnotationRequest): IntentionAction =
-    createAddAnnotationActions(modifierListOwner, annotationRequest).single()
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
-  fun `test add annotation with value text literal`() {
+  private suspend fun createAnnotationAction(modifierListOwner: PsiJvmModifiersOwner, annotationRequest: AnnotationRequest): IntentionAction =
+    readAction { createAddAnnotationActions(modifierListOwner, annotationRequest).single() }
+
+  @Test
+  fun `test add annotation with value text literal`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.configureByText("A.java", """
       class A {
       void bar(){}
       }
     """.trimIndent())
 
-    val modifierListOwner = myFixture.findElementByText("bar", PsiJvmModifiersOwner::class.java)
+    val modifierListOwner = readAction { myFixture.findElementByText("bar", PsiJvmModifiersOwner::class.java) }
 
     myFixture.launchAction(createAnnotationAction(modifierListOwner,
                                                   annotationRequest("java.lang.SuppressWarnings",
@@ -41,7 +53,8 @@ class CreateAnnotationTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
-  fun `test add annotation with two parameters`() {
+  @Test
+  fun `test add annotation with two parameters`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.addClass("""
       public @interface Anno{
 
@@ -55,7 +68,7 @@ class CreateAnnotationTest : LightJavaCodeInsightFixtureTestCase() {
       class A {}
     """.trimIndent())
 
-    val modifierListOwner = myFixture.findElementByText("A", PsiJvmModifiersOwner::class.java)
+    val modifierListOwner = readAction { myFixture.findElementByText("A", PsiJvmModifiersOwner::class.java) }
 
     myFixture.launchAction(createAnnotationAction(modifierListOwner,
                                                   annotationRequest(
@@ -71,7 +84,8 @@ class CreateAnnotationTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
-  fun `test add annotation with class access literal`() {
+  @Test
+  fun `test add annotation with class access literal`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.addClass("""
       public @interface Anno {
         Class<?> value();
@@ -81,7 +95,7 @@ class CreateAnnotationTest : LightJavaCodeInsightFixtureTestCase() {
       class A {}
     """.trimIndent())
 
-    val modifierListOwner = myFixture.findElementByText("A", PsiJvmModifiersOwner::class.java)
+    val modifierListOwner = readAction { myFixture.findElementByText("A", PsiJvmModifiersOwner::class.java) }
 
     myFixture.launchAction(createAnnotationAction(modifierListOwner,
                                                   annotationRequest(
@@ -96,7 +110,8 @@ class CreateAnnotationTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
-  fun `test add annotation with field reference`() {
+  @Test
+  fun `test add annotation with field reference`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.addClass("""
       public @interface Anno {
         int field1();
@@ -110,7 +125,7 @@ class CreateAnnotationTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-    val modifierListOwner = myFixture.findElementByText("A", PsiJvmModifiersOwner::class.java)
+    val modifierListOwner = readAction { myFixture.findElementByText("A", PsiJvmModifiersOwner::class.java) }
 
     val annotation = annotationRequest("Anno",
                                        constantAttribute("field1", "A.CONSTANT"),
@@ -125,7 +140,8 @@ class CreateAnnotationTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
-  fun `test add annotation with array value`() {
+  @Test
+  fun `test add annotation with array value`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.addClass("""
       public @interface Anno {
         String[] value();
@@ -135,7 +151,7 @@ class CreateAnnotationTest : LightJavaCodeInsightFixtureTestCase() {
       class A {}
     """.trimIndent())
 
-    val modifierListOwner = myFixture.findElementByText("A", PsiJvmModifiersOwner::class.java)
+    val modifierListOwner = readAction { myFixture.findElementByText("A", PsiJvmModifiersOwner::class.java) }
 
     val arrayMembers = listOf(
       AnnotationAttributeValueRequest.StringValue("member 1"),
@@ -150,7 +166,8 @@ class CreateAnnotationTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
-  fun `test add annotation with deep nesting`() {
+  @Test
+  fun `test add annotation with deep nesting`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.addClass("""
       public @interface Root {
         Nested1 value();
@@ -174,7 +191,7 @@ class CreateAnnotationTest : LightJavaCodeInsightFixtureTestCase() {
       class A {}
     """.trimIndent())
 
-    val modifierListOwner = myFixture.findElementByText("A", PsiJvmModifiersOwner::class.java)
+    val modifierListOwner = readAction { myFixture.findElementByText("A", PsiJvmModifiersOwner::class.java) }
 
     val nested2_1 = annotationRequest(
       "Nested2",

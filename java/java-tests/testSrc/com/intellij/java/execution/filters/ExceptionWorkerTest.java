@@ -11,6 +11,7 @@ import com.intellij.execution.filters.ExceptionWorker;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.FilterMixin;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -19,31 +20,44 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UClass;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * @author gregsh
  */
-public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class ExceptionWorkerTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   private record LogItem(@NotNull String text, @Nullable Integer row, @Nullable Integer column) {
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
-
+  @Test
   public void testParsing() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package com.sample;
 
@@ -86,13 +100,14 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
       \tat com.sample.RunningMain.main(RunningMain.java:13)
       """;
     final Document document = EditorFactory.getInstance().createDocument(testData);
-    FilterMixin filter = (FilterMixin)new ExceptionExFilterFactory().create(GlobalSearchScope.projectScope(getProject()));
+    FilterMixin filter = (FilterMixin)new ExceptionExFilterFactory().create(GlobalSearchScope.projectScope(myFixture.getProject()));
     final ArrayList<String> result = new ArrayList<>();
     filter.applyHeavyFilter(document, 0, 0, r -> r.getResultItems().forEach(
       highlight -> result.add(new TextRange(highlight.getHighlightStartOffset(), highlight.getHighlightEndOffset()).substring(testData))));
-    assertSameElements(result, "com.sample.RunningMain.func1", "com.sample.RunningMain.main");
+    assertThat(result).containsOnly("com.sample.RunningMain.func1", "com.sample.RunningMain.main");
   }
 
+  @Test
   public void testAnomalyParenthesisParsing() {
     assertParsed("at youtrack.jetbrains.com.Issue.IDEA_125137()(FooTest.groovy:2)\n", "youtrack.jetbrains.com.Issue", "IDEA_125137()", "FooTest.groovy", 2);
     assertParsed("at youtrack.jetbrains.com.Issue.IDEA_125137()Hmm(FooTest.groovy:2)\n", "youtrack.jetbrains.com.Issue", "IDEA_125137()Hmm", "FooTest.groovy", 2);
@@ -109,18 +124,22 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(lineIndex, trinity.lineNumber);
   }
 
+  @Test
   public void testYourKitFormat() {
     assertParsed("com.intellij.util.concurrency.Semaphore.waitFor(long) Semaphore.java:89\n",
                  "com.intellij.util.concurrency.Semaphore", "waitFor", "Semaphore.java", 89);
   }
 
+  @Test
   public void testForcedJstackFormat() {
     assertParsed(" - java.lang.ref.ReferenceQueue.remove(long) @bci=151, line=143 (Compiled frame)\n",
                  "java.lang.ref.ReferenceQueue", "remove", null, 143);
 
   }
 
+  @Test
   public void testJava9ModulePrefixed() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String line = "at mod.name/p.A.foo(A.java:2)\n";
     assertParsed(line, "p.A", "foo", "A.java", 2);
 
@@ -128,25 +147,30 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
                                              package p; public class A {
                                                public void foo() {}
                                              }""");
-    ExceptionInfoCache cache = new ExceptionInfoCache(getProject(), GlobalSearchScope.projectScope(getProject()));
+    ExceptionInfoCache cache = new ExceptionInfoCache(myFixture.getProject(), GlobalSearchScope.projectScope(myFixture.getProject()));
     ExceptionLineParser worker = ExceptionLineParserFactory.getInstance().create(cache);
-    worker.execute(line, line.length());
-    UClass aClass = worker.getUClass();
-    assertNotNull(aClass);
-    assertEquals(psiClass, aClass.getSourcePsi());
+    ReadAction.runBlocking(() -> {
+      worker.execute(line, line.length());
+      UClass aClass = worker.getUClass();
+      assertNotNull(aClass);
+      assertEquals(psiClass, aClass.getSourcePsi());
+    });
   }
 
+  @Test
   public void testNonClassInTheLine() {
     String line = "2016-12-20 10:58:36,617 [   5740]   INFO - llij.ide.plugins.PluginManager - Loaded bundled plugins: Android Support (10.2.2), Ant Support (1.0), Application Servers View (0.2.0), AspectJ Support (1.2), CFML Support (3.53), CSS Support (163.7743.44), CVS Integration (11), Cloud Foundry integration (1.0), CloudBees integration (1.0), Copyright (8.1), Coverage (163.7743.44), DSM Analysis (1.0.0), Database Tools and SQL (1.0), Eclipse Integration (3.0), EditorConfig (163.7743.44), Emma (163.7743.44), Flash/Flex Support (163.7743.44)";
     assertNull(ExceptionWorker.parseExceptionLine(line));
     assertNull(ExceptionWorker.parseExceptionLine(line + "\n"));
   }
 
+  @Test
   public void testNativeMethod() {
     assertParsed("at java.base/java.security.AccessController.doPrivileged(Native Method)\n",
                  "java.security.AccessController", "doPrivileged", null, -1);
   }
 
+  @Test
   public void testColumnFinder() {
     @Language("JAVA") String classText =
       """
@@ -201,6 +225,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
   
+  @Test
   public void testColumnFinderAssert() {
     @Language("JAVA") String classText =
       """
@@ -216,6 +241,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testColumnFinderArrayStore() {
     @Language("JAVA") String classText =
       """
@@ -233,6 +259,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testArrayIndexFilter() {
     @Language("JAVA") String classText =
       """
@@ -248,6 +275,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testClassCastGeneric() {
     @Language("JAVA") String classText =
       """
@@ -269,6 +297,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testClassCastGenericOnNextLine() {
     @Language("JAVA") String classText =
       """
@@ -296,6 +325,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testClassCastGenericBound() {
     @Language("JAVA") String classText =
       """
@@ -324,6 +354,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testClassCastGenericBoundOnNextLine() {
     @Language("JAVA") String classText =
       """
@@ -358,6 +389,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testClassCastIntersection() {
     @Language("JAVA") String classText =
       """
@@ -377,6 +409,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testClassCastIntersectionOnNextLine() {
     @Language("JAVA") String classText =
       """
@@ -398,6 +431,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testClassCastIntersectionBound() {
     @Language("JAVA") String classText =
       """
@@ -424,6 +458,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testClassCastPrimitive() {
     @Language("JAVA") String classText =
       """
@@ -441,6 +476,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testClassCastArray() {
     @Language("JAVA") String classText =
       """
@@ -458,6 +494,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testClassCastNestedArray() {
     @Language("JAVA") String classText =
       """
@@ -475,6 +512,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testColumnFinderNegativeArraySize() {
     @Language("JAVA") String classText =
       """
@@ -491,6 +529,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testColumnFinderNegativeArraySizeOnNextLine() {
     @Language("JAVA") String classText =
       """
@@ -510,6 +549,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
   
+  @Test
   public void testColumnFinderDivisionByZero() {
     @Language("JAVA") String classText =
       """
@@ -527,6 +567,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testColumnFinderDivisionByZeroOnNewLine() {
     @Language("JAVA") String classText =
       """
@@ -547,6 +588,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testArrayCopyIndexNewLine() {
     @Language("JAVA") String classText =
       """
@@ -568,6 +610,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeInvoke() {
     @Language("JAVA") String classText =
       """
@@ -584,6 +627,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeInvokeOnNextLine() {
     @Language("JAVA") String classText =
       """
@@ -606,6 +650,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeJetBrains() {
     @Language("JAVA") String classText =
       """
@@ -625,6 +670,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeSynchronized() {
     @Language("JAVA") String classText =
       """
@@ -641,6 +687,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeSynchronizedOnNextLine() {
     @Language("JAVA") String classText =
       """
@@ -661,6 +708,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeThrow() {
     @Language("JAVA") String classText =
       """
@@ -677,6 +725,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeThrowOnNextLine() {
     @Language("JAVA") String classText =
       """
@@ -695,6 +744,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeArrayRead() {
     @Language("JAVA") String classText =
       """
@@ -712,6 +762,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeArrayReadOnNextLine() {
     @Language("JAVA") String classText =
       """
@@ -730,6 +781,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeArrayWrite() {
     @Language("JAVA") String classText =
       """
@@ -747,6 +799,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeArrayWriteOnNextLine() {
     @Language("JAVA") String classText =
       """
@@ -768,6 +821,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeArrayLength() {
     @Language("JAVA") String classText =
       """
@@ -787,6 +841,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeArrayLengthOnNextLine() {
     @Language("JAVA") String classText =
       """
@@ -808,6 +863,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeFieldRead() {
     @Language("JAVA") String classText =
       """
@@ -827,6 +883,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeFieldReadOnNextLine() {
     @Language("JAVA") String classText =
       """
@@ -848,6 +905,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeFieldWrite() {
     @Language("JAVA") String classText =
       """
@@ -867,6 +925,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeFieldWriteOnNextLine() {
     @Language("JAVA") String classText =
       """
@@ -890,6 +949,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeUnboxing() {
     @Language("JAVA") String classText =
       """
@@ -908,6 +968,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeUnboxingOnNextLine() {
     @Language("JAVA") String classText =
       """
@@ -929,6 +990,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeUnboxing2() {
     @Language("JAVA") String classText =
       """
@@ -947,6 +1009,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeUnboxingArray() {
     @Language("JAVA") String classText =
       """
@@ -965,6 +1028,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeGetClassOnMethodReference() {
     @Language("JAVA") String classText =
       """
@@ -981,6 +1045,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeGetClassOnMethodReferenceOnNextLine() {
     @Language("JAVA") String classText =
       """
@@ -999,6 +1064,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeGetClassOnQualifiedNew() {
     @Language("JAVA") String classText =
       """
@@ -1017,6 +1083,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeGetClassOnQualifiedNewOnNewLine() {
     @Language("JAVA") String classText =
       """
@@ -1038,6 +1105,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeRequireNonNullOnSwitch() {
     @Language("JAVA") String classText =
       """
@@ -1055,7 +1123,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
-
+  @Test
   public void testNpeRequireNonNullOnSwitchOnNewLine() {
     @Language("JAVA") String classText =
       """
@@ -1077,6 +1145,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpePoorMan() {
     @Language("JAVA") String classText =
       """
@@ -1096,6 +1165,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpePoorManOnNewLine() {
     @Language("JAVA") String classText =
       """
@@ -1120,6 +1190,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeFieldOldOnNewLine() {
     @Language("JAVA") String classText =
       """
@@ -1143,6 +1214,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testNpeArrayOldOnNewLine() {
     @Language("JAVA") String classText =
       """
@@ -1162,6 +1234,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testInternalFrames() {
     @Language("JAVA") String classText =
       """
@@ -1185,6 +1258,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testLinchekOutputFormat() {
     @Language("JAVA") String classText =
       """
@@ -1205,7 +1279,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testVarHandle() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package java.lang.invoke;
                          
@@ -1257,6 +1333,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   @SuppressWarnings({"RedundantOperationOnEmptyContainer", "DataFlowIssue"})
   public void testWithClassLoader() {
     @Language("JAVA") String classText =
@@ -1283,6 +1360,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testHprofOutput() {
     @Language("JAVA") String classText =
       """
@@ -1316,6 +1394,7 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     checkColumnFinder(classText, traceAndPositions);
   }
 
+  @Test
   public void testParseExceptionLine() {
     String exceptionLine = "Caused by: java.lang.AssertionError: expected same";
     ExceptionInfo info = ExceptionInfo.parseMessage(exceptionLine, exceptionLine.length());
@@ -1324,24 +1403,27 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void checkColumnFinder(String classText, List<LogItem> traceAndPositions) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("SomeClass.java", classText);
     Editor editor = myFixture.getEditor();
     assertEquals(classText, editor.getDocument().getText());
-    ExceptionFilter filter = new ExceptionFilter(myFixture.getFile().getResolveScope());
-    for (LogItem line : traceAndPositions) {
-      String stackLine = line.text();
-      Filter.Result result = filter.applyFilter(stackLine, stackLine.length());
-      Integer row = line.row();
-      Integer column = line.column();
-      if (row != null) {
-        assertNotNull(result);
-        HyperlinkInfo info = result.getFirstHyperlinkInfo();
-        assertNotNull(info);
-        info.navigate(getProject());
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-        LogicalPosition actualPos = editor.getCaretModel().getLogicalPosition();
-        assertEquals(new LogicalPosition(row - 1, column - 1), actualPos);
+    ExceptionFilter filter = ReadAction.computeBlocking(() -> new ExceptionFilter(myFixture.getFile().getResolveScope()));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      for (LogItem line : traceAndPositions) {
+        String stackLine = line.text();
+        Filter.Result result = filter.applyFilter(stackLine, stackLine.length());
+        Integer row = line.row();
+        Integer column = line.column();
+        if (row != null) {
+          assertNotNull(result);
+          HyperlinkInfo info = result.getFirstHyperlinkInfo();
+          assertNotNull(info);
+          info.navigate(myFixture.getProject());
+          NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+          LogicalPosition actualPos = editor.getCaretModel().getLogicalPosition();
+          assertEquals(new LogicalPosition(row - 1, column - 1), actualPos);
+        }
       }
-    }
+    });
   }
 }

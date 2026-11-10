@@ -6,12 +6,27 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.awt.datatransfer.StringSelection
 
-class TextBlockPasteTest: LightJavaCodeInsightFixtureTestCase() {
-  override fun getTestDataPath(): String = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/editorActions/textBlockPaste"
+@TestApplication
+class TextBlockPasteTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/editorActions/textBlockPaste"
+  }
+
+  @Test
   fun testPasteSimple() {
     doTest("""
       first line
@@ -19,6 +34,7 @@ class TextBlockPasteTest: LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
+  @Test
   fun testPasteWhitespaceLineInTheMiddle() {
     doTest("""
       first line
@@ -29,6 +45,7 @@ class TextBlockPasteTest: LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
+  @Test
   fun testPasteWhitespaceLineInTheEnd() {
     doTest("""
       first line
@@ -38,6 +55,7 @@ class TextBlockPasteTest: LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
+  @Test
   fun testPasteWhitespaceLineInTheBeginning() {
     doTest("""
           
@@ -47,6 +65,7 @@ class TextBlockPasteTest: LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
+  @Test
   fun testPasteLineWithWhitespacesInTheEnd() {
     doTest("""
       first line with whitespaces in the end            
@@ -56,10 +75,10 @@ class TextBlockPasteTest: LightJavaCodeInsightFixtureTestCase() {
 
   private fun doTest(text: String) {
     CopyPasteManager.getInstance().setContents(StringSelection(text))
-    myFixture.configureByFile("before${getTestName(false)}.java")
-    WriteCommandAction.runWriteCommandAction(project) { CodeStyleManager.getInstance(project).reformatText(file, 0, editor.document.textLength) }
-    myFixture.checkResultByFile("before${getTestName(false)}.java")
+    myFixture.configureByFile("before${myFixture.getTestName(false)}.java")
+    WriteCommandAction.runWriteCommandAction(myFixture.project) { CodeStyleManager.getInstance(myFixture.project).reformatText(myFixture.file, 0, myFixture.editor.document.textLength) }
+    myFixture.checkResultByFile("before${myFixture.getTestName(false)}.java")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
-    myFixture.checkResultByFile("after${getTestName(false)}.java")
+    myFixture.checkResultByFile("after${myFixture.getTestName(false)}.java")
   }
 }

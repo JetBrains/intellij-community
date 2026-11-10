@@ -4,16 +4,30 @@ package com.intellij.java.codeInspection
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint
 import com.intellij.codeInspection.visibility.VisibilityInspection
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_9
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class Java9AccessCanBeTightenedTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/java9AccessCanBeTightened/"
-  override fun getProjectDescriptor() = JAVA_9
+@TestApplication
+class Java9AccessCanBeTightenedTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_9)
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = JavaTestUtil.getJavaTestDataPath() + "/inspection/java9AccessCanBeTightened/"
+  }
 
   private lateinit var inspection: VisibilityInspection
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     inspection = VisibilityInspection().apply {
       SUGGEST_PRIVATE_FOR_INNERS = true
       SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true
@@ -22,23 +36,31 @@ class Java9AccessCanBeTightenedTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.enableInspections(inspection.sharedLocalInspectionTool)
   }
 
-  fun testPublicClass() = doTestClass()
-  fun testPublicClassOff() = doTestClass()
+  @Test
+  fun testPublicClass(): Unit = doTestClass()
+  @Test
+  fun testPublicClassOff(): Unit = doTestClass()
 
-  fun testExportedPackage() = doTestClass()
-  fun testExportedPackageOff() = doTestClass()
+  @Test
+  fun testExportedPackage(): Unit = doTestClass()
+  @Test
+  fun testExportedPackageOff(): Unit = doTestClass()
 
-  fun testDeclaredService() = doTestService()
-  fun testDeclaredServiceOff() = doTestService()
+  @Test
+  fun testDeclaredService(): Unit = doTestService()
+  @Test
+  fun testDeclaredServiceOff(): Unit = doTestService()
 
-  fun testUsedService() = doTestService()
-  fun testUsedServiceOff() = doTestService()
+  @Test
+  fun testUsedService(): Unit = doTestService()
+  @Test
+  fun testUsedServiceOff(): Unit = doTestService()
 
   private fun doTestClass() = doTest("Public")
   private fun doTestService() = doTest("Service")
 
   private fun doTest(className: String) {
-    val testName = getTestName(true)
+    val testName = myFixture.getTestName(true)
     inspection.setEntryPointEnabled(Java9ModuleEntryPoint.ID, !testName.endsWith("Off"))
     myFixture.copyFileToProject("${testName}/module-info.java", "module-info.java")
     myFixture.configureByFile("${testName}/foo/bar/${className}.java")

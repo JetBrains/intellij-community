@@ -15,9 +15,13 @@ import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.testFramework.propertyBased.ActionOnFile;
 import com.intellij.testFramework.propertyBased.IntentionPolicy;
 import com.intellij.testFramework.propertyBased.InvokeIntention;
@@ -29,6 +33,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.PropertyChecker;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,36 +43,31 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
 @SkipSlowTestLocally
-public class JavaFeatureSpecificSanityTest extends LightJavaCodeInsightFixtureTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
+@TestApplication
+public class JavaFeatureSpecificSanityTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @AfterEach
+  void tearDown() {
+    JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    // remove jdk if it was created during highlighting to avoid leaks
-    try {
-      JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
+  @Test
   public void testSwitchExpressionSpecific() {
     checkScenarios(JavaFeatureSpecificSanityTest::getSwitchGenerator, Pattern.compile(" switch"));
   }
 
+  @Test
   public void testPatternInstanceOfSpecific() {
     checkScenarios(JavaFeatureSpecificSanityTest::getPatternInstanceOfGenerator, Pattern.compile(" instanceof"));
   }
 
+  @Test
   public void testPatternIfCanBeSwitchSpecific() {
     checkScenarios(JavaFeatureSpecificSanityTest::getIfCanBeSwitchGenerator, Pattern.compile(" if \\(\\w+ instanceof .+") );
   }
@@ -75,19 +76,23 @@ public class JavaFeatureSpecificSanityTest extends LightJavaCodeInsightFixtureTe
                               @NotNull Pattern pattern) {
     enableInspections();
 
-    PropertyChecker
-      .customized().withIterationCount(30)
-      .checkScenarios(createChooser(fileActions, pattern));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PropertyChecker
+        .customized().withIterationCount(30)
+        .checkScenarios(createChooser(fileActions, pattern));
+    });
   }
 
   private void enableInspections() {
-    MadTestingUtil.enableAllInspections(getProject(), JavaLanguage.INSTANCE, "GrazieInspection", "GrazieStyle");
-    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable()); // https://youtrack.jetbrains.com/issue/IDEA-228814
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    MadTestingUtil.enableAllInspections(myFixture.getProject(), JavaLanguage.INSTANCE, "GrazieInspection", "GrazieStyle");
+    RecursionManager.disableMissedCacheAssertions(myFixture.getTestRootDisposable()); // https://youtrack.jetbrains.com/issue/IDEA-228814
   }
 
   @Contract(pure = true)
   private @NotNull Supplier<MadTestingAction> createChooser(@NotNull Function<PsiFile, Generator<? extends MadTestingAction>> fileActions,
                                                             @NotNull Pattern pattern) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> {
       try {
         return f.getName().endsWith(".java") && pattern.matcher(FileUtil.loadFile(f)).find();

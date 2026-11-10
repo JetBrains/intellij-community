@@ -12,15 +12,28 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class LightUnusedHighlightingFixtureTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+@TestApplication
+public class LightUnusedHighlightingFixtureTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advFixture");
     myFixture.enableInspections(new UnusedDeclarationInspection(true));
     ImplicitUsageProvider.EP_NAME.getPoint().registerExtension(new ImplicitUsageProvider() {
       @Override
@@ -41,16 +54,20 @@ public class LightUnusedHighlightingFixtureTest extends LightJavaCodeInsightFixt
           "implicitWritePackagePrivate".equals(((PsiNamedElement)element).getName())
         );
       }
-    }, getTestRootDisposable());
+    }, myFixture.getTestRootDisposable());
   }
 
+  @Test
   public void testMarkFieldsWhichAreExplicitlyWrittenAsUnused() {
-    myFixture.configureByFile(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testConflictingIgnoreParameters() {
-    String testFileName = getTestName(false);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    String testFileName = myFixture.getTestName(false);
     myFixture.configureByFile(testFileName + ".java");
     IntentionAction action = myFixture.getAvailableIntention(
       CodeInsightBundle.message("rename.named.element.text", "foo", "ignored1"));
@@ -59,35 +76,30 @@ public class LightUnusedHighlightingFixtureTest extends LightJavaCodeInsightFixt
     myFixture.checkResultByFile(testFileName + "_after.java", true);
   }
 
+  @Test
   public void testBrokenClassToImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ()->{
-      myFixture.configureByFile(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ()->{
+      myFixture.configureByFile(myFixture.getTestName(false) + ".java");
       myFixture.checkHighlighting();
     });
   }
 
+  @Test
   public void testSeveralMainMethods() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, ()->{
-      myFixture.configureByFile(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_25, ()->{
+      myFixture.configureByFile(myFixture.getTestName(false) + ".java");
       myFixture.checkHighlighting();
     });
   }
 
+  @Test
   public void testMainMethodInInterface() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, ()->{
-      myFixture.configureByFile(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_25, ()->{
+      myFixture.configureByFile(myFixture.getTestName(false) + ".java");
       myFixture.checkHighlighting();
     });
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advFixture";
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
   }
 }

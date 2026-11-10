@@ -7,9 +7,13 @@ import com.intellij.analysis.JavaAnalysisScope;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,28 +21,29 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class CyclicDependenciesTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/dependencies/cycle/";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class CyclicDependenciesTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_1_7);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/dependencies/cycle/");
+    myFixture.copyDirectoryToProject(myFixture.getTestName(true), "");
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.copyDirectoryToProject(getTestName(true), "");
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_7;
-  }
-
+  @Test
   public void testT1() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     // com.a<->com.b
-    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(getProject(),
-                                                                            new AnalysisScope(getProject()));
+    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myFixture.getProject(),
+                                                                            new AnalysisScope(myFixture.getProject()));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<>();
@@ -47,11 +52,13 @@ public class CyclicDependenciesTest extends LightJavaCodeInsightFixtureTestCase 
     checkResult(expected, cyclicDependencies);
   }
 
+  @Test
   public void testPackageScope1(){
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     // com.a<->com.b
-    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(getProject(),
+    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myFixture.getProject(),
                                                                             new JavaAnalysisScope(JavaPsiFacade
-                                                                              .getInstance(getProject()).findPackage("com"), null));
+                                                                              .getInstance(myFixture.getProject()).findPackage("com"), null));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<>();
@@ -60,11 +67,13 @@ public class CyclicDependenciesTest extends LightJavaCodeInsightFixtureTestCase 
     checkResult(expected, cyclicDependencies);
   }
 
+  @Test
   public void testT2() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     //com.b<->com.a
     //com.c<->com.d
-    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(getProject(),
-                                                                            new AnalysisScope(getProject()));
+    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myFixture.getProject(),
+                                                                            new AnalysisScope(myFixture.getProject()));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<>();
@@ -75,12 +84,14 @@ public class CyclicDependenciesTest extends LightJavaCodeInsightFixtureTestCase 
     checkResult(expected, cyclicDependencies);
   }
 
+  @Test
   public void testPackageScope2() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     //com.b<->com.a  - find
     //com.c<->com.d  - not in scope
-    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(getProject(),
+    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myFixture.getProject(),
                                                                             new JavaAnalysisScope(JavaPsiFacade
-                                                                              .getInstance(getProject()).findPackage(
+                                                                              .getInstance(myFixture.getProject()).findPackage(
                                                                               "com.subscope1"), null));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
@@ -90,11 +101,13 @@ public class CyclicDependenciesTest extends LightJavaCodeInsightFixtureTestCase 
     checkResult(expected, cyclicDependencies);
   }
 
+  @Test
   public void testT3() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     //com.b<->com.d
     //com.b->com.a->com.c->com.b
-    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(getProject(),
-                                                                            new AnalysisScope(getProject()));
+    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myFixture.getProject(),
+                                                                            new AnalysisScope(myFixture.getProject()));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<>();
@@ -105,11 +118,13 @@ public class CyclicDependenciesTest extends LightJavaCodeInsightFixtureTestCase 
     checkResult(expected, cyclicDependencies, true);
   }
 
+  @Test
   public void testT4() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     //com.a<->com.b
     //com.a->com.c->com.d->com.a
-    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(getProject(),
-                                                                            new AnalysisScope(getProject()));
+    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myFixture.getProject(),
+                                                                            new AnalysisScope(myFixture.getProject()));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<>();
@@ -120,11 +135,13 @@ public class CyclicDependenciesTest extends LightJavaCodeInsightFixtureTestCase 
     checkResult(expected, cyclicDependencies, true);
   }
 
+  @Test
   public void testT5() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     //com.b<->com.d
     //com.b->com.a->com.c->com.b
-    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(getProject(),
-                                                                            new AnalysisScope(getProject()));
+    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myFixture.getProject(),
+                                                                            new AnalysisScope(myFixture.getProject()));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<>();
@@ -135,12 +152,14 @@ public class CyclicDependenciesTest extends LightJavaCodeInsightFixtureTestCase 
     checkResult(expected, cyclicDependencies, true);
   }
 
+  @Test
   public void testT6() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     //A->B1
     //B2->C
     //C->A
-    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(getProject(),
-                                                                            new AnalysisScope(getProject()));
+    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myFixture.getProject(),
+                                                                            new AnalysisScope(myFixture.getProject()));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<>();
@@ -150,10 +169,12 @@ public class CyclicDependenciesTest extends LightJavaCodeInsightFixtureTestCase 
     checkResult(expected, cyclicDependencies, true);
   }
 
+  @Test
   public void testNoCycle(){
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     //B->A
-    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(getProject(),
-                                                                            new AnalysisScope(getProject()));
+    final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myFixture.getProject(),
+                                                                            new AnalysisScope(myFixture.getProject()));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<>();

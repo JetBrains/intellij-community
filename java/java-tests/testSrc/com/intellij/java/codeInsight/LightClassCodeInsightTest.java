@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -15,27 +16,45 @@ import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.impl.light.LightClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class LightClassCodeInsightTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
 
     // MyElementFinder provides "abc.MyInterface"
-    PlatformTestUtil.maskExtensions(PsiElementFinder.EP, getProject(), Arrays.asList(new MyElementFinder(), PackagePrefixElementFinder.getInstance(getProject())), getTestRootDisposable());
+    PlatformTestUtil.maskExtensions(PsiElementFinder.EP, myFixture.getProject(), Arrays.asList(new MyElementFinder(), PackagePrefixElementFinder.getInstance(myFixture.getProject())), myFixture.getTestRootDisposable());
   }
 
+  @Test
   public void testCustomInstanceMethodHighlighting() {
-    PsiClass myInterface = myFixture.findClass("abc.MyInterface");
-    PsiMethod[] allMethods = myInterface.getAllMethods();
-    assertTrue(ContainerUtil.exists(allMethods, m -> m.getName().contains("staticMethod")));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ReadAction.runBlocking(() -> {
+      PsiClass myInterface = myFixture.findClass("abc.MyInterface");
+      PsiMethod[] allMethods = myInterface.getAllMethods();
+      assertTrue(ContainerUtil.exists(allMethods, m -> m.getName().contains("staticMethod")));
+    });
 
     myFixture.configureByText(JavaFileType.INSTANCE,
                               """
@@ -46,13 +65,17 @@ public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCa
                                   }
                                 }""");
     List<HighlightInfo> highlightInfos = myFixture.doHighlighting(HighlightSeverity.ERROR);
-    assertEmpty(highlightInfos);
+    assertThat(highlightInfos).isNullOrEmpty();
   }
 
+  @Test
   public void testCustomStaticMethodHighlighting() {
-    PsiClass myInterface = myFixture.findClass("abc.MyInterface");
-    PsiMethod[] allMethods = myInterface.getAllMethods();
-    assertTrue(ContainerUtil.exists(allMethods, m -> m.getName().contains("staticMethod")));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ReadAction.runBlocking(() -> {
+      PsiClass myInterface = myFixture.findClass("abc.MyInterface");
+      PsiMethod[] allMethods = myInterface.getAllMethods();
+      assertTrue(ContainerUtil.exists(allMethods, m -> m.getName().contains("staticMethod")));
+    });
 
     myFixture.configureByText(JavaFileType.INSTANCE,
                               """
@@ -62,10 +85,12 @@ public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCa
                                   }
                                 }""");
     List<HighlightInfo> highlightInfos = myFixture.doHighlighting(HighlightSeverity.ERROR);
-    assertEmpty(highlightInfos);
+    assertThat(highlightInfos).isNullOrEmpty();
   }
 
+  @Test
   public void testInstanceMethodCompletion() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("TestCompletion.java",
                               """
                                 public class TestCompletion {
@@ -83,10 +108,13 @@ public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   private void assertContainsItems(String name) {
-    assertTrue(myFixture.getLookupElementStrings().toString(), myFixture.getLookupElementStrings().contains(name));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    assertTrue(myFixture.getLookupElementStrings().contains(name), myFixture.getLookupElementStrings().toString());
   }
 
+  @Test
   public void testStaticMethodCompletion() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("TestCompletion.java",
                               """
                                 public class TestCompletion {
@@ -102,10 +130,14 @@ public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCa
     assertContainsItems("staticMethod");
   }
 
+  @Test
   public void testCustomInstanceMethodCompletion() {
-    PsiClass myInterface = myFixture.findClass("abc.MyInterface");
-    PsiMethod[] allMethods = myInterface.getAllMethods();
-    assertTrue(ContainerUtil.exists(allMethods, m -> m.getName().contains("staticMethod")));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ReadAction.runBlocking(() -> {
+      PsiClass myInterface = myFixture.findClass("abc.MyInterface");
+      PsiMethod[] allMethods = myInterface.getAllMethods();
+      assertTrue(ContainerUtil.exists(allMethods, m -> m.getName().contains("staticMethod")));
+    });
 
     myFixture.configureByText("TestCompletion.java",
                               """
@@ -119,10 +151,14 @@ public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCa
     assertContainsItems("instanceMethod");
   }
 
+  @Test
   public void testCustomStaticMethodCompletion() {
-    PsiClass myInterface = myFixture.findClass("abc.MyInterface");
-    PsiMethod[] allMethods = myInterface.getAllMethods();
-    assertTrue(ContainerUtil.exists(allMethods, m -> m.getName().contains("staticMethod")));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ReadAction.runBlocking(() -> {
+      PsiClass myInterface = myFixture.findClass("abc.MyInterface");
+      PsiMethod[] allMethods = myInterface.getAllMethods();
+      assertTrue(ContainerUtil.exists(allMethods, m -> m.getName().contains("staticMethod")));
+    });
 
     myFixture.configureByText("TestCompletion.java",
                               """

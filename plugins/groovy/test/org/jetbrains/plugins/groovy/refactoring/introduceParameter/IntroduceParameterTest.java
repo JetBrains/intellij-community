@@ -15,19 +15,35 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Maxim.Medvedev
  */
-public class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "refactoring/introduceParameter/" + getTestName(true) + "/";
+@TestApplication
+public class IntroduceParameterTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "refactoring/introduceParameter/" + codeInsightFixture.get().getTestName(true) + "/");
   }
 
   private void doTest(int replaceFieldsWithGetters,
@@ -35,13 +51,16 @@ public class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase 
                       boolean searchForSuper,
                       boolean declareFinal,
                       @Nullable String conflicts) {
-    final String beforeGroovy = getTestName(false) + "Before.groovy";
-    final String afterGroovy = getTestName(false) + "After.groovy";
-    final String javaClass = getTestName(false) + "MyClass.java";
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String beforeGroovy = myFixture.getTestName(false) + "Before.groovy";
+    final String afterGroovy = myFixture.getTestName(false) + "After.groovy";
+    final String javaClass = myFixture.getTestName(false) + "MyClass.java";
     myFixture.configureByFiles(javaClass, beforeGroovy);
-    executeRefactoring(replaceFieldsWithGetters, searchForSuper, declareFinal, removeUnusedParameters, conflicts);
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-    myFixture.checkResultByFile(beforeGroovy, afterGroovy, true);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      executeRefactoring(replaceFieldsWithGetters, searchForSuper, declareFinal, removeUnusedParameters, conflicts);
+      PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
+      myFixture.checkResultByFile(beforeGroovy, afterGroovy, true);
+    });
   }
 
   private void doTest(int replaceFieldsWithGetters, boolean removeUnusedParameters, boolean searchForSuper, boolean declareFinal) {
@@ -50,12 +69,13 @@ public class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase 
 
   private void executeRefactoring(int replaceFieldsWithGetters, boolean searchForSuper, boolean declareFinal,
                                   boolean removeUnusedParameters, String conflicts) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     boolean generateDelegate = false;
     Editor editor = myFixture.getEditor();
 
     final PsiFile myFile = myFixture.getFile();
     final ElementToWorkOn[] elementToWorkOn = new ElementToWorkOn[1];
-    ElementToWorkOn.processElementToWorkOn(editor, myFile, "INtr param", HelpID.INTRODUCE_PARAMETER, getProject(),
+    ElementToWorkOn.processElementToWorkOn(editor, myFile, "INtr param", HelpID.INTRODUCE_PARAMETER, myFixture.getProject(),
                                            new ElementToWorkOn.ElementsProcessor<>() {
                                              @Override
                                              public boolean accept(ElementToWorkOn el) {
@@ -108,76 +128,94 @@ public class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase 
     editor.getSelectionModel().removeSelection();
   }
 
+  @Test
   public void testSimpleOverridedMethod() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
+  @Test
   public void testOverridedMethodWithRemoveUnusedParameters() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false);
   }
 
+  @Test
   public void testSimpleUsage() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
+  @Test
   public void testMethodWithoutParams() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
+  @Test
   public void testParameterSubstitution() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
+  @Test
   public void testThisSubstitution() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
+  @Test
   public void testThisSubstitutionInQualifier() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false,
            "field <b><code>Test.i</code></b> is not accessible from method <b><code>XTest.n()</code></b>. Value for introduced parameter in that method call will be incorrect.");
   }
 
+  @Test
   public void testFieldAccess() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
+  @Test
   public void testMethodAccess() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
+  @Test
   public void testStaticFieldAccess() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
+  @Test
   public void testFieldWithGetterReplacement() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, false, false, false);
   }
 
+  @Test
   public void testFieldWithInaccessibleGetterReplacement() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
+  @Test
   public void testWeirdQualifier() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
+  @Test
   public void testSuperInExpression() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false,
            "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class");
   }
 
+  @Test
   public void testWeirdQualifierAndParameter() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
+  @Test
   public void testImplicitSuperCall() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
+  @Test
   public void testImplicitDefaultConstructor() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
 
+  @Test
   public void testInternalSideEffect() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }
@@ -186,11 +224,13 @@ public class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }*/
 
+  @Test
   public void testSuperWithSideEffect() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false,
            "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class");
   }
 
+  @Test
   public void testConflictingField() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, true, false);
   }
@@ -211,6 +251,7 @@ public class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true);
   }*/
 
+  @Test
   public void testRemoveParameterInHierarchy() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false);
   }
@@ -219,14 +260,18 @@ public class IntroduceParameterTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false);
   }*/
 
-  public void testVarargs() {   // IDEADEV-16828
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+  @Test
+  public void testVarargs() {
+    // IDEADEV-16828
+     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
+  @Test
   public void testMethodUsageInThisMethodInheritor() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }
 
+  @Test
   public void testIntroduceConstantField() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
   }

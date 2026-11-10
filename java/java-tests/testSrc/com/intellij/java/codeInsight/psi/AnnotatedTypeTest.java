@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.psi;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiAnnotation;
@@ -17,20 +18,34 @@ import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class AnnotatedTypeTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class AnnotatedTypeTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   private PsiElementFactory factory;
   private PsiElement context;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
 
     factory = myFixture.getJavaFacade().getElementFactory();
     context = myFixture.addClass("""
@@ -47,103 +62,133 @@ public class AnnotatedTypeTest extends LightJavaCodeInsightFixtureTestCase {
        @SuppressWarnings("ExceptionClassNameDoesntEndWithException") class E2 extends Exception { }""".stripIndent());
   }
 
-  @Override
-  public void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     factory = null;
     context = null;
-    super.tearDown();
   }
 
+  @Test
   public void testPrimitiveArrayType() {
     doTest("@A @TA(1) int @TA(2) [] a", "int[]", "@pkg.TA(1) int @pkg.TA(2) []", "int[]", "@TA int @TA []");
   }
 
+  @Test
   public void testEllipsisType() {
     doTest("@TA int @TA ... p", "int...", "@pkg.TA int @pkg.TA ...", "int...", "@TA int @TA ...");
   }
 
+  @Test
   public void testClassReferenceType() {
     doTest("@A @TA(1) String s", "java.lang.String", "java.lang.@pkg.TA(1) String", "String", "@TA String");
   }
 
+  @Test
   public void testQualifiedClassReferenceType() {
     doTest("@A java.lang.@TA(1) String s", "java.lang.String", "java.lang.@pkg.TA(1) String", "String", "@TA String");
   }
 
+  @Test
   public void testQualifiedPackageClassReferenceType() {
     doTest("@A @TA java.lang.String s", "java.lang.String", "java.lang.String", "String", "String");// packages can't have type annotations
   }
 
+  @Test
   public void testPartiallyQualifiedClassReferenceType() {
     doTest("@TA(1) O.@TA(2) I i", "pkg.O.I", "pkg.@pkg.TA(1) O.@pkg.TA(2) I", "I", "@TA O.@TA I");
   }
 
+  @Test
   public void testCStyleArrayType() {
     doTest("@A @TA(1) String @TA(2) [] f @TA(3) []", "java.lang.String[][]", "java.lang.@pkg.TA(1) String @pkg.TA(3) [] @pkg.TA(2) []",
            "String[][]", "@TA String @TA [] @TA []");
   }
 
+  @Test
   public void testCStyleMultiArrayType() {
     doTest("@A @TA(1) String @TA(2) [] @TA(3) [] f @TA(4) [] @TA(5) []", "java.lang.String[][][][]",
            "java.lang.@pkg.TA(1) String @pkg.TA(4) [] @pkg.TA(5) [] @pkg.TA(2) [] @pkg.TA(3) []", "String[][][][]",
            "@TA String @TA [] @TA [] @TA [] @TA []");
   }
 
+  @Test
   public void testWildcardType() {
     doTest("Class<@TA(1) ?> c", "java.lang.Class<?>", "java.lang.Class<@pkg.TA(1) ?>", "Class<?>", "Class<@TA ?>");
   }
 
+  @Test
   public void testWildcardBoundType() {
     doTest("Class<@TA(1) ? extends @TA(2) Object> c", "java.lang.Class<? extends java.lang.Object>",
            "java.lang.Class<@pkg.TA(1) ? extends java.lang.@pkg.TA(2) Object>", "Class<? extends Object>",
            "Class<@TA ? extends @TA Object>");
   }
 
+  @Test
   public void testDisjunctionType() {
-    PsiTryStatement psi = (PsiTryStatement)factory.createStatementFromText("try { } catch (@A @TA(1) E1 | @TA(2) E2 e) { }", context);
-    assertTypeText(psi.getCatchBlockParameters()[0].getType(), "pkg.E1 | pkg.E2", "pkg.@pkg.TA(1) E1 | pkg.@pkg.TA(2) E2", "E1 | E2",
-                   "@TA E1 | @TA E2");
+    ReadAction.runBlocking(() -> {
+      PsiTryStatement psi = (PsiTryStatement)factory.createStatementFromText("try { } catch (@A @TA(1) E1 | @TA(2) E2 e) { }", context);
+      assertTypeText(psi.getCatchBlockParameters()[0].getType(), "pkg.E1 | pkg.E2", "pkg.@pkg.TA(1) E1 | pkg.@pkg.TA(2) E2", "E1 | E2",
+                     "@TA E1 | @TA E2");
+    });
   }
 
+  @Test
   public void testDiamondType() {
-    PsiDeclarationStatement psi = (PsiDeclarationStatement)factory.createStatementFromText("Class<@TA String> cs = new Class<>()", context);
-    PsiVariable var = (PsiVariable)psi.getDeclaredElements()[0];
-    assertTypeText(var.getInitializer().getType(), "java.lang.Class<java.lang.String>", "java.lang.Class<java.lang.@pkg.TA String>",
-                   "Class<String>", "Class<@TA String>");
+    ReadAction.runBlocking(() -> {
+      PsiDeclarationStatement psi = (PsiDeclarationStatement)factory.createStatementFromText("Class<@TA String> cs = new Class<>()", context);
+      PsiVariable var = (PsiVariable)psi.getDeclaredElements()[0];
+      assertTypeText(var.getInitializer().getType(), "java.lang.Class<java.lang.String>", "java.lang.Class<java.lang.@pkg.TA String>",
+                     "Class<String>", "Class<@TA String>");
+    });
   }
 
+  @Test
   public void testImmediateClassType() {
-    PsiClass aClass = myFixture.getJavaFacade().findClass(CommonClassNames.JAVA_LANG_OBJECT);
-    PsiAnnotation[] annotations = factory.createParameterFromText("@TA int x", context).getModifierList().getAnnotations();
-    PsiImmediateClassType type = new PsiImmediateClassType(aClass, PsiSubstitutor.EMPTY, LanguageLevel.JDK_1_8, annotations);
-    assertTypeText(type, CommonClassNames.JAVA_LANG_OBJECT, "java.lang.@pkg.TA Object", "Object", "@TA Object");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ReadAction.runBlocking(() -> {
+      PsiClass aClass = myFixture.getJavaFacade().findClass(CommonClassNames.JAVA_LANG_OBJECT);
+      PsiAnnotation[] annotations = factory.createParameterFromText("@TA int x", context).getModifierList().getAnnotations();
+      PsiImmediateClassType type = new PsiImmediateClassType(aClass, PsiSubstitutor.EMPTY, LanguageLevel.JDK_1_8, annotations);
+      assertTypeText(type, CommonClassNames.JAVA_LANG_OBJECT, "java.lang.@pkg.TA Object", "Object", "@TA Object");
+    });
   }
 
+  @Test
   public void testFieldType() {
-    PsiField psi = factory.createFieldFromText("@A @TA(1) String f;", context);
-    assertTypeText(psi.getType(), "java.lang.String", "java.lang.@pkg.TA(1) String", "String", "@TA String");
-    assertAnnotations(psi.getType(), "@TA(1)");
+    ReadAction.runBlocking(() -> {
+      PsiField psi = factory.createFieldFromText("@A @TA(1) String f;", context);
+      assertTypeText(psi.getType(), "java.lang.String", "java.lang.@pkg.TA(1) String", "String", "@TA String");
+      assertAnnotations(psi.getType(), "@TA(1)");
+    });
   }
 
+  @Test
   public void testMethodReturnType() {
-    PsiMethod psi = factory.createMethodFromText("@A @TA(1) <T> @TA(2) String m() { return null; }", context);
-    assertTypeText(psi.getReturnType(), "java.lang.String", "java.lang.@pkg.TA(1) @pkg.TA(2) String", "String", "@TA @TA String");
-    assertAnnotations(psi.getReturnType(), "@TA(1)", "@TA(2)");
+    ReadAction.runBlocking(() -> {
+      PsiMethod psi = factory.createMethodFromText("@A @TA(1) <T> @TA(2) String m() { return null; }", context);
+      assertTypeText(psi.getReturnType(), "java.lang.String", "java.lang.@pkg.TA(1) @pkg.TA(2) String", "String", "@TA @TA String");
+      assertAnnotations(psi.getReturnType(), "@TA(1)", "@TA(2)");
+    });
   }
 
+  @Test
   public void testIsAnnotated() {
-    PsiParameter unqualified = factory.createParameterFromText("@A @TA(1) String p", context);
-    assertTrue(AnnotationUtil.isAnnotated(unqualified, "pkg.A", CHECK_TYPE));
-    assertTrue(AnnotationUtil.isAnnotated(unqualified, "pkg.TA", CHECK_TYPE));
+    ReadAction.runBlocking(() -> {
+      PsiParameter unqualified = factory.createParameterFromText("@A @TA(1) String p", context);
+      assertTrue(AnnotationUtil.isAnnotated(unqualified, "pkg.A", CHECK_TYPE));
+      assertTrue(AnnotationUtil.isAnnotated(unqualified, "pkg.TA", CHECK_TYPE));
 
-    PsiParameter qualified = factory.createParameterFromText("@A java.lang.@TA(1) String p", context);
-    assertTrue(AnnotationUtil.isAnnotated(qualified, "pkg.A", CHECK_TYPE));
-    assertTrue(AnnotationUtil.isAnnotated(qualified, "pkg.TA", CHECK_TYPE));
+      PsiParameter qualified = factory.createParameterFromText("@A java.lang.@TA(1) String p", context);
+      assertTrue(AnnotationUtil.isAnnotated(qualified, "pkg.A", CHECK_TYPE));
+      assertTrue(AnnotationUtil.isAnnotated(qualified, "pkg.TA", CHECK_TYPE));
+    });
   }
 
   private void doTest(String text, String canonical, String canonicalAnnotated, String presentable, String presentableAnnotated) {
-    assertTypeText(factory.createParameterFromText(text, context).getType(), canonical, canonicalAnnotated, presentable,
-                   presentableAnnotated);
+    ReadAction.runBlocking(() -> {
+      assertTypeText(factory.createParameterFromText(text, context).getType(), canonical, canonicalAnnotated, presentable,
+                     presentableAnnotated);
+    });
   }
 
   private static void assertTypeText(PsiType type,

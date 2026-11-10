@@ -5,25 +5,40 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Checks that the JSON compliance inspection accepts a JSON fragment injected into a Java string.
  */
-public class JsonInjectionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected @NotNull String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/plugins/IntelliLang/tests/testData/injected/";
+@TestApplication
+public class JsonInjectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(PathManager.getCommunityHomePath() + "/plugins/IntelliLang/tests/testData/injected/");
   }
 
+
   // PY-133425
+  @Test
   public void testJsonFragmentInjectedInJavaString() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new JsonStandardComplianceInspection());
-    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
     List<HighlightInfo> highlightInfos = myFixture.doHighlighting();
     String message = JsonBundle.message("inspection.compliance.msg.illegal.property.key");
     assertNull(ContainerUtil.find(highlightInfos, info -> message.equals(info.getDescription())));

@@ -71,6 +71,8 @@ jvm_library(
         "//jps/model-api:model",
         "//platform/ide-core",
         "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
     ],
 )
 ### auto-generated section `build intellij.devkit.testFramework` end

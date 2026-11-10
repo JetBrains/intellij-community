@@ -19,14 +19,20 @@ import com.intellij.psi.PsiStatement;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.PropertyChecker;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Objects;
@@ -35,7 +41,15 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class SourceToSinkPropertyInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   private static final @Language("JAVA") String A_CLASS = """
     package com.jetbrains;
@@ -50,21 +64,17 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
         static @Untainted String safe() { return "safe"; }
     }""";
 
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     SourceToSinkFlowInspection inspection = new SourceToSinkFlowInspection();
     inspection.warnIfComplex = true;
     myFixture.enableInspections(inspection);
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK;
-  }
-
+  @Test
   public void testSinkToSourceFlowIsReported() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package org.checkerframework.checker.tainting.qual;
                          import java.lang.annotation.ElementType;
@@ -89,13 +99,16 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
                              static String foo(String... a) { return a.length==0? "bar" : a[0]; }
                              static @Untainted String safe() { return "safe"; }
                          }""");
-    PropertyChecker.customized()
-      .checkScenarios(() -> this::doTestSinkToSourceFlowIsReported);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PropertyChecker.customized()
+        .checkScenarios(() -> this::doTestSinkToSourceFlowIsReported);
+    });
   }
 
   private void doTestSinkToSourceFlowIsReported(ImperativeCommand.Environment env) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     JavaPsiFacadeEx facade = myFixture.getJavaFacade();
-    Project project = getProject();
+    Project project = myFixture.getProject();
     PsiClass psiClass = Objects.requireNonNull(facade.findClass("com.jetbrains.A", GlobalSearchScope.allScope(project)));
     myFixture.openFileInEditor(psiClass.getContainingFile().getVirtualFile());
     MethodBody methodBody = MethodBody.generate(env);
@@ -114,10 +127,10 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
       }
     }
     if (taintState == TaintState.SAFE) {
-      assertEmpty(infos);
+      assertThat(infos).isNullOrEmpty();
     }
     else {
-      assertSize(1, infos);
+      assertThat(infos).hasSize(1);
       PsiElement sinkArgument = javaContext.getSinkCallArgument();
       HighlightInfo info = infos.get(0);
       assertEquals(sinkArgument.getTextRange().getStartOffset(), info.getActualStartOffset());

@@ -7,19 +7,26 @@ import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection;
 import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.java.JavaBundle;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /// Regression test for IDEA-386737.
-public class ClassCanBeRecordFixAllAvailabilityTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class ClassCanBeRecordFixAllAvailabilityTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
-
+  @Test
   public void testSuppressAnnotationFixHasNoFixAll() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     ClassCanBeRecordInspection inspection = new ClassCanBeRecordInspection(ConversionStrategy.DO_NOT_SUGGEST, true);
     myFixture.enableInspections(inspection);
     myFixture.configureByText("SomeService.java", """

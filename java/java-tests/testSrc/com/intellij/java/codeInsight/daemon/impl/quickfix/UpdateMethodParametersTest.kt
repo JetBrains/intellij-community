@@ -7,16 +7,30 @@ import com.intellij.lang.jvm.actions.ChangeParametersRequest
 import com.intellij.lang.jvm.actions.createChangeParametersActions
 import com.intellij.lang.jvm.actions.expectedParameter
 import com.intellij.lang.jvm.actions.updateMethodParametersRequest
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiTypes
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 import java.util.function.Supplier
+import kotlin.time.Duration.Companion.minutes
 
-class UpdateMethodParametersTest : LightJavaCodeInsightFixtureTestCase() {
-  private fun updateParametersAction(method: JvmMethod, request: ChangeParametersRequest): IntentionAction =
-    createChangeParametersActions(method, request).single()
+@TestApplication
+class UpdateMethodParametersTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  fun `test simple annotation preservation`() {
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  private suspend fun updateParametersAction(method: JvmMethod, request: ChangeParametersRequest): IntentionAction =
+    readAction { createChangeParametersActions(method, request).single() }
+
+  @Test
+  fun `test simple annotation preservation`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.addClass("""
       public @interface Anno {
         int num();
@@ -29,7 +43,7 @@ class UpdateMethodParametersTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-    val method = myFixture.findElementByText("bar", PsiMethod::class.java)
+    val method = readAction { myFixture.findElementByText("bar", PsiMethod::class.java) }
 
     val request = updateMethodParametersRequest(Supplier { method }) { existing ->
       val oldParam = existing[1]
@@ -44,7 +58,8 @@ class UpdateMethodParametersTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
-  fun `test complex annotation preservation`() {
+  @Test
+  fun `test complex annotation preservation`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.addClass("""
       public @interface Anno {
         String str();
@@ -58,7 +73,7 @@ class UpdateMethodParametersTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-    val method = myFixture.findElementByText("bar", PsiMethod::class.java)
+    val method = readAction { myFixture.findElementByText("bar", PsiMethod::class.java) }
 
     val request = updateMethodParametersRequest(Supplier { method }) { existing ->
       val oldParam = existing[1]
@@ -73,7 +88,8 @@ class UpdateMethodParametersTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
-  fun `test nested annotation preservation`() {
+  @Test
+  fun `test nested annotation preservation`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.addClass("""
       public @interface Anno {
         Nested nested();
@@ -91,7 +107,7 @@ class UpdateMethodParametersTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-    val method = myFixture.findElementByText("bar", PsiMethod::class.java)
+    val method = readAction { myFixture.findElementByText("bar", PsiMethod::class.java) }
 
     val request = updateMethodParametersRequest(Supplier { method }) { existing ->
       val oldParam = existing[1]

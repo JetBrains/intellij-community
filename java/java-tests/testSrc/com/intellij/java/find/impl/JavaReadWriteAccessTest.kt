@@ -16,6 +16,7 @@
 package com.intellij.java.find.impl
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiForeachStatement
@@ -23,36 +24,59 @@ import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiNameValuePair
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class JavaReadWriteAccessTest : LightJavaCodeInsightFixtureTestCase() {
-  fun testWriteAnnotationsMethodExplicitCall() {
+@TestApplication
+class JavaReadWriteAccessTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
+  fun testWriteAnnotationsMethodExplicitCall(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val anno = myFixture.addClass("@interface Anno {String value() default \"\";}")
-    val detector = ReadWriteAccessDetector.findDetector(anno.methods[0])
+    val detector = readAction { ReadWriteAccessDetector.findDetector(anno.methods[0]) }
     assertNotNull(detector)
 
     val file: PsiFile = myFixture.configureByText("A.java", "@Anno(val<caret>ue = \"foo\") class A {}")
-    val element = file.findElementAt(myFixture.editor.caretModel.offset)
-    assertNotNull(element)
-    val expressionAccess = detector!!.getExpressionAccess(element!!)
-    assertEquals(ReadWriteAccessDetector.Access.Write, expressionAccess)
+    readAction {
+      val element = file.findElementAt(myFixture.editor.caretModel.offset)
+      assertNotNull(element)
+      val expressionAccess = detector!!.getExpressionAccess(element!!)
+      assertEquals(ReadWriteAccessDetector.Access.Write, expressionAccess)
+    }
   }
 
-  fun testWriteAnnotationsMethodImplicitCall() {
+  @Test
+  fun testWriteAnnotationsMethodImplicitCall(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val anno = myFixture.addClass("@interface Anno {String value() default \"\";}")
-    val detector = ReadWriteAccessDetector.findDetector(anno.methods[0])
+    val detector = readAction { ReadWriteAccessDetector.findDetector(anno.methods[0]) }
     assertNotNull(detector)
 
     val file: PsiFile = myFixture.configureByText("A.java", "@Anno(\"fo<caret>o\") class A {}")
-    val element = file.findElementAt(myFixture.editor.caretModel.offset)
-    assertNotNull(element)
-    val expressionAccess = detector!!.getExpressionAccess(PsiTreeUtil.getParentOfType(element, PsiNameValuePair::class.java, true)!!)
-    assertEquals(ReadWriteAccessDetector.Access.Write, expressionAccess)
+    readAction {
+      val element = file.findElementAt(myFixture.editor.caretModel.offset)
+      assertNotNull(element)
+      val expressionAccess = detector!!.getExpressionAccess(PsiTreeUtil.getParentOfType(element, PsiNameValuePair::class.java, true)!!)
+      assertEquals(ReadWriteAccessDetector.Access.Write, expressionAccess)
+    }
   }
 
-  fun testExplicitCallToAnnotationMethod() {
+  @Test
+  fun testExplicitCallToAnnotationMethod(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val anno = myFixture.addClass("@interface Anno {String value() default \"\";}")
-    val detector = ReadWriteAccessDetector.findDetector(anno.methods[0])
+    val detector = readAction { ReadWriteAccessDetector.findDetector(anno.methods[0]) }
     assertNotNull(detector)
 
     val file: PsiFile = myFixture.configureByText("A.java", "import java.lang.reflect.Field;" +
@@ -62,13 +86,16 @@ class JavaReadWriteAccessTest : LightJavaCodeInsightFixtureTestCase() {
                                                             "   System.out.println(a.val<caret>ue());" +
                                                             " }" +
                                                             "}")
-    val element = file.findElementAt(myFixture.editor.caretModel.offset)
-    assertNotNull(element)
-    val expressionAccess = detector!!.getExpressionAccess(PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression::class.java, true)!!)
-    assertEquals(ReadWriteAccessDetector.Access.Read, expressionAccess)
+    readAction {
+      val element = file.findElementAt(myFixture.editor.caretModel.offset)
+      assertNotNull(element)
+      val expressionAccess = detector!!.getExpressionAccess(PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression::class.java, true)!!)
+      assertEquals(ReadWriteAccessDetector.Access.Read, expressionAccess)
+    }
   }
 
-  fun testJavaField() {
+  @Test
+  fun testJavaField(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val anno = myFixture.addClass("""
       class X { 
         int x1;
@@ -79,15 +106,17 @@ class JavaReadWriteAccessTest : LightJavaCodeInsightFixtureTestCase() {
           }
         }
       }""")
-    val x1: PsiField = anno.findFieldByName("x1", false)!!
-    val x2: PsiField = anno.findFieldByName("x2", false)!!
-    val x3: PsiParameter = anno.findMethodsByName("f", false)[0].parameterList.parameters[0]!!
-    val x4: PsiParameter = (anno.findMethodsByName("f", false)[0].body!!.statements[0] as PsiForeachStatement).iterationParameter
-    val detector = ReadWriteAccessDetector.findDetector(x1)!!
+    readAction {
+      val x1: PsiField = anno.findFieldByName("x1", false)!!
+      val x2: PsiField = anno.findFieldByName("x2", false)!!
+      val x3: PsiParameter = anno.findMethodsByName("f", false)[0].parameterList.parameters[0]!!
+      val x4: PsiParameter = (anno.findMethodsByName("f", false)[0].body!!.statements[0] as PsiForeachStatement).iterationParameter
+      val detector = ReadWriteAccessDetector.findDetector(x1)!!
 
-    assertFalse(detector.isDeclarationWriteAccess(x1))
-    assertTrue(detector.isDeclarationWriteAccess(x2))
-    assertFalse(detector.isDeclarationWriteAccess(x3))
-    assertTrue(detector.isDeclarationWriteAccess(x4))
+      assertFalse(detector.isDeclarationWriteAccess(x1))
+      assertTrue(detector.isDeclarationWriteAccess(x2))
+      assertFalse(detector.isDeclarationWriteAccess(x3))
+      assertTrue(detector.isDeclarationWriteAccess(x4))
+    }
   }
 }

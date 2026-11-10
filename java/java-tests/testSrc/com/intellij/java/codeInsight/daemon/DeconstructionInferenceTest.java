@@ -2,24 +2,33 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInspection.miscGenerics.RawUseOfParameterizedTypeInspection;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPatternVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 
-public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestApplication
+public class DeconstructionInferenceTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testSimple() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     // Examples from JEP 432
     myFixture.configureByText("Test.java", """
       record Box<T>(T t) {}
@@ -51,7 +60,9 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testSwitch() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       interface I<T> {}
       record Box<T>(T t) implements I<T> {}
@@ -69,7 +80,9 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testSubType() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       import java.util.function.Supplier;
       
@@ -86,7 +99,9 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testNested() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       interface I {
         void runI();
@@ -104,7 +119,9 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testNestedWithSuperType() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       class Test {
           interface A<X, Y, Z> {}
@@ -124,7 +141,9 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testNestedInFor() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       import java.util.List;
       
@@ -139,10 +158,12 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
           }
       }
       """);
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_X, () -> myFixture.checkHighlighting());
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_X, () -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testWildcardTypeParameterBound() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       public class Test {
         interface BaseRecord<T> {}
@@ -163,7 +184,9 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testInvalid() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       import java.util.List;
       
@@ -179,7 +202,9 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testTwoParams() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       import java.util.List;
       
@@ -198,7 +223,9 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testIntersection() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       import java.io.Serializable;
       import java.util.List;
@@ -239,7 +266,9 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testCaptured() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       import java.io.Serializable;
       import java.util.List;
@@ -258,7 +287,9 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testTypeParameterWithSealedBound() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       sealed interface MyInterface<T> {}
       record MyRecord1<T>(T value) implements MyInterface<T> {}
@@ -282,8 +313,9 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
-
+  @Test
   public void testImplementsGenericInterface() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     // Example from JLS 18.5.5 
     PsiFile file = myFixture.configureByText("Test.java", """
       import java.util.function.UnaryOperator;
@@ -298,13 +330,17 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
           }
       }
       """);
-    Collection<PsiPatternVariable> variables = PsiTreeUtil.collectElementsOfType(file, PsiPatternVariable.class);
-    for (PsiPatternVariable variable : variables) {
-      assertEquals("java.lang.CharSequence", variable.getType().getCanonicalText());
-    }
+    ReadAction.runBlocking(() -> {
+      Collection<PsiPatternVariable> variables = PsiTreeUtil.collectElementsOfType(file, PsiPatternVariable.class);
+      for (PsiPatternVariable variable : variables) {
+        assertEquals("java.lang.CharSequence", variable.getType().getCanonicalText());
+      }
+    });
   }
 
+  @Test
   public void testForEach() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       import java.util.List;
       
@@ -319,10 +355,12 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
       }
       """);
     myFixture.enableInspections(new RawUseOfParameterizedTypeInspection());
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_X, () -> myFixture.checkHighlighting());
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_X, () -> myFixture.checkHighlighting());
   }
 
+  @Test
   public void testRawPattern() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       class X {
         public static boolean test() {

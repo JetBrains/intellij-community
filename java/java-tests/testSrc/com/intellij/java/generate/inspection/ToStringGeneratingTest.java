@@ -2,6 +2,7 @@
 package com.intellij.java.generate.inspection;
 
 import com.intellij.codeInsight.generation.PsiElementClassMember;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
@@ -10,7 +11,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.GenerateToStringActionHandlerImpl;
@@ -21,11 +25,23 @@ import org.jetbrains.java.generate.config.ConflictResolutionPolicy;
 import org.jetbrains.java.generate.config.ReplacePolicy;
 import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class ToStringGeneratingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testDuplicateToStringAnInnerClass() {
     doTest("""
              public class Foobar  {
@@ -62,6 +78,7 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
              """, ReplacePolicy.getInstance());
   }
 
+  @Test
   public void testProtectedFieldInSuper() {
     doTest("""
              class Foobar extends Foo {
@@ -89,6 +106,7 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
              """, ReplacePolicy.getInstance());
   }
 
+  @Test
   public void testPrivateFieldWithGetterInSuper() {
     Config config = GenerateToStringContext.getConfig();
     config.setEnableMethods(true);
@@ -129,6 +147,7 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
     }
   }
 
+  @Test
   public void testPrivateFieldWithGetterInSuperSortSuperFirst() {
     Config config = GenerateToStringContext.getConfig();
     config.setEnableMethods(true);
@@ -171,6 +190,7 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
     }
   }
 
+  @Test
   public void testAbstractSuperToString() {
     doTest("""
 
@@ -196,6 +216,7 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
              """, ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"));
   }
 
+  @Test
   public void testImplicitClass() {
     doTest(
             """
@@ -229,6 +250,7 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
             }""", ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"));
   }
 
+  @Test
   public void testImplicitClassWithoutMain() {
     doTest("""
             public void main()
@@ -251,6 +273,7 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
              """, ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"));
   }
 
+  @Test
   public void testAnonymousClass() {
     doTest(
       """
@@ -295,6 +318,7 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
                       @NotNull ConflictResolutionPolicy policy,
                       @NotNull TemplateResource template,
                       boolean fromCaret) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", before);
 
     PsiClass clazz = findClass(fromCaret);
@@ -314,6 +338,7 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
 
   @NotNull
   private GenerateToStringWorker buildWorker(@NotNull final PsiClass clazz, @NotNull final ConflictResolutionPolicy policy) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     return new GenerateToStringWorker(clazz, myFixture.getEditor(), true);
   }
 
@@ -332,11 +357,13 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
 
   @NotNull
   private static Collection<PsiMember> collectMembers(@NotNull PsiClass clazz) {
-    PsiElementClassMember<?>[] memberElements = GenerateToStringActionHandlerImpl.buildMembersToShow(clazz);
-    return Arrays.stream(memberElements)
-      .<PsiMember>map(x -> x.getElement())
-      .sorted((o1, o2) -> compareMembers(o1, o2))
-      .toList();
+    return ReadAction.computeBlocking(() -> {
+      PsiElementClassMember<?>[] memberElements = GenerateToStringActionHandlerImpl.buildMembersToShow(clazz);
+      return Arrays.stream(memberElements)
+        .<PsiMember>map(x -> x.getElement())
+        .sorted((o1, o2) -> compareMembers(o1, o2))
+        .toList();
+    });
   }
 
   private static int compareMembers(PsiMember o1, PsiMember o2) {
@@ -347,18 +374,21 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
 
   @NotNull
   private PsiClass findClass(boolean fromCaret) {
-    PsiFile file = myFixture.getFile();
-    if (fromCaret) {
-      Editor editor = getEditor();
-      int offset = editor.getCaretModel().getOffset();
-      PsiElement element = file.findElementAt(offset);
-      PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-      assertNotNull(psiClass);
-      return psiClass;
-    }
-    assertInstanceOf(file, PsiJavaFile.class);
-    PsiClass[] classes = ((PsiJavaFile)file).getClasses();
-    assertTrue(classes.length > 0);
-    return classes[0];
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    return ReadAction.computeBlocking(() -> {
+      PsiFile file = myFixture.getFile();
+      if (fromCaret) {
+        Editor editor = myFixture.getEditor();
+        int offset = editor.getCaretModel().getOffset();
+        PsiElement element = file.findElementAt(offset);
+        PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+        assertNotNull(psiClass);
+        return psiClass;
+      }
+      assertInstanceOf(PsiJavaFile.class, file);
+      PsiClass[] classes = ((PsiJavaFile)file).getClasses();
+      assertTrue(classes.length > 0);
+      return classes[0];
+    });
   }
 }

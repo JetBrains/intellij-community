@@ -16,25 +16,41 @@
 package org.jetbrains.plugins.groovy.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 /**
  * @author Max Medvedev
  */
-public class GrCreateFieldFromParameterTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "intentions/createFieldFromParameter/";
+@TestApplication
+public class GrCreateFieldFromParameterTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "intentions/createFieldFromParameter/");
   }
 
+  @Test
   public void test1() { doTest("Create field for parameter 'id'"); }
 
+  @Test
   public void test2() { doTest("Create field for parameter 'test'"); }
 
+  @Test
   public void test3() { doTest("Create field for parameter 'length'"); }
 
+  @Test
   public void test4() { doTest("Create field for parameter 'p1'"); }
 
   public void _test5() { doTest(""); }
@@ -43,10 +59,13 @@ public class GrCreateFieldFromParameterTest extends LightJavaCodeInsightFixtureT
 
   public void _test7() { doTest(""); }
 
+  @Test
   public void test8() { doTest("Create field for parameter 'p1'"); }
 
+  @Test
   public void testArrayType() { doTest("Create field for parameter 'p1'"); }
 
+  @Test
   public void testBoundListTypeParameter() { doTest("Create field for parameter 'p1'"); }
 
   public void _testCaretOnMethod() { doTest(""); }
@@ -55,24 +74,30 @@ public class GrCreateFieldFromParameterTest extends LightJavaCodeInsightFixtureT
 
   public void _testCaretOnMethodWithoutParams() { doTest(""); }
 
+  @Test
   public void testClassTypeParameter() { doTest("Create field for parameter 'p1'"); }
 
+  @Test
   public void testListClassTypeParameter() { doTest("Create field for parameter 'p1'"); }
 
+  @Test
   public void testListTypeParameter() { doTest("Create field for parameter 'p1'"); }
 
   public void _testNotNull() { doTest(""); }
 
   public void _testNullable() { doTest(""); }
 
+  @Test
   public void testSimpleTypeParameter() { doTest("Create field for parameter 'p1'"); }
 
+  @Test
   public void testTypeParameter() { doTest("Create field for parameter 'p1'"); }
 
   private void doTest(@NotNull String hint) {
-    myFixture.configureByFile("before" + getTestName(false) + ".groovy");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile("before" + myFixture.getTestName(false) + ".groovy");
     IntentionAction intention = myFixture.findSingleIntention(hint);
     myFixture.launchAction(intention);
-    myFixture.checkResultByFile("after" + getTestName(false) + ".groovy");
+    myFixture.checkResultByFile("after" + myFixture.getTestName(false) + ".groovy");
   }
 }

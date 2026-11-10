@@ -80,6 +80,7 @@
     <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.json.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.yaml.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.devkit.core" />
 </module>

@@ -2,6 +2,7 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -26,20 +27,39 @@ import com.intellij.refactoring.rename.HeadlessRenameResult;
 import com.intellij.refactoring.rename.ReadOnlyUsagePolicy;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessorBase;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.ExtensionTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
 
-public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class HeadlessRenameProcessorTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testFieldAndItsUsageAreRenamed() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Counter.java", """
       public class Counter {
         int hits;
@@ -56,13 +76,17 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
 
     HeadlessRenameResult result = performRename(hits, "count");
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    assertNotNull("the field kept the old name", findClass("Counter").findFieldByName("count", false));
-    String reader = findClass("Reader").getContainingFile().getText();
-    assertTrue("the usage kept the old name: " + reader, reader.contains("counter.count"));
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(HeadlessRenameResult.Applied.class, result);
+      assertNotNull(findClass("Counter").findFieldByName("count", false), "the field kept the old name");
+      String reader = findClass("Reader").getContainingFile().getText();
+      assertTrue(reader.contains("counter.count"), "the usage kept the old name: " + reader);
+    });
   }
 
+  @Test
   public void testOverridingMethodIsRenamed() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Base.java", """
       public class Base {
         public void run() {}
@@ -74,18 +98,22 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
         public void run() {}
       }
       """);
-    PsiMethod[] baseRun = findClass("Base").findMethodsByName("run", false);
-    assertSize(1, baseRun);
+    PsiMethod[] baseRun = ReadAction.computeBlocking(() -> findClass("Base").findMethodsByName("run", false));
+    assertThat(baseRun).hasSize(1);
 
     HeadlessRenameResult result = performRename(baseRun[0], "execute");
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    assertSize(1, findClass("Base").findMethodsByName("execute", false));
-    assertSize(1, findClass("Impl").findMethodsByName("execute", false));
-    assertSize(0, findClass("Impl").findMethodsByName("run", false));
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(HeadlessRenameResult.Applied.class, result);
+      assertThat(findClass("Base").findMethodsByName("execute", false)).hasSize(1);
+      assertThat(findClass("Impl").findMethodsByName("execute", false)).hasSize(1);
+      assertThat(findClass("Impl").findMethodsByName("run", false)).hasSize(0);
+    });
   }
 
+  @Test
   public void testEveryOverrideOfADeepHierarchyIsRenamed() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Hierarchy.java", """
       class Parent {
         void test() {}
@@ -101,56 +129,68 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
         void test() {}
       }
       """);
-    PsiMethod[] deepest = findClass("Child2").findMethodsByName("test", false);
-    assertSize(1, deepest);
+    PsiMethod[] deepest = ReadAction.computeBlocking(() -> findClass("Child2").findMethodsByName("test", false));
+    assertThat(deepest).hasSize(1);
 
-    HeadlessRenameResult planned = HeadlessRenameProcessor.analyze(getProject(), deepest[0], "test2");
-    HeadlessRenameResult.Planned plan = assertInstanceOf(planned, HeadlessRenameResult.Planned.class);
-    PsiElement substituted = plan.getPlan().getPrimaryElement();
-    assertEquals("the target was not substituted with the base method",
-                 findClass("Parent").findMethodsByName("test", false)[0], substituted);
-    HeadlessRenameResult result = plan.getPlan().apply();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      HeadlessRenameResult planned = HeadlessRenameProcessor.analyze(myFixture.getProject(), deepest[0], "test2");
+      HeadlessRenameResult.Planned plan = assertInstanceOf(HeadlessRenameResult.Planned.class, planned);
+      PsiElement substituted = plan.getPlan().getPrimaryElement();
+      assertEquals(findClass("Parent").findMethodsByName("test", false)[0],
+                   substituted, "the target was not substituted with the base method");
+      HeadlessRenameResult result = plan.getPlan().apply();
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    assertSize(1, findClass("Parent").findMethodsByName("test2", false));
-    assertSize(1, findClass("Child").findMethodsByName("test2", false));
-    assertSize(1, findClass("Child2").findMethodsByName("test2", false));
+      assertInstanceOf(HeadlessRenameResult.Applied.class, result);
+      assertThat(findClass("Parent").findMethodsByName("test2", false)).hasSize(1);
+      assertThat(findClass("Child").findMethodsByName("test2", false)).hasSize(1);
+      assertThat(findClass("Child2").findMethodsByName("test2", false)).hasSize(1);
+    });
   }
 
+  @Test
   public void testAnalyzeWritesNothing() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.addFileToProject("Plain.java", """
       public class Plain {
         int hits;
       }
       """);
-    String before = file.getText();
-    PsiField hits = findHitsField("Plain");
+    ReadAction.runBlocking(() -> {
+      String before = file.getText();
+      PsiField hits = findHitsField("Plain");
 
-    HeadlessRenameResult result = HeadlessRenameProcessor.analyze(getProject(), hits, "count");
+      HeadlessRenameResult result = HeadlessRenameProcessor.analyze(myFixture.getProject(), hits, "count");
 
-    HeadlessRenameResult.Planned planned = assertInstanceOf(result, HeadlessRenameResult.Planned.class);
-    assertContainsElements(planned.getPlan().getAffectedFiles(), file.getVirtualFile());
-    assertEquals("analyze wrote to the file", before, file.getText());
-    assertNotNull("the field lost its old name", findClass("Plain").findFieldByName("hits", false));
+      HeadlessRenameResult.Planned planned = assertInstanceOf(HeadlessRenameResult.Planned.class, result);
+      assertThat(planned.getPlan().getAffectedFiles()).contains(file.getVirtualFile());
+      assertEquals(before, file.getText(), "analyze wrote to the file");
+      assertNotNull(findClass("Plain").findFieldByName("hits", false), "the field lost its old name");
+    });
   }
 
+  @Test
   public void testConflictWithAnExistingFieldIsRefused() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Holder.java", """
       public class Holder {
         int hits;
         int count;
       }
       """);
-    PsiField hits = findHitsField("Holder");
+    ReadAction.runBlocking(() -> {
+      PsiField hits = findHitsField("Holder");
 
-    HeadlessRenameResult result = HeadlessRenameProcessor.analyze(getProject(), hits, "count");
+      HeadlessRenameResult result = HeadlessRenameProcessor.analyze(myFixture.getProject(), hits, "count");
 
-    HeadlessRenameResult.Refused refused = assertInstanceOf(result, HeadlessRenameResult.Refused.class);
-    assertFalse("a refusal must name its conflict", refused.getConflicts().isEmpty());
-    assertNotNull("the rename wrote to the file", findClass("Holder").findFieldByName("hits", false));
+      HeadlessRenameResult.Refused refused = assertInstanceOf(HeadlessRenameResult.Refused.class, result);
+      assertFalse(refused.getConflicts().isEmpty(), "a refusal must name its conflict");
+      assertNotNull(findClass("Holder").findFieldByName("hits", false), "the rename wrote to the file");
+    });
   }
 
+  @Test
   public void testUsageInAReadOnlyFileIsRefused() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Signal.java", """
       public class Signal {
         int hits;
@@ -169,19 +209,21 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
     HeadlessRenameResult result;
     WriteAction.run(() -> lockedFile.setWritable(false));
     try {
-      result = HeadlessRenameProcessor.analyze(getProject(), hits, "count");
+      result = ReadAction.computeBlocking(() -> HeadlessRenameProcessor.analyze(myFixture.getProject(), hits, "count"));
     }
     finally {
       WriteAction.run(() -> lockedFile.setWritable(true));
     }
 
-    HeadlessRenameResult.Failed failed = assertInstanceOf(result, HeadlessRenameResult.Failed.class);
+    HeadlessRenameResult.Failed failed = assertInstanceOf(HeadlessRenameResult.Failed.class, result);
     assertEquals(HeadlessRenameFailure.READ_ONLY_USAGES, failed.getKind());
-    assertNotNull("the read-only file names itself in the report", failed.getDetail());
-    assertNotNull("the rename wrote to the file", findClass("Signal").findFieldByName("hits", false));
+    assertNotNull(failed.getDetail(), "the read-only file names itself in the report");
+    assertNotNull(findClass("Signal").findFieldByName("hits", false), "the rename wrote to the file");
   }
 
+  @Test
   public void testAReadOnlyDeclarationIsRefusedWithTheSkipPolicy() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile locked = myFixture.addFileToProject("Sealed.java", """
       public class Sealed {
         int hits;
@@ -193,19 +235,21 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
     HeadlessRenameResult result;
     WriteAction.run(() -> lockedFile.setWritable(false));
     try {
-      result = HeadlessRenameProcessor.analyze(getProject(), hits, "count", ReadOnlyUsagePolicy.SKIP, false);
+      result = ReadAction.computeBlocking(() -> HeadlessRenameProcessor.analyze(myFixture.getProject(), hits, "count", ReadOnlyUsagePolicy.SKIP, false));
     }
     finally {
       WriteAction.run(() -> lockedFile.setWritable(true));
     }
 
-    HeadlessRenameResult.Failed failed = assertInstanceOf(result, HeadlessRenameResult.Failed.class);
+    HeadlessRenameResult.Failed failed = assertInstanceOf(HeadlessRenameResult.Failed.class, result);
     assertEquals(HeadlessRenameFailure.READ_ONLY_USAGES, failed.getKind());
-    assertNotNull("the refusal must name the file", failed.getDetail());
-    assertNotNull("the rename wrote to the file", findClass("Sealed").findFieldByName("hits", false));
+    assertNotNull(failed.getDetail(), "the refusal must name the file");
+    assertNotNull(findClass("Sealed").findFieldByName("hits", false), "the rename wrote to the file");
   }
 
+  @Test
   public void testAReadOnlyUsageIsSkippedWithTheSkipPolicy() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Meter.java", """
       public class Meter {
         int hits;
@@ -224,19 +268,21 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
     HeadlessRenameResult result;
     WriteAction.run(() -> lockedFile.setWritable(false));
     try {
-      result = HeadlessRenameProcessor.analyze(getProject(), hits, "count", ReadOnlyUsagePolicy.SKIP, false);
+      result = ReadAction.computeBlocking(() -> HeadlessRenameProcessor.analyze(myFixture.getProject(), hits, "count", ReadOnlyUsagePolicy.SKIP, false));
     }
     finally {
       WriteAction.run(() -> lockedFile.setWritable(true));
     }
 
-    HeadlessRenameResult.Planned planned = assertInstanceOf(result, HeadlessRenameResult.Planned.class);
-    assertSize(1, planned.getPlan().getNotes());
-    assertTrue("the note must name the file: " + planned.getPlan().getNotes(),
-               planned.getPlan().getNotes().getFirst().contains(lockedFile.getPath()));
+    HeadlessRenameResult.Planned planned = assertInstanceOf(HeadlessRenameResult.Planned.class, result);
+    assertThat(planned.getPlan().getNotes()).hasSize(1);
+    assertTrue(planned.getPlan().getNotes().getFirst().contains(lockedFile.getPath()),
+               "the note must name the file: " + planned.getPlan().getNotes());
   }
 
+  @Test
   public void testAnAutomaticRenamerRenamesAVariableOfTheClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Widget.java", """
       public class Widget {
       }
@@ -250,16 +296,20 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
       """);
     PsiClass widget = findClass("Widget");
 
-    HeadlessRenameResult analysis =
-      HeadlessRenameProcessor.analyze(getProject(), widget, "Gadget", ReadOnlyUsagePolicy.REFUSE, true);
-    HeadlessRenameResult result = assertInstanceOf(analysis, HeadlessRenameResult.Planned.class).getPlan().apply();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      HeadlessRenameResult analysis =
+        HeadlessRenameProcessor.analyze(myFixture.getProject(), widget, "Gadget", ReadOnlyUsagePolicy.REFUSE, true);
+      HeadlessRenameResult result = assertInstanceOf(HeadlessRenameResult.Planned.class, analysis).getPlan().apply();
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    String holder = findClass("Holder").getContainingFile().getText();
-    assertTrue("the variable kept the old name: " + holder, holder.contains("Gadget gadget"));
+      assertInstanceOf(HeadlessRenameResult.Applied.class, result);
+      String holder = findClass("Holder").getContainingFile().getText();
+      assertTrue(holder.contains("Gadget gadget"), "the variable kept the old name: " + holder);
+    });
   }
 
+  @Test
   public void testACollisionOfAnAutomaticRenameIsReported() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Gear.java", """
       public class Gear {
       }
@@ -275,146 +325,176 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
     PsiClass gear = findClass("Gear");
 
     // The renamer wants the variable gear to become cog, and the method already holds a variable cog.
-    HeadlessRenameResult analysis =
-      HeadlessRenameProcessor.analyze(getProject(), gear, "Cog", ReadOnlyUsagePolicy.REFUSE, true);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      HeadlessRenameResult analysis =
+        HeadlessRenameProcessor.analyze(myFixture.getProject(), gear, "Cog", ReadOnlyUsagePolicy.REFUSE, true);
 
-    HeadlessRenameResult.Planned planned = assertInstanceOf(analysis, HeadlessRenameResult.Planned.class);
-    assertSize(1, planned.getPlan().getNotes());
-    assertTrue("the note must name the collision: " + planned.getPlan().getNotes(),
-               planned.getPlan().getNotes().getFirst().contains("cog"));
-    assertInstanceOf(planned.getPlan().apply(), HeadlessRenameResult.Applied.class);
-    String box = findClass("Box").getContainingFile().getText();
-    assertTrue("the variable took a name that is taken: " + box, box.contains("Cog gear"));
+      HeadlessRenameResult.Planned planned = assertInstanceOf(HeadlessRenameResult.Planned.class, analysis);
+      assertThat(planned.getPlan().getNotes()).hasSize(1);
+      assertTrue(planned.getPlan().getNotes().getFirst().contains("cog"),
+                 "the note must name the collision: " + planned.getPlan().getNotes());
+      assertInstanceOf(HeadlessRenameResult.Applied.class, planned.getPlan().apply());
+      String box = findClass("Box").getContainingFile().getText();
+      assertTrue(box.contains("Cog gear"), "the variable took a name that is taken: " + box);
+    });
   }
 
+  @Test
   public void testMethodWithALibraryBaseMethodIsRefused() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Task.java", """
       public class Task implements Runnable {
         @Override
         public void run() {}
       }
       """);
-    PsiMethod[] taskRun = findClass("Task").findMethodsByName("run", false);
-    assertSize(1, taskRun);
+    ReadAction.runBlocking(() -> {
+      PsiMethod[] taskRun = findClass("Task").findMethodsByName("run", false);
+      assertThat(taskRun).hasSize(1);
 
-    HeadlessRenameResult result = HeadlessRenameProcessor.analyze(getProject(), taskRun[0], "execute");
+      HeadlessRenameResult result = HeadlessRenameProcessor.analyze(myFixture.getProject(), taskRun[0], "execute");
 
-    HeadlessRenameResult.Failed failed = assertInstanceOf(result, HeadlessRenameResult.Failed.class);
-    assertEquals(HeadlessRenameFailure.TARGET_NOT_RENAMABLE, failed.getKind());
-    assertSize(1, findClass("Task").findMethodsByName("run", false));
+      HeadlessRenameResult.Failed failed = assertInstanceOf(HeadlessRenameResult.Failed.class, result);
+      assertEquals(HeadlessRenameFailure.TARGET_NOT_RENAMABLE, failed.getKind());
+      assertThat(findClass("Task").findMethodsByName("run", false)).hasSize(1);
+    });
   }
 
+  @Test
   public void testAnInvalidNewNameIsRefused() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Gauge.java", """
       public class Gauge {
         int hits;
       }
       """);
-    PsiField hits = findHitsField("Gauge");
+    ReadAction.runBlocking(() -> {
+      PsiField hits = findHitsField("Gauge");
 
-    HeadlessRenameResult result = HeadlessRenameProcessor.analyze(getProject(), hits, "not a name");
+      HeadlessRenameResult result = HeadlessRenameProcessor.analyze(myFixture.getProject(), hits, "not a name");
 
-    HeadlessRenameResult.Failed failed = assertInstanceOf(result, HeadlessRenameResult.Failed.class);
-    assertEquals(HeadlessRenameFailure.NEW_NAME_REFUSED, failed.getKind());
-    assertNotNull("a refusal must name its reason", failed.getDetail());
-    assertNotNull("the rename wrote to the file", findClass("Gauge").findFieldByName("hits", false));
+      HeadlessRenameResult.Failed failed = assertInstanceOf(HeadlessRenameResult.Failed.class, result);
+      assertEquals(HeadlessRenameFailure.NEW_NAME_REFUSED, failed.getKind());
+      assertNotNull(failed.getDetail(), "a refusal must name its reason");
+      assertNotNull(findClass("Gauge").findFieldByName("hits", false), "the rename wrote to the file");
+    });
   }
 
+  @Test
   public void testAnInvalidPackageNameIsRefused() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("pack3/Meter.java", """
       package pack3;
 
       public class Meter {
       }
       """);
-    PsiPackage pack3 = JavaPsiFacade.getInstance(getProject()).findPackage("pack3");
-    assertNotNull("no package pack3 in the fixture", pack3);
+    ReadAction.runBlocking(() -> {
+      PsiPackage pack3 = JavaPsiFacade.getInstance(myFixture.getProject()).findPackage("pack3");
+      assertNotNull(pack3, "no package pack3 in the fixture");
 
-    // PsiPackageRenameValidator states this refusal as a message, and RenameUtil.isValidName lets it pass.
-    HeadlessRenameResult result = HeadlessRenameProcessor.analyze(getProject(), pack3, "1bad");
+      // PsiPackageRenameValidator states this refusal as a message, and RenameUtil.isValidName lets it pass.
+      HeadlessRenameResult result = HeadlessRenameProcessor.analyze(myFixture.getProject(), pack3, "1bad");
 
-    HeadlessRenameResult.Failed failed = assertInstanceOf(result, HeadlessRenameResult.Failed.class);
-    assertEquals(HeadlessRenameFailure.NEW_NAME_REFUSED, failed.getKind());
-    assertNotNull("a refusal must name its reason", failed.getDetail());
-    assertNotNull("the package lost its old name", JavaPsiFacade.getInstance(getProject()).findPackage("pack3"));
+      HeadlessRenameResult.Failed failed = assertInstanceOf(HeadlessRenameResult.Failed.class, result);
+      assertEquals(HeadlessRenameFailure.NEW_NAME_REFUSED, failed.getKind());
+      assertNotNull(failed.getDetail(), "a refusal must name its reason");
+      assertNotNull(JavaPsiFacade.getInstance(myFixture.getProject()).findPackage("pack3"), "the package lost its old name");
+    });
   }
 
+  @Test
   public void testAQualifiedPackageNameWithTheSameParentIsRenamed() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("outer/inner/Gear.java", """
       package outer.inner;
 
       public class Gear {
       }
       """);
-    PsiPackage inner = JavaPsiFacade.getInstance(getProject()).findPackage("outer.inner");
-    assertNotNull("no package outer.inner in the fixture", inner);
+    ReadAction.runBlocking(() -> {
+      PsiPackage inner = JavaPsiFacade.getInstance(myFixture.getProject()).findPackage("outer.inner");
+      assertNotNull(inner, "no package outer.inner in the fixture");
 
-    HeadlessRenameResult result = HeadlessRenameProcessor.analyze(getProject(), inner, "outer.renamed");
+      HeadlessRenameResult result = HeadlessRenameProcessor.analyze(myFixture.getProject(), inner, "outer.renamed");
 
-    //just refuse until moving is implemented
-    assertInstanceOf(result, HeadlessRenameResult.Refused.class);
+      //just refuse until moving is implemented
+      assertInstanceOf(HeadlessRenameResult.Refused.class, result);
+    });
   }
 
   /** A qualified name that changes the parent package asks for a move, and a rename holds no move. */
+  @Test
   public void testAQualifiedPackageNameThatMovesIsRefused() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("pack8/Axle.java", """
       package pack8;
 
       public class Axle {
       }
       """);
-    PsiPackage pack8 = JavaPsiFacade.getInstance(getProject()).findPackage("pack8");
-    assertNotNull("no package pack8 in the fixture", pack8);
+    ReadAction.runBlocking(() -> {
+      PsiPackage pack8 = JavaPsiFacade.getInstance(myFixture.getProject()).findPackage("pack8");
+      assertNotNull(pack8, "no package pack8 in the fixture");
 
-    HeadlessRenameResult result = HeadlessRenameProcessor.analyze(getProject(), pack8, "other.pack9");
+      HeadlessRenameResult result = HeadlessRenameProcessor.analyze(myFixture.getProject(), pack8, "other.pack9");
 
-    HeadlessRenameResult.Refused refused = assertInstanceOf(result, HeadlessRenameResult.Refused.class);
-    assertFalse("a refusal must name its conflict", refused.getConflicts().isEmpty());
-    assertNotNull("the rename wrote to the project", JavaPsiFacade.getInstance(getProject()).findPackage("pack8"));
+      HeadlessRenameResult.Refused refused = assertInstanceOf(HeadlessRenameResult.Refused.class, result);
+      assertFalse(refused.getConflicts().isEmpty(), "a refusal must name its conflict");
+      assertNotNull(JavaPsiFacade.getInstance(myFixture.getProject()).findPackage("pack8"), "the rename wrote to the project");
+    });
   }
 
   /**
    * A directory of a package is renamed as the package. DirectoryAsPackageRenameHandler answers the
    * same way when one directory holds the package, and it asks the user nothing there.
    */
+  @Test
   public void testAPackageDirectoryIsRenamedAsAPackage() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile wheel = myFixture.addFileToProject("pack6/Wheel.java", """
       package pack6;
 
       public class Wheel {
       }
       """);
-    PsiDirectory directory = wheel.getContainingDirectory();
-    assertNotNull("no directory for the file", directory);
+    PsiDirectory directory = ReadAction.computeBlocking(() -> wheel.getContainingDirectory());
+    assertNotNull(directory, "no directory for the file");
 
     HeadlessRenameResult result = performRename(directory, "pack7");
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    PsiFile moved = findClass("pack7.Wheel").getContainingFile();
-    assertEquals("the package statement kept the old name", "pack7", ((PsiJavaFile)moved).getPackageName());
-    PsiDirectory movedDirectory = moved.getContainingDirectory();
-    assertNotNull("the file left the tree", movedDirectory);
-    assertEquals("the directory kept the old name", "pack7", movedDirectory.getName());
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(HeadlessRenameResult.Applied.class, result);
+      PsiFile moved = findClass("pack7.Wheel").getContainingFile();
+      assertEquals("pack7", ((PsiJavaFile)moved).getPackageName(), "the package statement kept the old name");
+      PsiDirectory movedDirectory = moved.getContainingDirectory();
+      assertNotNull(movedDirectory, "the file left the tree");
+      assertEquals("pack7", movedDirectory.getName(), "the directory kept the old name");
+    });
   }
 
+  @Test
   public void testPackageDirectoryIsRenamed() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("pack1/Widget.java", """
       package pack1;
 
       public class Widget {
       }
       """);
-    PsiPackage pack1 = JavaPsiFacade.getInstance(getProject()).findPackage("pack1");
-    assertNotNull("no package pack1 in the fixture", pack1);
+    PsiPackage pack1 = JavaPsiFacade.getInstance(myFixture.getProject()).findPackage("pack1");
+    assertNotNull(pack1, "no package pack1 in the fixture");
 
     HeadlessRenameResult result = performRename(pack1, "pack2");
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    PsiFile widget = findClass("pack2.Widget").getContainingFile();
-    assertEquals("the package statement kept the old name", "pack2", ((PsiJavaFile)widget).getPackageName());
-    PsiDirectory directory = widget.getContainingDirectory();
-    assertNotNull("the file left the tree", directory);
-    assertEquals("the file stayed in the old directory", "pack2", directory.getName());
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(HeadlessRenameResult.Applied.class, result);
+      PsiFile widget = findClass("pack2.Widget").getContainingFile();
+      assertEquals("pack2", ((PsiJavaFile)widget).getPackageName(), "the package statement kept the old name");
+      PsiDirectory directory = widget.getContainingDirectory();
+      assertNotNull(directory, "the file left the tree");
+      assertEquals("pack2", directory.getName(), "the file stayed in the old directory");
+    });
   }
 
   /**
@@ -422,7 +502,9 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
    * on Windows and on macOS, and there the check for a taken name reads the file itself. On Linux the
    * file system keeps the case apart, so the test is a plain rename there.
    */
+  @Test
   public void testARenameOfTheCaseRenamesTheFile() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("gauge.java", """
       public class gauge {
       }
@@ -431,71 +513,85 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
 
     HeadlessRenameResult result = performRename(gauge, "Gauge");
 
-    HeadlessRenameResult.Applied applied = assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    assertEmpty("the rename of the file was skipped", applied.getSkippedFiles());
-    assertEquals("the file kept the old name", "Gauge.java", findClass("Gauge").getContainingFile().getName());
+    ReadAction.runBlocking(() -> {
+      HeadlessRenameResult.Applied applied = assertInstanceOf(HeadlessRenameResult.Applied.class, result);
+      assertThat(applied.getSkippedFiles()).as("the rename of the file was skipped").isNullOrEmpty();
+      assertEquals("Gauge.java", findClass("Gauge").getContainingFile().getName(), "the file kept the old name");
+    });
   }
 
+  @Test
   public void testPlanRunsOnlyOnce() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Once.java", """
       public class Once {
         int hits;
       }
       """);
     PsiField hits = findHitsField("Once");
-    HeadlessRenameResult.Planned planned =
-      assertInstanceOf(HeadlessRenameProcessor.analyze(getProject(), hits, "count"), HeadlessRenameResult.Planned.class);
-    assertInstanceOf(planned.getPlan().apply(), HeadlessRenameResult.Applied.class);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      HeadlessRenameResult.Planned planned =
+        assertInstanceOf(HeadlessRenameResult.Planned.class, HeadlessRenameProcessor.analyze(myFixture.getProject(), hits, "count"));
+      assertInstanceOf(HeadlessRenameResult.Applied.class, planned.getPlan().apply());
 
-    HeadlessRenameResult second = planned.getPlan().apply();
+      HeadlessRenameResult second = planned.getPlan().apply();
 
-    HeadlessRenameResult.Failed failed = assertInstanceOf(second, HeadlessRenameResult.Failed.class);
-    assertEquals(HeadlessRenameFailure.PLAN_STALE, failed.getKind());
-    assertNotNull("a plan that already ran says so", failed.getDetail());
+      HeadlessRenameResult.Failed failed = assertInstanceOf(HeadlessRenameResult.Failed.class, second);
+      assertEquals(HeadlessRenameFailure.PLAN_STALE, failed.getKind());
+      assertNotNull(failed.getDetail(), "a plan that already ran says so");
+    });
   }
 
+  @Test
   public void testAnUncommittedChangeStopsThePlan() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.addFileToProject("Pulse.java", """
       public class Pulse {
         int hits;
       }
       """);
     PsiField hits = findHitsField("Pulse");
-    HeadlessRenameResult.Planned planned =
-      assertInstanceOf(HeadlessRenameProcessor.analyze(getProject(), hits, "count"), HeadlessRenameResult.Planned.class);
-    Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
-    assertNotNull("no document for the file", document);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      HeadlessRenameResult.Planned planned =
+        assertInstanceOf(HeadlessRenameResult.Planned.class, HeadlessRenameProcessor.analyze(myFixture.getProject(), hits, "count"));
+      Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
+      assertNotNull(document, "no document for the file");
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "// a note\n"));
-    assertTrue("the fixture committed the change, so this test proves nothing",
-               PsiDocumentManager.getInstance(getProject()).isUncommited(document));
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> document.insertString(0, "// a note\n"));
+      assertTrue(PsiDocumentManager.getInstance(myFixture.getProject()).isUncommited(document),
+                 "the fixture committed the change, so this test proves nothing");
 
-    HeadlessRenameResult result = planned.getPlan().apply();
+      HeadlessRenameResult result = planned.getPlan().apply();
 
-    HeadlessRenameResult.Failed failed = assertInstanceOf(result, HeadlessRenameResult.Failed.class);
-    assertEquals(HeadlessRenameFailure.PLAN_STALE, failed.getKind());
-    assertNotNull("the rename wrote to the file", findClass("Pulse").findFieldByName("hits", false));
+      HeadlessRenameResult.Failed failed = assertInstanceOf(HeadlessRenameResult.Failed.class, result);
+      assertEquals(HeadlessRenameFailure.PLAN_STALE, failed.getKind());
+      assertNotNull(findClass("Pulse").findFieldByName("hits", false), "the rename wrote to the file");
+    });
   }
 
+  @Test
   public void testARefusedWriteIsReported() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Boom.java", """
       public class Boom {
         int boom;
       }
       """);
     PsiField boom = findClass("Boom").findFieldByName("boom", false);
-    assertNotNull("no field boom in the fixture", boom);
+    assertNotNull(boom, "no field boom in the fixture");
     ExtensionTestUtil.maskExtensions(HeadlessRenamePsiElementProcessor.EP_NAME,
                                      ContainerUtil.prepend(HeadlessRenamePsiElementProcessor.EP_NAME.getExtensionList(),
                                                            new RefusingRenameProcessor()),
-                                     getTestRootDisposable());
+                                     myFixture.getTestRootDisposable());
 
     HeadlessRenameResult result = performRename(boom, "count");
 
-    HeadlessRenameResult.Failed failed = assertInstanceOf(result, HeadlessRenameResult.Failed.class);
-    assertEquals(HeadlessRenameFailure.WRITE_FAILED, failed.getKind());
-    assertEquals("The test refuses the write.", failed.getDetail());
-    assertNotNull("the rename wrote to the file", findClass("Boom").findFieldByName("boom", false));
+    ReadAction.runBlocking(() -> {
+      HeadlessRenameResult.Failed failed = assertInstanceOf(HeadlessRenameResult.Failed.class, result);
+      assertEquals(HeadlessRenameFailure.WRITE_FAILED, failed.getKind());
+      assertEquals("The test refuses the write.", failed.getDetail());
+      assertNotNull(findClass("Boom").findFieldByName("boom", false), "the rename wrote to the file");
+    });
   }
 
   /**
@@ -505,28 +601,34 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
    * the catch of the headless driver it would leave {@link com.intellij.refactoring.rename.RenamePlan}
    * and reach the caller raw.
    */
+  @Test
   public void testAThrowableOfTheWriteIsReported() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Crash.java", """
       public class Crash {
         int crash;
       }
       """);
     PsiField crash = findClass("Crash").findFieldByName("crash", false);
-    assertNotNull("no field crash in the fixture", crash);
+    assertNotNull(crash, "no field crash in the fixture");
     ExtensionTestUtil.maskExtensions(HeadlessRenamePsiElementProcessor.EP_NAME,
                                      ContainerUtil.prepend(HeadlessRenamePsiElementProcessor.EP_NAME.getExtensionList(),
                                                            new BreakingRenameProcessor()),
-                                     getTestRootDisposable());
+                                     myFixture.getTestRootDisposable());
 
     HeadlessRenameResult result = performRename(crash, "count");
 
-    HeadlessRenameResult.Failed failed = assertInstanceOf(result, HeadlessRenameResult.Failed.class);
-    assertEquals(HeadlessRenameFailure.WRITE_FAILED, failed.getKind());
-    assertEquals("The test breaks the write.", failed.getDetail());
-    assertNotNull("the rename wrote to the file", findClass("Crash").findFieldByName("crash", false));
+    ReadAction.runBlocking(() -> {
+      HeadlessRenameResult.Failed failed = assertInstanceOf(HeadlessRenameResult.Failed.class, result);
+      assertEquals(HeadlessRenameFailure.WRITE_FAILED, failed.getKind());
+      assertEquals("The test breaks the write.", failed.getDetail());
+      assertNotNull(findClass("Crash").findFieldByName("crash", false), "the rename wrote to the file");
+    });
   }
 
+  @Test
   public void testAnElementOfTheDefaultProcessorIsRenamed() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Plain.java", """
       public class Plain {
         int hits;
@@ -536,44 +638,54 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
       }
       """);
     PsiField hits = findHitsField("Plain");
-    ExtensionTestUtil.maskExtensions(HeadlessRenamePsiElementProcessor.EP_NAME, List.of(), getTestRootDisposable());
-    ExtensionTestUtil.maskExtensions(RenamePsiElementProcessorBase.EP_NAME, List.of(), getTestRootDisposable());
+    ExtensionTestUtil.maskExtensions(HeadlessRenamePsiElementProcessor.EP_NAME, List.of(), myFixture.getTestRootDisposable());
+    ExtensionTestUtil.maskExtensions(RenamePsiElementProcessorBase.EP_NAME, List.of(), myFixture.getTestRootDisposable());
 
     HeadlessRenameResult result = performRename(hits, "count");
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    String text = findClass("Plain").getContainingFile().getText();
-    assertTrue("the usage kept the old name: " + text, text.contains("return count;"));
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(HeadlessRenameResult.Applied.class, result);
+      String text = findClass("Plain").getContainingFile().getText();
+      assertTrue(text.contains("return count;"), "the usage kept the old name: " + text);
+    });
   }
 
   /** A processor that can ask the user, and that carries no headless registration, refuses by name. */
+  @Test
   public void testAProcessorWithNoHeadlessRegistrationIsRefused() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Lonely.java", """
       public class Lonely {
         int hits;
       }
       """);
-    PsiField hits = findHitsField("Lonely");
-    ExtensionTestUtil.maskExtensions(HeadlessRenamePsiElementProcessor.EP_NAME, List.of(), getTestRootDisposable());
+    ReadAction.runBlocking(() -> {
+      PsiField hits = findHitsField("Lonely");
+      ExtensionTestUtil.maskExtensions(HeadlessRenamePsiElementProcessor.EP_NAME, List.of(), myFixture.getTestRootDisposable());
 
-    HeadlessRenameResult result = HeadlessRenameProcessor.analyze(getProject(), hits, "count");
+      HeadlessRenameResult result = HeadlessRenameProcessor.analyze(myFixture.getProject(), hits, "count");
 
-    HeadlessRenameResult.Failed failed = assertInstanceOf(result, HeadlessRenameResult.Failed.class);
-    assertEquals(HeadlessRenameFailure.LANGUAGE_NOT_SUPPORTED, failed.getKind());
-    assertEquals("RenameJavaVariableProcessor renames this element, and it has no headless registration.",
-                 failed.getDetail());
-    assertNotNull("the field lost its old name", findClass("Lonely").findFieldByName("hits", false));
+      HeadlessRenameResult.Failed failed = assertInstanceOf(HeadlessRenameResult.Failed.class, result);
+      assertEquals(HeadlessRenameFailure.LANGUAGE_NOT_SUPPORTED, failed.getKind());
+      assertEquals("RenameJavaVariableProcessor renames this element, and it has no headless registration.",
+                   failed.getDetail());
+      assertNotNull(findClass("Lonely").findFieldByName("hits", false), "the field lost its old name");
+    });
   }
 
   /** A language with no {@code headlessRenameSupportedLanguage} statement refuses before the lookup. */
+  @Test
   public void testAnUncoveredLanguageIsRefused() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile notes = myFixture.addFileToProject("notes.txt", "a note\n");
 
-    HeadlessRenameResult result = HeadlessRenameProcessor.analyze(getProject(), notes, "memo.txt");
+    ReadAction.runBlocking(() -> {
+      HeadlessRenameResult result = HeadlessRenameProcessor.analyze(myFixture.getProject(), notes, "memo.txt");
 
-    HeadlessRenameResult.Failed failed = assertInstanceOf(result, HeadlessRenameResult.Failed.class);
-    assertEquals(HeadlessRenameFailure.LANGUAGE_NOT_SUPPORTED, failed.getKind());
-    assertEquals("notes.txt was renamed", "notes.txt", notes.getName());
+      HeadlessRenameResult.Failed failed = assertInstanceOf(HeadlessRenameResult.Failed.class, result);
+      assertEquals(HeadlessRenameFailure.LANGUAGE_NOT_SUPPORTED, failed.getKind());
+      assertEquals("notes.txt", notes.getName(), "notes.txt was renamed");
+    });
   }
 
   /**
@@ -582,16 +694,20 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
    * {@code PsiDirectoryImpl.getLanguage} answers with that one, so a directory names no language the
    * gate could read, and the processor list decides instead.
    */
+  @Test
   public void testADirectoryPassesTheLanguageGate() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile notes = myFixture.addFileToProject("data/notes.txt", "a note\n");
-    PsiDirectory data = notes.getContainingDirectory();
-    assertNotNull("no directory data in the fixture", data);
-    assertEquals("PsiDirectory no longer answers with Language.ANY", Language.ANY, data.getLanguage());
+    PsiDirectory data = ReadAction.computeBlocking(() -> notes.getContainingDirectory());
+    assertNotNull(data, "no directory data in the fixture");
+    assertEquals(Language.ANY, data.getLanguage(), "PsiDirectory no longer answers with Language.ANY");
 
     HeadlessRenameResult result = performRename(data, "info");
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    assertEquals("the directory kept the old name", "info", data.getName());
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(HeadlessRenameResult.Applied.class, result);
+      assertEquals("info", data.getName(), "the directory kept the old name");
+    });
   }
 
   /** Refuses the write of the field named boom, and answers every other question as Java does. */
@@ -629,20 +745,23 @@ public class HeadlessRenameProcessorTest extends LightJavaCodeInsightFixtureTest
   }
 
   private static HeadlessRenameResult performRename(PsiElement element, String newName) {
-    HeadlessRenameResult planned = HeadlessRenameProcessor.analyze(element.getProject(), element, newName);
-    HeadlessRenameResult.Planned plan = assertInstanceOf(planned, HeadlessRenameResult.Planned.class);
-    return plan.getPlan().apply();
+    return EdtTestUtil.runInEdtAndGet(() -> {
+      HeadlessRenameResult planned = HeadlessRenameProcessor.analyze(element.getProject(), element, newName);
+      HeadlessRenameResult.Planned plan = assertInstanceOf(HeadlessRenameResult.Planned.class, planned);
+      return plan.getPlan().apply();
+    });
   }
 
   private PsiField findHitsField(String className) {
-    PsiField field = findClass(className).findFieldByName("hits", false);
-    assertNotNull("no field hits in " + className, field);
+    PsiField field = ReadAction.computeBlocking(() -> findClass(className).findFieldByName("hits", false));
+    assertNotNull(field, "no field hits in " + className);
     return field;
   }
 
   private PsiClass findClass(String name) {
-    PsiClass psiClass = myFixture.findClass(name);
-    assertNotNull("no class " + name + " in the fixture", psiClass);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiClass psiClass = ReadAction.computeBlocking(() -> myFixture.findClass(name));
+    assertNotNull(psiClass, "no class " + name + " in the fixture");
     return psiClass;
   }
 }

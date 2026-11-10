@@ -2,11 +2,25 @@
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class InsertMissingTokenFixInjectionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
+@TestApplication
+public class InsertMissingTokenFixInjectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/codeInsight/daemonCodeAnalyzer/quickFix/insertSemicolon");
+
+  @Test
   public void testInjection() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.setCaresAboutInjection(false);
     String text = """
       import org.intellij.lang.annotations.Language;
@@ -25,11 +39,15 @@ public class InsertMissingTokenFixInjectionTest extends LightJavaCodeInsightFixt
       }""";
     myFixture.configureByText("Test.java", text);
     IntentionAction intention = myFixture.findSingleIntention("Insert ';'");
-    myFixture.checkPreviewAndLaunchAction(intention);
-    myFixture.checkResult(text.replace("<caret>", ";"));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.checkPreviewAndLaunchAction(intention);
+      myFixture.checkResult(text.replace("<caret>", ";"));
+    });
   }
   
+  @Test
   public void testInjection2() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.setCaresAboutInjection(false);
     String text = """
       import org.intellij.lang.annotations.Language;
@@ -47,11 +65,15 @@ public class InsertMissingTokenFixInjectionTest extends LightJavaCodeInsightFixt
         }
       }""";
     myFixture.configureByText("Test.java", text.replace("<target>", ""));
-    myFixture.launchAction("Insert ';'");
-    myFixture.checkResult(text.replace("<target>", ";"));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.launchAction("Insert ';'");
+      myFixture.checkResult(text.replace("<target>", ";"));
+    });
   }
   
+  @Test
   public void testInjectionFixAll() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.setCaresAboutInjection(false);
     String text = """
       import org.intellij.lang.annotations.Language;
@@ -86,10 +108,5 @@ public class InsertMissingTokenFixInjectionTest extends LightJavaCodeInsightFixt
     IntentionAction intention = myFixture.findSingleIntention("Apply all 'Insert ';'' fixes in file");
     myFixture.launchAction(intention);
     myFixture.checkResult(text.replace("<target>", ";"));
-  }
-  
-  @Override
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/insertSemicolon";
   }
 }

@@ -20,14 +20,27 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.NeedsIndex;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-public class SPICompletionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
 
+@TestApplication
+public class SPICompletionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   @NeedsIndex.SmartMode(reason = "Smart completion in dumb mode is not supported for SPI")
   public void testQualifiedReference() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package com.foo; public class Interface {}");
     myFixture.addClass("package com.foo; public class Implementation extends Interface {}");
     myFixture.configureFromExistingVirtualFile(
@@ -36,14 +49,16 @@ public class SPICompletionTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.checkResult("com.foo.Implementation");
   }
 
+  @Test
   @NeedsIndex.SmartMode(reason = "Smart completion in dumb mode is not supported for SPI")
   public void testCompletionAfterRenaming() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFile file = myFixture.addFileToProject("META-INF/services/aaa", "<caret>").getVirtualFile();
     myFixture.configureFromExistingVirtualFile(file);
-    assertEmpty(myFixture.completeBasic());
-    LookupManager.getInstance(getProject()).hideActiveLookup();
+    assertThat(myFixture.completeBasic()).isNullOrEmpty();
+    LookupManager.getInstance(myFixture.getProject()).hideActiveLookup();
 
-    WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Void, IOException>)() -> {
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), (ThrowableComputable<Void, IOException>)() -> {
       file.rename(this, "java.lang.Runnable");
       return null;
     });

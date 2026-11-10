@@ -2,6 +2,9 @@
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
+import com.intellij.openapi.application.EDT
+import kotlin.time.Duration.Companion.minutes
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.ide.highlighter.JavaFileType
@@ -9,26 +12,28 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Inlay
 import com.intellij.testFramework.EditorTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_8_ANNOTATED
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
 
-class JavaInlayParameterHintsTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return JAVA_8_ANNOTATED
+@TestApplication
+class JavaInlayParameterHintsTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_8_ANNOTATED)
   }
 
-  override fun tearDown() {
-    try {
-      val default = ParameterNameHintsSettings()
-      ParameterNameHintsSettings.getInstance().loadState(default.state)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @AfterEach
+  fun tearDown() {
+    val default = ParameterNameHintsSettings()
+    ParameterNameHintsSettings.getInstance().loadState(default.state)
   }
 
   fun check(text: String) {
@@ -36,6 +41,7 @@ class JavaInlayParameterHintsTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testInlays()
   }
 
+  @Test
   fun `test insert literal arguments`() {
     check("""
 class Groo {
@@ -59,6 +65,7 @@ class Groo {
 }""")
   }
 
+  @Test
   fun `test do not show for Exceptions`() {
     check("""
 class Fooo {
@@ -71,7 +78,7 @@ class Fooo {
 """)
   }
 
-
+  @Test
   fun `test show hint for single string literal if there is multiple string params`() {
     check("""class Groo {
 
@@ -89,7 +96,7 @@ class Fooo {
 }""")
   }
 
-
+  @Test
   fun `test do not show hints on setters`() {
     check("""class Groo {
 
@@ -106,7 +113,7 @@ class Fooo {
 }""")
   }
 
-
+  @Test
   fun `test single varargs hint`() {
     check("""
 public class VarArgTest {
@@ -124,6 +131,7 @@ public class VarArgTest {
 """)
   }
 
+  @Test
   fun `test no hint if varargs null`() {
     check("""
 public class VarArgTest {
@@ -141,7 +149,7 @@ public class VarArgTest {
 """)
   }
 
-
+  @Test
   fun `test multiple vararg hint`() {
     check("""
 public class VarArgTest {
@@ -159,7 +167,7 @@ public class VarArgTest {
 """)
   }
 
-
+  @Test
   fun `test do not inline known subsequent parameter names`() {
     check("""
 public class Test {
@@ -188,7 +196,7 @@ public class Test {
 """)
   }
 
-
+  @Test
   fun `test show if can be assigned`() {
     check("""
 public class CharSymbol {
@@ -206,6 +214,7 @@ public class CharSymbol {
 """)
   }
 
+  @Test
   fun `test inline positive and negative numbers`() {
     check("""
 public class CharSymbol {
@@ -224,6 +233,7 @@ public class CharSymbol {
 """)
   }
 
+  @Test
   fun `test inline literal arguments with crazy settings`() {
     check("""
 public class Test {
@@ -236,6 +246,7 @@ public class Test {
 
   }
 
+  @Test
   fun `test suppress for erroneous parameters`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(false)
     check("""
@@ -264,7 +275,7 @@ public class Test {
 
   }
 
-
+  @Test
   fun `test ignored methods`() {
     check("""
 public class Test {
@@ -301,6 +312,7 @@ public class Test {
 
   }
 
+  @Test
   fun `test hints for generic arguments`() {
     check("""
 
@@ -322,6 +334,7 @@ public class Test {
 """)
   }
 
+  @Test
   fun `test inline constructor literal arguments names`() {
     check("""
 public class Test {
@@ -343,6 +356,7 @@ public class Test {
 """)
   }
 
+  @Test
   fun `test inline anonymous class constructor parameters`() {
     check("""
 public class Test {
@@ -361,6 +375,7 @@ public class Test {
 """)
   }
 
+  @Test
   fun `test inline if one of vararg params is literal`() {
     check("""
 public class VarArgTest {
@@ -381,6 +396,7 @@ public class VarArgTest {
 """)
   }
 
+  @Test
   fun `test if any param matches inline all`() {
     check("""
 public class VarArgTest {
@@ -396,6 +412,7 @@ public class VarArgTest {
 """)
   }
 
+  @Test
   fun `test inline common name pair if more that 2 args`() {
     check("""
 public class VarArgTest {
@@ -412,6 +429,7 @@ public class VarArgTest {
 """)
   }
 
+  @Test
   fun `test ignore String methods`() {
     check("""
 class Test {
@@ -424,6 +442,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test inline common name pair if more that 2 args xxx`() {
     check("""
 public class VarArgTest {
@@ -439,6 +458,7 @@ public class VarArgTest {
 """)
   }
 
+  @Test
   fun `test inline this`() {
     check("""
 public class VarArgTest {
@@ -454,6 +474,7 @@ public class VarArgTest {
 """)
   }
 
+  @Test
   fun `test inline strange methods`() {
     check("""
 public class Test {
@@ -472,6 +493,7 @@ interface Content {}
 """)
   }
 
+  @Test
   fun `test do not show single parameter hint if it is string literal`() {
     check("""
 public class Test {
@@ -488,6 +510,7 @@ public class Test {
 """)
   }
 
+  @Test
   fun `test show single`() {
     check("""
 class Test {
@@ -509,6 +532,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test do not show for setters`() {
     check("""
 class Test {
@@ -527,6 +551,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test do not show for equals and min`() {
     check("""
 class Test {
@@ -538,6 +563,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test more blacklisted items`() {
     check("""
 class Test {
@@ -556,6 +582,7 @@ class Key {
 """)
   }
 
+  @Test
   fun `test poly and binary expressions`() {
       check("""
 class Test {
@@ -572,6 +599,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test incorrect pattern`() {
     ParameterNameHintsSettings.getInstance().addIgnorePattern(JavaLanguage.INSTANCE, "")
     check("""
@@ -584,6 +612,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test do not show hint for name contained in method`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().showIfMethodNameContainsParameterName.set(false)
     check("""
@@ -598,6 +627,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test show if multiple params but name contained`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().showIfMethodNameContainsParameterName.set(false)
     check("""
@@ -612,6 +642,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test show same params`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(true)
     check("""
@@ -627,6 +658,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test show triple`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(true)
     check("""
@@ -641,6 +673,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test show couple of doubles`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(true)
     check("""
@@ -657,6 +690,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test show ambigous`() {
     myFixture.configureByText(JavaFileType.INSTANCE, """
 class Test {
@@ -680,6 +714,7 @@ class Test {
     assertSingleInlayWithText("a:")
   }
 
+  @Test
   fun `test show ambiguous constructor`() {
     myFixture.configureByText(JavaFileType.INSTANCE, """
 class Test {
@@ -706,6 +741,7 @@ class X {
     assertSingleInlayWithText("a:")
   }
 
+  @Test
   fun `test preserved inlays`() {
     myFixture.configureByText(JavaFileType.INSTANCE,
                               """
@@ -742,6 +778,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test do not show hints if method is unknown and one of them or both are blacklisted`() {
     ParameterNameHintsSettings.getInstance().addIgnorePattern(JavaLanguage.INSTANCE, "*kee")
     myFixture.configureByText(JavaFileType.INSTANCE, """
@@ -766,7 +803,7 @@ class Test {
     assertThat(hints).hasSize(0)
   }
 
-  
+  @Test
   fun `test multiple hints on same offset lives without exception`() {
     myFixture.configureByText(JavaFileType.INSTANCE,
                               """
@@ -792,7 +829,7 @@ class Test {
     assert(inlays.size == 1 && inlays.first() == "qas:") { "Real inlays ${inlays.size}" }
   }
 
-
+  @Test
   fun `test params with same type`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(true)
     check("""
@@ -807,6 +844,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test if resolved but no hints just return no hints`() {
     myFixture.configureByText(JavaFileType.INSTANCE, """
 public class Test {
@@ -825,7 +863,6 @@ public class Test {
     var inlays = getHints()
     assert(inlays.size == 1)
 
-
     myFixture.type('\b')
 
     myFixture.performEditorAction("EditorLeft")
@@ -835,6 +872,7 @@ public class Test {
     assert(inlays.isEmpty())
   }
 
+  @Test
   fun `test one-char one-digit hints enabled`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(true)
     check("""
@@ -847,6 +885,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test ordered sequential`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
@@ -867,6 +906,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test unordered sequential`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
@@ -881,6 +921,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test ordered with varargs`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
@@ -895,6 +936,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test one-char one-digit hints disabled`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
@@ -907,6 +949,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test just some unparsable parameter name`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
@@ -921,6 +964,7 @@ class Test {
 """)
   }
 
+  @Test
   fun `test unclear expression type setting true`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintWhenExpressionTypeIsClear.set(true)
     check("""
@@ -935,7 +979,7 @@ class Test {
 """)
   }
 
-
+  @Test
   fun `test unclear expression type setting false`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintWhenExpressionTypeIsClear.set(false)
     check("""
@@ -950,7 +994,7 @@ class Test {
 """)
   }
 
-
+  @Test
   fun `test enum parameter names`() {
     check("""
 public enum Thingy {
@@ -970,7 +1014,7 @@ public enum Thingy {
 }""")
   }
 
-
+  @Test
   fun `test enum parameter names disabled`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintsForEnumConstants.set(false)
     check("""
@@ -991,7 +1035,7 @@ public enum Thingy {
 }""")
   }
 
-
+  @Test
   fun `test constructor call`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintsForNewExpressions.set(true)
     check("""
@@ -1006,7 +1050,7 @@ public class Test {
 }""")
   }
 
-
+  @Test
   fun `test constructor call disabled`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintsForNewExpressions.set(false)
     check("""
@@ -1021,6 +1065,7 @@ public class Test {
 }""")
   }
 
+  @Test
   fun `test constructor call with other features`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintsForNewExpressions.set(true)
     JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
@@ -1036,6 +1081,7 @@ public class Test {
 }""")
   }
 
+  @Test
   fun `test parameters have comments`() {
     check("""
 public class Test {
@@ -1049,6 +1095,7 @@ public class Test {
 }""")
   }
 
+  @Test
   fun `test optional empty`() {
     check("""
 import java.util.Optional;
@@ -1061,30 +1108,33 @@ public class Test {
 }""")
   }
 
-  fun `test undo after typing space`() {
+  @Test
+  fun `test undo after typing space`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     check("""
 class C {
   void m(int a, int b) {}
   void m2() { m(<hint text="a:"/>1, <hint text="b:"/>2); }
 }
 """)
-    EditorTestUtil.testUndoInEditor(myFixture.editor) {
-      myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf(");"))
-      EditorTestUtil.executeAction(myFixture.editor, IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT)
-      myFixture.type(' ')
-      myFixture.doHighlighting()
-      EditorTestUtil.executeAction(myFixture.editor, IdeActions.ACTION_UNDO)
-      myFixture.doHighlighting()
-      myFixture.checkResultWithInlays("""
+    withContext(Dispatchers.EDT) {
+      EditorTestUtil.testUndoInEditor(myFixture.editor) {
+        myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf(");"))
+        EditorTestUtil.executeAction(myFixture.editor, IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT)
+        myFixture.type(' ')
+        myFixture.doHighlighting()
+        EditorTestUtil.executeAction(myFixture.editor, IdeActions.ACTION_UNDO)
+        myFixture.doHighlighting()
+        myFixture.checkResultWithInlays("""
 class C {
   void m(int a, int b) {}
   void m2() { m(<hint text="a:"/>1, <hint text="b:"/><caret>2); }
 }
 """)
+      }
     }
   }
 
-
+  @Test
   fun `test same argument and parameter names`() {
     JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintWhenExpressionTypeIsClear.set(true)
     JavaInlayParameterHintsProvider.Utils.getInstance().showIfMethodNameContainsParameterName.set(false)
@@ -1117,12 +1167,11 @@ class A {
       .mapNotNull { manager.getHintText(it) }
   }
 
-  
   private fun assertSingleInlayWithText(expectedText: String) {
     val inlays = ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(
-      editor,
+      myFixture.editor,
       0,
-      editor.document.textLength
+      myFixture.editor.document.textLength
     )
     assertThat(inlays).hasSize(1)
     val realText = getHintText(inlays[0])

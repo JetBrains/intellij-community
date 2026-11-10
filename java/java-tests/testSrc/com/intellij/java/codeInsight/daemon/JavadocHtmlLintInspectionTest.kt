@@ -7,10 +7,12 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.currentJavaVersion
+import org.junit.jupiter.api.Test
 import java.io.File
 
 private val DESCRIPTOR = object : DefaultLightProjectDescriptor() {
@@ -21,14 +23,22 @@ private val DESCRIPTOR = object : DefaultLightProjectDescriptor() {
   }
 }
 
-class JavadocHtmlLintInspectionTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = DESCRIPTOR
+@TestApplication
+class JavadocHtmlLintInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(DESCRIPTOR)
+  }
 
-  fun testNoComment() = doTest("class C { }")
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
-  fun testEmptyComment() = doTest("/** */\nclass C { }")
+  @Test
+  fun testNoComment(): Unit = doTest("class C { }")
+
+  @Test
+  fun testEmptyComment(): Unit = doTest("/** */\nclass C { }")
 
   @ReviseWhenPortedToJDK("17")
+  @Test
   fun testCommonErrorsJdk11() {
     if (JavaSdkUtil.isJdkAtLeast(DESCRIPTOR.sdk, JavaSdkVersion.JDK_17)) return
     doTest("""
@@ -63,6 +73,7 @@ class JavadocHtmlLintInspectionTest : LightJavaCodeInsightFixtureTestCase() {
       class C { }""".trimIndent())
   }
   
+ @Test
  fun testCommonErrors() {
    if (!JavaSdkUtil.isJdkAtLeast(DESCRIPTOR.sdk, JavaSdkVersion.JDK_17)) return
    doTest("""
@@ -97,7 +108,8 @@ class JavadocHtmlLintInspectionTest : LightJavaCodeInsightFixtureTestCase() {
       class C { }""".trimIndent())
   }
 
-  fun testPackageInfo() = doTest("""
+  @Test
+  fun testPackageInfo(): Unit = doTest("""
     /**
      * Another self-closed paragraph: <error descr="Self-closing element not allowed"><p/></error>
      */
@@ -105,7 +117,7 @@ class JavadocHtmlLintInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   private fun doTest(text: String, name: String? = null) {
     myFixture.enableInspections(JavadocHtmlLintInspection())
-    myFixture.configureByText(name ?: "${getTestName(false)}.java", text)
+    myFixture.configureByText(name ?: "${myFixture.getTestName(false)}.java", text)
     myFixture.checkHighlighting(true, false, false)
   }
 }

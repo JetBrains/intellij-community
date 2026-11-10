@@ -135,8 +135,10 @@ jvm_library(
         "//platform/structure-view-impl:structureView",
         "//plugins/java-decompiler/plugin:java-decompiler",
         "//java/java-frontback-psi-api:frontback-psi",
-        "//libraries/junit4",
         "//platform/bazel-runfiles",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
+        "//libraries/assertj-core",
     ],
 )
 ### auto-generated section `build intellij.java.decompiler.tests` end

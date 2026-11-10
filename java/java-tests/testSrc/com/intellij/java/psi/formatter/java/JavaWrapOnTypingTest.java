@@ -2,10 +2,24 @@
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaWrapOnTypingTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class JavaWrapOnTypingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testWrapInsideTags() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(JavaFileType.INSTANCE,
                               """
                                 public class Hw {
@@ -40,7 +54,9 @@ public class JavaWrapOnTypingTest extends LightJavaCodeInsightFixtureTestCase {
                             """);
   }
 
+  @Test
   public void testWrapAtLineWithParameterHints() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(JavaFileType.INSTANCE,
                               """
                                 public class C {
@@ -48,28 +64,32 @@ public class JavaWrapOnTypingTest extends LightJavaCodeInsightFixtureTestCase {
                                     void other() { m(1, 2<caret>); }
                                 }""");
     myFixture.doHighlighting();
-    myFixture.checkResultWithInlays("""
-                                      public class C {
-                                          void m(int a, int b) {}
-                                          void other() { m(<hint text="a:"/>1, <hint text="b:"/>2<caret>); }
-                                      }""");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.checkResultWithInlays("""
+                                        public class C {
+                                            void m(int a, int b) {}
+                                            void other() { m(<hint text="a:"/>1, <hint text="b:"/>2<caret>); }
+                                        }""");
+    });
 
-    myFixture.getEditor().getSettings().setWrapWhenTypingReachesRightMargin(true);
-    myFixture.getEditor().getSettings().setRightMargin(30);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.getEditor().getSettings().setWrapWhenTypingReachesRightMargin(true);
+      myFixture.getEditor().getSettings().setRightMargin(30);
 
-    myFixture.type(" ");
-    myFixture.checkResultWithInlays("""
-                                      public class C {
-                                          void m(int a, int b) {}
-                                          void other() { m(<hint text="a:"/>1, <hint text="b:"/>2 <caret>); }
-                                      }""");
-    myFixture.type(" ");
-    myFixture.doHighlighting();
-    myFixture.checkResultWithInlays("""
-                                      public class C {
-                                          void m(int a, int b) {}
-                                          void other() { m(<hint text="a:"/>1,
-                                                  <hint text="b:"/>2  <caret>); }
-                                      }""");
+      myFixture.type(" ");
+      myFixture.checkResultWithInlays("""
+                                        public class C {
+                                            void m(int a, int b) {}
+                                            void other() { m(<hint text="a:"/>1, <hint text="b:"/>2 <caret>); }
+                                        }""");
+      myFixture.type(" ");
+      myFixture.doHighlighting();
+      myFixture.checkResultWithInlays("""
+                                        public class C {
+                                            void m(int a, int b) {}
+                                            void other() { m(<hint text="a:"/>1,
+                                                    <hint text="b:"/>2  <caret>); }
+                                        }""");
+    });
   }
 }

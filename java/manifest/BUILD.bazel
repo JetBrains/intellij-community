@@ -111,6 +111,9 @@ jvm_library(
         "//platform/structure-view-impl/plugin",
         "//platform/todo/plugin",
         "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
+        "//libraries/assertj-core",
     ],
 )
 ### auto-generated section `build intellij.java.manifest.tests` end

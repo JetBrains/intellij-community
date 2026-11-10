@@ -12,18 +12,34 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-public class JavaFileTemplatesTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+@TestApplication
+public class JavaFileTemplatesTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testCreateFromTemplateGroup() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("foo.java", "");
     DataContext context = ((EditorEx)myFixture.getEditor()).getDataContext();
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, context);
-    AnAction[] children = new CreateFromTemplateGroup().getChildren(event);
+    AnAction[] children = ReadAction.computeBlocking(() -> new CreateFromTemplateGroup().getChildren(event));
     assertFalse(ContainerUtil.exists(children, action -> isTemplateAction(action, "Class")));
   }
 
@@ -31,8 +47,10 @@ public class JavaFileTemplatesTest extends LightJavaCodeInsightFixtureTestCase {
     return action instanceof CreateFromTemplateAction && name.equals(((CreateFromTemplateAction)action).getTemplate().getName());
   }
 
+  @Test
   public void testManyTemplates() {
-    FileTemplateManagerImpl templateManager = (FileTemplateManagerImpl)FileTemplateManager.getInstance(getProject());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    FileTemplateManagerImpl templateManager = (FileTemplateManagerImpl)FileTemplateManager.getInstance(myFixture.getProject());
     templateManager.getState().recentTemplates.clear();
     FileTemplate[] before = templateManager.getAllTemplates();
     try {

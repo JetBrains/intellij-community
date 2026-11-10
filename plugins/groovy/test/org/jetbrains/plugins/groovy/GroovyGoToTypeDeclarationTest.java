@@ -2,51 +2,73 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class GroovyGoToTypeDeclarationTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+
+@TestApplication
+public class GroovyGoToTypeDeclarationTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testGoToTypeDeclarationMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("g.groovy", """
       class A {
-      
+    
         public def method() {
           return new B();
         }
-      
+    
         {
           method<caret>()
         }
       }
-      
+    
       class B {
-      
+    
       }
       """);
 
-    PsiElement res = GotoTypeDeclarationAction.findSymbolType(myFixture.getEditor(), myFixture.getCaretOffset());
-    assertInstanceOf(res, PsiClass.class);
-    assertEquals("B", ((PsiClass)res).getName());
+    ReadAction.runBlocking(() -> {
+      PsiElement res = GotoTypeDeclarationAction.findSymbolType(myFixture.getEditor(), myFixture.getCaretOffset());
+      assertInstanceOf(PsiClass.class, res);
+      assertEquals("B", ((PsiClass)res).getName());
+    });
   }
 
+  @Test
   public void testGoToTypeDeclarationVariable() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("g.groovy", """
       class A {
-      
+    
         {
           def a = new B()
           println(a<caret>)
         }
       }
-      
+    
       class B {
-      
+    
       }
       """);
 
-    PsiElement res = GotoTypeDeclarationAction.findSymbolType(myFixture.getEditor(), myFixture.getCaretOffset());
-    assertInstanceOf(res, PsiClass.class);
-    assertEquals("B", ((PsiClass)res).getName());
+    ReadAction.runBlocking(() -> {
+      PsiElement res = GotoTypeDeclarationAction.findSymbolType(myFixture.getEditor(), myFixture.getCaretOffset());
+      assertInstanceOf(PsiClass.class, res);
+      assertEquals("B", ((PsiClass)res).getName());
+    });
   }
 }

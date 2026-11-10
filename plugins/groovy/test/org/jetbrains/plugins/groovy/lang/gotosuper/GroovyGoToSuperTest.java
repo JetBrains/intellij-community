@@ -17,33 +17,57 @@ package org.jetbrains.plugins.groovy.lang.gotosuper;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.lang.CodeInsightActions;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.NavigationTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class GroovyGoToSuperTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "groovy/gotoSuper/";
+@TestApplication
+public class GroovyGoToSuperTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "groovy/gotoSuper/");
   }
 
-  public void testGts1() { doTest(); }
-  public void testGts2() { doTest(); }
-  public void testGts3() { doTest(); }
+  @Test
+  public void testGts1() {
+    doTest();
+  }
+  @Test
+  public void testGts2() {
+    doTest();
+  }
+  @Test
+  public void testGts3() {
+    doTest();
+  }
 
   private void doTest() {
-    final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final List<String> data = TestUtils.readInput(myFixture.getTestDataPath() + myFixture.getTestName(true) + ".test");
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
     final CodeInsightActionHandler handler = CodeInsightActions.GOTO_SUPER.forLanguage(GroovyLanguage.INSTANCE);
-    handler.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-    NavigationTestUtil.awaitPendingNavigation(getProject());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      handler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+      NavigationTestUtil.awaitPendingNavigation(myFixture.getProject());
 
-    myFixture.checkResult(data.get(1));
+      myFixture.checkResult(data.get(1));
+    });
   }
 
 }

@@ -18,15 +18,29 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.codeInspection.TrailingSpacesInPropertyInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class TrailingSpacesInPropertyInspectionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class TrailingSpacesInPropertyInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(PluginPathManager.getPluginHomePath("properties") + "/tests/testData");
   }
 
+  @Test
   public void testSimple() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     final TrailingSpacesInPropertyInspection inspection = new TrailingSpacesInPropertyInspection();
     myFixture.enableInspections(inspection);
     myFixture.configureByFile("/propertiesFile/highlighting/trailingSpaces.properties");
@@ -34,7 +48,9 @@ public class TrailingSpacesInPropertyInspectionTest extends LightJavaCodeInsight
     myFixture.disableInspections(inspection);
   }
 
+  @Test
   public void testOnlyNonVisible() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     final TrailingSpacesInPropertyInspection inspection = new TrailingSpacesInPropertyInspection();
     inspection.myIgnoreVisibleSpaces = true;
     myFixture.enableInspections(inspection);

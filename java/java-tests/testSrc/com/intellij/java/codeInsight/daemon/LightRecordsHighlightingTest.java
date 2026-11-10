@@ -6,46 +6,62 @@ import com.intellij.idea.TestFor;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceVariable.ReassignVariableUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlightingRecords";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class LightRecordsHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlightingRecords");
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK;
-  }
-
+  @Test
   public void testRecordBasics() {
     doTest();
   }
+  @Test
   public void testRecordBasicsJava16() {
     doTest();
   }
+  @Test
   public void testRecordAccessors() {
     doTest();
   }
+  @Test
   public void testRecordConstructors() {
     doTest();
   }
+  @Test
   public void testRecordConstructors2() {
     doTest();
   }
+  @Test
   public void testRecordConstructorAccessJava15() {
     doTest();
   }
+  @Test
   public void testRecordCompactConstructors() {
     doTest();
   }
 
+  @Test
   @TestFor(issues = "IDEA-393876")
   public void testVarArgsCompactConstructorFromStub() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          public record VarArgsRecord(String... xs) {
                            public VarArgsRecord { xs = xs.clone(); }
@@ -61,10 +77,13 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testLocalRecords() {
     doTest();
   }
+  @Test
   public void testReassignToRecordComponentsDisabled() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package java.lang; public abstract class Record {" +
                        "public abstract boolean equals(Object obj);" +
                        "public abstract int hashCode();" +
@@ -75,22 +94,26 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
               int x<caret>1 = 0
           }}""");
 
-    PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiDeclarationStatement.class);
-    assertNotNull(decl);
-    ReassignVariableUtil.registerDeclaration(getEditor(), decl, getTestRootDisposable());
-    ReassignVariableUtil.reassign(getEditor());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiDeclarationStatement.class);
+      assertNotNull(decl);
+      ReassignVariableUtil.registerDeclaration(myFixture.getEditor(), decl, myFixture.getTestRootDisposable());
+      ReassignVariableUtil.reassign(myFixture.getEditor());
+    });
   }
+  @Test
   public void testModifiersInsideAnonymousLocal() {
     doTest();
   }
 
   private void doTest() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package java.lang; public abstract class Record {" +
                        "public abstract boolean equals(Object obj);" +
                        "public abstract int hashCode();" +
                        "public abstract String toString();" +
                        "}");
-    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }
 }

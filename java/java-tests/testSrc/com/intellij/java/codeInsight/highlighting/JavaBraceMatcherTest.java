@@ -15,45 +15,63 @@
  */
 package com.intellij.java.codeInsight.highlighting;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaBraceMatcherTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+@TestApplication
+public class JavaBraceMatcherTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testGenerics() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", "import java.util.ArrayList;" +
                                         "class A {" +
                                         "  ArrayList<caret><? extends @Anno String[]> f;" +
                                         "}");
-    final int offset = BraceMatchingUtil.getMatchedBraceOffset(myFixture.getEditor(), true, myFixture.getFile());
+    final int offset = ReadAction.computeBlocking(() -> BraceMatchingUtil.getMatchedBraceOffset(myFixture.getEditor(), true, myFixture.getFile()));
     assertEquals(72, offset);
   }
 
+  @Test
   public void testBrokenText() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", "import java.util.ArrayList;" +
                                         "class A {" +
                                         "  ArrayList<caret><String");
     final Editor editor = myFixture.getEditor();
     final EditorHighlighter editorHighlighter = editor.getHighlighter();
-    final HighlighterIterator iterator = editorHighlighter.createIterator(editor.getCaretModel().getOffset());
+    final HighlighterIterator iterator = ReadAction.computeBlocking(() -> editorHighlighter.createIterator(editor.getCaretModel().getOffset()));
     boolean matched = BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), myFixture.getFile().getFileType(), iterator,
                                                    true);
     assertFalse(matched);
   }
 
+  @Test
   public void testBinaryStatement() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", "import java.util.ArrayList;" +
                                         "class A {" +
                                         "  int i = 3 <caret>< 4 ? 5 > 6 : 1 : 1 : 1;" +
                                         "}");
     final Editor editor = myFixture.getEditor();
     final EditorHighlighter editorHighlighter = editor.getHighlighter();
-    final HighlighterIterator iterator = editorHighlighter.createIterator(editor.getCaretModel().getOffset());
+    final HighlighterIterator iterator = ReadAction.computeBlocking(() -> editorHighlighter.createIterator(editor.getCaretModel().getOffset()));
     boolean matched = BraceMatchingUtil.matchBrace(editor.getDocument().getCharsSequence(), myFixture.getFile().getFileType(), iterator, true);
     assertFalse(matched);
   }
-
-
 
 }

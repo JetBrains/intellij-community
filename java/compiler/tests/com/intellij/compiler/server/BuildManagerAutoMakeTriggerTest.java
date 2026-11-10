@@ -14,9 +14,13 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,39 +30,60 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 /**
  * Tests the auto-make trigger decision of {@link BuildManager}.
  * The VFS listener itself is off in unit-test mode, so the tests call the decision method directly.
  */
-public class BuildManagerAutoMakeTriggerTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class BuildManagerAutoMakeTriggerTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testContentFileChangeTriggersMake() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     var file = addContentFile("A.java", "class A {}");
-    assertTrue(BuildManager.shouldTriggerMake(getProject(), List.of(change(file))));
+    assertTrue(BuildManager.shouldTriggerMake(myFixture.getProject(), List.of(change(file))));
   }
 
+  @Test
   public void testFileOutsideContentDoesNotTriggerMake() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     var outside = new LightVirtualFile("B.txt", "x");
-    assertFalse(BuildManager.shouldTriggerMake(getProject(), List.of(change(outside))));
+    assertFalse(BuildManager.shouldTriggerMake(myFixture.getProject(), List.of(change(outside))));
   }
 
+  @Test
   public void testGeneratedSourceDoesNotTriggerMake() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     var file = addContentFile("Gen.java", "class Gen {}");
     var filter = new RecordingFilter(_ -> true);
-    ExtensionTestUtil.maskExtensions(GeneratedSourcesFilter.EP_NAME, List.of(filter), getTestRootDisposable());
+    ExtensionTestUtil.maskExtensions(GeneratedSourcesFilter.EP_NAME, List.of(filter), myFixture.getTestRootDisposable());
 
-    assertFalse(BuildManager.shouldTriggerMake(getProject(), List.of(change(file))));
+    assertFalse(BuildManager.shouldTriggerMake(myFixture.getProject(), List.of(change(file))));
     assertEquals(List.of(file), filter.seenFiles);
   }
 
+  @Test
   public void testProjectFileDoesNotTriggerMakeAndSkipsFilters() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     var workspaceFile = addContentFile(".idea/workspace.xml", "<project/>");
     var filter = new RecordingFilter(_ -> true);
-    ExtensionTestUtil.maskExtensions(GeneratedSourcesFilter.EP_NAME, List.of(filter), getTestRootDisposable());
+    ExtensionTestUtil.maskExtensions(GeneratedSourcesFilter.EP_NAME, List.of(filter), myFixture.getTestRootDisposable());
 
-    assertFalse(BuildManager.shouldTriggerMake(getProject(), List.of(change(workspaceFile))));
-    assertEmpty(filter.seenFiles);
+    assertFalse(BuildManager.shouldTriggerMake(myFixture.getProject(), List.of(change(workspaceFile))));
+    assertThat(filter.seenFiles).isNullOrEmpty();
   }
 
+  @Test
   public void testDeletedFileTriggersMakeWithoutProject() throws IOException {
     var file = addContentFile("Deleted.java", "class Deleted {}");
     WriteAction.run(() -> file.delete(this));
@@ -67,6 +92,7 @@ public class BuildManagerAutoMakeTriggerTest extends LightJavaCodeInsightFixture
     assertTrue(BuildManager.shouldTriggerMake(null, List.of(new VFileDeleteEvent(null, file))));
   }
 
+  @Test
   public void testMissingOrInvalidProjectDoesNotTriggerMake() {
     var file = addContentFile("A.java", "class A {}");
     var events = List.of(change(file));
@@ -75,7 +101,9 @@ public class BuildManagerAutoMakeTriggerTest extends LightJavaCodeInsightFixture
     assertFalse(BuildManager.shouldTriggerMake(ProjectManager.getInstance().getDefaultProject(), events));
   }
 
+  @Test
   public void testPendingWriteActionCancelsAndRestartsTheDecision() throws Exception {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     var file = addContentFile("A.java", "class A {}");
     var attempts = new AtomicInteger();
     var firstAttemptStarted = new CountDownLatch(1);
@@ -92,10 +120,10 @@ public class BuildManagerAutoMakeTriggerTest extends LightJavaCodeInsightFixture
       }
       return false;
     });
-    ExtensionTestUtil.maskExtensions(GeneratedSourcesFilter.EP_NAME, List.of(filter), getTestRootDisposable());
+    ExtensionTestUtil.maskExtensions(GeneratedSourcesFilter.EP_NAME, List.of(filter), myFixture.getTestRootDisposable());
 
     var events = List.of(change(file));
-    var project = getProject();
+    var project = myFixture.getProject();
     var result = ApplicationManager.getApplication().executeOnPooledThread(
       () -> ReadAction.nonBlocking(() -> BuildManager.shouldTriggerMake(project, events)).executeSynchronously()
     );
@@ -109,6 +137,7 @@ public class BuildManagerAutoMakeTriggerTest extends LightJavaCodeInsightFixture
   }
 
   private @NotNull VirtualFile addContentFile(@NotNull String relativePath, @NotNull String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     return myFixture.addFileToProject(relativePath, text).getVirtualFile();
   }
 

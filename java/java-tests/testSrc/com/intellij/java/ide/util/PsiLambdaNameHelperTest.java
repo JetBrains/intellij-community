@@ -16,15 +16,30 @@
 package com.intellij.java.ide.util;
 
 import com.intellij.ide.util.PsiLambdaNameHelper;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 
-public class PsiLambdaNameHelperTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class PsiLambdaNameHelperTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testNames() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     final PsiClass aClass = myFixture.addClass("""
                                                  class Test {
                                                      Runnable r = () -> {
@@ -41,14 +56,16 @@ public class PsiLambdaNameHelperTest extends LightJavaCodeInsightFixtureTestCase
                                                          };
                                                      }
                                                  }""");
-    final Collection<PsiLambdaExpression> lambdaExpressions = PsiTreeUtil.findChildrenOfType(aClass, PsiLambdaExpression.class);
-    final String[] expectedNames = {"lambda$new$0",
-                                    "lambda$method$1",
-                                    "lambda$method$2",
-                                    "lambda$0"};
-    int idx = 0;
-    for (PsiLambdaExpression expression : lambdaExpressions) {
-      assertEquals(expectedNames[idx++], PsiLambdaNameHelper.getVMName(expression));
-    }
+    ReadAction.runBlocking(() -> {
+      final Collection<PsiLambdaExpression> lambdaExpressions = PsiTreeUtil.findChildrenOfType(aClass, PsiLambdaExpression.class);
+      final String[] expectedNames = {"lambda$new$0",
+                                      "lambda$method$1",
+                                      "lambda$method$2",
+                                      "lambda$0"};
+      int idx = 0;
+      for (PsiLambdaExpression expression : lambdaExpressions) {
+        assertEquals(expectedNames[idx++], PsiLambdaNameHelper.getVMName(expression));
+      }
+    });
   }
 }

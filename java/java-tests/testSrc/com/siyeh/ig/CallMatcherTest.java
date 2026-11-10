@@ -1,27 +1,35 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class CallMatcherTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
-
+  @Test
   public void testUnresolvedPartiallyMatchQualifier() {
     @Language("JAVA") String text = """
       class Main{
@@ -55,7 +63,6 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
                       .parameterCount(0)
                       .allowStaticUnresolved(), text));
 
-
     @Language("JAVA") String textWithFullyQualifiedName = """
       class Main{
         void m() {
@@ -77,7 +84,6 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
                       .parameterCount(0)
                       .allowStaticUnresolved(), textWithFullyQualifiedName));
 
-
     @Language("JAVA") String textWithEmptyFullyQualifiedName = """
       class Main{
         void m() {
@@ -95,7 +101,7 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
                       .allowStaticUnresolved(), textWithEmptyFullyQualifiedName));
   }
 
-
+  @Test
   public void testUnresolvedWithParameters() {
     @Language("JAVA") String text = """
       class Main{
@@ -155,7 +161,7 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
                       .allowStaticUnresolved(), textParameters2));
   }
 
-
+  @Test
   public void testUnresolvedWithVarArgs() {
     //imagine that there is "java.lang.IO2" with "printf"
     @Language("JAVA") String text = """
@@ -181,7 +187,6 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
       isMatchedCall(CallMatcher.staticCall("java.lang.IO2", "printf")
                       .parameterTypes(JAVA_LANG_STRING, JAVA_LANG_STRING, JAVA_LANG_OBJECT + "...")
                       .allowStaticUnresolved(), text));
-
 
     @Language("JAVA") String textWithVarArgs2 = """
       class Main{
@@ -225,6 +230,7 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
                       .allowStaticUnresolved(), textWithVarArgs2));
   }
 
+  @Test
   public void testUnresolvedSamePackage() {
     @Language("JAVA") String text = """
       package foo.bar;
@@ -242,9 +248,9 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
       isMatchedCall(CallMatcher.staticCall("foo.bar2.IO2", "printf")
                       .parameterCount(1)
                       .allowStaticUnresolved(), text));
-
   }
 
+  @Test
   public void testUnresolvedOnDemandImports() {
     @Language("JAVA") String text = """
       import static foo.bar.IO2.*;
@@ -295,6 +301,7 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
                       .allowStaticUnresolved(), textNested));
   }
 
+  @Test
   public void testUnresolvedImports() {
     @Language("JAVA") String text = """
       import static foo.bar.IO2;
@@ -317,7 +324,6 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
       isMatchedCall(CallMatcher.staticCall("foo.bar.IO", "printf")
                       .parameterCount(1)
                       .allowStaticUnresolved(), text));
-
 
     @Language("JAVA") String textNested = """
       import static foo.bar.IO2;
@@ -346,6 +352,7 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
                       .allowStaticUnresolved(), textNested));
   }
 
+  @Test
   public void testUnresolvedWithArgs() {
     @Language("JAVA") String text = """
       import static foo.bar.IO2;
@@ -370,7 +377,6 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
                       .parameterTypes("java.lang.String", "java.lang.String...")
                       .allowStaticUnresolved(), text));
 
-
     @Language("JAVA") String textWithArray = """
       import static foo.bar.IO2;
       package foo.bar;
@@ -393,9 +399,12 @@ public class CallMatcherTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private boolean isMatchedCall(@NotNull CallMatcher matcher, @Language("JAVA") @NotNull String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("Main.java", text);
-    PsiElement element = file.findElementAt(myFixture.getCaretOffset());
-    PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
-    return matcher.matches(callExpression);
+    return ReadAction.computeBlocking(() -> {
+      PsiElement element = file.findElementAt(myFixture.getCaretOffset());
+      PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
+      return matcher.matches(callExpression);
+    });
   }
 }

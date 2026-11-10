@@ -20,8 +20,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -30,8 +34,19 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
-public final class SingleFileRootResolveTest extends LightJavaCodeInsightFixtureTestCase {
-  private final @NotNull LightProjectDescriptor MY_DESCRIPTOR = new LightProjectDescriptor() {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public final class SingleFileRootResolveTest {
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  private static final @NotNull LightProjectDescriptor MY_DESCRIPTOR = new LightProjectDescriptor() {
     @Override
     protected void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       try {
@@ -58,13 +73,11 @@ public final class SingleFileRootResolveTest extends LightJavaCodeInsightFixture
       }
     }
   };
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(MY_DESCRIPTOR);
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return MY_DESCRIPTOR;
-  }
-
+  @Test
   public void testSingleFileRootResolve() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Use.java", """
       import com.example.*;
       
@@ -76,41 +89,53 @@ public final class SingleFileRootResolveTest extends LightJavaCodeInsightFixture
       }
       """);
     myFixture.checkHighlighting();
-    PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass("com.example.A", GlobalSearchScope.projectScope(getProject()));
-    assertNotNull(aClass);
-    // Works for single-file roots as well
-    String pkg = PackageIndex.getInstance(getProject()).getPackageName(aClass.getContainingFile().getVirtualFile());
-    assertEquals("com.example", pkg);
+    ReadAction.runBlocking(() -> {
+      PsiClass aClass = JavaPsiFacade.getInstance(myFixture.getProject()).findClass("com.example.A", GlobalSearchScope.projectScope(myFixture.getProject()));
+      assertNotNull(aClass);
+      // Works for single-file roots as well
+      String pkg = PackageIndex.getInstance(myFixture.getProject()).getPackageName(aClass.getContainingFile().getVirtualFile());
+      assertEquals("com.example", pkg);
+    });
   }
   
+  @Test
   public void testPackagePrivateScope() {
-    PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass("com.example.A", GlobalSearchScope.projectScope(getProject()));
-    assertNotNull(aClass);
-    PsiClass cClass = JavaPsiFacade.getInstance(getProject()).findClass("com.example.C", GlobalSearchScope.projectScope(getProject()));
-    assertNotNull(cClass);
-    SearchScope scope = cClass.getUseScope();
-    assertTrue(scope.contains(aClass.getContainingFile().getVirtualFile()));
-    Collection<PsiReference> uses = ReadAction.computeBlocking(() -> ReferencesSearch.search(cClass).findAll());
-    assertEquals(1, uses.size());
-    PsiElement element = uses.iterator().next().getElement();
-    PsiJavaCodeReferenceElement ref = assertInstanceOf(element, PsiJavaCodeReferenceElement.class);
-    PsiTypeElement typeElement = assertInstanceOf(ref.getParent(), PsiTypeElement.class);
-    assertInstanceOf(typeElement.getParent(), PsiField.class);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ReadAction.runBlocking(() -> {
+      PsiClass aClass = JavaPsiFacade.getInstance(myFixture.getProject()).findClass("com.example.A", GlobalSearchScope.projectScope(myFixture.getProject()));
+      assertNotNull(aClass);
+      PsiClass cClass = JavaPsiFacade.getInstance(myFixture.getProject()).findClass("com.example.C", GlobalSearchScope.projectScope(myFixture.getProject()));
+      assertNotNull(cClass);
+      SearchScope scope = cClass.getUseScope();
+      assertTrue(scope.contains(aClass.getContainingFile().getVirtualFile()));
+      Collection<PsiReference> uses = ReferencesSearch.search(cClass).findAll();
+      assertEquals(1, uses.size());
+      PsiElement element = uses.iterator().next().getElement();
+      PsiJavaCodeReferenceElement ref = assertInstanceOf(PsiJavaCodeReferenceElement.class, element);
+      PsiTypeElement typeElement = assertInstanceOf(PsiTypeElement.class, ref.getParent());
+      assertInstanceOf(PsiField.class, typeElement.getParent());
+    });
   }
   
+  @Test
   public void testFindResource() throws IOException {
-    VirtualFile cFile = ResourceFileUtil.findResourceFileInProject(getProject(), "com/example/C.java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    VirtualFile cFile = ResourceFileUtil.findResourceFileInProject(myFixture.getProject(), "com/example/C.java");
     assertNotNull(cFile);
     assertEquals("package com.example;\nclass C {}\n", new String(cFile.contentsToByteArray(), StandardCharsets.UTF_8));
-    VirtualFile bFile = ResourceFileUtil.findResourceFileInProject(getProject(), "com/example/B.java");
+    VirtualFile bFile = ResourceFileUtil.findResourceFileInProject(myFixture.getProject(), "com/example/B.java");
     assertNull(bFile);
   }
   
+  @Test
   public void testGetFiles() {
-    PsiPackage psiPackage = JavaPsiFacade.getInstance(getProject()).findPackage("com.example");
-    assertNotNull(psiPackage);
-    List<String> fileNames = Stream.of(psiPackage.getFiles(GlobalSearchScope.projectScope(getProject())))
-      .map(f -> f.getName()).sorted().toList();
-    assertEquals(List.of("A.java", "C.java"), fileNames);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ReadAction.runBlocking(() -> {
+      PsiPackage psiPackage = JavaPsiFacade.getInstance(myFixture.getProject()).findPackage("com.example");
+      assertNotNull(psiPackage);
+      List<String> fileNames = Stream.of(psiPackage.getFiles(GlobalSearchScope.projectScope(myFixture.getProject())))
+        .map(f -> f.getName()).sorted().toList();
+      assertEquals(List.of("A.java", "C.java"), fileNames);
+    });
   }
 }

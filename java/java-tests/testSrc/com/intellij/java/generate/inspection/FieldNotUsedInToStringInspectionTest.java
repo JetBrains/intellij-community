@@ -1,17 +1,28 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.generate.inspection;
 
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.java.generate.GenerateToStringContext;
 import org.jetbrains.java.generate.inspection.FieldNotUsedInToStringInspection;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class FieldNotUsedInToStringInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class FieldNotUsedInToStringInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
+  @Test
   public void testBasic() {
     doTest("""
              class X {
@@ -22,6 +33,7 @@ public class FieldNotUsedInToStringInspectionTest extends LightJavaCodeInsightFi
              }""");
   }
 
+  @Test
   public void testGetterUsed() {
     doTest("""
               class ToStringTest3 {
@@ -43,7 +55,9 @@ public class FieldNotUsedInToStringInspectionTest extends LightJavaCodeInsightFi
              }""");
   }
 
+  @Test
   public void testReflectionUsed() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package java.util;
                          public class Objects {
@@ -62,6 +76,7 @@ public class FieldNotUsedInToStringInspectionTest extends LightJavaCodeInsightFi
              }""");
   }
 
+  @Test
   public void testMethods() {
     GenerateToStringContext.getConfig().setEnableMethods(true);
     doTest("""
@@ -82,6 +97,7 @@ public class FieldNotUsedInToStringInspectionTest extends LightJavaCodeInsightFi
   }
 
   private void doTest(@Language("JAVA") @NonNls String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("X.java", text);
     myFixture.enableInspections(new FieldNotUsedInToStringInspection());
     myFixture.testHighlighting(true, false, false);

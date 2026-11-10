@@ -1,22 +1,33 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.impl;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiLambdaParameterType;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public final class PsiLambdaExpressionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@TestApplication
+public final class PsiLambdaExpressionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testLambdaParameterTypeMultiResolve() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       import java.util.stream.*;
       
@@ -27,13 +38,17 @@ public final class PsiLambdaExpressionTest extends LightJavaCodeInsightFixtureTe
       }
       """
     );
-    PsiReferenceExpression ref =
-      PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiReferenceExpression.class);
-    assertNotNull(ref);
-    assertEquals(CommonClassNames.JAVA_LANG_STRING, ref.getType().getCanonicalText());
+    ReadAction.runBlocking(() -> {
+      PsiReferenceExpression ref =
+        PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiReferenceExpression.class);
+      assertNotNull(ref);
+      assertEquals(CommonClassNames.JAVA_LANG_STRING, ref.getType().getCanonicalText());
+    });
   }
   
+  @Test
   public void testLambdaParameterTypeMultiResolveDifferentFunctions() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       import java.util.function.Consumer;
       import java.util.function.Function;
@@ -48,13 +63,17 @@ public final class PsiLambdaExpressionTest extends LightJavaCodeInsightFixtureTe
           }
       }
       """);
-    PsiReferenceExpression ref =
-      PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiReferenceExpression.class);
-    assertNotNull(ref);
-    assertEquals(CommonClassNames.JAVA_LANG_STRING, ref.getType().getCanonicalText());
+    ReadAction.runBlocking(() -> {
+      PsiReferenceExpression ref =
+        PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiReferenceExpression.class);
+      assertNotNull(ref);
+      assertEquals(CommonClassNames.JAVA_LANG_STRING, ref.getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testLambdaParameterTypeMultiResolveConstructor() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       import java.util.function.Consumer;
       import java.util.function.Function;
@@ -69,13 +88,17 @@ public final class PsiLambdaExpressionTest extends LightJavaCodeInsightFixtureTe
           }
       }
       """);
-    PsiReferenceExpression ref =
-      PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiReferenceExpression.class);
-    assertNotNull(ref);
-    assertEquals(CommonClassNames.JAVA_LANG_STRING, ref.getType().getCanonicalText());
+    ReadAction.runBlocking(() -> {
+      PsiReferenceExpression ref =
+        PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiReferenceExpression.class);
+      assertNotNull(ref);
+      assertEquals(CommonClassNames.JAVA_LANG_STRING, ref.getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testLambdaParameterTypeMultiResolveConstructorDiamond() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       import java.util.function.Consumer;
       import java.util.function.Function;
@@ -90,13 +113,17 @@ public final class PsiLambdaExpressionTest extends LightJavaCodeInsightFixtureTe
           }
       }
       """);
-    PsiReferenceExpression ref =
-      PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiReferenceExpression.class);
-    assertNotNull(ref);
-    assertEquals(CommonClassNames.JAVA_LANG_STRING, ref.getType().getCanonicalText());
+    ReadAction.runBlocking(() -> {
+      PsiReferenceExpression ref =
+        PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiReferenceExpression.class);
+      assertNotNull(ref);
+      assertEquals(CommonClassNames.JAVA_LANG_STRING, ref.getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testLambdaInIfCondition() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     // code is invalid, test that we don't throw exceptions
     myFixture.configureByText("Test.java", """
       class Test {
@@ -105,9 +132,11 @@ public final class PsiLambdaExpressionTest extends LightJavaCodeInsightFixtureTe
         }
       }
       """);
-    PsiLambdaExpression lambda =
-      PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiLambdaExpression.class);
-    assertNotNull(lambda);
-    assertInstanceOf(lambda.getParameterList().getParameters()[0].getType(), PsiLambdaParameterType.class);
+    ReadAction.runBlocking(() -> {
+      PsiLambdaExpression lambda =
+        PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PsiLambdaExpression.class);
+      assertNotNull(lambda);
+      assertInstanceOf(PsiLambdaParameterType.class, lambda.getParameterList().getParameters()[0].getType());
+    });
   }
 }

@@ -17,27 +17,34 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.codeInspection.WrongPropertyKeyValueDelimiterInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 /**
  * @author Dmitry Batkovich
  */
-public class WrongPropertyKeyValueDelimiterInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class WrongPropertyKeyValueDelimiterInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData/wrongPropertyKeyDelimiter";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    codeInsightFixture.get().setTestDataPath(PluginPathManager.getPluginHomePath("properties") + "/tests/testData/wrongPropertyKeyDelimiter");
     myFixture.enableInspections(new WrongPropertyKeyValueDelimiterInspection());
   }
 
+  @Test
   public void testSimple() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile("Test1.properties");
     myFixture.checkHighlighting();
   }

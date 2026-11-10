@@ -156,6 +156,9 @@ jvm_library(
         "//xml/plugin",
         "//platform/workspace/jps",
         "//platform/scratch/plugin",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
+        "//libraries/assertj-core",
     ],
 )
 ### auto-generated section `build intellij.devkit.gradle.tests` end

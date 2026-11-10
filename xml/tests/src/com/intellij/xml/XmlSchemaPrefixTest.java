@@ -15,42 +15,65 @@
  */
 package com.intellij.xml;
 
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.xml.refactoring.SchemaPrefixRenameHandler;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class XmlSchemaPrefixTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class XmlSchemaPrefixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/xml/tests/testData/schemaPrefix");
 
+  @Test
   public void testPrefixUsages() {
     doFindUsages("usages.xml", 16);
     doFindUsages("usages1.xml", 16);
   }
 
-  public void testRename() {doRename();}
-  public void testRename1() {doRename();}
+  @Test
+  public void testRename() {
+    doRename();
+  }
+  @Test
+  public void testRename1() {
+    doRename();
+  }
 
-  public void testRename2() {doRename();}
-  public void testRenameFromClosingTag() {doRename();}
+  @Test
+  public void testRename2() {
+    doRename();
+  }
+  @Test
+  public void testRenameFromClosingTag() {
+    doRename();
+  }
 
   private void doRename() {
     doRename("xsd");
   }
 
   private void doRename(String newValue) {
-    final String name = getTestName(true);
-    CodeInsightTestUtil.doInlineRenameTest(new SchemaPrefixRenameHandler(), name, "xml", newValue, myFixture);
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "/xml/tests/testData/schemaPrefix";
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String name = myFixture.getTestName(true);
+    EdtTestUtil.runInEdtAndWait(() -> CodeInsightTestUtil.doInlineRenameTest(new SchemaPrefixRenameHandler(), name, "xml", newValue, myFixture));
   }
 
   protected void doFindUsages(String filename, int usages) {
-    assertSize(usages, myFixture.testFindUsages(filename));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> assertThat(myFixture.testFindUsages(filename)).hasSize(usages));
   }
 
 }

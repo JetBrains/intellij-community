@@ -2,21 +2,33 @@
 package org.intellij.plugins.intelliLang;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.plugins.intelliLang.references.InjectedReferencesInspection;
+import org.junit.jupiter.api.Test;
 
-public class MethodNameReferenceCompletionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/methodNameRef/";
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class MethodNameReferenceCompletionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/methodNameRef/");
+
+  @Test
   public void testMethodName() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String input = """
       import org.intellij.lang.annotations.Language;
 
@@ -72,14 +84,16 @@ public class MethodNameReferenceCompletionTest extends LightJavaCodeInsightFixtu
         interface BlueComponent {}
       }""";
     myFixture.checkResult(result);
-    PsiElement element = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
-    assertTrue(element instanceof PsiJavaToken);
-    element = element.getParent();
-    assertTrue(element instanceof PsiLiteralExpression);
-    PsiReference[] refs = element.getReferences();
-    assertEquals(1, refs.length);
-    PsiElement target = refs[0].resolve();
-    assertTrue(target instanceof PsiMethod);
-    assertEquals("waitForBlueComponent", ((PsiMethod)target).getName());
+    ReadAction.runBlocking(() -> {
+      PsiElement element = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+      assertTrue(element instanceof PsiJavaToken);
+      element = element.getParent();
+      assertTrue(element instanceof PsiLiteralExpression);
+      PsiReference[] refs = element.getReferences();
+      assertEquals(1, refs.length);
+      PsiElement target = refs[0].resolve();
+      assertTrue(target instanceof PsiMethod);
+      assertEquals("waitForBlueComponent", ((PsiMethod)target).getName());
+    });
   }
 }

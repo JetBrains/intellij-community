@@ -1,13 +1,31 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.navigation
 
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiMember
+import kotlin.time.Duration.Companion.minutes
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.psi.PsiReference
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class AtomicFieldUpdaterNavigationTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+class AtomicFieldUpdaterNavigationTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUp() {
 
     myFixture.addClass("""package foo.bar;
 class Base {
@@ -27,30 +45,37 @@ class Data extends Base {
   private val LONG = "AtomicLongFieldUpdater"
   private val REFERENCE = "AtomicReferenceFieldUpdater"
 
-  fun testIntField() = doTest("pvi", INTEGER)
+  @Test
+  fun testIntField(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("pvi", INTEGER) }
 
-  fun testLongField() = doTest("pvl", LONG)
+  @Test
+  fun testLongField(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("pvl", LONG) }
 
-  fun testStringField() = doTest("pvs", REFERENCE)
+  @Test
+  fun testStringField(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("pvs", REFERENCE) }
 
-  fun testStaticByteField() = doTest("sb", REFERENCE)
+  @Test
+  fun testStaticByteField(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("sb", REFERENCE) }
 
-  fun testBaseField() = doTest("base", REFERENCE, false)
+  @Test
+  fun testBaseField(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("base", REFERENCE, false) }
 
-  private fun doTest(name: String, updater: String, shouldResolve: Boolean = true) {
+  private suspend fun doTest(name: String, updater: String, shouldResolve: Boolean = true) {
     val mainClassText = getMainClassText(name, updater)
     myFixture.configureByText("Main.java", mainClassText)
 
-    val reference = getReference()
-    assertEquals("Reference text", name, reference.canonicalText)
-    val resolved = reference.resolve()
-    if (shouldResolve) {
-      assertNotNull("Reference is not resolved: " + reference.canonicalText, resolved)
-      assertTrue("Target is a member", resolved is PsiMember)
-      assertEquals("Target name", name, (resolved as PsiMember?)?.name)
-    }
-    else {
-      assertNull("Reference should not be resolved", resolved)
+    readAction {
+      val reference = getReference()
+      assertEquals(name, reference.canonicalText, "Reference text")
+      val resolved = reference.resolve()
+      if (shouldResolve) {
+        assertNotNull(resolved, "Reference is not resolved: " + reference.canonicalText)
+        assertTrue(resolved is PsiMember, "Target is a member")
+        assertEquals(name, (resolved as PsiMember?)?.name, "Target name")
+      }
+      else {
+        assertNull(resolved, "Reference should not be resolved")
+      }
     }
   }
 
@@ -70,7 +95,7 @@ class Main {
   private fun getReference(): PsiReference {
     val offset = myFixture.caretOffset
     val reference = myFixture.file.findReferenceAt(offset)
-    assertNotNull("No reference at the caret", reference)
+    assertNotNull(reference, "No reference at the caret")
     return reference!!
   }
 }

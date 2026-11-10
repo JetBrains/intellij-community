@@ -2,28 +2,46 @@
 package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.inline.InlineMethodProcessor;
 import com.intellij.refactoring.util.InlineUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author anna
  */
-public class InlineLibraryMethodTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+@TestApplication
+public class InlineLibraryMethodTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath());
   }
 
+  @Test
   public void testInlineAllInProjectFromLibrary() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package mycompany;
                          import java.util.*; // unused
@@ -35,12 +53,12 @@ public class InlineLibraryMethodTest extends LightJavaCodeInsightFixtureTestCase
                          @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
                          @Retention(RetentionPolicy.RUNTIME)
                          @interface IntrinsicCandidate {}""");
-    @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
+    @NonNls String fileName = "/refactoring/inlineMethod/" + myFixture.getTestName(false) + ".java";
     myFixture.configureByFile(fileName);
 
-    PsiClass libraryClass = myFixture.findClass("mycompany.File");
+    PsiClass libraryClass = ReadAction.computeBlocking(() -> myFixture.findClass("mycompany.File"));
 
-    final PsiFile file = libraryClass.getContainingFile();
+    final PsiFile file = ReadAction.computeBlocking(() -> libraryClass.getContainingFile());
     WriteCommandAction.runWriteCommandAction(null, () -> {
       try {
         file.getVirtualFile().setWritable(false);
@@ -50,14 +68,17 @@ public class InlineLibraryMethodTest extends LightJavaCodeInsightFixtureTestCase
       }
     });
 
-    PsiMethod[] createTempFiles = libraryClass.findMethodsByName("createTempFile", false);
-    PsiMethod methodToInline =
-      ContainerUtil.find(createTempFiles, createTempFile -> createTempFile.getParameterList().getParametersCount() == 2);
+    PsiMethod methodToInline = ReadAction.computeBlocking(() -> {
+      PsiMethod[] createTempFiles = libraryClass.findMethodsByName("createTempFile", false);
+      return ContainerUtil.find(createTempFiles, createTempFile -> createTempFile.getParameterList().getParametersCount() == 2);
+    });
     assertNotNull(methodToInline);
-    final boolean condition = InlineMethodProcessor.checkBadReturns(methodToInline) && !InlineUtil.allUsagesAreTailCalls(methodToInline);
-    assertFalse("Bad returns found", condition);
-    final InlineMethodProcessor processor = new InlineMethodProcessor(getProject(), methodToInline, null, getEditor(), false, false, false, false);
-    processor.run();
-    myFixture.checkResultByFile(fileName + ".after");
+    final boolean condition = ReadAction.computeBlocking(() -> InlineMethodProcessor.checkBadReturns(methodToInline) && !InlineUtil.allUsagesAreTailCalls(methodToInline));
+    assertFalse(condition, "Bad returns found");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      final InlineMethodProcessor processor = new InlineMethodProcessor(myFixture.getProject(), methodToInline, null, myFixture.getEditor(), false, false, false, false);
+      processor.run();
+      myFixture.checkResultByFile(fileName + ".after");
+    });
   }
 }

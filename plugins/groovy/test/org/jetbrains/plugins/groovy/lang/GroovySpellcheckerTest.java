@@ -2,10 +2,23 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class GroovySpellcheckerTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class GroovySpellcheckerTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testParameterName() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
       def test(int <TYPO descr="Typo: In word 'ddddd'">ddddd</TYPO>) {
       }
@@ -14,11 +27,14 @@ public class GroovySpellcheckerTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   private void checkTypos() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new GrazieSpellCheckingInspection());
     myFixture.checkHighlighting(false, false, true);
   }
 
+  @Test
   public void testLiteralMethodNames() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
       class SpockTest {
         def "adds a 'play' extension"() { }
@@ -28,7 +44,9 @@ public class GroovySpellcheckerTest extends LightJavaCodeInsightFixtureTestCase 
     checkTypos();
   }
 
+  @Test
   public void testStringEscapes() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
       def foo = "\\ntest \\n<TYPO descr="Typo: In word 'ddddd'">ddddd</TYPO>"
       def foo1 = '\\ntest \\n<TYPO descr="Typo: In word 'ddddd'">ddddd</TYPO>'

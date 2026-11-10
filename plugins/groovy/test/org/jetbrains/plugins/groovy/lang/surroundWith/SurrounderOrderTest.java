@@ -5,51 +5,60 @@ import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SurrounderOrderTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+
+@TestApplication
+public class SurrounderOrderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testStatementSurrounders() {
     List<String> names = getSurrounders("<selection>println a</selection>");
-    UsefulTestCase.assertOrderedEquals(names, "if", "if / else", "while", "{ -> ... }.call()", "{}", "for", "try / catch", "try / finally",
-                                       "try / catch / finally", "shouldFail () {...}", "(expr)", "!(expr)", "((Type) expr)",
-                                       "with () {...}", "<editor-fold...> Comments", "region...endregion Comments");
+    assertIterableEquals(List.of("if", "if / else", "while", "{ -> ... }.call()", "{}", "for", "try / catch", "try / finally", "try / catch / finally", "shouldFail () {...}", "(expr)", "!(expr)", "((Type) expr)", "with () {...}", "<editor-fold...> Comments", "region...endregion Comments"), names);
   }
 
+  @Test
   public void testStatementWithSemicolon() {
     List<String> names = getSurrounders("<selection>println a;</selection>");
-    UsefulTestCase.assertOrderedEquals(names, "if", "if / else", "while", "{ -> ... }.call()", "{}", "for", "try / catch", "try / finally",
-                                       "try / catch / finally", "shouldFail () {...}", "with () {...}", "<editor-fold...> Comments",
-                                       "region...endregion Comments");
+    assertIterableEquals(List.of("if", "if / else", "while", "{ -> ... }.call()", "{}", "for", "try / catch", "try / finally", "try / catch / finally", "shouldFail () {...}", "with () {...}", "<editor-fold...> Comments", "region...endregion Comments"), names);
   }
 
+  @Test
   public void testStatementsWithComments() {
     List<String> names = getSurrounders("""
                                           <selection>println a; //a is very important
                                           println b
                                           println c /*also important */
                                           </selection>""");
-    UsefulTestCase.assertOrderedEquals(names, "if", "if / else", "while", "{ -> ... }.call()", "{}", "for", "try / catch", "try / finally",
-                                       "try / catch / finally", "shouldFail () {...}", "with () {...}", "<editor-fold...> Comments",
-                                       "region...endregion Comments");
+    assertIterableEquals(List.of("if", "if / else", "while", "{ -> ... }.call()", "{}", "for", "try / catch", "try / finally", "try / catch / finally", "shouldFail () {...}", "with () {...}", "<editor-fold...> Comments", "region...endregion Comments"), names);
   }
 
+  @Test
   public void testInnerExpressionSurrounders() {
     List<String> names = getSurrounders("boolean a; println <selection>a</selection>");
-    UsefulTestCase.assertOrderedEquals(names, "(expr)", "!(expr)", "((Type) expr)");
+    assertIterableEquals(List.of("(expr)", "!(expr)", "((Type) expr)"), names);
   }
 
+  @Test
   public void testOuterExpressionSurrounders() {
     List<String> names = getSurrounders("boolean a; <selection>a</selection>");
-    UsefulTestCase.assertOrderedEquals(names, "if", "if / else", "while", "{ -> ... }.call()", "{}", "for", "try / catch", "try / finally",
-                                       "try / catch / finally", "shouldFail () {...}", "(expr)", "!(expr)", "((Type) expr)",
-                                       "with () {...}", "if (expr)", "if (expr) / else", "while (expr)", "with (expr)");
+    assertIterableEquals(List.of("if", "if / else", "while", "{ -> ... }.call()", "{}", "for", "try / catch", "try / finally", "try / catch / finally", "shouldFail () {...}", "(expr)", "!(expr)", "((Type) expr)", "with () {...}", "if (expr)", "if (expr) / else", "while (expr)", "with (expr)"), names);
   }
 
   private List<String> getSurrounders(final String fileText) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", fileText);
 
     return WriteAction.compute(() -> {

@@ -5,10 +5,23 @@ import com.intellij.ide.structureView.impl.java.KindSorter;
 import com.intellij.ide.util.InheritedMembersNodeProvider;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.StructureViewComponentTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class GroovyStructureViewTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class GroovyStructureViewTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testSyntheticMethods() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
       class Foo {
         int prop
@@ -31,7 +44,9 @@ public class GroovyStructureViewTest extends LightJavaCodeInsightFixtureTestCase
     });
   }
 
+  @Test
   public void testInheritedSynthetic() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
       class Foo {
         int prop
@@ -81,7 +96,9 @@ public class GroovyStructureViewTest extends LightJavaCodeInsightFixtureTestCase
     });
   }
 
+  @Test
   public void testTupleConstructor() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package groovy.transform; public @interface TupleConstructor{}");
     myFixture.configureByText("a.groovy", """
       @groovy.transform.TupleConstructor
@@ -102,7 +119,9 @@ public class GroovyStructureViewTest extends LightJavaCodeInsightFixtureTestCase
     });
   }
 
+  @Test
   public void testTraitMembers() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("T.groovy", """
       trait T {\s
         def tProperty

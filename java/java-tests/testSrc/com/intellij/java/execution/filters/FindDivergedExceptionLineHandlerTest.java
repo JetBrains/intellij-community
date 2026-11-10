@@ -5,6 +5,7 @@ import com.intellij.execution.filters.ExceptionFilter;
 import com.intellij.execution.filters.ExceptionLineRefiner;
 import com.intellij.execution.filters.ExceptionWorker;
 import com.intellij.execution.filters.FindDivergedExceptionLineHandler;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -13,21 +14,32 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class FindDivergedExceptionLineHandlerTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
+@TestApplication
+public class FindDivergedExceptionLineHandlerTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testColumnFinder() {
     @Language("JAVA") String classText =
       """
@@ -94,6 +106,7 @@ public class FindDivergedExceptionLineHandlerTest extends LightJavaCodeInsightFi
     checkFindMethodHandler(classText, traceAndPositions);
   }
 
+  @Test
   public void testColumnFinderAssert() {
     @Language("JAVA") String classText =
       """
@@ -115,6 +128,7 @@ public class FindDivergedExceptionLineHandlerTest extends LightJavaCodeInsightFi
     checkFindMethodHandler(classText, traceAndPositions);
   }
 
+  @Test
   public void testColumnFinderArrayStore() {
     @Language("JAVA") String classText =
       """
@@ -138,6 +152,7 @@ public class FindDivergedExceptionLineHandlerTest extends LightJavaCodeInsightFi
       Trinity.create("\tat SomeClass.unknown(SomeClass.java:2)\n", null, null));
     checkFindMethodHandler(classText, traceAndPositions);
   }
+  @Test
   public void testNonStaticField() {
     @Language("JAVA") String classText =
       """
@@ -169,6 +184,7 @@ public class FindDivergedExceptionLineHandlerTest extends LightJavaCodeInsightFi
     checkFindMethodHandler(classText, traceAndPositions);
   }
 
+  @Test
   public void testStaticField() {
     @Language("JAVA") String classText =
       """
@@ -199,6 +215,7 @@ public class FindDivergedExceptionLineHandlerTest extends LightJavaCodeInsightFi
     checkFindMethodHandler(classText, traceAndPositions);
   }
 
+  @Test
   public void testStaticBlock() {
     @Language("JAVA") String classText =
       """
@@ -230,6 +247,7 @@ public class FindDivergedExceptionLineHandlerTest extends LightJavaCodeInsightFi
     checkFindMethodHandler(classText, traceAndPositions);
   }
 
+  @Test
   public void testSkipBridge() {
     @Language("JAVA") String classText =
       """
@@ -261,6 +279,7 @@ public class FindDivergedExceptionLineHandlerTest extends LightJavaCodeInsightFi
     checkFindMethodHandler(classText, traceAndPositions);
   }
 
+  @Test
   public void testSkipMultilineException() {
     @Language("JAVA") String classText =
       """
@@ -283,46 +302,49 @@ public class FindDivergedExceptionLineHandlerTest extends LightJavaCodeInsightFi
   }
 
   private void checkFindMethodHandler(String classText, List<Trinity<String, Integer, Integer>> traceAndPositions) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("SomeClass.java", classText);
     Editor editor = myFixture.getEditor();
     assertEquals(classText, editor.getDocument().getText());
-    ExceptionFilter filter = new ExceptionFilter(myFixture.getFile().getResolveScope());
-    ExceptionLineRefiner previousRefiner = null;
-    for (Trinity<String, Integer, Integer> line : traceAndPositions) {
-      String stackLine = line.getFirst();
-      filter.applyFilter(stackLine, stackLine.length());
-      ExceptionLineRefiner refiner = filter.getLocationRefiner();
-      ExceptionWorker.ParsedLine parsedLine = ExceptionWorker.parseExceptionLine(stackLine);
-      if (parsedLine == null) {
-        previousRefiner = refiner;
-        continue;
-      }
-      Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
-      int lineStart = document.getLineStartOffset(parsedLine.lineNumber - 1);
-      int lineEnd = document.getLineEndOffset(parsedLine.lineNumber - 1);
-      String className = parsedLine.classFqnRange.substring(stackLine);
-      String methodName = parsedLine.methodNameRange.substring(stackLine);
-      FindDivergedExceptionLineHandler
-        handler = FindDivergedExceptionLineHandler.getFindMethodHandler(file, className, methodName, previousRefiner, lineStart, lineEnd, editor);
-      previousRefiner = refiner;
-      Integer row = line.getSecond();
-      Integer column = line.getThird();
-      if (column != null && row != null) {
-        if (column == 0) {
-          assertNull(handler);
+    ExceptionFilter filter = ReadAction.computeBlocking(() -> new ExceptionFilter(myFixture.getFile().getResolveScope()));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ExceptionLineRefiner previousRefiner = null;
+      for (Trinity<String, Integer, Integer> line : traceAndPositions) {
+        String stackLine = line.getFirst();
+        filter.applyFilter(stackLine, stackLine.length());
+        ExceptionLineRefiner refiner = filter.getLocationRefiner();
+        ExceptionWorker.ParsedLine parsedLine = ExceptionWorker.parseExceptionLine(stackLine);
+        if (parsedLine == null) {
+          previousRefiner = refiner;
           continue;
         }
-        assertNotNull(handler);
-        Collection<PsiElement> elements = handler.collector().get();
-        if (elements.iterator().next() instanceof Navigatable navigatable) {
-          navigatable.navigate(true);
-          LogicalPosition actualPos = editor.getCaretModel().getLogicalPosition();
-          assertEquals(new LogicalPosition(row - 1, column - 1), actualPos);
-        }
-        else {
-          fail();
+        Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
+        int lineStart = document.getLineStartOffset(parsedLine.lineNumber - 1);
+        int lineEnd = document.getLineEndOffset(parsedLine.lineNumber - 1);
+        String className = parsedLine.classFqnRange.substring(stackLine);
+        String methodName = parsedLine.methodNameRange.substring(stackLine);
+        FindDivergedExceptionLineHandler
+          handler = FindDivergedExceptionLineHandler.getFindMethodHandler(file, className, methodName, previousRefiner, lineStart, lineEnd, editor);
+        previousRefiner = refiner;
+        Integer row = line.getSecond();
+        Integer column = line.getThird();
+        if (column != null && row != null) {
+          if (column == 0) {
+            assertNull(handler);
+            continue;
+          }
+          assertNotNull(handler);
+          Collection<PsiElement> elements = handler.collector().get();
+          if (elements.iterator().next() instanceof Navigatable navigatable) {
+            navigatable.navigate(true);
+            LogicalPosition actualPos = editor.getCaretModel().getLogicalPosition();
+            assertEquals(new LogicalPosition(row - 1, column - 1), actualPos);
+          }
+          else {
+            fail();
+          }
         }
       }
-    }
+    });
   }
 }

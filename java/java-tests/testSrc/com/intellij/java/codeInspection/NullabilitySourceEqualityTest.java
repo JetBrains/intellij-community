@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilitySource;
 import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiArrayType;
@@ -18,20 +19,35 @@ import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.TypeAnnotationPath;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ref.GCUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertNotEquals;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Checks the equality of {@link NullabilitySource.ExplicitAnnotation}.
  */
-public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public final class NullabilitySourceEqualityTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   private static final String TEXT = """
     import org.jetbrains.annotations.*;
     import java.util.List;
@@ -47,55 +63,71 @@ public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFix
       java.lang.@Nullable String qualified() { return null; }    }
     """;
 
+  @Test
   public void testStubAndAst() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("Stubbed.java", TEXT);
-    PsiClass aClass = ((PsiJavaFile)file).getClasses()[0];
-    List<TypeNullability> fromStub = nullabilities(aClass);
-    assertFalse(file.isContentsLoaded());
+    ReadAction.runBlocking(() -> {
+      PsiClass aClass = ((PsiJavaFile)file).getClasses()[0];
+      List<TypeNullability> fromStub = nullabilities(aClass);
+      assertFalse(file.isContentsLoaded());
 
-    ASTNode node = file.getNode();
-    GCUtil.tryGcSoftlyReachableObjects();
-    assertTrue(file.withGreenStubTreeOrAst(_ -> false, _ -> true));
-    List<TypeNullability> fromAst = nullabilities(aClass);
+      ASTNode node = file.getNode();
+      GCUtil.tryGcSoftlyReachableObjects();
+      assertTrue((boolean)file.withGreenStubTreeOrAst(_ -> false, _ -> true));
+      List<TypeNullability> fromAst = nullabilities(aClass);
 
-    for (int i = 0; i < fromStub.size(); i++) {
-      assertEquals("Nullability #" + i, Nullability.NULLABLE, fromStub.get(i).nullability());
-      assertEquals("Nullability #" + i, fromStub.get(i), fromAst.get(i));
-      assertEquals("Nullability #" + i, fromStub.get(i).hashCode(), fromAst.get(i).hashCode());
-    }
-    assertNotNull(node);
+      for (int i = 0; i < fromStub.size(); i++) {
+        assertEquals(Nullability.NULLABLE, fromStub.get(i).nullability(), "Nullability #" + i);
+        assertEquals(fromStub.get(i), fromAst.get(i), "Nullability #" + i);
+        assertEquals(fromStub.get(i).hashCode(), fromAst.get(i).hashCode(), "Nullability #" + i);
+      }
+      assertNotNull(node);
+    });
   }
 
+  @Test
   public void testTwoBounds() {
-    PsiClass aClass = ((PsiJavaFile)myFixture.configureByText("Stubbed.java", TEXT)).getClasses()[0];
-    NullabilitySource source = returnType(aClass, "twoBounds").getNullability().source();
-    NullabilitySource.ExtendsBound bound = assertInstanceOf(source, NullabilitySource.ExtendsBound.class);
-    NullabilitySource.MultiSource multiSource = assertInstanceOf(bound.boundSource(), NullabilitySource.MultiSource.class);
-    assertSize(2, multiSource.sources());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("Stubbed.java", TEXT);
+    NullabilitySource source = ReadAction.computeBlocking(() -> returnType(file.getClasses()[0], "twoBounds").getNullability().source());
+    NullabilitySource.ExtendsBound bound = assertInstanceOf(NullabilitySource.ExtendsBound.class, source);
+    NullabilitySource.MultiSource multiSource = assertInstanceOf(NullabilitySource.MultiSource.class, bound.boundSource());
+    assertThat(multiSource.sources()).hasSize(2);
   }
 
+  @Test
   public void testCopyFromText() {
-    PsiClass aClass = ((PsiJavaFile)myFixture.configureByText("Stubbed.java", TEXT)).getClasses()[0];
-    PsiMethod method = aClass.findMethodsByName("qualified", false)[0];
-    PsiType copy = JavaPsiFacade.getElementFactory(getProject()).createTypeFromText("java.lang.@Nullable String", method);
-    TypeNullability original = method.getReturnType().getNullability();
-    assertEquals(original.nullability(), copy.getNullability().nullability());
-    assertNotEquals(original, copy.getNullability());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("Stubbed.java", TEXT);
+    ReadAction.runBlocking(() -> {
+      PsiClass aClass = file.getClasses()[0];
+      PsiMethod method = aClass.findMethodsByName("qualified", false)[0];
+      PsiType copy = JavaPsiFacade.getElementFactory(myFixture.getProject()).createTypeFromText("java.lang.@Nullable String", method);
+      TypeNullability original = method.getReturnType().getNullability();
+      assertEquals(original.nullability(), copy.getNullability().nullability());
+      assertThat(copy.getNullability()).isNotEqualTo(original);
+    });
   }
 
+  @Test
   public void testModifierListAnnotation() {
-    PsiClass aClass = ((PsiJavaFile)myFixture.configureByText("A.java", """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("A.java", """
       import org.jetbrains.annotations.*;
 
       class A {
         @Nullable String first() { return null; }
         @Nullable String second() { return null; }
       }
-      """)).getClasses()[0];
-    TypeNullability first = returnType(aClass, "first").getNullability();
-    assertEquals(Nullability.NULLABLE, first.nullability());
-    assertEquals(first, returnType(aClass, "first").getNullability());
-    assertNotEquals(first, returnType(aClass, "second").getNullability());
+      """);
+    ReadAction.runBlocking(() -> {
+      PsiClass aClass = file.getClasses()[0];
+      TypeNullability first = returnType(aClass, "first").getNullability();
+      assertEquals(Nullability.NULLABLE, first.nullability());
+      assertEquals(first, returnType(aClass, "first").getNullability());
+      assertThat(returnType(aClass, "second").getNullability()).isNotEqualTo(first);
+    });
   }
 
   private static @NotNull List<TypeNullability> nullabilities(@NotNull PsiClass aClass) {
@@ -115,16 +147,19 @@ public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFix
     return aClass.findMethodsByName(name, false)[0].getReturnType();
   }
 
+  @Test
   public void testVarargsTypeArgument() {
     assertStubAndAstNullable("void m(List<@Nullable String>... args) {}", aClass ->
       ((PsiClassType)((PsiArrayType)parameterType(aClass)).getComponentType()).getParameters()[0]);
   }
 
+  @Test
   public void testQualifiedVarargs() {
     assertStubAndAstNullable("void m(java.lang.@Nullable String... args) {}", aClass ->
       ((PsiArrayType)parameterType(aClass)).getComponentType());
   }
 
+  @Test
   public void testTwoDimensionalArrayTypeArgument() {
     assertStubAndAstNullable("List<@Nullable String>[][] f;", aClass -> {
       PsiArrayType outer = (PsiArrayType)aClass.findFieldByName("f", false).getType();
@@ -133,6 +168,7 @@ public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFix
     });
   }
 
+  @Test
   public void testCStyleArrayTypeArgument() {
     assertStubAndAstNullable("List<@Nullable String> f[];", aClass -> {
       PsiArrayType array = (PsiArrayType)aClass.findFieldByName("f", false).getType();
@@ -140,16 +176,19 @@ public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFix
     });
   }
 
+  @Test
   public void testCompoundField() {
     assertStubAndAstNullable("List<@Nullable String> a, b;", aClass ->
       ((PsiClassType)aClass.findFieldByName("b", false).getType()).getParameters()[0]);
   }
 
+  @Test
   public void testCompoundFieldWithFewerDimensions() {
     assertStubAndAstNullable("List<@Nullable String> @Nullable [] a[], b;", aClass ->
       ((PsiClassType)((PsiArrayType)aClass.findFieldByName("b", false).getType()).getComponentType()).getParameters()[0]);
   }
 
+  @Test
   public void testCompoundFieldWithMoreDimensions() {
     assertStubAndAstNullable("List<@Nullable String> a, b[];", aClass -> {
       PsiArrayType array = (PsiArrayType)aClass.findFieldByName("b", false).getType();
@@ -157,6 +196,7 @@ public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFix
     });
   }
 
+  @Test
   public void testCompoundFieldSharesAnnotation() {
     assertStubAndAstNullable("List<@Nullable String> a, b;", aClass -> {
       PsiType first = ((PsiClassType)aClass.findFieldByName("a", false).getType()).getParameters()[0];
@@ -171,20 +211,24 @@ public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFix
     @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Other {}
     """;
 
+  @Test
   public void testInnerType() {
     assertStubAndAstNullable(INNER_CLASSES + "List<Outer.@Nullable Inner> f;", aClass ->
       ((PsiClassType)aClass.findFieldByName("f", false).getType()).getParameters()[0]);
   }
 
+  @Test
   public void testAnnotatedOuterAndInnerType() {
     assertStubAndAstNullable(INNER_CLASSES + "List<@Other Outer.@Nullable Inner> f;", aClass ->
       ((PsiClassType)aClass.findFieldByName("f", false).getType()).getParameters()[0]);
   }
 
+  @Test
   public void testAnnotatedQualifierPaths() {
     assertDistinctStubAndAstPaths("List<Stubbed.@Other Outer.@Nullable Inner> f;");
   }
 
+  @Test
   public void testAnnotatedOuterAndInnerPaths() {
     assertDistinctStubAndAstPaths("List<@Other Outer.@Nullable Inner> f;");
   }
@@ -193,6 +237,7 @@ public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFix
    * Checks the paths of the two annotations in the type argument of field {@code f}.
    */
   private void assertDistinctStubAndAstPaths(@NotNull String field) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("Stubbed.java", """
       import org.jetbrains.annotations.*;
       import java.util.List;
@@ -202,19 +247,21 @@ public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFix
         %s
       }
       """.formatted(INNER_CLASSES, field));
-    PsiClass aClass = ((PsiJavaFile)file).getClasses()[0];
-    List<TypeAnnotationPath> fromStub = annotationPaths(aClass.findFieldByName("f", false).getType());
-    assertFalse(file.isContentsLoaded());
+    ReadAction.runBlocking(() -> {
+      PsiClass aClass = ((PsiJavaFile)file).getClasses()[0];
+      List<TypeAnnotationPath> fromStub = annotationPaths(aClass.findFieldByName("f", false).getType());
+      assertFalse(file.isContentsLoaded());
 
-    ASTNode node = file.getNode();
-    GCUtil.tryGcSoftlyReachableObjects();
-    assertTrue(file.withGreenStubTreeOrAst(_ -> false, _ -> true));
-    List<TypeAnnotationPath> fromAst = annotationPaths(aClass.findFieldByName("f", false).getType());
-    assertSize(2, fromStub);
-    assertNotNull(fromStub.get(0));
-    assertEquals(fromStub, fromAst);
-    assertNotEquals(fromStub.get(0), fromStub.get(1));
-    assertNotNull(node);
+      ASTNode node = file.getNode();
+      GCUtil.tryGcSoftlyReachableObjects();
+      assertTrue((boolean)file.withGreenStubTreeOrAst(_ -> false, _ -> true));
+      List<TypeAnnotationPath> fromAst = annotationPaths(aClass.findFieldByName("f", false).getType());
+      assertThat(fromStub).hasSize(2);
+      assertNotNull(fromStub.get(0));
+      assertEquals(fromStub, fromAst);
+      assertThat(fromStub.get(1)).isNotEqualTo(fromStub.get(0));
+      assertNotNull(node);
+    });
   }
 
   private static @NotNull List<TypeAnnotationPath> annotationPaths(@NotNull PsiType type) {
@@ -224,6 +271,7 @@ public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFix
   }
 
   private void assertStubAndAstNullable(@NotNull String member, @NotNull Function<PsiClass, PsiType> typeGetter) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("Stubbed.java", """
       import org.jetbrains.annotations.*;
       import java.util.List;
@@ -232,19 +280,21 @@ public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFix
         %s
       }
       """.formatted(member));
-    PsiClass aClass = ((PsiJavaFile)file).getClasses()[0];
-    PsiType fromStub = typeGetter.apply(aClass);
-    assertFalse(file.isContentsLoaded());
-    assertEquals("Stub: " + fromStub.getCanonicalText(true), Nullability.NULLABLE, fromStub.getNullability().nullability());
+    ReadAction.runBlocking(() -> {
+      PsiClass aClass = ((PsiJavaFile)file).getClasses()[0];
+      PsiType fromStub = typeGetter.apply(aClass);
+      assertFalse(file.isContentsLoaded());
+      assertEquals(Nullability.NULLABLE, fromStub.getNullability().nullability(), "Stub: " + fromStub.getCanonicalText(true));
 
-    ASTNode node = file.getNode();
-    GCUtil.tryGcSoftlyReachableObjects();
-    assertTrue(file.withGreenStubTreeOrAst(_ -> false, _ -> true));
-    PsiType fromAst = typeGetter.apply(aClass);
-    assertEquals("AST: " + fromAst.getCanonicalText(true), Nullability.NULLABLE, fromAst.getNullability().nullability());
-    assertEquals(fromStub.getCanonicalText(true), fromAst.getCanonicalText(true));
-    assertEquals(fromStub.getNullability(), fromAst.getNullability());
-    assertNotNull(node);
+      ASTNode node = file.getNode();
+      GCUtil.tryGcSoftlyReachableObjects();
+      assertTrue((boolean)file.withGreenStubTreeOrAst(_ -> false, _ -> true));
+      PsiType fromAst = typeGetter.apply(aClass);
+      assertEquals(Nullability.NULLABLE, fromAst.getNullability().nullability(), "AST: " + fromAst.getCanonicalText(true));
+      assertEquals(fromStub.getCanonicalText(true), fromAst.getCanonicalText(true));
+      assertEquals(fromStub.getNullability(), fromAst.getNullability());
+      assertNotNull(node);
+    });
   }
 
   private static @NotNull PsiType parameterType(@NotNull PsiClass aClass) {

@@ -21,17 +21,29 @@ import com.intellij.lang.ant.dom.AntDomProject;
 import com.intellij.lang.ant.dom.AntDomRecursiveVisitor;
 import com.intellij.lang.ant.typedefs.AntCustomTask;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.PathUtil;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 
-public class CustomTypesTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class CustomTypesTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   private static final String myCustomTaskClass = "com.intellij.lang.ant.typedefs.AntCustomTask";
 
@@ -42,37 +54,41 @@ public class CustomTypesTest extends LightJavaCodeInsightFixtureTestCase {
     return PluginPathManager.getPluginHomePath("ant") + "/tests/data/psi/customTypes";
   }
 
+  @Test
   public void testAntCustomTask() throws Exception {
     doTest();
   }
 
   protected void doTest() throws Exception {
-    String name = getTestName(false);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    String name = myFixture.getTestName(false);
     String text = loadFile(name + ".ant");
     PsiFile file = myFixture.addFileToProject(name + ".ant", text);
-    final AntDomProject antProject = AntSupport.getAntDomProject(file);
-    final Ref<Boolean> found = new Ref<>(false);
-    antProject.accept(new AntDomRecursiveVisitor() {
+    ReadAction.runBlocking(() -> {
+      final AntDomProject antProject = AntSupport.getAntDomProject(file);
+      final Ref<Boolean> found = new Ref<>(false);
+      antProject.accept(new AntDomRecursiveVisitor() {
 
-      @Override
-      public void visitAntDomElement(AntDomElement element) {
-        if (!found.get()) {
-          super.visitAntDomElement(element);
+        @Override
+        public void visitAntDomElement(AntDomElement element) {
+          if (!found.get()) {
+            super.visitAntDomElement(element);
+          }
         }
-      }
 
-      @Override
-      public void visitAntDomCustomElement(AntDomCustomElement element) {
-        final Class clazz = element.getDefinitionClass();
-        if (clazz != null && AntCustomTask.class.getName().equals(clazz.getName())) {
-          found.set(true);
+        @Override
+        public void visitAntDomCustomElement(AntDomCustomElement element) {
+          final Class clazz = element.getDefinitionClass();
+          if (clazz != null && AntCustomTask.class.getName().equals(clazz.getName())) {
+            found.set(true);
+          }
+          else {
+            super.visitAntDomElement(element);
+          }
         }
-        else {
-          super.visitAntDomElement(element);
-        }
-      }
+      });
+      assertTrue(found.get());
     });
-    assertTrue(found.get());
   }
 
   protected String loadFile(String name) throws IOException {

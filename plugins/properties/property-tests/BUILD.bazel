@@ -74,7 +74,8 @@ jvm_library(
         "//libraries/jetcheck",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
-        "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
     ],
 )
 ### auto-generated section `build intellij.properties.propertyBased.tests` end

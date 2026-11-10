@@ -26,8 +26,12 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.java.FieldElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.testFramework.propertyBased.MadTestingAction;
 import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.ObjectUtils;
@@ -39,26 +43,40 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.PropertyChecker;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class JavaOutOfClassDefinitionPropertyTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class JavaOutOfClassDefinitionPropertyTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testMoveMethodOutOfClassAndBack() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_17, () -> {
-      Supplier<MadTestingAction> fileAction =
-        MadTestingUtil.performOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"),
-                                             this::doTestMoveMethodOutOfClassAndBack);
-      PropertyChecker
-        .checkScenarios(fileAction);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_17, () -> {
+        Supplier<MadTestingAction> fileAction =
+          MadTestingUtil.performOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"),
+                                               this::doTestMoveMethodOutOfClassAndBack);
+        PropertyChecker
+          .checkScenarios(fileAction);
+      });
     });
   }
 
   private void doTestMoveMethodOutOfClassAndBack(@NotNull ImperativeCommand.Environment env, @NotNull VirtualFile file) {
-    Project project = getProject();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    Project project = myFixture.getProject();
     if (!isCompilable(project, file)) return;
     myFixture.openFileInEditor(file);
     PsiJavaFile psiJavaFile = ObjectUtils.tryCast(myFixture.getFile(), PsiJavaFile.class);
@@ -75,14 +93,15 @@ public class JavaOutOfClassDefinitionPropertyTest extends LightJavaCodeInsightFi
     psiClass = Objects.requireNonNull(classPtr.getElement());
     PsiMember memberInImplicitClass = Objects.requireNonNull(PsiTreeUtil.getPrevSiblingOfType(psiClass, PsiMember.class));
     int outerMemberOffset = memberInImplicitClass.getTextOffset();
-    assertTrue("Failed to find member after moving it out of a class", outerMemberOffset != -1);
+    assertTrue(outerMemberOffset != -1, "Failed to find member after moving it out of a class");
     moveMemberToClass(outerMemberOffset);
     psiClass = classPtr.getElement();
     if (psiClass == null) return;
-    assertSize(nMembers, findMembers(psiClass));
+    assertThat(findMembers(psiClass)).hasSize(nMembers);
   }
 
   private void moveMemberToClass(int offset) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.getEditor().getCaretModel().moveToOffset(offset);
     IntentionAction intention = myFixture.findSingleIntention("Move member into class");
     myFixture.launchAction(intention);
@@ -90,6 +109,7 @@ public class JavaOutOfClassDefinitionPropertyTest extends LightJavaCodeInsightFi
   }
 
   private boolean moveMemberFromClass(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull PsiMember psiMember) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     int startOffset = psiClass.getTextRange().getStartOffset();
     String memberText = psiMember.getText() + "\n";
     Document document = myFixture.getDocument(psiMember.getContainingFile());

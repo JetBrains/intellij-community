@@ -3,19 +3,32 @@ package com.intellij.java.codeInsight.colors;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.StressTestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ui.ColorIcon;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Bas Leijdekkers
  */
 @PerformanceUnitTest
-public final class JavaColorProviderPerformanceTest extends LightJavaCodeInsightFixtureTestCase {
+@StressTestApplication
+public final class JavaColorProviderPerformanceTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/colors/");
     myFixture.addClass("package java.awt;" +
                        "public class Color {" +
                        "public Color(int rgb) {}" +
@@ -26,15 +39,12 @@ public final class JavaColorProviderPerformanceTest extends LightJavaCodeInsight
                        "}");
   }
 
-  @Override
-  public String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/colors/";
-  }
-
+  @Test
   public void testLargeArrayLiteral() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Benchmark.newBenchmark("Large array initializer performance", () -> {
       // needs to be inside the benchmark otherwise gutters are cached from the warmup phase. 
-      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.configureByFile(myFixture.getTestName(false) + ".java");
       
       long count = myFixture.findAllGutters().stream()
         .filter(g -> g.getIcon() instanceof ColorIcon).count();

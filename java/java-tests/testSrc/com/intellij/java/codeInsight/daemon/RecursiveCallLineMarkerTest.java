@@ -5,29 +5,46 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class RecursiveCallLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
-  
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/recursive";
+@TestApplication
+public class RecursiveCallLineMarkerTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/recursive");
   }
 
+  @Test
   public void testQualifiedCall() {
-    myFixture.configureByFile(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
     myFixture.doHighlighting();
-    @NotNull Document document = getEditor().getDocument();
-    final List<LineMarkerInfo<?>> infoList = LineMarkersPass.getDisplayedLineMarkers(document, getProject());
+    @NotNull Document document = myFixture.getEditor().getDocument();
+    final List<LineMarkerInfo<?>> infoList = LineMarkersPass.getDisplayedLineMarkers(document, myFixture.getProject());
    
-    assertSize(2, infoList);
-    for (LineMarkerInfo<?> info : infoList) {
-      assertEquals(JavaBundle.message("tooltip.recursive.call"), info.getLineMarkerTooltip());
-    }
+    assertThat(infoList).hasSize(2);
+    ReadAction.runBlocking(() -> {
+      for (LineMarkerInfo<?> info : infoList) {
+        assertEquals(JavaBundle.message("tooltip.recursive.call"), info.getLineMarkerTooltip());
+      }
+    });
   }
 }

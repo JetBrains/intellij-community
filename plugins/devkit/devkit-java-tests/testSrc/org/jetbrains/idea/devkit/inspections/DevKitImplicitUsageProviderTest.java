@@ -18,21 +18,28 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.inheritance.ImplicitSubclassInspection;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.ig.inheritance.AbstractClassNeverImplementedInspection;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/implicitUsage")
-public class DevKitImplicitUsageProviderTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class DevKitImplicitUsageProviderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/implicitUsage");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/implicitUsage";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
 
     myFixture.addClass("package com.intellij.util.xml; public interface DomElement {}");
     myFixture.addClass("package com.intellij.util.xml; public interface DomElementVisitor {}");
@@ -45,37 +52,48 @@ public class DevKitImplicitUsageProviderTest extends LightJavaCodeInsightFixture
     myFixture.addClass("package com.intellij.mcpserver; public interface McpToolset {}");
   }
 
+  @Test
   public void testImplicitUsagesDomElement() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     enableImplicitUsageInspections();
     myFixture.testHighlighting("ImplicitUsagesDomElement.java");
   }
 
+  @Test
   public void testImplicitUsagesDomElementVisitor() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     enableImplicitUsageInspections();
     myFixture.testHighlighting("ImplicitUsagesDomElementVisitor.java");
   }
 
+  @Test
   public void testImplicitUsagesMcpToolMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     enableImplicitUsageInspections();
     myFixture.testHighlighting("ImplicitUsagesMcpToolMethod.java");
   }
 
   private void enableImplicitUsageInspections() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new UnusedDeclarationInspectionBase(true));
   }
 
-
+  @Test
   public void testImplementedAtRuntimeDomElementImpl() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     enableImplementedAtRuntimeInspections();
     myFixture.testHighlighting("ImplementedAtRuntimeDomElementImpl.java");
   }
 
+  @Test
   public void testManualJamElementInstantiation() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(ImplicitSubclassInspection.class);
     myFixture.testHighlighting("ManualJamElementInstantiation.java");
   }
 
   private void enableImplementedAtRuntimeInspections() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new AbstractClassNeverImplementedInspection());
   }
 }

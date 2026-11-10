@@ -3,16 +3,32 @@ package com.intellij.java.codeInsight;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.idea.IJIgnore;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class MakeInferredAnnotationExplicitTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   @IJIgnore(issue = "AT-4013")
   public void testContractAndNotNull() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       class Foo {
         static String f<caret>oo() {
@@ -34,7 +50,9 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
       }""");
   }
 
+  @Test
   public void testParameter() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       class Foo {
         static String foo(String s<caret>tr) {
@@ -52,9 +70,11 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
       }""");
   }
 
+  @Test
   public void testCustomNotNull() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; public @interface MyNotNull {}");
-    NullableNotNullManager.getInstance(getProject()).setNotNulls("foo.MyNotNull");
+    NullableNotNullManager.getInstance(myFixture.getProject()).setNotNulls("foo.MyNotNull");
 
     myFixture.configureByText("a.java", """
       class Foo {
@@ -76,9 +96,11 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
                             }""");
   }
 
+  @Test
   public void testTypeUse() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; import java.lang.annotation.*;@Target(ElementType.TYPE_USE)public @interface MyNotNull {}");
-    NullableNotNullManager.getInstance(getProject()).setNotNulls("foo.MyNotNull");
+    NullableNotNullManager.getInstance(myFixture.getProject()).setNotNulls("foo.MyNotNull");
     myFixture.configureByText("a.java", """
       class Foo {
         static void foo(String[] ar<caret>ray) {
@@ -96,9 +118,11 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
                             }""");
   }
 
+  @Test
   public void testTypeUseQualifiedType() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; import java.lang.annotation.*;@Target(ElementType.TYPE_USE)public @interface MyNotNull {}");
-    NullableNotNullManager.getInstance(getProject()).setNotNulls("foo.MyNotNull");
+    NullableNotNullManager.getInstance(myFixture.getProject()).setNotNulls("foo.MyNotNull");
     myFixture.configureByText("a.java", """
       import org.jetbrains.annotations.Contract;
       import foo.MyNotNull;
@@ -123,7 +147,9 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
     assert myFixture.filterAvailableIntentions("Insert '@MyNotNull'").isEmpty();
   }
 
+  @Test
   public void testNoUnmodifiableInferenceWhenTypeAnnotated() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
        import java.util.List;
        import org.jetbrains.annotations.NotNull;
@@ -138,24 +164,12 @@ public class MakeInferredAnnotationExplicitTest extends LightJavaCodeInsightFixt
        }""");
     List<IntentionAction> actions =
       myFixture.filterAvailableIntentions("Insert '@Contract(value = \"_ -> new\", pure = true) @Unmodifiable'");
-    assertEmpty(actions);
+    assertThat(actions).isNullOrEmpty();
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      NullableNotNullManager.getInstance(getProject()).setNotNulls(ArrayUtil.EMPTY_STRING_ARRAY);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    NullableNotNullManager.getInstance(myFixture.getProject()).setNotNulls(ArrayUtil.EMPTY_STRING_ARRAY);
   }
 }

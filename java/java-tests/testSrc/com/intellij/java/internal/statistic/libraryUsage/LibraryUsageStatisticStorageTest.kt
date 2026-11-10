@@ -5,14 +5,28 @@ import com.intellij.internal.statistic.libraryUsage.LibraryUsage
 import com.intellij.internal.statistic.libraryUsage.LibraryUsageStatisticsStorageService
 import com.intellij.internal.statistic.libraryUsage.ProcessedFilesStorageService
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.xmlb.XmlSerializer
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class LibraryUsageStatisticStorageTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class LibraryUsageStatisticStorageTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
   fun testFiles() {
     val txtFile = myFixture.addFileToProject("Text.txt", "").virtualFile
     val javaFile = myFixture.addFileToProject("JavaFile.java", "").virtualFile
-    val filesStorageService = ProcessedFilesStorageService.getInstance(project)
+    val filesStorageService = ProcessedFilesStorageService.getInstance(myFixture.project)
     val state = filesStorageService.state
     val timestamps = state.timestamps
 
@@ -42,10 +56,11 @@ class LibraryUsageStatisticStorageTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(timestamps, filesStorageService.state.timestamps)
   }
 
+  @Test
   fun testLibraries() {
     val txtFile = myFixture.addFileToProject("Text.txt", "").virtualFile
     val javaFile = myFixture.addFileToProject("JavaFile.java", "").virtualFile
-    val storageService = LibraryUsageStatisticsStorageService.getInstance(project)
+    val storageService = LibraryUsageStatisticsStorageService.getInstance(myFixture.project)
 
     val txtLib = createLib(txtFile)
     storageService.increaseUsage(txtLib)

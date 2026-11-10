@@ -11,25 +11,46 @@ import com.intellij.codeInspection.logging.LoggingSimilarMessageInspection
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingTestUtils.addSlf4J
+import com.intellij.openapi.application.EDT
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.createGlobalContextForTool
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.File
+import kotlin.time.Duration.Companion.minutes
 
 private const val inspectionPath = "/codeInspection/loggingSimilarMessageInspectionSuppression"
 
 @TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
-class JavaLoggingSimilarMessageInspectionSuppressionTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class JavaLoggingSimilarMessageInspectionSuppressionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun setUp() {
-    super.setUp()
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = JavaJvmAnalysisTestUtil.testDataPath + inspectionPath
+  }
+
+  @BeforeEach
+  fun setUp() {
     addSlf4J(myFixture)
     myFixture.enableInspections(LoggingSimilarMessageInspection())
   }
 
-  fun testSuppressedSlf4jStatement() {
+  @Test
+  fun testSuppressedSlf4jStatement(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       import org.slf4j.*;
       class Logging {
@@ -48,7 +69,8 @@ class JavaLoggingSimilarMessageInspectionSuppressionTest : LightJavaCodeInsightF
     doSuppressTest()
   }
 
-  fun testSuppressedSlf4jMethod() {
+  @Test
+  fun testSuppressedSlf4jMethod(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       import org.slf4j.*;
       class Logging {
@@ -67,7 +89,8 @@ class JavaLoggingSimilarMessageInspectionSuppressionTest : LightJavaCodeInsightF
     doSuppressTest()
   }
 
-  fun testSuppressedSlf4jClass() {
+  @Test
+  fun testSuppressedSlf4jClass(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       import org.slf4j.*;
 
@@ -87,8 +110,7 @@ class JavaLoggingSimilarMessageInspectionSuppressionTest : LightJavaCodeInsightF
     doSuppressTest()
   }
 
-
-  private fun doSuppressTest() {
+  private suspend fun doSuppressTest() {
     val toolWrapper = GlobalInspectionToolWrapper(object : RedundantSuppressInspection(){
       override fun getInspectionTools(psiElement: PsiElement, profile: InspectionProfile): MutableList<InspectionToolWrapper<*, *>?> {
         val loggingSimilarMessageInspection: LocalInspectionTool = LoggingSimilarMessageInspection()
@@ -97,14 +119,12 @@ class JavaLoggingSimilarMessageInspectionSuppressionTest : LightJavaCodeInsightF
     })
     val scope = AnalysisScope(myFixture.getProject())
     val globalContext =
-      createGlobalContextForTool(scope, project, mutableListOf<InspectionToolWrapper<*, *>>(toolWrapper))
+      createGlobalContextForTool(scope, myFixture.project, mutableListOf<InspectionToolWrapper<*, *>>(toolWrapper))
 
-    InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
-    InspectionTestUtil.compareToolResults(globalContext, toolWrapper, false, File(getTestDataPath(), getTestName(false)).path)
-  }
-
-  override fun getTestDataPath(): String {
-    return JavaJvmAnalysisTestUtil.testDataPath + inspectionPath
+    withContext(Dispatchers.EDT) {
+      InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
+      InspectionTestUtil.compareToolResults(globalContext, toolWrapper, false, File(myFixture.getTestDataPath(), myFixture.getTestName(false)).path)
+    }
   }
 }
 

@@ -2,14 +2,25 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 /**
  * @author Max Medvedev
  */
-public class TargetAnnotationHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class TargetAnnotationHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   private void addElementType() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                           package java.lang.annotation;
 
@@ -42,6 +53,7 @@ public class TargetAnnotationHighlightingTest extends LightJavaCodeInsightFixtur
   }
 
   private void addTarget() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package java.lang.annotation;
 
@@ -51,7 +63,9 @@ public class TargetAnnotationHighlightingTest extends LightJavaCodeInsightFixtur
                          """);
   }
 
+  @Test
   public void testTargetAnnotationInsideGroovy1() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addElementType();
     addTarget();
     myFixture.addFileToProject("Ann.groovy", """
@@ -78,7 +92,9 @@ public class TargetAnnotationHighlightingTest extends LightJavaCodeInsightFixtur
     myFixture.testHighlighting(true, false, false);
   }
 
+  @Test
   public void testTargetAnnotationInsideGroovy2() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addElementType();
     addTarget();
     myFixture.addFileToProject("Ann.groovy", """
@@ -104,7 +120,9 @@ public class TargetAnnotationHighlightingTest extends LightJavaCodeInsightFixtur
     myFixture.testHighlighting(true, false, false);
   }
 
+  @Test
   public void testTargetAnnotationInsideGroovy3() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addElementType();
     addTarget();
     myFixture.addFileToProject("Ann.groovy", """
@@ -128,10 +146,5 @@ public class TargetAnnotationHighlightingTest extends LightJavaCodeInsightFixtur
         }
       }""");
     myFixture.testHighlighting(true, false, false);
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR;
   }
 }

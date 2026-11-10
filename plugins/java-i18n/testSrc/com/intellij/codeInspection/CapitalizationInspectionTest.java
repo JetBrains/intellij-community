@@ -9,88 +9,125 @@ import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * @author Dmitry Avdeev
  */
-public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class CapitalizationInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, PluginPathManager.getPluginHomePathRelative("java-i18n") + "/testData/inspections/capitalization");
 
+  @Test
   public void testTitleCapitalization() {
     doTest(true);
   }
   
+  @Test
   public void testTitleCapitalizationHtml() {
     doTest(true);
   }
 
+  @Test
   public void testTitleCapitalizationExtension() {
     doTest(true);
   }
 
+  @Test
   public void testSentenceCapitalization() {
     doTest(true);
   }
   
+  @Test
   public void testSentenceCapitalizationHtml() {
     doTest(true);
   }
 
+  @Test
   public void testMnemonics() {
     doTest(true);
   }
 
+  @Test
   public void testTernaryAndParentheses() {
-    myFixture.testHighlighting(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
   }
 
+  @Test
   public void testMultipleReturns() {
     doTest(true);
   }
 
+  @Test
   public void testEmptySentence() {
     doTest(false);
   }
 
+  @Test
   public void testArgument() {
     doTest(false);
   }
 
+  @Test
   public void testConstructorArgument() {
     doTest(false);
   }
 
+  @Test
   public void testSuperConstructorArgument() {
     doTest(false);
   }
   
+  @Test
   public void testStripHtml() {
     doTest(false);
   }
   
+  @Test
   public void testCapitalizationMismatch() {
     doTest(false);
   }
   
+  @Test
   public void testCapitalizationMix() {
     doTest(false);
   }
   
+  @Test
   public void testLocalVar() {
     doTest(false);
   }
 
+  @Test
   public void testField() {
     doTest(false);
   }
 
+  @Test
   public void testIgnoreConcatFormat() {
     doTest(false);
   }
 
+  @Test
   public void testPropertyTest() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String props = """
       property.lowercase=hello world
       property.titlecase=Hello World
@@ -124,48 +161,46 @@ public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTes
     assertEquals(expected, myFixture.getIntentionPreviewText(action));
   }
 
+  @Test
   public void testRecursiveMethod() {
-    myFixture.testHighlighting(getTestName(false) + ".java");
-    assertEmpty(myFixture.filterAvailableIntentions("Properly capitalize"));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
+    assertThat(myFixture.filterAvailableIntentions("Properly capitalize")).isNullOrEmpty();
   }
 
+  @Test
   public void testIntention() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile("Intention.java");
     AnnotateCapitalizationIntention intention = new AnnotateCapitalizationIntention();
-    ActionContext context = ActionContext.from(getEditor(), getFile());
-    assertNotNull(intention.getPresentation(context));
-    ModCommandExecutor.executeInteractively(context, "", getEditor(), () -> intention.perform(context));
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    myFixture.checkResultByFile("Intention_after.java");
-    assertNull(intention.getPresentation(context));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      ActionContext context = ActionContext.from(myFixture.getEditor(), myFixture.getFile());
+      assertNotNull(intention.getPresentation(context));
+      ModCommandExecutor.executeInteractively(context, "", myFixture.getEditor(), () -> intention.perform(context));
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      myFixture.checkResultByFile("Intention_after.java");
+      assertNull(intention.getPresentation(context));
+    });
   }
 
   private void doTest(boolean fix) {
-    myFixture.testHighlighting(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
     if (!fix) return;
 
     final IntentionAction action = myFixture.filterAvailableIntentions("Properly capitalize").get(0);
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> action.invoke(getProject(), myFixture.getEditor(), getFile()));
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> action.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile()));
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.java");
+    });
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package com.intellij.codeInspection; public class CommonProblemDescriptor {}");
     myFixture.addClass("package com.intellij.codeInspection; public class QuickFix {}");
     myFixture.enableInspections(TitleCapitalizationInspection.class);
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
-
-  @Override
-  protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("java-i18n") + "/testData/inspections/capitalization";
   }
 }

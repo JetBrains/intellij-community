@@ -197,6 +197,8 @@ jvm_library(
         "//platform/structuralsearch/plugin",
         "//java/structuralsearch-java:structuralSearch",
         "//plugins/IntelliLang:langInjection",
+        "//platform/testFramework/junit5",
+        "//libraries/assertj-core",
     ],
 )
 ### auto-generated section `build intellij.testng.tests` end

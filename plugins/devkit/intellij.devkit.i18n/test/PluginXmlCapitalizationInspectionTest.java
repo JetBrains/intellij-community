@@ -4,38 +4,57 @@ package org.jetbrains.idea.devkit.i18n;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
 import com.intellij.openapi.project.IntelliJProjectUtil;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestDataPath("$CONTENT_ROOT/../testData/inspections/pluginXmlCapitalization/")
-public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class PluginXmlCapitalizationInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, DevkitI18nTestUtil.TESTDATA_PATH + "inspections/pluginXmlCapitalization");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitI18nTestUtil.TESTDATA_PATH + "inspections/pluginXmlCapitalization";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new PluginXmlCapitalizationInspection());
   }
 
+  @Test
   public void testPluginNameDomElementFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("pluginXmlPluginNameDomElementFix.xml");
     IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize");
-    myFixture.checkPreviewAndLaunchAction(capitalizeIntention);
-    myFixture.checkResultByFile("pluginXmlPluginNameDomElementFix_after.xml");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.checkPreviewAndLaunchAction(capitalizeIntention);
+      myFixture.checkResultByFile("pluginXmlPluginNameDomElementFix_after.xml");
+    });
   }
 
+  @Test
   public void testSeparatorTextDomElementFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("pluginXmlSeparatorTextDomElementFix.xml");
     IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize");
-    myFixture.checkPreviewAndLaunchAction(capitalizeIntention);
-    myFixture.checkResultByFile("pluginXmlSeparatorTextDomElementFix_after.xml");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.checkPreviewAndLaunchAction(capitalizeIntention);
+      myFixture.checkResultByFile("pluginXmlSeparatorTextDomElementFix_after.xml");
+    });
   }
 
+  @Test
   public void testActionDescriptionPropertyFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("pluginXmlActionDescriptionPropertyFix.xml",
                                "ActionDescriptionFixBundle.properties");
     IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize 'lower case description'");
@@ -48,7 +67,9 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
                                 "ActionDescriptionFixBundle_after.properties", true);
   }
 
+  @Test
   public void testActionTextUnicodeEscapesPropertyFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("pluginXmlActionTextUnicodeEscapesPropertyFix.xml",
                                "ActionTextUnicodeEscapesFixBundle.properties");
     IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize");
@@ -61,7 +82,9 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
                                 "ActionTextUnicodeEscapesFixBundle_after.properties", true);
   }
 
+  @Test
   public void testActionTextEscapedBackslashPropertyFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFiles("pluginXmlActionTextEscapedBackslashPropertyFix.xml",
                                "ActionTextEscapedBackslashFixBundle.properties");
     IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize");
@@ -74,7 +97,9 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
                                 "ActionTextEscapedBackslashFixBundle_after.properties", true);
   }
 
+  @Test
   public void testActionTextLineBreakPropertyFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFiles("pluginXmlActionTextLineBreakPropertyFix.xml",
                                "ActionTextLineBreakFixBundle.properties");
     IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize");
@@ -87,7 +112,9 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
                                 "ActionTextLineBreakFixBundle_after.properties", true);
   }
 
+  @Test
   public void testActionTextLeadingTabPropertyFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFiles("pluginXmlActionTextLeadingTabPropertyFix.xml",
                                "ActionTextLeadingTabFixBundle.properties");
     IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize");
@@ -100,7 +127,9 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
                                 "ActionTextLeadingTabFixBundle_after.properties", true);
   }
 
+  @Test
   public void testActionTextSpaceDelimiterPropertyFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("pluginXmlActionTextSpaceDelimiterPropertyFix.xml",
                                "ActionTextSpaceDelimiterFixBundle.properties");
     IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize");
@@ -113,7 +142,9 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
                                 "ActionTextSpaceDelimiterFixBundle_after.properties", true);
   }
 
+  @Test
   public void testActionTextLineContinuationPropertyFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("pluginXmlActionTextLineContinuationPropertyFix.xml",
                                "ActionTextLineContinuationFixBundle.properties");
     IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize");
@@ -126,7 +157,9 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
                                 "ActionTextLineContinuationFixBundle_after.properties", true);
   }
 
+  @Test
   public void testActionTextXmlEntityPropertyFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFiles("pluginXmlActionTextXmlEntityPropertyFix.xml",
                                "ActionTextXmlEntityFixBundle.properties");
     IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize 'copy & paste'");
@@ -139,7 +172,9 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
                                 "ActionTextXmlEntityFixBundle_after.properties", true);
   }
 
+  @Test
   public void testActionTextMnemonicPropertyFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("pluginXmlActionTextMnemonicPropertyFix.xml",
                                "ActionTextMnemonicFixBundle.properties");
     IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize 'copy path'");
@@ -152,29 +187,37 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
                                 "ActionTextMnemonicFixBundle_after.properties", true);
   }
 
+  @Test
   public void testActionPluginName() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("pluginXmlCapitalization_ActionPluginName.xml",
                                "MyBundle.properties", "MyAction.java", "AnotherBundle.properties");
   }
 
+  @Test
   public void testActionCorePluginId() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.testHighlighting("pluginXmlCapitalization_CorePluginId.xml",
                                "messages/ActionsBundle.properties");
   }
 
+  @Test
   public void testActionNoPluginIdInIdeaProject() {
-    IntelliJProjectUtil.markAsIntelliJPlatformProject(getProject(), true);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(myFixture.getProject(), true);
 
     try {
       myFixture.testHighlighting("pluginXmlCapitalization_NoPluginIdInIdeaProject.xml",
                                  "messages/ActionsBundle.properties");
     }
     finally {
-      IntelliJProjectUtil.markAsIntelliJPlatformProject(getProject(), false);
+      IntelliJProjectUtil.markAsIntelliJPlatformProject(myFixture.getProject(), false);
     }
   }
 
+  @Test
   public void testExtensionPoint() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package com.intellij.util.xmlb.annotations; public @interface Attribute { String value() default \"\";}");
     myFixture.addClass("package com.intellij.util.xmlb.annotations; public @interface Tag { String value() default \"\";}");
 

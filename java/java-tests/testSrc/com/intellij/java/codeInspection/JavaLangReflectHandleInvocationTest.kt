@@ -19,35 +19,57 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_9
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class JavaLangReflectHandleInvocationTest : LightJavaCodeInsightFixtureTestCase() {
-  fun testVirtual() = doTest()
-  fun testStatic() = doTest()
-  fun testConstructor() = doTest()
+@TestApplication
+class JavaLangReflectHandleInvocationTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_9)
+  }
 
-  fun testGetter() = doTest()
-  fun testSetter() = doTest()
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
-  fun testStaticGetter() = doTest()
-  fun testStaticSetter() = doTest()
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = JavaTestUtil.getJavaTestDataPath() + "/inspection/javaLangReflectHandleInvocation"
+  }
 
-  fun testVarHandle() = doTest()
-  fun testStaticVarHandle() = doTest()
-  fun testArrayVarHandle() = doTest()
+  @Test
+  fun testVirtual(): Unit = doTest()
+  @Test
+  fun testStatic(): Unit = doTest()
+  @Test
+  fun testConstructor(): Unit = doTest()
 
-  override fun setUp() {
-    super.setUp()
-    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_9)
+  @Test
+  fun testGetter(): Unit = doTest()
+  @Test
+  fun testSetter(): Unit = doTest()
+
+  @Test
+  fun testStaticGetter(): Unit = doTest()
+  @Test
+  fun testStaticSetter(): Unit = doTest()
+
+  @Test
+  fun testVarHandle(): Unit = doTest()
+  @Test
+  fun testStaticVarHandle(): Unit = doTest()
+  @Test
+  fun testArrayVarHandle(): Unit = doTest()
+
+  @BeforeEach
+  fun setUp() {
+    IdeaTestUtil.setProjectLanguageLevel(myFixture.project, LanguageLevel.JDK_1_9)
     myFixture.enableInspections(JavaLangInvokeHandleSignatureInspection())
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
-
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/javaLangReflectHandleInvocation"
-
   private fun doTest() {
-    myFixture.testHighlighting("${getTestName(false)}.java")
+    myFixture.testHighlighting("${myFixture.getTestName(false)}.java")
   }
 }

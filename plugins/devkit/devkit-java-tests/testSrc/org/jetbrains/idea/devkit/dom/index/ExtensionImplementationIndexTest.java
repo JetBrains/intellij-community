@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -11,11 +12,15 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.indexing.FileBasedIndex;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,18 +33,30 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 @TestDataPath("$CONTENT_ROOT/testData/dom/index/extensionImplementation")
-public class ExtensionImplementationIndexTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class ExtensionImplementationIndexTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, DevkitJavaTestsUtil.TESTDATA_PATH + "dom/index/extensionImplementation");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "dom/index/extensionImplementation";
-  }
-
+  @Test
   public void testKeysAndOffsets() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFile file = myFixture.copyFileToProject("plugin.xml", "META-INF/plugin.xml");
     String text = getText(file);
-    Map<String, IntList> data = FileBasedIndex.getInstance().getFileData(ExtensionImplementationIndex.NAME, file, getProject());
+    Map<String, IntList> data = ReadAction.computeBlocking(() -> FileBasedIndex.getInstance().getFileData(ExtensionImplementationIndex.NAME, file, myFixture.getProject()));
 
     int myEp1 = text.indexOf("<myEp implementation=\"myPkg.MyImplementation\" os");
     int myEp2 = text.indexOf("<myEp implementation=\"myPkg.Outer$Inner$Deepest\"");
@@ -49,15 +66,7 @@ public class ExtensionImplementationIndexTest extends LightJavaCodeInsightFixtur
     int bean = text.indexOf("<myBeanEp");
     int dotted = text.indexOf("<dottedEp");
 
-    assertSameElements(data.keySet(),
-                       "myPkg.MyImplementation",
-                       "myPkg.MyService", "myPkg.MyServiceImpl",
-                       "myPkg.MyContributor",
-                       "myPkg.MyBeanClass",
-                       "myPkg.Deep$Nested", "myPkg.Deep",
-                       "myPkg.Outer$Inner$Deepest", "myPkg.Outer$Inner", "myPkg.Outer",
-                       "myPkg.Outer.DottedInner",
-                       "ep:myEp", "ep:applicationService", "ep:contributor", "ep:myBeanEp", "ep:fold", "ep:dottedEp", "ep:ext");
+    assertThat(data.keySet()).containsOnly("myPkg.MyImplementation", "myPkg.MyService", "myPkg.MyServiceImpl", "myPkg.MyContributor", "myPkg.MyBeanClass", "myPkg.Deep$Nested", "myPkg.Deep", "myPkg.Outer$Inner$Deepest", "myPkg.Outer$Inner", "myPkg.Outer", "myPkg.Outer.DottedInner", "ep:myEp", "ep:applicationService", "ep:contributor", "ep:myBeanEp", "ep:fold", "ep:dottedEp", "ep:ext");
 
     assertOffsets(data, "myPkg.MyImplementation", myEp1, myEp3);
     assertOffsets(data, "myPkg.MyService", service);
@@ -74,7 +83,9 @@ public class ExtensionImplementationIndexTest extends LightJavaCodeInsightFixtur
     assertOffsets(data, "ep:contributor", contributor);
   }
 
+  @Test
   public void testExtensionPointShortNames() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     var file = myFixture.addFileToProject("META-INF/plugin.xml", """
       <idea-plugin>
         <extensions defaultExtensionNs="com.intellij">
@@ -90,21 +101,25 @@ public class ExtensionImplementationIndexTest extends LightJavaCodeInsightFixtur
       """);
     var scope = GlobalSearchScope.fileScope(file);
     var names = new ArrayList<String>();
-    assertTrue(ExtensionImplementationIndex.processExtensionsByEpShortName(getProject(), "contributor", scope, tag -> {
-      names.add(tag.getName());
-      return true;
-    }));
-    assertOrderedEquals(names, "contributor", "completion.contributor");
+    ReadAction.runBlocking(() -> {
+      assertTrue(ExtensionImplementationIndex.processExtensionsByEpShortName(myFixture.getProject(), "contributor", scope, tag -> {
+        names.add(tag.getName());
+        return true;
+      }));
+      assertIterableEquals(List.of("contributor", "completion.contributor"), names);
 
-    names.clear();
-    assertFalse(ExtensionImplementationIndex.processExtensionsByEpShortName(getProject(), "contributor", scope, tag -> {
-      names.add(tag.getName());
-      return false;
-    }));
-    assertSize(1, names);
+      names.clear();
+      assertFalse(ExtensionImplementationIndex.processExtensionsByEpShortName(myFixture.getProject(), "contributor", scope, tag -> {
+        names.add(tag.getName());
+        return false;
+      }));
+      assertThat(names).hasSize(1);
+    });
   }
 
+  @Test
   public void testExtensionPointShortNamesAcrossFiles() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     int fileCount = 24;
     var expectedIds = List.of("first", "second", "third", "fourth", "fifth", "sixth",
                              "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth");
@@ -116,74 +131,85 @@ public class ExtensionImplementationIndexTest extends LightJavaCodeInsightFixtur
       xml.append("</extensions></idea-plugin>");
       myFixture.addFileToProject("plugin" + i + ".xml", xml.toString());
     }
-    var scope = GlobalSearchScope.projectScope(getProject());
+    var scope = GlobalSearchScope.projectScope(myFixture.getProject());
     var idsByFile = new ConcurrentHashMap<String, List<String>>();
-    assertTrue(ExtensionImplementationIndex.processExtensionsByEpShortName(getProject(), "contributor", scope, tag -> {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-      idsByFile.computeIfAbsent(tag.getContainingFile().getName(), _ -> new ArrayList<>()).add(tag.getAttributeValue("id"));
-      return true;
-    }));
-    assertSize(fileCount, idsByFile.keySet());
-    for (var ids : idsByFile.values()) {
-      assertOrderedEquals(ids, expectedIds);
-    }
+    ReadAction.runBlocking(() -> {
+      assertTrue(ExtensionImplementationIndex.processExtensionsByEpShortName(myFixture.getProject(), "contributor", scope, tag -> {
+        ApplicationManager.getApplication().assertReadAccessAllowed();
+        idsByFile.computeIfAbsent(tag.getContainingFile().getName(), _ -> new ArrayList<>()).add(tag.getAttributeValue("id"));
+        return true;
+      }));
+      assertThat(idsByFile.keySet()).hasSize(fileCount);
+      for (var ids : idsByFile.values()) {
+        assertIterableEquals(expectedIds, ids);
+      }
 
-    var processed = new AtomicInteger();
-    assertFalse(ExtensionImplementationIndex.processExtensionsByEpShortName(getProject(), "contributor", scope, _ -> {
-      processed.incrementAndGet();
-      return false;
-    }));
-    assertTrue(processed.get() > 0 && processed.get() <= fileCount);
+      var processed = new AtomicInteger();
+      assertFalse(ExtensionImplementationIndex.processExtensionsByEpShortName(myFixture.getProject(), "contributor", scope, _ -> {
+        processed.incrementAndGet();
+        return false;
+      }));
+      assertTrue(processed.get() > 0 && processed.get() <= fileCount);
+    });
   }
 
+  @Test
   public void testExtensionPointLookupCancellation() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     var file = myFixture.copyFileToProject("plugin.xml", "META-INF/plugin.xml");
-    var scope = GlobalSearchScope.fileScope(getProject(), file);
+    var scope = GlobalSearchScope.fileScope(myFixture.getProject(), file);
     var indicator = new EmptyProgressIndicator();
     var processed = new AtomicInteger();
-    assertThrows(ProcessCanceledException.class, () -> ProgressManager.getInstance().runProcess(() ->
-      ExtensionImplementationIndex.processExtensionsByEpShortName(getProject(), "myEp", scope, _ -> {
-        processed.incrementAndGet();
-        indicator.cancel();
-        return true;
-      }), indicator));
+    ReadAction.runBlocking(() -> {
+      assertThrows(ProcessCanceledException.class, () -> ProgressManager.getInstance().runProcess(() ->
+        ExtensionImplementationIndex.processExtensionsByEpShortName(myFixture.getProject(), "myEp", scope, _ -> {
+          processed.incrementAndGet();
+          indicator.cancel();
+          return true;
+        }), indicator));
+    });
     assertEquals(1, processed.get());
   }
 
+  @Test
   public void testProcessExtensions() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     VirtualFile file = myFixture.copyFileToProject("plugin.xml", "META-INF/plugin.xml");
     String text = getText(file);
-    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
 
     List<XmlTag> tags = new ArrayList<>();
-    assertTrue(ExtensionImplementationIndex.processExtensions(getProject(), "myPkg.MyImplementation", scope, tags::add));
-    assertSize(2, tags);
-    for (XmlTag tag : tags) {
-      assertEquals("myEp", tag.getName());
-      assertEquals("myPkg.MyImplementation", tag.getAttributeValue("implementation"));
-    }
+    ReadAction.runBlocking(() -> {
+      assertTrue(ExtensionImplementationIndex.processExtensions(myFixture.getProject(), "myPkg.MyImplementation", scope, tags::add));
+      assertThat(tags).hasSize(2);
+      for (XmlTag tag : tags) {
+        assertEquals("myEp", tag.getName());
+        assertEquals("myPkg.MyImplementation", tag.getAttributeValue("implementation"));
+      }
 
-    tags.clear();
-    assertTrue(ExtensionImplementationIndex.processExtensions(getProject(), "myPkg.Outer", scope, tags::add));
-    XmlTag outer = assertOneElement(tags);
-    assertEquals(text.indexOf("<myEp implementation=\"myPkg.Outer$Inner$Deepest\""), outer.getTextOffset());
-    assertEquals("myPkg.Outer$Inner$Deepest", outer.getAttributeValue("implementation"));
+      tags.clear();
+      assertTrue(ExtensionImplementationIndex.processExtensions(myFixture.getProject(), "myPkg.Outer", scope, tags::add));
+      XmlTag outer = assertThat(tags).singleElement().actual();
+      assertEquals(text.indexOf("<myEp implementation=\"myPkg.Outer$Inner$Deepest\""), outer.getTextOffset());
+      assertEquals("myPkg.Outer$Inner$Deepest", outer.getAttributeValue("implementation"));
 
-    tags.clear();
-    assertTrue(ExtensionImplementationIndex.processExtensions(getProject(), "myPkg.Deep", scope, tags::add));
-    assertEquals("myBeanEp", assertOneElement(tags).getName());
+      tags.clear();
+      assertTrue(ExtensionImplementationIndex.processExtensions(myFixture.getProject(), "myPkg.Deep", scope, tags::add));
+      assertEquals("myBeanEp", assertThat(tags).singleElement().actual().getName());
 
-    tags.clear();
-    assertFalse(ExtensionImplementationIndex.processExtensions(getProject(), "myPkg.MyImplementation", scope, tag -> {
-      tags.add(tag);
-      return false;
-    }));
-    assertSize(1, tags);
+      tags.clear();
+      assertFalse(ExtensionImplementationIndex.processExtensions(myFixture.getProject(), "myPkg.MyImplementation", scope, tag -> {
+        tags.add(tag);
+        return false;
+      }));
+      assertThat(tags).hasSize(1);
 
-    assertTrue(ExtensionImplementationIndex.processExtensions(getProject(), "myPkg.MyClass.foo", scope, ExtensionImplementationIndexTest::unexpected));
-    assertTrue(ExtensionImplementationIndex.processExtensions(getProject(), "myPkg.MyClass", scope, ExtensionImplementationIndexTest::unexpected));
+      assertTrue(ExtensionImplementationIndex.processExtensions(myFixture.getProject(), "myPkg.MyClass.foo", scope, ExtensionImplementationIndexTest::unexpected));
+      assertTrue(ExtensionImplementationIndex.processExtensions(myFixture.getProject(), "myPkg.MyClass", scope, ExtensionImplementationIndexTest::unexpected));
+    });
   }
 
+  @Test
   public void testIsClassLike() {
     assertTrue(ExtensionImplementationIndex.isClassLike("myPkg.MyClass"));
     assertTrue(ExtensionImplementationIndex.isClassLike("a.b.C"));
@@ -206,7 +232,9 @@ public class ExtensionImplementationIndexTest extends LightJavaCodeInsightFixtur
     assertFalse(ExtensionImplementationIndex.isClassLike("META-INF/Plugin.xml"));
   }
 
+  @Test
   public void testExactAndPrefixMatches() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     var file = myFixture.addFileToProject("META-INF/plugin.xml", """
       <idea-plugin>
         <extensions defaultExtensionNs="com.intellij">
@@ -219,21 +247,25 @@ public class ExtensionImplementationIndexTest extends LightJavaCodeInsightFixtur
       """);
     var scope = GlobalSearchScope.fileScope(file);
     var ids = new ArrayList<String>();
-    assertTrue(ExtensionImplementationIndex.processExtensions(getProject(), "myPkg.Outer", scope, true, tag -> {
-      ids.add(tag.getAttributeValue("id"));
-      return true;
-    }));
-    assertOrderedEquals(ids, "prefixFirst", "exactFirst", "nested");
+    ReadAction.runBlocking(() -> {
+      assertTrue(ExtensionImplementationIndex.processExtensions(myFixture.getProject(), "myPkg.Outer", scope, true, tag -> {
+        ids.add(tag.getAttributeValue("id"));
+        return true;
+      }));
+      assertIterableEquals(List.of("prefixFirst", "exactFirst", "nested"), ids);
 
-    ids.clear();
-    assertTrue(ExtensionImplementationIndex.processExtensions(getProject(), "myPkg.Outer", scope, tag -> {
-      ids.add(tag.getAttributeValue("id"));
-      return true;
-    }));
-    assertOrderedEquals(ids, "prefix", "prefixFirst", "exactFirst", "nested");
+      ids.clear();
+      assertTrue(ExtensionImplementationIndex.processExtensions(myFixture.getProject(), "myPkg.Outer", scope, tag -> {
+        ids.add(tag.getAttributeValue("id"));
+        return true;
+      }));
+      assertIterableEquals(List.of("prefix", "prefixFirst", "exactFirst", "nested"), ids);
+    });
   }
 
+  @Test
   public void testXIncludesAreSkipped() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     var file = myFixture.addFileToProject("META-INF/plugin.xml", """
       <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
         <extensions defaultExtensionNs="com.intellij">
@@ -242,21 +274,26 @@ public class ExtensionImplementationIndexTest extends LightJavaCodeInsightFixtur
         </extensions>
       </idea-plugin>
       """).getVirtualFile();
-    Map<String, IntList> data = FileBasedIndex.getInstance().getFileData(ExtensionImplementationIndex.NAME, file, getProject());
+    Map<String, IntList> data = ReadAction.computeBlocking(() -> FileBasedIndex.getInstance().getFileData(ExtensionImplementationIndex.NAME, file, myFixture.getProject()));
 
-    assertSameElements(data.keySet(), "myPkg.MyImplementation", "ep:myEp");
+    assertThat(data.keySet()).containsOnly("myPkg.MyImplementation", "ep:myEp");
   }
 
+  @Test
   public void testStrictMatchSkipsOuterPrefixes() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     var file = myFixture.copyFileToProject("plugin.xml", "META-INF/plugin.xml");
-    var scope = GlobalSearchScope.fileScope(getProject(), file);
-    assertTrue(ExtensionImplementationIndex.processExtensions(getProject(), "myPkg.Outer", scope, true,
-                                                             ExtensionImplementationIndexTest::unexpected));
-    var tags = new ArrayList<XmlTag>();
-    assertTrue(ExtensionImplementationIndex.processExtensions(getProject(), "myPkg.Outer$Inner$Deepest", scope, true, tags::add));
-    assertSize(1, tags);
+    var scope = GlobalSearchScope.fileScope(myFixture.getProject(), file);
+    ReadAction.runBlocking(() -> {
+      assertTrue(ExtensionImplementationIndex.processExtensions(myFixture.getProject(), "myPkg.Outer", scope, true,
+                                                               ExtensionImplementationIndexTest::unexpected));
+      var tags = new ArrayList<XmlTag>();
+      assertTrue(ExtensionImplementationIndex.processExtensions(myFixture.getProject(), "myPkg.Outer$Inner$Deepest", scope, true, tags::add));
+      assertThat(tags).hasSize(1);
+    });
   }
 
+  @Test
   public void testValueExternalizer() throws IOException {
     var externalizer = new ExtensionImplementationIndex().getValueExternalizer();
     for (var values : List.of(IntList.of(), IntList.of(40000), IntList.of(40001), IntList.of(0, 384, 40001))) {
@@ -273,23 +310,24 @@ public class ExtensionImplementationIndexTest extends LightJavaCodeInsightFixtur
   }
 
   private String getText(VirtualFile file) {
-    PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiFile psiFile = ReadAction.computeBlocking(() -> PsiManager.getInstance(myFixture.getProject()).findFile(file));
     assertNotNull(psiFile);
-    return psiFile.getText();
+    return ReadAction.computeBlocking(() -> psiFile.getText());
   }
 
   private static void assertOffsets(Map<String, IntList> data, String key, int... expected) {
     IntList actual = data.get(key);
-    assertNotNull("no key " + key, actual);
+    assertNotNull(actual, "no key " + key);
     List<Integer> expectedList = new ArrayList<>();
     for (int offset : expected) {
-      assertTrue("fixture marker not found for " + key, offset >= 0);
+      assertTrue(offset >= 0, "fixture marker not found for " + key);
       expectedList.add(offset);
     }
     IntList offsets = new IntArrayList(actual.size());
     for (int i = 0; i < actual.size(); i++) {
       offsets.add(actual.getInt(i) >>> 1);
     }
-    assertOrderedEquals(key, offsets, expectedList);
+    assertIterableEquals(expectedList, offsets, key);
   }
 }

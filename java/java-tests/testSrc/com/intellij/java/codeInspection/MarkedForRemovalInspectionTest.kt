@@ -8,40 +8,61 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.DeprecationUtil
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_9
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class MarkedForRemovalInspectionTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class MarkedForRemovalInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_9)
+  }
 
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/forRemoval"
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = JavaTestUtil.getJavaTestDataPath() + "/inspection/forRemoval"
+  }
 
   private val inspection = MarkedForRemovalInspection()
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(inspection)
   }
 
-  fun testClass() = doTest()
+  @Test
+  fun testClass(): Unit = doTest()
 
-  fun testField() = doTest()
+  @Test
+  fun testField(): Unit = doTest()
 
-  fun testMethod() = doTest()
+  @Test
+  fun testMethod(): Unit = doTest()
 
-  fun testOverride() = doTest()
+  @Test
+  fun testOverride(): Unit = doTest()
 
-  fun testOverridesNonDeprecatedInterface() = doTest()
+  @Test
+  fun testOverridesNonDeprecatedInterface(): Unit = doTest()
 
-  fun testDefaultConstructorInSuper() = doTest()
+  @Test
+  fun testDefaultConstructorInSuper(): Unit = doTest()
   
-  fun testWithSince() = doTest()
+  @Test
+  fun testWithSince(): Unit = doTest()
 
-  fun testSameOutermostClass() = doTest()
+  @Test
+  fun testSameOutermostClass(): Unit = doTest()
 
-  fun testAnnotationProperty() = doTest()
+  @Test
+  fun testAnnotationProperty(): Unit = doTest()
 
+  @Test
   fun testSameOutermostClassOff() {
     val oldIgnore = inspection.IGNORE_IN_SAME_OUTERMOST_CLASS
     try {
@@ -53,11 +74,14 @@ class MarkedForRemovalInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     }
   }
 
-  fun testErrorSeverity() = doTest()
+  @Test
+  fun testErrorSeverity(): Unit = doTest()
 
-  fun testWarningSeverity() = doSeverityTest(HighlightDisplayLevel.WARNING)
+  @Test
+  fun testWarningSeverity(): Unit = doSeverityTest(HighlightDisplayLevel.WARNING)
 
-  fun testWeakWarningSeverity() = doSeverityTest(HighlightDisplayLevel.WEAK_WARNING)
+  @Test
+  fun testWeakWarningSeverity(): Unit = doSeverityTest(HighlightDisplayLevel.WEAK_WARNING)
 
   private fun doSeverityTest(severityLevel: HighlightDisplayLevel) {
     val forRemovalKey: HighlightDisplayKey = HighlightDisplayKey.find(DeprecationUtil.FOR_REMOVAL_SHORT_NAME)!!
@@ -74,7 +98,7 @@ class MarkedForRemovalInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   private fun doTest() {
-    myFixture.configureByFile(getTestName(false) + ".java")
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java")
     myFixture.checkHighlighting()
   }
 }

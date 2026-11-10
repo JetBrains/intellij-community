@@ -10,71 +10,93 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WRAP_ALWAYS
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class TypeAnnotationFormatterTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class TypeAnnotationFormatterTest {
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = "${JavaTestUtil.getJavaTestDataPath()}/psi/formatter/java/typeAnnotation/"
+  }
+
   companion object {
     private val PROJECT_DESCRIPTOR = DefaultLightProjectDescriptor()
       .withJetBrainsAnnotationsWithTypeUse()
+    private val projectFixture = lightJavaProjectFixture(PROJECT_DESCRIPTOR)
   }
 
   private val commonSettings: CommonCodeStyleSettings
-    get() = CodeStyle.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE)
+    get() = CodeStyle.getSettings(myFixture.project).getCommonSettings(JavaLanguage.INSTANCE)
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = PROJECT_DESCRIPTOR
-
-  override fun getTestDataPath() = "${JavaTestUtil.getJavaTestDataPath()}/psi/formatter/java/typeAnnotation/"
-
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     commonSettings.KEEP_LINE_BREAKS = false
     commonSettings.METHOD_ANNOTATION_WRAP = WRAP_ALWAYS
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_8, myFixture.testRootDisposable)
   }
 
-  fun testKnownAnnotationBeforeType() = doTest()
+  @Test
+  fun testKnownAnnotationBeforeType(): Unit = doTest()
 
-  fun testKnownAnnotationBeforeTypeParameterList() = doTest()
+  @Test
+  fun testKnownAnnotationBeforeTypeParameterList(): Unit = doTest()
 
-  fun testCustomAnnotation() = doTest()
+  @Test
+  fun testCustomAnnotation(): Unit = doTest()
 
-  fun testManyKnownAnnotations() = doTest()
+  @Test
+  fun testManyKnownAnnotations(): Unit = doTest()
 
-  fun testPreserveWrappingSingleAnnotation() = doTest()
+  @Test
+  fun testPreserveWrappingSingleAnnotation(): Unit = doTest()
 
-  fun testPreserveWrappingManyAnnotations() = doTest()
+  @Test
+  fun testPreserveWrappingManyAnnotations(): Unit = doTest()
 
-  fun testFullyQualifiedName() = doTest()
+  @Test
+  fun testFullyQualifiedName(): Unit = doTest()
 
-  fun testImportOnDemand() = doTest()
+  @Test
+  fun testImportOnDemand(): Unit = doTest()
 
-  fun testImportMix() = doTest()
+  @Test
+  fun testImportMix(): Unit = doTest()
 
-  fun testSpacesInImportList() = doTest()
+  @Test
+  fun testSpacesInImportList(): Unit = doTest()
 
-  fun testSpacesInFqnAnnotations() = doTest()
+  @Test
+  fun testSpacesInFqnAnnotations(): Unit = doTest()
 
+  @Test
   fun testKeepLineBreaks() {
     commonSettings.KEEP_LINE_BREAKS = true
     doTest()
   }
 
+  @Test
   fun testLowLanguageLevel() {
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_7)
     doTest()
   }
 
+  @Test
   fun testModuleImport() {
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_25)
     doTest()
   }
 
   private fun doTest() {
-    val testName = getTestName(false)
+    val testName = myFixture.getTestName(false)
     myFixture.configureByFile("$testName.java")
-    WriteCommandAction.runWriteCommandAction(project) { CodeStyleManager.getInstance(project).reformatText(file, 0, editor.document.textLength) }
+    WriteCommandAction.runWriteCommandAction(myFixture.project) { CodeStyleManager.getInstance(myFixture.project).reformatText(myFixture.file, 0, myFixture.editor.document.textLength) }
     myFixture.checkResultByFile("${testName}_after.java")
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDiamondType;
@@ -14,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiForeachStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiNewExpression;
@@ -28,79 +30,111 @@ import com.intellij.psi.impl.light.LightFieldBuilder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ref.GCUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PsiAugmentProviderTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class PsiAugmentProviderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   private static final String AUGMENTED_FIELD = "augmented";
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/augment";
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/augment");
     PsiAugmentProvider.EP_NAME.getPoint().registerExtension(new TestAugmentProvider(), myFixture.getTestRootDisposable());
     myFixture.addClass("package lombok;\npublic @interface val { }");
   }
 
+  @Test
   public void testLombokVal() {
-    myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.testHighlighting(false, false, false, myFixture.getTestName(false) + ".java");
   }
 
+  @Test
   public void testLombokEditing() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("a.java", "import lombok.val;\nclass Foo { {val o = <caret>;} }");
-    PsiLocalVariable var = PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getCaretOffset()), PsiLocalVariable.class);
+    PsiLocalVariable var = ReadAction.computeBlocking(() -> PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getCaretOffset()), PsiLocalVariable.class));
     assertNotNull(var);
 
-    PsiType type1 = var.getType();
-    assertNotNull(type1);
-    assertEquals("lombok.val", type1.getCanonicalText(false));
+    ReadAction.runBlocking(() -> {
+      PsiType type1 = var.getType();
+      assertNotNull(type1);
+      assertEquals("lombok.val", type1.getCanonicalText(false));
+    });
 
     myFixture.type('1');
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    assertTrue(var.isValid());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+      assertTrue(var.isValid());
 
-    PsiType type2 = var.getType();
-    assertNotNull(type2);
-    assertEquals(PsiTypes.intType().getCanonicalText(false), type2.getCanonicalText(false));
+      PsiType type2 = var.getType();
+      assertNotNull(type2);
+      assertEquals(PsiTypes.intType().getCanonicalText(false), type2.getCanonicalText(false));
+    });
   }
 
+  @Test
   public void testDuplicatesFromSeveralAugmenterCallsAreIgnored() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass psiClass = myFixture.addClass("class C {}");
-    PsiField field = psiClass.findFieldByName(AUGMENTED_FIELD, false);
+    PsiField field = ReadAction.computeBlocking(() -> psiClass.findFieldByName(AUGMENTED_FIELD, false));
     assertNotNull(field);
 
     GCUtil.tryGcSoftlyReachableObjects();
 
-    assertSame(field, psiClass.findFieldByName(AUGMENTED_FIELD, false));
+    assertSame(field, ReadAction.computeBlocking(() -> psiClass.findFieldByName(AUGMENTED_FIELD, false)));
   }
 
+  @Test
   public void testDoNotCacheInvalidAugmentedFields() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass psiClass = myFixture.addClass("class C {}");
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
       PsiField field = psiClass.findFieldByName(AUGMENTED_FIELD, false);
       assertTrue(field.isValid());
 
-      getPsiManager().dropPsiCaches();
+      PsiManager.getInstance(myFixture.getProject()).dropPsiCaches();
       assertFalse(field.isValid());
 
       PsiUtilCore.ensureValid(psiClass.findFieldByName(AUGMENTED_FIELD, false));
     });
   }
 
+  @Test
   public void testPassNameHintToAugmenter() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass psiClass = myFixture.addClass("class C {}");
 
     List<String> hints = new ArrayList<>();
@@ -116,12 +150,14 @@ public class PsiAugmentProviderTest extends LightJavaCodeInsightFixtureTestCase 
       }
     }, myFixture.getTestRootDisposable());
 
-    assertNotNull(psiClass.findFieldByName(AUGMENTED_FIELD, true));
-    assertNull(psiClass.findFieldByName("another", false));
-    assertSize(1, psiClass.getFields());
-    assertSize(2, psiClass.getAllFields());
+    ReadAction.runBlocking(() -> {
+      assertNotNull(psiClass.findFieldByName(AUGMENTED_FIELD, true));
+      assertNull(psiClass.findFieldByName("another", false));
+      assertThat(psiClass.getFields()).hasSize(1);
+      assertThat(psiClass.getAllFields()).hasSize(2);
 
-    assertOrderedEquals(hints, AUGMENTED_FIELD, "another", null);
+      assertIterableEquals(Arrays.asList(AUGMENTED_FIELD, "another", null), hints);
+    });
   }
 
   private static class TestAugmentProvider extends PsiAugmentProvider {

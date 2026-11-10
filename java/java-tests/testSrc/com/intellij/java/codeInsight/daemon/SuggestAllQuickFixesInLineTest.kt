@@ -3,24 +3,42 @@ package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.IntentionsUI
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.enableInspectionTool
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class SuggestAllQuickFixesInLineTest : LightJavaCodeInsightFixtureTestCase() {
-  fun testPreferFixesFromOffset() {
-    enableInspectionTool(project, UnusedDeclarationInspection(true), testRootDisposable)
+@TestApplication
+class SuggestAllQuickFixesInLineTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
+  fun testPreferFixesFromOffset(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
+    enableInspectionTool(myFixture.project, UnusedDeclarationInspection(true), myFixture.testRootDisposable)
     myFixture.configureByText("Foo.java",
                               "class Test {\n" +
                               "    int fo<caret>o; int bar = UnknownMethod();\n" +
                               "}")
     myFixture.doHighlighting()
-    val allActions = IntentionsUI.getInstance(project).getCachedIntentions(editor, file).allActions
+    val allActions = readAction { IntentionsUI.getInstance(myFixture.project).getCachedIntentions(myFixture.editor, myFixture.file).allActions }
     assertNotNull(allActions.first {  it.text == "Safe delete 'foo'" })
     assertNotNull(allActions.first {  it.text == "Create method 'UnknownMethod' in 'Test'" })
 
-    editor.caretModel.moveToOffset(editor.caretModel.offset + 20)
+    withContext(Dispatchers.EDT) { myFixture.editor.caretModel.moveToOffset(myFixture.editor.caretModel.offset + 20) }
     myFixture.doHighlighting()
-    val newActions = IntentionsUI.getInstance(project).getCachedIntentions(editor, file).allActions
+    val newActions = readAction { IntentionsUI.getInstance(myFixture.project).getCachedIntentions(myFixture.editor, myFixture.file).allActions }
     assertNotNull(newActions.first {  it.text == "Create method 'UnknownMethod' in 'Test'" })
   }
 }

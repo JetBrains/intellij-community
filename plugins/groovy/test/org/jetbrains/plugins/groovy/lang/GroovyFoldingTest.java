@@ -1,23 +1,41 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Max Medvedev
  */
-public class GroovyFoldingTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class GroovyFoldingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   private void configure(String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("____________a_______________.groovy", text);
-    EditorTestUtil.buildInitialFoldingsInBackground(myFixture.getEditor());
+    EdtTestUtil.runInEdtAndWait(() -> EditorTestUtil.buildInitialFoldingsInBackground(myFixture.getEditor()));
     myFixture.doHighlighting();
   }
 
   private boolean assertFolding(final int offset) {
-    assertTrue("offset should be positive. current: " + offset, offset >= 0);
-    FoldRegion[] regions = myFixture.getEditor().getFoldingModel().getAllFoldRegions();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    assertTrue(offset >= 0, "offset should be positive. current: " + offset);
+    FoldRegion[] regions = ReadAction.computeBlocking(() -> myFixture.getEditor().getFoldingModel().getAllFoldRegions());
     for (FoldRegion region : regions) {
       if (region.getStartOffset() == offset) return true;
     }
@@ -25,12 +43,14 @@ public class GroovyFoldingTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void assertFolding(String marker) {
-    assertTrue(marker, assertFolding(myFixture.getFile().getText().indexOf(marker)));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    assertTrue(assertFolding(myFixture.getFile().getText().indexOf(marker)), marker);
   }
 
   private boolean assertNoFolding(final int offset) {
-    assertTrue("offset should be positive. current: " + offset, offset >= 0);
-    FoldRegion[] regions = myFixture.getEditor().getFoldingModel().getAllFoldRegions();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    assertTrue(offset >= 0, "offset should be positive. current: " + offset);
+    FoldRegion[] regions = ReadAction.computeBlocking(() -> myFixture.getEditor().getFoldingModel().getAllFoldRegions());
     for (FoldRegion region : regions) {
       if (offset >= region.getStartOffset() && region.getEndOffset() > offset) return false;
     }
@@ -38,18 +58,21 @@ public class GroovyFoldingTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void assertNoFolding(String marker) {
-    assertTrue(marker, assertNoFolding(myFixture.getFile().getText().indexOf(marker)));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    assertTrue(assertNoFolding(myFixture.getFile().getText().indexOf(marker)), marker);
   }
 
+  @Test
   public void testEditingImports() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure("""
-                
+              
                 import java.util.List
                 import java.util.Map
                 <caret>
-                
+              
                 println 'hello'
-                
+              
                 class Foo { List a; Map b; }
                 """);
 
@@ -60,6 +83,7 @@ public class GroovyFoldingTest extends LightJavaCodeInsightFixtureTestCase {
     assertNull(myFixture.getEditor().getFoldingModel().getCollapsedRegionAtOffset(46));
   }
 
+  @Test
   public void testOpenBlock() {
     configure("""
                 def foo() {print 'a'}
@@ -70,6 +94,7 @@ public class GroovyFoldingTest extends LightJavaCodeInsightFixtureTestCase {
     assertFolding("{\n");
   }
 
+  @Test
   public void testClosureBlock() {
     configure("""
                 def foo = {print 'a'}
@@ -80,6 +105,7 @@ public class GroovyFoldingTest extends LightJavaCodeInsightFixtureTestCase {
     assertFolding("{\n");
   }
 
+  @Test
   public void testClassBody() {
     configure("""
                 class Single {//1
@@ -94,14 +120,15 @@ public class GroovyFoldingTest extends LightJavaCodeInsightFixtureTestCase {
     assertFolding("{//3");
   }
 
+  @Test
   public void testComments() {
     configure("""
-                
+              
                 #!sh comment
                 /*single lime*/
                 /*multi
                 line*/
-                
+              
                 //one
                 //two
                 //region test
@@ -110,13 +137,13 @@ public class GroovyFoldingTest extends LightJavaCodeInsightFixtureTestCase {
                 //endregion
                 //five
                 //six
-                
+              
                 delimiter()
                 //single
-                
+              
                 /**single line doccomment */
                 def foo(){}
-                
+              
                 /**multiline
                 */
                 def bar(){}
@@ -133,6 +160,7 @@ public class GroovyFoldingTest extends LightJavaCodeInsightFixtureTestCase {
     assertFolding("/**multi");
   }
 
+  @Test
   public void testStrings() {
     configure("""
                 def s1 = '''1
@@ -144,12 +172,12 @@ public class GroovyFoldingTest extends LightJavaCodeInsightFixtureTestCase {
                 def s5 = ""\"5 ${text} defabc ${fg} ""\"
                 def s6 = ""\"6 ${text} def
                 abc ${fg}""\"
-                
+              
                 def s7 = /7singlelinestring/
                 def s8 = /8print ${text} defabc ${fg} /
                 def s9 = /9print ${text}+- def
                 abc ${fg}/
-                
+              
                 def s10 = $/10singlelinestring/$
                 def s11 = $/11print ${text} defabc ${fg} /$
                 def s12 = $/12print ${text}-+ def

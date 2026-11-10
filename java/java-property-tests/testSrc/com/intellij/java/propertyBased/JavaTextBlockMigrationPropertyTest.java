@@ -20,14 +20,19 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.testFramework.propertyBased.MadTestingAction;
 import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.ObjectUtils;
@@ -37,53 +42,53 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.PropertyChecker;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @SkipSlowTestLocally
-public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class JavaTextBlockMigrationPropertyTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_15);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15;
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new TextBlockMigrationInspection(), new TextBlockBackwardMigrationInspection());
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    // remove jdk if it was created during highlighting to avoid leaks
-    try {
-      JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
   }
 
+  @Test
   public void testPreserveStringContent() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Supplier<MadTestingAction> fileAction =
       MadTestingUtil.performOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"),
                                            this::transformContent);
-    PropertyChecker.
-      checkScenarios(fileAction);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PropertyChecker.
+        checkScenarios(fileAction);
+    });
   }
 
   private void transformContent(@NotNull ImperativeCommand.Environment env, @NotNull VirtualFile file) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     List<PsiPolyadicExpression> concatenations =
-      ContainerUtil.filter(PsiTreeUtil.findChildrenOfType(getPsiManager().findFile(file), PsiPolyadicExpression.class),
+      ContainerUtil.filter(PsiTreeUtil.findChildrenOfType(PsiManager.getInstance(myFixture.getProject()).findFile(file), PsiPolyadicExpression.class),
                            e -> e.getType() != null && e.getType().equalsToText(JAVA_LANG_STRING));
     if (concatenations.isEmpty()) return;
 
@@ -100,7 +105,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
 
       env.logMessage("Tweaking concatenation at " + concatenation.getTextRange());
 
-      List<Pair<PsiElement, TextRange>> injected = InjectedLanguageManager.getInstance(getProject()).getInjectedPsiFiles(operands[0]);
+      List<Pair<PsiElement, TextRange>> injected = InjectedLanguageManager.getInstance(myFixture.getProject()).getInjectedPsiFiles(operands[0]);
       // IDEA-224671
       if (injected != null && !injected.isEmpty()) continue;
       String expected = getConcatenationText(operands);
@@ -108,7 +113,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
       expected = replaceUnescapedSpaces(expected);
 
       Computable<PsiElement> replaceAction = () -> {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(myFixture.getProject()).getElementFactory();
         PsiExpression newExpression = factory.createExpressionFromText("(" + concatenation.getText() + ")", null);
         return concatenation.replace(newExpression);
       };
@@ -123,7 +128,7 @@ public class JavaTextBlockMigrationPropertyTest extends LightJavaCodeInsightFixt
       PsiExpression[] operandsAfter = getOperands(element);
 
       String actual = Objects.requireNonNull(getConcatenationText(operandsAfter));
-      assertEquals("concatenation content", expected, actual);
+      assertEquals(expected, actual, "concatenation content");
     }
   }
   

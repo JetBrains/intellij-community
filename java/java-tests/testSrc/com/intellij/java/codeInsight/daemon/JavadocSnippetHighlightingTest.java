@@ -4,16 +4,32 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class JavadocSnippetHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class JavadocSnippetHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new JavadocDeclarationInspection());
   }
 
+  @Test
   public void testSnippetExternalMismatch() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("snippet-files/Test.java", """
       class Test {
           // @start region=reg
@@ -40,25 +56,29 @@ public class JavadocSnippetHighlightingTest extends LightJavaCodeInsightFixtureT
                    class X {}
                    """, myFixture.getIntentionPreviewText(deleteSnippetBody));
     IntentionAction action = myFixture.findSingleIntention("Synchronize inline snippet");
-    myFixture.checkPreviewAndLaunchAction(action);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    myFixture.checkResult("""
-                            /**
-                             * {@snippet class="Test":
-                             * class Test {
-                             *
-                             *
-                             *     void two() {}
-                             *     void anothertwo() {}
-                             *
-                             *
-                             * }}
-                             */
-                            class X {}
-                            """);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.checkPreviewAndLaunchAction(action);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      myFixture.checkResult("""
+                              /**
+                               * {@snippet class="Test":
+                               * class Test {
+                               *
+                               *
+                               *     void two() {}
+                               *     void anothertwo() {}
+                               *
+                               *
+                               * }}
+                               */
+                              class X {}
+                              """);
+    });
   }
   
+  @Test
   public void testSnippetExternalMismatchMarkdown() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("snippet-files/Test.java", """
       class Test {
           // @start region=reg
@@ -81,21 +101,22 @@ public class JavadocSnippetHighlightingTest extends LightJavaCodeInsightFixtureT
                    class X {}
                    """, myFixture.getIntentionPreviewText(deleteSnippetBody));
     IntentionAction action = myFixture.findSingleIntention("Synchronize inline snippet");
-    myFixture.checkPreviewAndLaunchAction(action);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    myFixture.checkResult("""
-                            /// {@snippet class="Test":
-                            /// class Test {
-                            ///
-                            ///
-                            ///     void two() {}
-                            ///     void anothertwo() {}
-                            ///
-                            ///
-                            /// }}
-                            class X {}
-                            """);
-    }
-
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.checkPreviewAndLaunchAction(action);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      myFixture.checkResult("""
+                              /// {@snippet class="Test":
+                              /// class Test {
+                              ///
+                              ///
+                              ///     void two() {}
+                              ///     void anothertwo() {}
+                              ///
+                              ///
+                              /// }}
+                              class X {}
+                              """);
+    });
+  }
 
 }

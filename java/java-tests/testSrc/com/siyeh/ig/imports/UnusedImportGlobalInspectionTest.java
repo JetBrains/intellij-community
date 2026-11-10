@@ -10,25 +10,37 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.InspectionsKt;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Collections;
 
-public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+@TestApplication
+public class UnusedImportGlobalInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_23);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/imports/globalInspection");
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     boolean deleteUnusedModuleImports = javaSettings.isDeleteUnusedModuleImports();
-    Disposer.register(getTestRootDisposable(), new Disposable() {
+    Disposer.register(myFixture.getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
         javaSettings.setDeleteUnusedModuleImports(deleteUnusedModuleImports);
@@ -37,17 +49,9 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
     javaSettings.setDeleteUnusedModuleImports(false);
   }
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/imports/globalInspection";
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_23;
-  }
-
+  @Test
   public void testInnerClassImport() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package pkg;
                          interface Action {
@@ -70,7 +74,9 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
               }""");
   }
 
+  @Test
   public void testShadowedImports() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package java.util; public class HashTable {}");
     myFixture.addClass("package java.util; public class List {}");
     myFixture.addClass("package java.awt; public class List { public static final int ABORT = 1; }");
@@ -88,6 +94,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }""");
   }
 
+  @Test
   public void testStaticImport() {
     doTest("""
              /*Unused import 'import java.util.Map.*;'*/import java.util.Map.*;/**/
@@ -97,6 +104,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }""");
   }
 
+  @Test
   public void testStaticImport2() {
     doTest("""
              import static java.lang.Math.*;
@@ -107,6 +115,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }""");
   }
 
+  @Test
   public void testExactStaticImport() {
     doTest("""
              package a;
@@ -117,8 +126,9 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }}""");
   }
 
-  
+  @Test
   public void testUnresolvedReferencesInsideAmbiguousCallToImportedMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package a; public class A {
                           public static void foo(Object o) {}
@@ -133,8 +143,9 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }""");
   }
 
-  
+  @Test
   public void testNoHighlightingInInvalidCode() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java",
                               """
                                 import<EOLError descr="Identifier expected" textAttributesKey="ERRORS_ATTRIBUTES"></EOLError>
@@ -143,7 +154,9 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
     myFixture.testHighlighting(true, false, false);
   }
 
+  @Test
   public void testStaticImportOnDemandConflict1() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package a;
                          public class Parent {
@@ -168,7 +181,9 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }""");
   }
 
+  @Test
   public void testStaticImportOnDemandConflict2() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package a;
                          public class Parent {
@@ -193,7 +208,9 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }""");
   }
 
+  @Test
   public void testInherited() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package a;
                          class GrandParent {
@@ -213,6 +230,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }""");
   }
 
+  @Test
   public void testNoWarning() {
     doTest("""
              import java.util.List;
@@ -226,7 +244,9 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }""");
   }
 
+  @Test
   public void testInnerClassAndMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package one; public class X { public class Inner {} public static void method() {}}");
     doTest("""
              package one;
@@ -240,6 +260,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }""");
   }
 
+  @Test
   public void testRedundantImport() {
     doTest("""
              /*Unused import 'import java.util.ArrayList;'*/import java.util.ArrayList;/**/
@@ -249,7 +270,9 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }""");
   }
 
+  @Test
   public void testNoWarn() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package java.awt; public class List extends Component {}");
     myFixture.addClass("package java.awt; public class Component {}");
     doTest("""
@@ -266,6 +289,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }""");
   }
 
+  @Test
   public void testOrderIsNotImportant() {
     doTest("""
              package a;
@@ -274,10 +298,11 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              class X {{
                List list = new ArrayList();
              }}""");
-
   }
 
+  @Test
   public void testConflictInSamePackage() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package a; public class List {}");
     doTest("""
              package a;
@@ -288,6 +313,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }}""");
   }
 
+  @Test
   public void testUsedButUnresolved() {
     doTest("""
              package a;
@@ -297,6 +323,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }}""");
   }
 
+  @Test
   public void testNoConflictInSamePackage() {
     doTest("""
              package a;
@@ -307,23 +334,26 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
              }}""");
   }
 
+  @Test
   public void testModuleInfo() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package a; public class A {}");
     myFixture.addFileToProject("module-info.java", """
       import a.A;
-      
+    
       module my {
         uses A;
       }""");
     doTest();
   }
 
+  @Test
   public void testSingleImportWithModuleImport() {
     doTest("""
       import module java.base;
       /*Unused import 'import java.util.List;'*/import java.util.List;/**/
       /*Unused import 'import java.util.ArrayList;'*/import java.util.ArrayList;/**/
-      
+    
       class Main {
           public static void main(String[] args) {
               List<String> a = new ArrayList<>();
@@ -331,12 +361,13 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
       }""");
   }
 
+  @Test
   public void testImplicitLangImport() {
     doTest("""
       import java.util.List;
       import java.util.ArrayList;
       /*Unused import 'import java.lang.String;'*/import java.lang.String;/**/
-      
+    
       class Main {
           public static void main(String[] args) {
               List<String> a = new ArrayList<>();
@@ -344,12 +375,14 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
       }""");
   }
 
+  @Test
   public void testRedundantImportWithImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(),
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getStandardLevel(),
                            () -> {
                              doTest("""
                                       /*Unused import 'import java.util.List;'*/import java.util.List;/**/
-                                      
+                                    
                                       public static void main(String[] args) {
                                           List<String> a = new ArrayList<>();
                                       }
@@ -357,13 +390,15 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
                            });
   }
 
+  @Test
   public void testImportModuleWithRedundantPackage() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
                            () -> {
                              doTest("""
                                       import module java.base;
                                       /*Unused import 'import java.util.*;'*/import java.util.*;/**/
-                                      
+                                    
                                       class Main {
                                           public static void main(String[] args) {
                                               List<String> a = new ArrayList<>();
@@ -373,12 +408,14 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
                            });
   }
 
+  @Test
   public void testImportImplicitModuleWithRedundantPackage() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
                            () -> {
                              doTest("""
                                       /*Unused import 'import java.util.*;'*/import java.util.*;/**/
-                                      
+                                    
                                       public static void main(String[] args) {
                                           List<String> a = new ArrayList<>();
                                       }
@@ -386,21 +423,22 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
                            });
   }
 
-
+  @Test
   public void testRedundantImportModuleWithNotRedundantPackage() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
                            () -> {
-                             JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
+                             JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(true);
                              myFixture.addClass("""
                                                   package a.b;
-                                                  
+                                                
                                                   public final class List {
                                                   }
                                                   """);
                              doTest("""
                                       /*Unused import 'import module java.base;'*/import module java.base;/**/
                                       import a.b.*;
-                                      
+                                    
                                       class Main {
                                           public static void main(String[] args) {
                                               List a;
@@ -410,20 +448,22 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
                            });
   }
 
+  @Test
   public void testNotShowRedundantImportModuleWithNotRedundantPackage() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
                            () -> {
-                             JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+                             JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(false);
                              myFixture.addClass("""
                                                   package a.b;
-                                                  
+                                                
                                                   public final class List {
                                                   }
                                                   """);
                              doTest("""
                                       import module java.base;
                                       import a.b.*;
-                                      
+                                    
                                       class Main {
                                           public static void main(String[] args) {
                                               List a;
@@ -433,13 +473,15 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
                            });
   }
 
+  @Test
   public void testDuplicatedRedundantImportModuleWithNotRedundantPackage() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(),
                            () -> {
-                             JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+                             JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(false);
                              myFixture.addClass("""
                                                   package a.b;
-                                                  
+                                                
                                                   public final class List {
                                                   }
                                                   """);
@@ -447,7 +489,7 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
                                       /*Unused import 'import module java.base;'*/ import module java.base;/**/
                                       import module java.base;
                                       import a.b.*;
-                                      
+                                    
                                       class Main {
                                           public static void main(String[] args) {
                                               List a;
@@ -457,10 +499,12 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
                            });
   }
 
+  @Test
   public void testStaticMethodInInterface() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
       package org.example;
-      
+    
       public interface Any {
           static void fromAny() {
           }
@@ -468,16 +512,16 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
       """);
     myFixture.addClass("""
       package org.example;
-      
+    
       public class Child implements Any {
           public static void fromChild(){}
       }""");
     myFixture.addFileToProject("Test.java", """
       package org.test;
-      
+    
       import static org.example.Any.*;
       import static org.example.Child.*;
-      
+    
       public class Test {
           public static void main(String[] args) {
               fromChild();
@@ -488,15 +532,17 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
     doTest();
   }
 
+  @Test
   public void testDoubleStaticSameMethodInheritance() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
       package org.example;
-      
+    
       public class Child2 extends Child {
       }""");
     myFixture.addClass("""
       package org.example;
-      
+    
       public class Child extends Any {
           public static void test(){
               Any.test();
@@ -504,16 +550,16 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
       }""");
     myFixture.addClass("""
       package org.example;
-      
+    
       public class Any {
           public static void test() {
           }
       }""");
     myFixture.addFileToProject("Test.java", """
       package org.test;
-      
+    
       import static org.example.Child2.*;
-      
+    
       public class Test {
           public static void main(String[] args) {
               test();
@@ -523,19 +569,23 @@ public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtur
   }
 
   private void doTest(String classText) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass(classText);
 
     doTest();
   }
 
   private void doTest() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     GlobalInspectionToolWrapper toolWrapper = new GlobalInspectionToolWrapper(new UnusedImportInspection());
     AnalysisScope scope = new AnalysisScope(myFixture.getProject());
     GlobalInspectionContextForTests globalContext =
-      InspectionsKt.createGlobalContextForTool(scope, getProject(), Collections.<InspectionToolWrapper<?, ?>>singletonList(toolWrapper));
+      InspectionsKt.createGlobalContextForTool(scope, myFixture.getProject(), Collections.<InspectionToolWrapper<?, ?>>singletonList(toolWrapper));
 
-    InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
-    InspectionTestUtil.compareToolResults(globalContext, toolWrapper, false, new File(getTestDataPath(), getTestName(false)).getPath());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
+      InspectionTestUtil.compareToolResults(globalContext, toolWrapper, false, new File(myFixture.getTestDataPath(), myFixture.getTestName(false)).getPath());
+    });
   }
 
 }

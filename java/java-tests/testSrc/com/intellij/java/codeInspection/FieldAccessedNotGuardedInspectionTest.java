@@ -18,41 +18,62 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.concurrencyAnnotations.FieldAccessNotGuardedInspection;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class FieldAccessedNotGuardedInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class FieldAccessedNotGuardedInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testItself() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package net.jcip.annotations;\n" + getGuardedByAnnotationText());
     doTest();
   }
 
+  @Test
   public void testJavax_itself() {
     doTest();
   }
 
+  @Test
   public void testSyncOnFieldQualifier() {
     doTest();
   }
 
+  @Test
   public void testFieldAccessNotGuarded() {
     doTest();
   }
 
+  @Test
   public void testCheapReadWriteLock() {
     doTest();
   }
 
+  @Test
   public void testIncompleteCode() {
     doTest();
   }
 
+  @Test
   public void testStaticSyncOnClass() {
     doTest();
   }
 
   private void doTest() {
-    myFixture.testHighlighting(true, false, false, getTestName(true) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.testHighlighting(true, false, false, myFixture.getTestName(true) + ".java");
   }
 
   @NotNull
@@ -65,17 +86,11 @@ public class FieldAccessedNotGuardedInspectionTest extends LightJavaCodeInsightF
       }""";
   }
 
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/guarded");
     myFixture.addClass("package javax.annotation.concurrent;\n" + getGuardedByAnnotationText());
     myFixture.enableInspections(new FieldAccessNotGuardedInspection());
   }
-
-  @NotNull
-   @Override
-   protected String getTestDataPath() {
-     return JavaTestUtil.getJavaTestDataPath() + "/inspection/guarded";
-   }
 }

@@ -2,54 +2,76 @@
 package com.intellij.java.util
 
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.PropertyIndexValue
 import com.intellij.psi.impl.javaSimplePropertyGist
 import com.intellij.psi.util.PropertyMemberType
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Test
 import kotlin.test.assertNotEquals
+import kotlin.time.Duration.Companion.minutes
 
-class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class JavaPropertyDetectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
   // getter field test
 
-  fun testFieldRef() {
+  @Test
+  fun testFieldRef(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertPropertyMember("""class Some {private String name;public String getN<caret>ame() { return name; }}""", PropertyMemberType.GETTER)
   }
 
-  fun testUnresolvedRef() {
+  @Test
+  fun testUnresolvedRef(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertNotPropertyMember("class Some { public String getN<caret>ame() { return name; }}", PropertyMemberType.GETTER)
   }
 
-  fun testUnresolvedRef2() {
+  @Test
+  fun testUnresolvedRef2(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertNotPropertyMember("""class Some {private String name;public static String getN<caret>ame() { return name; }}""", PropertyMemberType.GETTER)
   }
 
-  fun testSuperFieldRef() {
+  @Test
+  fun testSuperFieldRef(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertNotPropertyMember("""class Some extends SomeBase {public String getN<caret>ame() { return name; }}class SomeBase { private String name;}""", PropertyMemberType.GETTER)
   }
 
-  fun testSuperFieldRef2() {
+  @Test
+  fun testSuperFieldRef2(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertPropertyMember("""class Some extends SomeBase
       |{public String getN<caret>ame() { return name; }}class SomeBase { protected String name;}""".trimMargin(), PropertyMemberType.GETTER)
   }
 
-  fun testInconsistentType() {
+  @Test
+  fun testInconsistentType(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertNotPropertyMember("""class Some
       |{String name;public long getNa<caret>me() { return name;}}""".trimMargin(), PropertyMemberType.GETTER)
 
   }
 
-  fun testWithSuperKeyWord() {
+  @Test
+  fun testWithSuperKeyWord(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertPropertyMember("""import java.util.List; class Some extends SomeBase
       |{ List<String> getL<caret>ist() { return Some.super.list;}} class SomeBase {List<String> list;} """.trimMargin(), PropertyMemberType.GETTER)
   }
 
-  fun testRedundantParenthesises() {
+  @Test
+  fun testRedundantParenthesises(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertNotPropertyMember("""import java.util.List;
                             class Some {
                                 Some a;
@@ -58,7 +80,8 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
                             }""", PropertyMemberType.GETTER)
   }
 
-  fun testParenthesesGetter() {
+  @Test
+  fun testParenthesesGetter(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertPropertyMember("""
       class X {
         String prop;
@@ -71,12 +94,14 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   // setter field test
 
-  fun testSimpleSetter() {
+  @Test
+  fun testSimpleSetter(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertPropertyMember("""class Some {
       |private String name;   public void set<caret>Name(String name) { this.name = name; }}""".trimMargin(), PropertyMemberType.SETTER)
   }
 
-  fun testParenthesesSetter() {
+  @Test
+  fun testParenthesesSetter(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertPropertyMember("""
       class Y {
         private String prop;
@@ -87,41 +112,48 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
     """, PropertyMemberType.SETTER)
   }
 
-  fun testFieldNotResolved() {
+  @Test
+  fun testFieldNotResolved(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertNotPropertyMember("""class Some {
       | public void set<caret>Name(String name) { this.name = name; }}""".trimMargin(), PropertyMemberType.SETTER)
   }
 
-  fun testInvalidExpression() {
+  @Test
+  fun testInvalidExpression(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertNotPropertyMember("""class Some {
       |public void set<caret>Name(String name) { = name; }}""".trimMargin(), PropertyMemberType.SETTER)
   }
 
-  fun testInvalidReference() {
+  @Test
+  fun testInvalidReference(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertNotPropertyMember("""class Some {
       |public void set<caret>Name(String name) { name = name; }}""".trimMargin(), PropertyMemberType.SETTER)
   }
 
-  fun testSuperClassField() {
+  @Test
+  fun testSuperClassField(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertPropertyMember(   """class Some extends SomeBase {
       | public void set<caret>Name(String name) { this.name = name; }}
       | class SomeBase {protected String name;}""".trimMargin(), PropertyMemberType.SETTER)
   }
 
-  fun testRefWithSuperKeyword() {
+  @Test
+  fun testRefWithSuperKeyword(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertPropertyMember(   """class Some extends SomeBase {
       |public void set<caret>Name(String name) { Some.super.name = name; }}
       | class SomeBase {protected String name;}""".trimMargin(), PropertyMemberType.SETTER)
   }
 
-  fun testOuterClassFieldSetter() {
+  @Test
+  fun testOuterClassFieldSetter(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertNotPropertyMember("""class Outer {String name;   class Some {
       |public void set<caret>Name(String name) { this.name = name; }}}""".trimMargin(), PropertyMemberType.SETTER)
   }
 
   // index data test
 
-  fun testAddToIndexOnlyMethodCallsWithoutArguments() {
+  @Test
+  fun testAddToIndexOnlyMethodCallsWithoutArguments(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertJavaSimplePropertyIndex("""
       public class Foo {
         public String getName() {
@@ -162,7 +194,8 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
     })
   }
 
-  fun testIndexDoesntContainPolyadicExpressions() {
+  @Test
+  fun testIndexDoesntContainPolyadicExpressions(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     assertJavaSimplePropertyIndex("""
       public class Foo {
         public int getX() { x + 1; }
@@ -186,27 +219,29 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent(), Int2ObjectOpenHashMap())
   }
 
-  private fun assertPropertyMember(text: String, memberType: PropertyMemberType) {
+  private suspend fun assertPropertyMember(text: String, memberType: PropertyMemberType) {
     doTest(text, memberType, true)
   }
 
-  private fun assertNotPropertyMember(text: String, memberType: PropertyMemberType) {
+  private suspend fun assertNotPropertyMember(text: String, memberType: PropertyMemberType) {
     doTest(text, memberType, false)
   }
 
-  private fun doTest(text: String, memberType: PropertyMemberType, expectedDecision: Boolean) {
+  private suspend fun doTest(text: String, memberType: PropertyMemberType, expectedDecision: Boolean) {
     assertNotEquals(PropertyMemberType.FIELD, memberType)
     myFixture.configureByText(JavaFileType.INSTANCE, text)
-    val method = PsiTreeUtil.getNonStrictParentOfType(myFixture.elementAtCaret, PsiMethod::class.java)!!
-    //use index
-    assertEquals(expectedDecision, if (memberType == PropertyMemberType.GETTER) PropertyUtil.isSimpleGetter(method) else PropertyUtil.isSimpleSetter(method))
-    //use ast
-    assertEquals(expectedDecision, if (memberType == PropertyMemberType.GETTER) PropertyUtil.isSimpleGetter(method, false) else PropertyUtil.isSimpleSetter(method, false))
+    readAction {
+      val method = PsiTreeUtil.getNonStrictParentOfType(myFixture.elementAtCaret, PsiMethod::class.java)!!
+      //use index
+      assertEquals(expectedDecision, if (memberType == PropertyMemberType.GETTER) PropertyUtil.isSimpleGetter(method) else PropertyUtil.isSimpleSetter(method))
+      //use ast
+      assertEquals(expectedDecision, if (memberType == PropertyMemberType.GETTER) PropertyUtil.isSimpleGetter(method, false) else PropertyUtil.isSimpleSetter(method, false))
+    }
   }
 
-  private fun assertJavaSimplePropertyIndex(text: String, expected: Int2ObjectMap<PropertyIndexValue>) {
+  private suspend fun assertJavaSimplePropertyIndex(text: String, expected: Int2ObjectMap<PropertyIndexValue>) {
     val file = myFixture.configureByText(JavaFileType.INSTANCE, text)
-    val data = javaSimplePropertyGist.getFileData(file)
+    val data = readAction { javaSimplePropertyGist.getFileData(file) }
     assertEquals(expected, data)
   }
 }

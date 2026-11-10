@@ -16,35 +16,58 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author anna
  */
-public class DndMoveTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/dndMove/";
+@TestApplication
+public class DndMoveTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/refactoring/dndMove/");
   }
 
+  @Test
   public void testPublicJavaClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     doTest("d", () -> myFixture.findClass("d.MyClass"), true);
   }
 
+  @Test
   public void testSecondJavaClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     doTest("d", () -> myFixture.findClass("d.Second"), false);
   }
 
   private void doTest(final String targetDirName, final Computable<PsiElement> source, final boolean expected) {
-    VirtualFile rootDir = myFixture.copyDirectoryToProject(getTestName(true), "");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    VirtualFile rootDir = myFixture.copyDirectoryToProject(myFixture.getTestName(true), "");
     final VirtualFile child1 = rootDir.findChild(targetDirName);
-    assertNotNull("File " + targetDirName + " not found", child1);
-    final PsiDirectory targetDirectory = getPsiManager().findDirectory(child1);
-    assertEquals(expected, MoveHandler.isMoveRedundant(source.compute(), targetDirectory));
+    assertNotNull(child1, "File " + targetDirName + " not found");
+    ReadAction.runBlocking(() -> {
+      final PsiDirectory targetDirectory = PsiManager.getInstance(myFixture.getProject()).findDirectory(child1);
+      assertEquals(expected, MoveHandler.isMoveRedundant(source.compute(), targetDirectory));
+    });
   }
 }

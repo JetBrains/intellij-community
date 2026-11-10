@@ -16,20 +16,27 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/missingActionUpdateThread")
-public class MissingActionUpdateThreadInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class MissingActionUpdateThreadInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/missingActionUpdateThread");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/missingActionUpdateThread";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(MissingActionUpdateThread.class);
     myFixture.addClass("package com.intellij.openapi.actionSystem;" +
                        "public interface ActionUpdateThreadAware {" +
@@ -48,9 +55,12 @@ public class MissingActionUpdateThreadInspectionTest extends LightJavaCodeInsigh
   }
 
   private void doTest() {
-    myFixture.testHighlighting(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
   }
 
+  @Test
   public void testAction() { doTest(); }
+  @Test
   public void testActionUpdateAware() { doTest(); }
 }

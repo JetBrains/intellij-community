@@ -8,17 +8,28 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.structuralsearch.inspection.SSBasedInspection;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * @author Bas Leijdekkers
  */
-public class SSBasedInspectionSerializationTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class SSBasedInspectionSerializationTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   /**
    * Ordered by modification time, with most recently modified pattern at the end. The order attribute needs to be written to define order between patterns part of a single inspection.
@@ -938,10 +949,12 @@ public class SSBasedInspectionSerializationTest extends LightJavaCodeInsightFixt
         </searchConfiguration>
       </inspection_tool>""";
 
+  @Test
   public void testOldSettingsMigrated() throws Exception {
     assertEquals(NEW_SETTINGS, writeSettings(readSettings(OLD_SETTINGS)));
   }
 
+  @Test
   public void testOldSettingsModified() throws Exception {
     final SSBasedInspection inspection = readSettings(OLD_SETTINGS);
     final List<Configuration> configurations = inspection.getConfigurations();
@@ -952,6 +965,7 @@ public class SSBasedInspectionSerializationTest extends LightJavaCodeInsightFixt
     assertEquals(NEW_SETTINGS, writeSettings(inspection));
   }
 
+  @Test
   public void testNewSettingsNotModified() throws Exception {
     // check if order is set correctly after loading
     final SSBasedInspection inspection = readSettings(NEW_SETTINGS);
@@ -965,11 +979,13 @@ public class SSBasedInspectionSerializationTest extends LightJavaCodeInsightFixt
     assertEquals(NEW_SETTINGS, writeSettings(inspection));
   }
 
+  @Test
   public void testScopedInspectionDoesNotDisappearOnWrite() throws Exception {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     var initInspections = InspectionProfileImpl.INIT_INSPECTIONS;
     if (!initInspections) {
       InspectionProfileImpl.INIT_INSPECTIONS = true;
-      Disposer.register(getTestRootDisposable(), () -> InspectionProfileImpl.INIT_INSPECTIONS = initInspections);
+      Disposer.register(myFixture.getTestRootDisposable(), () -> InspectionProfileImpl.INIT_INSPECTIONS = initInspections);
     }
 
     var profileXml = """
@@ -986,7 +1002,7 @@ public class SSBasedInspectionSerializationTest extends LightJavaCodeInsightFixt
     var supplier = new InspectionToolsSupplier.Simple(List.of(wrapper));
     var profile = new InspectionProfileImpl("foo.profile", supplier, InspectionProfileImpl.BASE_PROFILE.get());
     profile.readExternal(JDOMUtil.load(profileXml));
-    profile.initInspectionTools(getProject());
+    profile.initInspectionTools(myFixture.getProject());
     profile.profileChanged();
     assertEquals(profileXml, JDOMUtil.write(profile.writeScheme()));
   }
