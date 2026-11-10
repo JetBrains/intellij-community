@@ -2,10 +2,10 @@
 package com.intellij.ide.impl;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DataSnapshotProvider;
+import com.intellij.openapi.actionSystem.InjectedDataKeys;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,10 +16,9 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.CancellableClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.EDT;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
@@ -28,9 +27,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @ApiStatus.Internal
 public abstract class DataValidators {
@@ -139,41 +138,48 @@ public abstract class DataValidators {
     return source instanceof SourceWrapper o ? o.unwrapSource() : source;
   }
 
-  private static final Map<String, Validator<?>[]> ourValidators = new ConcurrentHashMap<>();
+  private static final CancellableClearableLazy<Map<String, Validator<?>[]>> ourValidators =
+    new CancellableClearableLazy<>(DataValidators::collectValidators);
 
   static {
     Application app = ApplicationManager.getApplication();
-    ExtensionPoint<@NotNull KeyedLazyInstance<GetDataRule>> dataRuleEP = app.getExtensionArea()
+    ExtensionPoint<DataValidators> dataValidatorsEP = app.getExtensionArea()
       .getExtensionPointIfRegistered(EP_NAME.getName());
-    if (dataRuleEP != null) {
-      dataRuleEP.addChangeListener(() -> ourValidators.clear(), app);
+    if (dataValidatorsEP != null) {
+      dataValidatorsEP.addChangeListener(ourValidators::clear, app);
     }
   }
 
   static Validator<?> @Nullable [] getValidators(@NotNull String dataId) {
-    Validator<?>[] result = ourValidators.get(dataId);
-    if (result != null || !ourValidators.isEmpty()) {
-      return result;
+    var validators = ourValidators.getValue();
+    var result = validators.get(dataId);
+    if (result == null) {
+      var uninjectedId = InjectedDataKeys.uninjectedId(dataId);
+      if (uninjectedId != null) return validators.get(uninjectedId);
     }
-    List<DataValidators> extensions = EP_NAME.getExtensionsIfPointIsRegistered();
+    return result;
+  }
+
+  private static @NotNull Map<String, Validator<?>[]> collectValidators() {
+    var extensions = EP_NAME.getExtensionsIfPointIsRegistered();
     if (extensions.isEmpty()) {
-      return null;
+      return Map.of();
     }
-    Map<String, List<Validator<?>>> map = FactoryMap.create(__ -> new ArrayList<>());
+    var map = new HashMap<String, List<Validator<?>>>();
     ValidatorRegistry registry = new ValidatorRegistry() {
       @Override
       public <T> void register(@NotNull DataKey<T> key,
                                @NotNull Validator<? super T> validator) {
-        map.get(key.getName()).add(validator);
+        map.computeIfAbsent(key.getName(), _ -> new ArrayList<>()).add(validator);
       }
     };
     for (DataValidators validators : extensions) {
       validators.collectValidators(registry);
     }
-    Validator<?>[] emptyArray = new Validator[0];
-    for (String s : map.keySet()) {
-      ourValidators.put(s, map.get(s).toArray(emptyArray));
+    var result = new HashMap<String, Validator<?>[]>();
+    for (var entry : map.entrySet()) {
+      result.put(entry.getKey(), entry.getValue().toArray(Validator<?>[]::new));
     }
-    return ourValidators.get(dataId);
+    return Map.copyOf(result);
   }
 }
