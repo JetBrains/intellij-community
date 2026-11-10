@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -922,6 +922,30 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testNoClassLiteral() {
     doActionTest();
     assertStringItems("Object.class", "getClass", "forName", "forName");
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  public void testClassLiteralForRawClassTypeArgument() {
+    myFixture.configureByText("a.java", """
+      class a {{
+        Class<Class> classClass = Cla<caret>
+      }}""");
+    complete();
+    selectItem(ContainerUtil.find(myItems, item -> item.getLookupString().equals("Class.class")));
+    myFixture.checkResult("""
+      class a {{
+        Class<Class> classClass = Class.class;<caret>
+      }}""");
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  public void testNoClassLiteralForParameterizedClassTypeArgument() {
+    myFixture.configureByText("a.java", """
+      class a {{
+        Class<Class<?>> classClass = Cla<caret>
+      }}""");
+    complete();
+    assertFalse(myItems != null && ContainerUtil.exists(myItems, item -> item.getLookupString().equals("Class.class")));
   }
 
   @NeedsIndex.ForStandardLibrary
