@@ -75,6 +75,7 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.hasBody
 
@@ -148,11 +149,20 @@ fun KtClass.getOrCreateCompanionObject(): KtObjectDeclaration {
     return appendDeclaration(KtPsiFactory(project).createCompanionObject())
 }
 
-// TODO: replace with an appropriate compiler API calls once available (KT-89032)
 fun KtClass.getOrCreateCompanionBlock(): KtCompanionBlock {
     companionBlocks.firstOrNull()?.let { return it }
-    val companionBlock = KtPsiFactory(project).createClass("class Cls { companion {} }").companionBlocks.single()
-    return appendElementToClassBody(companionBlock)
+    val newCompanionBlock = KtPsiFactory(project).createCompanionBlock()
+    return appendElementToClassBody(newCompanionBlock)
+}
+
+/**
+ * Adds a semicolon after a class or an object without a body before the companion block,
+ * so that `companion` is not a constructor modifier of that class or object.
+ */
+fun KtCompanionBlock.separateFromPrecedingClassIfNeeded() {
+    val precedingClass = getPrevSiblingIgnoringWhitespaceAndComments() as? KtClassOrObject ?: return
+    if (precedingClass.body != null || precedingClass.primaryConstructor != null || precedingClass.getSuperTypeList() != null) return
+    precedingClass.parent.addAfter(KtPsiFactory(project).createSemicolon(), precedingClass)
 }
 
 inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T, skipWhiteSpaces: Boolean = true): T {

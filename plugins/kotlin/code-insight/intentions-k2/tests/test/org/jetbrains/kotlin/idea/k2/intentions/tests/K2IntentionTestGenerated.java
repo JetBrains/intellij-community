@@ -13947,6 +13947,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/actualFun.kt");
         }
 
+        @TestMetadata("afterNestedClassWithoutBody.kt")
+        public void testAfterNestedClassWithoutBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/afterNestedClassWithoutBody.kt");
+        }
+
+        @TestMetadata("afterNestedClassWithoutBodyWithSemicolon.kt")
+        public void testAfterNestedClassWithoutBodyWithSemicolon() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/afterNestedClassWithoutBodyWithSemicolon.kt");
+        }
+
+        @TestMetadata("afterNestedObjectWithoutBody.kt")
+        public void testAfterNestedObjectWithoutBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/afterNestedObjectWithoutBody.kt");
+        }
+
         @TestMetadata("aliasedJvmStaticFunFromCompanionObject.kt")
         public void testAliasedJvmStaticFunFromCompanionObject() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/aliasedJvmStaticFunFromCompanionObject.kt");
@@ -14070,6 +14085,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("nestedClass.kt")
         public void testNestedClass() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/nestedClass.kt");
+        }
+
+        @TestMetadata("nestedClassWithoutBodyIsLast.kt")
+        public void testNestedClassWithoutBodyIsLast() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/nestedClassWithoutBodyIsLast.kt");
         }
 
         @TestMetadata("nonConflictingOverload.kt")

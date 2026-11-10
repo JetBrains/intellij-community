@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.idea.base.psi.deleteSingle
 import org.jetbrains.kotlin.idea.base.psi.getOrCreatePrimaryConstructorParameterList
 import org.jetbrains.kotlin.idea.base.psi.insertParameterBefore
 import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
+import org.jetbrains.kotlin.idea.base.psi.separateFromPrecedingClassIfNeeded
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
@@ -54,7 +55,9 @@ import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringListener
 import org.jetbrains.kotlin.idea.refactoring.pullUp.willBeMoved
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtCompanionBlock
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFileAnnotationList
@@ -497,6 +500,9 @@ open class K2MoveDeclarationsRefactoringProcessor(
                 declaration.removeModifierKeyword(KtTokens.OPEN_KEYWORD)
                 declaration.removeModifierKeyword(KtTokens.FINAL_KEYWORD)
             }
+        }
+        if (moveTargetType == DeclarationTargetType.COMPANION_BLOCK) {
+            ((newDeclaration.parent as? KtClassBody)?.parent as? KtCompanionBlock)?.separateFromPrecedingClassIfNeeded()
         }
         when (newDeclaration) {
             is KtClass -> {
