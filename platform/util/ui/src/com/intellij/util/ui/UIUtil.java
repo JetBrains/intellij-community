@@ -246,10 +246,7 @@ public final class UIUtil {
 
   public static int getMultiClickInterval() {
     Object property = Toolkit.getDefaultToolkit().getDesktopProperty("awt.multiClickInterval");
-    if (property instanceof Integer) {
-      return (Integer)property;
-    }
-    return 500;
+    return property instanceof Integer val ? val : 500;
   }
 
   private static final Supplier<Boolean> X_RENDER_ACTIVE = new SynchronizedClearableLazy<>(() -> {
@@ -430,7 +427,7 @@ public final class UIUtil {
    */
   @Deprecated(forRemoval = true)
   public static boolean isClientPropertyTrue(Object component, @NotNull Object key) {
-    return component instanceof Component && ClientProperty.isTrue((Component)component, key);
+    return component instanceof Component c && ClientProperty.isTrue(c, key);
   }
 
   /**
@@ -450,7 +447,7 @@ public final class UIUtil {
    */
   @Deprecated
   public static <T> @Nullable T getClientProperty(Object component, @NotNull Key<T> key) {
-    return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
+    return component instanceof Component c ? ClientProperty.get(c, key) : null;
   }
 
   /**
@@ -473,7 +470,7 @@ public final class UIUtil {
   public static @NotNull String getHtmlBody(@NotNull String text) {
     int htmlIndex = 6 + text.indexOf("<html>");
     if (htmlIndex < 6) {
-      return text.replaceAll("\n", "<br>");
+      return text.replace("\n", "<br>");
     }
     int htmlCloseIndex = text.indexOf("</html>", htmlIndex);
     if (htmlCloseIndex < 0) {
@@ -493,7 +490,7 @@ public final class UIUtil {
   @SuppressWarnings("HardCodedStringLiteral")
   public static @NotNull @Nls String getHtmlBody(@NotNull Html html) {
     String result = getHtmlBody(html.getText());
-    return html.isKeepFont() ? result : result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
+    return html.isKeepFont() ? result : result.replaceAll("<font(.*?)>", "").replace("</font>", "");
   }
 
   public static void drawLinePickedOut(@NotNull Graphics graphics, int x, int y, int x1, int y1) {
@@ -550,7 +547,7 @@ public final class UIUtil {
 
   /**
    * Helper method that hides dependency on Swing.
-   * To be used in pair with the {@link SwingUtilities2#drawString}, that is commonly used by {@link ComponentUI} implementations..
+   * To be used in pair with the {@link SwingUtilities2#drawString}, that is commonly used by {@link ComponentUI} implementations.
    */
   public static int computeStringWidth(@NotNull JComponent c, @NotNull FontMetrics fontMetrics, @Nullable String string) {
     return SwingUtilities2.stringWidth(c, fontMetrics, string);
@@ -708,10 +705,10 @@ public final class UIUtil {
 
   /**
    * Computes the minimum size the component must have to keep the given number of characters
-   *
+   * <p>
    * Same as {@code computeTextComponentMinimumSize(preferredSize, text, fontMetrics, nCharactersToKeep, 0, "...")}.
    *
-   * @see #computeTextComponentMinimumSize(int, String, FontMetrics, int, int)
+   * @see #computeTextComponentMinimumSize(int, String, FontMetrics, int, int, String)
    */
   public static int computeTextComponentMinimumSize(
     int preferredSize,
@@ -771,7 +768,7 @@ public final class UIUtil {
   public static void setActionNameAndMnemonic(@NotNull @Nls String text, @NotNull Action action) {
     assignMnemonic(text, action);
 
-    text = text.replaceAll("&", "");
+    text = text.replace("&", "");
     action.putValue(Action.NAME, text);
   }
 
@@ -820,8 +817,8 @@ public final class UIUtil {
 
     Icon buttonIcon = cb.getIcon();
     if (buttonIcon == null && ui != null) {
-      if (ui instanceof BasicRadioButtonUI) {
-        buttonIcon = ((BasicRadioButtonUI)ui).getDefaultIcon();
+      if (ui instanceof BasicRadioButtonUI buttonUI) {
+        buttonIcon = buttonUI.getDefaultIcon();
       }
     }
 
@@ -1377,7 +1374,6 @@ public final class UIUtil {
     }
   }
 
-  @SuppressWarnings({"UnregisteredNamedColor", "UseJBColor"})
   public static void drawSearchMatch(@NotNull Graphics2D g,
                                      final float startX,
                                      final float endX,
@@ -1825,8 +1821,7 @@ public final class UIUtil {
   }
 
   private static boolean kindaHasFocus(@NotNull Component component) {
-    JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
-    return jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(HAS_FOCUS));
+    return component instanceof JComponent jComponent && Boolean.TRUE.equals(jComponent.getClientProperty(HAS_FOCUS));
   }
 
   /**
@@ -1916,14 +1911,14 @@ public final class UIUtil {
 
   public static @Nullable JLayeredPane getWindowLayeredPaneFor(@NotNull Component component) {
     Window window = SwingUtilities.windowForComponent(component);
-    if (window instanceof JFrame) {
-      return ((JFrame)window).getLayeredPane();
+    if (window instanceof JFrame jFrame) {
+      return jFrame.getLayeredPane();
     }
-    else if (window instanceof JDialog) {
-      return ((JDialog)window).getLayeredPane();
+    else if (window instanceof JDialog jDialog) {
+      return jDialog.getLayeredPane();
     }
-    else if (window instanceof JWindow) {
-      return ((JWindow)window).getLayeredPane();
+    else if (window instanceof JWindow jWindow) {
+      return jWindow.getLayeredPane();
     }
     else {
       return null;
@@ -2030,10 +2025,10 @@ public final class UIUtil {
       c.removeMouseWheelListener(each);
     }
 
-    if (c instanceof AbstractButton) {
-      final ActionListener[] listeners = ((AbstractButton)c).getActionListeners();
+    if (c instanceof AbstractButton button) {
+      final ActionListener[] listeners = button.getActionListeners();
       for (ActionListener listener : listeners) {
-        ((AbstractButton)c).removeActionListener(listener);
+        button.removeActionListener(listener);
       }
     }
   }
@@ -2090,7 +2085,7 @@ public final class UIUtil {
   @Deprecated
   public static final class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
     @Override
-    public ViewFactory getViewFactory() {
+    public @NotNull ViewFactory getViewFactory() {
       return ExtendableHTMLViewFactory.DEFAULT_WORD_WRAP;
     }
   }
@@ -2104,7 +2099,7 @@ public final class UIUtil {
     }
   }
 
-  public static @NotNull Font getFontWithFallbackIfNeeded(@NotNull Font font, @NotNull char[] text) {
+  public static @NotNull Font getFontWithFallbackIfNeeded(@NotNull Font font, char @NotNull [] text) {
     if (!SystemInfoRt.isMac /* 'getFontWithFallback' does nothing on macOS */ && font.canDisplayUpTo(text, 0, text.length) != -1) {
       return getFontWithFallback(font);
     }
@@ -2129,7 +2124,7 @@ public final class UIUtil {
         return StartupUiUtil.getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
       }
     }
-    return font instanceof FontUIResource ? (FontUIResource)font : new FontUIResource(font);
+    return font instanceof FontUIResource resource ? resource : new FontUIResource(font);
   }
 
   public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
@@ -2138,9 +2133,9 @@ public final class UIUtil {
 
   //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
   public static <T> T htmlInjectionGuard(T toRender) {
-    if (toRender instanceof String && Strings.toLowerCase((String)toRender).startsWith("<html>")) {
+    if (toRender instanceof String str && Strings.toLowerCase(str).startsWith("<html>")) {
       //noinspection unchecked
-      return (T)("<html>" + Strings.escapeXmlEntities((String)toRender));
+      return (T)("<html>" + Strings.escapeXmlEntities(str));
     }
     return toRender;
   }
@@ -2309,8 +2304,8 @@ public final class UIUtil {
    */
   public static boolean isDescendingFrom(@Nullable Component child, @NotNull Component parent) {
     while (child != null && child != parent) {
-      child = child instanceof JPopupMenu ? ((JPopupMenu)child).getInvoker()
-                                          : child.getParent();
+      child = child instanceof JPopupMenu menu ? menu.getInvoker()
+                                               : child.getParent();
     }
     return child == parent;
   }
@@ -2376,8 +2371,8 @@ public final class UIUtil {
       return JBIterable.empty();
     }
     JBIterable<Component> result;
-    if (c instanceof JMenu) {
-      result = JBIterable.of(((JMenu)c).getMenuComponents());
+    if (c instanceof JMenu menu) {
+      result = JBIterable.of(menu.getMenuComponents());
     }
     else {
       result = uiChildren(c);
@@ -2435,8 +2430,8 @@ public final class UIUtil {
       return cls.cast(parent);
     }
     for (Component component : parent.getComponents()) {
-      if (component instanceof JComponent) {
-        T comp = findComponentOfType((JComponent)component, cls);
+      if (component instanceof JComponent jComponent) {
+        T comp = findComponentOfType(jComponent, cls);
         if (comp != null) return comp;
       }
     }
@@ -2572,9 +2567,9 @@ public final class UIUtil {
     if (root != null) return root;
     Component eachParent = c;
     while (eachParent != null) {
-      if (eachParent instanceof JComponent) {
+      if (eachParent instanceof JComponent jComponent) {
         @SuppressWarnings("unchecked") WeakReference<JRootPane> pane =
-          (WeakReference<JRootPane>)((JComponent)eachParent).getClientProperty(ROOT_PANE);
+          (WeakReference<JRootPane>)jComponent.getClientProperty(ROOT_PANE);
         if (pane != null) return pane.get();
       }
       eachParent = eachParent.getParent();
@@ -2590,7 +2585,7 @@ public final class UIUtil {
   public static boolean isDialogRootPane(JRootPane rootPane) {
     if (rootPane != null) {
       final Object isDialog = rootPane.getClientProperty("DIALOG_ROOT_PANE");
-      return isDialog instanceof Boolean && ((Boolean)isDialog).booleanValue();
+      return isDialog instanceof Boolean b && b;
     }
     return false;
   }
@@ -2621,7 +2616,7 @@ public final class UIUtil {
     JComponent maxWidthAnchor = null;
     int maxWidth = 0;
     for (PanelWithAnchor panel : panels) {
-      if (visibleOnly && (panel instanceof JComponent) && !((JComponent)panel).isVisible()) {
+      if (visibleOnly && (panel instanceof JComponent jComponent) && !jComponent.isVisible()) {
         continue;
       }
       JComponent anchor = panel != null ? panel.getOwnAnchor() : null;
@@ -2637,9 +2632,9 @@ public final class UIUtil {
     for (PanelWithAnchor panel : panels) {
       if (panel != null) {
         panel.setAnchor(maxWidthAnchor);
-        if (panel instanceof JComponent) {
-          ((JComponent)panel).revalidate();
-          ((JComponent)panel).repaint();
+        if (panel instanceof JComponent jComponent) {
+          jComponent.revalidate();
+          jComponent.repaint();
         }
       }
     }
@@ -2655,8 +2650,8 @@ public final class UIUtil {
       return;
     }
     forEachComponentInHierarchy(component, c -> {
-      if (c instanceof JComponent) {
-        ((JComponent)c).setOpaque(opaque);
+      if (c instanceof JComponent jComponent) {
+        jComponent.setOpaque(opaque);
       }
     });
   }
@@ -2682,8 +2677,8 @@ public final class UIUtil {
 
   public static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<? super Component> action) {
     action.consume(component);
-    if (component instanceof Container) {
-      for (Component c : ((Container)component).getComponents()) {
+    if (component instanceof Container container) {
+      for (Component c : container.getComponents()) {
         forEachComponentInHierarchy(c, action);
       }
     }
@@ -2790,7 +2785,7 @@ public final class UIUtil {
     });
   }
 
-  //May have no usages but it's useful in runtime (Debugger "watches", some logging etc.)
+  //May have no usages, but it's useful in runtime (Debugger "watches", some logging etc.)
   public static @NotNull String getDebugText(@NotNull Component c) {
     StringBuilder builder = new StringBuilder();
     getAllTextsRecursively(c, builder);
@@ -2799,9 +2794,9 @@ public final class UIUtil {
 
   private static void getAllTextsRecursively(@NotNull Component component, @NotNull StringBuilder builder) {
     String candidate = "";
-    if (component instanceof JLabel) candidate = ((JLabel)component).getText();
-    if (component instanceof JTextComponent) candidate = ((JTextComponent)component).getText();
-    if (component instanceof AbstractButton) candidate = ((AbstractButton)component).getText();
+    if (component instanceof JLabel label) candidate = label.getText();
+    if (component instanceof JTextComponent textComponent) candidate = textComponent.getText();
+    if (component instanceof AbstractButton button) candidate = button.getText();
     if (Strings.isNotEmpty(candidate)) {
       candidate = candidate.replaceAll("<a href=\"#inspection/[^)]+\\)", "");
       if (!builder.isEmpty()) {
@@ -2809,8 +2804,8 @@ public final class UIUtil {
       }
       builder.append(StringUtil.removeHtmlTags(candidate, true).trim());
     }
-    if (component instanceof Container) {
-      Component[] components = ((Container)component).getComponents();
+    if (component instanceof Container container) {
+      Component[] components = container.getComponents();
       for (Component child : components) {
         getAllTextsRecursively(child, builder);
       }
@@ -2902,8 +2897,8 @@ public final class UIUtil {
    * @param window the window to activate
    */
   public static void toFront(@Nullable Window window) {
-    if (window instanceof Frame) {
-      ((Frame)window).setState(Frame.NORMAL);
+    if (window instanceof Frame frame) {
+      frame.setState(Frame.NORMAL);
     }
     if (window != null) {
       window.toFront();
@@ -2938,11 +2933,11 @@ public final class UIUtil {
   }
 
   public static void setColumns(JTextComponent textComponent, int columns) {
-    if (textComponent instanceof JTextField) {
-      ((JTextField)textComponent).setColumns(columns);
+    if (textComponent instanceof JTextField textField) {
+      textField.setColumns(columns);
     }
-    if (textComponent instanceof JTextArea) {
-      ((JTextArea)textComponent).setColumns(columns);
+    if (textComponent instanceof JTextArea textArea) {
+      textArea.setColumns(columns);
     }
   }
 
@@ -2973,7 +2968,7 @@ public final class UIUtil {
       policy = parent.getFocusTraversalPolicy();
     }
     Component component = policy.getFirstComponent(container);
-    return component instanceof JComponent ? (JComponent)component : null;
+    return component instanceof JComponent jComponent ? jComponent : null;
   }
 
   /**
@@ -2984,8 +2979,8 @@ public final class UIUtil {
    * @return a component style of the specified component
    */
   public static @NotNull ComponentStyle getComponentStyle(Component component) {
-    if (component instanceof JComponent) {
-      Object property = ((JComponent)component).getClientProperty("JComponent.sizeVariant");
+    if (component instanceof JComponent jComponent) {
+      Object property = jComponent.getClientProperty("JComponent.sizeVariant");
       if ("large".equals(property)) return ComponentStyle.LARGE;
       if ("small".equals(property)) return ComponentStyle.SMALL;
       if ("mini".equals(property)) return ComponentStyle.MINI;
@@ -3037,7 +3032,7 @@ public final class UIUtil {
   }
 
   private static Window findWindowAncestor(@NotNull Component c) {
-    return c instanceof Window ? (Window)c : SwingUtilities.getWindowAncestor(c);
+    return c instanceof Window window ? window : SwingUtilities.getWindowAncestor(c);
   }
 
   public static boolean isSimpleWindow(Window window) {
@@ -3054,7 +3049,7 @@ public final class UIUtil {
 
   /**
    * Employs a common pattern to use {@code Graphics}. This is a non-distractive approach
-   * all modifications on {@code Graphics} are metter only inside the {@code Consumer} block
+   * all modifications on {@code Graphics} are matter only inside the {@code Consumer} block
    *
    * @param originGraphics  graphics to work with
    * @param drawingConsumer you can use the Graphics2D object here safely
@@ -3361,8 +3356,8 @@ public final class UIUtil {
    */
   public static void scrollToReference(@NotNull JEditorPane editor, @NotNull @NonNls String reference) {
     Document document = editor.getDocument();
-    if (document instanceof HTMLDocument) {
-      Element elementById = ((HTMLDocument)document).getElement(reference);
+    if (document instanceof HTMLDocument htmlDocument) {
+      Element elementById = htmlDocument.getElement(reference);
       if (elementById != null) {
         SwingUtilities.invokeLater(() -> {
           try {
@@ -3549,20 +3544,20 @@ public final class UIUtil {
     if (focusOwner == null || !SwingUtilities.isDescendingFrom(focusOwner, window)) {
       return;
     }
-    if (focusOwner instanceof JFormattedTextField) {
+    if (focusOwner instanceof JFormattedTextField textField) {
       try {
-        ((JFormattedTextField)focusOwner).commitEdit();
+        textField.commitEdit();
       }
       catch (ParseException ignored) {
       }
     }
     Object obj = focusOwner.getParent();
-    if (obj instanceof JTable) {
-      TableUtil.stopEditing((JTable)obj);
+    if (obj instanceof JTable table) {
+      TableUtil.stopEditing(table);
     }
     Object obj1 = focusOwner.getParent();
-    if (obj1 instanceof JTree) {
-      ((JTree)obj1).stopEditing();
+    if (obj1 instanceof JTree tree) {
+      tree.stopEditing();
     }
   }
 

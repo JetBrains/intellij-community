@@ -50,12 +50,13 @@ import static com.intellij.util.ui.html.UtilsKt.reapplyCss;
 public class JBHtmlEditorKit extends HTMLEditorKit {
   private static final Logger LOG = Logger.getInstance(JBHtmlEditorKit.class);
 
+  private static final @NotNull JBHtmlEditorKit.DetailsSummaryController DETAILS_SUMMARY_CONTROLLER = new DetailsSummaryController();
+
   private final @NotNull ViewFactory myViewFactory;
   private final @NotNull StyleSheet myStyle;
 
   private final @NotNull HTMLEditorKit.LinkController myLinkController = new MouseExitSupportLinkController();
   private final @NotNull HyperlinkListener myHyperlinkListener = new LinkUnderlineListener();
-  private final @NotNull JBHtmlEditorKit.DetailsSummaryController myDetailsSummaryController = new DetailsSummaryController();
   private final boolean myDisableLinkedCss;
   private boolean myUnderlineHoveredHyperlink = true;
 
@@ -147,7 +148,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
         // The default JEditorPane's font is the label font, seems there's no need to reset it here.
         // If the default font is overridden, more so we should not reset it.
         // However, if the new font is not UIResource - it won't be auto-scaled.
-        // [tav] dodo: remove the next two lines in case there're no regressions
+        // [tav] dodo: remove the next two lines in case there are no regressions
         //Font font = getLabelFont();
         //pane.setFont(font);
 
@@ -159,13 +160,13 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     if (myUnderlineHoveredHyperlink) {
       pane.addHyperlinkListener(myHyperlinkListener);
     }
-    pane.addMouseListener(myDetailsSummaryController);
+    pane.addMouseListener(DETAILS_SUMMARY_CONTROLLER);
 
-    java.util.List<LinkController> listeners1 = filterLinkControllerListeners(pane.getMouseListeners());
-    java.util.List<LinkController> listeners2 = filterLinkControllerListeners(pane.getMouseMotionListeners());
+    List<LinkController> listeners1 = filterLinkControllerListeners(pane.getMouseListeners());
+    List<LinkController> listeners2 = filterLinkControllerListeners(pane.getMouseMotionListeners());
     // replace just the original listener
     if (listeners1.size() == 1 && listeners1.equals(listeners2)) {
-      LinkController oldLinkController = listeners1.get(0);
+      LinkController oldLinkController = listeners1.getFirst();
       pane.removeMouseListener(oldLinkController);
       pane.removeMouseMotionListener(oldLinkController);
       pane.addMouseListener(myLinkController);
@@ -174,7 +175,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   }
 
   @Override
-  public ViewFactory getViewFactory() {
+  public @NotNull ViewFactory getViewFactory() {
     return myViewFactory;
   }
 
@@ -187,6 +188,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     c.removeMouseListener(myLinkController);
     c.removeMouseMotionListener(myLinkController);
     c.removeHyperlinkListener(myHyperlinkListener);
+    c.removeMouseListener(DETAILS_SUMMARY_CONTROLLER);
     super.deinstall(c);
   }
 
@@ -291,8 +293,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     @Override
     public ParserCallback getReader(int pos) {
       Object desc = getProperty(StreamDescriptionProperty);
-      if (desc instanceof URL) {
-        setBase((URL)desc);
+      if (desc instanceof URL url) {
+        setBase(url);
       }
       ParserCallback reader = new JBHtmlReader(pos);
       return myDisableLinkedCss ? new CallbackWrapper(reader) : reader;
@@ -301,8 +303,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     @Override
     public ParserCallback getReader(int pos, int popDepth, int pushDepth, HTML.Tag insertTag) {
       Object desc = getProperty(StreamDescriptionProperty);
-      if (desc instanceof URL) {
-        setBase((URL)desc);
+      if (desc instanceof URL url) {
+        setBase(url);
       }
       HTMLReader reader = new JBHtmlReader(pos, popDepth, pushDepth, insertTag);
       return myDisableLinkedCss ? new CallbackWrapper(reader) : reader;
@@ -463,7 +465,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
      * {@code <a><span>Objects.</span><span>equals()</span></a>} then only one block
      * was underlined on mouse hover.
      *
-     * <p>That was due to the receiver of the {@code HyperlinkEvent} was only one of child blocks
+     * <p>That was due to the receiver of the {@code HyperlinkEvent} was only one of child blocks,
      * and we need to properly find the range occupied by the whole parent.</p>
      */
     @SuppressWarnings("SameParameterValue")
