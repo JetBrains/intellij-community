@@ -5,7 +5,6 @@ import com.intellij.ide.CliResult;
 import com.intellij.ide.SpecialConfigFiles;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.platform.ide.bootstrap.DirectoryLock.CannotActivateException;
 import com.intellij.testFramework.TestLoggerFactory;
@@ -26,8 +25,11 @@ import java.net.UnixDomainSocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,6 +37,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assume.assumeTrue;
 
+@SuppressWarnings("UseOptimizedEelFunctions")
 public abstract sealed class DirectoryLockTest {
   static {
     Logger.setFactory(TestLoggerFactory.class);
@@ -121,6 +124,21 @@ public abstract sealed class DirectoryLockTest {
   }
 
   @Test
+  public void socketFileIsOwnerOnly() throws Exception {
+    assumeTrue(!(this instanceof FallbackModeTest));
+    assumeTrue(Files.getFileAttributeView(testDir, PosixFileAttributeView.class) != null);
+
+    var systemDir = Files.createDirectories(testDir.resolve("s"));
+    var lock = createLock(testDir.resolve("c"), systemDir);
+    assertNull(lock.lockOrActivate(currentDir, List.of()));
+
+    var redirectedPortFile = lock.getRedirectedPortFile();
+    var portFile = redirectedPortFile != null ? redirectedPortFile : systemDir.resolve(SpecialConfigFiles.PORT_FILE);
+    assertThat(Files.getPosixFilePermissions(portFile))
+      .isEqualTo(Set.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+  }
+
+  @Test
   public void lockingVacantDirectories() throws Exception {
     var lock = createLock(Files.createDirectories(testDir.resolve("c")), Files.createDirectories(testDir.resolve("s")));
     assertNull(lock.lockOrActivate(currentDir, List.of()));
@@ -128,7 +146,7 @@ public abstract sealed class DirectoryLockTest {
 
   @Test
   public void lockingReadOnlyDirectory() throws Exception {
-    assumeTrue(SystemInfo.isUnix);
+    assumeTrue(OS.CURRENT != OS.Windows);
     var configDir = Files.createDirectories(testDir.resolve("c"));
     NioFiles.setReadOnly(configDir, true);
     var lock = createLock(configDir, Files.createDirectories(testDir.resolve("s")));

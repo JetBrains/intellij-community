@@ -47,8 +47,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -284,6 +287,13 @@ public final class DirectoryLock {
       if (myFallbackMode) {
         var port = ((InetSocketAddress)serverChannel.getLocalAddress()).getPort();
         Files.writeString(myPortFile, String.valueOf(port), StandardOpenOption.TRUNCATE_EXISTING);
+      }
+      else {
+        var portFile = myRedirectedPortFile != null ? myRedirectedPortFile : myPortFile;
+        //noinspection DataFlowIssue
+        if (Files.getFileAttributeView(portFile, PosixFileAttributeView.class) != null) {
+          Files.setPosixFilePermissions(portFile, Set.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+        }
       }
 
       Files.writeString(myLockFile, Long.toString(myPid), StandardOpenOption.CREATE_NEW);
