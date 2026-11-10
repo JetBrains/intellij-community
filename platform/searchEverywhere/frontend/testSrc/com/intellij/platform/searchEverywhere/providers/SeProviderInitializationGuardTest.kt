@@ -128,7 +128,7 @@ class SeProviderInitializationGuardTest {
     maxCooldownOpenings: Int = SeProviderInitializationGuard.DEFAULT_MAX_COOLDOWN_OPENINGS,
     test: suspend CoroutineScope.(SeProviderInitializationGuard) -> Unit,
   ) = runBlocking {
-    test(SeProviderInitializationGuard(this, SLOW_THRESHOLD, SeProviderInitializationGuard.DEFAULT_SLOW_OPENINGS_TO_OPEN,
+    test(SeProviderInitializationGuard(this, { SLOW_THRESHOLD }, SeProviderInitializationGuard.DEFAULT_SLOW_OPENINGS_TO_OPEN,
                                        maxCooldownOpenings))
   }
 
