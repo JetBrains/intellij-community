@@ -46,12 +46,63 @@ internal class FileBasedIndexImplIndexInvalidationTest {
     }
   }
 
+  @Test
+  fun `a switch of key-hash tracing clears the layout before index creation`() {
+    val events = mutableListOf<String>()
+    val layout = TestLayout { events.add("clear") }
+    val extension = TestIndexExtension(traceKeyHashes = true) {
+      events.add("create")
+      mock()
+    }
+
+    // the index was built without tracing: its key-hash mapping misses the keys, so the index must be rebuilt
+    IndexVersion.rewriteVersion(TestIndexExtension.INDEX_ID, TestIndexExtension.VERSION)
+    try {
+      FileBasedIndexImpl.registerIndexer(extension, layout, IndexConfiguration(), IndexVersionRegistrationSink(), IntOpenHashSet())
+
+      assertThat(events)
+        .describedAs("the switch of tracing from false to true must clear the index")
+        .containsExactly("clear", "create")
+    }
+    finally {
+      FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(TestIndexExtension.INDEX_ID))
+      FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(TestIndexExtension.INDEX_ID))
+    }
+  }
+
+  @Test
+  fun `an index without key-hash tracing keeps the version of its extension`() {
+    val events = mutableListOf<String>()
+    val layout = TestLayout { events.add("clear") }
+    val extension = TestIndexExtension(traceKeyHashes = false) {
+      events.add("create")
+      mock()
+    }
+
+    // the version of an index that does not trace is the version of its extension, as it was before: no rebuild on an upgrade
+    IndexVersion.rewriteVersion(TestIndexExtension.INDEX_ID, TestIndexExtension.VERSION)
+    try {
+      FileBasedIndexImpl.registerIndexer(extension, layout, IndexConfiguration(), IndexVersionRegistrationSink(), IntOpenHashSet())
+
+      assertThat(events)
+        .describedAs("an index that does not trace the key hashes must not be cleared")
+        .containsExactly("create")
+    }
+    finally {
+      FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(TestIndexExtension.INDEX_ID))
+      FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(TestIndexExtension.INDEX_ID))
+    }
+  }
+
   private class TestIndexExtension(
+    private val traceKeyHashes: Boolean = false,
     private val createIndex: (VfsAwareIndexStorageLayout<Int, Int>) -> UpdatableIndex<Int, Int, FileContent, *>,
   ) : FileBasedIndexExtension<Int, Int>(), CustomImplementationFileBasedIndexExtension<Int, Int> {
     override fun getName(): ID<Int, Int> = INDEX_ID
 
     override fun getVersion(): Int = VERSION
+
+    override fun traceKeyHashToVirtualFileMapping(): Boolean = traceKeyHashes
 
     override fun dependsOnFileContent(): Boolean = true
 

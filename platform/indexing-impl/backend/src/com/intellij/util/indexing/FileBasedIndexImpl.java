@@ -2425,7 +2425,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Internal
   static <K, V> int getIndexExtensionVersion(@NotNull FileBasedIndexExtension<K, V> extension) {
-    return extension.getVersion();
+    int version = extension.getVersion();
+    if (extension.traceKeyHashToVirtualFileMapping()) {
+      //include traceKeyHashToVirtualFileMapping into index version, because traceKeyHashToVirtualFileMapping change
+      // requires either removing of old trace-supporting file(s), or creating and filling up new one(s). Since change
+      // of traceKeyHashToVirtualFileMapping is rare -- easier to implement this by just full index rebuild:
+      version ^= (1 << 30);
+    }
+    return version;
   }
 
   private @Nullable IdFilter extractFileEnumeration(@NotNull GlobalSearchScope scope) {
