@@ -29,6 +29,7 @@
     <orderEntry type="module" module-name="intellij.platform.credentialStore" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.snakeyaml" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scopes" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.rpc" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.searchEverywhere.frontend" />
 </module>
