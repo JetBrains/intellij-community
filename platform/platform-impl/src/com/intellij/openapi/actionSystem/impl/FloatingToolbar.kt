@@ -127,7 +127,7 @@ abstract class FloatingToolbar(
     if (!canBeShownAtCurrentSelection) {
       return
     }
-    val hint = createHint()
+    val hint = createHint() ?: return
     //maybe readaction
     writeIntentReadAction {
       showHint (hint)
@@ -147,8 +147,11 @@ abstract class FloatingToolbar(
     }
   }
 
-  protected open suspend fun createHint(): LightweightHint {
-    val toolbar = createUpdatedActionToolbar(editor.contentComponent)
+  /**
+   * Returns `null` when [createActionGroup] returns no group. Then the toolbar does not show.
+   */
+  protected open suspend fun createHint(): LightweightHint? {
+    val toolbar = createUpdatedActionToolbar(editor.contentComponent) ?: return null
     val component = BorderLayoutPanel().apply {
       addToCenter(toolbar.component)
     }
@@ -178,7 +181,7 @@ abstract class FloatingToolbar(
     hide()
   }
 
-  private suspend fun createUpdatedActionToolbar(targetComponent: JComponent): ActionToolbar {
+  private suspend fun createUpdatedActionToolbar(targetComponent: JComponent): ActionToolbar? {
     return suspendCancellableCoroutine { continuation ->
       WriteIntentReadAction.run {
         createActionToolbar(targetComponent) {
@@ -190,8 +193,12 @@ abstract class FloatingToolbar(
     }
   }
 
-  private fun createActionToolbar(targetComponent: JComponent, onUpdated: (ActionToolbar) -> Unit) {
-    val group = createActionGroup() ?: return
+  private fun createActionToolbar(targetComponent: JComponent, onUpdated: (ActionToolbar?) -> Unit) {
+    val group = createActionGroup()
+    if (group == null) {
+      onUpdated(null)
+      return
+    }
     val place = ActionPlaces.EDITOR_FLOATING_TOOLBAR
     val toolbar = ToolbarUtils.createImmediatelyUpdatedToolbar(
       group,

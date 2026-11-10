@@ -201,8 +201,8 @@ class CodeFloatingToolbar(
     return DefaultActionGroup(actionList)
   }
 
-  override suspend fun createHint(): LightweightHint {
-    val hint = super.createHint()
+  override suspend fun createHint(): LightweightHint? {
+    val hint = super.createHint() ?: return null
     val buttons = UIUtil.findComponentsOfType(hint.component, ActionButton::class.java)
     buttons.forEach { button ->
       if (button.presentation.getClientProperty(ActionUtil.HIDE_DROPDOWN_ICON) == null) {
@@ -231,6 +231,7 @@ class CodeFloatingToolbar(
   }
 
   override fun isAvailableForSelection(editor: Editor, elementAtStart: PsiElement, elementAtEnd: PsiElement): Boolean {
+    if (getContextAwareGroupId(editor) == null) return false
     return editor.selectionModel.hasSelection() || !isSelectionRequiredForFloatingToolbar(PsiUtilCore.findLanguageFromElement(elementAtStart))
   }
 
