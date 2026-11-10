@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -30,6 +31,32 @@ jvm_library(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.vcs.gitlab` end
+
+### auto-generated section `plugin intellij.vcs.gitlab` start
+ij_plugin(
+    name = "gitlab_plugin",
+    descriptor_module = ":gitlab",
+    content_modules = [
+        # do not sort,
+        "//plugins/gitlab/shared",
+        "//plugins/gitlab/gitlab-core:vcs-gitlab-backend",
+        "//plugins/gitlab/frontend",
+        "//plugins/gitlab/gitlab-git:vcs-gitlab-git",
+        "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            # do not sort,
+            "@@//plugins/gitlab/gitlab-ultimate-features-shared:vcs-gitlab-ultimate-features-shared",
+            "@@//plugins/gitlab/gitlab-ultimate-features-backend:vcs-gitlab-ultimate-features-backend",
+            "@@//plugins/gitlab/gitlab-ultimate-features-frontend:vcs-gitlab-ultimate-features-frontend",
+            "@@//plugins/gitlab/gitlab-ultimate-features-frontend-split:vcs-gitlab-ultimate-features-frontend-split",
+            "@@//plugins/gitlab/gitlab-ultimate-ci-sh:vcs-gitlab-ultimate-ci-sh",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.vcs.gitlab` end
 
 ### auto-generated section `iml intellij.vcs.gitlab` start
 exports_files(
