@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+open class Base {
+    open fun String.foo() {}
+}
+
+class Derived : Base() {
+    override fun String.foo() {}
+}

@@ -68,15 +68,15 @@ object ContextParameterUtils {
     }
 
     /**
-     * Checks that the whole override hierarchy of [function] can be modified by the refactoring.
+     * Checks that the whole override hierarchy of [declaration] can be modified by the refactoring.
      * Returns `false` if the function overrides a declaration from a library (compiled, read-only)
      * or a non-Kotlin declaration, because the Change Signature refactoring targets the root
      * overridden declaration, which must be writable Kotlin source.
      */
     context(session: KaSession)
-    fun overridesOnlyModifiableDeclarations(function: KtNamedFunction): Boolean {
-        if (!function.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return true
-        val symbol = function.symbol as? KaCallableSymbol ?: return false
+    fun overridesOnlyModifiableDeclarations(declaration: KtCallableDeclaration): Boolean {
+        if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return true
+        val symbol = declaration.symbol as? KaCallableSymbol ?: return false
         return symbol.allOverriddenSymbols.all { overridden ->
             val psi = overridden.psi
             psi is KtCallableDeclaration && psi.canRefactorElement()

@@ -3,12 +3,16 @@
 package org.jetbrains.kotlin.idea.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.impl.Utils.computeWithProgressIcon
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.createSmartPointer
+import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -23,7 +27,9 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetin
 import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParameterUtils.findContextParameterInChangeInfo
 import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParameterUtils.isAnonymousParameter
 import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParameterUtils.isConvertibleContextParameter
+import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParameterUtils.overridesOnlyModifiableDeclarations
 import org.jetbrains.kotlin.idea.codeinsight.intentions.contexts.ContextParameterUtils.runChangeSignatureForParameter
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.renameParameter
@@ -39,10 +45,29 @@ class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntentio
 ), LowPriorityAction {
     override fun startInWriteAction(): Boolean = false
 
+    override fun visitTargetTypeOnlyOnce(): Boolean = true
+
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {
         if (!isConvertibleContextParameter(element)) return false
         val ownerFunction = (element.parent as? KtContextParameterList)?.ownerDeclaration as? KtNamedFunction ?: return false
-        return !isAnonymousParameter(element) || !ownerFunction.hasModifier(OVERRIDE_KEYWORD) // KTIJ-34978
+        if (!ownerFunction.hasModifier(OVERRIDE_KEYWORD)) return true
+        if (isAnonymousParameter(element)) return false // KTIJ-34978
+
+        val canModifyOverrides = {
+            analyze(ownerFunction) {
+                overridesOnlyModifiableDeclarations(ownerFunction)
+            }
+        }
+        return if (ApplicationManager.getApplication().isDispatchThread) {
+            val editor = element.findExistingEditor() ?: return false
+            val component = editor.contentComponent
+            val point = RelativePoint(component, editor.logicalPositionToXY(editor.offsetToLogicalPosition(caretOffset)))
+            computeWithProgressIcon(point, component, ActionPlaces.UNKNOWN) {
+                readAction { canModifyOverrides() }
+            }
+        } else {
+            canModifyOverrides()
+        }
     }
 
     override fun applyTo(element: KtParameter, editor: Editor?) {

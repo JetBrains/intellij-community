@@ -15462,6 +15462,36 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/multipleContextParameters.kt");
             }
 
+            @TestMetadata("overrideLibraryClass.kt")
+            public void testOverrideLibraryClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/overrideLibraryClass.kt");
+            }
+
+            @TestMetadata("overrideLibraryInterface.kt")
+            public void testOverrideLibraryInterface() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/overrideLibraryInterface.kt");
+            }
+
+            @TestMetadata("overrideLibraryProperty.kt")
+            public void testOverrideLibraryProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/overrideLibraryProperty.kt");
+            }
+
+            @TestMetadata("overrideTraversal.kt")
+            public void testOverrideTraversal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/overrideTraversal.kt");
+            }
+
+            @TestMetadata("overrideWritable.kt")
+            public void testOverrideWritable() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/overrideWritable.kt");
+            }
+
+            @TestMetadata("overrideWritableProperty.kt")
+            public void testOverrideWritableProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/overrideWritableProperty.kt");
+            }
+
             @TestMetadata("propertyReference.kt")
             public void testPropertyReference() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/propertyReference.kt");
@@ -15773,6 +15803,26 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("onlyContextParameter.kt")
             public void testOnlyContextParameter() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/onlyContextParameter.kt");
+            }
+
+            @TestMetadata("overrideLibraryClass.kt")
+            public void testOverrideLibraryClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/overrideLibraryClass.kt");
+            }
+
+            @TestMetadata("overrideLibraryInterface.kt")
+            public void testOverrideLibraryInterface() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/overrideLibraryInterface.kt");
+            }
+
+            @TestMetadata("overrideTraversal.kt")
+            public void testOverrideTraversal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/overrideTraversal.kt");
+            }
+
+            @TestMetadata("overrideWritable.kt")
+            public void testOverrideWritable() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/overrideWritable.kt");
             }
 
             @TestMetadata("recursiveCalls.kt")

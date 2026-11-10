@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+open class Base {
+    open val String.value: Int
+        get() = length
+}
+
+class Derived : Base() {
+    override val String.value: Int
+        get() = length
+}
