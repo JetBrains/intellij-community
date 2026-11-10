@@ -44,6 +44,12 @@ import org.jetbrains.annotations.Nullable;
 public final class PyKeywordHighlightingAnnotator extends PyAnnotatorBase implements HighlightRangeExtension {
 
   @Override
+  public boolean runInBatchMode() {
+    return false;
+  }
+
+
+  @Override
   public boolean isForceHighlightParents(@NotNull PsiFile psiFile) {
     return psiFile instanceof PyAstFile;
   }

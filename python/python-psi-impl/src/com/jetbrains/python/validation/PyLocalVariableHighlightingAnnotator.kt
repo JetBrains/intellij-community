@@ -13,6 +13,11 @@ import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 
 class PyLocalVariableHighlightingAnnotator : PyAnnotatorBase() {
+
+  override fun runInBatchMode(): Boolean {
+    return false
+  }
+
   override fun annotate(element: PsiElement, holder: PyAnnotationHolder) {
     element.accept(PyLocalVariableAnnotatorVisitor(holder))
   }

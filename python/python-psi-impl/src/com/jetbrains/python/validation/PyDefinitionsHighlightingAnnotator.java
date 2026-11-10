@@ -21,6 +21,12 @@ import java.util.Objects;
  * Highlights class definitions, function definitions, and decorators.
  */
 public final class PyDefinitionsHighlightingAnnotator extends PyAnnotatorBase {
+
+  @Override
+  public boolean runInBatchMode() {
+    return false;
+  }
+
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
     if (holder.isBatchMode()) return;

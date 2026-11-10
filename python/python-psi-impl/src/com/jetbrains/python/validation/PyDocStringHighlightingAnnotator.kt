@@ -24,6 +24,11 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
  * Highlights doc strings in classes, functions, and files.
  */
 class PyDocStringHighlightingAnnotator : PyAnnotatorBase() {
+
+  override fun runInBatchMode(): Boolean {
+    return false
+  }
+
   override fun annotate(element: PsiElement, holder: PyAnnotationHolder) {
     if (holder.isBatchMode) return
     if (element is PsiComment) {

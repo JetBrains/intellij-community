@@ -1,14 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.impl;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.ProductionDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl;
+import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -51,9 +54,12 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPlainText;
+import com.intellij.testFramework.InspectionTestUtil;
+import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
@@ -898,5 +904,74 @@ public class DaemonAnnotatorsRespondToChangesTest extends ProductionDaemonAnalyz
         backspace();
       }
     });
+  }
+
+  public static class MyBatchAnnotator extends MyRecordingAnnotator {
+    private static final String MSG = "batch annotator";
+
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiFile) {
+        holder.newAnnotation(HighlightSeverity.WARNING, MSG).range(element).create();
+        iDidIt();
+      }
+    }
+  }
+
+  public static class MyEditorOnlyAnnotator extends MyRecordingAnnotator {
+    private static final String MSG = "editor-only annotator";
+
+    @Override
+    public boolean runInBatchMode() {
+      return false;
+    }
+
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiFile) {
+        holder.newAnnotation(HighlightSeverity.WARNING, MSG).range(element).create();
+        iDidIt();
+      }
+    }
+  }
+
+  public void testAnnotatorsWithRunInBatchModeFalseRunInEditor() {
+    MyBatchAnnotator batchAnnotator = new MyBatchAnnotator();
+    MyEditorOnlyAnnotator editorOnlyAnnotator = new MyEditorOnlyAnnotator();
+    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{batchAnnotator, editorOnlyAnnotator}, () -> {
+      configureByText(PlainTextFileType.INSTANCE, "text");
+      List<HighlightInfo> warnings = myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+      assertSize(2, warnings);
+      assertTrue(ContainerUtil.exists(warnings, info -> MyBatchAnnotator.MSG.equals(info.getDescription())));
+      assertTrue(ContainerUtil.exists(warnings, info -> MyEditorOnlyAnnotator.MSG.equals(info.getDescription())));
+    });
+  }
+
+  public void testAnnotatorsWithRunInBatchModeFalseAreSkippedInBatchMode() {
+    MyRecordingAnnotator.clearAll();
+    MyBatchAnnotator batchAnnotator = new MyBatchAnnotator();
+    MyEditorOnlyAnnotator editorOnlyAnnotator = new MyEditorOnlyAnnotator();
+    configureByText(PlainTextFileType.INSTANCE, "text");
+    myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.WARNING);
+    LanguageAnnotators.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, batchAnnotator);
+    LanguageAnnotators.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, editorOnlyAnnotator);
+    try {
+      GlobalInspectionToolWrapper toolWrapper = new GlobalInspectionToolWrapper(new HighlightVisitorBasedInspection().setRunAnnotators(true));
+      AnalysisScope scope = new AnalysisScope(getFile());
+      GlobalInspectionContextForTests globalContext =
+        InspectionsKt.createGlobalContextForTool(scope, getProject(), List.of(toolWrapper));
+
+      InspectionTestUtil.runTool(toolWrapper, scope, globalContext);
+
+      String description = assertOneElement(globalContext.getPresentation(toolWrapper).getProblemDescriptors())
+        .getDescriptionTemplate();
+      assertTrue(description, description.startsWith(MyBatchAnnotator.MSG));
+      assertTrue(batchAnnotator.didIDoIt());
+      assertFalse(editorOnlyAnnotator.didIDoIt());
+    }
+    finally {
+      LanguageAnnotators.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, editorOnlyAnnotator);
+      LanguageAnnotators.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, batchAnnotator);
+    }
   }
 }

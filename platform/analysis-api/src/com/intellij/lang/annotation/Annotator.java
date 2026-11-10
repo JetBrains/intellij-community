@@ -34,4 +34,17 @@ public interface Annotator extends PossiblyDumbAware {
    * @param holder  the container which receives annotations created by the plugin.
    */
   void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder);
+  /**
+   * Returns {@code false} if this annotator should be skipped in batch mode, i.e. when a file is analyzed outside the editor
+   * (for example, by "Inspect Code" or on commit), as opposed to on-the-fly highlighting of an open editor.
+   * <p>
+   * Annotators that only apply text attributes (semantic syntax coloring) and never report problems should return {@code false},
+   * since their output is invisible in batch results and running them is wasted work.
+   * Annotators that report errors or warnings must keep the default {@code true}.
+   *
+   * @see AnnotationSession#isBatchMode()
+   */
+  default boolean runInBatchMode() {
+    return true;
+  }
 }

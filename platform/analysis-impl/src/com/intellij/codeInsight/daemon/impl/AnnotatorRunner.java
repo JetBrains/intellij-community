@@ -73,7 +73,7 @@ final class AnnotatorRunner {
 
     // TODO move inside Divider to calc only once
     List<PsiElement> insideThenOutside = ContainerUtil.concat(inside, outside);
-    Map<Annotator, Set<Language>> supportedLanguages = calcSupportedLanguages(insideThenOutside);
+    Map<Annotator, Set<Language>> supportedLanguages = calcSupportedLanguages(insideThenOutside, myBatchMode);
     Processor<? super Annotator> processor = annotator ->
       ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(document, annotator, insideThenOutside, supportedLanguages, resultSink));
     boolean result = JobLauncher.getInstance().processConcurrentlyAsync(new ArrayList<>(supportedLanguages.keySet()), processor, runnable);
@@ -81,7 +81,7 @@ final class AnnotatorRunner {
     return result;
   }
 
-  private static @NotNull @Unmodifiable Map<Annotator, Set<Language>> calcSupportedLanguages(@NotNull List<? extends PsiElement> elements) {
+  private static @NotNull @Unmodifiable Map<Annotator, Set<Language>> calcSupportedLanguages(@NotNull List<? extends PsiElement> elements, boolean batchMode) {
     Map<Annotator, Set<Language>> map = CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<>() {
       @Override
       public int hashCode(Annotator object) {
@@ -101,6 +101,7 @@ final class AnnotatorRunner {
     for (Language language : languages) {
       List<Annotator> templates = LanguageAnnotators.INSTANCE.allForLanguageOrAny(language);
       for (Annotator template : templates) {
+        if (batchMode && !template.runInBatchMode()) continue;
         Set<Language> supportedLanguages = map.get(template);
         if (supportedLanguages == null) {
           supportedLanguages = new HashSet<>();
@@ -128,13 +129,14 @@ final class AnnotatorRunner {
       return;
     }
     VirtualFile virtualFile = myPsiFile.getVirtualFile();
+    boolean usable = myDumbService.isUsableInCurrentContext(annotator, virtualFile);
+    if (!usable) {
+      return;
+    }
     // create AnnotationHolderImpl for each Annotator to make it immutable thread-safe converter to the corresponding HighlightInfo
     AnnotationSessionImpl.computeWithSession(myBatchMode, annotator, myAnnotationSession, annotationHolder -> {
       for (PsiElement psiElement : insideThenOutside) {
         if (!supported.contains(psiElement.getLanguage())) {
-          continue;
-        }
-        if (!myDumbService.isUsableInCurrentContext(annotator, virtualFile)) {
           continue;
         }
         ProgressManager.checkCanceled();

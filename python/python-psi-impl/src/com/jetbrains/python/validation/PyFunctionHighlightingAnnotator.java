@@ -31,6 +31,12 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 
 public class PyFunctionHighlightingAnnotator extends PyAnnotatorBase {
+
+  @Override
+  public boolean runInBatchMode() {
+    return false;
+  }
+
   @Override
   protected void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
     if (holder.isBatchMode()) return;

@@ -31,6 +31,11 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  * - f"{x:.2f}" where x has unknown type - does NOT highlight
  */
 class PyFStringFormatSpecAnnotator : PyAnnotatorBase() {
+
+  override fun runInBatchMode(): Boolean {
+    return false
+  }
+
   override fun annotate(element: PsiElement, holder: PyAnnotationHolder) {
     if (holder.isBatchMode()) return
     element.accept(PyFStringFormatSpecVisitor(holder))

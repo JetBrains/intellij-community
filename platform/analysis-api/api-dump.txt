@@ -1342,6 +1342,7 @@ Fc:com.intellij.lang.annotation.AnnotationSession
 com.intellij.lang.annotation.Annotator
 - com.intellij.openapi.project.PossiblyDumbAware
 - a:annotate(com.intellij.psi.PsiElement,com.intellij.lang.annotation.AnnotationHolder):V
+- runInBatchMode():Z
 a:com.intellij.lang.annotation.ExternalAnnotator
 - com.intellij.openapi.project.PossiblyDumbAware
 - <init>():V
