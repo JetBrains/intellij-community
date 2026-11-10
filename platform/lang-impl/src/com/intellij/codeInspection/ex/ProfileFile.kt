@@ -15,12 +15,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.eel.fs.EelFiles
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
 
 private val LOG = logger<ProfileFile>()
@@ -49,18 +47,17 @@ data class ProfileFile(val path: Path, val profileName: String) {
     if (tools.isEmpty()) return ModCommand.nop()
     val toolElements = tools.map { toolElement(it) }
     val path = path
-    if (Files.isRegularFile(path)) {
-      val file = VirtualFileManager.getInstance().findFileByNioPath(path)
-      val oldText = readText(file, path)
+    // The virtual file system supplies the current snapshot, including unsaved profile files
+    val file = VirtualFileManager.getInstance().findFileByNioPath(path)
+    if (file?.isDirectory == true) return ModCommand.nop()
+    if (file != null) {
+      val oldText = readText(file)
                     ?: return ModCommand.error(InspectionsBundle.message("disable.inspection.cannot.read.profile", path))
       val newText = replaceToolElements(oldText, toolElements)
                     ?: return ModCommand.error(InspectionsBundle.message("disable.inspection.cannot.read.profile", path))
       // The profile in memory can be older than the file, and the file can already have the settings
       if (newText == oldText) return ModCommand.nop()
-      // The virtual file system can miss a file that exists, such as a file which is not in the index of a language server
-      val target = file ?: findExistingAncestor(path)?.let { [ancestorPath, ancestor] -> futureFile(ancestor, ancestorPath, path) }
-                   ?: return ModCommand.nop()
-      return ModUpdateFileText(target, oldText, newText, ModCommandExecutorImpl.calculateFragments(oldText, newText))
+      return ModUpdateFileText(file, oldText, newText, ModCommandExecutorImpl.calculateFragments(oldText, newText))
     }
     val profileElement = Element(PROFILE_TAG).setAttribute("version", "1.0")
     profileElement.addContent(Element("option").setAttribute("name", "myName").setAttribute("value", profileName))
@@ -116,16 +113,13 @@ data class ProfileFile(val path: Path, val profileName: String) {
     return if (changed) JDOMUtil.write(root, "\n") else text
   }
 
-  /** The text of the profile file, with LF line separators, from its document or from the disk. */
-  private fun readText(file: VirtualFile?, path: Path): String? {
-    if (file != null) {
-      return FileDocumentManager.getInstance().getDocument(file)?.text ?: StringUtil.convertLineSeparators(VfsUtilCore.loadText(file))
-    }
+  /** The text of the profile file, with LF line separators, from its document or the virtual file system. */
+  private fun readText(file: VirtualFile): String? {
     return try {
-      StringUtil.convertLineSeparators(EelFiles.readString(path))
+      FileDocumentManager.getInstance().getDocument(file)?.text ?: StringUtil.convertLineSeparators(VfsUtilCore.loadText(file))
     }
     catch (e: IOException) {
-      LOG.info("Cannot read the inspection profile $path", e)
+      LOG.info("Cannot read the inspection profile ${file.path}", e)
       null
     }
   }
@@ -135,29 +129,18 @@ data class ProfileFile(val path: Path, val profileName: String) {
     val [ancestorPath, ancestor] = findExistingAncestor(path) ?: return ModCommand.nop()
     var command = ModCommand.nop()
     var parent = ancestor
-    var parentPath = ancestorPath
-    for (directory in ancestorPath.relativize(path.parent)) {
-      parentPath = parentPath.resolve(directory)
+    for (directory in ancestorPath.relativize(path).toList().dropLast(1)) {
       val futureDirectory = FutureVirtualFile(parent, directory.toString(), null)
-      if (!Files.isDirectory(parentPath)) {
-        command = command.andThen(ModCreateFile(futureDirectory, ModCreateFile.Directory()))
-      }
+      command = command.andThen(ModCreateFile(futureDirectory, ModCreateFile.Directory()))
       parent = futureDirectory
     }
-    val fileName = path.fileName.toString()
-    val fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName)
-    return command.andThen(ModCreateFile(FutureVirtualFile(parent, fileName, fileType), ModCreateFile.Text(text)))
+    return command.andThen(ModCreateFile(futureFile(parent, path), ModCreateFile.Text(text)))
   }
 
-  /** The virtual file for [path] under the [ancestor] directory at [ancestorPath], which the virtual file system misses. */
-  private fun futureFile(ancestor: VirtualFile, ancestorPath: Path, path: Path): VirtualFile {
-    var file = ancestor
-    val names = ancestorPath.relativize(path).toList()
-    for ([index, name] in names.withIndex()) {
-      val fileType = if (index == names.lastIndex) FileTypeManager.getInstance().getFileTypeByFileName(name.toString()) else null
-      file = FutureVirtualFile(file, name.toString(), fileType)
-    }
-    return file
+  /** The virtual file for [path] under the [parent] directory, before the file exists in the virtual file system. */
+  private fun futureFile(parent: VirtualFile, path: Path): FutureVirtualFile {
+    val name = path.fileName.toString()
+    return FutureVirtualFile(parent, name, FileTypeManager.getInstance().getFileTypeByFileName(name))
   }
 
   /** The nearest parent directory of [path] that the virtual file system has, as a path and as a virtual file. */
@@ -165,7 +148,7 @@ data class ProfileFile(val path: Path, val profileName: String) {
     var directory = path.parent
     while (directory != null) {
       val file = VirtualFileManager.getInstance().findFileByNioPath(directory)
-      if (file != null) return directory to file
+      if (file != null) return if (file.isDirectory) directory to file else null
       directory = directory.parent
     }
     return null

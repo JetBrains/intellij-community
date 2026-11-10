@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.PROFILE_DIR
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.project.stateStore
@@ -28,6 +29,7 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createOrLoadProject
 import com.intellij.testFramework.refreshProjectConfigDir
+import com.intellij.testFramework.writeChild
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -35,9 +37,7 @@ import kotlinx.coroutines.withContext
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.nio.file.Path
 import kotlin.io.path.readText
-import kotlin.io.path.writeText
 
 class DisableInspectionToolModCommandActionTest {
   companion object {
@@ -55,11 +55,14 @@ class DisableInspectionToolModCommandActionTest {
   val initInspectionRule = InitInspectionRule()
 
   /** @param setUp prepares the project directory before the project loads */
-  private fun doTest(setUp: (Path) -> Unit = {}, task: suspend (Project) -> Unit) {
+  private fun doTest(setUp: (VirtualFile) -> Unit = {}, task: suspend (Project) -> Unit) {
     runBlocking(Dispatchers.Default) {
       createOrLoadProject(
         tempDirManager = tempDirManager,
-        projectCreator = { Path.of(it.path).also(setUp) },
+        projectCreator = { directory ->
+          setUp(directory)
+          directory.toNioPath()
+        },
         task = { project ->
           project.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true)
           val profileManager = ProjectInspectionProfileManager.getInstance(project)
@@ -113,9 +116,7 @@ class DisableInspectionToolModCommandActionTest {
   @Test
   fun `disable in the scope of the file`() {
     doTest(setUp = { root ->
-      val profileFile = root.resolve(".idea").resolve(PROFILE_DIR).resolve("Project_Default.xml")
-      profileFile.parent.createDirectories()
-      profileFile.writeText("""
+      root.writeChild(".idea/$PROFILE_DIR/Project_Default.xml", """
         <component name="InspectionProjectProfileManager">
           <profile version="1.0">
             <option name="myName" value="Project Default" />
@@ -207,10 +208,8 @@ class DisableInspectionToolModCommandActionTest {
     context to action.perform(context)
   }
 
-  private fun writeProfileWithDisabledTool(root: Path) {
-    val profileFile = root.resolve(".idea").resolve(PROFILE_DIR).resolve("Project_Default.xml")
-    profileFile.parent.createDirectories()
-    profileFile.writeText("""
+  private fun writeProfileWithDisabledTool(root: VirtualFile) {
+    root.writeChild(".idea/$PROFILE_DIR/Project_Default.xml", """
       <component name="InspectionProjectProfileManager">
         <profile version="1.0">
           <option name="myName" value="Project Default" />
