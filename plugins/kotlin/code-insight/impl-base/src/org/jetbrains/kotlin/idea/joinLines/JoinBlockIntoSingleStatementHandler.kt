@@ -6,6 +6,7 @@ import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate
 import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JOIN
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.utils.isConvertableToExpressionBody
@@ -35,6 +36,8 @@ class JoinBlockIntoSingleStatementHandler : JoinLinesHandlerDelegate {
 
         val block = brace.parent as? KtBlockExpression ?: return CANNOT_JOIN
         val statement = block.statements.singleOrNull() ?: return CANNOT_JOIN
+        // otherwise the lambda braces become the block of the when entry or the if branch
+        if (PsiTreeUtil.getDeepestFirst(statement).elementType == KtTokens.LBRACE) return CANNOT_JOIN
 
         val parent = block.parent
         val oneLineReturnFunction = (parent as? KtDeclarationWithBody)?.takeIf { it.isConvertableToExpressionBody() }

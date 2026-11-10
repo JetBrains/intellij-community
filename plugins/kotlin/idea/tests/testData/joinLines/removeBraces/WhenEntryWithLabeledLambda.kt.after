@@ -1,0 +1,6 @@
+val f: () -> Int? = when (true) {
+    true -> l@{ 1 }
+    false -> {
+        { 2 }
+    }
+}

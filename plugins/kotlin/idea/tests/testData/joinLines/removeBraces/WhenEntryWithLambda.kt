@@ -1,0 +1,8 @@
+val f: () -> Int? = when (true) {
+    true -> {<caret>
+        { 1 }
+    }
+    false -> {
+        { 2 }
+    }
+}

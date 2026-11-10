@@ -361,6 +361,11 @@ public abstract class KotlinFirJoinLinesTestGenerated extends AbstractKotlinFirJ
             runTest("../../idea/tests/testData/joinLines/removeBraces/Else.kt");
         }
 
+        @TestMetadata("ElseWithLambda.kt")
+        public void testElseWithLambda() throws Exception {
+            runTest("../../idea/tests/testData/joinLines/removeBraces/ElseWithLambda.kt");
+        }
+
         @TestMetadata("For.kt")
         public void testFor() throws Exception {
             runTest("../../idea/tests/testData/joinLines/removeBraces/For.kt");
@@ -391,6 +396,11 @@ public abstract class KotlinFirJoinLinesTestGenerated extends AbstractKotlinFirJ
             runTest("../../idea/tests/testData/joinLines/removeBraces/IfWithElseBlockInAssignment.kt");
         }
 
+        @TestMetadata("IfWithLambda.kt")
+        public void testIfWithLambda() throws Exception {
+            runTest("../../idea/tests/testData/joinLines/removeBraces/IfWithLambda.kt");
+        }
+
         @TestMetadata("IfWithPostfixAfterElseBlock.kt")
         public void testIfWithPostfixAfterElseBlock() throws Exception {
             runTest("../../idea/tests/testData/joinLines/removeBraces/IfWithPostfixAfterElseBlock.kt");
@@ -419,6 +429,21 @@ public abstract class KotlinFirJoinLinesTestGenerated extends AbstractKotlinFirJ
         @TestMetadata("WhenEntry.kt")
         public void testWhenEntry() throws Exception {
             runTest("../../idea/tests/testData/joinLines/removeBraces/WhenEntry.kt");
+        }
+
+        @TestMetadata("WhenEntryWithLabeledLambda.kt")
+        public void testWhenEntryWithLabeledLambda() throws Exception {
+            runTest("../../idea/tests/testData/joinLines/removeBraces/WhenEntryWithLabeledLambda.kt");
+        }
+
+        @TestMetadata("WhenEntryWithLambda.kt")
+        public void testWhenEntryWithLambda() throws Exception {
+            runTest("../../idea/tests/testData/joinLines/removeBraces/WhenEntryWithLambda.kt");
+        }
+
+        @TestMetadata("WhenEntryWithLambdaCall.kt")
+        public void testWhenEntryWithLambdaCall() throws Exception {
+            runTest("../../idea/tests/testData/joinLines/removeBraces/WhenEntryWithLambdaCall.kt");
         }
 
         @TestMetadata("While.kt")

@@ -1,0 +1,4 @@
+fun foo(p: Boolean): () -> Int = if (p) {<caret> { 1 }
+} else {
+    { 2 }
+}
