@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.KeyedLazyInstanceEP;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +49,7 @@ public abstract class VirtualFileSystem {
    * @param path the path to find file by
    * @return a virtual file if found, {@code null} otherwise
    */
+  @RequiresBackgroundThread(generateAssertion = false)
   public abstract @Nullable VirtualFile findFileByPath(@NotNull @NonNls String path);
 
   /**

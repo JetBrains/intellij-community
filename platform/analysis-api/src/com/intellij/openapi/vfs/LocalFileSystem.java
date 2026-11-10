@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +70,8 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   }
 
   /// Prefer [VirtualFileManager#findFileByNioPath(Path)].
-  public @Nullable VirtualFile findFileByNioFile(@NotNull Path file) {
+  @RequiresBackgroundThread(generateAssertion = false)
+  public final @Nullable VirtualFile findFileByNioFile(@NotNull Path file) {
     //TODO RC: we convert Path to String, but down the stack we convert String to Path again -- and such conversion
     //         could be costly (e.g. on Windows). It may worth to think about how to pass the Path down the stack,
     //         to avoid this double-conversion
@@ -77,6 +79,7 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   }
 
   /// Prefer [VirtualFileManager#refreshAndFindFileByNioPath(Path)].
+  @RequiresBackgroundThread(generateAssertion = false)
   public @Nullable VirtualFile refreshAndFindFileByNioFile(@NotNull Path file) {
     return refreshAndFindFileByPath(file.toAbsolutePath().toString());
   }

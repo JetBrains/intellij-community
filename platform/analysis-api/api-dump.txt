@@ -1773,7 +1773,7 @@ com.intellij.openapi.vfs.LocalFileOperationsHandler
 a:com.intellij.openapi.vfs.LocalFileSystem
 - com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 - findFileByIoFile(java.io.File):com.intellij.openapi.vfs.VirtualFile
-- findFileByNioFile(java.nio.file.Path):com.intellij.openapi.vfs.VirtualFile
+- f:findFileByNioFile(java.nio.file.Path):com.intellij.openapi.vfs.VirtualFile
 - s:getInstance():com.intellij.openapi.vfs.LocalFileSystem
 - refreshAndFindFileByIoFile(java.io.File):com.intellij.openapi.vfs.VirtualFile
 - refreshAndFindFileByNioFile(java.nio.file.Path):com.intellij.openapi.vfs.VirtualFile
