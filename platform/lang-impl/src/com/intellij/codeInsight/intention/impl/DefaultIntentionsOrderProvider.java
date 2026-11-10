@@ -1,9 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.PriorityAction.Priority;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,25 +27,11 @@ public final class DefaultIntentionsOrderProvider implements IntentionsOrderProv
   }
 
   public static int getPriorityWeight(@NotNull IntentionActionWithTextCaching action) {
-    IntentionAction nonDelegatedAction = findNonDelegatedAction(action.getAction());
-    Priority priority = nonDelegatedAction instanceof PriorityAction ? ((PriorityAction)nonDelegatedAction).getPriority() : null;
-    return getPriorityWeight(priority);
+    return getPriorityWeight(action.getPriority());
   }
 
   public static int getWeight(@NotNull CachedIntentions context, @NotNull IntentionActionWithTextCaching action) {
-    int group = context.getGroup(action).getPriority();
-    IntentionAction nonDelegatedAction = findNonDelegatedAction(action.getAction());
-    if (nonDelegatedAction instanceof PriorityAction) {
-      return group + getPriorityWeight(((PriorityAction)nonDelegatedAction).getPriority());
-    }
-    return group;
-  }
-
-  private static IntentionAction findNonDelegatedAction(IntentionAction action) {
-    while (action instanceof IntentionActionDelegate && !(action instanceof PriorityAction)) {
-      action = ((IntentionActionDelegate)action).getDelegate();
-    }
-    return action;
+    return context.getGroup(action).getPriority() + getPriorityWeight(action.getPriority());
   }
 
   public static int getPriorityWeight(@Nullable Priority priority) {

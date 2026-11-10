@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.CustomizableIntentionActionDelegate;
 import com.intellij.codeInsight.intention.EventTrackingIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
@@ -38,6 +39,7 @@ public final class IntentionActionWithTextCaching implements Comparable<Intentio
   private final List<IntentionAction> myOptionErrorFixes = new ArrayList<>();
   private final List<IntentionAction> myOptionInspectionFixes = new ArrayList<>();
   private final @IntentionName String myText;
+  private final @Nullable PriorityAction.Priority myPriority;
   private final IntentionAction myAction;
   private final @NlsContexts.PopupTitle String myDisplayName;
   private final Icon myIcon;
@@ -60,6 +62,7 @@ public final class IntentionActionWithTextCaching implements Comparable<Intentio
     myText = action.getText();
     // needed for checking errors in user written actions
     LOG.assertTrue(myText != null, "action " + action.getClass() + " text returned null");
+    myPriority = findPriority(action);
     myAction = new MyIntentionAction(action, markInvoked);
     myDisplayName = displayName;
     myFixRange = fixRange;
@@ -67,6 +70,26 @@ public final class IntentionActionWithTextCaching implements Comparable<Intentio
 
   public @NotNull @IntentionName String getText() {
     return myText;
+  }
+
+  /**
+   * @return the priority of the action, or null when the action is not a {@link PriorityAction}.
+   * The constructor gets the priority, so the EDT can read it without a call to the action.
+   */
+  @Nullable PriorityAction.Priority getPriority() {
+    return myPriority;
+  }
+
+  private static @Nullable PriorityAction.Priority findPriority(@NotNull IntentionAction action) {
+    IntentionAction nonDelegatedAction = findNonDelegatedAction(action);
+    return nonDelegatedAction instanceof PriorityAction priorityAction ? priorityAction.getPriority() : null;
+  }
+
+  private static IntentionAction findNonDelegatedAction(IntentionAction action) {
+    while (action instanceof IntentionActionDelegate delegate && !(action instanceof PriorityAction)) {
+      action = delegate.getDelegate();
+    }
+    return action;
   }
 
   void addIntention(@NotNull IntentionAction action) {
