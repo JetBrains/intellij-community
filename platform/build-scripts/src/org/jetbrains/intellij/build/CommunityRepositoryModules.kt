@@ -80,7 +80,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withModule("intellij.vcs.git.rt", "git4idea-rt.jar")
     },
     pluginAuto("intellij.tasks.core") { spec ->
-      spec.withModule("intellij.tasks")
       spec.withModule("intellij.tasks.compatibility")
     },
     // The relative paths below (`lib/maven3`, `lib/intellij.maven.server3`, ...) are a runtime contract, not an

@@ -14,6 +14,7 @@
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.tasks.impl"/>
     <module name="intellij.platform.util.ui"/>
+    <module name="intellij.tasks"/>
   </dependencies>
   <!-- endregion -->
 

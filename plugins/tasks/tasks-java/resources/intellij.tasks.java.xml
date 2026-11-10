@@ -8,6 +8,7 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.tasks"/>
     <module name="intellij.platform.tasks.impl"/>
+    <module name="intellij.tasks"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij.tasks">

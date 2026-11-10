@@ -1,7 +1,7 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.tasks"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
@@ -10,8 +10,9 @@
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs.core"/>
-    <!-- endregion -->
+    <module name="intellij.tasks"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <tasks.repositoryType implementation="org.jetbrains.plugins.github.tasks.GithubRepositoryType"/>
   </extensions>
