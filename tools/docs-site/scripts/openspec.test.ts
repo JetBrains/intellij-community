@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { checkOpenSpec, OpenSpecInfrastructureError, openspecFindings, type OpenSpecConfig } from './openspec.ts'
+import { checkOpenSpec, OpenSpecInfrastructureError, openspecCommand, openspecFindings, type OpenSpecConfig } from './openspec.ts'
 import { temporaryTree } from './tempTree.ts'
 import { testSiteConfig } from './testSiteConfig.ts'
 
@@ -47,5 +47,48 @@ describe('the OpenSpec check', () => {
   it('refuses a root that is not a folder named openspec, because the CLI finds only that name', () => {
     const root = temporaryTree('openspec-', { 'os/specs/config.yaml': 'schema: spec-driven\n' })
     assert.throws(() => openspecFindings(config(['os/specs']), fakeCli(VALID_REPORT), root), /is not a folder named openspec/)
+  })
+})
+
+describe('the command of the OpenSpec CLI', () => {
+  /** Runs `body` with the two variables that the command reads set to the given values, and restores them. */
+  function withEnvironment(entry: string | undefined, testSrcDir: string | undefined, body: () => void): void {
+    const saved = { OPENSPEC_ENTRY: process.env.OPENSPEC_ENTRY, TEST_SRCDIR: process.env.TEST_SRCDIR }
+    const set = (name: keyof typeof saved, value: string | undefined): void => {
+      if (value === undefined) {
+        delete process.env[name]
+      }
+      else {
+        process.env[name] = value
+      }
+    }
+    set('OPENSPEC_ENTRY', entry)
+    set('TEST_SRCDIR', testSrcDir)
+    try {
+      body()
+    }
+    finally {
+      set('OPENSPEC_ENTRY', saved.OPENSPEC_ENTRY)
+      set('TEST_SRCDIR', saved.TEST_SRCDIR)
+    }
+  }
+
+  it('runs the declared entry on the runtime of this process, also under bazel test', () => {
+    withEnvironment('/cli/bin/openspec.js', '/runfiles', () => {
+      assert.deepEqual(openspecCommand('/repo/tools/openspec.cmd'), [process.execPath, '/cli/bin/openspec.js'])
+    })
+  })
+
+  it('refuses the wrapper under bazel test, because its build would wait for the output base lock of the test', () => {
+    withEnvironment(undefined, '/runfiles', () => {
+      assert.throws(() => openspecCommand('/repo/tools/openspec.cmd'), OpenSpecInfrastructureError)
+    })
+  })
+
+  it('runs the wrapper that the site names outside Bazel', () => {
+    withEnvironment(undefined, undefined, () => {
+      const expected = process.platform === 'win32' ? ['cmd.exe', '/c', '/repo/tools/openspec.cmd'] : ['/bin/sh', '/repo/tools/openspec.cmd']
+      assert.deepEqual(openspecCommand('/repo/tools/openspec.cmd'), expected)
+    })
   })
 })

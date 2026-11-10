@@ -2,9 +2,9 @@
 // over each OpenSpec root of `specs.openspec`. The CLI owns these rules, and this module runs it. The references, the
 // anchors and the sentence budget stay with specRefs.ts.
 //
-// The kernel names no path of a site. The site gives the command that starts the CLI: the bun of the gate with the
-// declared entry of the CLI, or the wrapper of the repository. The gate of a site runs on bun without node_modules, so
-// this module imports nothing from npm.
+// The kernel names no path of a site. The site gives the command that starts the CLI, and `openspecCommand` builds it
+// from the wrapper of the repository that the site names. The gate of a site runs on bun without node_modules, so this
+// module imports nothing from npm.
 
 import { spawnSync } from 'node:child_process'
 import { basename, dirname, join } from 'node:path'
@@ -26,6 +26,25 @@ const QUIET_ENVIRONMENT: Readonly<Record<string, string>> = {
   OPENSPEC_TELEMETRY: '0',
   DO_NOT_TRACK: '1',
   OPENSPEC_NO_UPDATE_CHECK: '1',
+}
+
+/**
+ * The command line that starts the OpenSpec CLI: the runtime of this process with the entry in `OPENSPEC_ENTRY`, or
+ * `wrapper`, the wrapper script of the repository.
+ *
+ * Under `bazel test`, the test target passes the declared entry of the CLI in `OPENSPEC_ENTRY`. The wrapper is refused
+ * there, because its build would wait for the output base lock of the outer test.
+ */
+export function openspecCommand(wrapper: string): string[] {
+  const entry = process.env.OPENSPEC_ENTRY
+  if (entry !== undefined && entry.length > 0) {
+    return [process.execPath, entry]
+  }
+  if (process.env.TEST_SRCDIR !== undefined) {
+    throw new OpenSpecInfrastructureError('openspec: OPENSPEC_ENTRY is missing under bazel test; the test target must pass the declared entry of the OpenSpec CLI')
+  }
+  // a polyglot `.cmd` has no shebang: a shell runs its bash half, and cmd.exe its CMD half
+  return process.platform === 'win32' ? ['cmd.exe', '/c', wrapper] : ['/bin/sh', wrapper]
 }
 
 /** The validate runs over one root: the main specs and the active changes, then the archived changes. */
