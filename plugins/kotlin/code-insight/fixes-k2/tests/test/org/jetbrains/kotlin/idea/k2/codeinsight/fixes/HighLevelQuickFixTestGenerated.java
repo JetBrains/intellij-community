@@ -8914,6 +8914,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         public void testSingleEntryCompleteOption() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/singleEntryCompleteOption.kt");
         }
+
+        @TestMetadata("underscoreWithGetterCompleteOption.kt")
+        public void testUnderscoreWithGetterCompleteOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/underscoreWithGetterCompleteOption.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

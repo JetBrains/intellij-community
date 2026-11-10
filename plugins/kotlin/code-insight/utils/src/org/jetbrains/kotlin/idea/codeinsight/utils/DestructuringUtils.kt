@@ -167,7 +167,9 @@ fun KtDestructuringDeclaration.applyNameBasedDestructuringForm(
     val outerKeyword = if (isVar) "var" else "val"
     val perEntryKeyword = if (!positionBased && !useShortForm) outerKeyword else ""
 
-    val (keptMappings, underscoreMappingsToDrop) = entryMappings.partition { !it.psiEntry.isSingleUnderscore }
+    val (keptMappings, underscoreMappingsToDrop) = entryMappings.partition {
+        !it.psiEntry.isSingleUnderscore || it.psiEntry.initializer != null
+    }
 
     if (keptMappings.isEmpty()) return null
 
