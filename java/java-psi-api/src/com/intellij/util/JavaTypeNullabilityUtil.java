@@ -327,7 +327,7 @@ public final class JavaTypeNullabilityUtil {
         rightType = GenericsUtil.getWildcardBound(rightType);
       }
       if (level > 0) {
-        NullabilityConflictContext context = getNullabilityConflictTypeContext(rightType, leftBound);
+        NullabilityConflictContext context = getNullabilityConflictInBound(rightType, leftBound);
         if (isAllowedNullabilityConflictType(level > 1 && options.checkNotNullToNull, context)) {
           context = new NullabilityConflictContext(NullabilityConflict.COMPLEX, leftBound, rightType);
           return context;
@@ -341,11 +341,28 @@ public final class JavaTypeNullabilityUtil {
     }
     else {
       if (level > 0) {
-        NullabilityConflictContext context = getNullabilityConflictTypeContext(leftBound, rightType);
+        NullabilityConflictContext context = getNullabilityConflictInBound(leftBound, rightType);
         if (isAllowedNullabilityConflictType(level > 1 && options.checkNotNullToNull, context)) return context;
       }
       return getNullabilityConflictInAssignment(leftBound, null, rightType, level, options);
     }
+  }
+
+  /**
+   * Checks whether {@code subType} satisfies the wildcard bound relation {@code subType <: superType} from the point of nullability.
+   * <p>
+   * Unlike {@link #getNullabilityConflictTypeContext(PsiType, PsiType)}, this check accepts a type variable {@code T}
+   * with a nullable bound where {@code @Nullable T} is expected.
+   * For example, {@code Foo<T>} is assignable to {@code Foo<? extends @Nullable T>}.
+   */
+  private static @NotNull NullabilityConflictContext getNullabilityConflictInBound(@Nullable PsiType superType,
+                                                                                   @Nullable PsiType subType) {
+    NullabilityConflictContext context = getNullabilityConflictTypeContext(superType, subType);
+    if (context.nullabilityConflict == NullabilityConflict.COMPLEX && superType != null &&
+        !isInheritedFromBound(superType.getNullability())) {
+      return NullabilityConflictContext.UNKNOWN;
+    }
+    return context;
   }
 
   /**
