@@ -853,19 +853,22 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
    * One walk fills every group, over the stub of the file or over its AST, whichever
    * {@link #collectAllChildren} finds. The same walk serves {@link ExportedNameCache}.
    */
-  private final class TopLevelChildren {
+  private static final class TopLevelChildren {
     private final long myModificationStamp;
     private final @NotNull LanguageLevel myLanguageLevel;
     private final Map<Class<? extends PyElement>, List<PyElement>> myByType;
 
-    private TopLevelChildren(@Nullable StubElement<?> stub, long modificationStamp, @NotNull LanguageLevel languageLevel) {
+    private TopLevelChildren(@NotNull PyFileImpl file,
+                             @Nullable StubElement<?> stub,
+                             long modificationStamp,
+                             @NotNull LanguageLevel languageLevel) {
       myModificationStamp = modificationStamp;
       myLanguageLevel = languageLevel;
       final Map<Class<? extends PyElement>, List<PyElement>> byType = new HashMap<>();
       for (Class<? extends PyElement> type : TOP_LEVEL_CHILD_TYPES) {
         byType.put(type, new ArrayList<>());
       }
-      for (PsiElement child : collectAllChildren(PyFileImpl.this, stub, languageLevel)) {
+      for (PsiElement child : collectAllChildren(file, stub, languageLevel)) {
         for (Class<? extends PyElement> type : TOP_LEVEL_CHILD_TYPES) {
           if (type.isInstance(child)) {
             byType.get(type).add((PyElement)child);
@@ -896,7 +899,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
       cache = null;
     }
     if (cache == null) {
-      cache = new TopLevelChildren(getGreenStub(), modificationStamp, languageLevel);
+      cache = new TopLevelChildren(this, getGreenStub(), modificationStamp, languageLevel);
       myTopLevelChildren = new SoftReference<>(cache);
     }
     return cache;
