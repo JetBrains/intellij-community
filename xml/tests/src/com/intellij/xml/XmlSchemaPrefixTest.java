@@ -73,7 +73,7 @@ public class XmlSchemaPrefixTest {
 
   protected void doFindUsages(String filename, int usages) {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
-    EdtTestUtil.runInEdtAndWait(() -> assertThat(myFixture.testFindUsages(filename)).hasSize(usages));
+    assertThat(myFixture.testFindUsages(filename)).hasSize(usages);
   }
 
 }

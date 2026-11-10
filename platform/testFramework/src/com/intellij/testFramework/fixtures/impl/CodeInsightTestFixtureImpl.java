@@ -1170,7 +1170,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       configureByFiles(fileNames);
     }
     int flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED;
-    PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), flags);
+    PsiElement targetElement = ReadAction.computeBlocking(() -> TargetElementUtil.findTargetElement(getEditor(), flags));
     assertNotNull("Cannot find referenced element", targetElement);
     return findUsages(targetElement);
   }
@@ -1237,13 +1237,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public @NotNull String getUsageViewTreeTextRepresentation(@NotNull PsiElement targetElement) {
     FindUsagesManager usagesManager = ((FindManagerBase)FindManager.getInstance(getProject())).getFindUsagesManager();
-    FindUsagesHandler handler = usagesManager.getFindUsagesHandler(targetElement, false);
+    FindUsagesHandler handler = ReadAction.computeBlocking(() -> usagesManager.getFindUsagesHandler(targetElement, false));
     assertNotNull("Cannot find handler for: " + targetElement, handler);
-    UsageViewImpl usageView = (UsageViewImpl)usagesManager.doFindUsages(handler.getPrimaryElements(),
-                                                                        handler.getSecondaryElements(),
-                                                                        handler,
-                                                                        handler.getFindUsagesOptions(),
-                                                                        false);
+    UsageViewImpl usageView = (UsageViewImpl)EdtTestUtil.runInEdtAndGet(() -> {
+      return usagesManager.doFindUsages(handler.getPrimaryElements(),
+                                        handler.getSecondaryElements(),
+                                        handler,
+                                        handler.getFindUsagesOptions(),
+                                        false);
+    });
     return getUsageViewTreeTextRepresentation(usageView);
   }
 
@@ -1266,14 +1268,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   public @NotNull @Unmodifiable Collection<UsageInfo> findUsages(@NotNull PsiElement targetElement, @Nullable SearchScope scope) {
     Project project = getProject();
-    FindUsagesHandler handler =
-      ((FindManagerBase)FindManager.getInstance(project)).getFindUsagesManager().getFindUsagesHandler(targetElement, false);
+    FindUsagesManager usagesManager = ((FindManagerBase)FindManager.getInstance(project)).getFindUsagesManager();
+    FindUsagesHandler handler = ReadAction.computeBlocking(() -> usagesManager.getFindUsagesHandler(targetElement, false));
 
     CommonProcessors.CollectProcessor<UsageInfo> processor =
       new CommonProcessors.CollectProcessor<>(Collections.synchronizedList(new ArrayList<>()));
     assertNotNull("Cannot find handler for: " + targetElement, handler);
-    PsiElement[] psiElements = ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements());
-    FindUsagesOptions options = handler.getFindUsagesOptions(null);
+    PsiElement[] psiElements = ReadAction.computeBlocking(() -> {
+      return ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements());
+    });
+    FindUsagesOptions options = ReadAction.computeBlocking(() -> handler.getFindUsagesOptions(null));
     if (scope != null) options.searchScope = scope;
     for (PsiElement psiElement : psiElements) {
       handler.processElementUsages(psiElement, processor, options);
@@ -1327,19 +1331,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public static boolean processGuttersAtCaret(Editor editor, Project project, @NotNull Processor<? super GutterMark> processor) {
-    int offset = editor.getCaretModel().getOffset();
+    return ReadAction.computeBlocking(() -> {
+      int offset = editor.getCaretModel().getOffset();
 
-    RangeHighlighter[] highlighters = DocumentMarkupModel.forDocument(editor.getDocument(), project, true).getAllHighlighters();
-    for (RangeHighlighter highlighter : highlighters) {
-      GutterMark renderer = highlighter.getGutterIconRenderer();
-      if (highlighter.isValid() &&
-          renderer != null &&
-          editor.getDocument().getLineNumber(offset) == editor.getDocument().getLineNumber(highlighter.getStartOffset()) &&
-          !processor.process(renderer)) {
-        return false;
+      RangeHighlighter[] highlighters = DocumentMarkupModel.forDocument(editor.getDocument(), project, true).getAllHighlighters();
+      for (RangeHighlighter highlighter : highlighters) {
+        GutterMark renderer = highlighter.getGutterIconRenderer();
+        if (highlighter.isValid() &&
+            renderer != null &&
+            editor.getDocument().getLineNumber(offset) == editor.getDocument().getLineNumber(highlighter.getStartOffset()) &&
+            !processor.process(renderer)) {
+          return false;
+        }
       }
-    }
-    return true;
+      return true;
+    });
   }
 
   @Override
@@ -1354,17 +1360,19 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     SortedMap<Integer, List<GutterMark>> result = new TreeMap<>();
 
     List<HighlightInfo> infos = doHighlighting();
-    for (HighlightInfo info : infos) {
-      addGutterIconRenderer(info.getGutterIconRenderer(), info.startOffset, result);
-    }
-
-    RangeHighlighter[] highlighters = DocumentMarkupModel.forDocument(editor.getDocument(), project, true).getAllHighlighters();
-    for (RangeHighlighter highlighter : highlighters) {
-      if (highlighter.isValid()) {
-        addGutterIconRenderer(highlighter.getGutterIconRenderer(), highlighter.getStartOffset(), result);
+    return ReadAction.computeBlocking(() -> {
+      for (HighlightInfo info : infos) {
+        addGutterIconRenderer(info.getGutterIconRenderer(), info.startOffset, result);
       }
-    }
-    return ContainerUtil.concat(result.values());
+
+      RangeHighlighter[] highlighters = DocumentMarkupModel.forDocument(editor.getDocument(), project, true).getAllHighlighters();
+      for (RangeHighlighter highlighter : highlighters) {
+        if (highlighter.isValid()) {
+          addGutterIconRenderer(highlighter.getGutterIconRenderer(), highlighter.getStartOffset(), result);
+        }
+      }
+      return ContainerUtil.concat(result.values());
+    });
   }
 
   @Override

@@ -14,7 +14,6 @@ import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLoca
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -65,12 +64,11 @@ public class GutterIntentionsTest {
     myFixture.configureByText(JavaFileType.INSTANCE, "public class Foo {\n" +
                                                      "  public static void <caret>main(String[] args) { someCode(); }" +
                                                      "}");
-    EdtTestUtil.runInEdtAndWait(() -> {
-      assertThat(myFixture.findGuttersAtCaret()).hasSize(1);
+    assertThat(myFixture.findGuttersAtCaret()).hasSize(1);
 
-      ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(myFixture.getEditor(), myFixture.getFile());
-      assertThat(intentions.guttersToShow.size()).isGreaterThan(1);
-    });
+    ShowIntentionsPass.IntentionsInfo intentions =
+      ReadAction.computeBlocking(() -> ShowIntentionsPass.getActionsToShow(myFixture.getEditor(), myFixture.getFile()));
+    assertThat(intentions.guttersToShow.size()).isGreaterThan(1);
   }
 
   @Test
@@ -96,14 +94,13 @@ public class GutterIntentionsTest {
     myFixture.configureByText(JavaFileType.INSTANCE, "public class Foo {\n" +
                                                      "  public static void <caret>main(String[] args) { someCode(); }" +
                                                      "}");
-    EdtTestUtil.runInEdtAndWait(() -> {
-      assertThat(myFixture.findGuttersAtCaret()).hasSize(1);
+    assertThat(myFixture.findGuttersAtCaret()).hasSize(1);
 
-      ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(myFixture.getEditor(), myFixture.getFile());
-      List<AnAction> descriptors = intentions.guttersToShow;
-      Set<String> names = descriptors.stream().map(o -> o.getTemplatePresentation().getText()).collect(Collectors.toSet());
-      assertEquals(descriptors.size(), names.size());
-    });
+    ShowIntentionsPass.IntentionsInfo intentions =
+      ReadAction.computeBlocking(() -> ShowIntentionsPass.getActionsToShow(myFixture.getEditor(), myFixture.getFile()));
+    List<AnAction> descriptors = intentions.guttersToShow;
+    Set<String> names = descriptors.stream().map(o -> o.getTemplatePresentation().getText()).collect(Collectors.toSet());
+    assertEquals(descriptors.size(), names.size());
   }
 
   @Test

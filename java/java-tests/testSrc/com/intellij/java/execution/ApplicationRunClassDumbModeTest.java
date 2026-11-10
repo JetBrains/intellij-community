@@ -65,9 +65,9 @@ public class ApplicationRunClassDumbModeTest {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Main.java", code);
 
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
     EdtTestUtil.runInEdtAndWait(() -> {
-      List<GutterMark> marks = myFixture.findGuttersAtCaret();
-      assertEquals(1, marks.size());
       GutterIconRenderer mark = (GutterIconRenderer)marks.getFirst();
       ActionGroup group = mark.getPopupMenuActions();
       assertNotNull(group);

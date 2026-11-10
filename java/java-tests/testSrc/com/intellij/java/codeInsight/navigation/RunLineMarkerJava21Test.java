@@ -14,7 +14,6 @@ import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.DumbModeTestUtils;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -48,12 +47,12 @@ public class RunLineMarkerJava21Test {
         }
       }
       """);
-      EdtTestUtil.runInEdtAndWait(() -> {
-        List<GutterMark> marks = myFixture.findGuttersAtCaret();
-        assertEquals(1, marks.size());
-        GutterMark mark = marks.get(0);
-        assertTrue(mark instanceof LineMarkerInfo.LineMarkerGutterIconRenderer);
-        LineMarkerInfo.LineMarkerGutterIconRenderer gutterIconRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)mark;
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      GutterMark mark = marks.get(0);
+      assertTrue(mark instanceof LineMarkerInfo.LineMarkerGutterIconRenderer);
+      LineMarkerInfo.LineMarkerGutterIconRenderer gutterIconRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)mark;
+      ReadAction.runBlocking(() -> {
         PsiElement element = gutterIconRenderer.getLineMarkerInfo().getElement();
         assertEquals(AllIcons.RunConfigurations.TestState.Run, gutterIconRenderer.getIcon());
         assertTrue(element instanceof PsiIdentifier);
@@ -70,7 +69,7 @@ public class RunLineMarkerJava21Test {
       void main<caret>() {
       }
       """);
-      List<GutterMark> marks = EdtTestUtil.runInEdtAndGet(() -> myFixture.findGuttersAtCaret());
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
       assertEquals(1, marks.size());
     });
   }
@@ -85,7 +84,7 @@ public class RunLineMarkerJava21Test {
         public void main<caret>() {}
       }
       """);
-      List<GutterMark> marks = EdtTestUtil.runInEdtAndGet(() -> myFixture.findGuttersAtCaret());
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
       assertEquals(1, marks.size());
     });
   }
@@ -99,7 +98,7 @@ public class RunLineMarkerJava21Test {
         public void main<caret>() {}
       }
       """);
-      List<GutterMark> marks = EdtTestUtil.runInEdtAndGet(() -> myFixture.findGuttersAtCaret());
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
       assertEquals(1, marks.size());
     });
   }
@@ -114,7 +113,7 @@ public class RunLineMarkerJava21Test {
         public void main<caret>() {}
       }
       """);
-      List<GutterMark> marks = EdtTestUtil.runInEdtAndGet(() -> myFixture.findGuttersAtCaret());
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
       assertEquals(0, marks.size());
     });
   }
@@ -131,7 +130,7 @@ public class RunLineMarkerJava21Test {
         public void main<caret>() {}
       }
       """);
-      List<GutterMark> marks = EdtTestUtil.runInEdtAndGet(() -> myFixture.findGuttersAtCaret());
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
       assertEquals(0, marks.size());
     });
   }
@@ -148,7 +147,7 @@ public class RunLineMarkerJava21Test {
         public void main() {}
       }
       """);
-      List<GutterMark> marks = EdtTestUtil.runInEdtAndGet(() -> myFixture.findGuttersAtCaret());
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
       assertEquals(0, marks.size());
     });
   }
@@ -163,7 +162,7 @@ public class RunLineMarkerJava21Test {
       """);
       List<GutterMark> marks = myFixture.findAllGutters();
       assertEquals(1, marks.size());
-      EdtTestUtil.runInEdtAndWait(() -> assertThat(myFixture.findGuttersAtCaret()).isNullOrEmpty());
+      assertThat(myFixture.findGuttersAtCaret()).isNullOrEmpty();
     });
   }
 
@@ -177,7 +176,7 @@ public class RunLineMarkerJava21Test {
       """);
       List<GutterMark> marks = myFixture.findAllGutters();
       assertEquals(1, marks.size());
-      EdtTestUtil.runInEdtAndWait(() -> assertThat(myFixture.findGuttersAtCaret()).isNullOrEmpty());
+      assertThat(myFixture.findGuttersAtCaret()).isNullOrEmpty();
     });
   }
 
@@ -191,7 +190,7 @@ public class RunLineMarkerJava21Test {
       """);
       List<GutterMark> marks = myFixture.findAllGutters();
       assertEquals(1, marks.size());
-      EdtTestUtil.runInEdtAndWait(() -> assertThat(myFixture.findGuttersAtCaret()).isNullOrEmpty());
+      assertThat(myFixture.findGuttersAtCaret()).isNullOrEmpty();
     });
   }
 
@@ -392,16 +391,15 @@ public class RunLineMarkerJava21Test {
             public static void main(String[] args) {}
         }
         """);
-      EdtTestUtil.runInEdtAndWait(() -> {
-        List<GutterMark> marks = myFixture.findGuttersAtCaret();
-        assertEquals(1, marks.size());
-        checkMark(marks.get(0), "Main");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      ReadAction.runBlocking(() -> checkMark(marks.get(0), "Main"));
 
-        List<GutterMark> allMarks = myFixture.findAllGutters();
-        assertEquals(2, allMarks.size());
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      ReadAction.runBlocking(() -> {
         checkMark(allMarks.get(0), "Main");
         checkMark(allMarks.get(1), "Main");
-
         checkMethod(myFixture, true);
       });
     });
@@ -416,16 +414,15 @@ public class RunLineMarkerJava21Test {
             public static void main(String[] args) {}
         }
         """);
-      EdtTestUtil.runInEdtAndWait(() -> {
-        List<GutterMark> marks = myFixture.findGuttersAtCaret();
-        assertEquals(1, marks.size());
-        checkMark(marks.get(0), "Main");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      ReadAction.runBlocking(() -> checkMark(marks.get(0), "Main"));
 
-        List<GutterMark> allMarks = myFixture.findAllGutters();
-        assertEquals(2, allMarks.size());
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      ReadAction.runBlocking(() -> {
         checkMark(allMarks.get(0), "Main");
         checkMark(allMarks.get(1), "Main");
-
         checkMethod(myFixture, true);
       });
     });
@@ -441,16 +438,15 @@ public class RunLineMarkerJava21Test {
             public static void main(String[] args) {}
         }
         """);
-      EdtTestUtil.runInEdtAndWait(() -> {
-        List<GutterMark> marks = myFixture.findGuttersAtCaret();
-        assertEquals(1, marks.size());
-        checkMark(marks.get(0), "Main");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      ReadAction.runBlocking(() -> checkMark(marks.get(0), "Main"));
 
-        List<GutterMark> allMarks = myFixture.findAllGutters();
-        assertEquals(2, allMarks.size());
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      ReadAction.runBlocking(() -> {
         checkMark(allMarks.get(0), "Main");
         checkMark(allMarks.get(1), "Main");
-
         checkMethod(myFixture, true);
       });
     });
@@ -466,16 +462,15 @@ public class RunLineMarkerJava21Test {
             public static void main(String[] args) {}
         }
         """);
-      EdtTestUtil.runInEdtAndWait(() -> {
-        List<GutterMark> marks = myFixture.findGuttersAtCaret();
-        assertEquals(1, marks.size());
-        checkMark(marks.get(0), "Main");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      ReadAction.runBlocking(() -> checkMark(marks.get(0), "Main"));
 
-        List<GutterMark> allMarks = myFixture.findAllGutters();
-        assertEquals(2, allMarks.size());
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      ReadAction.runBlocking(() -> {
         checkMark(allMarks.get(0), "Main");
         checkMark(allMarks.get(1), "Main");
-
         checkMethod(myFixture, true);
       });
     });
@@ -507,16 +502,15 @@ public class RunLineMarkerJava21Test {
             public void main(String[] args) {}
         }
         """);
-      EdtTestUtil.runInEdtAndWait(() -> {
-        List<GutterMark> marks = myFixture.findGuttersAtCaret();
-        assertEquals(1, marks.size());
-        checkMark(marks.get(0), "Main");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      ReadAction.runBlocking(() -> checkMark(marks.get(0), "Main"));
 
-        List<GutterMark> allMarks = myFixture.findAllGutters();
-        assertEquals(2, allMarks.size());
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      ReadAction.runBlocking(() -> {
         checkMark(allMarks.get(0), "Main");
         checkMark(allMarks.get(1), "Main");
-
         checkMethod(myFixture, true);
       });
     });
@@ -532,16 +526,15 @@ public class RunLineMarkerJava21Test {
             public void main(String[] args) {}
         }
         """);
-      EdtTestUtil.runInEdtAndWait(() -> {
-        List<GutterMark> marks = myFixture.findGuttersAtCaret();
-        assertEquals(1, marks.size());
-        checkMark(marks.get(0), "Main");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      ReadAction.runBlocking(() -> checkMark(marks.get(0), "Main"));
 
-        List<GutterMark> allMarks = myFixture.findAllGutters();
-        assertEquals(2, allMarks.size());
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      ReadAction.runBlocking(() -> {
         checkMark(allMarks.get(0), "Main");
         checkMark(allMarks.get(1), "Main");
-
         checkMethod(myFixture, true);
       });
     });
@@ -557,16 +550,15 @@ public class RunLineMarkerJava21Test {
             public void main(String[] args) {}
         }
         """);
-      EdtTestUtil.runInEdtAndWait(() -> {
-        List<GutterMark> marks = myFixture.findGuttersAtCaret();
-        assertEquals(1, marks.size());
-        checkMark(marks.get(0), "Main");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      ReadAction.runBlocking(() -> checkMark(marks.get(0), "Main"));
 
-        List<GutterMark> allMarks = myFixture.findAllGutters();
-        assertEquals(2, allMarks.size());
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      ReadAction.runBlocking(() -> {
         checkMark(allMarks.get(0), "Main");
         checkMark(allMarks.get(1), "Main");
-
         checkMethod(myFixture, true);
       });
     });
@@ -596,16 +588,15 @@ public class RunLineMarkerJava21Test {
             void main(String[] args) {}
         }
         """);
-      EdtTestUtil.runInEdtAndWait(() -> {
-        List<GutterMark> marks = myFixture.findGuttersAtCaret();
-        assertEquals(1, marks.size());
-        checkMark(marks.get(0), "Main");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      ReadAction.runBlocking(() -> checkMark(marks.get(0), "Main"));
 
-        List<GutterMark> allMarks = myFixture.findAllGutters();
-        assertEquals(2, allMarks.size());
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      ReadAction.runBlocking(() -> {
         checkMark(allMarks.get(0), "Main");
         checkMark(allMarks.get(1), "Main");
-
         checkMethod(myFixture, true);
       });
     });
@@ -620,16 +611,15 @@ public class RunLineMarkerJava21Test {
             protected void main(String[] args) {}
         }
         """);
-      EdtTestUtil.runInEdtAndWait(() -> {
-        List<GutterMark> marks = myFixture.findGuttersAtCaret();
-        assertEquals(1, marks.size());
-        checkMark(marks.get(0), "Main");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      ReadAction.runBlocking(() -> checkMark(marks.get(0), "Main"));
 
-        List<GutterMark> allMarks = myFixture.findAllGutters();
-        assertEquals(2, allMarks.size());
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      ReadAction.runBlocking(() -> {
         checkMark(allMarks.get(0), "Main");
         checkMark(allMarks.get(1), "Main");
-
         checkMethod(myFixture, true);
       });
     });
@@ -644,16 +634,15 @@ public class RunLineMarkerJava21Test {
             public void main(String[] args) {}
         }
         """);
-      EdtTestUtil.runInEdtAndWait(() -> {
-        List<GutterMark> marks = myFixture.findGuttersAtCaret();
-        assertEquals(1, marks.size());
-        checkMark(marks.get(0), "Main");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      ReadAction.runBlocking(() -> checkMark(marks.get(0), "Main"));
 
-        List<GutterMark> allMarks = myFixture.findAllGutters();
-        assertEquals(2, allMarks.size());
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      ReadAction.runBlocking(() -> {
         checkMark(allMarks.get(0), "Main");
         checkMark(allMarks.get(1), "Main");
-
         checkMethod(myFixture, true);
       });
     });
@@ -683,16 +672,15 @@ public class RunLineMarkerJava21Test {
             static void main(String[] args) {}
         }
         """);
-      EdtTestUtil.runInEdtAndWait(() -> {
-        List<GutterMark> marks = myFixture.findGuttersAtCaret();
-        assertEquals(1, marks.size());
-        checkMark(marks.get(0), "Main");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      ReadAction.runBlocking(() -> checkMark(marks.get(0), "Main"));
 
-        List<GutterMark> allMarks = myFixture.findAllGutters();
-        assertEquals(2, allMarks.size());
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      ReadAction.runBlocking(() -> {
         checkMark(allMarks.get(0), "Main");
         checkMark(allMarks.get(1), "Main");
-
         checkMethod(myFixture, true);
       });
     });
@@ -707,16 +695,15 @@ public class RunLineMarkerJava21Test {
             protected static void main(String[] args) {}
         }
         """);
-      EdtTestUtil.runInEdtAndWait(() -> {
-        List<GutterMark> marks = myFixture.findGuttersAtCaret();
-        assertEquals(1, marks.size());
-        checkMark(marks.get(0), "Main");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      ReadAction.runBlocking(() -> checkMark(marks.get(0), "Main"));
 
-        List<GutterMark> allMarks = myFixture.findAllGutters();
-        assertEquals(2, allMarks.size());
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      ReadAction.runBlocking(() -> {
         checkMark(allMarks.get(0), "Main");
         checkMark(allMarks.get(1), "Main");
-
         checkMethod(myFixture, true);
       });
     });
@@ -731,16 +718,15 @@ public class RunLineMarkerJava21Test {
             public static void main(String[] args) {}
         }
         """);
-      EdtTestUtil.runInEdtAndWait(() -> {
-        List<GutterMark> marks = myFixture.findGuttersAtCaret();
-        assertEquals(1, marks.size());
-        checkMark(marks.get(0), "Main");
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+      ReadAction.runBlocking(() -> checkMark(marks.get(0), "Main"));
 
-        List<GutterMark> allMarks = myFixture.findAllGutters();
-        assertEquals(2, allMarks.size());
+      List<GutterMark> allMarks = myFixture.findAllGutters();
+      assertEquals(2, allMarks.size());
+      ReadAction.runBlocking(() -> {
         checkMark(allMarks.get(0), "Main");
         checkMark(allMarks.get(1), "Main");
-
         checkMethod(myFixture, true);
       });
     });

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -36,7 +35,7 @@ public class ComponentDeclarationRelatedItemLineMarkerProviderTest {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.copyFileToProject("pluginComponentSingleDeclaration.xml");
 
-    GutterMark gutter = EdtTestUtil.runInEdtAndGet(() -> myFixture.findGutter("MyComponent.java"));
+    GutterMark gutter = myFixture.findGutter("MyComponent.java");
     ReadAction.runBlocking(() -> {
       DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                     buildTooltipText("MyComponent"),
@@ -49,7 +48,7 @@ public class ComponentDeclarationRelatedItemLineMarkerProviderTest {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.copyFileToProject("pluginComponentMultipleDeclarations.xml");
 
-    GutterMark gutter = EdtTestUtil.runInEdtAndGet(() -> myFixture.findGutter("MyComponent.java"));
+    GutterMark gutter = myFixture.findGutter("MyComponent.java");
     ReadAction.runBlocking(() -> {
       DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                     buildTooltipText("ActualImplementation", "MyComponent"),
@@ -62,7 +61,7 @@ public class ComponentDeclarationRelatedItemLineMarkerProviderTest {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.copyFileToProject("pluginComponentInterfaceMultipleDeclarations.xml");
 
-    GutterMark gutter = EdtTestUtil.runInEdtAndGet(() -> myFixture.findGutter("MyComponentInterface.java"));
+    GutterMark gutter = myFixture.findGutter("MyComponentInterface.java");
     ReadAction.runBlocking(() -> {
       DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                     buildTooltipText("AnotherComponent", "MyComponent"),

@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
@@ -19,13 +20,16 @@ class PyTypingAnnotationInjectorTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-93096"])
-  fun `find usages of a type parameter of a type alias include the quoted occurrences`() = runInEdtAndWait {
-    configureWithCaret("""
-      type Mapping[T] = dict["T", "list[T]"]
-      #            └ CARET
-    """)
-    val typeParameter = myFixture.elementAtCaret as? PyTypeParameter ?: fail("No type parameter at the caret")
-    val usages = myFixture.findUsages(typeParameter).map { it.element!!.text }
+  fun `find usages of a type parameter of a type alias include the quoted occurrences`() {
+    runInEdtAndWait {
+      configureWithCaret("""
+        type Mapping[T] = dict["T", "list[T]"]
+        #            └ CARET
+      """)
+    }
+    val typeParameter = runReadActionBlocking { myFixture.elementAtCaret as? PyTypeParameter } ?: fail("No type parameter at the caret")
+    val usageInfos = myFixture.findUsages(typeParameter)
+    val usages = runReadActionBlocking { usageInfos.map { it.element!!.text } }
     assertEquals(listOf("T", "T"), usages)
   }
 

@@ -127,7 +127,7 @@ class PyEditorFeaturesPerformanceTest : PyCodeInsightTestCase() {
     return runReadActionBlocking { PsiTreeUtil.findChildOfType(file.findTopLevelFunction("target"), PyNamedParameter::class.java)!! }
   }
 
-  private fun findUsages(parameter: PyNamedParameter): Int = runInEdtAndGet { myFixture.findUsages(parameter).size }
+  private fun findUsages(parameter: PyNamedParameter): Int = myFixture.findUsages(parameter).size
 
   private companion object {
     val MEMBERS = listOf(100, 200, 400)

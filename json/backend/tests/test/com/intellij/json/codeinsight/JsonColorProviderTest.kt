@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.LineMarkerSettings
 import com.intellij.json.psi.JsonStringLiteral
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.ElementColorProvider
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightProjectFixture
@@ -125,23 +126,23 @@ class JsonColorProviderTest {
 
   @Test
   fun `gutter preview uses the color setting without CSS injection`() = timeoutRunBlocking {
-    withContext(Dispatchers.EDT) {
-      assertTrue(ElementColorProvider.EP_NAME.extensionList.any { it is JsonColorProvider })
-      fixture.configureByText("colors.json", "[\"#ff0000\"]")
+    assertTrue(ElementColorProvider.EP_NAME.extensionList.any { it is JsonColorProvider })
+    fixture.configureByText("colors.json", "[\"#ff0000\"]")
+    readAction {
       val literal = literalLeaf().parent as PsiLanguageInjectionHost
       assertNull(InjectedLanguageManager.getInstance(fixture.project).getInjectedPsiFiles(literal))
-      val settings = LineMarkerSettings.getSettings()
-      val wasEnabled = settings.isEnabled(ColorLineMarkerProvider.INSTANCE)
-      try {
-        settings.setEnabled(ColorLineMarkerProvider.INSTANCE, true)
-        assertEquals(1, fixture.findAllGutters().size)
-        settings.setEnabled(ColorLineMarkerProvider.INSTANCE, false)
-        DaemonCodeAnalyzer.getInstance(fixture.project).restart(fixture.file, "Color preview setting changed")
-        assertTrue(fixture.findAllGutters().isEmpty())
-      }
-      finally {
-        settings.setEnabled(ColorLineMarkerProvider.INSTANCE, wasEnabled)
-      }
+    }
+    val settings = LineMarkerSettings.getSettings()
+    val wasEnabled = settings.isEnabled(ColorLineMarkerProvider.INSTANCE)
+    try {
+      settings.setEnabled(ColorLineMarkerProvider.INSTANCE, true)
+      assertEquals(1, fixture.findAllGutters().size)
+      settings.setEnabled(ColorLineMarkerProvider.INSTANCE, false)
+      DaemonCodeAnalyzer.getInstance(fixture.project).restart(fixture.file, "Color preview setting changed")
+      assertTrue(fixture.findAllGutters().isEmpty())
+    }
+    finally {
+      settings.setEnabled(ColorLineMarkerProvider.INSTANCE, wasEnabled)
     }
   }
 
