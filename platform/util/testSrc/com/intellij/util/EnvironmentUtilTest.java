@@ -12,6 +12,7 @@ import java.util.List;
 import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @Timeout(30)
 public class EnvironmentUtilTest {
@@ -24,6 +25,19 @@ public class EnvironmentUtilTest {
     if (OS.CURRENT == OS.Windows) {
       assertNotNull(EnvironmentUtil.getValue("Path"));
     }
+  }
+
+  @Test void testGetValueForLogging() {
+    assertNull(EnvironmentUtil.getValueForLogging("HOME", null));
+    assertEquals("value", EnvironmentUtil.getValueForLogging("PATH", "value"));
+    assertEquals("value", EnvironmentUtil.getValueForLogging("path", "value"));
+    assertEquals("value", EnvironmentUtil.getValueForLogging("TEMP", "value"));
+    assertEquals("value", EnvironmentUtil.getValueForLogging("HOME", "value"));
+    assertEquals("value", EnvironmentUtil.getValueForLogging("JAVA_HOME", "value"));
+    assertEquals("***", EnvironmentUtil.getValueForLogging("DOTNET_FOO_TOKEN", "value"));
+    assertEquals("***", EnvironmentUtil.getValueForLogging("NUGET_API_KEY", "value"));
+    assertEquals("***", EnvironmentUtil.getValueForLogging("RIDER_X_PAT", "value"));
+    assertEquals("value", EnvironmentUtil.getValueForLogging("RIDER_ORIGINAL_PATH", "value"));
   }
 
   @Test void parse() {

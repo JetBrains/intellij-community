@@ -31,6 +31,13 @@ public final class EnvironmentUtil {
   private static final String DESKTOP_STARTUP_ID = "DESKTOP_STARTUP_ID";
   private static final String MAC_OS_LOCALE_PATH = "/usr/share/locale";
 
+  private static final String[] EXCLUDED_SUFFIXES = {"_SALT", "_DEVICEID", "_USERID", "_PAT"};
+  @SuppressWarnings("SpellCheckingInspection")
+  private static final String[] EXCLUDED_SUBSTRINGS = {
+    "TOKEN", "KEY", "JWT", "BEARER", "SECRET", "PASS", "PWD", "CREDENTIAL", "AUTH", "_PAT_", "_SALT_", "_DEVICEID_",
+    "_USERID_", "CONNECTIONSTRING", "CONNECTION_STRING"
+  };
+
   private static final AtomicReference<Supplier<Map<String, String>>> ourEnvLoader = new AtomicReference<>();
 
   private EnvironmentUtil() { }
@@ -207,5 +214,20 @@ public final class EnvironmentUtil {
         lookup.put(key, value);
       }
     }
+  }
+
+  public static @Nullable String getValueForLogging(@NotNull String key, @Nullable String value) {
+    return shouldSkipLoggingValue(key) ? "***" : value;
+  }
+
+  private static boolean shouldSkipLoggingValue(String key) {
+    String normalizedKey = key.toUpperCase(Locale.ROOT);
+    for (String excludedSuffix : EXCLUDED_SUFFIXES) {
+      if (normalizedKey.endsWith(excludedSuffix)) return true;
+    }
+    for (String excludedSubstring : EXCLUDED_SUBSTRINGS) {
+      if (normalizedKey.contains(excludedSubstring)) return true;
+    }
+    return false;
   }
 }

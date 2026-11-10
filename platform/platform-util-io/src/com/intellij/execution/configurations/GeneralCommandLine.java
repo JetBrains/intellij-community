@@ -418,7 +418,7 @@ public class GeneralCommandLine implements UserDataHolder {
       if (myWorkingDirectory != null) {
         LOG.debug("  working dir: " + myWorkingDirectory.toAbsolutePath());
       }
-      LOG.debug("  environment: " + myEnvParams + " (+" + myParentEnvironmentType + ")");
+      LOG.debug("  environment: " + environmentForLogging(myEnvParams) + " (+" + myParentEnvironmentType + ")");
       LOG.debug("  charset: " + myCharset);
     }
 
@@ -446,6 +446,16 @@ public class GeneralCommandLine implements UserDataHolder {
       }
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
     }
+  }
+
+  private static String environmentForLogging(Map<String, String> environment) {
+    var result = new StringBuilder("{");
+    for (var entry : environment.entrySet()) {
+      if (result.length() > 1) result.append(", ");
+      var key = entry.getKey();
+      result.append(key).append('=').append(EnvironmentUtil.getValueForLogging(key, entry.getValue()));
+    }
+    return result.append('}').toString();
   }
 
   private static Charset defaultCharset() {
