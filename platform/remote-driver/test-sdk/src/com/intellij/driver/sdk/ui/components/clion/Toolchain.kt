@@ -147,7 +147,7 @@ sealed class Toolchain(
 
 private object WindowsToolchainPaths {
   val mingw: String
-    get() = installationPath("tools.msys2.mingw64")
+    get() = "${installationPath("tools.msys2.installDir")}/ucrt64"
   val msvc: String
     get() = installationPath("tools.msvs.2026.installDir")
   val cygwin: String
