@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.CancelableParserDelegator
@@ -27,6 +27,8 @@ import javax.swing.text.MutableAttributeSet
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.parser.ParserDelegator
+
+private val LOG = logger<PythonSimpleRepositoryCacheService>()
 
 @Service
 @ApiStatus.Internal
@@ -53,7 +55,7 @@ class PythonSimpleRepositoryCacheService {
           val cache = PythonSimpleRepositoryCache(repository)
 
           cache.reload().getOr {
-            thisLogger().error("Failed to refresh repository ${repository.repositoryUrl}")
+            LOG.warn("Failed to refresh repository ${repository.repositoryUrl}: ${it.error.message}")
             service.markInvalid(repository.repositoryUrl)
             return@withContext Result.Failure(PythonRepositoryIOError(it.error.message))
           }
