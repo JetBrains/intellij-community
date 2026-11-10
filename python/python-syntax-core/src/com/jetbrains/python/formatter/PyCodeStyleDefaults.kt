@@ -2,7 +2,6 @@
 package com.jetbrains.python.formatter
 
 import com.intellij.openapi.components.serviceOrNull
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.jetbrains.python.PythonLanguage
@@ -31,11 +30,18 @@ fun isPyNewFormatterDefaultsFeatureEnabled(): Boolean = Registry.`is`(PY_NEW_FOR
  */
 @ApiStatus.Internal
 fun isPyNewFormatterDefaultsActive(): Boolean =
-  isPyNewFormatterDefaultsFeatureEnabled() && isPyNewFormatterDefaultsSettingOn()
+  isPyNewFormatterDefaultsFeatureEnabled() && serviceOrNull<PyNewFormatterDefaultsSettings>()?.useNewDefaults == true
 
-// A light test application, such as the one of ParsingTestCase, has no AdvancedSettings service. The setting then keeps its default.
-private fun isPyNewFormatterDefaultsSettingOn(): Boolean =
-  serviceOrNull<AdvancedSettings>() != null && AdvancedSettings.getBoolean(PY_NEW_FORMATTER_DEFAULTS_SETTING_ID)
+/**
+ * Holds the per-installation rollout state (flag 2), the value of the [PY_NEW_FORMATTER_DEFAULTS_SETTING_ID] advanced setting.
+ *
+ * The Python plugin registers the implementation and declares the advanced setting.
+ * The light mode of JetBrains Light and a light test application do not load that plugin, so the new defaults are off there.
+ */
+@ApiStatus.Internal
+interface PyNewFormatterDefaultsSettings {
+  val useNewDefaults: Boolean
+}
 
 /**
  * The profile a fresh Python scheme defaults to: the modern [PyDefaultStyleGuide] when the new defaults

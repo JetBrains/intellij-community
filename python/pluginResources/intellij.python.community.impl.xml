@@ -349,6 +349,8 @@
     <advancedSetting id="python.typing.strict.unions" default="true" groupKey="group.advanced.settings.python"/>
     <advancedSetting id="python.formatter.use.new.defaults" default="false" groupKey="group.advanced.settings.python"
                      service="com.jetbrains.python.formatter.PyNewFormatterDefaultsSettings" property="useNewDefaults"/>
+    <applicationService serviceInterface="com.jetbrains.python.formatter.PyNewFormatterDefaultsSettings"
+                        serviceImplementation="com.jetbrains.python.formatter.PyNewFormatterDefaultsSettingsImpl"/>
     <runLineMarkerContributor language="Python"
                               implementationClass="com.jetbrains.python.testing.PyTestLineMarkerContributor"/>
     <toolWindow id="Python Console" anchor="right" icon="com.jetbrains.python.icons.PythonIcons.Python.PythonConsoleToolWindow"

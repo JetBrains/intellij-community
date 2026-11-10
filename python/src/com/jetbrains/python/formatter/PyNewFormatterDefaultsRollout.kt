@@ -20,7 +20,6 @@ import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -113,14 +112,14 @@ internal class PyNewFormatterDefaultsReformatListener : AnActionListener {
  * is inert, so a change stores the value and does not change the scheme.
  */
 @Suppress("unused") // The advanced setting calls the property and the visibility check by reflection.
-@Service(Service.Level.APP)
 @State(name = "PyNewFormatterDefaults", storages = [Storage("python-formatter.xml", roamingType = RoamingType.DISABLED)])
-internal class PyNewFormatterDefaultsSettings : SimplePersistentStateComponent<PyNewFormatterDefaultsSettings.SettingsState>(SettingsState()) {
+internal class PyNewFormatterDefaultsSettingsImpl
+  : SimplePersistentStateComponent<PyNewFormatterDefaultsSettingsImpl.SettingsState>(SettingsState()), PyNewFormatterDefaultsSettings {
   class SettingsState : BaseState() {
     var useNewDefaults: Boolean by property(false)
   }
 
-  var useNewDefaults: Boolean
+  override var useNewDefaults: Boolean
     get() = state.useNewDefaults
     set(value) {
       if (value == state.useNewDefaults) return
@@ -134,7 +133,7 @@ internal class PyNewFormatterDefaultsSettings : SimplePersistentStateComponent<P
   fun isUseNewDefaultsVisible(): Boolean = isPyNewFormatterDefaultsFeatureEnabled()
 }
 
-/** Turns on the new defaults. [PyNewFormatterDefaultsSettings] applies the modern profile to the IDE-level Default scheme. */
+/** Turns on the new defaults. [PyNewFormatterDefaultsSettingsImpl] applies the modern profile to the IDE-level Default scheme. */
 private fun useNewDefaults() {
   AdvancedSettings.setBoolean(PY_NEW_FORMATTER_DEFAULTS_SETTING_ID, true)
 }
