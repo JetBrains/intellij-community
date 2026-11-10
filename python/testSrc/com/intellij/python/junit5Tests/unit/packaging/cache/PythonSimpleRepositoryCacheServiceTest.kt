@@ -17,6 +17,7 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -49,9 +50,13 @@ class PythonSimpleRepositoryCacheServiceTest {
     val repo = PyPackageRepository(name, srv.simpleUrl, srv.credentials?.login)
     srv.credentials?.let { repo.setPassword(it.password) }
     val repoService = service<PyPackageRepositories>()
-    repoService.repositories.add(repo)
+    synchronized(repoService.repositories) {
+      repoService.repositories.add(repo)
+    }
     initialized(repo) {
-      repoService.repositories.remove(repo)
+      synchronized(repoService.repositories) {
+        repoService.repositories.remove(repo)
+      }
       if (srv.credentials != null) {
         repo.clearCredentials()
       }
@@ -88,12 +93,12 @@ class PythonSimpleRepositoryCacheServiceTest {
     val firstCache = checkNotNull(cacheService[firstRepo]) { "First repo cache should be populated" }
     assertTrue(firstCache.contains("numpy"), "numpy should be in first repo cache")
     assertTrue(firstCache.contains("pandas" ), "pandas should be in first repo cache")
-    assertTrue(firstCache.contains("requests" ), "requests should not leak into first repo cache")
+    assertFalse(firstCache.contains("requests"), "requests should not leak into first repo cache")
 
     val secondCache = checkNotNull(cacheService[secondRepo]) { "Second repo cache should be populated" }
     assertTrue(secondCache.contains("requests"), "requests should be in second repo cache")
     assertTrue(secondCache.contains("urllib3" ), "urllib3 should be in second repo cache")
-    assertTrue(secondCache.contains("numpy" ), "numpy should not leak into second repo cache")
+    assertFalse(secondCache.contains("numpy"), "numpy should not leak into second repo cache")
   }
 
   @Test
