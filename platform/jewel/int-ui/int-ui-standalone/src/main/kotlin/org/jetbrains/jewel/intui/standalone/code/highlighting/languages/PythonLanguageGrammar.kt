@@ -14,14 +14,14 @@ private const val NUMBER_FLOAT =
     """(?x)
       (?<! \w)(?:
         (?:
-          \.[0-9](?: _?[0-9] )*
+          \.[0-9](?: _?[0-9] )*+
           |
-          [0-9](?: _?[0-9] )* \. [0-9](?: _?[0-9] )*
+          [0-9](?: _?[0-9] )*+ \. [0-9](?: _?[0-9] )*+
           |
-          [0-9](?: _?[0-9] )* \.
-        ) (?: [eE][+-]?[0-9](?: _?[0-9] )* )?
+          [0-9](?: _?[0-9] )*+ \.
+        ) (?: [eE][+-]?[0-9](?: _?[0-9] )*+ )?
         |
-        [0-9](?: _?[0-9] )* (?: [eE][+-]?[0-9](?: _?[0-9] )* )
+        [0-9](?: _?[0-9] )*+ (?: [eE][+-]?[0-9](?: _?[0-9] )*+ )
       )([jJ])?\b
     """
 
@@ -29,11 +29,11 @@ private const val NUMBER_FLOAT =
 private const val NUMBER_DEC =
     """(?x)
       (?<![\w\.])(?:
-          [1-9](?: _?[0-9] )*
+          [1-9](?: _?[0-9] )*+
           |
           0+
           |
-          [0-9](?: _?[0-9] )* ([jJ])
+          [0-9](?: _?[0-9] )*+ ([jJ])
           |
           0 ([0-9]+)(?![eE\.])
       )\b
@@ -72,8 +72,8 @@ internal val PYTHON =
                 // Strings — triple-quoted first, with optional r/b/u/f prefixes
                 TokenRule.string("[rRbBuUfF]{0,2}\"\"\"[\\s\\S]*?\"\"\""),
                 TokenRule.string("[rRbBuUfF]{0,2}'''[\\s\\S]*?'''"),
-                TokenRule.string("[rRbBuUfF]{0,2}\"(?:[^\"\\\\\n]|\\\\.)*\""),
-                TokenRule.string("[rRbBuUfF]{0,2}'(?:[^'\\\\\n]|\\\\.)*'"),
+                TokenRule.string("[rRbBuUfF]{0,2}\"(?:[^\"\\\\\n]|\\\\.)*+\""),
+                TokenRule.string("[rRbBuUfF]{0,2}'(?:[^'\\\\\n]|\\\\.)*+'"),
                 // entity.name.function.decorator.python
                 TokenRule.functionCall("(@[A-Za-z_][A-Za-z0-9_.]*)"),
                 // def <name> / class <name>
@@ -106,9 +106,9 @@ internal val PYTHON =
                 // The prefixes are storage.type.number.python in the bundle; we fold them into the number.
                 TokenRule.number(NUMBER_FLOAT),
                 TokenRule.number(NUMBER_DEC),
-                TokenRule.number("""(?x) (?<![\w\.]) (0[xX]) (_?[0-9a-fA-F])+ \b"""),
-                TokenRule.number("""(?x) (?<![\w\.]) (0[oO]) (_?[0-7])+ \b"""),
-                TokenRule.number("""(?x) (?<![\w\.]) (0[bB]) (_?[01])+ \b"""),
+                TokenRule.number("""(?x) (?<![\w\.]) (0[xX]) (_?[0-9a-fA-F])++ \b"""),
+                TokenRule.number("""(?x) (?<![\w\.]) (0[oO]) (_?[0-7])++ \b"""),
+                TokenRule.number("""(?x) (?<![\w\.]) (0[bB]) (_?[01])++ \b"""),
                 // #number-long, python 2 long ints
                 TokenRule.number("""(?x) (?<![\w\.]) ([1-9][0-9]* | 0) ([lL]) \b"""),
             ),

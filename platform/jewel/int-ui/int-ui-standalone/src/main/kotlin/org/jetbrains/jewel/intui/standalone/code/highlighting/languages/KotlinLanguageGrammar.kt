@@ -16,8 +16,8 @@ internal val KOTLIN =
                 TokenRule.comment("//[^\n]*"),
                 // Strings
                 TokenRule.string("\"\"\"[\\s\\S]*?\"\"\""),
-                TokenRule.string("\"(?:[^\"\\\\]|\\\\.)*\""),
-                TokenRule.string("'(?:[^'\\\\]|\\\\.)*'"),
+                TokenRule.string("\"(?:[^\"\\\\]|\\\\.)*+\""),
+                TokenRule.string("'(?:[^'\\\\]|\\\\.)*+'"),
                 // fun <name> — entity.name.function.kotlin
                 TokenRule.functionDeclaration("\\b(fun)\\s+([A-Za-z_][A-Za-z0-9_]*)"),
                 // class/interface/object <name> — entity.name.type.class.kotlin

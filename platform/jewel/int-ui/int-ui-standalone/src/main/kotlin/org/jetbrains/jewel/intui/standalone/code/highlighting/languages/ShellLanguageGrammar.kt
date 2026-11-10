@@ -104,11 +104,11 @@ internal val SHELL =
                 ),
                 // #string — the bundle's begin/end pairs, fused. Single quotes take no escapes in shell,
                 // which is why only the double-quoted forms carry one.
-                TokenRule.string("\\$'(?:\\\\.|[^'\\\\])*'"),
+                TokenRule.string("\\$'(?:\\\\.|[^'\\\\])*+'"),
                 TokenRule.string("'[^']*'"),
-                TokenRule.string("\\$?\"(?:\\\\.|[^\"\\\\])*\""),
+                TokenRule.string("\\$?\"(?:\\\\.|[^\"\\\\])*+\""),
                 // string.interpolated.backtick.shell and string.interpolated.process-substitution.shell
-                TokenRule.string("`(?:\\\\.|[^`\\\\])*`"),
+                TokenRule.string("`(?:\\\\.|[^`\\\\])*+`"),
                 TokenRule.string("[><]\\([^)]*\\)"),
                 // constant.character.escape.line-continuation.shell, then constant.character.escape.shell
                 TokenRule.constant("\\\\(?=\\n)"),
@@ -132,7 +132,7 @@ internal val SHELL =
                 // #loop — the while/until, select and if begins, plus the done and fi ends
                 TokenRule.keyword("(?<=^|[;&\\s])(?:while|until)(?=[\\s;&]|$)"),
                 TokenRule(
-                    "(?<=^|[;&\\s])(select)\\s+((?:[^\\s\\\\]|\\\\.)+)(?=[\\s;&]|$)",
+                    "(?<=^|[;&\\s])(select)\\s+((?:[^\\s\\\\]|\\\\.)++)(?=[\\s;&]|$)",
                     mapOf(1 to TokenType.KEYWORD, 2 to TokenType.BUILTIN),
                 ),
                 TokenRule.keyword("(?<=^|[;&\\s])if(?=[\\s;&]|$)"),

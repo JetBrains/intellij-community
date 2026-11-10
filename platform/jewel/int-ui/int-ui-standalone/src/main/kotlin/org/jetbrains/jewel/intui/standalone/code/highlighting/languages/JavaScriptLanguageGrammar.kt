@@ -50,9 +50,9 @@ internal val JAVASCRIPT =
                 // comment.line.double-slash.js
                 TokenRule.comment("//[^\n]*"),
                 // Strings — template literals first. Interpolations are part of the string span.
-                TokenRule.string("`(?:[^`\\\\]|\\\\.)*`"),
-                TokenRule.string("\"(?:[^\"\\\\]|\\\\.)*\""),
-                TokenRule.string("'(?:[^'\\\\]|\\\\.)*'"),
+                TokenRule.string("`(?:[^`\\\\]|\\\\.)*+`"),
+                TokenRule.string("\"(?:[^\"\\\\]|\\\\.)*+\""),
+                TokenRule.string("'(?:[^'\\\\]|\\\\.)*+'"),
                 // meta.object-literal.key.js — anchored to `{` or `,` so ternaries (`a ? b : c`) don't match.
                 // Group 2 is the key; the anchor and the colon stay uncolored.
                 TokenRule("([{,])\\s*([_\$a-zA-Z][\\w\$]*)\\s*(?=:)", mapOf(2 to TokenType.PROPERTY_KEY)),

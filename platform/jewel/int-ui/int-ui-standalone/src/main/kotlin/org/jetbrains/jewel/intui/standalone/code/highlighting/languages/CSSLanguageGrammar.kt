@@ -269,7 +269,7 @@ private const val MISC_FUNCTIONS =
 // A CSS custom property: variable.css in #rule-list-innards, variable.argument.css inside var(). The two patterns
 // are identical apart from the leading (?<![\w-]), which is kept.
 private const val CUSTOM_PROPERTY =
-    "(?x)(?<![\\w-])--(?:[-a-zA-Z_]|[^\\x00-\\x7F])(?:[-a-zA-Z0-9_]|[^\\x00-\\x7F]|\\\\(?:[0-9a-fA-F]{1,6}|.))*"
+    "(?x)(?<![\\w-])--(?:[-a-zA-Z_]|[^\\x00-\\x7F])(?:[-a-zA-Z0-9_]|[^\\x00-\\x7F]|\\\\(?:[0-9a-fA-F]{1,6}|.))*+"
 
 internal val CSS =
     LanguageGrammar(
@@ -277,7 +277,7 @@ internal val CSS =
         rules =
             listOf(
                 // comment.block.css — begin `/\*`, end `\*/`
-                TokenRule.comment("/\\*(?:[^*]|\\*[^/])*\\*/"),
+                TokenRule.comment("/\\*[\\s\\S]*?\\*/"),
                 // string.quoted.double.css / string.quoted.single.css — begin `"`, end `"|(?<!\\)(?=$|\n)`, with
                 // #escapes as the body
                 TokenRule.string("(?m)\"(?:\\\\(?:[0-9a-fA-F]{1,6}|.)|[^\"\\\\\\r\\n])*+(?:\"|(?<!\\\\)(?=\$))"),
@@ -317,17 +317,17 @@ internal val CSS =
                 TokenRule(NUMERIC, mapOf(0 to TokenType.NUMBER, 1 to TokenType.KEYWORD, 2 to TokenType.KEYWORD)),
                 // entity.other.attribute-name.class.css / .id.css
                 TokenRule.type(
-                    "(?m)(?x)(\\.)((?:[-a-zA-Z_0-9]|[^\\x00-\\x7F]|\\\\(?:[0-9a-fA-F]{1,6}|.))+)" +
+                    "(?m)(?x)(\\.)((?:[-a-zA-Z_0-9]|[^\\x00-\\x7F]|\\\\(?:[0-9a-fA-F]{1,6}|.))++)" +
                         "(?=\$|[\\s,.\\#)\\[:{>+~|]|/\\*)"
                 ),
                 TokenRule.type(
-                    "(?m)(?x)(\\#)(-?(?![0-9])(?:[-a-zA-Z0-9_]|[^\\x00-\\x7F]|\\\\(?:[0-9a-fA-F]{1,6}|.))+)" +
+                    "(?m)(?x)(\\#)(-?(?![0-9])(?:[-a-zA-Z0-9_]|[^\\x00-\\x7F]|\\\\(?:[0-9a-fA-F]{1,6}|.))++)" +
                         "(?=\$|[\\s,.\\#)\\[:{>+~|]|/\\*)"
                 ),
                 // entity.other.attribute-name.css, fused with meta.attribute-selector.css's `begin: "\\["` so the
                 // name is only recognized inside brackets
                 TokenRule(
-                    "(?x)\\[\\s*(-?(?!\\d)(?>[\\w-]|[^\\x00-\\x7F]|\\\\(?:[0-9a-fA-F]{1,6}|.))+)\\s*" +
+                    "(?x)\\[\\s*(-?(?!\\d)(?>[\\w-]|[^\\x00-\\x7F]|\\\\(?:[0-9a-fA-F]{1,6}|.))++)\\s*" +
                         "(?=[~|^\\]\$*=]|/\\*)",
                     mapOf(1 to TokenType.PROPERTY_KEY),
                 ),

@@ -127,8 +127,8 @@ internal val C =
                     "(?ms)^[\\t ]*+(#)\\s*if\\b(?=\\s*\\(*\\b0+\\b\\)*\\s*(?:$|//|/\\*)).*?^[\\t ]*+#\\s*endif\\b"
                 ),
                 // #strings — string.quoted.double.c and string.quoted.single.c
-                TokenRule.string("\"(?:\\\\.|[^\"\\\\])*\""),
-                TokenRule.string("'(?:\\\\.|[^'\\\\])*'"),
+                TokenRule.string("\"(?:\\\\.|[^\"\\\\])*+\""),
+                TokenRule.string("'(?:\\\\.|[^'\\\\])*+'"),
                 // #line_continuation_character — constant.character.escape.line-continuation.c
                 TokenRule.constant("\\\\(?=\\n)"),
                 // The preprocessor directives, each the begin of its own meta.preprocessor block. The
@@ -139,7 +139,7 @@ internal val C =
                 ),
                 // entity.name.function.preprocessor.c on the macro name
                 TokenRule(
-                    "((?:(?:(?>\\s+)|(\\/\\*)((?>(?:[^\\*]|(?>\\*+)[^\\/])*)((?>\\*+)\\/)))+?|" +
+                    "((?:(?:(?>\\s+)|(\\/\\*)((?>(?:[^\\*]|(?>\\*+)[^\\/])*+)((?>\\*+)\\/)))+?|" +
                         "(?:(?:(?:(?:\\b|(?<=\\W))|(?=\\W))|\\A)|\\Z)))((#)\\s*define\\b)\\s+" +
                         "((?<!\\w)[a-zA-Z_]\\w*(?!\\w))(?:(\\()([^()\\\\]+)(\\)))?",
                     mapOf(5 to TokenType.KEYWORD, 7 to TokenType.FUNCTION_CALL),
@@ -230,6 +230,6 @@ internal val C =
                 TokenRule.builtin("\\b([A-Za-z0-9_]+_t)\\b"),
                 // #numbers — the bundle re-parses the whole match to split prefix, digits and suffix; every
                 // branch of that is constant.numeric.*, so the outer match maps to NUMBER as a unit
-                TokenRule.number("(?<!\\w)\\.?\\d(?:(?:[0-9a-zA-Z_\\.]|')|(?<=[eEpP])[+-])*"),
+                TokenRule.number("(?<!\\w)\\.?\\d(?:(?:[0-9a-zA-Z_\\.]|')|(?<=[eEpP])[+-])*+"),
             ),
     )
