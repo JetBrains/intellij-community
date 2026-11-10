@@ -7,7 +7,9 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 /**
  * Invitation-only service for running short-lived computing-intensive IO-free tasks on all available CPU cores.
@@ -16,7 +18,7 @@ import java.util.List;
  * {@link com.intellij.execution.process.ProcessIOExecutorService} and {@link com.intellij.util.concurrency.NonUrgentExecutor} for that.
  */
 @ApiStatus.Internal
-public abstract class JobLauncher {
+public abstract class JobLauncher implements Executor {
   public static JobLauncher getInstance() {
     return ApplicationManager.getApplication().getService(JobLauncher.class);
   }
@@ -49,4 +51,10 @@ public abstract class JobLauncher {
   public abstract <T> boolean processConcurrentlyAsync(@NotNull List<? extends T> things,
                                               @NotNull Processor<? super T> thingProcessor,
                                               @NotNull Runnable runnable) throws ProcessCanceledException;
+
+  @Override
+  public void execute(@NotNull Runnable command) {
+    // just to invoke command in JobLauncher thread pool
+    invokeConcurrentlyUnderContextProgress(Collections.singletonList(1), e->{ command.run();return true; });
+  }
 }

@@ -11,7 +11,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.IntentionActionWithOptions;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.CustomSuppressableInspectionTool;
 import com.intellij.codeInspection.ExternalSourceProblemGroup;
@@ -25,6 +24,7 @@ import com.intellij.codeInspection.SuppressableProblemGroup;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -99,7 +99,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
@@ -1588,7 +1587,7 @@ public class HighlightInfo implements Segment {
         Future<List<IntentionActionDescriptor>> future = description.future();
         if (future == null) {
           Consumer<? super QuickFixActionRegistrar> computer = description.fixesComputer();
-          future = ReadAction.nonBlocking(() -> doComputeLazyQuickFixes(document, project, description.psiModificationStamp(), computer)).wrapProgress(progressIndicator.get()).submit(ForkJoinPool.commonPool());
+          future = ReadAction.nonBlocking(() -> doComputeLazyQuickFixes(document, project, description.psiModificationStamp(), computer)).wrapProgress(progressIndicator.get()).submit(JobLauncher.getInstance());
           return new LazyFixDescription(computer, PsiManager.getInstance(project).getModificationTracker().getModificationCount(), future);
         }
         return description;

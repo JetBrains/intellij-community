@@ -230,6 +230,11 @@ public final class JobLauncherImpl extends JobLauncher {
     return null;
   }
 
+  @Override
+  public void execute(@NotNull Runnable command) {
+    submitToJobThread(command, null);
+  }
+
   public @NotNull Job submitToJobThread(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
     VoidForkJoinTask task = new VoidForkJoinTask(action, myForkJoinPool, onDoneCallback);
     task.submit();
