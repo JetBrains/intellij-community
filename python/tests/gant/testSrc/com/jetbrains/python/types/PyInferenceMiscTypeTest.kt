@@ -16,7 +16,6 @@ import com.jetbrains.python.psi.impl.PyReprExpressionImpl
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -2634,7 +2633,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-85200"])
-    @Disabled("PY-85200: a descriptor reached through an aliased import of a stub-declared class loses the return type of its __get__")
     fun `descriptor re-exported through a type-checking guard keeps the return type of its __get__`() = test("""
       from cache_api import cached_property
 
@@ -2645,7 +2643,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       def f(h: Holder):
           expr = h.value
-      #   └ TYPE int
+      #   └ TYPE Unknown FIXME int # PY-85200
       """.trimIndent(),
       // Flattened mirror of `propcache`'s own chain, which is what `yarl.URL.query` is decorated with:
       //   propcache.api          -> from ._helpers import cached_property
@@ -2694,7 +2692,6 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-85200"])
-    @Disabled("PY-85200: a descriptor reached through an aliased import of a stub-declared class loses the return type of its __get__")
     fun `an aliased re-export of a stub-declared descriptor keeps the return type of its __get__`() = test("""
       from leaf import cp
 
@@ -2705,7 +2702,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       def f(h: Holder):
           expr = h.value
-      #   └ TYPE int
+      #   └ TYPE () -> int FIXME int # PY-85200
       """.trimIndent(),
       // The minimal shape behind the case above: one `import ... as ...` hop over a descriptor whose class is
       // declared in a **stub** (`functools.cached_property`, from typeshed). Neither `TYPE_CHECKING` nor a
