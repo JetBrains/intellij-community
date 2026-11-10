@@ -1860,6 +1860,7 @@ a:com.intellij.openapi.vfs.VirtualFileManager
 - s:extractProtocol(java.lang.String):java.lang.String
 - findFileByNioPath(java.nio.file.Path):com.intellij.openapi.vfs.VirtualFile
 - findFileByUrl(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- a:fireEvents(java.util.List,java.lang.Runnable):V
 - a:getFileSystem(java.lang.String):com.intellij.openapi.vfs.VirtualFileSystem
 - s:getInstance():com.intellij.openapi.vfs.VirtualFileManager
 - refreshAndFindFileByNioPath(java.nio.file.Path):com.intellij.openapi.vfs.VirtualFile

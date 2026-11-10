@@ -9,8 +9,11 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -95,5 +98,16 @@ public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
   @Override
   public final int storeName(@NotNull String name) {
     return FSRecords.getInstance().getNameId(name);
+  }
+
+  @Override
+  @RequiresWriteLock
+  public final void fireEvents(@NotNull List<? extends @NotNull VFileEvent> events, @NotNull Runnable applyAction) {
+    if (ManagingFS.getInstance() instanceof PersistentFSImpl persistentFS) {
+      persistentFS.fireEventsImpl(events, applyAction);
+    }
+    else {
+      super.fireEvents(events, applyAction);
+    }
   }
 }

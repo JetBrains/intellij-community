@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -1793,6 +1794,24 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         }
       }
     }
+  }
+
+  @ApiStatus.Internal
+  @RequiresWriteLock
+  public void fireEventsImpl(@NotNull List<? extends @NotNull VFileEvent> events, @NotNull Runnable applyAction) {
+    if (events.isEmpty()) {
+      applyAction.run();
+      return;
+    }
+    List<Runnable> applyActions = applyAction == EmptyRunnable.getInstance() ? List.of() : List.of(applyAction);
+    applyMultipleEvents(
+      getPublisherEdt(),
+      getPublisherBackgroundable(),
+      AsyncEventSupport.ChangeAppliers.EMPTY,
+      applyActions,
+      events,
+      /*excludeAsyncListeners: */ false
+    );
   }
 
   private static void applyMultipleEvents(@NotNull BulkFileListener publisher,
