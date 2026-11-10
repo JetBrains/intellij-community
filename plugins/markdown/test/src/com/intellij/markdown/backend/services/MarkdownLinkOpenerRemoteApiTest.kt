@@ -1,10 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-
 package com.intellij.markdown.backend.services
 
 import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.application.smartReadAction
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.testFramework.junit5.TestApplication
@@ -58,14 +57,14 @@ internal class MarkdownLinkOpenerRemoteApiTest {
   }
 
   private fun checkHeader(fragment: String, heading: String): Unit = timeoutRunBlocking {
-    val header = findHeaders(fragment).single()
-    assertEquals(targetFile.get().virtualFile.rpcId(), header.virtualFileId)
-    assertEquals(smartReadAction(projectFixture.get()) { targetFile.get().text.indexOf("## $heading") }, header.textOffset)
+    (val textOffset, val virtualFileId) = findHeaders(fragment).single()
+    assertEquals(targetFile.get().virtualFile.rpcId(), virtualFileId)
+    assertEquals(smartReadAction(projectFixture.get()) { targetFile.get().text.indexOf("## $heading") }, textOffset)
   }
 
   private suspend fun findHeaders(fragment: String): List<MarkdownHeaderInfo> {
     val target = targetFile.get()
-    smartReadAction(projectFixture.get()) { }
+    IndexingTestUtil.suspendUntilIndexesAreReady(projectFixture.get())
     val data = MarkdownLinkOpenerRemoteApiImpl().fetchLinkNavigationData("target.md#$fragment", target.virtualFile.rpcId())
     return requireNotNull(data.headers)
   }

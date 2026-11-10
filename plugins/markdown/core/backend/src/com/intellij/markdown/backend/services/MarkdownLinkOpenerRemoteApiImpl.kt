@@ -15,8 +15,10 @@ import org.intellij.plugins.markdown.dto.MarkdownLinkNavigationData
 import org.intellij.plugins.markdown.mapper.MarkdownHeaderMapper
 import org.intellij.plugins.markdown.service.MarkdownLinkNavigationResolver
 import org.intellij.plugins.markdown.service.MarkdownLinkOpenerRemoteApi
+import org.jetbrains.annotations.ApiStatus
 
-internal class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
+@ApiStatus.Internal
+class MarkdownLinkOpenerRemoteApiImpl : MarkdownLinkOpenerRemoteApi {
   override suspend fun fetchLinkNavigationData(link: String, virtualFileId: VirtualFileId?): MarkdownLinkNavigationData {
     return MarkdownLinkNavigationResolver.resolve(link, virtualFileId?.virtualFile(), ::collectHeaders)
   }
