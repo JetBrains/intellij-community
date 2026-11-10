@@ -1,23 +1,36 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
+import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.ex.ProjectFrameUiPolicy
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.TaskHandle
 import com.intellij.platform.ide.progress.TaskStatus
 import com.intellij.platform.ide.progress.TaskStorage
 import com.intellij.platform.ide.progress.suspender.TaskSuspension
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -91,6 +104,31 @@ class RecentProjectProgressTrackerTest {
       assertThat(task.status.first { it is TaskStatus.Canceled }).isInstanceOf(TaskStatus.Canceled::class.java)
     }
   }
+
+  /**
+   * A [Task.Backgroundable] shows its progress in the status bar of its frame. A project with no frame of its own has no status bar, so
+   * its indicator reports the task as one of the project. The row shows it, and no dialog does.
+   */
+  @Test
+  fun `a backgroundable task of a project with no frame of its own shows on its row`(@TestDisposable disposable: Disposable) =
+    timeoutRunBlocking {
+      ExtensionTestUtil.maskExtensions(ProjectFrameCapabilitiesService.EP_NAME, listOf(NoFrameOfItsOwn), disposable)
+      val task = object : Task.Backgroundable(project, "Fetching") {
+        override fun run(indicator: ProgressIndicator) = Unit
+      }
+
+      withTracker { tracker ->
+        tracker.follow(recentProjectId(), project)
+        val indicator = withContext(Dispatchers.EDT) { BackgroundableProcessIndicator(task) }
+        indicator.start()
+
+        assertThat(tracker.awaitProgressOf(count = 1).map { it.title }).containsExactly("Fetching")
+
+        indicator.finish(task)
+        indicator.stop()
+        assertThat(tracker.awaitProgressOf(count = 0)).isEmpty()
+      }
+    }
 
   @Test
   fun `a load shows while it runs, and goes once it ends`() = timeoutRunBlocking {
@@ -216,4 +254,11 @@ class RecentProjectProgressTrackerTest {
     projectGroup = null,
     activationTimestamp = null,
   )
+}
+
+/** Gives every project no frame of its own, as the welcome screen does for a recent project that it holds. */
+private object NoFrameOfItsOwn : ProjectFrameCapabilitiesProvider {
+  override fun getCapabilities(project: Project): Set<ProjectFrameCapability> = setOf(ProjectFrameCapability.NO_FRAME_OF_ITS_OWN)
+
+  override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? = null
 }

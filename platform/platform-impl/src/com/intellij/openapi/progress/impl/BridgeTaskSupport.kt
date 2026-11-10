@@ -24,7 +24,7 @@ import kotlinx.coroutines.withContext
  * allowing status from the indicator be passed to [withBackgroundProgress]
  */
 @Service(Service.Level.APP)
-@Deprecated("Intended only for support of obsolete API, must not be used outside IdeStatusBarImpl")
+@Deprecated("Intended only for support of obsolete API, must not be used outside IdeStatusBarImpl and BackgroundableProcessIndicator")
 internal class BridgeTaskSupport(private val coroutineScope: CoroutineScope) {
 
   fun withBridgeBackgroundProgress(project: Project?, indicator: ProgressIndicatorEx, info: TaskInfo) {

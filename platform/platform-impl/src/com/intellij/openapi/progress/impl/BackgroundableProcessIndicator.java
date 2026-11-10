@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
@@ -10,6 +11,8 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
+import com.intellij.openapi.wm.ex.ProjectFrameCapability;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -37,6 +40,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
 
   private boolean myDidInitializeOnEdt;
   private boolean myDisposed;
+  private boolean myBridged;
 
   @Obsolete
   public BackgroundableProcessIndicator(@NotNull Task.Backgroundable task) {
@@ -89,12 +93,32 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
       Project nonDefaultProject = myProject == null || myProject.isDisposed() || myProject.isDefault() ? null : myProject;
       IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameHelper(nonDefaultProject);
       myStatusBar = frame != null ? (StatusBarEx)frame.getStatusBar() : null;
+      if (myStatusBar == null && nonDefaultProject != null && hasNoFrameOfItsOwn(nonDefaultProject)) {
+        bridgeProgress(nonDefaultProject);
+        return;
+      }
       if (myStatusBar == null && LOG.isDebugEnabled()) {
         LOG.debug("No status bar for [" + this + "], progress will be displayed in a popup\nproject:" + myProject + "\nframe:" + frame,
                   new Throwable());
       }
     }
     doBackground(myStatusBar);
+  }
+
+  private static boolean hasNoFrameOfItsOwn(@NotNull Project project) {
+    return ApplicationManager.getApplication().getService(ProjectFrameCapabilitiesService.class)
+      .has(project, ProjectFrameCapability.NO_FRAME_OF_ITS_OWN);
+  }
+
+  /**
+   * Reports the progress of a project with no frame of its own as a background task of the project, as a status bar does.
+   * <p>
+   * Such a project has no status bar. The frame that runs its action shows the tasks of the project, so no dialog shows.
+   */
+  @SuppressWarnings("deprecation")
+  private void bridgeProgress(@NotNull Project project) {
+    myBridged = true;
+    BridgeTaskSupport.Companion.getInstance().withBridgeBackgroundProgress(project, this, myInfo);
   }
 
   /**
@@ -144,7 +168,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     if (myDisposed) return;
     initializeOnEdtIfNeeded(); // could happen before initialization succeeds - in that case we do it now
 
-    if (myStatusBar != null) {
+    if (myStatusBar != null || myBridged) {
       return;
     }
 
