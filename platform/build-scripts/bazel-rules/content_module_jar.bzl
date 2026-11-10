@@ -273,7 +273,7 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
         # The mnemonic selects a strategy or an execution-info override for every pack action that carries it. Three
         # producers share `PackContentModuleJar`: the content-module jar, the platform jar and the native tree. So one
         # override reaches all three. `common.bazelrc` adds `no-remote-cache` to `PackContentModuleJar` and to
-        # `PackDevPluginJar`, so their outputs stay in the disk cache only. `cache.spec.md` states the policy.
+        # `PackDevPluginJar`, so their outputs stay in the disk cache only. `build/openspec/specs/cache/spec.md` states the policy.
         mnemonic = mnemonic,
         inputs = depset(library_jars + module_jars + [patch.file for patch in patch_files]),
         outputs = outputs,

@@ -200,7 +200,7 @@ IntellijProjectModelTreeInfo = provider(
     },
 )
 
-# The cache policy of the references and the component collectors. `cache.spec.md` states it.
+# The cache policy of the references and the component collectors. `build/openspec/specs/cache/spec.md` states it.
 # The policy does not use `local`. In the shipped `JetBrains/9.1.0-jb` binary, `Spawns.mayBeCached` tests both
 # `no-cache` and `local`, and `RemoteExecutionService` gates `--disk_cache` on that test. So `local` also stops the disk
 # cache.

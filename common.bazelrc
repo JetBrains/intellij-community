@@ -276,8 +276,8 @@ build:bt --ui_event_filters=-info --noshow_progress --show_result=0
 common --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
 
 # Keep a packed jar or tree of the dev distribution in the local disk cache and out of the remote cache. These outputs
-# are large, and their download takes longer than a local pack. `build/spec/cache.spec.md` states the policy, and
-# `build/docs/decisions/2026-11-04-a-packed-output-stays-out-of-the-remote-cache.md` has the measurements.
+# are large, and their download takes longer than a local pack. `build/openspec/specs/cache/spec.md` states the
+# policy, and `build/docs/decisions/2026-11-04-a-packed-output-stays-out-of-the-remote-cache.md` has the measurements.
 common --modify_execution_info=PackContentModuleJar=+no-remote-cache,PackDevPluginJar=+no-remote-cache,PackDevPluginRemainder=+no-remote-cache,DevPluginSourceTreeArchive=+no-remote-cache,DevPluginSourceTreeExtract=+no-remote-cache
 
 # A CI build packs each jar in the sandbox, so a pack that reads an undeclared input fails there. A local build packs
