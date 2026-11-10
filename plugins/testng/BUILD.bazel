@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
@@ -112,6 +113,20 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.testng` end
+
+### auto-generated section `plugin intellij.testng` start
+ij_plugin(
+    name = "testng_plugin",
+    descriptor_module = ":testng",
+    content_modules = [
+        # do not sort,
+        "//libraries/testng:testng_plugin_module",
+        "//plugins/testng/langInjection",
+        "//plugins/testng_rt:testng-rt",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.testng` end
 
 ### auto-generated section `iml intellij.testng` start
 exports_files(
