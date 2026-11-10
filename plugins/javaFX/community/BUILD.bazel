@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -46,6 +47,29 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.javaFX.community` end
+
+### auto-generated section `plugin intellij.javaFX.community` start
+ij_plugin(
+    name = "community_plugin",
+    descriptor_module = ":community",
+    content_modules = [
+        # do not sort,
+        "//plugins/javaFX",
+        "//plugins/javaFX:javaFX-properties",
+        "//plugins/javaFX/common",
+        "//plugins/javaFX/jps",
+        "//plugins/javaFX/sceneBuilder",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            # do not sort,
+            "@@//plugins/javaFX:javaFX-css",
+            "@@//ultimate/ultimate-verifier:commercial-verifier",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.javaFX.community` end
 
 ### auto-generated section `iml intellij.javaFX.community` start
 exports_files(
