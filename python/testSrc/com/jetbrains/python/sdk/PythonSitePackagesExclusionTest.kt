@@ -5,8 +5,11 @@ import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,6 +26,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import com.jetbrains.python.tools.sdkTools.PythonMockSdkKeys
 import org.assertj.core.api.Assertions.assertThat
@@ -128,6 +132,45 @@ internal class PythonSitePackagesExclusionLegacyFlowTest : PythonSitePackagesExc
       assertThat(isExcluded(packageFile)).isFalse()
       assertThat(isInLibrary(packageFile)).isTrue()
     }
+  }
+
+  /**
+   * Two used SDKs share the stdlib root, and only the second one has its `site-packages` as a class root. The exclusion
+   * of the first SDK follows the use and the roots of the second one.
+   */
+  @Test
+  fun `the exclusion of an SDK follows the class roots of another used SDK`(
+    @TestDisposable disposable: Disposable,
+  ): Unit = timeoutRunBlocking {
+    val project = projectFixture.get()
+    val lib = newDir("lib")
+    val sitePackages = newDir(lib, "site-packages")
+    val packageFile = newFile(sitePackages, "pkg.py")
+    val other = PythonMockSdk.create()
+    edtWriteAction {
+      setClassRoots(other, "PY-93818 other used SDK", lib, sitePackages)
+      ProjectJdkTable.getInstance().addJdk(other, disposable)
+    }
+    withMockInterpreter(listOf(lib.path)) {
+      assertThat(isExcluded(packageFile)).isTrue()
+
+      edtWriteAction {
+        val module = ModuleManager.getInstance(project).newModule(tempDir.get().resolve("other.iml"), PYTHON_MODULE_ID)
+        ModuleRootModificationUtil.setModuleSdk(module, other)
+      }
+      assertThat(isExcluded(packageFile)).isFalse()
+
+      edtWriteAction { setClassRoots(other, other.name, lib) }
+      assertThat(isExcluded(packageFile)).isTrue()
+    }
+  }
+
+  private fun setClassRoots(sdk: Sdk, name: String, vararg roots: VirtualFile) {
+    val modificator = sdk.sdkModificator
+    modificator.name = name
+    modificator.removeAllRoots()
+    roots.forEach { modificator.addRoot(it, OrderRootType.CLASSES) }
+    modificator.commitChanges()
   }
 }
 
