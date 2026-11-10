@@ -14,8 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  * The size of a project on disk, and the line count that the size implies.
  *
  * These are the only two measures of the repository profile that no collector reports. The platform already reports
- * the file count, the languages and the module totals. See `project.indexable.files`, `file.types` and
- * `project.structure`. Do not report those facts again here.
+ * the languages and the module totals. See `file.types` and `project.structure`. Do not report those facts again here.
  *
  * Both values are an order of magnitude, not an exact number. The collector reports each one through
  * `EventFields.LogarithmicInt`, which rounds to 1, 2 and 5 per decade.

@@ -10,9 +10,8 @@ import com.intellij.openapi.project.Project
 /**
  * Reports the size of a project on disk, and the line count that the size implies.
  *
- * These two measures let an analyst group a metric by repository scale. The platform already reports the file count,
- * the languages and the module totals, so this collector adds only what is missing. See `project.indexable.files`,
- * `file.types` and `project.structure`.
+ * These two measures let an analyst group a metric by repository scale. The platform already reports the languages
+ * and the module totals, so this collector adds only what is missing. See `file.types` and `project.structure`.
  *
  * The platform adds an anonymized `project` field to every metric of a project state collector. That field is the
  * join key: it carries the same value in every group of the FUS recorder, so an agent event that also reports the
