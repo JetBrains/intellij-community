@@ -20,6 +20,7 @@
     <module name="intellij.javaFX.properties"/>
     <module name="intellij.javaFX.common" loading="required"/>
     <module name="intellij.javaFX.jps" loading="on-demand"/>
+    <module name="intellij.javaFX.sceneBuilder" loading="on-demand"/>
     <module name="intellij.javaFX.css" loading="optional"/>
   </content>
 

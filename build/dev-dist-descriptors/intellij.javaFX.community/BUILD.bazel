@@ -23,6 +23,7 @@ dev_dist_plugin_descriptor(
         "intellij.javaFX.common",
         "intellij.javaFX.jps",
         "intellij.javaFX.properties",
+        "intellij.javaFX.sceneBuilder",
     ],
     descriptor = "//plugins/javaFX/community:resources/META-INF/plugin.xml",
     main_module = "intellij.javaFX.community",
@@ -31,6 +32,7 @@ dev_dist_plugin_descriptor(
             "intellij.javaFX",
             "intellij.javaFX.properties",
             "intellij.javaFX.jps",
+            "intellij.javaFX.sceneBuilder",
         ],
     },
     refused_content_modules = [
@@ -44,6 +46,7 @@ dev_plugin(
     content_module_jars = [
         "//plugins/javaFX/common:common_content_module_jar",
         "//plugins/javaFX/jps:jps_content_module_jar",
+        "//plugins/javaFX/sceneBuilder:sceneBuilder_content_module_jar",
         "//plugins/javaFX:javaFX-properties_content_module_jar",
         "//plugins/javaFX:javaFX_content_module_jar",
     ],
@@ -52,14 +55,10 @@ dev_plugin(
         "lib/javaFX-community.jar": [
             "intellij.javaFX.community",
         ],
-        "lib/rt/sceneBuilderBridge.jar": [
-            "intellij.javaFX.sceneBuilder",
-        ],
     },
     main_module = "intellij.javaFX.community",
     modules = {
         "//plugins/javaFX/community": "intellij.javaFX.community",
-        "//plugins/javaFX/sceneBuilder": "intellij.javaFX.sceneBuilder",
     },
     plugin_directory = "plugins/javaFX-community",
     stamp_class_modes = [

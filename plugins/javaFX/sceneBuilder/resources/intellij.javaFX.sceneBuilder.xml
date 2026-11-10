@@ -1,0 +1,18 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.javaFX"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.indexing.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

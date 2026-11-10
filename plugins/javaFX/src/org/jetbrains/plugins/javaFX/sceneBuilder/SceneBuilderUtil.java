@@ -59,7 +59,7 @@ final class SceneBuilderUtil {
       final Path javaFxJar = Paths.get(PathUtil.getJarPathForClass(SceneBuilderUtil.class));
       boolean isDevMode = Files.isDirectory(javaFxJar);
       final Path sceneBuilder = getSceneBuilder11Path();
-      final Path sceneBuilderImpl = getJarPath(isDevMode ? "intellij.javaFX.sceneBuilder" : "../rt/sceneBuilderBridge.jar", javaFxJar);
+      final Path sceneBuilderImpl = getJarPath(isDevMode ? "intellij.javaFX.sceneBuilder" : "intellij.javaFX.sceneBuilder.jar", javaFxJar);
 
       try {
         Class.forName(JavaFxCommonNames.JAVAFX_SCENE_NODE);

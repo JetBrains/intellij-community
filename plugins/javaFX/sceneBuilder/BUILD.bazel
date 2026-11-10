@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.javaFX.sceneBuilder` start
+content_module_jar(module = ":sceneBuilder")
+### auto-generated section `dev intellij.javaFX.sceneBuilder` end
 
 ### auto-generated section `build intellij.javaFX.sceneBuilder` start
 jvm_library(
@@ -12,6 +17,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.javaFX.sceneBuilder",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     runtime_deps = ["//jps/model-api:model"],
     deps = [
@@ -39,6 +48,7 @@ jvm_library(
 exports_files(
     [
         "intellij.javaFX.sceneBuilder.iml",
+        "resources/intellij.javaFX.sceneBuilder.xml",
     ],
     visibility = ["//visibility:public"],
 )
