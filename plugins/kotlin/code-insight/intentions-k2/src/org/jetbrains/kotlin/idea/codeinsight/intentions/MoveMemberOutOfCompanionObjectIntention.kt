@@ -31,6 +31,7 @@ internal class MoveMemberOutOfCompanionObjectIntention : MoveMemberIntention(
         val containingClassOrObject = getClassForCompanionObjectMember(element) ?: return null
         if (element.findAnnotation(ClassId.fromString(JVM_FIELD_CLASS_ID)) != null) return null
         if (containingClassOrObject.isInterfaceClass()) return null
+        if (element.isExpectOrActual()) return null
         return element.nameIdentifier?.textRange
     }
 }

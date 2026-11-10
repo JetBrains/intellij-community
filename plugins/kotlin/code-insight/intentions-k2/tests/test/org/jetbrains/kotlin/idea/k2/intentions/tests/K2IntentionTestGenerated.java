@@ -12423,9 +12423,19 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("actualFun.kt")
+        public void testActualFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/actualFun.kt");
+        }
+
         @TestMetadata("companionAsImplicitReceiver.kt")
         public void testCompanionAsImplicitReceiver() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/companionAsImplicitReceiver.kt");
+        }
+
+        @TestMetadata("expectFun.kt")
+        public void testExpectFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveOutOfCompanion/expectFun.kt");
         }
 
         @TestMetadata("hasJvmFieldInInterface.kt")
