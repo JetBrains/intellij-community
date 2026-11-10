@@ -1,26 +1,34 @@
 package org.jetbrains.plugins.textmate.editor
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.formatting.IndentInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider
+import com.intellij.textmate.joni.JoniRegexFactory
 import org.jetbrains.plugins.textmate.TextMateLanguage
 import org.jetbrains.plugins.textmate.TextMateService
 import org.jetbrains.plugins.textmate.editor.Utils.Companion.indentOfLine
 import org.jetbrains.plugins.textmate.language.preferences.IndentAction
 import org.jetbrains.plugins.textmate.language.preferences.IndentationRules
 import org.jetbrains.plugins.textmate.language.preferences.OnEnterRule
+import org.jetbrains.plugins.textmate.regex.CaffeineCachingRegexProvider
+import org.jetbrains.plugins.textmate.regex.RegexProvider
+import org.jetbrains.plugins.textmate.regex.TextMateString
 
 
 /**
  * Provides line indentation for TextMate language.
  */
 class TextMateLineIndentProvider : LineIndentProvider {
+  private val regexProvider: RegexProvider = CaffeineCachingRegexProvider(JoniRegexFactory())
+
   override fun getLineIndent(project: Project, editor: Editor, language: Language?, offset: Int): String? {
     if (language !is TextMateLanguage) return null
 
@@ -61,48 +69,49 @@ class TextMateLineIndentProvider : LineIndentProvider {
     return language != null && language is TextMateLanguage
   }
 
-  private fun getIndentChange(prevLineText: String,
-                              indentationRules: IndentationRules,
-                              onEnterRules: List<OnEnterRule>): Int? {
+  private fun getIndentChange(
+    prevLineText: String,
+    indentationRules: IndentationRules,
+    onEnterRules: List<OnEnterRule>,
+  ): Int? {
+    try {
+      return regexProvider.withString(prevLineText) { prevLine ->
+        getIndentChange(prevLine, indentationRules, onEnterRules)
+      }
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      thisLogger().error("Using regex failed", e)
+      return null
+    }
+  }
 
-
+  private fun getIndentChange(
+    prevLine: TextMateString,
+    indentationRules: IndentationRules,
+    onEnterRules: List<OnEnterRule>,
+  ): Int? {
     for (onEnterRule in onEnterRules) {
-      val beforeTextPatter = onEnterRule.beforeText.text
-      try {
-        if (prevLineText.contains(Regex(beforeTextPatter))) {
-          when (onEnterRule.action.indent) {
-            IndentAction.INDENT -> return 1
-            IndentAction.NONE -> return null
-            else -> {}
-          }
+      if (matches(onEnterRule.beforeText.text, prevLine)) {
+        when (onEnterRule.action.indent) {
+          IndentAction.INDENT -> return 1
+          IndentAction.NONE -> return null
+          else -> {}
         }
       }
-      catch (e: Exception) {
-        thisLogger().error("Using regex onEnterRule.beforeText failed", e)
-      }
     }
 
-    val increasePattern = indentationRules.increaseIndentPattern
-    try {
-      if (increasePattern != null && prevLineText.matches(Regex(increasePattern))) {
-        return 1
-      }
+    when {
+      matches(indentationRules.increaseIndentPattern, prevLine) -> return 1
+      matches(indentationRules.decreaseIndentPattern, prevLine) -> return -1
+      else -> return null
     }
-    catch (e: Exception) {
-      thisLogger().error("Using regex indentationRules.increaseIndentPattern failed", e)
-    }
+  }
 
-
-    val decreasePattern = indentationRules.decreaseIndentPattern
-    try {
-      if (decreasePattern != null && prevLineText.matches(Regex(decreasePattern))) {
-        return -1
-      }
+  private fun matches(pattern: String?, line: TextMateString): Boolean {
+    if (pattern == null) return false
+    return regexProvider.withRegex(pattern) {
+      it.match(line, { ProgressManager.checkCanceled() }).matched
     }
-    catch (e: Exception) {
-      thisLogger().error("Using regex indentationRules.decreaseIndentPattern failed", e)
-    }
-
-    return null
   }
 }
