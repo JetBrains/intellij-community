@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -56,6 +57,30 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.dotenv` end
+
+### auto-generated section `plugin intellij.dotenv` start
+ij_plugin(
+    name = "dotenv_plugin",
+    descriptor_module = ":dotenv",
+    content_modules = [
+        # do not sort,
+        "//plugins/env-files-support/kotlin",
+        "//plugins/env-files-support/java",
+        "//plugins/env-files-support/python",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            # do not sort,
+            "@@//plugins/dotenv-ultimate/php",
+            "@@//plugins/dotenv-ultimate/go",
+            "@@//plugins/dotenv-ultimate/rust",
+            "@@//plugins/dotenv-ultimate/ruby",
+            "@@//plugins/dotenv-ultimate/docker",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.dotenv` end
 
 ### auto-generated section `iml intellij.dotenv` start
 exports_files(
