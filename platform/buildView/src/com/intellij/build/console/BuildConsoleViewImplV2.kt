@@ -167,7 +167,7 @@ internal class BuildConsoleViewImplV2(
   }
 
   override fun scrollToNodeOutput(nodeId: Any) {
-    state.access {
+    state.accessFlushed {
       val inlay = nodeInlays(nodeId).firstOrNull()
       val bounds = inlay?.bounds
       if (inlay != null && bounds != null) {
@@ -360,7 +360,6 @@ internal class BuildConsoleViewImplV2(
       }
     }
 
-    @TestOnly
     fun accessFlushed(action: ConsoleViewStateAccessor.() -> Unit) {
       invokeAndWaitIfNeeded {
         WriteIntentReadAction.run {
