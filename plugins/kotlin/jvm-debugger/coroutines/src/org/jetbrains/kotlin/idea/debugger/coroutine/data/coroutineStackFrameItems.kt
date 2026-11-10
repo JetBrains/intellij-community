@@ -11,6 +11,7 @@ import com.intellij.debugger.memory.utils.StackFrameItem
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
+import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
 import org.jetbrains.kotlin.idea.debugger.base.util.dropInlineSuffix
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.safeKotlinPreferredLineNumber
@@ -122,7 +123,7 @@ sealed class CoroutineStackFrameItem(val location: Location, val spilledVariable
                 context,
                 continuation,
                 fieldName,
-                dropInlineSuffix(variableName)
+                dropInlineSuffix(variableName.dropInlineScopeInfo())
             )
             return JavaValue.create(
                 null,

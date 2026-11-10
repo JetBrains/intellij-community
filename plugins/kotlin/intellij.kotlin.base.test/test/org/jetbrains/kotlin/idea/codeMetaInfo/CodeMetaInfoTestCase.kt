@@ -29,7 +29,6 @@ import com.intellij.util.LineSeparator
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
 import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
-import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.DiagnosticCodeMetaInfoRenderConfiguration
 import org.jetbrains.kotlin.daemon.common.OSKind
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.KotlinMultiplatformAnalysisModeComponent
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.FileLevelHighlightingCodeMetaInfo
@@ -62,12 +61,6 @@ open class CodeMetaInfoTestCase(
     protected val filterMetaInfo: (CodeMetaInfo) -> Boolean = { true },
     checkNoDiagnosticError: Boolean = false, // to remove on cleanup commit
 ) : DaemonAnalyzerTestCase() {
-
-    protected open fun getDiagnosticCodeMetaInfos(
-        configuration: DiagnosticCodeMetaInfoRenderConfiguration = DiagnosticCodeMetaInfoRenderConfiguration(),
-        parseDirective: Boolean = true
-    ): List<CodeMetaInfo> = emptyList()
-
     protected open fun highlightErrorDiagnostics() {
         throw AssertionError("Should not check k1 errors in k2 tests")
     }
@@ -159,10 +152,6 @@ open class CodeMetaInfoTestCase(
         fun task() {
             for (configuration in codeMetaInfoTypes) {
                 when (configuration) {
-                    is DiagnosticCodeMetaInfoRenderConfiguration -> {
-                        codeMetaInfoForCheck.addAll(getDiagnosticCodeMetaInfos(configuration))
-                    }
-
                     is HighlightingConfiguration -> {
                         codeMetaInfoForCheck.addAll(getHighlightingCodeMetaInfos(configuration))
                     }
@@ -190,12 +179,6 @@ open class CodeMetaInfoTestCase(
             }
         } else {
             task()
-        }
-
-        if (codeMetaInfoTypes.any { it is DiagnosticCodeMetaInfoRenderConfiguration } &&
-            !codeMetaInfoTypes.any { it is HighlightingConfiguration }
-        ) {
-            highlightErrorDiagnostics()
         }
 
         val parsedMetaInfo = if (expectedFile.exists()) {
@@ -270,7 +253,6 @@ abstract class AbstractCodeMetaInfoTest : AbstractMultiModuleTest() {
     open val checkNoDiagnosticError: Boolean get() = false
 
     open fun getConfigurations(): List<AbstractCodeMetaInfoRenderConfiguration> = listOf(
-        DiagnosticCodeMetaInfoRenderConfiguration(),
         LineMarkerConfiguration(),
         HighlightingConfiguration(),
         FileLevelHighlightingConfiguration(),

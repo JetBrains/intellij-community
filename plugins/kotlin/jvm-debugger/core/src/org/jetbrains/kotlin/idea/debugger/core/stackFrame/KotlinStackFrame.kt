@@ -218,7 +218,8 @@ open class KotlinStackFrame(
             name == AsmUtil.THIS ||
                     name == AsmUtil.THIS_IN_DEFAULT_IMPLS ||
                     name.startsWith(AsmUtil.LABELED_THIS_PARAMETER) ||
-                    name == AsmUtil.INLINE_DECLARATION_SITE_THIS
+                    // An inlined `this_` has a scope number or an inline suffix. It keeps its label, as `this (@A)`.
+                    variable.name() == AsmUtil.INLINE_DECLARATION_SITE_THIS
             }
 
         // The variables are already sorted, so the mainThis is the last one in the list.
