@@ -6,9 +6,9 @@ import com.intellij.dev.codeInsight.internal.GoodCodeRedVisitor
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.components.collectDiagnostics
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtVisitor
@@ -18,12 +18,12 @@ internal class KotlinGoodCodeRedVisitor : GoodCodeRedVisitor {
   override fun createVisitor(holder: ProblemsHolder): PsiElementVisitor {
 
     return object : KtVisitor<Unit, Unit>() {
+      @OptIn(KaExperimentalApi::class)
       override fun visitFile(file: PsiFile) {
         super.visitFile(file)
         try {
           analyze(file as KtFile) {
-            val diagnostics = file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-            for (diagnostic in diagnostics) {
+            for (diagnostic in file.diagnostics()) {
               if (diagnostic.severity == KaSeverity.ERROR) {
                 holder.registerProblem(diagnostic.psi, diagnostic.defaultMessage)
               }
