@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -256,7 +257,8 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       return DiamondInferenceResult.UNRESOLVED_CONSTRUCTOR;
     }
 
-    LOG.assertTrue(!PsiMethodCallExpressionImpl.doWePerformGenericMethodOverloadResolutionNow(newExpression, PsiUtil.getLanguageLevel(newExpression)), 
+    LOG.assertTrue(!PsiMethodCallExpressionImpl.doWePerformGenericMethodOverloadResolutionNow(newExpression, PsiUtil.getLanguageLevel(newExpression)) ||
+                   !PsiPolyExpressionUtil.isPolyExpression(newExpression),
                    "diamond evaluation during overload resolution");
 
     PsiSubstitutor substitutor = staticFactoryCandidateInfo.getSubstitutor();

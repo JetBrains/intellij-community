@@ -30,4 +30,14 @@ public class ResolveMethod21Test extends LightResolveTestCase {
     assertInstanceOf(getCodeTarget, PsiMethod.class);
     assertEquals("getCode", ((PsiMethod)getCodeTarget).getName());
   }
+
+  public void testVarWithDiamondInsideLambdaDuringOverloadResolution() {
+    PsiFile file = myFixture.configureByFile("method/" + getTestName(false) + ".java");
+    PsiReference reference = file.findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
+    assertNotNull(reference);
+    PsiElement target = reference.resolve();
+    assertInstanceOf(target, PsiMethod.class);
+    assertEquals("java.util.function.Supplier<? extends T>",
+                 ((PsiMethod)target).getParameterList().getParameters()[1].getType().getCanonicalText());
+  }
 }
