@@ -59,6 +59,7 @@ import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.AsyncableFileSystem;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
+import com.intellij.openapi.vfs.newvfs.BackgroundEventSupport;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
@@ -222,6 +223,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                                                    HashingStrategy.caseInsensitive());
 
     AsyncEventSupport.startListening();
+    BackgroundEventSupport.startListening();
 
     app.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
@@ -1864,25 +1866,37 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private static void fireBeforeEvents(@NotNull BulkFileListener publisherEdt,
                                        @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
                                        @NotNull List<? extends VFileEvent> toSend) {
-    runSuppressing(
-      () -> runActionOnBackgroundRegardlessOfCurrentThread(() -> publisherBackgroundable.before(toSend)),
-      () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.before(toSend)),
-      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend)
-    );
+    BackgroundEventSupport.markBeforeProcessed(toSend);
+    try {
+      runSuppressing(
+        () -> runActionOnBackgroundRegardlessOfCurrentThread(() -> publisherBackgroundable.before(toSend)),
+        () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.before(toSend)),
+        () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend)
+      );
+    }
+    finally {
+      BackgroundEventSupport.unmarkBeforeProcessed(toSend);
+    }
   }
 
   private static void fireAfterEvents(@NotNull BulkFileListener publisherEdt,
                                       @NotNull BulkFileListenerBackgroundable publisherBackgroundable,
                                       @NotNull AsyncEventSupport.ChangeAppliers earlyAfterEventChangeAppliers,
                                       @NotNull List<? extends VFileEvent> toSend) {
-    runSuppressing(
-      () -> CachedFileType.clearCache(),
-      () -> afterVfsChange(earlyAfterEventChangeAppliers),
-      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend),
-      () -> AsyncEventSupport.drainEarlyAppliers(toSend),
-      () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.after(toSend)),
-      () -> runActionOnBackgroundRegardlessOfCurrentThread(() -> publisherBackgroundable.after(toSend))
-    );
+    BackgroundEventSupport.markAfterProcessed(toSend);
+    try {
+      runSuppressing(
+        () -> CachedFileType.clearCache(),
+        () -> afterVfsChange(earlyAfterEventChangeAppliers),
+        () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend),
+        () -> AsyncEventSupport.drainEarlyAppliers(toSend),
+        () -> runActionOnEdtRegardlessOfCurrentThread(() -> publisherEdt.after(toSend)),
+        () -> runActionOnBackgroundRegardlessOfCurrentThread(() -> publisherBackgroundable.after(toSend))
+      );
+    }
+    finally {
+      BackgroundEventSupport.unmarkAfterProcessed(toSend);
+    }
   }
 
   // remove children from specified directories using VirtualDirectoryImpl.removeChildren() optimised for bulk removals
