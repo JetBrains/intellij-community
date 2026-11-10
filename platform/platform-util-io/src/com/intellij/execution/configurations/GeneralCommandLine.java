@@ -9,15 +9,12 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.IllegalEnvVarException;
 import com.intellij.execution.Platform;
 import com.intellij.execution.WorkingDirectoryNotFoundException;
-import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.execution.process.ProcessNotCreatedException;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
@@ -39,7 +36,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -57,53 +53,55 @@ import java.util.function.Function;
 import static com.intellij.execution.configurations.EelProcessLauncherKt.startProcessBlockingUsingEel;
 import static com.intellij.platform.eel.provider.EelPathDescriptorKt.getEelDescriptor;
 
-/**
- * OS-independent way of executing external processes with complex parameters.
- * <p>
- * Main idea of the class is to accept parameters as-is, just as they should look to an external process, and quote/escape them
- * as required by the underlying platform - so to run some program with a "parameter with space" all that's needed is
- * {@code new GeneralCommandLine("some program", "parameter with space").createProcess()}.
- * <p>
- * Consider the following things when using this class.
- * <h3>Working directory</h3>
- * By default, a current directory of the IDE process is used (usually a "bin/" directory of IDE installation).
- * If child processes may create files in it, this choice is unwelcome. On the other hand, informational commands (e.g. "git --version")
- * are safe. When unsure, set it to something neutral - like a user's home or a temp directory.
- * <h3>Parent Environment</h3>
- * {@link ParentEnvironmentType Three options here}.
- * For commands designed from the ground up for typing into a terminal, use {@link ParentEnvironmentType#CONSOLE CONSOLE}
- * (typical cases: version controls, Node.js and all the surrounding stuff, Python and Ruby interpreters and utilities, etc.).
- * For GUI apps and CLI tools that aren't primarily intended to be launched by humans, use {@link ParentEnvironmentType#SYSTEM SYSTEM}
- * (examples: UI builders, browsers, XCode components). And for the empty environment, there is {@link ParentEnvironmentType#NONE NONE}.
- * According to extensive research conducted by British scientists (tm) on a diverse population of both wild and domesticated tools
- * (no one was harmed), most of them are either insensitive to the environment or fall into the first category,
- * thus backing up the choice of CONSOLE as the default value.
- * <h3>Encoding/Charset</h3>
- * The {@link #getCharset()} method is used by classes like {@link com.intellij.execution.process.OSProcessHandler OSProcessHandler}
- * or {@link com.intellij.execution.util.ExecUtil ExecUtil} to decode bytes of a child's output stream. For proper conversion,
- * the same value should be used on another side of the pipe. Chances are you don't have to mess with the setting -
- * because a platform-dependent guessing behind {@link EncodingManager#getDefaultConsoleEncoding()} is used by default and a child process
- * may happen to use a similar heuristic.
- * If the above automagic fails or more control is needed, the charset may be set explicitly. Again, remember the other side -
- * call {@code addParameter("-Dfile.encoding=...")} for Java-based tools, or use {@code withEnvironment("HGENCODING", "...")}
- * for Mercurial, etc.
- *
- * @see com.intellij.execution.util.ExecUtil
- * @see com.intellij.execution.process.OSProcessHandler
- */
+/// OS-independent way of executing external processes with complex parameters.
+///
+/// Main idea of the class is to accept parameters as-is, just as they should look to an external process, and quote/escape them
+/// as required by the underlying platform - so to run some program with a "parameter with space" all that's needed is
+/// `new GeneralCommandLine("some program", "parameter with space").createProcess()`.
+///
+/// Consider the following things when using this class.
+///
+/// ### Working directory
+///
+/// By default, a current directory of the IDE process is used (usually a "bin/" directory of IDE installation).
+/// If child processes may create files in it, this choice is unwelcome. On the other hand, informational commands (e.g. "git --version")
+/// are safe. When unsure, set it to something neutral - like a user's home or a temp directory.
+/// ### Parent Environment
+///
+/// [`Three options here`][ParentEnvironmentType].
+/// For commands designed from the ground up for typing into a terminal, use [`CONSOLE`][ParentEnvironmentType#CONSOLE]
+/// (typical cases: version controls, Node.js and all the surrounding stuff, Python and Ruby interpreters and utilities, etc.).
+/// For GUI apps and CLI tools that aren't primarily intended to be launched by humans, use [`SYSTEM`][ParentEnvironmentType#SYSTEM]
+/// (examples: UI builders, browsers, Xcode components). And for the empty environment, there is [`NONE`][ParentEnvironmentType#NONE].
+/// According to extensive research conducted by British scientists (tm) on a diverse population of both wild and domesticated tools
+/// (no one was harmed), most of them are either insensitive to the environment or fall into the first category,
+/// thus backing up the choice of CONSOLE as the default value.
+/// ### Encoding/Charset
+///
+/// The [#getCharset()] method is used by classes like [`OSProcessHandler`][com.intellij.execution.process.OSProcessHandler]
+/// or [`ExecUtil`][com.intellij.execution.util.ExecUtil] to decode bytes of a child's output stream. For proper conversion,
+/// the same value should be used on another side of the pipe. Chances are you don't have to mess with the setting -
+/// because a platform-dependent guessing behind [EncodingManager#getDefaultConsoleEncoding()] is used by default and a child process
+/// may happen to use a similar heuristic.
+/// If the above automagic fails or more control is needed, the charset may be set explicitly. Again, remember the other side -
+/// call `addParameter("-Dfile.encoding=...")` for Java-based tools, or use `withEnvironment("HGENCODING", "...")`
+/// for Mercurial, etc.
+///
+/// @see com.intellij.execution.util.ExecUtil
+/// @see com.intellij.execution.process.OSProcessHandler
 public class GeneralCommandLine implements UserDataHolder {
   private static final Logger LOG = Logger.getInstance(GeneralCommandLine.class);
 
-  /**
-   * Determines the scope of a parent environment passed to a child process.
-   * <p>
-   * {@code NONE} means a child process will receive an empty environment. <br/>
-   * {@code SYSTEM} will provide it with the same environment as an IDE. <br/>
-   * {@code CONSOLE} provides the child with a similar environment as if it was launched from, well, a console.
-   * On macOS, a console environment is simulated (see {@link EnvironmentUtil#getEnvironmentMap()} for reasons it's needed
-   * and details on how it works). On Windows and Unix hosts, this option is no different from {@code SYSTEM}
-   * since there is no drastic distinction in environment between GUI and console apps.
-   */
+  /// Determines the scope of a parent environment passed to a child process.
+  ///
+  /// `NONE` means a child process will receive an empty environment.
+  ///
+  /// `SYSTEM` will provide it with the same environment as an IDE.
+  ///
+  /// `CONSOLE` provides the child with a similar environment as if it was launched from, well, a console.
+  /// On macOS, a console environment is simulated (see [EnvironmentUtil#getEnvironmentMap()] for reasons it's needed
+  /// and details on how it works). On Windows and Unix hosts, this option is no different from `SYSTEM`
+  /// since there is no drastic distinction in environment between GUI and console apps.
   public enum ParentEnvironmentType {NONE, SYSTEM, CONSOLE}
 
   private String myExePath;
@@ -113,15 +111,14 @@ public class GeneralCommandLine implements UserDataHolder {
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = defaultCharset();
   private boolean myRedirectErrorStream;
-  private @Nullable File myInputFile;
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  private @Nullable java.io.File myInputFile;
   private Map<Object, Object> myUserData;
-  /**
-   * Caches the target derived from the executable path and the working directory.
-   * Changing either value clears this cache.
-   * `null` means that the ref is not initialized yet
-   * `Ref(null)` means that Eel should **not** be used here
-   * `Ref(not-null)` means that the Eel **should** be used
-   */
+  /// Caches the target derived from the executable path and the working directory.
+  /// Changing either value clears this cache.
+  /// \`null\` means that the ref is not initialized yet
+  /// \`Ref(null)\` means that Eel should \*\*not\*\* be used here
+  /// \`Ref(not-null)\` means that the Eel \*\*should\*\* be used
   private @Nullable Ref<@Nullable EelDescriptor> myEelDescriptor = null;
   private @Nullable Function<ProcessBuilder, Process> myProcessCreator;
 
@@ -134,9 +131,9 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   public GeneralCommandLine(@NotNull List<String> command) {
-    int size = command.size();
+    var size = command.size();
     if (size > 0) {
-      setExePath(command.get(0));
+      setExePath(command.getFirst());
       if (size > 1) {
         addParameters(command.subList(1, size));
       }
@@ -157,11 +154,9 @@ public class GeneralCommandLine implements UserDataHolder {
     myEelDescriptor = original.myEelDescriptor;
   }
 
-  /**
-   * Returns an environment that will be inherited by a child process.
-   *
-   * @see #getEffectiveEnvironment()
-   */
+  /// Returns an environment that will be inherited by a child process.
+  ///
+  /// @see #getEffectiveEnvironment()
   public @NotNull Map<String, String> getParentEnvironment() {
     return switch (myParentEnvironmentType) {
       case SYSTEM -> System.getenv();
@@ -174,65 +169,64 @@ public class GeneralCommandLine implements UserDataHolder {
     return myExePath;
   }
 
-  /**
-   * Sets an executable path or a program name.
-   * For remote EEL execution, accepts an absolute global path, an absolute native path, or a name from the target's PATH.
-   * Executable strings without a remote global path are passed unchanged to EEL.
-   * For remote EEL execution, a native path or a program name requires a working directory that identifies the remote target.
-   * A native path can also be a valid local path when both systems use the same path syntax.
-   * Global executable and working directory paths must identify the same target.
-   */
+  /// Sets an executable path or a program name.
+  /// For remote EEL execution, accepts an absolute global path, an absolute native path, or a name from the target's PATH.
+  /// Executable strings without a remote global path are passed unchanged to EEL.
+  /// For remote EEL execution, a native path or a program name requires a working directory that identifies the remote target.
+  /// A native path can also be a valid local path when both systems use the same path syntax.
+  /// Global executable and working directory paths must identify the same target.
   public @NotNull GeneralCommandLine withExePath(@NotNull String exePath) {
     myExePath = exePath.trim();
     myEelDescriptor = null;
     return this;
   }
 
-  /** Please use {@link #withExePath}. */
+  /// Please use [#withExePath].
   @ApiStatus.Obsolete(since = "2024.2")
   public void setExePath(@NotNull String exePath) {
     withExePath(exePath);
   }
 
-  /**
-   * Turns the command line into parameters of a new one.
-   * Case in point &ndash; running a process with lower priority: {@code commandLine.withWrappingCommand("nice", "-n", "10")}.
-   */
+  /// Turns the command line into parameters of a new one.
+  /// Case in point – running a process with lower priority: `commandLine.withWrappingCommand("nice", "-n", "10")`.
   @ApiStatus.Experimental
-  public @NotNull GeneralCommandLine withWrappingCommand(@NotNull String command, @NotNull String @NotNull ... args) {
+  public @NotNull GeneralCommandLine withWrappingCommand(@NotNull String command, @SuppressWarnings("SSBasedInspection") @NotNull String @NotNull ... args) {
     if (myExePath == null || myExePath.isBlank()) throw new IllegalStateException("Executable is not set yet");
     myProgramParams.prepend(myExePath);
     myProgramParams.prependAll(args);
     return withExePath(command);
   }
 
-  /** Please use {@link #getWorkingDirectory()}. */
+  /// Please use [#getWorkingDirectory()].
   @ApiStatus.Obsolete(since = "2024.2")
-  public File getWorkDirectory() {
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public java.io.File getWorkDirectory() {
     return myWorkingDirectory != null ? myWorkingDirectory.toFile() : null;
   }
 
-  /** Please use {@link #withWorkingDirectory(Path)}. */
+  /// Please use [#withWorkingDirectory(Path)].
   @ApiStatus.Obsolete(since = "2024.2")
   public @NotNull GeneralCommandLine withWorkDirectory(@Nullable String path) {
     return withWorkingDirectory(path != null ? Path.of(path) : null);
   }
 
-  /** Please use {@link #withWorkingDirectory(Path)}. */
+  /// Please use [#withWorkingDirectory(Path)].
   @ApiStatus.Obsolete(since = "2024.2")
-  public @NotNull GeneralCommandLine withWorkDirectory(@Nullable File workDirectory) {
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public @NotNull GeneralCommandLine withWorkDirectory(@Nullable java.io.File workDirectory) {
     return withWorkingDirectory(workDirectory != null ? workDirectory.toPath() : null);
   }
 
-  /** Please use {@link #withWorkingDirectory(Path)}. */
+  /// Please use [#withWorkingDirectory(Path)].
   @ApiStatus.Obsolete(since = "2024.2")
   public void setWorkDirectory(@Nullable String path) {
     withWorkDirectory(path);
   }
 
-  /** Please use {@link #withWorkingDirectory(Path)}. */
+  /// Please use [#withWorkingDirectory(Path)].
   @ApiStatus.Obsolete(since = "2024.2")
-  public void setWorkDirectory(@Nullable File workDirectory) {
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public void setWorkDirectory(@Nullable java.io.File workDirectory) {
     withWorkDirectory(workDirectory);
   }
 
@@ -246,9 +240,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
-  /**
-   * Note: the returned map is forgiving to passing {@code null} values into {@link Map#putAll}.
-   */
+  /// Note: the returned map is forgiving to passing `null` values into [Map#putAll].
   public @NotNull Map<String, String> getEnvironment() {
     return myEnvParams;
   }
@@ -278,18 +270,14 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
-  protected @NotNull List<String> prepareCommandLine(@NotNull String command,
-                                                     @NotNull List<String> parameters,
-                                                     @NotNull Platform platform) {
+  protected @NotNull List<String> prepareCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
     return CommandLineUtil.toCommandLine(command, parameters, platform);
   }
 
-  /**
-   * Returns an environment as seen by a child process,
-   * that is the {@link #getEnvironment() environment} merged with the {@link #getParentEnvironment() parent} one.
-   */
+  /// Returns an environment as seen by a child process,
+  /// that is the [`environment`][#getEnvironment()] merged with the [`parent`][#getParentEnvironment()] one.
   public @NotNull Map<String, String> getEffectiveEnvironment() {
-    Map<String, String> env = new MyMap();
+    var env = new MyMap();
     setupEnvironment(env);
     return env;
   }
@@ -302,13 +290,13 @@ public class GeneralCommandLine implements UserDataHolder {
     withParameters(parameters);
   }
 
-  public @NotNull GeneralCommandLine withParameters(@NotNull String @NotNull ... parameters) {
-    for (String parameter : parameters) addParameter(parameter);
+  public @NotNull GeneralCommandLine withParameters(@SuppressWarnings("SSBasedInspection") @NotNull String @NotNull ... parameters) {
+    for (var parameter : parameters) addParameter(parameter);
     return this;
   }
 
   public @NotNull GeneralCommandLine withParameters(@NotNull List<String> parameters) {
-    for (String parameter : parameters) addParameter(parameter);
+    for (var parameter : parameters) addParameter(parameter);
     return this;
   }
 
@@ -329,7 +317,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
-  /** Please use {@link #withCharset}. */
+  /// Please use [#withCharset].
   @ApiStatus.Obsolete(since = "2024.2")
   public void setCharset(@NotNull Charset charset) {
     withCharset(charset);
@@ -344,38 +332,38 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
-  /** Please use {@link #withRedirectErrorStream}. */
+  /// Please use [#withRedirectErrorStream].
   @ApiStatus.Obsolete(since = "2024.2")
   public void setRedirectErrorStream(boolean redirectErrorStream) {
     withRedirectErrorStream(redirectErrorStream);
   }
 
-  public @Nullable File getInputFile() {
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public @Nullable java.io.File getInputFile() {
     return myInputFile;
   }
 
-  public @NotNull GeneralCommandLine withInput(@Nullable File file) {
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public @NotNull GeneralCommandLine withInput(@Nullable java.io.File file) {
     myInputFile = file;
     return this;
   }
 
-  /**
-   * Returns string representation of this command line.<br/>
-   * Warning: resulting string is not OS-dependent - <b>do not</b> use it for executing this command line.
-   *
-   * @return single-string representation of this command line.
-   */
+  /// Returns string representation of this command line.
+  ///
+  /// Warning: resulting string is not OS-dependent - **do not** use it for executing this command line.
+  ///
+  /// @return single-string representation of this command line.
   public @NlsSafe @NotNull String getCommandLineString() {
     return getCommandLineString(null);
   }
 
-  /**
-   * Returns string representation of this command line.<br/>
-   * Warning: resulting string is not OS-dependent - <b>do not</b> use it for executing this command line.
-   *
-   * @param exeName use this executable name instead of given by {@link #setExePath(String)}
-   * @return single-string representation of this command line.
-   */
+  /// Returns string representation of this command line.
+  ///
+  /// Warning: resulting string is not OS-dependent - **do not** use it for executing this command line.
+  ///
+  /// @param exeName use this executable name instead of given by [#setExePath(String)]
+  /// @return single-string representation of this command line.
   public @NotNull String getCommandLineString(@Nullable String exeName) {
     return ParametersListUtil.join(getCommandLineList(exeName));
   }
@@ -387,23 +375,19 @@ public class GeneralCommandLine implements UserDataHolder {
     return commands;
   }
 
-  /**
-   * Prepares command (quotes and escapes all arguments) and returns it as a newline-separated list.
-   *
-   * @return command as a newline-separated list.
-   * @see #getPreparedCommandLine(Platform)
-   */
+  /// Prepares command (quotes and escapes all arguments) and returns it as a newline-separated list.
+  ///
+  /// @return command as a newline-separated list.
+  /// @see #getPreparedCommandLine(Platform)
   public @NotNull String getPreparedCommandLine() {
     return getPreparedCommandLine(Platform.current());
   }
 
-  /**
-   * Prepares command (quotes and escapes all arguments) and returns it as a newline-separated list
-   * (suitable, e.g., for passing in an environment variable).
-   *
-   * @param platform a target platform
-   * @return command as a newline-separated list.
-   */
+  /// Prepares command (quotes and escapes all arguments) and returns it as a newline-separated list
+  /// (suitable, e.g., for passing in an environment variable).
+  ///
+  /// @param platform a target platform
+  /// @return command as a newline-separated list.
   public @NotNull String getPreparedCommandLine(@NotNull Platform platform) {
     return String.join("\n", prepareCommandLine(myExePath != null ? myExePath : "", myProgramParams.getList(), platform));
   }
@@ -429,19 +413,19 @@ public class GeneralCommandLine implements UserDataHolder {
         try {
           pidString = Long.toString(process.pid());
         }
-        catch (UnsupportedOperationException ignored) {
-        }
+        catch (UnsupportedOperationException ignored) { }
         LOG.debug(String.format("Process %s started with pid %s", getCommandLineString(), pidString));
       }
       return process;
     }
     catch (IOException e) {
-      if (SystemInfo.isWindows) {
+      if (OS.CURRENT == OS.Windows) {
         var mode = System.getProperty("jdk.lang.Process.allowAmbiguousCommands");
         @SuppressWarnings("removal") var sm = System.getSecurityManager();
         if ("false".equalsIgnoreCase(mode) || sm != null) {
           e.addSuppressed(
-            new IllegalStateException("Suspicious state: allowAmbiguousCommands=" + mode + " SM=" + (sm != null ? sm.getClass() : null)));
+            new IllegalStateException("Suspicious state: allowAmbiguousCommands=" + mode + " SM=" + (sm != null ? sm.getClass() : null))
+          );
         }
       }
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
@@ -459,9 +443,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   private static Charset defaultCharset() {
-    return LoadingState.COMPONENTS_LOADED.isOccurred()
-           ? EncodingManager.getInstance().getDefaultConsoleEncoding()
-           : Charset.defaultCharset();
+    return LoadingState.COMPONENTS_LOADED.isOccurred() ? EncodingManager.getInstance().getDefaultConsoleEncoding() : Charset.defaultCharset();
   }
 
   @ApiStatus.Internal
@@ -474,13 +456,11 @@ public class GeneralCommandLine implements UserDataHolder {
     return process;
   }
 
-  /**
-   * Allows specifying a handler for creating processes different from {@link ProcessBuilder#start()}.
-   * <p>
-   * Quoting, which is required for running processes locally, may be harmful for remote operating systems. F.i., arguments with spaces
-   * must be quoted before passing them into {@code CreateProcess} on Windows, and must not be quoted for {@code exec} on a Unix-like OS.
-   * Therefore, when the process creator is not null, various validations and mangling of arguments and environment variables are disabled.
-   */
+  /// Allows specifying a handler for creating processes different from [ProcessBuilder#start()].
+  ///
+  /// Quoting, which is required for running processes locally, may be harmful for remote operating systems. F.i., arguments with spaces
+  /// must be quoted before passing them into `CreateProcess` on Windows, and must not be quoted for `exec` on a Unix-like OS.
+  /// Therefore, when the process creator is not null, various validations and mangling of arguments and environment variables are disabled.
   @ApiStatus.Internal
   public final void setProcessCreator(@Nullable Function<ProcessBuilder, Process> processCreator) {
     myProcessCreator = processCreator;
@@ -491,19 +471,15 @@ public class GeneralCommandLine implements UserDataHolder {
     return myProcessCreator != null;
   }
 
-  /**
-   * Returns a non-local [EelDescriptor] when this command line should be executed via EEL on a non-local
-   * environment (WSL, Docker, SSH, …); returns {@code null} when the legacy (local) implementation should
-   * be used. Specifically, returns {@code null} for:
-   * <ul>
-   *   <li>local exe + local working directory,</li>
-   *   <li>absolute Windows DOS paths (IJPL-177172),</li>
-   *   <li>{@code ide.general.command.line.use.eel} registry key disabled.</li>
-   * </ul>
-   */
+  /// Returns a non-local [EelDescriptor] when this command line should be executed via EEL on a non-local
+  /// environment (WSL, Docker, SSH, …); returns `null` when the legacy (local) implementation should
+  /// be used. Specifically, returns `null` for:
+  ///   - local exe + local working directory,
+  ///   - absolute Windows DOS paths (IJPL-177172),
+  ///   - `ide.general.command.line.use.eel` registry key disabled.
   @ApiStatus.Internal
   public @Nullable EelDescriptor getNonLocalEelDescriptor() {
-    Ref<EelDescriptor> eelDescriptorRef = myEelDescriptor;
+    var eelDescriptorRef = myEelDescriptor;
     if (eelDescriptorRef != null) {
       return eelDescriptorRef.get();
     }
@@ -531,7 +507,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
     // IJPL-177172: do not use eel for absolute Windows paths (e.g., C:\...).
     // Fallback to the legacy WSL behavior where a local exe is executed in a remote working directory.
-    if (SystemInfo.isWindows && OSAgnosticPathUtil.isAbsoluteDosPath(exe)) {
+    if (OS.CURRENT == OS.Windows && OSAgnosticPathUtil.isAbsoluteDosPath(exe)) {
       descriptor = null;
     }
     else if (executableDescriptor != LocalEelDescriptor.INSTANCE) {
@@ -595,51 +571,47 @@ public class GeneralCommandLine implements UserDataHolder {
     return prepareCommandLine(exePath, myProgramParams.getList(), Platform.current());
   }
 
-  /**
-   * @implNote for subclasses:
-   * <p>On Windows, the parameters in the {@code builder} argument must never be modified or augmented in any way.
-   * Windows command line handling is extremely fragile and vague, and the exact escaping of a particular argument may vary
-   * depending on the values of the preceding arguments.
-   * <pre>
-   *   [foo] [^] -> [foo] [^^]
-   * </pre>
-   * but:
-   * <pre>
-   *   [foo] ["] [^] -> [foo] [\"] ["^"]
-   * </pre>
-   * Note how the last parameter escaping changes after prepending another argument.</p>
-   * <p>If you need to alter the command line passed in, override the {@link #prepareCommandLine(String, List, Platform)} method instead.</p>
-   */
+  /// @implNote for subclasses:
+  ///
+  /// On Windows, the parameters in the `builder` argument must never be modified or augmented in any way.
+  /// Windows command line handling is extremely fragile and vague, and the exact escaping of a particular argument may vary
+  /// depending on the values of the preceding arguments:
+  ///
+  /// ```
+  ///   [foo] [^] -> [foo] [^^]
+  /// ```
+  /// but:
+  /// ```
+  ///   [foo] ["] [^] -> [foo] [\"] ["^"]
+  /// ```
+  ///
+  /// Note how the last parameter escaping changes after prepending another argument.
+  ///
+  /// If you need to alter the command line passed in, override the [#prepareCommandLine(String, List, Platform)] method instead.
   protected @NotNull Process createProcess(@NotNull ProcessBuilder processBuilder) throws IOException {
     if (myProcessCreator != null) {
       return myProcessCreator.apply(processBuilder);
     }
-    EelDescriptor descriptor = getNonLocalEelDescriptor();
+    var descriptor = getNonLocalEelDescriptor();
     if (descriptor == null) {
       return processBuilder.start();
     }
-    LocalPtyOptions ptyOptions;
-
-    if (this instanceof PtyCommandLine ptyCommandLine) {
-      ptyOptions = ptyCommandLine.getPtyOptions();
-    }
-    else {
-      ptyOptions = null;
-    }
+    var ptyOptions = this instanceof PtyCommandLine ptyCommandLine ? ptyCommandLine.getPtyOptions() : null;
     return startProcessBlockingUsingEel(descriptor, processBuilder, ptyOptions, isPassParentEnvironment());
   }
 
-  /** @deprecated please override {@link #createProcess(ProcessBuilder)} instead. */
+  /// @deprecated please override [#createProcess(ProcessBuilder)] instead.
   @Deprecated(forRemoval = true)
   protected @NotNull Process startProcess(@NotNull List<String> escapedCommands) throws IOException {
     return createProcess(toProcessBuilder(escapedCommands));
   }
 
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
   private ProcessBuilder toProcessBuilder(List<String> escapedCommands) {
     var builder = new ProcessBuilder(escapedCommands);
     setupEnvironment(builder.environment());
     if (myWorkingDirectory != null) {
-      builder.directory(new File(myWorkingDirectory.toString()));
+      builder.directory(new java.io.File(myWorkingDirectory.toString()));
     }
     builder.redirectErrorStream(myRedirectErrorStream);
     if (myInputFile != null) {
@@ -655,16 +627,16 @@ public class GeneralCommandLine implements UserDataHolder {
       environment.putAll(getParentEnvironment());
     }
 
-    if (SystemInfo.isUnix && myProcessCreator == null && getNonLocalEelDescriptor() == null) {
-      File workDirectory = getWorkDirectory();
+    if (OS.CURRENT != OS.Windows && myProcessCreator == null && getNonLocalEelDescriptor() == null) {
+      var workDirectory = getWorkDirectory();
       if (workDirectory != null) {
         environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
       }
     }
 
     if (!myEnvParams.isEmpty()) {
-      if (SystemInfo.isWindows && myProcessCreator == null && getNonLocalEelDescriptor() == null) {
-        Map<String, String> envVars = CollectionFactory.createCaseInsensitiveStringMap();
+      if (OS.CURRENT == OS.Windows && myProcessCreator == null && getNonLocalEelDescriptor() == null) {
+        var envVars = CollectionFactory.<String>createCaseInsensitiveStringMap();
         envVars.putAll(environment);
         envVars.putAll(myEnvParams);
         environment.clear();
@@ -679,26 +651,22 @@ public class GeneralCommandLine implements UserDataHolder {
     customizeEnv(environment);
   }
 
-  /**
-   * Allow plugins/modules to define a service that can modify environment variables before process execution.
-   */
+  /// Allow plugins/modules to define a service that can modify environment variables before process execution.
   private void customizeEnv(@NotNull Map<String, String> environment) {
-    Application application = ApplicationManager.getApplication();
+    var application = ApplicationManager.getApplication();
     if (application != null) {
-      ExecutionEnvCustomizerService envCustomizer = application.getService(ExecutionEnvCustomizerService.class);
+      var envCustomizer = application.getService(ExecutionEnvCustomizerService.class);
       if (envCustomizer != null) {
         envCustomizer.customizeEnv(this, environment);
       }
     }
   }
 
-  /**
-   * Normally, double quotes in parameters are escaped, so they arrive to a called program as-is.
-   * But some commands (e.g. {@code 'cmd /c start "title" ...'}) should get their quotes non-escaped -
-   * use this method to wrap such parameters (instead of using quotes).
-   *
-   * @see com.intellij.execution.util.ExecUtil#getTerminalCommand(String, String)
-   */
+  /// Normally, double quotes in parameters are escaped, so they arrive to a called program as-is.
+  /// But some commands (e.g. `'cmd /c start "title" ...'`) should get their quotes non-escaped -
+  /// use this method to wrap such parameters (instead of using quotes).
+  ///
+  /// @see com.intellij.execution.util.ExecUtil#getTerminalCommand(String, String)
   public static @NotNull String inescapableQuote(@NotNull String parameter) {
     return CommandLineUtil.specialQuote(parameter);
   }
@@ -711,7 +679,7 @@ public class GeneralCommandLine implements UserDataHolder {
   @Override
   public @Nullable <T> T getUserData(@NotNull Key<T> key) {
     if (myUserData == null) return null;
-    @SuppressWarnings("unchecked") T t = (T)myUserData.get(key);
+    @SuppressWarnings("unchecked") var t = (T)myUserData.get(key);
     return t;
   }
 
@@ -726,7 +694,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   private static final class MyMap extends Object2ObjectOpenCustomHashMap<String, String> {
     private MyMap() {
-      super(FastUtilHashingStrategies.getStringStrategy(!SystemInfo.isWindows));
+      super(FastUtilHashingStrategies.getStringStrategy(OS.CURRENT != OS.Windows));
     }
 
     @Override
