@@ -5,13 +5,17 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
+
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 /**
  * Extension point to implement a file-based inverted index.
@@ -52,6 +56,26 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
   // Use VFS-based implementation for FilenameIndex
   @ApiStatus.Internal
   public static final boolean USE_VFS_FOR_FILENAME_INDEX = Boolean.parseBoolean(System.getProperty("indexing.filename.over.vfs", "true"));
+
+  /// If true: method [FileBasedIndex#processAllKeys(ID, Processor, GlobalSearchScope, IdFilter)] with non-trivial [IdFilter]
+  /// uses a forward index to speed up keys filtering.
+  ///
+  /// This is an alternative to [#traceKeyHashToVirtualFileMapping()]: [#traceKeyHashToVirtualFileMapping()] is supported via
+  /// additional persistent structure ([KeyHashLog]), which takes up disk space, memory, and costs CPU to maintain -- but
+  /// provides faster filtering. Forward-index-based filtering, if enabled/supported, need no additional structures (=0 added
+  ///  cost), but the filtering is slightly slower. Forward-index-based filtering is still significantly faster than without
+  /// any of these optimizations, though.
+  ///
+  /// Forward-index filtering optimization is only supported by the indexes with existing forward index: e.g. stub indexes do
+  /// not have a forward index => forward-index-based filtering is not supported. For indexes without forward index, the
+  /// `traceKeyHashToVirtualFileMapping=true` the only way to speed up [FileBasedIndex#processAllKeys(ID, Processor, GlobalSearchScope, IdFilter)],
+  /// if this filtering is a performance issue. It may be not an issue at all: do some measurements first.
+  ///
+  /// An extension that needs faster `processKeys(..,IdFilter)` and _has_ a forward index can return `!USE_FORWARD_INDEX_FOR_KEYS_FILTERING`
+  /// from [#traceKeyHashToVirtualFileMapping]: it enables the key-hash-based filtering as a fallback, when forward-index-based filtering
+  /// is off.
+  @ApiStatus.Internal
+  public static final boolean USE_FORWARD_INDEX_FOR_KEYS_FILTERING = getBooleanProperty("ide.indexes.use-forward-index-for-filtering", true);
 
   private static final int DEFAULT_CACHE_SIZE = 1024;
 
@@ -106,6 +130,7 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
    * This property might help optimize "Navigate | File/Symbol" and completion performance in the case of multiple indexed projects.
    *
    * @see IdFilter#buildProjectIdFilter(Project, boolean)
+   * @see #USE_FORWARD_INDEX_FOR_KEYS_FILTERING
    */
   public boolean traceKeyHashToVirtualFileMapping() {
     return false;

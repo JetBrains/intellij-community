@@ -38,16 +38,11 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static com.intellij.util.indexing.FileBasedIndexExtension.USE_FORWARD_INDEX_FOR_KEYS_FILTERING;
 
 @Internal
 public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduceIndex<Key, Value, FileContent>
   implements UpdatableIndex<Key, Value, FileContent, FileCache> {
-
-  /// If true: [ForwardIndex] is used to speed up filtering keys by `fileId` (i.e. [IdFilter])
-  /// BEWARE: being enabled, it may supersede [[FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()]: if an index does have
-  ///         a (capable) [ForwardIndex], then it is used for keys filtering, not [com.intellij.util.indexing.impl.storage.KeyHashLog]
-  private static final boolean USE_FORWARD_INDEX_FOR_KEYS_FILTERING = getBooleanProperty("ide.indexes.use-forward-index-for-filtering", true);
 
   private final boolean mySingleEntryIndex;
 
