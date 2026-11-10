@@ -1,0 +1,14 @@
+// "Convert to a full name-based destructuring form" "true"
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
+// WITH_STDLIB
+
+data class Point(val x: Int, val y: Int)
+
+fun test(p: Point): String {
+    (var n: Number = x, var s = y) = p
+    n = 2.5
+    s++
+    return "$n $s"
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertNameBasedDestructuringShortFormToFullFix

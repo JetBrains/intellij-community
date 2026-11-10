@@ -8840,6 +8840,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/escapedPropertyCompleteOption.kt");
         }
 
+        @TestMetadata("explicitEntryTypeCompleteOption.kt")
+        public void testExplicitEntryTypeCompleteOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/explicitEntryTypeCompleteOption.kt");
+        }
+
+        @TestMetadata("explicitEntryTypeOnlySyntaxOption.kt")
+        public void testExplicitEntryTypeOnlySyntaxOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/explicitEntryTypeOnlySyntaxOption.kt");
+        }
+
         @TestMetadata("featureDisabled.kt")
         public void testFeatureDisabled() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/featureDisabled.kt");
@@ -8986,6 +8996,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("destructuringNameMismatchActionsOrder.kt")
         public void testDestructuringNameMismatchActionsOrder() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/destructuringNameMismatchActionsOrder.kt");
+        }
+
+        @TestMetadata("explicitEntryTypeNameMismatchOption.kt")
+        public void testExplicitEntryTypeNameMismatchOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/explicitEntryTypeNameMismatchOption.kt");
         }
 
         @TestMetadata("fullFormLambdaNameMismatch.kt")

@@ -135,6 +135,10 @@ private fun getNewEntriesText(entryMappings: List<EntryMapping>, perEntryKeyword
                 append(" ")
             }
             append(mapping.usedName)
+            mapping.psiEntry.typeReference?.let {
+                append(": ")
+                append(it.text)
+            }
 
             if (!positionBased && mapping.usedName != mapping.targetName.asString()) {
                 append(" = ")

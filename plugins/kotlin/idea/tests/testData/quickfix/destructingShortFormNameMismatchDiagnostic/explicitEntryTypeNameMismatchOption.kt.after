@@ -1,0 +1,12 @@
+// "Convert to a full name-based destructuring form" "true"
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=name-mismatch
+// WITH_STDLIB
+
+data class Point(val x: Int, val y: Int)
+
+fun test(p: Point): Boolean {
+    (val x: Any, val s = y) = p
+    return x == "1"
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.DestructuringToFullFormFactory$ConvertNameBasedDestructuringToFullFormFix
