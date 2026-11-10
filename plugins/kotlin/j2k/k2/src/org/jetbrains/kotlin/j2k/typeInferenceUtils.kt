@@ -39,6 +39,7 @@ internal class TypeInferenceInfo {
 
     // The calls whose result goes only to a declaration with a read-only type
     val readOnlyCalls: MutableSet<PsiElement> = HashSet()
+    val readOnlyLambdaParameters: MutableSet<PsiParameter> = HashSet()
 
     // The data flow facts of the engine, so that J2K does not analyze the same code again
     val expressionDfTypes: MutableMap<PsiExpression, DfType> = HashMap()

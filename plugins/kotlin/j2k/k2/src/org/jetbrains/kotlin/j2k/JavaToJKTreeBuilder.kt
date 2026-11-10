@@ -1264,11 +1264,12 @@ class JavaToJKTreeBuilder internal constructor(
 
         fun PsiParameter.toJK(): JKParameter {
             val info = typeFactory.typeInferenceInfo
+            val baseType = if (info != null && this in info.readOnlyLambdaParameters) typeFactory.fromPsiTypeAsReadOnly(type) else type.toJK()
             val rawType = when {
-                info == null -> type.toJK()
-                this in info.notNullLambdaParameters -> type.toJK().updateNullability(NotNull)
-                this in info.nullableLambdaParameters -> type.toJK().updateNullability(Nullable)
-                else -> type.toJK()
+                info == null -> baseType
+                this in info.notNullLambdaParameters -> baseType.updateNullability(NotNull)
+                this in info.nullableLambdaParameters -> baseType.updateNullability(Nullable)
+                else -> baseType
             }
             val type =
                 if (isVarArgs && rawType is JKJavaArrayType) JKTypeElement(rawType.type, typeElement.annotationList(this))

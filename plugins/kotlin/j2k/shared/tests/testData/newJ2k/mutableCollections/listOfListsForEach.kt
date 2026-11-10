@@ -1,6 +1,6 @@
 class J {
     fun foo() {
-        val list: MutableList<MutableList<Int>> = ArrayList<MutableList<Int>>()
+        val list: List<MutableList<Int>> = ArrayList<MutableList<Int>>()
         for (l in list) {
             l.add(42)
         }

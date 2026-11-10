@@ -73,6 +73,11 @@ public class K2JavaToKotlinConverterMultiFileTestGenerated extends AbstractK2Jav
         runTest("../../shared/tests/testData/multiFile/Java17_RecordClassExplicitAccessor/");
     }
 
+    @TestMetadata("JavaOverridersOfCollectionParameters")
+    public void testJavaOverridersOfCollectionParameters() throws Exception {
+        runTest("../../shared/tests/testData/multiFile/JavaOverridersOfCollectionParameters/");
+    }
+
     @TestMetadata("JavaUsageOfBothFieldAndAccessor")
     public void testJavaUsageOfBothFieldAndAccessor() throws Exception {
         runTest("../../shared/tests/testData/multiFile/JavaUsageOfBothFieldAndAccessor/");
@@ -86,6 +91,11 @@ public class K2JavaToKotlinConverterMultiFileTestGenerated extends AbstractK2Jav
     @TestMetadata("KT11952")
     public void testKT11952() throws Exception {
         runTest("../../shared/tests/testData/multiFile/KT11952/");
+    }
+
+    @TestMetadata("KotlinUsersOfCollectionParameters")
+    public void testKotlinUsersOfCollectionParameters() throws Exception {
+        runTest("../../shared/tests/testData/multiFile/KotlinUsersOfCollectionParameters/");
     }
 
     @TestMetadata("MethodReferenceToGetter")

@@ -154,12 +154,26 @@ class J2KTypeInference(
             return true
         }
 
+        fun makeReadOnlyCandidate() {
+            mutable = false
+            elements.forEach { it.makeReadOnlyCandidate() }
+        }
+
+        fun makeMutable() {
+            if (!mutabilityFixed) mutable = isMappedCollection(type)
+            elements.forEach { it.makeMutable() }
+        }
+
+        fun descendants(): List<TypeNode> = elements.flatMap { listOf(it) + it.descendants() }
+
         fun decide(): Nullability = platformNullability ?: when {
             dataflowNullability == Nullability.Nullable -> Nullability.Nullable
             needsNotNull || dataflowNullability == Nullability.NotNull -> Nullability.NotNull
             else -> Nullability.Default
         }
     }
+
+    private class ElementLink(val source: TypeNode, val target: TypeNode, val owner: TypeNode, val index: Int)
 
     private val nodes = LinkedHashMap<PsiModifierListOwner, TypeNode>()
 
@@ -176,9 +190,15 @@ class J2KTypeInference(
 
     /** The type arguments that give the types of lambda parameters, see [linkLambdaParameters]. */
     private val lambdaParameterTypeArguments = HashMap<PsiParameter, TypeNode>()
+
+    /** The lambda parameters, for the mutability only: the converter prints their nullability from [lambdaParameterTypeArguments]. */
+    private val lambdaParameterNodes = HashMap<PsiParameter, TypeNode>()
+    private val elementLinks = ArrayList<ElementLink>()
+    private val unseenArgumentOwners = ArrayList<TypeNode>()
     private val nullComparisons = ArrayList<PsiBinaryExpression>()
     private val typeElements = ArrayList<PsiTypeElement>()
     private val returnStatements = HashMap<PsiMethod, MutableList<PsiReturnStatement>>()
+    private val typeElementNodes = HashMap<PsiTypeElement, TypeNode>()
     private val originals = OriginalJavaSemanticResolver()
     private val originalFile by lazy { originals.originalElementOrSelf(file) }
 
@@ -225,6 +245,9 @@ class J2KTypeInference(
         }
         for ((expression, node) in sinks) {
             if (expression is PsiMethodCallExpression && !node.mutable && isMappedCollection(node.type)) info.readOnlyCalls += expression
+        }
+        for ((parameter, node) in lambdaParameterNodes) {
+            if (!node.mutable && isMappedCollection(node.type)) info.readOnlyLambdaParameters += parameter
         }
         info.expressionDfTypes.putAll(expressionDfTypes)
         return info
@@ -331,8 +354,9 @@ class J2KTypeInference(
         override fun visitField(field: PsiField) {
             super.visitField(field)
             if (!inFile || field is PsiEnumConstant) return
-            val node = addNode(field, field.type)
-            if (node != null && (field.hasModifierProperty(PsiModifier.PRIVATE) || searchesAllUsers(field))) node.mutable = false
+            val node = addNode(field, field.type) ?: return
+            if (field.hasModifierProperty(PsiModifier.PRIVATE) || searchesAllUsers(field)) node.makeReadOnlyCandidate()
+            shareTypeElement(field, node)
         }
 
         override fun visitMethod(method: PsiMethod) {
@@ -345,7 +369,7 @@ class J2KTypeInference(
             val returnType = method.returnType
             if (!method.isConstructor && returnType != null && method.containingClass?.isAnnotationType != true) {
                 val node = addNode(method, returnType)
-                if (node != null && (method.hasModifierProperty(PsiModifier.PRIVATE) || searchesAllUsers(method))) node.mutable = false
+                if (node != null && (method.hasModifierProperty(PsiModifier.PRIVATE) || searchesAllUsers(method))) node.makeReadOnlyCandidate()
             }
         }
 
@@ -360,19 +384,35 @@ class J2KTypeInference(
             when (val scope = parameter.declarationScope) {
                 is PsiMethod -> if (!parameter.isVarArgs) {
                     val node = addNode(parameter, parameter.type)
-                    if (node != null && !isImplementedByLambdas(scope)) node.mutable = false
+                    if (node != null && !isImplementedByLambdas(scope)) {
+                        node.makeReadOnlyCandidate()
+                        if (!scope.hasModifierProperty(PsiModifier.PRIVATE)) unseenArgumentOwners += node
+                    }
                 }
 
                 is PsiForeachStatement -> {
-                    addNode(parameter, parameter.type)?.mutable = false
+                    addNode(parameter, parameter.type)?.makeReadOnlyCandidate()
                     notPrinted += parameter
+                }
+
+                is PsiLambdaExpression -> {
+                    val type = parameter.type
+                    if (!TypeConversionUtil.isPrimitiveAndNotNull(type) && PsiUtil.resolveClassInClassTypeOnly(type) !is PsiTypeParameter) {
+                        lambdaParameterNodes[parameter] = TypeNode(type, null).also {
+                            it.elements = createElements(type)
+                            it.makeReadOnlyCandidate()
+                        }
+                    }
                 }
             }
         }
 
         override fun visitLocalVariable(variable: PsiLocalVariable) {
             super.visitLocalVariable(variable)
-            if (inFile) addNode(variable, variable.type)?.mutable = false
+            if (!inFile) return
+            val node = addNode(variable, variable.type) ?: return
+            node.makeReadOnlyCandidate()
+            shareTypeElement(variable, node)
         }
 
         override fun visitRecordComponent(recordComponent: PsiRecordComponent) {
@@ -425,7 +465,11 @@ class J2KTypeInference(
             later {
                 addArgumentSinks(callExpression)
                 addMutabilityDataflow(callExpression)
-                if (callExpression is PsiMethodCallExpression) addReceiverElementSinks(callExpression)
+                if (callExpression is PsiMethodCallExpression) {
+                    addReceiverElementSinks(callExpression)
+                    addEntryMutability(callExpression)
+                    addLambdaParameterSources(callExpression)
+                }
                 // The nodes of the type arguments must exist before the DFA runs
                 if (callExpression is PsiMethodCallExpression && typeArgumentElements(callExpression).isNotEmpty()) calleeNode(callExpression)
                 // The converter reads the nullability of the arguments of a generic method call
@@ -449,12 +493,12 @@ class J2KTypeInference(
             super.visitForeachStatement(statement)
             later {
                 val variable = nodes[statement.iterationParameter] ?: return@later
-                mutabilitySource(statement.iteratedValue)?.let { variable.mutabilitySources += it }
                 val iterated = expressionNode(statement.iteratedValue) ?: return@later
                 val element = if (iterated.type is PsiArrayType) iterated.elements.firstOrNull() else receiverElement(iterated, iterableElementType)
                 if (element != null) {
                     edge(element, variable)
                     linkElements(element, variable)
+                    flowMutability(element, variable)
                 }
             }
         }
@@ -492,6 +536,19 @@ class J2KTypeInference(
     /** The DFA analyzes a body together with the classes and lambdas inside it, so the engine does not analyze them alone. */
     private fun isOutsideBodies(element: PsiElement): Boolean =
         PsiTreeUtil.getParentOfType(element, true, PsiMethod::class.java, PsiClassInitializer::class.java) == null
+
+    /** The declarations of `List<String> a, b;` have one type object, so the converter prints one mutability for both. */
+    private fun shareTypeElement(variable: PsiVariable, node: TypeNode) {
+        val typeElement = variable.typeElement ?: return
+        val other = typeElementNodes.putIfAbsent(typeElement, node) ?: return
+        if (other.type === node.type) shareMutability(other, node)
+    }
+
+    private fun shareMutability(first: TypeNode, second: TypeNode) {
+        first.mutabilitySources += second
+        second.mutabilitySources += first
+        for ((firstElement, secondElement) in first.elements.zip(second.elements)) shareMutability(firstElement, secondElement)
+    }
 
     private fun addGeneratedMethodNodes(aClass: PsiClass) {
         if (aClass.isRecord) return
@@ -594,6 +651,7 @@ class J2KTypeInference(
             }
             addParameterDataflow(method)
             addOverrideDataflow(method)
+            addOverriderDataflow(method)
             if (searchesAllUsers) addProjectDataflow(method)
         }
         for ((owner, node) in nodes) {
@@ -619,12 +677,60 @@ class J2KTypeInference(
                 mutabilitySource(stripped)?.let { node.mutabilitySources += it }
                 val source = expressionNode(stripped)
                 source?.let { linkElements(it, node) }
+                source?.let { flowElementMutability(it, node) }
                 val initializer = (stripped as? PsiNewExpression)?.arrayInitializer ?: stripped as? PsiArrayInitializerExpression
                 val element = node.elements.firstOrNull()
                 if (source == null && initializer != null && element != null) {
                     for (initializerElement in initializer.initializers) addSink(initializerElement, element)
                 }
                 if (stripped is PsiNewExpression && initializer == null) addNewArrayDataflow(stripped, node)
+            }
+        }
+    }
+
+    private fun flowMutability(source: TypeNode, target: TypeNode) {
+        if (source === target) return
+        target.mutabilitySources += source
+        flowElementMutability(source, target)
+    }
+
+    private fun flowElementMutability(source: TypeNode, target: TypeNode) {
+        if (source === target) return
+        for ((index, elements) in source.elements.zip(target.elements).withIndex()) {
+            val (sourceElement, targetElement) = elements
+            if (targetElement.wildcard?.isSuper == true) {
+                sourceElement.mutabilitySources += targetElement
+            } else {
+                targetElement.mutabilitySources += sourceElement
+                elementLinks += ElementLink(sourceElement, targetElement, target, index)
+            }
+            flowElementMutability(sourceElement, targetElement)
+        }
+    }
+
+    /** `MutableMap.entries` has mutable entries, and `Map.entries` has read-only entries. */
+    private fun addEntryMutability(call: PsiMethodCallExpression) {
+        if (call.methodExpression.referenceName != "entrySet") return
+        val map = mutabilitySource(call.methodExpression.qualifierExpression) ?: return
+        val entry = expressionNode(call)?.elements?.firstOrNull() ?: return
+        entry.mutabilitySources += map
+        map.mutabilitySources += entry
+    }
+
+    private fun addLambdaParameterSources(call: PsiMethodCallExpression) {
+        val receiver = expressionNode(call.methodExpression.qualifierExpression) ?: return
+        if (receiver.elements.isEmpty()) return
+        val parameters = call.resolveMethod()?.parameterList?.parameters ?: return
+        for ((position, argument) in call.argumentList.expressions.withIndex()) {
+            val lambda = PsiUtil.skipParenthesizedExprDown(argument) as? PsiLambdaExpression ?: continue
+            val functionalType = parameters.getOrNull(position)?.takeIf { !it.isVarArgs }?.type ?: continue
+            val samMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalType) ?: continue
+            val substitutor = LambdaUtil.getSubstitutor(samMethod, PsiUtil.resolveGenericsClassInType(functionalType))
+            for ((index, lambdaParameter) in lambda.parameterList.parameters.withIndex()) {
+                val node = lambdaParameterNodes[lambdaParameter] ?: continue
+                val samParameterType = samMethod.parameterList.parameters.getOrNull(index)?.type ?: continue
+                val type = substitutor.substitute(samParameterType).let { (it as? PsiWildcardType)?.bound ?: it }
+                receiverElement(receiver, type)?.let { flowMutability(it, node) }
             }
         }
     }
@@ -735,13 +841,15 @@ class J2KTypeInference(
 
     private fun mutabilitySource(expression: PsiExpression?): TypeNode? = when (val stripped = PsiUtil.skipParenthesizedExprDown(expression)) {
         is PsiTypeCastExpression -> mutabilitySource(stripped.operand)
-        is PsiMethodCallExpression ->
-            if (stripped.methodExpression.referenceName in VIEW_METHODS) {
-                mutabilitySource(stripped.methodExpression.qualifierExpression)
-            } else {
-                stripped.resolveMethod()?.let { nodes[it] }
-            }
-        else -> variableNode(stripped)
+        is PsiMethodCallExpression -> when {
+            stripped.methodExpression.referenceName in VIEW_METHODS -> mutabilitySource(stripped.methodExpression.qualifierExpression)
+            stripped.methodExpression.qualifierExpression?.let(::expressionNode) != null -> expressionNode(stripped)
+            else -> stripped.resolveMethod()?.let { nodes[it] }
+        }
+
+        is PsiArrayAccessExpression -> expressionNode(stripped)
+        is PsiAssignmentExpression -> mutabilitySource(stripped.lExpression)
+        else -> variableNode(stripped) ?: ((stripped as? PsiReferenceExpression)?.resolve() as? PsiParameter)?.let { lambdaParameterNodes[it] }
     }
 
     /** Returns the reference that [expression] compares with `null`, like `x` in `x != null`. */
@@ -790,9 +898,10 @@ class J2KTypeInference(
             if (returnNode != null && superReturnNode != null) {
                 edge(returnNode, superReturnNode)
                 linkElements(returnNode, superReturnNode)
-                superReturnNode.mutabilitySources += returnNode
+                flowMutability(returnNode, superReturnNode)
+                keepSubstitutedElementsMutable(superReturnNode, returnNode)
             } else if (returnNode != null) {
-                returnNode.mutable = true
+                returnNode.makeMutable()
             }
             for ((parameter, superParameter) in method.parameterList.parameters.zip(superMethod.parameterList.parameters)) {
                 val parameterNode = nodes[parameter] ?: continue
@@ -801,13 +910,14 @@ class J2KTypeInference(
                     val kotlinParameter = (superParameter as? KtLightElement<*, *>)?.kotlinOrigin as? KtParameter
                     if (kotlinParameter != null) {
                         analyze(kotlinParameter) { applyKotlinType(kotlinParameter.returnType, parameterNode) }
-                    } else if (!parameterNode.mutabilityFixed) {
-                        parameterNode.mutable = true
+                    } else {
+                        parameterNode.makeMutable()
                     }
                     continue
                 }
-                parameterNode.mutabilitySources += superParameterNode
-                superParameterNode.mutabilitySources += parameterNode
+                keepSubstitutedElementsMutable(superParameterNode, parameterNode)
+                flowMutability(superParameterNode, parameterNode)
+                flowMutability(parameterNode, superParameterNode)
                 edge(parameterNode, superParameterNode)
                 edge(superParameterNode, parameterNode)
                 linkElements(parameterNode, superParameterNode)
@@ -816,9 +926,42 @@ class J2KTypeInference(
         }
     }
 
+    /**
+     * An override in another file must repeat the parameter types: a Kotlin override gives its types,
+     * and a Java override keeps them mutable, because its own conversion does the same for a super method in another file.
+     */
+    private fun addOverriderDataflow(method: PsiMethod) {
+        val containingClass = method.containingClass ?: return
+        if (method.isConstructor || method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC) ||
+            method.hasModifierProperty(PsiModifier.FINAL) || containingClass.hasModifierProperty(PsiModifier.FINAL) ||
+            PsiUtil.isLocalOrAnonymousClass(containingClass)
+        ) return
+        val parameters = method.parameterList.parameters
+        if (parameters.none { parameter -> nodes[parameter]?.let(::containsMappedCollection) == true }) return
+        for (overrider in OverridingMethodsSearch.search(originals.originalElementOrSelf(method)).findAll()) {
+            if (overrider.containingFile == originalFile) continue
+            for ((parameter, overriderParameter) in parameters.zip(overrider.parameterList.parameters)) {
+                val node = nodes[parameter] ?: continue
+                val kotlinParameter = (overriderParameter as? KtLightElement<*, *>)?.kotlinOrigin as? KtParameter
+                if (kotlinParameter != null) analyze(kotlinParameter) { applyKotlinType(kotlinParameter.returnType, node) } else node.makeMutable()
+            }
+        }
+    }
+
+    /** The extends clause prints the type argument of a type parameter mutable, so the override must print it mutable too. */
+    private fun keepSubstitutedElementsMutable(superNode: TypeNode, node: TypeNode) {
+        for ((superElement, element) in superNode.elements.zip(node.elements)) {
+            if (PsiUtil.resolveClassInClassTypeOnly(superElement.type) is PsiTypeParameter) element.makeMutable()
+            else keepSubstitutedElementsMutable(superElement, element)
+        }
+    }
+
+    private fun containsMappedCollection(node: TypeNode): Boolean = isMappedCollection(node.type) || node.elements.any(::containsMappedCollection)
+
     context(_: KaSession)
     private fun applyKotlinType(type: KaType, node: TypeNode) {
-        if (type is KaErrorType || type is KaTypeParameterType) return
+        if (type is KaErrorType) return
+        if (type is KaTypeParameterType) return node.makeMutable()
         node.platformNullability = if (type.isMarkedNullable) Nullability.Nullable else Nullability.NotNull
         val classType = type as? KaClassType ?: return
         node.mutable = JavaToKotlinClassMap.mutabilityMappings.any { it.kotlinMutable == classType.classId }
@@ -843,7 +986,7 @@ class J2KTypeInference(
             }
         }
         val returnNode = nodes[method] ?: return
-        if (!returnNode.mutable && isMappedCollection(returnNode.type) && references.any { mayChangeOutside(it.parent) }) returnNode.mutable = true
+        if (!returnNode.mutable && isMappedCollection(returnNode.type) && references.any { mayChangeOutside(it.parent) }) returnNode.makeMutable()
         if (returnNode.platformNullability != null) return
         if (method.isConstructor || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.FINAL)) return
         for (overrider in OverridingMethodsSearch.search(originals.originalElementOrSelf(method)).findAll()) {
@@ -866,7 +1009,7 @@ class J2KTypeInference(
 
     private fun addProjectAssignmentDataflow(field: PsiField, node: TypeNode) {
         for (element in referencesOutsideFile(field)) {
-            if (!node.mutable && isMappedCollection(node.type) && mayChangeOutside(element)) node.mutable = true
+            if (!node.mutable && isMappedCollection(node.type) && mayChangeOutside(element)) node.makeMutable()
             val assignment = element.parent as? PsiAssignmentExpression ?: continue
             if (assignment.lExpression != element) continue
             val value = assignment.rExpression
@@ -1082,6 +1225,8 @@ class J2KTypeInference(
                 return TypeNode(type, nullability).also {
                     if (nullability == null) it.join(Nullability.Default)
                     it.elements = elements
+                    // The entries follow the map, see addEntryMutability
+                    if (method.name == "entrySet") elements.first().mutable = false
                     callNodes[call] = it
                     linkTypeArguments(call, method, it)
                 }
@@ -1241,14 +1386,36 @@ class J2KTypeInference(
     }
 
     private fun solveMutability() {
-        val queue = ArrayDeque(allNodes().filter { it.mutable })
-        while (queue.isNotEmpty()) {
-            for (source in queue.removeFirst().mutabilitySources) {
-                if (source.mutable || source.mutabilityFixed) continue
-                source.mutable = true
-                queue += source
-            }
+        val all = allNodes() + lambdaParameterNodes.values + lambdaParameterNodes.values.flatMap { it.descendants() }
+        val queue = ArrayDeque(all.filter { it.mutable })
+
+        fun mark(node: TypeNode) {
+            if (node.mutable || node.mutabilityFixed) return
+            node.mutable = true
+            queue += node
         }
+
+        do {
+            while (queue.isNotEmpty()) queue.removeFirst().mutabilitySources.forEach(::mark)
+            for (link in elementLinks) {
+                if (link.source.mutable && isInvariant(link.owner, link.index)) mark(link.target)
+            }
+            for (owner in unseenArgumentOwners) markUnseenInvariantElements(owner, ::mark)
+        } while (queue.isNotEmpty())
+    }
+
+    private fun markUnseenInvariantElements(owner: TypeNode, mark: (TypeNode) -> Unit) {
+        for ((index, element) in owner.elements.withIndex()) {
+            if (element.wildcard?.isSuper == true || isInvariant(owner, index)) mark(element)
+            markUnseenInvariantElements(element, mark)
+        }
+    }
+
+    private fun isInvariant(owner: TypeNode, index: Int): Boolean {
+        if (owner.elements[index].wildcard != null) return false
+        val ownerClass = PsiUtil.resolveClassInClassTypeOnly(owner.type)?.qualifiedName
+        if (ownerClass !in toKotlinMutableTypesMap) return true
+        return owner.mutable || ownerClass == CommonClassNames.JAVA_UTIL_MAP && index == 0
     }
 
     private fun resolve() {
@@ -1287,7 +1454,7 @@ class J2KTypeInference(
             "setValue", "sort",
         )
 
-        private val VIEW_METHODS: Set<String> = setOf("entrySet", "iterator", "keySet", "listIterator", "subList", "values")
+        private val VIEW_METHODS: Set<String> = setOf("entrySet", "iterator", "keySet", "listIterator", "reversed", "subList", "values")
 
         private val COLLECTION_ROOTS: List<String> = listOf(
             CommonClassNames.JAVA_LANG_ITERABLE,

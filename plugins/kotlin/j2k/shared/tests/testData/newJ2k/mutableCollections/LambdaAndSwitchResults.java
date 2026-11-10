@@ -4,12 +4,14 @@ import java.util.function.Supplier;
 class A {
     void lambda(List<String> items) {
         Supplier<List<String>> supplier = () -> items;
+        supplier.get().add("a");
     }
 
     void blockLambda(List<String> items) {
         Supplier<List<String>> supplier = () -> {
             return items;
         };
+        supplier.get().add("a");
     }
 
     void libraryLambda(List<String> items) {

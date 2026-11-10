@@ -1,5 +1,5 @@
 internal open class A<T> {
-    open fun foo(): Map<T?, MutableList<T?>?>? {
+    open fun foo(): Map<T?, List<T?>?>? {
         throw UnsupportedOperationException()
     }
 
@@ -9,7 +9,7 @@ internal open class A<T> {
 }
 
 internal class B : A<Int?>() {
-    override fun foo(): Map<Int?, MutableList<Int?>?>? {
+    override fun foo(): Map<Int?, List<Int?>?>? {
         return null
     }
 

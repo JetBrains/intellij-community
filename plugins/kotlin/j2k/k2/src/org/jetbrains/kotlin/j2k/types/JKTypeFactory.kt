@@ -48,6 +48,8 @@ class JKTypeFactory internal constructor(
 
     fun fromPsiType(type: PsiType): JKType = createFromPsiType(type)
 
+    internal fun fromPsiTypeAsReadOnly(type: PsiType): JKType = createFromPsiType(type, readOnly = true)
+
     context(_: KaSession)
     fun fromKaType(type: KaType): JKType = createFromKaType(type)
 
@@ -91,7 +93,7 @@ class JKTypeFactory internal constructor(
 
     val types: DefaultTypes by lazy(LazyThreadSafetyMode.NONE) { DefaultTypes() }
 
-    private fun createFromPsiType(type: PsiType): JKType {
+    private fun createFromPsiType(type: PsiType, readOnly: Boolean = false): JKType {
         val nullability = getNullability(type)
 
         return when (type) {
@@ -116,7 +118,7 @@ class JKTypeFactory internal constructor(
 
                     else -> {
                         JKClassType(
-                            readOnlyClassSymbol(type, target) ?: symbolProvider.provideDirectSymbol(target) as JKClassSymbol,
+                            readOnlyClassSymbol(type, target, readOnly) ?: symbolProvider.provideDirectSymbol(target) as JKClassSymbol,
                             parameters,
                             nullability
                         )
@@ -177,10 +179,12 @@ class JKTypeFactory internal constructor(
         return nullability
     }
 
-    private fun readOnlyClassSymbol(type: PsiClassType, target: PsiClass): JKClassSymbol? {
-        val info = typeInferenceInfo ?: return null
-        val referenceElement = (type as? PsiClassReferenceType)?.reference
-        if (type !in info.readOnlyTypes && referenceElement !in info.readOnlyElements) return null
+    private fun readOnlyClassSymbol(type: PsiClassType, target: PsiClass, readOnly: Boolean): JKClassSymbol? {
+        if (!readOnly) {
+            val info = typeInferenceInfo ?: return null
+            val referenceElement = (type as? PsiClassReferenceType)?.reference
+            if (type !in info.readOnlyTypes && referenceElement !in info.readOnlyElements) return null
+        }
         val kotlinClass = JavaToKotlinClassMap.mapJavaToKotlin(FqName(target.qualifiedName ?: return null)) ?: return null
         return symbolProvider.provideClassSymbol(kotlinClass.asSingleFqName())
     }

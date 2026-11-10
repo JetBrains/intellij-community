@@ -3,7 +3,7 @@ internal class J {
         return list
     }
 
-    fun nested(map: Map<String?, MutableList<String>?>?): Map<String?, MutableList<String>?>? {
+    fun nested(map: Map<String?, List<String>?>?): Map<String?, List<String>?>? {
         return map
     }
 
@@ -11,23 +11,23 @@ internal class J {
         return collection
     }
 
-    fun nestedNotNull(list: List<MutableList<String>?>?): List<MutableList<String>?>? {
+    fun nestedNotNull(list: List<List<String>?>?): List<List<String>?>? {
         return list
     }
 
-    fun nestedNullable(list: List<MutableList<String?>?>?): List<MutableList<String?>?>? {
+    fun nestedNullable(list: List<List<String?>?>?): List<List<String?>?>? {
         return list
     }
 
-    fun outerNullableInnerNotNull(list: List<MutableList<String>?>?): List<MutableList<String>?>? {
+    fun outerNullableInnerNotNull(list: List<List<String>?>?): List<List<String>?>? {
         return list
     }
 
-    fun outerNotNullInnerNullable(list: List<MutableList<String?>>?): List<MutableList<String?>>? {
+    fun outerNotNullInnerNullable(list: List<List<String?>>?): List<List<String?>>? {
         return list
     }
 
-    fun mapMixed(map: Map<String, MutableList<String>?>?): Map<String, MutableList<String>?>? {
+    fun mapMixed(map: Map<String, List<String>?>?): Map<String, List<String>?>? {
         return map
     }
 
@@ -39,11 +39,11 @@ internal class J {
         return list
     }
 
-    fun <T> nestedNotNullT(list: List<MutableList<T>?>?): List<MutableList<T>?>? {
+    fun <T> nestedNotNullT(list: List<List<T>?>?): List<List<T>?>? {
         return list
     }
 
-    fun <T> outerNullableInnerNotNullT(list: List<MutableList<T>?>?): List<MutableList<T>?>? {
+    fun <T> outerNullableInnerNotNullT(list: List<List<T>?>?): List<List<T>?>? {
         return list
     }
 }

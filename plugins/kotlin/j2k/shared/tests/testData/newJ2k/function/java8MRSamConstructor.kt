@@ -138,7 +138,7 @@ internal class Java8Class {
     }
 
     fun testGenericFunctions() {
-        val emptyList: JFunction1<MutableList<String?>?> = JFunction1 { mutableListOf() }
+        val emptyList: JFunction1<List<String?>?> = JFunction1 { mutableListOf() }
         emptyList.foo()
         MethodReferenceHelperClass.staticFun1<MutableList<String?>?>(JFunction1 { mutableListOf() })
         h.memberFun1<MutableList<String?>?>(JFunction1 { mutableListOf() })
