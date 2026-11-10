@@ -19,6 +19,7 @@
     <module name="intellij.junit.properties"/>
     <module name="intellij.junit.vcs"/>
     <module name="intellij.junit.dashboard"/>
+    <module name="intellij.junit.rt" loading="embedded"/>
   </content>
   <content>
     <module name="intellij.libraries.hamcrest" loading="embedded"/>

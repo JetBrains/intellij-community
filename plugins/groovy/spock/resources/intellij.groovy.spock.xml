@@ -1,11 +1,12 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="JUnit"/>
     <plugin id="org.intellij.groovy"/>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.junit.rt"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.execution.impl"/>
@@ -13,8 +14,8 @@
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.testRunner"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="org.intellij.groovy">
     <membersContributor implementation="org.jetbrains.plugins.groovy.ext.spock.SpockMemberContributor"/>
     <elementFilter implementation="org.jetbrains.plugins.groovy.ext.spock.SpockElementFilter"/>

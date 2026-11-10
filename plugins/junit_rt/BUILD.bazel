@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.junit.rt` start
+content_module_jar(module = ":junit-rt")
+### auto-generated section `dev intellij.junit.rt` end
 
 ### auto-generated section `build intellij.junit.rt` start
 jvm_provided_library(
@@ -18,6 +23,10 @@ jvm_library(
     ),
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.junit.rt",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -31,6 +40,7 @@ jvm_library(
 exports_files(
     [
         "intellij.junit.rt.iml",
+        "resources/intellij.junit.rt.xml",
     ],
     visibility = ["//visibility:public"],
 )
