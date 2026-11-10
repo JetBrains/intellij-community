@@ -486,14 +486,15 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     withComponent { robot.postGesture(it, where, RemoteMouseButton.LEFT, 1) }
   }
 
-  fun strictClick(point: Point? = null, mouseButton: RemoteMouseButton = RemoteMouseButton.LEFT) {
+  /** Clicks with the left button and repeats the click until the component gets it. See [Robot.strictClick]. */
+  fun strictClick(point: Point? = null) {
     LOG.info("strictClick at $this${point?.let { ": $it" } ?: ""}")
-    if (point != null) {
-      withComponent { robot.strictClick(it, point) }
-    }
-    else {
-      withComponent { robot.strictClick(it, null) }
-    }
+    withComponent { robot.strictClick(it, point) }
+  }
+
+  @Deprecated("The click always uses the left button and ignores mouseButton", ReplaceWith("strictClick(point)"))
+  fun strictClick(point: Point? = null, mouseButton: RemoteMouseButton = RemoteMouseButton.LEFT) {
+    strictClick(point)
   }
 
   fun doubleClick(point: Point? = null) {
@@ -558,6 +559,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }
   }
 
+  @Deprecated("The method ignores the to point. Use press(from) and mouseRelease(), or mousePressMoveRelease(from, to).")
   fun mousePressAndRelease(from: Point, to: Point) {
     with(robot) {
       withComponent { moveMouse(it, from) }
