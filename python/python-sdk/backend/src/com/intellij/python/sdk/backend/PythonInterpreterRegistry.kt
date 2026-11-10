@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
@@ -49,7 +47,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -660,25 +657,6 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
 
   /** [interpreters] without the wait: empty also before the first computation. For code that cannot suspend. */
   fun interpretersIfReady(pyProject: PyProject): List<PythonInterpreter> = state.value?.interpreters.orEmpty().belongingTo(pyProject)
-
-  /**
-   * Calls [listener] on the EDT each time the interpreters of [pyProject] change, until [parentDisposable] is disposed.
-   * It does not call it for the current list. For a Java caller that cannot collect [interpretersFlow].
-   */
-  fun addChangeListener(pyProject: PyProject, parentDisposable: Disposable, listener: Runnable) {
-    val job = scope.launch(Dispatchers.EDT) {
-      interpretersFlow(pyProject).drop(1).collect { listener.run() }
-    }
-    Disposer.register(parentDisposable) { job.cancel() }
-  }
-
-  /**
-   * Emits each time the registry computes its interpreters again: after a change of the data of an interpreter and after
-   * a module change. A new collector gets a value for the current interpreters at once, or after the first computation.
-   * For a form that lists the interpreters of a module it can change.
-   */
-  val tableChanges: Flow<Unit>
-    get() = tableFlow.map { }
 
   companion object {
     private val REMOVE_TIMEOUT = 30.seconds
