@@ -154,23 +154,28 @@ enum class JavaFeature {
     override val standardLevel: LanguageLevel = LanguageLevel.JDK_25
   },
   STABLE_VALUES(LanguageLevel.JDK_25_PREVIEW, "feature.stable.values"),
-  STRUCTURED_CONCURRENCY(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency"),
-  STRUCTURED_CONCURRENCY_TASK_SCOPE_CONSTRUCTORS(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency.constructors") {
+  /**
+   * JEP 543
+   */
+  STRUCTURED_CONCURRENCY(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency") {
     override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
-      return super.isSufficient(useSiteLevel) && !useSiteLevel.isAtLeast(LanguageLevel.JDK_25)
+      return super.isSufficient(useSiteLevel) || useSiteLevel.isAtLeast(LanguageLevel.JDK_28)
     }
+
+    override val standardLevel: LanguageLevel = LanguageLevel.JDK_28
   },
 
-  /**
-   * JEP 525
-   */
-  STRUCTURED_CONCURRENCY_TASK_SCOPE_STATIC_FACTORY_METHODS(LanguageLevel.JDK_25_PREVIEW, "feature.structured.concurrency.static.factory.methods"),
-
 
   /**
-   * JEP 533
+   * JEP 533, JEP 543 (without any changes)
    */
-  STRUCTURED_CONCURRENCY_TASK_SCOPE_STATIC_FACTORY_METHODS_WITH_EXEC_EXCEPTION(LanguageLevel.JDK_27_PREVIEW, "feature.structured.concurrency.static.factory.methods.with.execution.exception"),
+  STRUCTURED_CONCURRENCY_TASK_SCOPE_STATIC_FACTORY_METHODS_WITH_EXEC_EXCEPTION(LanguageLevel.JDK_27_PREVIEW, "feature.structured.concurrency.static.factory.methods.with.execution.exception") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) || useSiteLevel.isAtLeast(LanguageLevel.JDK_28)
+    }
+
+    override val standardLevel: LanguageLevel = LanguageLevel.JDK_28
+  },
 
   PEM_API(LanguageLevel.JDK_25_PREVIEW, "feature.pem.api") {
     override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {

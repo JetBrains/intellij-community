@@ -946,6 +946,9 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_27_PREVIEW, () -> {
       assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
     });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_28, () -> {
+      assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
 
   }
 
