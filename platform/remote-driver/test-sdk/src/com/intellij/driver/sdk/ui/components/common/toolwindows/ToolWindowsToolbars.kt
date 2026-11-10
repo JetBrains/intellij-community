@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components.common.toolwindows
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ideLogger
+import com.intellij.driver.sdk.settings.waitForVcsActivated
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
@@ -20,9 +21,9 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
   val projectButton: StripeButtonUi = stripeButton("Project")
   val runButton: StripeButtonUi = stripeButton("Run")
   val buildButton: StripeButtonUi = stripeButton("Build")
-  val gitButton: StripeButtonUi = stripeButton("Git")
-  val vcsButton: StripeButtonUi = stripeButton("Version Control")
-  val commitButton: StripeButtonUi = stripeButton("Commit")
+  val gitButton: StripeButtonUi get() = vcsStripeButton("Git")
+  val vcsButton: StripeButtonUi get() = vcsStripeButton("Version Control")
+  val commitButton: StripeButtonUi get() = vcsStripeButton("Commit")
   val structureButton: StripeButtonUi = stripeButton("Structure")
   val servicesButton: StripeButtonUi = stripeButton("Services")
   val terminalButton: StripeButtonUi = stripeButton("Terminal")
@@ -39,6 +40,15 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
   val vcpkg: StripeButtonUi = stripeButton("Vcpkg")
   fun openMoreToolWindow() {
     moreButton.click()
+  }
+
+  /**
+   * Returns the stripe button of a VCS tool window after [waitForVcsActivated].
+   * Without the wait, the button search can time out on a slow IDE startup.
+   */
+  private fun vcsStripeButton(accessibleName: String): StripeButtonUi {
+    driver.waitForVcsActivated()
+    return stripeButton(accessibleName)
   }
 }
 
