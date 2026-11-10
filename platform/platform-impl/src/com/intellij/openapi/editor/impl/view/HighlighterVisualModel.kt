@@ -185,6 +185,19 @@ internal class HighlighterVisualModel(private val editor: EditorImpl) {
     paintBackgroundBlock(block, BackgroundLayer(color, HighlighterLayer.SELECTION, editor.shouldUseNewSelection(), false, Int.MAX_VALUE))
   }
 
+  fun paintLayeredBlock(block: Rectangle2D, layers: List<BackgroundLayer>) {
+    var lowest: BackgroundLayer? = null
+    for (layer in layers) {
+      if (layer.forcesBackground) {
+        paintBackgroundBlock(block, layer)
+        continue
+      }
+      if (lowest != null && layer > lowest) continue
+      paintBackgroundBlock(block, layer)
+      lowest = layer
+    }
+  }
+
   fun paintBackgroundBlock(block: Rectangle2D, layer: BackgroundLayer) {
     val yStart = block.y - yShift
     val singleton = HighlightLine(AxisBounds(yStart, yStart + block.height))

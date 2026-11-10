@@ -233,7 +233,7 @@ public class IterationStateTest {
       assertEquals(2, it.getStartOffset());
       assertEquals(3, it.getEndOffset());
       assertEquals(Color.red, it.getPastLineEndBackgroundAttributes().getBackgroundColor());
-      assertEquals(Color.red, it.getBeforeLineStartBackgroundAttributes().getBackgroundColor());
+      assertEquals(Color.red, it.getBeforeLineStartBackgroundLayers().get(0).getColor());
     });
   }
 

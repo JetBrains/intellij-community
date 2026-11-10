@@ -44,6 +44,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -113,19 +114,20 @@ public final class IterationState {
   private final boolean myUseOnlyFontOrForegroundAffectingHighlighters;
   private final boolean myStickyLinesPainting;
   private final boolean myEditorRightAligned;
+  private final boolean myAutoRoundedHighlighters;
   private final boolean myReverseIteration;
   private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<>();
   private final List<TextAttributes> myCachedAttributesList = new ArrayList<>(5);
+  private final List<BackgroundLayer> myCachedBackgroundLayers = new ArrayList<>(5);
   private final GuardedBlocksIndex myGuardedBlocks;
 
   private int myStartOffset;
   private int myEndOffset;
   private int myCurrentSelectionIndex;
-  private Color myCurrentBackgroundColor;
-  private Color myLastBackgroundColor;
+  private List<BackgroundLayer> myBackgroundLayers;
+  private List<BackgroundLayer> myLastBackgroundLayers;
   private FoldRegion myCurrentFold;
   private boolean myNextIsFoldRegion;
-  private final boolean myShouldUseNewSelection;
 
   @ApiStatus.Internal
   public IterationState(
@@ -156,6 +158,7 @@ public final class IterationState {
     myUseOnlyFontOrForegroundAffectingHighlighters = useOnlyFontOrForegroundAffectingHighlighters;
     myStickyLinesPainting = editor instanceof EditorImpl impl && impl.isStickyLinePainting();
     myEditorRightAligned = editor instanceof EditorImpl impl && impl.isRightAligned();
+    myAutoRoundedHighlighters = editor instanceof EditorImpl impl && impl.shouldUseNewSelection();
     myReverseIteration = iterateBackwards;
     myHighlighterIterator = useOnlyFullLineHighlighters ? null : getHighlighter(editor).createIterator(start);
     myCaretData = ObjectUtils.notNull(caretData, CaretData.getNullCaret());
@@ -173,7 +176,6 @@ public final class IterationState {
     myDocumentHighlighters = createSweep(getDocumentMarkupModel(editor));
     myGuardedBlocks =  useOnlyFullLineHighlighters ? null : buildGuardedBlocks(document.getGuardedBlocks(), start, end);
     myEndOffset = myStartOffset;
-    myShouldUseNewSelection = editor instanceof EditorImpl impl && impl.shouldUseNewSelection();
     advance();
   }
 
@@ -276,6 +278,16 @@ public final class IterationState {
   }
 
   @ApiStatus.Internal
+  public @NotNull List<BackgroundLayer> getBackgroundLayers() {
+    return myBackgroundLayers;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<BackgroundLayer> getBreakBackgroundLayers(boolean beforeBreak) {
+    return setAttributes(new TextAttributes(), true, beforeBreak);
+  }
+
+  @ApiStatus.Internal
   public boolean atEnd() {
     return myReverseIteration ? myStartOffset <= myEnd : myStartOffset >= myEnd;
   }
@@ -302,14 +314,28 @@ public final class IterationState {
 
   @ApiStatus.Internal
   public @NotNull TextAttributes getPastLineEndBackgroundAttributes() {
-    myMergedAttributes.setBackgroundColor(
-      hasSoftWrap()
-      ? getBreakBackgroundColor(true)
-      : myEditorRightAligned && myLastBackgroundColor != null
-        ? myLastBackgroundColor
-        : myCurrentBackgroundColor
-    );
+    List<BackgroundLayer> layers = getPastLineEndBackgroundLayers();
+    BackgroundLayer layer = ContainerUtil.find(layers, BackgroundLayer::getForcesBackground);
+    if (layer == null) {
+      layer = ContainerUtil.getFirstItem(layers);
+    }
+    myMergedAttributes.setBackgroundColor(layer == null ? myDefaultBackground : layer.getColor());
     return myMergedAttributes;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<BackgroundLayer> getPastLineEndBackgroundLayers() {
+    List<BackgroundLayer> layers;
+    if (hasSoftWrap()) {
+      layers = getBreakBackgroundLayers(true);
+    }
+    else if (myEditorRightAligned && myLastBackgroundLayers != null) {
+      layers = myLastBackgroundLayers;
+    }
+    else {
+      layers = myBackgroundLayers;
+    }
+    return getStraightLayers(layers);
   }
 
   @ApiStatus.Internal
@@ -318,10 +344,12 @@ public final class IterationState {
   }
 
   @ApiStatus.Internal
-  public @NotNull TextAttributes getBeforeLineStartBackgroundAttributes() {
-    return myEditorRightAligned && !hasSoftWrap()
-           ? getBreakAttributes()
-           : new TextAttributes(null, getBreakBackgroundColor(false), null, null, Font.PLAIN);
+  public @NotNull List<BackgroundLayer> getBeforeLineStartBackgroundLayers() {
+    return getStraightLayers(getBreakBackgroundLayers(false));
+  }
+
+  private static @NotNull List<BackgroundLayer> getStraightLayers(@NotNull List<BackgroundLayer> layers) {
+    return ContainerUtil.filter(layers, layer -> !layer.isRounded());
   }
 
   private @NotNull HighlighterSweep createSweep(MarkupModelEx markupModel) {
@@ -534,12 +562,19 @@ public final class IterationState {
   }
 
   private void reinit() {
-    setAttributes(myMergedAttributes, false, false);
-    myLastBackgroundColor = myCurrentBackgroundColor;
-    myCurrentBackgroundColor = myMergedAttributes.getBackgroundColor();
+    myLastBackgroundLayers = myBackgroundLayers;
+    myBackgroundLayers = setAttributes(myMergedAttributes, false, false);
   }
 
-  private void setAttributes(@NotNull TextAttributes attributes, boolean atBreak, boolean beforeBreak) {
+  private void addAttributes(@NotNull TextAttributes attributes, int layer, boolean rounded, boolean forcesBackground, int span) {
+    myCachedAttributesList.add(attributes);
+    Color color = attributes.getBackgroundColor();
+    if (color != null) {
+      myCachedBackgroundLayers.add(new BackgroundLayer(color, layer, rounded, forcesBackground, span));
+    }
+  }
+
+  private @NotNull List<BackgroundLayer> setAttributes(@NotNull TextAttributes attributes, boolean atBreak, boolean beforeBreak) {
     boolean isInSelection = isInSelection(atBreak);
     boolean isInCaretRow = isInCaretRow(
       !myReverseIteration && (!atBreak || !beforeBreak),
@@ -553,10 +588,6 @@ public final class IterationState {
                               ? null
                               : myHighlighterIterator.getTextAttributes();
     TextAttributes selection = getSelectionAttributes(isInSelection);
-    if (myShouldUseNewSelection && selection != null) {
-      selection = selection.clone();
-      selection.setBackgroundColor(null);
-    }
     TextAttributes caret = getCaretRowAttributes(isInCaretRow);
     TextAttributes fold = myCurrentFold != null ? myFoldTextAttributes : null;
     TextAttributes guard = isInGuardedBlock
@@ -577,6 +608,7 @@ public final class IterationState {
 
     List<TextAttributes> cachedAttributes = myCachedAttributesList;
     if (!cachedAttributes.isEmpty()) cachedAttributes.clear();
+    if (!myCachedBackgroundLayers.isEmpty()) myCachedBackgroundLayers.clear();
 
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
@@ -587,42 +619,43 @@ public final class IterationState {
       }
       if (highlighter.getLayer() < HighlighterLayer.SELECTION) {
         if (selection != null) {
-          cachedAttributes.add(selection);
+          addAttributes(selection, HighlighterLayer.SELECTION, myAutoRoundedHighlighters, false, Integer.MAX_VALUE);
           selection = null;
         }
       }
 
       if (fold != null && highlighter.getLayer() < HighlighterLayer.GUARDED_BLOCKS) {
-        cachedAttributes.add(fold);
+        addAttributes(fold, HighlighterLayer.GUARDED_BLOCKS, false, false, Integer.MAX_VALUE);
         fold = null;
       }
 
       if (guard != null && highlighter.getLayer() < HighlighterLayer.GUARDED_BLOCKS) {
-        cachedAttributes.add(guard);
+        addAttributes(guard, HighlighterLayer.GUARDED_BLOCKS, false, true, Integer.MAX_VALUE);
         guard = null;
       }
 
       if (caret != null && highlighter.getLayer() < HighlighterLayer.CARET_ROW) {
-        cachedAttributes.add(caret);
+        addAttributes(caret, HighlighterLayer.CARET_ROW, false, false, Integer.MAX_VALUE);
         caret = null;
       }
 
       if (syntax != null && highlighter.getLayer() < HighlighterLayer.SYNTAX) {
-        cachedAttributes.add(syntax);
+        addAttributes(syntax, HighlighterLayer.SYNTAX, false, false, Integer.MAX_VALUE);
         syntax = null;
       }
 
       TextAttributes textAttributes = highlighter.getTextAttributes(myColorsScheme);
       if (textAttributes != null && textAttributes != TextAttributes.ERASE_MARKER) {
-        cachedAttributes.add(textAttributes);
+        int span = highlighter.getAffectedAreaEndOffset() - highlighter.getAffectedAreaStartOffset();
+        addAttributes(textAttributes, highlighter.getLayer(), false, false, span);
       }
     }
 
-    if (selection != null) cachedAttributes.add(selection);
-    if (fold != null) cachedAttributes.add(fold);
-    if (guard != null) cachedAttributes.add(guard);
-    if (caret != null) cachedAttributes.add(caret);
-    if (syntax != null) cachedAttributes.add(syntax);
+    if (selection != null) addAttributes(selection, HighlighterLayer.SELECTION, myAutoRoundedHighlighters, false, Integer.MAX_VALUE);
+    if (fold != null) addAttributes(fold, HighlighterLayer.GUARDED_BLOCKS, false, false, Integer.MAX_VALUE);
+    if (guard != null) addAttributes(guard, HighlighterLayer.GUARDED_BLOCKS, false, true, Integer.MAX_VALUE);
+    if (caret != null) addAttributes(caret, HighlighterLayer.CARET_ROW, false, false, Integer.MAX_VALUE);
+    if (syntax != null) addAttributes(syntax, HighlighterLayer.SYNTAX, false, false, Integer.MAX_VALUE);
 
     Color fore = null;
     Color back = isInGuardedBlock ? myReadOnlyColor : null;
@@ -665,6 +698,7 @@ public final class IterationState {
     if (effectsBuilder != null) {
       effectsBuilder.applyTo(attributes);
     }
+    return myCachedBackgroundLayers.isEmpty() ? Collections.emptyList() : List.copyOf(myCachedBackgroundLayers);
   }
 
   private boolean isInCaretRow(boolean includeLineStart, boolean includeLineEnd) {
@@ -683,10 +717,6 @@ public final class IterationState {
       return null;
     }
     return isInCaretRow ? myCaretRowAttributes : null;
-  }
-
-  private Color getBreakBackgroundColor(boolean lineEnd) {
-    return getBreakAttributes(lineEnd).getBackgroundColor();
   }
 
   private boolean hasSoftWrap() {

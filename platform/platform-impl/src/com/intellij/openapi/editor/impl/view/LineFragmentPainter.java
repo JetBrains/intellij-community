@@ -5,12 +5,13 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 
 interface LineFragmentPainter {
 
   void paintBeforeLineStart(
     IterationState iterationState,
-    TextAttributes attributes,
+    List<BackgroundLayer> backgroundLayers,
     @Nullable SoftWrapEx softWrap,
     int columnEnd,
     float xEnd,
@@ -22,7 +23,7 @@ interface LineFragmentPainter {
     int start,
     int end,
     TextAttributes attributes,
-    boolean isSelection,
+    List<BackgroundLayer> backgroundLayers,
     float xStart,
     float xEnd,
     int y
