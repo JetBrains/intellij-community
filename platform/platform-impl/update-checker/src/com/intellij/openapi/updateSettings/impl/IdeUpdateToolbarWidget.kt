@@ -236,6 +236,9 @@ internal class DownloadUpdateAction : UpdatePopupAction() {
   override fun actionPerformed(e: AnActionEvent, update: PlatformUpdates.Loaded) {
     val downloadUrl = update.newBuild.downloadUrl
     when {
+      UpdateSettingsEntryPointActionProvider.hasIncompatiblePlugins() ->
+        UpdateSettingsEntryPointActionProvider.showPlatformUpdateDialog(e.project, update)
+
       update.patches != null -> PlatformUpdateDialog.startPatchTask(e.project, update, null, emptyList())
       downloadUrl != null -> BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(downloadUrl))
     }

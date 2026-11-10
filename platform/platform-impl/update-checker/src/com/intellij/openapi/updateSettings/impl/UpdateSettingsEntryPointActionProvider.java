@@ -273,6 +273,10 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     return myPlatformUpdateInfo;
   }
 
+  static boolean hasIncompatiblePlugins() {
+    return !ContainerUtil.isEmpty(myIncompatiblePluginNames);
+  }
+
   static void showPlatformUpdateDialog(@Nullable Project project, @NotNull PlatformUpdates.Loaded platformUpdateInfo) {
     PlatformUpdateDialog dialog = new PlatformUpdateDialog(project, platformUpdateInfo, true,
                                                           myLocalUpdatesForPlugins, myIncompatiblePluginNames);
