@@ -19,6 +19,7 @@
     <module name="intellij.tasks.jira"/>
     <module name="intellij.tasks.java"/>
     <module name="intellij.tasks" loading="embedded"/>
+    <module name="intellij.tasks.compatibility" loading="embedded"/>
   </content>
   <content>
     <module name="intellij.libraries.xml.rpc"/>

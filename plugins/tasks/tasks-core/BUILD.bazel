@@ -10,22 +10,22 @@ dev_dist_plugin(
         "intellij.tasks.jira",
         "intellij.tasks.java",
         "intellij.tasks",
+        "intellij.tasks.compatibility",
         "intellij.libraries.xml.rpc",
         "intellij.tasks.core.libraries.commonsDiscovery",
-        "intellij.tasks.compatibility",
     ],
     descriptor = "resources/META-INF/plugin.xml",
     jars = {
+        "lib/intellij.tasks.compatibility.jar": [
+            "intellij.tasks.compatibility",
+            "@lib//:tasks-compatibility-http-client-3-1",
+        ],
         "lib/intellij.tasks.core.libraries.commonsDiscovery.jar": [
             "intellij.tasks.core.libraries.commonsDiscovery",
             "@lib//:tasks-core-libraries-commons_discovery-commons-discovery",
         ],
-        "lib/tasks-core.jar": [
-            "intellij.tasks.core",
-            "intellij.tasks.compatibility",
-        ],
+        "lib/tasks-core.jar": ["intellij.tasks.core"],
         "lib/axis.jar": ["//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4"],
-        "lib/http-client.jar": ["@lib//:tasks-compatibility-http-client-3-1"],
     },
     main_module = "intellij.tasks.core",
     mode_refused_content_modules = {

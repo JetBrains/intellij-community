@@ -1,0 +1,10 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.credentialStore"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.tasks"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

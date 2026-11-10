@@ -12,6 +12,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.tasks.compatibility",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:tasks-compatibility-http-client-3-1"],
     deps = [
@@ -29,6 +33,7 @@ jvm_library(
 exports_files(
     [
         "intellij.tasks.compatibility.iml",
+        "resources/intellij.tasks.compatibility.xml",
     ],
     visibility = ["//visibility:public"],
 )

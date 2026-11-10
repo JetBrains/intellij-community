@@ -8,6 +8,7 @@
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.tasks"/>
+    <module name="intellij.tasks.compatibility"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
