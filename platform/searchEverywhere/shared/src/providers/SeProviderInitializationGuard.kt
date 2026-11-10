@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeItemsProvider
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -31,6 +32,8 @@ import kotlin.time.TimeSource
  * The cooldown is a number of popup openings and starts with one opening.
  *
  * One popup opening can call a factory several times. The guard counts each opening only once.
+ *
+ * The guard does not apply to the factories in [exemptFactoryIds]. The popup always waits for their providers.
  */
 @ApiStatus.Internal
 class SeProviderInitializationGuard(
@@ -38,6 +41,7 @@ class SeProviderInitializationGuard(
   private val slowThreshold: () -> Duration,
   private val slowOpeningsToOpen: Int,
   private val maxCooldownOpenings: Int,
+  private val exemptFactoryIds: Set<String> = emptySet(),
 ) {
   private val states = ConcurrentHashMap<String, FactoryState>()
 
@@ -52,6 +56,8 @@ class SeProviderInitializationGuard(
     logLabel: String,
     initializer: suspend () -> SeItemsProvider?,
   ): SeItemsProvider? {
+    if (factoryId in exemptFactoryIds) return initializer()
+
     val state = states.computeIfAbsent(factoryId) { FactoryState() }
     val factoryName = "$factoryId (plugin: $pluginId, $logLabel)"
 
@@ -158,6 +164,15 @@ class SeProviderInitializationGuard(
     const val DEFAULT_SLOW_OPENINGS_TO_OPEN: Int = 2
     const val DEFAULT_MAX_COOLDOWN_OPENINGS: Int = 32
 
+    /**
+     * The factories of the Files, Classes, Symbols, Actions and Text contributors.
+     */
+    val DEFAULT_EXEMPT_FACTORY_IDS: Set<String> = setOf(SeProviderIdUtils.FILES_ID,
+                                                        SeProviderIdUtils.CLASSES_ID,
+                                                        SeProviderIdUtils.SYMBOLS_ID,
+                                                        SeProviderIdUtils.ACTIONS_ID,
+                                                        SeProviderIdUtils.TEXT_ID)
+
     fun getInstance(): SeProviderInitializationGuard = service<SeProviderInitializationGuardHolder>().guard
   }
 }
@@ -169,5 +184,6 @@ internal class SeProviderInitializationGuardHolder(coroutineScope: CoroutineScop
   val guard = SeProviderInitializationGuard(coroutineScope,
                                             { AdvancedSettings.getInt(SLOW_THRESHOLD_SETTING_ID).milliseconds },
                                             SeProviderInitializationGuard.DEFAULT_SLOW_OPENINGS_TO_OPEN,
-                                            SeProviderInitializationGuard.DEFAULT_MAX_COOLDOWN_OPENINGS)
+                                            SeProviderInitializationGuard.DEFAULT_MAX_COOLDOWN_OPENINGS,
+                                            SeProviderInitializationGuard.DEFAULT_EXEMPT_FACTORY_IDS)
 }

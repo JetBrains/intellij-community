@@ -124,12 +124,23 @@ class SeProviderInitializationGuardTest {
     trialProvider.awaitDisposed()
   }
 
+  @Test
+  fun `always waits for an exempt factory`() = runGuardTest(exemptFactoryIds = setOf(FACTORY_ID)) { guard ->
+    guard.openBreaker()
+    val provider = TestProvider()
+
+    val result = guard.open(3) { slowProvider(provider) }
+
+    assertSame(provider, result)
+  }
+
   private fun runGuardTest(
     maxCooldownOpenings: Int = SeProviderInitializationGuard.DEFAULT_MAX_COOLDOWN_OPENINGS,
+    exemptFactoryIds: Set<String> = emptySet(),
     test: suspend CoroutineScope.(SeProviderInitializationGuard) -> Unit,
   ) = runBlocking {
     test(SeProviderInitializationGuard(this, { SLOW_THRESHOLD }, SeProviderInitializationGuard.DEFAULT_SLOW_OPENINGS_TO_OPEN,
-                                       maxCooldownOpenings))
+                                       maxCooldownOpenings, exemptFactoryIds))
   }
 
   private suspend fun SeProviderInitializationGuard.open(opening: Int, initializer: suspend () -> SeItemsProvider?): SeItemsProvider? =
