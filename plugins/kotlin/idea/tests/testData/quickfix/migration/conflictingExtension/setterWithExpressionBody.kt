@@ -4,4 +4,4 @@ var Thread.<caret>priority: Int
     get() = getPriority()
     set(value) = setPriority(value)
 
-// FUS_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.quickfix.ModPlanSafeDeleteFix
+// FUS_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.quickfix.JavaModPlanSafeDeleteFix

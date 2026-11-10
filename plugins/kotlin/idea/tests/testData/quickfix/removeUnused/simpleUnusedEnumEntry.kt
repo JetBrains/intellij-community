@@ -7,4 +7,4 @@ enum class MyEnum {
 fun main() {
     MyEnum.HELLO
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.highlighting.ModPlanSafeDeleteFix
+// FUS_QUICKFIX_NAME: com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteFix

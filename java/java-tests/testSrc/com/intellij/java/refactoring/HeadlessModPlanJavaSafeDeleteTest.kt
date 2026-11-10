@@ -3,7 +3,7 @@ package com.intellij.java.refactoring
 
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl
-import com.intellij.codeInsight.daemon.impl.quickfix.ModPlanSafeDeleteFix
+import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.options.OptionContainer
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
@@ -375,9 +375,10 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
     }, null, null)
   }
 
-  /** @return the command of [ModPlanSafeDeleteFix] for the parameter of `Worker.bar` */
+  /** @return the command of the safe delete fix for the parameter of `Worker.bar` */
   private fun parameterFixCommand(file: PsiFile): ModCommand = inBackground {
-    ModPlanSafeDeleteFix(method("Worker", "bar").parameterList.parameters[0]).perform(ActionContext.from(null, file))
+    QuickFixFactory.getInstance().createSafeDeleteFix(method("Worker", "bar").parameterList.parameters[0])
+      .asModCommandAction()!!.perform(ActionContext.from(null, file))
   }
 
   private fun addCallersThatPassOnTheParameter() {

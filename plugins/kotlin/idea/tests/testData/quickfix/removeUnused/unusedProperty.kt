@@ -3,4 +3,4 @@ class UnusedProperty() {
     val <caret>myOwnProperty96: String = ":)"
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.highlighting.ModPlanSafeDeleteFix
+// FUS_QUICKFIX_NAME: com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteFix

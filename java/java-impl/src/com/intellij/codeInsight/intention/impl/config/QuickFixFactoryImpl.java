@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -65,6 +65,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.InsertNewFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.InsertSuperFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.InsertThisFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.IterateOverIterableIntention;
+import com.intellij.codeInsight.daemon.impl.quickfix.JavaModPlanSafeDeleteFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.LiftThrowOutOfSwitchExpressionFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.MakeReceiverParameterFirstFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.MakeVarargParameterLastFix;
@@ -102,7 +103,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceTypeWithWrongImportF
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithListAccessFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithTypePatternFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReuseVariableDeclarationFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.ModPlanSafeDeleteFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetVariableTypeFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ShowDuplicateElementsFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ShowModulePropertiesFix;
@@ -918,7 +918,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull LocalQuickFixAndIntentionActionOnPsiElement createSafeDeleteFix(@NotNull PsiElement element) {
-    return LocalQuickFixAndIntentionActionOnPsiElement.from(new ModPlanSafeDeleteFix(element), element);
+    return LocalQuickFixAndIntentionActionOnPsiElement.from(new JavaModPlanSafeDeleteFix(element), element);
   }
 
   @Override

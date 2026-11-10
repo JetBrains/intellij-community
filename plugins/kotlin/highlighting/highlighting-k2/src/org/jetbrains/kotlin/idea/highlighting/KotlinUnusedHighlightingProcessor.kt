@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
@@ -15,6 +16,9 @@ import com.intellij.concurrency.JobLauncher
 import com.intellij.openapi.util.Predicates
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.modplan.ModPlanOptionValues
+import com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteFix
+import com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteOptions
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiClass
 import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiField
@@ -53,7 +57,6 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
@@ -70,8 +73,6 @@ import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.psi.KtVisitorVoid
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.resolve.DataClassResolver
@@ -301,6 +302,13 @@ class KotlinRefsHolder(val containingFile: KtFile) {
         return false
     }
 }
+
+/** @return the safe delete of [declaration] alone, on the ModPlan engine. Every safe delete fix of a Kotlin declaration is created here. */
+internal fun createSafeDeleteFix(declaration: KtNamedDeclaration): LocalQuickFixAndIntentionActionOnPsiElement =
+    LocalQuickFixAndIntentionActionOnPsiElement.from(
+        ModPlanSafeDeleteFix(declaration, ModPlanOptionValues.EMPTY.with(ModPlanSafeDeleteOptions.SEARCH_RELATED, false), declaration.safeDeleteText()),
+        declaration,
+    )
 
 internal fun KtNamedDeclaration.safeDeleteText(): @IntentionName String {
     val key = when (this) {
