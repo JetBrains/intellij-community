@@ -2,10 +2,12 @@
 package com.intellij.openapi.editor.impl.view
 
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.markup.HighlighterLayer
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.geom.Path2D
 import java.awt.geom.Rectangle2D
+import java.util.TreeMap
 import java.util.TreeSet
 import kotlin.math.abs
 import kotlin.math.min
@@ -19,7 +21,7 @@ private sealed class CornerType(open val radius: Double) {
   class InvertedRounded(override val radius: Double) : CornerType(radius)
 }
 
-private data class AxisBounds(val start: Double, val end: Double) : Comparable<AxisBounds> {
+private data class AxisBounds(val start: Double, val end: Double, val span: Int = 0) : Comparable<AxisBounds> {
   override fun compareTo(other: AxisBounds): Int {
     return compareValuesBy(this, other, { it.start }, { it.end })
   }
@@ -52,12 +54,12 @@ internal abstract class IntervalSet<T : Comparable<T>> {
   }
 }
 
-private class SelectionLine(val boundsY: AxisBounds) : IntervalSet<AxisBounds>(), Comparable<SelectionLine> {
+private class HighlightLine(val boundsY: AxisBounds) : IntervalSet<AxisBounds>(), Comparable<HighlightLine> {
   override fun getStart(item: AxisBounds): Double = item.start
   override fun getEnd(item: AxisBounds): Double = item.end
 
   override fun add(item: AxisBounds) {
-    var (start, end) = item
+    var [start, end, span] = item
 
     val existing = items.floor(item) ?: items.ceiling(item)
     if (existing == null) {
@@ -73,12 +75,13 @@ private class SelectionLine(val boundsY: AxisBounds) : IntervalSet<AxisBounds>()
 
       start = min(start, current.start)
       end = max(end, current.end)
+      span = max(span, current.span)
       it.remove()
     }
-    items.add(AxisBounds(start, end))
+    items.add(AxisBounds(start, end, span))
   }
 
-  override fun compareTo(other: SelectionLine): Int {
+  override fun compareTo(other: HighlightLine): Int {
     return compareValuesBy(this, other) { it.boundsY }
   }
 
@@ -95,8 +98,8 @@ private class SelectionLine(val boundsY: AxisBounds) : IntervalSet<AxisBounds>()
       withAllIntersectingBlocks(xStart, xEnd) { it, block ->
         it.remove()
 
-        if (block.start < xStart) add(AxisBounds(block.start, xStart))
-        if (block.end > xEnd) add(AxisBounds(xEnd, block.end))
+        if (block.start < xStart) add(AxisBounds(block.start, xStart, block.span))
+        if (block.end > xEnd) add(AxisBounds(xEnd, block.end, block.span))
       }
     }
     items.addAll(toAdd)
@@ -126,52 +129,68 @@ private class SelectionLine(val boundsY: AxisBounds) : IntervalSet<AxisBounds>()
   }
 }
 
-private class LineSet : IntervalSet<SelectionLine>() {
-  override fun getStart(item: SelectionLine): Double = item.boundsY.start
-  override fun getEnd(item: SelectionLine): Double = item.boundsY.end
+private class LineSet : IntervalSet<HighlightLine>() {
+  override fun getStart(item: HighlightLine): Double = item.boundsY.start
+  override fun getEnd(item: HighlightLine): Double = item.boundsY.end
 
-  override fun add(item: SelectionLine) {
+  override fun add(item: HighlightLine) {
     val existing = items.ceiling(item)
     if (existing != null && existing.boundsY == item.boundsY) {
-      existing.add(item.items.first())
+      item.items.forEach { existing.add(it) }
     }
     else {
       items.add(item)
     }
   }
 
-  fun lineAbove(line: SelectionLine): SelectionLine? {
+  fun lineAbove(line: HighlightLine): HighlightLine? {
     val candidate = items.lower(line) ?: return null
     return candidate.takeIf { abs(it.boundsY.end - line.boundsY.start) < EPSILON }
   }
 
-  fun lineBelow(line: SelectionLine): SelectionLine? {
+  fun lineBelow(line: HighlightLine): HighlightLine? {
     val candidate = items.higher(line) ?: return null
     return candidate.takeIf { abs(it.boundsY.start - line.boundsY.end) < EPSILON }
   }
 }
 
-internal class SelectionVisualModel(
-  private val editor: EditorImpl,
-) {
+private class PaintedBlock(
+  val layer: BackgroundLayer,
+  val lines: LineSet,
+  val line: HighlightLine,
+  val bounds: AxisBounds,
+) : Comparable<PaintedBlock> {
+  override fun compareTo(other: PaintedBlock): Int {
+    val order = compareValuesBy(this, other, { it.layer.forcesBackground }, { it.layer.layer }, { -it.bounds.span })
+    if (order != 0) return order
+    return BackgroundLayer.STYLE_ORDER.compare(layer, other.layer)
+  }
+}
+
+internal class HighlighterVisualModel(private val editor: EditorImpl) {
   var yShift: Int = 0
 
-  private val selectionBg get() = editor.selectionModel.textAttributes.backgroundColor
-  private val lines = LineSet()
+  private val selectionBg get() = editor.editorModel.selectionModel.textAttributes.backgroundColor
+  private val linesByLayer = TreeMap<BackgroundLayer, LineSet>(BackgroundLayer.STYLE_ORDER)
 
   /*
-   * Drop the cached selection rectangles
+   * Drop the cached highlighter rectangles
    * Called when the change might have caused cached rectangles outside
    * the visible area to become invalid (for example, font size changes)
    */
-  fun reset() = lines.items.clear()
+  fun reset() = linesByLayer.clear()
 
-  fun paintBlock(block: Rectangle2D) {
+  fun paintSelectionBlock(block: Rectangle2D) {
+    val color = selectionBg ?: return
+    paintBackgroundBlock(block, BackgroundLayer(color, HighlighterLayer.SELECTION, editor.shouldUseNewSelection(), false, Int.MAX_VALUE))
+  }
+
+  fun paintBackgroundBlock(block: Rectangle2D, layer: BackgroundLayer) {
     val yStart = block.y - yShift
-    val singleton = SelectionLine(AxisBounds(yStart, yStart + block.height))
-    singleton.add(AxisBounds(block.x, block.x + block.width))
+    val singleton = HighlightLine(AxisBounds(yStart, yStart + block.height))
+    singleton.add(AxisBounds(block.x, block.x + block.width, layer.span))
 
-    lines.add(singleton)
+    linesByLayer.getOrPut(layer) { LineSet() }.add(singleton)
   }
 
   fun invalidateArea(area: Rectangle2D) {
@@ -180,14 +199,17 @@ internal class SelectionVisualModel(
     val xStart = area.x
     val xEnd = area.x + area.width
 
-    val lineProbe = SelectionLine(AxisBounds(yStart, yStart))
-    val emptyLines = buildSet {
-      lines.withAllIntersecting(yStart, yEnd, lineProbe) { _, line ->
-        line.invalidateSegment(xStart, xEnd)
-        if (line.items.isEmpty()) add(line)
+    val lineProbe = HighlightLine(AxisBounds(yStart, yStart))
+    for (lines in linesByLayer.values) {
+      val emptyLines = buildSet {
+        lines.withAllIntersecting(yStart, yEnd, lineProbe) { _, line ->
+          line.invalidateSegment(xStart, xEnd)
+          if (line.items.isEmpty()) add(line)
+        }
       }
+      lines.items.removeAll(emptyLines)
     }
-    lines.items.removeAll(emptyLines)
+    linesByLayer.values.removeIf { it.items.isEmpty() }
   }
 
   fun paint(graphics: Graphics2D, clip: Rectangle2D, lineHeight: Int) {
@@ -196,14 +218,21 @@ internal class SelectionVisualModel(
 
     val oldAA = graphics.getRenderingHint(RenderingHints.KEY_ANTIALIASING)
     graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    graphics.color = selectionBg
     graphics.translate(0.0, yShift.toDouble())
     try {
-      val clipProbe = SelectionLine(AxisBounds(yStart, yStart))
-      lines.withAllIntersecting(yStart, yEnd, clipProbe) { _, line ->
-        line.withAllIntersectingBlocks(xStart, xEnd) { _, block ->
-          paintRoundedSelection(graphics, line, block, lineHeight)
+      val clipProbe = HighlightLine(AxisBounds(yStart, yStart))
+      val blocks = ArrayList<PaintedBlock>()
+      for ([layer, lines] in linesByLayer) {
+        lines.withAllIntersecting(yStart, yEnd, clipProbe) { _, line ->
+          line.withAllIntersectingBlocks(xStart, xEnd) { _, block ->
+            blocks.add(PaintedBlock(layer, lines, line, block))
+          }
         }
+      }
+      blocks.sort()
+      for (painted in blocks) {
+        graphics.color = painted.layer.color
+        paintBlock(graphics, painted.layer, painted.lines, painted.line, painted.bounds, lineHeight)
       }
     }
     finally {
@@ -213,14 +242,20 @@ internal class SelectionVisualModel(
     }
   }
 
-  private fun paintRoundedSelection(
+  private fun paintBlock(
     graphics: Graphics2D,
-    line: SelectionLine,
+    layer: BackgroundLayer,
+    lines: LineSet,
+    line: HighlightLine,
     block: AxisBounds,
     lineHeight: Int,
   ) {
     val (top, bottom) = line.boundsY
     val (left, right) = block
+    if (!layer.isRounded) {
+      EditorPainter.fillRectExact(graphics, Rectangle2D.Double(left, top, right - left, bottom - top), layer.color)
+      return
+    }
     val radius = lineHeight / 6.0
     val precision = 2 * radius
 

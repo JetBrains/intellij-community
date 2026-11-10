@@ -692,7 +692,7 @@ com.intellij.openapi.editor.impl.view.LogicalPositionCache
 com.intellij.openapi.editor.impl.view.CharWidthCache
 com.intellij.openapi.editor.impl.view.TabFragment
 com.intellij.openapi.editor.impl.view.LineFragment
-com.intellij.openapi.editor.impl.view.SelectionVisualModel
+com.intellij.openapi.editor.impl.view.HighlighterVisualModel
 com.intellij.util.ui.UiScopeKt$launchOnShowFixed$1
 it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap
 it.unimi.dsi.fastutil.ints.AbstractInt2FloatMap
@@ -8262,7 +8262,7 @@ com.intellij.openapi.editor.impl.view.XCorrector$LeftAligned
 com.intellij.openapi.editor.impl.ClipDetector
 com.intellij.openapi.editor.impl.view.CaretDataInView
 com.intellij.openapi.editor.impl.view.SelectionInlayQueries
-com.intellij.openapi.editor.impl.view.SelectionLine
+com.intellij.openapi.editor.impl.view.HighlightLine
 com.intellij.openapi.editor.impl.view.AxisBounds
 com.intellij.openapi.editor.impl.view.LineWhitespacePaintingStrategy
 com.intellij.openapi.editor.impl.view.EditorPainter$Session$1

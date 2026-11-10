@@ -275,7 +275,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final ScaleContext myScaleContext;
     private MarginPositions myMarginPositions;
     private final CaretDataInView myCaretDataInView;
-    private SelectionVisualModel mySelectionModelView = null;
+    private HighlighterVisualModel myHighlighterVisualModel = null;
     private boolean myBrokenFragmentRangeReported;
 
     Session(EditorView view, EditorPainterCache cache, EditorCaretPainter caretPainter, Graphics2D g) {
@@ -502,9 +502,9 @@ public final class EditorPainter implements TextDrawingCallback {
       float selectionExtensionWidth = selectionExtensionWidth();
 
       SelectionInlayQueries selectionInlayQueries = new SelectionInlayQueries(myEditor);
-      mySelectionModelView = myView.getSelectionVisualModel();
-      mySelectionModelView.setYShift(myYShift);
-      mySelectionModelView.invalidateArea(new Rectangle2D.Double(myClip.x, myClip.y + myYShift, myClip.width, myClip.height));
+      myHighlighterVisualModel = myView.getHighlighterVisualModel();
+      myHighlighterVisualModel.setYShift(myYShift);
+      myHighlighterVisualModel.invalidateArea(new Rectangle2D.Double(myClip.x, myClip.y + myYShift, myClip.width, myClip.height));
 
       int lineCount = myView.getVisibleLineCount();
       boolean calculateMarginWidths = myRegistry.isRightMarginAdjusted() && isMarginShown() && myStartVisualLine < lineCount;
@@ -551,7 +551,7 @@ public final class EditorPainter implements TextDrawingCallback {
               if (bounds == null) continue;
               float left = bounds.x - (myEditor.isRightAligned() ? selectionExtensionWidth : 0f);
               float right = bounds.x + bounds.width + (myEditor.isRightAligned() ? 0f : selectionExtensionWidth);
-              mySelectionModelView.paintBlock(new Rectangle2D.Double(left, bounds.y + myYShift, right - left, bounds.height));
+              myHighlighterVisualModel.paintSelectionBlock(new Rectangle2D.Double(left, bounds.y + myYShift, right - left, bounds.height));
             }
           } else {
             paintBackground(attributes, startX, prevY, endX - startX, y - prevY);
@@ -573,7 +573,8 @@ public final class EditorPainter implements TextDrawingCallback {
             if (shouldUseNewSelection()
                 && it.isInSelection(true)
                 && myEditor.isRightAligned()) {
-              mySelectionModelView.paintBlock(new Rectangle2D.Double(xEnd - selectionExtensionWidth, y, selectionExtensionWidth, myLineHeight));
+              Rectangle2D block = new Rectangle2D.Double(xEnd - selectionExtensionWidth, y, selectionExtensionWidth, myLineHeight);
+              myHighlighterVisualModel.paintSelectionBlock(block);
             }
             if (softWrap == null) {
               return;
@@ -601,7 +602,7 @@ public final class EditorPainter implements TextDrawingCallback {
                 !paintFoldingBackground(foldRegionInnerAttributes, xStart, y, xEnd - xStart, foldRegion)) {
               paintBackground(attributes, xStart, y, xEnd - xStart);
               if (isSelection && shouldUseNewSelection()) {
-                mySelectionModelView.paintBlock(new Rectangle2D.Double(xStart, y, xEnd - xStart, myLineHeight));
+                myHighlighterVisualModel.paintSelectionBlock(new Rectangle2D.Double(xStart, y, xEnd - xStart, myLineHeight));
               }
             }
             Inlay<?> inlay = fragment.getCurrentInlay();
@@ -660,7 +661,7 @@ public final class EditorPainter implements TextDrawingCallback {
                 backgroundAttributes.setBackgroundColor(selectionBackgroundColor());
                 float start = startX - (myEditor.isRightAligned() ? selectionExtensionWidth : 0.0f);
                 float end = start + paintWidth + (myEditor.isRightAligned() ? 0.0f : selectionExtensionWidth);
-                mySelectionModelView.paintBlock(new Rectangle2D.Double(start, y, end - start, cfr.getHeightInPixels()));
+                myHighlighterVisualModel.paintSelectionBlock(new Rectangle2D.Double(start, y, end - start, cfr.getHeightInPixels()));
               } else {
                 paintBackground(backgroundAttributes, startX, y, paintWidth, cfr.getHeightInPixels());
               }
@@ -673,7 +674,7 @@ public final class EditorPainter implements TextDrawingCallback {
             }
             paintBackground(backgroundAttributes.getBackgroundColor(), x, y, endX - x, myLineHeight);
             if (it.hasPastLineEndExtension() && shouldUseNewSelection() && !myEditor.isRightAligned()) {
-              mySelectionModelView.paintBlock(new Rectangle2D.Double(x, y, selectionExtensionWidth, myLineHeight));
+              myHighlighterVisualModel.paintSelectionBlock(new Rectangle2D.Double(x, y, selectionExtensionWidth, myLineHeight));
             }
             int offset = it.getEndOffset();
             SoftWrapEx softWrap = mySoftWrapModel.getSoftWrapEx(offset);
@@ -712,7 +713,7 @@ public final class EditorPainter implements TextDrawingCallback {
         prevY = y + visLinesIterator.getLineHeight();
         visLinesIterator.advance();
       }
-      mySelectionModelView.paint(myGraphics, new Rectangle2D.Double(myClip.x, myClip.y, myClip.width, myClip.height), myLineHeight);
+      myHighlighterVisualModel.paint(myGraphics, new Rectangle2D.Double(myClip.x, myClip.y, myClip.width, myClip.height), myLineHeight);
       if (calculateMarginWidths && myEndVisualLine >= lineCount - 1) {
         myMarginPositions.y()[myMarginPositions.y().length - 1] = myMarginPositions.y()[myMarginPositions.y().length - 2] + myLineHeight;
       }
@@ -766,7 +767,7 @@ public final class EditorPainter implements TextDrawingCallback {
       }
       float endX = (float)Math.min(clipEndX, myView.visualPositionToXY(new VisualPosition(visualLine, selectionRange.second)).getX());
       if (shouldUseNewSelection()) {
-        mySelectionModelView.paintBlock(new Rectangle2D.Double(startX, y, endX - startX, myLineHeight));
+        myHighlighterVisualModel.paintSelectionBlock(new Rectangle2D.Double(startX, y, endX - startX, myLineHeight));
       } else {
         paintBackground(selectionBackgroundColor(), startX, y, endX - startX);
       }
@@ -785,7 +786,7 @@ public final class EditorPainter implements TextDrawingCallback {
       float endX = (selectionEndPosition.line == visualLine && selectionEndPosition.column < columnEnd) ?
                    (float)myView.visualPositionToXY(selectionEndPosition).getX() : xEnd;
       if (shouldUseNewSelection()) {
-        mySelectionModelView.paintBlock(new Rectangle2D.Double(startX, y, endX - startX, myLineHeight));
+        myHighlighterVisualModel.paintSelectionBlock(new Rectangle2D.Double(startX, y, endX - startX, myLineHeight));
       } else {
         paintBackground(selectionBackgroundColor(), startX, y, endX - startX);
       }
@@ -816,7 +817,7 @@ public final class EditorPainter implements TextDrawingCallback {
                    : clipEndX;
 
       if (shouldUseNewSelection()) {
-        mySelectionModelView.paintBlock(new Rectangle2D.Double(startX, y, endX - startX, myLineHeight));
+        myHighlighterVisualModel.paintSelectionBlock(new Rectangle2D.Double(startX, y, endX - startX, myLineHeight));
       } else {
         paintBackground(selectionBackgroundColor(), startX, y, endX - startX);
       }
