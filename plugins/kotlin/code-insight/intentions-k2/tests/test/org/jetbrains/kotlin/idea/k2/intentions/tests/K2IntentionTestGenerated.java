@@ -14042,6 +14042,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/lastFunFromCompanionObject.kt");
         }
 
+        @TestMetadata("lastFunFromCompanionObjectWithSupertype.kt")
+        public void testLastFunFromCompanionObjectWithSupertype() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/lastFunFromCompanionObjectWithSupertype.kt");
+        }
+
         @TestMetadata("memberExtensionFun.kt")
         public void testMemberExtensionFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/memberExtensionFun.kt");

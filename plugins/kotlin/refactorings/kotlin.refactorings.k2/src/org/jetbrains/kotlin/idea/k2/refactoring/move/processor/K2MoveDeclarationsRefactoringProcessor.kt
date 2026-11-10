@@ -160,10 +160,12 @@ open class K2MoveDeclarationsRefactoringProcessor(
     private fun deleteMovedElement(element: KtNamedDeclaration, companionObjectsToKeep: Set<KtObjectDeclaration>) {
         val containingClass = element.containingClassOrObject
         element.deleteSingle()
-        if (containingClass is KtObjectDeclaration && containingClass.isCompanion() &&
-            containingClass !in companionObjectsToKeep && containingClass.isEffectivelyEmpty()) {
-            containingClass.deleteSingle()
-        }
+        val shouldDeleteContainingCompanionObject =
+            containingClass is KtObjectDeclaration && containingClass.isCompanion()
+                && containingClass !in companionObjectsToKeep
+                && containingClass.getSuperTypeList() == null
+                && containingClass.isEffectivelyEmpty()
+        if (shouldDeleteContainingCompanionObject) containingClass.deleteSingle()
     }
 
     private val conflicts: MultiMap<PsiElement, String> = MultiMap<PsiElement, String>()
