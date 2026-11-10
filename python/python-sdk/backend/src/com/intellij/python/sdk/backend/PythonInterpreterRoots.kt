@@ -4,6 +4,8 @@ package com.intellij.python.sdk.backend
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -44,12 +46,11 @@ class PythonInterpreterRoots(private val project: Project, scope: CoroutineScope
   /** The last roots of each interpreter, which [changes] reported. */
   private val roots = ConcurrentHashMap<PythonInterpreterKey, PythonInterpreterRootFiles>()
   private val changeCount = MutableStateFlow(0L)
-  /** The interpreters whose roots the writer derives and commits next, see [requestDerive]. */
-  private val pending = ConcurrentHashMap<PythonInterpreterKey, PythonInterpreter>()
-  /** The number of the last [requestDerive]. A new number wakes the writer. */
-  private val requests = MutableStateFlow(0L)
-  /** The number of the last request whose roots the writer committed, see [awaitCommittedForTests]. */
-  private val committed = MutableStateFlow(0L)
+  /**
+   * The requests whose roots the writer did not commit yet, see [requestDerive]. A new request for an interpreter
+   * replaces the older one, so a burst gives one derive.
+   */
+  private val pending = MutableStateFlow<Map<PythonInterpreterKey, Request>>(emptyMap())
 
   init {
     scope.launch {
@@ -60,8 +61,14 @@ class PythonInterpreterRoots(private val project: Project, scope: CoroutineScope
       }
     }
     scope.launch(Dispatchers.Default) {
-      // A state flow conflates the requests: a burst during a pass gives one more pass.
-      requests.collect { writePending() }
+      // Each pass removes a request or sees a new one, so the flow gives the next value until no request is left.
+      pending.collect { requests ->
+        val request = requests.values.firstOrNull() ?: return@collect
+        // A failed derive must not stop the writer of the project.
+        LOG.runAndLogException { write(request.interpreter) }
+        // A request that came during the write is another object. It stays, and the writer derives it next.
+        pending.update { if (it[request.interpreter.key] === request) it - request.interpreter.key else it }
+      }
     }
   }
 
@@ -81,34 +88,22 @@ class PythonInterpreterRoots(private val project: Project, scope: CoroutineScope
    * progress ends blocks nobody (PY-93878).
    */
   fun requestDerive(interpreter: PythonInterpreter) {
-    pending[interpreter.key] = interpreter
-    requests.update { it + 1 }
+    pending.update { it + (interpreter.key to Request(interpreter)) }
   }
 
   /** For tests: suspends until the writer committed the roots of every request, see [requestDerive]. */
   @TestOnly
   suspend fun awaitCommittedForTests() {
-    val last = requests.value
-    committed.first { it >= last }
+    pending.first { it.isEmpty() }
   }
 
-  /**
-   * Derives and commits the roots of each pending interpreter, see [requestDerive]. The writer takes an interpreter out
-   * of [pending] before it derives, so a request during the derive asks for one more pass. A request puts its interpreter
-   * into [pending] before it takes its number, so each request up to [last] is in this pass or in an earlier one.
-   */
-  private suspend fun writePending() {
-    val last = requests.value
-    while (true) {
-      val key = pending.keys.firstOrNull() ?: break
-      val interpreter = pending.remove(key) ?: continue
-      val derived = derive(interpreter)
-      // No write action when nothing changes. A write action on the EDT, not a background one: a pending background
-      // write stops the read actions, such as of a VFS refresh, that a caller holding the write-intent lock can wait for.
-      if (needsCommit(interpreter, derived)) edtWriteAction { commit(interpreter, derived) }
-      else store(interpreter, derived)
-    }
-    committed.value = last
+  /** Derives the roots of [interpreter] and commits them into its SDK, see [requestDerive]. */
+  private suspend fun write(interpreter: PythonInterpreter) {
+    val derived = derive(interpreter)
+    // No write action when nothing changes. A write action on the EDT, not a background one: a pending background
+    // write stops the read actions, such as of a VFS refresh, that a caller holding the write-intent lock can wait for.
+    if (needsCommit(interpreter, derived)) edtWriteAction { commit(interpreter, derived) }
+    else store(interpreter, derived)
   }
 
   /** For tests: how many changes this service has reported, see [changes]. */
@@ -246,7 +241,12 @@ class PythonInterpreterRoots(private val project: Project, scope: CoroutineScope
       .firstOrNull { entity -> entity.contentRoots.any { it.url.toPath().normalize() == ownerDir } }
   }
 
+  /** A request for the roots of [interpreter]. It has no `equals`, so two requests for one interpreter differ. */
+  private class Request(val interpreter: PythonInterpreter)
+
   companion object {
+    private val LOG = logger<PythonInterpreterRoots>()
+
     @JvmStatic
     fun getInstance(project: Project): PythonInterpreterRoots = project.service()
   }
