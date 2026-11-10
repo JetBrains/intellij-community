@@ -1,23 +1,29 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.AnActionListener
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 import kotlin.math.min
@@ -31,7 +37,7 @@ class ActionsLocalSummary : PersistentStateComponent<ActionsLocalSummaryState>, 
   @Volatile
   private var totalSummary: ActionsTotalSummary = ActionsTotalSummary(0, Integer.MAX_VALUE, 0, Integer.MAX_VALUE)
 
-  override fun getState() = state
+  override fun getState(): ActionsLocalSummaryState = state
 
   override fun loadState(state: ActionsLocalSummaryState) {
     this.state = state
@@ -56,7 +62,12 @@ class ActionsLocalSummary : PersistentStateComponent<ActionsLocalSummaryState>, 
   }
 
   @Synchronized
-  fun getTotalStats(): ActionsTotalSummary = totalSummary
+  fun getTotalStats(): ActionsTotalSummary = ActionsTotalSummary(
+    totalSummary.maxUsageCount,
+    totalSummary.minUsageCount,
+    totalSummary.maxUsageFromSearchEverywhere,
+    totalSummary.minUsageFromSearchEverywhere
+  )
 
   @Synchronized
   fun getActionsStats(): Map<String, ActionSummary> {
@@ -172,9 +183,11 @@ data class ActionsLocalSummaryState(
 )
 
 @ApiStatus.Internal
-data class ActionsTotalSummary(
-  var maxUsageCount: Int, var minUsageCount: Int,
-  var maxUsageFromSearchEverywhere: Int, var minUsageFromSearchEverywhere: Int
+class ActionsTotalSummary(
+  var maxUsageCount: Int,
+  var minUsageCount: Int,
+  var maxUsageFromSearchEverywhere: Int,
+  var minUsageFromSearchEverywhere: Int
 ) {
   fun updateUsage(newUsageSummary: ActionExtendedSummary, isFromSearchEverywhere: Boolean) {
     maxUsageCount = max(newUsageSummary.usageCount, maxUsageCount)
@@ -187,13 +200,35 @@ data class ActionsTotalSummary(
   }
 }
 
-private class ActionsLocalSummaryListener : AnActionListener {
-  private val service = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
-                        ?: throw ExtensionNotApplicableException.create()
+@Service
+private class ActionsLocalSummaryUpdater(coroutineScope: CoroutineScope) {
+  private val events = MutableSharedFlow<ActionUsage>(replay = 1, extraBufferCapacity = 10, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
-    if (getPluginInfo(action::class.java).isSafeToReport()) {
-      service.updateActionsSummary(event.actionManager.getId(action) ?: action.javaClass.name, event.place)
+  init {
+    coroutineScope.launch {
+      events.collect { usage ->
+        try {
+          if (getPluginInfo(usage.actionClass).isSafeToReport()) {
+            serviceAsync<ActionsLocalSummary>().updateActionsSummary(usage.actionId ?: usage.actionClass.name, usage.place)
+          }
+        }
+        catch (e: Throwable) {
+          rethrowControlFlowException(e)
+          thisLogger().error(e)
+        }
+      }
     }
+  }
+
+  fun incUsage(actionClass: Class<out AnAction>, actionId: String?, place: String) {
+    events.tryEmit(ActionUsage(actionClass, actionId, place))
+  }
+}
+
+private class ActionUsage(val actionClass: Class<out AnAction>, val actionId: String?, val place: String)
+
+internal class ActionsLocalSummaryListener : AnActionListener {
+  override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
+    service<ActionsLocalSummaryUpdater>().incUsage(action.javaClass, event.actionManager.getId(action), event.place)
   }
 }

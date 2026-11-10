@@ -13,7 +13,6 @@ import com.intellij.ide.wizard.OnboardingTipsInstallationInfo
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.AnActionResult
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionUtil.getDelegateChainRootAction
@@ -140,7 +139,7 @@ private fun installActionListener(project: Project, pathToRunningFile: @NonNls S
   val connection = project.messageBus.connect()
   val actionsMapReported = promotedActions.associateWith { false }.toMutableMap()
   connection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
-    override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
+    override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
       val virtualFile = event.getData(CommonDataKeys.EDITOR)?.virtualFile ?: return
       if (virtualFile.path != pathToRunningFile) {
         return
@@ -151,10 +150,9 @@ private fun installActionListener(project: Project, pathToRunningFile: @NonNls S
       val reported = actionsMapReported.get(actionId) ?: return
       if (!reported) {
         actionsMapReported.put(actionId, true)
-        // the usage count increased in the beforeActionPerformed listener,
-        // so here we use the "afterActionPerformed" event to avoid question about listener order
-        val usageCount = service<ActionsLocalSummary>().getActionStatsById(actionId)?.usageCount ?: return
-        OnboardingTipsStatistics.logPromotedActionUsedEvent(project, actionId, onboardingGenerationNumber, usageCount == 1)
+        // ActionsLocalSummary counts the usage asynchronously, so read the count before this usage
+        val previousUsageCount = service<ActionsLocalSummary>().getActionStatsById(actionId)?.usageCount ?: 0
+        OnboardingTipsStatistics.logPromotedActionUsedEvent(project, actionId, onboardingGenerationNumber, previousUsageCount == 0)
       }
     }
   })
