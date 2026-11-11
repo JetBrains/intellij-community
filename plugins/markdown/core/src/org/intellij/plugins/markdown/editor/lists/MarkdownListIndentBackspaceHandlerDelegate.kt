@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.lists
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
@@ -26,12 +27,12 @@ import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
  *   - otherwise, the line is unindented
  */
 internal class MarkdownListIndentBackspaceHandlerDelegate : BackspaceHandlerDelegate() {
-  private var deletedRange: TextRange? = null
+  private var wantedIndent: Int? = null
   private var listItem: MarkdownListItem? = null
   private var moveCaret = false
 
   override fun beforeCharDeleted(char: Char, file: PsiFile, editor: Editor) {
-    deletedRange = null
+    wantedIndent = null
     listItem = null
     moveCaret = false
     if (!file.supportsMarkdown() || !char.isWhitespace()) {
@@ -64,13 +65,12 @@ internal class MarkdownListIndentBackspaceHandlerDelegate : BackspaceHandlerDele
                     ?: file.getListItemAtLineSafely(line - 2, document)
                     ?: return
 
-    if (indent + document.getLineStartOffset(line) > document.getLineEndOffset(line)) {
+    if (indent > editor.offsetToLogicalPosition(document.getLineEndOffset(line)).column) {
       moveCaret = true
       return
     }
 
-    val wantedIndent = indentLevels(aboveItem, document, file).find { it < indent } ?: return
-    deletedRange = TextRange.from(lineStart + wantedIndent, indent - wantedIndent)
+    wantedIndent = indentLevels(aboveItem, document, file).find { it < indent }
   }
 
   // a sequence of indent sizes for the caret to iterate over, from greatest to smallest
@@ -102,18 +102,25 @@ internal class MarkdownListIndentBackspaceHandlerDelegate : BackspaceHandlerDele
       return true
     }
 
-    val deletedRange = deletedRange ?: return false
+    val wantedIndent = wantedIndent ?: return false
 
     val line = document.getLineNumber(editor.caretModel.offset)
     val indentRange = document.getLineIndentRange(line)
     val realIndent = document.getLineIndentSpaces(line, file)!!
 
     runWriteAction {
+      var endOffset = editor.caretModel.offset
       if (indentRange.length < document.getLineIndentInnerSpacesLength(line, file)!!) {
+        val tabCount = document.charsSequence.subSequence(indentRange.startOffset, endOffset).count { it == '\t' }
+        endOffset += tabCount * (CodeStyle.getFacade(file).tabSize - 1)
         editor.document.replaceString(indentRange.startOffset, indentRange.endOffset, realIndent)
       }
 
-      editor.document.deleteString(deletedRange.startOffset, deletedRange.endOffset - 1)
+      val startOffset = document.getLineStartOffset(line) + wantedIndent
+      if (startOffset < endOffset) {
+        editor.document.deleteString(startOffset, endOffset)
+      }
+      editor.caretModel.moveToOffset(minOf(startOffset, endOffset))
     }
     return true
   }

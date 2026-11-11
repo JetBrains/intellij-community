@@ -15,6 +15,20 @@ class MarkdownListBackspaceHandlerDelegatesTest: LightPlatformCodeInsightTestCas
 
   fun testDeleteIndent() = doTest()
 
+  fun testDeleteTabIndent() = doTest("*\n\t<caret>abcdefg", "*\n<caret>abcdefg")
+
+  fun testDeleteTabIndentAfterIndentedMarker() = doTest(" *\n\t<caret>abcdefg", " *\n<caret>abcdefg")
+
+  fun testDeleteTabIndentBeforeShortText() = doTest("*\n\t<caret>a", "*\n<caret>a")
+
+  fun testDeleteSpaceAfterMixedIndent() = doTest("* outer\n \t <caret>text", "* outer\n<caret>text")
+
+  fun testDeleteSpaceAfterMixedIndentBeforeTab() = doTest("* outer\n \t <caret>\ttext", "* outer\n<caret>    text")
+
+  fun testExpandTabAtParentIndent() = doTest("* outer\n\t* inner\n\t\t<caret>text", "* outer\n\t* inner\n    <caret>text")
+
+  fun testDeleteTabIndentBeforeSpaces() = doTest("*\n\t<caret>  text", "*\n<caret>  text")
+
   fun testDeleteIndentCaretAfterEndOfLine() {
     val testName = getTestName(true)
     configureByFile("$testName.md")
@@ -29,6 +43,13 @@ class MarkdownListBackspaceHandlerDelegatesTest: LightPlatformCodeInsightTestCas
   fun testIterateIndentLevels() = doTest(2)
 
   fun testIterateIndentLevelsInBlockQuote() = doTest(2)
+
+  private fun doTest(before: String, after: String) {
+    configureFromFileText("test.md", before)
+    editor.settings.setTabSize(4)
+    backspace()
+    checkResultByText(after)
+  }
 
   private fun doTest(repeats: Int = 1) {
     val testName = getTestName(true)
