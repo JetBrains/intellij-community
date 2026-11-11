@@ -297,9 +297,10 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
     }
   }
 
+  /** Opens the settings of the project of this frame. The context is the frame, so the call does not depend on the focus. */
   fun openSettingsDialog() {
     step("Open settings dialog via IDE action") {
-      driver.invokeAction("ShowSettings", now = false)
+      driver.invokeAction("ShowSettings", now = false, component = component)
     }
   }
 

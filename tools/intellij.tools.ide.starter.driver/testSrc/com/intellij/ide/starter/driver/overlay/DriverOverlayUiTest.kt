@@ -194,38 +194,41 @@ class DriverOverlayUiTest {
   fun `a dialog that opens over the overlay paints its part of the overlay`(driver: Driver) {
     with(driver) {
       waitForProjectOpen(1.minutes)
-      val frame = ideFrame().component
       val title = "Open the settings over the overlay"
       step(title) {
-        invokeAction("ShowSettings", now = false)
-        ideFrame().settingsDialog {
-          waitFound()
-          // The top of the dialog goes over the overlay at the top of the IDE frame.
-          val frameLocation = frame.getLocationOnScreen()
-          setBounds(frameLocation.x + 100, frameLocation.y + 30, frame.width - 200, frame.height - 100)
-          waitTitle(title, "the overlay shows")
-          takeScreenshot("overlay_under_dialog")
-          closeDialog()
-          waitFor("the dialog closes") { !present() }
+        ideFrame {
+          openSettingsDialog()
+          val frame = component
+          settingsDialog {
+            // The top of the dialog goes over the overlay at the top of the IDE frame.
+            val frameLocation = frame.getLocationOnScreen()
+            setBounds(frameLocation.x + 100, frameLocation.y + 30, frame.width - 200, frame.height - 100)
+            waitTitle(title, "the overlay shows")
+            takeScreenshot("overlay_under_dialog")
+            closeDialog()
+            waitFor("the dialog closes") { !present() }
+          }
         }
       }
     }
   }
 
-  /** The screenshot is for a person: the test cannot see where the overlay is on the screen. */
+  /** The screenshot is for a person: it shows the overlay of a step while the settings dialog is open. */
   @Test
   fun `a step overlay shows over an open dialog`(driver: Driver) {
     with(driver) {
       waitForProjectOpen(1.minutes)
-      invokeAction("ShowSettings", now = false)
-      ideFrame().settingsDialog {
-        waitFound()
-        step("Over a dialog") {
-          waitTitle("Over a dialog", "the overlay shows")
-          takeScreenshot("overlay_over_dialog")
+      ideFrame {
+        openSettingsDialog()
+        settingsDialog {
+          waitFound()
+          step("Over a dialog") {
+            waitTitle("Over a dialog", "the overlay shows")
+            takeScreenshot("overlay_over_dialog")
+          }
+          closeDialog()
+          waitFor("the dialog closes") { !present() }
         }
-        closeDialog()
-        waitFor("the dialog closes") { !present() }
       }
     }
   }
