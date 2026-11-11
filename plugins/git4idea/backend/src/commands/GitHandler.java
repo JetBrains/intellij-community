@@ -28,6 +28,7 @@ import com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.system.OS;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutable;
@@ -165,6 +166,11 @@ public abstract class GitHandler {
     List<@NonNls String> toPass = new ArrayList<>();
     toPass.add("core.quotepath=false");
     toPass.add("log.showSignature=false");
+    if (OS.CURRENT == OS.OHOS) {
+      // On OHOS, the system file manager owns the user files, whoever creates them.
+      // Thus the dubious ownership check of Git fails for every repository in the user files.
+      toPass.add("safe.directory=*");
+    }
     toPass.addAll(requestedConfigParameters);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
