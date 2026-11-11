@@ -61,8 +61,6 @@ import com.jetbrains.python.target.PyInterpreterVersionUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import com.jetbrains.python.venvReader.VirtualEnvReaderKt;
 import kotlin.coroutines.Continuation;
-import kotlin.jvm.functions.Function2;
-import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -77,6 +75,7 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 import java.awt.Component;
 import java.lang.ref.WeakReference;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -84,6 +83,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static com.intellij.platform.ide.progress.TasksKt.runWithModalProgressBlocking;
 import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REFRESH_SKELETONS_FOR_REMOTE_INTERPRETER_FAILED;
@@ -189,24 +189,24 @@ public final class PythonSdkType extends SdkType {
           record ValidationResult(boolean isValid, boolean isDirectory) {
           }
 
-          ValidationResult result = runWithModalProgressBlocking(
-            ModalTaskOwner.guess(), PyBundle.message("modal.progress.title.path.validation"), TaskCancellation.cancellable(),
-            new Function2<>() {
-              @Override
-              public ValidationResult invoke(CoroutineScope scope,
-                                             Continuation<? super ValidationResult> continuation) {
-
-                try {
-                  String adjustedPath = adjustSelectedSdkHome(file.getPath());
-                  boolean isValid = isLocalPathValid(Path.of(adjustedPath));
-                  return new ValidationResult(isLocatedInWsl(file) || isValid, file.isDirectory());
-                }
-                catch (InvalidPathException e) {
-                  return new ValidationResult(false, false);
-                }
-              }
+          Supplier<ValidationResult> validation = () -> {
+            try {
+              Path adjustedPath = Path.of(adjustSelectedSdkHome(file.getPath()));
+              // A flavor accepts any executable path, and a directory is one. So a directory is valid only when it holds
+              // a Python binary, which the adjusted path then names.
+              boolean isValid = !Files.isDirectory(adjustedPath) && isLocalPathValid(adjustedPath);
+              return new ValidationResult(isLocatedInWsl(file) || isValid, file.isDirectory());
             }
-          );
+            catch (InvalidPathException e) {
+              return new ValidationResult(false, false);
+            }
+          };
+          // The validation reads the file system. A chooser can call it on the EDT or on a background thread.
+          ValidationResult result = ApplicationManager.getApplication().isDispatchThread()
+                                    ? runWithModalProgressBlocking(
+                                      ModalTaskOwner.guess(), PyBundle.message("modal.progress.title.path.validation"),
+                                      TaskCancellation.cancellable(), (scope, continuation) -> validation.get())
+                                    : validation.get();
 
           if (!result.isValid()) {
             String message = result.isDirectory()
@@ -219,12 +219,10 @@ public final class PythonSdkType extends SdkType {
 
       @Override
       public boolean isFileSelectable(@Nullable VirtualFile file) {
-        if (file == null) return false;
-        // A regular file may be a Python binary or a wrapper script (e.g. a .bat/.sh launching Python), so allow
-        // selecting any file and let validateSelectedFiles() reject the invalid ones (PY-89236). A directory is
-        // selectable only when it contains a Python binary (the folder-selection feature from PY-86247).
-        if (!file.isDirectory()) return true;
-        return VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(file.toNioPath()) != null;
+        // A regular file may be a Python binary or a wrapper script (e.g. a .bat/.sh launching Python, PY-89236), and a
+        // directory may hold a Python binary (PY-86247). So every file and directory is selectable, and
+        // validateSelectedFiles() rejects an invalid one with a message.
+        return file != null;
       }
     }
       .withTitle(PyBundle.message("sdk.select.path"))
