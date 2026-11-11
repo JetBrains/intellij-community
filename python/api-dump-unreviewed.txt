@@ -768,16 +768,13 @@ f:com.jetbrains.python.run.EnvFileComponent
 - com.intellij.openapi.ui.LabeledComponent
 - com.intellij.ui.UserActivityProviderComponent
 - sf:Companion:com.jetbrains.python.run.EnvFileComponent$Companion
-- <init>(kotlin.jvm.functions.Function0):V
 - addChangeListener(javax.swing.event.ChangeListener):V
 - f:getEnvFilesComponent():com.jetbrains.python.run.EnvironmentFilePathTextFieldWithBrowseButton
 - removeChangeListener(javax.swing.event.ChangeListener):V
 f:com.jetbrains.python.run.EnvFileComponent$Companion
-- f:createEnvFilesFragment(kotlin.jvm.functions.Function0):com.intellij.execution.ui.SettingsEditorFragment
 f:com.jetbrains.python.run.EnvironmentFilePathTextFieldWithBrowseButton
 - com.intellij.openapi.ui.TextFieldWithBrowseButton$NoPathCompletion
 - com.intellij.ui.UserActivityProviderComponent
-- <init>(kotlin.jvm.functions.Function0):V
 - addChangeListener(javax.swing.event.ChangeListener):V
 - f:getEnvFilePaths():java.util.List
 - getTextField():com.intellij.ui.components.fields.ExtendableTextField
