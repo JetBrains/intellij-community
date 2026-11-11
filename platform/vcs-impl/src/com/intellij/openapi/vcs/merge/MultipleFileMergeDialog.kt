@@ -487,7 +487,7 @@ open class MultipleFileMergeDialog(
     runWithModalProgressBlocking(getModalTaskOwner(),
                                  VcsBundle.message("multiple.file.merge.dialog.progress.title.applying.resolutions")) {
       iterativelyResolved.forEach { [file, model] ->
-        edtWriteAction { saveDocument(file) }
+        if (!edtWriteAction { saveDocument(file) }) return@forEach
         checkMarkModifiedProject(project, file)
         markFileProcessed(file, model.chosenSide.toMergeResolution())
       }
@@ -538,8 +538,7 @@ open class MultipleFileMergeDialog(
           val iterativelyResolved = iterativeDataHolder?.isFileResolved(file) ?: false
 
           // finishResolution saves and marks an iteratively resolved file
-          if (!iterativelyResolved) {
-            runWriteAction { saveDocument(file) }
+          if (!iterativelyResolved && runWriteAction { saveDocument(file) }) {
             checkMarkModifiedProject(project, file)
             runWithModalProgressBlocking(getModalTaskOwner(),
                                          VcsBundle.message("multiple.file.merge.dialog.progress.title.resolving.conflicts")) {
@@ -697,10 +696,18 @@ private fun checkMarkModifiedProject(project: Project?, file: VirtualFile) {
   MergeUtil.reportProjectFileChangeIfNeeded(project, file)
 }
 
+/**
+ * Returns false when the document of the [file] stays unsaved, for example after an I/O error or a veto.
+ * The caller must not mark such a file processed, because the VCS would take the old content on disk as the resolution.
+ */
 @RequiresWriteLock
-private fun saveDocument(file: VirtualFile) {
-  val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return
-  FileDocumentManager.getInstance().saveDocument(document)
+private fun saveDocument(file: VirtualFile): Boolean {
+  val fileDocumentManager = FileDocumentManager.getInstance()
+  // FileDocumentManager keeps a strong reference to each unsaved document, so the GC cannot remove it from the cache.
+  // Thus a file without a cached document has no unsaved changes, and the disk already holds its content.
+  val document = fileDocumentManager.getCachedDocument(file) ?: return true
+  fileDocumentManager.saveDocument(document)
+  return !fileDocumentManager.isDocumentUnsaved(document)
 }
 
 private fun MergeSession.Resolution.yoursOrTheirs(): Boolean = when (this) {

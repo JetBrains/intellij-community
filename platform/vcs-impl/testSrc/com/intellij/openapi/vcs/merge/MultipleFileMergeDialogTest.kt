@@ -12,7 +12,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapperPeer
@@ -26,6 +28,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
@@ -151,6 +154,26 @@ internal class MultipleFileMergeDialogTest {
     assertEquals(listOf(conflict.file), conflict.provider.resolvedFiles)
   }
 
+  @Test
+  fun closeKeepsConflictWhenSaveFails(): Unit = timeoutRunBlocking {
+    val conflict = createConflict()
+    replaceMergeViewer(disposable) { request ->
+      IterativeResolveSupport.getData(request)!!.acceptRevisionForSide(Side.RIGHT)
+      request.applyResult(MergeResult.RESOLVED)
+    }
+    ExtensionTestUtil.addExtensions(FileDocumentSynchronizationVetoer.EP_NAME, listOf(SaveVetoer(conflict.file)), disposable)
+
+    withMergeDialog(conflict) { dialog ->
+      withContext(Dispatchers.EDT) { dialog.clickButton(VcsBundle.message("multiple.file.iterative.merge.resolve.manually")) }
+      withContext(Dispatchers.EDT) { dialog.doCancelAction() }
+      assertEquals(emptyList<VirtualFile>(), dialog.processedFiles)
+    }
+
+    assertEquals(YOURS, fileText(conflict.file))
+    assertEquals(YOURS, documentText(conflict.file))
+    assertEquals(emptyList<VirtualFile>(), conflict.provider.resolvedFiles)
+  }
+
   /** Answers each message dialog with [answer] and returns the messages that the dialogs showed. */
   private fun answerQuestions(answer: Int): List<String> {
     val questions = CopyOnWriteArrayList<String>()
@@ -206,6 +229,12 @@ private class WorkingFileMergeProvider : MergeProvider {
   }
 
   override fun isBinary(file: VirtualFile): Boolean = false
+}
+
+/** Vetoes each save of the document of [file], so that the document stays unsaved as after an I/O error. */
+private class SaveVetoer(private val file: VirtualFile) : FileDocumentSynchronizationVetoer() {
+  override fun maySaveDocument(document: Document, isSaveExplicit: Boolean): Boolean =
+    FileDocumentManager.getInstance().getFile(document) != file
 }
 
 /** Replaces the three-side merge viewer with [onShow], which gets the merge request instead of a window. */
