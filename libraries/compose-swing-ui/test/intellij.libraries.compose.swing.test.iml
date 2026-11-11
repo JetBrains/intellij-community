@@ -6,10 +6,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="org.jetbrains.compose.swing.swing-ui-test" type="repository">
-        <properties maven-id="org.jetbrains.compose.swing:swing-ui-test:0.1.0-alpha06">
+        <properties maven-id="org.jetbrains.compose.swing:swing-ui-test:0.1.0-alpha07">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha06/swing-ui-test-0.1.0-alpha06.jar">
-              <sha256sum>4b52a26f33b0681d865e1575858c41da861ce213a3ea7e18c4023635551876bd</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha07/swing-ui-test-0.1.0-alpha07.jar">
+              <sha256sum>dcd30f7fe367c9543ea571c7590c7f629d4c99be931a9b580364f0876bbd5559</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.4.20/kotlin-test-2.4.20.jar">
               <sha256sum>fa281d657898a34f6b0c7383f374f0a0161e61b6cea0095f135d917721d63f22</sha256sum>
@@ -31,14 +31,14 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha06/swing-ui-test-0.1.0-alpha06.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha07/swing-ui-test-0.1.0-alpha07.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.4.20/kotlin-test-2.4.20.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.9.0/kotlinx-coroutines-test-jvm-1.9.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.9.0/kotlinx-coroutines-swing-1.9.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha06/swing-ui-test-0.1.0-alpha06-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha07/swing-ui-test-0.1.0-alpha07-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.4.20/kotlin-test-2.4.20-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.9.0/kotlinx-coroutines-test-jvm-1.9.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.9.0/kotlinx-coroutines-swing-1.9.0-sources.jar!/" />

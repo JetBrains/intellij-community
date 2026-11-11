@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="org.jetbrains.compose.swing.swing-ui" type="repository">
-        <properties maven-id="org.jetbrains.compose.swing:swing-ui:0.1.0-alpha06">
+        <properties maven-id="org.jetbrains.compose.swing:swing-ui:0.1.0-alpha07">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui/0.1.0-alpha06/swing-ui-0.1.0-alpha06.jar">
-              <sha256sum>22c5c363e973195ba147d4624b9c15979a3f5e2eeae8ed903bdbfb004446e975</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui/0.1.0-alpha07/swing-ui-0.1.0-alpha07.jar">
+              <sha256sum>ee9979f798de338fe1526b9f4c6c33cb3442481ebdb05dbfacfe9c93a41667e3</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.9.0/kotlinx-coroutines-swing-1.9.0.jar">
               <sha256sum>ce506d82f3642651a39fc706f3d2928d846772a64c92e749f018d7f0f216826f</sha256sum>
@@ -33,13 +33,13 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui/0.1.0-alpha06/swing-ui-0.1.0-alpha06.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui/0.1.0-alpha07/swing-ui-0.1.0-alpha07.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.9.0/kotlinx-coroutines-swing-1.9.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/tracing/tracing-desktop/2.0.0/tracing-desktop-2.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui/0.1.0-alpha06/swing-ui-0.1.0-alpha06-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui/0.1.0-alpha07/swing-ui-0.1.0-alpha07-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.9.0/kotlinx-coroutines-swing-1.9.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/tracing/tracing-desktop/2.0.0/tracing-desktop-2.0.0-sources.jar!/" />
         </SOURCES>
@@ -47,10 +47,10 @@
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="org.jetbrains.compose.swing.swing-ui-foundation" type="repository">
-        <properties maven-id="org.jetbrains.compose.swing:swing-ui-foundation:0.1.0-alpha06">
+        <properties maven-id="org.jetbrains.compose.swing:swing-ui-foundation:0.1.0-alpha07">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-foundation/0.1.0-alpha06/swing-ui-foundation-0.1.0-alpha06.jar">
-              <sha256sum>ff2fe1abb2af488e7b644b45f30a9ccbfc51d798cf41ed26bd02a95787a94f45</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-foundation/0.1.0-alpha07/swing-ui-foundation-0.1.0-alpha07.jar">
+              <sha256sum>2ce3b6f32373c4acaf6b93e3f652e74fab637a164f718604c07df72ad14a91e8</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -61,20 +61,20 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-foundation/0.1.0-alpha06/swing-ui-foundation-0.1.0-alpha06.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-foundation/0.1.0-alpha07/swing-ui-foundation-0.1.0-alpha07.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-foundation/0.1.0-alpha06/swing-ui-foundation-0.1.0-alpha06-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-foundation/0.1.0-alpha07/swing-ui-foundation-0.1.0-alpha07-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="org.jetbrains.compose.swing.swing-ui-animation" type="repository">
-        <properties maven-id="org.jetbrains.compose.swing:swing-ui-animation:0.1.0-alpha06">
+        <properties maven-id="org.jetbrains.compose.swing:swing-ui-animation:0.1.0-alpha07">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-animation/0.1.0-alpha06/swing-ui-animation-0.1.0-alpha06.jar">
-              <sha256sum>e446ed6f8034bfce4a511070a11ce41b6d25b1bbd9d1c1f073ef725c6ebfce40</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-animation/0.1.0-alpha07/swing-ui-animation-0.1.0-alpha07.jar">
+              <sha256sum>1f8ebd2334015cf4e307843cde39dc4975ddd36b860b9d311dfd68d2be19e040</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -89,11 +89,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-animation/0.1.0-alpha06/swing-ui-animation-0.1.0-alpha06.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-animation/0.1.0-alpha07/swing-ui-animation-0.1.0-alpha07.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-animation/0.1.0-alpha06/swing-ui-animation-0.1.0-alpha06-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-animation/0.1.0-alpha07/swing-ui-animation-0.1.0-alpha07-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

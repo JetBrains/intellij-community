@@ -5937,10 +5937,10 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_compose_swing-swing-ui-0_1_0-alpha06_http",
-    downloaded_file_path = "swing-ui-0.1.0-alpha06.jar",
-    sha256 = "22c5c363e973195ba147d4624b9c15979a3f5e2eeae8ed903bdbfb004446e975",
-    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui/0.1.0-alpha06/swing-ui-0.1.0-alpha06.jar",
+    name = "org_jetbrains_compose_swing-swing-ui-0_1_0-alpha07_http",
+    downloaded_file_path = "swing-ui-0.1.0-alpha07.jar",
+    sha256 = "ee9979f798de338fe1526b9f4c6c33cb3442481ebdb05dbfacfe9c93a41667e3",
+    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui/0.1.0-alpha07/swing-ui-0.1.0-alpha07.jar",
 )
 
 http_file(
@@ -5958,10 +5958,10 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_compose_swing-swing-ui-0_1_0-alpha06-sources_http",
-    downloaded_file_path = "swing-ui-0.1.0-alpha06-sources.jar",
-    sha256 = "0778950c1e5064c152ed659a780940d2fe7ce244473bb7d72bec863b99cb2f04",
-    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui/0.1.0-alpha06/swing-ui-0.1.0-alpha06-sources.jar",
+    name = "org_jetbrains_compose_swing-swing-ui-0_1_0-alpha07-sources_http",
+    downloaded_file_path = "swing-ui-0.1.0-alpha07-sources.jar",
+    sha256 = "da7cf67ea4691d3c0694c4316f5055ea3a8f5158af51d309d7f02fe5061cedb5",
+    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui/0.1.0-alpha07/swing-ui-0.1.0-alpha07-sources.jar",
 )
 
 http_file(
@@ -5979,38 +5979,38 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_compose_swing-swing-ui-animation-0_1_0-alpha06_http",
-    downloaded_file_path = "swing-ui-animation-0.1.0-alpha06.jar",
-    sha256 = "e446ed6f8034bfce4a511070a11ce41b6d25b1bbd9d1c1f073ef725c6ebfce40",
-    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui-animation/0.1.0-alpha06/swing-ui-animation-0.1.0-alpha06.jar",
+    name = "org_jetbrains_compose_swing-swing-ui-animation-0_1_0-alpha07_http",
+    downloaded_file_path = "swing-ui-animation-0.1.0-alpha07.jar",
+    sha256 = "1f8ebd2334015cf4e307843cde39dc4975ddd36b860b9d311dfd68d2be19e040",
+    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui-animation/0.1.0-alpha07/swing-ui-animation-0.1.0-alpha07.jar",
 )
 
 http_file(
-    name = "org_jetbrains_compose_swing-swing-ui-animation-0_1_0-alpha06-sources_http",
-    downloaded_file_path = "swing-ui-animation-0.1.0-alpha06-sources.jar",
-    sha256 = "1a5715539ed686f6355d8542f35398a9ed9f883d4536f691ab28a26ed22b0493",
-    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui-animation/0.1.0-alpha06/swing-ui-animation-0.1.0-alpha06-sources.jar",
+    name = "org_jetbrains_compose_swing-swing-ui-animation-0_1_0-alpha07-sources_http",
+    downloaded_file_path = "swing-ui-animation-0.1.0-alpha07-sources.jar",
+    sha256 = "978e1041cd548a633eb3ce03bfa31472fd0ad79da6ab5681b7404f1b3a42dc52",
+    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui-animation/0.1.0-alpha07/swing-ui-animation-0.1.0-alpha07-sources.jar",
 )
 
 http_file(
-    name = "org_jetbrains_compose_swing-swing-ui-foundation-0_1_0-alpha06_http",
-    downloaded_file_path = "swing-ui-foundation-0.1.0-alpha06.jar",
-    sha256 = "ff2fe1abb2af488e7b644b45f30a9ccbfc51d798cf41ed26bd02a95787a94f45",
-    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui-foundation/0.1.0-alpha06/swing-ui-foundation-0.1.0-alpha06.jar",
+    name = "org_jetbrains_compose_swing-swing-ui-foundation-0_1_0-alpha07_http",
+    downloaded_file_path = "swing-ui-foundation-0.1.0-alpha07.jar",
+    sha256 = "2ce3b6f32373c4acaf6b93e3f652e74fab637a164f718604c07df72ad14a91e8",
+    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui-foundation/0.1.0-alpha07/swing-ui-foundation-0.1.0-alpha07.jar",
 )
 
 http_file(
-    name = "org_jetbrains_compose_swing-swing-ui-foundation-0_1_0-alpha06-sources_http",
-    downloaded_file_path = "swing-ui-foundation-0.1.0-alpha06-sources.jar",
-    sha256 = "637d9b6a54dbc864379ddf10b09f8a33b82ad08ef635a66ee2f07c6a1c94ceca",
-    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui-foundation/0.1.0-alpha06/swing-ui-foundation-0.1.0-alpha06-sources.jar",
+    name = "org_jetbrains_compose_swing-swing-ui-foundation-0_1_0-alpha07-sources_http",
+    downloaded_file_path = "swing-ui-foundation-0.1.0-alpha07-sources.jar",
+    sha256 = "124be0a9ba8862cdf9967795719dec52e7d5051fbc17645b375041ef9c4002e6",
+    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui-foundation/0.1.0-alpha07/swing-ui-foundation-0.1.0-alpha07-sources.jar",
 )
 
 http_file(
-    name = "org_jetbrains_compose_swing-swing-ui-test-0_1_0-alpha06_http",
-    downloaded_file_path = "swing-ui-test-0.1.0-alpha06.jar",
-    sha256 = "4b52a26f33b0681d865e1575858c41da861ce213a3ea7e18c4023635551876bd",
-    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha06/swing-ui-test-0.1.0-alpha06.jar",
+    name = "org_jetbrains_compose_swing-swing-ui-test-0_1_0-alpha07_http",
+    downloaded_file_path = "swing-ui-test-0.1.0-alpha07.jar",
+    sha256 = "dcd30f7fe367c9543ea571c7590c7f629d4c99be931a9b580364f0876bbd5559",
+    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha07/swing-ui-test-0.1.0-alpha07.jar",
 )
 
 http_file(
@@ -6028,10 +6028,10 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_compose_swing-swing-ui-test-0_1_0-alpha06-sources_http",
-    downloaded_file_path = "swing-ui-test-0.1.0-alpha06-sources.jar",
-    sha256 = "c663eafd12340770c414b6375dcbd7f9776c8165ded250a07b586371d972b677",
-    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha06/swing-ui-test-0.1.0-alpha06-sources.jar",
+    name = "org_jetbrains_compose_swing-swing-ui-test-0_1_0-alpha07-sources_http",
+    downloaded_file_path = "swing-ui-test-0.1.0-alpha07-sources.jar",
+    sha256 = "72178f0acb89e2890320c688418dae9cc0dea7be466236ab7ee2c125ec98299b",
+    url = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha07/swing-ui-test-0.1.0-alpha07-sources.jar",
 )
 
 http_file(
