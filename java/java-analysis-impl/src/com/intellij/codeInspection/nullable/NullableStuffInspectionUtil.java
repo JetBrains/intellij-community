@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilitySource;
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
@@ -15,6 +18,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReferenceParameterList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -35,7 +39,30 @@ final class NullableStuffInspectionUtil {
     HtmlChunk actualChunk = getSideChunk(context, JavaTypeNullabilityUtil.Side.ACTUAL);
     if (expectedChunk.isEmpty() || actualChunk.isEmpty()) return HtmlChunk.empty();
     return HtmlChunk.tag("table")
-      .children(expectedChunk, actualChunk);
+      .children(expectedChunk, actualChunk,
+                getBoundNullabilityNote(context, JavaTypeNullabilityUtil.Side.EXPECTED),
+                getBoundNullabilityNote(context, JavaTypeNullabilityUtil.Side.ACTUAL));
+  }
+
+  /**
+   * @return a note row when the {@code side} type is a type parameter that is nullable only because of its nullable bound.
+   * Such a type parameter can also be instantiated as non-null.
+   */
+  private static @NotNull HtmlChunk getBoundNullabilityNote(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context,
+                                                            @NotNull JavaTypeNullabilityUtil.Side side) {
+    PsiType type = context.getType(side);
+    if (!isNullableFromTypeParameterBound(type)) return HtmlChunk.empty();
+    String messageKey = side == JavaTypeNullabilityUtil.Side.EXPECTED
+                        ? "expected.type.parameter.can.be.not.null.nullability.conflict.message"
+                        : "actual.type.parameter.can.be.not.null.nullability.conflict.message";
+    return HtmlChunk.tag("tr").child(
+      HtmlChunk.tag("td").attr("colspan", 2).addText(JavaAnalysisBundle.message(messageKey, type.getPresentableText(false))));
+  }
+
+  private static boolean isNullableFromTypeParameterBound(@Nullable PsiType type) {
+    if (!(type instanceof PsiClassType classType) || !(classType.resolve() instanceof PsiTypeParameter)) return false;
+    TypeNullability nullability = type.getNullability();
+    return nullability.nullability() == Nullability.NULLABLE && nullability.source() instanceof NullabilitySource.ExtendsBound;
   }
 
   private static @NotNull HtmlChunk getSideChunk(@NotNull JavaTypeNullabilityUtil.NullabilityConflictContext context,
@@ -62,11 +89,19 @@ final class NullableStuffInspectionUtil {
     Context presentationContext = getPresentationContext(outerType, path, outerType instanceof PsiArrayType);
 
     String typeText = presentationContext.sb.toString();
+    if (presentationContext.position == null) return HtmlChunk.empty();
+    if (isNullableFromTypeParameterBound(context.getType(side))) {
+      return generateHtmlChunk(side, HtmlChunk.text(typeText));
+    }
     PsiAnnotation annotation = context.getAnnotation(side);
     String annotationText = getAnnotationText(annotation);
-    if (presentationContext.position == null || annotationText == null) return HtmlChunk.empty();
-    HtmlChunk result = generateHtmlChunk(typeText, "@" + annotationText, annotation, side, presentationContext.position);
-    return result;
+    if (annotationText == null) return HtmlChunk.empty();
+    int position = presentationContext.position;
+    return generateHtmlChunk(side,
+                             HtmlChunk.text(typeText.substring(0, position)),
+                             getAnnotationChunk(annotation, "@" + annotationText),
+                             HtmlChunk.text(" "),
+                             HtmlChunk.text(typeText.substring(position)));
   }
 
   private static @Nullable String getAnnotationText(@Nullable PsiAnnotation annotation) {
@@ -76,11 +111,8 @@ final class NullableStuffInspectionUtil {
     return ref.getReferenceName();
   }
 
-  private static @NotNull HtmlChunk generateHtmlChunk(@NlsSafe String text,
-                                                      @NlsSafe String annotationText,
-                                                      @NotNull PsiAnnotation annotation,
-                                                      @NotNull JavaTypeNullabilityUtil.Side side,
-                                                      int position) {
+  private static @NotNull HtmlChunk generateHtmlChunk(@NotNull JavaTypeNullabilityUtil.Side side,
+                                                      @NotNull HtmlChunk @NotNull ... typeChunks) {
     return HtmlChunk.tag("tr")
       .children(
         HtmlChunk.tag("td")
@@ -90,12 +122,7 @@ final class NullableStuffInspectionUtil {
                                                             : "actual.type.nullability.conflict.message"
             )
           ),
-        HtmlChunk.tag("td").children(
-          HtmlChunk.text(text.substring(0, position)),
-          getAnnotationChunk(annotation, annotationText),
-          HtmlChunk.text(" "),
-          HtmlChunk.text(text.substring(position))
-        )
+        HtmlChunk.tag("td").children(typeChunks)
       );
   }
 
@@ -233,6 +260,6 @@ final class NullableStuffInspectionUtil {
 
   private static final class Context {
     private @Nullable Integer position = null;
-    private final @NotNull StringBuilder sb = new StringBuilder();
+    private final @NotNull @NlsSafe StringBuilder sb = new StringBuilder();
   }
 }
