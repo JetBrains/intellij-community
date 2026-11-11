@@ -165,9 +165,7 @@ class MergeConflictModel(
   /**
    * Applies every auto-resolvable change to the output document.
    *
-   * @return true when it changed the output document, false when there was nothing to auto-resolve. A caller that persists
-   * the output, for example the multi-file merge dialog, must save only when this returns true. Otherwise it would write the
-   * seeded merge base back to the file. See `MultipleFileMergeDialog.resolveAutomatically`.
+   * @return true when it changed the output document, false when there was nothing to auto-resolve.
    */
   @RequiresWriteLock
   fun resolveAllChangesAutomatically(): Boolean {

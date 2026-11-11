@@ -22,6 +22,7 @@ import com.intellij.diff.util.Side
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrHandleException
@@ -65,10 +66,10 @@ import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.JBUI
@@ -157,7 +158,7 @@ open class MultipleFileMergeDialog(
     showMergeDialog = ::showMergeDialog,
     toggleGroupByDirectory = ::toggleGroupByDirectory,
     getGroupByDirectory = { groupByDirectory },
-    resolveAutomatically = { resolveAutomatically(project, iterativeDataHolder) },
+    resolveAutomatically = { resolveAutomatically(iterativeDataHolder) },
     updateTable = ::updateModelFromFiles,
   )
   else OneShotMergeFlowDelegate(
@@ -233,13 +234,11 @@ open class MultipleFileMergeDialog(
   }
 
   /**
-   * Opening the three-side viewer replaces each opened file's document with the merge base (that is what
-   * makes the result editable). For files the user did not finish - still unresolved, so never saved or
-   * marked processed - that base is left unsaved in the document and would be flushed to disk after the
-   * dialog closes (e.g. by the VFS refresh in GitConflictResolver), destroying the conflict. Reload their
-   * on-disk content so any later flush is a no-op. Files that were saved ("Save and Close" or finished)
-   * are already in sync with disk and are skipped. Runs after `super.dispose()` so the models - and their
-   * document listeners - are already gone and cannot react to the reload.
+   * Opening the three-side viewer replaces the document of each opened file with the merge base. The dialog saves a document
+   * only when it marks the file processed. Thus each unprocessed file keeps the merge base and its partial resolution in an
+   * unsaved document. A later flush, for example by the VFS refresh in GitConflictResolver, would write that over the conflicted
+   * file. Reload the on-disk content, so that a later flush does nothing. Runs after `super.dispose()`, so that the models and
+   * their document listeners are gone and cannot react to the reload.
    *
    * IJPL-251324 Merge Revisions viewer: cancelling overwrites the conflicted file and marks it resolved
    */
@@ -274,10 +273,7 @@ open class MultipleFileMergeDialog(
   @Throws(ProcessCanceledException::class)
   @RequiresBlockingContext
   @RequiresEdt
-  private fun resolveAutomatically(
-    project: Project,
-    iterativeDataHolder: MergeConflictIterativeDataHolder,
-  ) {
+  private fun resolveAutomatically(iterativeDataHolder: MergeConflictIterativeDataHolder) {
     // Resolve in the order shown in the table, makes the UX a bit better
     val files = getUnresolvedFiles().sortedWith(fileComparator)
     if (files.isEmpty()) return
@@ -294,10 +290,7 @@ open class MultipleFileMergeDialog(
                 val model = iterativeDataHolder.prepareModelIfSupported(file, request) ?: return@itemStep
 
                 edtWriteAction {
-                  if (model.resolveAllChangesAutomatically()) {
-                    saveDocument(file)
-                    checkMarkModifiedProject(project, file)
-                  }
+                  model.resolveAllChangesAutomatically()
                   updateModelFromFiles()
                 }
               }
@@ -411,24 +404,10 @@ open class MultipleFileMergeDialog(
         .ask(project)
       if (!confirmed) return
     }
-    filesWithModel.forEach { [file, model] ->
-      acceptRevisionForFileIterativeResolution(file, model, resolution)
-    }
+    val side = if (resolution == MergeSession.Resolution.AcceptedTheirs) Side.RIGHT else Side.LEFT
+    filesWithModel.forEach { [_, model] -> model.acceptRevisionForSide(side) }
 
     updateModelFromFiles()
-  }
-
-  @RequiresBlockingContext
-  @RequiresEdt
-  private fun acceptRevisionForFileIterativeResolution(
-    file: VirtualFile,
-    mergeConflictModel: MergeConflictModel,
-    resolution: MergeSession.Resolution,
-  ) {
-    val side = if (resolution == MergeSession.Resolution.AcceptedTheirs) Side.RIGHT else Side.LEFT
-    mergeConflictModel.acceptRevisionForSide(side)
-    saveDocument(file)
-    checkMarkModifiedProject(project, file)
   }
 
   @RequiresEdt
@@ -506,13 +485,11 @@ open class MultipleFileMergeDialog(
   private fun finishResolution() {
     val iterativelyResolved =
       iterativeDataHolder?.getResolvedFilesAndModels() ?: return
-    iterativelyResolved.keys.forEach { file ->
-      saveDocument(file)
-      checkMarkModifiedProject(project, file)
-    }
     runWithModalProgressBlocking(getModalTaskOwner(),
                                  VcsBundle.message("multiple.file.merge.dialog.progress.title.applying.resolutions")) {
       iterativelyResolved.forEach { [file, model] ->
+        edtWriteAction { saveDocument(file) }
+        checkMarkModifiedProject(project, file)
         markFileProcessed(file, model.chosenSide.toMergeResolution())
       }
     }
@@ -549,12 +526,7 @@ open class MultipleFileMergeDialog(
                                                VcsBundle.message("multiple.file.merge.dialog.progress.title.loading.revisions")) {
       mergeRequestBuilder(file).withTitles().withCallback { result: MergeResult ->
         mergeResult = result
-        val model = iterativeDataHolder?.getMergeConflictModel(file)
-        if (result != MergeResult.CANCEL || model?.contentModified == true) {
-          saveDocument(file)
-          checkMarkModifiedProject(project, file)
-        }
-        model?.apply {
+        iterativeDataHolder?.getMergeConflictModel(file)?.apply {
           markReviewed()
           chosenSide = when (result) {
             MergeResult.LEFT -> Side.LEFT
@@ -566,7 +538,10 @@ open class MultipleFileMergeDialog(
         if (result != MergeResult.CANCEL) {
           val iterativelyResolved = iterativeDataHolder?.isFileResolved(file) ?: false
 
+          // finishResolution saves and marks an iteratively resolved file
           if (!iterativelyResolved) {
+            runWriteAction { saveDocument(file) }
+            checkMarkModifiedProject(project, file)
             runWithModalProgressBlocking(getModalTaskOwner(),
                                          VcsBundle.message("multiple.file.merge.dialog.progress.title.resolving.conflicts")) {
               markFileProcessed(file, getSessionResolution(result))
@@ -723,9 +698,10 @@ private fun checkMarkModifiedProject(project: Project?, file: VirtualFile) {
   MergeUtil.reportProjectFileChangeIfNeeded(project, file)
 }
 
+@RequiresWriteLock
 private fun saveDocument(file: VirtualFile) {
   val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return
-  application.runWriteAction { FileDocumentManager.getInstance().saveDocument(document) }
+  FileDocumentManager.getInstance().saveDocument(document)
 }
 
 private fun MergeSession.Resolution.yoursOrTheirs(): Boolean = when (this) {
