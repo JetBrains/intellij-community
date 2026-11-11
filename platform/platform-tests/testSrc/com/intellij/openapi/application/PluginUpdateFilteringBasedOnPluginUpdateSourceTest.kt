@@ -1,6 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.ide.plugins.DiscoveredPluginsList
+import com.intellij.ide.plugins.PluginMainDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginsDiscoveryResult
+import com.intellij.ide.plugins.PluginsSourceContext
+import com.intellij.ide.plugins.computeTargetState
 import com.intellij.ide.plugins.newui.DefaultPluginUpdatesProvider
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
@@ -21,6 +27,8 @@ import com.intellij.openapi.updateSettings.impl.FORCE_INTERNAL_USER_FOR_TESTS_IN
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil.withSystemProperty
@@ -39,6 +47,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
+import java.nio.file.Path
 import java.util.UUID
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -93,8 +102,8 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
         assertUpdate(results.receive(), "2.1", repositoryB.url)
         withModalProgress(ModalTaskOwner.guess(), "Check plugin updates", TaskCancellation.nonCancellable()) {
           for ((source, version, repository) in listOf(Triple(sourceA, "1.1", repositoryA.url),
-                                                     Triple(sourceB, "2.1", repositoryB.url),
-                                                     Triple(sourceA, "1.1", repositoryA.url))) {
+                                                       Triple(sourceB, "2.1", repositoryB.url),
+                                                       Triple(sourceA, "1.1", repositoryA.url))) {
             DefaultUiPluginManagerController.setPendingPluginUpdateSourceInSession(session.sessionId, pluginId, source)
             assertEquals(null, DefaultUiPluginManagerController.apply(null, null).error)
             assertEquals(source, sources.getPluginUpdateSourceId(pluginId))
@@ -299,6 +308,58 @@ internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateChecke
     assertEquals(setOf(MARKETPLACE_SOURCE_MARKETPLACE_CHANNEL_CUSTOM_REPOSITORY), updatesById.keys)
     assertEquals("9.0", updatesById.getValue(MARKETPLACE_SOURCE_MARKETPLACE_CHANNEL_CUSTOM_REPOSITORY).pluginVersion)
     assertTrue(internalResult.pluginUpdates.allDisabled.isEmpty())
+  }
+
+  @Test
+  fun `updated JetBrains bundled plugin receives updates from Marketplace`() {
+    val pluginId = "test.updated.bundled.jetbrains"
+    fun descriptor(version: String, isBundled: Boolean): PluginMainDescriptor {
+      val raw = PluginDescriptorBuilder.builder().apply {
+        id = pluginId
+        this.version = version
+        vendor = "JetBrains"
+      }.build()
+      return PluginMainDescriptor(raw, Path.of(version), isBundled)
+    }
+
+    val builder = PluginSetTestBuilder.fromDescriptors {
+      listOf(descriptor("1.0", isBundled = true), descriptor("2.0", isBundled = false))
+    }
+    val discoveredPlugins = builder.discoverPlugins().second.pluginLists.single().plugins
+    val bundledPlugin = discoveredPlugins.first { it.version == "1.0" }
+    val updatedPlugin = discoveredPlugins.first { it.version == "2.0" }
+    val pluginSet = builder.buildInitContext().computeTargetState(
+      discoveryResult = PluginsDiscoveryResult.build(listOf(
+        DiscoveredPluginsList(listOf(bundledPlugin), PluginsSourceContext.Bundled),
+        DiscoveredPluginsList(listOf(updatedPlugin), PluginsSourceContext.Custom),
+      )),
+      isStartupInit = false,
+      parentActivity = null,
+    )
+
+    val originalPluginSet = PluginManagerCore.getPluginSet()
+    PluginManagerCore.setPluginSet(pluginSet)
+    try {
+      assertTrue(PluginManagerCore.isUpdatedBundledPlugin(updatedPlugin))
+      val customServer = createTestServer()
+      setInstalledPluginMocks(installedPlugin(pluginId, isJetBrainsPlugin = true))
+      installedPluginsFacade.setHosts(listOf(customServer.url))
+      setMarketplacePlugins(listOf(RepositoryPluginMock(pluginId, "801", "401", "3.0")), listOf(pluginId))
+      setCustomRepositoryPlugins(customServer, listOf(CustomRepositoryPlugin(pluginId, "9.0")))
+
+      val service = PluginUpdateSourceService.getInstance()
+      assertEquals(service.createMarketplacePluginUpdateSourceId(), service.getPluginUpdateSourceId(PluginId.getId(pluginId)))
+
+      val update = with(UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates()) {
+        assertEquals(emptyMap<String?, Exception>(), errors)
+        pluginUpdates.allEnabled.single()
+      }
+      assertEquals(pluginId, update.id.idString)
+      assertEquals("3.0", update.pluginVersion)
+    }
+    finally {
+      PluginManagerCore.setPluginSet(originalPluginSet)
+    }
   }
 
   private fun setMarketplacePlugins(plugins: List<RepositoryPluginMock>, knownPluginIds: Collection<String>) {
