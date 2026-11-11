@@ -1,9 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import com.intellij.ide.ImportOldConfigsUsagesCollector.InitialImportScenario
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+
+// stored outside ImportOldConfigsUsagesCollector to not load it early in startup
+@Volatile private var initialImportScenario = null as InitialImportScenario?
+@Volatile private var inheritedSettings = false
 
 internal object ImportOldConfigsUsagesCollector : CounterUsagesCollector() {
   internal enum class InitialImportScenario {
@@ -17,9 +22,6 @@ internal object ImportOldConfigsUsagesCollector : CounterUsagesCollector() {
     EventFields.Enum("initial_import_scenario", InitialImportScenario::class.java),
     EventFields.Boolean("inherited_settings")
   )
-
-  @Volatile private var initialImportScenario = null as InitialImportScenario?
-  @Volatile private var inheritedSettings = false
 
   override fun getGroup(): EventLogGroup = GROUP
 
