@@ -466,6 +466,7 @@ open class MultipleFileMergeDialog(
   }
 
   override fun doCancelAction() {
+    if (!mergeFlowDelegate.confirmClose()) return
     MergeStatisticsCollector.logDialogClosed(project, mergeFlow)
     finishResolution()
     super.doCancelAction()
