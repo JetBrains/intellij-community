@@ -58,6 +58,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.EmptyIcon;
@@ -366,6 +367,10 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       myChooserDescriptor.validateSelectedFiles(files);
     }
     catch (Exception e) {
+      if (!myChooserDescriptor.isValidationErrorShown(e)) {
+        ExceptionUtil.rethrowUnchecked(e);
+        throw new RuntimeException(e);
+      }
       Messages.showErrorDialog(getContentPane(), e.getMessage(), getTitle());
       return;
     }

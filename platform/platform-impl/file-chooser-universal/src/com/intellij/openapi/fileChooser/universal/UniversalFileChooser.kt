@@ -291,7 +291,8 @@ object UniversalFileChooser {
    * Checks [files] with [FileChooserDescriptor.validateSelectedFiles]. The validation can do I/O,
    * so it runs on [Dispatchers.IO]. Callable from the EDT: there it shows a modal progress when the
    * validation takes long, and no progress otherwise.
-   * When the validation fails, shows an error dialog and returns false.
+   * When the validation fails, shows an error dialog and returns false. When
+   * [FileChooserDescriptor.withValidationErrorFilter] rejects the exception, rethrows it.
    */
   private fun validateChosenFiles(descriptor: FileChooserDescriptor, project: Project, files: List<VirtualFile>): Boolean {
     if (files.isEmpty()) return true
@@ -313,6 +314,7 @@ object UniversalFileChooser {
     }
     catch (e: Exception) {
       rethrowControlFlowException(e)
+      if (!descriptor.isValidationErrorShown(e)) throw e
       val dialogTitle = descriptor.title ?: UIBundle.message("file.chooser.default.title")
       Messages.showErrorDialog(project, e.message, dialogTitle)
       return false

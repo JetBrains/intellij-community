@@ -182,7 +182,7 @@ public final class PythonSdkType extends SdkType {
   public @NotNull FileChooserDescriptor getHomeChooserDescriptor() {
     final var descriptor = new FileChooserDescriptor(true, true, false, false, false, false) {
       @Override
-      public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
+      public void validateSelectedFiles(VirtualFile @NotNull [] files) throws PySelectInterpreterException {
         if (files.length != 0) {
           VirtualFile file = files[0];
 
@@ -212,7 +212,7 @@ public final class PythonSdkType extends SdkType {
             String message = result.isDirectory()
                              ? PyBundle.message("python.sdk.error.invalid.venv.selected", file.getName())
                              : PyBundle.message("python.sdk.error.invalid.interpreter.selected", file.getName());
-            throw new Exception(message);
+            throw new PySelectInterpreterException(message);
           }
         }
       }
@@ -226,7 +226,8 @@ public final class PythonSdkType extends SdkType {
       }
     }
       .withTitle(PyBundle.message("sdk.select.path"))
-      .withShowHiddenFiles(SystemInfo.isUnix);
+      .withShowHiddenFiles(SystemInfo.isUnix)
+      .withValidationErrorFilter(e -> e instanceof PySelectInterpreterException);
 
     // XXX: Workaround for PY-21787 and PY-43507 since the native macOS dialog always follows symlinks
     if (SystemInfo.isMac) {

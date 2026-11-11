@@ -68,6 +68,7 @@ public class FileChooserDescriptor {
   private @Nullable List<FileType> myFileTypeFilter = null;
   private @Nullable Predicate<? super VirtualFile> myFileFilter = null;
   private @Nullable Predicate<? super Path> myPathFilter = null;
+  private @Nullable Predicate<? super Exception> myValidationErrorFilter = null;
   private boolean myForcedToUseIdeaFileChooser = false;
   private boolean myEnvironmentRestricted = false;
   private boolean myLocalFileSystem = false;
@@ -121,6 +122,7 @@ public class FileChooserDescriptor {
     myFileTypeFilter = d.myFileTypeFilter;
     myFileFilter = d.myFileFilter;
     myPathFilter = d.myPathFilter;
+    myValidationErrorFilter = d.myValidationErrorFilter;
     myForcedToUseIdeaFileChooser = false;
     myEnvironmentRestricted = d.myEnvironmentRestricted;
     myLocalFileSystem = d.myLocalFileSystem;
@@ -296,6 +298,20 @@ public class FileChooserDescriptor {
   }
 
   /**
+   * Sets a condition for the exceptions of {@link #validateSelectedFiles(VirtualFile[])}.
+   * A file chooser shows the message of an exception that matches the condition in an error dialog.
+   * It rethrows an exception that does not match, and the platform reports it as an IDE error.
+   * Without a condition, the file chooser shows all exceptions.
+   * <p/>
+   * Use it to show only the exceptions that tell the user about wrong input.
+   */
+  @ApiStatus.Internal
+  public FileChooserDescriptor withValidationErrorFilter(@Nullable Condition<? super Exception> filter) {
+    myValidationErrorFilter = filter;
+    return this;
+  }
+
+  /**
    * @see #withExtensionFilter(String, String...)
    */
   public FileChooserDescriptor withExtensionFilter(@NotNull FileType type) {
@@ -425,7 +441,8 @@ public class FileChooserDescriptor {
    * Override to customize the validation of user input.
    *
    * @param files selected files to be checked
-   * @throws Exception if selected files cannot be accepted, the exception message will be shown in the UI.
+   * @throws Exception if selected files cannot be accepted, the exception message will be shown in the UI
+   *                   if {@link #isValidationErrorShown(Exception)} allows it.
    */
   public void validateSelectedFiles(@SuppressWarnings("SSBasedInspection") @NotNull VirtualFile @NotNull [] files) throws Exception {
     if (myBaseDescriptor != null) {
@@ -568,5 +585,16 @@ public class FileChooserDescriptor {
   @Override
   public String toString() {
     return "FileChooserDescriptor [" + myTitle + "]";
+  }
+
+  /**
+   * Tells if a file chooser shows the message of {@code e} from {@link #validateSelectedFiles(VirtualFile[])} in an error dialog.
+   *
+   * @see #withValidationErrorFilter(Condition)
+   */
+  @ApiStatus.Internal
+  public final boolean isValidationErrorShown(@NotNull Exception e) {
+    var filter = myValidationErrorFilter;
+    return filter == null || filter.test(e);
   }
 }

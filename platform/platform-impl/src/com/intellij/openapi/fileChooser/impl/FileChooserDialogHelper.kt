@@ -126,6 +126,7 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
       return selectedFiles
     }
     catch (e: Exception) {
+      if (!descriptor.isValidationErrorShown(e)) throw e
       Messages.showErrorDialog(parent, e.message, title)
       return emptyArray()
     }
