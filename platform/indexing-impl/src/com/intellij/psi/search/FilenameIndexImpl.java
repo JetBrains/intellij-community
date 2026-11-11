@@ -58,6 +58,7 @@ final class FilenameIndexImpl extends ScalarIndexExtension<String> {
 
   @Override
   public boolean traceKeyHashToVirtualFileMapping() {
-    return true;
+    // the forward index filters the keys by file id, unless that filtering is off:
+    return !FileBasedIndexExtension.USE_FORWARD_INDEX_FOR_KEYS_FILTERING;
   }
 }
