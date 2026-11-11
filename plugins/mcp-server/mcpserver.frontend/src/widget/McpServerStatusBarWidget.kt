@@ -9,14 +9,12 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
-import com.intellij.platform.compose.swing.composeSwingPanel
+import com.intellij.platform.compose.swing.AnchorAlignmentPositionProvider
+import com.intellij.platform.compose.swing.createComposeSwingPopup
 import com.intellij.ui.BadgeIconSupplier
 import com.intellij.ui.popup.PopupState
 import com.intellij.util.Consumer
@@ -30,14 +28,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.compose.swing.foundation.layout.Alignment
-import org.jetbrains.compose.swing.foundation.layout.wrapContentHeight
+import org.jetbrains.compose.swing.foundation.layout.width
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.listener.componentListener
-import org.jetbrains.compose.swing.style.maximumSize
-import org.jetbrains.compose.swing.style.minimumSize
-import org.jetbrains.compose.swing.style.styleable
-import java.awt.Dimension
-import java.awt.Point
 import java.awt.event.MouseEvent
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -53,7 +45,6 @@ internal class McpServerStatusBarWidget(
     private val MCP_LOGO: Icon = AllIcons.Nodes.McpServerWidget
     private val BADGE_ICON_SUPPLIER = BadgeIconSupplier(MCP_LOGO)
     const val POPUP_WIDTH: Int = 450
-    private const val POPUP_HEIGHT = 180 //approx size of the content
   }
 
   override fun ID(): String = MCP_WIDGET_ID
@@ -104,7 +95,6 @@ internal class McpServerStatusBarWidget(
   }
 
   private fun createAndShowPopup(component: JComponent) {
-    var popupRef: JBPopup? = null
     val model = McpServerPopupModelImpl(
       project = project,
       coroutineScope = coroutineScope,
@@ -118,64 +108,27 @@ internal class McpServerStatusBarWidget(
       },
       onStateChangedAction = { updatePresentation() },
     )
-    val contentDisposable = Disposer.newDisposable("MCP popup")
-    Disposer.register(this, contentDisposable)
-    val panel = composeSwingPanel(contentDisposable) {
-      McpServerPopupContent(
-        model = model,
-        // The content keeps its own height, which the listener below sizes the popup by.
-        modifier = SwingModifier
-          .wrapContentHeight(Alignment.Top)
-          .componentListener(onComponentResized = {
-            popupRef?.let { popup ->
-              popup.size = Dimension(POPUP_WIDTH, it.component.height)
-              adjustPopupLocation(popup, component)
-            }
-          })
-          .styleable {
-            minimumSize(JBUI.scale(POPUP_WIDTH), 0)
-            maximumSize(JBUI.scale(POPUP_WIDTH), Int.MAX_VALUE)
-          },
-      )
-    }.apply {
-      preferredSize = JBUI.size(POPUP_WIDTH, POPUP_HEIGHT)
+    val popup = JBPopupFactory.getInstance().createComposeSwingPopup(
+      // The popup sits above the widget, and the end edges of the two are in line.
+      positionProvider = AnchorAlignmentPositionProvider(anchorAlignment = Alignment.TopEnd, popupAlignment = Alignment.BottomEnd),
+      configure = {
+        setCancelOnOtherWindowOpen(true)
+        setCancelOnClickOutside(true)
+        setShowBorder(false)
+        setFocusable(true)
+        setRequestFocus(true)
+      },
+    ) {
+      McpServerPopupContent(model = model, modifier = SwingModifier.width(JBUI.scale(POPUP_WIDTH)))
     }
-
-    val popup = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(panel, null)
-      .setCancelOnOtherWindowOpen(true)
-      .setCancelOnClickOutside(true)
-      .setShowBorder(false)
-      .setFocusable(true)
-      .setRequestFocus(true)
-      .createPopup()
     Disposer.register(this, popup)
-    Disposer.register(popup, contentDisposable)
-    popupRef = popup
 
     popupState.prepareToShow(popup)
-    popup.showInCorner(component)
+    popup.show(component)
   }
 
   override fun dispose() {
     statusBar = null
     coroutineScope.cancel()
   }
-}
-
-private fun adjustPopupLocation(popup: JBPopup, component: JComponent) {
-  val location = Point(component.locationOnScreen).apply {
-    x -= popup.size.width - component.width
-    y -= popup.size.height
-  }
-  popup.setLocation(location)
-}
-
-private fun JBPopup.showInCorner(component: JComponent) {
-  addListener(object : JBPopupListener {
-    override fun beforeShown(event: LightweightWindowEvent) {
-      adjustPopupLocation(event.asPopup(), component)
-    }
-  })
-  show(component)
 }

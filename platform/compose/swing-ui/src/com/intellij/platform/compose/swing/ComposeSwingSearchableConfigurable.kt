@@ -2,18 +2,16 @@
 package com.intellij.platform.compose.swing
 
 import androidx.compose.runtime.Composable
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.newEditor.ExternalUpdateRequest
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.DisposableHandle
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.compose.swing.annotations.InternalSwingUiApi
-import org.jetbrains.compose.swing.core.SwingRecomposer
-import org.jetbrains.compose.swing.foundation.layout.setContent
 import java.awt.BorderLayout
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
@@ -39,12 +37,10 @@ import kotlin.reflect.KMutableProperty0
  * @see com.intellij.openapi.options.BoundSearchableConfigurable
  */
 @ApiStatus.Experimental
-@OptIn(InternalSwingUiApi::class)
 public abstract class ComposeSwingSearchableConfigurable : SearchableConfigurable, Configurable.NoMargin {
   private val bindings = mutableListOf<SettingState<*>>()
   private var page: JComponent? = null
-  private var composition: DisposableHandle? = null
-  private var recomposer: SwingRecomposer? = null
+  private var composition: Disposable? = null
 
   /** Content of this configurable. */
   @Composable
@@ -71,13 +67,7 @@ public abstract class ComposeSwingSearchableConfigurable : SearchableConfigurabl
     // which a panel hosting a composition cannot be, so the page states its own margins and opts out of the
     // dialog's with NoMargin.
     val panel = ComposeSwingPanel().apply { addContainerListener(PageMargins) }
-    // A runtime of the page's own, named as the parent of the mount, is what composes the content on this
-    // call: a mount left to resolve its parent from the Swing tree waits for a window, and Settings search
-    // builds a page and walks it without ever showing it. Content that is only ever shown stays on the
-    // runtime its window shares, which is what composeSwingPanel gives it.
-    val recomposer = SwingRecomposer.create(panel)
-    this.recomposer = recomposer
-    composition = panel.setContent(recomposer.compositionContext) { ComposeContent() }
+    composition = panel.setContentWithOwnRecomposer { ComposeContent() }
     page = panel
     return panel
   }
@@ -88,10 +78,8 @@ public abstract class ComposeSwingSearchableConfigurable : SearchableConfigurabl
    * `super`.
    */
   override fun disposeUIResources() {
-    composition?.dispose()
+    composition?.let(Disposer::dispose)
     composition = null
-    recomposer?.dispose()
-    recomposer = null
     page = null
   }
 

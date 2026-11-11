@@ -70,6 +70,20 @@ A host composes when it reaches a window, so an
 off-screen traversal, such as settings search, reads an empty panel. A `ComposeSwingSearchableConfigurable` composes when it is built, so settings search finds its
 options. See [kotlin-ui-dsl.md](docs/kotlin-ui-dsl.md).
 
+## Popups
+
+```kotlin
+val popup = JBPopupFactory.getInstance().createComposeSwingPopup(
+  positionProvider = AnchorAlignmentPositionProvider(anchorAlignment = Alignment.TopEnd, popupAlignment = Alignment.BottomEnd),
+  configure = { setRequestFocus(true) },
+) {
+  MyPopupContent(modifier = SwingModifier.width(JBUI.scale(400)))
+}
+popup.show(component)
+```
+
+`createComposeSwingPopup` creates the popup and composes its content. The caller closes the popup with `popup.cancel()`. The popup takes the size of the content and follows it when the content changes, so the content sets its limits with layout modifiers. The `PopupPositionProvider` places the popup against the component it is shown for, as the `Popup` of androidx Compose does. For a popup that the platform builds, such as a documentation popup, `composeSwingPopupContent` returns the content component, and the platform sizes the popup.
+
 ## What this module adds
 
 Components, layout panels and modifiers come from the library, cataloged in

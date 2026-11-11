@@ -12,9 +12,12 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.WidthBasedLayout
 import kotlinx.coroutines.DisposableHandle
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.compose.swing.annotations.InternalSwingUiApi
+import org.jetbrains.compose.swing.core.SwingRecomposer
 import org.jetbrains.compose.swing.foundation.layout.ConstrainedPanel
 import org.jetbrains.compose.swing.foundation.layout.ConstrainedScope
 import org.jetbrains.compose.swing.foundation.layout.Constraints
+import org.jetbrains.compose.swing.foundation.layout.MeasurePolicy
 import org.jetbrains.compose.swing.foundation.layout.setContent
 import javax.swing.JComponent
 
@@ -60,8 +63,35 @@ public fun composeSwingPanel(
   return panel
 }
 
+/**
+ * Sets [content] as [setContent] does, on a recomposer of this panel's own, so the content composes on this call and
+ * needs no window: a host whose size or components are read before it shows, such as a Settings page that settings
+ * search walks, or a popup that reads its size before it opens. Disposing the result ends the content and the
+ * recomposer.
+ */
+@OptIn(InternalSwingUiApi::class)
+internal fun ConstrainedPanel.setContentWithOwnRecomposer(content: @Composable ConstrainedScope.() -> Unit): Disposable {
+  val recomposer = SwingRecomposer.create(this)
+  val composition = try {
+    setContent(recomposer.compositionContext, content)
+  }
+  catch (e: Throwable) {
+    recomposer.dispose()
+    throw e
+  }
+  return Disposable {
+    composition.dispose()
+    recomposer.dispose()
+  }
+}
+
 @ApiStatus.Internal
-public class ComposeSwingPanel : ConstrainedPanel(), WidthBasedLayout {
+public open class ComposeSwingPanel : ConstrainedPanel, WidthBasedLayout {
+  public constructor() : super()
+
+  /** A host whose top-level composables [measurePolicy] measures and places. */
+  internal constructor(measurePolicy: MeasurePolicy) : super(measurePolicy)
+
   init {
     // The panel paints the panel background, as the JPanel the host replaces did.
     isOpaque = true

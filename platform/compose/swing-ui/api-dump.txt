@@ -1,4 +1,5 @@
 f:com.intellij.platform.compose.swing.ComposeSwingPanelKt
+f:com.intellij.platform.compose.swing.ComposeSwingPopupKt
 f:com.intellij.platform.compose.swing.components.ActionLinkKt
 f:com.intellij.platform.compose.swing.components.BrowserLinkKt
 f:com.intellij.platform.compose.swing.components.ComboBoxKt

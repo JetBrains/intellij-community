@@ -8,13 +8,10 @@ import com.intellij.platform.compose.swing.components.Comment
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
-import org.jetbrains.compose.swing.annotations.InternalSwingUiApi
 import org.jetbrains.compose.swing.components.Label
-import org.jetbrains.compose.swing.core.SwingRecomposer
 import org.jetbrains.compose.swing.foundation.layout.Alignment
 import org.jetbrains.compose.swing.foundation.layout.Column
 import org.jetbrains.compose.swing.foundation.layout.ConstrainedScope
-import org.jetbrains.compose.swing.foundation.layout.setContent
 import org.jetbrains.compose.swing.foundation.layout.wrapContentHeight
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.junit.jupiter.api.Test
@@ -141,18 +138,14 @@ class ComposeSwingPanelTest {
     assertTrue(second.labels.isEmpty())
   }
 
-  @OptIn(InternalSwingUiApi::class)
   private fun withComposedPanel(content: @Composable ConstrainedScope.() -> Unit, assertions: (ComposeSwingPanel) -> Unit) {
     val panel = ComposeSwingPanel()
-    // A runtime of the test's own composes the content on the call, as the Settings page does.
-    val recomposer = SwingRecomposer.create(panel)
-    val composition = panel.setContent(recomposer.compositionContext, content)
+    val composition = panel.setContentWithOwnRecomposer(content)
     try {
       assertions(panel)
     }
     finally {
-      composition.dispose()
-      recomposer.dispose()
+      Disposer.dispose(composition)
     }
   }
 
