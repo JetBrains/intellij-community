@@ -33,7 +33,7 @@ import org.jetbrains.annotations.ApiStatus
 val condaSupportedLanguages: List<LanguageLevel>
   get() = LanguageLevel.SUPPORTED_LEVELS
     .asReversed()
-    .filter { it < LanguageLevel.PYTHON314 }
+    .filter { it <= LanguageLevel.PYTHON315 }
 
 
 
