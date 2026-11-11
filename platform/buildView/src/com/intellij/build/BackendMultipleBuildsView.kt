@@ -28,7 +28,6 @@ import com.intellij.platform.rpc.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.EdtExecutorService
-import com.intellij.util.ui.EdtInvocationManager
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
@@ -145,11 +144,7 @@ class BackendMultipleBuildsView(private val project: Project, internal val viewM
         buildView.onEvent(buildId, event)
 
         val treeViewId = buildView.eventView?.buildViewId
-
-        // Normally MultipleBuildsView is disposed on EDT (triggered by AbstractViewManager instance disposal),
-        // but in tests AbstractViewManager instances are often mocked and disposed not on EDT
-        val transferDisposable = buildView.toEdtDisposable()
-        val consoleComponent = buildView.consoleComponent?.setupTransfer(transferDisposable)
+        val consoleComponent = buildView.consoleComponent?.setupTransfer(buildView)
 
         val processHandler = buildInfo.processHandler
         if (processHandler is Disposable) {
@@ -313,15 +308,5 @@ class BackendMultipleBuildsView(private val project: Project, internal val viewM
 
     val isRunning: Boolean
       get() = endTime == -1L
-  }
-}
-
-private fun Disposable.toEdtDisposable() = Disposer.newDisposable().also {
-  if (!Disposer.tryRegister(this) {
-      EdtInvocationManager.invokeLaterIfNeeded {
-        Disposer.dispose(it)
-      }
-  }) {
-    Disposer.dispose(it)
   }
 }
