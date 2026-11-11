@@ -1,15 +1,14 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.project.getFileTypeWithoutContent
+import com.intellij.internal.statistic.project.processContentFilesInReadActions
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
-import it.unimi.dsi.fastutil.ints.Int2IntMap
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 
 internal class CodeInsightContextFusCollector : ProjectUsagesCollector() {
@@ -24,37 +23,27 @@ internal class CodeInsightContextFusCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  override fun requiresReadAccess(): Boolean = true
-
   override fun getMetrics(project: Project): Set<MetricEvent> {
-
-    val events = mutableSetOf<MetricEvent>()
+    if (project.isDisposed) return emptySet()
 
     val sharedSourceEnabled = isSharedSourceSupportEnabled(project)
+    val enabledEvent = ENABLED.metric(sharedSourceEnabled)
+    if (!sharedSourceEnabled) return setOf(enabledEvent)
 
-    events.add(ENABLED.metric(sharedSourceEnabled))
+    val contextManager = CodeInsightContextManager.getInstance(project)
+    val fileCounts = HashMap<FileType, Int2IntOpenHashMap>()
+    processContentFilesInReadActions(project) { file ->
+      val contextCount = contextManager.getCodeInsightContexts(file).size
+      fileCounts.getOrPut(getFileTypeWithoutContent(file)) { Int2IntOpenHashMap() }.addTo(contextCount, 1)
+    }
 
-    if (sharedSourceEnabled) {
-      val contextManager = CodeInsightContextManager.getInstance(project)
-      val map = mutableMapOf<FileType, Int2IntMap>()
-
-      ProjectFileIndex.getInstance(project).iterateContent { file ->
-        val size = contextManager.getCodeInsightContexts(file).size
-        val fileType = file.fileType
-
-        map.getOrPut(fileType) { Int2IntOpenHashMap() }.mergeInt(size, 1, Int::plus)
-        true
-      }
-
-      map.entries.flatMapTo(events) { (fileType, contextNumber2fileNumber) ->
-        ProgressManager.checkCanceled()
-
-        contextNumber2fileNumber.int2IntEntrySet().map<Int2IntMap.Entry, MetricEvent> { entry ->
-          CONTEXT_REPORT.metric(fileType, entry.intKey, entry.intValue)
+    return buildSet {
+      add(enabledEvent)
+      for ([fileType, fileCountByContextCount] in fileCounts) {
+        for (entry in fileCountByContextCount.int2IntEntrySet()) {
+          add(CONTEXT_REPORT.metric(fileType, entry.intKey, entry.intValue))
         }
       }
     }
-
-    return events
   }
 }
