@@ -15,8 +15,11 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
 fun <T : Any> ExtensionPointName<T>.createExtensionDisposable(extension: T, parentDisposable: Disposable): Disposable {
-  return ExtensionPointUtil.createExtensionDisposable(extension, this)
-    .also { Disposer.register(parentDisposable, it) }
+  val extensionDisposable = ExtensionPointUtil.createExtensionDisposable(extension, this)
+  if (!Disposer.tryRegister(parentDisposable, extensionDisposable)) {
+    Disposer.dispose(extensionDisposable)
+  }
+  return extensionDisposable
 }
 
 inline fun <E : Any> ExtensionPointName<E>.forEachExtensionSafeInline(handler: (E) -> Unit) {

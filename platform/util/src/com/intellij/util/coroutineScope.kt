@@ -23,8 +23,12 @@ fun Job.cancelOnDispose(disposable: Disposable) {
 
     override fun toString(): String = "Cancel on dispose spawned in `${caller.topFrame}`"
   }
-  Disposer.register(disposable, childDisposable)
-  invokeOnCompletion {
+  if (Disposer.tryRegister(disposable, childDisposable)) {
+    invokeOnCompletion {
+      Disposer.dispose(childDisposable)
+    }
+  }
+  else {
     Disposer.dispose(childDisposable)
   }
 }

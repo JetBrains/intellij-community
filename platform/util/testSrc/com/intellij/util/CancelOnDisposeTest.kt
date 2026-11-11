@@ -6,8 +6,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.callUnderOwnClassLoader
 import kotlinx.coroutines.Job
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import java.util.function.Predicate
 
 /**
  * A `cancelOnDispose` registration names its caller, and it keeps no class loader of that caller. A plugin that registers
@@ -16,18 +16,33 @@ import org.junit.jupiter.api.Test
 internal class CancelOnDisposeTest {
   @Test
   fun `a registration names its caller`() {
+    val parent = Disposer.newDisposable("the parent of a named registration")
+    val job = Job()
+    try {
+      register(job, parent)
+
+      val names = ArrayList<String>()
+      Disposer.getTree().assertNoReferenceKeptInTree(Predicate {
+        val name = it.toString()
+        if (name.startsWith("Cancel on dispose spawned in `")) names.add(name)
+        false
+      })
+      assertThat(names).anySatisfy {
+        assertThat(it).contains("${CancelOnDisposeTest::class.java.name}.register(")
+      }
+    }
+    finally {
+      Disposer.dispose(parent)
+    }
+  }
+
+  @Test
+  fun `a registration under a disposed parent cancels the job`() {
     val parent = Disposer.newDisposable("the disposed parent")
     Disposer.dispose(parent)
     val job = Job()
-    try {
-      assertThatThrownBy { register(job, parent) }
-        .isInstanceOf(IncorrectOperationException::class.java)
-        .hasMessageContaining("Cancel on dispose spawned in `")
-        .hasMessageContaining("${CancelOnDisposeTest::class.java.name}.register(")
-    }
-    finally {
-      job.cancel()
-    }
+    job.cancelOnDispose(parent)
+    assertThat(job.isCancelled).isTrue()
   }
 
   @Test
