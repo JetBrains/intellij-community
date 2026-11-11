@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringsSettings
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinK2RefactoringsBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.canDeleteElement
@@ -58,6 +59,7 @@ import org.jetbrains.kotlin.idea.refactoring.deleteSeparatingComma
 import org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinSafeDeleteSettings
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
+import org.jetbrains.kotlin.idea.search.usagesSearch.processDelegationCallConstructorUsages
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -128,7 +130,14 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 return@Processor true
             })
         }
-        
+
+        if (element is KtConstructor<*>) {
+            element.processDelegationCallConstructorUsages(element.useScope()) { callElement ->
+                result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(callElement.calleeExpression ?: callElement, element, false))
+                true
+            }
+        }
+
         if (element is KtTypeParameter) {
             val owner = element.getNonStrictParentOfType<KtTypeParameterListOwner>()
             if (owner != null) {
@@ -157,6 +166,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 }
             }
         }
+
 
         return NonCodeUsageSearchInfo(isInside, element)
     }

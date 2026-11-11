@@ -103,6 +103,11 @@ public class FirMultiModuleSafeDeleteTestGenerated extends AbstractFirMultiModul
         runTest("testData/safeDeleteMultiModule/byExpectClassPrimaryConstructorParameter/expectsAndActualsByExpectClassPrimaryConstructorParameter.test");
     }
 
+    @TestMetadata("byExpectClassSecondaryConstructorDelegate/byExpectClassSecondaryConstructorDelegate.test")
+    public void testByExpectClassSecondaryConstructorDelegate_ByExpectClassSecondaryConstructorDelegate() throws Exception {
+        runTest("testData/safeDeleteMultiModule/byExpectClassSecondaryConstructorDelegate/byExpectClassSecondaryConstructorDelegate.test");
+    }
+
     @TestMetadata("byExpectClassSecondaryConstructorParameter/expectsAndActualsByExpectClassSecondaryConstructorParameter.test")
     public void testByExpectClassSecondaryConstructorParameter_ExpectsAndActualsByExpectClassSecondaryConstructorParameter() throws Exception {
         runTest("testData/safeDeleteMultiModule/byExpectClassSecondaryConstructorParameter/expectsAndActualsByExpectClassSecondaryConstructorParameter.test");

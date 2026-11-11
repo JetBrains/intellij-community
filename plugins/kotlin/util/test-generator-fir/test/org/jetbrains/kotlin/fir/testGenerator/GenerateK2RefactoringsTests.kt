@@ -54,16 +54,11 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
 
         testClass<AbstractK2SafeDeleteTest> {
             model("safeDelete/deleteClass/kotlinClass", testMethodName = "doClassTest")
-            //todo secondary constructor
             model("safeDelete/deleteClass/kotlinClassWithJava", testMethodName = "doClassTestWithJava")
             model("safeDelete/deleteClass/javaClassWithKotlin", pattern = Patterns.JAVA, testMethodName = "doJavaClassTest")
             model("safeDelete/deleteObject/kotlinObject", testMethodName = "doObjectTest")
             model("safeDelete/deleteFunction/kotlinFunction", testMethodName = "doFunctionTest")
-            model(
-                "safeDelete/deleteFunction/kotlinFunctionWithJava",
-                Patterns.forRegex("^(((?!secondary)(?!implement4).)+)\\.kt"), //todo secondary constructor, super method search from java override
-                testMethodName = "doFunctionTestWithJava"
-            )
+            model("safeDelete/deleteFunction/kotlinFunctionWithJava", testMethodName = "doFunctionTestWithJava")
             model("safeDelete/deleteFunction/javaFunctionWithKotlin", testMethodName = "doJavaMethodTest")
             model("safeDelete/deleteProperty/kotlinProperty", testMethodName = "doPropertyTest")
             model("safeDelete/deleteProperty/kotlinPropertyWithJava", testMethodName = "doPropertyTestWithJava")//todo  super method search from java override

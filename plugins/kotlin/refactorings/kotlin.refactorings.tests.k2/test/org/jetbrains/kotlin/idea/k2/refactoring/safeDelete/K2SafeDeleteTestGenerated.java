@@ -330,6 +330,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/implement3.kt");
         }
 
+        @TestMetadata("implement4.kt")
+        public void testImplement4() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/implement4.kt");
+        }
+
         @TestMetadata("override1.kt")
         public void testOverride1() throws Exception {
             runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/override1.kt");
@@ -353,6 +358,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("overrideAndImplement2.kt")
         public void testOverrideAndImplement2() throws Exception {
             runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/overrideAndImplement2.kt");
+        }
+
+        @TestMetadata("secondaryConstructor.kt")
+        public void testSecondaryConstructor() throws Exception {
+            runTest("testData/safeDelete/deleteFunction/kotlinFunctionWithJava/secondaryConstructor.kt");
         }
 
         @TestMetadata("usageInOverrideToDelete.kt")

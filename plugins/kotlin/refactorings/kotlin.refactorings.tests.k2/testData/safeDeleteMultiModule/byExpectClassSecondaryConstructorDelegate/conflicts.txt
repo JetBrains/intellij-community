@@ -1,0 +1,6 @@
+Usage of constructor Foo() that is not safe to delete.
+Usage of constructor Foo() that is not safe to delete.
+Usage of constructor Foo() that is not safe to delete.
+Usage of constructor Foo() that is not safe to delete.
+Usage of constructor Foo() that is not safe to delete.
+Usage of constructor Foo() that is not safe to delete.
