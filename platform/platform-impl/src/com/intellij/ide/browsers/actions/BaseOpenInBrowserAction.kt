@@ -5,15 +5,17 @@ import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.BrowserLauncher
+import com.intellij.ide.browsers.EditorTabWebBrowser
+import com.intellij.ide.browsers.EditorTabWebBrowserProvider
 import com.intellij.ide.browsers.OpenInBrowserRequest
 import com.intellij.ide.browsers.SystemDefaultBrowser
 import com.intellij.ide.browsers.SystemDefaultBrowserDetector
 import com.intellij.ide.browsers.WebBrowser
 import com.intellij.ide.browsers.WebBrowserManager
-import com.intellij.ide.browsers.WebBrowserProvider
 import com.intellij.ide.browsers.WebBrowserService
 import com.intellij.ide.browsers.WebBrowserUrlProvider
 import com.intellij.ide.browsers.WebBrowserXmlService
+import com.intellij.ide.browsers.actions.BaseOpenInBrowserAction.Handler.openInRightSplit
 import com.intellij.ide.browsers.createOpenInBrowserRequest
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -23,8 +25,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.newvfs.ManagingFS
@@ -33,6 +37,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.BitUtil
 import com.intellij.util.Url
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -50,6 +55,10 @@ open class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareA
       return if (applicable) request else  null
     }
 
+    /**
+     * Opens the URL of [request] in [browser].
+     * An [EditorTabWebBrowser] opens it in a new tab in the right split of the editor, see [openInRightSplit].
+     */
     internal fun openInBrowser(request: OpenInBrowserRequest, preferLocalUrl: Boolean = false, browser: WebBrowser? = null) {
       try {
         val urls = WebBrowserService.getInstance().getUrlsToOpen(request, preferLocalUrl)
@@ -58,7 +67,10 @@ open class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareA
             .onSuccess { url ->
               FileDocumentManager.getInstance().saveAllDocuments()
               ManagingFS.getInstance().flushPendingUpdatesOrNotify()
-              BrowserLauncher.instance.browse(url.toExternalForm(), browser, request.project)
+              val externalUrl = url.toExternalForm()
+              if (browser !is EditorTabWebBrowser || !openInRightSplit(request.project, browser, externalUrl)) {
+                BrowserLauncher.instance.browse(externalUrl, browser, request.project)
+              }
             }
         }
       }
@@ -68,6 +80,16 @@ open class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareA
       catch (e: Exception) {
         LOG.error(e)
       }
+    }
+
+    /**
+     * Opens [url] in a new tab of [browser] in the right split of the editor, as the built-in preview does.
+     *
+     * @return `false` when no tab opened, for example when the editor has no current window
+     */
+    private fun openInRightSplit(project: Project, browser: EditorTabWebBrowser, url: String): Boolean {
+      val file = browser.createEditorTabFile(project, url)
+      return FileEditorManagerEx.getInstanceEx(project).splitters.openInRightSplit(file, requestFocus = false) != null
     }
 
     internal fun openInBrowser(event: AnActionEvent, browser: WebBrowser?) {
@@ -80,12 +102,12 @@ open class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareA
   /**
    * Returns [browser] while it can open a page.
    * A browser of the list needs a path. [SystemDefaultBrowser] has no path.
-   * A browser of a [WebBrowserProvider] has no path and must be available.
+   * An [EditorTabWebBrowser] has no path and must be available.
    */
   private fun getBrowser(): WebBrowser? {
     val canOpen = browser.path != null ||
                   browser === SystemDefaultBrowser ||
-                  WebBrowserProvider.getAvailableBrowsers().contains(browser)
+                  EditorTabWebBrowserProvider.getAvailableBrowsers().any { it === browser }
     return if (canOpen && WebBrowserManager.getInstance().isActive(browser)) browser else null
   }
 
@@ -153,10 +175,11 @@ internal class OpenInSystemDefaultBrowserAction : BaseOpenInBrowserAction(System
 }
 
 /**
- * Opens the file in a browser of a [WebBrowserProvider], such as the IDE Browser.
+ * Opens the file in an [EditorTabWebBrowser], such as the IDE Browser.
  * It is a separate class, so the action statistics tell it apart from a browser of the list.
  */
-internal class OpenInProvidedBrowserAction(browser: WebBrowser) : BaseOpenInBrowserAction(browser)
+@ApiStatus.Internal
+class OpenInProvidedBrowserAction(browser: EditorTabWebBrowser) : BaseOpenInBrowserAction(browser)
 
 private fun createRequest(context: DataContext, isForceFileUrlIfNoUrlProvider: Boolean): OpenInBrowserRequest? {
   val editor = CommonDataKeys.EDITOR.getData(context)

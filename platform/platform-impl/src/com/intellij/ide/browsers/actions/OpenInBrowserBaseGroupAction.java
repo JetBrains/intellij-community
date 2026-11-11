@@ -4,12 +4,13 @@ package com.intellij.ide.browsers.actions;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.browsers.EditorTabWebBrowser;
+import com.intellij.ide.browsers.EditorTabWebBrowserProvider;
 import com.intellij.ide.browsers.KnownBrowser;
 import com.intellij.ide.browsers.SystemDefaultBrowser;
 import com.intellij.ide.browsers.SystemDefaultBrowserDetector;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
-import com.intellij.ide.browsers.WebBrowserProvider;
 import com.intellij.ide.browsers.WebBrowserXmlService;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.lang.Language;
@@ -64,13 +65,13 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    List<WebBrowser> providedBrowsers = WebBrowserProvider.getAvailableBrowsers();
+    List<EditorTabWebBrowser> providedBrowsers = EditorTabWebBrowserProvider.getAvailableBrowsers();
     List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
     List<AnAction> actions = new ArrayList<>(providedBrowsers.size() + browsers.size() + 3);
-    for (WebBrowser browser : providedBrowsers) {
-      actions.add(myBrowserActions.computeIfAbsent(browser, OpenInProvidedBrowserAction::new));
+    for (EditorTabWebBrowser browser : providedBrowsers) {
+      actions.add(myBrowserActions.computeIfAbsent(browser, __ -> new OpenInProvidedBrowserAction(browser)));
     }
-    AnAction localBrowserAction = getLocalBrowserAction();
+    AnAction localBrowserAction = providedBrowsers.isEmpty() ? getLocalBrowserAction() : null;
     if (localBrowserAction != null) {
       actions.add(localBrowserAction);
     }
@@ -101,10 +102,10 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
 
   /**
    * Returns {@code true} when the group has an action to show.
-   * Such an action opens a browser of a {@link WebBrowserProvider}, the local browser, the system default browser, or an active browser.
+   * Such an action opens an {@link EditorTabWebBrowser}, the local browser, the system default browser, or an active browser.
    */
   public static boolean hasBrowserActions() {
-    return !WebBrowserProvider.getAvailableBrowsers().isEmpty() ||
+    return !EditorTabWebBrowserProvider.getAvailableBrowsers().isEmpty() ||
            hasLocalBrowser() ||
            usesSystemDefaultBrowser() ||
            !WebBrowserManager.getInstance().getActiveBrowsers().isEmpty();

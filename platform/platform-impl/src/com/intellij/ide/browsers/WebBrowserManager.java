@@ -805,7 +805,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   }
 
   /**
-   * Checks {@link SystemDefaultBrowser}, then the browsers of the list, then the browsers of a {@link WebBrowserProvider}.
+   * Checks {@link SystemDefaultBrowser}, then the browsers of the list, then the available {@link EditorTabWebBrowser} browsers.
    * So a provider cannot take the id of the system default browser or of a browser of the list.
    *
    * @param idOrFamilyName UUID or, due to backward compatibility, browser family name or JS debugger engine ID
@@ -838,7 +838,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
         return browser;
       }
     }
-    return ContainerUtil.find(WebBrowserProvider.getAvailableBrowsers(), it -> it.getId().equals(id));
+    return ContainerUtil.find(EditorTabWebBrowserProvider.getAvailableBrowsers(), it -> it.getId().equals(id));
   }
 
   /**
