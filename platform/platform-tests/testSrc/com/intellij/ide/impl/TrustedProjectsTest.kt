@@ -367,6 +367,22 @@ class TrustedProjectsTest {
     Assertions.assertEquals(expectedTrustedState, TrustedProjects.getProjectTrustedState(projectRoot))
   }
 
+  @Test
+  fun `a processor that attaches with no confirmation gets the project while the setting asks`(): Unit = runBlocking {
+    val projectRoot = testRoot.resolve("project")
+    TrustedProjectStartupDialog.setDialogChoiceInTests(OpenUntrustedProjectChoice.TRUST_AND_OPEN, asDisposable())
+    val attachProcessor = RecordingAttachProcessor(withoutConfirmation = true)
+    ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(attachProcessor), asDisposable())
+
+    // In a test, the question gives "new window". The project attaches only when the platform does not ask.
+    withProjectToClose(GeneralSettings.OPEN_PROJECT_ASK) { projectToClose ->
+      openProjectToAttach(projectRoot, projectToClose)
+    }
+
+    Assertions.assertEquals(listOf(projectRoot), attachProcessor.attachedDirs)
+    Assertions.assertEquals(ThreeState.YES, TrustedProjects.getProjectTrustedState(projectRoot))
+  }
+
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `failed attach does not open the project`(hasAttachProcessor: Boolean): Unit = runBlocking {
@@ -394,8 +410,14 @@ class TrustedProjectsTest {
     Assertions.assertTrue(ProjectManagerEx.getInstanceEx().isProjectOpened(projectToClose))
   }
 
-  private class RecordingAttachProcessor(private val attachResult: Boolean = true) : ProjectAttachProcessor() {
+  private class RecordingAttachProcessor(
+    private val attachResult: Boolean = true,
+    private val withoutConfirmation: Boolean = false,
+  ) : ProjectAttachProcessor() {
     val attachedDirs: MutableList<Path> = CopyOnWriteArrayList()
+
+    override fun attachesWithoutConfirmation(project: Project, projectDir: Path): Boolean = withoutConfirmation
+
     override suspend fun attachToProjectAsync(
       project: Project,
       projectDir: Path,

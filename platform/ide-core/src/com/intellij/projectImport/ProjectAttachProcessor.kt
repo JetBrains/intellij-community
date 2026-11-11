@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
 open class ProjectAttachProcessor {
@@ -57,4 +58,13 @@ open class ProjectAttachProcessor {
   open fun getDescription(project: Project): @NlsContexts.DetailedDescription String? = null
 
   open fun defaultOptionIndex(project: Project?): Int = 0
+
+  /**
+   * Tells whether [projectDir] attaches to [project] with no question to the user.
+   *
+   * The platform asks this processor before it asks the user where to open [projectDir]. For `true`, it shows no dialog
+   * and reads no setting: it calls [attachToProjectAsync], after the trust check of [projectDir].
+   */
+  @Internal
+  open fun attachesWithoutConfirmation(project: Project, projectDir: Path): Boolean = false
 }

@@ -1293,7 +1293,13 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     val processor = ProjectAttachProcessor.getProcessor(projectToClose, projectDir, options.project)
-    when (withContext(Dispatchers.EDT) { ProjectUtil.confirmOpenOrAttachProject(projectToClose, processor) }) {
+    val openMode = if (processor != null && processor.attachesWithoutConfirmation(projectToClose, projectDir)) {
+      GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH
+    }
+    else {
+      withContext(Dispatchers.EDT) { ProjectUtil.confirmOpenOrAttachProject(projectToClose, processor) }
+    }
+    when (openMode) {
       GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH -> {
         processor?.beforeAttach(options.project)
         attachToProjectAsync(projectToClose = projectToClose, projectDir = projectDir, processor = processor,
