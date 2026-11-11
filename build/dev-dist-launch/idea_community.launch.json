@@ -48,7 +48,8 @@
         "-Dfull.scanning.on.startup.can.be.skipped=false",
         "-Dqodana.product.name=Qodana Community for JVM",
         "-Dqodana.build.number=QDJVMC-@@build_number@@",
-        "-Dqodana.eap=true"
+        "-Dqodana.eap=true",
+        "-Dqodana.structural.fingerprints.default=true"
       ]
     },
     {

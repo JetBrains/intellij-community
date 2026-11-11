@@ -35,6 +35,9 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
 
 private const val IS_EAP = false
 
+/** The linters that use the structural baseline indicators by default. */
+private val STRUCTURAL_FINGERPRINTS_PRODUCT_CODES: Set<String> = setOf("QDJVM", "QDJVMC", "QDJS")
+
 /**
  * Represents a set of properties specific to the Qodana product.
  *
@@ -55,6 +58,7 @@ class QodanaProductProperties(val productCode: String, val productName: String, 
         add("-Dqodana.build.date=$buildDate")
       }
       add("-Dqodana.eap=${IS_EAP}")
+      add("-Dqodana.structural.fingerprints.default=${productCode in STRUCTURAL_FINGERPRINTS_PRODUCT_CODES}")
     }
     return COMMON_ADDITIONAL_VM_OPTIONS + customVmOptions + appInfoOptions
   }
