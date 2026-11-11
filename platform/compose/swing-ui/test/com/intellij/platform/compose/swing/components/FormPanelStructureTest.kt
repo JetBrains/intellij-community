@@ -7,8 +7,9 @@ import androidx.compose.runtime.mutableStateOf
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.appearance.name
 import org.jetbrains.compose.swing.modifier.appearance.testTag
-import org.jetbrains.compose.swing.modifier.layout.visible
 import org.jetbrains.compose.swing.node.SwingNode
+import org.jetbrains.compose.swing.style.styleable
+import org.jetbrains.compose.swing.style.visible
 import org.jetbrains.compose.swing.test.ComposeSwingTest
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.junit.jupiter.api.Test
@@ -131,6 +132,31 @@ class FormPanelStructureTest {
   }
 
   @Test
+  fun aFormInARowTakesOneCellOfThatRowAndLaysItsControlsOutInItsOwnRows() = runComposeSwingTest {
+    setContent {
+      Form {
+        FormRow("Outer:") {
+          FormPanel(modifier = SwingModifier.testTag("inner")) {
+            FormRow("Host:") { TextFieldControl("host") }
+            FormRow("Port:") { TextFieldControl("port") }
+          }
+        }
+      }
+    }
+
+    val inner = onNodeWithTag("inner").fetch<JComponent>()
+    val outer = form().layOut()
+    assertEquals(listOf("JLabel 'Outer:'", "JPanel "), outer.components.map { "${it.javaClass.simpleName} ${describe(it)}" })
+    assertSame(inner, outer.components[1], "the inner form is the one control of the outer row")
+
+    val host = onNodeWithTag("host").fetch<JTextField>()
+    val port = onNodeWithTag("port").fetch<JTextField>()
+    assertSame(inner, host.parent, "the inner form holds its own controls")
+    assertSame(inner, port.parent, "the inner form holds its own controls")
+    assertTrue(host.y < port.y, "each control of the inner form stands in its own row")
+  }
+
+  @Test
   fun aTextFieldKeepsWhatItHoldsAcrossAChangeOfStructure() = runComposeSwingTest {
     val showFirst = mutableStateOf(false)
 
@@ -164,7 +190,7 @@ class FormPanelStructureTest {
         FormRow("Always:") { TextFieldControl("always") }
         // A row collapses when everything in it is hidden, so this one holds nothing else - a label of its
         // own would still be shown, and the row would keep the height of the label.
-        FormRow { TextFieldControl("sometimes", SwingModifier.visible(visible.value)) }
+        FormRow { TextFieldControl("sometimes", SwingModifier.styleable { visible(visible.value) }) }
       }
     }
 

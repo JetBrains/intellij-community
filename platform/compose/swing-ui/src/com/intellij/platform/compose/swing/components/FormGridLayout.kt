@@ -288,7 +288,7 @@ internal class FormGridLayout : GridLayout(), MeasurementLayoutManager {
    * Reads the form's declared structure off the children of [parent], in the order they were composed in.
    *
    * Every component of a form knows its row: the row's label and comment from the [FormMark] the form gives
-   * them, and a control from the [FormRowElement] its row provides to it. A row's components stand together,
+   * them, and a control from the [FormRowElement] its row declares for it. A row's components stand together,
    * so the rows come out in the order their first components do.
    *
    * A component standing outside every row belongs nowhere, and is reported rather than shown in a place it
