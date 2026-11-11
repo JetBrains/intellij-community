@@ -208,7 +208,7 @@ public class DumpDataForm {
       panel2.add(myOutputFileOrDirectory, new GridConstraints(10, 0, 1, 4, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-                                                              null, null, null, 0, false));
+                                                              new Dimension(0, -1), null, null, 0, false));
       myExtractorCombobox = LabeledComponent.create(
         new ComboBox<>(),
         DataGridBundle.message("settings.database.DumpDialog.Extractor")
