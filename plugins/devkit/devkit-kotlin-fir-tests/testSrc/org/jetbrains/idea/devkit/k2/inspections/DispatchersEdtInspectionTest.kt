@@ -1,23 +1,27 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections
 
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.kotlin.inspections.DispatchersEdtInspection
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-@RunWith(JUnit4::class)
-class DispatchersEdtInspectionTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+class DispatchersEdtInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(PROJECT_DESCRIPTOR_WITH_KOTLIN)
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = PROJECT_DESCRIPTOR_WITH_KOTLIN
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
-  @Before
+  @BeforeEach
   fun enableInspection() {
     myFixture.enableInspections(DispatchersEdtInspection::class.java)
     myFixture.configureByText("coroutines.kt", /*language=kotlin*/  """
@@ -46,7 +50,7 @@ class DispatchersEdtInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   @Test
-  fun `replacement with Dispatchers UI`() {
+  fun `replacement with Dispatchers UI`(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.configureByText("file.kt", /*language=kotlin*/ """
       import com.intellij.openapi.application.EDT
       import kotlinx.coroutines.*
@@ -59,17 +63,19 @@ class DispatchersEdtInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
     val intention = myFixture.getAvailableIntention("Replace 'Dispatchers.EDT' with 'Dispatchers.UI'")
     requireNotNull(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
+    withContext(Dispatchers.EDT) {
+      myFixture.checkPreviewAndLaunchAction(intention)
 
-    myFixture.checkResult(/*language=kotlin*/ """
-      import com.intellij.openapi.application.EDT
-      import kotlinx.coroutines.*
-      import com.intellij.openapi.application.UI
+      myFixture.checkResult(/*language=kotlin*/ """
+        import com.intellij.openapi.application.EDT
+        import kotlinx.coroutines.*
+        import com.intellij.openapi.application.UI
       
-      suspend fun foo() {
-        withContext(Dispatchers.UI) {
+        suspend fun foo() {
+          withContext(Dispatchers.UI) {
+          }
         }
-      }
-    """.trimIndent())
+      """.trimIndent())
+    }
   }
 }

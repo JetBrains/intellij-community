@@ -2,16 +2,38 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class GroovyActionsTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
+public class GroovyActionsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "groovy/actions/");
+  }
+
+  @Test
   public void testSelectWordBeforeMethod() {
     doTestForSelectWord(1);
   }
 
+  @Test
   public void testSWInGString() { doTestSelectWordUpTo(5); }
 
+  @Test
   public void test_select_word_in_GString_select_line_before_injection() {
     doTestForSelectWord(2, """
 print ""\"
@@ -28,6 +50,7 @@ fdsas
 """);
   }
 
+  @Test
   public void test_select_word_in_GString_select_line_after_injection() {
     doTestForSelectWord(2, """
 print ""\"
@@ -44,6 +67,7 @@ fdsas
 """);
   }
 
+  @Test
   public void test_select_word_in_GString_select_line_before_end() {
     doTestForSelectWord(2, """
 print ""\"
@@ -58,34 +82,46 @@ asdf $b sfsasdf
 """);
   }
 
+  @Test
   public void testSWInGStringMultiline() { doTestSelectWordUpTo(4); }
 
+  @Test
   public void testSWInGStringBegin() { doTestSelectWordUpTo(2); }
 
+  @Test
   public void testSWInGStringEnd() { doTestSelectWordUpTo(2); }
 
+  @Test
   public void testSWInParameterList() { doTestForSelectWord(3); }
 
+  @Test
   public void testSWInArgLabel1() { doTestForSelectWord(2); }
 
+  @Test
   public void testSWInArgLabel2() { doTestForSelectWord(2); }
 
+  @Test
   public void testSWInArgLabel3() { doTestForSelectWord(2); }
 
+  @Test
   public void testSWEscapesInString() {
     doTestForSelectWord(1, "String s = \"abc\\nd<caret>ef\"", "String s = \"abc\\n<selection>d<caret>ef</selection>\"");
   }
 
+  @Test
   public void testSWListLiteralArgument() {
     doTestForSelectWord(2, "foo([a<caret>], b)", "foo(<selection>[a<caret>]</selection>, b)");
   }
 
+  @Test
   public void testSWMethodParametersBeforeQualifier() {
     doTestForSelectWord(2, "a.fo<caret>o(b)", "a.<selection>foo(b)</selection>");
   }
 
+  @Test
   public void testSWInCodeBlock() { doTestForSelectWord(5); }
 
+  @Test
   public void testElseBranch() {
     doTestForSelectWord(3, """
 def foo() {
@@ -104,6 +140,7 @@ def foo() {
 """);
   }
 
+  @Test
   public void testBlocksOfCode() {
     doTestForSelectWord(8, """
 this.allOptions = [:];
@@ -145,12 +182,15 @@ this.allOptions = [:];
   }
 
   private void assertEditorTextContains(String s) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     if (!myFixture.getEditor().getDocument().getText().contains(s)) {
       fail("Missing '" + s + "' in editor document text: " + myFixture.getEditor().getDocument().getText());
     }
   }
 
+  @Test
   public void test_hippie_completion_in_groovydoc() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String text = """
       class A {
 
@@ -167,7 +207,9 @@ this.allOptions = [:];
     myFixture.checkResult(text);
   }
 
+  @Test
   public void test_hippie_completion_with_hyphenated_match() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
       foo = [ helloWorld: 1, "hello-world": {
           hw<caret>
@@ -179,11 +221,13 @@ this.allOptions = [:];
     performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION);
     assertEditorTextContains(" helloWorld\n");
 
-    myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getText().indexOf(" f") + 2);
+    EdtTestUtil.runInEdtAndWait(
+      () -> myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getText().indexOf(" f") + 2));
     performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION);
     assertEditorTextContains(" foo\n");
   }
 
+  @Test
   public void testSWforMemberWithDoc() {
     doTestForSelectWord(4, """
 class A {
@@ -206,6 +250,7 @@ class A {
 """);
   }
 
+  @Test
   public void testMultiLineStingSelection() {
     doTestForSelectWord(2, """
          print '''
@@ -233,19 +278,22 @@ class A {
   }
 
   private void doTestForSelectWord(int count, String input, String expected) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", input);
     selectWord(count);
     myFixture.checkResult(expected);
   }
 
   private void doTestForSelectWord(int count) {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
     selectWord(count);
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.groovy");
   }
 
   private void doTestSelectWordUpTo(int count) {
-    final String testName = getTestName(false);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String testName = myFixture.getTestName(false);
     myFixture.configureByFile(testName + "_0.groovy");
     myFixture.getEditor().getSettings().setCamelWords(true);
     for (int i = 0; i < count; i++) {
@@ -255,6 +303,7 @@ class A {
   }
 
   private void selectWord(int count) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.getEditor().getSettings().setCamelWords(true);
     for (int i = 0; i < count; i++) {
       performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
@@ -262,13 +311,7 @@ class A {
   }
 
   private void performEditorAction(final String actionId) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.performEditorAction(actionId);
   }
-
-  @Override
-  public final String getTestDataPath() {
-    return basePath;
-  }
-
-  private final String basePath = TestUtils.getAbsoluteTestDataPath() + "groovy/actions/";
 }

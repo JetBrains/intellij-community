@@ -2,20 +2,26 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.kotlin.inspections.UsePlatformProcessAwaitExitInspection
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/usePlatformProcessAwaitExit")
-class KtUsePlatformProcessAwaitExitInspectionTest : LightJavaCodeInsightFixtureTestCase() {
-
-  override fun getBasePath(): String {
-    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/usePlatformProcessAwaitExit"
+@TestApplication
+class KtUsePlatformProcessAwaitExitInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
   }
 
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture, DevkitKtTestsUtil.TESTDATA_PATH + "inspections/usePlatformProcessAwaitExit")
+
   @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(UsePlatformProcessAwaitExitInspection())
     myFixture.addClass("""
       package java.util.concurrent;
@@ -49,7 +55,8 @@ class KtUsePlatformProcessAwaitExitInspectionTest : LightJavaCodeInsightFixtureT
     )
   }
 
+  @Test
   fun testUsePlatformProcessAwaitExit() {
-    myFixture.testHighlighting(getTestName(false) + ".kt")
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".kt")
   }
 }

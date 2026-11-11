@@ -1,14 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections.errorhandling
 
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.siyeh.ig.errorhandling.ReturnFromFinallyBlockInspection
+import org.junit.jupiter.api.Test
 
-class KtReturnFromFinallyBlockInspectionTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class KtReturnFromFinallyBlockInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-    
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
-  fun `test simple return`() = doTest("""
+  @Test
+  fun `test simple return`(): Unit = doTest("""
     fun foo() {
       try {
       } finally {
@@ -17,7 +25,8 @@ class KtReturnFromFinallyBlockInspectionTest : LightJavaCodeInsightFixtureTestCa
     }
   """.trimIndent())
 
-  fun `test return from local function`() = doTest("""
+  @Test
+  fun `test return from local function`(): Unit = doTest("""
     fun foo() {
       try {
       } finally {
@@ -28,7 +37,8 @@ class KtReturnFromFinallyBlockInspectionTest : LightJavaCodeInsightFixtureTestCa
     }
   """.trimIndent())
 
-  fun `test nested try-finally in finally block`() = doTest("""
+  @Test
+  fun `test nested try-finally in finally block`(): Unit = doTest("""
     fun foo() {
       try {
       } finally {
@@ -39,7 +49,8 @@ class KtReturnFromFinallyBlockInspectionTest : LightJavaCodeInsightFixtureTestCa
     }
   """.trimIndent())
 
-  fun `test return from lambda over finally`() = doTest("""
+  @Test
+  fun `test return from lambda over finally`(): Unit = doTest("""
     fun run(body: () -> Unit): Unit = body()
     
     fun foo() {
@@ -52,7 +63,8 @@ class KtReturnFromFinallyBlockInspectionTest : LightJavaCodeInsightFixtureTestCa
     }
   """.trimIndent())
 
-  fun `test return from lambda in finally`() = doTest("""
+  @Test
+  fun `test return from lambda in finally`(): Unit = doTest("""
     fun run(body: () -> Unit): Unit = body()
     
     fun foo() {
@@ -67,7 +79,8 @@ class KtReturnFromFinallyBlockInspectionTest : LightJavaCodeInsightFixtureTestCa
     }
   """.trimIndent())
 
-  fun `test return from lambda over finally but nested try-finally`() = doTest("""
+  @Test
+  fun `test return from lambda over finally but nested try-finally`(): Unit = doTest("""
     fun run(body: () -> Unit): Unit = body()
     
     fun foo() {

@@ -7,11 +7,21 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class JavaLibraryUtilTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+@TestApplication
+public class JavaLibraryUtilTest {
   private static final LightProjectDescriptor JUNIT_4_PROJECT = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
@@ -19,17 +29,18 @@ public class JavaLibraryUtilTest extends LightJavaCodeInsightFixtureTestCase {
       MavenDependencyUtil.addFromMaven(model, "junit:junit:4.13.2");
     }
   };
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(JUNIT_4_PROJECT);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JUNIT_4_PROJECT;
-  }
-
+  @Test
   public void testJpsLibraryVersionFromJarManifest() {
-    assertEquals("4.13.2", ReadAction.compute(() -> JavaLibraryUtil.getLibraryVersion(getModule(), "junit:junit")));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    assertEquals("4.13.2", ReadAction.computeBlocking(() -> JavaLibraryUtil.getLibraryVersion(myFixture.getModule(), "junit:junit")));
   }
 
+  @Test
   public void testJpsLibraryVersionOfMissingLibrary() {
-    assertNull(ReadAction.compute(() -> JavaLibraryUtil.getLibraryVersion(getModule(), "org.junit.jupiter:junit-jupiter-api")));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    assertNull(ReadAction.computeBlocking(() -> JavaLibraryUtil.getLibraryVersion(myFixture.getModule(), "org.junit.jupiter:junit-jupiter-api")));
   }
 }

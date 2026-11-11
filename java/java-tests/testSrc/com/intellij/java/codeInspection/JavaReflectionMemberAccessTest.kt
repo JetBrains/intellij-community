@@ -3,42 +3,63 @@ package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.reflectiveAccess.JavaReflectionMemberAccessInspection
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class JavaReflectionMemberAccessTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class JavaReflectionMemberAccessTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8) // older mock JREs are missing some bits
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
   private val inspection = JavaReflectionMemberAccessInspection()
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
+    myFixture.testDataPath = JavaTestUtil.getJavaTestDataPath() + "/inspection/javaReflectionMemberAccess"
     myFixture.enableInspections(inspection)
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_8 // older mock JREs are missing some bits
+  @Test
+  fun testFields(): Unit = doTest()
+  @Test
+  fun testMethods(): Unit = doTest()
+  @Test
+  fun testConstructors(): Unit = doTest()
 
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/javaReflectionMemberAccess"
+  @Test
+  fun testFieldExists(): Unit = doTest(true)
+  @Test
+  fun testMethodExists(): Unit = doTest(true)
+  @Test
+  fun testMethodInnerClass(): Unit = doTest(true)
+  @Test
+  fun testConstructorExists(): Unit = doTest(true)
+  @Test
+  fun testConstructorInnerClass(): Unit = doTest(true)
+  @Test
+  fun testConstructorNestedInnerClass(): Unit = doTest(true)
+  @Test
+  fun testConstructorLocalClass(): Unit = doTest(true)
+  @Test
+  fun testConstructorLocalClassInStaticMethod(): Unit = doTest(true)
 
-  fun testFields() = doTest()
-  fun testMethods() = doTest()
-  fun testConstructors() = doTest()
-
-  fun testFieldExists() = doTest(true)
-  fun testMethodExists() = doTest(true)
-  fun testMethodInnerClass() = doTest(true)
-  fun testConstructorExists() = doTest(true)
-  fun testConstructorInnerClass() = doTest(true)
-  fun testConstructorNestedInnerClass() = doTest(true)
-  fun testConstructorLocalClass() = doTest(true)
-  fun testConstructorLocalClassInStaticMethod() = doTest(true)
-
-  fun testNewInstance() = doTest(true)
-  fun testBugs() = doTest(true)
-  fun testClassArray() = doTest(true)
+  @Test
+  fun testNewInstance(): Unit = doTest(true)
+  @Test
+  fun testBugs(): Unit = doTest(true)
+  @Test
+  fun testClassArray(): Unit = doTest(true)
 
 
   private fun doTest(checkExists: Boolean = false) {
     inspection.checkMemberExistsInNonFinalClasses = checkExists
-    myFixture.testHighlighting("${getTestName(false)}.java")
+    myFixture.testHighlighting("${myFixture.getTestName(false)}.java")
   }
 }

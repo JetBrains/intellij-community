@@ -1,12 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections
 
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.inspections.UElementAsPsiInspection
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+class KtUElementAsPsiInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUp() {
 
     myFixture.addClass("package org.jetbrains.uast; public interface UElement {}")
     myFixture.addClass("""package com.intellij.psi; public interface PsiElement {
@@ -20,6 +31,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.enableInspections(UElementAsPsiInspection())
   }
 
+  @Test
   fun testPassAsPsiClass() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
@@ -43,6 +55,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   }
 
+  @Test
   fun testExtensionMethods() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
@@ -65,6 +78,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   }
 
+  @Test
   fun testAssignment() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
@@ -88,6 +102,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   }
 
+  @Test
   fun testCast() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
@@ -108,6 +123,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   }
 
+  @Test
   fun testCallParentMethod() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
@@ -128,6 +144,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   }
 
+  @Test
   fun testImplementAndCallParentMethod() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
@@ -155,6 +172,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   }
 
+  @Test
   fun testPsiElementExtensionFunction() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
@@ -176,6 +194,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting("UastUsage.kt")
   }
 
+  @Test
   fun testPsiElementExtensionFunctionInClassExtendingUElement() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
@@ -197,6 +216,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting("UastUsage.kt")
   }
 
+  @Test
   fun testTopLevelPsiElementExtensionFunction() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
@@ -219,6 +239,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   // there was a bug reporting warning for nested methods multiple times (during analyzing top-level method and all nested)
+  @Test
   fun testNestedMethods() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin
@@ -248,6 +269,7 @@ class KtUElementAsPsiInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting("UastUsage.kt")
   }
 
+  @Test
   fun testNestedKotlinFunction() {
     myFixture.configureByText("UastUsage.kt",
       //language=kotlin

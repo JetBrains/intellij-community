@@ -8,49 +8,67 @@ import com.intellij.codeInspection.i18n.I18nizeConcatenationQuickFix
 import com.intellij.codeInspection.i18n.JavaI18nUtil
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import junit.framework.TestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade
 import org.jetbrains.uast.toUElementOfType
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
 private const val i18nizedExpr = "i18nizedExpr"
 
 /**
  * Analogical Java tests: [com.intellij.java.codeInsight.daemon.quickFix.I18nizeTest]
  */
-class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
-    
+@TestApplication
+class KtI18nizeTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  private fun <T : UExpression> doTest(before: String, expected: String? = null, i18nized: String = i18nizedExpr) {
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  private fun <T : UExpression> doTest(before: String, expected: String? = null, i18nized: String = i18nizedExpr): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.configureByText("Test.kt", before)
-    val action = I18nizeAction()
-    val dataContext = DataManager.getInstance().getDataContext(editor.component)
-    val event = AnActionEvent.createFromAnAction(action, null, "place", dataContext)
-    action.update(event)
-    val handler: I18nQuickFixHandler<T>? = I18nizeAction.getHandler(event) as I18nQuickFixHandler<T>?
-    handler?.checkApplicability(file, editor)
-    TestCase.assertEquals(expected != null, event.presentation.isEnabled)
-    if (expected != null) {
-      WriteCommandAction.runWriteCommandAction(myFixture.project) {
-        assertNotNull(handler)
-        val literalExpression = handler!!.getEnclosingLiteral(file, editor)
-        handler.performI18nization(
-          file,
-          editor,
-          literalExpression,
-          emptyList(),
-          "key1",
-          "value1",
-          i18nized,
-          emptyArray(),
-          JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER
-        )
+    withContext(Dispatchers.EDT) {
+      val action = I18nizeAction()
+      val dataContext = DataManager.getInstance().getDataContext(myFixture.editor.component)
+      val event = AnActionEvent.createFromAnAction(action, null, "place", dataContext)
+      action.update(event)
+      val handler: I18nQuickFixHandler<T>? = I18nizeAction.getHandler(event) as I18nQuickFixHandler<T>?
+      handler?.checkApplicability(myFixture.file, myFixture.editor)
+      assertEquals(expected != null, event.presentation.isEnabled)
+      if (expected != null) {
+        WriteCommandAction.runWriteCommandAction(myFixture.project) {
+          assertNotNull(handler)
+          val literalExpression = handler!!.getEnclosingLiteral(myFixture.file, myFixture.editor)
+          handler.performI18nization(
+            myFixture.file,
+            myFixture.editor,
+            literalExpression,
+            emptyList(),
+            "key1",
+            "value1",
+            i18nized,
+            emptyArray(),
+            JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER
+          )
+        }
+        myFixture.checkResult(expected)
       }
-      myFixture.checkResult(expected)
     }
   }
 
@@ -58,7 +76,8 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
   private fun doTest(before: String, expected: String? = null, i18nized: String = i18nizedExpr) =
     doTest<UExpression>(before, expected, i18nized)
 
-  fun testLiteral() = doTest("""
+  @Test
+  fun testLiteral(): Unit = doTest("""
     fun main() {
       val foo = "str<caret>ing"
     }
@@ -68,7 +87,8 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
     }
   """.trimIndent())
 
-  fun testConcatenation() = doTest("""
+  @Test
+  fun testConcatenation(): Unit = doTest("""
     fun main() {
       val foo = "str<caret>ing" + "string1"
     }
@@ -78,7 +98,8 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
     }
   """.trimIndent())
 
-  fun testInterpolation() = doTest("""
+  @Test
+  fun testInterpolation(): Unit = doTest("""
     fun main() {
       val bar = "bar"
       val foo = "str<caret>ing ${'$'}bar string1"
@@ -90,7 +111,8 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
     }
   """.trimIndent())
 
-  fun testConcatenationWithInterpolation() = doTest("""
+  @Test
+  fun testConcatenationWithInterpolation(): Unit = doTest("""
     fun main() {
       val bar = "bar"
       val foo = "str<caret>ing ${'$'}bar string1" + bar
@@ -102,13 +124,15 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
     }
   """.trimIndent())
 
-  fun testOutsideLiteral() = doTest("""
+  @Test
+  fun testOutsideLiteral(): Unit = doTest("""
     fun main() {
       <caret>val foo = "string"
     }
   """.trimIndent())
 
-  fun testShortenClassReferences() = doTest("""
+  @Test
+  fun testShortenClassReferences(): Unit = doTest("""
     package p
     class MyBundle {
       fun message(key: String): String {
@@ -134,7 +158,8 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
     }
   """.trimIndent(), i18nized = """p.MyBundle().message("key")""")
 
-  fun testConcatenationWithIfExpr() {
+  @Test
+  fun testConcatenationWithIfExpr(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.configureByText("Test.kt", """
       class MyTest {
         fun f(prefix : Boolean){
@@ -142,17 +167,20 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
         }
       }
     """.trimIndent())
-    val enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(file, editor)
-    val concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral)
-    assertNotNull(concatenation)
-    val args = ArrayList<UExpression?>()
-    Assert.assertEquals("Not a valid java identifier part in {0, choice, 0#prefix|1#suffix}",
-                        JavaI18nUtil.buildUnescapedFormatString(concatenation!!, args, project))
-    assertSize(1, args)
-    assertEquals("if (prefix) 0 else 1", args[0]!!.sourcePsi!!.text)
+    readAction {
+      val enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(myFixture.file, myFixture.editor)
+      val concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral)
+      assertNotNull(concatenation)
+      val args = ArrayList<UExpression?>()
+      assertEquals("Not a valid java identifier part in {0, choice, 0#prefix|1#suffix}",
+                   JavaI18nUtil.buildUnescapedFormatString(concatenation!!, args, myFixture.project))
+      assertEquals(1, args.size)
+      assertEquals("if (prefix) 0 else 1", args[0]!!.sourcePsi!!.text)
+    }
   }
 
-  fun testConcatenationWithIfExprNested() {
+  @Test
+  fun testConcatenationWithIfExprNested(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.configureByText("Test.kt", """
       class MyTest {
         fun f(list : java.util.List<String>){
@@ -160,18 +188,21 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
         }
       }
     """.trimIndent())
-    val enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(file, editor)
-    val concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral)
-    assertNotNull(concatenation)
-    val args = ArrayList<UExpression?>()
-    Assert.assertEquals("Not a valid java identifier part in {1, choice, 0#{0} prefix''''s|1#suffix''''s}",
-                        JavaI18nUtil.buildUnescapedFormatString(concatenation!!, args, project))
-    assertSize(2, args)
-    assertEquals("list.get(0)", args[0]!!.sourcePsi!!.text)
-    assertEquals("if (list.size() == 1) 0 else 1", args[1]!!.sourcePsi!!.text)
+    readAction {
+      val enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(myFixture.file, myFixture.editor)
+      val concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral)
+      assertNotNull(concatenation)
+      val args = ArrayList<UExpression?>()
+      assertEquals("Not a valid java identifier part in {1, choice, 0#{0} prefix''''s|1#suffix''''s}",
+                   JavaI18nUtil.buildUnescapedFormatString(concatenation!!, args, myFixture.project))
+      assertEquals(2, args.size)
+      assertEquals("list.get(0)", args[0]!!.sourcePsi!!.text)
+      assertEquals("if (list.size() == 1) 0 else 1", args[1]!!.sourcePsi!!.text)
+    }
   }
 
-  fun testConcatenationWithIfExprNested1() {
+  @Test
+  fun testConcatenationWithIfExprNested1(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.configureByText("Test.kt", """
       class MyTest {
         fun f(list : java.util.List<String>){
@@ -179,19 +210,22 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
         }
       }
     """.trimIndent())
-    val enclosingStringLiteral = I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(myFixture.file.findElementAt(myFixture.editor.caretModel.offset))
+    readAction {
+      val enclosingStringLiteral = I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(myFixture.file.findElementAt(myFixture.editor.caretModel.offset))
 
-    val concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral)
-    assertNotNull(concatenation)
-    val args = ArrayList<UExpression?>()
-    Assert.assertEquals("Not a valid java identifier part in {1, choice, 0#{0} prefix''''s|1#suffix''''s}",
-                        JavaI18nUtil.buildUnescapedFormatString(concatenation!!, args, project))
-    assertSize(2, args)
-    assertEquals("list.get(0)", args[0]!!.sourcePsi!!.text)
-    assertEquals("if (list.size() == 1) 0 else 1", args[1]!!.sourcePsi!!.text)
+      val concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral)
+      assertNotNull(concatenation)
+      val args = ArrayList<UExpression?>()
+      assertEquals("Not a valid java identifier part in {1, choice, 0#{0} prefix''''s|1#suffix''''s}",
+                   JavaI18nUtil.buildUnescapedFormatString(concatenation!!, args, myFixture.project))
+      assertEquals(2, args.size)
+      assertEquals("list.get(0)", args[0]!!.sourcePsi!!.text)
+      assertEquals("if (list.size() == 1) 0 else 1", args[1]!!.sourcePsi!!.text)
+    }
   }
 
-  fun testConcatenationOfLiterals() {
+  @Test
+  fun testConcatenationOfLiterals(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.configureByText("Test.kt", """
       class MyTest {
         fun f(prefix : Boolean){
@@ -199,15 +233,18 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
         }
       }
     """.trimIndent())
-    val enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(file, editor)
-    val concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral)
-    assertNotNull(concatenation)
-    val args = ArrayList<UExpression?>()
-    Assert.assertEquals("part in suffix {0} and prefix '{1}'",
-                        JavaI18nUtil.buildUnescapedFormatString(concatenation!!, args, project))
+    readAction {
+      val enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(myFixture.file, myFixture.editor)
+      val concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral)
+      assertNotNull(concatenation)
+      val args = ArrayList<UExpression?>()
+      assertEquals("part in suffix {0} and prefix '{1}'",
+                   JavaI18nUtil.buildUnescapedFormatString(concatenation!!, args, myFixture.project))
+    }
   }
 
-  fun testLightAnnotationTypeResolve() {
+  @Test
+  fun testLightAnnotationTypeResolve(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.configureByText("Test.kt", """
       annotation class MyMetaAnnotation
       
@@ -218,12 +255,14 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
       class MyClass<caret>
     """.trimIndent())
 
-    val psiClass = myFixture.elementAtCaret.toUElementOfType<UClass>()?.javaPsi
-                   ?: error("PsiClass not found")
+    readAction {
+      val psiClass = myFixture.elementAtCaret.toUElementOfType<UClass>()?.javaPsi
+                     ?: error("PsiClass not found")
 
-    val resolvedAnnotationType = psiClass.annotations.firstOrNull()?.resolveAnnotationType()
-    assertNull(resolvedAnnotationType)
+      val resolvedAnnotationType = psiClass.annotations.firstOrNull()?.resolveAnnotationType()
+      assertNull(resolvedAnnotationType)
 
-    assertTrue(MetaAnnotationUtil.isMetaAnnotated(psiClass, listOf("MyMetaAnnotation")))
+      assertTrue(MetaAnnotationUtil.isMetaAnnotated(psiClass, listOf("MyMetaAnnotation")))
+    }
   }
 }

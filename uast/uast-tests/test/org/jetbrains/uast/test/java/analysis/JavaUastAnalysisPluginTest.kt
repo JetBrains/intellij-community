@@ -2,7 +2,11 @@
 package org.jetbrains.uast.test.java.analysis
 
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.openapi.application.readAction
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.intellij.lang.annotations.Language
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UField
@@ -12,14 +16,22 @@ import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.java.analysis.JavaUastAnalysisPlugin
 import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.visitor.AbstractUastVisitor
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-@RunWith(JUnit4::class)
-internal class JavaUastAnalysisPluginTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+internal class JavaUastAnalysisPluginTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
   @Test
-  fun `test dataflow not null`() = doTest("""
+  fun `test dataflow not null`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       void dataFlowNotNull(boolean b) {
           String a = b ? null : "hello";
         
@@ -27,65 +39,65 @@ internal class JavaUastAnalysisPluginTest : LightJavaCodeInsightFixtureTestCase(
               System.out.println(/*NOT_NULL*/a);
           }
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Test
-  fun `test not null declaration`() = doTest("""
+  fun `test not null declaration`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       void notNullDeclaration() {
           String a = "hello";
           System.out.println(/*NOT_NULL*/a);
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Test
-  fun `test nullable declaration`() = doTest("""
+  fun `test nullable declaration`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       void nullableDeclaration(boolean b) {
           String a = b ? null : "hello";
           System.out.println(/*NULLABLE*/ a);
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Test
   @Suppress("StringBufferReplaceableByString")
-  fun `test platform types`() = doTest("""
+  fun `test platform types`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       void platformTypes() {
           System.out.println(/*NOT_NULL*/ new java.lang.StringBuilder().append("a"));
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Test
-  fun `test unknown type`() = doTest("""
+  fun `test unknown type`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       void typeNotNull(StringBuilder builder) {
           System.out.println(/*UNKNOWN*/builder);
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Test
-  fun `test type with nullable annotation`() = doTest("""
+  fun `test type with nullable annotation`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       import org.jetbrains.annotations.Nullable;    
        
       void typeNullable(@Nullable StringBuilder builder) {
           System.out.println(/*NULLABLE*/builder);
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Test
-  fun `test ternary operator nullability`() = doTest("""
+  fun `test ternary operator nullability`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       void ternaryOperator(boolean b) {
           String a = b ? null : "hello";
           System.out.println(/*NOT_NULL*/ (a != null ? a : ""));
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Test
-  fun `test null expression`() = doTest("""
+  fun `test null expression`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       void nullExpression() {
           System.out.println(/*NULL*/ null);
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Test
-  fun `test nullability of parameter with dfa`() = doTest("""
+  fun `test nullability of parameter with dfa`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       import org.jetbrains.annotations.Nullable;    
   
       void nullableParamWithDfa(@Nullable Integer p) {
@@ -93,11 +105,11 @@ internal class JavaUastAnalysisPluginTest : LightJavaCodeInsightFixtureTestCase(
               System.out.println(/*NOT_NULL*/p);
           }
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Test
   @Suppress("SwitchStatementWithTooFewBranches")
-  fun `test nullability of switch expression`() = doTest("""
+  fun `test nullability of switch expression`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       import org.jetbrains.annotations.Nullable;    
       
       void notNullIfExpression(@Nullable Integer d) {
@@ -108,10 +120,10 @@ internal class JavaUastAnalysisPluginTest : LightJavaCodeInsightFixtureTestCase(
           
           System.out.println(/*NOT_NULL*/a);
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Test
-  fun `test nullability with platform type and if`() = doTest("""
+  fun `test nullability with platform type and if`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       void platformWithIf(StringBuilder a) {    
           if (a != null) {
               System.out.println(/*NOT_NULL*/a);
@@ -119,11 +131,11 @@ internal class JavaUastAnalysisPluginTest : LightJavaCodeInsightFixtureTestCase(
               "a";
           }
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Suppress("ConstantValue")
   @Test
-  fun `test if and ternary`() = doTest("""
+  fun `test if and ternary`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       import org.jetbrains.annotations.Nullable;
       
       void notNullIfWithElvis(@Nullable String a) {
@@ -133,10 +145,10 @@ internal class JavaUastAnalysisPluginTest : LightJavaCodeInsightFixtureTestCase(
                 System.out.println(/*NOT_NULL*/ (a != null ? a : "a"));
             }    
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Test
-  fun `test complex if condition`() = doTest("""
+  fun `test complex if condition`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       import org.jetbrains.annotations.Nullable;    
   
       void twoNotNull(@Nullable String a, @Nullable String b) {
@@ -144,10 +156,10 @@ internal class JavaUastAnalysisPluginTest : LightJavaCodeInsightFixtureTestCase(
               System.out.println(/*NOT_NULL*/a);
           }
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Test
-  fun `test nullable field with primitive types`() = doTest("""
+  fun `test nullable field with primitive types`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       import org.jetbrains.annotations.Nullable;    
   
       class SomeClass {
@@ -161,10 +173,10 @@ internal class JavaUastAnalysisPluginTest : LightJavaCodeInsightFixtureTestCase(
               this.c = c;
           }
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Test
-  fun `test non nullable fields with primitive types`() = doTest("""
+  fun `test non nullable fields with primitive types`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       import org.jetbrains.annotations.NotNull;    
         
       class SomeClass {
@@ -176,10 +188,10 @@ internal class JavaUastAnalysisPluginTest : LightJavaCodeInsightFixtureTestCase(
               this.b = b;
           }
       }
-    """.trimIndent())
+    """.trimIndent()) }
 
   @Test
-  fun `test complex fields`() = doTest("""
+  fun `test complex fields`(): Unit = timeoutRunBlocking(timeout = 2.minutes) { doTest("""
       import org.jetbrains.annotations.NotNull;
       import org.jetbrains.annotations.Nullable;
           
@@ -198,40 +210,43 @@ internal class JavaUastAnalysisPluginTest : LightJavaCodeInsightFixtureTestCase(
       }
           
       class D {}
-    """.trimIndent())
+    """.trimIndent()) }
 
-  private fun doTest(@Language("java") source: String) {
+  private suspend fun doTest(@Language("java") source: String) {
     val uastAnalysisPlugin = UastLanguagePlugin.byLanguage(JavaLanguage.INSTANCE)?.analysisPlugin
-    assertInstanceOf(uastAnalysisPlugin, JavaUastAnalysisPlugin::class.java)
-    val file = myFixture.configureByText("file.java", source).toUElement()
+    assertInstanceOf(JavaUastAnalysisPlugin::class.java, uastAnalysisPlugin)
+    val psiFile = myFixture.configureByText("file.java", source)
+    readAction {
+      val file = psiFile.toUElement()
 
-    checkNotNull(file)
-    checkNotNull(uastAnalysisPlugin)
+      checkNotNull(file)
+      checkNotNull(uastAnalysisPlugin)
 
-    var visitAny = false
-    file.accept(object : AbstractUastVisitor() {
+      var visitAny = false
+      file.accept(object : AbstractUastVisitor() {
 
-      override fun visitField(node: UField): Boolean {
-        val typeReference = node.typeReference ?: return super.visitField(node)
-        return visitExpression(typeReference)
-      }
-
-      override fun visitExpression(node: UExpression): Boolean {
-        val uNullability = node.comments.firstOrNull()?.text
-                             ?.removePrefix("/*")
-                             ?.removeSuffix("*/")
-                             ?.trim()
-                             ?.let { UNullability.valueOf(it) } ?: return super.visitExpression(node)
-        visitAny = true
-
-        with(uastAnalysisPlugin) {
-          assertEquals("Failed for ${node.asRenderString()}", uNullability, node.getExpressionFact(UExpressionFact.UNullabilityFact))
+        override fun visitField(node: UField): Boolean {
+          val typeReference = node.typeReference ?: return super.visitField(node)
+          return visitExpression(typeReference)
         }
 
-        return super.visitExpression(node)
-      }
-    })
+        override fun visitExpression(node: UExpression): Boolean {
+          val uNullability = node.comments.firstOrNull()?.text
+                               ?.removePrefix("/*")
+                               ?.removeSuffix("*/")
+                               ?.trim()
+                               ?.let { UNullability.valueOf(it) } ?: return super.visitExpression(node)
+          visitAny = true
 
-    assertTrue(visitAny)
+          with(uastAnalysisPlugin) {
+            assertEquals(uNullability, node.getExpressionFact(UExpressionFact.UNullabilityFact), "Failed for ${node.asRenderString()}")
+          }
+
+          return super.visitExpression(node)
+        }
+      })
+
+      assertTrue(visitAny)
+    }
   }
 }

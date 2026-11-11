@@ -4,66 +4,36 @@ package com.theoryinpractice.testng.referenceContributor;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.util.ui.UIUtil;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-@Test
-public class TestNGSuiteTest extends LightJavaCodeInsightFixtureTestCase {
-  @BeforeMethod
-  @Override
-  protected void setUp() {
-    UIUtil.invokeAndWaitIfNeeded(() -> {
-      try {
-        super.setUp();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @AfterMethod
-  @Override
-  protected void tearDown() {
-    UIUtil.invokeAndWaitIfNeeded(() -> {
-      try {
-        super.tearDown();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
-  }
+@TestApplication
+public class TestNGSuiteTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, PluginPathManager.getPluginHomePathRelative("testng") + "/testData/references");
 
+  @Test
   public void testNothing(){}
 
+  @Test
   public void testTestNGSuiteFile() {
-    UIUtil.invokeAndWaitIfNeeded(() -> {
-      try {
-        myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");
-        myFixture.addClass("package org.testng.annotations; public @interface Test {}");
-        myFixture.addClass("package o; @Test public class MyTest { public void testMe(){} }");
-        myFixture.addFileToProject("subPack/test-unit.xml", "<suite>" +
-                                                            "<test>" +
-                                                            "<classes></classes>" +
-                                                            "</test>" +
-                                                            "</suite>");
-        myFixture.enableInspections(new XmlPathReferenceInspection(), new XmlUnresolvedReferenceInspection());
-        myFixture.testHighlighting("testng.xml");
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");
+    myFixture.addClass("package org.testng.annotations; public @interface Test {}");
+    myFixture.addClass("package o; @Test public class MyTest { public void testMe(){} }");
+    myFixture.addFileToProject("subPack/test-unit.xml", "<suite>" +
+                                                        "<test>" +
+                                                        "<classes></classes>" +
+                                                        "</test>" +
+                                                        "</suite>");
+    myFixture.enableInspections(new XmlPathReferenceInspection(), new XmlUnresolvedReferenceInspection());
+    myFixture.testHighlighting("testng.xml");
   }
-
-  @Override
-  protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("testng") + "/testData/references";
-  }
-
-
 }

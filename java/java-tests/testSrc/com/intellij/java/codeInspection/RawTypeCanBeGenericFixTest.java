@@ -10,50 +10,66 @@ import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.ProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class RawTypeCanBeGenericFixTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
+public class RawTypeCanBeGenericFixTest {
   private static final ProjectDescriptor JDK_8_WITH_LEVEL_6 = new ProjectDescriptor(LanguageLevel.JDK_1_6) {
     @Override
     public Sdk getSdk() {
       return IdeaTestUtil.getMockJdk18();
     }
   };
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(JDK_8_WITH_LEVEL_6);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInspection/makeTypeGeneric";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInspection/makeTypeGeneric");
     myFixture.enableInspections(new RawUseOfParameterizedTypeInspection());
   }
 
+  @Test
   public void testField() {
     doTest(getMessage("TT", "Comparator<String>"));
   }
 
+  @Test
   public void testLocalVariable() {
     doTest(getMessage("list", "List<String>"));
   }
 
+  @Test
   public void testAvoidUnrelatedWarnings() {
     doTest(getMessage("iterator", "Iterator<String>"));
   }
 
+  @Test
   public void testAtEquals() {
     doTest(getMessage("list", "List<String>"));
   }
 
+  @Test
   public void testConflict() {
-    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    DefaultLogger.disableStderrDumping(myFixture.getTestRootDisposable());
     try {
       doTest(getMessage("list", "List<T>"));
       fail("No conflict detected");
@@ -64,45 +80,71 @@ public class RawTypeCanBeGenericFixTest extends LightJavaCodeInsightFixtureTestC
     }
   }
 
+  @Test
   public void testAtTypeCast() { doTest("Change cast type to List<?>"); }
+  @Test
   public void testAtTypeCast2() { doTest("Change cast type to List<?>"); }
+  @Test
   public void testAtTypeCast3() { assertIntentionNotAvailable("Change cast type to List<?>"); }
+  @Test
   public void testAtTypeCast4() { doTest("Change cast type to X<?>"); }
+  @Test
   public void testAtTypeCast5() { assertIntentionNotAvailable("Change cast type to X<?>"); }
+  @Test
   public void testAtTypeCast6() { assertIntentionNotAvailable("Change cast type to Callable<><?>"); }
 
+  @Test
   public void testAtConstructor1() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> assertIntentionNotAvailable("Insert '<>'")); }
-  public void testAtConstructor2() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest("Insert '<>'")); }
-  public void testAtConstructor3() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest("Insert '<>'")); }
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, () -> assertIntentionNotAvailable("Insert '<>'"));
+  }
+  @Test
+  public void testAtConstructor2() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, () -> doTest("Insert '<>'"));
+  }
+  @Test
+  public void testAtConstructor3() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, () -> doTest("Insert '<>'"));
+  }
+  @Test
   public void testAtConstructor4() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> assertIntentionNotAvailable("Insert '<>'"));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, () -> assertIntentionNotAvailable("Insert '<>'"));
   }
 
+  @Test
   public void testAtInitializer() {
     assertIntentionNotAvailable(getMessagePrefix());
   }
 
+  @Test
   public void testImplementedRaw() {
     assertIntentionNotAvailable(getMessagePrefix());
   }
 
+  @Test
   public void testBoundedTypeParameter() {
     doTest(getMessage("list", "List<? extends Integer>"));
   }
 
   private void doTest(String intentionName) {
-    myFixture.configureByFiles(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFiles(myFixture.getTestName(false) + ".java");
     final IntentionAction singleIntention = myFixture.findSingleIntention(intentionName);
-    myFixture.launchAction(singleIntention);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    myFixture.checkResultByFile(getTestName(false) + ".java", getTestName(false) + "_after.java", true);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.launchAction(singleIntention);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      myFixture.checkResultByFile(myFixture.getTestName(false) + ".java", myFixture.getTestName(false) + "_after.java", true);
+    });
   }
 
   private void assertIntentionNotAvailable(String intentionName) {
-    myFixture.configureByFiles(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFiles(myFixture.getTestName(false) + ".java");
     final List<IntentionAction> intentionActions = myFixture.filterAvailableIntentions(intentionName);
-    assertEmpty(intentionName + " is not expected", intentionActions);
+    assertThat(intentionActions).as(intentionName + " is not expected").isEmpty();
   }
 
   private static String getMessage(String variable, String type) {
@@ -112,11 +154,5 @@ public class RawTypeCanBeGenericFixTest extends LightJavaCodeInsightFixtureTestC
   private static String getMessagePrefix() {
     String message = JavaBundle.message("raw.variable.type.can.be.generic.quickfix", "@", "@");
     return message.substring(0, message.indexOf("@"));
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JDK_8_WITH_LEVEL_6;
   }
 }

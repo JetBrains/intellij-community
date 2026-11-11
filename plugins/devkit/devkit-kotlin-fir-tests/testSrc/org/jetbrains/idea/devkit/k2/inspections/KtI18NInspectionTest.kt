@@ -4,23 +4,35 @@ package org.jetbrains.idea.devkit.k2.inspections
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInspection.i18n.I18nInspection
 import com.intellij.codeInspection.i18n.NlsInfo
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiClassOwner
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_8
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.annotations.Nls
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
-    
-
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return JAVA_8
+@TestApplication
+class KtI18NInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_8)
   }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
 
   // To avoid Java highlighting
   private fun configureKt(fileText: String) {
     myFixture.configureByText("Foo.kt", fileText)
   }
 
+  @Test
   fun testFunctionParameters() {
     myFixture.enableInspections(I18nInspection())
     configureKt($$"""
@@ -35,6 +47,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testPropagateToReceiver() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -48,6 +61,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testPropagateThroughLocal() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -65,7 +79,8 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
-  fun testPropagateThroughLocalNls() {
+  @Test
+  fun testPropagateThroughLocalNls(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
     myFixture.enableInspections(inspection)
@@ -78,13 +93,14 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
           foo(text)
        }
     """.trimIndent())
-    val parameterNls = NlsInfo.forModifierListOwner((file as PsiClassOwner).classes[0].methods[0].parameterList.parameters[0])
+    val parameterNls = readAction { NlsInfo.forModifierListOwner((myFixture.file as PsiClassOwner).classes[0].methods[0].parameterList.parameters[0]) }
     assertTrue(parameterNls is NlsInfo.Localized)
     assertEquals(Nls.Capitalization.Title, (parameterNls as NlsInfo.Localized).capitalization)
     myFixture.testHighlighting()
   }
 
-  fun testPropagateThroughLocalNlsFix() {
+  @Test
+  fun testPropagateThroughLocalNlsFix(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
     inspection.setReportUnannotatedReferences(true)
@@ -95,7 +111,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
          foo(te<caret>xt)
        }
     """.trimIndent())
-    val parameterNls = NlsInfo.forModifierListOwner((file as PsiClassOwner).classes[0].methods[0].parameterList.parameters[0])
+    val parameterNls = readAction { NlsInfo.forModifierListOwner((myFixture.file as PsiClassOwner).classes[0].methods[0].parameterList.parameters[0]) }
     assertTrue(parameterNls is NlsInfo.Localized)
     assertEquals(Nls.Capitalization.Title, (parameterNls as NlsInfo.Localized).capitalization)
     myFixture.doHighlighting()
@@ -112,6 +128,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
+  @Test
   fun testPropagateThroughElvisNls() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
@@ -126,6 +143,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testPropertyAssignment() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
@@ -150,6 +168,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testAnnotationValues() {
     myFixture.enableInspections(I18nInspection())
     myFixture.addClass("""
@@ -179,6 +198,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testKotlinAnnotationValues() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -204,6 +224,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testNamedParameters() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -219,6 +240,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testWhen() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -238,6 +260,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testIf() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -249,6 +272,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testStringBuilder() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -262,6 +286,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testStringBuilder2() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
@@ -282,6 +307,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testFunctionReturn() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -296,6 +322,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testExtensionMethod() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -314,6 +341,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testLocals() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -325,6 +353,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testConcatenation() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -335,6 +364,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testList() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -352,6 +382,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testCompareWithNonNls() {
     myFixture.enableInspections(I18nInspection())
     myFixture.addClass("public interface Y {@org.jetbrains.annotations.NonNls String getNonNls();}")
@@ -380,6 +411,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testException() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -397,6 +429,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testNoException() {
     val inspection = I18nInspection()
     inspection.ignoreForExceptionConstructors = false
@@ -411,6 +444,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testFunctionParametersOnlyNls() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
@@ -426,6 +460,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testDslNls() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
@@ -453,6 +488,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testScopeFunctionsNls() {
     val inspection = I18nInspection()
     inspection.run {  }
@@ -491,6 +527,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testDefaultValues() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -502,6 +539,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testConstructorParameter() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -514,6 +552,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testReturnValues() {
     myFixture.enableInspections(I18nInspection())
     configureKt("""
@@ -532,6 +571,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testReturnWithWhen() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
@@ -557,6 +597,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testStartsWith() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
@@ -572,6 +613,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testTypeUseAnnotation() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
@@ -595,6 +637,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testLocalVariable() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
@@ -615,6 +658,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testTopLevelProperty() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
@@ -636,6 +680,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testFunctionParameter() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
@@ -655,6 +700,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testSimpleReferenceCallArgument() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
@@ -678,6 +724,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testQualifiedReferenceCallArgument() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
@@ -705,6 +752,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testLoops() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
@@ -743,6 +791,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testTypeArgumentAnnotations() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)

@@ -2,16 +2,27 @@
 
 package com.intellij.psi
 
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.patterns.ElementPattern
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ProcessingContext
-import junit.framework.TestCase
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class UastReferenceRegistrarTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class UastReferenceRegistrarTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
   @Test
-  fun testUastReferenceContributorCalledOnlyOnLiterals() {
+  fun testUastReferenceContributorCalledOnlyOnLiterals(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
 
     /**
      * This implementation is used instead of [ReferenceProvidersRegistry] to emulate behaviour that [PsiReferenceProvider] will be called on
@@ -56,15 +67,16 @@ class UastReferenceRegistrarTest : LightJavaCodeInsightFixtureTestCase() {
       }
     """.trimIndent())
 
-
     myFixture.configureByFile("MyClass.java")
-    myFixture.file.accept(object : JavaRecursiveElementWalkingVisitor() {
-      override fun visitElement(element: PsiElement) {
-        psiReferenceRegistrar.getReferencesFor(element)
-        super.visitElement(element)
-      }
-    })
-    TestCase.assertEquals(expectedInvocationCount, invocationCount)
+    readActionBlocking {
+      myFixture.file.accept(object : JavaRecursiveElementWalkingVisitor() {
+        override fun visitElement(element: PsiElement) {
+          psiReferenceRegistrar.getReferencesFor(element)
+          super.visitElement(element)
+        }
+      })
+    }
+    assertEquals(expectedInvocationCount, invocationCount)
 
   }
 

@@ -1,13 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.util.indexing.impl.perFileVersion;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.indexing.CompositeDataIndexer;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.IndexedFile;
@@ -18,41 +21,55 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 @SuppressWarnings("FieldMayBeStatic")
-public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class PersistentSubIndexerVersionEnumeratorTest {
+  private static final Logger LOG = Logger.getInstance(PersistentSubIndexerVersionEnumeratorTest.class);
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   private TempDirTestFixture myDirTestFixture;
   private Path myRoot;
 
   private PersistentSubIndexerRetriever<MyIndexFileAttribute, String> myMap;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myRoot = FileUtil.createTempDirectory("persistent", "map").toPath();
+  @BeforeEach
+  void setUp(@TempDir Path tempDir) throws Exception {
+    myRoot = tempDir;
     myDirTestFixture = new TempDirTestFixtureImpl();
     myDirTestFixture.setUp();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() throws Exception {
     try {
       if (myMap != null) {
         myMap.close();
       }
-      myDirTestFixture.tearDown();
     }
-    catch (Exception e) {
-      addSuppressedException(e);
-    } finally {
-      super.tearDown();
+    finally {
+      if (myDirTestFixture != null) {
+        myDirTestFixture.tearDown();
+      }
     }
   }
 
+  @Test
   public void testAddRetrieve() throws IOException {
     myMap = new PersistentSubIndexerRetriever<>(myRoot, "index_name", 0, new MyPerFileIndexExtension());
     persistIndexedState(foo1);
@@ -65,6 +82,7 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
     assertFalse(isIndexedState(baz1));
   }
 
+  @Test
   public void testInvalidation() throws IOException {
     myMap = new PersistentSubIndexerRetriever<>(myRoot, "index_name", 0, new MyPerFileIndexExtension());
     persistIndexedState(foo1);
@@ -77,6 +95,7 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
     assertFalse(isIndexedState(foo1));
   }
 
+  @Test
   public void testStaleKeysRemoval() {
     int baseThreshold = PersistentSubIndexerVersionEnumerator.getStorageSizeLimit();
     PersistentSubIndexerVersionEnumerator.setStorageSizeLimit(2);
@@ -161,7 +180,7 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
     VirtualFile file = file(attribute);
     file.putUserData(ATTRIBUTE_KEY, attribute);
     try {
-      myMap.setIndexedState(((VirtualFileWithId) file).getId(), new IndexedFileImpl(file, getProject()));
+      myMap.setIndexedState(((VirtualFileWithId) file).getId(), new IndexedFileImpl(file, codeInsightFixture.get().getProject()));
     }
     catch (IOException e) {
       LOG.error(e);
@@ -175,7 +194,7 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
     VirtualFile file = file(attribute);
     file.putUserData(ATTRIBUTE_KEY, attribute);
     try {
-      return myMap.getSubIndexerState(((VirtualFileWithId)file).getId(), new IndexedFileImpl(file, getProject())).isUpToDate();
+      return myMap.getSubIndexerState(((VirtualFileWithId)file).getId(), new IndexedFileImpl(file, codeInsightFixture.get().getProject())).isUpToDate();
     }
     catch (IOException e) {
       LOG.error(e);

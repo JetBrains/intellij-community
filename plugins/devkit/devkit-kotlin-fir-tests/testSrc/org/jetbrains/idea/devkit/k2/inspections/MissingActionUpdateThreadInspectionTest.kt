@@ -2,19 +2,25 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.inspections.MissingActionUpdateThread
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/missingActionUpdateThread")
-class MissingActionUpdateThreadInspectionTest : LightJavaCodeInsightFixtureTestCase() {
-
-  override fun getBasePath(): String {
-    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/missingActionUpdateThread"
+@TestApplication
+class MissingActionUpdateThreadInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
   }
 
-  override fun setUp() {
-    super.setUp()
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture, DevkitKtTestsUtil.TESTDATA_PATH + "inspections/missingActionUpdateThread")
+
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(MissingActionUpdateThread::class.java)
     myFixture.addClass("package com.intellij.openapi.actionSystem;" +
                        "public interface ActionUpdateThreadAware {" +
@@ -34,11 +40,12 @@ class MissingActionUpdateThreadInspectionTest : LightJavaCodeInsightFixtureTestC
                        "public @interface JvmDefault {}")
   }
 
-
   private fun doTest() {
-    myFixture.testHighlighting(getTestName(false) + ".kt")
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".kt")
   }
 
-  fun testAction() = doTest()
-  fun testActionUpdateAware() = doTest()
+  @Test
+  fun testAction(): Unit = doTest()
+  @Test
+  fun testActionUpdateAware(): Unit = doTest()
 }

@@ -18,65 +18,85 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyMoveScriptTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class GroovyMoveScriptTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "refactoring/move/moveScript/";
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "refactoring/move/moveScript/");
   }
 
+  @Test
   public void testMoveScriptBasic() {
     doTest(new String[]{"a/Script.groovy"}, "b");
   }
 
+  @Test
   public void testUpdateReferences() {
     doTest(new String[]{"a/Script.groovy"}, "b");
   }
 
+  @Test
   public void testMultiMove() {
     doTest(new String[]{"a/Script.groovy", "a/Script2.groovy"}, "b");
   }
 
+  @Test
   public void testScriptWithClasses() {
     doTest(new String[]{"a/Foo.groovy"}, "b");
   }
 
+  @Test
   public void testFileWithTwoClasses() {
     doTest(new String[]{"a/Foo.groovy"}, "b");
   }
 
+  @Test
   public void testMoveToSamePackage() {
     doTest(new String[]{"a/Foo.groovy"}, "b");
   }
 
   private void performAction(String[] fileNames, String newDirName, String dir) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     final PsiFile[] files = new PsiFile[fileNames.length];
     for (int i = 0; i < files.length; i++) {
       String fileName = fileNames[i];
       final VirtualFile file = myFixture.getTempDirFixture().getFile(dir + "/" + fileName);
-      assertNotNull("File " + fileName + " not found", file);
+      assertNotNull(file, "File " + fileName + " not found");
 
-      files[i] = PsiManager.getInstance(getProject()).findFile(file);
-      assertNotNull("File " + fileName + " not found", files[i]);
+      files[i] = PsiManager.getInstance(myFixture.getProject()).findFile(file);
+      assertNotNull(files[i], "File " + fileName + " not found");
     }
     final VirtualFile virDir = myFixture.getTempDirFixture().getFile(dir + "/" + newDirName);
-    assertNotNull("Directory " + newDirName + " not found", virDir);
+    assertNotNull(virDir, "Directory " + newDirName + " not found");
 
-    final PsiDirectory psiDirectory = PsiManager.getInstance(getProject()).findDirectory(virDir);
-    assertNotNull("Directory " + newDirName + " not found", psiDirectory);
+    final PsiDirectory psiDirectory = PsiManager.getInstance(myFixture.getProject()).findDirectory(virDir);
+    assertNotNull(psiDirectory, "Directory " + newDirName + " not found");
 
     final PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(psiDirectory);
     List<PsiClass> classList = new ArrayList<>();
@@ -84,30 +104,32 @@ public class GroovyMoveScriptTest extends LightJavaCodeInsightFixtureTestCase {
       Collections.addAll(classList, ((PsiClassOwner)file).getClasses());
     }
     final PsiClass[] classes = classList.toArray(PsiClass.EMPTY_ARRAY);
-    new MoveClassesOrPackagesProcessor(getProject(), classes, new SingleSourceRootMoveDestination(PackageWrapper.create(pkg), psiDirectory), true, true, null).run();
+    new MoveClassesOrPackagesProcessor(myFixture.getProject(), classes, new SingleSourceRootMoveDestination(PackageWrapper.create(pkg), psiDirectory), true, true, null).run();
 
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 
   private void doTest(String[] fileNames, String newDirName) {
-    String testName = getTestName(true);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    String testName = myFixture.getTestName(true);
     final VirtualFile actualRoot = myFixture.copyDirectoryToProject(testName + "/before", "");
 
-    performAction(fileNames, newDirName, VfsUtilCore.getRelativePath(actualRoot, myFixture.getTempDirFixture().getFile(""), '/'));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      performAction(fileNames, newDirName, VfsUtilCore.getRelativePath(actualRoot, myFixture.getTempDirFixture().getFile(""), '/'));
 
-    final VirtualFile expectedRoot = StandardFileSystems.local().findFileByPath(getTestDataPath() + getTestName(true) + "/after");
-    //File expectedRoot = new File(getTestDataPath() + testName + "/after");
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+      final VirtualFile expectedRoot = StandardFileSystems.local().findFileByPath(myFixture.getTestDataPath() + myFixture.getTestName(true) + "/after");
+      //File expectedRoot = new File(getTestDataPath() + testName + "/after");
+      PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
 
-    VfsTestUtil.syncRefresh();
-    try {
-      PlatformTestUtil.assertDirectoriesEqual(expectedRoot, actualRoot);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+      VfsTestUtil.syncRefresh();
+      try {
+        PlatformTestUtil.assertDirectoriesEqual(expectedRoot, actualRoot);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
-
 
 }

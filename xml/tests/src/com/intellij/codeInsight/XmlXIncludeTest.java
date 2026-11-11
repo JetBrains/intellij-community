@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,46 +11,72 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import junit.framework.TestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class XmlXIncludeTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class XmlXIncludeTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, "/xml/tests/testData/" + BASE_PATH);
+  private String testMethodName;
+
+  @BeforeEach
+  void setUp(TestInfo testInfo) {
+    testMethodName = testInfo.getTestMethod().orElseThrow().getName();
+  }
+
+  @Test
   public void testBasicXi() {
     configure();
     assertSubtagNames("before", "include1", "after");
   }
 
+  @Test
   public void testXpointerXi1() {
     configure();
     assertSubtagNames("before", "foo", "bar", "after");
   }
 
+  @Test
   public void testXmlBase() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.copyDirectoryToProject("xmlBase", "xmlBase");
     myFixture.enableInspections(XmlPathReferenceInspection.class);
     myFixture.testHighlighting("xmlBase/XmlBase.xml");
   }
 
-  @Override
-  protected String getBasePath() {
-    return "/xml/tests/testData/" + BASE_PATH;
-  }
-
   private void assertSubtagNames(String... expectedNames) {
-    final XmlTag tag = ((XmlFile)myFixture.getFile()).getDocument().getRootTag();
-    final List<String> names = Arrays.stream(tag.getSubTags()).map(t -> t.getName()).toList();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ReadAction.runBlocking(() -> {
+      final XmlTag tag = ((XmlFile)myFixture.getFile()).getDocument().getRootTag();
+      final List<String> names = Arrays.stream(tag.getSubTags()).map(t -> t.getName()).toList();
 
-    TestCase.assertEquals("subtags are different", StringUtil.join(expectedNames, "\n"), StringUtil.join(names, "\n"));
+      assertEquals(StringUtil.join(expectedNames, "\n"), StringUtil.join(names, "\n"), "subtags are different");
+    });
   }
 
   private void configure() {
-    myFixture.configureByFiles(getName() + ".xml", "/include1.xml");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFiles(testMethodName + ".xml", "/include1.xml");
   }
 
+  @Test
   public void testModifyingIncludedFile() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.xml", """
       <root xmlns:xi="http://www.w3.org/2001/XInclude">
         <before/>
@@ -65,7 +92,9 @@ public class XmlXIncludeTest extends LightJavaCodeInsightFixtureTestCase {
     assertSubtagNames("before", "a", "after");
   }
 
+  @Test
   public void testModifyingTransitivelyIncludedFile() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.xml", """
       <root xmlns:xi="http://www.w3.org/2001/XInclude">
         <before/>
@@ -90,12 +119,13 @@ public class XmlXIncludeTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void changeText(final VirtualFile inc1, final String s) {
-    WriteAction.run(
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> WriteAction.run(
       () -> {
         FileDocumentManager.getInstance().getDocument(inc1).setText(s);
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
       }
-    );
+    ));
   }
 
   private static final String BASE_PATH = "/psi/xi";

@@ -15,7 +15,9 @@ import com.intellij.codeInspection.bytecodeAnalysis.ClassDataIndexer;
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -37,6 +39,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameValuePair;
@@ -46,15 +49,19 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -65,10 +72,14 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.jetbrains.java.decompiler.IdeaDecompilerKt.IDEA_DECOMPILER_BANNER;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class BytecodeAnalysisIntegrationTest {
   private static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT;
   private static final String INFERRED_TEST_METHOD =
     "org.apache.velocity.util.ExceptionUtils java.lang.Throwable createWithCause(java.lang.Class, java.lang.String, java.lang.Throwable)";
@@ -107,6 +118,9 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
       return sdk;
     }
   };
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(PROJECT_DESCRIPTOR);
+  private static final Logger LOG = Logger.getInstance(BytecodeAnalysisIntegrationTest.class);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   private static VirtualFile getAnnotationsRoot() {
     String annotationsPath = JavaTestUtil.getJavaTestDataPath() + "/codeInspection/bytecodeAnalysis/annotations";
@@ -115,17 +129,13 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     return annotationsDir;
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
-  }
-
+  @Test
   public void testInferredAnnoGutter() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     LineMarkerSettingsImpl settings = (LineMarkerSettingsImpl)LineMarkerSettings.getSettings();
     final InferredContractAnnotationsLineMarkerProvider descriptor = new InferredContractAnnotationsLineMarkerProvider();
     settings.setEnabled(descriptor, true);
-    Disposer.register(getTestRootDisposable(), () -> settings.resetEnabled(descriptor));
+    Disposer.register(myFixture.getTestRootDisposable(), () -> settings.resetEnabled(descriptor));
 
     checkHasGutter("org.apache.velocity.util.ExceptionUtils",
                    """
@@ -136,6 +146,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
                      <span style="color:#000000;">Throwable</span><span style="">)</span></code></pre></html>""");
   }
 
+  @Test
   public void testExternalAnnoGutter() {
     checkHasGutter("java.lang.String",
                    """
@@ -146,27 +157,31 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
   }
 
   private void checkHasGutter(String className, String expectedText) {
-    PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.moduleWithLibrariesScope(getModule()));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiClass psiClass = ReadAction.computeBlocking(() -> JavaPsiFacade.getInstance(myFixture.getProject()).findClass(className, GlobalSearchScope.moduleWithLibrariesScope(myFixture.getModule())));
     assertNotNull(psiClass);
-    myFixture.openFileInEditor(psiClass.getContainingFile().getVirtualFile());
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.openFileInEditor(psiClass.getContainingFile().getVirtualFile()));
     String documentText = myFixture.getEditor().getDocument().getText();
     assertThat(documentText).startsWith(IDEA_DECOMPILER_BANNER);
-    Set<String> gutters = myFixture.findAllGutters().stream()
+    List<GutterMark> allGutters = myFixture.findAllGutters();
+    Set<String> gutters = ReadAction.computeBlocking(() -> allGutters.stream()
       .map(GutterMark::getTooltipText)
       .filter(Objects::nonNull)
       .map(s -> s.replaceAll(" +", " ").replace("&nbsp;", " ").replace("&quot;", "'").replace("&gt;", ">"))
-      .collect(Collectors.toCollection(LinkedHashSet::new));
+      .collect(Collectors.toCollection(LinkedHashSet::new)));
     assertThat(gutters).contains(expectedText);
   }
 
+  @Test
   public void testSdkAndLibAnnotations() {
-    PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiPackage rootPackage = JavaPsiFacade.getInstance(myFixture.getProject()).findPackage("");
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), BytecodeAnalysisSuppressor.EP_NAME, TEST_SUPPRESSOR,
-                                           getTestRootDisposable());
+                                           myFixture.getTestRootDisposable());
     assertNotNull(rootPackage);
 
     List<String> diffs = new ArrayList<>();
-    JavaRecursiveElementVisitor visitor = new PackageVisitor(GlobalSearchScope.moduleWithLibrariesScope(getModule())) {
+    JavaRecursiveElementVisitor visitor = new PackageVisitor(GlobalSearchScope.moduleWithLibrariesScope(myFixture.getModule())) {
       @Override
       protected void visitSubPackage(PsiPackage aPackage, PsiClass[] classes) {
         for (PsiClass aClass : classes) {
@@ -181,13 +196,14 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
         }
       }
     };
-    rootPackage.accept(visitor);
+    ReadAction.runBlocking(() -> rootPackage.accept(visitor));
     LOG.debug(String.valueOf(ClassDataIndexer.ourIndexSizeStatistics));
-    assertEmpty(diffs);
+    assertThat(diffs).isNullOrEmpty();
   }
 
   private void checkMethodAnnotations(PsiMethod method, List<? super String> diffs) {
-    if (ProjectBytecodeAnalysis.getInstance(getProject()).getKey(method) == null) return;
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    if (ProjectBytecodeAnalysis.getInstance(myFixture.getProject()).getKey(method) == null) return;
     String methodKey = PsiFormatUtil.getExternalName(method, false, Integer.MAX_VALUE);
     if (INFERRED_TEST_METHOD.equals(methodKey)) return;
 
@@ -228,7 +244,8 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
   }
 
   private void checkFieldAnnotations(PsiField field, List<? super String> diffs) {
-    if (ProjectBytecodeAnalysis.getInstance(getProject()).getKey(field) == null) return;
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    if (ProjectBytecodeAnalysis.getInstance(myFixture.getProject()).getKey(field) == null) return;
     String fieldKey = PsiFormatUtil.getExternalName(field, false, Integer.MAX_VALUE);
 
     String externalNotNullMethodAnnotation = findExternalAnnotation(field, AnnotationUtil.NOT_NULL) == null ? "-" : "@NotNull";
@@ -238,15 +255,17 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     }
   }
 
+  @Test
   @SuppressWarnings("unused")
   public void testExportInferredAnnotations() {
-    PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiPackage rootPackage = JavaPsiFacade.getInstance(myFixture.getProject()).findPackage("");
     assertNotNull(rootPackage);
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), BytecodeAnalysisSuppressor.EP_NAME, TEST_SUPPRESSOR,
-                                           getTestRootDisposable());
+                                           myFixture.getTestRootDisposable());
 
     VirtualFile annotationsRoot = getAnnotationsRoot();
-    JavaRecursiveElementVisitor visitor = new PackageVisitor(GlobalSearchScope.moduleWithLibrariesScope(getModule())) {
+    JavaRecursiveElementVisitor visitor = new PackageVisitor(GlobalSearchScope.moduleWithLibrariesScope(myFixture.getModule())) {
       @Override
       protected void visitSubPackage(PsiPackage aPackage, PsiClass[] classes) {
         LOG.debug(aPackage.getQualifiedName());
@@ -316,31 +335,34 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
           .mapKeyValue((externalName, content) -> "<item name='" + StringUtil.escapeXmlEntities(externalName) +
                                                   "'>\n" + content.trim() + "\n</item>\n")
           .joining("", "<root>\n", "</root>");
-        PsiDirectory directory = getPsiManager().findDirectory(root);
-        WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        PsiDirectory directory = PsiManager.getInstance(myFixture.getProject()).findDirectory(root);
+        WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
           XmlFile xml = ExternalAnnotationsManagerImpl.createAnnotationsXml(null, directory, packageName);
           if (xml == null) throw new IllegalStateException("Unable to get XML for package " + packageName + "; root = " + root);
           xml.getVirtualFile().refresh(false, false);
-          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
+          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myFixture.getProject());
           Document document = documentManager.getDocument(xml);
           document.setText(xmlContent);
           documentManager.commitDocument(document);
-          CodeStyleManager.getInstance(getProject()).reformat(xml);
+          CodeStyleManager.getInstance(myFixture.getProject()).reformat(xml);
           FileDocumentManager.getInstance().saveDocument(document);
         });
       }
     };
-    rootPackage.accept(visitor);
+    // The visitor saves the XML files with a write command between its PSI reads.
+    EdtTestUtil.runInEdtAndWait(() -> rootPackage.accept(visitor));
   }
 
   @Nullable
   private PsiAnnotation findInferredAnnotation(PsiModifierListOwner owner, String fqn) {
-    return ProjectBytecodeAnalysis.getInstance(getProject()).findInferredAnnotation(owner, fqn);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    return ProjectBytecodeAnalysis.getInstance(myFixture.getProject()).findInferredAnnotation(owner, fqn);
   }
 
   @Nullable
   private PsiAnnotation findExternalAnnotation(PsiModifierListOwner owner, String fqn) {
-    ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(getProject());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(myFixture.getProject());
     PsiAnnotation annotation = manager.findExternalAnnotation(owner, fqn);
     if (annotation == null) {
       annotation = manager.findExternalTypeAnnotation(owner, "", fqn);

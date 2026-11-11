@@ -5,25 +5,46 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.IncorrectLazyConstantUsageInspection;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.ig.style.FieldMayBeFinalInspection;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class IncorrectLazyCollectionUsageInspectionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
+@TestApplication
+public class IncorrectLazyCollectionUsageInspectionTest {
+  private static final LightJavaCodeInsightFixtureTestCase.ProjectDescriptor DESCRIPTOR =
+    new LightJavaCodeInsightFixtureTestCase.ProjectDescriptor(LanguageLevel.JDK_26_PREVIEW) {
+      //otherwise it is impossible to override List, Map
+      @Override
+      public Sdk getSdk() {
+        return null;
+      }
+    };
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testLazyCollectionUsage() {
     doTest();
   }
 
+  @Test
   public void testNoDuplicateWithFieldMayBeFinalLazyCollection() {
-    myFixture.enableInspections(new FieldMayBeFinalInspection());
+    codeInsightFixture.get().enableInspections(new FieldMayBeFinalInspection());
     doTest();
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/incorrectLazyConstantUsage");
     myFixture.enableInspections(new IncorrectLazyConstantUsageInspection());
     myFixture.addClass("""
                          package java.util;
@@ -50,24 +71,7 @@ public class IncorrectLazyCollectionUsageInspectionTest extends LightJavaCodeIns
   }
 
   private void doTest() {
-    myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return new ProjectDescriptor(LanguageLevel.JDK_26_PREVIEW) {
-      //otherwise it is impossible to override List, Map
-      @Override
-      public Sdk getSdk() {
-        return null;
-      }
-    };
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/incorrectLazyConstantUsage";
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.testHighlighting(true, false, false, myFixture.getTestName(false) + ".java");
   }
 }

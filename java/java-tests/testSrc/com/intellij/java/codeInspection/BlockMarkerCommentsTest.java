@@ -5,76 +5,94 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.BlockMarkerCommentsInspection;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Dmitry Batkovich
  */
-public class BlockMarkerCommentsTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class BlockMarkerCommentsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   private BlockMarkerCommentsInspection myInspection;
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/blockMarkerComments/";
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/blockMarkerComments/");
     myInspection = new BlockMarkerCommentsInspection();
     myFixture.enableInspections(myInspection);
   }
 
-  @Override
-  public void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     try {
-      myFixture.disableInspections(myInspection);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
+      if (myInspection != null) {
+        codeInsightFixture.get().disableInspections(myInspection);
+      }
     }
     finally {
       myInspection = null;
-      super.tearDown();
     }
   }
 
   private void doTestInspection() {
-    myFixture.testHighlighting(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
   }
 
   private void doTestQuickFix() {
-    final String testFileName = getTestName(false);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String testFileName = myFixture.getTestName(false);
     myFixture.enableInspections(new BlockMarkerCommentsInspection());
     myFixture.configureByFile(testFileName + ".java");
     final IntentionAction intentionAction = myFixture.findSingleIntention("Remove block marker comment");
     assertNotNull(intentionAction);
-    myFixture.launchAction(intentionAction);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    myFixture.checkResultByFile(testFileName + "_after.java", true);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.launchAction(intentionAction);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      myFixture.checkResultByFile(testFileName + "_after.java", true);
+    });
   }
 
+  @Test
   public void testMethod() {
     doTestInspection();
   }
 
+  @Test
   public void testIf() {
     doTestInspection();
   }
 
+  @Test
   public void testLoop() {
     doTestInspection();
   }
 
+  @Test
   public void testTryCatch() {
     doTestInspection();
   }
 
+  @Test
   public void testClass() {
     doTestInspection();
   }
 
+  @Test
   public void testRemoveBlockMarker() {
     doTestQuickFix();
   }

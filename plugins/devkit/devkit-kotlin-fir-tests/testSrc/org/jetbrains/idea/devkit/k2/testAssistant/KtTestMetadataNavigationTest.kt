@@ -4,34 +4,45 @@ package org.jetbrains.idea.devkit.k2.testAssistant
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.execution.Location
 import com.intellij.execution.PsiLocation
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.MapDataContext
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import junit.framework.TestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class KtTestMetadataNavigationTest {
+  companion object {
+    private val projectDescriptor = object : LightJavaCodeInsightFixtureTestCase.ProjectDescriptor(LanguageLevel.HIGHEST) {
 
-  private val projectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST) {
+      override fun getSourceRootType(): JpsModuleSourceRootType<*> = JavaSourceRootType.TEST_SOURCE
 
-    override fun getSourceRootType(): JpsModuleSourceRootType<*> = JavaSourceRootType.TEST_SOURCE
+      override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk17()
 
-    override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk17()
+    }
 
+    private val projectFixture = lightJavaProjectFixture(projectDescriptor)
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = projectDescriptor
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
     myFixture.addClass("""
       package org.junit.platform.commons.annotation;
@@ -66,7 +77,8 @@ class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
   }
 
-  fun testNavigationByMetadata() {
+  @Test
+  fun testNavigationByMetadata(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.configureByText("TestKotlin.kt", """
       package test
 
@@ -86,21 +98,23 @@ class KtTestMetadataNavigationTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
     myFixture.checkHighlighting()
     val gutters = myFixture.findAllGutters()
-    val lineMarkerInfo = gutters.asSequence()
-      .filterIsInstance<LineMarkerInfo.LineMarkerGutterIconRenderer<*>>()
-      .map { it.lineMarkerInfo }
-      .filter { it.element?.text == "testFizzbuzz" }
-      .filter { it.createGutterRenderer()?.clickAction?.templateText == "Navigate to Test Data" }
-      .single()
+    val dataContext = readAction {
+      val lineMarkerInfo = gutters.asSequence()
+        .filterIsInstance<LineMarkerInfo.LineMarkerGutterIconRenderer<*>>()
+        .map { it.lineMarkerInfo }
+        .filter { it.element?.text == "testFizzbuzz" }
+        .filter { it.createGutterRenderer()?.clickAction?.templateText == "Navigate to Test Data" }
+        .single()
 
-    val dataContext = MapDataContext().apply {
-      put(Location.DATA_KEY, PsiLocation.fromPsiElement<PsiElement>(lineMarkerInfo.element))
+      MapDataContext().apply {
+        put(Location.DATA_KEY, PsiLocation.fromPsiElement<PsiElement>(lineMarkerInfo.element))
+      }
     }
     val findTestDataFilesForTests = NavigateToTestDataAction.findTestDataFiles(
-      dataContext, project, true).map { it.path }
+      dataContext, myFixture.project, true).map { it.path }
 
-    UsefulTestCase.assertSize(1, findTestDataFilesForTests)
-    TestCase.assertTrue(findTestDataFilesForTests.single().endsWith("/testData/foo/b"))
+    assertEquals(1, findTestDataFilesForTests.size, findTestDataFilesForTests.toString())
+    assertTrue(findTestDataFilesForTests.single().endsWith("/testData/foo/b"))
   }
 
 }

@@ -7,8 +7,12 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,52 +21,72 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.refactoring.introduce.constant.GrIntroduceConstantHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.constant.GrIntroduceConstantSettings;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Maxim.Medvedev
  */
-public class IntroduceConstantTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "refactoring/introduceConstant/";
+@TestApplication
+public class IntroduceConstantTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "refactoring/introduceConstant/");
   }
 
+  @Test
   public void testSimple() {
     doTest();
   }
 
+  @Test
   public void testReplaceAllOccurrences() {
     doTest();
   }
 
+  @Test
   public void testEscalateVisibility() {
     doTest("Other", true, false, VisibilityUtil.ESCALATE_VISIBILITY);
   }
 
+  @Test
   public void testInsertInEnum() {
     doTest("Planet", false, false, PsiModifier.PROTECTED);
   }
 
+  @Test
   public void testInsertInInterface() {
     doTest("MyInterface", false, false, PsiModifier.PROTECTED);
   }
 
+  @Test
   public void testTupleDeclaration() {
     doTest("Test", true, false, PsiModifier.PUBLIC);
   }
 
+  @Test
   public void testStringPart() {
     doTest();
   }
 
+  @Test
   public void testAnonymousClass() {
     doTest();
   }
 
+  @Test
   public void testFieldWithClassName() {
     doTest();
   }
 
+  @Test
   public void testLocalVarRef() {
     doTest();
   }
@@ -72,26 +96,29 @@ public class IntroduceConstantTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void doTest(@Nullable String targetClassName, boolean replaceAllOccurrences, boolean useExplicitType, String modifier) {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
 
-    final GrIntroduceConstantHandler handler = new GrIntroduceConstantHandler();
-    final Editor editor = myFixture.getEditor();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      final GrIntroduceConstantHandler handler = new GrIntroduceConstantHandler();
+      final Editor editor = myFixture.getEditor();
 
-    final GrExpression expression = findExpression(myFixture);
-    final GrVariable variable = findVariable(myFixture);
-    final StringPartInfo stringPart = findStringPart(myFixture);
-    PsiElement[] scopes = handler.findPossibleScopes(expression, variable, stringPart, editor);
-    final GrIntroduceContext context = handler.getContext(getProject(), editor, expression, variable, stringPart, scopes[0]);
+      final GrExpression expression = findExpression(myFixture);
+      final GrVariable variable = findVariable(myFixture);
+      final StringPartInfo stringPart = findStringPart(myFixture);
+      PsiElement[] scopes = handler.findPossibleScopes(expression, variable, stringPart, editor);
+      final GrIntroduceContext context = handler.getContext(myFixture.getProject(), editor, expression, variable, stringPart, scopes[0]);
 
-    PsiClass targetClass =
-      targetClassName == null ? GrIntroduceConstantHandler.findContainingClass(context) : myFixture.findClass(targetClassName);
-    assertNotNull("target class is null", targetClass);
+      PsiClass targetClass =
+        targetClassName == null ? GrIntroduceConstantHandler.findContainingClass(context) : myFixture.findClass(targetClassName);
+      assertNotNull(targetClass, "target class is null");
 
-    PsiType type = getType(useExplicitType, expression, variable, stringPart);
-    final GrIntroduceConstantSettings settings = new MockIntroduceConstantSettings(targetClass, replaceAllOccurrences, type, modifier);
+      PsiType type = getType(useExplicitType, expression, variable, stringPart);
+      final GrIntroduceConstantSettings settings = new MockIntroduceConstantSettings(targetClass, replaceAllOccurrences, type, modifier);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), (Runnable) () -> handler.runRefactoring(context, settings));
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true);
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), (Runnable) () -> handler.runRefactoring(context, settings));
+      myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.groovy", true);
+    });
   }
 
   private static PsiType getType(boolean useExplicitType, GrExpression expression, GrVariable variable, StringPartInfo stringPart) {

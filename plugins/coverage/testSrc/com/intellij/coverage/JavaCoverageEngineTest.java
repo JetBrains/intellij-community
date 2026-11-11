@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,10 +16,20 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-@RunWith(JUnit4.class)
-public class JavaCoverageEngineTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class JavaCoverageEngineTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   @Test
   public void getQualifiedNamesIncludesNestedClassJvmNames() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     var file = myFixture.addFileToProject("src/org/demo/Foo.java", """
       package org.demo;
 
@@ -32,8 +42,8 @@ public class JavaCoverageEngineTest extends LightJavaCodeInsightFixtureTestCase 
       class Bar {}
       """);
 
-    Assert.assertEquals(Set.of("org.demo.Foo", "org.demo.Foo$Nested", "org.demo.Foo$Nested$Deep", "org.demo.Bar"),
-                        new JavaCoverageEngine().getQualifiedNames(file));
+    assertEquals(Set.of("org.demo.Foo", "org.demo.Foo$Nested", "org.demo.Foo$Nested$Deep", "org.demo.Bar"),
+                 new JavaCoverageEngine().getQualifiedNames(file));
   }
 
   @Test
@@ -68,12 +78,12 @@ public class JavaCoverageEngineTest extends LightJavaCodeInsightFixtureTestCase 
         JavaCoverageEngine engine = new JavaCoverageEngine();
         CoverageSuitesBundle suite = createSuite(engine, runner);
         List<Integer> expectedLines = engine.collectSrcLinesForUntouchedFile(classFile, suite);
-        Assert.assertNotNull(expectedLines);
-        Assert.assertFalse(runner.getPresentableName(), expectedLines.isEmpty());
-        Assert.assertEquals(runner.getPresentableName(), expectedLines, engine.collectSrcLinesForUntouchedFile(archiveEntry, suite));
-        Assert.assertEquals(runner.getPresentableName(),
-                            List.of(),
-                            engine.collectSrcLinesForUntouchedFile(missingArchiveEntry, suite));
+        assertNotNull(expectedLines);
+        assertFalse(expectedLines.isEmpty(), runner.getPresentableName());
+        assertEquals(expectedLines, engine.collectSrcLinesForUntouchedFile(archiveEntry, suite), runner.getPresentableName());
+        assertEquals(List.of(),
+                     engine.collectSrcLinesForUntouchedFile(missingArchiveEntry, suite),
+                     runner.getPresentableName());
       }
     }
     finally {
@@ -85,13 +95,14 @@ public class JavaCoverageEngineTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   private CoverageSuitesBundle createSuite(JavaCoverageEngine engine, JavaCoverageRunner runner) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     JavaCoverageSuite javaSuite = new JavaCoverageSuite(engine) {
       @Override
       public CoverageRunner getRunner() {
         return runner;
       }
     };
-    javaSuite.setProject(getProject());
+    javaSuite.setProject(myFixture.getProject());
     return new CoverageSuitesBundle(javaSuite);
   }
 

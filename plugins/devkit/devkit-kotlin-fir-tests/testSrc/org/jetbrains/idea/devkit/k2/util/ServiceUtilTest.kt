@@ -1,9 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.util
 
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.testFramework.TestDataPath
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.inspections.LevelType
 import org.jetbrains.idea.devkit.inspections.getLevelType
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
@@ -12,44 +16,55 @@ import org.jetbrains.uast.UClass
 import org.jetbrains.uast.getContainingUClass
 import org.jetbrains.uast.getParentOfType
 import org.jetbrains.uast.toUElement
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.io.path.Path
+import kotlin.time.Duration.Companion.minutes
 
 private const val SERVICE_DECLARATIONS_DIR = "serviceDeclarations"
 private const val SERVICE_USAGES_DIR = "serviceUsages"
 
 @TestDataPath("\$CONTENT_ROOT/testData/util/serviceUtil")
-class ServiceUtilTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class ServiceUtilTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun getBasePath(): String = DevkitKtTestsUtil.TESTDATA_PATH + "util/serviceUtil"
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture, DevkitKtTestsUtil.TESTDATA_PATH + "util/serviceUtil")
 
-  override fun setUp() {
-    super.setUp()
-    ConfigLibraryUtil.configureKotlinRuntime(module)
+  @BeforeEach
+  fun setUp() {
+    ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
     addPlatformClasses()
     myFixture.configureByFile("plugin.xml")
   }
 
   // ##### Test services (defined both in Java and Kotlin) usages from Java #####
+  @Test
   fun testServiceLevelByAnnotationFromJava() {
     lightServiceTests("java").forEach(::serviceLevelByAnnotationTest)
   }
 
-
+  @Test
   fun testServiceLevelByClassFromJava() {
     (lightServiceTests("java") + registeredServiceTests("java")).forEach(::serviceLevelByClassTest)
   }
 
   // ##### Test services (defined both in Java and Kotlin) usages from Kotlin #####
+  @Test
   fun testServiceLevelByAnnotationFromKotlin() {
     lightServiceTests("kt").forEach(::serviceLevelByAnnotationTest)
   }
 
-
+  @Test
   fun testServiceLevelByClassFromKotlin() {
     (lightServiceTests("kt") + registeredServiceTests("kt")).forEach(::serviceLevelByClassTest)
   }
 
+  @Test
   fun testNonService() {
     nonServiceTests().forEach {
       serviceLevelByClassTest(it)
@@ -133,7 +148,6 @@ class ServiceUtilTest : LightJavaCodeInsightFixtureTestCase() {
       """.trimIndent()
     )
 
-
     myFixture.addClass(
       """
       package kotlin.reflect;
@@ -180,37 +194,41 @@ class ServiceUtilTest : LightJavaCodeInsightFixtureTestCase() {
     return elementAtCaret.getContainingUClass() ?: elementAtCaret.getParentOfType(strict = false)
   }
 
-  private fun serviceLevelByAnnotationTest(testName: String) {
+  private fun serviceLevelByAnnotationTest(testName: String): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.testHighlighting(testName, *serviceDeclarationPaths)
 
-    val uClass = getUClassAtCaret() ?: error("No class found at the caret for $testName")
-    val expectedLevel = getExpectedServiceLevel(uClass)
+    readAction {
+      val uClass = getUClassAtCaret() ?: error("No class found at the caret for $testName")
+      val expectedLevel = getExpectedServiceLevel(uClass)
 
-    val annotation = uClass.findAnnotation(Service::class.qualifiedName!!) ?: error("No Service annotation found for ${uClass.name}")
-    val psiAnnotation = annotation.javaPsi!!
-    val actualLevel = getLevelType(psiAnnotation, uClass.language)
+      val annotation = uClass.findAnnotation(Service::class.qualifiedName!!) ?: error("No Service annotation found for ${uClass.name}")
+      val psiAnnotation = annotation.javaPsi!!
+      val actualLevel = getLevelType(psiAnnotation, uClass.language)
 
-    assertEquals("Incorrect service level for ${uClass.name}", expectedLevel, actualLevel)
+      assertEquals(expectedLevel, actualLevel, "Incorrect service level for ${uClass.name}")
+    }
   }
 
-  private fun serviceLevelByClassTest(testName: String) {
+  private fun serviceLevelByClassTest(testName: String): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     myFixture.testHighlighting(testName, *serviceDeclarationPaths)
 
-    val uClass = getUClassAtCaret() ?: error("No class found at the caret for $testName")
-    val expectedLevel = getExpectedServiceLevel(uClass)
-    val actualLevel = getLevelType(project, uClass)
+    readAction {
+      val uClass = getUClassAtCaret() ?: error("No class found at the caret for $testName")
+      val expectedLevel = getExpectedServiceLevel(uClass)
+      val actualLevel = getLevelType(myFixture.project, uClass)
 
-    assertEquals("Incorrect service level for ${uClass.name}", expectedLevel, actualLevel)
+      assertEquals(expectedLevel, actualLevel, "Incorrect service level for ${uClass.name}")
+    }
   }
 
   private fun getPaths(subpath: String = "", extension: String? = null, nameFilter: (String) -> Boolean = { true }): Array<String> {
-    return Path(testDataPath, subpath)
+    return Path(myFixture.testDataPath, subpath)
       .toFile()
       .walk()
       .filter {
         it.isFile && nameFilter(it.name) && extension?.let { ext -> it.extension == ext } ?: true
       }
-      .map { it.relativeTo(File(testDataPath)).toString() }
+      .map { it.relativeTo(File(myFixture.testDataPath)).toString() }
       .toList()
       .toTypedArray()
   }

@@ -5,40 +5,46 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.UITestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-@RunWith(Parameterized.class)
-public class SameParameterValueSlashesTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+public class SameParameterValueSlashesTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   private SameParameterValueInspection myInspection = new SameParameterValueInspection();
 
-  @Before
+  @BeforeEach
   public void before() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(myInspection);
   }
 
-  @After
+  @AfterEach
   public void after() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.disableInspections(myInspection);
     myInspection = null;
   }
 
-  @Parameterized.Parameters(name = "\\{0}")
   public static Object[] data() {
     return new Object[] { "n", "r", "b", "t", "f", "\"", "'", "\\", "1", "n\" + \"\\n"};
   }
 
-  @Parameterized.Parameter
-  public String symbol;
-
-  @Test
-  public void testSlashes() {
+  @ParameterizedTest(name = "\\{0}", quoteTextArguments = false)
+  @MethodSource("data")
+  public void testSlashes(String symbol) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Runnable runnable = () -> {
       String specialSymbol = "\\" + symbol;
       String ourIntentionName = "Inline value '";

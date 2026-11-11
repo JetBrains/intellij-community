@@ -15,30 +15,47 @@
  */
 package com.intellij.java.refactoring.rename
 
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiJavaFile
 import com.intellij.refactoring.rename.JavaModuleRenameValidator
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ProcessingContext
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class JavaModuleRenameValidatorTest : LightJavaCodeInsightFixtureTestCase() {
-  @Test fun test() {
+@TestApplication
+class JavaModuleRenameValidatorTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test fun test(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val validator = JavaModuleRenameValidator()
-    val module = (myFixture.configureByText("module-info.java", "module M { }") as PsiJavaFile).moduleDeclaration!!
-    val context = ProcessingContext()
+    val file = myFixture.configureByText("module-info.java", "module M { }") as PsiJavaFile
+    readAction {
+      val module = file.moduleDeclaration!!
+      val context = ProcessingContext()
 
-    assertTrue(validator.isInputValid("M", module, context))
-    assertTrue(validator.isInputValid("M.M.M", module, context))
-    assertTrue(validator.isInputValid("M42", module, context))
+      assertTrue(validator.isInputValid("M", module, context))
+      assertTrue(validator.isInputValid("M.M.M", module, context))
+      assertTrue(validator.isInputValid("M42", module, context))
 
-    assertFalse(validator.isInputValid("", module, context))
-    assertFalse(validator.isInputValid(" ", module, context))
-    assertFalse(validator.isInputValid("\n", module, context))
-    assertFalse(validator.isInputValid("42", module, context))
-    assertFalse(validator.isInputValid("M.42", module, context))
-    assertFalse(validator.isInputValid("M.", module, context))
-    assertFalse(validator.isInputValid(".M", module, context))
-    assertFalse(validator.isInputValid("M.M.", module, context))
-    assertFalse(validator.isInputValid("M..M", module, context))
+      assertFalse(validator.isInputValid("", module, context))
+      assertFalse(validator.isInputValid(" ", module, context))
+      assertFalse(validator.isInputValid("\n", module, context))
+      assertFalse(validator.isInputValid("42", module, context))
+      assertFalse(validator.isInputValid("M.42", module, context))
+      assertFalse(validator.isInputValid("M.", module, context))
+      assertFalse(validator.isInputValid(".M", module, context))
+      assertFalse(validator.isInputValid("M.M.", module, context))
+      assertFalse(validator.isInputValid("M..M", module, context))
+    }
   }
 }

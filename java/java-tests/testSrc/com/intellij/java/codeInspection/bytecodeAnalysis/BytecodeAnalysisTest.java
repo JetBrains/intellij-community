@@ -11,6 +11,7 @@ import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.LeakingParameters;
 import com.intellij.lang.jvm.JvmAnnotation;
 import com.intellij.lang.jvm.JvmParameter;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -25,10 +26,12 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -37,13 +40,22 @@ import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
+public class BytecodeAnalysisTest {
   private static final String PACKAGE_NAME = "bytecodeAnalysis";
   private static final String EXPECT_NOT_NULL = PACKAGE_NAME + ".ExpectNotNull";
   private static final String EXPECT_CONTRACT = PACKAGE_NAME + ".ExpectContract";
@@ -58,13 +70,10 @@ public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
       PsiTestUtil.newLibrary("velocity").classesRoot(dataDir + "/classes").classesRoot(dataDir + "/conflict").addTo(model);
     }
   };
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(PROJECT_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
-  }
-
+  @Test
   public void testInference() {
     checkAnnotations("data.Test01");
     checkAnnotations("data.Test02");
@@ -74,14 +83,17 @@ public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
     checkAnnotations("data.TestField");
   }
 
+  @Test
   public void testJava9Inference() {
     checkAnnotations("java9.TestStringConcat");
   }
 
+  @Test
   public void testHashCollision() {
     checkAnnotations("data.TestHashCollision");
   }
 
+  @Test
   public void testConverter() throws IOException {
     checkCompoundIds("data.Test01");
     checkCompoundIds("data.TestConverterData");
@@ -91,76 +103,83 @@ public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
     checkCompoundIds("data.TestAnnotation");
   }
 
+  @Test
   public void testLeakingParametersAnalysis() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Map<String, boolean[]> map = new HashMap<>();
 
-    GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(getModule());
-    PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(PACKAGE_NAME + ".data.TestLeakingParametersData", scope);
-    assertNotNull(psiClass);
-    try (InputStream stream = getVirtualFile(psiClass).getInputStream()) {
-      ClassReader reader = new ClassReader(stream);
-      reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
-        @Override
-        public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-          MethodNode node = new MethodNode(Opcodes.API_VERSION, access, name, desc, signature, exceptions);
-          return new MethodVisitor(Opcodes.API_VERSION, node) {
-            @Override
-            public void visitEnd() {
-              try {
-                map.put(name, LeakingParameters.build(reader.getClassName(), node, false).parameters);
+    GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(myFixture.getModule());
+    ReadAction.runBlocking(() -> {
+      PsiClass psiClass = JavaPsiFacade.getInstance(myFixture.getProject()).findClass(PACKAGE_NAME + ".data.TestLeakingParametersData", scope);
+      assertNotNull(psiClass);
+      try (InputStream stream = getVirtualFile(psiClass).getInputStream()) {
+        ClassReader reader = new ClassReader(stream);
+        reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
+          @Override
+          public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+            MethodNode node = new MethodNode(Opcodes.API_VERSION, access, name, desc, signature, exceptions);
+            return new MethodVisitor(Opcodes.API_VERSION, node) {
+              @Override
+              public void visitEnd() {
+                try {
+                  map.put(name, LeakingParameters.build(reader.getClassName(), node, false).parameters);
+                }
+                catch (AnalyzerException ignore) { }
               }
-              catch (AnalyzerException ignore) { }
-            }
-          };
-        }
-      }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-    }
-
-    for (PsiMethod method : psiClass.getMethods()) {
-      JvmParameter[] parameters = method.getParameters();
-      for (int i = 0; i < parameters.length; i++) {
-        boolean isLeaking = false;
-        for (JvmAnnotation annotation : parameters[i].getAnnotations()) {
-          if (EXPECT_LEAKING.equals(annotation.getQualifiedName())) {
-            isLeaking = true;
+            };
           }
-        }
-        assertEquals(method + " #" + i, isLeaking, map.get(method.getName())[i]);
+        }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
       }
-    }
+
+      for (PsiMethod method : psiClass.getMethods()) {
+        JvmParameter[] parameters = method.getParameters();
+        for (int i = 0; i < parameters.length; i++) {
+          boolean isLeaking = false;
+          for (JvmAnnotation annotation : parameters[i].getAnnotations()) {
+            if (EXPECT_LEAKING.equals(annotation.getQualifiedName())) {
+              isLeaking = true;
+            }
+          }
+          assertEquals(isLeaking, map.get(method.getName())[i], method + " #" + i);
+        }
+      }
+    });
   }
 
   private void checkAnnotations(String className) {
-    GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(getModule());
-    PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(PACKAGE_NAME + '.' + className, scope);
-    assertNotNull(psiClass);
-    ProjectBytecodeAnalysis service = ProjectBytecodeAnalysis.getInstance(getProject());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(myFixture.getModule());
+    ReadAction.runBlocking(() -> {
+      PsiClass psiClass = JavaPsiFacade.getInstance(myFixture.getProject()).findClass(PACKAGE_NAME + '.' + className, scope);
+      assertNotNull(psiClass);
+      ProjectBytecodeAnalysis service = ProjectBytecodeAnalysis.getInstance(myFixture.getProject());
 
-    for (PsiMethod method : psiClass.getMethods()) {
-      PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (method.isConstructor() && parameters.length == 0) continue;
+      for (PsiMethod method : psiClass.getMethods()) {
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (method.isConstructor() && parameters.length == 0) continue;
 
-      for (int i = 0; i < parameters.length; i++) {
-        boolean expectNotNull = AnnotationUtil.isAnnotated(parameters[i], EXPECT_NOT_NULL, 0);
-        PsiAnnotation inferredAnnotation = service.findInferredAnnotation(parameters[i], AnnotationUtil.NOT_NULL);
-        assertNullity(displayName(method) + "/arg#" + i, expectNotNull, inferredAnnotation);
+        for (int i = 0; i < parameters.length; i++) {
+          boolean expectNotNull = AnnotationUtil.isAnnotated(parameters[i], EXPECT_NOT_NULL, 0);
+          PsiAnnotation inferredAnnotation = service.findInferredAnnotation(parameters[i], AnnotationUtil.NOT_NULL);
+          assertNullity(displayName(method) + "/arg#" + i, expectNotNull, inferredAnnotation);
+        }
+
+        boolean expectNotNull = AnnotationUtil.isAnnotated(method, EXPECT_NOT_NULL, 0);
+        PsiAnnotation actualAnnotation = service.findInferredAnnotation(method, AnnotationUtil.NOT_NULL);
+        assertNullity(displayName(method), expectNotNull, actualAnnotation);
+
+        PsiAnnotation expectedContract = AnnotationUtil.findAnnotation(method, EXPECT_CONTRACT);
+        PsiAnnotation actualContract = service.findInferredAnnotation(method, Contract.class.getName());
+        String expectedText = contractText(expectedContract);
+        String inferredText = contractText(actualContract);
+        assertEquals(expectedText, inferredText, displayName(method) + ":" + expectedText + " <> " + inferredText);
       }
-
-      boolean expectNotNull = AnnotationUtil.isAnnotated(method, EXPECT_NOT_NULL, 0);
-      PsiAnnotation actualAnnotation = service.findInferredAnnotation(method, AnnotationUtil.NOT_NULL);
-      assertNullity(displayName(method), expectNotNull, actualAnnotation);
-
-      PsiAnnotation expectedContract = AnnotationUtil.findAnnotation(method, EXPECT_CONTRACT);
-      PsiAnnotation actualContract = service.findInferredAnnotation(method, Contract.class.getName());
-      String expectedText = contractText(expectedContract);
-      String inferredText = contractText(actualContract);
-      assertEquals(displayName(method) + ":" + expectedText + " <> " + inferredText, expectedText, inferredText);
-    }
-    for (PsiField field : psiClass.getFields()) {
-      boolean expectNotNull = AnnotationUtil.isAnnotated(field, EXPECT_NOT_NULL, 0);
-      PsiAnnotation actualAnnotation = service.findInferredAnnotation(field, AnnotationUtil.NOT_NULL);
-      assertNullity(displayName(field), expectNotNull, actualAnnotation);
-    }
+      for (PsiField field : psiClass.getFields()) {
+        boolean expectNotNull = AnnotationUtil.isAnnotated(field, EXPECT_NOT_NULL, 0);
+        PsiAnnotation actualAnnotation = service.findInferredAnnotation(field, AnnotationUtil.NOT_NULL);
+        assertNullity(displayName(field), expectNotNull, actualAnnotation);
+      }
+    });
   }
 
   private static String displayName(PsiMember member) {
@@ -181,27 +200,30 @@ public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
   }
   
   private void checkCompoundIds(String className) throws IOException {
-    GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(getModule());
-    PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(PACKAGE_NAME + '.' + className, scope);
-    assertNotNull(psiClass);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(myFixture.getModule());
+    ReadAction.runBlocking(() -> {
+      PsiClass psiClass = JavaPsiFacade.getInstance(myFixture.getProject()).findClass(PACKAGE_NAME + '.' + className, scope);
+      assertNotNull(psiClass);
 
-    try (InputStream stream = getVirtualFile(psiClass).getInputStream()) {
-      ClassReader reader = new ClassReader(stream);
-      reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
-        @Override
-        public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-          if ((access & Opcodes.ACC_SYNTHETIC) == 0) {
-            Member method = new Member(reader.getClassName(), name, desc);
-            PsiMethod[] psiMethods = "<init>".equals(name) ? psiClass.getConstructors() : psiClass.findMethodsByName(name, false);
-            assertEquals("Must be single method: " + name, 1, psiMethods.length);
-            PsiMethod psiMethod = psiMethods[0];
-            boolean noKey = psiMethod.hasAnnotation(EXPECT_NO_PSI_KEY);
-            checkCompoundId(method, psiMethod, noKey);
+      try (InputStream stream = getVirtualFile(psiClass).getInputStream()) {
+        ClassReader reader = new ClassReader(stream);
+        reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
+          @Override
+          public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+            if ((access & Opcodes.ACC_SYNTHETIC) == 0) {
+              Member method = new Member(reader.getClassName(), name, desc);
+              PsiMethod[] psiMethods = "<init>".equals(name) ? psiClass.getConstructors() : psiClass.findMethodsByName(name, false);
+              assertEquals(1, psiMethods.length, "Must be single method: " + name);
+              PsiMethod psiMethod = psiMethods[0];
+              boolean noKey = psiMethod.hasAnnotation(EXPECT_NO_PSI_KEY);
+              checkCompoundId(method, psiMethod, noKey);
+            }
+            return null;
           }
-          return null;
-        }
-      }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-    }
+        }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+      }
+    });
   }
 
   private static void checkCompoundId(Member method, PsiMethod psiMethod, boolean noKey) {

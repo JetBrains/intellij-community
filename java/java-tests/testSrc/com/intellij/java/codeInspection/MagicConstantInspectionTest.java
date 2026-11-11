@@ -4,52 +4,81 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.magicConstant.MagicConstantInspection;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class MagicConstantInspectionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/magic/";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class MagicConstantInspectionTest {
+  // has to have JFrame and sources
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_1_7_ANNOTATED);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/magic/");
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    // has to have JFrame and sources
-    return JAVA_1_7_ANNOTATED;
-  }
-
+  @Test
   public void testSimple() { doTest(); }
   
+  @Test
   public void testManyConstantSources() { doTest(); }
   // test that the optimisation for not loading AST works
+  @Test
   public void testWithLibrary() { doTest(); }
+  @Test
   public void testSpecialCases() { doTest(); }
+  @Test
   public void testVarargMethodCall() { doTest(); }
+  @Test
   public void testEnumConstructor() { doTest(); }
+  @Test
   public void testFieldInitializer() { doTest(); }
+  @Test
   public void testSwitchBlock() { doTest(); }
+  @Test
   public void testPropagate() { doTest(); }
+  @Test
   public void testMinMax() { doTest(); }
-  public void testSwitchExpression1() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14, () -> doTest()); }
-  public void testSwitchExpression2() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14, () -> doTest()); }
+  @Test
+  public void testSwitchExpression1() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_14, () -> doTest());
+  }
+  @Test
+  public void testSwitchExpression2() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_14, () -> doTest());
+  }
 
   private void doTest() {
-    myFixture.configureByFile(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
 
-    PsiClass calendarClass = myFixture.getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_CALENDAR);
-    assertNotNull("No Calendar class in mockJDK", calendarClass);
-    PsiElement calendarSource = calendarClass.getNavigationElement();
-    assertTrue(calendarSource instanceof PsiClassImpl);
-    myFixture.allowTreeAccessForFile(calendarSource.getContainingFile().getVirtualFile());
+    ReadAction.runBlocking(() -> {
+      PsiClass calendarClass = myFixture.getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_CALENDAR);
+      assertNotNull(calendarClass, "No Calendar class in mockJDK");
+      PsiElement calendarSource = calendarClass.getNavigationElement();
+      assertTrue(calendarSource instanceof PsiClassImpl);
+      myFixture.allowTreeAccessForFile(calendarSource.getContainingFile().getVirtualFile());
+    });
 
     myFixture.enableInspections(new MagicConstantInspection());
     myFixture.testHighlighting(true, false, false);

@@ -2,19 +2,31 @@
 
 package com.intellij.patterns.uast
 
+import com.intellij.openapi.application.readAction
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.toUElement
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
-class UastPatternsTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class UastPatternsTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
   @Test
-  fun testCallParameters() {
+  fun testCallParameters(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
 
     val psiClass = myFixture.addClass("""
       class MyClass {
@@ -42,11 +54,11 @@ class UastPatternsTest : LightJavaCodeInsightFixtureTestCase() {
 
   }
 
-  private fun assertAccepted(psiClass: PsiElement,
-                             pattern: ULiteralExpressionPattern,
-                             vararg expected: String) {
-    assertSameElements(getAcceptedElements(psiClass, pattern).map { it.sourcePsi?.text ?: "null" },
-                       *expected)
+  private suspend fun assertAccepted(psiClass: PsiElement,
+                                     pattern: ULiteralExpressionPattern,
+                                     vararg expected: String) {
+    val texts = readAction { getAcceptedElements(psiClass, pattern).map { it.sourcePsi?.text ?: "null" } }
+    assertThat(texts).hasSize(expected.size).containsOnly(*expected)
   }
 
   private fun getAcceptedElements(psiClass: PsiElement,

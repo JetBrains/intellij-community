@@ -5,9 +5,6 @@
       <class name="com.theoryinpractice.testng.configuration.ConfigurationsTest"/>
       <class name="com.theoryinpractice.testng.inspection.UndeclaredTestsInspectionTest"/>
       <class name="com.theoryinpractice.testng.intention.AddTestNGJarFixTest"/>
-      <class name="com.theoryinpractice.testng.referenceContributor.TestNGDataProviderTest"/>
-      <class name="com.theoryinpractice.testng.referenceContributor.TestNGSuiteTest"/>
-      <class name="com.theoryinpractice.testng.inspection.TestNGDependsOnInspectionTest"/>
     </classes>
   </test>
 </suite>

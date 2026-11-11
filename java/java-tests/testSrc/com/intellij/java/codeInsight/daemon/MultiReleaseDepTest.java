@@ -8,11 +8,19 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public final class MultiReleaseDepTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public final class MultiReleaseDepTest {
   private static final @NotNull LightProjectDescriptor MY_DESCRIPTOR = new LightProjectDescriptor() {
     @Override
     public @NotNull Sdk getSdk() {
@@ -25,15 +33,14 @@ public final class MultiReleaseDepTest extends LightJavaCodeInsightFixtureTestCa
       MavenDependencyUtil.addFromMaven(model, "org.apache.logging.log4j:log4j-api:2.20.0"); // Multi-release-JAR
     }
   };
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(MY_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return MY_DESCRIPTOR;
-  }
-
+  @Test
   public void testOnDemandResolveIntoMultiReleaseJar() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     // IDEA-350754
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
       myFixture.configureByText("Test.java", """
       package com.example;
 

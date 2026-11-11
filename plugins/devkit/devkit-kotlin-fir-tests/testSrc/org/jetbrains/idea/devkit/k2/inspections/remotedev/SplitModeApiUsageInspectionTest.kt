@@ -2,8 +2,9 @@
 package org.jetbrains.idea.devkit.k2.inspections.remotedev
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.project.IntelliJProjectUtil
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -11,26 +12,38 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeApiUsageInspection
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
-class SplitModeApiUsageInspectionTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class SplitModeApiUsageInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun getBasePath(): String = "inspections/apiUsageRestrictedToModuleType"
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture, "inspections/apiUsageRestrictedToModuleType")
 
-  override fun setUp() {
-    super.setUp()
-    IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
+  @BeforeEach
+  fun setUp() {
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(myFixture.project, true)
 
-    val service = SplitModeApiRestrictionsService.getInstance(project)
+    val service = SplitModeApiRestrictionsService.getInstance(myFixture.project)
     service.scheduleLoadRestrictions()
     timeoutRunBlocking {
       waitUntil("API restrictions failed to load", 2.seconds) { service.isLoaded() }
     }
 
-    PsiTestUtil.addResourceContentToRoots(module, myFixture.tempDirFixture.findOrCreateDir("resources"), false)
+    PsiTestUtil.addResourceContentToRoots(myFixture.module, myFixture.tempDirFixture.findOrCreateDir("resources"), false)
 
     myFixture.addClass("""
       package com.intellij.util.remdev;
@@ -246,6 +259,7 @@ class SplitModeApiUsageInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.addFileToProject("resources/light_idea_test_case.xml", pluginXmlContent)
   }
 
+  @Test
   fun testFrontendApiInBackendModule() {
     configurePluginXml(
       """
@@ -290,6 +304,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testCodeInspectionIsSkippedForLiteFrontendModule() {
     configurePluginXml(
       """
@@ -317,6 +332,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testCodeInspectionIsSkippedForPluginIdWithPredefinedModuleKind() {
     configurePluginXml(
       """
@@ -343,9 +359,10 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testCodeInspectionIsNotSkippedForPluginIdWithPredefinedModuleKindWhenFlagDisabled() {
     RegistryManager.getInstance().get("devkit.split.mode.inspections.skip.predefined")
-      .setValue(false, testRootDisposable)
+      .setValue(false, myFixture.testRootDisposable)
 
     configurePluginXml(
       """
@@ -376,6 +393,7 @@ Predefined module kind for plugin/module id 'com.intellij.modules.lang'">Virtual
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testBackendApiInFrontendModule() {
     configurePluginXml(
       """
@@ -415,6 +433,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testFileIndexApiInFrontendModule() {
     configurePluginXml(
       """
@@ -469,6 +488,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testFrontendOrBackendApiInBackendModule() {
     configurePluginXml(
       """
@@ -493,6 +513,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testFrontendApiInBackendModuleForFileEditorManagerListener() {
     configurePluginXml(
       """
@@ -521,6 +542,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testSharedApiInFrontendModuleForParserDefinition() {
     configurePluginXml(
       """
@@ -550,6 +572,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testBackendLifecycleListenerInFrontendModule() {
     configurePluginXml(
       """
@@ -579,6 +602,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testBackendApiInFrontendContentModule() {
     configureContentModuleXml(
       """
@@ -618,6 +642,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'light_idea_tes
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testAnnotatedBackendApiInFrontendModule() {
     configurePluginXml(
       """
@@ -651,6 +676,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testAnnotatedFrontendApiInBackendModule() {
     configurePluginXml(
       """
@@ -683,7 +709,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
     myFixture.checkHighlighting()
   }
 
-
+  @Test
   fun testWarningsInSharedModule() {
     configurePluginXml(
       """
@@ -726,6 +752,7 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testFrontendOrBackendApiInSharedModule() {
     configurePluginXml(
       """
@@ -756,6 +783,7 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testNoWarningsInMixedModule() {
     configurePluginXml(
       """
@@ -790,6 +818,7 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
     myFixture.checkHighlighting()
   }
 
+  @Test
   fun testNoWarningsInMonolithModule() {
     configurePluginXml(
       """
@@ -823,7 +852,8 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
     myFixture.checkHighlighting()
   }
 
-  fun testAddFrontendDependencyFix() {
+  @Test
+  fun testAddFrontendDependencyFix(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     configurePluginXml(
       """
       <idea-plugin>
@@ -855,13 +885,14 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
     }
 
     val pluginXml = myFixture.findFileInTempDir("resources/META-INF/plugin.xml")
-    val result = FileDocumentManager.getInstance().getDocument(pluginXml)!!.text
+    val result = readAction { FileDocumentManager.getInstance().getDocument(pluginXml)!!.text }
     assertTrue(result.contains("<module name=\"intellij.platform.core\"/>"))
     assertTrue(result.contains("<module name=\"intellij.platform.frontend\"/>"))
     assertTrue(getModuleDependencyNames().contains("intellij.platform.frontend"))
   }
 
-  fun testMakeModuleMonolithOnlyFixForFrontendApiInBackendModule() {
+  @Test
+  fun testMakeModuleMonolithOnlyFixForFrontendApiInBackendModule(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     configurePluginXml(
       """
       <idea-plugin>
@@ -893,7 +924,7 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
     myFixture.launchAction(intention)
 
     val pluginXml = myFixture.findFileInTempDir("resources/META-INF/plugin.xml")
-    val result = FileDocumentManager.getInstance().getDocument(pluginXml)!!.text
+    val result = readAction { FileDocumentManager.getInstance().getDocument(pluginXml)!!.text }
     assertTrue(result.contains("<module name=\"intellij.platform.core\"/>"))
     assertTrue(result.contains("<module name=\"intellij.platform.monolith\"/>"))
     assertFalse(result.contains("intellij.platform.backend"))
@@ -903,7 +934,8 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
     myFixture.checkHighlighting()
   }
 
-  fun testMakeModuleMonolithOnlyFixForBackendApiInFrontendModule() {
+  @Test
+  fun testMakeModuleMonolithOnlyFixForBackendApiInFrontendModule(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     configurePluginXml(
       """
       <idea-plugin>
@@ -936,7 +968,7 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
     myFixture.launchAction(intention)
 
     val pluginXml = myFixture.findFileInTempDir("resources/META-INF/plugin.xml")
-    val result = FileDocumentManager.getInstance().getDocument(pluginXml)!!.text
+    val result = readAction { FileDocumentManager.getInstance().getDocument(pluginXml)!!.text }
     assertTrue(result.contains("<module name=\"intellij.platform.core\"/>"))
     assertTrue(result.contains("<module name=\"intellij.platform.monolith\"/>"))
     assertFalse(result.contains("intellij.platform.frontend"))
@@ -946,7 +978,8 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
     myFixture.checkHighlighting()
   }
 
-  fun testMakeModuleHaveOnlyBackendDependenciesFix() {
+  @Test
+  fun testMakeModuleHaveOnlyBackendDependenciesFix(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     configurePluginXml(
       """
       <idea-plugin>
@@ -980,18 +1013,18 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
     }
 
     val pluginXml = myFixture.findFileInTempDir("resources/META-INF/plugin.xml")
-    val result = FileDocumentManager.getInstance().getDocument(pluginXml)!!.text
+    val result = readAction { FileDocumentManager.getInstance().getDocument(pluginXml)!!.text }
     assertTrue(result.contains("<module name=\"intellij.platform.core\"/>"))
     assertFalse(result.contains("intellij.platform.frontend"))
     assertFalse(getModuleDependencyNames().contains("intellij.platform.frontend"))
   }
 
   private fun getModuleDependencyNames(): Set<String> {
-    return ModuleRootManager.getInstance(module).orderEntries.filterIsInstance<ModuleOrderEntry>().map { it.moduleName }.toSet()
+    return ModuleRootManager.getInstance(myFixture.module).orderEntries.filterIsInstance<ModuleOrderEntry>().map { it.moduleName }.toSet()
   }
 
   private fun addCurrentModuleDependencies(vararg dependencyNames: String) {
-    ModuleRootModificationUtil.updateModel(module) { model ->
+    ModuleRootModificationUtil.updateModel(myFixture.module) { model ->
       for (dependencyName in dependencyNames) {
         if (model.orderEntries.filterIsInstance<ModuleOrderEntry>().none { it.moduleName == dependencyName }) {
           model.addInvalidModuleEntry(dependencyName)

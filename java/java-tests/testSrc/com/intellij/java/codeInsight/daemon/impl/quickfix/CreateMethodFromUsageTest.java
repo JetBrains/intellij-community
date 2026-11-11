@@ -5,12 +5,21 @@ import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 public class CreateMethodFromUsageTest extends LightQuickFixParameterizedTestCase {
 
@@ -37,8 +46,14 @@ public class CreateMethodFromUsageTest extends LightQuickFixParameterizedTestCas
     return ActionHint.parse(psiFile, contents, false);
   }
 
-  public static class PreviewTest extends LightJavaCodeInsightFixtureTestCase {
+  @TestApplication
+  public static class PreviewTest {
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+    private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+    @Test
     public void testAnotherFile() {
+      LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
       myFixture.addClass("class Another { }");
       myFixture.configureByText("Test.java", """
         class Test {
@@ -47,9 +62,9 @@ public class CreateMethodFromUsageTest extends LightQuickFixParameterizedTestCas
           }
         }""");
       IntentionAction action = myFixture.findSingleIntention("Create method 'foo' in 'Another'");
-      assertNotNull(action);
-      String text = IntentionPreviewPopupUpdateProcessor.getPreviewText(getProject(), action, getFile(), getEditor());
-      assertEquals("""
+      Assertions.assertNotNull(action);
+      String text = ReadAction.computeBlocking(() -> IntentionPreviewPopupUpdateProcessor.getPreviewText(myFixture.getProject(), action, myFixture.getFile(), myFixture.getEditor()));
+      Assertions.assertEquals("""
       class Another {
           public static void foo() {
              \s

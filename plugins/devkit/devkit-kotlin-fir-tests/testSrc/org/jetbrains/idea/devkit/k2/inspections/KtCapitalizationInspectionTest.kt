@@ -2,11 +2,21 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.codeInspection.i18n.TitleCapitalizationInspection
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class KtCapitalizationInspectionTest : LightJavaCodeInsightFixtureTestCase() {
-    
+@TestApplication
+class KtCapitalizationInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
   fun testBasic() {
     myFixture.enableInspections(TitleCapitalizationInspection())
     myFixture.configureByText("Foo.kt", """
@@ -35,6 +45,7 @@ class KtCapitalizationInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testProperties() {
     val props = """
       property.lowercase=hello world

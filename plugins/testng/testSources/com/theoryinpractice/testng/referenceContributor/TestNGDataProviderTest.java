@@ -2,41 +2,23 @@
 package com.theoryinpractice.testng.referenceContributor;
 
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ui.UIUtil;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Test
-public class TestNGDataProviderTest extends LightJavaCodeInsightFixtureTestCase {
-  @BeforeMethod
-  @Override
-  protected void setUp() {
-    UIUtil.invokeAndWaitIfNeeded(() -> {
-      try {
-        super.setUp();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @AfterMethod
-  @Override
-  protected void tearDown() {
-    UIUtil.invokeAndWaitIfNeeded(() -> {
-      try {
-        super.tearDown();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
-  }
+@Test
+@TestApplication
+public class TestNGDataProviderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lightJavaCodeInsightFixture(projectFixture, PluginPathManager.getPluginHomePathRelative("testng") + "/testData/references");
 
   @DataProvider
   public Object[][] data() {
@@ -48,26 +30,14 @@ public class TestNGDataProviderTest extends LightJavaCodeInsightFixtureTestCase 
     };
   }
 
+  @org.junit.jupiter.api.Test
   public void testNothing(){}
 
   @Test(dataProvider = "data")
   public void checkDataProviders(final String path, final String... results) {
-    UIUtil.invokeAndWaitIfNeeded(() -> {
-      try {
-        myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");
-        myFixture.addClass("package org.testng.annotations; public @interface Test {}");
-        myFixture.testCompletionVariants(path + "provider.java", results);
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");
+    myFixture.addClass("package org.testng.annotations; public @interface Test {}");
+    myFixture.testCompletionVariants(path + "provider.java", results);
   }
-
-  @Override
-  protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("testng") + "/testData/references";
-  }
-
-
 }

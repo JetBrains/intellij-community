@@ -8,38 +8,56 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jdom.Element;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class CopyReferenceActionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  private Element mySavedSettings;
+
+  @BeforeEach
+  void setUp() {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/copyReference");
+    CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    mySavedSettings = settings.getState();
+    settings.ADD_IMPORTS_ON_PASTE = CodeInsightSettings.YES;
   }
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/copyReference";
+  @AfterEach
+  void tearDown() {
+    if (mySavedSettings != null) {
+      CodeInsightSettings.getInstance().loadState(mySavedSettings);
+    }
   }
 
-  @Override
-  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    CodeInsightSettings.runWithTemporarySettings(settings -> {
-      settings.ADD_IMPORTS_ON_PASTE = CodeInsightSettings.YES;
-      super.runTestRunnable(testRunnable);
-      return null;
-    });
-  }
-
+  @Test
   public void testConstructor() { doTest(); }
+  @Test
   public void testDefaultConstructor() { doTest(); }
+  @Test
   public void testIdentifierSeparator() { doTest(); }
+  @Test
   public void testMethodFromAnonymousClass() { doTest(); }
 
+  @Test
   public void testSameClassNames() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package p; public class Foo {}");
     myFixture.configureByText("Foo.java", "package p1; public class Fo<caret>o {}");
     performCopy();
@@ -48,7 +66,9 @@ public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase
     myFixture.checkResult("import p.Foo; class Bar extends Foo { p1.Foo}");
   }
 
+  @Test
   public void testAddImport() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; public class Foo {}");
     myFixture.configureByText("a.java", "import foo.F<caret>oo;");
     performCopy();
@@ -60,7 +80,9 @@ public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase
                             class Goo { Foo }""");
   }
 
+  @Test
   public void testPasteCorrectSignatureToJavadoc() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       class Foo {
         void foo(int a) {}
@@ -73,7 +95,9 @@ public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase
     myFixture.checkResult("/** Foo#foo(byte)<caret> */");
   }
 
+  @Test
   public void testPasteCorrectGenericSignatureToJavadoc() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       class Foo {
         void foo<caret>(java.util.List<String[]> a) {}
@@ -85,7 +109,9 @@ public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase
     myFixture.checkResult("/** Foo#foo(java.util.List)<caret> */");
   }
 
+  @Test
   public void testPasteOverloadedSignatureToAComment() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       class Foo {
         void foo<caret>(int a) {} //
@@ -93,7 +119,8 @@ public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase
       }
       """);
     performCopy();
-    myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getText().indexOf("//") + 2);
+    EdtTestUtil.runInEdtAndWait(
+      () -> myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getText().indexOf("//") + 2));
     performPaste();
     myFixture.checkResult("""
                             class Foo {
@@ -103,7 +130,9 @@ public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase
                             """);
   }
 
+  @Test
   public void testPasteOverloadedSignatureToCode() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       class Foo {
         void foo<caret>(int a) {}
@@ -114,7 +143,8 @@ public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase
       }
       """);
     performCopy();
-    myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getText().indexOf("//") - 2);
+    EdtTestUtil.runInEdtAndWait(
+      () -> myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getText().indexOf("//") - 2));
     performPaste();
     myFixture.checkResult("""
                             class Foo {
@@ -127,7 +157,9 @@ public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase
                             """);
   }
 
+  @Test
   public void testFqnInImport() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("package foo; public class Foo {}");
     myFixture.configureByText("a.java", "import foo.F<caret>oo;");
     performCopy();
@@ -136,17 +168,21 @@ public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase
     myFixture.checkResult("import foo.Foo<caret>");
   }
 
+  @Test
   public void testCopyFile() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile psiFile = myFixture.addFileToProject("x/x.txt", "");
-    assertTrue(CopyReferenceAction.doCopy(psiFile, getProject()));
+    assertTrue(CopyReferenceAction.doCopy(psiFile, myFixture.getProject()));
 
-    String name = getTestName(false);
+    String name = myFixture.getTestName(false);
     myFixture.configureByFile(name + "_dst.java");
     performPaste();
     myFixture.checkResultByFile(name + "_after.java");
   }
 
+  @Test
   public void testCopyLineNumber() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
 
       <caret>class Foo {
@@ -157,7 +193,9 @@ public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase
     myFixture.checkResult("a.java:2");
   }
 
+  @Test
   public void testMethodOverloadCopy() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.java", """
       class Koo {
         public void foo(int a) { }
@@ -183,20 +221,25 @@ public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase
                             """);
   }
 
+  @Test
   public void testModuleNameCopy() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("module-info.java", "module M16<caret> { }");
     performCopy();
     assertEquals("M16", CopyPasteManager.getInstance().getContents(CopyReferenceAction.ourFlavor));
   }
 
+  @Test
   public void testModuleReferenceCopy() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("module-info.java", "module M16 { requires M16<caret>; }");
     performCopy();
     assertEquals("M16", CopyPasteManager.getInstance().getContents(CopyReferenceAction.ourFlavor));
   }
 
   private void doTest() {
-    String name = getTestName(false);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    String name = myFixture.getTestName(false);
     myFixture.configureByFile(name + ".java");
     performCopy();
     myFixture.configureByFile(name + "_dst.java");
@@ -205,10 +248,10 @@ public class CopyReferenceActionTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   private void performCopy() {
-    myFixture.testAction(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY_REFERENCE));
+    EdtTestUtil.runInEdtAndWait(() -> codeInsightFixture.get().testAction(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY_REFERENCE)));
   }
 
   private void performPaste() {
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
+    codeInsightFixture.get().performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
   }
 }
