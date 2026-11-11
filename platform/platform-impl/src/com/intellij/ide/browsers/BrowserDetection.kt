@@ -211,51 +211,53 @@ private fun harmonyOSCandidates(): Sequence<Path> {
   return emptySequence()
 }
 
-private fun findInNameAndPath(what: String, browser: WebBrowser): Boolean {
-  return browser.name.contains(what, ignoreCase = true) ||
-         browser.path?.contains(what, ignoreCase = true) == true
-}
-
 /**
  * Guessing browser type from [WebBrowser] name and path.
  */
 @ApiStatus.Internal
-fun detectBrowserType(browser: WebBrowser): KnownBrowser? {
+fun detectBrowserType(browser: WebBrowser): KnownBrowser? =
+  detectBrowserType(*listOfNotNull(browser.name, browser.path).toTypedArray())
+
+/**
+ * Guesses the browser type from [texts], such as the name and the path of a browser, or the id of a desktop entry.
+ */
+internal fun detectBrowserType(vararg texts: String): KnownBrowser? {
+  fun has(what: String): Boolean = texts.any { it.contains(what, ignoreCase = true) }
   return when {
-    findInNameAndPath("chromium", browser) -> KnownBrowser.CHROMIUM
-    findInNameAndPath("chrome", browser) -> when {
-      findInNameAndPath("canary", browser) || findInNameAndPath("sxs", browser) -> KnownBrowser.CHROME_CANARY
-      findInNameAndPath("dev", browser) || findInNameAndPath("unstable", browser) -> KnownBrowser.CHROME_DEV
-      findInNameAndPath("beta", browser) -> KnownBrowser.CHROME_BETA
+    has("chromium") -> KnownBrowser.CHROMIUM
+    has("chrome") -> when {
+      has("canary") || has("sxs") -> KnownBrowser.CHROME_CANARY
+      has("dev") || has("unstable") -> KnownBrowser.CHROME_DEV
+      has("beta") -> KnownBrowser.CHROME_BETA
       else -> KnownBrowser.CHROME
     }
-    findInNameAndPath("edge", browser) -> when {
-      findInNameAndPath("canary", browser) || findInNameAndPath("sxs", browser) -> KnownBrowser.EDGE_CANARY
-      findInNameAndPath("dev", browser) -> KnownBrowser.EDGE_DEV
-      findInNameAndPath("beta", browser) -> KnownBrowser.EDGE_BETA
+    has("edge") -> when {
+      has("canary") || has("sxs") -> KnownBrowser.EDGE_CANARY
+      has("dev") -> KnownBrowser.EDGE_DEV
+      has("beta") -> KnownBrowser.EDGE_BETA
       else -> KnownBrowser.EDGE
     }
-    findInNameAndPath("opera", browser) -> when {
-      findInNameAndPath("gx", browser) -> KnownBrowser.OPERA_GX
-      findInNameAndPath("developer", browser) -> KnownBrowser.OPERA_DEVELOPER
-      findInNameAndPath("beta", browser) -> KnownBrowser.OPERA_BETA
+    has("opera") -> when {
+      has("gx") -> KnownBrowser.OPERA_GX
+      has("developer") -> KnownBrowser.OPERA_DEVELOPER
+      has("beta") -> KnownBrowser.OPERA_BETA
       else -> KnownBrowser.OPERA
     }
-    findInNameAndPath("brave", browser) -> when {
-      findInNameAndPath("nightly", browser) -> KnownBrowser.BRAVE_NIGHTLY
-      findInNameAndPath("beta", browser) -> KnownBrowser.BRAVE_BETA
+    has("brave") -> when {
+      has("nightly") -> KnownBrowser.BRAVE_NIGHTLY
+      has("beta") -> KnownBrowser.BRAVE_BETA
       else -> KnownBrowser.BRAVE
     }
-    findInNameAndPath("vivaldi", browser) -> {
-      if (findInNameAndPath("snapshot", browser)) KnownBrowser.VIVALDI_SNAPSHOT else KnownBrowser.VIVALDI
+    has("vivaldi") -> {
+      if (has("snapshot")) KnownBrowser.VIVALDI_SNAPSHOT else KnownBrowser.VIVALDI
     }
-    findInNameAndPath("firefox", browser) -> when {
-      findInNameAndPath("nightly", browser) -> KnownBrowser.FIREFOX_NIGHTLY
-      findInNameAndPath("developer", browser) -> KnownBrowser.FIREFOX_DEVELOPER_EDITION
+    has("firefox") -> when {
+      has("nightly") -> KnownBrowser.FIREFOX_NIGHTLY
+      has("developer") -> KnownBrowser.FIREFOX_DEVELOPER_EDITION
       else -> KnownBrowser.FIREFOX
     }
-    findInNameAndPath("safari", browser) -> {
-      if (findInNameAndPath("technology preview", browser)) KnownBrowser.SAFARI_TECHNOLOGY_PREVIEW else KnownBrowser.SAFARI
+    has("safari") -> {
+      if (has("technology preview")) KnownBrowser.SAFARI_TECHNOLOGY_PREVIEW else KnownBrowser.SAFARI
     }
     else -> null
   }
