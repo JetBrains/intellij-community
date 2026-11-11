@@ -46,7 +46,9 @@ import java.awt.event.ComponentEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import javax.swing.event.HyperlinkEvent
@@ -102,9 +104,7 @@ internal class BuildConsoleViewImplV2(
   private fun onMessageEvent(event: MessageEvent) {
     val html = event.getConsoleHtml()
     if (html == null) {
-      state.access {
-        addNodeOutputMarkers(event.id, event.outputIds)
-      }
+      state.addNodeOutputMarkers(event.id, event.outputIds)
       return
     }
     addConsoleInlay(event.id, ConsoleInlayInfo()
@@ -125,9 +125,7 @@ internal class BuildConsoleViewImplV2(
   }
 
   private fun onOutputReferenceEvent(event: OutputReferenceEvent) {
-    state.access {
-      addNodeOutputMarkers(event.parentId, event.outputIds)
-    }
+    state.addNodeOutputMarkers(event.parentId, event.outputIds)
   }
 
   @TestOnly
@@ -274,8 +272,8 @@ internal class BuildConsoleViewImplV2(
       delegate.print(inlayInfo.plainText, contentType)
       return
     }
+    state.addNodeOutputMarkers(nodeId, inlayInfo.outputIds)
     state.access {
-      addNodeOutputMarkers(nodeId, inlayInfo.outputIds)
       inlayCount++
       (editor as? EditorEx)?.let { ensureFollowListeners(it) }
       val inlayProperties = InlayProperties()
@@ -332,11 +330,11 @@ internal class BuildConsoleViewImplV2(
   private class ConsoleViewState(private val consoleView: ConsoleViewImpl) {
 
     private val outputMarkers = HashMap<Any, RangeMarker>()
-    private val nodeToOutputMarkers = HashMap<Any, MutableSet<OutputId>>()
+    private val nodeToOutputMarkers = ConcurrentHashMap<Any, MutableSet<OutputId>>()
     private val nodeToInlays = HashMap<Any, MutableList<Inlay<ComponentInlayRenderer<JComponent>>>>()
 
-    private val pendingStateActions = ArrayDeque<ConsoleViewStateAccessor.() -> Unit>()
-    private var isDrainScheduled = false
+    private val pendingStateActions = ConcurrentLinkedQueue<ConsoleViewStateAccessor.() -> Unit>()
+    private val isDrainScheduled = AtomicBoolean()
 
     init {
       consoleView.addChangeListener(object : ObservableConsoleView.ChangeListener {
@@ -347,21 +345,20 @@ internal class BuildConsoleViewImplV2(
       }, consoleView)
     }
 
-    fun access(action: ConsoleViewStateAccessor.() -> Unit) {
-      invokeAndWaitIfNeeded {
-        pendingStateActions.addLast(action)
-        drainPendingActions()
-      }
+    fun addNodeOutputMarkers(nodeId: Any, outputIds: Collection<Any>) {
+      nodeToOutputMarkers.computeIfAbsent(nodeId) { ConcurrentHashMap.newKeySet() }
+        .addAll(outputIds)
     }
 
-    private fun drainPendingActions() {
-      if (isDrainScheduled) {
-        return
-      }
-      isDrainScheduled = true
-      consoleView.performWhenNoDeferredOutput {
-        isDrainScheduled = false
-        runPendingActions()
+    fun access(action: ConsoleViewStateAccessor.() -> Unit) {
+      pendingStateActions.add(action)
+      if (isDrainScheduled.compareAndSet(false, true)) {
+        ApplicationManager.getApplication().invokeLater {
+          consoleView.performWhenNoDeferredOutput {
+            isDrainScheduled.set(false)
+            runPendingActions()
+          }
+        }
       }
     }
 
@@ -369,7 +366,7 @@ internal class BuildConsoleViewImplV2(
       invokeAndWaitIfNeeded {
         WriteIntentReadAction.run {
           consoleView.flushDeferredText()
-          pendingStateActions.addLast(action)
+          pendingStateActions.add(action)
           runPendingActions()
         }
       }
@@ -382,18 +379,13 @@ internal class BuildConsoleViewImplV2(
         return
       }
       val targetEditor = getClientEditor(editor, ClientId.currentOrNull)
-      while (pendingStateActions.isNotEmpty()) {
-        val action = pendingStateActions.removeFirst()
+      while (true) {
+        val action = pendingStateActions.poll() ?: break
         action(ConsoleViewStateAccessor(targetEditor))
       }
     }
 
     inner class ConsoleViewStateAccessor(val editor: Editor) {
-
-      fun addNodeOutputMarkers(nodeId: Any, outputIds: Collection<Any>) {
-        nodeToOutputMarkers.computeIfAbsent(nodeId) { HashSet() }
-          .addAll(outputIds)
-      }
 
       fun addNodeInlay(nodeId: Any, inlay: Inlay<ComponentInlayRenderer<JComponent>>) {
         nodeToInlays.computeIfAbsent(nodeId) { ArrayList() }.add(inlay)
