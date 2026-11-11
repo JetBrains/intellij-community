@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="qodana-sarif" type="repository">
-        <properties maven-id="com.jetbrains.qodana:qodana-sarif:1.0.38">
+        <properties maven-id="com.jetbrains.qodana:qodana-sarif:1.0.57">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/qodana/qodana-sarif/1.0.38/qodana-sarif-1.0.38.jar">
-              <sha256sum>74bb84c7d91c497a5a5f3965578e3d8208337797d12405d783d011e56e34f23b</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/qodana/qodana-sarif/1.0.57/qodana-sarif-1.0.57.jar">
+              <sha256sum>def8d5669d7ddc1c04b462e0047672179b8d5380fde0925e1621f235acf7a35e</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -25,11 +25,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/qodana/qodana-sarif/1.0.38/qodana-sarif-1.0.38.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/qodana/qodana-sarif/1.0.57/qodana-sarif-1.0.57.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/qodana/qodana-sarif/1.0.38/qodana-sarif-1.0.38-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/qodana/qodana-sarif/1.0.57/qodana-sarif-1.0.57-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
