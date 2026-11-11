@@ -26,7 +26,7 @@ abstract class FileWithoutExtensionReference(
     get() = fileReference.decode(path)
 
   protected val containingFile: VirtualFile?
-    get() = element.containingFile?.virtualFile
+    get() = element.containingFile?.originalFile?.virtualFile
 
   override fun resolve(): PsiElement? {
     val referencedFile = findReferencedFile() ?: return null

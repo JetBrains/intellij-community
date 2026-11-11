@@ -66,6 +66,16 @@ class HeaderReferenceCompletionTest : BasePlatformTestCase() {
                                      "what-is-this-repository-for")
   }
 
+  fun testAFileHeadersNoExtension() {
+    myFixture.configureByFile("multipleHeaders.md")
+    myFixture.testCompletionVariants(getBeforeFileName(), "environment-variables",
+                                     "how-do-i-get-set-up",
+                                     "mxbezier3scalar",
+                                     "plugin-list",
+                                     "requirements",
+                                     "what-is-this-repository-for")
+  }
+
   fun testGfmLowercase() {
     myFixture.testCompletionVariants(getBeforeFileName(), "what-is-this-repository-for", "what-is-this-for")
   }
