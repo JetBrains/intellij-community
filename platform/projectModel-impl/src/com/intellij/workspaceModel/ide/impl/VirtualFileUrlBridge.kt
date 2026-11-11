@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.platform.backend.workspace.impl.VirtualFileUrlWithVirtualFile
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
@@ -21,6 +22,9 @@ internal class VirtualFileUrlBridge(
   override fun toString() = url
 
   override fun cacheVirtualFile(file: VirtualFile) {
+    if (file !is VirtualFileWithId) {
+      return
+    }
     fileFinder.cacheVirtualFile(file)
   }
 

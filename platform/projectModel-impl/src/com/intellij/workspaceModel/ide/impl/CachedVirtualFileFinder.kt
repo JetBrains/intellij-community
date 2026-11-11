@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileWithId
 import java.util.concurrent.atomic.AtomicReference
 
 internal class CachedVirtualFileFinder {
@@ -29,7 +30,7 @@ internal class CachedVirtualFileFinder {
     val modCounterBefore = fileManager.modificationCount
     val file = fileManager.findFileByUrl(url)
     val modCounterAfter = fileManager.modificationCount
-    if (modCounterBefore == modCounterAfter) {
+    if (modCounterBefore == modCounterAfter && (file == null || file is VirtualFileWithId)) {
       cachedFile.set(Pair(file, modCounterAfter))
     }
     // we don't know what we have calculated just now. This might happen, because  findFileByUrl might load (not yet loaded) children

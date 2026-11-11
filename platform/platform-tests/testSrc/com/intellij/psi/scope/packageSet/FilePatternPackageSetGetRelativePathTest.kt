@@ -90,7 +90,7 @@ internal class FilePatternPackageSetGetRelativePathTest() {
     val contentRoot = baseProjectDir.newVirtualDirectory("content-root")
     val parent = baseProjectDir.newVirtualDirectory("content-root/src")
     val file = ParentedLightVirtualFile("file.txt", parent)
-    registerFileSet(file, ModuleContentFileSetData(module, contentRoot))
+    registerFileSet(parent, ModuleContentFileSetData(module, contentRoot))
 
     assertEquals(contentRoot, contentRootForFile(file))
     assertEquals("src/file.txt", getRelativePath(file))
