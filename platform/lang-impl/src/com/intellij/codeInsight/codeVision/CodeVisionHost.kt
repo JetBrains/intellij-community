@@ -605,10 +605,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     val indicator = EmptyProgressIndicator()
     indicator.start()
 
-    (JobLauncher.getInstance() as JobLauncherImpl).submitToJobThread(
-      { ProgressManager.getInstance().runProcess(runnable, indicator) },
-      {}
-    )
+    JobLauncher.getInstance().execute { ProgressManager.getInstance().runProcess(runnable, indicator) }
 
     lifetime.onTerminationIfAlive {
       if (indicator.isRunning) indicator.cancel()
