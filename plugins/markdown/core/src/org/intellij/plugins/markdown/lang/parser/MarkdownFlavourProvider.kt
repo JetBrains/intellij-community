@@ -10,6 +10,11 @@ import org.jetbrains.annotations.ApiStatus
  * Extension point to override default flavour used by Markdown plugin.
  *
  * Use [MarkdownDefaultFlavour] and [MarkdownDefaultMarkerProcessor] to implement your custom flavour.
+ *
+ * The HTML preview uses the generating providers of the flavour only for the element types that the Markdown plugin does not render itself.
+ * Tokens keep their default rendering.
+ *
+ * @see org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementProvider
  */
 @ApiStatus.Experimental
 interface MarkdownFlavourProvider {
