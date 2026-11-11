@@ -318,7 +318,7 @@ open class MultipleFileMergeDialog(
           acceptRevision(resolution, textFiles)
         }
         else {
-          val iterativeFilesWithModels = mutableListOf<Pair<VirtualFile, MergeConflictModel>>()
+          val iterativeModels = mutableListOf<MergeConflictModel>()
           val nonIterativeFiles = mutableListOf<VirtualFile>()
           for (file in textFiles) {
             // A file the iterative resolution cannot take (too big to load or to diff) falls back to the
@@ -326,7 +326,7 @@ open class MultipleFileMergeDialog(
             val request = mergeRequestBuilder(file).build().getOrNull()
             val model = request?.let { iterativeDataHolder.prepareModelIfSupported(file, it) }
             if (model != null) {
-              iterativeFilesWithModels.add(file to model)
+              iterativeModels.add(model)
             }
             else {
               nonIterativeFiles.add(file)
@@ -335,7 +335,7 @@ open class MultipleFileMergeDialog(
 
           val [yoursLabel, theirsLabel] = MergeUIUtil.getYoursAndTheirsLabes(columns)
           withContext(Dispatchers.UiWithModelAccess) {
-            acceptRevisionForIterativeResolution(iterativeFilesWithModels, resolution, yoursLabel, theirsLabel)
+            acceptRevisionForIterativeResolution(iterativeModels, resolution, yoursLabel, theirsLabel)
           }
           acceptRevision(resolution, nonIterativeFiles)
         }
@@ -384,19 +384,17 @@ open class MultipleFileMergeDialog(
 
   @RequiresEdt
   private fun acceptRevisionForIterativeResolution(
-    filesWithModel: List<Pair<VirtualFile, MergeConflictModel>>,
+    models: List<MergeConflictModel>,
     resolution: MergeSession.Resolution,
     yoursLabel: @Nls String,
     theirsLabel: @Nls String,
   ) {
-    if (filesWithModel.isEmpty()) return
-    if (filesWithModel.any { [_, model] ->
-        model.getResolvedChanges().isNotEmpty()
-      }) {
+    if (models.isEmpty()) return
+    if (models.any { it.getResolvedChanges().isNotEmpty() }) {
       val confirmed = MessageDialogBuilder
         .yesNo(VcsBundle.message("multiple.file.iterative.merge.accept.confirmation.title"),
                VcsBundle.message("multiple.file.iterative.merge.accept.confirmation.message",
-                                 filesWithModel.size,
+                                 models.size,
                                  if (resolution == MergeSession.Resolution.AcceptedYours) yoursLabel else theirsLabel))
         .yesText(VcsBundle.message("multiple.file.iterative.merge.accept.confirmation.yes"))
         .noText(CommonBundle.getCancelButtonText())
@@ -405,7 +403,7 @@ open class MultipleFileMergeDialog(
       if (!confirmed) return
     }
     val side = if (resolution == MergeSession.Resolution.AcceptedTheirs) Side.RIGHT else Side.LEFT
-    filesWithModel.forEach { [_, model] -> model.acceptRevisionForSide(side) }
+    models.forEach { it.acceptRevisionForSide(side) }
 
     updateModelFromFiles()
   }
