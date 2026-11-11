@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -65,7 +66,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     List<WebBrowser> providedBrowsers = WebBrowserProvider.getAvailableBrowsers();
     List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
-    List<AnAction> actions = new ArrayList<>(providedBrowsers.size() + browsers.size() + 2);
+    List<AnAction> actions = new ArrayList<>(providedBrowsers.size() + browsers.size() + 3);
     for (WebBrowser browser : providedBrowsers) {
       actions.add(myBrowserActions.computeIfAbsent(browser, OpenInProvidedBrowserAction::new));
     }
@@ -73,6 +74,8 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     if (localBrowserAction != null) {
       actions.add(localBrowserAction);
     }
+    // the browsers in the IDE come before the external browsers; the action system hides a separator at the edge
+    actions.add(Separator.getInstance());
     KnownBrowser systemDefaultBrowser = null;
     if (usesSystemDefaultBrowser()) {
       actions.add(mySystemDefaultBrowserAction);
