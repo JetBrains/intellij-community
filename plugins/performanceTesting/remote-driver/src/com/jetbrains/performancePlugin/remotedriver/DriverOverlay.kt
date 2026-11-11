@@ -135,6 +135,14 @@ object DriverOverlay {
     return shown?.message
   }
 
+  /** The bounds of the shown overlay on the screen, or null when the IDE shows no overlay. */
+  @JvmStatic
+  @RequiresEdt
+  fun getShownBounds(): Rectangle? {
+    applyPending()
+    return shown?.screenBounds()
+  }
+
   private fun submit(request: Request) {
     // Only the first request of a series schedules the EDT. The later requests replace it before the EDT runs.
     if (pending.getAndSet(request) == null) {
@@ -285,12 +293,18 @@ private class ShownOverlay(val main: JRootPane, private val location: Point) {
     layout()
   }
 
+  /** The bounds of the overlay on the screen, or null before the overlay has a text. */
+  fun screenBounds(): Rectangle? {
+    val text = text ?: return null
+    val screenLocation = Point(location)
+    SwingUtilities.convertPointToScreen(screenLocation, main.glassPane)
+    return Rectangle(screenLocation, text.size)
+  }
+
   /** Adds a part to each window over the overlay, moves the parts of the windows that moved, and removes the other parts. */
   fun layout() {
     val text = text ?: return
-    val screenLocation = Point(location)
-    SwingUtilities.convertPointToScreen(screenLocation, main.glassPane)
-    val onScreen = Rectangle(screenLocation, text.size)
+    val onScreen = screenBounds() ?: return
     val windows = Window.getWindows().mapNotNull { it.withIdeGlassPane() }.filter { rootPane ->
       rootPane === main || Rectangle(rootPane.locationOnScreen, rootPane.size).intersects(onScreen)
     }
@@ -299,7 +313,7 @@ private class ShownOverlay(val main: JRootPane, private val location: Point) {
     }
     for (rootPane in windows) {
       // The painter paints in the coordinates of the glass pane. Under a custom title bar, it starts below the root pane.
-      val partLocation = Point(screenLocation)
+      val partLocation = onScreen.location
       SwingUtilities.convertPointFromScreen(partLocation, rootPane.glassPane)
       val bounds = Rectangle(partLocation, text.size)
       parts[rootPane]?.move(bounds) ?: parts.put(rootPane, OverlayPart(rootPane, text, bounds))

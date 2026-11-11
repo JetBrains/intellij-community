@@ -258,6 +258,10 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun getCaretLine(): Int = caretPosition.getLine() + 1
+
+  /** The line at [point] of this component, from 1, as [getCaretLine] gives it. */
+  fun getLineAt(point: Point): Int = interact { xyToLogicalPosition(point).getLine() + 1 }
+
   fun getCaretColumn(): Int = caretPosition.getColumn() + 1
 
   fun getMultipleCaretPositions(): List<Pair<Int, Int>> {

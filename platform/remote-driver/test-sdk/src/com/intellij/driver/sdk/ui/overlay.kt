@@ -10,6 +10,7 @@ import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import com.intellij.driver.sdk.withoutPauseOnIndicators
 import com.intellij.openapi.diagnostic.fileLogger
 import org.jetbrains.annotations.TestOnly
+import java.awt.Rectangle
 import java.lang.ref.WeakReference
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
@@ -75,9 +76,17 @@ data class ShownOverlay(val title: String, val message: String?)
 
 /** Returns the overlay that the IDE shows now, after the overlay calls that are already sent. */
 @TestOnly
-fun Driver.shownOverlay(): ShownOverlay? {
+fun Driver.shownOverlay(): ShownOverlay? = readOverlay { readShownOverlay() }
+
+/** Returns the bounds on the screen of the overlay that the IDE shows now, after the overlay calls that are already sent. */
+@TestOnly
+fun Driver.shownOverlayBounds(): Rectangle? = readOverlay {
+  withContext(OnDispatcher.EDT) { utility(DriverOverlayRef::class).getShownBounds() }
+}
+
+private fun <T> readOverlay(read: () -> T): T {
   try {
-    return overlayThread.submit<ShownOverlay?> { readShownOverlay() }.get(OVERLAY_CALL_TIMEOUT.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+    return overlayThread.submit<T>(read).get(OVERLAY_CALL_TIMEOUT.inWholeMilliseconds, TimeUnit.MILLISECONDS)
   }
   catch (e: ExecutionException) {
     throw e.cause ?: e
@@ -295,4 +304,5 @@ private interface DriverOverlayRef {
   fun hide()
   fun getShownTitle(): String?
   fun getShownMessage(): String?
+  fun getShownBounds(): Rectangle?
 }

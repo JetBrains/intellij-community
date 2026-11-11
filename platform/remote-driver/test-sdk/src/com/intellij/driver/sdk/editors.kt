@@ -21,6 +21,7 @@ interface Editor {
   fun getProject(): Project
   fun getCaretModel(): CaretModel
   fun logicalPositionToXY(position: LogicalPosition): Point
+  fun xyToLogicalPosition(p: Point): LogicalPosition
   fun getVirtualFile(): VirtualFile
   fun getLineHeight(): Int
   fun offsetToVisualPosition(offset: Int): VisualPosition
