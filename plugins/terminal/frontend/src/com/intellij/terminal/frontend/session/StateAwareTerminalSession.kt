@@ -149,6 +149,8 @@ internal class StateAwareTerminalSession(
   override val processId: Long
     get() = delegate.processId
 
+  override suspend fun awaitProcessExitCode(): Int? = delegate.awaitProcessExitCode()
+
   override val isClosed: Boolean
     get() = delegate.isClosed
 

@@ -3,7 +3,9 @@ package com.intellij.terminal.frontend.session.jediterm
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.util.io.awaitExit
 import com.jediterm.core.input.KeyInputEvent
+import com.jediterm.terminal.ProcessTtyConnector
 import com.jediterm.terminal.TtyConnector
 import com.jediterm.terminal.emulator.keyboard.KeyEventProcessingSettings
 import com.jediterm.terminal.emulator.keyboard.TerminalKeyEventProcessor
@@ -104,6 +106,10 @@ class JediTerminalSession internal constructor(
     return withContext(Dispatchers.IO) {
       TerminalUtil.hasRunningCommands(ttyConnector)
     }
+  }
+
+  override suspend fun awaitProcessExitCode(): Int? {
+    return (ttyConnector.original as? ProcessTtyConnector)?.process?.awaitExit()
   }
 
   override fun processMouseEvent(
