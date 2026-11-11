@@ -113,21 +113,24 @@ import org.jetbrains.compose.swing.foundation.layout.padding
 import org.jetbrains.compose.swing.foundation.layout.size
 import org.jetbrains.compose.swing.foundation.layout.width
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.accessibility.accessibleName
-import org.jetbrains.compose.swing.modifier.appearance.background
-import org.jetbrains.compose.swing.modifier.appearance.cursor
-import org.jetbrains.compose.swing.modifier.appearance.font
-import org.jetbrains.compose.swing.modifier.appearance.foreground
-import org.jetbrains.compose.swing.modifier.appearance.opaque
-import org.jetbrains.compose.swing.modifier.appearance.toolTip
-import org.jetbrains.compose.swing.modifier.interaction.enabled
-import org.jetbrains.compose.swing.modifier.interaction.focusable
 import org.jetbrains.compose.swing.modifier.interaction.onFocus
 import org.jetbrains.compose.swing.modifier.interaction.onPointerEvent
 import org.jetbrains.compose.swing.modifier.keyboard.onKeyStroke
-import org.jetbrains.compose.swing.modifier.layout.preferredSize
 import org.jetbrains.compose.swing.modifier.listener.actionListener
 import org.jetbrains.compose.swing.node.SwingNode
+import org.jetbrains.compose.swing.style.ContainerStyleScope
+import org.jetbrains.compose.swing.style.SwingStyle
+import org.jetbrains.compose.swing.style.accessibleName
+import org.jetbrains.compose.swing.style.background
+import org.jetbrains.compose.swing.style.cursor
+import org.jetbrains.compose.swing.style.enabled
+import org.jetbrains.compose.swing.style.focusable
+import org.jetbrains.compose.swing.style.font
+import org.jetbrains.compose.swing.style.foreground
+import org.jetbrains.compose.swing.style.opaque
+import org.jetbrains.compose.swing.style.preferredSize
+import org.jetbrains.compose.swing.style.styleable
+import org.jetbrains.compose.swing.style.toolTip
 import java.awt.BasicStroke
 import java.awt.Color
 import java.awt.Cursor
@@ -184,7 +187,10 @@ internal fun AnimationsTab(modifier: SwingModifier) {
   }
   // The tab paints the panel background, so the controls of the header do not show a background of their own.
   Column(
-    modifier.background(UIUtil.getPanelBackground()).opaque(true),
+    modifier.styleable {
+      background(UIUtil.getPanelBackground())
+      opaque(true)
+    },
     verticalArrangement = Arrangement.spacedBy(spacing.verticalComponentGap.dp),
   ) {
     AnimationSettingsHeader(settings)
@@ -254,7 +260,11 @@ private fun ColumnScope.AnimationSettingsHeader(settings: AnimationSettings) {
     TextField(
       value = settings.durationText,
       onValueChange = settings::editDurationText,
-      modifier = SwingModifier.errorOutline(!settings.durationTextValid).toolTip("From 0 to $MAX_DURATION ms").accessibleName("Duration"),
+      modifier = SwingModifier.errorOutline(!settings.durationTextValid),
+      style = {
+        toolTip("From 0 to $MAX_DURATION ms")
+        accessibleName("Duration")
+      },
       columns = 4,
     )
     DurationStepButton(settings, SMALL_STEP)
@@ -275,7 +285,11 @@ private fun DurationStepButton(settings: AnimationSettings, delta: Int) {
   Button(
     text = text,
     onClick = { settings.changeDuration(delta) },
-    modifier = SwingModifier.enabled(canChange).toolTip(description).accessibleName(description),
+    style = {
+      enabled(canChange)
+      toolTip(description)
+      accessibleName(description)
+    },
   )
 }
 
@@ -419,11 +433,11 @@ private fun ColumnScope.AnimatedVisibilityList(enter: EnterTransition, exit: Exi
 
   ControlsRow(fillWidth = false) {
     Button(text = "Add", onClick = { items.add(ListItem(nextId++)) })
-    Button(text = "Remove", onClick = { lastShown?.visibleState?.targetState = false }, modifier = SwingModifier.enabled(lastShown != null))
+    Button(text = "Remove", onClick = { lastShown?.visibleState?.targetState = false }, style = { enabled(lastShown != null) })
   }
 
   Column(SwingModifier.fillMaxWidth().demoArea(), verticalArrangement = Arrangement.spacedBy(spacing.verticalComponentGap.dp)) {
-    DemoCell("First item (static)", SwingModifier.fillMaxWidth().enabled(false))
+    DemoCell("First item (static)", SwingModifier.fillMaxWidth().styleable { enabled(false) })
     for (item in items) {
       key(item.id) {
         // No fillMaxWidth here: a fixed width would override the animated width of expandHorizontally and shrinkHorizontally.
@@ -438,7 +452,7 @@ private fun ColumnScope.AnimatedVisibilityList(enter: EnterTransition, exit: Exi
         }
       }
     }
-    DemoCell("Last item (static)", SwingModifier.fillMaxWidth().enabled(false))
+    DemoCell("Last item (static)", SwingModifier.fillMaxWidth().styleable { enabled(false) })
   }
 }
 
@@ -499,7 +513,7 @@ private fun ColumnScope.AnimatedContentPage(settings: AnimationSettings) {
   Selector("contentAlignment", ContentAlignmentItem.entries, alignment) { alignment = it }
   LabeledRow("SizeTransform") {
     CheckBox(text = "Animate the size", checked = sizeTransform, onCheckedChange = { sizeTransform = it })
-    CheckBox(text = "clip", checked = clip, onCheckedChange = { clip = it }, modifier = SwingModifier.enabled(sizeTransform))
+    CheckBox(text = "clip", checked = clip, onCheckedChange = { clip = it }, style = { enabled(sizeTransform) })
   }
   ControlsRow(fillWidth = false) {
     Button(text = "Previous", onClick = { card = (card + CARD_SIZES.size - 1) % CARD_SIZES.size })
@@ -788,13 +802,24 @@ private fun ColumnScope.AnimatedElementsPage(settings: AnimationSettings) {
     OnOffSwitch(text = if (on) "On" else "Off", checked = on, onCheckedChange = { on = it }, settings = settings)
     // The Swing toggle that OnOffSwitch copies. In an Islands theme, IslandsOnOffButtonUI paints it.
     ClickableControl("Swing OnOffButton", onClick = { on = !on }) {
-      SwingNode(
-        factory = { OnOffButton() },
-        modifier = SwingModifier.actionListener<OnOffButton> { on = isSelected }.accessibleName("Swing OnOffButton"),
-        update = { set(on) { isSelected = it } },
-      )
+      SwingOnOffButton(checked = on, onCheckedChange = { on = it }, style = { accessibleName("Swing OnOffButton") })
     }
   }
+}
+
+/** The platform [OnOffButton], selected while [checked]. */
+@Composable
+private fun SwingOnOffButton(
+  checked: Boolean,
+  onCheckedChange: (Boolean) -> Unit,
+  modifier: SwingModifier = SwingModifier,
+  style: SwingStyle<ContainerStyleScope> = SwingStyle,
+) {
+  SwingNode(
+    factory = { OnOffButton() },
+    modifier = modifier.actionListener<OnOffButton> { onCheckedChange(isSelected) }.styleable(style),
+    update = { set(checked) { isSelected = it } },
+  )
 }
 
 /** The pairs of gradient colors that [NewChip] goes through. */
@@ -839,7 +864,11 @@ private fun NewChip(settings: AnimationSettings) {
   Box(SwingModifier.background(gradient, CircleShape).background(CHIP_SHADE, CircleShape)) {
     Label(
       "NEW",
-      modifier = SwingModifier.foreground(CHIP_TEXT).font(JBFont.small().asBold()).padding(vertical = 2.dp, horizontal = 8.dp),
+      modifier = SwingModifier.padding(vertical = 2.dp, horizontal = 8.dp),
+      style = {
+        foreground(CHIP_TEXT)
+        font(JBFont.small().asBold())
+      },
     )
   }
 }
@@ -858,8 +887,8 @@ private fun ClickableControl(
   // The row gets the mouse events of a child that does not listen to the mouse, such as the text. A Swing control handles its own clicks.
   Row(
     SwingModifier
-      .cursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
-      .onPointerEvent(onPress = { onPressedChange(true) }, onRelease = { onPressedChange(false) }, onClick = { onClick() }),
+      .onPointerEvent(onPress = { onPressedChange(true) }, onRelease = { onPressedChange(false) }, onClick = { onClick() })
+      .styleable { cursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)) },
     horizontalArrangement = Arrangement.spacedBy(spacing.horizontalSmallGap.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
@@ -912,11 +941,13 @@ private fun AnimatedCheckBox(text: String, checked: Boolean, onCheckedChange: (B
     val size = JBUIScale.scale(CheckBoxGeometry.SIZE).toInt()
     Canvas(
       SwingModifier
-        .preferredSize(size, size)
-        .focusable(true)
         .onKeyStroke("SPACE") { toggle() }
         .onFocus(onGained = { focused = true }, onLost = { focused = false })
-        .accessibleName(text),
+        .styleable {
+          preferredSize(size, size)
+          focusable(true)
+          accessibleName(text)
+        },
     ) {
       val g2 = graphics.create() as Graphics2D
       try {
@@ -1039,11 +1070,13 @@ private fun OnOffSwitch(text: String, checked: Boolean, onCheckedChange: (Boolea
     ClickableControl(text, onClick = toggle) {
       Canvas(
         SwingModifier
-          .preferredSize(JBUIScale.scale(WIDTH).toInt(), JBUIScale.scale(HEIGHT).toInt())
-          .focusable(true)
           .onKeyStroke("SPACE") { toggle() }
           .onFocus(onGained = { isFocused = true }, onLost = { isFocused = false })
-          .accessibleName(text),
+          .styleable {
+            preferredSize(JBUIScale.scale(WIDTH).toInt(), JBUIScale.scale(HEIGHT).toInt())
+            focusable(true)
+            accessibleName(text)
+          },
       ) {
         val g2 = graphics.create() as Graphics2D
         try {

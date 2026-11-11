@@ -74,12 +74,13 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.compose.swing.components.Label
 import org.jetbrains.compose.swing.components.button.Button
 import org.jetbrains.compose.swing.components.button.CheckBox
+import org.jetbrains.compose.swing.components.style.icon
 import org.jetbrains.compose.swing.components.text.TextField
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.appearance.icon
-import org.jetbrains.compose.swing.modifier.appearance.toolTip
-import org.jetbrains.compose.swing.modifier.interaction.enabled
-import org.jetbrains.compose.swing.modifier.layout.visible
+import org.jetbrains.compose.swing.style.enabled
+import org.jetbrains.compose.swing.style.styleable
+import org.jetbrains.compose.swing.style.toolTip
+import org.jetbrains.compose.swing.style.visible
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.Icon
@@ -142,7 +143,7 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
       // TODO Ask the page's owners whether those 8px are meant. They only show while the server is on - the
       //  state in which the row they come from is invisible - which reads more like a side effect of
       //  visibleIf than a decision. If they are not, this goes back to being an `if` and the page moves up.
-      FormRow { Comment(disabledExplanationHtml, modifier = SwingModifier.visible(!enabled)) }
+      FormRow { Comment(disabledExplanationHtml, modifier = SwingModifier.styleable { visible(!enabled) }) }
 
       if (enabled) {
         projectClients?.let { ProjectClientsGroup(it) }
@@ -245,9 +246,9 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
           BrowserLink(
             text = sseUrl,
             url = sseUrl,
-            modifier = SwingModifier.gap(FormRightGap.SMALL).toolTip(sseUrl),
+            modifier = SwingModifier.gap(FormRightGap.SMALL).styleable { toolTip(sseUrl) },
           )
-          BrowserLink(text = streamUrl, url = streamUrl, modifier = SwingModifier.toolTip(streamUrl))
+          BrowserLink(text = streamUrl, url = streamUrl, modifier = SwingModifier.styleable { toolTip(streamUrl) })
         }
       }
     }
@@ -282,21 +283,21 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
         FormRow {
           Button(
             McpServerBundle.message("copy.mcp.server.sse.configuration"),
-            modifier = SwingModifier.enabled(serverRunning),
+            style = { enabled(serverRunning) },
             onClick = {
               copyJsonToClipboard(createSseServerJsonEntry(McpServerService.getInstance().port, mcpPath()))
             },
           )
           Button(
             McpServerBundle.message("copy.mcp.server.stdio.configuration"),
-            modifier = SwingModifier.enabled(serverRunning),
+            style = { enabled(serverRunning) },
             onClick = {
               copyJsonToClipboard(createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port, mcpPath()))
             },
           )
           Button(
             McpServerBundle.message("copy.mcp.server.stream.configuration"),
-            modifier = SwingModifier.enabled(serverRunning),
+            style = { enabled(serverRunning) },
             onClick = {
               copyJsonToClipboard(createStreamableServerJsonEntry(McpServerService.getInstance().port, mcpPath()))
             },
@@ -359,10 +360,10 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
         onClick = state.onAutoConfigure,
         options = options,
         addSeparator = false,
-        modifier = SwingModifier.enabled(serverRunning),
+        modifier = SwingModifier.styleable { enabled(serverRunning) },
       )
       state.statusIcon?.let {
-        Label(text = "", modifier = SwingModifier.gap(FormRightGap.SMALL).icon(it))
+        Label(text = "", modifier = SwingModifier.gap(FormRightGap.SMALL), style = { icon(it) })
       }
       if (state.statusText.isNotEmpty()) {
         if (state.statusIsComment) Comment(state.statusText) else Label(state.statusText)

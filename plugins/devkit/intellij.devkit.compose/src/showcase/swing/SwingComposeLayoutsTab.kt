@@ -45,8 +45,8 @@ import org.jetbrains.compose.swing.foundation.layout.height
 import org.jetbrains.compose.swing.foundation.layout.size
 import org.jetbrains.compose.swing.foundation.layout.width
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.interaction.enabled
-import org.jetbrains.compose.swing.modifier.layout.preferredSize
+import org.jetbrains.compose.swing.style.enabled
+import org.jetbrains.compose.swing.style.preferredSize
 import java.awt.FlowLayout
 import javax.swing.BoxLayout
 
@@ -81,14 +81,14 @@ private fun ColumnScope.ButtonsPage() {
   var clicks by remember { mutableIntStateOf(0) }
   LabeledRow("Button") {
     Button(text = "Click me", onClick = { clicks++ })
-    Button(text = "Disabled", onClick = {}, modifier = SwingModifier.enabled(false))
+    Button(text = "Disabled", onClick = {}, style = { enabled(false) })
     Label("Clicked $clicks times")
   }
 
   var checked by remember { mutableStateOf(true) }
   LabeledRow("CheckBox") {
     CheckBox(text = "Check me", checked = checked, onCheckedChange = { checked = it })
-    CheckBox(text = "Disabled", checked = checked, onCheckedChange = {}, modifier = SwingModifier.enabled(false))
+    CheckBox(text = "Disabled", checked = checked, onCheckedChange = {}, style = { enabled(false) })
   }
 
   var threeState by remember { mutableStateOf(ThreeStateCheckBoxState.INDETERMINATE) }
@@ -133,7 +133,7 @@ private fun ColumnScope.TextInputPage() {
 
   var area by remember { mutableStateOf("A text area.\nIt wraps long lines at word boundaries, so you can type a long sentence here.") }
   LabeledRow("TextArea") {
-    ScrollPane(SwingModifier.preferredSize(300.dp, 80.dp)) {
+    ScrollPane(style = { preferredSize(300.dp, 80.dp) }) {
       Viewport { TextArea(value = area, onValueChange = { area = it }, lineWrap = true, wrapStyleWord = true) }
     }
   }
@@ -170,7 +170,7 @@ private fun ColumnScope.ChoosersPage() {
 private fun ColumnScope.LinksPage() {
   LabeledRow("Label") {
     Label("A label")
-    Label("A disabled label", modifier = SwingModifier.enabled(false))
+    Label("A disabled label", style = { enabled(false) })
   }
 
   var linkClicks by remember { mutableIntStateOf(0) }
@@ -412,7 +412,7 @@ private fun ColumnScope.FormPanelPage() {
       }
       FormIndent {
         FormRow(label = "Indented:") {
-          TextField(value = name, onValueChange = { name = it }, modifier = SwingModifier.enabled(enabled), columns = 10)
+          TextField(value = name, onValueChange = { name = it }, style = { enabled(enabled) }, columns = 10)
         }
       }
     }

@@ -19,6 +19,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.compose.swing.components.Label
 import org.jetbrains.compose.swing.components.layout.ScrollPane
 import org.jetbrains.compose.swing.components.selection.ListBox
+import org.jetbrains.compose.swing.components.style.horizontalAlignment
 import org.jetbrains.compose.swing.foundation.graphics.RoundedCornerShape
 import org.jetbrains.compose.swing.foundation.graphics.background
 import org.jetbrains.compose.swing.foundation.layout.Alignment
@@ -34,11 +35,11 @@ import org.jetbrains.compose.swing.foundation.layout.padding
 import org.jetbrains.compose.swing.foundation.layout.width
 import org.jetbrains.compose.swing.foundation.layout.widthIn
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.appearance.background
-import org.jetbrains.compose.swing.modifier.appearance.border
-import org.jetbrains.compose.swing.modifier.appearance.foreground
-import org.jetbrains.compose.swing.modifier.appearance.horizontalAlignment
-import org.jetbrains.compose.swing.modifier.appearance.opaque
+import org.jetbrains.compose.swing.style.background
+import org.jetbrains.compose.swing.style.border
+import org.jetbrains.compose.swing.style.foreground
+import org.jetbrains.compose.swing.style.opaque
+import org.jetbrains.compose.swing.style.styleable
 import java.awt.Color
 import javax.swing.JScrollPane
 import javax.swing.ListSelectionModel
@@ -60,16 +61,19 @@ internal fun ShowcasePages(pages: List<ShowcasePage>, modifier: SwingModifier = 
   val titles = remember(pages) { pages.map { it.title } }
   // The row paints the panel background, so the page list looks the same in every tab, whatever the tab paints behind it.
   Row(
-    modifier.background(UIUtil.getPanelBackground()).opaque(true),
+    modifier.styleable {
+      background(UIUtil.getPanelBackground())
+      opaque(true)
+    },
     horizontalArrangement = Arrangement.spacedBy(spacing.horizontalSmallGap.dp),
   ) {
     // The list background sets the list apart from the page, so the scroll pane has no border.
-    ScrollPane(SwingModifier.fillMaxHeight().border(JBUI.Borders.empty())) {
+    ScrollPane(SwingModifier.fillMaxHeight(), style = { border(JBUI.Borders.empty()) }) {
       Viewport {
         ListBox(
           items = titles,
           // The child of a scroll pane takes no padding, so an empty border keeps the first and the last item off the edges.
-          modifier = SwingModifier.border(JBUI.Borders.empty(LIST_GAP, 0)),
+          style = { border(JBUI.Borders.empty(LIST_GAP, 0)) },
           selectedIndices = setOf(selectedPage),
           onSelectionChange = { indices -> indices.firstOrNull()?.let { selectedPage = it } },
           selectionMode = ListSelectionModel.SINGLE_SELECTION,
@@ -91,15 +95,19 @@ internal fun ShowcasePages(pages: List<ShowcasePage>, modifier: SwingModifier = 
 private fun PageListItem(title: String, isSelected: Boolean) {
   // The list paints its own selection background under the item, in a different color with and without the focus. The item paints
   // the list background over the full row, so only the rounded selection shows.
-  Box(SwingModifier.background(UIUtil.getListBackground()).opaque(true)) {
+  Box(
+    SwingModifier.styleable {
+      background(UIUtil.getListBackground())
+      opaque(true)
+    },
+  ) {
     val item = SwingModifier.fillMaxWidth().padding(horizontal = LIST_GAP.dp, vertical = 1.dp)
     val selectionBackground = JBUI.CurrentTheme.List.Selection.background(true)
     Box(if (isSelected) item.background(selectionBackground, RoundedCornerShape(SELECTION_ARC.dp.toFloat())) else item) {
       Label(
         title,
-        modifier = SwingModifier
-          .foreground(if (isSelected) JBUI.CurrentTheme.List.Selection.foreground(true) else UIUtil.getListForeground())
-          .padding(vertical = 4.dp, horizontal = 8.dp),
+        modifier = SwingModifier.padding(vertical = 4.dp, horizontal = 8.dp),
+        style = { foreground(if (isSelected) JBUI.CurrentTheme.List.Selection.foreground(true) else UIUtil.getListForeground()) },
       )
     }
   }
@@ -109,7 +117,7 @@ private fun PageListItem(title: String, isSelected: Boolean) {
 @Composable
 private fun PageContent(page: ShowcasePage, modifier: SwingModifier) {
   // The page has no border, as the page list has none.
-  ScrollPane(modifier.border(JBUI.Borders.empty()), horizontalScrollbar = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) {
+  ScrollPane(modifier, style = { border(JBUI.Borders.empty()) }, horizontalScrollbar = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) {
     // The child of a scroll pane takes no padding, so an inner column holds the padding.
     Viewport(unitIncrement = 16.dp) {
       Column {
@@ -177,17 +185,19 @@ internal inline fun <reified T : Any> ColumnScope.Selector(
 internal fun DemoCell(text: String, modifier: SwingModifier = SwingModifier, background: Color = CELL_BACKGROUND) {
   Label(
     text,
-    modifier = modifier
-      .border(cellBorder())
-      .background(background)
-      .opaque(true)
-      .horizontalAlignment(SwingConstants.CENTER),
+    modifier = modifier,
+    style = {
+      border(cellBorder())
+      this.background(background)
+      opaque(true)
+      horizontalAlignment(SwingConstants.CENTER)
+    },
   )
 }
 
 /** The border of an area that holds the result of a demo. It shows the bounds of the layout. */
 internal fun SwingModifier.demoArea(): SwingModifier =
-  border(CompoundBorder(JBUI.Borders.customLine(JBColor.border()), JBUI.Borders.empty(2)))
+  styleable { border(CompoundBorder(JBUI.Borders.customLine(JBColor.border()), JBUI.Borders.empty(2))) }
 
 private fun cellBorder(): Border = CompoundBorder(JBUI.Borders.customLine(JBColor.border()), JBUI.Borders.empty(4, 8))
 

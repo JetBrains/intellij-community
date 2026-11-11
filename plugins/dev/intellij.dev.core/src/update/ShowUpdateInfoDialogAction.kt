@@ -74,13 +74,16 @@ import org.jetbrains.compose.swing.foundation.layout.RowScope
 import org.jetbrains.compose.swing.foundation.layout.fillMaxWidth
 import org.jetbrains.compose.swing.foundation.layout.widthIn
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.accessibility.accessibleName
-import org.jetbrains.compose.swing.modifier.appearance.emptyBorder
-import org.jetbrains.compose.swing.modifier.appearance.font
-import org.jetbrains.compose.swing.modifier.appearance.toolTip
-import org.jetbrains.compose.swing.modifier.interaction.enabled
-import org.jetbrains.compose.swing.modifier.layout.preferredSize
 import org.jetbrains.compose.swing.node.SwingNode
+import org.jetbrains.compose.swing.style.ContainerStyleScope
+import org.jetbrains.compose.swing.style.SwingStyle
+import org.jetbrains.compose.swing.style.accessibleName
+import org.jetbrains.compose.swing.style.emptyBorder
+import org.jetbrains.compose.swing.style.enabled
+import org.jetbrains.compose.swing.style.font
+import org.jetbrains.compose.swing.style.preferredSize
+import org.jetbrains.compose.swing.style.styleable
+import org.jetbrains.compose.swing.style.toolTip
 import org.jetbrains.compose.swing.tooling.Preview
 import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
@@ -300,12 +303,13 @@ private fun UpdateInfoTabs(
 private fun TabbedPaneScope.Tab(title: String, content: @Composable ColumnScope.() -> Unit) {
   val gap = spacing.verticalSmallGap.dp
   ScrollPane(
-    SwingModifier.tab(title).emptyBorder(0, 0, 0, 0),
+    SwingModifier.tab(title),
+    style = { emptyBorder(0, 0, 0, 0) },
     horizontalScrollbar = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER,
   ) {
     Viewport {
       Column(
-        SwingModifier.emptyBorder(gap, gap, gap, gap),
+        SwingModifier.styleable { emptyBorder(gap, gap, gap, gap) },
         verticalArrangement = Arrangement.spacedBy(spacing.verticalComponentGap.dp),
         content = content,
       )
@@ -320,16 +324,16 @@ private fun ColumnScope.GeneralTab(
   forceUpdate: Boolean,
   onForceUpdateChange: (Boolean) -> Unit,
 ) {
-  Label("Add updates.xml content or choose a patch file", modifier = SwingModifier.font(JBFont.label().asBold()))
+  Label("Add updates.xml content or choose a patch file", style = { font(JBFont.label().asBold()) })
 
   Label("Updates.xml <channel> text:")
   ScrollPane(SwingModifier.fillMaxWidth().weight(1f).shrinkableSize(height = 150)) {
-    Viewport { SwingNode(factory = { textArea }) }
+    Viewport { ChannelTextArea(textArea) }
   }
 
   ControlsRow {
     Label("Patch file:")
-    SwingNode(factory = { fileCombo }, modifier = SwingModifier.weight(1f))
+    PatchFileField(fileCombo, SwingModifier.weight(1f))
   }
 
   ControlsRow(fillWidth = false) {
@@ -341,6 +345,26 @@ private fun ColumnScope.GeneralTab(
       renderer = { showDialog -> if (showDialog) "Show dialog" else "Check updates" },
     )
   }
+}
+
+/** Shows [textArea], which the dialog owns and reads when the user clicks OK. */
+@Composable
+private fun ChannelTextArea(
+  textArea: JBTextArea,
+  modifier: SwingModifier = SwingModifier,
+  style: SwingStyle<ContainerStyleScope> = SwingStyle,
+) {
+  SwingNode(factory = { textArea }, modifier = modifier.styleable(style))
+}
+
+/** Shows [field], which the dialog owns and reads when the user clicks OK. */
+@Composable
+private fun PatchFileField(
+  field: TextFieldWithBrowseButton,
+  modifier: SwingModifier = SwingModifier,
+  style: SwingStyle<ContainerStyleScope> = SwingStyle,
+) {
+  SwingNode(factory = { field }, modifier = modifier.styleable(style))
 }
 
 /** The state of the Quick Mock tab. [execute] reads it when the user clicks OK. */
@@ -405,7 +429,8 @@ private fun ColumnScope.QuickMockTab(state: QuickMockState) {
     TextField(
       value = state.incompatiblePlugins,
       onValueChange = { state.incompatiblePlugins = it },
-      modifier = SwingModifier.weight(1f).enabled(state.incompatiblePluginsEnabled),
+      modifier = SwingModifier.weight(1f),
+      style = { enabled(state.incompatiblePluginsEnabled) },
       columns = 1,
     )
   }
@@ -415,7 +440,8 @@ private fun ColumnScope.QuickMockTab(state: QuickMockState) {
     TextField(
       value = state.licenseNote,
       onValueChange = { state.licenseNote = it },
-      modifier = SwingModifier.weight(1f).enabled(state.licenseNoteWarning),
+      modifier = SwingModifier.weight(1f),
+      style = { enabled(state.licenseNoteWarning) },
       columns = 1,
     )
   }
@@ -680,9 +706,9 @@ private fun ColumnScope.GenerateXmlTab(state: GenerateXmlState, currentProductCo
     Button(
       text = "Save to temp directory",
       onClick = state::saveToTempDirectory,
-      modifier = SwingModifier.enabled(state.requiredFilled),
+      style = { enabled(state.requiredFilled) },
     )
-    Button(text = "Generate XML", onClick = state::generate, modifier = SwingModifier.enabled(state.requiredFilled))
+    Button(text = "Generate XML", onClick = state::generate, style = { enabled(state.requiredFilled) })
   }
 
   SavedUpdatesInfo(state.saved, state.saveError, describe = ::describe)
@@ -803,7 +829,7 @@ private fun ColumnScope.ControlsRow(fillWidth: Boolean = true, content: @Composa
  * Sets a small preferred size. A scroll pane asks for the width of its longest line, which widens the dialog. With this size, it
  * takes the width that its parent gives. Its height is [height] until the parent gives more.
  */
-private fun SwingModifier.shrinkableSize(height: Int): SwingModifier = preferredSize(100.dp, height.dp)
+private fun SwingModifier.shrinkableSize(height: Int): SwingModifier = styleable { preferredSize(100.dp, height.dp) }
 
 @Composable
 private fun Input(
@@ -878,7 +904,14 @@ private fun PathInfo(
         // A label asks for the width of its text. With no width, it fits its column and cuts a long path with an ellipsis.
         val text = path.toString()
         val lineHeight = remember { JLabel(" ").preferredSize.height }
-        Label(text, modifier = SwingModifier.weight(1f).preferredSize(0, lineHeight).toolTip(text))
+        Label(
+          text,
+          modifier = SwingModifier.weight(1f),
+          style = {
+            preferredSize(0, lineHeight)
+            toolTip(text)
+          },
+        )
         CopyLink(text, tooltip = "Copy path")
         if (directory && RevealFileAction.isDirectoryOpenSupported()) {
           IconLink(AllIcons.Actions.MenuOpen, tooltip = RevealFileAction.getActionName()) { RevealFileAction.openDirectory(path) }
@@ -898,7 +931,10 @@ private fun IconLink(icon: Icon, tooltip: String, onClick: () -> Unit) {
   ActionLink(
     text = "",
     onClick = onClick,
-    modifier = SwingModifier.actionLinkIcon(icon, atRight = false).toolTip(tooltip).accessibleName(tooltip),
+    modifier = SwingModifier.actionLinkIcon(icon, atRight = false).styleable {
+      toolTip(tooltip)
+      accessibleName(tooltip)
+    },
   )
 }
 

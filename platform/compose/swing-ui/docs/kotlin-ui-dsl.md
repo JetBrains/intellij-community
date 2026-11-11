@@ -4,8 +4,8 @@ The DSL builds a form by calling into a builder; here the form *is* the composit
 through everything below:
 
 - **Visibility and enabled state differ.** A conditional can replace `visibleIf` when removing the control preserves its state contract.
-  Use `SwingModifier.visible(...)` when the hidden control must keep its state and identity.
-  Use `SwingModifier.enabled(...)` for one control or `ProvideComponentDefaults(DefaultEnabled provides enabled)` for a composed region. Disable children inside a hosted Swing container through its own enabled contract.
+  Use `style = { visible(...) }` when the hidden control must keep its state and identity.
+  Use `style = { enabled(...) }` for one control, or `style = { provideNestedStyle(AllComponents) { enabled(...) } }` on a container for a composed region. Disable children inside a hosted Swing container through its own enabled contract.
 - **Binding is state, not a call.** `bindSelected(prop)` becomes `bind(prop)` on the configurable, read and
   written as an ordinary `var`.
 
@@ -223,8 +223,8 @@ Two consequences decide whether a settings page should be split this way at all:
 | `layout(RowLayout)` | - | The form derives the layout from the row |
 | `resizableRow()` | `FormRow(resizable = true)` | |
 | `rowComment(...)` | `FormRow(comment = ...)` | `FormComment(...)` is a row holding nothing but a comment |
-| `visible` / `visibleIf` | `if (condition)`, or `SwingModifier.visible(...)` | |
-| `enabled` / `enabledIf` | `SwingModifier.enabled(...)` | Per component |
+| `visible` / `visibleIf` | `if (condition)`, or `style = { visible(...) }` | |
+| `enabled` / `enabledIf` | `style = { enabled(...) }` | Per component |
 | `topGap(TopGap.X)` / `bottomGap(BottomGap.X)` | `FormRow(topGap = FormGap.X)` / `bottomGap = FormGap.X` | `FormGap` names the same NONE/SMALL/MEDIUM steps. A dropped gap is invisible in a diff: the rows still line up but stand closer together. Read the gaps off every row of the original page |
 | `customize(UnscaledGapsY)` | **gap** | Only the named steps; a row wanting an exact distance stays with `panel {}` |
 | `checkBox(text)` | `CheckBox` | |
@@ -240,7 +240,7 @@ Two consequences decide whether a settings page should be split this way at all:
 | `link(text, action)` | `ActionLink` | |
 | `browserLink(text, url)` | `BrowserLink` | |
 | `dropDownLink(item, items)` | `DropDownLink` | |
-| `icon(icon)` | `SwingModifier.icon(...)` | `AllIcons` directly, with no icon-key indirection |
+| `icon(icon)` | `Label(style = { icon(...) })` | `AllIcons` directly, with no icon-key indirection |
 | `contextHelp(description, title)` | `SwingNode(factory = { ContextHelpLabel.create(...) })` | Deliberately unwrapped |
 | `textField()` | `TextField` | |
 | `passwordField()` | `PasswordField` | |
@@ -266,8 +266,8 @@ Two consequences decide whether a settings page should be split this way at all:
 | `comment(...)` / `commentRight(...)` | `FormRow(comment = ..., commentMaxLineLength = ...)` | **Gap** for `commentRight`: a `Comment` placed as a second control gets the default gap, not the comment gap, and does not describe the control for accessibility |
 | `focused()` | `SwingModifier.initialFocus()` | |
 | `applyToComponent { }` | the `update` block of `SwingNode` | |
-| `bold()` | `SwingModifier.font(...)` | |
-| `accessibleName` / `accessibleDescription` | the library's accessibility modifiers | |
+| `bold()` | `style = { font(...) }` | |
+| `accessibleName` / `accessibleDescription` | `style = { accessibleName(...) }` / `style = { accessibleDescription(...) }` | |
 | `contextHelp(...)` | `SwingNode(factory = { ContextHelpLabel.create(...) })` | |
 | `applyIfEnabled()` | **gap** | `apply()` writes every binding, also the binding of a disabled control. Use the computed `bind(get, set)` and check the enabled condition in `set` |
 | `onChanged` / `onChangedContext` | the component's own callback | |
@@ -282,5 +282,5 @@ Two consequences decide whether a settings page should be split this way at all:
 | DSL | Compose |
 |---|---|
 | `RowsRange.visible` / `visibleIf` | a conditional, or visibility modifiers when the controls must retain their state |
-| `RowsRange.enabled` / `enabledIf` | enabled properties or `SwingModifier.enabled(...)` on the affected components |
+| `RowsRange.enabled` / `enabledIf` | enabled properties or `style = { enabled(...) }` on the affected components |
 | `ButtonsGroup.bind(prop, type)` | **gap**. `RadioGroup` from the library, bound by hand |
