@@ -647,6 +647,11 @@ data class EvoAddNewOptionDto(
    * IDE must not run its own Python installer first, because the tool is about to do that job itself.
    */
   val downloadedByTool: Boolean = false,
+  /**
+   * Only pre-releases of this version exist, such as `3.16.0a1`. The user can pick it, but a plain click of the row
+   * builds on the first option that is not a pre-release.
+   */
+  val preRelease: Boolean = false,
 )
 
 /**

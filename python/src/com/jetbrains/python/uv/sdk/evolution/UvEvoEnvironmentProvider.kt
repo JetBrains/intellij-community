@@ -242,5 +242,6 @@ private fun List<UvPythonEntry>.toOption(): EvoAddNewOptionDto {
     // uv fetches what it cannot find, so a version with nothing installed at all is a download — but one uv performs
     // itself, which is why this is not `installable` (that would run the IDE's own Python installer first, to no purpose).
     downloadedByTool = none { it.path != null },
+    preRelease = all { it.isPreRelease },
   )
 }
