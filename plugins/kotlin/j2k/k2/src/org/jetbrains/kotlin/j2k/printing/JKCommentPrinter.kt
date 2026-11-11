@@ -50,9 +50,23 @@ class JKCommentPrinter(private val printer: JKPrinter) {
             printedTokens += comment
             val text = comment.escapedText()
             if (needNewLine && comment.indent?.let { StringUtil.containsLineBreak(it) } != true) appendLine()
-            append(comment.indent ?: ' ')
+            appendIndent(comment.indent)
             append(text)
             needNewLine = text.startsWith("//") || '\n' in text
+        }
+    }
+
+    /**
+     * A comment on its own line gets the indent of the printer instead of its Java indent,
+     * so that the formatter does not shift the lines of a block comment.
+     */
+    private fun StringBuilder.appendIndent(javaIndent: String?) {
+        val indent = javaIndent ?: " "
+        val lastLineBreak = indent.lastIndexOf('\n')
+        when {
+            lastLineBreak < 0 && isEmpty() && printer.lastSymbolIsLineBreak -> {}
+            lastLineBreak >= 0 || endsWith('\n') -> append(indent, 0, lastLineBreak + 1).append(printer.currentIndentText)
+            else -> append(indent)
         }
     }
 

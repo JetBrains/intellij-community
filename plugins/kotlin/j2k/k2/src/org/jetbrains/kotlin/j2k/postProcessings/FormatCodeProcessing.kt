@@ -28,8 +28,8 @@ class FormatCodeProcessing : FileBasedPostProcessing() {
             val codeStyleManager = CodeStyleManager.getInstance(file.project)
 
             when {
-                rangeMarker == null -> codeStyleManager.reformat(file)
-                rangeMarker.isValid -> codeStyleManager.reformatRange(file, rangeMarker.startOffset, rangeMarker.endOffset)
+                rangeMarker == null -> codeStyleManager.reformatText(file, 0, file.textLength)
+                rangeMarker.isValid -> codeStyleManager.reformatText(file, rangeMarker.startOffset, rangeMarker.endOffset)
             }
         }
     }

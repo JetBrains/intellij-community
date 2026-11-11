@@ -24,6 +24,8 @@ open class JKPrinterBase {
     private val stringBuilder: StringBuilder = StringBuilder()
     var currentIndent = 0
     private val indentSymbol = " ".repeat(4)
+    val currentIndentText: String
+        get() = indentSymbol.repeat(currentIndent)
     var lastSymbolIsLineBreak = false
     private var lastSymbolIsSingleSpace = false
 
