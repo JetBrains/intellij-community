@@ -134,7 +134,7 @@ private fun ColumnScope.TextInputPage() {
   var area by remember { mutableStateOf("A text area.\nIt wraps long lines at word boundaries, so you can type a long sentence here.") }
   LabeledRow("TextArea") {
     ScrollPane(SwingModifier.preferredSize(300.dp, 80.dp)) {
-      TextArea(value = area, onValueChange = { area = it }, modifier = SwingModifier.viewport(), lineWrap = true, wrapStyleWord = true)
+      Viewport { TextArea(value = area, onValueChange = { area = it }, lineWrap = true, wrapStyleWord = true) }
     }
   }
 }

@@ -65,14 +65,16 @@ internal fun ShowcasePages(pages: List<ShowcasePage>, modifier: SwingModifier = 
   ) {
     // The list background sets the list apart from the page, so the scroll pane has no border.
     ScrollPane(SwingModifier.fillMaxHeight().border(JBUI.Borders.empty())) {
-      ListBox(
-        items = titles,
-        // The child of a scroll pane takes no padding, so an empty border keeps the first and the last item off the edges.
-        modifier = SwingModifier.viewport().border(JBUI.Borders.empty(LIST_GAP, 0)),
-        selectedIndices = setOf(selectedPage),
-        onSelectionChange = { indices -> indices.firstOrNull()?.let { selectedPage = it } },
-        selectionMode = ListSelectionModel.SINGLE_SELECTION,
-      ) { title -> PageListItem(title, isSelected) }
+      Viewport {
+        ListBox(
+          items = titles,
+          // The child of a scroll pane takes no padding, so an empty border keeps the first and the last item off the edges.
+          modifier = SwingModifier.border(JBUI.Borders.empty(LIST_GAP, 0)),
+          selectedIndices = setOf(selectedPage),
+          onSelectionChange = { indices -> indices.firstOrNull()?.let { selectedPage = it } },
+          selectionMode = ListSelectionModel.SINGLE_SELECTION,
+        ) { title -> PageListItem(title, isSelected) }
+      }
     }
     // The pages share one call site, so each page needs its own key. Otherwise a page gets the remembered state of the page before it.
     key(selectedPage) {
@@ -109,14 +111,16 @@ private fun PageContent(page: ShowcasePage, modifier: SwingModifier) {
   // The page has no border, as the page list has none.
   ScrollPane(modifier.border(JBUI.Borders.empty()), horizontalScrollbar = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) {
     // The child of a scroll pane takes no padding, so an inner column holds the padding.
-    Column(SwingModifier.viewport(unitIncrement = 16.dp)) {
-      Column(
-        SwingModifier.fillMaxWidth().padding(all = spacing.verticalSmallGap.dp),
-        verticalArrangement = Arrangement.spacedBy(spacing.verticalComponentGap.dp),
-      ) {
-        // A comment asks for the width of its longest line, which widens the page. With no width, it wraps to the page width.
-        Comment(page.description, modifier = SwingModifier.fillMaxWidth().widthIn(max = 0))
-        page.content(this)
+    Viewport(unitIncrement = 16.dp) {
+      Column {
+        Column(
+          SwingModifier.fillMaxWidth().padding(all = spacing.verticalSmallGap.dp),
+          verticalArrangement = Arrangement.spacedBy(spacing.verticalComponentGap.dp),
+        ) {
+          // A comment asks for the width of its longest line, which widens the page. With no width, it wraps to the page width.
+          Comment(page.description, modifier = SwingModifier.fillMaxWidth().widthIn(max = 0))
+          page.content(this)
+        }
       }
     }
   }

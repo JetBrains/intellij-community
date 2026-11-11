@@ -82,11 +82,11 @@ private val SEARCH_FIELD_DOCUMENT_PAIR =
  */
 private val SEARCH_FIELD_DOCUMENT =
   CallbackRegistration<IdeaSearchTextField, (Document) -> Unit, DocumentListener>(
-    adapter = { current ->
+    adapter = { callback ->
       object : DocumentListener {
-        override fun insertUpdate(e: DocumentEvent): Unit = current()(e.document)
-        override fun removeUpdate(e: DocumentEvent): Unit = current()(e.document)
-        override fun changedUpdate(e: DocumentEvent): Unit = current()(e.document)
+        override fun insertUpdate(e: DocumentEvent): Unit = callback.report { it(e.document) }
+        override fun removeUpdate(e: DocumentEvent): Unit = callback.report { it(e.document) }
+        override fun changedUpdate(e: DocumentEvent): Unit = callback.report { it(e.document) }
       }
     },
     registration = SEARCH_FIELD_DOCUMENT_PAIR,

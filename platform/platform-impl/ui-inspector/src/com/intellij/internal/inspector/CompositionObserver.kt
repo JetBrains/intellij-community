@@ -178,7 +178,7 @@ internal class CompositionObserver : Disposable {
   private fun CompositionData.enclosingAnchorOf(component: Component, enclosing: Any?): Any? {
     for (group in compositionGroups) {
       val anchor = group.data.firstNotNullOfOrNull { (it as? RecomposeScope)?.anchor } ?: enclosing
-      if ((group.node as? SwingComponentNode)?.component === component) return anchor
+      if ((group.node as? SwingComponentNode<*>)?.component === component) return anchor
       group.enclosingAnchorOf(component, anchor)?.let { return it }
     }
     return null
