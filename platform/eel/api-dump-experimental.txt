@@ -775,14 +775,6 @@ f:com.intellij.platform.eel.channels.PeekableEelReceiveChannelKt
 - <init>(java.lang.String,java.lang.String):V
 - f:getRaw():java.lang.String
 - f:getReason():java.lang.String
-*f:com.intellij.platform.eel.provider.EelDescriptors
-- sf:INSTANCE:com.intellij.platform.eel.provider.EelDescriptors
-- *f:docker(java.lang.String):com.intellij.platform.eel.EelDescriptor
-- *f:docker(java.lang.String,java.lang.String):com.intellij.platform.eel.EelDescriptor
-- *f:getLocal():com.intellij.platform.eel.provider.LocalEelDescriptor
-- *f:ssh(java.lang.String):com.intellij.platform.eel.EelDescriptor
-- *f:ssh(java.lang.String,com.intellij.platform.eel.EelOsFamily):com.intellij.platform.eel.EelDescriptor
-- *f:wsl(java.lang.String):com.intellij.platform.eel.EelDescriptor
 f:com.intellij.platform.eel.provider.EelMachineProviderUtil
 - *sf:getResolvedEelMachine(com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelMachine
 - *sf:resolveEelMachine(com.intellij.platform.eel.EelDescriptor,kotlin.coroutines.Continuation):java.lang.Object
@@ -793,13 +785,6 @@ f:com.intellij.platform.eel.provider.EelMachineProviderUtil
 - a:resolveEelMachine(com.intellij.platform.eel.EelDescriptor,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.platform.eel.provider.EelMachineResolver$Companion
 - f:getAll():java.util.List
-*f:com.intellij.platform.eel.provider.EelMachines
-- sf:INSTANCE:com.intellij.platform.eel.provider.EelMachines
-- *f:docker(java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- *f:docker(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- *f:getLocal():com.intellij.platform.eel.provider.LocalEelMachine
-- *f:ssh(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- *f:wsl(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.eel.provider.LocalEelApiKt
 - *sf:getLocalEel():com.intellij.platform.eel.LocalEelApi
 *f:com.intellij.platform.eel.provider.LocalEelDescriptor
