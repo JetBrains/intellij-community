@@ -5,7 +5,7 @@ public class Main {
     public void testGetOrDefault(Map<String, String> map, String key, Main other) {
         String a = null, str = map.get(key);
         // before if
-        if(str == nu<caret>ll) {
+        <caret>if(str == null) {
             // comment
             str = "";
             /* after comment */

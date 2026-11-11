@@ -7,6 +7,6 @@ public class Main {
   private String str;
 
   public String testGetOrDefault(Map<String, String> map, String key, Main other) {
-    return map.conta<caret>insKey(key) ? map.get(key) : "oops";
+    return map.containsKey(key) ?<caret> map.get(key) : "oops";
   }
 }

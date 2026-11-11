@@ -5,7 +5,7 @@ public class Main {
 
   public void test(Map<String, List<String>> map, String key) {
     List<String> list = map.get(key);
-    if (list == <caret>null) {
+    if<caret> (list == null) {
       map.put(key, new ArrayList<>());
     }
     System.out.println(map);

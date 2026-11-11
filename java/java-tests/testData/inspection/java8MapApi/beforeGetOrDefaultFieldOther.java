@@ -6,7 +6,7 @@ public class Main {
 
   public void testGetOrDefault(Map<String, String> map, String key, Main other) {
     str = map.get(key);
-    if(other.str ==<caret> null) {
+    if<caret>(other.str == null) {
       // comment
       str = "";
     }

@@ -5,7 +5,7 @@ public class Main {
     public void testMerge(Map<String, Integer> map, String key, int max) {
         Integer val = /*get!*/map.get(key);
         // check
-        if(val<caret> == null) {
+        if<caret>(val == null) {
             map.put(key, /* passed max value */ max)
         } else {
             map.put(key, Math.max(/*get max*/val, max));

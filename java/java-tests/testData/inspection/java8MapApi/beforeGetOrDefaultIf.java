@@ -7,7 +7,7 @@ public class Main {
   private String str;
 
   public void testGetOrDefault(Map<String, String> map, String key, Main other) {
-    if(map.conta<caret>insKey("k")) {
+    if<caret>(map.containsKey("k")) {
       System.out.println(/* output map value */ map.get("k"));
     } else {
       System.out.println(/* output none */ NONE);

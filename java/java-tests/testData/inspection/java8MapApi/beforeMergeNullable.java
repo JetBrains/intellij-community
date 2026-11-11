@@ -14,7 +14,7 @@ public class Test {
 
   public static void addAttribute(String attributeName, @Nullable String value) {
     final String current = m.get(attributeName);
-    if (current <caret>== null) {
+    if<caret> (current == null) {
       m.put(attributeName, value);
     }
     else {

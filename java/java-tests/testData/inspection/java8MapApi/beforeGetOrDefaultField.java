@@ -8,7 +8,7 @@ public class Main {
 
   public void testGetOrDefault(Map<String, String> map, String key, Main other) {
     str = map.get(key);
-    if(!(str != nul<caret>l)) {
+    if<caret>(!(str != null)) {
       /*
       block comment
        */

@@ -16,7 +16,7 @@ public class Main {
 
   public MyItem testMap(Map<String, MyItem> map, String token) {
     MyItem item = map.get(token);
-    if(item == nul<caret>l) {
+    if<caret>(item == null) {
       map.put(token, item = new MyItem(token, 1));
     }
     return item;

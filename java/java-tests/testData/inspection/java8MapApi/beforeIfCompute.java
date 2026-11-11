@@ -6,7 +6,7 @@ class Test{
   int k;
 
   void ensureExists(Map<String, List<String>> map, String key) {
-    if (!map.conta<caret>insKey(key)) {
+    if<caret> (!map.containsKey(key)) {
       map.put(key, new ArrayList<>());
     }
   }

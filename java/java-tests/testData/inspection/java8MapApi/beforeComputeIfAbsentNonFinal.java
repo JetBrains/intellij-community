@@ -8,7 +8,7 @@ public class Main {
     int size = 5;
     if(map.isEmpty()) size = 10;
     List<String> list = map.get(key);
-    if(list == <caret>null) {
+    if<caret>(list == null) {
       list = new ArrayList<>(size);
       map.put(key, list);
     }

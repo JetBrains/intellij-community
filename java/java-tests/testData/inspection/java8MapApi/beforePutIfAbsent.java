@@ -7,7 +7,7 @@ public class Main {
   public static void main(String[] args) {
     Map<String, String> vals = new HashMap<>();
     String v = vals.get("foo");
-    if(v <caret>== null) {
+    <caret>if(v == null) {
       vals.put("foo", "bar");
     }
     System.out.println(v);
