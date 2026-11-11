@@ -24,6 +24,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.MavenArchetypeManager;
@@ -67,7 +68,11 @@ import java.util.TreeMap;
 
 /**
  * @author Dmitry Avdeev
+ * @deprecated use {@link MavenNewProjectWizardStep} instead
  */
+@Deprecated(forRemoval = true)
+@ApiStatus.Internal
+@SuppressWarnings("DeprecatedIsStillUsed")
 public final class MavenArchetypesStep extends ModuleWizardStep implements Disposable {
   private final JCheckBox myUseArchetypeCheckBox;
   private final JButton myAddArchetypeButton;

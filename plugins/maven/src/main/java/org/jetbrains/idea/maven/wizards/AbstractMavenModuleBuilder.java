@@ -316,10 +316,12 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     return myArchetype;
   }
 
-  public MavenEnvironmentForm getEnvironmentForm() {
-    return myEnvironmentForm;
-  }
-
+  /**
+   * @deprecated No replacement
+   */
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public void setEnvironmentForm(MavenEnvironmentForm environmentForm) {
     myEnvironmentForm = environmentForm;
   }

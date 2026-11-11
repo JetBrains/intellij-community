@@ -166,6 +166,7 @@ public class SelectPropertiesStep extends ModuleWizardStep {
   }
 
   @Override
+  @SuppressWarnings("removal")
   public void updateDataModel() {
     myBuilder.setEnvironmentForm(myEnvironmentForm);
     myBuilder.setPropertiesToCreateByArtifact(myMavenPropertiesPanel.getDataAsMap());

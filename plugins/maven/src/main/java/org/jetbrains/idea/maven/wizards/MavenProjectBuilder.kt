@@ -145,11 +145,6 @@ internal class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), Depre
   }
 
 
-  @Deprecated("Use {@link #setRootDirectory(Project, Path)}")
-  fun setRootDirectory(projectToUpdate: Project?, root: String): Boolean {
-    return setRootDirectory(projectToUpdate, Paths.get(root))
-  }
-
   private fun runConfigurationProcess(message: @NlsContexts.DialogTitle String, p: MavenTask): Boolean {
     try {
       MavenUtil.run(message, p)
@@ -208,7 +203,7 @@ internal class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), Depre
     parameters.mySelectedProjects = tree.rootProjects
   }
 
-  override fun getList(): List<MavenProject>? {
+  override fun getList(): List<MavenProject> {
     return parameters.myMavenProjectTree!!.rootProjects
   }
 

@@ -7,6 +7,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
@@ -25,6 +26,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
+/**
+ * @deprecated use {@link org.jetbrains.idea.maven.wizards.archetype.MavenAddArchetypeDialog} instead
+ */
+@Deprecated(forRemoval = true)
+@ApiStatus.Internal
+@SuppressWarnings("DeprecatedIsStillUsed")
 public class MavenAddArchetypeDialog extends DialogWrapper {
   private final JPanel myMainPanel;
   private final JTextField myGroupIdField;

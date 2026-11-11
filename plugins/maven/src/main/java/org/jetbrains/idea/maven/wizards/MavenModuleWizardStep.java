@@ -194,10 +194,6 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     loadSettings();
   }
 
-  public MavenModuleWizardStep(MavenModuleBuilder builder, WizardContext context, boolean includeArtifacts) {
-    this((AbstractMavenModuleBuilder)builder, context, includeArtifacts);
-  }
-
   private static Method $$$cachedGetBundleMethod$$$ = null;
 
   /** @noinspection ALL */
