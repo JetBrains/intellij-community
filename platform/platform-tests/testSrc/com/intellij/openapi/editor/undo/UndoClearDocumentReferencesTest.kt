@@ -6,11 +6,15 @@ import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.sourceRootFixture
+import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -25,7 +29,11 @@ import kotlin.test.assertEquals
 internal class UndoClearDocumentReferencesTest {
   private companion object {
     val project = projectFixture(openAfterCreation = true)
+    val module = project.moduleFixture()
+    val sourceRoot = module.sourceRootFixture()
   }
+
+  private val physicalFile = sourceRoot.virtualFileFixture("physical.txt", "")
 
   @AfterEach
   fun dropHistory() {
@@ -44,6 +52,27 @@ internal class UndoClearDocumentReferencesTest {
     assertCleanupReleasesLightFile("state-cleared-before-flush.txt", false)
   }
 
+  @Test
+  fun `a cleanup after the flush releases the light file of a mention`() {
+    val lightName = "mention-cleared-after-flush.txt"
+    val physical = timeoutRunBlocking(context = Dispatchers.EDT) {
+      checkNotNull(FileDocumentManager.getInstance().getDocument(physicalFile.get()))
+    }
+    val lightStackSizes = timeoutRunBlocking(context = Dispatchers.EDT) {
+      val lightDocument = changeWhileLightTextEditorIsCurrent(LightVirtualFile(lightName, ""), physical)
+      undoManager(project.get()).flushCurrentCommandMerger()
+      val beforeCleanup = stackSize(lightDocument)
+      undoManager(project.get()).clearDocumentReferences(lightDocument)
+      beforeCleanup to stackSize(lightDocument)
+    }
+    val physicalStackSize = timeoutRunBlocking(context = Dispatchers.EDT) {
+      stackSize(physical)
+    }
+    assertEquals(1 to 0, lightStackSizes)
+    assertEquals(1, physicalStackSize)
+    assertLightFileNotReachable(lightName, physical)
+  }
+
   private fun assertCleanupReleasesLightFile(lightName: String, flushBeforeCleanup: Boolean) {
     val changed = timeoutRunBlocking(context = Dispatchers.EDT) {
       val changed = EditorFactory.getInstance().createDocument("")
@@ -52,8 +81,7 @@ internal class UndoClearDocumentReferencesTest {
       changed
     }
     val stackSize = timeoutRunBlocking(context = Dispatchers.EDT) {
-      val reference = DocumentReferenceManager.getInstance().create(changed)
-      undoManager(project.get()).getStackSize(reference, true)
+      stackSize(changed)
     }
     assertEquals(1, stackSize)
     assertLightFileNotReachable(lightName, changed)
@@ -73,6 +101,30 @@ internal class UndoClearDocumentReferencesTest {
       undoManager(project.get()).flushCurrentCommandMerger()
     }
     undoManager(project.get()).clearDocumentReferences(lightDocument)
+  }
+
+  /**
+   * Changes [changed] in a command while a text editor of [lightFile] is current, and returns the light document.
+   * The command mentions the light document, because a text editor of it is current.
+   * The editor has no project, so the code style cache of the project does not keep the light file.
+   */
+  private fun changeWhileLightTextEditorIsCurrent(lightFile: LightVirtualFile, changed: Document): Document {
+    val lightDocument = checkNotNull(FileDocumentManager.getInstance().getDocument(lightFile))
+    val editor = EditorFactory.getInstance().createEditor(lightDocument)
+    try {
+      val textEditor = TextEditorProvider.getInstance().getTextEditor(editor)
+      undoManager(project.get()).withCurrentEditor(textEditor) {
+        typeSpace(project.get(), changed)
+      }
+    } finally {
+      EditorFactory.getInstance().releaseEditor(editor)
+    }
+    return lightDocument
+  }
+
+  private fun stackSize(document: Document): Int {
+    val reference = DocumentReferenceManager.getInstance().create(document)
+    return undoManager(project.get()).getStackSize(reference, true)
   }
 
   /**

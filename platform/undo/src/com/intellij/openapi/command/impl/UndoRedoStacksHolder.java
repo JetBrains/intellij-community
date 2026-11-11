@@ -70,6 +70,7 @@ final class UndoRedoStacksHolder {
     DocumentReference referenceFile = DocumentReferenceManager.getInstance().create(document);
     DocumentReference referenceDoc = new DocumentReferenceByDocument(document);
 
+    removeMentionsOf(referenceFile);
     documentWithoutFileStacks.removeHolder(document);
     documentStacks.remove(referenceFile);
     documentStacks.remove(referenceDoc);
@@ -270,6 +271,44 @@ final class UndoRedoStacksHolder {
     documentStacks.clear();
     documentWithoutFileStacks.clearStacks();
     nonlocalVirtualFileStacks.clearStacks();
+  }
+
+  /**
+   * Replaces each group that mentions {@code ref} with a copy without the mention.
+   * Such a copy leaves the stack of {@code ref} when it no longer affects {@code ref}.
+   */
+  private void removeMentionsOf(@NotNull DocumentReference ref) {
+    UndoRedoList<UndoableGroup> stack = findStack(ref);
+    if (stack == null) {
+      return;
+    }
+    for (UndoableGroup group : List.copyOf(stack)) {
+      UndoableGroup withoutMentions = group.withoutMentionsOf(ref);
+      if (withoutMentions != group) {
+        replaceOnStacks(group, withoutMentions);
+        if (!withoutMentions.getAffectedDocuments().contains(ref)) {
+          stack.remove(withoutMentions);
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns the stack of {@code ref} like {@link #getStack}, but does not create a missing stack.
+   */
+  private @Nullable UndoRedoList<UndoableGroup> findStack(@NotNull DocumentReference ref) {
+    VirtualFile file = ref.getFile();
+    if (file != null) {
+      if (file.isInLocalFileSystem()) {
+        return documentStacks.get(ref);
+      }
+      return nonlocalVirtualFileStacks.findStack(file);
+    }
+    Document document = ref.getDocument();
+    if (document == null) {
+      return null;
+    }
+    return documentWithoutFileStacks.findStack(document);
   }
 
   /**

@@ -237,6 +237,33 @@ final class UndoableGroup implements Dumpable {
     }
   }
 
+  /**
+   * Returns a copy of this group without the mentions of {@code ref}, or this group when it has no such mention.
+   */
+  @NotNull UndoableGroup withoutMentionsOf(@NotNull DocumentReference ref) {
+    List<? extends UndoableAction> kept = ContainerUtil.filter(actions, action -> !isMentionOf(action, ref));
+    if (kept.size() == actions.size()) {
+      return this;
+    }
+    UndoableGroup copy = new UndoableGroup(
+      commandIds,
+      commandName,
+      kept,
+      confirmationPolicy,
+      stateBefore,
+      stateAfter,
+      flushReason,
+      commandTimestamp,
+      isLocalHistoryActivity,
+      isTransparent,
+      isGlobal,
+      isValid
+    );
+    copy.isTemporary = isTemporary;
+    copy.originalContext = originalContext;
+    return copy;
+  }
+
   @Nullable EditorAndState getStateBefore() {
     return stateBefore;
   }
@@ -373,6 +400,14 @@ final class UndoableGroup implements Dumpable {
         bulkDocument.setInBulkUpdate(false);
       }
     }
+  }
+
+  private static boolean isMentionOf(@NotNull UndoableAction action, @NotNull DocumentReference ref) {
+    if (!(action instanceof MentionOnlyUndoableAction)) {
+      return false;
+    }
+    DocumentReference[] refs = action.getAffectedDocuments();
+    return refs != null && ContainerUtil.and(refs, each -> each.equals(ref));
   }
 
   private static @Nullable DocumentEx getDocumentToSetBulkMode(@NotNull UndoableAction action) {
