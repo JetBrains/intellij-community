@@ -11,7 +11,6 @@ import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTracka
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.ui.components.panels.Wrapper
@@ -80,13 +79,8 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
         vm.focusRequests.collect { requestFocus(false) }
       }
     }.let { roundedPanel ->
-      if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
-        Wrapper(roundedPanel).apply {
-          border = JBUI.Borders.empty(VERTICAL_INLAY_MARGIN, LEFT_INLAY_MARGIN, VERTICAL_INLAY_MARGIN, RIGHT_INLAY_MARGIN)
-        }
-      }
-      else {
-        roundedPanel
+      Wrapper(roundedPanel).apply {
+        border = JBUI.Borders.empty(VERTICAL_INLAY_MARGIN, LEFT_INLAY_MARGIN, VERTICAL_INLAY_MARGIN, RIGHT_INLAY_MARGIN)
       }
     }.let {
       UiDataProvider.wrapComponent(it) { sink ->

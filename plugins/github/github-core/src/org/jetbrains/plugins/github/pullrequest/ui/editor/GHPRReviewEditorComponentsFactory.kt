@@ -26,7 +26,6 @@ import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.Wrapper
@@ -93,9 +92,7 @@ internal object GHPRReviewEditorComponentsFactory {
     }, UiDataProvider { sink ->
       sink[CodeReviewTrackableItemViewModel.TRACKABLE_ITEM_KEY] = vm
     }).apply {
-      if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
-        border = JBUI.Borders.empty(VERTICAL_INLAY_MARGIN, LEFT_INLAY_MARGIN, VERTICAL_INLAY_MARGIN, RIGHT_INLAY_MARGIN)
-      }
+      border = JBUI.Borders.empty(VERTICAL_INLAY_MARGIN, LEFT_INLAY_MARGIN, VERTICAL_INLAY_MARGIN, RIGHT_INLAY_MARGIN)
     }
   }
 
@@ -176,16 +173,9 @@ internal object GHPRReviewEditorComponentsFactory {
       border = JBUI.Borders.empty(itemType.inputPaddingInsets)
     }
 
-    val component = if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
-      Wrapper(CodeReviewCommentUIUtil.createEditorInlayPanel(editor)).apply {
-        border = JBUI.Borders.empty(VERTICAL_INLAY_MARGIN, LEFT_INLAY_MARGIN, VERTICAL_INLAY_MARGIN, RIGHT_INLAY_MARGIN)
-        setFocusable(vm)
-      }
-    }
-    else {
-      CodeReviewCommentUIUtil.createEditorInlayPanel(editor).apply {
-        setFocusable(vm)
-      }
+    val component = Wrapper(CodeReviewCommentUIUtil.createEditorInlayPanel(editor)).apply {
+      border = JBUI.Borders.empty(VERTICAL_INLAY_MARGIN, LEFT_INLAY_MARGIN, VERTICAL_INLAY_MARGIN, RIGHT_INLAY_MARGIN)
+      setFocusable(vm)
     }
 
     return UiDataProvider.wrapComponent(component) { sink ->

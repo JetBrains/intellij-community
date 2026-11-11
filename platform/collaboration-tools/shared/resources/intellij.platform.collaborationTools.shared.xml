@@ -41,11 +41,6 @@
     <additionalTextAttributes scheme="Islands Dark" file="colorSchemes/CollaborationToolsDark.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/CollaborationToolsDark.xml"/>
     <additionalTextAttributes scheme="Darcula Contrast" file="colorSchemes/CollaborationToolsDark.xml"/>
-
-    <advancedSetting id="show.review.threads.with.increased.margins"
-                     default="true"
-                     bundle="messages.CollaborationToolsBundle"
-                     groupKey="advanced.settings.collab.tools"/>
   </extensions>
 
   <actions>
