@@ -12,9 +12,6 @@ import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.compose.swing.defaults.ProvideComponentDefaults
-import org.jetbrains.compose.swing.defaults.componentDefaultKeyOf
-import org.jetbrains.compose.swing.defaults.provides
 import org.jetbrains.compose.swing.layout.LayoutScopeMarker
 import org.jetbrains.compose.swing.layout.ParentDataModifier
 import org.jetbrains.compose.swing.layout.ParentLayoutElement
@@ -22,6 +19,7 @@ import org.jetbrains.compose.swing.layout.ParentProtocol
 import org.jetbrains.compose.swing.layout.parentProtocolOf
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.node.SwingNode
+import org.jetbrains.compose.swing.node.VirtualSwingNode
 import javax.swing.JLabel
 import javax.swing.JPanel
 import com.intellij.ui.TitledSeparator as IdeaTitledSeparator
@@ -100,8 +98,7 @@ public fun FormPanel(
   SwingNode(
     factory = { JPanel(newFormLayout()) },
     modifier = modifier,
-    // A form nested in a row of another form holds rows of its own, not the outer row's controls.
-    content = { ProvideComponentDefaults(FormRowDefault provides null) { scope.content() } },
+    content = { scope.content() },
   )
 }
 
@@ -414,21 +411,16 @@ internal data class FormCellMark(
   val rightGap: FormRightGap? = null,
 ) : FormMark
 
-/**
- * The row a control is composed in. [FormScope.FormRow] provides it to every component in its content as a
- * component default, so a control needs no declaration of its own to take a cell of the row.
- */
+/** The row a control is composed in. [FormScope.FormRow] declares it to the form's panel for each control. */
 internal data class FormRowElement(val row: FormRowMark) : ParentLayoutElement {
   override val parentProtocol: ParentProtocol get() = FormParentProtocol
-
-  override val inheritable: Boolean get() = true
 
   override val name: String get() = "formRow"
 
   override val declaredValues: Map<String, Any?> get() = mapOf("row" to row)
 }
 
-private val FormRowDefault = componentDefaultKeyOf<FormRowMark>("FormRow") { this then FormRowElement(it) }
+private fun SwingModifier.formRow(row: FormRowMark): SwingModifier = this then FormRowElement(row)
 
 /** The parents a [FormMark] is declared for: the panel of a [FormPanel], and no other. */
 private val FormParentProtocol: ParentProtocol = parentProtocolOf("FormPanel row") { it.layout is FormGridLayout }
@@ -524,7 +516,7 @@ private class FormScopeInstance(
     if (label != null) {
       FormRowStart(label, SwingModifier.formMark(row))
     }
-    ProvideComponentDefaults(FormRowDefault provides row) {
+    VirtualSwingNode(SwingModifier.formRow(row)) {
       FormRowScopeInstance.content()
     }
     if (comment != null) {
