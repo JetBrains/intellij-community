@@ -77,7 +77,7 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
           withContext(Dispatchers.IO) {
             // A light process never runs the indexing scan that completes this refresh, so waiting for it would hang forever.
             if (!IdeProductMode.isLight) {
-              project.service<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()
+              InitialVfsRefreshService.getInstance(project).awaitInitialVfsRefreshFinished()
             }
 
             coroutineToIndicator {

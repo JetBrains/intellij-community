@@ -2,6 +2,7 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
@@ -108,4 +109,8 @@ class InitialVfsRefreshService(private val project: Project, private val corouti
   fun isInitialVfsRefreshFinished(): Boolean = job.isCompleted
 
   suspend fun awaitInitialVfsRefreshFinished(): Unit = job.await()
+
+  companion object {
+    fun getInstance(project: Project): InitialVfsRefreshService = project.service()
+  }
 }

@@ -5,7 +5,6 @@ import com.intellij.configurationStore.OLD_NAME_CONVERTER
 import com.intellij.ide.impl.ProjectUtil.isRealProject
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadActionBlocking
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -65,7 +64,7 @@ class VcsIgnoreManagerImpl(private val project: Project, coroutineScope: Corouti
 
     ignoreRefreshQueue.queue(object : Update("wait Project opening activities scan") {
       override fun run() {
-        val vfsRefreshService = project.service<InitialVfsRefreshService>()
+        val vfsRefreshService = InitialVfsRefreshService.getInstance(project)
         runBlockingCancellable {
           vfsRefreshService.awaitInitialVfsRefreshFinished()
         }

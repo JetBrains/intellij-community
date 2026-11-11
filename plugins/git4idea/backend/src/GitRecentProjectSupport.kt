@@ -3,7 +3,6 @@ package git4idea
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -42,7 +41,7 @@ internal suspend fun prepareRecentGitProject(project: Project, projectPath: Path
   withContext(Dispatchers.IO) { GitCommitTemplateTracker.getInstance(project).start() }
   // The untracked files of a repository load after the initial VFS refresh. An open project starts that refresh when it indexes its
   // files. These projects index nothing, so the refresh starts here.
-  project.serviceAsync<InitialVfsRefreshService>().scheduleInitialVfsRefresh()
+  InitialVfsRefreshService.getInstance(project).scheduleInitialVfsRefresh()
 }
 
 /** Registers the Git root of [projectPath] when the project has no repository yet. */

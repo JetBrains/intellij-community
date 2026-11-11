@@ -31,7 +31,7 @@ internal class BackendChangesViewModelBuilderService(private val project: Projec
   override fun modifyTreeModelBuilder(modelBuilder: TreeModelBuilder) {
     val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
     val shouldShowUntrackedLoading = changeListManager.unversionedFilesPaths.isEmpty() &&
-                                     !project.getService(InitialVfsRefreshService::class.java).isInitialVfsRefreshFinished() &&
+                                     !InitialVfsRefreshService.getInstance(project).isInitialVfsRefreshFinished() &&
                                      changeListManager.isUnversionedInUpdateMode
     if (shouldShowUntrackedLoading) {
       modelBuilder.insertSubtreeRoot(ChangesBrowserUnversionedLoadingPendingNode())
