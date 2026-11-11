@@ -313,12 +313,17 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     if (StandardCopyOption.ATOMIC_MOVE in options) {
       throw UnsupportedOperationException("Unsupported copy option")
     }
-    ensureAbsoluteIjentNioPath(source)
-    ensureAbsoluteIjentNioPath(target)
-    if (source.nioFs != target.nioFs || EelCopyMoveImpl.hasEelCopyOption(options)) {
+    // A cross-environment operation may bring a foreign path, for example a local sun.nio.fs.UnixPath in a local-to-remote
+    // copy. Per nio-routing.md, the IJent provider handles foreign paths by delegating the operation to EelCopyMoveImpl,
+    // so the check for a cross-environment pair must happen before the strict IJent-only path checks below.
+    val sourceNioFs = (source as? IjentNioPath)?.nioFs
+    val targetNioFs = (target as? IjentNioPath)?.nioFs
+    if (sourceNioFs == null || targetNioFs == null || sourceNioFs != targetNioFs || EelCopyMoveImpl.hasEelCopyOption(options)) {
       EelCopyMoveImpl.copy(source, target, *options)
       return
     }
+    ensureAbsoluteIjentNioPath(source)
+    ensureAbsoluteIjentNioPath(target)
     val sourcePath = source.eelPath
     val targetPath = target.eelPath
 
@@ -343,12 +348,17 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   override fun move(source: Path, target: Path, vararg options: CopyOption?) {
-    ensureAbsoluteIjentNioPath(source)
-    ensureAbsoluteIjentNioPath(target)
-    if (source.nioFs != target.nioFs || EelCopyMoveImpl.hasEelCopyOption(options)) {
+    // A cross-environment operation may bring a foreign path, for example a local sun.nio.fs.UnixPath in a remote-to-local
+    // move. Per nio-routing.md, the IJent provider handles foreign paths by delegating the operation to EelCopyMoveImpl,
+    // so the check for a cross-environment pair must happen before the strict IJent-only path checks below.
+    val sourceNioFs = (source as? IjentNioPath)?.nioFs
+    val targetNioFs = (target as? IjentNioPath)?.nioFs
+    if (sourceNioFs == null || targetNioFs == null || sourceNioFs != targetNioFs || EelCopyMoveImpl.hasEelCopyOption(options)) {
       EelCopyMoveImpl.move(source, target, *options.filterNotNull().toTypedArray())
       return
     }
+    ensureAbsoluteIjentNioPath(source)
+    ensureAbsoluteIjentNioPath(target)
     val sourcePath = source.eelPath
     val targetPath = target.eelPath
     return source.nioFs.ijentFs.move(sourcePath, targetPath)
