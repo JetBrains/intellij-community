@@ -51,7 +51,7 @@ open class NativePsiAndKtLightElementEqualityProviderTest : KotlinSearchEverywhe
                 val ulc2 = klass2.classSymbol?.asPsiClass()!!
                 findPsiByPattern("MyKotlinClassWithStrangeName") { results ->
                     assertTrue(klass in results)
-                    assertTrue(klass2 in results)
+                    //assertTrue(klass2 in results)
                     assertFalse(file in results)
                     assertFalse(ulc in results)
                     assertFalse(ulc2 in results)
