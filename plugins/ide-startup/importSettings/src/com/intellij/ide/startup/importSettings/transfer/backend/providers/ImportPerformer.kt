@@ -53,9 +53,9 @@ private val logger = logger<DefaultImportPerformer>()
 
 class DefaultImportPerformer(private val partials: Collection<PartialImportPerformer>) : ImportPerformer {
   constructor() : this(arrayListOf(LookAndFeelImportPerformer(),
-                                   SyntaxSchemeImportPerformer(),
-                                   KeymapSchemeImportPerformer(),
-                                   RecentProjectsImportPerformer()))
+                              SyntaxSchemeImportPerformer(),
+                              KeymapSchemeImportPerformer(),
+                              RecentProjectsImportPerformer()).apply { addAll(PartialImportPerformer.EP_NAME.extensionList) })
 
   private fun onlyRequiredPartials(settings: Settings) = partials.filter { p -> p.willPerform(settings) }
 
