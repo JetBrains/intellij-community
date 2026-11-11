@@ -139,6 +139,25 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       cfg173, cfg191, cfg182, cfg183, cfg181, cfg163, cfg172, cfg171, cfg161, cfg162, cfg10)
   }
 
+  @Test fun `find config directories of a product in the given homes`() {
+    val home = newTempDir("host")
+    val now = LocalDateTime.now()
+    val cfg241 = home.resolve("IntelliJIdea2024.1").createDirectories().also { writeStorageFile(it, now.minusSeconds(2)) }
+    val cfg243 = home.resolve("IntelliJIdea2024.3").createDirectories().also { writeStorageFile(it, now.minusSeconds(1)) }
+    home.resolve("IntelliJIdea2025.1-go").createDirectories().also { writeStorageFile(it, now) }
+    home.resolve("IntelliJIdeaCE2025.1").createDirectories().also { writeStorageFile(it, now) }
+    home.resolve("PyCharm2025.1").createDirectories().also { writeStorageFile(it, now) }
+
+    val prefix = ConfigImportHelper.getPrefixFromSelector("IntelliJIdea2025.1")!!
+    assertThat(prefix).isEqualTo("IntelliJIdea")
+    assertThat(ConfigImportHelper.findConfigDirectories(listOf(home), prefix).paths).containsExactly(cfg243, cfg241)
+  }
+
+  @Test fun `find no config directories in a missing home`() {
+    val home = newTempDir("host").resolve("missing")
+    assertThat(ConfigImportHelper.findConfigDirectories(listOf(home), "IntelliJIdea").paths).isEmpty()
+  }
+
   @Test fun `set keymap - old version`() {
     doKeyMapTest("2016.4", isMigrationExpected = true)
     doKeyMapTest("2019.1", isMigrationExpected = true)
