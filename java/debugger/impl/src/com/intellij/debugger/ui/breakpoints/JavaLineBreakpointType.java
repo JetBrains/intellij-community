@@ -290,11 +290,6 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     if (properties instanceof JavaLineBreakpointProperties breakpointProperties) {
       if (!(breakpoint instanceof RunToCursorBreakpoint) && breakpointProperties.isAllPositions()) return true;
 
-      // Non-Java JVM languages sometimes use Java breakpoints but they should only use "all positions" variant.
-      // Because otherwise the code below is not able to analyze non-Java PSI.
-      var language = position.getFile().getLanguage();
-      LOG.assertTrue(language.isKindOf(JavaLanguage.INSTANCE), language.getID());
-
       PsiElement containingMethod = getContainingMethod(breakpoint);
       if (containingMethod == null) return false;
       return DebuggerUtilsEx.inTheMethod(position, containingMethod);
