@@ -41,6 +41,7 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//platform/todo/plugin",
         "//xml/plugin",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
