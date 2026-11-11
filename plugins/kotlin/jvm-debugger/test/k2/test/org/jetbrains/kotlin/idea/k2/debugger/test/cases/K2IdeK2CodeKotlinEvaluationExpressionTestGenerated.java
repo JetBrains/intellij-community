@@ -43,6 +43,16 @@ public class K2IdeK2CodeKotlinEvaluationExpressionTestGenerated extends Abstract
         runTest("../testData/evaluationExpression/atomicfuPrefill.kt");
     }
 
+    @TestMetadata("capturedArrayElementInLambda.kt")
+    public void testCapturedArrayElementInLambda() throws Exception {
+        runTest("../testData/evaluationExpression/capturedArrayElementInLambda.kt");
+    }
+
+    @TestMetadata("capturedJavaKeywordNameInLambda.kt")
+    public void testCapturedJavaKeywordNameInLambda() throws Exception {
+        runTest("../testData/evaluationExpression/capturedJavaKeywordNameInLambda.kt");
+    }
+
     @TestMetadata("castToClassNamedAsJdkClass.kt")
     public void testCastToClassNamedAsJdkClass() throws Exception {
         runTest("../testData/evaluationExpression/castToClassNamedAsJdkClass.kt");

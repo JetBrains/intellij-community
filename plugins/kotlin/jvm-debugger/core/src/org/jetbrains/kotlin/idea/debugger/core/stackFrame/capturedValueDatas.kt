@@ -13,7 +13,9 @@ import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl
 import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.openapi.project.Project
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiNameHelper
 import com.intellij.xdebugger.frame.XValueModifier
 import com.sun.jdi.Field
 import com.sun.jdi.ObjectReference
@@ -51,6 +53,14 @@ class DelegateDescriptor(
     override fun getName() = valueName
 
     override fun calcValue(evaluationContext: EvaluationContextImpl?): Value? = delegate.calcValue(evaluationContext)
-    override fun getDescriptorEvaluation(context: DebuggerContext?): PsiExpression = delegate.getDescriptorEvaluation(context)
+
+    override fun getDescriptorEvaluation(context: DebuggerContext?): PsiExpression {
+        // Java PSI cannot parse a source name that is not a Java identifier, such as the keyword `default`.
+        if (delegate is LocalVariableDescriptorImpl && PsiNameHelper.getInstance(project).isIdentifier(valueName)) {
+            return JavaPsiFacade.getElementFactory(project).createExpressionFromText(valueName, null)
+        }
+        return delegate.getDescriptorEvaluation(context)
+    }
+
     override fun getModifier(value: JavaValue?): XValueModifier = delegate.getModifier(value)
 }
