@@ -35,10 +35,12 @@ import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import static com.intellij.platform.vcs.changes.ChangesUtil.MANY_CHANGES_THRESHOLD;
@@ -181,12 +183,10 @@ public abstract class ChangeViewDiffRequestProcessor extends UpdatableMultipleCh
 
     Wrapper currentChange = myCurrentChange;
     Wrapper selectedChange = currentChange != null ? ContainerUtil.find(selectedChanges, currentChange) : null;
-    if (fromModelRefresh &&
-        selectedChange == null &&
-        currentChange != null &&
-        forceKeepCurrentFileWhileFocused() &&
-        getContext().isWindowFocused() &&
-        getContext().isFocusedInWindow()) {
+    if (keepsCurrentChange(fromModelRefresh, currentChange, selectedChange,
+                           () -> forceKeepCurrentFileWhileFocused() &&
+                                 getContext().isWindowFocused() &&
+                                 getContext().isFocusedInWindow())) {
       // Do not automatically switch focused viewer
       if (selectedChanges.size() == 1 && ContainerUtil.exists(iterateAllChanges(), it -> currentChange.equals(it))) {
         selectChange(currentChange); // Restore selection if necessary
@@ -205,6 +205,32 @@ public abstract class ChangeViewDiffRequestProcessor extends UpdatableMultipleCh
     }
 
     setCurrentChange(selectedChange);
+  }
+
+  /**
+   * A model refresh keeps the current change of a focused viewer when the selection lost it,
+   * unless that change is a {@link #isPlaceholder placeholder} waiting for the real one.
+   *
+   * @param keepFocusedFile evaluated only when the other conditions hold
+   */
+  @VisibleForTesting
+  static boolean keepsCurrentChange(boolean fromModelRefresh,
+                                    @Nullable Wrapper currentChange,
+                                    @Nullable Wrapper selectedChange,
+                                    @NotNull BooleanSupplier keepFocusedFile) {
+    return fromModelRefresh &&
+           selectedChange == null &&
+           currentChange != null &&
+           !(currentChange.getUserObject() instanceof Change change && isPlaceholder(change)) &&
+           keepFocusedFile.getAsBoolean();
+  }
+
+  /**
+   * A change restored from the saved changelists before the first {@link ChangeListManager} refresh.
+   */
+  @VisibleForTesting
+  static boolean isPlaceholder(@NotNull Change change) {
+    return change.getBeforeRevision() instanceof FakeRevision || change.getAfterRevision() instanceof FakeRevision;
   }
 
   @Override
@@ -520,7 +546,7 @@ public abstract class ChangeViewDiffRequestProcessor extends UpdatableMultipleCh
 
     @Override
     public @Nullable DiffRequestProducer createProducer(@Nullable Project project) {
-      if (change.getBeforeRevision() instanceof FakeRevision || change.getAfterRevision() instanceof FakeRevision) {
+      if (isPlaceholder(change)) {
         LoadingDiffRequest request = new LoadingDiffRequest(ChangeDiffRequestProducer.getRequestTitle(change));
         return new ErrorChangeRequestProducer(change, request);
       }
