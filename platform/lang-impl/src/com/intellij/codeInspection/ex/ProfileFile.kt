@@ -11,14 +11,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
-import java.io.IOException
 import java.nio.file.Path
 
 private val LOG = logger<ProfileFile>()
@@ -113,16 +110,8 @@ data class ProfileFile(val path: Path, val profileName: String) {
     return if (changed) JDOMUtil.write(root, "\n") else text
   }
 
-  /** The text of the profile file, with LF line separators, from its document or the virtual file system. */
-  private fun readText(file: VirtualFile): String? {
-    return try {
-      FileDocumentManager.getInstance().getDocument(file)?.text ?: StringUtil.convertLineSeparators(VfsUtilCore.loadText(file))
-    }
-    catch (e: IOException) {
-      LOG.info("Cannot read the inspection profile ${file.path}", e)
-      null
-    }
-  }
+  /** The text of the profile file, with LF line separators, from its document. */
+  private fun readText(file: VirtualFile): String? = FileDocumentManager.getInstance().getDocument(file)?.text
 
   /** The commands that create the file at [path] with [text], and its absent parent directories. */
   private fun createFile(path: Path, text: String): ModCommand {
