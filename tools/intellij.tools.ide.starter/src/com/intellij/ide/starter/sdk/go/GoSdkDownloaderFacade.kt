@@ -2,6 +2,8 @@ package com.intellij.ide.starter.sdk.go
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.intellij.ide.starter.config.ConfigurationStorage
+import com.intellij.ide.starter.config.useDockerContainer
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.runner.SetupException
 import com.intellij.ide.starter.runner.targets.TargetIdentifier
@@ -55,8 +57,10 @@ object GoSdkDownloaderFacade {
   }
 
   /**
-   * Returns platform info for the current target (local or remote).
-   * Falls back to SystemInfo when the target is local or cannot be resolved.
+   * Returns platform info for the platform where the IDE runs.
+   * A remote target gives its own platform.
+   * A local target, or a remote target whose platform cannot be resolved, gives the host platform.
+   * A Docker run reports a local target, but its IDE runs in a Linux container, so it gets Linux on the host architecture.
    */
   fun getTargetPlatformInfo(): PlatformInfo {
     val platform = getTargetPlatform()
@@ -73,15 +77,17 @@ object GoSdkDownloaderFacade {
       )
     }
     else {
+      val os = when {
+        ConfigurationStorage.useDockerContainer() -> "linux"
+        OS.CURRENT == OS.Windows -> "windows"
+        OS.CURRENT == OS.Linux -> "linux"
+        OS.CURRENT == OS.macOS -> "darwin"
+        else -> throw DownloadGoSdkException("Unknown OS")
+      }
       PlatformInfo(
-        os = when (OS.CURRENT) {
-            OS.Windows -> "windows"
-            OS.Linux -> "linux"
-            OS.macOS -> "darwin"
-            else -> throw DownloadGoSdkException("Unknown OS")
-        },
+        os = os,
         arch = if (CpuArch.isArm64()) "arm64" else "amd64",
-        extension = if (OS.CURRENT == OS.Windows) ".zip" else ".tar.gz"
+        extension = if (os == "windows") ".zip" else ".tar.gz"
       )
     }
   }
