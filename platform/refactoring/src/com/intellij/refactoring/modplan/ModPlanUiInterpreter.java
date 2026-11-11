@@ -4,7 +4,6 @@ package com.intellij.refactoring.modplan;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,11 +21,10 @@ import java.util.function.Function;
  * thread. Under a write action, the chain runs on the EDT, with no progress and no cancel. In both cases its questions are shown under
  * the lock.
  * <p>
- * Only for the EDT code of the interactive IDE flow; other callers use {@link ModPlanCommandInterpreter}.
+ * Only for the EDT code of the interactive IDE flow; other callers should use {@link ModPlanCommandInterpreter}.
  *
  * @see ModPlanCommandInterpreter
  */
-@ApiStatus.Internal
 public interface ModPlanUiInterpreter {
   /**
    * @return an instance of this service

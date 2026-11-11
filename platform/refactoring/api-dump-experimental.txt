@@ -329,6 +329,9 @@
 - optionValues():com.intellij.refactoring.modplan.ModPlanOptionValues
 - project():com.intellij.openapi.project.Project
 - subjects():java.util.List
+*:com.intellij.refactoring.modplan.ModPlanUiInterpreter
+- s:getInstance():com.intellij.refactoring.modplan.ModPlanUiInterpreter
+- a:interpret(java.lang.String,com.intellij.refactoring.modplan.ModPlanRequest,java.util.function.Function):com.intellij.refactoring.modplan.ModPlanChain$ChainResult$Finished
 *:com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
 - com.intellij.refactoring.rename.HeadlessRenamePsiElementProcessor
 - canProcessElementHeadless(com.intellij.psi.PsiElement):Z
