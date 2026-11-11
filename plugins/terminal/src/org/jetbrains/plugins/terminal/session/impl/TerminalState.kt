@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.session.impl
 
+import com.intellij.platform.util.annotations.paths.OsPath
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
@@ -23,8 +24,8 @@ data class TerminalState(
   /** Whether such events as command started/finished are supported by the shell integration */
   val isShellIntegrationEnabled: Boolean,
   /**
-   * Absolute OS-dependent path of the current shell directory.
-   * Though, when shell is started in non-local environments (WSL/Docker),
+   * Absolute OS-dependent path of the current process directory.
+   * When process is started in non-local environments (WSL/Docker),
    * this path is related to the remote file system root.
    *
    * For example,
@@ -34,5 +35,6 @@ data class TerminalState(
    *
    * Can be null in case the current directory is unknown.
    */
+  @OsPath
   val currentDirectory: String?,
 )

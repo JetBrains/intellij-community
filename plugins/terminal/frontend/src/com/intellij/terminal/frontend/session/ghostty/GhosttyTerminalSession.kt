@@ -72,6 +72,7 @@ import org.jetbrains.plugins.terminal.session.toTermSize
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
@@ -122,7 +123,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class GhosttyTerminalSession internal constructor(
   private val ttyConnector: TtyConnector,
   initialGeometry: TerminalGridGeometry,
-  initialWorkingDirectory: String?,
+  initialWorkingDirectory: Path?,
   /** The `TERM` of the started process, which the emulator reports for the `XTGETTCAP` query `TN`; null if not set. */
   private val terminfoName: String?,
   private val shellIntegrationController: TerminalShellIntegrationController,
@@ -222,7 +223,7 @@ class GhosttyTerminalSession internal constructor(
   // and is kept fresh by the working-directory tracker (see
   // createGhosttyTerminalSession). Guarded by emulatorLock; the next projection reports the
   // new value.
-  private var currentDirectory: String? = initialWorkingDirectory
+  private var currentDirectory: Path? = initialWorkingDirectory
 
   @Volatile
   override var isClosed: Boolean = false
@@ -269,7 +270,7 @@ class GhosttyTerminalSession internal constructor(
    * Invoked by the working-directory tracker; the new value is reported by the next
    * projection tick.
    */
-  fun updateCurrentDirectory(directory: String) {
+  fun updateCurrentDirectory(directory: Path) {
     emulatorLock.withLock {
       currentDirectory = directory
       changedSinceLastProjection = true
@@ -840,7 +841,7 @@ internal fun createGhosttyTerminalSession(
       gridSize = initialTermSize.toTerminalSize(),
       cellSize = options.initialCellPixelSize?.toCellPixelSize() ?: CellPixelSize.UNKNOWN,
     ),
-    initialWorkingDirectory = getInitialWorkingDirectory(options)?.toString(),
+    initialWorkingDirectory = getInitialWorkingDirectory(options),
     terminfoName = options.envVariables["TERM"],
     shellIntegrationController = shellIntegrationController,
     settings = settings,

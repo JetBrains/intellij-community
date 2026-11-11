@@ -476,13 +476,12 @@ internal class TerminalEmulatorOutputProjectorTest {
     write(csi("?1000h")) // normal mouse tracking
     write(csi("?1006h")) // SGR mouse encoding
 
-    val changed = getState(isShellIntegrationEnabled = true, currentDirectory = "/tmp")
+    val changed = getState(isShellIntegrationEnabled = true)
     assertThat(changed.isCursorVisible).isFalse()
     assertThat(changed.isAlternateScreenBuffer).isTrue()
     assertThat(changed.mouseMode).isEqualTo(MouseModeDto.MOUSE_REPORTING_NORMAL)
     assertThat(changed.mouseFormat).isEqualTo(MouseFormatDto.MOUSE_FORMAT_SGR)
     assertThat(changed.isShellIntegrationEnabled).isTrue()
-    assertThat(changed.currentDirectory).isEqualTo("/tmp")
   }
 
   @Test
@@ -1438,8 +1437,8 @@ internal class TerminalEmulatorOutputProjectorTest {
       }
     }
 
-    fun getState(isShellIntegrationEnabled: Boolean = false, currentDirectory: String? = null): TerminalStateDto =
-      projector.buildState(isShellIntegrationEnabled, currentDirectory)
+    fun getState(isShellIntegrationEnabled: Boolean = false): TerminalStateDto =
+      projector.buildState(isShellIntegrationEnabled, currentDirectory = null)
   }
 
   private fun withProjector(

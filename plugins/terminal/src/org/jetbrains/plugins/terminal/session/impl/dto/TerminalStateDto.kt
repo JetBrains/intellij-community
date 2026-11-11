@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.session.impl.dto
 
+import com.intellij.platform.util.annotations.paths.OsPath
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.session.impl.TerminalState
@@ -20,7 +21,7 @@ data class TerminalStateDto(
   val isBracketedPasteMode: Boolean,
   val windowTitle: String,
   val isShellIntegrationEnabled: Boolean,
-  val currentDirectory: String?,
+  val currentDirectory: @OsPath String?,
 )
 
 @ApiStatus.Internal

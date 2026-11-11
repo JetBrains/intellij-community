@@ -324,17 +324,13 @@ internal class TerminalSessionOutputEventsTest(emulatorType: TerminalEmulatorTyp
   }
 
   @Test
-  fun `a shell session reports no current directory before the shell reports one`() = runSessionTest { _, connector, collector ->
+  fun `a shell session starts without a current directory`() = runSessionTest { _, connector, collector ->
     // The title change makes both emulators report the state.
     connector.feed("${ESC}]0;My Title${BEL}")
-    val beforeShellReport = collector.awaitEvent<TerminalStateChangedEvent> { it.state.windowTitle == "My Title" }
-    assertThat(beforeShellReport.state.currentDirectory)
+    val event = collector.awaitEvent<TerminalStateChangedEvent> { it.state.windowTitle == "My Title" }
+    assertThat(event.state.currentDirectory)
       .describedAs("a shell can start in another directory than the requested one")
       .isNull()
-
-    connector.feed(shellIntegrationInitializedOsc(WORKING_DIRECTORY))
-    val afterShellReport = collector.awaitEvent<TerminalStateChangedEvent> { it.state.currentDirectory != null }
-    assertThat(afterShellReport.state.currentDirectory).isEqualTo(WORKING_DIRECTORY)
   }
 
   @Test

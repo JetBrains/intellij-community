@@ -1,10 +1,9 @@
 package com.intellij.terminal.frontend.session
 
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
-import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -13,16 +12,20 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.arrangement.ProcessInfoUtil
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
+import org.jetbrains.plugins.terminal.original
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+import org.jetbrains.plugins.terminal.util.convertNativePathToNioPath
+import java.nio.file.Path
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Returns the directory that the session can report before the process reports one.
  */
-internal fun getInitialWorkingDirectory(options: ShellStartupOptions): EelPath? {
+internal fun getInitialWorkingDirectory(options: ShellStartupOptions): Path? {
   if (options.processType == TerminalProcessType.SHELL) {
     // Do not use a directory requested for a shell process as an initial directory.
     // Because shell may actually decide to start in a different directory.
@@ -31,17 +34,37 @@ internal fun getInitialWorkingDirectory(options: ShellStartupOptions): EelPath? 
   }
   // But if it is a NON_SHELL process, it is safe to use the directory where the process started.
   // Because it shouldn't change.
-  return options.workingDirectoryEelPathNotNull
+  return options.workingDirectoryEelPathNotNull.asNioPath()
 }
 
+/**
+ * Reports the working directory of the process to [listener].
+ * Reports nothing if [ttyConnector] does not wrap a [LocalTerminalTtyConnector],
+ * because only this connector knows the Eel environment of the process.
+ */
 internal fun addWorkingDirectoryListener(
   ttyConnector: ObservableTtyConnector,
   shellIntegrationController: TerminalShellIntegrationController,
   coroutineScope: CoroutineScope,
-  listener: (String) -> Unit,
+  listener: (Path) -> Unit,
 ) {
+  val localTtyConnector = ttyConnector.original as? LocalTerminalTtyConnector ?: run {
+    LOG.info("Failed to get local TTY connector: $ttyConnector. Working directory won't be updated.")
+    return
+  }
+  val eelDescriptor = localTtyConnector.eelDescriptor
+  val reportDirectory = { directory: String ->
+    val path = convertNativePathToNioPath(directory, eelDescriptor)
+    if (path != null) {
+      listener(path)
+    }
+    else {
+      LOG.warn("Failed to convert working directory '$directory' to a path on $eelDescriptor")
+    }
+  }
+
   val heuristicBasedTrackerScope = coroutineScope.childScope("Heuristic based working directory tracker")
-  addHeuristicBasedCwdListener(ttyConnector, heuristicBasedTrackerScope, listener)
+  addHeuristicBasedCwdListener(ttyConnector, localTtyConnector, heuristicBasedTrackerScope, reportDirectory)
 
   shellIntegrationController.addListener(object : TerminalShellIntegrationEventsListener {
     override fun initialized(currentDirectory: String?, historyPath: String?) {
@@ -50,13 +73,13 @@ internal fun addWorkingDirectoryListener(
       heuristicBasedTrackerScope.cancel()
 
       if (currentDirectory != null) {
-        listener(currentDirectory)
+        reportDirectory(currentDirectory)
       }
     }
 
     override fun commandFinished(command: String, exitCode: Int, currentDirectory: String?) {
       if (currentDirectory != null) {
-        listener(currentDirectory)
+        reportDirectory(currentDirectory)
       }
     }
   })
@@ -70,6 +93,7 @@ internal fun addWorkingDirectoryListener(
 @OptIn(FlowPreview::class)
 private fun addHeuristicBasedCwdListener(
   ttyConnector: ObservableTtyConnector,
+  localTtyConnector: LocalTerminalTtyConnector,
   coroutineScope: CoroutineScope,
   listener: (String) -> Unit,
 ) {
@@ -86,9 +110,9 @@ private fun addHeuristicBasedCwdListener(
 
   coroutineScope.launch {
     workingDirectoryUpdateRequests
-      .debounce(500)
+      .debounce(500.milliseconds)
       .collect {
-        val cwd = doCalculateCurrentDirectory(ttyConnector) ?: return@collect
+        val cwd = doCalculateCurrentDirectory(localTtyConnector) ?: return@collect
         listener(cwd)
       }
   }
@@ -101,12 +125,7 @@ private fun addHeuristicBasedCwdListener(
   //}
 }
 
-private suspend fun doCalculateCurrentDirectory(ttyConnector: TtyConnector): String? {
-  val processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(ttyConnector) ?: run {
-    LOG.warn("Failed to get process TTY connector: $ttyConnector. Working directory won't be updated.")
-    return null
-  }
-
+private suspend fun doCalculateCurrentDirectory(processTtyConnector: LocalTerminalTtyConnector): String? {
   return try {
     ProcessInfoUtil.getInstance().getCurrentWorkingDirectory(processTtyConnector.process) ?: run {
       LOG.warn("Failed to get current working directory: $processTtyConnector")
