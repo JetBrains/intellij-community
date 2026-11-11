@@ -53,12 +53,14 @@ import kotlin.time.Instant
 private const val REPO_PATH = "/repos/owner/repo"
 private const val SEARCH_PATH = "/search/issues"
 private const val TOKEN = "test-token"
+private const val OTHER_TOKEN = "other-token"
 private const val PRIMARY_RATE_LIMIT_BODY = """{"message":"API rate limit exceeded for user ID 1."}"""
 
 /**
  * Checks the primary rate limit budgets and the secondary rate limit pauses of [GHApiRateLimiter] against a local HTTP server.
  *
  * Each case starts its own server on a new port, so the budgets and the pauses of the cases don't mix in the shared [GHApiRateLimiter].
+ * The limits are separate for each token, and for the requests without a token.
  * The secondary rate limit errors ask for short waits, so the cases with retries take a few seconds.
  */
 @TestApplication
@@ -220,6 +222,7 @@ internal class GHApiRateLimiterTest {
     val first = async {
       limiter.execute(
         restRequest(),
+        TOKEN,
         send = {
           sent.complete(Unit)
           answered.await()
@@ -234,7 +237,7 @@ internal class GHApiRateLimiterTest {
     first.await()
 
     assertThrows<GithubRateLimitExceededException> {
-      limiter.execute(restRequest(), send = { fail("The request reached the server with an exhausted budget") }, parse = { _, _ -> })
+      limiter.execute(restRequest(), TOKEN, send = { fail("The request reached the server with an exhausted budget") }, parse = { _, _ -> })
     }
   }
 
@@ -338,7 +341,7 @@ internal class GHApiRateLimiterTest {
         // Resume the queued request during the release of the permit.
         scope.launch(Dispatchers.Unconfined) {
           assertThrows<GithubSecondaryRateLimitExceededException> {
-            limiter.execute(restRequest(), send = { fail("The queued request reached the server during the pause") }, parse = { _, _ -> })
+            limiter.execute(restRequest(), TOKEN, send = { fail("The queued request reached the server during the pause") }, parse = { _, _ -> })
           }
         }
         throw GithubSecondaryRateLimitExceededException("secondary rate limit", 2.minutes)
@@ -424,6 +427,63 @@ internal class GHApiRateLimiterTest {
   }
 
   @Test
+  fun `executors with the same token share the budget`(): Unit = timeoutRunBlocking {
+    answer = { respondExhausted(it, "core", inOneHour()) }
+    executor.execute(restRequest())
+    val sameTokenExecutor = GithubApiRequestExecutor.Factory.getInstance().create(serverPath, TOKEN)
+
+    assertThrows<GithubRateLimitExceededException> {
+      sameTokenExecutor.execute(restRequest())
+    }
+
+    assertEquals(1, received.get())
+  }
+
+  @Test
+  fun `an exhausted budget of a token doesn't block requests with another token`(): Unit = timeoutRunBlocking {
+    answer = { respondExhausted(it, "core", inOneHour()) }
+    executor.execute(restRequest())
+    val otherExecutor = GithubApiRequestExecutor.Factory.getInstance().create(serverPath, OTHER_TOKEN)
+
+    assertThrows<GithubRateLimitExceededException> {
+      executor.execute(restRequest())
+    }
+    otherExecutor.execute(restRequest())
+
+    assertEquals(2, received.get())
+  }
+
+  @Test
+  fun `an exhausted budget without a token doesn't block requests with a token`(): Unit = timeoutRunBlocking {
+    answer = { respondExhausted(it, "core", inOneHour()) }
+    val anonymousExecutor = GithubApiRequestExecutor.Factory.getInstance().create()
+    anonymousExecutor.execute(restRequest())
+
+    assertThrows<GithubRateLimitExceededException> {
+      anonymousExecutor.execute(restRequest())
+    }
+    executor.execute(restRequest())
+
+    assertEquals(2, received.get())
+  }
+
+  @Test
+  fun `a secondary rate limit pause of a token doesn't pause requests with another token`(): Unit = timeoutRunBlocking {
+    answer = { if (received.get() == 1) respondSecondaryLimit(it, retryAfterSeconds = 30) else respondRepo(it) }
+    // the request fails at once and leaves the pause of the token behind
+    assertThrows<GithubSecondaryRateLimitExceededException> {
+      executor.execute(restRequest())
+    }
+    val otherExecutor = GithubApiRequestExecutor.Factory.getInstance().create(serverPath, OTHER_TOKEN)
+
+    withTimeout(5.seconds) {
+      otherExecutor.execute(restRequest())
+    }
+
+    assertEquals(2, received.get())
+  }
+
+  @Test
   fun `the old executor reports a secondary rate limit error`(): Unit = timeoutRunBlocking {
     Registry.get(GithubApiRequestExecutor.Factory.JDK11_CLIENT_REGISTRY_KEY).setValue(false, testDisposable)
     val oldExecutor = GithubApiRequestExecutor.Factory.getInstance().create(serverPath, TOKEN)
@@ -461,7 +521,7 @@ internal class GHApiRateLimiterTest {
     request: GithubApiRequest<T>,
     headers: Map<String, String> = emptyMap(),
     result: suspend () -> T,
-  ): T = execute(request, send = { TestResponse(headers) }, parse = { _, _ -> result() })
+  ): T = execute(request, TOKEN, send = { TestResponse(headers) }, parse = { _, _ -> result() })
 
   private fun coreBudgetHeaders(remaining: Int, resetAt: Instant): Map<String, String> = mapOf(
     GHRateLimitHeaders.RATE_LIMIT_RESOURCE_HEADER to "core",
