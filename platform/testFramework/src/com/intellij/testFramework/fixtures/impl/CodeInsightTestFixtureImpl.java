@@ -301,7 +301,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private void createAndSetEditor(@NotNull VirtualFile virtualFile) {
     myVirtualFile = virtualFile; // set file first for isMyFile() to work correctly
-    Editor editor = createEditor(virtualFile);
+    Editor hostEditor = createEditor(virtualFile);
+    Editor editor = virtualFile instanceof VirtualFileWindow ? ReadAction.compute(() -> {
+      PsiFile injectedFile = PsiManager.getInstance(getProject()).findFile(virtualFile);
+      return injectedFile == null ? hostEditor : InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile);
+    }) : hostEditor;
     setFileAndEditor(virtualFile, editor);
   }
 

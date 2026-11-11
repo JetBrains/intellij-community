@@ -8,10 +8,11 @@ import com.intellij.codeWithMe.ClientId.Companion.current
 import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.ide.highlighter.HighlighterFactory
+import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager.Companion.getProjectSession
 import com.intellij.openapi.diagnostic.logger
@@ -160,11 +161,8 @@ internal class TestEditorManagerImpl(override val project: Project) : FileEditor
 
   private suspend fun openInEditorNow(descriptor: FileEditorNavigatable, request: FileEditorOpenRequest): FileEditorComposite {
     checkRequest(request)
-    val effectiveDescriptor = readAction {
-      normalizeFileEditorDescriptor(descriptor)
-    }
     return withContext(Dispatchers.EDT) {
-      doOpenFile(effectiveDescriptor, buildFileEditorOpenOptions(request))
+      doOpenFile(descriptor, buildFileEditorOpenOptions(request))
     }
   }
 
@@ -317,7 +315,7 @@ internal class TestEditorManagerImpl(override val project: Project) : FileEditor
       return clientManager.getComposite(file)?.selectedWithProvider
     }
 
-    return testEditorSplitter.getEditorAndProvider(file)?.let {
+    return testEditorSplitter.getEditorAndProvider(hostFile(file))?.let {
       FileEditorWithProvider(it.first, it.second)
     }
   }
@@ -369,7 +367,7 @@ internal class TestEditorManagerImpl(override val project: Project) : FileEditor
       val clientManager = clientFileEditorManager ?: return false
       return clientManager.isFileOpen(file)
     }
-    return getEditor(file) != null
+    return getEditor(hostFile(file)) != null
   }
 
   override fun isFileOpenWithRemotes(file: VirtualFile): Boolean {
@@ -531,12 +529,13 @@ internal class TestEditorManagerImpl(override val project: Project) : FileEditor
   }
 
   private fun doOpenFile(descriptor: FileEditorNavigatable, options: FileEditorOpenOptions): FileEditorComposite {
-    val composite = openFileImpl3(descriptor, options)
+    val hostDescriptor = runReadActionBlocking { normalizeFileEditorDescriptor(descriptor) }
+    val composite = openFileImpl3(hostDescriptor, options)
     for ((editor, provider) in composite.allEditorsWithProviders) {
-      if (editor is NavigatableFileEditor && descriptor.file == editor.file) {
-        if (editor.canNavigateTo(descriptor)) {
-          setSelectedEditor(file = descriptor.file, fileEditorProviderId = provider.editorTypeId)
-          editor.navigateTo(descriptor)
+      if (editor is NavigatableFileEditor && hostDescriptor.file == editor.file) {
+        if (editor.canNavigateTo(hostDescriptor)) {
+          setSelectedEditor(file = hostDescriptor.file, fileEditorProviderId = provider.editorTypeId)
+          editor.navigateTo(hostDescriptor)
         }
         break
       }
@@ -582,10 +581,16 @@ internal class TestEditorManagerImpl(override val project: Project) : FileEditor
       return clientFileEditorManager?.getComposite(file)
     }
 
-    return testEditorSplitter.getEditorAndProvider(file)?.let {
+    return testEditorSplitter.getEditorAndProvider(hostFile(file))?.let {
       TestEditorComposite(it.first, it.second)
     }
   }
+
+  /**
+   * Returns the host file for a [VirtualFileWindow], as [FileEditorManagerImpl.getComposite] does.
+   * The open methods open the host file, so the lookup methods must find it for a window file too.
+   */
+  private fun hostFile(file: VirtualFile): VirtualFile = if (file is VirtualFileWindow) file.delegate else file
 
   override val windowSplitCount: Int
     get() = 0
