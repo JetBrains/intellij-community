@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -35,6 +36,20 @@ jvm_library(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.xray` end
+
+### auto-generated section `plugin intellij.xray` start
+ij_plugin(
+    name = "xray_plugin",
+    descriptor_module = ":xray",
+    content_modules = [
+        # do not sort,
+        "//plugins/xray/frontend",
+        "//plugins/xray/shared",
+        "//plugins/xray/backend",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.xray` end
 
 ### auto-generated section `iml intellij.xray` start
 exports_files(
