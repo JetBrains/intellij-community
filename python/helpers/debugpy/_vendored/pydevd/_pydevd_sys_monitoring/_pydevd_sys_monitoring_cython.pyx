@@ -202,6 +202,12 @@ cdef _get_unhandled_exception_frame(exc, int depth):
         tag = exc
 
     try:
+        if _thread_local_info.f_reported_unhandled_exc_tag is tag:
+            return None
+    except AttributeError:
+        pass
+
+    try:
         if _thread_local_info.f_unhandled_exc_tag is tag:
             return _thread_local_info.f_unhandled_frame
         else:
@@ -344,7 +350,7 @@ cdef _create_thread_info(depth):
         if f_bootstrap_frame.f_code.co_name in ("__bootstrap_inner", "_bootstrap_inner", "is_alive"):
             # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
             t = f_bootstrap_frame.f_locals.get("self")
-            if not isinstance(t, threading.Thread):
+            if not isinstance(t, threading.Thread) or getattr(t, "ident", None) != thread_ident:
                 t = None
 
         elif f_bootstrap_frame.f_code.co_name in ("_exec", "__call__"):
@@ -958,6 +964,9 @@ cdef _unwind_event(code, instruction, exc):
     break_on_uncaught_exceptions = py_db.break_on_uncaught_exceptions
     if break_on_uncaught_exceptions:
         if frame is _get_unhandled_exception_frame(exc, 1):
+            _thread_local_info.f_reported_unhandled_exc_tag = _thread_local_info.f_unhandled_exc_tag
+            del _thread_local_info.f_unhandled_exc_tag
+            del _thread_local_info.f_unhandled_frame
             stop_on_unhandled_exception(py_db, thread_info.thread, thread_info.additional_info, arg)
             return
 
@@ -1344,6 +1353,7 @@ cdef _stop_on_breakpoint(py_db, ThreadInfo thread_info, int stop_reason, bp, fra
             py_db.writer.add_command(cmd)
 
     if stop:
+        additional_info.hit_breakpoint_ids = [bp.breakpoint_id]
         py_db.set_suspend(
             thread_info.thread,
             stop_reason,
@@ -1356,6 +1366,7 @@ cdef _stop_on_breakpoint(py_db, ThreadInfo thread_info, int stop_reason, bp, fra
     elif stop_on_plugin_breakpoint:
         stop_at_frame = py_db.plugin.suspend(py_db, thread_info.thread, frame, bp_type)
         if stop_at_frame and thread_info.additional_info.pydev_state == 2:
+            additional_info.hit_breakpoint_ids = [bp.breakpoint_id]
             _do_wait_suspend(py_db, thread_info, stop_at_frame, "line", None)
         return
 
@@ -1543,7 +1554,10 @@ cdef _internal_line_event(FuncCodeInfo func_code_info, frame, int line):
     # print('line event', info.pydev_state, line, threading.current_thread(), code)
     # If we reached here, it was not filtered out.
 
-    if func_code_info.breakpoint_found:
+    # Skipped while the thread is already suspended, as pydevd_frame does: otherwise a
+    # thread suspended by another thread's stop reports its own breakpoint on waking,
+    # producing a second stopped event for what is a single all-threads stop.
+    if func_code_info.breakpoint_found and info.pydev_state != 2:
         bp = None
         stop = False
         stop_on_plugin_breakpoint = False
@@ -1870,6 +1884,51 @@ cpdef stop_monitoring(all_threads=False):
                 return
         # print('stop monitoring, thread=', thread_info.thread)
         thread_info.trace = False
+
+
+# fmt: off
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+cpdef bint suspend_current_thread_tracing():
+    cdef ThreadInfo thread_info
+# ELSE
+# def suspend_current_thread_tracing():
+# ENDIF
+# fmt: on
+    """
+    Suspends tracing for the current thread and returns the previous state,
+    to be restored with resume_current_thread_tracing().
+    """
+    try:
+        thread_info = _thread_local_info.thread_info
+    except:
+        # Create the ThreadInfo if missing; monitoring events create it with
+        # tracing enabled by default, which would defeat the suspension.
+        thread_info = _get_thread_info(True, 1)
+        if thread_info is None:
+            return False
+    previous_state = thread_info.trace
+    thread_info.trace = False
+    return previous_state
+
+
+# fmt: off
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+cpdef resume_current_thread_tracing():
+    cdef ThreadInfo thread_info
+# ELSE
+# def resume_current_thread_tracing():
+# ENDIF
+# fmt: on
+    """
+    Resumes tracing for the current thread.
+    """
+    try:
+        thread_info = _thread_local_info.thread_info
+    except:
+        thread_info = _get_thread_info(True, 1)
+        if thread_info is None:
+            return
+    thread_info.trace = True
 
 
 def update_monitor_events(suspend_requested: Optional[bool]=None) -> None:

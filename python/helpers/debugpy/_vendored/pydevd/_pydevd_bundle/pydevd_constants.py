@@ -365,6 +365,21 @@ PYDEVD_THREAD_DUMP_ON_WARN_EVALUATION_TIMEOUT = is_true_in_env("PYDEVD_THREAD_DU
 # elapses.
 PYDEVD_UNBLOCK_THREADS_TIMEOUT = as_float_in_env("PYDEVD_UNBLOCK_THREADS_TIMEOUT", -1.0)
 
+# This timeout is used only when the mode that all threads are stopped/resumed at once is used
+# (i.e.: multi_threads_single_notification).
+#
+# When resolving the children of a variable (i.e.: expanding it in the variables view), computing
+# one of its attributes may end up blocked waiting on another (currently suspended) thread -- for
+# instance a property getter that dispatches work to a background event loop running in another
+# thread. As all threads are suspended at a breakpoint, that would deadlock the debugger.
+#
+# If the resolution doesn't finish until this timeout elapses, we resume all other threads until it
+# finishes (and then suspend them again) so that such computations can complete instead of hanging
+# forever.
+#
+# A negative value disables this behavior.
+PYDEVD_UNBLOCK_THREADS_ON_VARIABLES_TIMEOUT = as_float_in_env("PYDEVD_UNBLOCK_THREADS_ON_VARIABLES_TIMEOUT", 3.0)
+
 # Timeout to interrupt a thread (so, if some evaluation doesn't finish until this
 # timeout, the thread doing the evaluation is interrupted).
 # A value <= 0 means this is disabled.

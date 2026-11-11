@@ -86,12 +86,16 @@ class Singleton(object):
 
     def __enter__(self):
         """Lock this singleton to prevent concurrent access."""
-        type(self)._lock.acquire()
+        lock = type(self)._lock
+        assert lock is not None 
+        lock.acquire()
         return self
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         """Unlock this singleton to allow concurrent access."""
-        type(self)._lock.release()
+        lock = type(self)._lock
+        assert lock is not None 
+        lock.release()
 
     def share(self):
         """Share this singleton, if it was originally created with shared=False."""
@@ -137,15 +141,18 @@ class ThreadSafeSingleton(Singleton):
     # with @threadsafe_method. Such methods should perform the necessary locking to
     # ensure thread safety for the callers.
 
-    @staticmethod
     def assert_locked(self):
         lock = type(self)._lock
-        assert lock.acquire(blocking=False), (
+        assert lock is not None
+        # Side-effect-free check: verify the current thread already owns the lock,
+        # rather than acquire()/release() (which mutates the RLock recursion count
+        # and, under `python -O` with the assert stripped, would leak a release()).
+        # _is_owned() is a private but stable RLock helper (used by threading itself).
+        assert lock._is_owned(), (  # pyright: ignore[reportAttributeAccessIssue]
             "ThreadSafeSingleton accessed without locking. Either use with-statement, "
             "or if it is a method or property, mark it as @threadsafe_method or with "
             "@autolocked_method, as appropriate."
         )
-        lock.release()
 
     def __getattribute__(self, name):
         value = object.__getattribute__(self, name)

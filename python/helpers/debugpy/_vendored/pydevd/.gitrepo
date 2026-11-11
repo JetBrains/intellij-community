@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/fabioz/PyDev.Debugger.git
 	branch = main
-	commit = b5cfeb38d1b11b429e5befe88cb27fcc57fdad12
+	commit = d6bc5f50cc31545fa0f32431a2a88a48f589810a
 	parent = 8ab4ee89e9ae9a926f711904900a27e3c96d43d4
 	method = merge
 	cmdver = 0.4.1

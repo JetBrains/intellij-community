@@ -27,6 +27,7 @@ cdef class PyDBAdditionalThreadInfo:
     cdef public bint pydev_use_scoped_step_frame
     cdef public object weak_thread
     cdef public bint is_in_wait_loop
+    cdef public object hit_breakpoint_ids
     
     cpdef get_topmost_frame(self, thread)
     cpdef update_stepping_info(self)

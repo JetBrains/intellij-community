@@ -10,6 +10,7 @@ import struct
 import subprocess
 import sys
 import threading
+from typing import Any
 
 from debugpy import launcher
 from debugpy.common import log, messaging
@@ -34,7 +35,7 @@ returns True, the launcher pauses and waits for user input before exiting.
 
 
 def describe():
-    return f"Debuggee[PID={process.pid}]"
+    return f"Debuggee[PID={process.pid if process is not None else 0}]"
 
 
 def spawn(process_name, cmdline, env, redirect_output):
@@ -47,6 +48,8 @@ def spawn(process_name, cmdline, env, redirect_output):
     )
 
     close_fds = set()
+    stdout_r = 0
+    stderr_r = 0
     try:
         if redirect_output:
             # subprocess.PIPE behavior can vary substantially depending on Python version
@@ -54,7 +57,7 @@ def spawn(process_name, cmdline, env, redirect_output):
             stdout_r, stdout_w = os.pipe()
             stderr_r, stderr_w = os.pipe()
             close_fds |= {stdout_r, stdout_w, stderr_r, stderr_w}
-            kwargs = dict(stdout=stdout_w, stderr=stderr_w)
+            kwargs: dict[str, Any] = dict(stdout=stdout_w, stderr=stderr_w)
         else:
             kwargs = {}
 
@@ -195,6 +198,10 @@ def kill():
 
 def wait_for_exit():
     try:
+        # wait_for_exit() only runs after the debuggee was spawned successfully, so
+        # process is always set here; assert to fail fast rather than reporting a
+        # bogus clean exit (code 0) if that invariant is ever broken.
+        assert process is not None
         code = process.wait()
         if sys.platform != "win32" and code < 0:
             # On POSIX, if the process was terminated by a signal, Popen will use
@@ -242,7 +249,7 @@ def _wait_for_user_input():
             log.debug("msvcrt available - waiting for user input via getch()")
             sys.stdout.write("Press any key to continue . . . ")
             sys.stdout.flush()
-            msvcrt.getch()
+            msvcrt.getch() # pyright: ignore[reportPossiblyUnboundVariable, reportAttributeAccessIssue]
         else:
             log.debug("msvcrt not available - waiting for user input via read()")
             sys.stdout.write("Press Enter to continue . . . ")

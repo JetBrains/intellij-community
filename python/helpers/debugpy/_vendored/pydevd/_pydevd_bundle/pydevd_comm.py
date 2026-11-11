@@ -68,6 +68,7 @@ import os
 
 from _pydev_bundle.pydev_imports import _queue
 from _pydev_bundle._pydev_saved_modules import time, ThreadingEvent
+from _pydev_bundle._pydev_saved_modules import threading
 from _pydev_bundle._pydev_saved_modules import socket as socket_module
 from _pydevd_bundle.pydevd_constants import (
     DebugInfoHolder,
@@ -83,6 +84,7 @@ from _pydevd_bundle.pydevd_constants import (
     silence_warnings_decorator,
     filter_all_warnings,
     IS_PY311_OR_GREATER,
+    PYDEVD_UNBLOCK_THREADS_ON_VARIABLES_TIMEOUT,
 )
 from _pydev_bundle.pydev_override import overrides
 import weakref
@@ -802,8 +804,22 @@ def internal_get_variable_json(py_db, request):
         except KeyError:
             pass
         else:
-            for child_var in variable.get_children_variables(fmt=fmt, scope=scope):
-                variables.append(child_var.get_var_data(fmt=fmt))
+            # Resolving the children of a variable may block on another (suspended) thread -- e.g. a
+            # property getter that dispatches work to a background event loop thread. Since all
+            # threads are suspended at a breakpoint, that would deadlock the debugger. If it takes
+            # too long, resume the other threads until it completes (and re-suspend afterwards).
+            timeout_message = (
+                "pydevd: Resolving variable children is taking too long (it may be waiting on another "
+                "thread). Resuming other threads until it finishes so the debugger doesn't hang."
+            )
+            with pydevd_vars.unblock_threads_on_timeout(
+                py_db,
+                threading.current_thread(),
+                PYDEVD_UNBLOCK_THREADS_ON_VARIABLES_TIMEOUT,
+                on_timeout_message=timeout_message,
+            ):
+                for child_var in variable.get_children_variables(fmt=fmt, scope=scope):
+                    variables.append(child_var.get_var_data(fmt=fmt))
     except:
         try:
             exc, exc_type, tb = sys.exc_info()

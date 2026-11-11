@@ -7,6 +7,7 @@ from __future__ import annotations
 import atexit
 import os
 import sys
+from typing import Any, Callable, Union, cast
 
 import debugpy
 from debugpy import adapter, common, launcher
@@ -67,7 +68,7 @@ class Client(components.Component):
             fully handled.
             """
 
-            self.start_request = None
+            self.start_request: Union[messaging.Request, None] = None
             """The "launch" or "attach" request as received from the client.
             """
 
@@ -124,11 +125,12 @@ class Client(components.Component):
             self.client.channel.propagate(event)
 
     def _propagate_deferred_events(self):
-        log.debug("Propagating deferred events to {0}...", self.client)
-        for event in self._deferred_events:
-            log.debug("Propagating deferred {0}", event.describe())
-            self.client.channel.propagate(event)
-        log.info("All deferred events propagated to {0}.", self.client)
+        if self._deferred_events is not None:
+            log.debug("Propagating deferred events to {0}...", self.client)
+            for event in self._deferred_events:
+                log.debug("Propagating deferred {0}", event.describe())
+                self.client.channel.propagate(event)
+            log.info("All deferred events propagated to {0}.", self.client)
         self._deferred_events = None
 
     # Generic event handler. There are no specific handlers for client events, because
@@ -210,9 +212,12 @@ class Client(components.Component):
     #
     # See https://github.com/microsoft/vscode/issues/4902#issuecomment-368583522
     # for the sequence of request and events necessary to orchestrate the start.
-    def _start_message_handler(f):
+    @staticmethod
+    def _start_message_handler(
+        f: Callable[..., Any],
+    ) -> Callable[..., object | None]:
         @components.Component.message_handler
-        def handle(self, request):
+        def handle(self, request: messaging.Request):
             assert request.is_request("launch", "attach")
             if self._initialize_request is None:
                 raise request.isnt_valid("Session is not initialized yet")
@@ -223,8 +228,9 @@ class Client(components.Component):
             if self.session.no_debug:
                 servers.dont_wait_for_first_connection()
 
+            request_options: list[Any] = cast("list[Any]", request("debugOptions", json.array(str)))
             self.session.debug_options = debug_options = set(
-                request("debugOptions", json.array(str))
+                request_options
             )
 
             f(self, request)
@@ -345,6 +351,7 @@ class Client(components.Component):
             launcher_python = python[0]
 
         program = module = code = ()
+        args = []
         if "program" in request:
             program = request("program", str)
             args = [program]
@@ -401,7 +408,7 @@ class Client(components.Component):
         if cwd == ():
             # If it's not specified, but we're launching a file rather than a module,
             # and the specified path has a directory in it, use that.
-            cwd = None if program == () else (os.path.dirname(program) or None)
+            cwd = None if program == () else (os.path.dirname(str(program)) or None)
 
         sudo = bool(property_or_debug_option("sudo", "Sudo"))
         if sudo and sys.platform == "win32":
@@ -496,6 +503,9 @@ class Client(components.Component):
         else:
             if not servers.is_serving():
                 servers.serve(localhost)
+            # servers.serve() above guarantees a listener; fail fast if it's missing
+            # rather than handing the debuggee an empty ("", 0) address it can't use.
+            assert servers.listener is not None
             host, port = sockets.get_address(servers.listener)
 
         # There are four distinct possibilities here.
@@ -530,6 +540,11 @@ class Client(components.Component):
                 except Exception:
                     raise request.isnt_valid('"processId" must be parseable as int')
             debugpy_args = request("debugpyArgs", json.array(str))
+
+            # On Linux, optionally prefer lldb (falling back to gdb) to inject into the
+            # target process. Forwarded to the injector as a debugpy CLI switch.
+            if request("linuxAttachPreferLldb", False):
+                debugpy_args = debugpy_args + ["--linux-attach-prefer-lldb"]
 
             def on_output(category, output):
                 self.channel.send_event(
@@ -588,9 +603,9 @@ class Client(components.Component):
             request.cant_handle("{0} is already being debugged.", conn)
 
     @message_handler
-    def configurationDone_request(self, request):
+    def configurationDone_request(self, request: messaging.Request):
         if self.start_request is None or self.has_started:
-            request.cant_handle(
+            raise request.cant_handle(
                 '"configurationDone" is only allowed during handling of a "launch" '
                 'or an "attach" request'
             )
@@ -631,6 +646,10 @@ class Client(components.Component):
     @message_handler
     def evaluate_request(self, request):
         propagated_request = self.server.channel.propagate(request)
+        if propagated_request is None:
+            raise request.cant_handle(
+                '"{0}" could not be propagated to the debug server', request.command
+            )
 
         def handle_response(response):
             request.respond(response.body)
@@ -661,7 +680,7 @@ class Client(components.Component):
         result = {"debugpy": {"version": debugpy.__version__}}
         if self.server:
             try:
-                pydevd_info = self.server.channel.request("pydevdSystemInfo")
+                pydevd_info: messaging.MessageDict = self.server.channel.request("pydevdSystemInfo")
             except Exception:
                 # If the server has already disconnected, or couldn't handle it,
                 # report what we've got.
@@ -778,6 +797,10 @@ class Client(components.Component):
             body["connect"]["host"] = host or localhost
         if "port" not in body["connect"]:
             if port is None:
+                # A subprocess is only reported once the client is connected, so the
+                # client listener must be serving; fail fast rather than sending the
+                # child a null port it can't connect to.
+                assert listener is not None
                 _, port = sockets.get_address(listener)
             body["connect"]["port"] = port
 

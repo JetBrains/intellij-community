@@ -776,6 +776,10 @@ class PyDBFrame:
 
                 # if thread has a suspend flag, we suspend with a busy wait
                 if info.pydev_state == STATE_SUSPEND:
+                    # This may also be reached by an unrelated pause, hence the inner check.
+                    # Scoped to this suspension only: cleared in PyDB._do_wait_suspend.
+                    if stop or stop_on_plugin_breakpoint:
+                        info.hit_breakpoint_ids = [breakpoint.breakpoint_id]
                     self.do_wait_suspend(thread, frame, event, arg)
                     return self.trace_dispatch
                 else:

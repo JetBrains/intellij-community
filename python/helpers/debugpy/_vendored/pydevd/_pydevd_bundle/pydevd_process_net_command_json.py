@@ -912,11 +912,14 @@ class PyDevJsonCommandProcessor(object):
         for bp in arguments.breakpoints:
             hit_condition = self._get_hit_condition_expression(bp.get("hitCondition"))
             condition = bp.get("condition")
+            breakpoint_id = self._next_breakpoint_id()
 
-            function_breakpoints.append(FunctionBreakpoint(bp["name"], condition, expression, suspend_policy, hit_condition, is_logpoint))
+            function_breakpoints.append(
+                FunctionBreakpoint(breakpoint_id, bp["name"], condition, expression, suspend_policy, hit_condition, is_logpoint)
+            )
 
             # Note: always succeeds.
-            breakpoints_set.append(pydevd_schema.Breakpoint(verified=True, id=self._next_breakpoint_id()).to_dict())
+            breakpoints_set.append(pydevd_schema.Breakpoint(verified=True, id=breakpoint_id).to_dict())
 
         self.api.set_function_breakpoints(py_db, function_breakpoints)
 

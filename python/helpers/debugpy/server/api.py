@@ -4,10 +4,12 @@
 
 import codecs
 import os
+from typing import Any
 import pydevd
 import socket
 import sys
 import threading
+import types
 
 import debugpy
 from debugpy import adapter
@@ -40,28 +42,25 @@ _adapter_process = None
 def _settrace(*args, **kwargs):
     log.debug("pydevd.settrace(*{0!r}, **{1!r})", args, kwargs)
     kwargs.setdefault("notify_stdin", True)
-    try:
-        pydevd.settrace(*args, **kwargs)
-    except Exception:
-        raise
+    return pydevd.settrace(*args, **kwargs)
 
 
 def ensure_logging():
     """Starts logging to log.log_dir, if it hasn't already been done."""
-    if ensure_logging.ensured:
+    if ensure_logging.ensured: # pyright: ignore[reportFunctionMemberAccess]
         return
-    ensure_logging.ensured = True
+    ensure_logging.ensured = True # pyright: ignore[reportFunctionMemberAccess]
     log.to_file(prefix="debugpy.server")
     log.describe_environment("Initial environment:")
     if log.log_dir is not None:
         pydevd.log_to(log.log_dir + "/debugpy.pydevd.log")
 
 
-ensure_logging.ensured = False
+ensure_logging.ensured = False # pyright: ignore[reportFunctionMemberAccess]
 
 
 def log_to(path):
-    if ensure_logging.ensured:
+    if getattr(ensure_logging, "ensured"):
         raise RuntimeError("logging has already begun")
 
     log.debug("log_to{0!r}", (path,))
@@ -154,7 +153,18 @@ def listen(address, settrace_kwargs, in_process_debug_adapter=False):
             block_until_connected=False,
             **settrace_kwargs
         )
-        return
+        # pydevd binds the listening socket on a background reader thread, so
+        # the OS-assigned port (when port=0 is passed) isn't visible from
+        # here directly. Wait for the socket to be ready and read the actual
+        # bound endpoint back from the global debugger.
+        pydb = get_global_debugger()
+        if pydb is not None:
+            pydb.wait_for_server_socket_ready()
+            actual_host, actual_port = pydb._server_socket_name
+        else:
+            actual_host, actual_port = host, port
+        listen.called = True
+        return actual_host, actual_port
 
     import subprocess
 
@@ -236,7 +246,10 @@ def listen(address, settrace_kwargs, in_process_debug_adapter=False):
                 sock.settimeout(None)
                 sock_io = sock.makefile("rb", 0)
                 try:
-                    endpoints = json.loads(sock_io.read().decode("utf-8"))
+                    data = sock_io.read()
+                    if not data:
+                        raise EOFError("EOF while reading adapter endpoints")
+                    endpoints = json.loads(data.decode("utf-8"))
                 finally:
                     sock_io.close()
             finally:
@@ -297,7 +310,7 @@ def connect(address, settrace_kwargs, access_token=None, parent_session_pid=None
     _settrace(host=host, port=port, client_access_token=access_token, ppid=parent_session_pid or 0, **settrace_kwargs)
 
 
-class wait_for_client:
+class wait_for_client_cls:
     def __call__(self):
         ensure_logging()
         log.debug("wait_for_client()")
@@ -311,12 +324,10 @@ class wait_for_client:
         pydevd._wait_for_attach(cancel=cancel_event)
 
     @staticmethod
-    def cancel():
+    def cancel() -> None:
         raise RuntimeError("wait_for_client() must be called first")
 
-
-wait_for_client = wait_for_client()
-
+wait_for_client = wait_for_client_cls()
 
 def is_client_connected():
     return pydevd._is_attached()
@@ -334,6 +345,7 @@ def breakpoint():
     stop_at_frame = sys._getframe().f_back
     while (
         stop_at_frame is not None
+        and pydb is not None
         and pydb.get_file_type(stop_at_frame) == pydb.PYDEV_FILE
     ):
         stop_at_frame = stop_at_frame.f_back
@@ -358,8 +370,52 @@ def trace_this_thread(should_trace):
     ensure_logging()
     log.debug("trace_this_thread({0!r})", should_trace)
 
-    pydb = get_global_debugger()
+    pydb: Any = get_global_debugger()
     if should_trace:
         pydb.enable_tracing()
     else:
         pydb.disable_tracing()
+
+
+def trigger_exception_handler(excinfo=None, as_uncaught=True):
+    ensure_logging()
+
+    if not is_client_connected():
+        log.info("trigger_exception_handler() ignored - debugger not attached")
+        return
+
+    if excinfo is None:
+        excinfo = sys.exc_info()
+
+    if isinstance(excinfo, BaseException):
+        excinfo = (type(excinfo), excinfo, excinfo.__traceback__)
+
+    if not (isinstance(excinfo, tuple) and len(excinfo) == 3):
+        raise ValueError(
+            f"excinfo must be an exception instance or a (type, value, traceback) "
+            f"tuple as returned by sys.exc_info(), not {excinfo!r}"
+        )
+
+    exctype, value, tb = excinfo
+    if exctype is None or value is None or tb is None:
+        log.debug("trigger_exception_handler() ignored - no exception info")
+        return
+
+    if not (
+        isinstance(exctype, type)
+        and isinstance(value, BaseException)
+        and isinstance(tb, types.TracebackType)
+    ):
+        raise ValueError(
+            f"excinfo must be an exception instance or a (type, value, traceback) "
+            f"tuple as returned by sys.exc_info(), not {excinfo!r}"
+        )
+
+    log.debug("trigger_exception_handler({0!r})", excinfo)
+
+    pydb = get_global_debugger()
+    if pydb is None:
+        log.warning("trigger_exception_handler() ignored - no global debugger")
+        return
+
+    pydb.trigger_exception_handler(excinfo, as_uncaught=as_uncaught)

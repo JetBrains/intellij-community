@@ -11,7 +11,7 @@ __file__ = os.path.abspath(__file__)
 _debugpy_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 
-def attach(setup):
+def attach(setup) -> None:
     log = None
     try:
         import sys

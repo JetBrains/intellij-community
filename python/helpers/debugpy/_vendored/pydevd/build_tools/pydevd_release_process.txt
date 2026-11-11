@@ -5,10 +5,20 @@ __version_info__ in pydevd.py
 
 Update cython-generated files (must update cython and then run build_tools/build.py on python 3.10 and 3.12)
 
+deactivate
+activate py310_64
+pip install cython --upgrade
+python build_tools/build.py
+deactivate
+activate py312_64
+pip install cython --upgrade
+python build_tools/build.py
+deactivate
+
 Create tag:
 -----------
-git tag pydev_debugger_3_4_1 -a -m "PyDev.Debugger 3.4.1"
-git push origin pydev_debugger_3_4_1
+git tag pydev_debugger_3_5_0 -a -m "PyDev.Debugger 3.5.0"
+git push origin pydev_debugger_3_5_0
 
 
 (pushing the tag does the release to PyPi now)

@@ -20,6 +20,7 @@ __all__ = [  # noqa
     "listen",
     "log_to",
     "trace_this_thread",
+    "trigger_exception_handler",
     "wait_for_client",
 ]
 

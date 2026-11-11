@@ -5,6 +5,7 @@
 import inspect
 import os
 import sys
+from typing import Any, Callable, Sequence
 
 
 def evaluate(code, path=__file__, mode="eval"):
@@ -19,7 +20,10 @@ def evaluate(code, path=__file__, mode="eval"):
 class Observable(object):
     """An object with change notifications."""
 
-    observers = ()  # used when attributes are set before __init__ is invoked
+    # Immutable default, used when attributes are set before __init__ is invoked.
+    # Kept as a tuple (rather than a list) so it can't be mutated and accidentally
+    # shared across instances.
+    observers: Sequence[Callable[..., Any]] = ()
 
     def __init__(self):
         self.observers = []
@@ -162,3 +166,4 @@ def hide_thread_from_debugger(thread):
     if hide_debugpy_internals():
         thread.pydev_do_not_trace = True
         thread.is_pydev_daemon_thread = True
+

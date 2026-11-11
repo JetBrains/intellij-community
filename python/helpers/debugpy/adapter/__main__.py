@@ -8,6 +8,7 @@ import codecs
 import locale
 import os
 import sys
+from typing import Any
 
 # WARNING: debugpy and submodules must not be imported on top level in this module,
 # and should be imported locally inside main() instead.
@@ -55,7 +56,7 @@ def main():
     if args.for_server is None:
         adapter.access_token = codecs.encode(os.urandom(32), "hex").decode("ascii")
 
-    endpoints = {}
+    endpoints: dict[str, Any] = {}
     try:
         client_host, client_port = clients.serve(args.host, args.port)
     except Exception as exc:

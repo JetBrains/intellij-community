@@ -7,8 +7,8 @@
 
 import builtins
 import json
-import numbers
 import operator
+from typing import Any, Callable, Literal, Tuple, Union
 
 
 JsonDecoder = json.JSONDecoder
@@ -21,14 +21,14 @@ class JsonEncoder(json.JSONEncoder):
     result is serialized instead of the object itself.
     """
 
-    def default(self, value):
+    def default(self, o):
         try:
-            get_state = value.__getstate__
+            get_state = o.__getstate__
         except AttributeError:
             pass
         else:
             return get_state()
-        return super().default(value)
+        return super().default(o)
 
 
 class JsonObject(object):
@@ -93,10 +93,13 @@ class JsonObject(object):
 # some substitutions - e.g. replacing () with some default value.
 
 
-def _converter(value, classinfo):
+def _converter(value: str, classinfo) -> Union[int, float, None]:
     """Convert value (str) to number, otherwise return None if is not possible"""
+    # Only int/float are accepted here (DAP number payloads are int or float);
+    # this deliberately narrows from numbers.Number and does not handle
+    # Decimal/complex/Fraction, which never appear in DAP messages.
     for one_info in classinfo:
-        if issubclass(one_info, numbers.Number):
+        if issubclass(one_info, int) or issubclass(one_info, float):
             try:
                 return one_info(value)
             except ValueError:
@@ -171,7 +174,7 @@ def enum(*values, **kwargs):
     return validate
 
 
-def array(validate_item=False, vectorize=False, size=None):
+def array(validate_item: Union[Callable[..., Any], Literal[False]]=False, vectorize=False, size=None):
     """Returns a validator for a JSON array.
 
     If the property is missing, it is treated as if it were []. Otherwise, it must
@@ -213,11 +216,11 @@ def array(validate_item=False, vectorize=False, size=None):
         )
     elif isinstance(size, tuple):
         assert 1 <= len(size) <= 2
-        size = tuple(operator.index(n) for n in size)
-        min_len, max_len = (size + (None,))[0:2]
+        sizes = tuple(operator.index(n) for n in size)
+        min_len, max_len = (sizes + (None,))[0:2]
         validate_size = lambda value: (
             "must have at least {0} elements".format(min_len)
-            if len(value) < min_len
+            if min_len is None or len(value) < min_len
             else "must have at most {0} elements".format(max_len)
             if max_len is not None and len(value) < max_len
             else True
@@ -250,7 +253,7 @@ def array(validate_item=False, vectorize=False, size=None):
     return validate
 
 
-def object(validate_value=False):
+def object(validate_value: Union[Callable[..., Any], Tuple, Literal[False]]=False):
     """Returns a validator for a JSON object.
 
     If the property is missing, it is treated as if it were {}. Otherwise, it must

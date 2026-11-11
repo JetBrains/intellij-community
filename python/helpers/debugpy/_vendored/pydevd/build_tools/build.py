@@ -110,33 +110,13 @@ def build():
         # set VS100COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 9.0\Common7\Tools
 
         if "GITHUB_ACTION" not in os.environ:
-            if sys.version_info[:2] in ((3, 6), (3, 7), (3, 8), (3, 9), (3, 10), (3, 11), (3, 12), (3, 13)):
-                FORCE_PYDEVD_VC_VARS = os.environ.get("FORCE_PYDEVD_VC_VARS")
-                if FORCE_PYDEVD_VC_VARS:
-                    env.update(get_environment_from_batch_command([FORCE_PYDEVD_VC_VARS], initial=os.environ.copy()))
-                else:
-                    try:
-                        from setuptools._distutils._msvccompiler import _find_vcvarsall as find_vcvarsall
-                    except Exception:
-                        import setuptools  # We have to import it first for the compiler to be found
-                        from distutils.msvc9compiler import find_vcvarsall
-
-                    vcvarsall = find_vcvarsall(14.0)
-                    if isinstance(vcvarsall, tuple):
-                        vcvarsall = vcvarsall[0]
-                    if vcvarsall is None or not os.path.exists(vcvarsall):
-                        msvc_version = msvc9compiler.get_build_version()
-                        print("msvc_version", msvc_version)
-                        vcvarsall = find_vcvarsall(msvc_version)
-
-                    if vcvarsall is None or not os.path.exists(vcvarsall):
-                        raise RuntimeError("Error finding vcvarsall.")
-
-                    if is_python_64bit():
-                        env.update(get_environment_from_batch_command([vcvarsall, "amd64"], initial=os.environ.copy()))
-                    else:
-                        env.update(get_environment_from_batch_command([vcvarsall, "x86"], initial=os.environ.copy()))
-
+            FORCE_PYDEVD_VC_VARS = os.environ.get("FORCE_PYDEVD_VC_VARS")
+            if not FORCE_PYDEVD_VC_VARS:
+                FORCE_PYDEVD_VC_VARS = r"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+                if not os.path.exists(FORCE_PYDEVD_VC_VARS):
+                    raise RuntimeError("Unable to find vcvars64.bat Please set FORCE_PYDEVD_VC_VARS environment variable to the path to the vcvars64.bat file.")
+            if FORCE_PYDEVD_VC_VARS:
+                env.update(get_environment_from_batch_command([FORCE_PYDEVD_VC_VARS], initial=os.environ.copy()))
             else:
                 raise AssertionError("Unable to setup environment for Python: %s" % (sys.version,))
 

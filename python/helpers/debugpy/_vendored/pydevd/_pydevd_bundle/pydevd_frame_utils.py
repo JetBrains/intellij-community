@@ -43,6 +43,32 @@ def remove_exception_from_frame(frame):
         frame.f_locals.pop("__exception__", None)
 
 
+_NO_EXCEPTION = object()
+
+
+class exception_on_frame(object):
+    """Exposes '__exception__' in the frame's locals during a stop, then restores
+    whatever was there before. Restoring by assignment (rather than deleting) avoids
+    a ValueError on 3.14+, where FrameLocalsProxy forbids deleting a real local -- as
+    happens when the user's own code has a variable named '__exception__'."""
+
+    def __init__(self, frame, exception_info):
+        self.frame = frame
+        self.exception_info = exception_info
+
+    def __enter__(self):
+        self._previous = self.frame.f_locals.get("__exception__", _NO_EXCEPTION)
+        add_exception_to_frame(self.frame, self.exception_info)
+        return self
+
+    def __exit__(self, *args):
+        if self._previous is _NO_EXCEPTION:
+            remove_exception_from_frame(self.frame)
+        else:
+            self.frame.f_locals["__exception__"] = self._previous
+        self.frame = None
+
+
 FILES_WITH_IMPORT_HOOKS = ["pydev_monkey_qt.py", "pydev_import_hook.py"]
 
 

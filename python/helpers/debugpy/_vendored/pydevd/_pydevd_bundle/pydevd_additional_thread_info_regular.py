@@ -63,6 +63,7 @@ class PyDBAdditionalThreadInfo(object):
         "pydev_use_scoped_step_frame",
         "weak_thread",
         "is_in_wait_loop",
+        "hit_breakpoint_ids",
     ]
     # ENDIF
     # fmt: on
@@ -118,6 +119,7 @@ class PyDBAdditionalThreadInfo(object):
         # at this time (otherwise it may be suspended but still didn't reach a point.
         # to pause).
         self.is_in_wait_loop = False
+        self.hit_breakpoint_ids = None
 
     # fmt: off
     # IFDEF CYTHON

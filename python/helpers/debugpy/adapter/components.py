@@ -3,7 +3,12 @@
 # for license information.
 
 import functools
+from typing import TYPE_CHECKING, Type, TypeVar, Union, cast
 
+if TYPE_CHECKING:
+    # Dont import this during runtime. There's an order
+    # of imports issue that causes the debugger to hang.
+    from debugpy.adapter.sessions import Session
 from debugpy.common import json, log, messaging, util
 
 
@@ -31,7 +36,7 @@ class Component(util.Observable):
     to wait_for() a change caused by another component.
     """
 
-    def __init__(self, session, stream=None, channel=None):
+    def __init__(self, session: "Session", stream: "Union[messaging.JsonIOStream, None]"=None, channel: "Union[messaging.JsonMessageChannel, None]"=None):
         assert (stream is None) ^ (channel is None)
 
         try:
@@ -44,18 +49,19 @@ class Component(util.Observable):
 
         self.session = session
 
-        if channel is None:
+        if channel is None and stream is not None:
             stream.name = str(self)
             channel = messaging.JsonMessageChannel(stream, self)
             channel.start()
-        else:
+        elif channel is not None:
             channel.name = channel.stream.name = str(self)
             channel.handlers = self
+        assert channel is not None
         self.channel = channel
         self.is_connected = True
 
         # Do this last to avoid triggering useless notifications for assignments above.
-        self.observers += [lambda *_: self.session.notify_changed()]
+        self.observers = [*self.observers, lambda *_: self.session.notify_changed()]
 
     def __str__(self):
         return f"{type(self).__name__}[{self.session.id}]"
@@ -108,8 +114,9 @@ class Component(util.Observable):
             self.is_connected = False
             self.session.finalize("{0} has disconnected".format(self))
 
+T = TypeVar('T')
 
-def missing(session, type):
+def missing(session, type: Type[T]) -> T:
     class Missing(object):
         """A dummy component that raises ComponentNotAvailable whenever some
         attribute is accessed on it.
@@ -124,7 +131,7 @@ def missing(session, type):
         except Exception as exc:
             log.reraise_exception("{0} in {1}", exc, session)
 
-    return Missing()
+    return cast(T, Missing())
 
 
 class Capabilities(dict):

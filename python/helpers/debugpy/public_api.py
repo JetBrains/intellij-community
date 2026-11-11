@@ -212,6 +212,44 @@ def trace_this_thread(__should_trace: bool):
     """
 
 
+@_api()
+def trigger_exception_handler(
+    __excinfo: (
+        typing.Tuple[type, BaseException, typing.Any] | BaseException | None
+    ) = None,
+    as_uncaught: bool = True,
+) -> None:
+    """Stops the debugger on an already-caught exception, as if it
+    were unhandled, allowing inspection of the exception and the
+    call stack at the point of failure.
+
+    The exception may be passed as an exception instance or as a
+    (type, value, traceback) tuple; with no argument, the current
+    exception is used.
+
+    If as_uncaught is true (default), the stop respects the client's
+    exception breakpoint configuration: if breaking on uncaught
+    exceptions is not enabled, or its filters exclude this exception,
+    nothing happens. If false, the debugger stops regardless, on the
+    innermost traceback frame that is not internal to the debugger.
+
+    Does nothing when no client is connected, when there is no
+    exception to show, or when the traceback has no suitable frame.
+    On resume, the program continues normally. Since the traceback
+    has already been unwound, stepping from the stop behaves like
+    pdb.post_mortem(): frames can be inspected but not stepped
+    through.
+
+    Example::
+
+        try:
+            risky_operation()
+        except Exception:
+            debugpy.trigger_exception_handler()
+            raise
+    """
+
+
 def get_cli_options() -> CliOptions | None:
     """Returns the CLI options that were processed by debugpy.
     

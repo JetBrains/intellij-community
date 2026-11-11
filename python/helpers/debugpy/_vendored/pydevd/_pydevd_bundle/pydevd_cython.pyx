@@ -69,6 +69,7 @@ cdef class PyDBAdditionalThreadInfo:
 #         "pydev_use_scoped_step_frame",
 #         "weak_thread",
 #         "is_in_wait_loop",
+#         "hit_breakpoint_ids",
 #     ]
     # ENDIF
     # fmt: on
@@ -124,6 +125,7 @@ cdef class PyDBAdditionalThreadInfo:
         # at this time (otherwise it may be suspended but still didn't reach a point.
         # to pause).
         self.is_in_wait_loop = False
+        self.hit_breakpoint_ids = None
 
     # fmt: off
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
@@ -1097,6 +1099,10 @@ cdef class PyDBFrame:
 
                 # if thread has a suspend flag, we suspend with a busy wait
                 if info.pydev_state == 2:
+                    # This may also be reached by an unrelated pause, hence the inner check.
+                    # Scoped to this suspension only: cleared in PyDB._do_wait_suspend.
+                    if stop or stop_on_plugin_breakpoint:
+                        info.hit_breakpoint_ids = [breakpoint.breakpoint_id]
                     self.do_wait_suspend(thread, frame, event, arg)
                     return self.trace_dispatch
                 else:

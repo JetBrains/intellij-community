@@ -5,6 +5,7 @@
 import socket
 import sys
 import threading
+from typing import Any, Callable, Union
 
 from debugpy.common import log
 from debugpy.common.util import hide_thread_from_debugger
@@ -68,7 +69,7 @@ def create_server(host, port=0, backlog=socket.SOMAXCONN, timeout=None):
     if port is None:
         port = 0
     ipv6 = host.count(":") > 1
-
+    server: Union[socket.socket, None] = None
     try:
         server = _new_sock(ipv6)
         if port != 0:
@@ -87,7 +88,8 @@ def create_server(host, port=0, backlog=socket.SOMAXCONN, timeout=None):
             server.settimeout(timeout)
         server.listen(backlog)
     except Exception:  # pragma: no cover
-        server.close()
+        if server is not None:
+            server.close()
         raise
     return server
 
@@ -138,7 +140,7 @@ def close_socket(sock):
     sock.close()
 
 
-def serve(name, handler, host, port=0, backlog=socket.SOMAXCONN, timeout=None):
+def serve(name: str, handler: Callable[[socket.socket], Any], host: str, port: int=0, backlog=socket.SOMAXCONN, timeout: Union[int, None]=None):
     """Accepts TCP connections on the specified host and port, and invokes the
     provided handler function for every new connection.
 
@@ -148,7 +150,7 @@ def serve(name, handler, host, port=0, backlog=socket.SOMAXCONN, timeout=None):
     assert backlog > 0
 
     try:
-        listener = create_server(host, port, backlog, timeout)
+        listener: socket.socket = create_server(host, port, backlog, timeout)
     except Exception:  # pragma: no cover
         log.reraise_exception(
             "Error listening for incoming {0} connections on {1}:{2}:", name, host, port

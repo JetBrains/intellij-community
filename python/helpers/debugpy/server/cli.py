@@ -38,6 +38,7 @@ Usage: debugpy --listen | --connect
                [--parent-session-pid <pid>]]
                [--adapter-access-token <token>]
                [--disable-sys-remote-exec]]
+               [--linux-attach-prefer-lldb]
                {1}
                [<arg>]...
 """.format(
@@ -58,6 +59,9 @@ class Options(object):
     config: Dict[str, Any] = {}
     parent_session_pid: Union[int, None] = None
     disable_sys_remote_exec = False
+    # When attaching by PID on Linux, prefer lldb to inject into the target process,
+    # falling back to gdb if lldb is not available. gdb is used by default.
+    linux_attach_prefer_lldb = False
 
 
 options = Options()
@@ -189,6 +193,7 @@ switches = [
     ("--parent-session-pid",    "<pid>",            set_arg("parent_session_pid", lambda x: int(x) if x else None)),
     ("--adapter-access-token",   "<token>",         set_arg("adapter_access_token")),
     ("--disable-sys-remote-exec", None,             set_const("disable_sys_remote_exec", True)),
+    ("--linux-attach-prefer-lldb", None,            set_const("linux_attach_prefer_lldb", True)),
 
     # Targets. The "" entry corresponds to positional command line arguments,
     # i.e. the ones not preceded by any switch name.
@@ -340,6 +345,14 @@ def start_debugging(argv_0):
     os.environ["DEBUGPY_RUNNING"] = "true"
 
 
+def _skip_sys_path_prepend():
+    # Python does not prepend the script's parent directory (for a file target)
+    # or the current directory (for -m / -c) to sys.path in isolated mode (-I) or
+    # safe-path mode (-P / PYTHONSAFEPATH), so debugpy shouldn't either.
+    # `sys.flags.safe_path` was added in Python 3.11; fall back to False on older versions.
+    return sys.flags.isolated or getattr(sys.flags, "safe_path", False)
+
+
 def run_file():
     target = options.target
     start_debugging(target)
@@ -348,10 +361,13 @@ def run_file():
     # if the target is a file (rather than a directory), it does not add its
     # parent directory to sys.path. Thus, importing other modules from the
     # same directory is broken unless sys.path is patched here.
+    # In isolated / safe-path mode, Python itself doesn't add the script directory,
+    # so don't do it here either.
 
     if target is not None and os.path.isfile(target):
-        dir = os.path.dirname(target)
-        sys.path.insert(0, dir)
+        if not _skip_sys_path_prepend():
+            target_dir = os.path.dirname(target)
+            sys.path.insert(0, target_dir)
     else:
         log.debug("Not a file: {0!r}", target)
 
@@ -362,9 +378,11 @@ def run_file():
 
 
 def run_module():
-    # Add current directory to path, like Python itself does for -m. This must
-    # be in place before trying to use find_spec below to resolve submodules.
-    sys.path.insert(0, str(""))
+    # Add current directory to path, like Python itself does for -m, unless
+    # it's suppressed by isolated / safe-path mode. This must be in place before
+    # trying to use find_spec below to resolve submodules.
+    if not _skip_sys_path_prepend():
+        sys.path.insert(0, str(""))
 
     # We want to do the same thing that run_module() would do here, without
     # actually invoking it.
@@ -396,8 +414,10 @@ def run_module():
 
 def run_code():
     if options.target is not None:
-        # Add current directory to path, like Python itself does for -c.
-        sys.path.insert(0, str(""))
+        # Add current directory to path, like Python itself does for -c,
+        # unless it's suppressed by isolated / safe-path mode.
+        if not _skip_sys_path_prepend():
+            sys.path.insert(0, str(""))
         code = compile(options.target, str("<string>"), str("exec"))
 
         start_debugging(str("-c"))
@@ -465,7 +485,7 @@ attach_pid_injected.attach(setup);
                 )
                 tmp_file.write(python_code.encode())
                 tmp_file.write(
-                    """import os;os.remove("{tmp_file_path}");""".format(
+                    """import os;os.remove({tmp_file_path!r});""".format(
                         tmp_file_path=tmp_file_path
                     ).encode()
                 )
@@ -494,6 +514,12 @@ attach_pid_injected.attach(setup);
 
     assert os.path.exists(pydevd_attach_to_process_path)
     sys.path.append(pydevd_attach_to_process_path)
+
+    # Propagate the lldb preference down to add_code_to_python_process, which reads
+    # PYDEVD_ATTACH_PREFER_LLDB at call time to decide whether to prefer lldb (falling
+    # back to gdb) when injecting on Linux.
+    if options.linux_attach_prefer_lldb:
+        os.environ["PYDEVD_ATTACH_PREFER_LLDB"] = "1"
 
     try:
         import add_code_to_python_process  # noqa

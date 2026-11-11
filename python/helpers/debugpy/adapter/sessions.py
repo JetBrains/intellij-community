@@ -7,6 +7,7 @@ import os
 import signal
 import threading
 import time
+from typing import Union
 
 from debugpy import common
 from debugpy.common import log, util
@@ -26,6 +27,7 @@ class Session(util.Observable):
     """
 
     _counter = itertools.count(1)
+    pid: Union[int, None] = None
 
     def __init__(self):
         from debugpy.adapter import clients
@@ -61,7 +63,7 @@ class Session(util.Observable):
         self.is_finalizing = False
         """Whether finalize() has been invoked."""
 
-        self.observers += [lambda *_: self.notify_changed()]
+        self.observers = [*self.observers, lambda *_: self.notify_changed()]
 
     def __str__(self):
         return f"Session[{self.id}]"
@@ -94,7 +96,7 @@ class Session(util.Observable):
                     _sessions.remove(self)
                     _sessions_changed.set()
 
-    def wait_for(self, predicate, timeout=None):
+    def wait_for(self, predicate, timeout: Union[float, None]=None):
         """Waits until predicate() becomes true.
 
         The predicate is invoked with the session locked. If satisfied, the method
@@ -111,13 +113,14 @@ class Session(util.Observable):
         seconds regardless of whether the predicate was satisfied. The method returns
         False if it timed out, and True otherwise.
         """
-
         def wait_for_timeout():
-            time.sleep(timeout)
-            wait_for_timeout.timed_out = True
+            if timeout is not None:
+                time.sleep(timeout)
+            wait_for_timeout.timed_out = True # pyright: ignore[reportFunctionMemberAccess]
             self.notify_changed()
 
-        wait_for_timeout.timed_out = False
+        wait_for_timeout.timed_out = False # pyright: ignore[reportFunctionMemberAccess]
+        
         if timeout is not None:
             thread = threading.Thread(
                 target=wait_for_timeout, name="Session.wait_for() timeout"
@@ -127,7 +130,7 @@ class Session(util.Observable):
 
         with self:
             while not predicate():
-                if wait_for_timeout.timed_out:
+                if wait_for_timeout.timed_out: # pyright: ignore[reportFunctionMemberAccess]
                     return False
                 self._changed_condition.wait()
             return True
@@ -180,7 +183,7 @@ class Session(util.Observable):
                     # can ask the launcher to kill it, do so instead of disconnecting
                     # from the server to prevent debuggee from running any more code.
                     self.launcher.terminate_debuggee()
-                else:
+                elif self.server.channel is not None:
                     # Otherwise, let the server handle it the best it can.
                     try:
                         self.server.channel.request(
@@ -218,7 +221,8 @@ class Session(util.Observable):
             self.wait_for(lambda: not self.launcher.is_connected)
 
             try:
-                self.launcher.channel.close()
+                if self.launcher.channel is not None:
+                    self.launcher.channel.close()
             except Exception:
                 log.swallow_exception()
 
@@ -230,7 +234,8 @@ class Session(util.Observable):
                 if self.client.restart_requested:
                     body["restart"] = True
                 try:
-                    self.client.channel.send_event("terminated", body)
+                    if self.client.channel is not None:
+                        self.client.channel.send_event("terminated", body)
                 except Exception:
                     pass
 

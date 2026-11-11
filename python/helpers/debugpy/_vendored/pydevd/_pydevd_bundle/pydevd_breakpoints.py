@@ -1,6 +1,6 @@
 from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_import_class
-from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
+from _pydevd_bundle.pydevd_frame_utils import exception_on_frame
 from _pydev_bundle._pydev_saved_modules import threading
 
 
@@ -76,7 +76,8 @@ class LineBreakpoint(object):
 
 
 class FunctionBreakpoint(object):
-    def __init__(self, func_name, condition, expression, suspend_policy="NONE", hit_condition=None, is_logpoint=False):
+    def __init__(self, breakpoint_id, func_name, condition, expression, suspend_policy="NONE", hit_condition=None, is_logpoint=False):
+        self.breakpoint_id = breakpoint_id
         self.condition = condition
         self.func_name = func_name
         self.expression = expression
@@ -155,14 +156,16 @@ def stop_on_unhandled_exception(py_db, thread, additional_info, arg):
         return
 
     frames_byid = dict([(id(frame), frame) for frame in frames])
-    add_exception_to_frame(user_frame, arg)
-    if exception_breakpoint.condition is not None:
-        eval_result = py_db.handle_breakpoint_condition(additional_info, exception_breakpoint, user_frame)
-        if not eval_result:
-            return
+    # Attach __exception__ so conditions/expressions can reference it; always
+    # detach as the thread may keep running (do_stop re-adds it while suspended).
+    with exception_on_frame(user_frame, arg):
+        if exception_breakpoint.condition is not None:
+            eval_result = py_db.handle_breakpoint_condition(additional_info, exception_breakpoint, user_frame)
+            if not eval_result:
+                return
 
-    if exception_breakpoint.expression is not None:
-        py_db.handle_breakpoint_expression(exception_breakpoint, additional_info, user_frame)
+        if exception_breakpoint.expression is not None:
+            py_db.handle_breakpoint_expression(exception_breakpoint, additional_info, user_frame)
 
     try:
         additional_info.pydev_message = exception_breakpoint.qname
