@@ -62,6 +62,12 @@ public class RedundantMethodOverrideInspectionTest {
   }
 
   @Test
+  public void testForEachPatterns() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_X, inspectionFixture.get()::doTest);
+  }
+
+  @Test
   public void testIgnoreDelegates(){
     boolean ignoreDelegatesOldValue = myInspection.ignoreDelegates;
     try {
