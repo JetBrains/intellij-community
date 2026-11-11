@@ -310,11 +310,11 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     smallIconLabel.isVisible = false
 
 
-    // Placeholder to prevent the top of scroll bar from jumping while an analysis is running
+    // Placeholder to prevent the top of the error stripe from jumping while an analysis is running
     val statusPanel = object : NonOpaquePanel() {
       override fun getPreferredSize(): Dimension =
         super.getPreferredSize().apply {
-          if (trafficLightVisible) {
+          if (trafficLightVisible && isErrorStripeVisible) {
             height = height.coerceAtLeast(statusIconSize)
           }
         }
