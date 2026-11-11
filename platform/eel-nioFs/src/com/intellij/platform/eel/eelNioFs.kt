@@ -45,7 +45,7 @@ class EelMachineNioFileSystemRegistry {
   init {
     EelMachineConnectionProvider.registry.addListener(object : EelMachineConnectionRegistry.Listener {
       override fun onConnectionOpened(eelApi: EelApi) {
-        findOrCreateFileSystem(eelApi)
+        findOrCreateFileSystem(eelApi, recreateIfClosed = true)
       }
 
       override fun isConnectionStillAlive(eelApi: EelApi): Boolean {
@@ -55,7 +55,7 @@ class EelMachineNioFileSystemRegistry {
 
       override fun onConnectionClosed(eelApi: EelApi) {
         val fileSystemToClose = synchronized(apiFileSystems) {
-          apiFileSystems.remove(eelApi)
+          apiFileSystems[eelApi]
         }
         if (fileSystemToClose != null) {
           runCatching {
@@ -66,13 +66,13 @@ class EelMachineNioFileSystemRegistry {
     })
   }
 
-  private fun findOrCreateFileSystem(eelApi: EelApi): FileSystem? {
+  private fun findOrCreateFileSystem(eelApi: EelApi, recreateIfClosed: Boolean = false): FileSystem? {
     if (eelApi is LocalEelApi) {
       return FileSystems.getDefault()
     }
     synchronized(apiFileSystems) {
       val existing = apiFileSystems[eelApi]
-      if (existing != null && existing.isOpen) {
+      if (existing != null && (!recreateIfClosed || existing.isOpen)) {
         return existing
       }
       val created = providerBridge?.getAll()?.firstNotNullOfOrNull { it.createFileSystemForEelApi(eelApi) } ?: return null
