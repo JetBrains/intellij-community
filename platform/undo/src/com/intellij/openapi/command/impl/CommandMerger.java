@@ -8,8 +8,10 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts.Command;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -184,6 +186,10 @@ public final class CommandMerger {
     affectedDocuments.removeAffected(refByDoc);
     additionalAffectedDocuments.removeAffected(refByFile);
     additionalAffectedDocuments.removeAffected(refByDoc);
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    if (file != null) {
+      dropEditorStatesOf(file);
+    }
   }
 
   @Nullable String getCommandName() {
@@ -243,6 +249,15 @@ public final class CommandMerger {
 
   @NotNull String dumpState() {
     return UndoDumpUnit.fromMerger(this).toString();
+  }
+
+  private void dropEditorStatesOf(@NotNull VirtualFile file) {
+    if (editorStateBefore != null && editorStateBefore.isFor(file)) {
+      editorStateBefore = null;
+    }
+    if (editorStateAfter != null && editorStateAfter.isFor(file)) {
+      editorStateAfter = null;
+    }
   }
 
   private void setEditorStateBefore(@Nullable EditorAndState state) {

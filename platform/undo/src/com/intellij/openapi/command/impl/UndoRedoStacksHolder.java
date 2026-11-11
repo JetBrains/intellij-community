@@ -5,6 +5,7 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -81,6 +82,10 @@ final class UndoRedoStacksHolder {
         ref -> ref.equals(referenceFile) || ref.equals(referenceDoc)
       )
     );
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    if (file != null) {
+      dropEditorStatesOf(file);
+    }
   }
 
   boolean canBeUndoneOrRedone(@NotNull Collection<DocumentReference> refs) {
@@ -265,6 +270,27 @@ final class UndoRedoStacksHolder {
     documentStacks.clear();
     documentWithoutFileStacks.clearStacks();
     nonlocalVirtualFileStacks.clearStacks();
+  }
+
+  /**
+   * Drops the editor states of the editors of {@code file} in all stacks.
+   * A group in the stack of another document can keep such a state, so the walk covers every stack.
+   */
+  private void dropEditorStatesOf(@NotNull VirtualFile file) {
+    for (UndoRedoList<UndoableGroup> stack : getAllStacks()) {
+      for (UndoableGroup group : stack) {
+        group.dropEditorStatesOf(file);
+      }
+    }
+  }
+
+  private @NotNull List<UndoRedoList<UndoableGroup>> getAllStacks() {
+    List<UndoRedoList<UndoableGroup>> result = new ArrayList<>();
+    result.add(globalStack);
+    result.addAll(documentStacks.values());
+    result.addAll(documentWithoutFileStacks.getStacks());
+    result.addAll(nonlocalVirtualFileStacks.getStacks());
+    return result;
   }
 
   private void removeEmptyStacks() {

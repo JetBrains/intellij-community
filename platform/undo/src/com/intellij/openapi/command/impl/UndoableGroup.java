@@ -225,6 +225,18 @@ final class UndoableGroup implements Dumpable {
     this.stateAfter = stateAfter;
   }
 
+  /**
+   * Drops the editor states of the editors of {@code file}.
+   */
+  void dropEditorStatesOf(@NotNull VirtualFile file) {
+    if (stateBefore != null && stateBefore.isFor(file)) {
+      stateBefore = null;
+    }
+    if (stateAfter != null && stateAfter.isFor(file)) {
+      stateAfter = null;
+    }
+  }
+
   @Nullable EditorAndState getStateBefore() {
     return stateBefore;
   }
