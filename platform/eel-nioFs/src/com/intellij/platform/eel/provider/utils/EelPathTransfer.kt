@@ -1212,6 +1212,7 @@ object EelPathTransfer {
     }
     val targetExistedBefore = targetAttrs != null
     var rootDirectoryCreated = false
+    val deferredDirectoryMetadataUpdates = ConcurrentLinkedQueue<DeferredDirectoryMetadataUpdate>()
 
     coroutineScope {
       when {
@@ -1352,14 +1353,15 @@ object EelPathTransfer {
                 is EelFileTransferAttributesStrategy.Skip -> Unit
                 else -> {
                   val setAttributes = sourceOsFamily == EelOsFamily.Windows && targetOsFamily == EelOsFamily.Windows
-                  setPermissionsAndAttributes(
-                    directorySourceFile,
-                    targetAbsolutePath,
-                    targetEelApi,
-                    fileAttributesStrategy,
-                    true,
-                    setAttributes,
-                    true,
+                  deferredDirectoryMetadataUpdates.add(
+                    DeferredDirectoryMetadataUpdate(
+                      sourcePathNio = sourceFileNioPath,
+                      targetPathNio = targetAbsolutePath,
+                      sourceEntry = directorySourceFile,
+                      updatePermissions = true,
+                      updateAttributes = setAttributes,
+                      updateTimestamps = true,
+                    )
                   )
                 }
               }
@@ -1524,6 +1526,18 @@ object EelPathTransfer {
                 currentTargetPath = targetPathNio
                 when (diffOp.sourceFile.type) {
                   is WalkDirectoryEntry.Type.Symlink -> Unit // permissions, timestamps, and attributes are ignored on symlinks
+                  is WalkDirectoryEntry.Type.Directory -> {
+                    deferredDirectoryMetadataUpdates.add(
+                      DeferredDirectoryMetadataUpdate(
+                        sourcePathNio = sourcePathNio,
+                        targetPathNio = targetPathNio,
+                        sourceEntry = diffOp.sourceFile,
+                        updatePermissions = diffOp.updatePermissions,
+                        updateAttributes = diffOp.updateAttributes,
+                        updateTimestamps = diffOp.updateTimestamps,
+                      )
+                    )
+                  }
                   else -> setPermissionsAndAttributes(diffOp.sourceFile,
                                                       targetPathNio,
                                                       targetEelApi,
@@ -1570,6 +1584,37 @@ object EelPathTransfer {
       }
     }
 
+    if (deferredDirectoryMetadataUpdates.isNotEmpty()) {
+      withContext(Dispatchers.IO) {
+        for (update in deferredDirectoryMetadataUpdates.sortedByDescending { it.targetPathNio.nameCount }) {
+          checkCancellable(cancellable)
+          try {
+            setPermissionsAndAttributes(
+              update.sourceEntry,
+              update.targetPathNio,
+              targetEelApi,
+              fileAttributesStrategy,
+              update.updatePermissions,
+              update.updateAttributes,
+              update.updateTimestamps,
+            )
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: IOException) {
+            rethrowIfInterrupted(cancellable, e)
+            recordError(update.sourcePathNio, update.targetPathNio, e)
+            if (!continueOnError) {
+              throw e
+            }
+          }
+        }
+      }
+    }
+
+    checkCancellable(cancellable)
+
     if (errors.isEmpty() && successfulItems.get() == 0) {
       if (!replaceExisting && targetExistedBefore) {
         val err = FileAlreadyExistsException(resolvedTargetRoot.toString())
@@ -1604,6 +1649,15 @@ object EelPathTransfer {
 
     return errors.isEmpty()
   }
+
+  private data class DeferredDirectoryMetadataUpdate(
+    val sourcePathNio: Path,
+    val targetPathNio: Path,
+    val sourceEntry: WalkDirectoryEntry,
+    val updatePermissions: Boolean,
+    val updateAttributes: Boolean,
+    val updateTimestamps: Boolean,
+  )
 
   private suspend fun copyRegularFileContents(
     sourcePathNio: Path,
