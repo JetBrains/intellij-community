@@ -490,10 +490,13 @@ public class JavaDebugProcess extends XDebugProcess {
                                         @NotNull DefaultActionGroup topToolbar,
                                         @NotNull DefaultActionGroup settings) {
     if (!UIExperiment.isNewDebuggerUIEnabled()) {
-      Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
-      leftToolbar.add(Separator.getInstance(), beforeRunner);
-      leftToolbar.add(ActionManager.getInstance().getAction("DumpThreads"), beforeRunner);
-      leftToolbar.add(Separator.getInstance(), beforeRunner);
+      var dumpThreads = ActionManager.getInstance().getAction("DumpThreads");
+      if (!leftToolbar.containsAction(dumpThreads)) {
+        Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
+        leftToolbar.add(Separator.getInstance(), beforeRunner);
+        leftToolbar.add(dumpThreads, beforeRunner);
+        leftToolbar.add(Separator.getInstance(), beforeRunner);
+      }
     }
 
     Constraints beforeSort = new Constraints(Anchor.BEFORE, "XDebugger.ToggleSortValues");
