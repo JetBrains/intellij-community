@@ -131,7 +131,7 @@ public final class MultiRoutingFileSystemProvider
       return wrapDelegatePath(localPath);
     }
     var backend = myFileSystem.getBackend(localPath.toString());
-    return wrapDelegatePath(backend == localPath.getFileSystem() ? localPath : backend.getPath(localPath.toString()));
+    return wrapDelegatePath(myFileSystem.isLocalBackend(backend) ? localPath : backend.getPath(localPath.toString()));
   }
 
   @Override
@@ -265,7 +265,12 @@ public final class MultiRoutingFileSystemProvider
         break;
       }
     }
-    return hasUnknownOption && getDelegate(path, null) == myLocalProvider;
+    return hasUnknownOption && isLocalBackendProvider(getDelegate(path, null));
+  }
+
+  private boolean isLocalBackendProvider(@NotNull FileSystemProvider provider) {
+    return provider == myLocalProvider ||
+           provider instanceof DelegatingFileSystemProvider<?, ?> dfsp && dfsp.getDelegate(null, null) == myLocalProvider;
   }
 
   /**
