@@ -14,6 +14,8 @@ open class Settings(
    * Original plugin id ⇒ feature or plugin info.
    */
   val plugins: MutableMap<String, FeatureInfo> = mutableMapOf(),
+
+  var bracketColorizationEnabled: Boolean? = null,
 ) {
   val notes = mutableMapOf<String, Any>()
 
