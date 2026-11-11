@@ -8,16 +8,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.platform.ide.bootstrap.DirectoryLock.CannotActivateException;
 import com.intellij.testFramework.TestLoggerFactory;
-import com.intellij.testFramework.rules.InMemoryFsRule;
-import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.testFramework.rules.InMemoryFsExtension;
 import com.intellij.util.Suppressions;
 import com.intellij.util.system.OS;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.junit.rules.Timeout;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.net.StandardProtocolFamily;
@@ -30,13 +29,15 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+@Timeout(value = 30, unit = TimeUnit.SECONDS, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
 @SuppressWarnings("UseOptimizedEelFunctions")
 public abstract sealed class DirectoryLockTest {
   static {
@@ -46,7 +47,7 @@ public abstract sealed class DirectoryLockTest {
   public static final class StandardModeTest extends DirectoryLockTest {
     @Override
     protected Path getTestDir() throws IOException {
-      var testDir = tempDir.getRootPath();
+      var testDir = tempDir;
       if (testDir.toString().length() > 90) {
         var dir = OS.CURRENT == OS.Windows ? Path.of(System.getenv("SystemRoot"), "Temp") : Path.of("/tmp");
         testDir = Files.createTempDirectory(dir, testDir.getFileName().toString());
@@ -58,7 +59,7 @@ public abstract sealed class DirectoryLockTest {
   public static final class RedirectedModeTest extends DirectoryLockTest {
     @Override
     protected Path getTestDir() throws IOException {
-      var testDir = tempDir.getRootPath();
+      var testDir = tempDir;
       if (testDir.toString().length() < 100) {
         var padding = "_path_length_padding_" + "x".repeat(100 - testDir.toString().length());
         testDir = Files.createDirectories(testDir.resolve(padding));
@@ -68,37 +69,35 @@ public abstract sealed class DirectoryLockTest {
   }
 
   public static final class FallbackModeTest extends DirectoryLockTest {
-    @Rule public final InMemoryFsRule memoryFs = new InMemoryFsRule(OS.CURRENT);
+    @RegisterExtension public final InMemoryFsExtension memoryFs = new InMemoryFsExtension(OS.CURRENT);
 
     @Override
     protected Path getTestDir() {
-      var path = OS.CURRENT == OS.Windows ? "C:\\tests\\" + tempDir.getRootPath().getFileName() : tempDir.getRootPath().toString();
+      var path = OS.CURRENT == OS.Windows ? "C:\\tests\\" + tempDir.getFileName() : tempDir.toString();
       return memoryFs.getFs().getPath(path);
     }
   }
 
-  @Rule public final TestRule watcher = TestLoggerFactory.createTestWatcher();
-  @Rule public final Timeout timeout = Timeout.seconds(30);
-  @Rule public final TempDirectory tempDir = new TempDirectory();
+  @TempDir public Path tempDir;
 
   private Path testDir;
   private final List<DirectoryLock> activeLocks = new ArrayList<>();
   private final Path currentDir = Path.of("");
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     testDir = getTestDir();
   }
 
   protected abstract Path getTestDir() throws IOException;
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     Suppressions.runSuppressing(
       () -> activeLocks.forEach(DirectoryLock::dispose),
       () -> activeLocks.clear(),
       () -> {
-        if (testDir != tempDir.getRootPath()) {
+        if (testDir != tempDir) {
           NioFiles.deleteRecursively(testDir);
         }
       });
@@ -184,7 +183,7 @@ public abstract sealed class DirectoryLockTest {
   public void activatingViaCaseMismatchingPath() throws Exception {
     var configDir1 = Files.createDirectories(testDir.resolve("c"));
     var configDir2 = Files.createDirectories(testDir.resolve("C"));
-    assumeTrue("case-insensitive system-only", Files.isSameFile(configDir1, configDir2));
+    assumeTrue(Files.isSameFile(configDir1, configDir2), "case-insensitive system-only");
 
     var lock1 = createLock(configDir1, testDir.resolve("s"));
     var lock2 = createLock(configDir2, testDir.resolve("S"));
@@ -265,7 +264,7 @@ public abstract sealed class DirectoryLockTest {
     var nonIdeProcess = ProcessHandle.allProcesses()
       .filter(h -> { var other = h.info().command().orElse(null); return other != null && !other.endsWith(command); })
       .findFirst().orElse(null);
-    assumeTrue("Cannot find a non-IDE process among running", nonIdeProcess != null);
+    assumeTrue(nonIdeProcess != null, "Cannot find a non-IDE process among running");
     var configDir = Files.createDirectories(testDir.resolve("c"));
     Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), Long.toString(nonIdeProcess.pid()));
     var lock = createLock(configDir, testDir.resolve("s"));
