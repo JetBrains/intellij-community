@@ -342,6 +342,7 @@ calm
 camo
 camp
 can-utils
+cao
 cap
 capacitor
 capistrano
@@ -576,7 +577,9 @@ coda
 code
 code-insiders
 codebuddy
+codebuff
 codeceptjs
+coderabbit
 codesign
 codex
 codex --ask-for-approval
@@ -692,6 +695,7 @@ cpphs
 cprehash
 cproto
 cqlsh
+cr
 cradle
 crane
 create-next-app
@@ -719,6 +723,7 @@ cry
 cryfs
 cryptsetup
 crypttool
+cs
 cscope
 csdx
 csh
@@ -1478,11 +1483,13 @@ github
 github-cli
 github-desktop
 gitk
+gitkraken-cli
 gitlab-runner
 gitleaks
 gitpod
 gjb
 gjs
+gk
 gkrellm
 gl
 glab
@@ -1593,6 +1600,7 @@ grep
 grep --color
 grep -i
 grep -r
+greptile
 grex
 grip
 groff
@@ -1668,6 +1676,7 @@ helm uninstall
 helm upgrade
 helmfile
 help
+herdr
 heroku
 heroku-cli
 hexo
@@ -2412,6 +2421,7 @@ openebs
 openfaas-cli
 openfortivpn
 openhab-cli
+openhands
 openid-connect
 openjdk
 openjdk-java
@@ -2436,6 +2446,7 @@ ora2pg
 orbit
 orc
 orc-tools
+orca
 os-prober
 osascript
 osc
@@ -2467,6 +2478,7 @@ pageres
 palera1n
 pandoc
 paper
+paradev
 parallel
 parca
 parquet-tools
@@ -2672,6 +2684,7 @@ qemu
 qmake
 qodana
 qodercli
+qodo
 qrcode
 qri
 qtcreator
@@ -2693,6 +2706,7 @@ rails s
 railway
 rain
 rake
+ralph
 rancher
 rancher-desktop
 ranger
@@ -3028,6 +3042,7 @@ suexec
 suitecloud
 sumocli
 supabase
+superset
 supervisorctl
 supervisord
 surreal
@@ -3296,6 +3311,7 @@ wait
 wait-job
 wakeonlan
 wall
+warp
 wasm-bindgen
 wasm-pack
 watch
