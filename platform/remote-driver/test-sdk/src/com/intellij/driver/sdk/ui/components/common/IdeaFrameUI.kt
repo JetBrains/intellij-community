@@ -67,6 +67,7 @@ fun Driver.ideFrame(index: Int, action: IdeaFrameUI.() -> Unit = {}): IdeaFrameU
 
 /**
  * Brings the first project frame to the front after the IDE start, as [IdeaFrameUI.ensureFocused] does.
+ * A reused IDE also calls it after it reopens the project for the next test.
  *
  * Returns false when no frame is shown yet or the frame is minimized. When another window of the IDE has the focus,
  * as a popup or a dialog does, and the IDE gets the keys, the call does not click.
@@ -256,6 +257,7 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
    * Brings the frame to the front when the frame is not focused or the IDE does not get the keys.
    *
    * The Driver calls it once after the IDE start, because on Windows the IDE can start without the focus.
+   * A reused IDE also calls it after it reopens the project for the next test.
    * Do not call it at the start of a test, also when the tests share one IDE. Call it only in these cases:
    * - the test switches between several windows of the IDE;
    * - an action opened a dialog that did not take the focus.

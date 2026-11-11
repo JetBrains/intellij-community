@@ -6,10 +6,12 @@ import com.intellij.driver.client.utility
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.step
+import com.intellij.driver.sdk.ui.components.common.requestInitialFocus
 import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.waitFor
 import com.intellij.ide.starter.driver.engine.BackgroundRun
 import com.intellij.ide.starter.project.NoProject
+import com.intellij.ide.starter.runner.CurrentTestMethod
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import kotlin.time.Duration.Companion.minutes
@@ -25,9 +27,22 @@ private fun Driver.waitForIdeFrame() {
   )
 }
 
+private fun BackgroundRun.showsIdeFrame(): Boolean =
+  !runContext.testContext.ide.vmOptions.hasHeadlessMode() && runContext.testContext.testCase.projectInfo != NoProject
+
 internal fun BackgroundRun.waitForIdeFrameIfNeeded() {
-  if (runContext.testContext.ide.vmOptions.hasHeadlessMode() || runContext.testContext.testCase.projectInfo == NoProject) return
-  driver.waitForIdeFrame()
+  if (showsIdeFrame()) driver.waitForIdeFrame()
+}
+
+/**
+ * Brings the reopened project frame to the front, as the Driver does once after the IDE start.
+ *
+ * The recovery reopens each project in a new frame, and the new frame can open without the focus.
+ * A headless IDE, an IDE without a project and a performance test get no request.
+ */
+internal fun BackgroundRun.focusReopenedIdeFrameIfNeeded() {
+  if (!showsIdeFrame() || CurrentTestMethod.get()?.isPerformanceTest == true) return
+  driver.requestInitialFocus()
 }
 
 internal fun Driver.checkResponsiveForRecovery() {

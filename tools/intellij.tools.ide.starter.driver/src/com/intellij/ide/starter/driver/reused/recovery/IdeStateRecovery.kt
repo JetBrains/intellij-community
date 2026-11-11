@@ -123,6 +123,7 @@ internal class IdeStateRecovery(
     bgRun.driver.waitForProjectsWithNoPendingIndexingWork("starting the next reused IDE test")
     bgRun.waitForIdeFrameIfNeeded()
     bgRun.driver.checkNoUnexpectedWindows(baseline.visibleWindows)
+    bgRun.focusReopenedIdeFrameIfNeeded()
     return settingsRecoveryPlan
   }
 
