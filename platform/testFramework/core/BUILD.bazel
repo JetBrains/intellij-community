@@ -46,7 +46,6 @@ jvm_library(
         "//libraries/http-client",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/testFramework/teamCity",
-        "//.ownership/runtime-resolver:codeowners-runtime-resolver",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
         ":libraries_junit4_provided",
         ":libraries_junit6_provided",
