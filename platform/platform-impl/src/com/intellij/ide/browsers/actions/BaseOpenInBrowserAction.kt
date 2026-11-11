@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.ide.browsers.OpenInBrowserRequest
 import com.intellij.ide.browsers.SystemDefaultBrowser
+import com.intellij.ide.browsers.SystemDefaultBrowserDetector
 import com.intellij.ide.browsers.WebBrowser
 import com.intellij.ide.browsers.WebBrowserManager
 import com.intellij.ide.browsers.WebBrowserProvider
@@ -139,8 +140,17 @@ open class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareA
 /**
  * Opens the file in [SystemDefaultBrowser].
  * It is a separate class, so the action statistics tell it apart from a browser of the list.
+ * It shows the icon of the browser that the OS opens, see [SystemDefaultBrowserDetector].
  */
-internal class OpenInSystemDefaultBrowserAction : BaseOpenInBrowserAction(SystemDefaultBrowser)
+internal class OpenInSystemDefaultBrowserAction : BaseOpenInBrowserAction(SystemDefaultBrowser) {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    if (e.presentation.isVisible) {
+      val knownBrowser = SystemDefaultBrowserDetector.getInstance().knownBrowser
+      e.presentation.icon = knownBrowser?.let(SystemDefaultBrowserDetector::iconOf) ?: SystemDefaultBrowser.icon
+    }
+  }
+}
 
 /**
  * Opens the file in a browser of a [WebBrowserProvider], such as the IDE Browser.
