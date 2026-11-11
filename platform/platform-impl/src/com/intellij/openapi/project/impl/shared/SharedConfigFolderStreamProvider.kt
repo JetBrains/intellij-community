@@ -89,10 +89,21 @@ internal class SharedConfigFolderStreamProvider(private val root: Path) : Stream
         if (!filter(child.name)) return FileVisitResult.CONTINUE
         if (!checkFile(child)) return FileVisitResult.CONTINUE
 
-        val abort = SharedConfigFolderUtil.readNonEmptyFileWithRetries(child) { stream ->
-          stream.use { !processor(child.name, it, false) }
+        try {
+          val abort = SharedConfigFolderUtil.readNonEmptyFileWithRetries(child) { stream ->
+            stream.use { !processor(child.name, it, false) }
+          }
+          if (abort) return FileVisitResult.TERMINATE
+        } catch (e: JDOMException) {
+          processReadException(e, file) { }
         }
-        if (abort) FileVisitResult.TERMINATE
+        catch (e: XMLStreamException) {
+          processReadException(e, file) { }
+        }
+        catch (e: IOException) {
+          processReadException(e, file) { }
+        }
+
         return FileVisitResult.CONTINUE
       }
     })
