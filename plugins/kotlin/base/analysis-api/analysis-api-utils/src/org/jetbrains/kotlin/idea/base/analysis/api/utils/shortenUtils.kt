@@ -26,10 +26,12 @@ import org.jetbrains.kotlin.idea.util.ClassImportFilter
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
@@ -169,25 +171,14 @@ fun ShortenCommandForIde.invokeShortening(results: MutableList<SmartPsiElementPo
     for ((typePointer, shortenedRef) in listOfTypeToShortenInfo) {
         val type = typePointer.element ?: continue
 
-        type.removeQualifier()
-        if (shortenedRef != null) {
-            type.referenceExpression?.replace(psiFactory.createExpression(shortenedRef))
-        }
+        type.shortenType(shortenedRef, psiFactory)
         results?.add(type.createSmartPointer())
     }
 
     for ((qualifierToShorten, shortenedReference) in listOfQualifierToShortenInfo) {
         val call = qualifierToShorten.element ?: continue
 
-        if (shortenedReference != null) {
-            when (val selector = call.selectorExpression) {
-                is KtArrayAccessExpression -> selector.arrayExpression
-                else -> selector.getCalleeExpressionIfAny()
-            }?.replace(psiFactory.createExpression(shortenedReference))
-        }
-
-        val selectorExpression = call.selectorExpression ?: continue
-        val expression = call.replace(selectorExpression) as KtExpression
+        val expression = call.shortenQualifier(shortenedReference, psiFactory) ?: continue
         results?.add(expression.createSmartPointer())
     }
 
@@ -217,6 +208,30 @@ fun ShortenCommandForIde.invokeShortening(results: MutableList<SmartPsiElementPo
         companionReferenceElement.deleteReferenceFromQualifiedExpression()
         // N.B. `results` are not updated for now
     }
+}
+
+@ApiStatus.Internal
+fun KtUserType.shortenType(shortenedRef: String?, psiFactory: KtPsiFactory) {
+    removeQualifier()
+    if (shortenedRef != null) {
+        referenceExpression?.replace(psiFactory.createExpression(shortenedRef))
+    }
+}
+
+/**
+ * Returns the selector that replaces the qualified expression, or `null` when the expression has no selector.
+ */
+@ApiStatus.Internal
+fun KtDotQualifiedExpression.shortenQualifier(shortenedReference: String?, psiFactory: KtPsiFactory): KtExpression? {
+    if (shortenedReference != null) {
+        when (val selector = selectorExpression) {
+            is KtArrayAccessExpression -> selector.arrayExpression
+            else -> selector.getCalleeExpressionIfAny()
+        }?.replace(psiFactory.createExpression(shortenedReference))
+    }
+
+    val selectorExpression = selectorExpression ?: return null
+    return replace(selectorExpression) as KtExpression
 }
 
 private fun KDocName.deleteQualifier() {
