@@ -49,6 +49,13 @@ internal class AttachToProcessElementsFilters(val selectedFilter: AtomicLazyProp
            (speedSearch.shouldBeShowing(item.indexedString) || item.commandLineText.contains(speedSearch.filter ?: "", ignoreCase = true))
   }
 
+  /**
+   * Required for moving the items with matching executable to the top of search results
+   */
+  fun matchesExecutable(item: AttachDialogProcessItem): Boolean {
+    return !speedSearch.filter.isNullOrEmpty() && speedSearch.shouldBeShowing(item.executableText)
+  }
+
   fun accept(item: Set<XAttachPresentationGroup<*>>): Boolean {
     return selectedFilter.get().canBeAppliedTo(item)
   }
