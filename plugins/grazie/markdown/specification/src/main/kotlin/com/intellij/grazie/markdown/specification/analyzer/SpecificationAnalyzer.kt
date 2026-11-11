@@ -4,8 +4,9 @@ import ai.grazie.rules.cloud.JBCloudAPI
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Specification
+import ai.grazie.rules.promptAnalysis.LlmProviders.HttpCallException
 import ai.grazie.utils.mpp.money.Credit
-import com.intellij.grazie.cloud.APIQueries
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.grazie.markdown.specification.fus.SpecificationFUSCollector
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -83,10 +84,7 @@ internal object SpecificationAnalyzer {
       return storages.first { it.file == file }.cache!!.data
     }
     catch (e: Throwable) {
-      val cause = ExceptionUtil.getRootCause(e)
-      if (cause is ProcessCanceledException) {
-        throw cause
-      }
+      rethrowControlFlowException(e)
       throw e
     }
   }
@@ -103,12 +101,16 @@ internal object SpecificationAnalyzer {
     val mutexKey = mutexKeys.computeIfAbsent(analyzer.javaClass.name) { Key.create("mutex key for ${analyzer.javaClass.name}") }
     val mutexes = getMutexes(files, mutexKey)
     return runWithCheckCanceled {
-      APIQueries.handleExceptions {
+      try {
         mutexes.withLock {
           action()
         }
       }
-    } ?: emptyList()
+      catch (e: HttpCallException) {
+        log.warn("HTTP call failed while analyzing text", e)
+        emptyList()
+      }
+    }
   }
 
   private fun getMutexes(files: Collection<PsiFile>, mutexKey: Key<Mutex>): List<Mutex> =
