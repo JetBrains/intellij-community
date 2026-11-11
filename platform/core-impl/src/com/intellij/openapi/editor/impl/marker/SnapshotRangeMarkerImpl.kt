@@ -255,7 +255,7 @@ open class SnapshotRangeMarkerImpl private constructor(
     return rootStorage.updateCurrentRoot(update) != null
   }
 
-  fun currentRootReference(): AtomicReference<PMarkerRoot> = currentRootCache?.state?.reference ?: rootStorage.currentRootReference()
+  fun currentRootReference(): AtomicReference<PMarkerRoot> = currentRootCache?.reference ?: rootStorage.currentRootReference()
 
   override fun toString(): String = "SnapshotRangeMarker(id=$id" +
                                     (if (isDisposed()) ", disposed" else "") +

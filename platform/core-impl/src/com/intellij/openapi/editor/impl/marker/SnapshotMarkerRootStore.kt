@@ -367,7 +367,15 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
    */
   internal class CurrentRootCache(val store: SnapshotMarkerRootStore<*>) {
     @Volatile
+    var reference: AtomicReference<PMarkerRoot>? = null
+      private set
+
+    @Volatile
     var state: State? = null
+      set(value) {
+        reference = value?.reference
+        field = value
+      }
 
     /**
      * Captures the root state and root instance for [snapshot] without creating an entry.
