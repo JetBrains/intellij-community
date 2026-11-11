@@ -19,8 +19,10 @@ import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 class JKImportStorage(targetPlatform: TargetPlatform, project: Project) {
     private val imports = mutableSetOf<FqName>()
 
+    private val kaDefaultImports = targetPlatform.getDefaultImports(project)
+
     private val defaultImports: Set<ImportPath> =
-        targetPlatform.getDefaultImports(project).defaultImports.mapTo(mutableSetOf()) { it.importPath }
+        kaDefaultImports.defaultImports.mapTo(mutableSetOf()) { it.importPath }
 
     fun addImport(import: FqName) {
         if (isImportNeeded(import, allowSingleIdentifierImport = false)) {
@@ -46,6 +48,11 @@ class JKImportStorage(targetPlatform: TargetPlatform, project: Project) {
 
     fun isImportNeeded(fqName: String, allowSingleIdentifierImport: Boolean = false): Boolean =
         isImportNeeded(FqName(fqName), allowSingleIdentifierImport)
+
+    fun isDefaultImport(fqName: String): Boolean {
+        val name = FqName(fqName)
+        return defaultImports.any { name.isImported(it) } && kaDefaultImports.excludedFromDefaultImports.none { name.isImported(it) }
+    }
 
     companion object {
         internal val PLATFORM_CLASSES_MAPPED_TO_KOTLIN: Set<Regex> = setOf(

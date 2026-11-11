@@ -149,7 +149,7 @@ class JKPrinter(
                     JKVarianceTypeParameterType.Variance.IN -> this.print("in ")
                     JKVarianceTypeParameterType.Variance.OUT -> this.print("out ")
                 }
-                renderType(type.boundType)
+                renderType(type.boundType, owner)
             }
 
             else -> this.print("Unit /* TODO: ${type::class} */")
@@ -157,7 +157,7 @@ class JKPrinter(
 
         if (type is JKParametrizedType && type.parameters.isNotEmpty() && renderTypeParameters) {
             par(ParenthesisKind.ANGLE) {
-                renderList(type.parameters, renderElement = { renderType(it) })
+                renderList(type.parameters, renderElement = { renderType(it, owner) })
             }
         }
         // we print undefined types as nullable because we need smartcast to work in nullability inference in post-processing

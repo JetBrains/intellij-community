@@ -6292,6 +6292,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("CompanionCallNameConflicts.java")
+        public void testCompanionCallNameConflicts() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/staticMembers/CompanionCallNameConflicts.java");
+        }
+
         @TestMetadata("PrivateStaticMembers.java")
         public void testPrivateStaticMembers() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/staticMembers/PrivateStaticMembers.java");
