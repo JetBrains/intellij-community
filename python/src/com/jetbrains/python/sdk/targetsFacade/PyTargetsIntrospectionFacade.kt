@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.PyHelper
+import com.intellij.python.community.execService.python.ZeroCodeVersionStringTransformer
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -17,9 +18,8 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper.Constants.SYSPATH_PY
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.InvalidSdkException
-import com.jetbrains.python.sdk.execGetStdout
+import com.jetbrains.python.sdk.execute
 import com.jetbrains.python.sdk.executeHelper
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus
 
@@ -63,12 +63,10 @@ sealed class PyTargetsIntrospectionFacade(
 
   @Throws(ExecutionException::class)
   @RequiresBackgroundThread
-  fun getInterpreterVersion(): String? =
+  fun getInterpreterVersion(): String =
     runBlockingMaybeCancellable {
-      PythonSdkFlavor.getVersionStringFromOutput(
-        ExecService().execGetStdout(interpreter(), Args(PYTHON_VERSION_ARG))
-          .orThrowExecException()
-      )
+      ExecService().execute(interpreter(), Args(PYTHON_VERSION_ARG), processOutputTransformer = ZeroCodeVersionStringTransformer)
+        .orThrowExecException()
     }
 
   @RequiresBackgroundThread(generateAssertion = false)
