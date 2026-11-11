@@ -10,6 +10,7 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.getType
+import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyAssertStatement
 import com.jetbrains.python.psi.PyAssignmentExpression
 import com.jetbrains.python.psi.PyBinaryExpression
@@ -20,6 +21,7 @@ import com.jetbrains.python.psi.PyConditionalExpression
 import com.jetbrains.python.psi.PyConditionalStatementPart
 import com.jetbrains.python.psi.PyDisjointBaseUtil.areDisjoint
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyGeneratorExpression
 import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
@@ -49,9 +51,12 @@ import com.jetbrains.python.psi.types.PyStructuralType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeChecker.containsAny
 import com.jetbrains.python.psi.types.PyTypeChecker.isUnknown
+import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.PyTypeUtil.inheritsAny
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
+import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isNoneType
@@ -128,9 +133,10 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
     if (lhs == null || rhs == null) return
 
     val operator = node.operator
-    val isOrEqualsOperator = node.isOperator(PyNames.IS) || PyTokenTypes.EQEQ == operator
-    if (isOrEqualsOperator || node.isOperator("isnot") || PyTokenTypes.NE == operator || PyTokenTypes.NE_OLD == operator) {
-      setPositive(isOrEqualsOperator) { processIsOrEquals(lhs, rhs) }
+    val isIdentity = node.isOperator(PyNames.IS) || node.isOperator("isnot")
+    val isEquality = PyTokenTypes.EQEQ == operator || PyTokenTypes.NE == operator || PyTokenTypes.NE_OLD == operator
+    if (isIdentity || isEquality) {
+      setPositive(node.isOperator(PyNames.IS) || PyTokenTypes.EQEQ == operator) { processIsOrEquals(lhs, rhs, isIdentity) }
     }
 
     if (PyTokenTypes.IN_KEYWORD == operator || node.isOperator("notin")) {
@@ -138,7 +144,7 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
     }
   }
 
-  private fun processIsOrEquals(lhs: PyExpression, rhs: PyExpression) {
+  private fun processIsOrEquals(lhs: PyExpression, rhs: PyExpression, isIdentity: Boolean) {
     val leftBoolean = PyEvaluator.evaluateNoResolve(lhs, Boolean::class.java)
     if (leftBoolean != null) {
       setPositive(leftBoolean) { rhs.accept(this) }
@@ -174,9 +180,75 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
     }
 
     val positive = myPositive
-    pushAssertion(lhs, myPositive) { context ->
+    val suggestedType: (TypeEvalContext) -> PyType? = { context ->
       val type: PyType? = getLiteralType(rhs, context)
       if (positive || type is PyLiteralType) type else null
+    }
+    if (isIdentity || !positive) {
+      pushAssertion(lhs, positive, suggestedType)
+    }
+    else {
+      pushAssertion(lhs, false, suggestedType, ::createEqualityAssertionType)
+    }
+  }
+
+  /**
+   * Narrows [initial] on the positive edge of an equality check (`==`, `!=`) against the [suggested] types.
+   *
+   * Unlike identity, equality can hold between unrelated types, e.g. `Decimal(0) == 0`. Members of [initial] that are
+   * unrelated to every suggested type are therefore kept as is when a comparison method of either operand can still
+   * return `True`. All other members go through the regular [createAssertionType] intersection.
+   */
+  private fun createEqualityAssertionType(
+    initial: PyType?,
+    suggested: PyType?,
+    context: TypeEvalContext,
+  ): Ref<PyType?>? {
+    if (suggested == null) return null
+    val candidates = suggested.asUnionSequence().toList()
+    fun isRelated(type: PyType?) = candidates.any { match(type, it, context) || match(it, type, context) }
+
+    val [preservedTypes, remainingTypes] = initial.asUnionSequence().partition { type ->
+      if (type is PyTypeVarType) {
+        // Keep the type parameter itself, not its bound, when any type it stands for can compare equal.
+        type.effectiveBound.asUnionSequence().any { bound ->
+          isRelated(bound) || canEqualUnrelated(bound, candidates, context)
+        }
+      }
+      else {
+        type !is PyLiteralType && !type.isNoneType && !type.containsAny(context = context) &&
+        !isRelated(type) && canEqualUnrelated(type, candidates, context)
+      }
+    }
+    val narrowed = if (remainingTypes.isEmpty()) {
+      PyNeverType.NEVER
+    }
+    else {
+      createAssertionType(PyUnionType.unionOrUnknown(remainingTypes), suggested, true, isStrictNarrowingAllowed, context)?.get()
+    }
+    return Ref(PyUnionType.unionOrUnknown(preservedTypes + narrowed))
+  }
+
+  private fun canEqualUnrelated(type: PyType?, candidates: List<PyType?>, context: TypeEvalContext): Boolean {
+    val group = builtinEqualityGroup(type)
+    val comparable = if (group == null) candidates else candidates.filter { builtinEqualityGroup(it).let { g -> g == null || g == group } }
+    return comparable.isNotEmpty() &&
+           (canHaveCustomEquality(type, context) || comparable.any { canHaveCustomEquality(it, context) })
+  }
+
+  /**
+   * Returns `false` only when [type] is known to compare with the default `object` implementation:
+   * a builtin literal, or a final class (or an enum member) that resolves both `__eq__` and `__ne__` to `object`.
+   * Open classes can get a custom comparison in a subclass.
+   */
+  private fun canHaveCustomEquality(type: PyType?, context: TypeEvalContext): Boolean {
+    if (type !is PyClassType || type.isDefinition) return true
+    if (type is PyLiteralType && type.isBuiltin) return false
+    if (type !is PyLiteralType && !isFinal(type, context)) return true
+    val objectClass = PyBuiltinCache.getInstance(type.pyClass).objectType?.pyClass ?: return true
+    return listOf(PyNames.EQ, NE).any { name ->
+      val members = type.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext(context))
+      members.isNullOrEmpty() || members.any { (it.element as? PyFunction)?.containingClass != objectClass }
     }
   }
 
@@ -274,25 +346,34 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
     forceStrictNarrow: Boolean,
     suggestedType: (TypeEvalContext) -> PyType?,
   ) {
+    pushAssertion(expr, allowAnyExpr, suggestedType) { initial, suggested, context ->
+      createAssertionType(initial, suggested, positive, forceStrictNarrow, context)
+    }
+  }
+
+  private fun pushAssertion(
+    expr: PyExpression?,
+    allowAnyExpr: Boolean,
+    suggestedType: (TypeEvalContext) -> PyType?,
+    narrowType: (PyType?, PyType?, TypeEvalContext) -> Ref<PyType?>?,
+  ) {
     var expr = expr
     expr = PyPsiUtils.flattenParens(expr)
     if (expr is PySequenceExpression) {
       val elements = expr.elements
       for (i in elements.indices) {
-        pushAssertion(elements[i], positive, allowAnyExpr, forceStrictNarrow, getIteratedType(suggestedType, i))
+        pushAssertion(elements[i], allowAnyExpr, getIteratedType(suggestedType, i), narrowType)
       }
     }
     else if (expr is PyAssignmentExpression) {
-      pushAssertion(expr.target, positive, allowAnyExpr, forceStrictNarrow, suggestedType)
+      pushAssertion(expr.target, allowAnyExpr, suggestedType, narrowType)
     }
     else if (expr != null) {
       val target: PyExpression = expr
       val typeCallback = InstructionTypeCallback { context ->
-        createAssertionType(
+        narrowType(
           context.getType(target),
           suggestedType(context),
-          positive,
-          forceStrictNarrow,
           context
         )
       }
@@ -308,6 +389,22 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
 
   class Assertion(@JvmField val element: PyQualifiedExpression?, val typeEvalFunction: InstructionTypeCallback)
   companion object {
+    private const val NE = "__ne__"
+
+    /**
+     * Instances of these builtin classes are equal only to values of the same group.
+     * Their subclasses overriding comparison are deliberately ignored, so that `int | str` is still narrowed by `== "a"`.
+     */
+    private val BUILTIN_EQUALITY_GROUPS = mapOf(
+      PyNames.TYPE_INT to 0, "bool" to 0, PyNames.TYPE_FLOAT to 0, PyNames.TYPE_COMPLEX to 0,
+      PyNames.TYPE_STR to 1,
+      PyNames.TYPE_BYTES to 2,
+    )
+
+    private fun builtinEqualityGroup(type: PyType?): Int? {
+      return if (type is PyClassType && !type.isDefinition && type.isBuiltin) BUILTIN_EQUALITY_GROUPS[type.pyClass.name] else null
+    }
+
     private fun isSafeForNegativeAssertion(expression: PyExpression, context: TypeEvalContext): Boolean {
       val elements: MutableList<PyExpression> = expandClassInfoExpressions(expression)
       return elements.isNotEmpty() && elements.all { isSafeClassInfoReference(it, context) }
