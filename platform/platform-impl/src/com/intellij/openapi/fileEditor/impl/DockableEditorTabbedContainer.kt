@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.ui.createDropAreaShape
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockContainer.ContentResponse
 import com.intellij.ui.docking.DockableContent
@@ -52,7 +53,6 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.awt.Shape
 import java.awt.event.MouseEvent
-import java.awt.geom.Rectangle2D
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
@@ -414,7 +414,8 @@ class DockableEditorTabbedContainer internal constructor(
 
     val r = Rectangle(tabs.component.size)
     TabsUtil.updateBoundsWithDropSide(r, currentDropSide)
-    return Rectangle2D.Double(r.x.toDouble(), r.y.toDouble(), r.width.toDouble(), r.height.toDouble())
+    val editorArea = SwingUtilities.convertRectangle(splitters, Rectangle(splitters.size), tabs.component)
+    return createDropAreaShape(r, editorArea, TabsUtil.getDropAreaArc())
   }
 
   override fun toString(): String = "DockableEditorTabbedContainer windows=${splitters.windows().joinToString()}"

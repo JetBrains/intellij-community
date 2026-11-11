@@ -3,6 +3,7 @@ package com.intellij.ui.tabs;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
@@ -108,5 +109,13 @@ public final class TabsUtil {
         bounds.x += w;
       }
     }
+  }
+
+  /**
+   * Returns the arc of the drop placeholder corners: {@code Island.arc} in the Islands theme, or 0 for square corners in another theme.
+   */
+  @ApiStatus.Internal
+  public static int getDropAreaArc() {
+    return IslandsState.Companion.isEnabled() ? JBUI.scale(JBUI.getInt("Island.arc", 16)) : 0;
   }
 }

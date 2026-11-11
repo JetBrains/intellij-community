@@ -501,6 +501,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   }
 
   private fun highlightToolWindowDropArea(decorator: InternalDecoratorImpl, point: RelativePoint) {
+    dropTargetHighlightComponent.cornerArea = null
     currentDropIndex = getTabIndex(point)
     if (currentDropIndex != -1 && (canReorderTabs(decorator) || decorator.toolWindow.canSplitTabs())) {
       decorator.setDropInfoIndex(currentDropIndex, dragImageView!!.size.width)
@@ -525,7 +526,11 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   }
 
   private fun highlightEditorDropArea(target: EditorDropTarget) {
-    dropTargetHighlightComponent.bounds = getGlassPaneBounds(target.component)
+    val bounds = getGlassPaneBounds(target.component)
+    dropTargetHighlightComponent.bounds = bounds
+    dropTargetHighlightComponent.cornerArea = ComponentUtil.getParentOfType(EditorsSplitters::class.java, target.component)?.let {
+      getGlassPaneBounds(it).apply { translate(-bounds.x, -bounds.y) }
+    }
   }
 
   private fun getGlassPaneBounds(component: JComponent): Rectangle {
