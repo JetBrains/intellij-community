@@ -634,7 +634,6 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * @see #findGutter(String)
    */
-  @RequiresEdt
   @NotNull
   @Unmodifiable
   List<GutterMark> findGuttersAtCaret();
