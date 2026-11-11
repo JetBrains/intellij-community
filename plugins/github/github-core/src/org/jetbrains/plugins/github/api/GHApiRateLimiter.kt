@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.api
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.io.DigestUtil
 import com.intellij.util.text.DateFormatUtil
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -44,10 +45,13 @@ private val PRIMARY_RATE_LIMIT_COOLDOWN: Duration = 1.minutes
 private val SECONDARY_RATE_LIMIT_WAIT: Duration = 1.minutes
 
 /**
- * Limits GitHub API requests to one server.
+ * Limits GitHub API requests to one server with one token.
  *
  * All executors share the limits, so they hold no matter how many executors the plugin creates.
  * The host and the port of the request URL identify the server.
+ * GitHub counts the limits for each user, and for each IP address without a token,
+ * so each token and the requests without a token have limits of their own.
+ * Two tokens of the same user have separate limits here, then the responses of each token correct its budget.
  *
  * Three limits apply:
  * * the number of concurrent requests, which the registry key [MAX_CONCURRENT_REQUESTS_REGISTRY_KEY] sets;
@@ -57,7 +61,7 @@ private val SECONDARY_RATE_LIMIT_WAIT: Duration = 1.minutes
  *   A rate limit error without the reset time blocks them for [PRIMARY_RATE_LIMIT_COOLDOWN].
  *   See https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#about-primary-rate-limits.
  * * the secondary rate limits of GitHub.
- *   After a secondary rate limit error, the next requests to the server fail without a call to the server
+ *   After a secondary rate limit error, the next requests to the server with the same token fail without a call to the server
  *   for the time that GitHub asks for.
  *   The failed request isn't sent again.
  *   See https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#about-secondary-rate-limits.
@@ -73,7 +77,7 @@ internal class GHApiRateLimiter {
   private val servers = ConcurrentHashMap<String, ServerState>()
 
   /**
-   * Sends the [request] and then parses the response.
+   * Sends the [request] with the [token], or without a token if it is `null`, and then parses the response.
    *
    * [send] sends the request and returns the response before the body is read.
    * The limiter records the budget from the rate limit headers of the response, also for a response with an error.
@@ -83,10 +87,11 @@ internal class GHApiRateLimiter {
   @Throws(GithubRateLimitExceededException::class)
   suspend fun <T> execute(
     request: GithubApiRequest<T>,
+    token: String?,
     send: suspend () -> HttpResponse<out InputStream>,
     parse: suspend (response: HttpResponse<out InputStream>, headers: GHRateLimitHeaders) -> T,
   ): T {
-    val server = serverState(request.url)
+    val server = serverState(request.url, token)
     // a request without a budget fails at once, before it waits for a permit
     server.checkPause()
     server.checkBudget(request)
@@ -102,7 +107,7 @@ internal class GHApiRateLimiter {
       }
       catch (e: GithubRateLimitExceededException) {
         if (e is GithubSecondaryRateLimitExceededException) {
-          // the request fails, and the next requests to the server fail until the pause ends
+          // the request fails, and the next requests to the server with the token fail until the pause ends
           server.pause(e.retryAfter ?: SECONDARY_RATE_LIMIT_WAIT)
         }
         else {
@@ -114,7 +119,21 @@ internal class GHApiRateLimiter {
     }
   }
 
-  private fun serverState(url: String): ServerState = servers.computeIfAbsent(serverKey(url)) { ServerState(maxConcurrentRequests) }
+  private fun serverState(url: String, token: String?): ServerState {
+    val tokenKey = tokenKey(token)
+    val key = if (tokenKey == null) serverKey(url) else "${serverKey(url)} $tokenKey"
+    return servers.computeIfAbsent(key) { ServerState(maxConcurrentRequests) }
+  }
+
+  /**
+   * The map of the states keeps a hash of the token, not the token itself.
+   *
+   * @return the hash of the [token], or `null` for a request without a token
+   */
+  private fun tokenKey(token: String?): String? {
+    if (token == null) return null
+    return DigestUtil.sha256Hex(token.toByteArray())
+  }
 
   /**
    * The host and the port of the [url] identify the server.
