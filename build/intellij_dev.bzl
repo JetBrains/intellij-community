@@ -1,6 +1,7 @@
 """Macros for IntelliJ-based IDE development builds."""
 
 load("@bazel_skylib//lib:shell.bzl", "shell")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@dev_launch_paths//:paths.bzl", "HOME", "OUTPUT_BASE", "WORKSPACE_ROOT")
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "IntellijDevDistInfo", "dist_home_path")
 
@@ -9,7 +10,7 @@ load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "IntellijDevD
 # where the reading side of this contract lives.
 DEV_IDE_CONFIG_PATH_PROPERTY = "idea.ide.config.path"
 
-def intellij_dev_dist_config(name, dist, visibility = None, tags = []):
+def intellij_dev_dist_config(name, dist, visibility = None):
     """A single-file label for an assembled dev distribution's config file, for `$(rlocationpath ...)`.
 
     That expansion takes a label naming exactly one file, which a dist target - two outputs, one of them declared rather
@@ -18,14 +19,30 @@ def intellij_dev_dist_config(name, dist, visibility = None, tags = []):
     A consumer declares both this and the dist itself in `data`, and they must stay siblings in the runfiles tree: the
     config names the home relatively, so that the pair survives being read from a different path than it was written to.
 
-    `tags` is the filegroup's; a consumer that must stay out of a wildcard build passes `["manual"]`.
+    The filegroup is `manual`. The compose action writes the config, so a wildcard build that matches the filegroup
+    composes the distribution. A consumer names the label, so it does not need a wildcard.
     """
     native.filegroup(
         name = name,
         srcs = [dist],
         output_group = "ide_config",
-        tags = tags,
+        tags = ["manual"],
         visibility = visibility,
+    )
+
+def dev_dist_build_test(name, targets, tags = [], **kwargs):
+    """A skylib `build_test` that gates the build of dev distribution targets, kept out of an IDE sync.
+
+    A "Build and Resync" of the Bazel plugin builds the generated `srcs` of every `genrule` below a sync target. The
+    genrules of a `build_test` have the gated targets as `srcs`, so a sync would compose each gated distribution. The
+    sync drops a target with the `no-ide` tag. Bazel and CI ignore the tag, so the `ultimate-smoke` pass still runs the
+    gate.
+    """
+    build_test(
+        name = name,
+        targets = targets,
+        tags = tags + ["no-ide"],
+        **kwargs
     )
 
 # The JVM flags that every dev launch of an IDE starts with. A rule that writes the flags of an IDE launch elsewhere loads

@@ -92,7 +92,7 @@ intellij_dev_run_configurations = _DECLARATIONS.run_configurations
 # One dev launcher written by hand over a distribution of its own. Bazel names the symbolic macro after this global.
 intellij_dev_run_configuration = _DECLARATIONS.run_configuration
 
-# A `build_test` that builds some rows.
+# A `dev_dist_build_test` that builds some rows.
 intellij_dev_launch_assembles_test = _DECLARATIONS.launch_assembles_test
 
 def intellij_dev_project_model_tree_community():

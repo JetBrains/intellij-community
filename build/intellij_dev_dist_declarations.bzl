@@ -9,7 +9,6 @@ community platform set and the community bundled plugins, with the additional pl
 tables name the community products and the community tables in `community`, see `_community_product`.
 """
 
-load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_platform_jar")
 load("//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_platform_payload")
 load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "dev_dist_product_files", "home_prefix", "product_info_destination")
@@ -17,7 +16,7 @@ load("//platform/build-scripts/bazel-rules:dev_dist_runtime_module_repository.bz
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "intellij_dev_fragments_dist", "intellij_dev_packed_jars_component")
 load(":download_rules.bzl", "EXECUTABLE_LIST_NAME")
 load(":host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
-load(":intellij_dev.bzl", "export_vm_options", "intellij_dev_dist_config", "intellij_dev_java_launcher_binary")
+load(":intellij_dev.bzl", "dev_dist_build_test", "export_vm_options", "intellij_dev_dist_config", "intellij_dev_java_launcher_binary")
 
 def _plugin_component_entries(platform_prefix, tier, entries):
     """Reads one tier of the generated component map as `struct(main_module, label, labels)` entries.
@@ -869,7 +868,6 @@ def _declare_run_distribution(tables, name, product, additional_modules, runtime
     intellij_dev_dist_config(
         name = name + "_dist_ide_config",
         dist = ":" + name + "_dist",
-        tags = ["manual"],
         visibility = visibility if export_visibility == None else export_visibility,
     )
 
@@ -937,8 +935,8 @@ def _declare_run_launcher(
     )
 
 def _launch_assembles_test(name, rows, tags):
-    """A `build_test` that builds the launchers of `rows`. The factory result documents it as `launch_assembles_test`."""
-    build_test(
+    """A `dev_dist_build_test` that builds the launchers of `rows`. The factory result documents it as `launch_assembles_test`."""
+    dev_dist_build_test(
         name = name,
         tags = tags,
         targets = rows,
@@ -1142,7 +1140,7 @@ def intellij_dev_dist_declarations(tables):
         _run_configurations(tables, rows)
 
     def launch_assembles_test(name, rows, tags = []):
-        """A `build_test` `name` that builds the launchers of `rows`, labels of rows of this package or another one."""
+        """A `dev_dist_build_test` `name` that builds the launchers of `rows`, labels of rows of this package or another one."""
         _launch_assembles_test(name, rows, tags)
 
     def run_configuration_impl(
