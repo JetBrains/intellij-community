@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.debugger.PyLineBreakpointType
 import com.jetbrains.python.fixtures.PyTestCase
+import org.assertj.core.api.Assertions.assertThat
 
 @Subsystems.Debugger
 @Layers.Functional
@@ -35,5 +36,40 @@ class PyLineBreakpointTypeTest : PyTestCase() {
     assertEquals("    print(1)", document.getText(range))
 
     assertTrue(PyLineBreakpointType().canPutAt(pythonFile, line, myFixture.project))
+  }
+
+  // PY-52080
+  fun testNonlocalStatement() {
+    assertThat(canPutAt("""
+      def baz():
+          foo = 0
+          def bar():
+              nonlocal foo  # comment
+              foo += 1
+    """, line = 3)).isFalse()
+  }
+
+  // PY-52080
+  fun testGlobalStatement() {
+    assertThat(canPutAt("""
+      def bar():
+          global foo
+          foo = 1
+    """, line = 1)).isFalse()
+  }
+
+  // PY-52080
+  fun testNonlocalStatementWithCodeOnSameLine() {
+    assertThat(canPutAt("""
+      def baz():
+          foo = 0
+          def bar():
+              nonlocal foo; foo += 1
+    """, line = 3)).isTrue()
+  }
+
+  private fun canPutAt(text: String, line: Int): Boolean {
+    val file = myFixture.configureByText(PythonFileType.INSTANCE, text.trimIndent()).virtualFile
+    return PyLineBreakpointType().canPutAt(file, line, myFixture.project)
   }
 }

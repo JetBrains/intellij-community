@@ -25,6 +25,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.PyGlobalStatement;
+import com.jetbrains.python.psi.PyNonlocalStatement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +44,11 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
                                                                                      PyTokenTypes.SINGLE_QUOTED_UNICODE,
                                                                                      PyTokenTypes.DOCSTRING);
 
-  @SuppressWarnings("unchecked") private static final Class<? extends PsiElement>[] UNSTOPPABLE_ELEMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
+  /**
+   * The PSI elements that compile to no bytecode: the whitespace, a comment, and a {@code global} or {@code nonlocal} statement.
+   */
+  @SuppressWarnings("unchecked") private static final Class<? extends PsiElement>[] UNSTOPPABLE_ELEMENTS =
+    new Class[]{PsiWhiteSpace.class, PsiComment.class, PyGlobalStatement.class, PyNonlocalStatement.class};
 
   public PyLineBreakpointType() {
     super(ID, PyBundle.message("debugger.line.breakpoint.type"), new PyDebuggerEditorsProvider());
