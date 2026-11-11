@@ -1,5 +1,16 @@
+*f:com.intellij.platform.compose.swing.AnchorAlignmentPositionProvider
+- com.intellij.platform.compose.swing.PopupPositionProvider
+- sf:$stable:I
+- <init>(org.jetbrains.compose.swing.foundation.layout.Alignment,org.jetbrains.compose.swing.foundation.layout.Alignment,java.awt.Point):V
+- b:<init>(org.jetbrains.compose.swing.foundation.layout.Alignment,org.jetbrains.compose.swing.foundation.layout.Alignment,java.awt.Point,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- calculatePosition(java.awt.Rectangle,java.awt.Rectangle,java.awt.ComponentOrientation,java.awt.Dimension):java.awt.Point
 f:com.intellij.platform.compose.swing.ComposeSwingPanelKt
 - *sf:composeSwingPanel(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function3):javax.swing.JComponent
+f:com.intellij.platform.compose.swing.ComposeSwingPopupKt
+- *sf:composeSwingPopupContent(com.intellij.openapi.Disposable,com.intellij.openapi.actionSystem.UiDataProvider,kotlin.jvm.functions.Function3):javax.swing.JComponent
+- *bs:composeSwingPopupContent$default(com.intellij.openapi.Disposable,com.intellij.openapi.actionSystem.UiDataProvider,kotlin.jvm.functions.Function3,I,java.lang.Object):javax.swing.JComponent
+- *sf:createComposeSwingPopup(com.intellij.openapi.ui.popup.JBPopupFactory,com.intellij.platform.compose.swing.PopupPositionProvider,com.intellij.openapi.actionSystem.UiDataProvider,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3):com.intellij.openapi.ui.popup.JBPopup
+- *bs:createComposeSwingPopup$default(com.intellij.openapi.ui.popup.JBPopupFactory,com.intellij.platform.compose.swing.PopupPositionProvider,com.intellij.openapi.actionSystem.UiDataProvider,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3,I,java.lang.Object):com.intellij.openapi.ui.popup.JBPopup
 *a:com.intellij.platform.compose.swing.ComposeSwingSearchableConfigurable
 - com.intellij.openapi.options.Configurable$NoMargin
 - com.intellij.openapi.options.SearchableConfigurable
@@ -16,6 +27,8 @@ f:com.intellij.platform.compose.swing.ComposeSwingPanelKt
 - isModified():Z
 - pf:requestModifiedCheck():V
 - reset():V
+*:com.intellij.platform.compose.swing.PopupPositionProvider
+- a:calculatePosition(java.awt.Rectangle,java.awt.Rectangle,java.awt.ComponentOrientation,java.awt.Dimension):java.awt.Point
 *f:com.intellij.platform.compose.swing.SettingState
 - androidx.compose.runtime.MutableState
 - sf:$stable:I
