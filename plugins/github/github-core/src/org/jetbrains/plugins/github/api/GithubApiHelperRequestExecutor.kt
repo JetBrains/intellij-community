@@ -58,11 +58,16 @@ internal class GithubApiHelperRequestExecutor(
   }
 
   override suspend fun <T> execute(request: GithubApiRequest<T>): T =
-    service<GHApiRateLimiter>().execute(request) {
-      doExecute(request)
-    }
+    service<GHApiRateLimiter>().execute(
+      request,
+      send = { send(request) },
+      parse = { response, rateLimitHeaders -> parse(request, response, rateLimitHeaders) },
+    )
 
-  private suspend fun <T> doExecute(request: GithubApiRequest<T>): T {
+  /**
+   * Sends the [request] and returns the response before its body is read.
+   */
+  private suspend fun send(request: GithubApiRequest<*>): HttpResponse<out InputStream> {
     check(!service<GHRequestExecutorBreaker>().isRequestsShouldFail) {
       "Request failure was triggered by user action. This a pretty long description of this failure that should resemble some long error which can go out of bounds."
     }
@@ -91,13 +96,25 @@ internal class GithubApiHelperRequestExecutor(
       throw e
     }
 
+    val rateLimitHeaders = GHRateLimitHeaders.parse(response)
     GHPRStatisticsCollector.logApiResponseReceived(
       activity = activity,
-      remaining = response.headers().firstValue(RATE_LIMIT_REMAINING_HEADER).getOrNull()?.toIntOrNull() ?: -1,
-      resourceName = response.headers().firstValue(RATE_LIMIT_RESOURCE_HEADER).getOrNull() ?: "unknown",
+      remaining = rateLimitHeaders.remaining ?: -1,
+      resourceName = rateLimitHeaders.resource ?: "unknown",
       statusCode = response.statusCode(),
     )
+    return response
+  }
 
+  /**
+   * Checks the status of the [response] to the [request] and reads its body.
+   */
+  private suspend fun <T> parse(
+    request: GithubApiRequest<T>,
+    response: HttpResponse<out InputStream>,
+    rateLimitHeaders: GHRateLimitHeaders,
+  ): T {
+    val requestName = response.request().logName()
     try {
       response.checkStatusCodeWithLogging(LOG, requestName)
       checkCanceled()
@@ -122,7 +139,7 @@ internal class GithubApiHelperRequestExecutor(
       if (request is GithubApiRequest.Get.Optional<*> && e.statusCode == HttpURLConnection.HTTP_NOT_FOUND) return null as T
 
       val responseContentType = response.headers().firstValue(HttpClientUtil.CONTENT_TYPE_HEADER).getOrNull()
-      throw createApiException(requestName, e.statusCode, e.body, responseContentType)
+      throw createApiException(requestName, e.statusCode, e.body, responseContentType, rateLimitHeaders)
     }
     catch (e: GithubConfusingException) {
       if (request.operationName != null) {
