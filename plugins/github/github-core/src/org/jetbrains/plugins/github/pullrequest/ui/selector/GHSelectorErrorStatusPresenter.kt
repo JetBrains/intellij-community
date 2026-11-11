@@ -10,6 +10,7 @@ import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GHAPIExceptionUtil
+import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
@@ -36,7 +37,11 @@ class GHSelectorErrorStatusPresenter(
   }
 
   override fun getErrorAction(error: RepositoryAndAccountSelectorViewModel.Error): Action? = when (error) {
-    is RepositoryAndAccountSelectorViewModel.Error.SubmissionError -> LogInAgain(project, error.account as GithubAccount, loginSource, resetAction)
+    is RepositoryAndAccountSelectorViewModel.Error.SubmissionError -> {
+      // GitHub counts the rate limits for the user, so a new token of the same user doesn't help
+      if (error.exception is GithubRateLimitExceededException) null
+      else LogInAgain(project, error.account as GithubAccount, loginSource, resetAction)
+    }
     else -> null
   }
 
