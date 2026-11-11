@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.idea.AppMode;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.xml.dom.XmlDomReader;
@@ -107,12 +108,12 @@ public final class ApplicationNamesInfo {
     String qodanaBuildDate = System.getProperty("qodana.build.date");
     if (qodanaBuildDate == null || qodanaBuildDate.isEmpty()) {
       String buildNumber = System.getProperty("qodana.build.number", "QD-SNAPSHOT");
-      if (!buildNumber.contains("SNAPSHOT")) {
+      if (!BuildNumber.fromString(buildNumber).isSnapshot()) {
         throw new RuntimeException("qodana.build.date system property must be set for Qodana");
       }
-      return;  // Dev/SNAPSHOT builds - skip setting date
+    } else {
+      buildNode.attributes.put("date", qodanaBuildDate);
     }
-    buildNode.attributes.put("date", qodanaBuildDate);
 
     String qodanaEap = System.getProperty("qodana.eap", "false");
     XmlElement versionNode = data.getChild("version");
