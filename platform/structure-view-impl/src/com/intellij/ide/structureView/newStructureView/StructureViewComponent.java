@@ -1010,13 +1010,19 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     @Override
     public boolean equals(Object o) {
-      if (o instanceof MyNodeWrapper) {
-        return Comparing.equal(unwrapElement(getValue()), unwrapElement(((MyNodeWrapper)o).getValue()));
+      if (o instanceof MyNodeWrapper wrapper) {
+        return Comparing.equal(unwrapElement(getValue()), unwrapElement(wrapper.getValue())) &&
+               Objects.equals(getProviderName(), wrapper.getProviderName());
       }
       if (o instanceof StructureViewTreeElement) {
         return Comparing.equal(unwrapElement(getValue()), ((StructureViewTreeElement)o).getValue());
       }
       return false;
+    }
+
+    private @Nullable String getProviderName() {
+      var provider = getProvider();
+      return provider == null ? null : provider.getName();
     }
 
     @Override

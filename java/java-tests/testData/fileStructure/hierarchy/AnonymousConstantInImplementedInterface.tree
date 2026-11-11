@@ -3,3 +3,4 @@
   -DEFAULT: AnonymousConstantInImplementedInterfaceBase = new AnonymousConstantInImplementedInterfaceBase() {...}
    -$1
  -AnonymousConstantInImplementedInterfaceBase
+  DEFAULT: AnonymousConstantInImplementedInterfaceBase = new AnonymousConstantInImplementedInterfaceBase() {...}

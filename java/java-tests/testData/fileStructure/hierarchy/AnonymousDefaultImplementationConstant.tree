@@ -2,3 +2,4 @@
  -[AnonymousDefaultImplementationConstant]
   -DEFAULT: AnonymousDefaultImplementationConstant = new AnonymousDefaultImplementationConstant() {...}
    -$1
+    DEFAULT: AnonymousDefaultImplementationConstant = new AnonymousDefaultImplementationConstant() {...}

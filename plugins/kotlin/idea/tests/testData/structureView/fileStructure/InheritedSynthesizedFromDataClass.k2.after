@@ -4,4 +4,8 @@
   constructor TestData(Int) location=→TestData
   field: Int
   some(): Unit location=→TestData
- TestData
+  TestData
+ -TestData
+  a: Int
+  constructor TestData(Int)
+  some(): Unit
