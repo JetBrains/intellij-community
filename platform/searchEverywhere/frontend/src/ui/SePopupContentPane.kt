@@ -10,9 +10,6 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereLanguage
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
-import com.intellij.ide.rpc.ThrottledAccumulatedItems
-import com.intellij.ide.rpc.ThrottledItems
-import com.intellij.ide.rpc.ThrottledOneItem
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI
 import com.intellij.ide.util.gotoByName.QuickSearchComponent
 import com.intellij.internal.inspector.PropertyBean
@@ -49,9 +46,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeClosePopupRequester
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeProviderId
-import com.intellij.platform.searchEverywhere.SeResultAddedEvent
-import com.intellij.platform.searchEverywhere.SeResultEvent
-import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
 import com.intellij.platform.searchEverywhere.SeUiInspectorInfo
 import com.intellij.platform.searchEverywhere.data.SeDataKeys
 import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
@@ -1363,12 +1357,6 @@ private fun <T> Flow<T>.coalesceWhileAvailable(fastFirstBatchSize: Int, maxBatch
     send(batch)
   }
 }.buffer(1, onBufferOverflow = BufferOverflow.SUSPEND)
-
-private fun ThrottledItems<SeResultEvent>.hasResultsUpdates(): Boolean =
-  when (this) {
-    is ThrottledOneItem<SeResultEvent> -> item is SeResultAddedEvent || item is SeResultReplacedEvent
-    is ThrottledAccumulatedItems<SeResultEvent> -> items.any { it is SeResultAddedEvent || it is SeResultReplacedEvent }
-  }
 
 internal fun SeUiInspectorInfo?.asPropertyBeans(): List<PropertyBean> {
   if (this == null) return emptyList()

@@ -5,7 +5,9 @@ import com.intellij.ide.rpc.ThrottledAccumulatedItems
 import com.intellij.ide.rpc.ThrottledItems
 import com.intellij.ide.rpc.ThrottledOneItem
 import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeResultAddedEvent
 import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
 import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
 import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import com.intellij.platform.searchEverywhere.frontend.vm.SeSearchContext
@@ -52,6 +54,9 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
     var shouldFreezeImmediately = false
 
     if (!isValid) {
+      // A valid empty list sets shouldLoadMore to false, and the tab stops the load of the results.
+      if (!throttledEvent.hasResultsUpdates()) return
+
       reset()
 
       // For non-all tab right after receiving first accumulated items
@@ -129,3 +134,10 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
     }
   }
 }
+
+/** Returns true when the event adds or replaces an item. An end event and a skipped event add no row. */
+internal fun ThrottledItems<SeResultEvent>.hasResultsUpdates(): Boolean =
+  when (this) {
+    is ThrottledOneItem<SeResultEvent> -> item is SeResultAddedEvent || item is SeResultReplacedEvent
+    is ThrottledAccumulatedItems<SeResultEvent> -> items.any { it is SeResultAddedEvent || it is SeResultReplacedEvent }
+  }
