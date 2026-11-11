@@ -9,6 +9,7 @@ import org.intellij.markdown.ast.accept
 import org.intellij.markdown.ast.findChildOfType
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.ast.visitors.RecursiveVisitor
+import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.LinkMap
@@ -25,6 +26,7 @@ internal class FootnoteMap private constructor(
   //       This continuation is indented. ← CODE_BLOCK or CODE_FENCE sibling
   // These are consumed into the footnote body and suppressed from normal rendering.
   private val continuationBlocks: Set<Int>,
+  private val flavour: MarkdownFlavourDescriptor,
 ) {
   data class FootnoteEntry(val label: String, val number: Int, val bodyMarkdown: String)
 
@@ -41,7 +43,7 @@ internal class FootnoteMap private constructor(
       for (entry in sorted) {
         ProgressManager.checkCanceled()
         append("<li id=\"fn:${entry.label}\">\n")
-        val bodyHtml = renderBodyMarkdown(entry.bodyMarkdown, baseUri, this@FootnoteMap)
+        val bodyHtml = renderBodyMarkdown(entry.bodyMarkdown, baseUri, flavour, this@FootnoteMap)
         append(insertBackLink(bodyHtml, entry.label))
         append("\n</li>\n")
       }
@@ -62,16 +64,16 @@ internal class FootnoteMap private constructor(
       }
     }
 
-    private fun renderBodyMarkdown(body: String, baseUri: URI?, fullMap: FootnoteMap? = null): String {
+    private fun renderBodyMarkdown(body: String, baseUri: URI?, flavour: MarkdownFlavourDescriptor, fullMap: FootnoteMap? = null): String {
       val content = if (body.endsWith('\n')) body else "$body\n"
-      val parsedTree = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR)
+      val parsedTree = MarkdownParserManager.createMarkdownParser(flavour)
         .buildMarkdownTreeFromString(CancellableText.of(content))
       val linkMap = LinkMap.buildLinkMap(parsedTree, content)
       val providers = MarkdownParserManager.FLAVOUR.createHtmlGeneratingProviders(linkMap, baseUri).toMutableMap()
       if (fullMap != null) {
         // Build a local map for suppression: identifies which PARAGRAPH, CODE_BLOCK, and CODE_FENCE nodes in this
         // body are footnote definitions/continuations that should be hidden (they go into the list).
-        val localMap = build(parsedTree, content)
+        val localMap = build(parsedTree, content, flavour)
         providers[MarkdownElementTypes.PARAGRAPH] = FootnoteNodeSuppressor(localMap, providers[MarkdownElementTypes.PARAGRAPH]!!)
         providers[MarkdownElementTypes.CODE_BLOCK] = FootnoteNodeSuppressor(localMap, providers[MarkdownElementTypes.CODE_BLOCK]!!)
         providers[MarkdownElementTypes.CODE_FENCE] = FootnoteNodeSuppressor(localMap, providers[MarkdownElementTypes.CODE_FENCE]!!)
@@ -79,6 +81,7 @@ internal class FootnoteMap private constructor(
         providers[MarkdownElementTypes.SHORT_REFERENCE_LINK] = FootnoteReferenceProvider(fullMap, providers[MarkdownElementTypes.SHORT_REFERENCE_LINK]!!)
         providers[MarkdownElementTypes.FULL_REFERENCE_LINK] = FootnoteReferenceProvider(fullMap, providers[MarkdownElementTypes.FULL_REFERENCE_LINK]!!)
       }
+      providers.addFlavourProviders(flavour, linkMap, baseUri)
       return HtmlGenerator(content, parsedTree, providers, false).generateHtml()
         .removePrefix("<body>").removeSuffix("</body>").trim()
     }
@@ -279,7 +282,7 @@ internal class FootnoteMap private constructor(
     @Suppress("RegExpRedundantEscape")
     private val FOOTNOTE_REF_REGEX = Regex("""\[\^([^\]\n]+)]""")
 
-    fun build(tree: ASTNode, text: String): FootnoteMap {
+    fun build(tree: ASTNode, text: String, flavour: MarkdownFlavourDescriptor): FootnoteMap {
       val definitions = mutableMapOf<String, String>()
       val continuationBlocks = mutableSetOf<Int>()
       val referenceOrder = mutableListOf<String>()
@@ -298,7 +301,7 @@ internal class FootnoteMap private constructor(
           processed.add(label)
           val body = definitions[label]!!
           val content = if (body.endsWith('\n')) body else "$body\n"
-          val bodyTree = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR)
+          val bodyTree = MarkdownParserManager.createMarkdownParser(flavour)
             .buildMarkdownTreeFromString(CancellableText.of(content))
           val nestedDefs = mutableMapOf<String, String>()
           val nestedRefs = mutableListOf<String>()
@@ -323,7 +326,7 @@ internal class FootnoteMap private constructor(
         val bodyMarkdown = definitions[label] ?: continue
         entries[label] = FootnoteEntry(label, number++, bodyMarkdown)
       }
-      return FootnoteMap(entries, continuationBlocks)
+      return FootnoteMap(entries, continuationBlocks, flavour)
     }
 
     internal fun isDefinition(node: ASTNode, text: String) = extractDefinitionLabel(node, text) != null

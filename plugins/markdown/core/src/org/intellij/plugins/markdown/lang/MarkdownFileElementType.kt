@@ -8,10 +8,10 @@ import com.intellij.psi.ParsingDiagnostics
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.PsiFileStub
 import com.intellij.psi.tree.IStubFileElementType
-import org.intellij.plugins.markdown.lang.MarkdownLazyElementType.obtainFlavour
 import org.intellij.plugins.markdown.lang.lexer.MarkdownParsedTreeLexer
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager
 import org.intellij.plugins.markdown.lang.parser.PsiBuilderFillingVisitor
+import org.intellij.plugins.markdown.lang.parser.obtainFlavour
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 
 /**
