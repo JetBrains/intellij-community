@@ -41,10 +41,12 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.progress.ProgressUIUtil
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.HtmlPanel
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI.Borders.empty
+import com.intellij.util.ui.JBUI.Borders.emptyTop
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil
@@ -388,10 +390,11 @@ private class FailuresPanel : JBPanel<FailuresPanel>() {
   private val description = FailuresDescriptionPanel()
 
   init {
+    // Top alignment keeps the icon on the first line of a multi-line description
     layout = BoxLayout(this, BoxLayout.X_AXIS)
-    add(iconLabel)
-    add(description.apply { border = empty(4, 4, 0, 0) })
-    add(createCommitChecksToolbar(this).component)
+    add(iconLabel.apply { border = emptyTop(4); alignmentY = TOP_ALIGNMENT })
+    add(description.apply { border = empty(4, 4, 0, 0); alignmentY = TOP_ALIGNMENT })
+    add(createCommitChecksToolbar(this).component.apply { alignmentY = TOP_ALIGNMENT })
 
     isOpaque = false
     isVisible = false
@@ -462,7 +465,10 @@ private class FailuresDescriptionPanel : HtmlPanel() {
       }
     }
     if (failureLinks.isEmpty()) return HtmlChunk.text(message("label.commit.checks.failed.unknown.reason"))
-    return HtmlBuilder().appendWithSeparators(HtmlChunk.raw("<br/><br/>"), failureLinks).toFragment()
+    val gapStyle = "margin-top: ${JBUIScale.scale(4)}px"
+    return HtmlBuilder().apply {
+      failureLinks.forEachIndexed { index, link -> append(link.wrapWith(if (index == 0) HtmlChunk.div() else HtmlChunk.div(gapStyle))) }
+    }.toFragment()
   }
 
   private fun showDetails(event: HyperlinkEvent) {
