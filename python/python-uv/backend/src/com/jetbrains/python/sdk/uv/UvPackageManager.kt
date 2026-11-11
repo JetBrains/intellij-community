@@ -20,7 +20,11 @@ import com.intellij.python.uv.common.UV_TOOL_ID
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.PyPackageName
+import com.intellij.python.requirements.PyPackageVersionComparator
+import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.PyVersionSpecifiers
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
@@ -35,6 +39,7 @@ import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.packageRequirements.extractDeclaredDependencies
 import com.jetbrains.python.packaging.packageRequirements.packagesUnavailable
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.requirements.PyDependenciesFile
 import com.jetbrains.python.uv.UV_LOCK
 import kotlinx.coroutines.Deferred
@@ -205,6 +210,37 @@ class UvPackageManager internal constructor(
     }
   }
 
+  /**
+   * `uv pip list --outdated` gives the newest version for the interpreter of the SDK only.
+   * `uv pip compile` then gives the newest version of each package for the whole `requires-python` range.
+   * A package without a newer version for that range, or with a fork by the Python version, is not outdated.
+   */
+  override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> = withUv { uv ->
+    val outdated = uv.listOutdatedPackages().getOr { return@withUv it }
+    if (outdated.isEmpty()) return@withUv PyResult.success(outdated)
+
+    val [projectFiles, minPython] = uvOutdatedInputs()
+    val overrides = outdated.map { "${it.name}<=${it.latestVersion}" }
+    val resolved = uv.resolveWithOverrides(projectFiles, overrides, minPython?.toPythonVersion()).getOr { return@withUv it }
+
+    PyResult.success(outdated.mapNotNull { pkg ->
+      val latest = resolved[PyPackageName.from(pkg.name)] ?: return@mapNotNull null
+      PythonOutdatedPackage(pkg.name, pkg.version, latest).takeIf { isNewer(latest, pkg.version) }
+    })
+  }
+
+  override suspend fun outdatedPackagesInputs(): Any = uvOutdatedInputs()
+
+  /**
+   * The `pyproject.toml` of the root and of each workspace member, and the lowest Python that all of them accept.
+   * uv resolves the workspace for the intersection of the `requires-python` of the members.
+   */
+  private suspend fun uvOutdatedInputs(): UvOutdatedInputs {
+    val projectFiles = resolveDependencyFilesTree().filterIsInstance<PyProjectTomlFile>().map { it.virtualFile.toNioPath() }
+    val minPython = projectFiles.mapNotNull { PyProjectToml.parseOrNull(it)?.project?.requiresPython?.let(::lowestPython) }.maxOrNull()
+    return UvOutdatedInputs(projectFiles, minPython)
+  }
+
   override suspend fun syncLockedCommand(): PyResult<Unit> {
     return withUv { uv -> uv.sync().mapSuccess { } }
   }
@@ -261,6 +297,24 @@ class UvPackageManager internal constructor(
 
     return@withContext true
   }
+}
+
+/** The lowest supported Python 3 that [requiresPython] accepts, or `null` when it accepts none. */
+internal fun lowestPython(requiresPython: String): LanguageLevel? {
+  val specifiers = PyVersionSpecifiers(requiresPython)
+  return LanguageLevel.SUPPORTED_LEVELS.filter { it.isPy3K }.firstOrNull { specifiers.isValid(it) }
+}
+
+/**
+ * What the outdated packages of a uv project depend on, see [UvPackageManager.outdatedPackagesInputs].
+ * [minPython] is `null` when no `pyproject.toml` has a `requires-python`.
+ */
+private data class UvOutdatedInputs(val projectFiles: List<Path>, val minPython: LanguageLevel?)
+
+private fun isNewer(version: String, than: String): Boolean {
+  val newVersion = PyPackageVersionNormalizer.normalize(version) ?: return false
+  val oldVersion = PyPackageVersionNormalizer.normalize(than) ?: return false
+  return PyPackageVersionComparator.compare(newVersion, oldVersion) > 0
 }
 
 private class UvWorkspaceSupport(private val project: Project, private val interpreter: PythonInterpreter) : PythonWorkspaceSupport {

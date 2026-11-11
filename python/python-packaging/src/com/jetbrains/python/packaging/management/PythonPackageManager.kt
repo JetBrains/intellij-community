@@ -180,6 +180,10 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   @Volatile
   private var outdatedPackagesLoad: Job = Job().apply { complete() }
 
+  /** The [outdatedPackagesInputs] of the last check of the outdated packages. */
+  @Volatile
+  private var lastOutdatedPackagesInputs: Any? = null
+
   @get:ApiStatus.Internal
   open val treeProvider: DependencyTreeProvider? = null
 
@@ -447,7 +451,16 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     outdatedPackagesLoad.join()
   }
 
+  /**
+   * The values of the dependency files that [loadOutdatedPackagesCommand] depends on.
+   * After a change of a dependency file, a new value starts a new check of the outdated packages.
+   * `null` means that the outdated packages depend on no dependency file.
+   */
+  @ApiStatus.Internal
+  protected open suspend fun outdatedPackagesInputs(): Any? = null
+
   private suspend fun reloadOutdatedPackages() {
+    lastOutdatedPackagesInputs = outdatedPackagesInputs()
     if (listInstalledPackagesSnapshot().isEmpty()) {
       outdatedPackages = emptyMap()
       return
@@ -648,6 +661,13 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     dependencyCache.awaitLatest()?.onFailure { thisLogger().warn("Failed to read the declared packages of $sdk: $it") }
   }
 
+  /** Starts a check of the outdated packages when a dependency file changed one of its [outdatedPackagesInputs]. */
+  private suspend fun reloadOutdatedPackagesOnInputsChange() {
+    // A list from the cache checks the outdated packages with the next list, see [publishInstalledPackages].
+    if (outdatedPending.get()) return
+    if (outdatedPackagesInputs() != lastOutdatedPackagesInputs) startOutdatedPackagesLoad()
+  }
+
   /**
    * Caches [listDeclaredPackages] keyed by the `(file -> modification stamp)` map produced
    * by [resolveDependencyFilesTree]. Each [awaitLatest] reuses the entry on a Map.equals hit
@@ -681,7 +701,10 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
       // A reader only reads [snapshot]. A change of a dependency file starts the next load, so a reader, such as an
       // inspection during highlighting, never starts one. A burst of changes gives one load.
       managerScope.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-        fileChanges.conflate().collect { loadDeclaredPackages() }
+        fileChanges.conflate().collect {
+          loadDeclaredPackages()
+          reloadOutdatedPackagesOnInputsChange()
+        }
       }
       watchDependencyFiles()
     }

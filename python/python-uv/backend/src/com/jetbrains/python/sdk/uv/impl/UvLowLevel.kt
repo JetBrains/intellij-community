@@ -32,13 +32,19 @@ import com.jetbrains.python.sdk.uv.UvScriptEnvironment
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.venvReader.tryResolvePath
 import io.github.z4kn4fein.semver.Version
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import tools.jackson.core.JacksonException
 import tools.jackson.module.kotlin.jacksonObjectMapper
 import tools.jackson.module.kotlin.readValue
+import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.name
 import kotlin.io.path.pathString
+import kotlin.io.path.writeLines
 
 private const val NO_METADATA_MESSAGE = "does not contain a PEP 723 metadata tag"
 private const val OUTDATED_ENV_MESSAGE = "The environment is outdated"
@@ -273,6 +279,29 @@ private class UvLowLevelImpl<P : PathHolder>(
     return PyExecResult.success(Unit)
   }
 
+  override suspend fun resolveWithOverrides(
+    projectFiles: List<Path>,
+    overrides: List<String>,
+    minPython: String?,
+  ): PyResult<Map<PyPackageName, String>> {
+    val overridesFile = withContext(Dispatchers.IO) {
+      Files.createTempFile("uv-overrides", ".txt").also { it.writeLines(overrides) }
+    }
+    try {
+      val args = Args("pip", "compile")
+      projectFiles.forEach { args.addPath(it) }
+      args.addPath(overridesFile)
+        .addArgs("--override").addPath(overridesFile)
+        .addArgs("--universal", "--fork-strategy", "fewest", "--no-header", "--no-annotate", "--quiet")
+      minPython?.let { args.addArgs("--python-version", it) }
+      val out = uvCli.runUv(cwd, venvPath, false, args).getOr { return it }
+      return PyExecResult.success(parsePinnedVersions(out))
+    }
+    finally {
+      withContext(NonCancellable + Dispatchers.IO) { overridesFile.deleteIfExists() }
+    }
+  }
+
   override suspend fun removeDependencies(
     pyPackages: Array<out String>,
     workspaceMember: PyWorkspaceMember?,
@@ -407,6 +436,22 @@ private class UvLowLevelImpl<P : PathHolder>(
     return PyResult.success(UvScriptEnvironment(environmentPath, pythonPath))
   }
 }
+
+/**
+ * Reads the `name==version` lines of the `uv pip compile` output.
+ * A package with more than one line has a fork by the Python version, so the result omits it.
+ */
+internal fun parsePinnedVersions(compileOutput: String): Map<PyPackageName, String> =
+  compileOutput.lineSequence()
+    .map { it.substringBefore(";").trim() }
+    .filter { it.isNotEmpty() && !it.startsWith("#") }
+    .mapNotNull { line ->
+      val [name, version] = line.split("==", limit = 2).takeIf { it.size == 2 } ?: return@mapNotNull null
+      PyPackageName.from(name.trim().substringBefore("[")) to version.trim()
+    }
+    .groupBy({ it.first }, { it.second })
+    .filterValues { it.size == 1 }
+    .mapValues { it.value.single() }
 
 /**
  * Arguments of the `uv sync --check` used to ask whether an environment is up to date. Lifted out of the

@@ -54,6 +54,13 @@ interface UvLowLevel<P : PathHolder> {
   suspend fun removeDependencies(pyPackages: Array<out String>, workspaceMember: PyWorkspaceMember? = null, dependencyGroup: PyDependencyGroup? = null): PyResult<Unit>
 
   /**
+   * `uv pip compile` of [projectFiles] with [overrides]. It changes no file of the project.
+   * It resolves for every Python from [minPython] up, in one fork when possible.
+   * Returns the resolved version of each package by its normalized name.
+   */
+  suspend fun resolveWithOverrides(projectFiles: List<Path>, overrides: List<String>, minPython: String?): PyResult<Map<PyPackageName, String>>
+
+  /**
    * Managing environment packages directly w/o depending or changing the project
    */
   suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): PyResult<Unit>
