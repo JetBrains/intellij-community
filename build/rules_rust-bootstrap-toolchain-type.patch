@@ -1,6 +1,6 @@
 Select the bootstrap Rust toolchain with a toolchain type, not with a build setting.
 
-Companion patch: rules_rs-0.2.1-bootstrap-toolchain-type.patch. Apply both, or neither.
+Companion patch: rules_rs-0.2.2-bootstrap-toolchain-type.patch. Apply both, or neither.
 
 # The problem
 
@@ -240,7 +240,7 @@ diff --git a/rust/private/repository_utils.bzl b/rust/private/repository_utils.b
 diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
 --- a/rust/private/rust.bzl
 +++ b/rust/private/rust.bzl
-@@ -1609,14 +1609,12 @@ _RustBuiltWithoutProcessWrapperInfo = provider(
+@@ -1566,14 +1566,12 @@ _RustBuiltWithoutProcessWrapperInfo = provider(
      fields = {},
  )
  
@@ -261,7 +261,7 @@ diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
  
  def _rust_binary_without_process_wrapper_impl(ctx):
      providers = _rust_binary_impl(ctx)
-@@ -1627,18 +1625,11 @@ rust_binary_without_process_wrapper = rule(
+@@ -1584,18 +1582,11 @@ rust_binary_without_process_wrapper = rule(
      doc = "A variant of `rust_binary` that uses a minimal process wrapper for `Rustc` actions.",
      provides = COMMON_PROVIDERS + [_RustBuiltWithoutProcessWrapperInfo],
      attrs = _COMMON_ATTRS | _RUST_BINARY_ATTRS | {
@@ -281,7 +281,7 @@ diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
  )
  
  def _rust_library_without_process_wrapper_impl(ctx):
-@@ -1651,10 +1642,7 @@ rust_library_without_process_wrapper = rule(
+@@ -1608,10 +1599,7 @@ rust_library_without_process_wrapper = rule(
      provides = COMMON_PROVIDERS + [_RustBuiltWithoutProcessWrapperInfo],
      attrs = _COMMON_ATTRS | _WITHOUT_PROCESS_WRAPPER_ATTRS,
      fragments = ["cpp"],
@@ -293,7 +293,7 @@ diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
  )
  
  def _rust_static_library_without_process_wrapper_impl(ctx):
-@@ -1666,10 +1654,7 @@ rust_static_library_without_process_wrapper = rule(
+@@ -1623,10 +1611,7 @@ rust_static_library_without_process_wrapper = rule(
      doc = "A variant of `rust_static_library` that uses a minimal process wrapper for `Rustc` actions.",
      attrs = _COMMON_ATTRS | _WITHOUT_PROCESS_WRAPPER_ATTRS,
      fragments = ["cpp"],
@@ -308,7 +308,7 @@ diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
 diff --git a/rust/private/rust_allocator_libraries.bzl b/rust/private/rust_allocator_libraries.bzl
 --- a/rust/private/rust_allocator_libraries.bzl
 +++ b/rust/private/rust_allocator_libraries.bzl
-@@ -287,21 +287,40 @@ def _rust_allocator_libraries_impl(ctx):
+@@ -296,21 +296,40 @@ def _rust_allocator_libraries_impl(ctx):
  
      return providers
  

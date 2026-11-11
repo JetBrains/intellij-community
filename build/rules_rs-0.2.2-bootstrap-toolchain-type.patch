@@ -36,7 +36,8 @@ This patch registers the toolchains to match:
 
 The `:bootstrapping` and `:bootstrapped` entries are gone from `target_settings`. The toolchain type alone now
 separates the two toolchains. The BPF toolchain has no bootstrap variant, and it stays on
-`@rules_rust//rust:toolchain_type`.
+`@rules_rust//rust:toolchain_type`. The UEFI toolchains have a bootstrap variant, and
+it follows the same rule.
 
 The selection tests now resolve the bootstrap cases through `_resolved_bootstrap_toolchain`, a rule that asks for
 the bootstrap type. They do not set `bootstrap_setting` now.
@@ -51,18 +52,18 @@ the bootstrap type. They do not set `bootstrap_setting` now.
 diff --git a/rs/toolchains/declare_rustc_toolchains.bzl b/rs/toolchains/declare_rustc_toolchains.bzl
 --- a/rs/toolchains/declare_rustc_toolchains.bzl
 +++ b/rs/toolchains/declare_rustc_toolchains.bzl
-@@ -290,7 +290,6 @@ def declare_rustc_toolchains(
+@@ -309,7 +309,6 @@ def declare_rustc_toolchains(
+             ("uefi", True),
          ]:
-             target_kind = "bpf" if is_bpf else "non_bpf"
              bootstrap_suffix = "_bootstrap" if bootstrapping else ""
 -            bootstrap_setting = "@rules_rust//rust/private:" + ("bootstrapping" if bootstrapping else "bootstrapped")
-             toolchain_suffix = "_bpf" if is_bpf else bootstrap_suffix
+             toolchain_suffix = "_bpf" if target_kind == "bpf" else ("_uefi" if target_kind == "uefi" else "") + bootstrap_suffix
              native.toolchain(
                  name = name + "_{}_{}_to_{}_targets_{}{}".format(
-@@ -303,9 +302,11 @@ def declare_rustc_toolchains(
+@@ -322,9 +321,11 @@ def declare_rustc_toolchains(
                  exec_compatible_with = exec_compatible_with,
                  target_settings = target_settings + [
-                     "@rules_rs//rs/toolchains:bpf_targets" if is_bpf else "@rules_rs//rs/toolchains:non_bpf_targets",
+                     "@rules_rs//rs/toolchains:" + target_kind + "_targets",
 -                    bootstrap_setting,
                  ],
                  toolchain = rust_toolchain_name + toolchain_suffix,
@@ -113,7 +114,7 @@ diff --git a/rs/toolchains/tests/declare_rustc_toolchains_test.bzl b/rs/toolchai
              # Analyze BPF toolchain selection without building its source stdlib.
              _SOURCE_STDLIB: True,
              "//command_line_option:extra_execution_platforms": [str(Label("//rs/platforms:" + exec_triple))],
-@@ -140,6 +150,7 @@ def declare_rustc_toolchains_test_suite(name):
+@@ -145,6 +155,7 @@ def declare_rustc_toolchains_test_suite(name):
          tags = ["manual"],
      )
      _resolved_toolchain(name = "resolved_toolchain", tags = ["manual"])
@@ -121,7 +122,7 @@ diff --git a/rs/toolchains/tests/declare_rustc_toolchains_test.bzl b/rs/toolchai
  
      tests = []
      for test_name, test_rule, kwargs in [
-@@ -160,7 +171,7 @@ def declare_rustc_toolchains_test_suite(name):
+@@ -167,7 +178,7 @@ def declare_rustc_toolchains_test_suite(name):
      ]:
          test_rule(
              name = test_name + "_test",

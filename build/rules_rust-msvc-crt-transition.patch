@@ -17,7 +17,7 @@ hold a `+crt-static` that the crates of a product share, which would make it nam
 diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
 --- a/rust/private/rust.bzl
 +++ b/rust/private/rust.bzl
-@@ -67,6 +67,40 @@
+@@ -67,6 +67,40 @@ load(
  # Setting path for per_crate_rustc_flag, used in transition definitions
  _PER_CRATE_FLAG_SETTING = "@rules_rust//rust/settings:per_crate_rustc_flag"
  
@@ -58,7 +58,7 @@ diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
  def _toolchain_make_variables(ctx):
      make_variables = {}
      for toolchain_target in getattr(ctx.attr, "toolchains", []):
-@@ -1252,6 +1286,7 @@
+@@ -1259,6 +1293,7 @@ def _rust_static_library_transition_impl(settings, attr):
      return {
          "//command_line_option:platforms": _resolve_platform(settings, attr),
          _PER_CRATE_FLAG_SETTING: per_crate_flags,
@@ -66,7 +66,7 @@ diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
      }
  
  _rust_static_library_transition = transition(
-@@ -1259,10 +1294,12 @@
+@@ -1266,10 +1301,12 @@ _rust_static_library_transition = transition(
      inputs = [
          "//command_line_option:platforms",
          _PER_CRATE_FLAG_SETTING,
@@ -79,7 +79,7 @@ diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
      ],
  )
  
-@@ -1298,6 +1335,7 @@
+@@ -1305,6 +1342,7 @@ def _rust_shared_library_transition_impl(settings, attr):
      return {
          "//command_line_option:platforms": _resolve_platform(settings, attr),
          _PER_CRATE_FLAG_SETTING: per_crate_flags,
@@ -87,7 +87,7 @@ diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
      }
  
  _rust_shared_library_transition = transition(
-@@ -1305,10 +1343,12 @@
+@@ -1312,10 +1350,12 @@ _rust_shared_library_transition = transition(
      inputs = [
          "//command_line_option:platforms",
          _PER_CRATE_FLAG_SETTING,
@@ -100,7 +100,7 @@ diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
      ],
  )
  
-@@ -1425,6 +1465,7 @@
+@@ -1435,6 +1475,7 @@ def _rust_binary_transition_impl(settings, attr):
      return {
          "//command_line_option:platforms": _resolve_platform(settings, attr),
          _PER_CRATE_FLAG_SETTING: per_crate_flags,
@@ -108,7 +108,7 @@ diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
      }
  
  _rust_binary_transition = transition(
-@@ -1432,10 +1473,12 @@
+@@ -1442,10 +1483,12 @@ _rust_binary_transition = transition(
      inputs = [
          "//command_line_option:platforms",
          _PER_CRATE_FLAG_SETTING,
@@ -121,7 +121,7 @@ diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
      ],
  )
  
-@@ -1674,6 +1717,7 @@
+@@ -1680,6 +1723,7 @@ def _rust_test_transition_impl(settings, attr):
      return {
          "//command_line_option:platforms": _resolve_platform(settings, attr),
          _PER_CRATE_FLAG_SETTING: per_crate_flags,
@@ -129,7 +129,7 @@ diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
      }
  
  _rust_test_transition = transition(
-@@ -1681,10 +1725,12 @@
+@@ -1687,10 +1731,12 @@ _rust_test_transition = transition(
      inputs = [
          "//command_line_option:platforms",
          _PER_CRATE_FLAG_SETTING,
@@ -145,7 +145,7 @@ diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
 diff --git a/rust/private/rustc.bzl b/rust/private/rustc.bzl
 --- a/rust/private/rustc.bzl
 +++ b/rust/private/rustc.bzl
-@@ -1471,6 +1471,11 @@
+@@ -1515,6 +1515,11 @@ def construct_arguments(
          # Color is not compatible with json output.
          rustc_flags.add("--color=always")
      rustc_flags.add(toolchain.target_flag_value, format = "--target=%s")
@@ -157,15 +157,15 @@ diff --git a/rust/private/rustc.bzl b/rust/private/rustc.bzl
      if hasattr(attr, "crate_features"):
          rustc_flags.add_all(getattr(attr, "crate_features"), before_each = "--cfg", format_each = 'feature="%s"')
      if linker_script:
-@@ -1792,6 +1797,11 @@
-         ),
+@@ -1839,6 +1844,11 @@ def construct_arguments(
          map_each = map_flag,
      )
-+
+ 
 +    # A proc-macro is a DLL that the host rustc loads, so it takes the dynamic C runtime of rustc. A `+crt-static` in its
 +    # flags, or in the flags that its crate graph shares, would make it name the static C runtime of the exec toolchain.
 +    if toolchain.target_abi == "msvc" and crate_info.type == "proc-macro":
 +        rustc_flags.add("-Ctarget-feature=-crt-static")
- 
++
      # Needed for bzlmod-aware runfiles resolution.
      env["REPOSITORY_NAME"] = ctx.label.workspace_name
+ 

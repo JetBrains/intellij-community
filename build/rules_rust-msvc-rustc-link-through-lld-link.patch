@@ -12,19 +12,18 @@ Drop the `/SUBSYSTEM:` flag of the cc toolchain too. rustc names the subsystem f
 cc link arguments come after its own, so the toolchain's `/SUBSYSTEM:CONSOLE` would win.
 --- a/rust/private/rustc.bzl
 +++ b/rust/private/rustc.bzl
-@@ -412,6 +412,7 @@
+@@ -412,6 +412,7 @@ _LinkerConfigInfo = provider(fields = [
      "action_name",
      "feature_configuration",
      "is_direct_driver",
 +    "msvc_lld_link",
      "rpaths",
      "rust_linker",
-     "target_arch",
-@@ -460,6 +461,14 @@
-     use_rust_linker = not cc_linker or toolchain.linker_preference == "rust" or use_bpf_linker
+     "target_abi",
+@@ -463,12 +464,21 @@ def _get_linker_config(ctx, crate_type, toolchain, cc_toolchain, feature_configu
      if use_rust_linker and not toolchain.linker:
          fail("No linker available for rustc. Either `rust_toolchain.linker` must be set or a `cc_toolchain` configured for the current configuration.")
-+
+ 
 +    # rustc drives an MSVC link with link.exe flags, which `clang-cl` rejects. `lld-link` takes them, and a
 +    # `clang-cl` link tool keeps it next to itself.
 +    msvc_lld_link = (
@@ -32,18 +31,18 @@ cc link arguments come after its own, so the toolchain's `/SUBSYSTEM:CONSOLE` wo
 +        toolchain.target_abi == "msvc" and
 +        cc_linker.split("/")[-1].split("\\")[-1].lower() in ("clang-cl", "clang-cl.exe")
 +    )
- 
++
      # Keep CcToolchainVariables and the Rust linker File until map_each runs so
      # cc_common and File.path use the Rustc action's path mapper.
-@@ -467,6 +476,7 @@
+     return _LinkerConfigInfo(
          feature_configuration = feature_configuration,
          action_name = action_name,
          variables = link_variables,
 +        msvc_lld_link = msvc_lld_link,
          rust_linker = toolchain.linker if use_rust_linker else None,
          is_direct_driver = use_rust_linker and toolchain.linker_type == "direct",
-         target_arch = toolchain.target_arch,
-@@ -476,11 +486,38 @@
+         target_abi = toolchain.target_abi,
+@@ -480,10 +490,37 @@ def _get_linker_config(ctx, crate_type, toolchain, cc_toolchain, feature_configu
  def _get_linker_path(linker_config):
      if linker_config.rust_linker:
          return linker_config.rust_linker.path
@@ -59,7 +58,7 @@ cc link arguments come after its own, so the toolchain's `/SUBSYSTEM:CONSOLE` wo
 +
 +def _clang_cl_link_args_to_lld_link(args):
 +    """The link arguments of a `clang-cl` link tool, in the form that `lld-link` takes.
- 
++
 +    `clang-cl` wraps each linker flag as `/clang:-Xlinker /clang:<flag>`, so keep `<flag>`. Keep the library search
 +    paths and the input files too. Drop every other argument: it is a `clang-cl` driver flag, such as `/MT`.
 +
@@ -79,11 +78,10 @@ cc link arguments come after its own, so the toolchain's `/SUBSYSTEM:CONSOLE` wo
 +        elif arg.upper().startswith(("/LIBPATH:", "-LIBPATH:")) or arg.lower().endswith((".lib", ".obj", ".res")):
 +            lld_link_args.append(arg)
 +    return lld_link_args
-+
+ 
  def _get_linker_env(linker_config):
      if linker_config.variables == None:
-         return {}
-@@ -498,6 +530,8 @@
+@@ -537,6 +574,8 @@ def _get_linker_args(linker_config):
              action_name = linker_config.action_name,
              variables = linker_config.variables,
          ))
