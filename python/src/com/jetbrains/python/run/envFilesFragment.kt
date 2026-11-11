@@ -7,6 +7,7 @@ import com.intellij.execution.configuration.EnvFilesDialog
 import com.intellij.execution.configuration.addEnvFile
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
@@ -26,8 +27,9 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import javax.swing.event.DocumentEvent
 
-class EnvFileComponent(workingDir: () -> VirtualFile?) : LabeledComponent<TextFieldWithBrowseButton?>(), UserActivityProviderComponent {
-  val envFilesComponent: EnvironmentFilePathTextFieldWithBrowseButton = EnvironmentFilePathTextFieldWithBrowseButton(workingDir)
+class EnvFileComponent(project: Project, workingDir: () -> VirtualFile?)
+  : LabeledComponent<TextFieldWithBrowseButton?>(), UserActivityProviderComponent {
+  val envFilesComponent: EnvironmentFilePathTextFieldWithBrowseButton = EnvironmentFilePathTextFieldWithBrowseButton(project, workingDir)
 
   init {
     setComponent(envFilesComponent)
@@ -46,8 +48,8 @@ class EnvFileComponent(workingDir: () -> VirtualFile?) : LabeledComponent<TextFi
   }
 
   companion object {
-    fun <T : EnvFilesOptions> createEnvFilesFragment(workingDir: () -> VirtualFile?): SettingsEditorFragment<T, *> {
-      val envFile = EnvFileComponent(workingDir)
+    fun <T : EnvFilesOptions> createEnvFilesFragment(project: Project, workingDir: () -> VirtualFile?): SettingsEditorFragment<T, *> {
+      val envFile = EnvFileComponent(project, workingDir)
       val fragment = SettingsEditorFragment<T, JComponent>(
         "envPaths",
         ExecutionBundle.message("environment.variables.filepath.fragment.name"),
@@ -74,7 +76,7 @@ class EnvFileComponent(workingDir: () -> VirtualFile?) : LabeledComponent<TextFi
   }
 }
 
-class EnvironmentFilePathTextFieldWithBrowseButton(private val workingDir: () -> VirtualFile?)
+class EnvironmentFilePathTextFieldWithBrowseButton(private val project: Project, private val workingDir: () -> VirtualFile?)
   : TextFieldWithBrowseButton.NoPathCompletion(), UserActivityProviderComponent {
   var envFilePaths: List<String>
     set(value) {
@@ -114,12 +116,12 @@ class EnvironmentFilePathTextFieldWithBrowseButton(private val workingDir: () ->
 
   private fun browseForEnvFile() {
     if (envFilePaths.isEmpty()) {
-      addEnvFile(textField, workingDir()) { s: String ->
+      addEnvFile(textField, workingDir(), project) { s: String ->
         envFilePaths = ArrayList(envFilePaths).also { it.add(s) }
       }
     }
     else {
-      val dialog = EnvFilesDialog(this, envFilePaths)
+      val dialog = EnvFilesDialog(this, envFilePaths, project)
       dialog.show()
       if (dialog.isOK) {
         envFilePaths = ArrayList(dialog.paths)
