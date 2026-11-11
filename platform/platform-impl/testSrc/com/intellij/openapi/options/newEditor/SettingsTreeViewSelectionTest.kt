@@ -99,6 +99,28 @@ internal class SettingsTreeViewSelectionTest {
     assertThat(selections).containsExactly(pages[0], pages[1])
   }
 
+  @Test
+  fun `a reload before the tree root loads selects the page in the new tree`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    withForcedRespectIsShowingClientProperty {
+      val disposable = Disposer.newDisposable()
+      try {
+        val editor = createEditor(disposable)
+        val treeView = editor.treeView
+        // A configurable extension can register while the dialog still loads its tree.
+        assertThat(treeView.tree.model.root).isNull()
+
+        treeView.reloadWithSelection(pages[2])
+        markAsShowing(editor)
+
+        waitFor("the reloaded tree") { treeView.tree.rowCount == pages.size }
+        waitFor("the page of the reload") { treeView.selectedConfigurable === pages[2] }
+      }
+      finally {
+        Disposer.dispose(disposable)
+      }
+    }
+  }
+
   /**
    * Runs [block] on the EDT with an editor that shows the first page.
    * The block gets the list of the pages that the editor made current, in order.

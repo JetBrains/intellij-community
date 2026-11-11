@@ -1197,7 +1197,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
     //remove expansion and selection (to avoid stuck old elements) before cleanup
     myTree.getSelectionModel().clearSelection();
-    myTree.collapsePath(new TreePath(myTree.getModel().getRoot()));
+    // The async tree model has no root before its first load, so nothing is expanded yet.
+    Object root = myTree.getModel().getRoot();
+    if (root != null) {
+      myTree.collapsePath(new TreePath(root));
+    }
 
     myModel.getTreeStructure().rebuild();
     myModel.getTreeStructure().refilter();
