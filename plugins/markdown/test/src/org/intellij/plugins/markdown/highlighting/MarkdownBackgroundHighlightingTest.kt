@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -121,6 +122,48 @@ class MarkdownBackgroundHighlightingTest : BasePlatformTestCase() {
 
     assertEquals(Color.RED, getPixel(image, corner.x, blankLine.y + editor.lineHeight / 2))
     assertOutsideTheFill(editor, getPixel(image, corner.x, corner.y))
+  }
+
+  fun `test a fence with folded marker lines draws its language at the right end of the closing line`() {
+    val text = "```lang title=\"123\"\naaaa\n```"
+    val editor = configureEditor(text, MarkdownHighlighterColors.CODE_FENCE)
+    editor.colorsScheme.setAttributes(MarkdownHighlighterColors.CODE_FENCE_LANGUAGE, TextAttributes(Color.BLUE, null, null, null, Font.PLAIN))
+    foldMarkerLines(editor, text)
+
+    val image = paintEditor(editor)
+    val x = editor.offsetToXY(text.indexOf("\n```")).x + 10
+    val closingY = editor.offsetToXY(text.length).y
+    val labelXs = (image.width / 2 until image.width).filter { px ->
+      (closingY until closingY + editor.lineHeight).any { distance(Color.BLUE, getPixel(image, px, it)) < distance(Color.RED, getPixel(image, px, it)) }
+    }
+    val languageWidth = editor.contentComponent.getFontMetrics(editor.colorsScheme.getFont(EditorFontType.PLAIN)).stringWidth("lang")
+
+    assertEquals(getEditorBackgroundColor(editor), getPixel(image, x, editor.offsetToXY(0).y + editor.lineHeight / 2))
+    assertEquals(Color.RED, getPixel(image, x, editor.offsetToXY(text.indexOf("aaaa")).y + editor.lineHeight / 2))
+    assertEquals(Color.RED, getPixel(image, x, closingY + editor.lineHeight / 2))
+    assertTrue("The right half of the closing line shows the language", labelXs.isNotEmpty())
+    assertTrue("The label shows only the language, not the title", labelXs.last() - labelXs.first() <= languageWidth + 2)
+  }
+
+  fun `test a fence without a language has no background on folded marker lines`() {
+    val text = "```\naaaa\n```"
+    val editor = configureEditor(text, MarkdownHighlighterColors.CODE_FENCE)
+    foldMarkerLines(editor, text)
+
+    val image = paintEditor(editor)
+    val x = editor.offsetToXY(text.indexOf("\n```")).x + 10
+
+    assertEquals(getEditorBackgroundColor(editor), getPixel(image, x, editor.offsetToXY(0).y + editor.lineHeight / 2))
+    assertEquals(Color.RED, getPixel(image, x, editor.offsetToXY(text.indexOf("aaaa")).y + editor.lineHeight / 2))
+    assertEquals(getEditorBackgroundColor(editor), getPixel(image, x, editor.offsetToXY(text.length).y + editor.lineHeight / 2))
+  }
+
+  private fun foldMarkerLines(editor: Editor, text: String) {
+    val folding = (editor as EditorEx).foldingModel
+    folding.runBatchFoldingOperation {
+      folding.createFoldRegion(0, text.indexOf('\n'), "", null, true)
+      folding.createFoldRegion(text.lastIndexOf("```"), text.length, "", null, true)
+    }
   }
 
   fun `test the background of a code span covers the content between the backtick runs`() {

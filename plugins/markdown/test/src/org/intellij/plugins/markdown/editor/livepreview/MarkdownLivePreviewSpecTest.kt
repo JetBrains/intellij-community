@@ -177,13 +177,18 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("[Markdown Guide][docs]", "[IntelliJ IDEA][]", "[GitHub]"), revealRanges(content))
   }
 
-  fun testCodeFenceContentIsNotConcealed() {
+  fun testCodeFenceConcealsOnlyItsMarkerLines() {
     val content = """
       |```markdown
       |**bold** and [docs](https://example.org)
       |```
     """.trimMargin()
-    assertEmpty(concealed(content))
+    assertEquals(listOf("```markdown", "```"), concealed(content))
+    assertEquals(listOf("```", "```"), concealed("```\nplain\n```"))
+    assertEquals(listOf("~~~python", "~~~"), concealed("~~~python\nprint(1)\n~~~"))
+    assertEquals(listOf("```kotlin", "```"), concealed("  ```kotlin\n  val a = 1\n  ```"))
+    assertEquals(listOf("```kotlin"), concealed("```kotlin\nopen\n"))
+    assertEquals(listOf("```java title=\"123\"", "```"), concealed("```java title=\"123\"\ncode\n```"))
   }
 
   fun testIndentedCodeBlockContentIsNotConcealed() {

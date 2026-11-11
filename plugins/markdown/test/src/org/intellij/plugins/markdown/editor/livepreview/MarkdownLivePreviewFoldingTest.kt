@@ -1164,7 +1164,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val highlighters = codeFontHighlighters()
 
     moveCaretTo(content.indexOf("foo"))
-    assertEmpty(concealed())
+    assertEquals(listOf("```", "```"), concealed())
     assertEquals(highlighters, codeFontHighlighters())
 
     moveCaretTo(content.indexOf("= 1") + 3)
@@ -1177,6 +1177,22 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     myFixture.editor.setLivePreviewEnabledness(false)
     MarkdownLivePreviewReconciler.getExisting(myFixture.editor)!!.reconcileNow()
     assertEmpty(codeFontHighlighters())
+  }
+
+  fun testCaretInACodeFenceRevealsBothMarkerLines() {
+    val content = "```kotlin\nval a = 1\n```\n\ntail"
+    configure("$content<caret>")
+    val concealedText = "\nval a = 1\n\n\ntail"
+    assertEquals(concealedText, visibleText())
+
+    for (offset in listOf(content.indexOf("kotlin") + 2, content.indexOf("= 1"), content.lastIndexOf("```"))) {
+      moveCaretTo(content.length)
+      moveCaretTo(offset)
+      assertEquals("The caret at $offset reveals the fence", content, visibleText())
+    }
+
+    moveCaretTo(content.length)
+    assertEquals(concealedText, visibleText())
   }
 
   fun testFrontMatterDelimitersAndThematicBreakUseRuleDecorations() {
@@ -1593,7 +1609,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     PlatformTestUtil.waitWithEventsDispatching("The diagram did not arrive", { (mermaidInlays().singleOrNull()?.heightInPixels ?: 0) > 0 }, 10)
     val inlay = mermaidInlays().single()
     assertEquals(fence.length, inlay.offset)
-    assertEquals(fence, visibleText().substringBefore("\n\n"))
+    assertEquals("\ngraph LR\n  A --> B\n\n\ntail", visibleText())
     assertTrue("The editor hosts the view", SwingUtilities.isDescendingFrom(service.views.single().component, myFixture.editor.contentComponent))
     assertEquals("A tall diagram is capped at 20 lines", 20 * myFixture.editor.lineHeight + 2 * JBUI.scale(2), inlay.heightInPixels)
 
