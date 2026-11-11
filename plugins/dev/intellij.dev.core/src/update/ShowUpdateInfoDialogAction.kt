@@ -303,11 +303,13 @@ private fun TabbedPaneScope.Tab(title: String, content: @Composable ColumnScope.
     SwingModifier.tab(title).emptyBorder(0, 0, 0, 0),
     horizontalScrollbar = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER,
   ) {
-    Column(
-      SwingModifier.viewport().emptyBorder(gap, gap, gap, gap),
-      verticalArrangement = Arrangement.spacedBy(spacing.verticalComponentGap.dp),
-      content = content,
-    )
+    Viewport {
+      Column(
+        SwingModifier.emptyBorder(gap, gap, gap, gap),
+        verticalArrangement = Arrangement.spacedBy(spacing.verticalComponentGap.dp),
+        content = content,
+      )
+    }
   }
 }
 
@@ -322,7 +324,7 @@ private fun ColumnScope.GeneralTab(
 
   Label("Updates.xml <channel> text:")
   ScrollPane(SwingModifier.fillMaxWidth().weight(1f).shrinkableSize(height = 150)) {
-    SwingNode(factory = { textArea }, modifier = SwingModifier.viewport())
+    Viewport { SwingNode(factory = { textArea }) }
   }
 
   ControlsRow {
@@ -379,13 +381,14 @@ private class QuickMockState {
 @Composable
 private fun ColumnScope.QuickMockTab(state: QuickMockState) {
   ScrollPane(SwingModifier.fillMaxWidth().weight(1f).shrinkableSize(height = 150)) {
-    TextArea(
-      value = state.xml,
-      onValueChange = { state.xml = it },
-      modifier = SwingModifier.viewport(),
-      lineWrap = true,
-      wrapStyleWord = true,
-    )
+    Viewport {
+      TextArea(
+        value = state.xml,
+        onValueChange = { state.xml = it },
+        lineWrap = true,
+        wrapStyleWord = true,
+      )
+    }
   }
 
   ControlsRow(fillWidth = false) {
@@ -658,18 +661,19 @@ private fun ColumnScope.GenerateXmlTab(state: GenerateXmlState, currentProductCo
 
   Input(label = "Message", modifier = SwingModifier.fillMaxWidth(), labelComment = "Announcement shown in the update dialog") {
     ScrollPane(SwingModifier.fillMaxWidth().shrinkableSize(height = 60)) {
-      TextArea(
-        value = state.message,
-        onValueChange = { state.message = it },
-        modifier = SwingModifier.viewport(),
-        lineWrap = true,
-        wrapStyleWord = true,
-      )
+      Viewport {
+        TextArea(
+          value = state.message,
+          onValueChange = { state.message = it },
+          lineWrap = true,
+          wrapStyleWord = true,
+        )
+      }
     }
   }
 
   ScrollPane(SwingModifier.fillMaxWidth().weight(1f).shrinkableSize(height = 120)) {
-    TextArea(value = state.xml, onValueChange = { state.xml = it }, modifier = SwingModifier.viewport())
+    Viewport { TextArea(value = state.xml, onValueChange = { state.xml = it }) }
   }
 
   ControlsRow {
@@ -728,13 +732,14 @@ private fun ColumnScope.SavedUpdatesInfo(saved: SavedUpdates?, saveError: String
     ControlsRow {
       ScrollPane(SwingModifier.weight(1f).shrinkableSize(height = 50)) {
         // The text wraps at any character, because the URLs have no spaces.
-        TextArea(
-          value = saved?.vmOptions.orEmpty(),
-          onValueChange = {},
-          modifier = SwingModifier.viewport(),
-          editable = false,
-          lineWrap = true,
-        )
+        Viewport {
+          TextArea(
+            value = saved?.vmOptions.orEmpty(),
+            onValueChange = {},
+            editable = false,
+            lineWrap = true,
+          )
+        }
       }
       if (saved != null) {
         CopyLink(saved.vmOptions, tooltip = "Copy VM options")

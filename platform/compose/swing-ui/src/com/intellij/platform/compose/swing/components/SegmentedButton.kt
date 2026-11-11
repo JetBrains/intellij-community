@@ -125,7 +125,7 @@ private val SEGMENTED_BUTTON_CHANGE_PAIR =
  */
 private val SEGMENTED_BUTTON_CHANGE =
   CallbackRegistration<SegmentedButtonComponent<*>, (ChangeEvent) -> Unit, ChangeListener>(
-    adapter = { current -> ChangeListener { event -> current()(event) } },
+    adapter = { callback -> ChangeListener { event -> callback.report { it(event) } } },
     registration = SEGMENTED_BUTTON_CHANGE_PAIR,
   )
 
