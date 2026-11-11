@@ -6,8 +6,8 @@ package com.intellij.platform.eel.provider
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.eel.EelMachineConnectionProvider
 import com.intellij.platform.eel.EelUnavailableException
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.ServiceLoader
 
@@ -50,8 +50,8 @@ fun EelDescriptor.getResolvedEelMachine(): EelMachine? {
  * (for example, when the descriptor comes from an open `Project` or a routed `Path`). It starts or reuses the environment, which may
  * take time and may fail. For [LocalEelDescriptor] it returns the local environment with no connection overhead.
  *
- * If the descriptor was created outside an open project or you need a reference-counted lease that
- * closes the environment and its [com.intellij.platform.eel.fileSystem] when your usage scope ends, use `toEelApi(lifetime)` instead.
+ * If the descriptor was created outside an open project, or you need the environment and its [com.intellij.platform.eel.fileSystem]
+ * to stay open while you work with them, use [withEelApi] instead.
  *
  * @throws EelUnavailableException if the environment cannot be reached.
  * @see EelMachine.toEelApi
@@ -63,27 +63,49 @@ suspend fun EelDescriptor.toEelApi(): EelApi {
 }
 
 /**
- * Resolves the [EelMachine] behind this descriptor and acquires a reference-counted connection lease bound to [lifetime],
- * returning a live [EelApi].
+ * Resolves the [EelMachine] behind this descriptor, holds a lease on its connection while [block] runs, and returns the result of [block].
  *
- * Unlike the parameterless [toEelApi], this overload ties the environment's lifecycle to [lifetime]. Use it when connecting to an
- * environment outside an open IDE project or when temporarily accessing
- * [com.intellij.platform.eel.fileSystem]. The lease remains active until [lifetime] is cancelled or completes. When all leases on the
- * underlying [EelMachine] (including any open IDE projects) end, its machine-bound [com.intellij.platform.eel.fileSystem] and
- * underlying remote agent session are closed.
+ * The lease starts before [block] is called and ends when [block] completes, whether normally, by an exception, or by cancellation.
+ * Concurrent and nested calls for the same machine share one [EelApi] and one [com.intellij.platform.eel.fileSystem]. When the last
+ * lease on the machine ends (including the leases of open IDE projects), the file system and the remote agent session are closed.
+ * Do not let the [EelApi] or its file system escape [block]: they may be closed right after [block] returns.
  *
- * Why a [lifetime] parameter instead of making [EelApi] implement [AutoCloseable]: an [EelApi] is backed by a machine-wide shared
- * session, and most callers of the parameterless [toEelApi] are one-shot lookups that never close the returned instance. Taking
- * [lifetime] at acquisition time distinguishes lease-holding callers from fire-and-forget callers, so reference counts cannot leak
- * and closing one caller's scope never terminates a session still used by another lease or an open project.
+ * Why a block instead of making [EelApi] implement [AutoCloseable]: an [EelApi] is backed by a machine-wide shared session, and most
+ * callers of the parameterless [toEelApi] are one-shot lookups that never close the returned instance. A block makes the lease
+ * impossible to leak and keeps the closing of one caller from terminating a session still used by another lease or an open project.
+ *
+ * A component that needs the connection for its whole lifetime holds it with a coroutine:
+ * ```kotlin
+ * scope.launch {
+ *   descriptor.withEelApi { api ->
+ *     ready.complete(api)
+ *     awaitCancellation()
+ *   }
+ * }
+ * ```
+ * Cancelling that coroutine releases the lease.
  *
  * @throws EelUnavailableException if the environment cannot be reached.
- * @see EelMachine.toEelApi
+ * @see EelMachine.withEelApi
  */
 @ApiStatus.Experimental
 @Throws(EelUnavailableException::class)
-suspend fun EelDescriptor.toEelApi(lifetime: CoroutineScope): EelApi {
-  return resolveEelMachine().toEelApi(this, lifetime)
+suspend fun <T> EelDescriptor.withEelApi(block: suspend (EelApi) -> T): T {
+  return resolveEelMachine().withEelApi(this, block)
+}
+
+/**
+ * Holds a lease on the connection to this machine while [block] runs and returns the result of [block].
+ *
+ * [descriptor] defines the path namespace of the [EelApi] passed to [block], as in [EelMachine.toEelApi].
+ * See [EelDescriptor.withEelApi] for the lease semantics.
+ *
+ * @throws EelUnavailableException if the environment cannot be reached.
+ */
+@ApiStatus.Experimental
+@Throws(EelUnavailableException::class)
+suspend fun <T> EelMachine.withEelApi(descriptor: EelDescriptor, block: suspend (EelApi) -> T): T {
+  return EelMachineConnectionProvider.registry.withConnection(this, descriptor, block)
 }
 
 /**
