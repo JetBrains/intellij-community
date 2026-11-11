@@ -1,6 +1,6 @@
 from _pydev_bundle._pydev_saved_modules import ThreadingEvent, ThreadingLock, thread, threading_current_thread
 from _pydevd_bundle.pydevd_daemon_thread import PyDBDaemonThread
-from _pydevd_bundle.pydevd_constants import thread_get_ident, IS_CPYTHON, IS_WINDOWS, NULL
+from _pydevd_bundle.pydevd_constants import thread_get_ident, IS_CPYTHON, IS_PY313_OR_GREATER, IS_WINDOWS, NULL
 import ctypes
 import time
 from _pydev_bundle import pydev_log
@@ -256,8 +256,7 @@ def _can_interrupt_with_ctrl_c():
 
 class _ConsoleInterrupt(object):
     """
-    Raises a KeyboardInterrupt on the thread that created this object, and can drop it again
-    while it is still pending.
+    Raises a KeyboardInterrupt on the thread that created this object.
 
     An emulated Ctrl+C is preferred, because it is the only one that also stops a sleep or an
     I/O operation. It is used only while it can raise a KeyboardInterrupt at all, which
@@ -302,30 +301,17 @@ class _ConsoleInterrupt(object):
         pydev_log.debug("Interrupt thread by ident: %s", self._tid)
         ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(self._tid), ctypes.py_object(KeyboardInterrupt))
 
-    def cancel(self):
-        """
-        Drops an asynchronous exception which this object scheduled and which the target thread
-        has not raised yet. May be called from any thread.
-
-        The caller of an interrupt needs this when the evaluation ended while the interrupt was
-        delivered. A KeyboardInterrupt left pending on that thread lands on a later frame,
-        inside pydevd or in the resumed program, and takes the debug session down.
-
-        A Ctrl+C cannot be taken back, so this only covers the asynchronous exception.
-        """
-        if self._fallback is None and IS_CPYTHON:
-            ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(self._tid), None)
-
 
 def create_interrupt_this_thread_by_ident_callback():
     """
     The idea here is the same as in `create_interrupt_this_thread_callback`, but the callback
-    targets the thread which called this function even when that is the main thread, it raises
-    the KeyboardInterrupt exactly once, and it can drop an interrupt that is still pending.
+    targets the thread which called this function even when that is the main thread, and it
+    raises the KeyboardInterrupt exactly once. `cancel_pending_interrupt_on_this_thread` drops
+    an interrupt of it that is still pending.
 
     :return callable:
         Returns a callback that will interrupt the thread that created it (this may be called
-        from an auxiliary thread). It also has a `cancel` method -- see `_ConsoleInterrupt`.
+        from an auxiliary thread). See `_ConsoleInterrupt`.
     """
     return _ConsoleInterrupt()
 
@@ -334,12 +320,26 @@ def cancel_pending_interrupt_on_this_thread():
     """
     Drops a KeyboardInterrupt which the callback of
     `create_interrupt_this_thread_by_ident_callback` scheduled on this thread and which was
-    not delivered yet. PyThreadState_SetAsyncExc with a NULL exception clears the pending
-    asynchronous exception of the given thread.
+    not delivered yet.
 
     Must be called on the thread the callback was created on. Without it, an interrupt which
     was requested just as the evaluation finished lands on a later frame of that thread,
     inside pydevd itself, where it can only be logged and thrown away.
+
+    CPython 3.13 and later clear it with PyThreadState_SetAsyncExc and a NULL exception.
+    Before 3.13 that call leaves the eval breaker set with no exception to raise, so every
+    later check of the eval breaker does the work again. On 3.11 a traced thread then loops
+    forever on the first instruction of the next frame it enters (PY-93788). Before 3.13 the
+    interrupt is therefore raised here and swallowed.
     """
-    if IS_CPYTHON:
+    if IS_CPYTHON and IS_PY313_OR_GREATER:
         ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(thread_get_ident()), None)
+        return
+
+    try:
+        # A pending asynchronous exception is raised at a jump backwards, so the loop needs to
+        # make at least one.
+        for _ in range(2):
+            pass
+    except KeyboardInterrupt:
+        pass
