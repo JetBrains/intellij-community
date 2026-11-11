@@ -1,8 +1,15 @@
+# The accio wrapper, which `accio_unused_test` of `//tools/jscpd-test:defs.bzl` runs from the checkout: the test
+# resolves the link of this file in its runfiles, so the wrapper finds `tool-wrapper.sh` beside it.
+exports_files(
+    ["accio.cmd"],
+    visibility = ["//visibility:public"],
+)
+
 # The pinned jscpd of the host, from the repositories of `jscpd.MODULE.bazel`. A repository of this module has no
 # name that the ultimate root can see, so `jscpd.cmd` asks Bazel for `//tools:jscpd`, and the `select` picks the
 # repository of the host. The alias is `manual`, so `//...` of the community root downloads no archive. The
-# `jscpd_test` targets and the Code Findings test target are the other readers: `jscpd.MODULE.bazel` says why. A host without a `config_setting`
-# fails the `select`.
+# `jscpd_test` targets are the other readers: `jscpd.MODULE.bazel` says why. A host without a `config_setting` fails
+# the `select`.
 alias(
     name = "jscpd",
     actual = select({

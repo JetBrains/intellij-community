@@ -63,6 +63,11 @@ equal to the sources.
     the clone markers of jscpd, `// jscpd:ignore-start <reason>` and `// jscpd:ignore-end`, and the reason names the
     kept copy and why it stays, in three words or more. A layout change that only hides a clone below the threshold
     does not remove it.
+12. No dead code, off for now. `//build/rust-tools:rust-tools-unused-code_test`, the `accio_unused_test` that
+    `code_gates` declares beside item 11, runs `accio unused` over the same directories of the checkout, without the
+    generated libaom headers of `community/tools/vm/aom/config`. It fails on each declaration that nothing uses. Delete
+    it, or keep it with `#[expect(dead_code, reason = "<why it stays>")]`, which accio leaves out. The test is
+    incompatible until `--//tools/jscpd-test:unused` turns it on.
 
 ### Where each workspace stands
 

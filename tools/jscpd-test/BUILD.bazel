@@ -1,7 +1,8 @@
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("//build/rust-tools:defs.bzl", "optimized_binary", "rust_tool_binary")
 
-# The runner of the `jscpd_test` rule of `defs.bzl`. The targets are the binary, its unit test `jscpd-test_test` and
-# its clippy test.
+# The runner of the `jscpd_test` and `accio_unused_test` rules of `defs.bzl`. The targets are the binary, its unit
+# test `jscpd-test_test` and its clippy test.
 rust_tool_binary(
     name = "jscpd-test",
     edition = "2024",
@@ -17,10 +18,25 @@ rust_tool_binary(
     ],
 )
 
-# The runner that `jscpd_test` runs, always optimized: a debug build spends seconds in the path filter of the marker
+# The runner that both rules run, always optimized: a debug build spends seconds in the path filter of the marker
 # case over the 30 000 files of a checkout.
 optimized_binary(
     name = "runner",
     binary = ":jscpd-test",
+    visibility = ["//visibility:public"],
+)
+
+# The switch of the unused tests that `code_gates` declares, off by default: a target of `accio_unused_test` is
+# incompatible, so `bazel test //...` skips it. Turn them on with `--@community//tools/jscpd-test:unused` from the
+# ultimate root, or `--//tools/jscpd-test:unused` from the community root.
+bool_flag(
+    name = "unused",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "unused_on",
+    flag_values = {":unused": "true"},
     visibility = ["//visibility:public"],
 )

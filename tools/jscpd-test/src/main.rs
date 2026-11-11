@@ -13,10 +13,14 @@
 //! resolve a relative entry against the real directory of the linked file. jscpd skips a link unless it gets
 //! `--follow-symlinks`. A target with `working_copy` scans the checkout: the runner resolves the link of the
 //! configuration file in the runfiles to the checkout, and it runs jscpd there with the file as it is.
+//!
+//! The same binary runs `accio_unused_test`, see the `unused` module: the rule of that test sets
+//! `ACCIO_UNUSED_TEST_ACCIO`, and the two tests share the report and the resolution of the root.
 
 mod clones;
 mod config;
 mod markers;
+mod unused;
 
 use crate::clones::Clone;
 use crate::config::{Config, Listing};
@@ -62,7 +66,8 @@ struct Case {
 }
 
 fn main() {
-    match run() {
+    let result = if env::var_os(unused::ACCIO_ENV_VAR).is_some() { unused::run() } else { run() };
+    match result {
         Ok(passed) => process::exit(i32::from(!passed)),
         Err(error) => {
             eprintln!("jscpd-test: {error}");
@@ -107,14 +112,18 @@ fn run() -> Result<bool, Box<dyn Error>> {
         ),
     };
 
-    let cases = [clone_case, marker_case];
-    for case in &cases {
+    Ok(finish(&env_var(CLASS_ENV_VAR)?, &[clone_case, marker_case])?)
+}
+
+/// Prints the failures of `cases`, writes their report under `class`, and answers whether all of them passed.
+fn finish(class: &str, cases: &[Case]) -> io::Result<bool> {
+    for case in cases {
         if let Some(failure) = &case.failure {
             println!("{}: {failure}\n", case.name);
         }
     }
     if let Some(path) = env::var_os(REPORT_ENV_VAR) {
-        fs::write(path, junit_report(&env_var(CLASS_ENV_VAR)?, &cases))?;
+        fs::write(path, junit_report(class, cases))?;
     }
     Ok(cases.iter().all(|case| case.failure.is_none()))
 }
