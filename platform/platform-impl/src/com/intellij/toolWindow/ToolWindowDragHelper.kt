@@ -37,7 +37,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.WindowRoundedCornersManager
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.drag.DialogDragImageView
 import com.intellij.ui.drag.DialogWithImage
 import com.intellij.ui.drag.DragImageView
@@ -55,7 +54,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
-import java.awt.Graphics
 import java.awt.Image
 import java.awt.Point
 import java.awt.Rectangle
@@ -155,31 +153,18 @@ class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSourcePane: Too
      *
      * This does not include the highlight for the stripe button, that is handled by the stripe
      */
-    fun createDropTargetHighlightComponent(): NonOpaquePanel {
-      return object: NonOpaquePanel() {
-        override fun paint(g: Graphics) {
-          if (ExperimentalUI.isNewUI()) {
-            g.color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.AREA_BACKGROUND
-          }
-          else {
-            g.color = JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
-          }
-          g.fillRect(0, 0, width, height)
-        }
+    fun createDropTargetHighlightComponent(): DropAreaHighlightComponent {
+      return DropAreaHighlightComponent {
+        if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.ToolWindow.DragAndDrop.AREA_BACKGROUND else JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
       }
     }
 
     /**
      * Create a component to show the rectangle of the tool window possible drop target
      */
-    fun createDropHintHighlightComponent(): NonOpaquePanel {
-      return object : NonOpaquePanel() {
-        override fun paint(g: Graphics) {
-          if (ExperimentalUI.isNewUI()) {
-            g.color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.HINT_BACKGROUND
-            g.fillRect(0, 0, width, height)
-          }
-        }
+    fun createDropHintHighlightComponent(): DropAreaHighlightComponent {
+      return DropAreaHighlightComponent {
+        if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.ToolWindow.DragAndDrop.HINT_BACKGROUND else null
       }
     }
   }
