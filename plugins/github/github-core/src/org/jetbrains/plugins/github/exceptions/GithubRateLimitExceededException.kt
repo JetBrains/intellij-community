@@ -16,15 +16,26 @@
 package org.jetbrains.plugins.github.exceptions
 
 import java.io.IOException
+import kotlin.time.Duration
 import kotlin.time.Instant
 
 /**
  * @author Aleksey Pivovarov
  */
-class GithubRateLimitExceededException @JvmOverloads constructor(
+open class GithubRateLimitExceededException @JvmOverloads constructor(
   message: String,
   /**
    * The time when the rate limit resets, or `null` if the server didn't report it.
    */
   val resetAt: Instant? = null,
 ) : IOException(message)
+
+/**
+ * GitHub rejected a request because of a secondary rate limit, such as too many requests per minute.
+ *
+ * See https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#about-secondary-rate-limits.
+ *
+ * @property retryAfter the time that GitHub asks to wait before the next request, or `null` if the server didn't report it
+ */
+class GithubSecondaryRateLimitExceededException(message: String, val retryAfter: Duration?) :
+  GithubRateLimitExceededException(message, null)
