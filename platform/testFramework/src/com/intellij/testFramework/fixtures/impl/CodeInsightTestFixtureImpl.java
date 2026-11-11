@@ -1242,7 +1242,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public @NotNull String getUsageViewTreeTextRepresentation(@NotNull PsiElement targetElement) {
     FindUsagesManager usagesManager = ((FindManagerBase)FindManager.getInstance(getProject())).getFindUsagesManager();
     FindUsagesHandler handler = ReadAction.computeBlocking(() -> usagesManager.getFindUsagesHandler(targetElement, false));
-    assertNotNull("Cannot find handler for: " + targetElement, handler);
+    if (handler == null) {
+      fail("Cannot find handler for: " + ReadAction.computeBlocking(() -> targetElement.toString()));
+    }
     UsageViewImpl usageView = (UsageViewImpl)EdtTestUtil.runInEdtAndGet(() -> {
       return usagesManager.doFindUsages(handler.getPrimaryElements(),
                                         handler.getSecondaryElements(),
@@ -1277,7 +1279,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     CommonProcessors.CollectProcessor<UsageInfo> processor =
       new CommonProcessors.CollectProcessor<>(Collections.synchronizedList(new ArrayList<>()));
-    assertNotNull("Cannot find handler for: " + targetElement, handler);
+    if (handler == null) {
+      fail("Cannot find handler for: " + ReadAction.computeBlocking(() -> targetElement.toString()));
+    }
     PsiElement[] psiElements = ReadAction.computeBlocking(() -> {
       return ArrayUtil.mergeArrays(handler.getPrimaryElements(), handler.getSecondaryElements());
     });
