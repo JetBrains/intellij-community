@@ -930,6 +930,8 @@ public @interface NotNull {
 
     fun testCompanionBlockNoClash() = doTest { newName = "beta" }
 
+    fun testCompanionWithJavaUsage() = doTest { newParameters[1].name = "bar" }
+
     fun testCompanionBlockOverloadClash() = doTestConflict { newParameters[0].setType("kotlin.Int") }
 
     fun testBlockMemberNoClashWithCompanionExtension() = doTest { newName = "fromExtension" }

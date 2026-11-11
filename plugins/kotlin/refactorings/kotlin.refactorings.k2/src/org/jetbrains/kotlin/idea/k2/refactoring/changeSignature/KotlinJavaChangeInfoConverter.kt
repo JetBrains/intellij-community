@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.isCompanion
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.types.Variance
 
@@ -284,6 +285,14 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
             }
         }
 
+        if ((originalFunction as? KtCallableDeclaration)?.isCompanion == true) {
+            params.removeFirst()
+            params.forEach {
+                if (!it.isNew) {
+                    it.oldParameterIndex -= 1
+                }
+            }
+        }
         return params
     }
 
