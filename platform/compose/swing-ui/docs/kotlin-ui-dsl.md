@@ -217,7 +217,7 @@ Two consequences decide whether a settings page should be split this way at all:
 |---|---|---|
 | `cell(component)` | `SwingNode(factory = { component })` | |
 | `cell()` | omit the cell | |
-| `scrollCell(component)` | `ScrollPane { }` | |
+| `scrollCell(component)` | `ScrollPane { Viewport { } }` | Import `ScrollPane` from `com.intellij.platform.compose.swing.components.layout`. It builds a `JBScrollPane`, as `scrollCell` does |
 | `placeholder()` | **obsolete by design** | Conditional content is native |
 | `panel { }` | a nested `FormPanel` | |
 | `layout(RowLayout)` | - | The form derives the layout from the row |
@@ -244,7 +244,7 @@ Two consequences decide whether a settings page should be split this way at all:
 | `contextHelp(description, title)` | `SwingNode(factory = { ContextHelpLabel.create(...) })` | Deliberately unwrapped |
 | `textField()` | `TextField` | |
 | `passwordField()` | `PasswordField` | |
-| `textArea()` | `ScrollPane { TextArea(...) }` | The DSL wraps the area in a scroll pane, but `TextArea` does not |
+| `textArea()` | `ScrollPane { Viewport { TextArea(...) } }` | The DSL wraps the area in a scroll pane, but `TextArea` does not |
 | `intTextField(range, keyboardStep)` | **gap** | `Spinner` for a bounded number, otherwise `SwingNode` over `JBTextField` |
 | `spinner(range, step)` | `Spinner` | |
 | `comboBox(model / items, renderer)` | `ComboBox` | |
