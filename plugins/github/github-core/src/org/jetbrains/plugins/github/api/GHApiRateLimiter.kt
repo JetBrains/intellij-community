@@ -7,6 +7,7 @@ import com.intellij.util.text.DateFormatUtil
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException
+import org.jetbrains.plugins.github.exceptions.GithubSecondaryRateLimitExceededException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.io.InputStream
 import java.net.URI
@@ -17,6 +18,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
+import kotlin.time.TimeSource
 
 internal const val MAX_CONCURRENT_REQUESTS_REGISTRY_KEY = "github.api.max.concurrent.requests"
 
@@ -35,18 +37,30 @@ internal const val DEFAULT_MAX_CONCURRENT_REQUESTS = 50
 private val PRIMARY_RATE_LIMIT_COOLDOWN: Duration = 1.minutes
 
 /**
+ * The pause after a secondary rate limit error without the `Retry-After` header.
+ * GitHub asks to wait at least one minute:
+ * https://docs.github.com/en/rest/using-the-rest-api/best-practices-for-using-the-rest-api?apiVersion=2026-03-10#handle-rate-limit-errors-appropriately.
+ */
+private val SECONDARY_RATE_LIMIT_WAIT: Duration = 1.minutes
+
+/**
  * Limits GitHub API requests to one server.
  *
  * All executors share the limits, so they hold no matter how many executors the plugin creates.
  * The host and the port of the request URL identify the server.
  *
- * Two limits apply:
+ * Three limits apply:
  * * the number of concurrent requests, which the registry key [MAX_CONCURRENT_REQUESTS_REGISTRY_KEY] sets;
  * * the primary rate limit of GitHub, separately for GraphQL and core REST requests.
  *   When a response reports that no requests remain, the next requests of the same kind fail without a call to the server until
  *   the limit resets.
  *   A rate limit error without the reset time blocks them for [PRIMARY_RATE_LIMIT_COOLDOWN].
  *   See https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#about-primary-rate-limits.
+ * * the secondary rate limits of GitHub.
+ *   After a secondary rate limit error, the next requests to the server fail without a call to the server
+ *   for the time that GitHub asks for.
+ *   The failed request isn't sent again.
+ *   See https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#about-secondary-rate-limits.
  */
 @Service
 internal class GHApiRateLimiter {
@@ -74,9 +88,11 @@ internal class GHApiRateLimiter {
   ): T {
     val server = serverState(request.url)
     // a request without a budget fails at once, before it waits for a permit
+    server.checkPause()
     server.checkBudget(request)
     return server.semaphore(maxConcurrentRequests).withPermit {
-      // the check runs again, because a response may exhaust the budget during the wait for the permit
+      // the checks run again, because a response may start a pause or exhaust the budget during the wait for the permit
+      server.checkPause()
       server.checkBudget(request)
       val response = send()
       val headers = GHRateLimitHeaders.parse(response)
@@ -85,8 +101,14 @@ internal class GHApiRateLimiter {
         parse(response, headers)
       }
       catch (e: GithubRateLimitExceededException) {
-        // a 403 or a 429
-        server.recordPrimaryRateLimitError(request, headers)
+        if (e is GithubSecondaryRateLimitExceededException) {
+          // the request fails, and the next requests to the server fail until the pause ends
+          server.pause(e.retryAfter ?: SECONDARY_RATE_LIMIT_WAIT)
+        }
+        else {
+          // a 403 or a 429
+          server.recordPrimaryRateLimitError(request, headers)
+        }
         throw e
       }
     }
@@ -148,6 +170,29 @@ private class ServerState(maxConcurrentRequests: Int) {
    * The time until which each budget has no requests left.
    */
   private val exhaustedUntil = ConcurrentHashMap<Budget, Instant>()
+
+  /**
+   * The end of the pause after a secondary rate limit error.
+   * The monotonic time source keeps the pause correct when the system clock changes.
+   */
+  private val pausedUntil = AtomicReference<TimeSource.Monotonic.ValueTimeMark?>()
+
+  fun pause(wait: Duration) {
+    val until = TimeSource.Monotonic.markNow() + wait
+    pausedUntil.updateAndGet { current -> if (current == null || until > current) until else current }
+  }
+
+  /**
+   * Fails the request without a call to the server while the pause after a secondary rate limit error lasts.
+   * The error reports the time left.
+   */
+  fun checkPause() {
+    val until = pausedUntil.get() ?: return
+    val timeLeft = -until.elapsedNow()
+    if (!timeLeft.isPositive()) return
+    val time = DateFormatUtil.formatTime((Clock.System.now() + timeLeft).toEpochMilliseconds())
+    throw GithubSecondaryRateLimitExceededException(GithubBundle.message("rate.limit.secondary.exceeded.until", time), timeLeft)
+  }
 
   /**
    * Records the budget of the [request] as exhausted until the reset when the response [headers] report no remaining requests.

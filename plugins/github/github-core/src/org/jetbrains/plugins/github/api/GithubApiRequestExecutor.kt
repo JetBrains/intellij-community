@@ -28,6 +28,7 @@ import org.jetbrains.plugins.github.exceptions.GithubConfusingException
 import org.jetbrains.plugins.github.exceptions.GithubJsonException
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException
+import org.jetbrains.plugins.github.exceptions.GithubSecondaryRateLimitExceededException
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
@@ -345,6 +346,9 @@ sealed class GithubApiRequestExecutor {
         isPrimaryRateLimitError(responseCode, jsonError, rateLimitHeaders) -> {
           GithubRateLimitExceededException(presentableError, rateLimitHeaders?.resetAt)
         }
+        isSecondaryRateLimitError(responseCode, jsonError, rateLimitHeaders) -> {
+          GithubSecondaryRateLimitExceededException(presentableError, rateLimitHeaders?.retryAfter)
+        }
         responseCode == HttpURLConnection.HTTP_UNAUTHORIZED ||
         responseCode == HttpURLConnection.HTTP_PAYMENT_REQUIRED ||
         responseCode == HttpURLConnection.HTTP_FORBIDDEN -> {
@@ -375,6 +379,19 @@ sealed class GithubApiRequestExecutor {
       }
       return (responseCode == HttpURLConnection.HTTP_FORBIDDEN || responseCode == HTTP_TOO_MANY_REQUESTS) && headers?.remaining == 0
     }
+
+    /**
+     * GitHub answers with 403 or 429, and the requests of the primary rate limit remain.
+     * A 403 is a secondary rate limit error only with the `Retry-After` header or with the message about the secondary rate limit,
+     * otherwise it is an access error.
+     * See https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#exceeding-the-rate-limit.
+     */
+    private fun isSecondaryRateLimitError(responseCode: Int, jsonError: GithubErrorMessage?, headers: GHRateLimitHeaders?): Boolean =
+      when (responseCode) {
+        HTTP_TOO_MANY_REQUESTS -> true
+        HttpURLConnection.HTTP_FORBIDDEN -> headers?.retryAfter != null || jsonError?.containsReasonMessage("secondary rate limit") == true
+        else -> false
+      }
 
     internal fun getJsonError(requestName: String, errorText: String, contentType: String): GithubErrorMessage? {
       if (!contentType.startsWith(GithubApiContentHelper.JSON_MIME_TYPE)) return null
