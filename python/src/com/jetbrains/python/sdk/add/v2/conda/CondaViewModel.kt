@@ -13,6 +13,7 @@ import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvir
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.PythonToolViewModel
@@ -95,6 +96,16 @@ class CondaViewModel<P : PathHolder>(
       }
     }
   }
+
+  /**
+   * The newest of [languageLevels] that the `python` dependency of the `environment.yml` in [projectPath] allows.
+   * Returns `null` when the file is not there, or when it allows none of [languageLevels].
+   */
+  internal suspend fun readEnvironmentYmlLanguageLevel(projectPath: Path, languageLevels: List<LanguageLevel>): LanguageLevel? =
+    withContext(Dispatchers.IO) {
+      val environmentYml = getEnvironmentYml(projectPath) ?: return@withContext null
+      CondaEnvironmentYmlParser.readPythonLanguageLevelFromFile(environmentYml, languageLevels)
+    }
 
   private fun getEnvironmentYml(projectPath: Path) = listOf(
     CondaEnvironmentYmlSdkUtils.ENV_YAML_FILE_NAME,

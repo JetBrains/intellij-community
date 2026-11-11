@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.conda
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
@@ -33,6 +34,13 @@ import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.ui.flow.bindText
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 
 internal class CondaNewEnvironmentCreator<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>) : PythonNewEnvironmentCreator<P>(model) {
 
@@ -73,6 +81,13 @@ internal class CondaNewEnvironmentCreator<P : PathHolder>(model: PythonMutableTa
 
   override fun onShown(scope: CoroutineScope) {
     condaExecutable.initialize(scope)
+    // Only a new level from `environment.yml` changes the selection, so a project path edit keeps the choice of the user.
+    model.projectPathFlows.projectPathWithDefault
+      .map { model.condaViewModel.readEnvironmentYmlLanguageLevel(it, condaSupportedLanguages) }
+      .distinctUntilChanged()
+      .filterNotNull()
+      .onEach { withContext(Dispatchers.EDT) { pythonVersion.set(it) } }
+      .launchIn(scope)
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<PythonInterpreter> {

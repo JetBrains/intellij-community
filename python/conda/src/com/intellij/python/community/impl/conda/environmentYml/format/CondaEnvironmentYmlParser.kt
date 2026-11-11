@@ -10,6 +10,8 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.intellij.python.requirements.parser.PyRequirementParser
 import com.intellij.python.requirements.parser.RequirementsParserHelper
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
+import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
+import com.jetbrains.python.psi.LanguageLevel
 import kotlinx.io.IOException
 import org.jetbrains.annotations.ApiStatus
 import tools.jackson.core.JacksonException
@@ -30,19 +32,41 @@ object CondaEnvironmentYmlParser {
   }
 
   suspend fun fromFile(file: VirtualFile): List<PyRequirement>? {
-    val pyRequirements = try {
+    val pyRequirements = readDepsOrNull(file) ?: return null
+    return pyRequirements.filter { it.name != "python" }.distinct()
+  }
+
+  /**
+   * The newest of [languageLevels] that the `python` dependency of [file] allows, such as 3.11 for `python=3.11`.
+   *
+   * Returns `null` when [file] has no `python` dependency, when the parse fails, or when no level matches.
+   */
+  suspend fun readPythonLanguageLevelFromFile(file: VirtualFile, languageLevels: List<LanguageLevel>): LanguageLevel? {
+    val python = readDepsOrNull(file)?.firstOrNull { it.name == "python" } ?: return null
+    return languageLevels.filter { level -> python.versionSpecs.all { it.allows(level) } }.maxOrNull()
+  }
+
+  /**
+   * conda reads `python=3.11` as any 3.11 release, but the PEP 440 `==3.11` matches only 3.11.0.
+   * Thus, an exact spec compares only the major and the minor version.
+   */
+  private fun PyRequirementVersionSpec.allows(level: LanguageLevel): Boolean = when (relation) {
+    PyRequirementRelation.EQ, PyRequirementRelation.STR_EQ -> version.split('.').take(2).joinToString(".") == level.toPythonVersion()
+    else -> matches(level.toPythonVersion())
+  }
+
+  private suspend fun readDepsOrNull(file: VirtualFile): List<PyRequirement>? =
+    try {
       readDeps(file)
     }
     catch (e: IOException) {
       thisLogger().info("Cannot parse deps from ${file.readText()}", e)
-      return null
+      null
     }
     catch (e: JacksonException) {
       thisLogger().info("Cannot parse deps from ${file.readText()}", e)
-      return null
+      null
     }
-    return pyRequirements.filter { it.name != "python" }.distinct()
-  }
 
   @Throws(IOException::class)
   private suspend fun readDeps(file: VirtualFile): List<PyRequirement> {
