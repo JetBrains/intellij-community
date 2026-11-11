@@ -27,7 +27,6 @@ import com.jetbrains.python.psi.types.SubtypeJudgement.isSubtype
 import com.jetbrains.python.psi.types.SubtypeJudgement.sameTypes
 import org.jetbrains.annotations.ApiStatus
 import java.util.ArrayDeque
-import java.util.Objects
 import java.util.TreeMap
 
 
@@ -284,7 +283,7 @@ class PyInferenceVariable(
   override fun assertValid(message: String?) {}
 
   override fun hashCode(): Int {
-    return Objects.hash(typeVariable.name)
+    return name.hashCode()
   }
 
   override fun equals(other: Any?): Boolean {
