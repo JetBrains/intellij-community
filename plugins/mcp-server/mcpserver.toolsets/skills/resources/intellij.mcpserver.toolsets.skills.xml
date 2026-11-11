@@ -1,0 +1,21 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.mcpserver.skills"/>
+    <module name="intellij.mcpserver.toolsets"/>
+    <module name="intellij.platform.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <mcpServer.bundledSkillsProvider implementation="com.intellij.mcpserver.toolsets.skills.JvmCodeBundledSkillsProvider"/>
+    <registryKey defaultValue="false"
+                 description="Enable the IntelliJ IDEA JVM imports bundled skill"
+                 key="llm.agents.contrib.idea.jvm.imports.skill.enabled"/>
+    <!-- TODO Before you set this to true: update the @McpDescription of rename_refactoring, and add
+         the skill to the root AGENTS.md, as step 7 of contrib/README.md tells you. -->
+    <registryKey defaultValue="false"
+                 description="Enable the IntelliJ IDEA JVM refactoring bundled skill"
+                 key="llm.agents.contrib.idea.refactor.jvm.skill.enabled"/>
+  </extensions>
+</idea-plugin>

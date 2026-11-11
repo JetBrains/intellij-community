@@ -147,6 +147,7 @@ intellij.maven.tests
 intellij.mcpserver.terminal.frontend.tests
 intellij.mcpserver.terminal.tests
 intellij.mcpserver.tests
+intellij.mcpserver.toolsets.skills.tests
 intellij.mermaid.tests
 intellij.notebooks.visualization.tests
 intellij.performanceTesting.tests

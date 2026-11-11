@@ -1500,6 +1500,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.testFramework/intellij.mcpserver.testFramework.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.testFramework/intellij.mcpserver.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/tests/intellij.mcpserver.tests.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/tests/intellij.mcpserver.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.toolsets/intellij.mcpserver.toolsets.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.toolsets/intellij.mcpserver.toolsets.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.toolsets/skills/intellij.mcpserver.toolsets.skills.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.toolsets/skills/intellij.mcpserver.toolsets.skills.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.toolsets/skills/intellij.mcpserver.toolsets.skills.tests.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.toolsets/skills/intellij.mcpserver.toolsets.skills.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.vcs/intellij.mcpserver.vcs.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.vcs/intellij.mcpserver.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/intellij.mermaid.iml" filepath="$PROJECT_DIR$/plugins/mermaid/intellij.mermaid.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mermaid/frontend/intellij.mermaid.frontend.iml" filepath="$PROJECT_DIR$/plugins/mermaid/frontend/intellij.mermaid.frontend.iml" />
