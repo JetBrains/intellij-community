@@ -2454,6 +2454,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("testData/inline/namedFunction/explicitContextArgumentNestedInnerCall.kt");
             }
 
+            @TestMetadata("explicitContextArgumentQualifiedInnerCall.kt")
+            public void testExplicitContextArgumentQualifiedInnerCall() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentQualifiedInnerCall.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentSafeQualifiedInnerCall.kt")
+            public void testExplicitContextArgumentSafeQualifiedInnerCall() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentSafeQualifiedInnerCall.kt");
+            }
+
             @TestMetadata("explicitContextArgumentSmartCast.kt")
             public void testExplicitContextArgumentSmartCast() throws Exception {
                 runTest("testData/inline/namedFunction/explicitContextArgumentSmartCast.kt");

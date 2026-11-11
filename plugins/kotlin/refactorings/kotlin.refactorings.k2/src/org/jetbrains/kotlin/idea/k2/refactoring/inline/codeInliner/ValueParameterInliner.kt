@@ -176,10 +176,11 @@ internal class ValueParameterInliner(
 
             val contextScopeArguments = if (callExpression == null) arguments else arguments.filter { it.first.isSpecial }
             if (contextScopeArguments.isNotEmpty()) {
-                val replacement: KtExpression = contextScopeArguments.foldRight(oldExpression) { pair, expr ->
+                val expressionToWrap = oldExpression.getQualifiedExpressionForSelectorOrThis()
+                val replacement: KtExpression = contextScopeArguments.foldRight(expressionToWrap) { pair, expr ->
                     psiFactory.createExpressionByPattern("kotlin.context($0) { $1 }", contextParameterReference(pair.second), expr)
                 }
-                codeToInline.replaceExpression(oldExpression, replacement)
+                codeToInline.replaceExpression(expressionToWrap, replacement)
             }
         }
     }

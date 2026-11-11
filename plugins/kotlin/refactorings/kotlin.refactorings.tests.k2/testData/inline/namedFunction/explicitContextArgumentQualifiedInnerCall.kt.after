@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
+// LANGUAGE_VERSION: 2.2
+
+class Session(val user: String)
+
+class Logger(val name: String) {
+    context(_: Session)
+    fun audit(): String = "$name(${contextOf<Session>().user})"
+
+    fun chained(): Logger = this
+}
+
+fun caller(): String = context(Session("caller")) { Logger("L").chained().audit() }.substring(42)
