@@ -7,6 +7,7 @@ import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -148,6 +149,7 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
    * The text margin at the right side keeps the soft-wrapped text away from the vertical scroll bar.
    */
   private fun applyContentMargin() {
+    if (editor.editorKind == EditorKind.DIFF) return
     val margin = (CONTENT_MARGIN_EMS * editor.colorsScheme.editorFontSize2D).roundToInt()
     // The soft wraps take insets that are at least as wide as the scroll bar as insets that include the scroll bar.
     val scrollBar = editor.scrollPane.verticalScrollBar
