@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public class GridDataHookUpManager implements Disposable {
+public class GridDataHookUpManager implements GridHookUpRegistry, Disposable {
   private final Project myProject;
   private final Set<HookUpReference> myHookUps;
   private final Object myLock;
@@ -46,7 +46,7 @@ public class GridDataHookUpManager implements Disposable {
   }
 
   public static GridDataHookUpManager getInstance(@NotNull Project project) {
-    return project.getService(GridDataHookUpManager.class);
+    return (GridDataHookUpManager)GridHookUpRegistry.getInstance(project);
   }
 
   public @NotNull CsvDocumentDataHookUp getHookUp(@NotNull CsvTableDataFragmentFile file, @NotNull Disposable parent) {
@@ -164,7 +164,8 @@ public class GridDataHookUpManager implements Disposable {
     }
   }
 
-  public <T extends GridDataHookUp<GridRow, GridColumn>> T registerHookUp(T hookUp, @NotNull Disposable parent) {
+  @Override
+  public <T extends GridDataHookUp<GridRow, GridColumn>> @NotNull T registerHookUp(@NotNull T hookUp, @NotNull Disposable parent) {
     synchronized (myLock) {
       HookUpReference ref = new HookUpReference(hookUp, null);
       myHookUps.add(ref);
