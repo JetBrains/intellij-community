@@ -20,6 +20,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.jetbrains.annotations.NotNull;
@@ -74,8 +75,7 @@ public final class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjecti
                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                     GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
                                                     null, 0, false));
-      myCenterPanel.setBorder(IdeBorderFactory.PlainSmallWithoutIndent.createTitledBorder(null, this.$$$getMessageFromBundle$$$(
-                                                                                            "messages/IntelliLangBundle", "base.injection.panel.title"), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
+      myCenterPanel.setBorder(IdeBorderFactory.PlainSmallWithoutIndent.createTitledBorder(null, IntelliLangBundle.message("base.injection.panel.title"), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION,
                                                                                           null, null));
       myRoot.add(myAdvancedPanel.$$$getRootComponent$$$(),
                  new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,

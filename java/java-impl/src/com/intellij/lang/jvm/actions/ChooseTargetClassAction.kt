@@ -7,6 +7,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.Presentation
+import org.jetbrains.annotations.Nls
 
 /**
  * One intention which stands for the same action on several target classes.
@@ -40,7 +41,7 @@ internal class ChooseTargetClassAction(
   private fun available(context: ActionContext): List<JvmGroupModCommandAction> =
     actions.filter { it.getPresentation(context) != null }
 
-  private fun getGroupText(actions: List<JvmGroupModCommandAction>): String {
+  private fun getGroupText(actions: List<JvmGroupModCommandAction>): @Nls String {
     actions.mapTo(HashSet()) { it.getGroupDisplayText() }.singleOrNull()?.let {
       // All actions have the same group text, so use it.
       return it

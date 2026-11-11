@@ -86,7 +86,6 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -94,7 +93,6 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.Set;
 
 public final class MethodParameterPanel extends AbstractInjectionPanel<MethodParameterInjection> {
@@ -136,8 +134,7 @@ public final class MethodParameterPanel extends AbstractInjectionPanel<MethodPar
                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null,
                                              0, false));
-      panel1.setBorder(IdeBorderFactory.PlainSmallWithoutIndent.createTitledBorder(null, this.$$$getMessageFromBundle$$$(
-                                                                                     "messages/IntelliLangBundle", "method.parameter.panel.class.methods"), TitledBorder.DEFAULT_JUSTIFICATION,
+      panel1.setBorder(IdeBorderFactory.PlainSmallWithoutIndent.createTitledBorder(null, IntelliLangBundle.message("method.parameter.panel.class.methods"), TitledBorder.DEFAULT_JUSTIFICATION,
                                                                                    TitledBorder.DEFAULT_POSITION, null, null));
       myClassPanel = new JPanel();
       myClassPanel.setLayout(new BorderLayout(0, 0));
@@ -215,25 +212,6 @@ public final class MethodParameterPanel extends AbstractInjectionPanel<MethodPar
         performToggleAction();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myParamsTable);
-  }
-
-  private static Method $$$cachedGetBundleMethod$$$ = null;
-
-  /** @noinspection ALL */
-  private String $$$getMessageFromBundle$$$(String path, String key) {
-    ResourceBundle bundle;
-    try {
-      Class<?> thisClass = this.getClass();
-      if ($$$cachedGetBundleMethod$$$ == null) {
-        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
-        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
-      }
-      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
-    }
-    catch (Exception e) {
-      bundle = ResourceBundle.getBundle(path);
-    }
-    return bundle.getString(key);
   }
 
   /** @noinspection ALL */

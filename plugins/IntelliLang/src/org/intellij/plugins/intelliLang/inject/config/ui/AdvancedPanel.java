@@ -20,6 +20,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 
 import javax.swing.AbstractButton;
@@ -58,12 +59,11 @@ public final class AdvancedPanel extends AbstractInjectionPanel<BaseInjection> {
       myRoot.add(panel1,
                  new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_FIXED,
                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-      panel1.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(null, this.$$$getMessageFromBundle$$$(
-                                                                                  "messages/IntelliLangBundle", "advanced.xml.panel.title"), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null,
+      panel1.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(null, IntelliLangBundle.message("advanced.xml.panel.title"), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null,
                                                                                 null));
       final JLabel label1 = new JLabel();
       this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/IntelliLangBundle", "label.value.pattern"));
-      label1.setToolTipText(this.$$$getMessageFromBundle$$$("messages/IntelliLangBundle", "tooltip.regular.expression.html"));
+      label1.setToolTipText(IntelliLangBundle.message("tooltip.regular.expression.html"));
       panel1.add(label1,
                  new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
                                      GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));

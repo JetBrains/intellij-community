@@ -76,7 +76,8 @@ public abstract class JavaDocInfoMarkdownPrinter implements JavaDocInfoPrinter {
     var tree = parser.buildMarkdownTreeFromString((CharSequence)postProcessedDoc);
     var result = new StringBuilder(postProcessedDoc);
     resolveRelativeLinks(tree, result, context);
-    return result.toString();
+    @NlsSafe String document = result.toString();
+    return document;
   }
 
   private void resolveRelativeLinks(ASTNode node, StringBuilder document, @Nullable PsiElement context) {

@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.FileCollectionFactory
@@ -89,8 +90,9 @@ class ForkedJavacCompiler(private val project: Project, private val workingDir: 
     if (!compiledOk) {
       val messages = diagnostic.diagnostics.map { d ->
         val uri = d.source?.toUri()
+        @NlsSafe val text = d.getMessage(Locale.US).orEmpty()
         CompilationException.Message(
-          kindToCategory(d.kind), d.getMessage(Locale.US).orEmpty(), uri?.toURL()?.toString(), d.lineNumber.toInt(), d.columnNumber.toInt()
+          kindToCategory(d.kind), text, uri?.toURL()?.toString(), d.lineNumber.toInt(), d.columnNumber.toInt()
         )
       }
       throw CompilationException("Compilation failed", messages)

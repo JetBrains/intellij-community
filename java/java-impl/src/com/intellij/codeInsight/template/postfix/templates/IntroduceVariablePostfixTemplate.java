@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -56,9 +57,8 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
                                                               @NotNull PostfixTemplateProvider provider,
                                                               @NotNull TextRange keyRange) {
     JavaIntroduceVariableModCommandService service = JavaIntroduceVariableModCommandService.getInstance();
-    //noinspection HardCodedStringLiteral
     if (service == null) return ModCommand.nop();
-    String familyName = MY_SELECTOR.getRenderer().fun(virtualExpr);
+    @NlsSafe String familyName = MY_SELECTOR.getRenderer().fun(virtualExpr);
     return service.introduceVariableCommand(ctx, new PostfixIntroduceSite(virtualExpr, provider, keyRange),
                                             service.getContext(virtualExpr), familyName);
   }

@@ -26,8 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.awt.Insets;
-import java.lang.reflect.Method;
-import java.util.ResourceBundle;
 
 public class JarApplicationConfigurable extends SettingsEditor<JarApplicationConfiguration> implements PanelWithAnchor {
   private final CommonJavaParametersPanel myCommonProgramParameters;
@@ -70,7 +68,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
                                                             GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                             null, null, null, 0, false));
       myJarPathComponent.setLabelLocation("West");
-      myJarPathComponent.setText(this.$$$getMessageFromBundle$$$("messages/ExecutionBundle", "label.path.to.jar"));
+      myJarPathComponent.setText(ExecutionBundle.message("label.path.to.jar"));
       myWholePanel.add(myJarPathComponent, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -78,7 +76,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
       myModuleComponent = new LabeledComponentNoThrow();
       myModuleComponent.setComponentClass("com.intellij.application.options.ModulesComboBox");
       myModuleComponent.setLabelLocation("West");
-      myModuleComponent.setText(this.$$$getMessageFromBundle$$$("messages/ExecutionBundle", "label.search.sources.using.module.classpath"));
+      myModuleComponent.setText(ExecutionBundle.message("label.search.sources.using.module.classpath"));
       myWholePanel.add(myModuleComponent, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
@@ -89,25 +87,6 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
     modulesComboBox.allowEmptySelection(JavaCompilerBundle.message("whole.project"));
     modulesComboBox.fillModules(project);
     myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromModuleDependencies(modulesComboBox, true));
-  }
-
-  private static Method $$$cachedGetBundleMethod$$$ = null;
-
-  /** @noinspection ALL */
-  private String $$$getMessageFromBundle$$$(String path, String key) {
-    ResourceBundle bundle;
-    try {
-      Class<?> thisClass = this.getClass();
-      if ($$$cachedGetBundleMethod$$$ == null) {
-        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass("com.intellij.DynamicBundle");
-        $$$cachedGetBundleMethod$$$ = dynamicBundleClass.getMethod("getBundle", String.class, Class.class);
-      }
-      bundle = (ResourceBundle)$$$cachedGetBundleMethod$$$.invoke(null, path, thisClass);
-    }
-    catch (Exception e) {
-      bundle = ResourceBundle.getBundle(path);
-    }
-    return bundle.getString(key);
   }
 
   /** @noinspection ALL */

@@ -33,6 +33,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.Nls;
@@ -68,8 +69,7 @@ public final class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
       myRoot = new JPanel();
       myRoot.setLayout(new GridLayoutManager(3, 2, new Insets(0, 0, 0, 0), -1, -1));
       myRoot.putClientProperty("BorderFactoryClass", "com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
-      myRoot.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(null, this.$$$getMessageFromBundle$$$(
-        "messages/IntelliLangBundle", "language.title"), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
+      myRoot.setBorder(IdeBorderFactory.PlainSmallWithIndent.createTitledBorder(null, IntelliLangBundle.message("language.title"), TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, null, null));
       final JLabel label1 = new JLabel();
       this.$$$loadLabelText$$$(label1, this.$$$getMessageFromBundle$$$("messages/IntelliLangBundle", "language.label.id"));
       myRoot.add(label1,
