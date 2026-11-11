@@ -108,6 +108,7 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
         "//libraries/junit6",
+        "//libraries/junit6-params",
         "//platform/structure-view-impl/plugin",
         "//platform/todo/plugin",
         "//java/plugin",

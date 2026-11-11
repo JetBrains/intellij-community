@@ -2,100 +2,124 @@
 package com.intellij.codeInsight.template.emmet.filters;
 
 import com.intellij.application.options.emmet.EmmetOptions;
-import com.intellij.codeInsight.template.emmet.EmmetAbbreviationTestSuite;
+import com.intellij.codeInsight.template.emmet.EmmetAbbreviationTestCase;
+import com.intellij.codeInsight.template.emmet.EmmetAbbreviationTestCases;
+import com.intellij.codeInsight.template.emmet.EmmetAbbreviationTestFixture;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import junit.framework.Test;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Named;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-public class BemEmmetFilterTest extends EmmetAbbreviationTestSuite {
-  public BemEmmetFilterTest() {
-    addBemTests();
-    addBem2Tests();
-    addRegressionTests();
-    addConfigurableTests();
+import java.util.List;
+
+import static com.intellij.codeInsight.template.emmet.EmmetAbbreviationTestFixture.emmetAbbreviationFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightProjectFixture;
+
+@TestApplication
+public class BemEmmetFilterTest {
+  private static final TestFixture<Project> projectFixture = codeInsightProjectFixture();
+  private final TestFixture<EmmetAbbreviationTestFixture> emmet = emmetAbbreviationFixture(projectFixture, "html");
+
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("cases")
+  void abbreviation(EmmetAbbreviationTestCase testCase) {
+    emmet.get().checkAbbreviation(testCase);
   }
 
-  public static Test suite() {
-    return new BemEmmetFilterTest();
+  static List<Named<EmmetAbbreviationTestCase>> cases() {
+    return new Cases().toNamedCases();
   }
 
-  private void addBemTests() {
-    addTest(".b_m|bem", "<div class=\"b b_m\"></div>");
-    addTest(".b_m1._m2|bem", "<div class=\"b b_m1 b_m2\"></div>");
-    addTest(".b>._m|bem", "<div class=\"b\">\n\t<div class=\"b b_m\"></div>\n</div>");
-    addTest(".b>._m1>._m2|bem", "<div class=\"b\">\n\t<div class=\"b b_m1\">\n\t\t<div class=\"b b_m2\"></div>\n\t</div>\n</div>");
-    addTest(".b>.__e|bem", "<div class=\"b\">\n\t<div class=\"b__e\"></div>\n</div>");
-    addTest(".b>.-e|bem", "<div class=\"b\">\n\t<div class=\"b__e\"></div>\n</div>");
-    addTest(".b>.__e>.__e|bem", "<div class=\"b\">\n\t<div class=\"b__e\">\n\t\t<div class=\"b__e\"></div>\n\t</div>\n</div>");
-    addTest(".b>.__e1>.____e2|bem", "<div class=\"b\">\n\t<div class=\"b__e1\">\n\t\t<div class=\"b__e2\"></div>\n\t</div>\n</div>");
-    addTest(".b>.-e1>.-e2|bem", "<div class=\"b\">\n\t<div class=\"b__e1\">\n\t\t<div class=\"b__e2\"></div>\n\t</div>\n</div>");
-    addTest(".b1>.b2_m1>.__e1+.____e2_m2|bem",
-            "<div class=\"b1\">\n\t<div class=\"b2 b2_m1\">\n\t\t<div class=\"b2__e1\"></div>\n\t\t<div class=\"b1__e2 b1__e2_m2\"></div>\n\t</div>\n</div>");
-    addTest(".b>.__e1>.__e2|bem", "<div class=\"b\">\n\t<div class=\"b__e1\">\n\t\t<div class=\"b__e2\"></div>\n\t</div>\n</div>");
-    addTestWithName(".b>.__e1>.____e2|bem", ".b>.__e1>.____e2|bem #2", "<div class=\"b\">\n\t<div class=\"b__e1\">\n\t\t<div class=\"b__e2\"></div>\n\t</div>\n</div>");
-    addTest(".b._mod|bem", "<div class=\"b b_mod\"></div>");
-    addTest("form.search-form._wide>input.-query-string+input:s.-btn_large|bem",
-            "<form action=\"\" class=\"search-form search-form_wide\"><input type=\"text\" class=\"search-form__query-string\"><input\n" +
-            "        type=\"submit\" value=\"\" class=\"search-form__btn search-form__btn_large\"></form>");
-    addTest(".b1-div>.b2_m1>.-e1+.--e2_m2|bem", """
-      <div class="b1-div">
-          <div class="b2 b2_m1">
-              <div class="b2__e1"></div>
-              <div class="b1-div__e2 b1-div__e2_m2"></div>
-          </div>
-      </div>""");
-  }
+  private static final class Cases extends EmmetAbbreviationTestCases {
+    Cases() {
+      addBemTests();
+      addBem2Tests();
+      addRegressionTests();
+      addConfigurableTests();
+    }
 
-  private void addBem2Tests() {
-    addTestWithName(".b_m1._m2|bem", ".b_m1._m2|bem #2", "<div class=\"b b_m1 b_m2\"></div>");
-    addTestWithName(".b._mod|bem", ".b._mod|bem #2", "<div class=\"b b_mod\"></div>");
-  }
+    private void addBemTests() {
+      addTest(".b_m|bem", "<div class=\"b b_m\"></div>");
+      addTest(".b_m1._m2|bem", "<div class=\"b b_m1 b_m2\"></div>");
+      addTest(".b>._m|bem", "<div class=\"b\">\n\t<div class=\"b b_m\"></div>\n</div>");
+      addTest(".b>._m1>._m2|bem", "<div class=\"b\">\n\t<div class=\"b b_m1\">\n\t\t<div class=\"b b_m2\"></div>\n\t</div>\n</div>");
+      addTest(".b>.__e|bem", "<div class=\"b\">\n\t<div class=\"b__e\"></div>\n</div>");
+      addTest(".b>.-e|bem", "<div class=\"b\">\n\t<div class=\"b__e\"></div>\n</div>");
+      addTest(".b>.__e>.__e|bem", "<div class=\"b\">\n\t<div class=\"b__e\">\n\t\t<div class=\"b__e\"></div>\n\t</div>\n</div>");
+      addTest(".b>.__e1>.____e2|bem", "<div class=\"b\">\n\t<div class=\"b__e1\">\n\t\t<div class=\"b__e2\"></div>\n\t</div>\n</div>");
+      addTest(".b>.-e1>.-e2|bem", "<div class=\"b\">\n\t<div class=\"b__e1\">\n\t\t<div class=\"b__e2\"></div>\n\t</div>\n</div>");
+      addTest(".b1>.b2_m1>.__e1+.____e2_m2|bem",
+              "<div class=\"b1\">\n\t<div class=\"b2 b2_m1\">\n\t\t<div class=\"b2__e1\"></div>\n\t\t<div class=\"b1__e2 b1__e2_m2\"></div>\n\t</div>\n</div>");
+      addTest(".b>.__e1>.__e2|bem", "<div class=\"b\">\n\t<div class=\"b__e1\">\n\t\t<div class=\"b__e2\"></div>\n\t</div>\n</div>");
+      addTestWithName(".b>.__e1>.____e2|bem", ".b>.__e1>.____e2|bem #2", "<div class=\"b\">\n\t<div class=\"b__e1\">\n\t\t<div class=\"b__e2\"></div>\n\t</div>\n</div>");
+      addTest(".b._mod|bem", "<div class=\"b b_mod\"></div>");
+      addTest("form.search-form._wide>input.-query-string+input:s.-btn_large|bem",
+              "<form action=\"\" class=\"search-form search-form_wide\"><input type=\"text\" class=\"search-form__query-string\"><input\n" +
+              "        type=\"submit\" value=\"\" class=\"search-form__btn search-form__btn_large\"></form>");
+      addTest(".b1-div>.b2_m1>.-e1+.--e2_m2|bem", """
+        <div class="b1-div">
+            <div class="b2 b2_m1">
+                <div class="b2__e1"></div>
+                <div class="b1-div__e2 b1-div__e2_m2"></div>
+            </div>
+        </div>""");
+    }
 
-  private void addRegressionTests() {
-    addTest(".name__name2__name3__name4|bem", "<div class=\"name__name2__name3__name4\"></div>");
-    addTest(".name__name2__name3|bem", "<div class=\"name__name2__name3\"></div>");
-    addTest(".news(.title.-title(.-text))|bem", """
-      <div class="news">
-          <div class="title news__title">
-              <div class="title__text"></div>
-          </div>
-      </div>""");
-  }
+    private void addBem2Tests() {
+      addTestWithName(".b_m1._m2|bem", ".b_m1._m2|bem #2", "<div class=\"b b_m1 b_m2\"></div>");
+      addTestWithName(".b._mod|bem", ".b._mod|bem #2", "<div class=\"b b_mod\"></div>");
+    }
 
-  private void addConfigurableTests() {
-    addTest(".b9m|bem", "<div class=\"b b9m\"></div>", createBemTestInitializer("__", "9", "-"), "html");
-    addTestWithName(".b9m|bem", ".b9m|bem #2", "<div class=\"b9mb9m\"></div>", createBemTestInitializer("", "", ""), "html");
-    addTest(".b>.Ыe|bem", """
-      <div class="b">
-          <div class="bЫe"></div>
-      </div>""", createBemTestInitializer("Ы", "_", "-"), "html");
-  }
+    private void addRegressionTests() {
+      addTest(".name__name2__name3__name4|bem", "<div class=\"name__name2__name3__name4\"></div>");
+      addTest(".name__name2__name3|bem", "<div class=\"name__name2__name3\"></div>");
+      addTest(".news(.title.-title(.-text))|bem", """
+        <div class="news">
+            <div class="title news__title">
+                <div class="title__text"></div>
+            </div>
+        </div>""");
+    }
 
-  @NotNull
-  private static TestInitializer createBemTestInitializer(String elementSeparator, String modifierSeparator, String shortPrefix) {
-    return (fixture, testRootDisposable) -> {
-      EmmetOptions options = EmmetOptions.getInstance();
-      String oldElementSeparator = options.getBemElementSeparator();
-      String oldModifierSeparator = options.getBemModifierSeparator();
-      String oldShortPrefix = options.getBemShortElementPrefix();
+    private void addConfigurableTests() {
+      addTest(".b9m|bem", "<div class=\"b b9m\"></div>", createBemTestInitializer("__", "9", "-"), "html");
+      addTestWithName(".b9m|bem", ".b9m|bem #2", "<div class=\"b9mb9m\"></div>", createBemTestInitializer("", "", ""), "html");
+      addTest(".b>.Ыe|bem", """
+        <div class="b">
+            <div class="bЫe"></div>
+        </div>""", createBemTestInitializer("Ы", "_", "-"), "html");
+    }
 
-      options.setBemElementSeparator(elementSeparator);
-      options.setBemModifierSeparator(modifierSeparator);
-      options.setBemShortElementPrefix(shortPrefix);
+    @NotNull
+    private static TestInitializer createBemTestInitializer(String elementSeparator, String modifierSeparator, String shortPrefix) {
+      return (fixture, testRootDisposable) -> {
+        EmmetOptions options = EmmetOptions.getInstance();
+        String oldElementSeparator = options.getBemElementSeparator();
+        String oldModifierSeparator = options.getBemModifierSeparator();
+        String oldShortPrefix = options.getBemShortElementPrefix();
 
-      Disposer.register(testRootDisposable, () -> {
-        options.setBemElementSeparator(oldElementSeparator);
-        options.setBemModifierSeparator(oldModifierSeparator);
-        options.setBemShortElementPrefix(oldShortPrefix);
-      });
-    };
-  }
+        options.setBemElementSeparator(elementSeparator);
+        options.setBemModifierSeparator(modifierSeparator);
+        options.setBemShortElementPrefix(shortPrefix);
 
-  private void addTest(String sourceData, String expectedData) {
-    addTest(sourceData, expectedData, "html");
-  }
+        Disposer.register(testRootDisposable, () -> {
+          options.setBemElementSeparator(oldElementSeparator);
+          options.setBemModifierSeparator(oldModifierSeparator);
+          options.setBemShortElementPrefix(oldShortPrefix);
+        });
+      };
+    }
 
-  private void addTestWithName(String sourceData, String name, String expectedData) {
-    super.addTestWithName(sourceData, name, expectedData, null, "html");
+    private void addTest(String sourceData, String expectedData) {
+      addTest(sourceData, expectedData, "html");
+    }
+
+    private void addTestWithName(String sourceData, String name, String expectedData) {
+      super.addTestWithName(sourceData, name, expectedData, null, "html");
+    }
   }
 }
