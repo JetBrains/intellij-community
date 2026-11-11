@@ -284,10 +284,7 @@ annotation_member_value_pair ::= annotation_key '=' annotation_value | annotatio
   extraRoot = true
 }
 private annotation_key ::= weak_keyword | IDENTIFIER | 'def' | 'in'
-private annotation_value ::= annotation | annotation_array_value | expression
-{
-  name = 'annotation attribute initializer'
-}
+private annotation_value ::= annotation | annotation_array_value | expression { name = 'annotation attribute initializer' }
 annotation_array_value ::= '[' annotation_array_item* (mb_nl ']') { pin = 1 }
 private annotation_array_item ::= mb_nl <<separated_item annotation_array_item_end annotation_value annotation_array_item_start>>
 private annotation_array_item_end ::= mb_nl (',' | &']' | end_of_file)
@@ -603,10 +600,7 @@ private non_empty_type_argument_list ::= '<' <<comma_list_p type_argument_list_i
 }
 private type_argument_list_item ::= mb_nl <<annotated type_argument>>
 private type_argument_list_end ::= <<mb_nl_group '>'>>
-private type_argument ::= any_type_element | wildcard_type_element
-{
-  name = 'type argument'
-}
+private type_argument ::= any_type_element | wildcard_type_element { name = 'type argument' }
 soft_type_argument_list ::= '<' soft_type_argument_list_item soft_type_argument_list_tail* type_argument_list_end
 {
   consumeTokenMethod = 'consumeTokenFast'
@@ -664,10 +658,7 @@ private block_level_end ::= top_level_end | &'}'
 private case_level_item ::= extended_statement_item
                           | <<addVariant "statement">> <<separated_item case_level_end statement case_level_start>>
 private case_level_start ::= statement_start | class_level_start | 'case' | 'default'
-private case_level_end ::= block_level_end | &('case' | 'default')
-{
-  consumeTokenMethod = 'consumeTokenFast'
-}
+private case_level_end ::= block_level_end | &('case' | 'default') { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
 
 
@@ -701,14 +692,8 @@ private tuple_var_declaration_tuple ::= '(' tuple_var_declaration_item (mb_nl ',
 }
 
 private tuple_var_declaration_item ::= mb_nl (type_element tuple_variable | tuple_variable)
-tuple_variable ::= weak_keyword | IDENTIFIER
-{
-  elementType = variable
-}
-private tuple_initializer ::= '=' mb_nl expression_or_application
-{
-  pin = 1
-}
+tuple_variable ::= weak_keyword | IDENTIFIER { elementType = variable }
+private tuple_initializer ::= '=' mb_nl expression_or_application { pin = 1 }
 // endregion
 
 
@@ -754,10 +739,7 @@ statement ::= if_statement
 
 private branch ::= <<extendedStatement>> | statement
 
-block_statement ::= !<<isParameterizedClosure>> lazy_block
-{
-  extraRoot = true
-}
+block_statement ::= !<<isParameterizedClosure>> lazy_block { extraRoot = true }
 
 private expression_statement ::= expression_or_application_except_zero_params_closure
 
@@ -839,20 +821,9 @@ break_statement ::= 'break' [weak_keyword | IDENTIFIER]
 continue_statement ::= 'continue' [weak_keyword | IDENTIFIER]
 yield_statement ::= <<insideSwitchExpression>> 'yield' expression { pin = 2 }
 
-throw_statement ::= 'throw' expression
-{
-  pin = 1
-}
-
-assert_statement ::= 'assert' expression assert_message?
-{
-  pin = 1
-}
-private assert_message ::= assert_message_separator (mb_nl expression)
-{
-  pin = 1
-}
-private assert_message_separator ::= ':' | ','
+throw_statement ::= 'throw' expression { pin = 1 }
+assert_statement ::= 'assert' expression assert_message? { pin = 1 }
+private assert_message ::= mb_nl (':' | ',') (mb_nl expression) { pin = 2 }
 // endregion
 
 
@@ -990,12 +961,12 @@ nested_array_initializer ::= '{' mb_nl '}' | array_initializer_no_pin { elementT
 private array_initializer_no_pin ::= '{' <<a_b_a array_initializer_item array_initializer_separator>> array_initializer_separator? mb_nl '}'
 private array_initializer_pin ::=  '{' <<a_b_a array_initializer_item array_initializer_separator>> array_initializer_separator? mb_nl '}' { pin = 1 }
 private array_initializer_item ::= mb_nl (array_initializer_closable_item | nested_array_initializer | expression)
-array_initializer_closable_item ::= non_empty_closure | (non_empty_lamda) { elementType = closure }
+array_initializer_closable_item ::= non_empty_closure | non_empty_lambda { elementType = closure }
 private array_initializer_separator ::= mb_nl ','
 
 array_declaration ::= mandatory_expression optional_expression* { consumeTokenMethod = 'consumeTokenFast' }
-private mandatory_expression ::= non_empty_annotation_list? '[' expression_with_mb_nl ']' { pin = 2 consumeTokenMethod = 'consumeTokenFast' }
-private optional_expression ::= non_empty_annotation_list? '[' expression_with_mb_nl? ']' { pin = 2 consumeTokenMethod = 'consumeTokenFast' }
+private mandatory_expression ::= non_empty_annotation_list? '[' expression_with_mb_nl ']' { pin = 2 }
+private optional_expression ::= non_empty_annotation_list? '[' expression_with_mb_nl? ']' { pin = 2 }
 private expression_with_mb_nl ::= mb_nl expression mb_nl
 private priority1_2 ::= method_call_expression | lazy_closure | lambda_expression | single_parameter_lambda_expression | list_or_map
 constructor_call_expression ::= &('this' | 'super') unqualified_reference_expression call_tail
@@ -1004,10 +975,7 @@ private call_tail ::= call_argument_list lazy_closure* | empty_argument_list laz
 private call_tail_with_nl_before_closure ::= call_argument_list (mb_nl lazy_closure)* | empty_argument_list (mb_nl lazy_closure)+
 
 //region Lambda expression
-lambda_expression ::= !<<isClosureParameter>> lambda_expression_base | clear_variants_and_fail
-{
-  extraRoot = true
-}
+lambda_expression ::= !<<isClosureParameter>> lambda_expression_base | clear_variants_and_fail { extraRoot = true }
 private lambda_expression_base ::= lambda_expression_head mb_nl lambda_body { pin = 1 }
 private lambda_expression_head ::= lambda_parameter_list mb_nl '->' { consumeTokenMethod = 'consumeTokenFast' }
 lambda_parameter_list ::= empty_parens | '(' <<comma_list (mb_nl parse_parameter)>> ')' { elementType = parameter_list }
@@ -1022,14 +990,9 @@ private single_parameter_lambda_expression_head ::= single_parameter_lambda_para
 single_parameter_lambda_parameter_list ::= !<<isApplicationArguments>> single_parameter_lambda_parameter { elementType = parameter_list }
 single_parameter_lambda_parameter ::= empty_modifier_list (weak_keyword | IDENTIFIER) { elementType = parameter }
 private single_parameter_lambda_body ::= expression_single_parameter_lambda_body | lazy_block_lambda_body
-expression_single_parameter_lambda_body ::= expression_or_application_except_zero_params_closure
-{
-  elementType = expression_lambda_body
-}
+expression_single_parameter_lambda_body ::= expression_or_application_except_zero_params_closure { elementType = expression_lambda_body }
 
-lazy_block_lambda_body ::= <<parseBlockLazy block_lambda_body 'BLOCK_LAMBDA_BODY'>> {
-  elementType = block_lambda_body
-}
+lazy_block_lambda_body ::= <<parseBlockLazy block_lambda_body 'BLOCK_LAMBDA_BODY'>> { elementType = block_lambda_body }
 
 block_lambda_body ::= block_lambda_body_impl {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.parser.GrBlockLambdaBodyElementType'
@@ -1061,11 +1024,10 @@ closure_switch_aware ::= <<insideSwitchExpression closure_impl>>
   elementTypeFactory = 'org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils.getSwitchAwareClosureBlockElementType'
   extraRoot = true
 }
-private closure_impl ::= '{' mb_nl closure_header mb_separators block_levels '}' { pin = 1   consumeTokenMethod = 'consumeTokenFast'
- }
+private closure_impl ::= '{' mb_nl closure_header mb_separators block_levels '}' { pin = 1   consumeTokenMethod = 'consumeTokenFast' }
 
 private non_empty_closure ::= '{' mb_nl closure_header_with_arrow mb_separators block_levels '}' { consumeTokenMethod = 'consumeTokenFast'}
-private non_empty_lamda ::= '{' empty_parameter_list mb_nl lambda_expression mb_nl '}' {consumeTokenMethod = 'consumeTokenFast' }
+private non_empty_lambda ::= '{' empty_parameter_list mb_nl lambda_expression mb_nl '}' { consumeTokenMethod = 'consumeTokenFast' }
 private closure_header ::= closure_header_with_arrow | empty_parameter_list
 private closure_header_with_arrow ::= empty_parameter_list mb_nl closure_arrow | closure_parameter_list mb_nl closure_arrow
 private closure_arrow ::= '->'
@@ -1073,17 +1035,11 @@ closure_parameter_list ::= <<comma_list (mb_nl closure_parameter)>> { elementTyp
 private closure_parameter ::= <<closureParameter parse_parameter>>
 empty_parameter_list ::= { elementType = parameter_list }
 
-list_or_map ::= empty_list | empty_map | non_empty_list_or_map
-{
-  extends = expression
-}
+list_or_map ::= empty_list | empty_map | non_empty_list_or_map { extends = expression }
 
 private empty_map ::= '[' mb_nl fast_colon mb_nl ']' { consumeTokenMethod='consumeTokenFast' }
 private empty_list ::= '[' mb_nl ']' { consumeTokenMethod='consumeTokenFast' }
-private non_empty_list_or_map ::= '[' bracket_argument_list_item bracket_argument_list_inner (mb_nl ']')
-{
-  pin = 2
-}
+private non_empty_list_or_map ::= '[' bracket_argument_list_item bracket_argument_list_inner (mb_nl ']') { pin = 2 }
 
 private qualified_expressions ::= method_reference_expression | attribute_expression | qualified_reference_expression | property_expression
 method_reference_expression ::= expression (mb_nl method_reference_dot) (mb_nl qualified_reference_expression_identifiers)
@@ -1106,10 +1062,7 @@ private qualified_reference_expression_identifiers ::= weak_keyword | IDENTIFIER
 {
   name = 'property selector'
 }
-private property_expression_identifiers ::= parenthesized_expression | lazy_block | gstring | regex
-{
-  name = 'property selector'
-}
+private property_expression_identifiers ::= parenthesized_expression | lazy_block | gstring | regex { name = 'property selector' }
 
 private priority1_4 ::= not_expression | cast_expression
 not_expression ::= ('~' | '!') mb_nl <<disableNlBeforeClosure>> expression { elementType = unary_expression }
@@ -1127,20 +1080,10 @@ index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner (m
   consumeTokenMethod = 'consumeTokenFast'
 }
 
-postfix_unary_expression ::= expression ('++' | '--')
-{
-  elementType = unary_expression
-}
-
+postfix_unary_expression ::= expression ('++' | '--') { elementType = unary_expression }
 power_expression ::= expression '**' mb_nl <<disableNlBeforeClosure>> expression
-
-prefix_unary_expression ::= ('++' | '--' | '-' | '+') mb_nl <<disableNlBeforeClosure>> expression
-{
-  elementType = unary_expression
-}
-
+prefix_unary_expression ::= ('++' | '--' | '-' | '+') mb_nl <<disableNlBeforeClosure>> expression { elementType = unary_expression }
 multiplicative_expression ::= expression mb_nl ('*' | '/' | '%') mb_nl <<disableNlBeforeClosure>> expression
-
 additive_expression ::= expression mb_nl_inside_parentheses ('+' | '-') mb_nl <<disableNlBeforeClosure>> expression
 
 private shift_or_range ::= shift_expression | range_expression
@@ -1163,10 +1106,7 @@ as_expression ::= expression mb_nl ('as') mb_nl type_element
 
 private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
 equality_expression ::= expression mb_nl <<equalityOperator>> mb_nl <<disableNlBeforeClosure>> expression
-compare_expression ::= expression mb_nl ('<=>') mb_nl <<disableNlBeforeClosure>> expression
-{
-  elementType = relational_expression
-}
+compare_expression ::= expression mb_nl ('<=>') mb_nl <<disableNlBeforeClosure>> expression { elementType = relational_expression }
 regex_find_expression ::= expression mb_nl ('=~') mb_nl <<disableNlBeforeClosure>> expression
 regex_match_expression ::= expression mb_nl ('==~') mb_nl <<disableNlBeforeClosure>> expression
 
@@ -1182,10 +1122,7 @@ private conditionals ::= ternary_expression | elvis_expression | switch_expressi
 ternary_expression ::= expression mb_nl (ternary_tail_pin | ternary_tail)
 private ternary_tail_pin ::= '?' mb_nl !'[' expression mb_nl ':' mb_nl conditionals { pin = 3 consumeTokenMethod = 'consumeTokenFast' }
 private ternary_tail ::= '?' mb_nl expression mb_nl ':' mb_nl conditionals { pin = 5 consumeTokenMethod = 'consumeTokenFast' }
-elvis_expression ::= expression mb_nl ('?:' mb_nl) <<disableNlBeforeClosure>> expression
-{
-  rightAssociative = true
-}
+elvis_expression ::= expression mb_nl ('?:' mb_nl) <<disableNlBeforeClosure>> expression { rightAssociative = true }
 
 // region Switch expression
 switch_expression ::= 'switch' '(' mb_nl <<insideParentheses expression>> mb_nl ')' mb_nl ('{' mb_nl <<insideSwitchExpression general_switch_section>>* '}') { pin = 1 }
@@ -1212,20 +1149,14 @@ private multi_tuple_assignment ::= tuple  mb_nl !'->' tuple_initializer { // pin
   pin = 3
 }
 single_tuple ::= '(' mb_nl unqualified_reference_expression mb_nl ')' { elementType = tuple }
-tuple ::= '(' mb_nl unqualified_reference_expression (mb_nl ',' mb_nl unqualified_reference_expression)+ mb_nl ')'
-{
-  consumeTokenMethod = 'consumeTokenFast'
-}
+tuple ::= '(' mb_nl unqualified_reference_expression (mb_nl ',' mb_nl unqualified_reference_expression)+ mb_nl ')' { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
 
 
 // region Applications
 expression_or_application ::= <<notApplicationArguments expression_or_application_inner>> { elementType = '' name = '' }
 private expression_or_application_inner ::= <<enableNlBeforeClosure expression>> (application mb_nl_inside_parentheses)*
-private application ::= <<parseApplication application_ref application_expression application_call application_index>>
-{
-  extends = expression
-}
+private application ::= <<parseApplication application_ref application_expression application_call application_index>> { extends = expression }
 left application_ref ::= weak_keyword | IDENTIFIER | simple_literal_tokens
 {
   elementType = reference_expression
@@ -1244,13 +1175,8 @@ private double_block_statement::= block_statement nls block_statement
 
 // region Arguments
 fake argument_list ::=
-
 empty_argument_list ::= { elementType = argument_list }
-
-call_argument_list ::= !<<isParameterizedLambda>> (empty_parens | non_empty_argument_list)
-{
-  elementType = argument_list
-}
+call_argument_list ::= !<<isParameterizedLambda>> (empty_parens | non_empty_argument_list) { elementType = argument_list }
 
 private non_empty_argument_list::= '(' <<insideParentheses <<notApplicationArguments paren_argument_list_inner>>>> (mb_nl ')') {
   pin = 1
@@ -1301,10 +1227,7 @@ argument_label ::= weak_keyword | IDENTIFIER | string_literal_tokens | primitive
 
 
 // region Type elements
-type_element ::= (primitive_type_element | class_type_element) array_type_elements
-{
-  extraRoot = true
-}
+type_element ::= (primitive_type_element | class_type_element) array_type_elements { extraRoot = true }
 
 primitive_type_element ::= primitive_type <<setTypeWasPrimitive>>
 external primitive_type ::= parsePrimitiveType
@@ -1336,10 +1259,7 @@ private any_type_element ::= <<anyTypeElement type_element>>
 
 
 // region Code references
-code_reference ::= code_reference_base
-{
-  extraRoot = true
-}
+code_reference ::= code_reference_base { extraRoot = true }
 private code_reference_base ::= short_code_reference code_reference_tail*
 qualified_code_reference ::= short_code_reference code_reference_tail code_reference_tail* { elementType = code_reference}
 short_code_reference ::= code_reference_part { elementType = code_reference }
