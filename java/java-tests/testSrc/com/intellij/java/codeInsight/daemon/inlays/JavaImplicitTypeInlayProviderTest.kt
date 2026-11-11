@@ -2,15 +2,23 @@
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.JavaImplicitTypeDeclarativeInlayHintsProvider
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.doTestProvider
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.Test
 
-class JavaImplicitTypeInlayProviderTest : DeclarativeInlayHintsProviderTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_11
+@TestApplication
+class JavaImplicitTypeInlayProviderTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_11)
+  }
 
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
+  @Test
   fun `test implicit int not shown`() {
     val text = """
 class Demo {
@@ -21,6 +29,7 @@ class Demo {
     testAnnotations(text)
   }
 
+  @Test
   fun `test call result`() {
     val text = """
 class Demo {
@@ -32,6 +41,7 @@ class Demo {
     testAnnotations(text)
   }
 
+  @Test
   fun `test cast`() {
     val text = """
 class Demo {
@@ -42,6 +52,7 @@ class Demo {
     testAnnotations(text)
   }
 
+  @Test
   fun `test unknown type`() {
     val text = """
 class Demo {
@@ -52,6 +63,7 @@ class Demo {
     testAnnotations(text)
   }
 
+  @Test
   fun `test long`() {
     val text = """
 class Demo {
@@ -64,6 +76,7 @@ class Demo {
     testAnnotations(text)
   }
 
+  @Test
   fun `test sdk name`() {
     val text = """
 import java.util.HashMap;
@@ -78,6 +91,6 @@ class Demo {
   }
 
   private fun testAnnotations(@Language("Java") text: String) {
-    doTestProvider("A.java", text, JavaImplicitTypeDeclarativeInlayHintsProvider())
+    doTestProvider(myFixture, "A.java", text, JavaImplicitTypeDeclarativeInlayHintsProvider())
   }
 }

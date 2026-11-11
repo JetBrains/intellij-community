@@ -3,25 +3,15 @@ package com.intellij.testFramework.utils.inlays.declarative
 
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
-import com.intellij.codeInsight.hints.declarative.InlayProviderPassInfo
-import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
-import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
-import com.intellij.codeInsight.hints.declarative.impl.DeclarativeHintsPreviewProvider
-import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass
-import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
-import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil
-import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList
-import com.intellij.codeInsight.hints.declarative.impl.views.TextInlayPresentationEntry
-import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.lang.Language
-import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestUtil
 import java.io.File
 
+/**
+ * @deprecated Use [DeclarativeInlayHintsProviderTestUtil] in a JUnit 5 test.
+ */
+@Deprecated("Use DeclarativeInlayHintsProviderTestUtil in a JUnit 5 test.")
 abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
   @JvmOverloads
   fun doTestProvider(
@@ -47,18 +37,9 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
     verifyHintsPresence: Boolean = false,
     testMode: ProviderTestMode = ProviderTestMode.DETAILED
   ) {
-    if (verifyHintsPresence) {
-      InlayHintsProviderTestUtil.verifyHintsPresence(expectedText)
-    }
-    val file = myFixture.file!!
-    val editor = myFixture.editor
-    val providerInfo = InlayProviderPassInfo(provider, "provider.id", enabledOptions)
-    val pass = ActionUtil.underModalProgress(project, "") {
-      DeclarativeInlayHintsPass(file, editor, listOf(providerInfo), isPreview = false)
-    }
-    pass.setContext(file.codeInsightContext)
-
-    applyPassAndCheckResult(pass, expectedFile, sourceText, expectedText, testMode)
+    DeclarativeInlayHintsProviderTestUtil.doTestProviderWithConfigured(myFixture, sourceText, expectedText, provider, enabledOptions,
+                                                                       expectedFile, verifyHintsPresence, testMode.toUtilMode(),
+                                                                       customToStringProvider)
   }
 
   @JvmOverloads
@@ -69,58 +50,12 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
     language: Language,
     testMode: ProviderTestMode = ProviderTestMode.DETAILED
   ) {
-    val previewText = DeclarativeHintsPreviewProvider.getPreview(language, providerId, provider) ?: error("Preview not found for provider: $providerId")
-    val fileName = "preview." + (language.associatedFileType?.defaultExtension ?: error("language must have extension"))
-    myFixture.configureByText(fileName, InlayDumpUtil.removeInlays(previewText))
-
-    val pass = ActionUtil.underModalProgress(project, "") {
-      DeclarativeInlayHintsPassFactory.createPassForPreview(myFixture.file, myFixture.editor, provider, providerId, emptyMap(), false)
-    }
-    pass.setContext(myFixture.file.codeInsightContext)
-    applyPassAndCheckResult(pass, null, previewText, expectedText, testMode)
+    DeclarativeInlayHintsProviderTestUtil.doTestPreview(myFixture, expectedText, providerId, provider, language, testMode.toUtilMode(),
+                                                        customToStringProvider)
   }
 
-  private fun applyPassAndCheckResult(
-    pass: DeclarativeInlayHintsPass,
-    expectedFile: File?,
-    previewText: String,
-    expectedText: String,
-    mode: ProviderTestMode,
-  ) {
-    ActionUtil.underModalProgress(project, "") {
-      pass.doCollectInformation(EmptyProgressIndicator())
-    }
-    pass.applyInformationToEditor()
-
-    val dump = DeclarativeHintsDumpUtil.dumpHints(previewText, editor = myFixture.editor, renderer = { renderHint(it, mode) })
-    val expectedTrim = expectedText.trim()
-    val dumpTrim = dump.trim()
-    if (expectedFile != null) {
-      if (expectedTrim != dumpTrim) {
-        throw FileComparisonFailedError("Text mismatch in the file ${expectedFile.absolutePath}", expectedTrim, dumpTrim, expectedFile.absolutePath)
-      }
-    }
-    else {
-      assertEquals(expectedTrim, dumpTrim)
-    }
-  }
-
-  private fun renderHint(presentationList: InlayPresentationList, mode: ProviderTestMode): String {
-    val entries = presentationList.getEntries()
-    return when (mode) {
-      ProviderTestMode.SIMPLE -> entries.joinToString(separator = "") { (it as TextInlayPresentationEntry).text }
-      ProviderTestMode.DETAILED -> entries.joinToString(separator = "|") { entry ->
-        val text = (entry as TextInlayPresentationEntry).text
-        val actionData = entry.clickArea?.actionData
-        val payload = actionData?.payload
-        when (payload) {
-          is PsiPointerInlayActionPayload -> (payload.pointer.element?.let { customToStringProvider?.invoke(it) } ?: "") + text
-          is StringInlayActionPayload -> "[${payload.text}:${actionData.handlerId}]$text"
-          else -> text
-        }
-      }
-    }
-  }
+  private fun ProviderTestMode.toUtilMode(): DeclarativeInlayHintsProviderTestUtil.ProviderTestMode =
+    DeclarativeInlayHintsProviderTestUtil.ProviderTestMode.valueOf(name)
 
   var customToStringProvider: ((PsiElement) -> String)? = null
 

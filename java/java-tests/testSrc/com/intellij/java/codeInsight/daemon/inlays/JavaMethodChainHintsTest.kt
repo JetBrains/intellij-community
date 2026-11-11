@@ -2,10 +2,19 @@
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.JavaMethodChainsDeclarativeInlayProvider
-import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.doTestProvider
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.Test
 
-class JavaMethodChainHintsTest : DeclarativeInlayHintsProviderTestCase() {
+@TestApplication
+class JavaMethodChainHintsTest {
+  private val projectFixture = codeInsightProjectFixture()
+  private val myFixture by codeInsightFixture(projectFixture)
+
+  @Test
   fun `test plain builder`() {
     check("""
 
@@ -36,6 +45,7 @@ public class Chains {
 }""")
   }
 
+  @Test
   fun `test duplicated builder`() {
     // IDEA-192777
     check("""public class Chains {
@@ -68,6 +78,7 @@ public class Chains {
 """)
   }
 
+  @Test
   fun `test duplicated call with reference qualifier`() {
     check("""public class Chains {
   static class A {
@@ -99,6 +110,7 @@ public class Chains {
 """)
   }
 
+  @Test
   fun `test comments`() {
     check("""public class Chains {
   static class A {
@@ -130,6 +142,7 @@ public class Chains {
 """)
   }
 
+  @Test
   fun `test several call chains`() {
     check("""public class Chains {
   static class A {
@@ -165,6 +178,7 @@ public class Chains {
 """)
   }
 
+  @Test
   fun `test nested call chains`() {
     check("""
 
@@ -206,6 +220,7 @@ public class Chains {
 """)
   }
 
+  @Test
   fun test() {
     check("""
       abstract class Foo<T> {
@@ -234,7 +249,7 @@ public class Chains {
   }
 
   fun check(@Language("Java") text: String) {
-    doTestProvider("A.java", text, JavaMethodChainsDeclarativeInlayProvider())
+    doTestProvider(myFixture, "A.java", text, JavaMethodChainsDeclarativeInlayProvider())
   }
 
 }

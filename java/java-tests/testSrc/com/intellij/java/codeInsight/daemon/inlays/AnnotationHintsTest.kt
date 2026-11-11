@@ -1,32 +1,33 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.inlays
 
-import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.hints.AnnotationInlayProvider
 import com.intellij.codeInsight.hints.AnnotationInlaySettings
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21
-import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.ProviderTestMode
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.doTestProvider
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.doTestProviderWithConfigured
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.Test
 import java.util.regex.Pattern
 
-class AnnotationHintsTest : DeclarativeInlayHintsProviderTestCase() {
+@TestApplication
+class AnnotationHintsTest {
 
-  override fun getBasePath(): String {
-    return JavaTestUtil.getJavaTestDataPath()
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_21)
   }
 
-  override fun getTestDataPath(): String {
-    return "/codeInsight/daemonCodeAnalyzer/annotations/"
-  }
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return JAVA_21
-  }
-
+  @Test
   fun `test contract inferred annotation`() {
     val text = """
       class Demo {
@@ -38,6 +39,7 @@ class AnnotationHintsTest : DeclarativeInlayHintsProviderTestCase() {
     testAnnotations(text, convert(text))
   }
 
+  @Test
   fun `test arrays`() {
     testAnnotations("""
       final class Demo {
@@ -56,6 +58,7 @@ class AnnotationHintsTest : DeclarativeInlayHintsProviderTestCase() {
       }""".trimIndent())
   }
 
+  @Test
   fun `test contract nullable`() {
     val text = """
       public class E {
@@ -71,6 +74,7 @@ class AnnotationHintsTest : DeclarativeInlayHintsProviderTestCase() {
     testAnnotations(text, convert(text))
   }
 
+  @Test
   fun `test no parameters have no parens`() {
     val text = """
       public class E {
@@ -83,6 +87,7 @@ class AnnotationHintsTest : DeclarativeInlayHintsProviderTestCase() {
     testAnnotations(text, convert(text))
   }
 
+  @Test
   fun `test parameters annotations on the same line`() {
     val text = """
       public class E {
@@ -95,11 +100,15 @@ class AnnotationHintsTest : DeclarativeInlayHintsProviderTestCase() {
     testAnnotations(text, convert(text))
   }
 
+  @Test
   fun `test external annotations`() {
-    val optionalClass = JavaPsiFacade.getInstance(project)
-      .findClass(CommonClassNames.JAVA_UTIL_OPTIONAL, GlobalSearchScope.allScope(project))!!
-    val file = optionalClass.containingFile
-    myFixture.configureFromExistingVirtualFile(file.virtualFile)
+    val project = myFixture.project
+    val file = runReadActionBlocking {
+      JavaPsiFacade.getInstance(project)
+        .findClass(CommonClassNames.JAVA_UTIL_OPTIONAL, GlobalSearchScope.allScope(project))!!
+        .containingFile.virtualFile
+    }
+    myFixture.configureFromExistingVirtualFile(file)
     val expected = """//
 // Source code recreated from a .class file by IntelliJ IDEA
 // (powered by Fernflower decompiler)
@@ -261,7 +270,7 @@ public final class Optional</*<# @NotNull #>*/T> {
     val old = settings.shortenNotNull
     settings.shortenNotNull = true
     try {
-      doTestProviderWithConfigured(myFixture.editor.document.text,
+      doTestProviderWithConfigured(myFixture, myFixture.editor.document.text,
                                    convert(expected),
                                    AnnotationInlayProvider(),
                                    enabledOptions = mapOf(AnnotationInlayProvider.SHOW_INFERRED to false,
@@ -298,7 +307,7 @@ public final class Optional</*<# @NotNull #>*/T> {
     val old = settings.shortenNotNull
     settings.shortenNotNull = false
     try {
-      doTestProvider(
+      doTestProvider(myFixture, 
         "test.java",
         annotatedText,
         AnnotationInlayProvider(),
@@ -306,7 +315,7 @@ public final class Optional</*<# @NotNull #>*/T> {
         testMode = ProviderTestMode.SIMPLE,
       )
       settings.shortenNotNull = true
-      doTestProvider(
+      doTestProvider(myFixture, 
         "test.java",
         nullnessMarkerText,
         AnnotationInlayProvider(),

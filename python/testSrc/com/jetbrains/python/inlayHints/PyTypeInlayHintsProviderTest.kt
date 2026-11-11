@@ -1,28 +1,46 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inlayHints
 
-import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.allure.Components
-
 import com.intellij.idea.TestFor
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
-import com.jetbrains.python.fixtures.PyLightProjectDescriptor
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.python.junit5Tests.framework.pyProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.ProviderTestMode
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.doTestProvider
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.FUNCTION_RETURN_TYPE_OPTION_ID
 import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.PARAMETER_TYPE_ANNOTATION
 import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.REVEAL_TYPE_OPTION_ID
 import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID
 import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.SOLVED_FUNCTION_TYPE_PARAMETERS_OPTION_ID
 import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.VARIANCE_OPTION_ID
+import com.jetbrains.python.junit5.framework.pyMockInterpreterFixture
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.tools.sdkTools.PythonMockSdk
+import org.junit.jupiter.api.Test
 
+@TestApplication
 @Subsystems.CodeInsight
 @Components.InlayHints
 @Layers.Functional
-class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
+class PyTypeInlayHintsProviderTest {
+  companion object {
+    private val tempDir = tempPathFixture()
+    private val projectFixture = projectFixture(tempDir, openAfterCreation = true)
+    private val pyProject = projectFixture.pyProjectFixture(tempDir)
 
+    @Suppress("unused")
+    private val interpreter = projectFixture.pyMockInterpreterFixture(pyProject) { PythonMockSdk.create(LanguageLevel.getLatest()) }
+  }
+
+  private val myFixture by codeInsightFixture(projectFixture, tempDir)
+
+  @Test
   fun `test reveal type`() {
     doTest("""
     from typing import reveal_type
@@ -35,6 +53,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, REVEAL_TYPE_OPTION_ID)
   }
 
+  @Test
   fun `test function return type`() {
     doTest("""
     def foo(a: int) -> str: # no inlay here
@@ -53,6 +72,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, FUNCTION_RETURN_TYPE_OPTION_ID)
   }
 
+  @Test
   fun `test preview`() {
     doTest("""    
     from typing import reveal_type
@@ -65,6 +85,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """)
   }
 
+  @Test
   fun `test variance on type variable`() {
     doTest("""
     from typing import TypeVar, Generic
@@ -77,6 +98,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, VARIANCE_OPTION_ID)
   }
 
+  @Test
   fun `test variance on two type variables`() {
     doTest("""
     from typing import TypeVar, Generic
@@ -90,6 +112,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, VARIANCE_OPTION_ID)
   }
 
+  @Test
   fun `test variance on type variable disabled when invariant`() {
     doTest("""
     from typing import TypeVar, Generic
@@ -102,6 +125,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, false, VARIANCE_OPTION_ID)
   }
 
+  @Test
   fun `test variance on type variable when explicitly using co or contra variance`() {
     doTest("""
     from typing import TypeVar, Generic
@@ -119,6 +143,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, VARIANCE_OPTION_ID)
   }
 
+  @Test
   fun `test variance on type parameter`() {
     doTest("""
     class A[/*<# in #>*/T]:
@@ -127,6 +152,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, VARIANCE_OPTION_ID)
   }
 
+  @Test
   fun `test variance on two type parameters`() {
     doTest("""
     class A[/*<# in #>*/T1, /*<# out #>*/T2]:
@@ -135,6 +161,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, VARIANCE_OPTION_ID)
   }
 
+  @Test
   fun `test variance on all parameter kinds`() {
     doTest("""
       from typing import Callable
@@ -146,6 +173,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, VARIANCE_OPTION_ID)
   }
 
+  @Test
   fun `test variance on type parameter disabled when invariant`() {
     doTest("""
     class A[T]: # no hint here
@@ -154,6 +182,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, false, VARIANCE_OPTION_ID)
   }
 
+  @Test
   fun `test variance on type parameter of type alias`() {
     doTest("""
     type MyTuple[/*<# out #>*/T] = tuple[T]
@@ -161,6 +190,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-82956"])
+  @Test
   fun `test async def`() {
     doTest("""
       async def foo()/*<# -> Literal[1] #>*/:
@@ -168,6 +198,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test parameter type inlay`() {
     doTest("""
       def f(a/*<# : int #>*/):
@@ -177,6 +208,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, PARAMETER_TYPE_ANNOTATION)
   }
 
+  @Test
   fun `test parameter type inlay with default`() {
     doTest("""
       def f(a/*<# : int #>*/=1):
@@ -184,6 +216,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, PARAMETER_TYPE_ANNOTATION)
   }
 
+  @Test
   fun `test parameter type hint with annotation`() {
     doTest("""
       def f(a: int): # no hint when already annotated
@@ -192,6 +225,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-87813"])
+  @Test
   fun `test parameter type hint skips self cls`() {
     doTest("""
       class A:
@@ -211,6 +245,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, PARAMETER_TYPE_ANNOTATION)
   }
 
+  @Test
   fun `test parameter type hint variadic`() {
     doTest("""
       def f(*args/*<# : int #>*/, **kwargs/*<# : str #>*/):
@@ -222,6 +257,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90411"])
+  @Test
   fun `test solved type parameters of generic class`() {
     doTest("""
       class A[T]:
@@ -233,6 +269,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90411"])
+  @Test
   fun `test solved type parameters of generic function`() {
     doTest("""
       def f[T](t: T) -> T: ...
@@ -242,6 +279,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90411"])
+  @Test
   fun `test solved type parameters with multiple type parameters`() {
     doTest("""
       def f[K, V](k: K, v: V) -> None: ...
@@ -251,6 +289,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90411"])
+  @Test
   fun `test solved type parameters with param spec`() {
     doTest("""
       from typing import Callable
@@ -265,6 +304,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90411"])
+  @Test
   fun `test solved type parameters with type var tuple`() {
     doTest("""
       class A[*Ts]:
@@ -275,6 +315,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90411"])
+  @Test
   fun `test solved type parameters from enclosing scope type parameter`() {
     doTest("""
       class Box[T]:
@@ -287,6 +328,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90411"])
+  @Test
   fun `test generic function type argument after constraint solving`() {
     doTest("""
       def select[T](x: T, y: T):
@@ -297,6 +339,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90411"])
+  @Test
   fun `test no solved type parameters hint for non generic call`() {
     doTest("""
       def f(t: int) -> int: ...
@@ -310,6 +353,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-92092"])
+  @Test
   fun `test no solved type parameters hint for a named tuple constructor`() {
     doTest("""
       from typing import NamedTuple
@@ -323,6 +367,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90411"])
+  @Test
   fun `test solved type parameters hint when new returns unrelated type`() {
     doTest("""
       class A[T]:
@@ -333,6 +378,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90411"])
+  @Test
   fun `test no solved type parameters hint when explicitly parameterized`() {
     doTest("""
       class A[T]:
@@ -344,6 +390,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90293"])
+  @Test
   fun `test return type name is navigable`() {
     doTestNavigable("""
       def f(x: int)/*<# -> |<int>int #>*/:
@@ -352,6 +399,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90293"])
+  @Test
   fun `test return type names in union are navigable`() {
     doTestNavigable("""
       def f(x: int, y: float)/*<# -> |<float>float| | |<int>int #>*/:
@@ -360,6 +408,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90293"])
+  @Test
   fun `test return type names in generic are navigable`() {
     doTestNavigable("""
       def f()/*<# -> |<list>list|[|<int>int|] #>*/:
@@ -368,6 +417,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90293"])
+  @Test
   fun `test parameter type name is navigable`() {
     doTestNavigable("""
       def f(a/*<# : |<int>int #>*/=1):
@@ -376,6 +426,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
   }
 
   @TestFor(issues = ["PY-90421"])
+  @Test
   fun `test lambda parameter type hint for a method of a generic receiver`() {
     doTest("""
       from typing import Callable
@@ -412,7 +463,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
 
   private fun doTest(text: String, verifyHintsPresence: Boolean, vararg enabledOptions: String) {
     val testOptions = if (enabledOptions.isEmpty()) allOptions else allOptions.mapValues { (key, _) -> key in enabledOptions }
-    doTestProvider("A.py",
+    doTestProvider(myFixture, "A.py",
                    text.trimIndent(),
                    PyTypeInlayHintsProvider(),
                    testOptions,
@@ -425,22 +476,13 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
    * `<>` so the expected text can assert both the rendered text and the navigation target of each clickable name.
    */
   private fun doTestNavigable(text: String, vararg enabledOptions: String) {
-    customToStringProvider = { element -> "<${(element as PyClass).name}>" }
-    try {
-      val testOptions = allOptions.mapValues { (key, _) -> key in enabledOptions }
-      doTestProvider("A.py",
-                     text.trimIndent(),
-                     PyTypeInlayHintsProvider(),
-                     testOptions,
-                     verifyHintsPresence = true,
-                     testMode = ProviderTestMode.DETAILED)
-    }
-    finally {
-      customToStringProvider = null
-    }
-  }
-
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return PyLightProjectDescriptor(LanguageLevel.getLatest())
+    val testOptions = allOptions.mapValues { (key, _) -> key in enabledOptions }
+    doTestProvider(myFixture, "A.py",
+                   text.trimIndent(),
+                   PyTypeInlayHintsProvider(),
+                   testOptions,
+                   verifyHintsPresence = true,
+                   testMode = ProviderTestMode.DETAILED,
+                   customToStringProvider = { element -> "<${(element as PyClass).name}>" })
   }
 }

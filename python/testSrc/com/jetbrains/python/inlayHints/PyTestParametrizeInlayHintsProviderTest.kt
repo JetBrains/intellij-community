@@ -1,21 +1,39 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inlayHints
 
-import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.allure.Components
-
 import com.intellij.idea.TestFor
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
-import com.jetbrains.python.fixtures.PyLightProjectDescriptor
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.python.junit5Tests.framework.pyProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.ProviderTestMode
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.doTestProvider
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.junit5.framework.pyMockInterpreterFixture
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.tools.sdkTools.PythonMockSdk
+import org.junit.jupiter.api.Test
 
+@TestApplication
 @Subsystems.CodeInsight
 @Components.InlayHints
 @Layers.Functional
-class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
+class PyTestParametrizeInlayHintsProviderTest {
+  companion object {
+    private val tempDir = tempPathFixture()
+    private val projectFixture = projectFixture(tempDir, openAfterCreation = true)
+    private val pyProject = projectFixture.pyProjectFixture(tempDir)
 
+    @Suppress("unused")
+    private val interpreter = projectFixture.pyMockInterpreterFixture(pyProject) { PythonMockSdk.create(LanguageLevel.getLatest()) }
+  }
+
+  private val myFixture by codeInsightFixture(projectFixture, tempDir)
+
+  @Test
   fun `test simple parametrize with two parameters`() {
     doTest("""
       import pytest
@@ -30,6 +48,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
     """)
   }
 
+  @Test
   fun `test parametrize with single parameter`() {
     doTest("""
       import pytest
@@ -43,6 +62,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
     """)
   }
 
+  @Test
   fun `test parametrize with three parameters`() {
     doTest("""
       import pytest
@@ -56,6 +76,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
     """)
   }
 
+  @Test
   fun `test no hints for non-tuple values`() {
     doTest("""
       import pytest
@@ -66,6 +87,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
     """, verifyHintsPresence = false)
   }
 
+  @Test
   fun `test no hints when parameter count mismatch`() {
     doTest("""
       import pytest
@@ -78,6 +100,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
     """)
   }
 
+  @Test
   fun `test class-level parametrize`() {
     doTest("""
       import pytest
@@ -91,6 +114,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
     """)
   }
 
+  @Test
   fun `test pytest param`() {
     doTest("""
       import pytest
@@ -104,6 +128,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
   }
 
   @TestFor(issues = ["PY-87820"])
+  @Test
   fun `test tuple`() {
     doTest("""
       import pytest
@@ -116,7 +141,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
   }
 
   private fun doTest(text: String, verifyHintsPresence: Boolean = true) {
-    doTestProvider(
+    doTestProvider(myFixture, 
       "test.py",
       text.trimIndent(),
       PyTestParametrizeInlayHintsProvider(),
@@ -124,9 +149,5 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
       verifyHintsPresence = verifyHintsPresence,
       testMode = ProviderTestMode.SIMPLE
     )
-  }
-
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return PyLightProjectDescriptor(LanguageLevel.getLatest())
   }
 }

@@ -1,19 +1,38 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inlayHints
 
-import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.allure.Layers
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.python.junit5Tests.framework.pyProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.ProviderTestMode
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.doTestProvider
 import com.jetbrains.python.allure.Components
-
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
-import com.jetbrains.python.fixtures.PyLightProjectDescriptor
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.junit5.framework.pyMockInterpreterFixture
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.tools.sdkTools.PythonMockSdk
+import org.junit.jupiter.api.Test
 
+@TestApplication
 @Subsystems.CodeInsight
 @Components.InlayHints
 @Layers.Functional
-class PyPseudoKeywordPatternInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
+class PyPseudoKeywordPatternInlayHintsProviderTest {
+  companion object {
+    private val tempDir = tempPathFixture()
+    private val projectFixture = projectFixture(tempDir, openAfterCreation = true)
+    private val pyProject = projectFixture.pyProjectFixture(tempDir)
+
+    @Suppress("unused")
+    private val interpreter = projectFixture.pyMockInterpreterFixture(pyProject) { PythonMockSdk.create(LanguageLevel.getLatest()) }
+  }
+
+  private val myFixture by codeInsightFixture(projectFixture, tempDir)
+
+  @Test
   fun testSimplePositional() {
     doTest(
       """
@@ -31,6 +50,7 @@ def f(p: Point):
     )
   }
 
+  @Test
   fun testStopsBeforeKeyword() {
     doTest(
       """
@@ -46,7 +66,7 @@ def f(p: Point):
   }
 
   private fun doTest(text: String) {
-    doTestProvider(
+    doTestProvider(myFixture, 
       "A.py",
       text,
       PyPseudoKeywordPatternInlayHintsProvider(),
@@ -54,9 +74,5 @@ def f(p: Point):
       verifyHintsPresence = true,
       testMode = ProviderTestMode.SIMPLE
     )
-  }
-
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return PyLightProjectDescriptor(LanguageLevel.getLatest())
   }
 }

@@ -186,30 +186,30 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
         }
 
         val inlayHintsFileRegexp = forRegex("^([^_]\\w+)\\.kt$")
-        testClass<AbstractKtReferenceTypeHintsProviderTest> {
+        testClass<AbstractKtReferenceTypeHintsProviderTest>(junit5 = Junit5Suite()) {
             model("../../../idea/tests/testData/codeInsight/hints/types", pattern = inlayHintsFileRegexp)
         }
-        testClass<AbstractKtLambdasHintsProviderTest> {
+        testClass<AbstractKtLambdasHintsProviderTest>(junit5 = Junit5Suite()) {
             model("../../../idea/tests/testData/codeInsight/hints/lambda")
         }
-        testClass<AbstractKtValuesHintsProviderTest> {
+        testClass<AbstractKtValuesHintsProviderTest>(junit5 = Junit5Suite()) {
             model("../../../idea/tests/testData/codeInsight/hints/values")
         }
-        testClass<AbstractKtParameterHintsProviderTest> {
+        testClass<AbstractKtParameterHintsProviderTest>(junit5 = Junit5Suite()) {
             model("../../../idea/tests/testData/codeInsight/hints/arguments", pattern = inlayHintsFileRegexp)
         }
-        testClass<AbstractKtCallChainHintsProviderTest> {
+        testClass<AbstractKtCallChainHintsProviderTest>(junit5 = Junit5Suite()) {
             model("../../../idea/tests/testData/codeInsight/hints/chainCall", pattern = inlayHintsFileRegexp)
         }
-        testClass<AbstractKtDefaultParameterInlayHintsProviderTest> {
+        testClass<AbstractKtDefaultParameterInlayHintsProviderTest>(junit5 = Junit5Suite()) {
             model("../../../idea/tests/testData/codeInsight/hints/defaultParameters", pattern = inlayHintsFileRegexp)
         }
 
-        testClass<AbstractKtBundledCompilerPluginModalityHintProviderTest> {
+        testClass<AbstractKtBundledCompilerPluginModalityHintProviderTest>(junit5 = Junit5Suite()) {
             model("hints/compilerPlugins/modality", pattern = inlayHintsFileRegexp)
         }
 
-        testClass<AbstractKtThirdPartyCompilerPluginModalityHintProviderTest> {
+        testClass<AbstractKtThirdPartyCompilerPluginModalityHintProviderTest>(junit5 = Junit5Suite()) {
             model("hints/compilerPlugins/modality", pattern = inlayHintsFileRegexp)
         }
 
@@ -225,11 +225,11 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
             model("hints/compilerPlugins/highlighger", pattern = inlayHintsFileRegexp)
         }
 
-        testClass<AbstractKtBundledCompilerSupertypesHintProviderTest> {
+        testClass<AbstractKtBundledCompilerSupertypesHintProviderTest>(junit5 = Junit5Suite()) {
             model("hints/compilerPlugins/supertypes", pattern = inlayHintsFileRegexp)
         }
 
-        testClass<AbstractKtThirdPartyCompilerSupertypesHintProviderTest> {
+        testClass<AbstractKtThirdPartyCompilerSupertypesHintProviderTest>(junit5 = Junit5Suite()) {
             model("hints/compilerPlugins/supertypes", pattern = inlayHintsFileRegexp)
         }
 

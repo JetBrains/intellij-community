@@ -1,19 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.doTestProvider
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.codeInsight.hint.types.GroovyLambdaParameterTypeHintsInlayProvider
+import org.junit.jupiter.api.Test
 
-class GroovyLambdaParameterTypeHintsInlayProviderTest : DeclarativeInlayHintsProviderTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
-
-  private fun doTest(@Language("Groovy") text: String) {
-    doTestProvider("test.groovy", text, GroovyLambdaParameterTypeHintsInlayProvider())
+@TestApplication
+class GroovyLambdaParameterTypeHintsInlayProviderTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_3_0)
   }
 
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  private fun doTest(@Language("Groovy") text: String) {
+    doTestProvider(myFixture, "test.groovy", text, GroovyLambdaParameterTypeHintsInlayProvider())
+  }
+
+  @Test
   fun `test single named argument`() {
     val text = """
     import groovy.transform.stc.ClosureParams
@@ -30,6 +39,7 @@ class GroovyLambdaParameterTypeHintsInlayProviderTest : DeclarativeInlayHintsPro
     doTest(text)
   }
 
+  @Test
   fun `test multiple named arguments`() {
     val text = """
       import groovy.transform.stc.ClosureParams
@@ -42,6 +52,7 @@ class GroovyLambdaParameterTypeHintsInlayProviderTest : DeclarativeInlayHintsPro
     doTest(text)
   }
 
+  @Test
   fun `test single implicit argument`() {
     val text = """
       import groovy.transform.stc.ClosureParams
@@ -54,6 +65,7 @@ class GroovyLambdaParameterTypeHintsInlayProviderTest : DeclarativeInlayHintsPro
     doTest(text)
   }
 
+  @Test
   fun `test no inlay hints for implicit arguments when multiple parameters`() {
     val text = """
       import groovy.transform.stc.ClosureParams

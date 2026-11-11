@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.hints.compilerPlugins
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.testFramework.rules.TempDirectory
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.base.psi.userDataCached
@@ -53,14 +52,6 @@ fun <T> OpenapiModule.withCompilerPlugin(
         action()
     }
 }
-
-/** Creates a "compatible" third-party compiler plugin jar as defined in [CompilerPluginManifestAttributes] */
-@ApiStatus.Internal
-@TestOnly
-fun createThirdPartyCompilerPluginJar(
-    plugin: KotlinK2BundledCompilerPlugins,
-    tempDir: TempDirectory,
-): Path = createThirdPartyCompilerPluginJar(plugin, tempDir.rootPath)
 
 /** Creates a "compatible" third-party compiler plugin jar in [targetDir], as defined in [CompilerPluginManifestAttributes] */
 @ApiStatus.Internal

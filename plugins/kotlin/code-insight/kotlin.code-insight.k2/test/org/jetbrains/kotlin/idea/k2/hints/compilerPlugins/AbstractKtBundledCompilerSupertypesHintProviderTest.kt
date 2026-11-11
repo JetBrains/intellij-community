@@ -2,23 +2,15 @@
 package org.jetbrains.kotlin.idea.k2.hints.compilerPlugins
 
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
-import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.rules.TempDirectory
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinInlayHintsProviderTest
 import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins
 import org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.KtCompilerSupertypesHintProvider
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 
 abstract class AbstractKtCompilerSupertypesHintProviderTestBase(val treatAsThirdParty: Boolean) : AbstractKotlinInlayHintsProviderTest() {
-    val tempDir = TempDirectory()
-
-    override fun setUp() {
-        super.setUp()
-        tempDir.before(name)
-    }
-
-    override fun tearDown() {
-        runAll({ tempDir.after() }, { super.tearDown() })
-    }
+    @TempDir
+    lateinit var tempDir: Path
 
     override fun inlayHintsProvider(): InlayHintsProvider =
         KtCompilerSupertypesHintProvider()
@@ -26,7 +18,7 @@ abstract class AbstractKtCompilerSupertypesHintProviderTestBase(val treatAsThird
     override fun doTest(testPath: String) {
         val plugin = KotlinK2BundledCompilerPlugins.KOTLINX_SERIALIZATION_COMPILER_PLUGIN
 
-        module.withCompilerPlugin(
+        myFixture.module.withCompilerPlugin(
             plugin,
             pluginJar = if (treatAsThirdParty) createThirdPartyCompilerPluginJar(plugin, tempDir) else plugin.bundledJarLocation,
         ) {

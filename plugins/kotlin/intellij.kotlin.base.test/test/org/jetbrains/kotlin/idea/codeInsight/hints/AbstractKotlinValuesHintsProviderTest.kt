@@ -10,7 +10,7 @@ abstract class AbstractKotlinValuesHintsProviderTest : AbstractKotlinInlayHintsP
 
     override fun doTestProviders(file: File) {
         val fileContents = FileUtil.loadFile(file, true)
-        withCustomCompilerOptions(fileContents, project, module) {
+        withCustomCompilerOptions(fileContents, myFixture.project, myFixture.module) {
             super.doTestProviders(file)
         }
     }

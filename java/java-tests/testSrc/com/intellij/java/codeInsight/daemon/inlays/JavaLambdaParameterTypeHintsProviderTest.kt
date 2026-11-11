@@ -2,13 +2,21 @@
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.JavaLambdaParameterTypeHintsProvider
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.doTestProvider
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.Test
 
-class JavaLambdaParameterTypeHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_17
+@TestApplication
+class JavaLambdaParameterTypeHintsProviderTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_17)
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
 
   private val functionInterface = """
     public interface BiFunction<T, U> {
@@ -21,6 +29,7 @@ class JavaLambdaParameterTypeHintsProviderTest : DeclarativeInlayHintsProviderTe
         }
     }"""
 
+  @Test
   fun `test parameter not shown`() {
     val text = """
         class Demo {
@@ -32,6 +41,7 @@ class JavaLambdaParameterTypeHintsProviderTest : DeclarativeInlayHintsProviderTe
     testAnnotations(text)
   }
 
+  @Test
   fun `test basic parameters`() {
     val text = """
         $functionInterface
@@ -46,6 +56,7 @@ class JavaLambdaParameterTypeHintsProviderTest : DeclarativeInlayHintsProviderTe
     testAnnotations(text)
   }
 
+  @Test
   fun `test integer list parameter`() {
     val listClass = """
     class ListClass {
@@ -67,6 +78,7 @@ class JavaLambdaParameterTypeHintsProviderTest : DeclarativeInlayHintsProviderTe
     testAnnotations(text)
   }
 
+  @Test
   fun `test generic class parameter`() {
     val genericClass = """
     class GenericLongClass<T, U> {
@@ -87,8 +99,7 @@ class JavaLambdaParameterTypeHintsProviderTest : DeclarativeInlayHintsProviderTe
     testAnnotations(text)
   }
 
-
   private fun testAnnotations(@Language("Java") text: String) {
-    doTestProvider("A.java", text, JavaLambdaParameterTypeHintsProvider(), )
+    doTestProvider(myFixture, "A.java", text, JavaLambdaParameterTypeHintsProvider(), )
   }
 }

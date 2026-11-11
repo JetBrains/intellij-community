@@ -2,19 +2,38 @@
 package com.jetbrains.python.inlayHints
 
 import com.intellij.idea.TestFor
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.python.junit5Tests.framework.pyProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.ProviderTestMode
+import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestUtil.doTestProvider
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
-import com.jetbrains.python.fixtures.PyLightProjectDescriptor
+import com.jetbrains.python.junit5.framework.pyMockInterpreterFixture
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.tools.sdkTools.PythonMockSdk
+import org.junit.jupiter.api.Test
 
+@TestApplication
 @TestFor(issues = ["PY-85836"])
 @Subsystems.CodeInsight
 @Layers.Functional
-class PyEnumAutoValueInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
+class PyEnumAutoValueInlayHintsProviderTest {
+  companion object {
+    private val tempDir = tempPathFixture()
+    private val projectFixture = projectFixture(tempDir, openAfterCreation = true)
+    private val pyProject = projectFixture.pyProjectFixture(tempDir)
 
-  fun `test consecutive auto values`() = doTest("""
+    @Suppress("unused")
+    private val interpreter = projectFixture.pyMockInterpreterFixture(pyProject) { PythonMockSdk.create(LanguageLevel.getLatest()) }
+  }
+
+  private val myFixture by codeInsightFixture(projectFixture, tempDir)
+
+  @Test
+  fun `test consecutive auto values`(): Unit = doTest("""
     from enum import Enum, auto
     class E(Enum):
         A = auto()/*<#  = 1 #>*/
@@ -22,21 +41,24 @@ class PyEnumAutoValueInlayHintsProviderTest : DeclarativeInlayHintsProviderTestC
         C = auto()/*<#  = 3 #>*/
   """)
 
-  fun `test qualified auto`() = doTest("""
+  @Test
+  fun `test qualified auto`(): Unit = doTest("""
     import enum
     class E(enum.Enum):
         A = enum.auto()/*<#  = 1 #>*/
         B = enum.auto()/*<#  = 2 #>*/
   """)
 
-  fun `test int enum`() = doTest("""
+  @Test
+  fun `test int enum`(): Unit = doTest("""
     from enum import IntEnum, auto
     class E(IntEnum):
         A = auto()/*<#  = 1 #>*/
         B = auto()/*<#  = 2 #>*/
   """)
 
-  fun `test auto continues from explicit int value`() = doTest("""
+  @Test
+  fun `test auto continues from explicit int value`(): Unit = doTest("""
     from enum import Enum, auto
     class E(Enum):
         A = auto()/*<#  = 1 #>*/
@@ -45,7 +67,8 @@ class PyEnumAutoValueInlayHintsProviderTest : DeclarativeInlayHintsProviderTestC
         D = auto()/*<#  = 7 #>*/
   """)
 
-  fun `test auto skips non-int explicit value`() = doTest("""
+  @Test
+  fun `test auto skips non-int explicit value`(): Unit = doTest("""
     from enum import Enum, auto
     class E(Enum):
         A = auto()/*<#  = 1 #>*/
@@ -53,7 +76,8 @@ class PyEnumAutoValueInlayHintsProviderTest : DeclarativeInlayHintsProviderTestC
         C = auto()/*<#  = 2 #>*/
   """)
 
-  fun `test flag uses powers of two`() = doTest("""
+  @Test
+  fun `test flag uses powers of two`(): Unit = doTest("""
     from enum import Flag, auto
     class E(Flag):
         A = auto()/*<#  = 1 #>*/
@@ -62,7 +86,8 @@ class PyEnumAutoValueInlayHintsProviderTest : DeclarativeInlayHintsProviderTestC
         D = auto()/*<#  = 8 #>*/
   """)
 
-  fun `test int flag uses powers of two`() = doTest("""
+  @Test
+  fun `test int flag uses powers of two`(): Unit = doTest("""
     from enum import IntFlag, auto
     class E(IntFlag):
         READ = auto()/*<#  = 1 #>*/
@@ -70,14 +95,16 @@ class PyEnumAutoValueInlayHintsProviderTest : DeclarativeInlayHintsProviderTestC
         EXECUTE = auto()/*<#  = 4 #>*/
   """)
 
-  fun `test str enum uses lower-cased name`() = doTest("""
+  @Test
+  fun `test str enum uses lower-cased name`(): Unit = doTest("""
     from enum import StrEnum, auto
     class Color(StrEnum):
         RED = auto()/*<#  = 'red' #>*/
         Green = auto()/*<#  = 'green' #>*/
   """)
 
-  fun `test no hint for custom generate next value`() = doTest("""
+  @Test
+  fun `test no hint for custom generate next value`(): Unit = doTest("""
     from enum import Enum, auto
     class E(Enum):
         @staticmethod
@@ -87,7 +114,8 @@ class PyEnumAutoValueInlayHintsProviderTest : DeclarativeInlayHintsProviderTestC
         B = auto()
   """, verifyHintsPresence = false)
 
-  fun `test no hint after unevaluable value`() = doTest("""
+  @Test
+  fun `test no hint after unevaluable value`(): Unit = doTest("""
     from enum import Enum, auto
     def factory(): ...
     class E(Enum):
@@ -95,13 +123,14 @@ class PyEnumAutoValueInlayHintsProviderTest : DeclarativeInlayHintsProviderTestC
         B = auto()
   """, verifyHintsPresence = false)
 
-  fun `test no hint outside enum`() = doTest("""
+  @Test
+  fun `test no hint outside enum`(): Unit = doTest("""
     from enum import auto
     x = auto()
   """, verifyHintsPresence = false)
 
   private fun doTest(text: String, verifyHintsPresence: Boolean = true) {
-    doTestProvider(
+    doTestProvider(myFixture, 
       "test.py",
       text.trimIndent(),
       PyEnumAutoValueInlayHintsProvider(),
@@ -109,9 +138,5 @@ class PyEnumAutoValueInlayHintsProviderTest : DeclarativeInlayHintsProviderTestC
       verifyHintsPresence = verifyHintsPresence,
       testMode = ProviderTestMode.SIMPLE
     )
-  }
-
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return PyLightProjectDescriptor(LanguageLevel.getLatest())
   }
 }
