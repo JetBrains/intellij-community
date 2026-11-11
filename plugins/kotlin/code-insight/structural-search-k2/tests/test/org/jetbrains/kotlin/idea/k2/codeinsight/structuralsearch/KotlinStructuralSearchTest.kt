@@ -35,7 +35,7 @@ abstract class KotlinStructuralSearchTest : KotlinLightCodeInsightFixtureTestCas
     override fun setUp() {
         super.setUp()
         myInspection = SSBasedInspection()
-        myFixture.enableInspections(myInspection)
+        myFixture.enableInspections(myInspection!!)
     }
 
     protected fun doTest(pattern: String, highlighting: String, context: PatternContext = KotlinStructuralSearchProfile.DEFAULT_CONTEXT) {

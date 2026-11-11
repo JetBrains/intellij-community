@@ -25,7 +25,7 @@ abstract class AbstractKotlinGotoImplementationMultifileTest : KotlinLightCodeIn
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    private fun doMultiFileTest(vararg fileNames: String?) {
+    private fun doMultiFileTest(vararg fileNames: String) {
         myFixture.configureByFiles(*fileNames)
         val gotoData = NavigationTestUtils.invokeGotoImplementations(getEditor(), getFile())
         NavigationTestUtils.assertGotoDataMatching(getEditor(), gotoData)
