@@ -36,6 +36,7 @@ import org.junit.runners.Parameterized
 import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import kotlinx.coroutines.cancel
 import kotlin.test.assertFalse
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -597,6 +598,20 @@ class EditorHyperlinkSupportTest(private val trackDocumentChangesManually: Boole
       }
     }
     assertSame(created, hyperlinkSupport)
+  }
+
+  @Test
+  fun `test EditorHyperlinkSupport#get succeeds for an editor with a cancelled coroutine scope`() {
+    // The project close cancels the editor scope before the editor is released.
+    // A console can still flush its text and install the hyperlink support in between.
+    val editor = EditorFactory.getInstance().createEditor(DocumentImpl("", true), project)
+    try {
+      editor.coroutineScope.cancel()
+      EditorHyperlinkSupport.get(editor, trackDocumentChangesManually)
+    }
+    finally {
+      EditorFactory.getInstance().releaseEditor(editor)
+    }
   }
 
   private fun assertHighlightings(textToHighlight: String, expectedCount: Int): List<RangeHighlighter> {

@@ -27,7 +27,7 @@ import java.awt.event.KeyEvent
  * Applies the hover and follow effects to the hyperlinks of [editor]
  * and shows the popup of an invisible hyperlink.
  *
- * The popup and its editor listener are removed when [coroutineScope] is cancelled.
+ * The popup and the editor listeners are removed when [coroutineScope] is cancelled.
  */
 @ApiStatus.Internal
 class EditorHyperlinkInteraction(
@@ -61,7 +61,7 @@ class EditorHyperlinkInteraction(
           }
         }
       }
-    })
+    }, coroutineScope)
   }
 
   /**

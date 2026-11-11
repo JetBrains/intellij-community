@@ -31,7 +31,6 @@ import com.intellij.ui.HintHint
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.asDisposable
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
@@ -84,7 +83,7 @@ internal class InvisibleHyperlinkHintManager(
           lastMousePressTime = event.mouseEvent.`when`
         }
       }
-    }, coroutineScope.asDisposable())
+    }, coroutineScope)
     coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
       editor.contentComponent.launchOnShow(InvisibleHyperlinkHintManager::class.simpleName + ": cancel popup on hiding") {
         try {

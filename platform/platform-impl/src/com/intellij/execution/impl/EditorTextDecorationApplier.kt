@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.SlowOperations
-import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -368,9 +367,8 @@ private class EditorTextDecorationApplierImpl(
   private var lastMouseMovedEvent: EditorMouseEvent? = null
 
   init {
-    val disposable = coroutineScope.asDisposable()
-    editor.addEditorMouseListener(MyMouseListener(), disposable)
-    editor.addEditorMouseMotionListener(MyMouseMotionListener(), disposable)
+    editor.addEditorMouseListener(MyMouseListener(), coroutineScope)
+    editor.addEditorMouseMotionListener(MyMouseMotionListener(), coroutineScope)
   }
 
   override fun addDecorations(decorations: Collection<EditorTextDecoration>) {
