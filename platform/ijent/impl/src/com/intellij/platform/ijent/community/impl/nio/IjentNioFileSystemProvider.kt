@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.directorySeparators
+import com.intellij.platform.eel.fs.EelCopyMoveImpl
 import com.intellij.platform.eel.fs.EelFileInfo.Type.Directory
 import com.intellij.platform.eel.fs.EelFileInfo.Type.Other
 import com.intellij.platform.eel.fs.EelFileInfo.Type.Regular
@@ -321,6 +322,10 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
     ensureAbsoluteIjentNioPath(source)
     ensureAbsoluteIjentNioPath(target)
+    if (source.nioFs != target.nioFs || EelCopyMoveImpl.hasEelCopyOption(options)) {
+      EelCopyMoveImpl.copy(source, target, *options)
+      return
+    }
     val sourcePath = source.eelPath
     val targetPath = target.eelPath
 
@@ -347,6 +352,10 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun move(source: Path, target: Path, vararg options: CopyOption?) {
     ensureAbsoluteIjentNioPath(source)
     ensureAbsoluteIjentNioPath(target)
+    if (source.nioFs != target.nioFs || EelCopyMoveImpl.hasEelCopyOption(options)) {
+      EelCopyMoveImpl.move(source, target, *options.filterNotNull().toTypedArray())
+      return
+    }
     val sourcePath = source.eelPath
     val targetPath = target.eelPath
     return source.nioFs.ijentFs.move(sourcePath, targetPath)

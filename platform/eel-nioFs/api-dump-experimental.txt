@@ -3,6 +3,39 @@ f:com.intellij.platform.eel.EelNioFsKt
 *:com.intellij.platform.eel.EelPathBoundDescriptor
 - com.intellij.platform.eel.EelDescriptor
 - a:getRootPath():java.nio.file.Path
+*:com.intellij.platform.eel.fs.EelCopyOption
+- java.nio.file.CopyOption
+*f:com.intellij.platform.eel.fs.EelCopyOption$Cancellable
+- com.intellij.platform.eel.fs.EelCopyOption
+- <init>(kotlin.coroutines.CoroutineContext):V
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- <init>(kotlinx.coroutines.Job):V
+- equals(java.lang.Object):Z
+- f:getJob():kotlinx.coroutines.Job
+- hashCode():I
+*f:com.intellij.platform.eel.fs.EelCopyOption$ContinueOnError
+- com.intellij.platform.eel.fs.EelCopyOption
+- sf:INSTANCE:com.intellij.platform.eel.fs.EelCopyOption$ContinueOnError
+*f:com.intellij.platform.eel.fs.EelCopyOption$Progress
+- com.intellij.platform.eel.fs.EelCopyOption
+- <init>():V
+- <init>(kotlinx.coroutines.flow.MutableSharedFlow):V
+- equals(java.lang.Object):Z
+- f:getFlow():kotlinx.coroutines.flow.MutableSharedFlow
+- hashCode():I
+*f:com.intellij.platform.eel.fs.EelCopyOption$ProgressEvent
+- <init>(java.nio.file.Path,java.nio.file.Path,J,I):V
+- <init>(java.nio.file.Path,java.nio.file.Path,J,I,java.io.IOException):V
+- equals(java.lang.Object):Z
+- f:getBytesTransferred():J
+- f:getError():java.io.IOException
+- f:getFilesTransferred():I
+- f:getSource():java.nio.file.Path
+- f:getTarget():java.nio.file.Path
+- hashCode():I
+*f:com.intellij.platform.eel.fs.EelCopyOption$Recursive
+- com.intellij.platform.eel.fs.EelCopyOption
+- sf:INSTANCE:com.intellij.platform.eel.fs.EelCopyOption$Recursive
 *f:com.intellij.platform.eel.fs.EelFileUtils
 - sf:INSTANCE:com.intellij.platform.eel.fs.EelFileUtils
 - sf:deleteRecursively(java.nio.file.Path):V

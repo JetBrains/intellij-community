@@ -4,8 +4,10 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.fs.ChangeAttributesOptionsBuilder
+import com.intellij.platform.eel.fs.EelCopyOption.ProgressEvent
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder
@@ -19,6 +21,7 @@ import com.intellij.platform.eel.fs.WalkDirectoryEntryWindows
 import com.intellij.platform.eel.fs.WalkDirectoryOptionsBuilder
 import com.intellij.platform.eel.fs.WriteOptionsBuilder
 import com.intellij.platform.eel.fs.listDirectoryWithAttrs
+import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
@@ -28,18 +31,24 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.osFamily
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.util.annotations.VisibleToClasses
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.produceIn
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -47,6 +56,8 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
+import java.nio.file.FileAlreadyExistsException
+import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -60,9 +71,14 @@ import java.nio.file.attribute.BasicFileAttributeView
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import java.util.logging.Level
 import java.util.logging.Logger
-import kotlin.io.path.Path
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.startCoroutine
 import kotlin.io.path.fileAttributesView
 import kotlin.io.path.fileAttributesViewOrNull
 import kotlin.io.path.isDirectory
@@ -90,16 +106,105 @@ object EelPathTransfer {
     absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler? = null,
     filter: ((Path) -> Boolean)? = null,
   ) {
+    walkingTransfer(
+      sourceRoot = sourceRoot,
+      targetRoot = targetRoot,
+      removeSource = removeSource,
+      fileAttributesStrategy = fileAttributesStrategy,
+      absoluteSymlinkHandler = absoluteSymlinkHandler,
+      filter = filter,
+      recursive = true,
+      replaceExisting = true,
+      continueOnError = false,
+      cancellableJobs = emptyList(),
+      progressFlows = emptyList(),
+    )
+  }
+
+  fun walkingTransfer(
+    sourceRoot: Path,
+    targetRoot: Path,
+    removeSource: Boolean,
+    fileAttributesStrategy: EelFileTransferAttributesStrategy,
+    absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?,
+    filter: ((Path) -> Boolean)?,
+    recursive: Boolean,
+    replaceExisting: Boolean,
+    continueOnError: Boolean,
+    cancellableJobs: List<Job>,
+    progressFlows: List<MutableSharedFlow<ProgressEvent>>,
+  ) {
     if (LOG.isLoggable(Level.FINE)) LOG.fine("walkingTransfer($sourceRoot -> $targetRoot)")
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking {
-      incrementalWalkingTransfer(sourceRoot, targetRoot, fileAttributesStrategy, absoluteSymlinkHandler, filter)
-      if (removeSource) {
-        val sourceEel = sourceRoot.asEelPath()
-        val sourceEelApi = sourceEel.descriptor.toEelApi()
-        sourceEelApi.fs.delete(sourceEel, true).getOrThrowFileSystemException()
+    for (externalJob in cancellableJobs) {
+      externalJob.ensureActive()
+    }
+    runSuspendBlocking {
+      val scopeJob = coroutineContext.job
+      val handles = cancellableJobs.map { externalJob ->
+        externalJob.invokeOnCompletion { cause ->
+          if (cause != null) {
+            val cancellation = cause as? CancellationException ?: CancellationException(cause.message ?: "Operation cancelled", cause)
+            scopeJob.cancel(cancellation)
+          }
+        }
+      }
+      try {
+        for (externalJob in cancellableJobs) {
+          externalJob.ensureActive()
+        }
+        val allSucceeded = incrementalWalkingTransfer(
+          sourceRoot = sourceRoot,
+          targetRoot = targetRoot,
+          fileAttributesStrategy = fileAttributesStrategy,
+          absoluteSymlinkHandler = absoluteSymlinkHandler,
+          filter = filter,
+          recursive = recursive,
+          replaceExisting = replaceExisting,
+          continueOnError = continueOnError,
+          cancellableJobs = cancellableJobs,
+          progressFlows = progressFlows,
+        )
+        for (externalJob in cancellableJobs) {
+          externalJob.ensureActive()
+        }
+        if (removeSource && allSucceeded) {
+          val sourceEel = sourceRoot.asEelPath()
+          val targetEel = targetRoot.asEelPath()
+          if (sourceEel.descriptor != targetEel.descriptor || sourceEel.normalize() != targetEel.normalize()) {
+            val sourceEelApi = sourceEel.descriptor.toEelApi()
+            sourceEelApi.fs.delete(sourceEel, recursive).getOrThrowFileSystemException()
+          }
+        }
+      }
+      finally {
+        for (handle in handles) {
+          handle.dispose()
+        }
       }
     }
+  }
+
+  private fun <T> runSuspendBlocking(block: suspend CoroutineScope.() -> T): T {
+    val latch = java.util.concurrent.CountDownLatch(1)
+    var result: Result<T>? = null
+    val scope = CoroutineScope(Dispatchers.Unconfined + Job())
+    val suspendBlock: suspend () -> T = { scope.block() }
+    suspendBlock.startCoroutine(object : Continuation<T> {
+      override val context get() = scope.coroutineContext
+      override fun resumeWith(outcome: Result<T>) {
+        result = outcome
+        latch.countDown()
+      }
+    })
+    try {
+      latch.await()
+    }
+    catch (e: InterruptedException) {
+      scope.cancel()
+      Thread.currentThread().interrupt()
+      throw CancellationException("Interrupted while waiting for transfer", e)
+    }
+    return result!!.getOrThrow()
   }
 
 
@@ -297,6 +402,35 @@ object EelPathTransfer {
     fileAttributesStrategy: EelFileTransferAttributesStrategy,
     ignoreCase: Boolean,
     filter: ((Path) -> Boolean)?,
+  ): Flow<DiffOperation> =
+    mergeHashByPathImpl(
+      scope = scope,
+      sourceEntryPoint = sourceEntryPoint,
+      targetEntryPoint = targetEntryPoint,
+      sourceHashFlow = sourceHashFlow,
+      targetHashFlow = targetHashFlow,
+      fileAttributesStrategy = fileAttributesStrategy,
+      ignoreCase = ignoreCase,
+      filter = filter,
+      replaceExisting = true,
+      targetRootExistedBefore = true,
+      onExistingConflict = null,
+      onUnchangedFile = null,
+    )
+
+  private fun mergeHashByPathImpl(
+    scope: CoroutineScope,
+    sourceEntryPoint: Path,
+    targetEntryPoint: Path,
+    sourceHashFlow: Flow<WalkDirectoryEntryResult>,
+    targetHashFlow: Flow<WalkDirectoryEntryResult>,
+    fileAttributesStrategy: EelFileTransferAttributesStrategy,
+    ignoreCase: Boolean,
+    filter: ((Path) -> Boolean)?,
+    replaceExisting: Boolean,
+    targetRootExistedBefore: Boolean,
+    onExistingConflict: ((WalkDirectoryEntry, WalkDirectoryEntry) -> Unit)?,
+    onUnchangedFile: ((WalkDirectoryEntry, WalkDirectoryEntry) -> Unit)?,
   ): Flow<DiffOperation> = flow {
     val sourceHashChan = sourceHashFlow.produceIn(scope)
     val targetHashChan = targetHashFlow.produceIn(scope)
@@ -310,6 +444,7 @@ object EelPathTransfer {
     // of filtered directories and check if any of them are parents of the current path.
     // The relative paths are stored as components to avoid recomputing the components on each check.
     val filteredParents = mutableListOf<List<String>>()
+    val deletedTargetParents = mutableListOf<List<String>>()
     fun isParentFilteredOut(
       path: Path,
       parents: List<List<String>>,
@@ -320,41 +455,62 @@ object EelPathTransfer {
       }
     }
 
+    suspend fun advanceSourceEntry() {
+      sourceEntry = null
+      sourceEntryResult = null
+      while (true) {
+        val nextResult = try {
+          sourceHashChan.receive()
+        }
+        catch (_: ClosedReceiveChannelException) {
+          break
+        }
+        val candidate = when (nextResult) {
+          is WalkDirectoryEntryResult.Ok -> nextResult.value
+          is WalkDirectoryEntryResult.Error -> {
+            error("Merge hash by path could not get source entry: ${nextResult.error}")
+          }
+        }
+        val candidateRelPath = candidate.path.asNioPath().relativeTo(sourceEntryPoint)
+        if (isParentFilteredOut(candidateRelPath, filteredParents)) {
+          continue
+        }
+        sourceEntryResult = nextResult
+        sourceEntry = candidate
+        break
+      }
+    }
+
+    suspend fun advanceTargetEntry() {
+      targetEntry = null
+      targetEntryResult = null
+      while (true) {
+        val nextResult = try {
+          targetHashChan.receive()
+        }
+        catch (_: ClosedReceiveChannelException) {
+          break
+        }
+        val candidate = when (nextResult) {
+          is WalkDirectoryEntryResult.Ok -> nextResult.value
+          is WalkDirectoryEntryResult.Error -> {
+            error("Merge hash by path could not get target entry: ${nextResult.error}")
+          }
+        }
+        val candidateRelPath = candidate.path.asNioPath().relativeTo(targetEntryPoint)
+        if (isParentFilteredOut(candidateRelPath, deletedTargetParents)) {
+          continue
+        }
+        targetEntryResult = nextResult
+        targetEntry = candidate
+        break
+      }
+    }
+
+    advanceSourceEntry()
+    advanceTargetEntry()
+
     while (true) {
-      if (sourceEntryResult == null) {
-        try {
-          sourceEntryResult = sourceHashChan.receive()
-        }
-        catch (_: ClosedReceiveChannelException) {
-        }
-      }
-
-      if (targetEntryResult == null) {
-        try {
-          targetEntryResult = targetHashChan.receive()
-        }
-        catch (_: ClosedReceiveChannelException) {
-        }
-      }
-
-      if (targetEntryResult != null) {
-        targetEntry = when (targetEntryResult) {
-          is WalkDirectoryEntryResult.Ok -> targetEntryResult.value
-          is WalkDirectoryEntryResult.Error -> {
-            error("Merge hash by path could not get target entry: ${targetEntryResult.error}")
-          }
-        }
-      }
-
-      if (sourceEntryResult != null) {
-        sourceEntry = when (sourceEntryResult) {
-          is WalkDirectoryEntryResult.Ok -> sourceEntryResult.value
-          is WalkDirectoryEntryResult.Error -> {
-            error("Merge hash by path could not get source entry: ${sourceEntryResult.error}")
-          }
-        }
-      }
-
       if (LOG.isLoggable(Level.FINER)) LOG.finer("Merge hash by path comparing source: $sourceEntry to target: $targetEntry")
       if (sourceEntry == null && targetEntry == null) {
         break
@@ -362,106 +518,144 @@ object EelPathTransfer {
 
       // if there is no file on the source side but there is a file on the target side, the file was deleted
       if (sourceEntry == null && targetEntry != null) {
-        when (targetEntry.type) {
-          is WalkDirectoryEntry.Type.Other -> error("File of type other should never be yielded")
-          else -> emit(DiffOperation.Delete(targetEntry))
+        val currentTarget = targetEntry!!
+        if (currentTarget.type is WalkDirectoryEntry.Type.Directory) {
+          deletedTargetParents.add(getRelativePathParts(currentTarget.path.asNioPath().relativeTo(targetEntryPoint)))
         }
-        targetEntry = null
-        targetEntryResult = null
+        advanceTargetEntry()
+        if (replaceExisting) {
+          when (currentTarget.type) {
+            is WalkDirectoryEntry.Type.Other -> error("File of type other should never be yielded")
+            else -> emit(DiffOperation.Delete(currentTarget))
+          }
+        }
         continue
       }
 
-      val relativeLocalPath = sourceEntry!!.path.asNioPath().relativeTo(sourceEntryPoint)
-      val shouldTransfer = filter?.invoke(relativeLocalPath) ?: true && !isParentFilteredOut(relativeLocalPath, filteredParents)
+      val currentSource = sourceEntry!!
+      val relativeLocalPath = currentSource.path.asNioPath().relativeTo(sourceEntryPoint)
+      val shouldTransfer = (filter?.invoke(relativeLocalPath) ?: true) && !isParentFilteredOut(relativeLocalPath, filteredParents)
 
       // if there is a file on the source side but not on the target side, the file was created
       if (targetEntry == null) {
         if (shouldTransfer) {
-          when (sourceEntry.type) {
-            is WalkDirectoryEntry.Type.Symlink.Absolute -> emit(DiffOperation.AbsoluteSymlink(sourceEntry, null))
+          when (currentSource.type) {
+            is WalkDirectoryEntry.Type.Symlink.Absolute -> emit(DiffOperation.AbsoluteSymlink(currentSource, null))
             is WalkDirectoryEntry.Type.Other -> error("File of type other should never be yielded")
-            else -> emit(DiffOperation.Create(sourceEntry))
+            else -> emit(DiffOperation.Create(currentSource))
           }
         }
         else {
-          when (sourceEntry.type) {
+          when (currentSource.type) {
             is WalkDirectoryEntry.Type.Directory -> filteredParents.add(getRelativePathParts(relativeLocalPath))
             else -> Unit
           }
         }
-        sourceEntry = null
-        sourceEntryResult = null
+        advanceSourceEntry()
         continue
       }
 
-      when (sourceEntry.type) {
+      val currentTarget = targetEntry!!
+      when (currentSource.type) {
         is WalkDirectoryEntry.Type.Other -> error("File of type other should never be yielded")
         else -> Unit
       }
-      when (targetEntry.type) {
+      when (currentTarget.type) {
         is WalkDirectoryEntry.Type.Other -> error("File of type other should never be yielded")
         else -> Unit
       }
 
-      val relativeRemotePath = targetEntry.path.asNioPath().relativeTo(targetEntryPoint)
+      val relativeRemotePath = currentTarget.path.asNioPath().relativeTo(targetEntryPoint)
 
       val pathComparison = compareRelativePathComponents(relativeLocalPath, relativeRemotePath, ignoreCase)
 
       // if the same file is present on both sides, and if the permissions/hash/type is different, sync them
       if (pathComparison == 0) {
         if (shouldTransfer) {
+          val isRootPlaceholder = !targetRootExistedBefore && relativeLocalPath.toString().isEmpty()
+          val isBothDirectories =
+            currentSource.type is WalkDirectoryEntry.Type.Directory && currentTarget.type is WalkDirectoryEntry.Type.Directory
+          if (!replaceExisting && !isRootPlaceholder && !isBothDirectories) {
+            if (currentSource.type is WalkDirectoryEntry.Type.Directory) {
+              filteredParents.add(getRelativePathParts(relativeLocalPath))
+            }
+            if (currentTarget.type is WalkDirectoryEntry.Type.Directory) {
+              deletedTargetParents.add(getRelativePathParts(relativeRemotePath))
+            }
+            onExistingConflict?.invoke(currentSource, currentTarget)
+            advanceSourceEntry()
+            advanceTargetEntry()
+            continue
+          }
+
           val transferAttributes = when (fileAttributesStrategy) {
             is EelFileTransferAttributesStrategy.Skip -> false
             else -> true
           }
           val updatePermissions =
-            transferAttributes && !arePermissionsEqual(fileAttributesStrategy, sourceEntry.permissions!!, targetEntry.permissions!!)
-          val updateAttributes = transferAttributes && !areAttributesEqual(sourceEntry, targetEntry)
-          val updateTimestamps = transferAttributes && !areTimestampsEqual(sourceEntry, targetEntry)
+            transferAttributes && !arePermissionsEqual(fileAttributesStrategy, currentSource.permissions!!, currentTarget.permissions!!)
+          val updateAttributes = transferAttributes && !areAttributesEqual(currentSource, currentTarget)
+          val updateTimestamps = transferAttributes && !areTimestampsEqual(currentSource, currentTarget)
           var opEmitted = false
+          var targetAdvanced = false
 
-          when (sourceEntry.type) {
+          when (currentSource.type) {
             is WalkDirectoryEntry.Type.Directory -> {
-              if (targetEntry.type !is WalkDirectoryEntry.Type.Directory) {
-                emit(DiffOperation.ReplaceFile(sourceEntry, targetEntry))
+              if (currentTarget.type !is WalkDirectoryEntry.Type.Directory) {
+                emit(DiffOperation.ReplaceFile(currentSource, currentTarget))
                 opEmitted = true
               }
             }
             is WalkDirectoryEntry.Type.Regular -> {
-              when (targetEntry.type) {
+              when (currentTarget.type) {
                 is WalkDirectoryEntry.Type.Regular -> {
-                  if ((sourceEntry.type as WalkDirectoryEntry.Type.Regular).hash != (targetEntry.type as WalkDirectoryEntry.Type.Regular).hash) {
+                  if ((currentSource.type as WalkDirectoryEntry.Type.Regular).hash != (currentTarget.type as WalkDirectoryEntry.Type.Regular).hash) {
                     // updating file contents implies updating modification timestamp
-                    emit(DiffOperation.UpdateContents(updatePermissions, updateAttributes, true, sourceEntry, targetEntry))
+                    emit(DiffOperation.UpdateContents(updatePermissions, updateAttributes, true, currentSource, currentTarget))
                     opEmitted = true
                   }
                 }
                 else -> {
-                  emit(DiffOperation.ReplaceFile(sourceEntry, targetEntry))
+                  if (currentTarget.type is WalkDirectoryEntry.Type.Directory) {
+                    deletedTargetParents.add(getRelativePathParts(relativeRemotePath))
+                    advanceTargetEntry()
+                    targetAdvanced = true
+                  }
+                  emit(DiffOperation.ReplaceFile(currentSource, currentTarget))
                   opEmitted = true
                 }
               }
             }
             is WalkDirectoryEntry.Type.Symlink.Relative -> {
-              when (targetEntry.type) {
+              when (currentTarget.type) {
                 is WalkDirectoryEntry.Type.Symlink.Relative -> {
                   // to be able to compare both relative paths are converted to have the same separator
-                  val sourceTarget = (sourceEntry.type as WalkDirectoryEntry.Type.Symlink.Relative).symlinkRelativePath.replace("\\", "/")
-                  val targetTarget = (targetEntry.type as WalkDirectoryEntry.Type.Symlink.Relative).symlinkRelativePath.replace("\\", "/")
+                  val sourceTarget = (currentSource.type as WalkDirectoryEntry.Type.Symlink.Relative).symlinkRelativePath.replace("\\", "/")
+                  val targetTarget = (currentTarget.type as WalkDirectoryEntry.Type.Symlink.Relative).symlinkRelativePath.replace("\\", "/")
                   val areEqual = compareRelativePathComponents(Paths.get(sourceTarget), Paths.get(targetTarget)) == 0
                   if (!areEqual) {
-                    emit(DiffOperation.ReplaceFile(sourceEntry, targetEntry))
+                    emit(DiffOperation.ReplaceFile(currentSource, currentTarget))
                     opEmitted = true
                   }
                 }
                 else -> {
-                  emit(DiffOperation.ReplaceFile(sourceEntry, targetEntry))
+                  if (currentTarget.type is WalkDirectoryEntry.Type.Directory) {
+                    deletedTargetParents.add(getRelativePathParts(relativeRemotePath))
+                    advanceTargetEntry()
+                    targetAdvanced = true
+                  }
+                  emit(DiffOperation.ReplaceFile(currentSource, currentTarget))
                   opEmitted = true
                 }
               }
             }
             is WalkDirectoryEntry.Type.Symlink.Absolute -> {
-              emit(DiffOperation.AbsoluteSymlink(sourceEntry, targetEntry))
+              if (currentTarget.type is WalkDirectoryEntry.Type.Directory) {
+                deletedTargetParents.add(getRelativePathParts(relativeRemotePath))
+                advanceTargetEntry()
+                targetAdvanced = true
+              }
+              emit(DiffOperation.AbsoluteSymlink(currentSource, currentTarget))
               opEmitted = true
             }
             is WalkDirectoryEntry.Type.Other -> {
@@ -471,57 +665,71 @@ object EelPathTransfer {
 
           // if no other op has been emitted, but there could still be differences in metadata
           if (!opEmitted && (updatePermissions || updateAttributes || updateTimestamps)) {
-            when (sourceEntry.type) {
+            when (currentSource.type) {
               // permissions, timestamps, and attributes are generally ignored on symlinks
-              is WalkDirectoryEntry.Type.Symlink -> Unit
+              is WalkDirectoryEntry.Type.Symlink -> {
+                onUnchangedFile?.invoke(currentSource, currentTarget)
+              }
               else ->
                 emit(DiffOperation.UpdateMetadata(
                   updatePermissions = updatePermissions,
                   updateAttributes = updateAttributes,
                   updateTimestamps = updateTimestamps,
-                  sourceFile = sourceEntry,
-                  targetFile = targetEntry,
+                  sourceFile = currentSource,
+                  targetFile = currentTarget,
                 ))
             }
+          }
+          else if (!opEmitted && currentSource.type !is WalkDirectoryEntry.Type.Directory) {
+            onUnchangedFile?.invoke(currentSource, currentTarget)
+          }
+
+          advanceSourceEntry()
+          if (!targetAdvanced) {
+            advanceTargetEntry()
           }
         }
         else {
           // if the source file is not to be transferred and the target file exists, the target file should be removed
-          emit(DiffOperation.Delete(targetEntry))
-
-          when (sourceEntry.type) {
+          when (currentSource.type) {
             is WalkDirectoryEntry.Type.Directory -> filteredParents.add(getRelativePathParts(relativeLocalPath))
             else -> Unit
           }
+          if (currentTarget.type is WalkDirectoryEntry.Type.Directory) {
+            deletedTargetParents.add(getRelativePathParts(relativeRemotePath))
+          }
+          advanceSourceEntry()
+          advanceTargetEntry()
+          if (replaceExisting) {
+            emit(DiffOperation.Delete(currentTarget))
+          }
         }
-
-        sourceEntry = null
-        sourceEntryResult = null
-        targetEntry = null
-        targetEntryResult = null
       }
       // if the source path is in lower lexicographical order than the target path, it means that the source file was created
       else if (pathComparison < 0) {
         if (shouldTransfer) {
-          when (sourceEntry.type) {
-            is WalkDirectoryEntry.Type.Symlink.Absolute -> emit(DiffOperation.AbsoluteSymlink(sourceEntry, null))
-            else -> emit(DiffOperation.Create(sourceEntry))
+          when (currentSource.type) {
+            is WalkDirectoryEntry.Type.Symlink.Absolute -> emit(DiffOperation.AbsoluteSymlink(currentSource, null))
+            else -> emit(DiffOperation.Create(currentSource))
           }
         }
         else {
-          when (sourceEntry.type) {
+          when (currentSource.type) {
             is WalkDirectoryEntry.Type.Directory -> filteredParents.add(getRelativePathParts(relativeLocalPath))
             else -> Unit
           }
         }
-        sourceEntry = null
-        sourceEntryResult = null
+        advanceSourceEntry()
       }
       // if the source path is higher in lexicographical order than the target path, it means that the target file was deleted
       else {
-        emit(DiffOperation.Delete(targetEntry))
-        targetEntry = null
-        targetEntryResult = null
+        if (currentTarget.type is WalkDirectoryEntry.Type.Directory) {
+          deletedTargetParents.add(getRelativePathParts(relativeRemotePath))
+        }
+        advanceTargetEntry()
+        if (replaceExisting) {
+          emit(DiffOperation.Delete(currentTarget))
+        }
       }
     }
   }
@@ -699,7 +907,6 @@ object EelPathTransfer {
         if (shouldTransfer) {
           // edge case when a source file is deleted and replaced by a directory with the same name
           Files.deleteIfExists(targetDirPath)
-
           Files.createDirectory(targetDirPath)
           sourceNextLayerQ.addAll(listDirectories(path, isSourceLocal, sourceEelApi))
         }
@@ -721,7 +928,6 @@ object EelPathTransfer {
           if (shouldTransfer) {
             // edge case when a source file is deleted and replaced by a directory with the same name
             Files.deleteIfExists(dirTargetPath)
-
             Files.createDirectory(dirTargetPath)
             sourceNextLayerQ.addAll(listDirectories(sourceCurrentLayerQ.removeFirst(), isSourceLocal, sourceEelApi))
           }
@@ -731,7 +937,8 @@ object EelPathTransfer {
         }
         // the source directory was deleted
         else if (comparison < 0) {
-          targetEelApi.fs.delete(targetCurrentLayerQ.removeFirst().asEelPath(), true).getOrThrowFileSystemException()
+          val removedTargetDir = targetCurrentLayerQ.removeFirst()
+          targetEelApi.fs.delete(removedTargetDir.asEelPath(), true).getOrThrowFileSystemException()
         }
         else {
           val shouldTransfer = filter?.invoke(sourceRelativeDirPath) ?: true
@@ -742,7 +949,8 @@ object EelPathTransfer {
           else {
             // if the filter dictates that a source directory should not be transferred and the target directory exists, it should be deleted
             // to maintain the proper directory structure on the target side
-            targetEelApi.fs.delete(targetCurrentLayerQ.removeFirst().asEelPath(), true).getOrThrowFileSystemException()
+            val removedTargetDir = targetCurrentLayerQ.removeFirst()
+            targetEelApi.fs.delete(removedTargetDir.asEelPath(), true).getOrThrowFileSystemException()
             sourceCurrentLayerQ.removeFirst()
           }
         }
@@ -824,58 +1032,181 @@ object EelPathTransfer {
     absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?,
     filter: ((Path) -> Boolean)?,
   ) {
+    incrementalWalkingTransfer(
+      sourceRoot = sourceRoot,
+      targetRoot = targetRoot,
+      fileAttributesStrategy = fileAttributesStrategy,
+      absoluteSymlinkHandler = absoluteSymlinkHandler,
+      filter = filter,
+      recursive = true,
+      replaceExisting = true,
+      continueOnError = false,
+      cancellableJobs = emptyList(),
+      progressFlows = emptyList(),
+    )
+  }
+
+  suspend fun incrementalWalkingTransfer(
+    sourceRoot: Path,
+    targetRoot: Path,
+    fileAttributesStrategy: EelFileTransferAttributesStrategy,
+    absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?,
+    filter: ((Path) -> Boolean)?,
+    recursive: Boolean,
+    replaceExisting: Boolean,
+    continueOnError: Boolean,
+    cancellableJobs: List<Job>,
+    progressFlows: List<MutableSharedFlow<ProgressEvent>>,
+  ): Boolean {
+    val totalBytesTransferred = AtomicLong(0L)
+    val totalFilesTransferred = AtomicInteger(0)
+    val successfulItems = AtomicInteger(0)
+    val errors = ConcurrentLinkedQueue<IOException>()
+    val progressLock = Any()
+
+    fun emitProgress(event: ProgressEvent) {
+      for (flow in progressFlows) {
+        if (!flow.tryEmit(event)) {
+          val emitBlock: suspend () -> Unit = { flow.emit(event) }
+          emitBlock.startCoroutine(Continuation(EmptyCoroutineContext) {})
+        }
+      }
+    }
+
+    fun recordBytesCopied(sourcePath: Path, targetPath: Path, deltaBytes: Long) {
+      if (deltaBytes <= 0L) return
+      synchronized(progressLock) {
+        val bytes = totalBytesTransferred.addAndGet(deltaBytes)
+        val files = totalFilesTransferred.get()
+        emitProgress(ProgressEvent(sourcePath, targetPath, bytes, files))
+      }
+    }
+
+    fun recordFileTransferred(sourcePath: Path, targetPath: Path) {
+      synchronized(progressLock) {
+        val bytes = totalBytesTransferred.get()
+        val files = totalFilesTransferred.incrementAndGet()
+        successfulItems.incrementAndGet()
+        emitProgress(ProgressEvent(sourcePath, targetPath, bytes, files))
+      }
+    }
+
+    fun emitDirectoryProgress(sourcePath: Path, targetPath: Path) {
+      synchronized(progressLock) {
+        val bytes = totalBytesTransferred.get()
+        val files = totalFilesTransferred.get()
+        emitProgress(ProgressEvent(sourcePath, targetPath, bytes, files))
+      }
+    }
+
+    fun recordDirectoryCreated(sourcePath: Path, targetPath: Path) {
+      synchronized(progressLock) {
+        val bytes = totalBytesTransferred.get()
+        val files = totalFilesTransferred.get()
+        successfulItems.incrementAndGet()
+        emitProgress(ProgressEvent(sourcePath, targetPath, bytes, files))
+      }
+    }
+
+    fun recordError(sourcePath: Path, targetPath: Path, error: IOException) {
+      synchronized(progressLock) {
+        errors.add(error)
+        val bytes = totalBytesTransferred.get()
+        val files = totalFilesTransferred.get()
+        emitProgress(ProgressEvent(sourcePath, targetPath, bytes, files, error))
+      }
+    }
+
+    val targetRootEel = targetRoot.asEelPath()
+    val targetDescriptor = targetRootEel.descriptor
+    val targetEelApi = targetDescriptor.toEelApi()
+    val sourcePathEel = sourceRoot.asEelPath()
+    val sourceDescriptor = sourcePathEel.descriptor
+    val sourceOsFamily = sourcePathEel.descriptor.osFamily
+    val targetOsFamily = targetRoot.osFamily
+    val resolvedSourceRoot = sourcePathEel.asNioPath()
+    val resolvedTargetRoot = targetRootEel.asNioPath()
+
+    val sourceAttrs = resolvedSourceRoot.fileAttributesView<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+    if (sourceDescriptor == targetDescriptor) {
+      val normSource = sourcePathEel.normalize()
+      val normTarget = targetRootEel.normalize()
+      if (normSource == normTarget) {
+        return true
+      }
+      if (sourceAttrs.isDirectory && normTarget.startsWith(normSource)) {
+        throw FileSystemException(
+          resolvedSourceRoot.toString(),
+          resolvedTargetRoot.toString(),
+          "Cannot copy or move a directory into its own subdirectory",
+        )
+      }
+    }
+
+    // handle target path not existing
+    val targetAttrs = try {
+      resolvedTargetRoot.fileAttributesViewOrNull<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS)?.readAttributes()
+    }
+    catch (_: IOException) {
+      null
+    }
+    val targetExistedBefore = targetAttrs != null
+    var rootDirectoryCreated = false
+
     coroutineScope {
-      val targetRootEel = targetRoot.asEelPath()
-      val targetDescriptor = targetRootEel.descriptor
-      val targetEelApi = targetDescriptor.toEelApi()
-      val sourcePathEel = sourceRoot.asEelPath()
-      val sourceDescriptor = sourcePathEel.descriptor
-      val sourceOsFamily = sourcePathEel.descriptor.osFamily
-      val targetOsFamily = targetRoot.osFamily
-      val sourceRoot = sourcePathEel.asNioPath()
-      val targetRoot = targetRootEel.asNioPath()
-
-      val sourceAttrs = sourceRoot.fileAttributesView<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
-      // handle target path not existing
-      val targetAttrs = try {
-        targetRoot.fileAttributesViewOrNull<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS)?.readAttributes()
-      }
-      catch (_: IOException) {
-        null
-      }
-
       when {
         sourceAttrs.isDirectory -> {
           if (targetAttrs == null) {
-            Files.createDirectory(targetRoot)
+            Files.createDirectory(resolvedTargetRoot)
+            rootDirectoryCreated = true
+            emitDirectoryProgress(resolvedSourceRoot, resolvedTargetRoot)
           }
           else if (!targetAttrs.isDirectory) {
+            if (!replaceExisting) {
+              val err = FileAlreadyExistsException(resolvedTargetRoot.toString())
+              recordError(resolvedSourceRoot, resolvedTargetRoot, err)
+              throw err
+            }
             targetEelApi.fs.delete(targetRootEel, true).getOrThrowFileSystemException()
-            Files.createDirectory(targetRoot)
+            Files.createDirectory(resolvedTargetRoot)
+            rootDirectoryCreated = true
+            emitDirectoryProgress(resolvedSourceRoot, resolvedTargetRoot)
           }
-          withContext(Dispatchers.IO) {
-            directoryOnlySync(sourcePathEel, targetRootEel, false, filter)
+          else if (!replaceExisting && (!continueOnError || !recursive)) {
+            val err = FileAlreadyExistsException(resolvedTargetRoot.toString())
+            recordError(resolvedSourceRoot, resolvedTargetRoot, err)
+            throw err
           }
         }
         sourceAttrs.isRegularFile -> {
+          if (targetAttrs != null && !replaceExisting) {
+            val err = FileAlreadyExistsException(resolvedTargetRoot.toString())
+            recordError(resolvedSourceRoot, resolvedTargetRoot, err)
+            throw err
+          }
           if (targetAttrs == null) {
-            Files.createFile(targetRoot)
+            Files.createFile(resolvedTargetRoot)
           }
           else if (!targetAttrs.isRegularFile) {
             targetEelApi.fs.delete(targetRootEel, true).getOrThrowFileSystemException()
-            Files.createFile(targetRoot)
+            Files.createFile(resolvedTargetRoot)
           }
         }
         sourceAttrs.isSymbolicLink -> {
+          if (targetAttrs != null && !replaceExisting) {
+            val err = FileAlreadyExistsException(resolvedTargetRoot.toString())
+            recordError(resolvedSourceRoot, resolvedTargetRoot, err)
+            throw err
+          }
           if (targetAttrs == null) {
             // a placeholder file is created so that, in the case of an absolute symlink, the user lambda receives the expected target path (where the absolute symlink should be)
-            Files.createFile(targetRoot)
+            Files.createFile(resolvedTargetRoot)
           }
           // if targetRoot is a directory, it should be deleted to prevent it from being traversed
           else if (targetAttrs.isDirectory) {
             targetEelApi.fs.delete(targetRootEel, true).getOrThrowFileSystemException()
             // a placeholder file is created so that, in the case of an absolute symlink, the user lambda receives the expected target path (where the absolute symlink should be)
-            Files.createFile(targetRoot)
+            Files.createFile(resolvedTargetRoot)
           }
         }
       }
@@ -884,6 +1215,7 @@ object EelPathTransfer {
         is EelFileTransferAttributesStrategy.Skip -> false
         else -> true
       }
+      val maxDepth = if (recursive) -1 else 0
 
       val walkDirectoryOptionsSource = WalkDirectoryOptionsBuilder(sourcePathEel)
         .traversalOrder(WalkDirectoryTraversalOrder.DFS)
@@ -891,16 +1223,16 @@ object EelPathTransfer {
         .yieldOtherFileTypes(false)
         .fileContentsHash(true)
         .readMetadata(readMetadata)
-        .maxDepth(-1)
+        .maxDepth(maxDepth)
         .build()
 
-      val walkDirectoryOptionsTarget = WalkDirectoryOptionsBuilder(targetRoot.asEelPath())
+      val walkDirectoryOptionsTarget = WalkDirectoryOptionsBuilder(resolvedTargetRoot.asEelPath())
         .traversalOrder(WalkDirectoryTraversalOrder.DFS)
         .entryOrder(WalkDirectoryEntryOrder.ALPHABETICAL)
         .yieldOtherFileTypes(false)
         .fileContentsHash(true)
         .readMetadata(readMetadata)
-        .maxDepth(-1)
+        .maxDepth(maxDepth)
         .build()
 
       val sourceHashes = async(Dispatchers.IO) { sourcePathEel.descriptor.toEelApi().fs.walkDirectory(walkDirectoryOptionsSource) }
@@ -908,75 +1240,147 @@ object EelPathTransfer {
 
       val semaphore = Semaphore(4) // TODO: fine tune
 
-      mergeHashByPath(this,
-                      sourceRoot,
-                      targetRoot,
-                      sourceHashes.await(),
-                      targetHashes.await(),
-                      fileAttributesStrategy,
-                      false,
-                      filter).collect { diffOp ->
+      mergeHashByPathImpl(
+        scope = this,
+        sourceEntryPoint = resolvedSourceRoot,
+        targetEntryPoint = resolvedTargetRoot,
+        sourceHashFlow = sourceHashes.await(),
+        targetHashFlow = targetHashes.await(),
+        fileAttributesStrategy = fileAttributesStrategy,
+        ignoreCase = false,
+        filter = filter,
+        replaceExisting = replaceExisting,
+        targetRootExistedBefore = targetExistedBefore,
+        onExistingConflict = { srcEntry, dstEntry ->
+          val srcPath = srcEntry.path.asNioPath()
+          val dstPath = dstEntry.path.asNioPath()
+          val err = FileAlreadyExistsException(dstPath.toString())
+          recordError(srcPath, dstPath, err)
+          if (!continueOnError) {
+            throw err
+          }
+        },
+        onUnchangedFile = { srcEntry, dstEntry ->
+          recordFileTransferred(srcEntry.path.asNioPath(), dstEntry.path.asNioPath())
+        },
+      ).collect { diffOp ->
+        for (externalJob in cancellableJobs) {
+          externalJob.ensureActive()
+        }
+        currentCoroutineContext().ensureActive()
+
+        val directorySourceFile = when (diffOp) {
+          is DiffOperation.Create -> diffOp.sourceFile.takeIf { it.type is WalkDirectoryEntry.Type.Directory }
+          is DiffOperation.ReplaceFile -> diffOp.sourceFile.takeIf { it.type is WalkDirectoryEntry.Type.Directory }
+          else -> null
+        }
+        if (directorySourceFile != null) {
+          val sourceFileNioPath = directorySourceFile.path.asNioPath()
+          val relativePath = sourceFileNioPath.relativeTo(resolvedSourceRoot)
+          val targetAbsolutePath = resolvedTargetRoot.resolve(relativePath)
+          try {
+            withContext(Dispatchers.IO) {
+              for (externalJob in cancellableJobs) {
+                externalJob.ensureActive()
+              }
+              currentCoroutineContext().ensureActive()
+              if (LOG.isLoggable(Level.FINER)) LOG.finer("Applying directory diff operation: $diffOp")
+              if (diffOp is DiffOperation.ReplaceFile) {
+                if (diffOp.targetFile.type is WalkDirectoryEntry.Type.Directory) {
+                  targetEelApi.fs.delete(diffOp.targetFile.path, true).getOrThrow()
+                }
+                else {
+                  Files.delete(diffOp.targetFile.path.asNioPath())
+                }
+              }
+              Files.createDirectory(targetAbsolutePath)
+              when (fileAttributesStrategy) {
+                is EelFileTransferAttributesStrategy.Skip -> Unit
+                else -> {
+                  val setAttributes = sourceOsFamily == EelOsFamily.Windows && targetOsFamily == EelOsFamily.Windows
+                  setPermissionsAndAttributes(
+                    directorySourceFile,
+                    targetAbsolutePath,
+                    targetEelApi,
+                    fileAttributesStrategy,
+                    true,
+                    setAttributes,
+                    true,
+                  )
+                }
+              }
+            }
+            recordDirectoryCreated(sourceFileNioPath, targetAbsolutePath)
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: IOException) {
+            for (externalJob in cancellableJobs) {
+              externalJob.ensureActive()
+            }
+            currentCoroutineContext().ensureActive()
+            recordError(sourceFileNioPath, targetAbsolutePath, e)
+            if (!continueOnError) {
+              throw e
+            }
+          }
+          return@collect
+        }
+
         // semaphore is used to limit how many files are being synced at any given moment
         semaphore.acquire()
         launch(Dispatchers.IO) {
+          var currentSourcePath = resolvedSourceRoot
+          var currentTargetPath = resolvedTargetRoot
           try {
+            for (externalJob in cancellableJobs) {
+              externalJob.ensureActive()
+            }
             if (LOG.isLoggable(Level.FINER)) LOG.finer("Applying diff operation: $diffOp")
             when (diffOp) {
               is DiffOperation.Create, is DiffOperation.ReplaceFile -> {
-                when (diffOp) {
-                  is DiffOperation.ReplaceFile -> Files.delete(diffOp.targetFile.path.asNioPath())
-                  else -> Unit
-                }
-
                 val sourceFile = when (diffOp) {
                   is DiffOperation.Create -> diffOp.sourceFile
                   is DiffOperation.ReplaceFile -> diffOp.sourceFile
                 }
 
                 val sourceFileNioPath = sourceFile.path.asNioPath()
-                val relativePath = sourceFileNioPath.relativeTo(sourceRoot)
-                val targetAbsolutePath = targetRoot.resolve(relativePath)
+                val relativePath = sourceFileNioPath.relativeTo(resolvedSourceRoot)
+                val targetAbsolutePath = resolvedTargetRoot.resolve(relativePath)
+                currentSourcePath = sourceFileNioPath
+                currentTargetPath = targetAbsolutePath
+
+                when (diffOp) {
+                  is DiffOperation.ReplaceFile -> {
+                    if (diffOp.targetFile.type is WalkDirectoryEntry.Type.Directory) {
+                      targetEelApi.fs.delete(diffOp.targetFile.path, true).getOrThrow()
+                    }
+                    else {
+                      Files.delete(diffOp.targetFile.path.asNioPath())
+                    }
+                  }
+                  else -> Unit
+                }
 
                 when (sourceFile.type) {
                   is WalkDirectoryEntry.Type.Directory -> {
-                    error("unreachable, directory was supposed to created in a pass before incremental transfer")
+                    error("unreachable, directory creation is handled synchronously before spawning file tasks")
                   }
                   is WalkDirectoryEntry.Type.Regular -> {
                     val targetAbsoluteTempPath = targetAbsolutePath.resolveSibling(targetAbsolutePath.fileName.toString() + ".part")
                     try {
-                      if (sourceDescriptor === targetDescriptor) {
-                        Files.newInputStream(sourceFileNioPath, READ).use { sourceFile ->
-                          Files.newOutputStream(targetAbsoluteTempPath, WRITE, CREATE, TRUNCATE_EXISTING).use { targetFile ->
-                            // this buffer size gave the best overall performance when benchmarking
-                            sourceFile.copyTo(targetFile, 64 * 1024)
-                          }
-                        }
-                      }
-                      else {
-                        val opts = WriteOptionsBuilder(targetAbsoluteTempPath.asEelPath())
-                          .allowCreate()
-                          .truncateExisting(true)
-                          .build()
-
-                        val chunks = flow {
-                          FileChannel.open(sourceFileNioPath, READ).use { chan ->
-                            while (true) {
-                              // this buffer size gave the best overall performance when benchmarking
-                              val buffer = ByteBuffer.allocate(256 * 1024)
-                              val bytesRead = chan.read(buffer)
-                              if (bytesRead <= 0) break
-                              buffer.flip()
-                              emit(buffer)
-                            }
-                          }
-                          // buffer size chosen randomly, but intentionally a higher number to have chunks ready at all times
-                        }.flowOn(Dispatchers.IO).buffer(5)
-                        val writeRes = targetEelApi.fs.streamingWrite(chunks, opts)
-                        when (writeRes) {
-                          is StreamingWriteResult.Error -> error("Streaming write failed writing file a target machine: ${writeRes.error}")
-                          is StreamingWriteResult.Ok -> Unit
-                        }
-                      }
+                      emitDirectoryProgress(sourceFileNioPath, targetAbsolutePath)
+                      copyRegularFileContents(
+                        sourcePathNio = sourceFileNioPath,
+                        tempTargetPathNio = targetAbsoluteTempPath,
+                        sourceDescriptor = sourceDescriptor,
+                        targetDescriptor = targetDescriptor,
+                        targetEelApi = targetEelApi,
+                        continueOnError = continueOnError,
+                        cancellableJobs = cancellableJobs,
+                        onBytesCopied = { bytesRead -> recordBytesCopied(sourceFileNioPath, targetAbsolutePath, bytesRead) },
+                      )
                       Files.move(targetAbsoluteTempPath, targetAbsolutePath, StandardCopyOption.REPLACE_EXISTING)
                       when (fileAttributesStrategy) {
                         is EelFileTransferAttributesStrategy.Skip -> Unit
@@ -992,6 +1396,7 @@ object EelPathTransfer {
                                                       true)
                         }
                       }
+                      recordFileTransferred(sourceFileNioPath, targetAbsolutePath)
                     }
                     finally {
                       Files.deleteIfExists(targetAbsoluteTempPath)
@@ -1007,7 +1412,8 @@ object EelPathTransfer {
                         symlinkTarget.replace("\\", "/")
                       }
                     }
-                    Files.createSymbolicLink(targetAbsolutePath, Path(symlinkTarget))
+                    Files.createSymbolicLink(targetAbsolutePath, targetAbsolutePath.fileSystem.getPath(symlinkTarget))
+                    recordFileTransferred(sourceFileNioPath, targetAbsolutePath)
                     // permissions on symlinks are not applied because they are ignored
                     // TODO: setting timestamps on a symlink requires using ffi syscall in ijent
                     //setPermissionsAndAttributes(sourceFile, targetAbsolutePath, fileAttributesStrategy, false, true, true)
@@ -1021,46 +1427,33 @@ object EelPathTransfer {
                 }
               }
               is DiffOperation.Delete -> {
-                Files.delete(diffOp.targetFile.path.asNioPath())
+                val targetNio = diffOp.targetFile.path.asNioPath()
+                currentTargetPath = targetNio
+                if (diffOp.targetFile.type is WalkDirectoryEntry.Type.Directory) {
+                  targetEelApi.fs.delete(diffOp.targetFile.path, true).getOrThrow()
+                }
+                else {
+                  Files.delete(targetNio)
+                }
               }
               is DiffOperation.UpdateContents -> {
                 val sourcePathNio = diffOp.sourceFile.path.asNioPath()
                 val targetPathNio = diffOp.targetFile.path.asNioPath()
+                currentSourcePath = sourcePathNio
+                currentTargetPath = targetPathNio
                 val tempRemotePath = targetPathNio.resolveSibling(targetPathNio.fileName.toString() + ".part")
                 try {
-                  if (sourceDescriptor === targetDescriptor) {
-                    Files.newInputStream(sourcePathNio, READ).use { sourceFile ->
-                      Files.newOutputStream(tempRemotePath, WRITE, TRUNCATE_EXISTING, CREATE).use { targetFile ->
-                        // this buffer size gave the best overall performance when benchmarking
-                        sourceFile.copyTo(targetFile, 64 * 1024)
-                      }
-                    }
-                  }
-                  else {
-                    val opts = WriteOptionsBuilder(tempRemotePath.asEelPath())
-                      .allowCreate()
-                      .truncateExisting(true)
-                      .build()
-
-                    val chunks = flow {
-                      FileChannel.open(sourcePathNio, READ).use { chan ->
-                        while (true) {
-                          // this buffer size gave the best overall performance when benchmarking
-                          val buffer = ByteBuffer.allocate(256 * 1024)
-                          val bytesRead = chan.read(buffer)
-                          if (bytesRead <= 0) break
-                          buffer.flip()
-                          emit(buffer)
-                        }
-                      }
-                      // buffer size chosen randomly, but intentionally a higher number to have chunks ready at all times
-                    }.flowOn(Dispatchers.IO).buffer(5)
-                    val writeRes = targetEelApi.fs.streamingWrite(chunks, opts)
-                    when (writeRes) {
-                      is StreamingWriteResult.Error -> error("Streaming write failed writing file a target machine: ${writeRes.error}")
-                      is StreamingWriteResult.Ok -> Unit
-                    }
-                  }
+                  emitDirectoryProgress(sourcePathNio, targetPathNio)
+                  copyRegularFileContents(
+                    sourcePathNio = sourcePathNio,
+                    tempTargetPathNio = tempRemotePath,
+                    sourceDescriptor = sourceDescriptor,
+                    targetDescriptor = targetDescriptor,
+                    targetEelApi = targetEelApi,
+                    continueOnError = continueOnError,
+                    cancellableJobs = cancellableJobs,
+                    onBytesCopied = { bytesRead -> recordBytesCopied(sourcePathNio, targetPathNio, bytesRead) },
+                  )
                   Files.move(tempRemotePath, targetPathNio, StandardCopyOption.REPLACE_EXISTING)
                   setPermissionsAndAttributes(diffOp.sourceFile,
                                               targetPathNio,
@@ -1069,35 +1462,169 @@ object EelPathTransfer {
                                               diffOp.updatePermissions,
                                               diffOp.updateAttributes,
                                               diffOp.updateTimestamps)
+                  recordFileTransferred(sourcePathNio, targetPathNio)
                 }
                 finally {
                   Files.deleteIfExists(tempRemotePath)
                 }
               }
               is DiffOperation.UpdateMetadata -> {
+                val sourcePathNio = diffOp.sourceFile.path.asNioPath()
+                val targetPathNio = diffOp.targetFile.path.asNioPath()
+                currentSourcePath = sourcePathNio
+                currentTargetPath = targetPathNio
                 when (diffOp.sourceFile.type) {
                   is WalkDirectoryEntry.Type.Symlink -> Unit // permissions, timestamps, and attributes are ignored on symlinks
                   else -> setPermissionsAndAttributes(diffOp.sourceFile,
-                                                      diffOp.targetFile.path.asNioPath(),
+                                                      targetPathNio,
                                                       targetEelApi,
                                                       fileAttributesStrategy,
                                                       diffOp.updatePermissions,
                                                       diffOp.updateAttributes,
                                                       diffOp.updateTimestamps)
                 }
-              }
-              is DiffOperation.AbsoluteSymlink -> {
-                when (absoluteSymlinkHandler) {
-                  null -> LOG.info("No absolute symlink handler provided for incremental walking transfer, skipping symlink: ${diffOp.sourceSymlink.path}")
-                  else -> absoluteSymlinkHandler.handle(diffOp.sourceSymlink, diffOp.targetSymlink)
+                if (diffOp.sourceFile.type !is WalkDirectoryEntry.Type.Directory) {
+                  recordFileTransferred(sourcePathNio, targetPathNio)
                 }
               }
+              is DiffOperation.AbsoluteSymlink -> {
+                val sourcePathNio = diffOp.sourceSymlink.path.asNioPath()
+                val targetPathNio = diffOp.targetSymlink?.path?.asNioPath()
+                                    ?: resolvedTargetRoot.resolve(sourcePathNio.relativeTo(resolvedSourceRoot))
+                currentSourcePath = sourcePathNio
+                currentTargetPath = targetPathNio
+                when (absoluteSymlinkHandler) {
+                  null -> LOG.info("No absolute symlink handler provided for incremental walking transfer, skipping symlink: ${diffOp.sourceSymlink.path}")
+                  else -> {
+                    absoluteSymlinkHandler.handle(diffOp.sourceSymlink, diffOp.targetSymlink)
+                    recordFileTransferred(sourcePathNio, targetPathNio)
+                  }
+                }
+              }
+            }
+            for (externalJob in cancellableJobs) {
+              externalJob.ensureActive()
+            }
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: IOException) {
+            for (externalJob in cancellableJobs) {
+              externalJob.ensureActive()
+            }
+            currentCoroutineContext().ensureActive()
+            recordError(currentSourcePath, currentTargetPath, e)
+            if (!continueOnError) {
+              throw e
             }
           }
           finally {
             semaphore.release()
           }
         }
+      }
+    }
+
+    for (externalJob in cancellableJobs) {
+      externalJob.ensureActive()
+    }
+
+    if (errors.isEmpty() && successfulItems.get() == 0) {
+      if (!replaceExisting && targetExistedBefore) {
+        val err = FileAlreadyExistsException(resolvedTargetRoot.toString())
+        recordError(resolvedSourceRoot, resolvedTargetRoot, err)
+      }
+      else if (rootDirectoryCreated) {
+        successfulItems.incrementAndGet()
+      }
+      else {
+        recordDirectoryCreated(resolvedSourceRoot, resolvedTargetRoot)
+      }
+    }
+
+    if (errors.isNotEmpty() && successfulItems.get() == 0) {
+      if (!targetExistedBefore) {
+        try {
+          targetEelApi.fs.delete(targetRootEel, true)
+        }
+        catch (_: Throwable) {
+        }
+      }
+      val iterator = errors.iterator()
+      val primary = iterator.next()
+      while (iterator.hasNext()) {
+        val suppressed = iterator.next()
+        if (suppressed !== primary) {
+          primary.addSuppressed(suppressed)
+        }
+      }
+      throw primary
+    }
+
+    return errors.isEmpty()
+  }
+
+  private suspend fun copyRegularFileContents(
+    sourcePathNio: Path,
+    tempTargetPathNio: Path,
+    sourceDescriptor: EelDescriptor,
+    targetDescriptor: EelDescriptor,
+    targetEelApi: EelApi,
+    continueOnError: Boolean,
+    cancellableJobs: List<Job>,
+    onBytesCopied: (Long) -> Unit,
+  ) {
+    if (sourceDescriptor === targetDescriptor) {
+      Files.newInputStream(sourcePathNio, READ).use { sourceFile ->
+        Files.newOutputStream(tempTargetPathNio, WRITE, TRUNCATE_EXISTING, CREATE).use { targetFile ->
+          // this buffer size gave the best overall performance when benchmarking
+          val buffer = ByteArray(64 * 1024)
+          while (true) {
+            for (externalJob in cancellableJobs) {
+              externalJob.ensureActive()
+            }
+            currentCoroutineContext().ensureActive()
+            val bytesRead = sourceFile.read(buffer)
+            if (bytesRead < 0) break
+            if (bytesRead == 0) continue
+            targetFile.write(buffer, 0, bytesRead)
+            onBytesCopied(bytesRead.toLong())
+          }
+        }
+      }
+    }
+    else {
+      val opts = WriteOptionsBuilder(tempTargetPathNio.asEelPath())
+        .allowCreate()
+        .truncateExisting(true)
+        .build()
+
+      val chunks = flow {
+        FileChannel.open(sourcePathNio, READ).use { chan ->
+          while (true) {
+            for (externalJob in cancellableJobs) {
+              externalJob.ensureActive()
+            }
+            currentCoroutineContext().ensureActive()
+            // this buffer size gave the best overall performance when benchmarking
+            val buffer = ByteBuffer.allocate(256 * 1024)
+            val bytesRead = chan.read(buffer)
+            if (bytesRead <= 0) break
+            buffer.flip()
+            emit(buffer)
+            onBytesCopied(bytesRead.toLong())
+          }
+        }
+        // buffer size chosen randomly, but intentionally a higher number to have chunks ready at all times
+      }.flowOn(Dispatchers.IO).buffer(5)
+      val writeRes = targetEelApi.fs.streamingWrite(chunks, opts)
+      when (writeRes) {
+        is StreamingWriteResult.Error -> {
+          val msg = "Streaming write failed writing file a target machine: ${writeRes.error}"
+          if (continueOnError) throw IOException(msg) else error(msg)
+        }
+        is StreamingWriteResult.Ok -> Unit
       }
     }
   }
