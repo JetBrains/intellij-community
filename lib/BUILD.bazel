@@ -13837,17 +13837,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.jetbrains.qodana/qodana-sarif-1.0.38.jar_copy",
-    src = "@com_jetbrains_qodana-qodana-sarif-1_0_38_http//file",
-    out = "com.jetbrains.qodana/qodana-sarif-1.0.38.jar",
+    name = "com.jetbrains.qodana/qodana-sarif-1.0.57.jar_copy",
+    src = "@com_jetbrains_qodana-qodana-sarif-1_0_57_http//file",
+    out = "com.jetbrains.qodana/qodana-sarif-1.0.57.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-qodana-sarif-qodana-sarif",
-    jar = "@com_jetbrains_qodana-qodana-sarif-1_0_38_http//file",
-    source_jar = "@com_jetbrains_qodana-qodana-sarif-1_0_38-sources_http//file",
+    jar = "@com_jetbrains_qodana-qodana-sarif-1_0_57_http//file",
+    source_jar = "@com_jetbrains_qodana-qodana-sarif-1_0_57-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
