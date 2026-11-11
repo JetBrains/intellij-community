@@ -51,11 +51,14 @@ interface ImportPerformer {
 
 private val logger = logger<DefaultImportPerformer>()
 
-class DefaultImportPerformer(private val partials: Collection<PartialImportPerformer>) : ImportPerformer {
-  constructor() : this(arrayListOf(LookAndFeelImportPerformer(),
-                              SyntaxSchemeImportPerformer(),
-                              KeymapSchemeImportPerformer(),
-                              RecentProjectsImportPerformer()).apply { addAll(PartialImportPerformer.EP_NAME.extensionList) })
+class DefaultImportPerformer : ImportPerformer {
+
+  private val partials: Collection<PartialImportPerformer>
+
+  constructor(partials: Collection<PartialImportPerformer>) {
+    require(partials.isNotEmpty()) { "No partial import performers provided" }
+    this.partials = partials
+  }
 
   private fun onlyRequiredPartials(settings: Settings) = partials.filter { p -> p.willPerform(settings) }
 
