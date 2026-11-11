@@ -120,6 +120,7 @@ jvm_library(
         "//platform/credential-store",
         "//libraries/snakeyaml",
         "//platform/scopes",
+        "//platform/platform-impl/rpc",
     ],
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend.tests` end
