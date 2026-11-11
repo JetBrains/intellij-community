@@ -126,6 +126,7 @@ jvm_library(
         "//platform/ide-core",
         "//libraries/junit4",
         "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5/codeInsight",
         "//libraries/junit6",
         "@lib//:kotlin-stdlib",
     ],

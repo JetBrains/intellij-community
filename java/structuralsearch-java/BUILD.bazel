@@ -117,6 +117,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//libraries/junit4",
         "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5/codeInsight",
         "//libraries/junit6",
         "//platform/bazel-runfiles",
     ],
