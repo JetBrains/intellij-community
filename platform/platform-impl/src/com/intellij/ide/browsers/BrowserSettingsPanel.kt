@@ -50,7 +50,7 @@ import javax.swing.table.TableCellRenderer
 import kotlin.io.path.Path
 
 /**
- * An item of the "Default Browser" dropdown: [SystemDefaultBrowser], a browser of a [WebBrowserProvider], a browser of the list,
+ * An item of the "Default Browser" dropdown: [SystemDefaultBrowser], an [EditorTabWebBrowser], a browser of the list,
  * or an installed browser that is not in the list yet.
  * The "JavaScript Debugger" dropdown has only the browsers of the [BrowserFamily.CHROME] family.
  * For a browser of the list, [id] is the id of the original row, see [BrowserSettingsConfigurable.originalOf].
@@ -291,7 +291,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   private fun updateDefaultBrowserChoices() {
     val choice = defaultBrowserModel.selected
     val systemDefault = if (canUseSystemDefaultBrowserPolicy()) listOf(BrowserChoice.systemDefault(systemDefaultIcon)) else emptyList()
-    val provided = WebBrowserProvider.getAvailableBrowsers().map { BrowserChoice.of(it) }
+    val provided = EditorTabWebBrowserProvider.getAvailableBrowsers().map { BrowserChoice.of(it) }
     val listed = listedBrowsers()
     val installed = installedChoices()
     defaultBrowserModel.replaceAll(buildList {
@@ -334,7 +334,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   /** The default browser that [WebBrowserManager] stores, as an item of the current dropdown. */
   private fun storedChoice(manager: WebBrowserManager): BrowserChoice? {
     val defaultBrowser = manager.defaultBrowser
-    if (WebBrowserProvider.getAvailableBrowsers().any { it === defaultBrowser }) return BrowserChoice.of(defaultBrowser)
+    if (EditorTabWebBrowserProvider.getAvailableBrowsers().any { it === defaultBrowser }) return BrowserChoice.of(defaultBrowser)
     return listedBrowsers().find { it.id == defaultBrowser.id } ?: fallbackChoice()
   }
 

@@ -18,14 +18,14 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Creates the file of a new editor tab that shows the page at [url] in [project].
  *
- * The tab is a browser tab when a [WebBrowserProvider] gives one, for example an IDE Browser tab.
+ * The tab is a browser tab when an [EditorTabWebBrowser] is available, for example an IDE Browser tab.
  * Otherwise, it is an IDE HTML editor tab with [title].
  * Each call creates a new file, so each opened file is a new tab.
  * The caller opens the file where it wants the tab. To open it in the current editor window, use [browseInEditorTab].
  */
 @ApiStatus.Internal
 fun createWebPageTabFile(project: Project, url: String, title: @DialogTitle String): VirtualFile =
-  WebBrowserProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.createEditorTabFile(project, url) }
+  EditorTabWebBrowserProvider.getAvailableBrowsers().firstOrNull()?.createEditorTabFile(project, url)
   ?: HTMLVirtualFile.createFile(project, title, HTMLEditorProvider.Request.url(url), WebPreviewFileType.INSTANCE, ignoreJcef = false)
 
 /**

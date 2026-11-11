@@ -4,7 +4,9 @@ package com.intellij.ide.browsers
 import com.intellij.ide.GeneralLocalSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import org.jdom.Element
@@ -18,7 +20,7 @@ import java.util.UUID
 import javax.swing.Icon
 
 /**
- * Tests a browser of a [WebBrowserProvider] in [WebBrowserManager] and in [BrowserLauncherImpl].
+ * Tests an [EditorTabWebBrowser] in [WebBrowserManager] and in [BrowserLauncherImpl].
  */
 @TestApplication
 class ProvidedWebBrowserTest {
@@ -38,7 +40,7 @@ class ProvidedWebBrowserTest {
     savedState = WebBrowserManager.getInstance().state
     savedUseDefaultBrowser = GeneralLocalSettings.getInstance().useDefaultBrowser
     savedBrowserPath = GeneralLocalSettings.getInstance().browserPath
-    ExtensionTestUtil.maskExtensions(WebBrowserProvider.EP_NAME, listOf(provider), disposable)
+    ExtensionTestUtil.maskExtensions(EditorTabWebBrowserProvider.EP_NAME, listOf(provider), disposable)
   }
 
   @AfterEach
@@ -96,36 +98,32 @@ class ProvidedWebBrowserTest {
     assertEquals(chromeId, manager.defaultBrowser.id)
   }
 
-  private class RecordingBrowser(private val id: UUID) : WebBrowser() {
+  private class RecordingBrowser(private val id: UUID) : EditorTabWebBrowser() {
     val opened = mutableListOf<String>()
 
     override fun getName(): String = "Recording"
 
     override fun getId(): UUID = id
 
-    override fun getFamily(): BrowserFamily? = null
-
     override fun getIcon(): Icon = SystemDefaultBrowser.icon
 
-    override fun getPath(): String? = null
-
     override fun getBrowserNotFoundMessage(): String = "not found"
-
-    override fun getSpecificSettings(): BrowserSpecificSettings? = null
 
     override fun browse(url: String, project: Project?) {
       opened += url
     }
+
+    override fun createEditorTabFile(project: Project, url: String): VirtualFile = LightVirtualFile(url)
 
     companion object {
       val ID: UUID = UUID.fromString("7c1d2e3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f")
     }
   }
 
-  private class FakeWebBrowserProvider(var providedBrowser: WebBrowser) : WebBrowserProvider {
+  private class FakeWebBrowserProvider(var providedBrowser: EditorTabWebBrowser) : EditorTabWebBrowserProvider {
     var available = true
 
-    override val browser: WebBrowser?
+    override val browser: EditorTabWebBrowser?
       get() = if (available) providedBrowser else null
   }
 
