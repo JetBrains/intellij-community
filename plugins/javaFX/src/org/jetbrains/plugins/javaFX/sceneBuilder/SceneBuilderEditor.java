@@ -17,6 +17,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.fs.EelFileUtils;
 import com.intellij.ui.EditorNotificationPanel;
@@ -136,7 +137,7 @@ public final class SceneBuilderEditor extends UserDataHolderBase implements File
 
             Path target = SceneBuilderUtil.getSceneBuilder11Path();
             NioFiles.createParentDirectories(target);
-            Files.copy(list.getFirst().first.toNioPath(), target, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(VfsUtil.getLocalFile(list.getFirst().first).toNioPath(), target, StandardCopyOption.REPLACE_EXISTING);
             EelFileUtils.deleteRecursively(tempDir);
 
             SceneBuilderUtil.updateLoader(myProject);
