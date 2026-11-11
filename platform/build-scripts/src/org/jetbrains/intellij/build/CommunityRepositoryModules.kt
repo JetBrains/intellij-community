@@ -179,7 +179,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withModule("intellij.libraries.groovy.ant", "groovy-ant.jar")
       spec.withProjectLibrary("Ant", "ant", LibraryPackMode.STANDALONE_SEPARATE)
     },
-    pluginAuto(listOf("intellij.gradle.java.plugin", "intellij.gradle.java")),
     pluginAuto(listOf("intellij.devkit")) { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     },
@@ -216,7 +215,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
     pluginAuto(listOf("intellij.findUsagesMl")) { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
-    pluginAuto(listOf("intellij.lombok.plugin")),
   ).addingAll(allJcefPlugins().toList())
 }
 
