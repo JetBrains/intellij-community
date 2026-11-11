@@ -94,6 +94,10 @@ public class MarkdownHtmlGenerationTest extends BasePlatformTestCase {
     assertFalse(html.contains("> line\n"));
   }
 
+  public void testEmphasisAroundCodeSpan() {
+    doTestByHtmlFile();
+  }
+
   public void testIndentedCodeFenceCopyContentMatchesPreview() {
     String content = "    ```\n    line\n        nested\n    ```";
     PsiFile mdFile = myFixture.configureByText("test.md", content);

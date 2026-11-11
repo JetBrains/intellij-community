@@ -39,7 +39,10 @@ class MarkdownAlertTest : BasePlatformTestCase() {
     val offset = myFixture.file.text.indexOf(title)
     assertTrue(
       "Expected $title to be highlighted with $expectedKey",
-      highlights.any { it.forcedTextAttributesKey == expectedKey && it.startOffset == offset && it.endOffset == offset + title.length }
+      highlights.any {
+        it.hasTextAttributesKey(expectedKey) &&
+        it.startOffset == offset && it.endOffset == offset + title.length
+      }
     )
   }
 

@@ -21,12 +21,12 @@ class MarkdownFootnoteHighlightingTest : BasePlatformTestCase() {
     // Each reference should be highlighted with LINK_LABEL color, same as the label inside a standalone [^note]
     assertTrue("[^note1] not highlighted as link label",
       highlights.any {
-        it.forcedTextAttributesKey == MarkdownHighlighterColors.LINK_LABEL
+        it.hasTextAttributesKey(MarkdownHighlighterColors.LINK_LABEL)
         && it.startOffset == note1Offset && it.endOffset == note1Offset + 8
       })
     assertTrue("[^note2] not highlighted as link label",
       highlights.any {
-        it.forcedTextAttributesKey == MarkdownHighlighterColors.LINK_LABEL
+        it.hasTextAttributesKey(MarkdownHighlighterColors.LINK_LABEL)
         && it.startOffset == note2Offset && it.endOffset == note2Offset + 8
       })
     // [^note1] must not appear as LINK_TEXT (hyperlink blue)
@@ -45,7 +45,7 @@ class MarkdownFootnoteHighlightingTest : BasePlatformTestCase() {
     """.trimIndent())
     val text = myFixture.file.text
     val ranges = myFixture.doHighlighting()
-      .filter { it.forcedTextAttributesKey == MarkdownHighlighterColors.FOOTNOTE_DEFINITION }
+      .filter { it.hasTextAttributesKey(MarkdownHighlighterColors.FOOTNOTE_DEFINITION) }
       .map { text.substring(it.startOffset, it.endOffset) }
     assertTrue(ranges.any { it.contains("body text") })
   }
@@ -68,12 +68,12 @@ class MarkdownFootnoteHighlightingTest : BasePlatformTestCase() {
     val refStart = lineStart + "    See".length
     assertTrue("[^note2] inside continuation CODE_LINE should be highlighted as LINK_LABEL",
       highlights.any {
-        it.forcedTextAttributesKey == MarkdownHighlighterColors.LINK_LABEL
+        it.hasTextAttributesKey(MarkdownHighlighterColors.LINK_LABEL)
         && it.startOffset == refStart && it.endOffset == refStart + 8
       })
     assertTrue("[^note2] inside continuation CODE_LINE should be highlighted as BOLD",
       highlights.any {
-        it.forcedTextAttributesKey == MarkdownHighlighterColors.BOLD
+        it.hasTextAttributesKey(MarkdownHighlighterColors.BOLD)
         && it.startOffset == refStart && it.endOffset == refStart + 8
       })
   }
@@ -89,7 +89,7 @@ class MarkdownFootnoteHighlightingTest : BasePlatformTestCase() {
     """.trimIndent())
     val text = myFixture.file.text
     val ranges = myFixture.doHighlighting()
-      .filter { it.forcedTextAttributesKey == MarkdownHighlighterColors.FOOTNOTE_DEFINITION }
+      .filter { it.hasTextAttributesKey(MarkdownHighlighterColors.FOOTNOTE_DEFINITION) }
       .map { text.substring(it.startOffset, it.endOffset) }
     assertTrue(ranges.any { it.contains("First paragraph.") })
     assertTrue(ranges.any { it.contains("Line one.") })

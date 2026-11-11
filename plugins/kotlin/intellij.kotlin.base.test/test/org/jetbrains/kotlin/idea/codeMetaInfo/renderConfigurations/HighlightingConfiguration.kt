@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations
 
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.editor.ex.util.LayeredTextAttributes
 import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
 import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.TestableLineMarkerNavigator
@@ -119,11 +120,16 @@ open class HighlightingConfiguration(
             }
         }
 
-        if (renderTextAttributesKey)
-            highlightingCodeMetaInfo.highlightingInfo.forcedTextAttributesKey?.apply {
-                val keyName = this.externalName
-                params.add("textAttributesKey='$keyName'")
+        if (renderTextAttributesKey) {
+            val attributesKeys = highlightingCodeMetaInfo.highlightingInfo.forcedTextAttributesKey?.let(::listOf)
+                ?: (highlightingCodeMetaInfo.highlightingInfo.forcedTextAttributes as? LayeredTextAttributes)
+                    ?.keys
+                    ?.toList()
+                ?: emptyList()
+            for (key in attributesKeys) {
+                params.add("textAttributesKey='${key.externalName}'")
             }
+        }
 
         if (renderHighlightingAttributesKey) {
             highlightingCodeMetaInfo.highlightingInfo.type.attributesKey.apply {

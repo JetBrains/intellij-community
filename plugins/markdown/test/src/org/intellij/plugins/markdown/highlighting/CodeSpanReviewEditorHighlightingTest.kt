@@ -68,7 +68,8 @@ class CodeSpanReviewEditorHighlightingTest : ProductionDaemonAnalyzerTestCase() 
     val start = text.indexOf("code")
     val end = start + "code".length
     return infos.any {
-      it.forcedTextAttributesKey == MarkdownHighlighterColors.CODE_SPAN && it.startOffset <= start && it.endOffset >= end
+      it.hasTextAttributesKey(MarkdownHighlighterColors.CODE_SPAN) &&
+      it.startOffset <= start && it.endOffset >= end
     }
   }
 }

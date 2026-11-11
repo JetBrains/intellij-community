@@ -417,6 +417,8 @@ img {
 
 code {
   font: 0.9em "JetBrains Mono", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  font-weight: inherit;
+  font-style: inherit;
   padding: 0.2em 0.4em;
   margin: 2px;
   border-radius: 3px;

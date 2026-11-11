@@ -4,7 +4,9 @@ package com.intellij.markdown.backend.highlighting
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.ex.util.LayeredTextAttributes
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
@@ -178,12 +180,7 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
       val parents = element.parents(withSelf = false).toList()
       val isImageLinkContent = parents.any { it.elementType == MarkdownElementTypes.IMAGE } &&
                                parents.any { it.elementType == MarkdownElementTypes.INLINE_LINK }
-      val isDefinitionListTerm = parents.any { it.elementType == MarkdownElementTypes.DEFINITION_TERM }
-      val codeSpan = parents.firstOrNull { it.elementType == MarkdownElementTypes.CODE_SPAN }
-      if (codeSpan != null && !isDefinitionListTerm) {
-        setOf(MarkdownHighlighterColors.CODE_SPAN)
-      }
-      else parents
+      parents
         .asReversed()
         .filterNot { isImageLinkContent && it.elementType == MarkdownElementTypes.IMAGE }
         // annotateBlockQuoteLines highlights whole lines, so the leaves do not repeat the block quote style
@@ -199,12 +196,13 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
   }
 
   private fun applyAnnotations(holder: AnnotationHolder, element: PsiElement, keys: HighlightingKeys) {
-    for (key in keys) {
-      holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-        .textAttributes(key)
-        .range(element.textRange)
-        .create()
-    }
+    if (keys.isEmpty()) return
+
+    val scheme = EditorColorsManager.getInstance().globalScheme
+    holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+      .enforcedTextAttributes(LayeredTextAttributes.create(scheme, keys.toTypedArray()))
+      .range(element.textRange)
+      .create()
   }
 
   private fun annotateBasedOnParent(

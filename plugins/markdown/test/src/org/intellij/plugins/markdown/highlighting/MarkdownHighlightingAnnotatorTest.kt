@@ -3,7 +3,9 @@ package org.intellij.plugins.markdown.highlighting
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import java.awt.Font
 
 class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
   fun testHeadersKeepLevelHighlighting() {
@@ -243,7 +245,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
 
     assertElementHighlightedWithKey(highlights, "Standalone", MarkdownHighlighterColors.CODE_SPAN)
     assertElementHighlightedWithKey(highlights, "Code", MarkdownHighlighterColors.CODE_SPAN)
-    assertElementHighlightedWithKey(highlights, "Code", MarkdownHighlighterColors.HEADER_LEVEL_4, HighlightingState.NOT_HIGHLIGHTED)
+    assertElementHighlightedWithKey(highlights, "Code", MarkdownHighlighterColors.HEADER_LEVEL_4)
   }
 
   fun testCodeSpansKeepCodeSpanHighlightingForProjectClassesInHeader() {
@@ -277,11 +279,44 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
       myFixture.configureByText("test.md", text)
       val highlights = myFixture.doHighlighting()
 
-      assertElementHighlightedWithKey(highlights, "Code", MarkdownHighlighterColors.CODE_SPAN)
-      if (inheritedKey != MarkdownHighlighterColors.TEXT) {
-        assertElementHighlightedWithKey(highlights, "Code", inheritedKey, HighlightingState.NOT_HIGHLIGHTED)
+      when (inheritedKey) {
+        MarkdownHighlighterColors.BOLD -> assertElementHasFontType(highlights, "Code", Font.BOLD)
+        MarkdownHighlighterColors.ITALIC -> assertElementHasFontType(highlights, "Code", Font.ITALIC)
+        else -> {
+          assertElementHighlightedWithKey(highlights, "Code", MarkdownHighlighterColors.CODE_SPAN)
+          if (inheritedKey != MarkdownHighlighterColors.TEXT) {
+            assertElementHighlightedWithKey(highlights, "Code", inheritedKey)
+          }
+        }
       }
     }
+  }
+
+  fun testCodeSpansKeepBoldAndItalicHighlighting() {
+    val text = "_**Some `code`**_"
+    myFixture.configureByText("test.md", text)
+    val highlights = myFixture.doHighlighting()
+
+    assertElementHasFontType(highlights, "Some", Font.BOLD or Font.ITALIC)
+    assertElementHasFontType(highlights, "code", Font.BOLD or Font.ITALIC)
+  }
+
+  fun testCodeSpansKeepHeadingAndEmphasisHighlighting() {
+    val text = "Setext ~~**`Header`**~~\n==="
+    myFixture.configureByText("test.md", text)
+    val highlights = myFixture.doHighlighting()
+
+    assertElementHasFontType(highlights, "Header", Font.BOLD or Font.ITALIC)
+  }
+
+  fun testCodeSpansKeepStrikethroughHighlighting() {
+    val text = "~~_**Some `code`**_~~"
+    myFixture.configureByText("test.md", text)
+    val highlights = myFixture.doHighlighting()
+
+    assertElementHasEffectType(highlights, "Some", EffectType.STRIKEOUT)
+    assertElementHasEffectType(highlights, "code", EffectType.STRIKEOUT)
+    assertElementDoesNotHaveEffectType(highlights, "`", EffectType.STRIKEOUT)
   }
 
   fun testDefinitionListTermsOverrideCodeSpanHighlighting() {
@@ -375,20 +410,71 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
   ) {
     assertTrue("Fragment '$element' was not found", startOffset >= 0)
     val endOffset = startOffset + element.length
-    val assertionPredicate = { highlight: HighlightInfo ->
-      highlight.forcedTextAttributesKey == attributesKey && highlight.startOffset <= startOffset && highlight.endOffset >= endOffset
+    val rangePredicate = { highlight: HighlightInfo ->
+      highlight.startOffset <= startOffset && highlight.endOffset >= endOffset
+    }
+    val highlightedPredicate = { highlight: HighlightInfo ->
+      rangePredicate(highlight) && highlight.hasTextAttributesKey(attributesKey)
     }
 
     when (highlightingState) {
       HighlightingState.HIGHLIGHTED -> assertTrue(
         "Expected '$element' to be highlighted with $attributesKey",
-        highlights.any(assertionPredicate)
+        highlights.any(highlightedPredicate)
       )
       HighlightingState.NOT_HIGHLIGHTED -> assertFalse(
         "Expected '$element' to be highlighted with $attributesKey",
-        highlights.any(assertionPredicate)
+        highlights.any { it.hasTextAttributesKey(attributesKey) && rangePredicate(it) }
       )
     }
+  }
+
+  private fun assertElementHasFontType(
+    highlights: List<HighlightInfo>,
+    element: String,
+    fontType: Int,
+    startOffset: Int = myFixture.file.text.indexOf(element),
+  ) {
+    assertTrue("Fragment '$element' was not found", startOffset >= 0)
+    val endOffset = startOffset + element.length
+    assertTrue(
+      "Expected '$element' to use font type $fontType",
+      highlights.any {
+        it.forcedTextAttributes?.fontType == fontType && it.startOffset <= startOffset && it.endOffset >= endOffset
+      },
+    )
+  }
+
+  private fun assertElementHasEffectType(
+    highlights: List<HighlightInfo>,
+    element: String,
+    effectType: EffectType,
+    startOffset: Int = myFixture.file.text.indexOf(element),
+  ) {
+    assertTrue("Fragment '$element' was not found", startOffset >= 0)
+    val endOffset = startOffset + element.length
+    assertTrue(
+      "Expected '$element' to use effect type $effectType",
+      highlights.any {
+        it.forcedTextAttributes?.effectType == effectType && it.startOffset <= startOffset && it.endOffset >= endOffset
+      },
+    )
+  }
+
+  private fun assertElementDoesNotHaveEffectType(
+    highlights: List<HighlightInfo>,
+    element: String,
+    effectType: EffectType,
+    startOffset: Int = myFixture.file.text.indexOf(element),
+  ) {
+    assertTrue("Fragment '$element' was not found", startOffset >= 0)
+    val endOffset = startOffset + element.length
+    assertFalse(
+      "Expected '$element' not to use effect type $effectType",
+      highlights.any {
+        it.forcedTextAttributes?.effectType == effectType && it.startOffset <= startOffset && it.endOffset >= endOffset
+      },
+    )
   }
 
   private enum class HighlightingState {
