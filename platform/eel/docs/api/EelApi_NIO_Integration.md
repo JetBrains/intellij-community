@@ -47,7 +47,6 @@ The method correctly handles different forms:
 - `~` → user's home directory
 - `~/path` → home directory + path
 - `~\path` → home directory + path (Windows-style)
-- `../path` → the same relative path
 
 #### createTemporaryFile
 

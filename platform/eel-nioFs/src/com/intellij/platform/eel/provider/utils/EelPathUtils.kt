@@ -6,7 +6,6 @@ package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelPosixFileInfo
@@ -64,27 +63,15 @@ object EelPathUtils {
   /**
    * Replaces `~` with the user home of [eelDescriptor] when [path] is `~` or starts with `~/` or `~\`.
    * Gets the Eel API only for such a path, so any other path needs no connection to the environment.
-   * Returns a relative [path] as a relative [Path], so the caller can resolve it.
    */
   fun expandUserHome(eelDescriptor: EelDescriptor, path: String): Path {
     val path = runCatching { Path(path).asEelPath().toString() }.getOrNull() ?: path // try to normalize path
     if (path != "~" && !path.startsWith("~/") && !path.startsWith("~\\")) {
-      if (isRelativePath(path, eelDescriptor.osFamily)) {
-        return Path(path)
-      }
       return eelDescriptor.getPath(path).asNioPath()
     }
 
     val userHome = runBlocking { eelDescriptor.toEelApi() }.userInfo.home
     return eelDescriptor.getPath(userHome.toString() + path.substring(1)).asNioPath()
-  }
-
-  private fun isRelativePath(path: String, osFamily: EelOsFamily): Boolean {
-    val hasRoot = when (osFamily) {
-      EelOsFamily.Posix -> path.startsWith("/")
-      EelOsFamily.Windows -> path.startsWith("\\") || path.startsWith("/") || path.getOrNull(1) == ':'
-    }
-    return !hasRoot && !Path(path).isAbsolute
   }
 
   private suspend fun createTemporaryDirectoryImpl(
