@@ -23,8 +23,28 @@ interface CommandLineProjectOpenProcessor {
    */
   suspend fun openProjectAndFile(file: Path, tempProject: Boolean, options: OpenProjectTask = OpenProjectTask()): Project?
 
+  /**
+   * Returns the project that takes [file], a regular file that comes from outside the IDE.
+   * Returns `null` when this processor has no preference.
+   *
+   * The platform asks every processor before it selects a project on its own, also when no project is open.
+   * An implementation can open a project for the file. The caller opens the file in the returned project.
+   */
+  @ApiStatus.Internal
+  suspend fun findProjectForExternalFile(file: Path): Project? = null
+
   @ApiStatus.Internal
   companion object {
+    /** Returns the first answer of [CommandLineProjectOpenProcessor.findProjectForExternalFile] among the registered processors. */
+    suspend fun findProjectForExternalFile(file: Path): Project? {
+      return ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()
+        .asSequence()
+        .filterIsInstance<CommandLineProjectOpenProcessor>()
+        .firstNotNullOfOrNull {
+          it.findProjectForExternalFile(file)
+        }
+    }
+
     suspend fun openProjectAndFile(file: Path, tempProject: Boolean, options: OpenProjectTask = OpenProjectTask()): Project? {
       val project = ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()
         .asSequence()

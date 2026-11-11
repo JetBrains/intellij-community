@@ -4,6 +4,7 @@ package com.intellij.ide
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -88,6 +89,22 @@ object TrustedFiles {
   @JvmStatic
   fun markExternallyOpenedIfOutsideProject(file: VirtualFile, project: Project) {
     serviceOrNull<TrustedFilesService>()?.markExternallyOpenedIfOutsideProject(file, project)
+  }
+}
+
+/**
+ * Hears each call of [TrustedFiles.markExternallyOpened], also a repeated call for a file that has the mark.
+ *
+ * The call comes before the editor of the file opens, on the thread of the caller.
+ */
+@ApiStatus.Internal
+fun interface ExternallyOpenedFileListener {
+  fun fileMarkedExternallyOpened(file: VirtualFile)
+
+  companion object {
+    @Topic.AppLevel
+    @JvmField
+    val TOPIC: Topic<ExternallyOpenedFileListener> = Topic(ExternallyOpenedFileListener::class.java, Topic.BroadcastDirection.NONE)
   }
 }
 

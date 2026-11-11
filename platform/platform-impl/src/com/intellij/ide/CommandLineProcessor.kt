@@ -132,7 +132,15 @@ object CommandLineProcessor {
       return CommandLineProcessorResult(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()))
     }
 
-    if (projects.isEmpty()) {
+    // a processor can name the project of the file, and it can open one when no project is open
+    val targetProject = if (tempProject || LightEditUtil.isForceOpenInLightEditMode()) {
+      null
+    }
+    else {
+      CommandLineProjectOpenProcessor.findProjectForExternalFile(ioFile)
+    }
+
+    if (targetProject == null && projects.isEmpty()) {
       val wait = if (shouldWait) CommandLineFileWait(file, CommandLineWaitingManager.getInstance().addHookForFile(file)) else null
       var opened = false
       try {
@@ -164,7 +172,7 @@ object CommandLineProcessor {
       project
     }
     else {
-      val project = findBestProject(file, projects)
+      val project = targetProject ?: findBestProject(file, projects)
       val wait = if (shouldWait) CommandLineFileWait(file, CommandLineWaitingManager.getInstance().addHookForFile(file)) else null
       if (!navigateToFileFromCommandLine(project, file, line, column) && wait != null) {
         releaseCommandLineWaitIfNotOpen(wait)

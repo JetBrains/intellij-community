@@ -613,7 +613,9 @@ object ProjectUtil {
       }
 
       LOG.debug { "$location: open file $file" }
-      if (projectToClose == null) {
+      // a processor can name the project of the file, and it can open one when no project is open
+      val targetProject = CommandLineProjectOpenProcessor.findProjectForExternalFile(file) ?: projectToClose
+      if (targetProject == null) {
         val openedProject = FUSProjectHotStartUpMeasurer.withProjectContextElement(file) {
           CommandLineProjectOpenProcessor.openProjectAndFile(file = file, tempProject = false)
         }
@@ -630,9 +632,9 @@ object ProjectUtil {
         val virtualFile = StandardFileSystems.local().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(file.toString()))
         if (virtualFile != null && virtualFile.isValid) {
           TrustedFiles.markExternallyOpened(virtualFile)
-          OpenFileAction.openFileAsync(virtualFile, projectToClose)
+          OpenFileAction.openFileAsync(virtualFile, targetProject)
         }
-        result = projectToClose
+        result = targetProject
       }
     }
     return result

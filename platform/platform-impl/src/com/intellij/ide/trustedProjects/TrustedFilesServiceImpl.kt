@@ -2,6 +2,7 @@
 package com.intellij.ide.trustedProjects
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.ide.ExternallyOpenedFileListener
 import com.intellij.ide.TrustedFiles
 import com.intellij.ide.TrustedFilesService
 import com.intellij.ide.lightEdit.LightEdit
@@ -69,9 +70,10 @@ internal class TrustedFilesServiceImpl : TrustedFilesService {
     if (file.isDirectory) return
     val nioPath = file.fileSystem.getNioPath(file) ?: return
     ExternallyOpenedFiles.getInstance().mark(nioPath)
-    for (project in ProjectManager.getInstanceIfCreated()?.openProjects ?: return) {
+    for (project in ProjectManager.getInstanceIfCreated()?.openProjects.orEmpty()) {
       project.serviceIfCreated<TrustedFilesCache>()?.dropVerdict(file)
     }
+    application.messageBus.syncPublisher(ExternallyOpenedFileListener.TOPIC).fileMarkedExternallyOpened(file)
   }
 
   override fun markExternallyOpenedIfOutsideProject(file: VirtualFile, project: Project) {
