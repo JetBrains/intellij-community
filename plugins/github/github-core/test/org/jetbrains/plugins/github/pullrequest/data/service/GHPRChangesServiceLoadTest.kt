@@ -17,8 +17,11 @@ import git4idea.repo.GitRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.github.api.DEFAULT_MAX_CONCURRENT_REQUESTS
+import org.jetbrains.plugins.github.api.GHApiRateLimiter
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiContentHelper
@@ -70,6 +73,7 @@ private val PR_ID = GHPRIdentifier("pr", 1)
  *
  * Each commit diff has two pages, so the load sends two requests for each commit.
  * The case runs against [GithubApiHelperRequestExecutor], the only executor with the limit.
+ * All executors share the limit through [GHApiRateLimiter].
  */
 @TestApplication
 internal class GHPRChangesServiceLoadTest {
@@ -178,6 +182,26 @@ internal class GHPRChangesServiceLoadTest {
     finally {
       threads.shutdownNow()
     }
+  }
+
+  @Test
+  fun `requests from many executors stay within the concurrency limit of the server`(): Unit = timeoutRunBlocking(2.minutes) {
+    val factory = GithubApiRequestExecutor.Factory.getInstance()
+    val files = try {
+      (1..BLOCKING_REQUESTS_COUNT).map { i ->
+        async {
+          // each request has its own executor, so only a limit shared between the executors keeps the load within the server limit
+          val executor = factory.create(repository.serverPath, "test-token")
+          executor.execute(Commits.getDiffFiles(repository, "commit-$i")).items
+        }
+      }.awaitAll().flatten()
+    }
+    catch (e: IOException) {
+      fail("The load failed. Peak of concurrent requests: ${maxInFlight.get()}, dropped requests: ${rejected.get()}", e)
+    }
+
+    assertWithinClientLimit()
+    assertEquals(BLOCKING_REQUESTS_COUNT * FILES_PER_PAGE, files.size)
   }
 
   private fun assertWithinClientLimit() {
