@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.project.impl.shared.SharedConfigFolderUtil
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -33,6 +32,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.system.OS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -201,15 +201,20 @@ private fun getStoragePathSpec(storage: Storage): String {
 }
 
 @Internal
-fun getOsDependentStorage(storagePathSpec: String): String = "${getPerOsSettingsStorageFolderName()}/${storagePathSpec}"
+@JvmOverloads
+fun getOsDependentStorage(storagePathSpec: String, os: OS = OS.CURRENT): String = "${getPerOsSettingsStorageFolderName(os)}/${storagePathSpec}"
 
+/**
+ * Returns the name of the per-OS settings folder that an IDE uses on a machine with [os].
+ */
 @Internal
-fun getPerOsSettingsStorageFolderName(): String = when {
-  SystemInfoRt.isMac -> "mac"
-  SystemInfoRt.isWindows -> "windows"
-  SystemInfoRt.isLinux -> "linux"
-  SystemInfoRt.isFreeBSD -> "freebsd"
-  else -> if (SystemInfoRt.isUnix) "unix" else "other_os"
+@JvmOverloads
+fun getPerOsSettingsStorageFolderName(os: OS = OS.CURRENT): String = when (os) {
+  OS.macOS -> "mac"
+  OS.Windows -> "windows"
+  OS.Linux -> "linux"
+  OS.FreeBSD -> "freebsd"
+  OS.OHOS, OS.Other -> "unix"
 }
 
 /**

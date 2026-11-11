@@ -53,6 +53,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBus
+import com.intellij.util.system.OS
 import com.intellij.util.xmlb.SettingsInternalApi
 import com.intellij.util.xmlb.XmlSerializerUtil
 import kotlinx.coroutines.CoroutineScope
@@ -973,11 +974,14 @@ internal suspend fun getStateForComponent(component: PersistentStateComponent<*>
   else -> readAction { component.state }
 }
 
-internal fun getStorageSpecGenericImpl(stateSpec: State, componentClass: Class<*>): List<Storage> {
+/**
+ * @param os the OS of the machine that holds the settings files
+ */
+internal fun getStorageSpecGenericImpl(stateSpec: State, componentClass: Class<*>, os: OS = OS.CURRENT): List<Storage> {
   val storages = mutableListOf<Storage>()
   for (storage in stateSpec.storages) {
     if (storage.roamingType == RoamingType.PER_OS) {
-      storages.add(StorageImpl.copyWithNewValue(storage, getOsDependentStorage(storage.value)))
+      storages.add(StorageImpl.copyWithNewValue(storage, getOsDependentStorage(storage.value, os)))
       storages.add(StorageImpl.deprecatedCopy(storage))
     }
     else {

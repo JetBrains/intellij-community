@@ -589,9 +589,6 @@ public final class ConfigImportHelper {
     @Nullable ConfigImportSettings settings,
     @NotNull List<String> args
   ) {
-    var otherEditionPrefixes = settings != null ? settings.getEditionsToImportFrom() : List.<String>of();
-    var otherProductPrefixes = settings != null ? settings.getProductsToImportFrom(args) : List.<String>of();
-
     var homes = new HashSet<Path>();  // looking for existing config directories ...
     homes.add(newConfigDir.getParent());  // ... in the vicinity of the new config directory
     homes.add(newConfigDir.getFileSystem().getPath(PathManager.getDefaultConfigPathFor("X")).getParent());  // ... in the default location
@@ -607,6 +604,26 @@ public final class ConfigImportHelper {
     }
     if (prefix == null) prefix = PlatformUtils.getPlatformPrefix();
 
+    return findConfigDirectories(homes, prefix, OS.CURRENT != OS.macOS ? historicHome : null, newConfigDir, settings, args);
+  }
+
+  /// Finds the config directories of a product with the given selector prefix in the given directories.
+  /// The directories can belong to another machine. The newest config directory is the first one.
+  public static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Collection<Path> homes, @NotNull String prefix) {
+    return findConfigDirectories(homes, prefix, null, null, null, List.of());
+  }
+
+  private static ConfigDirsSearchResult findConfigDirectories(
+    Collection<Path> homes,
+    String prefix,
+    @Nullable Path dottedHome,
+    @Nullable Path excludedDir,
+    @Nullable ConfigImportSettings settings,
+    List<String> args
+  ) {
+    var otherEditionPrefixes = settings != null ? settings.getEditionsToImportFrom() : List.<String>of();
+    var otherProductPrefixes = settings != null ? settings.getProductsToImportFrom(args) : List.<String>of();
+
     var exactCandidates = new ArrayList<Path>();
     var otherProductCandidates = new ArrayList<Path>();
 
@@ -615,11 +632,11 @@ public final class ConfigImportHelper {
         continue;
       }
 
-      var dotted = OS.CURRENT != OS.macOS && home == historicHome;
+      var dotted = home == dottedHome;
 
       try (var stream = Files.newDirectoryStream(home)) {
         for (var path : stream) {
-          if (!path.equals(newConfigDir) && Files.isDirectory(path)) {
+          if (!path.equals(excludedDir) && Files.isDirectory(path)) {
             var name = path.getFileName().toString();
             var pathPrefix = getPrefixFromSelector(getNameWithVersion(path));
             if (nameMatchesPrefixStrictly(name, prefix, dotted)) {
@@ -694,7 +711,7 @@ public final class ConfigImportHelper {
     return m.matches() ? m.group(1) : null;
   }
 
-  private static @Nullable String getPrefixFromSelector(@Nullable String nameWithSelector) {
+  public static @Nullable String getPrefixFromSelector(@Nullable String nameWithSelector) {
     if (nameWithSelector != null) {
       var m = SELECTOR_PATTERN.matcher(nameWithSelector);
       if (m.matches()) {

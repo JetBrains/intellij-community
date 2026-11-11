@@ -367,17 +367,7 @@ open class StateStorageManagerImpl(
   }
 
   override fun expandMacro(collapsedPath: String): Path {
-    for ((key, value) in macros) {
-      if (key == collapsedPath) {
-        return value
-      }
-
-      if (collapsedPath.length > (key.length + 2) && collapsedPath[key.length] == '/' && collapsedPath.startsWith(key)) {
-        return value.resolve(collapsedPath.substring(key.length + 1))
-      }
-    }
-
-    throw IllegalStateException("Cannot resolve $collapsedPath in $macros")
+    return expandMacroOrNull(macros, collapsedPath) ?: throw IllegalStateException("Cannot resolve $collapsedPath in $macros")
   }
 
   final override fun collapseMacro(path: String): String {
@@ -421,3 +411,16 @@ private class TrackedDirectoryStorage(
 
 @ApiStatus.Internal
 data class Macro(@JvmField val key: String, @JvmField var value: Path)
+
+internal fun expandMacroOrNull(macros: List<Macro>, collapsedPath: String): Path? {
+  for ((key, value) in macros) {
+    if (key == collapsedPath) {
+      return value
+    }
+
+    if (collapsedPath.length > (key.length + 2) && collapsedPath[key.length] == '/' && collapsedPath.startsWith(key)) {
+      return value.resolve(collapsedPath.substring(key.length + 1))
+    }
+  }
+  return null
+}

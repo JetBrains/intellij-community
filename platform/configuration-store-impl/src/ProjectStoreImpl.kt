@@ -53,7 +53,7 @@ internal const val VERSION_OPTION: String = "version"
 @ApiStatus.Internal
 const val PROJECT_CONFIG_DIR: String = $$"$PROJECT_CONFIG_DIR$"
 
-private const val CONFIG_WORKSPACE_DIR = "workspace"
+internal const val CONFIG_WORKSPACE_DIR: String = "workspace"
 
 @ApiStatus.Internal
 const val WORKSPACE_XML_FILE_NAME: String = "workspace.xml"
