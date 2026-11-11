@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.CustomImlComponentService;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
@@ -55,7 +54,7 @@ public final class PluginBuildConfiguration {
   }
 
   public static @Nullable PluginBuildConfiguration getInstance(@NotNull Module module) {
-    return ModuleType.is(module, PluginModuleType.getInstance())
+    return PluginModuleType.isOfType(module)
            ? PluginBuildConfigurationFactory.getInstance(module.getProject()).getService(module)
            : null;
   }

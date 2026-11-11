@@ -48,8 +48,11 @@ public final class PluginModuleType extends ModuleType<JavaModuleBuilder> {
     return (PluginModuleType)ModuleTypeManager.getInstance().findByID(ID);
   }
 
+  /**
+   * Checks the module type by its id, so it works without {@link ModuleTypeManager} (e.g. in the language server, where it is not registered).
+   */
   public static boolean isOfType(@NotNull Module module) {
-    return get(module) instanceof PluginModuleType;
+    return ID.equals(module.getModuleTypeName());
   }
 
   @Override
@@ -131,7 +134,7 @@ public final class PluginModuleType extends ModuleType<JavaModuleBuilder> {
     final List<Module> candidates = new ArrayList<>(modules.length);
     final Set<Module> deps = new HashSet<>(modules.length);
     for (Module m : modules) {
-      if (get(m) == getInstance()) {
+      if (isOfType(m)) {
         deps.clear();
         PluginBuildUtil.getDependencies(m, deps);
 
