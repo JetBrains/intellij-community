@@ -392,24 +392,28 @@ class DockableEditorTabbedContainer internal constructor(
     }
 
     fun processDropOver() {
-      boundingBox = null
       setNeedsRepaint(true)
-      val r = currentOver!!.dropArea
-      val currentDropSide: Int = currentDropSide
-      if (currentDropSide == -1) {
-        return
-      }
-      val file = currentOverInfo?.`object` as? VirtualFile
-      val dragStartLocation = file?.getUserData(DRAG_START_LOCATION_HASH_KEY)
-      if (currentDropSide == SwingConstants.CENTER &&
-          dragStartLocation != null &&
-          dragStartLocation == System.identityHashCode(currentOver)) {
-        return
-      }
-
-      TabsUtil.updateBoundsWithDropSide(r, currentDropSide)
-      boundingBox = Rectangle2D.Double(r.x.toDouble(), r.y.toDouble(), r.width.toDouble(), r.height.toDouble())
+      boundingBox = getDropAreaShape()
     }
+  }
+
+  private fun getDropAreaShape(): Shape? {
+    val tabs = currentOver ?: return null
+    val currentDropSide = currentDropSide
+    if (currentDropSide == -1) {
+      return null
+    }
+    val file = currentOverInfo?.`object` as? VirtualFile
+    val dragStartLocation = file?.getUserData(DRAG_START_LOCATION_HASH_KEY)
+    if (currentDropSide == SwingConstants.CENTER &&
+        dragStartLocation != null &&
+        dragStartLocation == System.identityHashCode(tabs)) {
+      return null
+    }
+
+    val r = tabs.dropArea
+    TabsUtil.updateBoundsWithDropSide(r, currentDropSide)
+    return Rectangle2D.Double(r.x.toDouble(), r.y.toDouble(), r.width.toDouble(), r.height.toDouble())
   }
 
   override fun toString(): String = "DockableEditorTabbedContainer windows=${splitters.windows().joinToString()}"
