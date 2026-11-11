@@ -18,7 +18,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CoroutinesKt;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ScrollType;
@@ -144,7 +143,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
       private void refreshUi() {
         if (isLookupActive[0]) {
-          WriteIntentReadAction.run(ParameterInfoController.this::updateComponent);
+          updateComponent();
         }
       }
     };
