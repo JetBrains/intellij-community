@@ -21,20 +21,20 @@ dev_dist_plugin(
         "intellij.terminal.frontend",
         "intellij.terminal.cloud",
         "intellij.terminal.sh",
+        "intellij.terminal.completion",
         "intellij.terminal.completion.ml",
         "intellij.libraries.completion.ranking.sh",
         "intellij.terminal.libraries.completionDbWithExtensions",
-        "intellij.terminal.completion",
     ],
     main_module = "intellij.terminal",
 )
 
 dev_dist_complex_plugin(
     artifact_inputs = {
+        "//plugins/terminal/completion:completion.jar": "intellij.terminal.completion",
         "//libraries/completion-ranking-sh:completion-ranking-sh.jar": "intellij.libraries.completion.ranking.sh",
         "//plugins/terminal/libraries:libraries-completionDbWithExtensions.jar": "intellij.terminal.libraries.completionDbWithExtensions",
         "//plugins/terminal:terminal.jar": "intellij.terminal",
-        "//plugins/terminal/completion:completion.jar": "intellij.terminal.completion",
     },
     descriptor = "//build/dev-dist-descriptors/intellij.terminal:intellij.terminal_dev_descriptor",
     execution_version = 2,
@@ -48,9 +48,9 @@ dev_dist_complex_plugin(
         "//plugins/terminal/completion-ml:completion-ml_content_module_jar",
     ],
     libraries = {
+        "@lib//:terminal-completion-terminal-completion-spec": "@lib//:terminal-completion-terminal-completion-spec",
         "@lib//:libraries-completion-ranking-sh-completion-ranking-sh": "@lib//:libraries-completion-ranking-sh-completion-ranking-sh",
         "@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions": "@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions",
-        "@lib//:terminal-completion-terminal-completion-spec": "@lib//:terminal-completion-terminal-completion-spec",
     },
     main_module = "intellij.terminal",
     platform_values = {
@@ -88,13 +88,10 @@ dev_dist_complex_plugin(
         "linux_aarch64",
     ],
     remainder_files = {
+        "lib/intellij.terminal.completion.jar": ["intellij.terminal.completion"],
         "lib/modules/intellij.libraries.completion.ranking.sh.jar": ["intellij.libraries.completion.ranking.sh"],
         "lib/intellij.terminal.libraries.completionDbWithExtensions.jar": ["intellij.terminal.libraries.completionDbWithExtensions"],
-        "lib/terminal.jar": [
-            "intellij.terminal",
-            "intellij.terminal.completion",
-        ],
-        "lib/terminal-completion-spec.jar": [],
+        "lib/terminal.jar": ["intellij.terminal"],
     },
     remainder_trees = [
         "{platform:destination}",

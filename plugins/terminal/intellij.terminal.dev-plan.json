@@ -22,6 +22,26 @@
             "module": "intellij.terminal.sh"
         },
         {
+            "destination": "lib/intellij.terminal.completion.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.terminal.completion",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:terminal-completion-terminal-completion-spec",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
             "module": "intellij.terminal.completion.ml"
         },
         {
@@ -81,26 +101,6 @@
                         "input": "intellij.terminal",
                         "kind": "module",
                         "filter": "module-v1"
-                    },
-                    {
-                        "input": "intellij.terminal.completion",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    }
-                ],
-                "writer": {
-                    "mergeEntities": true
-                }
-            }
-        },
-        {
-            "destination": "lib/terminal-completion-spec.jar",
-            "recipe": {
-                "sources": [
-                    {
-                        "input": "@lib//:terminal-completion-terminal-completion-spec",
-                        "kind": "library",
-                        "filter": "library-v1"
                     }
                 ],
                 "writer": {

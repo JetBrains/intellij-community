@@ -13,6 +13,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.terminal.completion",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:terminal-completion-terminal-completion-spec"],
     deps = [
@@ -29,6 +33,7 @@ jvm_library(
 exports_files(
     [
         "intellij.terminal.completion.iml",
+        "resources/intellij.terminal.completion.xml",
     ],
     visibility = ["//visibility:public"],
 )

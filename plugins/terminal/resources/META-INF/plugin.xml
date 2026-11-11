@@ -103,6 +103,7 @@
     <module name="intellij.terminal.frontend.split"/>
     <module name="intellij.terminal.cloud"/>
     <module name="intellij.terminal.sh"/>
+    <module name="intellij.terminal.completion" loading="embedded"/>
     <module name="intellij.terminal.completion.ml"/>
     <module name="intellij.terminal.agentsProvider"/>
   </content>

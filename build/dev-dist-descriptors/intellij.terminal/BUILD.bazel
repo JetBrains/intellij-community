@@ -21,6 +21,7 @@ dev_dist_plugin_descriptor(
         "intellij.libraries.completion.ranking.sh",
         "intellij.terminal.backend",
         "intellij.terminal.cloud",
+        "intellij.terminal.completion",
         "intellij.terminal.completion.ml",
         "intellij.terminal.emulator",
         "intellij.terminal.execution",

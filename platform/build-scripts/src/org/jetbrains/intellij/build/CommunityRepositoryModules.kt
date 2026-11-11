@@ -213,7 +213,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
     },
     pluginAuto("intellij.terminal") { spec ->
-      spec.withModule("intellij.terminal.completion")
       spec.withResource("resources/shell-integrations", "shell-integrations")
       // bundle the libghostty-vt native library
       for (platform in SUPPORTED_DISTRIBUTIONS) {
