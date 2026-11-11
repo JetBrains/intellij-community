@@ -58,6 +58,11 @@ val panel: JComponent = composeSwingPanel(parentDisposable) {
 `parentDisposable` on the EDT. Only `parentDisposable` ends the composition. A host that leaves the Swing
 hierarchy and comes back keeps its state.
 
+The host is the root of the content's layout. Each top-level composable is measured under the host's size
+and placed at its top-start corner, so `fillMaxWidth`, `width` and `wrapContentHeight` work at the top
+level. The host implements `WidthBasedLayout`: an IDE layout that asks for the height at a width gets the
+content's height at that width.
+
 The library's `JComponent.setContent` is the built-in alternative. It returns a `DisposableHandle`, and the
 caller disposes it.
 

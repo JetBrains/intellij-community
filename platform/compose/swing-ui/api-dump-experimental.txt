@@ -1,5 +1,5 @@
 f:com.intellij.platform.compose.swing.ComposeSwingPanelKt
-- *sf:composeSwingPanel(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function2):javax.swing.JComponent
+- *sf:composeSwingPanel(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function3):javax.swing.JComponent
 *a:com.intellij.platform.compose.swing.ComposeSwingSearchableConfigurable
 - com.intellij.openapi.options.Configurable$NoMargin
 - com.intellij.openapi.options.SearchableConfigurable
