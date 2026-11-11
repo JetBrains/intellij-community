@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDialog
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
@@ -190,8 +191,11 @@ object UniversalFileChooser {
 
     override fun choose(toSelect: VirtualFile?, callback: Consumer<in MutableList<VirtualFile>>) {
       val explicit = toSelect?.let { runCatching { it.toNioPath() }.getOrNull() }
-      val chosen = chooseWithValidation(explicit) ?: return
-      callback.consume(chosen.toMutableList())
+      deliverChosenFiles(
+        chosen = chooseWithValidation(explicit),
+        onChosen = { callback.consume(it.toMutableList()) },
+        onCancelled = { (callback as? FileChooser.FileChooserConsumer)?.cancelled() },
+      )
     }
 
     /**
@@ -236,6 +240,21 @@ object UniversalFileChooser {
 
     private fun performOkAction() {
       super.doOKAction()
+    }
+  }
+
+  /**
+   * Passes [chosen] to [onChosen] when it holds at least one file. Otherwise, calls [onCancelled].
+   * [chosen] is null when the user cancels the dialog.
+   * It is empty when no selected path gives a VirtualFile.
+   * Like the other file choosers, this keeps the callback contract of [FileChooser.chooseFiles].
+   */
+  internal fun <T> deliverChosenFiles(chosen: List<T>?, onChosen: (List<T>) -> Unit, onCancelled: () -> Unit) {
+    if (chosen.isNullOrEmpty()) {
+      onCancelled()
+    }
+    else {
+      onChosen(chosen)
     }
   }
 
