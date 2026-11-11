@@ -280,8 +280,12 @@ fun createChildContextWithContextJob(debugName: @NonNls String) : ChildContext =
  */
 @Internal
 fun createChildContextIgnoreStructuredConcurrency(debugName: @NonNls String) : ChildContext {
+  val context = currentThreadContext()
+  if (context[BlockingJob] == null) {
+    return createChildContext(debugName)
+  }
   // probably we need to exclude some elements like PlatformActivityTrackerService.ObservationTracker
-  return installThreadContext(currentThreadContext().minusKey(BlockingJob), true) {
+  return installThreadContext(context.minusKey(BlockingJob), true) {
     createChildContext(debugName)
   }
 }

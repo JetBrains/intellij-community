@@ -11,6 +11,7 @@ import com.intellij.concurrency.callable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.currentThreadOverriddenContextOrNull
 import com.intellij.concurrency.installThreadContext
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.concurrency.runnable
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.application.ApplicationManager
@@ -54,6 +55,8 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.lang.reflect.Method
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -67,6 +70,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -74,6 +78,39 @@ import kotlin.test.assertTrue
 @TestApplication
 @ExtendWith(ThreadContextPropagationTest.Enabler::class)
 class ThreadContextPropagationTest {
+
+  @ParameterizedTest
+  @ValueSource(booleans = [false, true])
+  fun `unstructured child contexts stay independent from parent cancellation`(withBlockingJob: Boolean) {
+    val parentJob = Job()
+    val element = TestElement("parent")
+    val context = parentJob + element + if (withBlockingJob) BlockingJob(parentJob) else EmptyCoroutineContext
+    try {
+      val children = installThreadContext(context, replace = true) {
+        val first = createChildContextIgnoreStructuredConcurrency("first")
+        val second = createChildContextIgnoreStructuredConcurrency("second")
+        Assertions.assertNotSame(first, second)
+        assertSame(context, currentThreadContext())
+        assertFalse(parentJob.children.any())
+        listOf(first, second)
+      }
+      parentJob.cancel()
+      resetThreadContext {
+        for (child in children) {
+          assertNull(child.job)
+          assertNull(child.context[Job])
+          assertNull(child.context[BlockingJob])
+          child.runInChildContext {
+            assertSame(element, currentThreadContext()[TestElementKey])
+            ProgressManager.checkCanceled()
+          }
+        }
+      }
+    }
+    finally {
+      parentJob.cancel()
+    }
+  }
 
   class Enabler : InvocationInterceptor {
 
