@@ -59,13 +59,22 @@ import kotlin.time.Duration.Companion.seconds
  * collapse cancel it, so a Refresh restarts the load. A child whose attributes do not
  * arrive in time appears as an unresolved node, and a lazy background job resolves it.
  * A symlink is not expandable; it becomes expandable when the resolution finds a directory target.
+ *
+ * @param parentScope the parent of the scope that runs the background jobs of the model.
  */
 @ApiStatus.Internal
-class NioFileTreeModel(
+class NioFileTreeModel internal constructor(
   descriptor: FileChooserDescriptor,
-  sortDirectories: Boolean = true,
-  internal val contributor: UniversalFileChooserContributor? = null,
+  sortDirectories: Boolean,
+  internal val contributor: UniversalFileChooserContributor?,
+  parentScope: CoroutineScope,
 ) : AbstractTreeModel(), InvokerSupplier {
+
+  constructor(
+    descriptor: FileChooserDescriptor,
+    sortDirectories: Boolean = true,
+    contributor: UniversalFileChooserContributor? = null,
+  ) : this(descriptor, sortDirectories, contributor, service<NioFileTreeModelScopeHolder>().scope)
 
   companion object {
 
@@ -111,7 +120,7 @@ class NioFileTreeModel(
   }
 
   private val invoker: Invoker = Invoker.forBackgroundThreadWithoutReadAction(this)
-  private val scope = service<NioFileTreeModelScopeHolder>().scope.childScope("NioFileTreeModel")
+  private val scope = parentScope.childScope("NioFileTreeModel")
   private val resolveSemaphore = Semaphore(MAX_SYM_LINKS_RESOLVED)
   private val listingJobs = ConcurrentHashMap<Path, Deferred<List<ChildEntry>?>>()
   private val state: State = State(descriptor, sortDirectories, this)

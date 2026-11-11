@@ -3,12 +3,21 @@ package com.intellij.openapi.fileChooser.universal
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.plus
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 @TestApplication
@@ -86,6 +95,40 @@ class NioFileTreeModelTest {
     try {
       val count = model.onInvoker { model.getChildCount(model.root) }
       assertThat(count).isEqualTo(0)
+    }
+    finally {
+      Disposer.dispose(model)
+    }
+  }
+
+  /**
+   * A regression test for IJPL-260363.
+   *
+   * The parent scope is cancelled and uses [Dispatchers.Unconfined],
+   * so the listing job completes inside `scope.async`, before the model registers its completion handler.
+   * The handler then runs at once, and the model must not log an [IllegalStateException] "Recursive update".
+   */
+  @OptIn(DelicateCoroutinesApi::class)
+  @Test
+  fun `a listing job that completes before the completion handler does not log an error`() {
+    Files.createDirectories(root.resolve("child"))
+    val parentScope = (GlobalScope + Job() + Dispatchers.Unconfined).apply { cancel() }
+    val descriptor = descriptor().withPathRoots(root)
+    val model = NioFileTreeModel(descriptor, sortDirectories = true, contributor = contributor { true }, parentScope = parentScope)
+    val errors = CopyOnWriteArrayList<Throwable>()
+    val processor = object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+        errors.add(t ?: AssertionError(message))
+        return Action.NONE
+      }
+    }
+    try {
+      LoggedErrorProcessor.executeWith<Throwable>(processor) {
+        val processed = CountDownLatch(1)
+        model.invoker.compute { model.getChildCount(model.root) }.onProcessed { processed.countDown() }
+        assertThat(processed.await(30, TimeUnit.SECONDS)).isTrue()
+      }
+      assertThat(errors).noneMatch { it is IllegalStateException }
     }
     finally {
       Disposer.dispose(model)
