@@ -70,7 +70,6 @@ open class MarkdownSyntaxHighlighter: SyntaxHighlighterBase() {
         safeMap(it, MarkdownElementTypes.CODE_SPAN, MarkdownHighlighterColors.CODE_SPAN)
         safeMap(it, MarkdownTokenTypes.CODE_LINE, MarkdownHighlighterColors.CODE_BLOCK)
 
-        safeMap(it, MarkdownTokenTypes.CODE_FENCE_CONTENT, MarkdownHighlighterColors.CODE_FENCE)
         safeMap(it, MarkdownTokenTypes.CODE_FENCE_START, MarkdownHighlighterColors.CODE_FENCE_MARKER)
         safeMap(it, MarkdownTokenTypes.CODE_FENCE_END, MarkdownHighlighterColors.CODE_FENCE_MARKER)
         safeMap(it, MarkdownTokenTypes.FENCE_LANG, MarkdownHighlighterColors.CODE_FENCE_LANGUAGE)

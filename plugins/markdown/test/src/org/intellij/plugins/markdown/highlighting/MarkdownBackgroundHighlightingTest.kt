@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.IndentsModelImpl
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
@@ -164,6 +165,22 @@ class MarkdownBackgroundHighlightingTest : BasePlatformTestCase() {
       folding.createFoldRegion(0, text.indexOf('\n'), "", null, true)
       folding.createFoldRegion(text.lastIndexOf("```"), text.length, "", null, true)
     }
+  }
+
+  fun `test the indent of a fence line has no background`() {
+    val pixels = listOf("java", "").associateWith { language ->
+      val editor = configureEditor("    ```$language\n    class C {}\n    ```")
+      getPixelAt(editor, paintEditor(editor), editor.document.getLineStartOffset(1)) to getEditorBackgroundColor(editor)
+    }
+    assertEquals(pixels.mapValues { it.value.second }, pixels.mapValues { it.value.first })
+  }
+
+  fun `test a fence has no indent guides and a list keeps its indent guide`() {
+    myFixture.configureByText("test.md", "- a\n    - b\n        - c\n\n```\na\n    b\n        c\n```")
+    myFixture.doHighlighting()
+
+    val model = myFixture.editor.indentsModel as IndentsModelImpl
+    assertEquals(listOf(1 to 4), model.indents.map { it.startLine to it.indentLevel })
   }
 
   fun `test the background of a code span covers the content between the backtick runs`() {

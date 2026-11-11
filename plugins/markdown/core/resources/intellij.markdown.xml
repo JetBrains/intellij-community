@@ -111,6 +111,7 @@
     <highlightingPassFactory implementation="org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewPassFactory"/>
     <!--suppress SplitModeXmlApiUsage -->
     <highlightingPassFactory implementation="org.intellij.plugins.markdown.editor.fence.MarkdownBackgroundHighlightingPassFactory"/>
+    <daemon.indentGuidePassFilter implementation="org.intellij.plugins.markdown.editor.fence.MarkdownCodeFenceIndentGuideFilter"/>
     <registryKey key="markdown.live.preview.enabled"
                  defaultValue="true"
                  description="Shows the Markdown live preview layout."/>
