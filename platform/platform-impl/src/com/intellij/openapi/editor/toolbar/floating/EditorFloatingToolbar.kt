@@ -39,15 +39,13 @@ class EditorFloatingToolbar(editor: EditorImpl) :
   JPanel(),
   Disposable.Default {
 
-  private val coroutineScope = createLifetime().coroutineScope
-
   init {
     layout = FlowLayout(FlowLayout.RIGHT, 20, 20)
     border = BorderFactory.createEmptyBorder()
     isOpaque = false
 
     FloatingToolbarProvider.EP_NAME.launchEachExtensionSafe(
-      coroutineScope = coroutineScope,
+      toolbarDisposable = this,
       context = Dispatchers.EDT,
     ) { providerScope, provider ->
       val dataContext = editor.dataContext
@@ -112,14 +110,15 @@ class EditorFloatingToolbar(editor: EditorImpl) :
 
   companion object {
 
-    fun <Extension : Any> ExtensionPointName<Extension>.launchEachExtensionSafe(
-      coroutineScope: CoroutineScope,
+    private fun <Extension : Any> ExtensionPointName<Extension>.launchEachExtensionSafe(
+      toolbarDisposable: Disposable,
       context: CoroutineContext = EmptyCoroutineContext,
       start: CoroutineStart = CoroutineStart.DEFAULT,
       handler: suspend CoroutineScope.(CoroutineScope, Extension) -> Unit,
     ) {
-      withEachExtensionSafe(coroutineScope) { extension ->
-        val extensionScope = createExtensionScope(coroutineScope, extension)
+      @Suppress("DEPRECATION")
+      withEachExtensionSafe(toolbarDisposable) { extension ->
+        val extensionScope = createExtensionScope(toolbarDisposable, extension)
         extensionScope.launch(context, start) {
           runCatching { handler(extensionScope, extension) }
             .onFailure { extensionScope.cancel() }
@@ -129,10 +128,10 @@ class EditorFloatingToolbar(editor: EditorImpl) :
     }
 
     private fun <T : Any> ExtensionPointName<T>.createExtensionScope(
-      coroutineScope: CoroutineScope,
+      toolbarDisposable: Disposable,
       extension: T,
     ): CoroutineScope {
-      return createExtensionDisposable(extension, coroutineScope.asDisposable())
+      return createExtensionDisposable(extension, toolbarDisposable)
         .createLifetime()
         .coroutineScope
     }
