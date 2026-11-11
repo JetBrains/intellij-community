@@ -102,11 +102,6 @@ internal class PyPackagesListPanel(
     setContentPanel(noSdkPanel)
   }
 
-  @RequiresEdt
-  internal fun showNoPackagesMessage() {
-    setContentPanel(noPackagesPanel)
-  }
-
   /**
    * Says why the packages could not be listed, rather than showing an empty list.
    *

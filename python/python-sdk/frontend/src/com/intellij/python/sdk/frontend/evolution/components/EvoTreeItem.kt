@@ -4,7 +4,6 @@ package com.intellij.python.sdk.frontend.evolution.components
 
 import com.intellij.icons.AllIcons
 import com.intellij.python.sdk.common.evolution.EvoNodeStats
-import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.ui.popup.ListSeparator
@@ -68,9 +67,6 @@ class EvoTreeItem(
    */
   val showsLoader: Boolean
     get() = element.state == State.LOADING && element !is EvoTreeLazyNodeElement
-
-  val keepPopupOnPerform: KeepPopupOnPerform
-    get() = element.presentation.getKeepPopupOnPerform()
 
   val tooltip: @NlsContexts.Tooltip String?
     get() = element.presentation.getClientProperty(ActionUtil.TOOLTIP_TEXT)

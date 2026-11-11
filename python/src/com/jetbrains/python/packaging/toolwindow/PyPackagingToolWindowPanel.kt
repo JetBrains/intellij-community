@@ -274,10 +274,6 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     moduleController.refreshAndSyncSelection(interpreter)
   }
 
-  fun syncSearchText(text: String) {
-    packageSearchController.text = text
-  }
-
   suspend fun clearFocus() {
     withContext(Dispatchers.EDT) {
       val kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager()

@@ -94,16 +94,6 @@ internal class PyPackagesTree(
     }
 
   /**
-   * Names that should render with the Python module glyph instead of the package glyph — uv/poetry
-   * workspace members plus JPS modules that carry their own `pyproject.toml`. Populated by
-   * [PyPackagingToolWindowService.refreshInstalledPackagesImpl] alongside [items] so the renderer
-   * can flip icons per-cell without re-querying the workspace on every paint. Kept as a plain
-   * mutable set because updates happen on EDT during refresh and reads happen on EDT during paint.
-   */
-  @set:RequiresEdt
-  var moduleAliasNames: Set<String> = emptySet()
-
-  /**
    * Service-side seeded sorted match list (cross-repo merge + global priority sort). Tree's
    * [loadMore] paginates this list visually so the on-scroll order matches the install dialog.
    */

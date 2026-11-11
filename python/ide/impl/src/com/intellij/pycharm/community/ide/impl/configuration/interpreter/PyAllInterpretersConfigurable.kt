@@ -62,7 +62,6 @@ import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
 import com.jetbrains.python.sdk.asModuleOrProject
 import com.jetbrains.python.sdk.associatedModuleNioPath
-import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -562,9 +561,7 @@ private object RowActionMetrics {
    */
   val ICON_SIZE: Int
     get() = AllIcons.Actions.Copy.iconWidth
-  /** Gap between the two trailing icons — matches the standard actions-list cell padding. */
-  val GAP: Int
-    get() = JBUI.CurrentTheme.ActionsList.cellPadding().left
+
   /** Space between the last icon and the row's inner selection edge — reuses the standard focus width. */
   val TRAILING_INSET: Int
     get() = BW.get()

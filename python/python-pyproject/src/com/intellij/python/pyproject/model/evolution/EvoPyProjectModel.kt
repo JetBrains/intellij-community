@@ -38,17 +38,13 @@ import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
-import com.intellij.python.sdk.backend.evolution.EvoToolContext
 import com.intellij.python.sdk.backend.evolution.EvoWorkspace
-import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
 import com.intellij.python.sdk.common.evolution.EvoPyProjectDto
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
-import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
 import com.jetbrains.python.project.project
-import com.jetbrains.python.sdk.add.v2.FileSystemWithEel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -541,21 +537,3 @@ suspend fun Project.findPythonInterpreter(file: VirtualFile, mainForOrphans: Boo
 suspend fun PyProject.getInterpreter(): PythonInterpreter? =
   EvoPyProjectModel.getInstance(project).snapshot().forPyProject(this)?.interpreter
 
-/**
- * The context a tool-owned operation on this project runs in: the entry of this project and its workspace, from the
- * current [EvoPyProjectModel.Snapshot], on [fileSystem]. `null` when the snapshot does not hold this project.
- *
- * The widget and the Add dialog build their context here, so a tool acts on one workspace whichever surface asks.
- * [systemPythons] lists the Pythons a new environment can be built on, see [EvoToolContext.systemPythonOptions].
- */
-@ApiStatus.Internal
-suspend fun PyProject.evoToolContext(
-  fileSystem: FileSystemWithEel,
-  errorSink: ErrorSink = ErrorSink(),
-  systemPythons: suspend (String?) -> List<EvoAddNewOptionDto>,
-): EvoToolContext? {
-  val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
-  val evoPyProject = snapshot.forPyProject(this) ?: return null
-  val workspace = snapshot.workspaces.firstOrNull { w -> w.members.any { it === evoPyProject } } ?: return null
-  return EvoToolContext(workspace, evoPyProject, fileSystem, errorSink, systemPythons)
-}

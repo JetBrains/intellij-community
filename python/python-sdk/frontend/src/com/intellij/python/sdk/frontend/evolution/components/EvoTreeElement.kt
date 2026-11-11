@@ -48,7 +48,6 @@ data class EvoTreeSection(
   val elements: List<EvoTreeElement>,
   val labelTooltip: @NlsSafe String? = null,
 ) {
-  constructor(label: ListSeparator? = null, vararg elements: EvoTreeElement) : this(label = label, elements = elements.toList())
 }
 
 sealed class EvoTreeElement(

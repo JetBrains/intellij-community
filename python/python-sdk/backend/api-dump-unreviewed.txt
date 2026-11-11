@@ -1,7 +1,3 @@
-f:com.jetbrains.python.packaging.IndicatedProcessOutputListener
-- com.intellij.execution.process.ProcessAdapter
-- <init>(com.intellij.openapi.progress.ProgressIndicator):V
-- onTextAvailable(com.intellij.execution.process.ProcessEvent,com.intellij.openapi.util.Key):V
 com.jetbrains.python.run.CommandLinePatcher
 c:com.jetbrains.python.sdk.PythonSdkAdditionalData
 - com.intellij.openapi.projectRoots.SdkAdditionalData

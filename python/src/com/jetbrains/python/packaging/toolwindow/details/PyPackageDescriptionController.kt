@@ -266,14 +266,6 @@ internal class PyPackageDescriptionController(
 
   val wrappedComponent: JComponent = UiDataProvider.wrapComponent(component, UiDataProvider {})
 
-  /**
-   * Doc-only view: just the package description HTML, without the header row that hosts the
-   * name label, version dropdown, and install/delete buttons. Used by the in-tool-window
-   * documentation pane (horizontal anchor) which renders the doc full-height instead of behind a
-   * narrow toolbar (PY-89838 follow-up).
-   */
-  val docComponent: JComponent = htmlPanel.component
-
   fun setPackage(pyPackage: DisplayablePackage) {
     val newKey = pyPackage.name
     selectedPackage.set(pyPackage)

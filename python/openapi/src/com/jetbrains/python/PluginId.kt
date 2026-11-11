@@ -9,8 +9,3 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 const val PYTHON_PROF_PLUGIN_ID: String = "Pythonid"
 
-/**
- * Python plugin with core (free) tier functionality
- */
-@ApiStatus.Internal
-const val PYTHON_FREE_PLUGIN_ID: String = "PythonCore"

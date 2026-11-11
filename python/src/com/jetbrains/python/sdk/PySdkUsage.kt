@@ -3,26 +3,12 @@
 
 package com.jetbrains.python.sdk
 
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.isFor
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 
 /** Whether a Python project of this snapshot uses [sdk]. */
 @ApiStatus.Internal
 fun EvoPyProjectModel.Snapshot.usesSdk(sdk: Sdk): Boolean = interpreters.any { it.isFor(sdk) }
 
-/** The modules whose Python project uses [sdk] in this snapshot. */
-@ApiStatus.Internal
-fun EvoPyProjectModel.Snapshot.modulesUsing(sdk: Sdk): List<Module> =
-  evoPyProjects.filter { it.interpreter?.isFor(sdk) == true }.map { it.pyProject.residesOnModule }.toList()
-
-/** The current snapshot of [project]. Waits for the first one, so it runs on a background thread outside a read action. */
-@ApiStatus.Internal
-@RequiresBackgroundThread
-fun awaitSnapshot(project: Project): EvoPyProjectModel.Snapshot =
-  runBlockingMaybeCancellable { EvoPyProjectModel.getInstance(project).snapshot() }

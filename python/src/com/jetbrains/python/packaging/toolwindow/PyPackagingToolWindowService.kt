@@ -26,14 +26,11 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.asItem
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.Result
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyPackageService
-import com.jetbrains.python.packaging.cache.PythonPackageSearchPage
-import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
@@ -343,7 +340,7 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
                 .toList()
               val displayable = sortedAll.take(PACKAGES_LIMIT)
               val exactMatch = displayable.indexOfFirst { StringUtil.equalsIgnoreCase(it.name, query) }
-              PyPackagesViewData(repository, result, 0, displayable, exactMatch, sortedAll)
+              PyPackagesViewData(repository, result, displayable, exactMatch, sortedAll)
             }
             .toList()
 
@@ -360,33 +357,6 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
         }
       }
       else {
-        var shouldRerun = false
-        val packagesByRepository =
-          packageManager
-            .repositoryManager
-            .searchPackages("", PACKAGES_LIMIT)
-            .mapNotNull { (repository, result) ->
-              val displayable =
-                if (result.pages.size == 1) {
-                  result.pages[0].contents().successOrNull?.asSequence()?.filterOutInstalled(repository)
-                }
-                else {
-                  emptyList()
-                }
-
-              if (displayable == null) {
-                shouldRerun = true
-                return@mapNotNull null
-              }
-
-              PyPackagesViewData(repository, result, 0, displayable)
-            }
-            .toList()
-
-        if (shouldRerun) {
-          rerunSearch()
-          return@launch
-        }
 
         if (isActive) {
           withContext(Dispatchers.EDT) {
@@ -715,18 +685,6 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
     }
   }
 
-  private fun processPackagesForRepo(
-    result: PythonPackageSearchResult,
-    pageIndex: Int,
-    query: String,
-    repository: PyPackageRepository,
-  ): Result<PyPackagesViewData, PythonPackageSearchPage.DataInvalidatedError> {
-    val contents = result.pages[pageIndex].contents().getOr { return it }
-    val shownPackages = contents.asSequence().filterOutInstalled(repository)
-    val exactMatch = shownPackages.indexOfFirst { StringUtil.equalsIgnoreCase(it.name, query) }
-    return Result.Success(PyPackagesViewData(repository, result, pageIndex, shownPackages, exactMatch))
-  }
-
   override fun dispose() {
     searchJob?.cancel()
     serviceScope.cancel()
@@ -783,19 +741,6 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
         refreshInstalledPackages()
       }
     }
-  }
-
-  fun getMoreResultsForPage(
-    repository: PyPackageRepository,
-    result: PythonPackageSearchResult,
-    pageIndex: Int,
-  ): Result<PyPackagesViewData, PythonPackageSearchPage.DataInvalidatedError> {
-    return processPackagesForRepo(
-      result,
-      pageIndex + 1,
-      currentQuery,
-      repository
-    )
   }
 
   /**

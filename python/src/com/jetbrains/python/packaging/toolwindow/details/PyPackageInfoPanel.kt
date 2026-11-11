@@ -88,8 +88,6 @@ internal class PyPackageInfoPanel(
 
   override fun dispose() {}
 
-  fun getPackage(): DisplayablePackage? = packageProperty.get()
-
   fun setPackage(pyPackage: DisplayablePackage?) {
     val isDocumentable = when (pyPackage) {
       is InstalledPackage, is InstallablePackage, is RequirementPackage -> true

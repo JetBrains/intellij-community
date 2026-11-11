@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener.FILE_EDITOR_MAN
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.util.asDisposable
@@ -30,7 +29,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.swing.DefaultListModel
 import javax.swing.JList
-import javax.swing.JScrollPane
 import javax.swing.ListSelectionModel
 import javax.swing.event.ListSelectionListener
 import kotlinx.coroutines.withContext
@@ -66,8 +64,6 @@ internal class PyPackagesSdkController(private val project: Project) : Disposabl
     cellRenderer = sdkListRenderer
     addListSelectionListener(selectionListener)
   }
-
-  val mainScrollPane: JScrollPane = ScrollPaneFactory.createScrollPane(sdkList, true)
 
   private val fileEditorListener = object : FileEditorManagerListener {
     override fun selectionChanged(event: FileEditorManagerEvent) {

@@ -28,7 +28,6 @@ class HatchExecutableNotFoundHatchError(path: Path?) : HatchError(
 class BasePythonExecutableNotFoundHatchError(pathString: String?) : HatchError(
   PyHatchBundle.message("python.hatch.error.base.python.executable.is.not.found", pathString.toString())
 ) {
-  constructor(path: Path?) : this(path.toString())
 }
 
 class EnvironmentCreationHatchError(details: @NlsSafe String) : HatchError(

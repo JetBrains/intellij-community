@@ -223,12 +223,12 @@ private class NonSelfKillingLoggingProcess(
 ) : LoggingProcessImpl(cfg)
 
 private class SelfKillingLoggingProcess(
-  private val selfKiller: SelfKiller,
+  selfKiller: SelfKiller,
   cfg: LoggingConfig,
 ) : LoggingProcessImpl(cfg), SelfKiller by selfKiller
 
 private class SelfTreeKillingLoggingProcess(
-  private val selfKiller: ProcessTreeKiller,
+  selfKiller: ProcessTreeKiller,
   cfg: LoggingConfig,
 ) : LoggingProcessImpl(cfg), ProcessTreeKiller by selfKiller, SelfKiller
 

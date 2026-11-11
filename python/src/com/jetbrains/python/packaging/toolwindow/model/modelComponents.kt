@@ -112,7 +112,6 @@ class LoadingNode : DisplayablePackage("", null)
 open class PyPackagesViewData(
   val repository: PyPackageRepository,
   val result: PythonPackageSearchResult,
-  val pageIndex: Int,
   val displayable: List<DisplayablePackage>,
   val exactMatch: Int = -1,
   /**
@@ -127,4 +126,4 @@ open class PyPackagesViewData(
 )
 
 class PyInvalidRepositoryViewData(repository: PyPackageRepository) :
-  PyPackagesViewData(repository, PythonPackageSearchResult(0, emptyList(), 0), 0, emptyList())
+  PyPackagesViewData(repository, PythonPackageSearchResult(0, emptyList(), 0), emptyList())
