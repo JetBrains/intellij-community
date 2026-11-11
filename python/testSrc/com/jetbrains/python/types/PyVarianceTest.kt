@@ -436,4 +436,22 @@ class PyVarianceTest : PyCodeInsightTestCase() {
             tmp: T_co = x # expect no error
     """.trimIndent())
 
+  @Test
+  @TestFor(issues = ["PY-76863"])
+  fun `Explicit variance together with infer_variance`() = test("""
+    from typing import Final, TypeVar
+
+    T = TypeVar("T", infer_variance=True)  # ok
+    T_co = TypeVar("T_co", covariant=True)  # ok
+    T_contra = TypeVar("T_contra", contravariant=True)  # ok
+    T_explicit = TypeVar("T_explicit", infer_variance=True, covariant=False)  # ok
+
+    S1 = TypeVar("S1", covariant=True, infer_variance=True) # ERROR Cannot use 'covariant' together with 'infer_variance'
+    S2 = TypeVar("S2", contravariant=True, infer_variance=True) # ERROR Cannot use 'contravariant' together with 'infer_variance'
+    S3 = TypeVar("S3", infer_variance=True, covariant=True) # ERROR Cannot use 'covariant' together with 'infer_variance'
+
+    X: Final = True
+    S4 = TypeVar("S4", covariant=X, infer_variance=True) # ERROR Cannot use 'covariant' together with 'infer_variance'
+    """.trimIndent())
+
 }

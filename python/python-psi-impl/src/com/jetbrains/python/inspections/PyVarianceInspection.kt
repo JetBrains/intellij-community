@@ -57,15 +57,20 @@ class PyVarianceInspection : PyInspection() {
     val context: TypeEvalContext,
   ) : PyInspectionVisitor(holder, context) {
 
-    // Inspection: "Obsolete variance for constrained TypeVar"
+    // Inspections on `X = TypeVar(...)` declarations
     override fun visitPyAssignmentStatement(node: PyAssignmentStatement) {
       super.visitPyAssignmentStatement(node)
       val typeVarCall = node.assignedValue as? PyCallExpression ?: return
       val typeVarType = PyTypingTypeProvider.getType(typeVarCall, context)?.get() as? PyTypeVarType ?: return
+      val argList = typeVarCall.argumentList ?: return
+      checkSuperfluousVarianceOfConstrainedTypeVar(typeVarType, argList)
+    }
+
+    // Inspection: "Obsolete variance for constrained TypeVar"
+    private fun checkSuperfluousVarianceOfConstrainedTypeVar(typeVarType: PyTypeVarType, argList: PyArgumentList) {
       if (typeVarType.constraints.size < 2) return
       if (typeVarType.constraints.size > 7) return // escape hatch wrt. performance
       if (typeVarType.variance != COVARIANT && typeVarType.variance != CONTRAVARIANT) return
-      val argList = typeVarCall.argumentList ?: return
       val varianceArg = argList.arguments.firstOrNull { arg -> arg.name == "covariant" || arg.name == "contravariant" } ?: return
       // now check that at least two constraints have a subtype relation
       for ((idx1, c1) in typeVarType.constraints.withIndex()) {

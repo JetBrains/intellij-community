@@ -20,6 +20,7 @@ import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.tools.PyConformanceInspections
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestFactory
 import java.nio.file.Files
 import java.nio.file.Path
@@ -39,6 +40,8 @@ import kotlin.io.path.writeText
  * highlight on a line without an expectation (`unexpected`, with the inspection id), and each logged error or exception
  * of the highlighting (`exception`). A file without such rows has no baseline file. `_scores.txt` gives the result of
  * each chapter of the suite.
+ * A trailing ` # ` comment may follow a baseline row, and a comment starting with `expected` marks a matching file as expected in the
+ * summary. A line that holds only a comment belongs to the row below it, or to the end of the file.
  *
  * The test fails on a difference in either direction, so a fix and a regression both change a baseline file.
  * Run it with `-Dpass.idea.tests.overwrite.data=true` to write the new baseline.
@@ -47,7 +50,7 @@ import kotlin.io.path.writeText
  * `# E[tag]` for a group of lines where one line has the error (`# E[tag+]`: one or more lines).
  * A highlight of severity WARNING or higher counts.
  */
-@TestFor(issues = ["PY-76770", "PY-92814"])
+@TestFor(issues = ["PY-76770", "PY-92814", "PY-76863"])
 @Subsystems.Typing
 @Layers.Functional
 class PyTypingConformanceBaselineTest : PyCodeInsightTestCase() {
@@ -66,17 +69,22 @@ class PyTypingConformanceBaselineTest : PyCodeInsightTestCase() {
         .toList()
     }
     val scores = LinkedHashMap<String, FileScore>()
+    val statuses = LinkedHashMap<String, FileStatus>()
     val fileTests = files.map { path ->
       DynamicTest.dynamicTest(path) {
         if (myFixture.findFileInTempDir(path) == null) myFixture.copyDirectoryToProject(SUITE_DIR, "")
         val result = checkFile(path)
         scores[path] = result.score
-        compareWithFile(baselineRoot.resolve(baselineName(path)), result.rows)
+        val file = baselineRoot.resolve(baselineName(path))
+        val baseline = readBaseline(file)
+        statuses[path] = fileStatus(baseline, result.rows)
+        compareWithFile(file, baseline, result.rows)
       }
     }
     val scoreTest = DynamicTest.dynamicTest(SCORES_FILE) {
       Assertions.assertEquals(files.size, scores.size, "Run all conformance files before the score")
-      compareWithFile(baselineRoot.resolve(SCORES_FILE), renderScores(scores))
+      val file = baselineRoot.resolve(SCORES_FILE)
+      compareWithFile(file, readBaseline(file), renderScores(scores))
     }
     val obsoleteTest = DynamicTest.dynamicTest("obsolete baseline files") {
       val known = files.mapTo(hashSetOf(SCORES_FILE)) { baselineName(it) }
@@ -86,7 +94,52 @@ class PyTypingConformanceBaselineTest : PyCodeInsightTestCase() {
       if (UsefulTestCase.OVERWRITE_TESTDATA) obsolete.forEach { it.deleteIfExists() }
       else Assertions.assertEquals(emptyList<Path>(), obsolete, "Baseline files without a conformance file")
     }
-    return fileTests + scoreTest + obsoleteTest
+    val summaryTest = DynamicTest.dynamicTest("summary") {
+      println(renderSummary(files.size, statuses.values))
+    }
+    return buildList {
+      addAll(fileTests)
+      add(scoreTest)
+      add(obsoleteTest)
+      add(summaryTest)
+    }
+  }
+
+  @Test
+  fun `baseline row text with hash`() {
+    val row = "unexpected 1: tool: description #type"
+    Assertions.assertEquals(row, parseBaselineLine(row)?.row)
+  }
+
+  @Test
+  fun `expected baseline comment`() {
+    val row = parseBaselineLine("missed 1 # expected, see PY-89651")
+    Assertions.assertEquals("missed 1", row?.row)
+    Assertions.assertEquals("expected, see PY-89651", row?.comment)
+    Assertions.assertTrue(row?.isExpected == true)
+  }
+
+  @Test
+  fun `baseline file without rows`() {
+    Assertions.assertNull(parseBaseline("# comment\n\n"))
+  }
+
+  @Test
+  fun `baseline comment lines`() {
+    val baseline = parseBaseline("# header\n\nmissed 1\n# between\nmissed 2 # expected\n# tail\n")!!
+    Assertions.assertEquals(listOf("missed 1", "missed 2"), baseline.rows.map { it.row })
+    Assertions.assertEquals(listOf("# header"), baseline.rows[0].commentLines)
+    Assertions.assertEquals(listOf("# between"), baseline.rows[1].commentLines)
+    Assertions.assertEquals(listOf("# tail"), baseline.trailingLines)
+  }
+
+  @Test
+  fun `overwrite keeps comment lines`() {
+    val baseline = parseBaseline("# header\nmissed 1 # expected\n# gone\nmissed 2\n# tail\n")
+    Assertions.assertEquals(
+      listOf("# header", "missed 1 # expected", "missed 3", "# gone", "# tail"),
+      renderBaseline(baseline, listOf("missed 1", "missed 3")),
+    )
   }
 
   private fun baselineName(path: String): String = path.substringBeforeLast('.') + ".txt"
@@ -94,6 +147,29 @@ class PyTypingConformanceBaselineTest : PyCodeInsightTestCase() {
   private class FileScore(val required: Int, val met: Int, val unexpected: Int)
 
   private class FileResult(val rows: List<String>, val score: FileScore)
+
+  /** The outcome of a conformance file for the console summary. */
+  private enum class FileStatus {
+    /** No baseline file: the result has no rows. */
+    PASSED,
+
+    /** The result matches a baseline where every row has a comment starting with `expected`. */
+    EXPECTED,
+
+    /** The baseline has rows without such a comment, or the result differs from the baseline. */
+    REMAINING,
+  }
+
+  /** The rows of a baseline file in order, and the lines that hold only a comment after the last row. */
+  private class Baseline(val rows: List<BaselineRow>, val trailingLines: List<String>)
+
+  /**
+   * A row of a baseline file with the text of its trailing comment, if any (without the `#`), and the lines that hold only
+   * a comment right above it.
+   */
+  private class BaselineRow(val row: String, val comment: String?, val commentLines: List<String> = emptyList()) {
+    val isExpected: Boolean get() = comment?.startsWith(EXPECTED_MARKER, ignoreCase = true) == true
+  }
 
   private class Expectations {
     /** The required and the optional error lines. A value is the expected message or an empty string. */
@@ -188,20 +264,105 @@ class PyTypingConformanceBaselineTest : PyCodeInsightTestCase() {
     return rows + "total: ${all.sumOf { it.met }}/${all.sumOf { it.required }} required lines met, ${all.sumOf { it.unexpected }} unexpected"
   }
 
-  /** Compares [rows] with [file]. No rows means no file. With the overwrite switch, writes the rows into the file. */
-  private fun compareWithFile(file: Path, rows: List<String>) {
-    val actual = if (rows.isEmpty()) null else rows.joinToString("\n", postfix = "\n")
-    val expected = if (file.exists()) file.readText() else null
-    if (actual == expected) return
+  private fun renderSummary(total: Int, statuses: Collection<FileStatus>): String {
+    val passed = statuses.count { it == FileStatus.PASSED }
+    val expected = statuses.count { it == FileStatus.EXPECTED }
+    // A file test that did not record a status (e.g. it threw before the comparison) counts as failed.
+    val remaining = total - passed - expected
+    return """
+      |Typing conformance summary
+      |  conformance files:                 $total
+      |  passed (no baseline):              $passed
+      |  passed with "expected" baseline:   $expected
+      |  to be addressed / failed:          $remaining
+    """.trimMargin()
+  }
+
+  private fun fileStatus(baseline: Baseline?, rows: List<String>): FileStatus = when {
+    rows != baseline?.rows.orEmpty().map { it.row } -> FileStatus.REMAINING
+    baseline == null -> FileStatus.PASSED
+    baseline.rows.all { it.isExpected } -> FileStatus.EXPECTED
+    else -> FileStatus.REMAINING
+  }
+
+  /** The baseline of [file], or `null` if [file] does not exist or has no rows. */
+  private fun readBaseline(file: Path): Baseline? = if (file.exists()) parseBaseline(file.readText()) else null
+
+  /** The rows of the baseline [text] with their comment lines, without the blank lines, or `null` if it has no rows. */
+  private fun parseBaseline(text: String): Baseline? {
+    val rows = mutableListOf<BaselineRow>()
+    val commentLines = mutableListOf<String>()
+    for (line in text.lines()) {
+      val row = parseBaselineLine(line, commentLines.toList())
+      when {
+        row != null -> {
+          rows += row
+          commentLines.clear()
+        }
+        line.isNotBlank() -> commentLines += line.trim()
+      }
+    }
+    return if (rows.isEmpty()) null else Baseline(rows, commentLines)
+  }
+
+  /**
+   * The row and the trailing comment of a baseline line, with the [commentLines] above it, or `null` for a blank line or a
+   * line that holds only a comment.
+   */
+  private fun parseBaselineLine(line: String, commentLines: List<String> = emptyList()): BaselineRow? {
+    val match = TRAILING_COMMENT.find(line)
+    val row = (if (match != null) line.substring(0, match.range.first) else line).trim()
+    if (row.isEmpty()) return null
+    val comment = match?.let { line.substring(it.range.first).trim().removePrefix("#").trim() }
+    return BaselineRow(row, comment, commentLines)
+  }
+
+  /**
+   * Compares [rows] with the rows of [baseline] read from [file]. No rows means no file.
+   * With the overwrite switch, writes the rows into the file with the comments of [baseline], see [renderBaseline].
+   */
+  private fun compareWithFile(file: Path, baseline: Baseline?, rows: List<String>) {
+    val expected = baseline?.rows?.map { it.row }
+    if (rows == expected.orEmpty()) return
     if (UsefulTestCase.OVERWRITE_TESTDATA) {
-      if (actual == null) file.deleteIfExists()
+      if (rows.isEmpty()) file.deleteIfExists()
       else {
         Files.createDirectories(file.parent)
-        file.writeText(actual)
+        file.writeText(renderBaseline(baseline, rows).joinToString("\n", postfix = "\n"))
       }
       return
     }
-    Assertions.assertEquals(expected ?: "<no baseline file>", actual ?: "<no rows>", "The conformance result differs from $file")
+    Assertions.assertEquals(
+      expected?.joinToString("\n", postfix = "\n") ?: "<no baseline file>",
+      rows.ifEmpty { null }?.joinToString("\n", postfix = "\n") ?: "<no rows>",
+      "The conformance result differs from $file",
+    )
+  }
+
+  /**
+   * The lines of the baseline file for [rows]: a row that remains keeps its trailing comment and the comment lines above it.
+   * The comment lines above a row that goes away move above the next row that remains, or to the end of the file.
+   */
+  private fun renderBaseline(baseline: Baseline?, rows: List<String>): List<String> {
+    val remaining = rows.toHashSet()
+    val commented = HashMap<String, String>()
+    val commentLines = HashMap<String, MutableList<String>>()
+    val carried = mutableListOf<String>()
+    for (row in baseline?.rows.orEmpty()) {
+      carried += row.commentLines
+      if (row.row !in remaining) continue
+      if (row.comment != null) commented[row.row] = "${row.row} # ${row.comment}"
+      commentLines.getOrPut(row.row) { mutableListOf() } += carried
+      carried.clear()
+    }
+    return buildList {
+      for (row in rows) {
+        commentLines.remove(row)?.let { addAll(it) }
+        add(commented[row] ?: row)
+      }
+      addAll(carried)
+      addAll(baseline?.trailingLines.orEmpty())
+    }
   }
 
   private companion object {
@@ -210,7 +371,13 @@ class PyTypingConformanceBaselineTest : PyCodeInsightTestCase() {
     const val SCORES_FILE = "_scores.txt"
     val SUITE_EXTENSIONS = setOf("py", "pyi")
 
+    /** The start of a trailing baseline comment that marks an accepted difference, compared ignoring case. */
+    const val EXPECTED_MARKER = "expected"
+
     /** `# E`, `# E?`, `# E: message`, `# E[tag]` and `# E[tag+]` at the start of a comment. */
     val EXPECTATION = Regex("""^#\s*E(?:\[([^]\n]+)]|(\?))?(?::(.*))?(?:\s|$)""")
+
+    /** A `#` comment at line start, or after whitespace when followed by whitespace or the end of the line. */
+    val TRAILING_COMMENT = Regex("""(^|\s)#(\s|$).*""")
   }
 }

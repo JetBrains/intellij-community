@@ -12,5 +12,11 @@ class C(Generic[T]):
         pass
 </code></pre>
 
+<p><b>Explicit variance together with <code>infer_variance</code></b></p>
+<pre><code class="language-python">
+from typing import TypeVar
+S = TypeVar("S", covariant=True, infer_variance=True) # at 'covariant=True': Cannot use 'covariant' together with 'infer_variance'
+</code></pre>
+
 </body>
 </html>

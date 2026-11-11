@@ -698,6 +698,9 @@ class PyTypeHintsInspection : PyInspection() {
     private fun checkTypeVarArguments(call: PyCallExpression, target: PyExpression?) {
       var covariant = false
       var contravariant = false
+      var inferVariance = false
+      var covariantArgument: PyExpression? = null
+      var contravariantArgument: PyExpression? = null
       var bound: PyExpression? = null
       var default: PyExpression? = null
       val constraints = mutableListOf<PyExpression?>()
@@ -708,8 +711,15 @@ class PyTypeHintsInspection : PyInspection() {
             checkNameIsTheSameAsTarget(argument, target,
                                        PyPsiBundle.message("INSP.type.hints.typevar.expects.string.literal.as.first.argument"),
                                        PyPsiBundle.message("INSP.type.hints.argument.to.typevar.must.be.string.equal.to.variable.name"))
-          "covariant" -> covariant = PyEvaluator.evaluateAsBoolean(argument, false)
-          "contravariant" -> contravariant = PyEvaluator.evaluateAsBoolean(argument, false)
+          "covariant" -> {
+            covariant = PyEvaluator.evaluateAsBoolean(argument, false)
+            covariantArgument = argument
+          }
+          "contravariant" -> {
+            contravariant = PyEvaluator.evaluateAsBoolean(argument, false)
+            contravariantArgument = argument
+          }
+          "infer_variance" -> inferVariance = PyEvaluator.evaluateAsBoolean(argument, false)
           "bound" -> bound = argument
           "default" -> default = argument
           "constraints" -> constraints.add(argument)
@@ -719,6 +729,12 @@ class PyTypeHintsInspection : PyInspection() {
       if (covariant && contravariant) {
         registerProblem(call, PyPsiBundle.message("INSP.type.hints.bivariant.type.variables.are.not.supported"),
                         ProblemHighlightType.GENERIC_ERROR)
+      }
+
+      if (inferVariance) {
+        // The runtime raises ValueError when infer_variance=True is combined with an explicit variance
+        if (covariant) reportExplicitVarianceWithInferVariance(covariantArgument, "covariant")
+        if (contravariant) reportExplicitVarianceWithInferVariance(contravariantArgument, "contravariant")
       }
 
       if (constraints.isNotEmpty() && bound != null) {
@@ -754,6 +770,13 @@ class PyTypeHintsInspection : PyInspection() {
         registerProblem(bound, PyPsiBundle.message("INSP.type.hints.typed.dict.is.not.allowed.as.a.bound.for.a.type.var"),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
       }
+    }
+
+    private fun reportExplicitVarianceWithInferVariance(argument: PyExpression?, parameterName: String) {
+      if (argument == null) return
+      registerProblem(argument.parent as? PyKeywordArgument ?: argument,
+                      PyPsiBundle.message("INSP.type.hints.explicit.variance.with.infer.variance", parameterName),
+                      ProblemHighlightType.GENERIC_ERROR)
     }
 
     private fun checkTypeVarDefaultType(defaultExpression: PyExpression, typeVarType: PyTypeVarType) {
