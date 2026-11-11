@@ -310,6 +310,70 @@ internal class GHApiRateLimiterTest {
   }
 
   @Test
+  fun `a GraphQL rate limit error with the status 200 fails the GraphQL requests until the reset`(): Unit = timeoutRunBlocking {
+    val resetAt = inOneHour()
+    // the shape that GitHub sends now: https://github.com/github/docs/issues/22607
+    answer = {
+      addExhaustedBudgetHeaders(it, "graphql", resetAt)
+      respond(it, 200, graphQLErrors("RATE_LIMIT", "graphql_rate_limit", "API rate limit already exceeded for user ID 1."))
+    }
+
+    val error = assertThrows<GithubRateLimitExceededException> {
+      executor.execute(parsingGraphQLRequest())
+    }
+    assertThrows<GithubRateLimitExceededException> {
+      executor.execute(parsingGraphQLRequest())
+    }
+
+    assertFalse(error is GithubSecondaryRateLimitExceededException)
+    assertEquals(resetAt, error.resetAt)
+    assertEquals(1, received.get())
+  }
+
+  @Test
+  fun `a GraphQL rate limit error of the older type without the headers blocks the GraphQL requests`(): Unit = timeoutRunBlocking {
+    answer = { respond(it, 200, graphQLErrors("RATE_LIMITED", null, "API rate limit exceeded for user ID 1.")) }
+
+    assertThrows<GithubRateLimitExceededException> {
+      executor.execute(parsingGraphQLRequest())
+    }
+    assertThrows<GithubRateLimitExceededException> {
+      executor.execute(parsingGraphQLRequest())
+    }
+
+    assertEquals(1, received.get())
+  }
+
+  @Test
+  fun `a GraphQL secondary rate limit error with the status 200 fails the next queries until the pause ends`(): Unit = timeoutRunBlocking {
+    answer = {
+      if (received.get() == 1) {
+        it.responseHeaders.add(GHRateLimitHeaders.RETRY_AFTER_HEADER, "1")
+        respond(it,
+                200,
+                graphQLErrors(null, null, "You have exceeded a secondary rate limit. Please wait a few minutes before you try again."))
+      }
+      else respond(it, 200, """{"data":{}}""")
+    }
+
+    // This call reaches the server
+    assertThrows<GithubSecondaryRateLimitExceededException> {
+      executor.execute(parsingGraphQLRequest())
+    }
+    // This call never reaches the server
+    assertThrows<GithubSecondaryRateLimitExceededException> {
+      executor.execute(parsingGraphQLRequest())
+    }
+    assertEquals(1, received.get())
+
+    delay(1100.milliseconds)
+    executor.execute(parsingGraphQLRequest())
+
+    assertEquals(2, received.get())
+    assertWaitedBetweenRequests(1.seconds)
+  }
+
+  @Test
   fun `a secondary rate limit error fails the next requests without a call to the server until the pause ends`(): Unit =
     timeoutRunBlocking {
       answer = { if (received.get() == 1) respondSecondaryLimit(it, retryAfterSeconds = 1) else respondRepo(it) }
@@ -543,6 +607,13 @@ internal class GHApiRateLimiterTest {
 
   private fun graphQLRequest(): GithubApiRequest<Unit> = TestGQLQuery(serverPath.toGraphQLUrl())
 
+  private fun parsingGraphQLRequest(): GithubApiRequest<Unit> = ParsingTestGQLQuery(serverPath.toGraphQLUrl())
+
+  private fun graphQLErrors(type: String?, code: String?, message: String): String {
+    val fields = listOfNotNull(type?.let { "\"type\":\"$it\"" }, code?.let { "\"code\":\"$it\"" }, "\"message\":\"$message\"")
+    return """{"errors":[{${fields.joinToString(",")}}]}"""
+  }
+
   // the header holds whole seconds
   private fun inOneHour(): Instant = Instant.fromEpochSeconds(Clock.System.now().epochSeconds + 3600)
 
@@ -583,6 +654,16 @@ private class TestGQLQuery(url: String) : GithubApiRequest.Post.GQLQuery<Unit>(u
   override val body: String = "{}"
 
   override fun extractResultWithCost(response: GithubApiResponse): Pair<Unit, GHGQLRateLimit?> = Unit to null
+}
+
+/**
+ * A bundled GraphQL operation that parses errors and ignores the response data.
+ */
+private class ParsingTestGQLQuery(url: String) : GithubApiRequest.Post.GQLQuery<Unit>(url, GHGQLQueries.findRepository, emptyMap()) {
+  override val clazz: Class<*> = Unit::class.java
+
+  override fun extractResultWithCost(response: GithubApiResponse): Pair<Unit, GHGQLRateLimit?> =
+    parseResponse(response, arrayOf()) { } ?: (Unit to null)
 }
 
 /**

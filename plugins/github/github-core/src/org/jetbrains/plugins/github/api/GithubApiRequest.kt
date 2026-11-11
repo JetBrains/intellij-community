@@ -158,7 +158,11 @@ sealed class GithubApiRequest<out T>(val url: String) {
           return GithubApiContentHelper.toJson(request, true)
         }
 
-      protected fun throwException(errors: List<GHGQLError>): Nothing {
+      protected fun throwException(errors: List<GHGQLError>, response: GithubApiResponse): Nothing {
+        // the status of a rate limit error is 200, only the errors and the headers tell about the limit
+        val rateLimitHeaders = GHRateLimitHeaders.parse(response::findHeader)
+        GithubApiRequestExecutor.createGraphQLRateLimitException(errors, rateLimitHeaders)?.let { throw it }
+
         if (errors.any { it.type.equals("INSUFFICIENT_SCOPES", true) })
           throw GithubAuthenticationException("Access token has not been granted the required scopes.")
 
@@ -268,7 +272,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
         }
         val errors = result.errors
         if (errors == null) return null
-        else throwException(errors)
+        else throwException(errors, response)
       }
     }
   }
