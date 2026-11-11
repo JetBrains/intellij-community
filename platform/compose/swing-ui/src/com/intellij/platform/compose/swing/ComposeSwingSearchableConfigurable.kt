@@ -13,7 +13,7 @@ import kotlinx.coroutines.DisposableHandle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.compose.swing.annotations.InternalSwingUiApi
 import org.jetbrains.compose.swing.core.SwingRecomposer
-import org.jetbrains.compose.swing.setContent
+import org.jetbrains.compose.swing.foundation.layout.setContent
 import java.awt.BorderLayout
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent

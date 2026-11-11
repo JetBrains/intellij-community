@@ -8,11 +8,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.ClientProperty
-import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.ui.JBColor
+import com.intellij.ui.WidthBasedLayout
 import kotlinx.coroutines.DisposableHandle
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.compose.swing.setContent
-import java.awt.BorderLayout
+import org.jetbrains.compose.swing.foundation.layout.ConstrainedPanel
+import org.jetbrains.compose.swing.foundation.layout.ConstrainedScope
+import org.jetbrains.compose.swing.foundation.layout.Constraints
+import org.jetbrains.compose.swing.foundation.layout.setContent
 import javax.swing.JComponent
 
 /**
@@ -37,6 +40,11 @@ import javax.swing.JComponent
  *
  * Must be called on the EDT, and [parentDisposable] must be disposed on the EDT.
  *
+ * The host is the root of the content's layout, as the root of an androidx Compose window is: each top-level
+ * composable is measured under the host's size and placed at its top-start corner, so layout modifiers such as
+ * `fillMaxWidth` or `width` apply at the top level. The host implements [WidthBasedLayout], so an IDE layout that
+ * asks for the height at a given width gets the content's height at that width.
+ *
  * This is the Swing-Compose analogue of the Jewel `JewelComposePanel`.
  *
  * @see org.jetbrains.jewel.bridge.JewelComposePanel
@@ -44,7 +52,7 @@ import javax.swing.JComponent
 @ApiStatus.Experimental
 public fun composeSwingPanel(
   parentDisposable: Disposable,
-  content: @Composable () -> Unit,
+  content: @Composable ConstrainedScope.() -> Unit,
 ): JComponent {
   val panel = ComposeSwingPanel()
   val handle = panel.setContent(content = content)
@@ -53,10 +61,17 @@ public fun composeSwingPanel(
 }
 
 @ApiStatus.Internal
-public class ComposeSwingPanel : BorderLayoutPanel() {
+public class ComposeSwingPanel : ConstrainedPanel(), WidthBasedLayout {
   init {
+    // The panel paints the panel background, as the JPanel the host replaces did.
+    isOpaque = true
+    background = JBColor.PanelBackground
     registerCreationStacktrace()
   }
+
+  override fun getPreferredWidth(): Int = maxIntrinsicWidth(Constraints.Infinity)
+
+  override fun getPreferredHeight(width: Int): Int = maxIntrinsicHeight(width)
 
   private fun registerCreationStacktrace() {
     if (ApplicationManager.getApplication()?.isInternal == true && UiInspectorUtil.isSaveStacktraces()) {

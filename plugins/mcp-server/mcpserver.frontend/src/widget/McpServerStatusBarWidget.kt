@@ -29,13 +29,13 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
+import org.jetbrains.compose.swing.foundation.layout.Alignment
+import org.jetbrains.compose.swing.foundation.layout.wrapContentHeight
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.layout.layoutConstraint
 import org.jetbrains.compose.swing.modifier.listener.componentListener
 import org.jetbrains.compose.swing.style.maximumSize
 import org.jetbrains.compose.swing.style.minimumSize
 import org.jetbrains.compose.swing.style.styleable
-import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.MouseEvent
@@ -123,8 +123,9 @@ internal class McpServerStatusBarWidget(
     val panel = composeSwingPanel(contentDisposable) {
       McpServerPopupContent(
         model = model,
+        // The content keeps its own height, which the listener below sizes the popup by.
         modifier = SwingModifier
-          .layoutConstraint(BorderLayout.NORTH)
+          .wrapContentHeight(Alignment.Top)
           .componentListener(onComponentResized = {
             popupRef?.let { popup ->
               popup.size = Dimension(POPUP_WIDTH, it.component.height)
