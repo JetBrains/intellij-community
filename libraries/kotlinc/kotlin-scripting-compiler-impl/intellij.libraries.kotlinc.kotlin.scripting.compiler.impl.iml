@@ -25,19 +25,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlin-scripting-compiler-impl" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:2.5.0-ij263-53">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:2.5.0-ij263-59">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.0-ij263-53/kotlin-scripting-compiler-impl-2.5.0-ij263-53.jar">
-              <sha256sum>9890b114f9634ad78f02a266960a4bc099e861e9d2b709b7c55d0af779b9d02c</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.0-ij263-59/kotlin-scripting-compiler-impl-2.5.0-ij263-59.jar">
+              <sha256sum>b16c9bd9046caee681f2133ee3c298f796615c513cdcd59fb3128a8a1d6582fe</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.0-ij263-53/kotlin-scripting-compiler-impl-2.5.0-ij263-53.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.0-ij263-59/kotlin-scripting-compiler-impl-2.5.0-ij263-59.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.0-ij263-53/kotlin-scripting-compiler-impl-2.5.0-ij263-53-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.0-ij263-59/kotlin-scripting-compiler-impl-2.5.0-ij263-59-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

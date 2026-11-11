@@ -25,19 +25,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlin-scripting-jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:2.5.0-ij263-53">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:2.5.0-ij263-59">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.0-ij263-53/kotlin-scripting-jvm-2.5.0-ij263-53.jar">
-              <sha256sum>c56e49d667ca3818dbb6909a0b4ba760e594adc6564c46c80c0c01f630032719</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.0-ij263-59/kotlin-scripting-jvm-2.5.0-ij263-59.jar">
+              <sha256sum>1fef360023e8c6bb006af8cdaf1c76424ca979fedc5e3e8bd38a4ec1f0455e4c</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.0-ij263-53/kotlin-scripting-jvm-2.5.0-ij263-53.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.0-ij263-59/kotlin-scripting-jvm-2.5.0-ij263-59.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.0-ij263-53/kotlin-scripting-jvm-2.5.0-ij263-53-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.0-ij263-59/kotlin-scripting-jvm-2.5.0-ij263-59-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
