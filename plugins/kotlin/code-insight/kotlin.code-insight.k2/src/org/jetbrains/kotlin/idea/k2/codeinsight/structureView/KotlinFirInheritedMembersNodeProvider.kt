@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
@@ -27,7 +26,6 @@ class KotlinFirInheritedMembersNodeProvider : InheritedMembersNodeProvider<TreeE
             val inheritedMembers = classSymbol.memberScope.declarations
                 .minus(classSymbol.declaredMemberScope.declarations.toSet())
             for (memberSymbol in inheritedMembers) {
-                if (memberSymbol.origin == KaSymbolOrigin.INTERSECTION_OVERRIDE) continue
                 if (memberSymbol is KaClassSymbol) continue
                 val psi = memberSymbol.psi
                 if (psi is NavigatablePsiElement) {

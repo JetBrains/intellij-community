@@ -1,0 +1,6 @@
+-InheritedJavaIntersectionOverride.kt
+ -WithJavaInterface
+  equals(Any?): Boolean location=→Any
+  foo(): Unit location=→JavaBase
+  hashCode(): Int location=→Any
+  toString(): String location=→Any

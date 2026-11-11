@@ -63,6 +63,11 @@ public class KotlinFirFileStructureTestGenerated extends AbstractKotlinFirFileSt
         runTest("../../idea/tests/testData/structureView/fileStructure/InheritedInnerClasses.kt");
     }
 
+    @TestMetadata("InheritedJavaIntersectionOverride.kt")
+    public void testInheritedJavaIntersectionOverride() throws Exception {
+        runTest("../../idea/tests/testData/structureView/fileStructure/InheritedJavaIntersectionOverride.kt");
+    }
+
     @TestMetadata("InheritedJavaMembers.kt")
     public void testInheritedJavaMembers() throws Exception {
         runTest("../../idea/tests/testData/structureView/fileStructure/InheritedJavaMembers.kt");
@@ -88,6 +93,11 @@ public class KotlinFirFileStructureTestGenerated extends AbstractKotlinFirFileSt
         runTest("../../idea/tests/testData/structureView/fileStructure/InheritedMembersWithSubstitutedTypes.kt");
     }
 
+    @TestMetadata("InheritedMixedIntersectionOverride.kt")
+    public void testInheritedMixedIntersectionOverride() throws Exception {
+        runTest("../../idea/tests/testData/structureView/fileStructure/InheritedMixedIntersectionOverride.kt");
+    }
+
     @TestMetadata("InheritedSAMConversion.kt")
     public void testInheritedSAMConversion() throws Exception {
         runTest("../../idea/tests/testData/structureView/fileStructure/InheritedSAMConversion.kt");
@@ -96,6 +106,11 @@ public class KotlinFirFileStructureTestGenerated extends AbstractKotlinFirFileSt
     @TestMetadata("InheritedSynthesizedFromDataClass.kt")
     public void testInheritedSynthesizedFromDataClass() throws Exception {
         runTest("../../idea/tests/testData/structureView/fileStructure/InheritedSynthesizedFromDataClass.kt");
+    }
+
+    @TestMetadata("InheritedToString.kt")
+    public void testInheritedToString() throws Exception {
+        runTest("../../idea/tests/testData/structureView/fileStructure/InheritedToString.kt");
     }
 
     @TestMetadata("LocalElements.kt")

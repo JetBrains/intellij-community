@@ -217,7 +217,8 @@ internal class KotlinFirStructureElementPresentation(
 
         analyze(ktElement) {
             val symbol = pointer.restoreSymbol()
-            if (symbol is KaCallableSymbol && symbol.origin == KaSymbolOrigin.SUBSTITUTION_OVERRIDE) {
+            if (symbol is KaCallableSymbol &&
+                (symbol.origin == KaSymbolOrigin.SUBSTITUTION_OVERRIDE || symbol.origin == KaSymbolOrigin.INTERSECTION_OVERRIDE)) {
                 val containerPsi = symbol.psi?.parent
                 if (containerPsi is PsiNamedElement) {
                     containerPsi.name?.let { 

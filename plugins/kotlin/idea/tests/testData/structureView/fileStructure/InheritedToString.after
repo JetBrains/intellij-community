@@ -1,0 +1,6 @@
+-InheritedToString.kt
+ -B
+  equals(Any?): Boolean location=→Any
+  foo(): Unit location=→A0
+  hashCode(): Int location=→Any
+  toString(): String location=→A

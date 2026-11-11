@@ -1,0 +1,3 @@
+interface KotlinFoo {
+    fun foo()
+}
