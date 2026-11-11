@@ -21,6 +21,7 @@ import com.jetbrains.python.sdk.configuration.CreateInterpreterInfoWithInterpret
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithToolBase
 import com.jetbrains.python.sdk.configuration.getInterpreterCreator
 import com.intellij.python.pyproject.model.evolution.readStoredInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.sdk.withSdkConfigurationLock
 
 private val logger = fileLogger()
@@ -42,7 +43,7 @@ private val logger = fileLogger()
 internal suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdk(controller: AutoConfigurationController<T>): InterpreterConfigurationResult<T> {
   val outcome = withSdkConfigurationLock(module.project) {
     // We might have TOCTOU here (sdk might already be created), so we check SDK once again
-    if (module.readStoredInterpreter() != null) ConfigOutcome.Configured() else autoConfigureSdkImpl(controller)
+    module.readStoredInterpreter()?.let { ConfigOutcome.Configured(it) } ?: autoConfigureSdkImpl(controller)
   }
   return when (outcome) {
     is ConfigOutcome.Configured -> {
@@ -71,7 +72,11 @@ internal suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdk(co
  * [autoConfigureSdk] waits for the snapshot only after it releases the lock.
  */
 private sealed interface ConfigOutcome<T : Any> {
-  class Configured<T : Any> : ConfigOutcome<T>
+  /**
+   * The module holds [interpreter] now. A `SameAs` child sets the [interpreter] of its parent, because the snapshot
+   * does not hold a parent configured in the same call yet.
+   */
+  class Configured<T : Any>(val interpreter: PythonInterpreter) : ConfigOutcome<T>
   class Failed<T : Any>(val error: InterpreterConfigurationError<T>) : ConfigOutcome<T>
 }
 
@@ -123,7 +128,7 @@ private suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdkImpl
                     is Result.Failure -> ConfigOutcome.Failed(InterpreterConfigurationResult.NotConfigured(sdkSetup.sdkResultMapper(set.error)))
                     is Result.Success -> {
                       PyProjectTomlCollector.sdkCreatedAutomatically(toolId)
-                      ConfigOutcome.Configured()
+                      ConfigOutcome.Configured(createSdk.result)
                     }
                   }
                 }
@@ -141,23 +146,18 @@ private suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdkImpl
 
       // Use the parent interpreter, but do not associate it with this module, as it belongs to the parent. The parent
       // registered it, so the call only points this module at it.
-      suspend fun inheritFromParent(): ConfigOutcome.Configured<T> {
-        parent.getInterpreter()?.let {
-          pyProject.setPythonInterpreter(it, waitForSnapshot = false).onFailure { error -> logger.warn("Cannot inherit the interpreter of ${parent.baseDir}: $error") }
-        }
-        return ConfigOutcome.Configured()
+      suspend fun inheritFromParent(interpreter: PythonInterpreter): ConfigOutcome.Configured<T> {
+        pyProject.setPythonInterpreter(interpreter, waitForSnapshot = false)
+          .onFailure { logger.warn("Cannot inherit the interpreter of ${parent.baseDir}: $it") }
+        return ConfigOutcome.Configured(interpreter)
       }
 
       // Deliberately not the shared cache: this runs under the SDK-configuration lock, inside a loop that configures the
       // project's modules one by one, so the parent's SDK may have been created moments ago by an earlier iteration —
       // the same TOCTOU the check in `autoConfigureSdk` above guards against.
       when (val parentSdkResult = parent.getModuleSdkState(fresh = true)) {
-        is ModuleSdkState.HasSdk -> {
-          // Parent already has SDK
-          pyProject.setPythonInterpreter(parentSdkResult.interpreter, waitForSnapshot = false)
-            .onFailure { logger.warn("Cannot use the configured interpreter of ${parent.baseDir}: $it") }
-          ConfigOutcome.Configured()
-        }
+        // Parent already has SDK
+        is ModuleSdkState.HasSdk -> inheritFromParent(parentSdkResult.interpreter)
         is ModuleSdkState.NoSdk -> {
           val parentSdkInfo = parentSdkResult.sdkConfigInstruction
           val error = if (parentSdkInfo == null) {
@@ -168,10 +168,8 @@ private suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdkImpl
             when (val parentSdkResult = parentSdkInfo.autoConfigureSdkImpl(controller)) {
               // Parent has problems with SDK, return it
               is ConfigOutcome.Failed -> parentSdkResult.error
-              is ConfigOutcome.Configured -> {
-                // Parent SDK was configured. The snapshot does not hold it yet, so it is read from the parent module.
-                return inheritFromParent()
-              }
+              // Parent SDK was configured in this call
+              is ConfigOutcome.Configured -> return inheritFromParent(parentSdkResult.interpreter)
             }
           }
           // Report parent SDK can't be configured
