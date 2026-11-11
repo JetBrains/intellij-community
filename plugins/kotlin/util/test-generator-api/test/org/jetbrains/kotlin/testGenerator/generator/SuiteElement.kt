@@ -221,32 +221,51 @@ class SuiteElement private constructor(
     }
 
     /**
-     * Renders this suite as a single top-level JUnit 5 Kotlin class (see `Junit5Suite`). Unlike [render], the generated
-     * class has no `@RunWith` and no nested classes; the `runTest` bridge lives on the hand-written abstract base.
+     * Renders this suite as a JUnit 5 Kotlin class (see `Junit5Suite`). Unlike [render], the generated class has no
+     * `@RunWith`; the `runTest` bridge lives on the hand-written abstract base.
+     *
+     * A suite with nested suites becomes an abstract class that holds one static nested class for each nested suite,
+     * so the test class names stay `Outer$Nested`, as in the JUnit 3 output. Each class with test methods gets
+     * `@TestApplication` and extends the abstract base.
      */
     fun Code.renderKotlin() {
         if (model.ignored) return
-        check(nestedSuites.isEmpty()) { "JUnit 5 generation does not support nested suites (class $className)" }
+        check(methods.isEmpty() || nestedSuites.isEmpty()) { "JUnit 5 generation does not support test methods next to nested suites (class $className)" }
 
         val junit5 = suite.junit5!!
         val testDataPath = testDataPath().toRelativeStringSystemIndependent(group.moduleRoot)
+        val isContainer = nestedSuites.isNotEmpty()
 
-        appendLine("@TestApplication")
-        junit5.classAnnotations.forEach { appendLine("@$it") }
-        appendLine("@TestRoot(\"${group.modulePath}\")")
+        if (!isContainer) {
+            appendLine("@TestApplication")
+            junit5.classAnnotations.forEach { appendLine("@$it") }
+        }
+        if (!isNested) {
+            appendLine("@TestRoot(\"${group.modulePath}\")")
+        }
         appendLine("@TestDataPath(\"\\\$PROJECT_ROOT/community/plugins/kotlin/${group.modulePath}\")")
         appendLine("@TestMetadata(\"$testDataPath\")")
 
         val header = buildString {
-            append("class ").append(className)
-            if (junit5.constructorParams.isNotEmpty()) {
-                append("(").append(junit5.constructorParams).append(")")
+            if (isContainer) {
+                append("abstract class ").append(className)
             }
-            append(" : ").append(suite.abstractTestClass.simpleName).append("(").append(junit5.superConstructorArgs).append(")")
+            else {
+                append("class ").append(className)
+                if (junit5.constructorParams.isNotEmpty()) {
+                    append("(").append(junit5.constructorParams).append(")")
+                }
+                append(" : ").append(suite.abstractTestClass.simpleName).append("(").append(junit5.superConstructorArgs).append(")")
+            }
         }
 
         appendBlock(header) {
-            appendList(methods.filterIsInstance<TestCaseMethod>(), separator = "\n\n") { with(it) { renderKotlin() } }
+            if (isContainer) {
+                appendList(nestedSuites, separator = "\n\n") { with(it) { renderKotlin() } }
+            }
+            else {
+                appendList(methods.filterIsInstance<TestCaseMethod>(), separator = "\n\n") { with(it) { renderKotlin() } }
+            }
         }
     }
 }
