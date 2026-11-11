@@ -9,10 +9,10 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.execGetStdout
+import com.intellij.python.community.execService.execute
 import com.intellij.python.community.execService.python.PyHelper
+import com.intellij.python.community.execService.python.ZeroCodeVersionStringTransformer
 import com.intellij.python.community.execService.python.executeHelper
-import com.intellij.python.community.execService.python.getVersionStringFromOutput
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PYTHON_VERSION_ARG
 import com.jetbrains.python.Result
@@ -48,8 +48,8 @@ object PythonInterpreterProbe {
 
   /** The facts of the environment that [binary] runs. [sdk] tells a target. */
   internal suspend fun read(binary: BinaryToExec, sdk: Sdk): PyResult<PythonEnvironmentFacts> {
-    val versionOutput = ExecService().execGetStdout(binary, Args(PYTHON_VERSION_ARG)).getOr { return it }
-    val version = getVersionStringFromOutput(versionOutput)
+    val version = ExecService().execute(binary, Args(PYTHON_VERSION_ARG), processOutputTransformer = ZeroCodeVersionStringTransformer)
+      .getOr { return it }
     if (sdk.sdkAdditionalData is PyTargetAwareAdditionalData) return PyResult.success(PythonEnvironmentFacts(version, null))
 
     val start = System.currentTimeMillis()
