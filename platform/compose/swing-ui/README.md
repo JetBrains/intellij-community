@@ -92,7 +92,7 @@ those first: a plain `JCheckBox` already looks like an IDE checkbox.
 
 What lives here is only what the library cannot express, an IntelliJ component with behavior of its
 own. Those wrappers are in `com.intellij.platform.compose.swing.components`, and their KDoc is the
-catalog. A component with no wrapper is hosted directly; see [raw-swing.md](docs/raw-swing.md).
+catalog. A wrapper that replaces a library component takes the name of that component, and its package mirrors the package of that component. For example, `ScrollPane` on a `JBScrollPane` is in `components.layout`. A component with no wrapper is hosted directly; see [raw-swing.md](docs/raw-swing.md).
 
 Forms are `FormPanel` rather than a component, laid out by the platform grid engine that `panel { }` uses.
 

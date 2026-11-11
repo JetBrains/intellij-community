@@ -1,6 +1,7 @@
 androidx/compose/runtime/Composer
 androidx/compose/runtime/MutableState
 kotlin/jvm/internal/DefaultConstructorMarker
+org/jetbrains/compose/swing/components/layout/ScrollState
 org/jetbrains/compose/swing/components/style/ButtonStyleScope
 org/jetbrains/compose/swing/foundation/layout/Alignment
 org/jetbrains/compose/swing/modifier/SwingModifier

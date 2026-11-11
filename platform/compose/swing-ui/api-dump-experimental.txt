@@ -127,6 +127,8 @@
 - s:values():com.intellij.platform.compose.swing.components.ThreeStateCheckBoxState[]
 *f:com.intellij.platform.compose.swing.components.TitledSeparatorKt
 - *sf:TitledSeparator(java.lang.String,org.jetbrains.compose.swing.modifier.SwingModifier,org.jetbrains.compose.swing.style.SwingStyle,androidx.compose.runtime.Composer,I,I):V
+*f:com.intellij.platform.compose.swing.components.layout.ScrollPaneKt
+- *sf:ScrollPane(org.jetbrains.compose.swing.modifier.SwingModifier,org.jetbrains.compose.swing.style.SwingStyle,org.jetbrains.compose.swing.components.layout.ScrollState,I,I,javax.swing.border.Border,Z,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
 *:com.intellij.platform.compose.swing.components.style.ActionLinkStyleScope
 - org.jetbrains.compose.swing.components.style.ButtonStyleScope
 *f:com.intellij.platform.compose.swing.components.style.ActionLinkStylesKt
