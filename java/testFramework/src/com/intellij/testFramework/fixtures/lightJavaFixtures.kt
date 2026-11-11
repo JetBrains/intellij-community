@@ -28,11 +28,11 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl
 import com.intellij.testFramework.CodeStyleSettingsTracker
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataProvider
+import com.intellij.testFramework.closeLegacyLightProject
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
 import com.intellij.testFramework.common.checkEditorsReleased
 import com.intellij.testFramework.common.runAllSuspend
@@ -358,13 +358,4 @@ internal fun lightTestDataPath(basePath: String): String {
   val communityPath = PlatformTestUtil.getCommunityPath().replace('\\', '/')
   val path = communityPath + basePath
   return if (Path.of(path).exists()) path else "$communityPath/../$basePath"
-}
-
-@Suppress("DEPRECATION")
-private suspend fun closeLegacyLightProject() {
-  // A JUnit 3 light test of the same JVM can leave its shared light project open.
-  // Close it, so that the JUnit 5 project leak check does not report it.
-  withContext(Dispatchers.EDT) {
-    LightPlatformTestCase.closeAndDeleteProject()
-  }
 }
