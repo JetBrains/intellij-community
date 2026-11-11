@@ -325,7 +325,7 @@ private fun center(bounds: Rectangle): Point = Point(bounds.x + bounds.width / 2
  *
  * [RelativePoint] returns `(0, 0)` for a component without a window, and a test component has no window.
  */
-private fun pointOn(component: Component, point: Point): RelativePoint = object : RelativePoint(component, point) {
+internal fun pointOn(component: Component, point: Point): RelativePoint = object : RelativePoint(component, point) {
   override fun getPoint(aTargetComponent: Component?): Point {
     return if (aTargetComponent === component) Point(point) else super.getPoint(aTargetComponent)
   }

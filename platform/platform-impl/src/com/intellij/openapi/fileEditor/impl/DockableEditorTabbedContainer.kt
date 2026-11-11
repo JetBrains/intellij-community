@@ -46,6 +46,7 @@ import org.intellij.lang.annotations.MagicConstant
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.Image
@@ -398,7 +399,8 @@ class DockableEditorTabbedContainer internal constructor(
     }
   }
 
-  private fun getDropAreaShape(): Shape? {
+  @VisibleForTesting
+  internal fun getDropAreaShape(): Shape? {
     val tabs = currentOver ?: return null
     val currentDropSide = currentDropSide
     if (currentDropSide == -1) {
