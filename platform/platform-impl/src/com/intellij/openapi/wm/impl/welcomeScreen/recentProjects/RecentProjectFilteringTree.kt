@@ -157,7 +157,7 @@ class RecentProjectFilteringTree internal constructor(
 
     treeComponent.putClientProperty(Control.Painter.KEY, Control.Painter.LEAF_WITHOUT_INDENT)
     treeComponent.putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
-    treeComponent.putClientProperty(JBScrollPane.UNITS_PER_WHEEL_NOTCH, 1)
+    treeComponent.putClientProperty(JBScrollPane.ONE_UNIT_PER_WHEEL_NOTCH, true)
     treeComponent.putClientProperty(
       RenderingUtil.CUSTOM_SELECTION_BACKGROUND,
       Supplier { ListUiUtil.WithTallRow.background(JList<Any>(), isSelected = true, hasFocus = true) }

@@ -96,12 +96,12 @@ public class JBScrollPane extends JScrollPane {
   public static final Key<Boolean> FORCE_HORIZONTAL_SCROLL = Key.create("FORCE_SHIFT_ON_SCROLL");
 
   /**
-   * The number of units that one notch of the mouse wheel scrolls.
+   * If {@code true}, one notch of the mouse wheel scrolls one unit, for example one row of a list or a tree.
    * Set it on the scroll pane or on its view.
    * By default, a notch scrolls by the number of units that the system sets, three on Windows by default.
    */
   @ApiStatus.Internal
-  public static final Key<Integer> UNITS_PER_WHEEL_NOTCH = Key.create("UNITS_PER_WHEEL_NOTCH");
+  public static final Key<Boolean> ONE_UNIT_PER_WHEEL_NOTCH = Key.create("ONE_UNIT_PER_WHEEL_NOTCH");
 
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
@@ -345,9 +345,8 @@ public class JBScrollPane extends JScrollPane {
           event = withShiftModifier(event);
         }
         MouseWheelEvent outerEvent = event;
-        Integer unitsPerNotch = getUnitsPerWheelNotch(pane);
-        if (unitsPerNotch != null && event.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL && event.getScrollAmount() != unitsPerNotch) {
-          event = withScrollAmount(event, unitsPerNotch);
+        if (isOneUnitPerWheelNotch(pane) && event.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL && event.getScrollAmount() != 1) {
+          event = withScrollAmount(event, 1);
         }
 
         JScrollBar bar = event.isShiftDown() ? pane.getHorizontalScrollBar() : pane.getVerticalScrollBar();
@@ -411,11 +410,10 @@ public class JBScrollPane extends JScrollPane {
                                      event.getX(), event.getY(), scrollAmount);
   }
 
-  static @Nullable Integer getUnitsPerWheelNotch(@NotNull JScrollPane pane) {
-    Integer unitsPerNotch = ClientProperty.get(pane, UNITS_PER_WHEEL_NOTCH);
-    if (unitsPerNotch != null) return unitsPerNotch;
+  static boolean isOneUnitPerWheelNotch(@NotNull JScrollPane pane) {
+    if (ClientProperty.isTrue(pane, ONE_UNIT_PER_WHEEL_NOTCH)) return true;
     JViewport viewport = pane.getViewport();
-    return viewport == null ? null : ClientProperty.get(viewport.getView(), UNITS_PER_WHEEL_NOTCH);
+    return viewport != null && ClientProperty.isTrue(viewport.getView(), ONE_UNIT_PER_WHEEL_NOTCH);
   }
 
   @Override

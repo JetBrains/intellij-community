@@ -238,7 +238,7 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
     if (result is ListPopupImpl) {
       ClientProperty.put(result.list, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
-      ClientProperty.put(result.list, JBScrollPane.UNITS_PER_WHEEL_NOTCH, 1)
+      ClientProperty.put(result.list, JBScrollPane.ONE_UNIT_PER_WHEEL_NOTCH, true)
 
       ApplicationManager.getApplication().messageBus.connect(result).subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
         override fun change() {

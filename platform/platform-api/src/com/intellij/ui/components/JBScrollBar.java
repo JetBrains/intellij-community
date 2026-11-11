@@ -335,12 +335,9 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
         // so we use 10 to restore amount of pixels to scroll.
         return 10 * rotation;
       }
-      if (getParent() instanceof JScrollPane pane) {
-        Integer unitsPerNotch = JBScrollPane.getUnitsPerWheelNotch(pane);
-        if (unitsPerNotch != null) {
-          int direction = rotation < 0 ? -1 : 1;
-          return getUnitIncrement(direction) * rotation * unitsPerNotch;
-        }
+      if (getParent() instanceof JScrollPane pane && JBScrollPane.isOneUnitPerWheelNotch(pane)) {
+        int direction = rotation < 0 ? -1 : 1;
+        return getUnitIncrement(direction) * rotation;
       }
       JViewport viewport = getViewport();
       Font font = viewport == null ? null : getViewFont(viewport);

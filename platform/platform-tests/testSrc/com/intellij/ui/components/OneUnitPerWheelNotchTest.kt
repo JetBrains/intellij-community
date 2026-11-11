@@ -18,7 +18,7 @@ import javax.swing.JScrollPane
 import kotlin.test.assertEquals
 
 @TestApplication
-class UnitsPerWheelNotchTest {
+class OneUnitPerWheelNotchTest {
   @Test
   fun `a wheel notch scrolls the system count of rows without the property`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
@@ -32,7 +32,7 @@ class UnitsPerWheelNotchTest {
   fun `a wheel notch scrolls one row with the property`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       val scrollPane = createScrollPane()
-      ClientProperty.put(scrollPane.viewport.view as JComponent, JBScrollPane.UNITS_PER_WHEEL_NOTCH, 1)
+      ClientProperty.put(scrollPane.viewport.view as JComponent, JBScrollPane.ONE_UNIT_PER_WHEEL_NOTCH, true)
       scrollPane.dispatchEvent(wheelNotch(scrollPane))
       assertEquals(ROW_HEIGHT, scrollPane.viewport.viewPosition.y)
     }
@@ -44,7 +44,7 @@ class UnitsPerWheelNotchTest {
     withContext(Dispatchers.EDT) {
       val scrollBar = DeltaScrollBar()
       val scrollPane = createScrollPane(scrollBar)
-      ClientProperty.put(scrollPane.viewport.view as JComponent, JBScrollPane.UNITS_PER_WHEEL_NOTCH, 1)
+      ClientProperty.put(scrollPane.viewport.view as JComponent, JBScrollPane.ONE_UNIT_PER_WHEEL_NOTCH, true)
       assertEquals(ROW_HEIGHT.toDouble(), scrollBar.delta(wheelNotch(scrollPane)))
     }
   }
