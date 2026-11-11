@@ -27,7 +27,10 @@ class DocumentLinksSafeState: SimplePersistentStateComponent<DocumentLinksSafeSt
   }
 
   fun isProtocolAllowed(protocol: String): Boolean {
-    return isHttpScheme(protocol) || isFileProtocol(protocol) || protocol.lowercase() in state.allowedProtocols
+    return isHttpScheme(protocol)
+           || isFileProtocol(protocol)
+           || isJetBrainsProtocol(protocol)
+           || protocol.lowercase() in state.allowedProtocols
   }
 
   fun allowProtocol(protocol: String) {
@@ -43,6 +46,10 @@ class DocumentLinksSafeState: SimplePersistentStateComponent<DocumentLinksSafeSt
 
     fun isFileProtocol(scheme: String): Boolean {
       return scheme.lowercase() == "file"
+    }
+
+    private fun isJetBrainsProtocol(scheme: String): Boolean {
+      return scheme.lowercase() == "jetbrains"
     }
 
     @JvmStatic

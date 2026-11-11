@@ -21,6 +21,7 @@ internal class MarkdownLocalLinkTest {
     assertFalse(MarkdownLinkOpenerImpl.isLocalFilePathLink("https://example.com/path#test", hasContainingFile = true))
     assertFalse(MarkdownLinkOpenerImpl.isLocalFilePathLink("//example.com/path", hasContainingFile = true))
     assertFalse(MarkdownLinkOpenerImpl.isLocalFilePathLink("mailto:user@example.com", hasContainingFile = true))
+    assertFalse(MarkdownLinkOpenerImpl.isLocalFilePathLink("jetbrains://idea/settings?name=Editor--Font", hasContainingFile = true))
   }
 
   @Test

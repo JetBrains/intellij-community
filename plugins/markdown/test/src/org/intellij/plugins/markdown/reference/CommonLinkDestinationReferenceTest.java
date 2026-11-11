@@ -91,6 +91,13 @@ public class CommonLinkDestinationReferenceTest extends BasePlatformTestCase {
     assertEquals("https://www.google.com", target.getName());
   }
 
+  public void testJetBrainsLinkText() {
+    PsiFile file = myFixture.configureByText("some.md", "[font](jetbrains://idea/settings?name=Editor--Font)");
+    var targets = GotoDeclarationAction.findAllTargetElements(getProject(), myFixture.getEditor(), file.getText().indexOf("font") + 1);
+    var target = assertInstanceOf(assertOneElement(targets), PsiNamedElement.class);
+    assertEquals("jetbrains://idea/settings?name=Editor--Font", target.getName());
+  }
+
   public void testImageInLinkText() {
     PsiFile file = myFixture.configureByText("some.md", "[![Logo](app/foo.txt)](https://www.google.com)");
     String fileText = file.getText();

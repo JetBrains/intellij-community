@@ -62,7 +62,11 @@ public final class GlobalPathReferenceProvider implements PathReferenceProvider 
   }
 
   public static boolean isWebReferenceUrl(String url) {
-    return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("about:") || url.startsWith("mailto:");
+    return url.startsWith("http://")
+           || url.startsWith("https://")
+           || url.startsWith("about:")
+           || url.startsWith("jetbrains://")
+           || url.startsWith("mailto:");
   }
 
   @Override
