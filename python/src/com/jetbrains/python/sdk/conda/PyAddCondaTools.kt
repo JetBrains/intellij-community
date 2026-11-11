@@ -35,7 +35,7 @@ import kotlin.io.path.Path
 internal val condaSupportedLanguages: List<LanguageLevel>
   get() = LanguageLevel.SUPPORTED_LEVELS
     .asReversed()
-    .filter { it < LanguageLevel.PYTHON314 }
+    .filter { it <= LanguageLevel.PYTHON315 }
 
 
 
