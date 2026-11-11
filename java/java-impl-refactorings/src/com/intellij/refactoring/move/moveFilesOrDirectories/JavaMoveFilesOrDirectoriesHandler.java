@@ -49,9 +49,7 @@ public final class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirector
   @Override
   public boolean canMove(PsiElement[] elements, PsiElement targetContainer, @Nullable PsiReference reference) {
     if (reference != null) return false;
-    if (elements.length > 1) {
-      elements = preprocess(elements);
-    }
+    elements = preprocess(elements);
     return super.canMove(elements, targetContainer, null);
   }
 
