@@ -317,8 +317,6 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       return parent != null && isParentOfStorageFiles(parent)
     }
 
-    // MAYBE IM: technically, .iml files can be out of project, but still define modules in it.
-    // This sound very unlikely, so it is not covered
     ProjectBulkFileListenerRegistry.getInstance(project).addListener(object : ProjectBulkFileListener {
       override fun afterVfsChange(events: List<VFileEvent>, project: Project) {
         //todo support move/rename

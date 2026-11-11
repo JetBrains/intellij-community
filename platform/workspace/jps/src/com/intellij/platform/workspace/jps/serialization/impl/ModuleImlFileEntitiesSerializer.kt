@@ -43,6 +43,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.ModuleImlFileEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.jps.entities.ModuleTypeId
 import com.intellij.platform.workspace.jps.entities.SdkDependency
@@ -266,6 +267,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
 
     if (moduleEntity != null) {
+      ModuleImlFileEntity(fileUrl, moduleEntity.entitySource) {
+        module = moduleEntity
+      }
       loadAdditionalContents(internalContent, virtualFileManager, moduleEntity, exceptionsCollector)
 
       runCatchingXmlIssues(exceptionsCollector) {

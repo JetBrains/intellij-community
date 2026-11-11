@@ -3291,6 +3291,45 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                              withDefault = false)),
                                   isAbstract = false)
     addMetadata(typeMetadata)
+    typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.jps.entities.ModuleImlFileEntity",
+                                  entityDataFqName = "com.intellij.platform.workspace.jps.entities.impl.ModuleImlFileEntityData",
+                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"),
+                                  properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "entitySource",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.EntitySource")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "url",
+                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                                                              typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                                                fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false,
+                                                                          isKey = false,
+                                                                          isOpen = false,
+                                                                          name = "module",
+                                                                          valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
+                                                                                                                        entityFqName = "com.intellij.platform.workspace.jps.entities.ModuleEntity",
+                                                                                                                        isChild = false,
+                                                                                                                        isNullable = false),
+                                                                          withDefault = false)),
+                                  extProperties = listOf(ExtPropertyMetadata(isComputable = false,
+                                                                             isOpen = false,
+                                                                             name = "moduleImlFile",
+                                                                             receiverFqn = "com.intellij.platform.workspace.jps.entities.ModuleEntity",
+                                                                             valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
+                                                                                                                           entityFqName = "com.intellij.platform.workspace.jps.entities.ModuleImlFileEntity",
+                                                                                                                           isChild = true,
+                                                                                                                           isNullable = true),
+                                                                             withDefault = false)),
+                                  isAbstract = false)
+    addMetadata(typeMetadata)
     typeMetadata = EntityMetadata(fqName = "com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity",
                                   entityDataFqName = "com.intellij.platform.workspace.jps.entities.impl.ModuleSettingsFacetBridgeEntityData",
                                   supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity",
@@ -3705,6 +3744,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkDependency", metadataHash = 2137223506)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkId", metadataHash = 206069110)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity", metadataHash = 1040067970)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleImlFileEntity", metadataHash = 1229378620)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity", metadataHash = -260448549)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity", metadataHash = -161397061)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkEntity", metadataHash = 324475262)

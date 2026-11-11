@@ -90,6 +90,11 @@ var ModuleEntityBuilder.groupPath: ModuleGroupPathEntityBuilder?
 
 @get:Internal
 @set:Internal
+var ModuleEntityBuilder.moduleImlFile: ModuleImlFileEntityBuilder?
+  by WorkspaceEntity.extensionBuilder(ModuleImlFileEntity::class.java)
+
+@get:Internal
+@set:Internal
 var ModuleEntityBuilder.testProperties: TestModulePropertiesEntityBuilder?
   by WorkspaceEntity.extensionBuilder(TestModulePropertiesEntity::class.java)
 

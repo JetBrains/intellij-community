@@ -4,9 +4,12 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleImlFileEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -15,7 +18,8 @@ import kotlinx.coroutines.delay
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import java.nio.file.Files
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
@@ -97,11 +101,60 @@ internal class JpsProjectModelSynchronizerTest {
     }
   }
 
+  @ParameterizedTest
+  @ValueSource(booleans = [false, true])
+  fun `module configuration is loaded when its file appears outside the project`(
+    createModuleDirectory: Boolean,
+    @TempDir testDir: Path,
+  ): Unit = timeoutRunBlocking(timeout = 30.seconds) {
+    val projectDir = testDir.resolve("project").createDirectories()
+    projectDir.resolve(".idea").createDirectories()
+    projectDir.resolve("main.iml").writeText(moduleIml(projectDir))
+    val modulesFile = projectDir.resolve(".idea/modules.xml")
+    modulesFile.writeText(modulesXml("main.iml"))
+    val moduleDir = testDir.resolve("modules")
+    if (createModuleDirectory) {
+      moduleDir.createDirectories()
+    }
+
+    ProjectUtil.openProject(projectDir, OpenProjectTask { createModule = false })!!.useProjectAsync { project ->
+      refreshProject(testDir)
+      val workspaceModel = project.workspaceModel as WorkspaceModelInternal
+      workspaceModel.awaitSynchronizationWithJpsModel()
+
+      modulesFile.writeText(modulesXml("main.iml", "../modules/module.iml"))
+      refreshProject(testDir)
+      workspaceModel.awaitSynchronizationWithJpsModel()
+
+      val module = workspaceModel.currentSnapshot.entities<ModuleEntity>().single { it.name == "module" }
+      assertThat(module.contentRoots).isEmpty()
+      assertThat(workspaceModel.currentSnapshot.entities<ModuleImlFileEntity>().map { it.url.presentableUrl }.toList())
+        .contains(moduleDir.resolve("module.iml").toString())
+
+      moduleDir.createDirectories()
+      val contentRoot = testDir.resolve("content").createDirectories()
+      moduleDir.resolve("module.iml").writeText(moduleIml(contentRoot, withLibrary = true))
+      refreshProject(testDir)
+      workspaceModel.awaitSynchronizationWithJpsModel()
+
+      val loadedModule = workspaceModel.currentSnapshot.entities<ModuleEntity>().single { it.name == "module" }
+      assertThat(loadedModule.contentRoots.map { Path.of(it.url.presentableUrl) }).containsExactly(contentRoot)
+      assertThat(workspaceModel.currentSnapshot.entities<LibraryEntity>().map { it.name }.toList()).contains("junit.jupiter")
+
+      modulesFile.writeText(modulesXml("main.iml"))
+      refreshProject(testDir)
+      workspaceModel.awaitSynchronizationWithJpsModel()
+
+      assertThat(workspaceModel.currentSnapshot.entities<ModuleImlFileEntity>().map { it.url.presentableUrl }.toList())
+        .containsExactly(projectDir.resolve("main.iml").toString())
+    }
+  }
+
   private companion object {
 
     private suspend fun refreshProject(projectDir: Path) {
-      val paths = Files.walk(projectDir).use { it.toList().toTypedArray() }
-      VfsUtil.markDirtyAndRefresh(false, false, false, *paths)
+      val root = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectDir)!!
+      VfsUtil.markDirtyAndRefresh(false, true, true, root)
       delay(1.seconds)
     }
 
