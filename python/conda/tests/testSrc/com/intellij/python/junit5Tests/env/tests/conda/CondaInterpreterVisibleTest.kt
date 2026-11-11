@@ -12,6 +12,7 @@ import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import org.assertj.core.api.Assertions.assertThat
@@ -36,7 +37,7 @@ class CondaInterpreterVisibleTest {
       val pyProject = pyProject.get()
       val env = createCondaEnv(condaEnv, path.resolve("conda_of_the_project"))
 
-      val created = env.createSdkFromThisEnv(pyProject.project, null, pyProject.baseDir).getOrThrow()
+      val created = env.createSdkFromThisEnv(ModuleAndProject(pyProject.residesOnModule), null, pyProject.baseDir).getOrThrow()
 
       try {
         pyProject.setPythonInterpreter(created).orThrow()
