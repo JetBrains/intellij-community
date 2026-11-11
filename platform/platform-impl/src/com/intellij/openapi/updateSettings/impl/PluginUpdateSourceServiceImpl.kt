@@ -67,7 +67,13 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
   }
 
   private fun PluginDescriptor?.hasImplicitMarketplaceUpdateSource(): Boolean =
-    this != null && isBundled && allowBundledUpdate() && PluginManagerCore.isDevelopedByJetBrains(this)
+    when {
+      this == null -> false
+      !PluginManagerCore.isDevelopedByJetBrains(this) -> false
+      isBundled && allowBundledUpdate() -> true
+      PluginManagerCore.isUpdatedBundledPlugin(this) -> true
+      else -> false
+    }
 
   override fun setPluginUpdateSourceId(pluginId: PluginId, updateSourceId: PluginUpdateSource) {
     if (!isFunctionalitySupported()) {
