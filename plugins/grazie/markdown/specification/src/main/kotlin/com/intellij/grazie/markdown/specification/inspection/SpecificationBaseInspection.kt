@@ -15,6 +15,7 @@ import com.intellij.grazie.markdown.specification.inspection.quickfix.Specificat
 import com.intellij.grazie.markdown.specification.utils.SpecificationUtils
 import com.intellij.grazie.markdown.specification.utils.SpecificationUtils.isAnalysisAvailable
 import com.intellij.grazie.markdown.specification.utils.SpecificationUtils.isSpecificationLikeFile
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.TextRange
 import com.intellij.profile.codeInspection.InspectionProfileManager
@@ -62,9 +63,13 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
-    if (!isOnTheFly || !isAnalysisAvailable() || InspectionProfileManager.hasTooLowSeverity(session, this)) {
+    if (!isOnTheFly || InspectionProfileManager.hasTooLowSeverity(session, this)) return PsiElementVisitor.EMPTY_VISITOR
+    val virtualFile = holder.file.viewProvider.virtualFile
+    if (!isSpecificationLikeFile(virtualFile)) {
+      thisLogger().debug { "${virtualFile.name} is not specification-like" }
       return PsiElementVisitor.EMPTY_VISITOR
     }
+    if (!isAnalysisAvailable()) return PsiElementVisitor.EMPTY_VISITOR
     val cloudApi = GrazieCloudConnector.api() ?: return PsiElementVisitor.EMPTY_VISITOR
     val api = JBCloudAPI(cloudApi.baseApiUrl, cloudApi.httpClient)
 
@@ -73,11 +78,6 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
         // Markdown file has two PSI trees: HTML and Markdown
         // We need to filter out HTML one otherwise it's going to be analyzed twice
         if (file !is MarkdownFile || MarkdownCodeFenceUtils.getCodeFence(file) != null) return
-
-        if (!isSpecificationLikeFile(file)) {
-          thisLogger().info("${file.name} is not specification-like")
-          return
-        }
 
         if (!GrazieConfig.get().specificationAnalysisEnabled) {
           SpecificationUtils.promoteAnalyzers(holder, file)

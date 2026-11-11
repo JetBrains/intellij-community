@@ -45,7 +45,7 @@ private const val AGREEMENT_KEY = "grazie.report.bug.yt.agreement.accepted"
 internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFixAction(), Iconable, DumbAware {
   private val naturalLanguage: Language = problem.rule.language
   private val programmingLanguages = problem.text.containingFile.viewProvider.languages
-  private val isCloud = seemsCloudConnected()
+  private val isCloud: Boolean get() = seemsCloudConnected()
   private val message = problem.shortMessage
   private val clazz: Class<*> = problem.javaClass
   private val isSpellingProblem = problem is TypoProblem
