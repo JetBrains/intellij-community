@@ -1153,6 +1153,7 @@ platform/testFramework/selfContainedProjects
 platform/testFramework/smoke
 platform/testFramework/structureView
 platform/testFramework/teamCity
+platform/testFramework/teamCity/bazelReporter
 platform/testIntegration
 platform/testIntegration-ui
 platform/testRunner

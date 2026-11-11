@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starter.junit5
 
-import com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter
-import com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter.BazelTestReportsWorkflow
-import com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter.TestNameFormat
-import com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter.createBazelTestLogMetadataWorkflow
-import com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter.createBazelTestOwnersMetadataWorkflow
-import com.intellij.platform.testFramework.teamCity.BazelJUnitXmlTestMetadataReporter.runBazelTestReportsWorkflow
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter
+import com.intellij.platform.testFramework.teamCity.bazelReporter.BazelJUnitXmlTestMetadataReporter
+import com.intellij.platform.testFramework.teamCity.bazelReporter.BazelJUnitXmlTestMetadataReporter.BazelTestReportsWorkflow
+import com.intellij.platform.testFramework.teamCity.bazelReporter.BazelJUnitXmlTestMetadataReporter.TestNameFormat
+import com.intellij.platform.testFramework.teamCity.bazelReporter.BazelJUnitXmlTestMetadataReporter.createBazelTestLogMetadataWorkflow
+import com.intellij.platform.testFramework.teamCity.bazelReporter.BazelJUnitXmlTestMetadataReporter.createBazelTestOwnersMetadataWorkflow
+import com.intellij.platform.testFramework.teamCity.bazelReporter.BazelJUnitXmlTestMetadataReporter.runBazelTestReportsWorkflow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test

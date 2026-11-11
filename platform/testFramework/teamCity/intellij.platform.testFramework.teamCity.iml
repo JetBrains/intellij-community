@@ -11,6 +11,5 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.libraries.teamcity.service.messages" />
-    <orderEntry type="module" module-name="intellij.codeowners.monorepo.resolver" />
   </component>
 </module>

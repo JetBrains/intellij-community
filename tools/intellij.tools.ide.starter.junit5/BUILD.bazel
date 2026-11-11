@@ -112,6 +112,7 @@ jvm_library(
         "//platform/util",
         "//platform/testFramework/junit5",
         "//platform/testFramework/teamCity",
+        "//platform/testFramework/teamCity/bazelReporter",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
         "//tools/intellij.tools.ide.starter/testSrc:tools-ide-starter-tests_test_lib",
     ],

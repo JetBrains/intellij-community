@@ -49,6 +49,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.teamCity" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.teamCity.bazelReporter" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.teamcity.service.messages" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.tests" scope="TEST" />
   </component>

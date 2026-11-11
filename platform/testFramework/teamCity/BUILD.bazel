@@ -22,7 +22,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
-        "//.ownership/monorepo-resolver:codeowners-monorepo-resolver",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.teamCity` end
