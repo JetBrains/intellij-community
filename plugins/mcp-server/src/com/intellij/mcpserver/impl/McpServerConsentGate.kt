@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o.
 package com.intellij.mcpserver.impl
 
-import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.mcpserver.McpServerConsentUi
 import com.intellij.mcpserver.settings.McpServerConsent
@@ -10,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.application
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -33,7 +31,8 @@ internal class McpServerConsentGate(
   private fun isInteractiveHost(): Boolean {
     interactiveHostOverride?.let { return it }
     val application = ApplicationManager.getApplication()
-    return !application.isUnitTestMode && !application.isHeadlessEnvironment
+    if (application.isUnitTestMode) return false
+    return !application.isHeadlessEnvironment || consentUi?.asksOnHeadlessHost == true
   }
 
   suspend fun awaitConsent(): Boolean {
@@ -53,8 +52,11 @@ internal class McpServerConsentGate(
         return@withLock false
       }
 
-      val granted = consentUi.askConsent(ProjectUtil.getActiveProject())
-      applyDecision(settings, granted)
+      val granted = consentUi.askConsent(ProjectUtil.getActiveProject()) ?: run {
+        logger.warn("Nobody answered the MCP server consent request, the MCP server call is rejected")
+        return@withLock false
+      }
+      applyDecision(settings, granted, consentUi)
       granted
     }
   }
@@ -65,7 +67,7 @@ internal class McpServerConsentGate(
     McpServerConsent.NOT_ASKED -> null
   }
 
-  private suspend fun applyDecision(settings: McpServerSettings, granted: Boolean) {
+  private suspend fun applyDecision(settings: McpServerSettings, granted: Boolean, consentUi: McpServerConsentUi) {
     settings.consent = if (granted) McpServerConsent.GRANTED else McpServerConsent.DENIED
     settings.enabledByFreshInstallPolicy = false
     if (!granted) {
@@ -74,7 +76,7 @@ internal class McpServerConsentGate(
     }
     if (ApplicationManager.getApplication().isUnitTestMode) return
     try {
-      saveSettings(application, forceSavingAllSettings = true)
+      consentUi.saveDecision()
     }
     catch (t: Throwable) {
       if (t is CancellationException) {

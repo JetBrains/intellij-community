@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.frontend.util
 
+import com.intellij.configurationStore.saveSettings
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpServerConsentUi
 import com.intellij.mcpserver.settings.McpServerConsent
@@ -9,6 +10,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.util.application
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -37,5 +39,9 @@ fun getConsentDialog(project: Project?): Boolean {
 internal class McpServerConsentUiImpl : McpServerConsentUi {
   override suspend fun askConsent(project: Project?): Boolean = withContext(Dispatchers.EDT) {
     getConsentDialog(project)
+  }
+
+  override suspend fun saveDecision() {
+    saveSettings(application, forceSavingAllSettings = true)
   }
 }

@@ -80,6 +80,16 @@ internal class McpServerConsentGateTest {
   }
 
   @Test
+  fun `a call is refused when nobody answers`(): Unit = timeoutRunBlocking {
+    val ui = CountingConsentUi(answer = null)
+    prepare(McpServerConsent.NOT_ASKED)
+
+    assertThat(newGate(ui).awaitConsent()).isFalse()
+    // The user decided nothing, so a later call must ask again.
+    assertThat(settings.consent).isEqualTo(McpServerConsent.NOT_ASKED)
+  }
+
+  @Test
   fun `concurrent first calls share one dialog`(): Unit = timeoutRunBlocking {
     val entered = CompletableDeferred<Unit>()
     val released = CompletableDeferred<Unit>()
@@ -109,17 +119,19 @@ internal class McpServerConsentGateTest {
   private fun newGate(consentUi: McpServerConsentUi?) = McpServerConsentGate(consentUi).apply { interactiveHostOverride = true }
 
   private class CountingConsentUi(
-    private val answer: Boolean,
+    private val answer: Boolean?,
     private val entered: CompletableDeferred<Unit>? = null,
     private val released: CompletableDeferred<Unit>? = null,
   ) : McpServerConsentUi {
     val callCount: AtomicInteger = AtomicInteger()
 
-    override suspend fun askConsent(project: Project?): Boolean {
+    override suspend fun askConsent(project: Project?): Boolean? {
       callCount.incrementAndGet()
       entered?.complete(Unit)
       released?.await()
       return answer
     }
+
+    override suspend fun saveDecision() {}
   }
 }

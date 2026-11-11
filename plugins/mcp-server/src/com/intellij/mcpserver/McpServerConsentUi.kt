@@ -7,5 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface McpServerConsentUi {
-  suspend fun askConsent(project: Project?): Boolean
+  val asksOnHeadlessHost: Boolean get() = false
+  suspend fun askConsent(project: Project?): Boolean?
+  suspend fun saveDecision()
 }

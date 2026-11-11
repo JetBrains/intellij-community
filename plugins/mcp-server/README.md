@@ -1182,7 +1182,11 @@ server, the same per-request hook that carries the token check, so it covers `/s
 it for a flow the user already began.
 
 The dialog itself lives on the frontend, so the frontend registers `McpServerConsentUi` as an application service. A host with no frontend
-has no service, and the gate then refuses the call without recording a decision.
+has no service, and the gate then refuses the call without recording a decision. The same happens when `askConsent` returns `null`,
+because nobody answered.
+
+The gate skips the consent of a headless host, unless its `McpServerConsentUi` sets `asksOnHeadlessHost`.
+The gate saves the answer through `McpServerConsentUi.saveDecision()`: the frontend saves the application settings.
 
 `enabledByFreshInstallPolicy` records that a policy started the server, rather than the user. `BaseState` writes only a value that differs from
 its declared default, and `NOT_ASKED` is the default of `consent`, so `consent` never reaches `mcpServer.xml` while the answer is missing.
