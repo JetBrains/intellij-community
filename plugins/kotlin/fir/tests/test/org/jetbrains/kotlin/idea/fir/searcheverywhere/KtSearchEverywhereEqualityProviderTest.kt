@@ -178,4 +178,25 @@ abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixt
             assertEquals(DoNothing, action2)
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners::class)
+    class KotlinClassesWithSameFqName : KtSearchEverywhereEqualityProviderTest() {
+        fun `test expect class and actual class shouldnt be deduplicated`() {
+            val expectClass = (myFixture.addFileToProject("common/Foo.kt", "package one\nexpect class Foo") as KtFile)
+                .declarations.single() as KtClass
+            val actualClass = (myFixture.addFileToProject("jvm/Foo.kt", "package one\nactual class Foo") as KtFile)
+                .declarations.single() as KtClass
+
+            val action1 = KtSearchEverywhereEqualityProvider().compareItemsCollection(
+                newItem = SearchEverywhereFoundElementInfo(expectClass, 0, null),
+                alreadyFoundItems = listOf(SearchEverywhereFoundElementInfo(actualClass, 0, null))
+            )
+            val action2 = KtSearchEverywhereEqualityProvider().compareItemsCollection(
+                newItem = SearchEverywhereFoundElementInfo(actualClass, 0, null),
+                alreadyFoundItems = listOf(SearchEverywhereFoundElementInfo(expectClass, 0, null))
+            )
+            assertEquals(DoNothing, action1)
+            assertEquals(DoNothing, action2)
+        }
+    }
 }

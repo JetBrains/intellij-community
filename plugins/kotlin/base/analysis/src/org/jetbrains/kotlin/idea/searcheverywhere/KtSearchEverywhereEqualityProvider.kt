@@ -14,9 +14,13 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
 /**
  * @see org.jetbrains.kotlin.idea.searcheverywhere.NativePsiAndKtLightElementEqualityProviderTest
@@ -70,7 +74,7 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
                     // TODO: try to get more diagnostics for KTIJ-33858
                     new.language.isKindOf(KotlinLanguage.INSTANCE) &&
                             old.language.isKindOf(KotlinLanguage.INSTANCE) &&
-                            new.manager.areElementsEquivalent(new, old)
+                            new.unwrapped == old.unwrapped
                 },
                 shouldBeReplaced = { new, old -> new is KtElement && old !is KtElement },
             ) ?: reduce(
