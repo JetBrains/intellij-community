@@ -3,9 +3,12 @@ package com.intellij.build
 
 import com.intellij.build.BuildTreeConsoleViewTest.Companion.assertTitleElements
 import com.intellij.build.events.BuildEventPresentationData
+import com.intellij.build.events.FinishBuildEvent
+import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.MessageEvent.Kind.ERROR
 import com.intellij.build.events.MessageEvent.Kind.INFO
 import com.intellij.build.events.MessageEvent.Kind.WARNING
+import com.intellij.build.events.StartBuildEvent
 import com.intellij.build.events.impl.SuccessResultImpl
 import com.intellij.build.progress.BuildProgressDescriptorImpl
 import com.intellij.execution.Platform
@@ -15,6 +18,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import com.intellij.platform.testFramework.assertion.assertConsoleText
@@ -319,6 +323,32 @@ class BuildViewTest(val singleConsole: Boolean) {
             assertThat((consoleComponent as JButton).text).isEqualTo("test button")
           }
         }
+      }
+    }
+  }
+
+  @Test
+  fun `test events arriving before and during start build event are not lost`(@TestDisposable testDisposable: Disposable) {
+    val buildId = Any()
+    val buildDescriptor = DefaultBuildDescriptor(buildId, "A build", "", System.currentTimeMillis())
+    val viewManager = project.service<BuildViewManager>()
+    val view = BuildView(project, buildDescriptor, null, viewManager)
+    Disposer.register(testDisposable, view)
+
+    val preStartMessage = MessageEvent.builder("Before start", INFO).withParentId(buildId).build()
+    val postStartMessage = MessageEvent.builder("After start", INFO).withParentId(buildId).build()
+    val startBuildEvent = StartBuildEvent.builder("started", buildDescriptor).withBuildViewSettings(settingsProvider).build()
+    val finishBuildEvent = FinishBuildEvent.builder(buildId, "finished", SuccessResultImpl()).build()
+
+    view.onEvent(buildId, preStartMessage)
+    view.onEvent(buildId, startBuildEvent)
+    view.onEvent(buildId, postStartMessage)
+    view.onEvent(buildId, finishBuildEvent)
+
+    assertBuildViewTree(view) {
+      assertNode("finished") {
+        assertNode("Before start")
+        assertNode("After start")
       }
     }
   }
