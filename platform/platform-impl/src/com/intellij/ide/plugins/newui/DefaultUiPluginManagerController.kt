@@ -716,7 +716,9 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override suspend fun performUninstall(sessionId: String, pluginId: PluginId): Boolean {
     val uninstalledPlugin = uninstallPlugin(pluginId)
-    persistPluginUpdateSource(sessionId, pluginId, null)
+    if (!isBundledUpdate(uninstalledPlugin)) {
+      persistPluginUpdateSource(sessionId, pluginId, null)
+    }
     val session = findSession(sessionId) ?: return false
 
     session.uninstalledPlugins.add(pluginId)
