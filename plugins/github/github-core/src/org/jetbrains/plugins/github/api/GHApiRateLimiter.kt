@@ -3,11 +3,20 @@ package org.jetbrains.plugins.github.api
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.text.DateFormatUtil
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException
+import org.jetbrains.plugins.github.i18n.GithubBundle
+import java.io.InputStream
 import java.net.URI
+import java.net.http.HttpResponse
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 internal const val MAX_CONCURRENT_REQUESTS_REGISTRY_KEY = "github.api.max.concurrent.requests"
 
@@ -20,13 +29,24 @@ internal const val MAX_CONCURRENT_REQUESTS_REGISTRY_KEY = "github.api.max.concur
 internal const val DEFAULT_MAX_CONCURRENT_REQUESTS = 50
 
 /**
+ * The time that the requests of a budget fail without a call to the server
+ * after a primary rate limit error that doesn't report the reset time.
+ */
+private val PRIMARY_RATE_LIMIT_COOLDOWN: Duration = 1.minutes
+
+/**
  * Limits GitHub API requests to one server.
  *
  * All executors share the limits, so they hold no matter how many executors the plugin creates.
  * The host and the port of the request URL identify the server.
  *
- * One limit applies:
- * * the number of concurrent requests, which the registry key [MAX_CONCURRENT_REQUESTS_REGISTRY_KEY] sets.
+ * Two limits apply:
+ * * the number of concurrent requests, which the registry key [MAX_CONCURRENT_REQUESTS_REGISTRY_KEY] sets;
+ * * the primary rate limit of GitHub, separately for GraphQL and core REST requests.
+ *   When a response reports that no requests remain, the next requests of the same kind fail without a call to the server until
+ *   the limit resets.
+ *   A rate limit error without the reset time blocks them for [PRIMARY_RATE_LIMIT_COOLDOWN].
+ *   See https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#about-primary-rate-limits.
  */
 @Service
 internal class GHApiRateLimiter {
@@ -39,12 +59,38 @@ internal class GHApiRateLimiter {
   private val servers = ConcurrentHashMap<String, ServerState>()
 
   /**
-   * Runs the [action] that sends the [request].
+   * Sends the [request] and then parses the response.
+   *
+   * [send] sends the request and returns the response before the body is read.
+   * The limiter records the budget from the rate limit headers of the response, also for a response with an error.
+   * Then [parse] checks the status and reads the body.
+   * The limiter records the rate limit errors that [parse] throws.
    */
-  suspend fun <T> execute(request: GithubApiRequest<T>, action: suspend () -> T): T =
-    serverState(request.url).semaphore(maxConcurrentRequests).withPermit {
-      action()
+  @Throws(GithubRateLimitExceededException::class)
+  suspend fun <T> execute(
+    request: GithubApiRequest<T>,
+    send: suspend () -> HttpResponse<out InputStream>,
+    parse: suspend (response: HttpResponse<out InputStream>, headers: GHRateLimitHeaders) -> T,
+  ): T {
+    val server = serverState(request.url)
+    // a request without a budget fails at once, before it waits for a permit
+    server.checkBudget(request)
+    return server.semaphore(maxConcurrentRequests).withPermit {
+      // the check runs again, because a response may exhaust the budget during the wait for the permit
+      server.checkBudget(request)
+      val response = send()
+      val headers = GHRateLimitHeaders.parse(response)
+      server.recordBudget(request, headers)
+      try {
+        parse(response, headers)
+      }
+      catch (e: GithubRateLimitExceededException) {
+        // a 403 or a 429
+        server.recordPrimaryRateLimitError(request, headers)
+        throw e
+      }
     }
+  }
 
   private fun serverState(url: String): ServerState = servers.computeIfAbsent(serverKey(url)) { ServerState(maxConcurrentRequests) }
 
@@ -67,6 +113,26 @@ internal class GHApiRateLimiter {
   }
 }
 
+private fun GithubApiRequest<*>.budget(): Budget? = when (this) {
+  is GithubApiRequest.Post.GQLQuery -> Budget.GRAPHQL
+  is GithubApiRequest.Get.JsonSearchPage<*> -> null
+  else -> Budget.REST
+}
+
+/**
+ * The budget that the response [headers] of the [request] report.
+ * Only the `core` and the `graphql` resources count, other resources (such as `search`) have budgets of their own.
+ * When the headers don't name the resource, the kind of the request selects the budget.
+ *
+ * @return the budget, or `null` if no budget counts the request
+ */
+private fun budgetOf(request: GithubApiRequest<*>, headers: GHRateLimitHeaders): Budget? = when (headers.resource) {
+  null -> request.budget()
+  "core" -> Budget.REST
+  "graphql" -> Budget.GRAPHQL
+  else -> null
+}
+
 private class ServerState(maxConcurrentRequests: Int) {
   private val permits = AtomicReference(Permits(maxConcurrentRequests))
 
@@ -77,7 +143,61 @@ private class ServerState(maxConcurrentRequests: Int) {
    */
   fun semaphore(maxConcurrentRequests: Int): Semaphore =
     permits.updateAndGet { if (it.count == maxConcurrentRequests) it else Permits(maxConcurrentRequests) }.semaphore
+
+  /**
+   * The time until which each budget has no requests left.
+   */
+  private val exhaustedUntil = ConcurrentHashMap<Budget, Instant>()
+
+  /**
+   * Records the budget of the [request] as exhausted until the reset when the response [headers] report no remaining requests.
+   * [budgetOf] selects the budget.
+   *
+   * A response with remaining requests doesn't unblock the budget.
+   * Such a response arrives late from the window that the block covers, because no new requests go out during the block.
+   */
+  fun recordBudget(request: GithubApiRequest<*>, headers: GHRateLimitHeaders) {
+    val budget = budgetOf(request, headers) ?: return
+    if (headers.remaining != 0) return
+    val resetAt = headers.resetAt ?: return
+    exhaustedUntil.merge(budget, resetAt, ::maxOf)
+  }
+
+  /**
+   * Records the primary rate limit error of the [request] when the response [headers] don't report the full budget,
+   * as on some GitHub Enterprise versions.
+   * Then the budget counts as exhausted until the reset that is known, or for [PRIMARY_RATE_LIMIT_COOLDOWN].
+   * An error about another resource (such as `search`) doesn't block requests.
+   */
+  fun recordPrimaryRateLimitError(request: GithubApiRequest<*>, headers: GHRateLimitHeaders) {
+    val budget = budgetOf(request, headers) ?: return
+    // recordBudget has already recorded the budget
+    if (headers.remaining == 0 && headers.resetAt != null) return
+    markExhausted(budget, headers.resetAt)
+  }
+
+  /**
+   * Marks the [budget] as exhausted until [resetAt], or until the end of the current block, or for [PRIMARY_RATE_LIMIT_COOLDOWN].
+   */
+  private fun markExhausted(budget: Budget, resetAt: Instant?) {
+    val now = Clock.System.now()
+    exhaustedUntil.compute(budget) { _, current ->
+      resetAt?.takeIf { it > now }
+      ?: current?.takeIf { it > now }
+      ?: (now + PRIMARY_RATE_LIMIT_COOLDOWN)
+    }
+  }
+
+  fun checkBudget(request: GithubApiRequest<*>) {
+    val budget = request.budget() ?: return
+    val until = exhaustedUntil[budget] ?: return
+    if (Clock.System.now() >= until) return
+    val resetTime = DateFormatUtil.formatTime(until.toEpochMilliseconds())
+    throw GithubRateLimitExceededException(GithubBundle.message("rate.limit.exceeded.until", resetTime), until)
+  }
 }
+
+private enum class Budget { GRAPHQL, REST }
 
 /**
  * A semaphore with the [count] of its permits.

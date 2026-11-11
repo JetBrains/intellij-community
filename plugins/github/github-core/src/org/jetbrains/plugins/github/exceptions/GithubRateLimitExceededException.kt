@@ -16,8 +16,15 @@
 package org.jetbrains.plugins.github.exceptions
 
 import java.io.IOException
+import kotlin.time.Instant
 
 /**
  * @author Aleksey Pivovarov
  */
-class GithubRateLimitExceededException(message: String) : IOException(message)
+class GithubRateLimitExceededException @JvmOverloads constructor(
+  message: String,
+  /**
+   * The time when the rate limit resets, or `null` if the server didn't report it.
+   */
+  val resetAt: Instant? = null,
+) : IOException(message)
