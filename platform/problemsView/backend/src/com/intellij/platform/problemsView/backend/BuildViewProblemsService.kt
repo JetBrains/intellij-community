@@ -36,12 +36,15 @@ class BuildViewProblemsListenerRegistrar : BuildProgressListenerRegistrar {
 @Service(Service.Level.PROJECT)
 class BuildViewProblemsService(override val project: Project) : ProblemsProvider {
   override fun dispose() {
-    buildIdToFileProblems.clear()
-    workingDirToBuildId.clear()
+    synchronized(lock) {
+      buildIdToFileProblems.clear()
+      workingDirToBuildId.clear()
+    }
   }
 
+  private val lock = Any()
   private val workingDirToBuildId: MutableMap<String, Any> = mutableMapOf()
-  private val buildIdToFileProblems: MutableMap<Any, MutableSet<FileBuildProblem>> = mutableMapOf()
+  private val buildIdToFileProblems: MutableMap<Any, MutableSet<FileProblem>> = mutableMapOf()
 
   fun listenToBuildView(buildProgressObservable: BuildProgressObservable) {
     val collector = project.service<ProblemsCollector>()
@@ -51,26 +54,44 @@ class BuildViewProblemsService(override val project: Project) : ProblemsProvider
         val virtualFile = event.filePosition.file?.let { VirtualFileManager.getInstance().findFileByNioPath(it.toPath()) }
                           ?: return@BuildProgressListener
         val problem = FileBuildProblem(event, virtualFile, this)
-
-        val problems = buildIdToFileProblems.computeIfAbsent(buildId) { HashSet() }
-        if (problems.add(problem)) {
-          collector.problemAppeared(problem)
-        }
-        else {
-          collector.problemUpdated(problem)
-        }
+        onFileBuildProblem(buildId, problem, collector)
       }
 
       if (event is StartBuildEvent) {
-        workingDirToBuildId
-          .put(event.buildDescriptor.workingDir, buildId)
-          ?.let { oldBuildId ->
-            buildIdToFileProblems[oldBuildId]?.forEach { collector.problemDisappeared(it) }
-            buildIdToFileProblems.remove(oldBuildId)
-          }
+        onBuildStarted(event.buildDescriptor.workingDir, buildId, collector)
       }
 
     }, this)
+  }
+
+  internal fun onFileBuildProblem(
+    buildId: Any,
+    problem: FileProblem,
+    collector: ProblemsCollector = project.service<ProblemsCollector>(),
+  ) {
+    synchronized(lock) {
+      val problems = buildIdToFileProblems.computeIfAbsent(buildId) { HashSet() }
+      if (problems.add(problem)) {
+        collector.problemAppeared(problem)
+      }
+      else {
+        collector.problemUpdated(problem)
+      }
+    }
+  }
+
+  internal fun onBuildStarted(
+    workingDir: String,
+    buildId: Any,
+    collector: ProblemsCollector = project.service<ProblemsCollector>(),
+  ) {
+    synchronized(lock) {
+      workingDirToBuildId
+        .put(workingDir, buildId)
+        ?.let { oldBuildId ->
+          buildIdToFileProblems.remove(oldBuildId)?.forEach { collector.problemDisappeared(it) }
+        }
+    }
   }
 
   class BuildProblemsProvider(override val project: Project) : ProblemsProvider
