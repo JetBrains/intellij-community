@@ -1,11 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.compose.swing.modifier
+package com.intellij.platform.compose.swing.components
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.intellij.platform.compose.swing.components.ActionLink
-import org.jetbrains.compose.swing.modifier.SwingModifier
+import com.intellij.platform.compose.swing.components.style.ActionLinkStyleScope
+import com.intellij.platform.compose.swing.components.style.actionLinkIcon
+import com.intellij.platform.compose.swing.components.style.autoHideOnDisable
+import com.intellij.platform.compose.swing.components.style.contextHelpIcon
+import com.intellij.platform.compose.swing.components.style.dropDownLinkIcon
+import com.intellij.platform.compose.swing.components.style.externalLinkIcon
+import com.intellij.platform.compose.swing.components.style.linkIcon
+import com.intellij.platform.compose.swing.components.style.visited
+import org.jetbrains.compose.swing.style.SwingStyle
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.jetbrains.compose.swing.test.screenshot.assertImageMatches
 import org.jetbrains.compose.swing.test.screenshot.captureToImage
@@ -16,22 +23,25 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import com.intellij.ui.components.ActionLink as IdeaActionLink
 
-class ActionLinkModifiersTest {
+class ActionLinkStyleTest {
 
   @Test
-  fun actionLinkCustomPropertiesMatchManualComponents() = runComposeSwingTest {
+  fun actionLinkStylePropertiesMatchManualComponents() = runComposeSwingTest {
     var visited by mutableStateOf(false)
     var autoHideOnDisable by mutableStateOf(true)
-    var showModifiers by mutableStateOf(true)
+    var styled by mutableStateOf(true)
 
     setContent {
-      val modifier = if (showModifiers) {
-        SwingModifier.visited(visited).autoHideOnDisable(autoHideOnDisable)
+      val style = if (styled) {
+        SwingStyle<ActionLinkStyleScope> {
+          visited(visited)
+          autoHideOnDisable(autoHideOnDisable)
+        }
       }
       else {
-        SwingModifier
+        SwingStyle
       }
-      ActionLink(text = "Action link", onClick = {}, modifier = modifier)
+      ActionLink(text = "Action link", onClick = {}, style = style)
     }
 
     onNodeWithText("Action link").apply {
@@ -55,7 +65,7 @@ class ActionLinkModifiersTest {
       assertImageMatches(expected.captureToImage())
     }
 
-    showModifiers = false
+    styled = false
     awaitIdle()
 
     onNodeWithText("Action link").apply {
@@ -64,23 +74,24 @@ class ActionLinkModifiersTest {
   }
 
   @Test
-  fun actionLinkIconModifiersMatchManualComponents() = runComposeSwingTest {
+  fun actionLinkIconSettersMatchManualComponents() = runComposeSwingTest {
     val customIcon = ImageIcon()
     val cases = listOf(
-      IconCase(SwingModifier.linkIcon()) { setLinkIcon() },
-      IconCase(SwingModifier.contextHelpIcon()) { setContextHelpIcon() },
-      IconCase(SwingModifier.externalLinkIcon()) { setExternalLinkIcon() },
-      IconCase(SwingModifier.dropDownLinkIcon()) { setDropDownLinkIcon() },
-      IconCase(SwingModifier.actionLinkIcon(customIcon, atRight = false)) { setIcon(customIcon, false) },
+      IconCase({ linkIcon() }) { setLinkIcon() },
+      IconCase({ contextHelpIcon() }) { setContextHelpIcon() },
+      IconCase({ externalLinkIcon() }) { setExternalLinkIcon() },
+      IconCase({ dropDownLinkIcon() }) { setDropDownLinkIcon() },
+      IconCase({ actionLinkIcon(customIcon) }) { setIcon(customIcon, false) },
+      IconCase({ actionLinkIcon(customIcon, atRight = true) }) { setIcon(customIcon, true) },
     )
-    var modifier by mutableStateOf<SwingModifier>(SwingModifier)
+    var style by mutableStateOf<SwingStyle<ActionLinkStyleScope>>(SwingStyle)
 
     setContent {
-      ActionLink(text = "Action link", onClick = {}, modifier = modifier)
+      ActionLink(text = "Action link", onClick = {}, style = style)
     }
 
     cases.forEach { case ->
-      modifier = case.modifier
+      style = case.style
       awaitIdle()
 
       val expected = IdeaActionLink("Action link").apply(case.configure)
@@ -92,7 +103,7 @@ class ActionLinkModifiersTest {
       }
     }
 
-    modifier = SwingModifier
+    style = SwingStyle
     awaitIdle()
 
     onNodeWithText("Action link").apply {
@@ -111,7 +122,7 @@ class ActionLinkModifiersTest {
   }
 
   private class IconCase(
-    val modifier: SwingModifier,
+    val style: SwingStyle<ActionLinkStyleScope>,
     val configure: IdeaActionLink.() -> Unit,
   )
 }

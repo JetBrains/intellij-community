@@ -1,3 +1,7 @@
 androidx/compose/runtime/Composer
 androidx/compose/runtime/MutableState
+org/jetbrains/compose/swing/components/style/ButtonStyleScope
 org/jetbrains/compose/swing/modifier/SwingModifier
+org/jetbrains/compose/swing/style/NestedStyleKey
+org/jetbrains/compose/swing/style/SwingComponentStyleScope
+org/jetbrains/compose/swing/style/SwingStyle

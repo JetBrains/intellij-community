@@ -3,10 +3,14 @@ package com.intellij.platform.compose.swing.components
 
 import androidx.compose.runtime.Composable
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.compose.swing.components.style.TitledSeparatorKind
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.node.SwingNode
 import com.intellij.ui.TitledSeparator as IdeaTitledSeparator
+import org.jetbrains.compose.swing.style.SwingComponentStyleScope
+import org.jetbrains.compose.swing.style.SwingStyle
+import org.jetbrains.compose.swing.style.styleable
 
 /**
  * A separator carrying a group [text] title, with the space above and below it that a titled separator
@@ -23,10 +27,11 @@ import com.intellij.ui.TitledSeparator as IdeaTitledSeparator
 public fun TitledSeparator(
   text: @NlsContexts.Separator String,
   modifier: SwingModifier = SwingModifier,
+  style: SwingStyle<SwingComponentStyleScope> = SwingStyle,
 ) {
   SwingNode(
     factory = { IdeaTitledSeparator() },
-    modifier = modifier,
+    modifier = modifier.styleable(TitledSeparatorKind, style),
     update = {
       set(text) { this.text = it }
     },

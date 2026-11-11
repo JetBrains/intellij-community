@@ -141,13 +141,13 @@ override fun apply() {
 }
 ```
 
-To mark the offending field as well, use the outline modifier:
+To mark the offending field as well, set its outline in the style:
 
 ```kotlin
 TextField(
   value = host,
   onValueChange = { host = it },
-  modifier = SwingModifier.errorOutline(host.isBlank()),
+  style = { errorOutline(host.isBlank()) },
 )
 ```
 
@@ -237,7 +237,7 @@ Two consequences decide whether a settings page should be split this way at all:
 | `label(text)` | `Label` | |
 | `text(text, maxLineLength, action)` | `Label` for plain text | `Comment` is dimmed. `Comment` has no `action` parameter: it opens `<a href>` links in a browser. **Gap** for a custom link action; use `ActionLink` or `SwingNode` |
 | `comment(comment, maxLineLength, action)` | `Comment` | By default it wraps to the width its row has left. Pass `maxLineLength` for a fixed width. **Gap** for `action`, as in `text` |
-| `link(text, action)` | `ActionLink` | |
+| `link(text, action)` | `ActionLink` | The link icon and the visited state are style setters: `style = { externalLinkIcon() }` |
 | `browserLink(text, url)` | `BrowserLink` | |
 | `dropDownLink(item, items)` | `DropDownLink` | |
 | `icon(icon)` | `Label(style = { icon(...) })` | `AllIcons` directly, with no icon-key indirection |
@@ -275,12 +275,12 @@ Two consequences decide whether a settings page should be split this way at all:
 | `bind(get, set, prop)` and every `bind*` extension | `bind(...)` on the configurable | `bindSelected`, `bindText`, `bindIntText`, `bindItem`, `bindValue`, `bindIntValue`, `bindState` |
 | `widthGroup(group)` | `SwingModifier.widthGroup(group)` | Controls in the group have the same width. A cell cannot also use `FormAlignX.FILL` |
 | `validationOnApply` / `errorOnApply` / `addValidationRule` | `ConfigurationException` from `apply` | See [Refusing a value](#refusing-a-value) |
-| `validationOnInput` / `validationRequestor` / `cellValidation` / `validationInfo` / `validation` | **gap** | No on-input validation framework; `SwingModifier.errorOutline(...)` for the look |
+| `validationOnInput` / `validationRequestor` / `cellValidation` / `validationInfo` / `validation` | **gap** | No on-input validation framework; the `errorOutline(...)` style setter for the look |
 
 ### `RowsRange` and `ButtonsGroup`
 
 | DSL | Compose |
 |---|---|
 | `RowsRange.visible` / `visibleIf` | a conditional, or visibility modifiers when the controls must retain their state |
-| `RowsRange.enabled` / `enabledIf` | enabled properties or `style = { enabled(...) }` on the affected components |
+| `RowsRange.enabled` / `enabledIf` | `FormPanel(style = { provideNestedStyle(AllComponents) { enabled(...) } })` on a nested form, or `style = { enabled(...) }` on the affected components |
 | `ButtonsGroup.bind(prop, type)` | **gap**. `RadioGroup` from the library, bound by hand |

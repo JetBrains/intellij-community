@@ -10,6 +10,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.compose.swing.components.style.SegmentedButtonKind
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
@@ -29,6 +30,9 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import com.intellij.openapi.ui.ComboBox as IdeaComboBox
 import com.intellij.ui.dsl.builder.SegmentedButton as IdeaSegmentedButton
+import org.jetbrains.compose.swing.style.SwingComponentStyleScope
+import org.jetbrains.compose.swing.style.SwingStyle
+import org.jetbrains.compose.swing.style.styleable
 
 /**
  * A row of buttons, one per item, of which one is selected at a time - the control
@@ -54,14 +58,15 @@ public fun <T> SegmentedButton(
   selectedItem: T?,
   onSelectedItemChange: (T?) -> Unit,
   modifier: SwingModifier = SwingModifier,
+  style: SwingStyle<SwingComponentStyleScope> = SwingStyle,
   renderer: (T) -> @NlsContexts.Button String,
   maxButtonsCount: Int = IdeaSegmentedButton.DEFAULT_MAX_BUTTONS_COUNT,
 ) {
   if (screenReaderActive() || items.size > maxButtonsCount) {
-    SegmentedComboBox(items, selectedItem, onSelectedItemChange, modifier, renderer)
+    SegmentedComboBox(items, selectedItem, onSelectedItemChange, modifier.styleable(SegmentedButtonKind, style), renderer)
   }
   else {
-    SegmentedButtons(items, selectedItem, onSelectedItemChange, modifier, renderer)
+    SegmentedButtons(items, selectedItem, onSelectedItemChange, modifier.styleable(SegmentedButtonKind, style), renderer)
   }
 }
 

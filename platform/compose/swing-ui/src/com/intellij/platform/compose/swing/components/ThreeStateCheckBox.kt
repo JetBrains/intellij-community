@@ -3,13 +3,17 @@ package com.intellij.platform.compose.swing.components
 
 import androidx.compose.runtime.Composable
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.compose.swing.components.style.ThreeStateCheckBoxKind
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.compose.swing.components.style.ButtonStyleScope
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.listener.actionListener
 import org.jetbrains.compose.swing.node.SwingNode
 import org.jetbrains.compose.swing.node.declare
 import org.jetbrains.compose.swing.node.rememberMirrorState
 import com.intellij.util.ui.ThreeStateCheckBox as IdeaThreeStateCheckBox
+import org.jetbrains.compose.swing.style.SwingStyle
+import org.jetbrains.compose.swing.style.styleable
 
 /** The state of a [ThreeStateCheckBox]. */
 @ApiStatus.Experimental
@@ -37,6 +41,7 @@ public fun ThreeStateCheckBox(
   state: ThreeStateCheckBoxState,
   onStateChange: (ThreeStateCheckBoxState) -> Unit,
   modifier: SwingModifier = SwingModifier,
+  style: SwingStyle<ButtonStyleScope> = SwingStyle,
 ) {
   val mirror = rememberMirrorState(state)
   SwingNode(
@@ -47,7 +52,7 @@ public fun ThreeStateCheckBox(
     modifier =
       modifier.actionListener<IdeaThreeStateCheckBox> {
         mirror.report(this.state.toCheckBoxState(), onStateChange)
-      },
+      }.styleable(ThreeStateCheckBoxKind, style),
     update = {
       set(text) { this.text = it }
       // Settled against the box rather than applied on change: a click moves the box out from under the
