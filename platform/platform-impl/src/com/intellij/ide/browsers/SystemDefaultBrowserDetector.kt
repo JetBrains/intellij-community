@@ -68,6 +68,17 @@ internal class SystemDefaultBrowserDetector(private val coroutineScope: Coroutin
       return detected
     }
 
+  /**
+   * Returns the known browser as [knownBrowser] does, but detects it on the calling thread when the result is older than [MAX_AGE].
+   * It can wait for a process, so call it on a background thread.
+   */
+  fun detectKnownBrowser(): KnownBrowser? {
+    if (IdeProductMode.isBackend) {
+      return null
+    }
+    return if (isOlderThan(MAX_AGE)) detectAndStore() else detected
+  }
+
   private fun detectIfOlderThan(age: Duration) {
     if (IdeProductMode.isBackend || !isOlderThan(age)) {
       return

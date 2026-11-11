@@ -57,6 +57,7 @@ import kotlin.io.path.Path
  * For an installed browser, [installed] is what [detectInstalledBrowsers] found.
  * Apply adds a selected installed browser to the list, see [BrowserSettingsConfigurable.addInstalledBrowser].
  * The last item of each dropdown is [addItem]. It opens [BrowserDialog] and is never the selected item.
+ * The [icon] takes part in the equality, so the page builds each [systemDefault] item with the same icon.
  */
 internal data class BrowserChoice(val id: UUID, @NlsSafe val name: String, val icon: Icon, val installed: InstalledBrowser? = null) {
   val isAddItem: Boolean
@@ -67,7 +68,8 @@ internal data class BrowserChoice(val id: UUID, @NlsSafe val name: String, val i
 
     fun addItem(): BrowserChoice = BrowserChoice(ADD_ITEM_ID, IdeBundle.message("settings.browsers.add.browser"), AllIcons.General.Add)
 
-    fun systemDefault(): BrowserChoice = of(SystemDefaultBrowser)
+    /** [icon] is the icon of the browser that the OS opens, see [SystemDefaultBrowserDetector]. */
+    fun systemDefault(icon: Icon): BrowserChoice = BrowserChoice(SystemDefaultBrowser.id, SystemDefaultBrowser.name, icon)
 
     fun of(browser: WebBrowser): BrowserChoice = BrowserChoice(browser.id, browser.name, browser.icon)
 
@@ -81,7 +83,9 @@ internal data class BrowserChoice(val id: UUID, @NlsSafe val name: String, val i
 /**
  * The Web Browsers settings page.
  *
- * When the page opens, it detects the installed browsers in the background, and keeps the result while it is open.
+ * When the page opens, it detects the installed browsers and the OS default browser in the background.
+ * It keeps the result while it is open.
+ * The OS default item shows the icon of the OS default browser, see [SystemDefaultBrowserDetector].
  * The "Default Browser" dropdown offers each installed browser that no browser of the list opens, see [InstalledBrowser.isSameAs].
  * The "JavaScript Debugger" dropdown does the same for the Chromium-based browsers, see [WebBrowserManager.getChromiumBasedBrowser].
  *
@@ -95,6 +99,9 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   private lateinit var browsersTable: JComponent
   private lateinit var browsersEditor: TableModelEditor<ConfigurableWebBrowser>
   private var installedBrowsers: List<InstalledBrowser> = emptyList()
+
+  /** The icon of each [BrowserChoice.systemDefault] item. The detection of the OS default browser sets it. */
+  private var systemDefaultIcon: Icon = SystemDefaultBrowser.icon
   private val defaultBrowserModel = BrowserChoiceModel(isChromiumBased = false)
   private val chromiumBasedBrowserModel = BrowserChoiceModel(isChromiumBased = true)
   private lateinit var showBrowserHover: JBCheckBox
@@ -258,14 +265,18 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
 
   /**
    * Detects the installed browsers in the background, and adds them to the dropdown.
+   * It also detects the OS default browser for the icon of the OS default item.
    * The page keeps the result while it is open.
    */
   private fun startDetection() {
     val modality = ModalityState.current()
     AppExecutorUtil.getAppExecutorService().execute {
+      val knownBrowser = SystemDefaultBrowserDetector.getInstance().detectKnownBrowser()
       val detected = detectInstalledBrowsers(Path(SystemProperties.getUserHome()), EnvironmentUtil.getEnvironmentMap())
       ApplicationManager.getApplication().invokeLater({
         installedBrowsers = detected
+        // the dropdowns get new items with the icon, and keep the selection by id
+        systemDefaultIcon = knownBrowser?.let(SystemDefaultBrowserDetector::iconOf) ?: SystemDefaultBrowser.icon
         updateBrowserChoices()
       }, modality) { root == null }
     }
@@ -279,7 +290,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
 
   private fun updateDefaultBrowserChoices() {
     val choice = defaultBrowserModel.selected
-    val systemDefault = if (canUseSystemDefaultBrowserPolicy()) listOf(BrowserChoice.systemDefault()) else emptyList()
+    val systemDefault = if (canUseSystemDefaultBrowserPolicy()) listOf(BrowserChoice.systemDefault(systemDefaultIcon)) else emptyList()
     val provided = WebBrowserProvider.getAvailableBrowsers().map { BrowserChoice.of(it) }
     val listed = listedBrowsers()
     val installed = installedChoices()
@@ -318,7 +329,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
 
   /** Returns `null` when the system default is not available and the list has no active browser. */
   private fun fallbackChoice(): BrowserChoice? =
-    if (canUseSystemDefaultBrowserPolicy()) BrowserChoice.systemDefault() else listedBrowsers().firstOrNull()
+    if (canUseSystemDefaultBrowserPolicy()) BrowserChoice.systemDefault(systemDefaultIcon) else listedBrowsers().firstOrNull()
 
   /** The default browser that [WebBrowserManager] stores, as an item of the current dropdown. */
   private fun storedChoice(manager: WebBrowserManager): BrowserChoice? {
