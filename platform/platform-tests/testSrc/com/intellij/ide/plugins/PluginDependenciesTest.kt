@@ -1288,6 +1288,62 @@ internal class PluginDependenciesTest {
     }.installAt(pluginDirPath)
 
     @Test
+    fun `external descriptor that depends on a php basic module gets soft dependency on php plugin`() {
+      `php basic plugin`()
+      `php plugin`()
+      plugin("external.consumer") {
+        dependencies { module("intellij.php.frontback.impl") }
+        content {
+          module("external.consumer.module", ModuleLoadingRuleValue.REQUIRED) {
+            packagePrefix = "external.consumer.module"
+            dependencies { module("intellij.php.frontback.impl") }
+          }
+        }
+      }.installAt(pluginDirPath)
+      plugin("jetbrains.consumer") {
+        vendor = "JetBrains"
+        dependencies { module("intellij.php.frontback.impl") }
+      }.installAt(pluginDirPath)
+
+      val pluginSet = buildPluginSet()
+      val php = pluginSet.getEnabledPlugin("com.jetbrains.php")
+      val phpFrontback = pluginSet.getEnabledModule("intellij.php.frontback.impl")
+
+      assertThat(pluginSet.getEnabledPlugin("external.consumer")).hasExactDirectParentClassloaders(phpFrontback, php)
+      assertThat(pluginSet.getEnabledModule("external.consumer.module")).hasExactDirectParentClassloaders(phpFrontback, php)
+      assertThat(pluginSet.getEnabledPlugin("jetbrains.consumer")).hasExactDirectParentClassloaders(phpFrontback)
+    }
+
+    @Test
+    fun `external descriptor that depends on a php basic module loads without php plugin`() {
+      `php basic plugin`()
+      plugin("external.consumer") {
+        dependencies { module("intellij.php.frontback.impl") }
+      }.installAt(pluginDirPath)
+
+      val pluginSet = buildPluginSet()
+
+      assertThat(pluginSet).hasExactlyEnabledPlugins("com.jetbrains.php.basic", "external.consumer")
+      assertThat(pluginSet.getEnabledPlugin("external.consumer"))
+        .hasExactDirectParentClassloaders(pluginSet.getEnabledModule("intellij.php.frontback.impl"))
+    }
+
+    private fun `php basic plugin`() = plugin("com.jetbrains.php.basic") {
+      vendor = "JetBrains"
+      content(namespace = "jetbrains") {
+        module("intellij.php.frontback.impl", ModuleLoadingRuleValue.REQUIRED) {
+          packagePrefix = "intellij.php.frontback.impl"
+          moduleVisibility = ModuleVisibilityValue.PUBLIC
+        }
+      }
+    }.installAt(pluginDirPath)
+
+    private fun `php plugin`() = plugin("com.jetbrains.php") {
+      vendor = "JetBrains"
+      dependencies { plugin("com.jetbrains.php.basic") }
+    }.installAt(pluginDirPath)
+
+    @Test
     @SystemProperty(propertyKey = "enable.implicit.json.dependency", propertyValue = "true")
     fun `non strict content module gets implicit json backend and collaboration tools`() {
       plugin("json.provider") {

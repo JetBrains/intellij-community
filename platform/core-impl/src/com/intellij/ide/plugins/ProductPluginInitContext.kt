@@ -326,6 +326,9 @@ class ProductPluginInitContext(
           if (javaBasicModulesExtractedFromJavaPlugin.any { doesDependOnModule(descriptor, it) }) {
             yieldIfResolves(DependencyRef.of(JAVA_PLUGIN_ID))
           }
+          if (phpBasicModulesExtractedFromPhpPlugin.any { doesDependOnModule(descriptor, it) }) {
+            yieldIfResolves(DependencyRef.of(PHP_PLUGIN_ID))
+          }
         }
         for (depends in descriptor.pluginDependencies) {
           if (depends.subDescriptor != null) { // will be processed when invoked for the sub-descriptor
@@ -453,6 +456,17 @@ private val javaBasicModulesExtractedFromJavaPlugin = arrayOf(
   "intellij.java.psi",
   "intellij.java.psi.impl",
   "intellij.java.frontback.impl",
+).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
+
+private val PHP_PLUGIN_ID = PluginId.getId("com.jetbrains.php")
+
+/**
+ * Content modules that moved from the PHP plugin `com.jetbrains.php` to the plugin `com.jetbrains.php.basic`.
+ * The PHP plugin embedded them, so a dependency on one of them gave the class loader of the PHP main module.
+ * To keep compatibility, an external plugin that depends on one of them gets a soft dependency on the PHP plugin.
+ */
+private val phpBasicModulesExtractedFromPhpPlugin = arrayOf(
+  "intellij.php.frontback.impl",
 ).map { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) }
 
 private val COLLABORATION_TOOLS_MODULE_ID = PluginModuleId("intellij.platform.collaborationTools", PluginModuleId.JETBRAINS_NAMESPACE)
