@@ -5,7 +5,9 @@ import com.jetbrains.lsp.protocol.LSP.ProgressNotificationType
 import com.jetbrains.lsp.protocol.ProgressParams
 import com.jetbrains.lsp.protocol.ProgressToken
 import fleet.util.async.chunkedByTimeout
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.toList
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.ListSerializer
@@ -46,9 +48,17 @@ suspend fun <R> Flow<R>.streamResults(
     resultSerializer: KSerializer<R>,
 ) {
     val ser = ListSerializer(resultSerializer)
-    // `chunkedByTimeout` to ensure that we do not spam the client with too many progress notifications.
-    chunkedByTimeout(BUFFERING_TIME_BETWEEN_SENDING_BATCH_RESULTS)
+    // `chunkedByTimeout` flushes its buffer only on an organic completion, so an upstream failure is caught before it and
+    // rethrown after the last batch: a failed search still sends the results it found. A `CancellationException` from the
+    // upstream is caught too (inside `chunkedByTimeout` it would end only the upstream, and its timer would tick forever),
+    // but its last batch is not sent. `catch` does not catch the cancellation of this coroutine itself.
+    var failure: Throwable? = null
+    catch { failure = it }
+        // `chunkedByTimeout` to ensure that we do not spam the client with too many progress notifications.
+        .chunkedByTimeout(BUFFERING_TIME_BETWEEN_SENDING_BATCH_RESULTS)
         .collect { partialResult ->
+            // a cancelled search sends nothing more
+            if (failure is CancellationException) return@collect
             lspClient.notify(
                 ProgressNotificationType,
                 ProgressParams(
@@ -57,6 +67,7 @@ suspend fun <R> Flow<R>.streamResults(
                 )
             )
         }
+    failure?.let { throw it }
 }
 
 
