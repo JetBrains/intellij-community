@@ -199,6 +199,20 @@ class CodeInsightContextManagerImpl(
     return getContextsOf(file).wrapToList()
   }
 
+  /**
+   * Returns the same contexts as [getCodeInsightContexts], but does not put a computed answer into the cache.
+   * Use it for a walk over many files that code insight does not need, such as a statistics collector.
+   */
+  @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  fun getCodeInsightContextsWithoutCaching(file: VirtualFile): List<CodeInsightContext> {
+    if (!isSharedSourceSupportEnabled(project)) return listOf(defaultContext())
+
+    ensureReadAccess(file)
+
+    return (allContexts[file] ?: computeContexts(file)).wrapToList()
+  }
+
   private fun getContextsOf(file: VirtualFile): ContextOrArray = allContexts.getOrPut(file) { computeContexts(file) }
 
   /** lazySequence, not extensionList: getContexts can cost a workspace-index query, so providers past the owner are not asked. */

@@ -30,10 +30,10 @@ internal class CodeInsightContextFusCollector : ProjectUsagesCollector() {
     val enabledEvent = ENABLED.metric(sharedSourceEnabled)
     if (!sharedSourceEnabled) return setOf(enabledEvent)
 
-    val contextManager = CodeInsightContextManager.getInstance(project)
+    val contextManager = CodeInsightContextManagerImpl.getInstanceImpl(project)
     val fileCounts = HashMap<FileType, Int2IntOpenHashMap>()
     processContentFilesInReadActions(project) { file ->
-      val contextCount = contextManager.getCodeInsightContexts(file).size
+      val contextCount = contextManager.getCodeInsightContextsWithoutCaching(file).size
       fileCounts.getOrPut(getFileTypeWithoutContent(file)) { Int2IntOpenHashMap() }.addTo(contextCount, 1)
     }
 

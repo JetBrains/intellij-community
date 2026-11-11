@@ -682,6 +682,31 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     assertEquals(listOf(setOf(virtualFile)), changes)
   }
 
+  // A file with no cached answer counts as changed in a recheck, so the recheck shows that the call cached nothing.
+  fun testContextsWithoutCachingDoNotCacheTheAnswer() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    val first = FakeContext("first")
+    registerOwningProvider(virtualFile, Answer.Contexts(listOf(first)))
+    val manager = CodeInsightContextManagerImpl.getInstanceImpl(project)
+
+    assertEquals(listOf(first), manager.getCodeInsightContextsWithoutCaching(virtualFile))
+    val changes = recordPerFileChanges()
+    manager.requestInvalidationNow(setOf(virtualFile))
+
+    assertEquals(listOf(setOf(virtualFile)), changes)
+  }
+
+  fun testContextsWithoutCachingReturnTheCachedAnswer() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    val first = FakeContext("first")
+    val provider = registerOwningProvider(virtualFile, Answer.Contexts(listOf(first)))
+    assertEquals(listOf(first), getRawContexts())
+
+    provider.answer = Answer.Contexts(listOf(FakeContext("second")))
+
+    assertEquals(listOf(first), CodeInsightContextManagerImpl.getInstanceImpl(project).getCodeInsightContextsWithoutCaching(virtualFile))
+  }
+
   private fun recordPerFileChanges(): List<Set<VirtualFile>> {
     val changes = ArrayList<Set<VirtualFile>>()
     project.messageBus.connect(testRootDisposable).subscribe(CodeInsightContextManager.topic, object : CodeInsightContextChangeListener {
