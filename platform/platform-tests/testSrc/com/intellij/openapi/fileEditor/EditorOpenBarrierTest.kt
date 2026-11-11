@@ -34,6 +34,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.awaitPendingEditorOpen
+import com.intellij.testFramework.collectBlockingEditorOpenWarnings
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -335,6 +336,32 @@ class EditorOpenBarrierTest {
     }
     project.awaitPendingEditorOpen()
 
+    assertThat(manager.isFileOpen(file)).isTrue()
+  }
+
+  @Test
+  fun `blocking open in a write action is collected as a warning`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = createFile("blocking-in-write-action.txt")
+
+    val warnings = collectBlockingEditorOpenWarnings {
+      WriteCommandAction.runWriteCommandAction(project) {
+        manager.openFile(file, false)
+      }
+    }
+
+    assertThat(warnings).hasSize(1)
+    assertThat(manager.isFileOpen(file)).isTrue()
+  }
+
+  @Test
+  fun `blocking open outside a write action is not collected`(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = createFile("blocking-outside-write-action.txt")
+
+    val warnings = collectBlockingEditorOpenWarnings {
+      manager.openFile(file, false)
+    }
+
+    assertThat(warnings).isEmpty()
     assertThat(manager.isFileOpen(file)).isTrue()
   }
 
