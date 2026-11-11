@@ -633,9 +633,8 @@ class PyDB(object):
         # in that thread (see
         # pydevd_timeout.create_interrupt_this_thread_by_ident_callback). This is the DAP
         # counterpart of the old CMD_INTERRUPT_DEBUG_CONSOLE command.
-        # The lock guards the slot only. A requester calls the callback outside the lock,
-        # because the callback raises a KeyboardInterrupt on the thread which runs the
-        # evaluation, and that thread takes this lock to clear the callback.
+        # A requester calls the callback while it holds the lock. The callback only schedules
+        # the KeyboardInterrupt, so the call returns at once.
         self._console_interrupt_callback = None
         self._console_interrupt_lock = thread.allocate_lock()
 
@@ -1875,24 +1874,14 @@ class PyDB(object):
         """
         with self._console_interrupt_lock:
             callback = self._console_interrupt_callback
-        if callback is None:
-            return False
+            if callback is None:
+                return False
 
-        # Outside the lock, because this raises a KeyboardInterrupt on the thread which runs the
-        # evaluation, and that thread takes the lock to clear the callback.
-        callback()
-
-        with self._console_interrupt_lock:
-            evaluation_ended = self._console_interrupt_callback is None
-
-        if evaluation_ended:
-            # The evaluation ended while this interrupt was delivered, so nothing will raise the
-            # KeyboardInterrupt that was just scheduled. Drop it: left pending, it lands on a
-            # later frame of that thread and takes the debug session down. Every order of the two
-            # threads is covered, because the evaluation clears the callback before it drops a
-            # pending interrupt of its own.
-            callback.cancel()
-            return False
+            # Under the lock, so the interrupt is scheduled before the evaluation clears the
+            # callback, and the evaluation drops it when it ends before raising it. This thread
+            # does not drop it: PyThreadState_SetAsyncExc with a NULL exception hangs CPython
+            # 3.11 (see pydevd_timeout.cancel_pending_interrupt_on_this_thread).
+            callback()
 
         return True
 
