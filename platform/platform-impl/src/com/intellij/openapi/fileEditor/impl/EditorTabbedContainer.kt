@@ -53,6 +53,7 @@ import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
@@ -430,16 +431,17 @@ private class TabMouseListener(private val window: EditorWindow, private val edi
     val info = editorTabs.findInfo(e) ?: return
     IdeEventQueue.getInstance().blockNextEvents(e)
     if (e.isAltDown && e.button == MouseEvent.BUTTON1) { //close others
-      val allTabInfos = editorTabs.tabs
-      for (tabInfo in allTabInfos) {
-        if (tabInfo == info) {
-          continue
+      val allTabs = editorTabs.tabs
+      val filesToClose = mutableListOf<Pair<EditorComposite, EditorWindow>>()
+      for (tabInfo in allTabs) {
+        if (tabInfo != info) {
+          window.getComposite(tabInfo.`object` as VirtualFile)?.let { filesToClose.add(Pair.create(it, window)) }
         }
-        window.manager.closeFile((tabInfo.`object` as VirtualFile), window)
       }
+      window.manager.closeFilesWithChecks(filesToClose)
     }
     else {
-      window.manager.closeFile((info.`object` as VirtualFile), window)
+      window.manager.closeFileWithChecks(info.`object` as VirtualFile, window)
     }
   }
 

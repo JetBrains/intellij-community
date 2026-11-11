@@ -152,7 +152,9 @@ import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.EventQueue
 import java.awt.Window
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
@@ -1284,6 +1286,49 @@ class FileEditorManagerTest {
 
     assertThat(checked).isFalse()
     assertOpenFiles()
+  }
+
+  @Test
+  fun testShiftClickOnTabRunsPreCloseCheck(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val file = openSourceFile("1.txt")
+    val window = currentWindow()
+    var checkedFile: VirtualFile? = null
+    registerPreCloseCheck(object : VirtualFilePreCloseCheck {
+      override fun canCloseFile(file: VirtualFile): Boolean {
+        checkedFile = file
+        return false
+      }
+    })
+
+    releaseCloseClickOnTab(window, file, InputEvent.SHIFT_DOWN_MASK)
+
+    assertThat(checkedFile).isEqualTo(file)
+    assertOpenFiles("1.txt")
+  }
+
+  @Test
+  fun testAltShiftClickOnTabRunsBatchPreCloseCheck(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    openSourceFiles("1.txt", "2.txt", "3.txt")
+    val window = currentWindow()
+    var singleChecks = 0
+    var batchFiles: List<VirtualFile> = emptyList()
+    registerPreCloseCheck(object : VirtualFilePreCloseCheck {
+      override fun canCloseFile(file: VirtualFile): Boolean {
+        singleChecks++
+        return true
+      }
+
+      override fun canCloseFiles(files: Collection<VirtualFile>): Boolean {
+        batchFiles = files.toList()
+        return false
+      }
+    })
+
+    releaseCloseClickOnTab(window, getSourceFile("1.txt"), InputEvent.SHIFT_DOWN_MASK or InputEvent.ALT_DOWN_MASK)
+
+    assertThat(singleChecks).isZero()
+    assertThat(batchFiles.map { it.name }).containsExactlyInAnyOrder("2.txt", "3.txt")
+    assertOpenFiles("1.txt", "2.txt", "3.txt")
   }
 
   @Test
@@ -2487,6 +2532,16 @@ class FileEditorManagerTest {
 
   private fun registerPreCloseCheck(check: VirtualFilePreCloseCheck) {
     VirtualFilePreCloseCheck.EP_NAME.point.registerExtension(check, disposable)
+  }
+
+  private fun releaseCloseClickOnTab(window: EditorWindow, file: VirtualFile, modifiers: Int) {
+    val editorTabs = window.tabbedPane.editorTabs
+    editorTabs.setBounds(0, 0, 1000, 500)
+    editorTabs.doLayout()
+    val label = editorTabs.getTabLabel(editorTabs.findInfo(file as Any)!!)!!
+    val event = MouseEvent(label, MouseEvent.MOUSE_RELEASED, System.currentTimeMillis(), modifiers,
+                           label.width / 2, label.height / 2, 1, false, MouseEvent.BUTTON1)
+    label.dispatchEvent(event)
   }
 
   private fun getSourceFile(name: String): VirtualFile = getFile("/src/$name")
