@@ -74,7 +74,9 @@ class PyIdeCommonFragmentsBuilder : PyCommonFragmentsBuilder() {
 
     fragments.add(createWorkingDirectoryFragment(config.project))
     fragments.add(createEnvParameters())
-    fragments.add(createEnvFilesFragment { VirtualFileManager.getInstance().findFileByNioPath(Path(config.getWorkingDirectorySafe())) })
+    fragments.add(createEnvFilesFragment(config.project) {
+      VirtualFileManager.getInstance().findFileByNioPath(Path(config.getWorkingDirectorySafe()))
+    })
     fragments.add(PyPathMappingsEditorFragment(sdkComboBox))
   }
 }
