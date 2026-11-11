@@ -3,19 +3,30 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load(":stream_debugger_test_dependencies.bzl", "MAVEN_REPOSITORY_RUNFILES_PATH", "all_test_dep_targets")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
+
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+)
 
 jps_test(
     name = "java-debugger-streams-tests_test",
     timeout = "long",
-    data = ALL_COMMUNITY_TARGETS + [
+    data = ALL_COMMUNITY_TARGETS + all_test_dep_targets + [
+        "@community//plugins/stream-debugger:testData",
         BAZEL_TARGETS_JSON,
     ],
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+        "-Dmaven.repo.for.testing.runfiles=" + MAVEN_REPOSITORY_RUNFILES_PATH,
     ],
-    tags = ["community-aggregator"],
+    sandbox = True,
+    tags = [
+        "debugger-tests",
+    ],
     runtime_deps = [":java-debugger-streams-tests_test_lib"],
 )
 ### skip generation section `test intellij.java.debugger.streams.tests`
@@ -115,6 +126,7 @@ jvm_library(
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
         "//xml/plugin",
+        "//java/java-impl/testFramework",
     ],
     deps = [
         # do not sort,

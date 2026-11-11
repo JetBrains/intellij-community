@@ -3,14 +3,14 @@ package com.intellij.debugger.streams.trace.dsl
 
 import com.intellij.debugger.streams.core.trace.dsl.impl.DslImpl
 import com.intellij.debugger.streams.test.DslTestCase
+import com.intellij.debugger.streams.test.StreamDebuggerTestUtil
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
-import com.intellij.openapi.application.PluginPathManager
 
 /**
  * @author Vitaliy.Bibaev
  */
 class JavaDslTest : DslTestCase(DslImpl(JavaStatementFactory())) {
   override fun getTestDataPath(): String {
-    return PluginPathManager.getPluginHomePath("stream-debugger") + "/testData/dsl/java"
+    return StreamDebuggerTestUtil.getTestDataPath("dsl/java")
   }
 }

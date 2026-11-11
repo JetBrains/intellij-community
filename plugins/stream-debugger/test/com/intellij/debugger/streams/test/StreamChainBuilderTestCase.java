@@ -8,7 +8,6 @@ import com.intellij.debugger.streams.psi.impl.JavaChainTransformerImpl;
 import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.PackageChainDetector;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -30,7 +29,7 @@ public abstract class StreamChainBuilderTestCase extends LightJavaCodeInsightTes
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return new File(PluginPathManager.getPluginHomePath("stream-debugger") + "/testData/" + getRelativeTestPath()).getAbsolutePath();
+    return StreamDebuggerTestUtil.getTestDataPath(getRelativeTestPath());
   }
 
   @NotNull

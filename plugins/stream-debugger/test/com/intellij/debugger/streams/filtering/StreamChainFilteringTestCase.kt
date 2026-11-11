@@ -9,8 +9,8 @@ import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.core.psi.impl.DebuggerPositionResolverImpl
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.lib.impl.StandardLibrarySupportProvider
+import com.intellij.debugger.streams.test.StreamDebuggerTestUtil
 import com.intellij.execution.process.ProcessOutputTypes
-import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Logger
@@ -19,7 +19,6 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.xdebugger.XSourcePosition
 import com.sun.jdi.Method
-import kotlin.io.path.Path
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -42,7 +41,7 @@ abstract class StreamChainFilteringTestCase : DebuggerTestCase() {
   }
 
   override fun getTestAppPath(): String =
-    Path(PluginPathManager.getPluginHomePath("stream-debugger")).resolve("testData/filtering/").toString()
+    StreamDebuggerTestUtil.getTestDataPath("filtering")
 
   protected open fun getLibrarySupportProvider(): LibrarySupportProvider = StandardLibrarySupportProvider()
 

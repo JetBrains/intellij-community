@@ -1,16 +1,15 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.exec
 
+import com.intellij.debugger.streams.test.StreamDebuggerTestUtil
 import com.intellij.debugger.streams.test.TraceExecutionTestCase
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.PsiTestUtil
-import java.io.File
 import kotlin.io.path.Path
 import kotlin.io.path.pathString
 
@@ -45,7 +44,7 @@ abstract class LibraryTraceExecutionTestCase(private val jarPath: String) : Trac
   }
 
   final override fun getTestAppPath(): String {
-    return File(PluginPathManager.getPluginHomePath("stream-debugger") + "/testData/${getTestAppRelativePath()}").absolutePath
+    return StreamDebuggerTestUtil.getTestDataPath(getTestAppRelativePath())
   }
 
   abstract fun getTestAppRelativePath(): String

@@ -13,7 +13,6 @@ import com.intellij.debugger.streams.lib.impl.StandardLibrarySupportProvider
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.pom.java.LanguageLevel
@@ -26,7 +25,6 @@ import com.intellij.xdebugger.XDebugSessionListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.seconds
 
@@ -59,7 +57,7 @@ abstract class TraceExecutionTestCase : DebuggerTestCase() {
   }
 
   override fun getTestAppPath(): String {
-    return File(PluginPathManager.getPluginHomePath("stream-debugger") + "/testData/debug/").absolutePath
+    return StreamDebuggerTestUtil.getTestDataPath("debug")
   }
 
   @Throws(Exception::class)
@@ -154,4 +152,3 @@ abstract class TraceExecutionTestCase : DebuggerTestCase() {
     private val DEFAULT_CHAIN_SELECTOR = byIndex(0)
   }
 }
-
