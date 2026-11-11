@@ -10,9 +10,13 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorMarkupModel
+import com.intellij.openapi.editor.impl.EditorMarkupModelImpl
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.application
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
@@ -69,6 +73,21 @@ class TrafficLightTest : DaemonAnalyzerTestCase() {
         ),
       listOf(HighlightSeverity.ERROR to 0),
     )
+  }
+
+  fun `test the inspection widget reserves its height only in an editor with the error stripe`() {
+    configureByText(JavaFileType.INSTANCE, "class Main {}")
+    val markupModel = editor.markupModel as EditorMarkupModelImpl
+    val statusComponent = ((editor as EditorEx).scrollPane as JBScrollPane).statusComponent!!
+
+    markupModel.isErrorStripeVisible = false
+    assertEquals(0, statusComponent.preferredSize.height)
+
+    markupModel.isErrorStripeVisible = true
+    assertEquals(JBUIScale.scale(18), statusComponent.preferredSize.height)
+
+    markupModel.setTrafficLightIconVisible(false)
+    assertEquals(0, statusComponent.preferredSize.height)
   }
 
   private fun doTrafficRendererTest(
