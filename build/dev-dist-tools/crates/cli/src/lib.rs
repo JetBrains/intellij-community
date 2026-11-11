@@ -7,13 +7,16 @@
 //! form: a short option, a value in the next argument, a bare `--`, a repeated option that is not a list, and an
 //! option that the tool does not take. A typo then fails the action and does not change it silently. A tool takes its
 //! options one by one, then [`Options::finish`] refuses the rest. [`report`] prints an error. Each tool keeps its own
-//! exit codes.
+//! exit codes: [`main`] runs the `run` function of a tool, and [`exit_code`] turns its result into one.
 //!
 //! The crate replaces `lexopt`, because each tool undid the model of `lexopt` with its own loop, and every tool is a
 //! re-key trigger of its actions. The code is small, and it has no dependency that a tool does not link already.
 
+use std::env::ArgsOs;
 use std::ffi::OsString;
 use std::io::Write;
+use std::iter::Skip;
+use std::process::ExitCode;
 
 use anyhow::{Result, bail};
 
@@ -118,6 +121,18 @@ impl Options {
 /// Prints the error with its causes, as `ERROR: <error>: <cause>`.
 pub fn report(stderr: &mut dyn Write, error: &anyhow::Error) {
     let _ = writeln!(stderr, "ERROR: {error:#}");
+}
+
+/// Runs a tool: `fn main() -> ExitCode { cli::main(run) }`. `run` gets the arguments after the program name and the
+/// error stream, and it returns the exit code. A test of the tool calls the same `run` with its own arguments.
+pub fn main(run: impl FnOnce(Skip<ArgsOs>, &mut dyn Write) -> u8) -> ExitCode {
+    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stderr()))
+}
+
+/// The exit code of a run of a tool: 0 for a value, or `failure` after [`report`] prints the error:
+/// `cli::exit_code(errors, write_identity(args), 1)`.
+pub fn exit_code<T>(stderr: &mut dyn Write, result: Result<T>, failure: u8) -> u8 {
+    ok_or_report(stderr, result).map_or(failure, |_| 0)
 }
 
 /// Returns the value of `result`. For an error, it prints the error with [`report`] and returns `None`, and the tool

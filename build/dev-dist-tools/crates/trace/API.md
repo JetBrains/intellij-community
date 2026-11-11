@@ -32,6 +32,7 @@ trace::run_traced(SERVICE_NAME, trace_file.as_deref(), FAILURE, stderr, |tracer,
 | `Span::tag(&self, &'static str, impl Into<TagValue>)` | Adds a tag. |
 | `Span::fail(&self, &dyn Display)` | Marks the span as failed and adds the `error.message` tag. |
 | `Span::end(self)` | Ends the span. A span that drops without this call ends at the drop. |
+| `Span::end_after<T, E: Display>(self, &Result<T, E>)` | Ends the span; an error first fails it with `{error:#}`, the error with its causes. |
 | `enum TagValue { Str(String), Long(i64) }` | The value of a tag. `From` converts `&str`, `String`, `i64`, `u64` and `usize`. A `u64` or a `usize` past `i64::MAX` saturates. |
 
 In the former tool, `Tracer::new`, `Tracer::write_file` and `Span::fail` had the names `NewTracer`, `WriteFile` and

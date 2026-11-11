@@ -197,6 +197,15 @@ impl Span {
     pub fn end(self) {
         drop(self);
     }
+
+    /// Ends the span after the work that it times: an error of `result` first fails the span with the alternate form
+    /// of the error, `{error:#}`, which states the causes of an `anyhow::Error`.
+    pub fn end_after<T, E: Display>(self, result: &Result<T, E>) {
+        if let Err(error) = result {
+            self.fail(&format_args!("{error:#}"));
+        }
+        self.end();
+    }
 }
 
 impl Drop for Span {

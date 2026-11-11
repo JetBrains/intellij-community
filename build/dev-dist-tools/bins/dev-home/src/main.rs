@@ -45,13 +45,7 @@ fn main() -> ExitCode {
 
 /// Runs the tool and returns the exit code: 1 for every error.
 fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
-    match dispatch(args, output) {
-        Ok(()) => 0,
-        Err(error) => {
-            cli::report(errors, &error);
-            1
-        }
-    }
+    cli::exit_code(errors, dispatch(args, output), 1)
 }
 
 fn dispatch(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write) -> Result<()> {

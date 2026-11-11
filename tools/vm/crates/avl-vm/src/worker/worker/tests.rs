@@ -578,14 +578,20 @@ async fn a_tart_connect_is_the_installed_agent_relay_with_stdin_carried() {
     );
 }
 
-/// On Parallels the relay is one shell string, like every guest command there, and no tty flag is passed.
-#[tokio::test]
-async fn a_parallels_connect_is_the_installed_agent_relay_in_one_shell_string() {
+/// A macOS pool on Parallels, the manager over it, and its first worker.
+fn parallels_manager() -> (avl_host_testkit::HostPool, Manager, String) {
     let pool = avl_host_testkit::HostPool::builder(Backend::Parallels, GuestOs::Macos, crate::worker::tart::MINIMUM_VERSION)
         .with_parallels()
         .build();
     let manager = manager_over(&pool.settings, pool.runner(), None, builds_nothing());
     let worker = pool.settings.workers[0].clone();
+    (pool, manager, worker)
+}
+
+/// On Parallels the relay is one shell string, like every guest command there, and no tty flag is passed.
+#[tokio::test]
+async fn a_parallels_connect_is_the_installed_agent_relay_in_one_shell_string() {
+    let (pool, manager, worker) = parallels_manager();
     let channel = manager.channel(&worker);
     let (port, served) = one_reply(b"from the macOS guest").await;
     assert_eq!(read_all(channel.as_ref(), port).await, b"from the macOS guest");
@@ -601,11 +607,7 @@ async fn a_parallels_connect_is_the_installed_agent_relay_in_one_shell_string() 
 /// starting it. A running VM has a guest that the commands must reach.
 #[tokio::test]
 async fn a_parallels_vm_that_does_not_run_runs_nothing() {
-    let pool = avl_host_testkit::HostPool::builder(Backend::Parallels, GuestOs::Macos, crate::worker::tart::MINIMUM_VERSION)
-        .with_parallels()
-        .build();
-    let manager = manager_over(&pool.settings, pool.runner(), None, builds_nothing());
-    let worker = pool.settings.workers[0].clone();
+    let (pool, manager, worker) = parallels_manager();
     for (status, runs_nothing) in [("suspended", true), ("stopped", true), ("running", false)] {
         pool.fake.answer(Answer::Status, format!("VM \"{worker}\" exist {status}\n"));
         assert_eq!(manager.runs_nothing(&ctx(), &worker).await.unwrap(), runs_nothing, "{status}");

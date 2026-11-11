@@ -24,21 +24,16 @@ const CLASS_TIME_BUDGET_FILE: &str = "plugins/air/tests/integration/class-time-b
 
 fn class_time_budget_tree(baseline: &str) -> FakeRuntime {
     let fake = fake_air_tree();
-    let mut lanes: serde_json::Value = serde_json::from_str(bt_core::fake::LANES_TEXT).expect("the fixture lane table parses");
-    let fast = lanes["lanes"]
-        .as_array_mut()
-        .expect("the fixture lane table has lanes")
-        .iter_mut()
-        .find(|lane| lane.get("name").and_then(serde_json::Value::as_str) == Some("fast"))
-        .expect("the fixture has a fast lane");
-    fast.as_object_mut().expect("a lane is an object").insert(
-        "classTimeBudget".to_owned(),
-        json!({
-            "seconds": 30,
-            "baseline": CLASS_TIME_BUDGET_FILE,
-        }),
-    );
-    fake.put(LANES_FILE, &serde_json::to_string(&lanes).expect("the fixture lane table encodes"));
+    let lanes = bt_core::fake::lanes_text_with_fast_lane(|fast| {
+        fast.insert(
+            "classTimeBudget".to_owned(),
+            json!({
+                "seconds": 30,
+                "baseline": CLASS_TIME_BUDGET_FILE,
+            }),
+        );
+    });
+    fake.put(LANES_FILE, &lanes);
     fake.put(CLASS_TIME_BUDGET_FILE, baseline);
     fake
 }
@@ -399,18 +394,20 @@ fn three_group_plan_tree() -> FakeRuntime {
     fake
 }
 
+/// The line of a dry run that starts with `prefix`, such as `heavy   ` or `argv    `.
+fn line_of(text: &str, prefix: &str) -> String {
+    text.lines()
+        .find(|line| line.starts_with(prefix))
+        .unwrap_or_else(|| panic!("no {prefix:?} in:\n{text}"))
+        .to_owned()
+}
+
 /// One forced count for a whole invocation: the heavy targets get an invocation of their own with the heavy count,
 /// and the invocation of the lane leaves them out.
 #[test]
 fn a_heavy_target_runs_in_an_invocation_of_its_own_with_the_heavy_count() {
     let text = run(&["--lane", "fast", "--dry-run"], &heavy_plan_tree()).text;
-    let line = |prefix: &str| {
-        text.lines()
-            .find(|line| line.starts_with(prefix))
-            .unwrap_or_else(|| panic!("no {prefix:?} in:\n{text}"))
-            .to_owned()
-    };
-    let heavy = line("heavy   ");
+    let heavy = line_of(&text, "heavy   ");
     assert_mentions(
         &heavy,
         &[
@@ -422,7 +419,7 @@ fn a_heavy_target_runs_in_an_invocation_of_its_own_with_the_heavy_count() {
         ],
     );
     assert!(!heavy.contains("//plugins/air/..."), "{heavy}");
-    let main = line("argv    ");
+    let main = line_of(&text, "argv    ");
     assert_mentions(
         &main,
         &[
@@ -447,23 +444,17 @@ fn a_heavy_target_runs_in_an_invocation_of_its_own_with_the_heavy_count() {
 #[test]
 fn a_single_shard_target_runs_in_an_invocation_of_its_own() {
     let text = run(&["--lane", "fast", "--dry-run"], &three_group_plan_tree()).text;
-    let line = |prefix: &str| {
-        text.lines()
-            .find(|line| line.starts_with(prefix))
-            .unwrap_or_else(|| panic!("no {prefix:?} in:\n{text}"))
-            .to_owned()
-    };
-    let heavy = line("heavy   ");
+    let heavy = line_of(&text, "heavy   ");
     assert_mentions(&heavy, &["--test_sharding_strategy=forced=8", CORE_LABEL]);
 
-    let main = line("argv    ");
+    let main = line_of(&text, "argv    ");
     assert_mentions(
         &main,
         &["--test_sharding_strategy=forced=2", &format!("-- -{CORE_LABEL} -{SINGLE_LABEL}")],
     );
     assert!(!main.contains(&format!("-{OTHER_LABEL}")), "{main}");
 
-    let single = line("single  ");
+    let single = line_of(&text, "single  ");
     assert_mentions(
         &single,
         &[

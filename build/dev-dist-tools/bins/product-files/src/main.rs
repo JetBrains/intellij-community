@@ -23,7 +23,7 @@ use anyhow::Context;
 use appinfo::{ApplicationInfo, Replacement};
 
 fn main() -> ExitCode {
-    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stderr()))
+    cli::main(run)
 }
 
 struct Options {

@@ -47,36 +47,23 @@ mod tests;
 const JOB_NAME: &str = "compose dev distribution";
 
 fn main() -> ExitCode {
-    ExitCode::from(run(std::env::args_os().skip(1), &mut io::stderr()))
+    cli::main(run)
 }
 
 /// Runs the tool. It returns 0 when the composition succeeds and 1 for every failure.
 fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
-    let mut options = match cli::parse(args) {
-        Ok(options) => options,
-        Err(error) => return report(errors, &error),
+    let Some(mut options) = cli::ok_or_report(errors, cli::parse(args)) else {
+        return 1;
     };
-    let trace_file = match optional_path(&mut options, "--trace-file") {
-        Ok(trace_file) => trace_file,
-        Err(error) => return report(errors, &error),
+    let Some(trace_file) = cli::ok_or_report(errors, optional_path(&mut options, "--trace-file")) else {
+        return 1;
     };
     trace::run_traced(JOB_NAME, trace_file.as_deref(), 1, errors, |tracer, errors| {
         let root = tracer.span(JOB_NAME);
         let result = compose_dev_distribution(options, &root);
-        if let Err(error) = &result {
-            root.fail(&format_args!("{error:#}"));
-        }
-        root.end();
-        match result {
-            Ok(()) => 0,
-            Err(error) => report(errors, &error),
-        }
+        root.end_after(&result);
+        cli::exit_code(errors, result, 1)
     })
-}
-
-fn report(errors: &mut dyn Write, error: &anyhow::Error) -> u8 {
-    cli::report(errors, error);
-    1
 }
 
 /// The absolute path of an option, or `None` when the option is absent or empty.

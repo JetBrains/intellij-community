@@ -3,14 +3,7 @@ use std::collections::BTreeSet;
 use pretty_assertions::assert_eq;
 
 use super::*;
-use crate::result::TargetTiming;
-
-fn timing(label: &str, classes: &[(&str, f64)]) -> TargetTiming {
-    TargetTiming {
-        label: label.to_owned(),
-        class_seconds: classes.iter().map(|(class, seconds)| ((*class).to_owned(), *seconds)).collect(),
-    }
-}
+use crate::fake::timing;
 
 fn plan() -> ShardPlan {
     let mut plan = ShardPlan::default();

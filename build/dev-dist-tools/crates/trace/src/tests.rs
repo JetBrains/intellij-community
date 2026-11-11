@@ -126,6 +126,28 @@ fn a_failed_span_carries_the_kotlin_writers_status_tags_first() {
 }
 
 #[test]
+fn end_after_fails_the_span_with_the_alternate_form_of_an_error_only() {
+    /// An error whose alternate form adds its cause, as an `anyhow::Error` does.
+    struct Chained;
+    impl Display for Chained {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            if f.alternate() { write!(f, "error: cause") } else { write!(f, "error") }
+        }
+    }
+
+    let tracer = new_test_tracer();
+    tracer.span("ok").end_after(&Ok::<(), Chained>(()));
+    tracer.span("failed").end_after(&Err::<(), _>(Chained));
+
+    let encoded = encoded(&tracer);
+    assert_eq!(encoded.matches(r#""key":"error.message""#).count(), 1, "{encoded}");
+    assert!(
+        encoded.contains(r#"{"key":"error.message","type":"string","value":"error: cause"}"#),
+        "{encoded}"
+    );
+}
+
+#[test]
 fn a_span_never_ended_is_closed_at_write_time() {
     let tracer = new_test_tracer();
     // Tick 1 starts the span, and the encode is tick 2.

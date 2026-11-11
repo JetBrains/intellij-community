@@ -45,7 +45,7 @@ use crate::assemble::{AssembledPart, assemble};
 use crate::part::{Member, PART_VERSION, PLUGIN_ORDER, read_part, write_json};
 
 fn main() -> ExitCode {
-    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stderr()))
+    cli::main(run)
 }
 
 /// Runs the tool and returns the exit code: 1 for every error. A run that succeeds writes nothing.
@@ -57,13 +57,7 @@ fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
     } else {
         run_assemble(args)
     };
-    match result {
-        Ok(()) => 0,
-        Err(error) => {
-            cli::report(errors, &error);
-            1
-        }
-    }
+    cli::exit_code(errors, result, 1)
 }
 
 fn run_assemble(args: Vec<OsString>) -> anyhow::Result<()> {

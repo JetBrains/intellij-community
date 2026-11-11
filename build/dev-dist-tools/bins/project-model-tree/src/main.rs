@@ -53,7 +53,7 @@ struct Row {
 }
 
 fn main() -> ExitCode {
-    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stderr()))
+    cli::main(run)
 }
 
 /// Runs the tool and returns the exit code: 2 for a usage error, 1 for a failed copy or a failed span file. A run that
@@ -65,18 +65,11 @@ fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
     trace::run_traced(JOB_NAME, options.trace_file.as_deref(), 1, errors, |tracer, errors| {
         let root = tracer.span(JOB_NAME);
         let result = materialize(&options.manifest, &options.output_dir);
-        match &result {
-            Ok(count) => root.tag("files", *count),
-            Err(error) => root.fail(&format_args!("{error:#}")),
+        if let Ok(count) = &result {
+            root.tag("files", *count);
         }
-        root.end();
-        match result {
-            Ok(_) => 0,
-            Err(error) => {
-                cli::report(errors, &error);
-                1
-            }
-        }
+        root.end_after(&result);
+        cli::exit_code(errors, result, 1)
     })
 }
 

@@ -55,9 +55,16 @@ pub fn lanes() -> &'static Lanes {
     area().lanes()
 }
 
-/// The files `bt.json` and the lane table add to a tree, for a test that loads the areas from the checkout. The fake
-/// omits the optional class-time budget; tests of that gate add a synthetic baseline explicitly.
-pub fn area_files() -> [(String, String); 2] {
+/// The timing of target `label`: the seconds of each class, by its suite name.
+pub fn timing(label: &str, classes: &[(&str, f64)]) -> crate::result::TargetTiming {
+    crate::result::TargetTiming {
+        label: label.to_owned(),
+        class_seconds: classes.iter().map(|(class, seconds)| ((*class).to_owned(), *seconds)).collect(),
+    }
+}
+
+/// The fixture lane table [`LANES_TEXT`] after `edit` changed its fast lane, as JSON text.
+pub fn lanes_text_with_fast_lane(edit: impl FnOnce(&mut serde_json::Map<String, serde_json::Value>)) -> String {
     let mut lanes: serde_json::Value = serde_json::from_str(LANES_TEXT).expect("the fixture lane table parses");
     let fast = lanes["lanes"]
         .as_array_mut()
@@ -65,8 +72,16 @@ pub fn area_files() -> [(String, String); 2] {
         .iter_mut()
         .find(|lane| lane.get("name").and_then(serde_json::Value::as_str) == Some("fast"))
         .expect("the fixture has a fast lane");
-    fast.as_object_mut().expect("a lane is an object").remove("classTimeBudget");
-    let lane_text = serde_json::to_string(&lanes).expect("the fixture lane table encodes");
+    edit(fast.as_object_mut().expect("a lane is an object"));
+    serde_json::to_string(&lanes).expect("the fixture lane table encodes")
+}
+
+/// The files `bt.json` and the lane table add to a tree, for a test that loads the areas from the checkout. The fake
+/// omits the optional class-time budget; tests of that gate add a synthetic baseline explicitly.
+pub fn area_files() -> [(String, String); 2] {
+    let lane_text = lanes_text_with_fast_lane(|fast| {
+        fast.remove("classTimeBudget");
+    });
     [
         (
             AREAS_FILE.to_owned(),

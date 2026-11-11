@@ -1,13 +1,7 @@
 use pretty_assertions::assert_eq;
 
 use super::*;
-
-fn timing(label: &str, classes: &[(&str, f64)]) -> TargetTiming {
-    TargetTiming {
-        label: label.to_owned(),
-        class_seconds: classes.iter().map(|(class, seconds)| ((*class).to_owned(), *seconds)).collect(),
-    }
-}
+use crate::fake::timing;
 
 #[test]
 fn a_target_gets_a_shard_per_90_recorded_seconds_up_to_the_heavy_count() {

@@ -30,12 +30,13 @@ An action tool returns `anyhow::Result` from every function and prints the chain
 
 ```rust
 fn main() -> ExitCode {
-    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stderr()))
+    cli::main(run)
 }
 ```
 
-`run` calls the tool and passes an error to `cli::report`, which prints `ERROR: {error:#}`. Each tool keeps its own exit
-codes. `bins/runtime-layout/src/main.rs` of the dev-dist tools shows the shape.
+`run` takes the arguments and the error stream, as a test calls it, and returns the exit code: `cli::exit_code` turns a
+result into 0, or into the code of the failure after `cli::report` prints `ERROR: {error:#}`. Each tool keeps its own
+exit codes. `bins/runtime-layout/src/main.rs` of the dev-dist tools shows the shape.
 
 An action tool that succeeds prints nothing. Bazel shows the output of a successful action as an `INFO: From` block.
 A count or a report of a run goes into a tag of its span.

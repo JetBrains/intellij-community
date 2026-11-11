@@ -116,17 +116,8 @@ fn run(args: Vec<OsString>, errors: &mut dyn Write) -> u8 {
             root.tag("byteCount", 0i64);
         }
         let result = collect(&options, &root);
-        if let Err(error) = &result {
-            root.fail(&format_args!("{error:#}"));
-        }
-        root.end();
-        match result {
-            Ok(()) => 0,
-            Err(error) => {
-                cli::report(errors, &error);
-                1
-            }
-        }
+        root.end_after(&result);
+        cli::exit_code(errors, result, 1)
     })
 }
 

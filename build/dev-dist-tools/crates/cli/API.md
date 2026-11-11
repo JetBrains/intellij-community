@@ -38,3 +38,5 @@ An empty value of an optional option is `Some("")`. The tool decides whether it 
 | `Options::finish(self) -> anyhow::Result<()>` | Refuses the options and the positional arguments that the tool did not take. |
 | `report(&mut dyn Write, &anyhow::Error)` | Prints `ERROR: {error:#}` and a line break. |
 | `ok_or_report<T>(&mut dyn Write, anyhow::Result<T>) -> Option<T>` | The value of the result, or `None` after `report` prints the error. |
+| `main(impl FnOnce(Skip<ArgsOs>, &mut dyn Write) -> u8) -> ExitCode` | Runs the `run` function of a tool with the arguments after the program name and the error stream. |
+| `exit_code<T>(&mut dyn Write, anyhow::Result<T>, failure: u8) -> u8` | 0 for a value, or `failure` after `report` prints the error. |
