@@ -484,7 +484,7 @@ open class TabLabel @Internal constructor(
   }
 
   protected open fun handlePopup(e: MouseEvent) {
-    if (e.clickCount != 1 || !e.isPopupTrigger || PopupUtil.getPopupContainerFor(this) != null) {
+    if (!e.isPopupTrigger || PopupUtil.getPopupContainerFor(this) != null) {
       return
     }
 
