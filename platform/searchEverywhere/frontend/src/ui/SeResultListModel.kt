@@ -61,6 +61,9 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
     var shouldFreezeImmediately = false
 
     if (!isValid) {
+      // A valid empty list sets shouldLoadMore to false, and the tab stops the load of the results.
+      if (!throttledEvent.hasResultsUpdates()) return
+
       reset()
 
       // For non-all tab right after receiving first accumulated items
@@ -167,3 +170,10 @@ private fun SeResultEvent.isSemantic(): Boolean {
   }
   return itemData?.additionalInfo[SeItemDataKeys.IS_SEMANTIC].toBoolean()
 }
+
+/** Returns true when the event adds or replaces an item. An end event and a skipped event add no row. */
+internal fun ThrottledItems<SeResultEvent>.hasResultsUpdates(): Boolean =
+  when (this) {
+    is ThrottledOneItem<SeResultEvent> -> item is SeResultAddedEvent || item is SeResultReplacedEvent
+    is ThrottledAccumulatedItems<SeResultEvent> -> items.any { it is SeResultAddedEvent || it is SeResultReplacedEvent }
+  }
