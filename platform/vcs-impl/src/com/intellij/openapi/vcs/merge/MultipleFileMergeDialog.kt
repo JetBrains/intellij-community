@@ -288,7 +288,7 @@ open class MultipleFileMergeDialog(
                                    "") {
         withProgressText(VcsBundle.message("multiple.file.merge.modal.progress.title.resolving.conflicts")) {
           reportSequentialProgress(files.size) { reporter ->
-            for ((index, file) in files.withIndex()) {
+            for ([index, file] in files.withIndex()) {
               reporter.itemStep(VcsBundle.message("multiple.file.merge.modal.progress.resolving.file", index + 1, files.size)) {
                 val request = mergeRequestBuilder(file).build().getOrNull() ?: return@itemStep
                 val model = iterativeDataHolder.prepareModelIfSupported(file, request) ?: return@itemStep
@@ -318,7 +318,7 @@ open class MultipleFileMergeDialog(
     runWithErrorHandling {
       runWithModalProgressBlocking(getModalTaskOwner(),
                                    VcsBundle.message("multiple.file.merge.dialog.progress.title.resolving.conflicts")) {
-        val (binaryFiles, textFiles) = files.partition(mergeProvider::isBinary)
+        val [binaryFiles, textFiles] = files.partition(mergeProvider::isBinary)
         acceptRevision(resolution, binaryFiles)
 
         if (iterativeDataHolder == null) {
@@ -340,7 +340,7 @@ open class MultipleFileMergeDialog(
             }
           }
 
-          val (yoursLabel, theirsLabel) = MergeUIUtil.getYoursAndTheirsLabes(columns)
+          val [yoursLabel, theirsLabel] = MergeUIUtil.getYoursAndTheirsLabes(columns)
           withContext(Dispatchers.UiWithModelAccess) {
             acceptRevisionForIterativeResolution(iterativeFilesWithModels, resolution, yoursLabel, theirsLabel)
           }
@@ -397,7 +397,7 @@ open class MultipleFileMergeDialog(
     theirsLabel: @Nls String,
   ) {
     if (filesWithModel.isEmpty()) return
-    if (filesWithModel.any { (_, model) ->
+    if (filesWithModel.any { [_, model] ->
         model.getResolvedChanges().isNotEmpty()
       }) {
       val confirmed = MessageDialogBuilder
@@ -411,7 +411,7 @@ open class MultipleFileMergeDialog(
         .ask(project)
       if (!confirmed) return
     }
-    filesWithModel.forEach { (file, model) ->
+    filesWithModel.forEach { [file, model] ->
       acceptRevisionForFileIterativeResolution(file, model, resolution)
     }
 
@@ -512,7 +512,7 @@ open class MultipleFileMergeDialog(
     }
     runWithModalProgressBlocking(getModalTaskOwner(),
                                  VcsBundle.message("multiple.file.merge.dialog.progress.title.applying.resolutions")) {
-      iterativelyResolved.forEach { (file, model) ->
+      iterativelyResolved.forEach { [file, model] ->
         markFileProcessed(file, model.chosenSide.toMergeResolution())
       }
     }
