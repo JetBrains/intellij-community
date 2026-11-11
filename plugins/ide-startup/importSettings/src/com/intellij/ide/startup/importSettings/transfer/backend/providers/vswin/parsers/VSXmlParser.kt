@@ -9,6 +9,7 @@ import com.intellij.ide.startup.importSettings.providers.vswin.parsers.data.VSPa
 import com.intellij.ide.startup.importSettings.providers.vswin.parsers.data.VSParsedDataCreator
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.Version2
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.data.KeyBindingsParsedData
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.data.TextEditorGeneralParsedData
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.VSHive
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
@@ -80,6 +81,7 @@ class VSXmlParser(settingsFile: Path, private val hive: VSHive? = null) {
                 PatchedKeymap(oldKeymap.transferableId, oldKeymap, disp.convertToSettingsFormat(), emptyList())
             }
           }
+          is TextEditorGeneralParsedData -> allSettings.bracketColorizationEnabled = disp.bracePairColorization
         }
       }
     }
@@ -93,6 +95,9 @@ class VSXmlParser(settingsFile: Path, private val hive: VSHive? = null) {
       }
       KeyBindingsParsedData.KEY -> {
         { VSParsedDataCreator.keyBindings(version, el, hive) }
+      }
+      TextEditorGeneralParsedData.KEY -> {
+        { VSParsedDataCreator.textEditorGeneral(el) }
       }
       //DebuggerParsedData.key -> { { VSParsedDataCreator.debugger(version, el) } }
       //ToolWindowsParsedData.key -> { { VSParsedDataCreator.toolWindows(version, el) } }

@@ -17,6 +17,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaInstaller
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.progress.ProgressIndicator
@@ -39,6 +40,11 @@ interface PartialImportPerformer {
   fun patchSettingsAfterPluginInstallation(settings: Settings, pluginIds: Set<String>): Settings
   fun perform(project: Project?, settings: Settings, pi: ProgressIndicator)
   fun performEdt(project: Project?, settings: Settings)
+
+  companion object {
+    val EP_NAME: ExtensionPointName<PartialImportPerformer> =
+      ExtensionPointName("com.intellij.transferSettings.partialImportPerformer")
+  }
 }
 
 class LookAndFeelImportPerformer : PartialImportPerformer {

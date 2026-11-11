@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings.providers.vswin.parsers.data
 import com.intellij.ide.startup.importSettings.providers.vswin.mappings.FontsAndColorsMappings
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.Version2
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.data.KeyBindingsParsedData
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.data.TextEditorGeneralParsedData
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.VSHive
 import com.intellij.openapi.diagnostic.logger
 import org.jdom.Element
@@ -53,5 +54,13 @@ object VSParsedDataCreator {
       logger.info(t)
       null
     }
+  }
+
+  fun textEditorGeneral(el: Element): VSParsedData? {
+    val raw = el.getChildren("PropertyValue")
+                .firstOrNull { it.getAttributeValue("name") == "EnableBracePairColorizationOption" }
+                ?.textTrim ?: return null
+    val value = raw.lowercase().toBooleanStrictOrNull() ?: return null
+    return TextEditorGeneralParsedData(value)
   }
 }

@@ -55,6 +55,9 @@
     <extensionPoint qualifiedName="com.intellij.transferSettings.thirdPartyProductSettingItem"
                     interface="com.intellij.ide.startup.importSettings.transfer.ThirdPartyProductSettingItemProvider"
                     dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.transferSettings.partialImportPerformer"
+                    interface="com.intellij.ide.startup.importSettings.transfer.backend.providers.PartialImportPerformer"
+                    dynamic="true" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
