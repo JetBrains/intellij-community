@@ -49,6 +49,7 @@ import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.Point
+import java.awt.Rectangle
 import java.awt.Shape
 import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
@@ -411,7 +412,7 @@ class DockableEditorTabbedContainer internal constructor(
       return null
     }
 
-    val r = tabs.dropArea
+    val r = Rectangle(tabs.component.size)
     TabsUtil.updateBoundsWithDropSide(r, currentDropSide)
     return Rectangle2D.Double(r.x.toDouble(), r.y.toDouble(), r.width.toDouble(), r.height.toDouble())
   }
