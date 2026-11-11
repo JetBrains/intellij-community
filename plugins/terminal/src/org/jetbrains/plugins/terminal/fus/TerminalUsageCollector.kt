@@ -21,7 +21,7 @@ import kotlin.time.Duration
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 36)
+  private val GROUP = EventLogGroup(GROUP_ID, 37)
 
   @JvmField
   val TERMINAL_COMMAND_HANDLER_FIELD: ClassEventField = EventFields.Class("terminalCommandHandler")
