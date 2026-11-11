@@ -28,6 +28,8 @@ abstract class AbstractExternalSystemOutputMessageDispatcher(
   protected val consoleSettings: BuildViewSettingsProvider,
 ) : ExternalSystemOutputMessageDispatcher {
 
+  private val completionLock = Any()
+
   @Volatile
   private var isClosed: Boolean = false
 
@@ -53,12 +55,18 @@ abstract class AbstractExternalSystemOutputMessageDispatcher(
   }
 
   override fun invokeOnCompletion(handler: Consumer<in Throwable?>) {
-    if (isClosed) {
+    val isAdded = synchronized(completionLock) {
+      if (isClosed) {
+        false
+      }
+      else {
+        onCompletionHandlers.add(handler)
+        true
+      }
+    }
+    if (!isAdded) {
       LOG.warn("Attempt to add completion handler for closed output dispatcher, the handler will be ignored",
                if (LOG.isDebugEnabled) Throwable() else null)
-    }
-    else {
-      onCompletionHandlers.add(handler)
     }
   }
 
@@ -67,9 +75,15 @@ abstract class AbstractExternalSystemOutputMessageDispatcher(
   final override fun close() {
     val exception = runCatching { doClose() }.exceptionOrNull()
 
-    isClosed = true
+    val handlers = synchronized(completionLock) {
+      if (isClosed) return
+      isClosed = true
+      val result = ArrayList(onCompletionHandlers)
+      onCompletionHandlers.clear()
+      result
+    }
 
-    for (handler in onCompletionHandlers) {
+    for (handler in handlers) {
       try {
         handler.accept(exception)
       }
