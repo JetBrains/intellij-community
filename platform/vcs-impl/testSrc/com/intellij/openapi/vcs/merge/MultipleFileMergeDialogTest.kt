@@ -17,6 +17,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapperPeer
 import com.intellij.openapi.ui.DialogWrapperPeerFactory
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.ui.impl.DialogWrapperPeerFactoryImpl
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl
 import com.intellij.openapi.vcs.VcsBundle
@@ -35,6 +38,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.Container
@@ -75,6 +79,7 @@ internal class MultipleFileMergeDialogTest {
       runWriteAction { model.resolveAllChangesAutomatically() }
       request.applyResult(MergeResult.CANCEL)
     }
+    val questions = answerQuestions(Messages.YES)
 
     withMergeDialog(conflict) { dialog ->
       withContext(Dispatchers.EDT) { dialog.clickButton(VcsBundle.message("multiple.file.iterative.merge.resolve.manually")) }
@@ -84,6 +89,7 @@ internal class MultipleFileMergeDialogTest {
       withContext(Dispatchers.EDT) { dialog.doCancelAction() }
     }
 
+    assertEquals(listOf(DISCARD_QUESTION), questions)
     assertEquals(YOURS, fileText(conflict.file))
     assertEquals(YOURS, documentText(conflict.file))
     assertEquals(emptyList<VirtualFile>(), conflict.provider.resolvedFiles)
@@ -92,6 +98,7 @@ internal class MultipleFileMergeDialogTest {
   @Test
   fun resolveAutomaticallyKeepsYoursOnDisk(): Unit = timeoutRunBlocking {
     val conflict = createConflict()
+    val questions = answerQuestions(Messages.YES)
 
     withMergeDialog(conflict) { dialog ->
       withContext(Dispatchers.EDT) { dialog.clickButton(VcsBundle.message("multiple.file.iterative.merge.resolve.automatically")) }
@@ -101,9 +108,26 @@ internal class MultipleFileMergeDialogTest {
       withContext(Dispatchers.EDT) { dialog.doCancelAction() }
     }
 
+    assertEquals(listOf(DISCARD_QUESTION), questions)
     assertEquals(YOURS, fileText(conflict.file))
     assertEquals(YOURS, documentText(conflict.file))
     assertEquals(emptyList<VirtualFile>(), conflict.provider.resolvedFiles)
+  }
+
+  /** Esc and the window close button call `doCancelAction`, as the Close button does. */
+  @Test
+  fun cancelKeepsDialogOpenWhenUserContinuesMerge(): Unit = timeoutRunBlocking {
+    val conflict = createConflict()
+    val questions = answerQuestions(Messages.NO)
+
+    withMergeDialog(conflict) { dialog ->
+      withContext(Dispatchers.EDT) { dialog.clickButton(VcsBundle.message("multiple.file.iterative.merge.resolve.automatically")) }
+      withContext(Dispatchers.EDT) { dialog.doCancelAction() }
+
+      assertEquals(listOf(DISCARD_QUESTION), questions)
+      assertFalse(dialog.isDisposed)
+      assertEquals(PARTIALLY_MERGED, documentText(conflict.file))
+    }
   }
 
   @Test
@@ -125,6 +149,13 @@ internal class MultipleFileMergeDialogTest {
 
     assertEquals(THEIRS, fileText(conflict.file))
     assertEquals(listOf(conflict.file), conflict.provider.resolvedFiles)
+  }
+
+  /** Answers each message dialog with [answer] and returns the messages that the dialogs showed. */
+  private fun answerQuestions(answer: Int): List<String> {
+    val questions = CopyOnWriteArrayList<String>()
+    TestDialogManager.setTestDialog(TestDialog { message -> questions.add(message); answer }, disposable)
+    return questions
   }
 
   private suspend fun createConflict(): Conflict {
@@ -155,6 +186,8 @@ private const val THEIRS = "alpha\n=\ntheirs\n=\nGAMMA\n"
 
 /** [BASE] with the two non-conflicting changes applied and the conflict left unresolved. */
 private const val PARTIALLY_MERGED = "ALPHA\n=\nbeta\n=\nGAMMA\n"
+
+private val DISCARD_QUESTION: String get() = VcsBundle.message("multiple.file.iterative.merge.close.confirmation.message")
 
 private class Conflict(val file: VirtualFile, val provider: WorkingFileMergeProvider)
 

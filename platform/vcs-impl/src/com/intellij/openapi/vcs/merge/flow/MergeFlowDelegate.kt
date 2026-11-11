@@ -19,4 +19,9 @@ internal interface MergeFlowDelegate {
     unacceptableFileSelected: Boolean,
   )
   fun buildTreeModel(project: Project?, grouping: ChangesGroupingPolicyFactory, unresolvedFiles: List<VirtualFile>): DefaultTreeModel
+
+  /**
+   * Returns false when the user keeps the dialog open. The dialog calls it for each close by Close, Esc, or the window close button.
+   */
+  fun confirmClose(): Boolean = true
 }

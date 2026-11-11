@@ -227,17 +227,7 @@ internal class IterativeMergeFlowDelegate(
       cell(JPanel()).resizableColumn()
       val closeAction = object : AbstractAction(CommonBundle.getCloseButtonText()) {
         override fun actionPerformed(e: ActionEvent) {
-          val hasPartiallyResolvedFiles = files.any {
-            val model = iterativeDataHolder.getMergeConflictModel(it) ?: return@any false
-            model.getResolvedChanges().isNotEmpty() && model.getUnresolvedChanges().isNotEmpty()
-          }
-          if (!hasPartiallyResolvedFiles || MessageDialogBuilder.yesNo(VcsBundle.message("multiple.file.iterative.merge.close.confirmation.title"),
-                                                                       VcsBundle.message("multiple.file.iterative.merge.close.confirmation.message"))
-              .yesText(VcsBundle.message("multiple.file.iterative.merge.close.confirmation.yes"))
-              .noText(VcsBundle.message("multiple.file.iterative.merge.close.confirmation.no"))
-              .ask(project)) {
-            onClose()
-          }
+          onClose()
         }
       }
       cell(DialogWrapper.createJButtonForAction(closeAction, rootPane))
@@ -392,6 +382,19 @@ internal class IterativeMergeFlowDelegate(
         insertFilesIntoNode(resolvedFiles, resolvedNode)
       }
     }.build()
+  }
+
+  override fun confirmClose(): Boolean {
+    val hasPartiallyResolvedFiles = files.any {
+      val model = iterativeDataHolder.getMergeConflictModel(it) ?: return@any false
+      model.getResolvedChanges().isNotEmpty() && model.getUnresolvedChanges().isNotEmpty()
+    }
+    return !hasPartiallyResolvedFiles ||
+           MessageDialogBuilder.yesNo(VcsBundle.message("multiple.file.iterative.merge.close.confirmation.title"),
+                                      VcsBundle.message("multiple.file.iterative.merge.close.confirmation.message"))
+             .yesText(VcsBundle.message("multiple.file.iterative.merge.close.confirmation.yes"))
+             .noText(VcsBundle.message("multiple.file.iterative.merge.close.confirmation.no"))
+             .ask(project)
   }
 
   private fun TreeTable.installTableContextMenu() {
