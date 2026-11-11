@@ -172,6 +172,7 @@ class TraverseState private constructor(
       }
 
       val fileIndex = WorkspaceFileIndexEx.getInstance(project)
+      fileIndex.ensureIsUpToDate()
       val urlManager = project.workspaceModel.getVirtualFileUrlManager() as VirtualFileUrlManagerImpl
       val root = path.last()
       val rootUrl = root.url

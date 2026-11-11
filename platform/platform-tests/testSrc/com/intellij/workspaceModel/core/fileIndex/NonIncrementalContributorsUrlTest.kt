@@ -12,14 +12,17 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.rules.TempDirectoryExtension
+import com.intellij.workspaceModel.core.fileIndex.impl.TraverseState
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSets
-import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -27,6 +30,10 @@ import org.junit.jupiter.api.function.Executable
 
 @TestApplication
 internal class NonIncrementalContributorsUrlTest {
+  @RegisterExtension
+  @Order(-1)
+  private val libraryDir = TempDirectoryExtension()
+
   @RegisterExtension
   @Order(0)
   private val createRootsBeforeProject = BeforeEachCallback { context ->
@@ -37,6 +44,7 @@ internal class NonIncrementalContributorsUrlTest {
         for (path in listOf("library/src", "library/bin", "library/excluded", "excluded")) {
           directory.newVirtualDirectory(path)
         }
+        libraryDir.newVirtualDirectory("src")
       }
     }
   }
@@ -44,6 +52,25 @@ internal class NonIncrementalContributorsUrlTest {
   @RegisterExtension
   @Order(1)
   private val projectModel = ProjectModelExtension()
+
+  @Test
+  fun `traversal refreshes synthetic library roots before URL lookup`(): Unit = timeoutRunBlocking {
+    edtWriteAction {
+      val root = libraryDir.virtualFileRoot.findChild("src")!!
+      val library = SyntheticLibrary.newImmutableLibrary(listOf(root))
+      val provider = object : AdditionalLibraryRootsProvider() {
+        override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> = listOf(library)
+      }
+      AdditionalLibraryRootsProvider.EP_NAME.point.registerExtension(provider, projectModel.disposableRule.disposable)
+      WorkspaceFileIndexEx.getInstance(projectModel.project).indexData.resetCustomContributors()
+      assertUrlsAbsent(listOf(root))
+
+      val state = TraverseState.getTraverseState(root, projectModel.project)
+      assertNotNull(state)
+      assertTrue(state!!.isIndexable)
+      assertUrlRegistered(root)
+    }
+  }
 
   @Test
   fun `synthetic library roots have registered URLs`(): Unit = timeoutRunBlocking {

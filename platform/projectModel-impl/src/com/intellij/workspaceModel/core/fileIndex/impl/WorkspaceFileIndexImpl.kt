@@ -192,6 +192,10 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     return false
   }
 
+  override fun ensureIsUpToDate() {
+    getMainIndexData().ensureIsUpToDate()
+  }
+
   override fun getFileSetsAt(url: VirtualFileUrl): WorkspaceFileSets {
     if (url is VirtualFileUrlImpl && !url.isRegistered()) {
       return WorkspaceFileSets.EMPTY

@@ -148,6 +148,12 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   val isInitialized: Boolean
 
   /**
+   * Refreshes the file sets and registers their URLs before a traversal reads the URL trie.
+   */
+  @ApiStatus.Internal
+  fun ensureIsUpToDate()
+
+  /**
    * There may be thousands of file sets in index, so visiting them all is generally discouraged.
    */
   @ApiStatus.Internal

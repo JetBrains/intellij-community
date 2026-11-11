@@ -73,6 +73,8 @@ interface WorkspaceFileIndexData {
    */
   fun resetCustomContributors()
 
+  fun ensureIsUpToDate()
+
   /**
    * Returns the file sets and the exclusions registered for [url] if the corresponding file doesn't exist.
    * If [url] exists, returns an empty collection.

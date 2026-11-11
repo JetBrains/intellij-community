@@ -331,7 +331,7 @@ internal class WorkspaceFileIndexDataImpl(
     return if (parent != file) parent else null
   }
 
-  private fun ensureIsUpToDate() {
+  override fun ensureIsUpToDate() {
     if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
       updateDirtyEntities()
     }
