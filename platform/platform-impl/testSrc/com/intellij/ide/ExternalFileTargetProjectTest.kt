@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
-import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.ExternallyOpenedFiles
 import com.intellij.openapi.Disposable
@@ -11,9 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.CommandLineProjectOpenProcessor
-import com.intellij.platform.PlatformProjectOpenProcessor
-import com.intellij.projectImport.ProjectOpenProcessor
+import com.intellij.platform.ExternalFileTargetProjectProvider
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
@@ -33,7 +30,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * A [CommandLineProjectOpenProcessor] names the project of a file that comes from outside the IDE, and each mark of such a file
+ * An [ExternalFileTargetProjectProvider] names the project of a file that comes from outside the IDE, and each mark of such a file
  * reaches [ExternallyOpenedFileListener].
  */
 @TestApplication
@@ -53,9 +50,9 @@ internal class ExternalFileTargetProjectTest {
   }
 
   @Test
-  fun `the command line opens a file in the project that a processor names`(): Unit = timeoutRunBlocking {
+  fun `the command line opens a file in the project that a provider names`(): Unit = timeoutRunBlocking {
     val target = targetProject()
-    maskProcessors(TargetProjectProcessor(target))
+    maskProviders(target)
     val path = createFile("cli.txt")
 
     assertSame(target, CommandLineProcessor.processExternalCommandLine(listOf(path.toString()), null).project)
@@ -66,9 +63,9 @@ internal class ExternalFileTargetProjectTest {
   }
 
   @Test
-  fun `a file association opens a file in the project that a processor names`(): Unit = timeoutRunBlocking {
+  fun `a file association opens a file in the project that a provider names`(): Unit = timeoutRunBlocking {
     val target = targetProject()
-    maskProcessors(TargetProjectProcessor(target))
+    maskProviders(target)
     val path = createFile("association.txt")
 
     assertSame(target, ProjectUtil.openOrImportFilesAsync(listOf(path), "test"))
@@ -97,10 +94,12 @@ internal class ExternalFileTargetProjectTest {
     return ProjectManagerEx.getOpenProjects().last()
   }
 
-  /** A test masks the processors one time: a second mask of the same point is read-only. */
-  private fun maskProcessors(processor: TargetProjectProcessor) {
-    val processors = listOf(processor, PlatformProjectOpenProcessor())
-    ExtensionTestUtil.maskExtensions(ProjectOpenProcessor.EXTENSION_POINT_NAME, processors, disposable)
+  /** A test masks the providers one time: a second mask of the same point is read-only. */
+  private fun maskProviders(target: Project) {
+    val provider = object : ExternalFileTargetProjectProvider {
+      override suspend fun getTargetProject(file: Path): Project = target
+    }
+    ExtensionTestUtil.maskExtensions(ExternalFileTargetProjectProvider.EP_NAME, listOf(provider), disposable)
   }
 
   private fun createFile(name: String): Path = Files.writeString(tempPath.resolve(name), "text")
@@ -111,17 +110,5 @@ internal class ExternalFileTargetProjectTest {
     withContext(Dispatchers.EDT) {
       FileEditorManager.getInstance(project).closeFile(file)
     }
-  }
-
-  private class TargetProjectProcessor(private val target: Project) : ProjectOpenProcessor(), CommandLineProjectOpenProcessor {
-    override val name: String = "test target project"
-
-    override fun canOpenProject(file: VirtualFile): Boolean = false
-
-    override suspend fun openProjectAsync(virtualFile: VirtualFile, projectOpenOptions: ProjectOpenOptions): Project? = null
-
-    override suspend fun openProjectAndFile(file: Path, tempProject: Boolean, options: OpenProjectTask): Project? = null
-
-    override suspend fun findProjectForExternalFile(file: Path): Project = target
   }
 }

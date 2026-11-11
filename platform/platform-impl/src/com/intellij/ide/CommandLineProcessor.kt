@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
 import com.intellij.platform.CommandLineFileWait
 import com.intellij.platform.COMMAND_LINE_FILE_WAIT
+import com.intellij.platform.ExternalFileTargetProjectProvider
 import com.intellij.platform.FolderProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.configureToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.navigateToFileFromCommandLine
@@ -132,12 +133,12 @@ object CommandLineProcessor {
       return CommandLineProcessorResult(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()))
     }
 
-    // a processor can name the project of the file, and it can open one when no project is open
+    // a provider can name the project of the file, and it can open one when no project is open
     val targetProject = if (tempProject || LightEditUtil.isForceOpenInLightEditMode()) {
       null
     }
     else {
-      CommandLineProjectOpenProcessor.findProjectForExternalFile(ioFile)
+      ExternalFileTargetProjectProvider.findTargetProject(ioFile)
     }
 
     if (targetProject == null && projects.isEmpty()) {

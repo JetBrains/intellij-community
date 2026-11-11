@@ -202,6 +202,9 @@
     <extensionPoint qualifiedName="com.intellij.multipleFileOpener"
                     interface="com.intellij.ide.impl.MultipleFileOpener"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.externalFileTargetProjectProvider"
+                    interface="com.intellij.platform.ExternalFileTargetProjectProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.linkHandler"
                     beanClass="com.intellij.codeInsight.hint.TooltipLinkHandlerEP" dynamic="true">
       <with attribute="handlerClass" implements="com.intellij.codeInsight.highlighting.TooltipLinkHandler"/>

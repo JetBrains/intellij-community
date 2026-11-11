@@ -47,6 +47,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
+import com.intellij.platform.ExternalFileTargetProjectProvider
 import com.intellij.platform.FolderProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
@@ -613,8 +614,8 @@ object ProjectUtil {
       }
 
       LOG.debug { "$location: open file $file" }
-      // a processor can name the project of the file, and it can open one when no project is open
-      val targetProject = CommandLineProjectOpenProcessor.findProjectForExternalFile(file) ?: projectToClose
+      // a provider can name the project of the file, and it can open one when no project is open
+      val targetProject = ExternalFileTargetProjectProvider.findTargetProject(file) ?: projectToClose
       if (targetProject == null) {
         val openedProject = FUSProjectHotStartUpMeasurer.withProjectContextElement(file) {
           CommandLineProjectOpenProcessor.openProjectAndFile(file = file, tempProject = false)
