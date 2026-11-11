@@ -52,14 +52,6 @@ public class WizardContext extends UserDataHolderBase {
     myProjectStorageFormat = format;
   }
 
-  /**
-   * @deprecated useless
-   */
-  @Deprecated(forRemoval = true)
-  public boolean isNewWizard() {
-    return true;
-  }
-
   public ModulesProvider getModulesProvider() {
     return myModulesProvider;
   }
@@ -99,9 +91,7 @@ public class WizardContext extends UserDataHolderBase {
     if (myProject != null){
       myProjectJdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
     }
-    if (isNewWizard()) {
-      mySessionId = Session.createRandomId();
-    }
+    mySessionId = Session.createRandomId();
   }
 
   public @Nullable Project getProject() {

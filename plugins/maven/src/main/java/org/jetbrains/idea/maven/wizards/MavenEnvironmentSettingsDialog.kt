@@ -64,7 +64,7 @@ class MavenEnvironmentSettingsDialog(private val project: Project,
   override fun createActions() = arrayOf(okAction)
 
   override fun createCenterPanel() = panel {
-    row(MavenConfigurableBundle.message("maven.settings.environment.user.settings") + ":") {
+    row(MavenConfigurableBundle.message("maven.settings.environment.user.settings")) {
       val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(message("maven.select.maven.settings.file"))
       textFieldWithBrowseButton(fileChooserDescriptor, project)
         .bindText(userSettingsProperty)
@@ -72,7 +72,7 @@ class MavenEnvironmentSettingsDialog(private val project: Project,
         .align(AlignX.FILL)
         .columns(COLUMNS_MEDIUM)
     }
-    row(MavenConfigurableBundle.message("maven.settings.environment.local.repository") + ":") {
+    row(MavenConfigurableBundle.message("maven.settings.environment.local.repository")) {
       val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(message("maven.select.local.repository"))
       textFieldWithBrowseButton(fileChooserDescriptor, project)
         .bindText(localRepositoryProperty)

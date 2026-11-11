@@ -44,7 +44,7 @@ import java.util.ResourceBundle;
 /**
  * @deprecated use {@link MavenNewProjectWizardStep} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @SuppressWarnings("DeprecatedIsStillUsed")
 public class MavenModuleWizardStep extends ModuleWizardStep {
   private static final Icon WIZARD_ICON = null;

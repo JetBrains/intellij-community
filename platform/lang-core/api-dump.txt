@@ -313,7 +313,6 @@ c:com.intellij.ide.util.projectWizard.WizardContext
 - getStepIcon():javax.swing.Icon
 - isCreatingNewProject():Z
 - isCreatingNewProjectInt():I
-- isNewWizard():Z
 - isProjectFileDirectorySet():Z
 - isProjectFileDirectorySetExplicitly():Z
 - requestNextStep():V

@@ -9,12 +9,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated Override {@link AbstractMavenModuleBuilder} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class MavenModuleBuilder extends AbstractMavenModuleBuilder {
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     return new ModuleWizardStep[]{
-      new MavenModuleWizardStep(this, wizardContext, !wizardContext.isNewWizard()),
+      new MavenModuleWizardStep(this, wizardContext, false),
       new SelectPropertiesStep(wizardContext.getProject(), this)
     };
   }

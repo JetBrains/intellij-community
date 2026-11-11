@@ -61,7 +61,8 @@ class MavenEnvironmentFormTest {
     checker: (TextFieldWithHistory?) -> Unit,
   ) {
     val form = getValue(MavenEnvironmentForm::class.java, configurable, "mavenPathsForm")
-    val mavenHomeField = getValue(TextFieldWithHistory::class.java, form, "mavenHomeField")
+    val ui = getValue(Any::class.java, form, "ui")
+    val mavenHomeField = getValue(TextFieldWithHistory::class.java, ui, "mavenHomeField")
     checker(mavenHomeField)
   }
 
