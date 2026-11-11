@@ -70,6 +70,7 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 import java.awt.Component;
 import java.lang.ref.WeakReference;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -195,8 +196,10 @@ public final class PythonSdkType extends SdkType {
 
           Supplier<ValidationResult> validation = () -> {
             try {
-              String adjustedPath = adjustSelectedSdkHome(file.getPath());
-              boolean isValid = isLocalPathValid(Path.of(adjustedPath));
+              Path adjustedPath = Path.of(adjustSelectedSdkHome(file.getPath()));
+              // A flavor accepts any executable path, and a directory is one. So a directory is valid only when it holds
+              // a Python binary, which the adjusted path then names.
+              boolean isValid = !Files.isDirectory(adjustedPath) && isLocalPathValid(adjustedPath);
               return new ValidationResult(isLocatedInWsl(file) || isValid, file.isDirectory());
             }
             catch (InvalidPathException e) {
