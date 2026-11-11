@@ -90,6 +90,18 @@ class UvPythonListParserTest {
     assertEquals("3.15", download.versionParts.languageLevel)
   }
 
+  /** PY-93959: the widget does not build an environment on a pre-release unless the user picks it. */
+  @Test
+  fun testPreRelease() {
+    val (stable, beta, pypy) = parseUvPythonList(sample).getOrThrow()
+    assertFalse(stable.isPreRelease, "3.14.5 is a final release")
+    assertTrue(beta.isPreRelease, "3.15.0b4 is a beta")
+    assertFalse(pypy.isPreRelease, "3.11.13 is a final release")
+    for (version in listOf("3.16.0a1", "3.15.0rc2", "3.16.0.dev0")) {
+      assertTrue(beta.copy(version = version).isPreRelease, version)
+    }
+  }
+
   @Test
   fun testNonCPythonImplementationIsKept() {
     val pypy = parseUvPythonList(sample).getOrThrow()[2]
