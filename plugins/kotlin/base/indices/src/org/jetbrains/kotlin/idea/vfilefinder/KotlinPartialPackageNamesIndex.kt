@@ -82,7 +82,8 @@ class KotlinPartialPackageNamesIndex : FileBasedIndexExtension<FqName, Name?>() 
 
     override fun getVersion() = 6
 
-    override fun traceKeyHashToVirtualFileMapping(): Boolean = true
+    // the forward index filters the keys by file id, unless that filtering is off:
+    override fun traceKeyHashToVirtualFileMapping(): Boolean = !FileBasedIndexExtension.USE_FORWARD_INDEX_FOR_KEYS_FILTERING
 
     private fun FileContent.toPackageFqName(): FqName? =
         when (this.fileType) {
