@@ -135,7 +135,7 @@ public abstract class FileAccessorCache<K, T> implements EqualityPolicy<K> {
   private <R, E extends Exception> R withUpdateLock(@NotNull K key,
                                                     @NotNull ThrowableComputable<R, E> lambda) throws E {
     int hash = getHashCode(key);
-    int segmentNo = Math.abs(hash) % resourceAllocationLocks.length;
+    int segmentNo = Math.floorMod(hash, resourceAllocationLocks.length);
     ReentrantLock lock = resourceAllocationLocks[segmentNo];
     lock.lock();
     try {
