@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
+// LANGUAGE_VERSION: 2.2
+
+class Session(val user: String)
+
+context(_: Session)
+val auditProp: String get() = "prop(${contextOf<Session>().user})"
+
+fun b3(): String = context(Session("b3")) { auditProp }

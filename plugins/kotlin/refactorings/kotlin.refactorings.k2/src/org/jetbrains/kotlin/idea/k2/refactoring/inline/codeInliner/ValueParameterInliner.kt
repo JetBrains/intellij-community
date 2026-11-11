@@ -155,7 +155,7 @@ internal class ValueParameterInliner(
             .sortedByDescending { PsiTreeUtil.getDepth(it, null) }
         usages.forEach { expr ->
             val contextParameterUsage = expr.getCopyableUserData(CodeToInline.CONTEXT_PARAMETER_USAGE_KEY) ?: return@forEach
-            val oldExpression = expr.parent as? KtExpression ?: return@forEach
+            val oldExpression = expr.parent as? KtExpression ?: expr
             val arguments = contextParameterUsage.filter { explicitContextArgumentsNames.contains(it.second) }
             if (arguments.isEmpty()) return@forEach
 
