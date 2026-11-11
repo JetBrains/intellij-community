@@ -12,4 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 interface PyProjectService {
   suspend fun getPyProject(module: Module): PyProject?
   suspend fun getPyProjects(project: Project): List<PyProject>
+
+  /** [getPyProjects] without the wait for the JPS model, see [getPyProjectsWithoutJpsSync]. */
+  fun getPyProjectsWithoutJpsSync(project: Project): List<PyProject>
 }

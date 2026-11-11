@@ -2,16 +2,17 @@
 package com.jetbrains.python.run.configuration
 
 import org.jetbrains.annotations.ApiStatus
-import com.jetbrains.python.project.PyProject.Companion.getPyProjects
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Computable
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.asItem
 import com.intellij.python.sdk.backend.isOnTarget
@@ -20,15 +21,20 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams
 import com.jetbrains.python.sdk.PySdkListCellRenderer
 import java.util.function.Consumer
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 
 /**
  * The interpreter combo of a run configuration.
  *
  * It holds [PyInterpreterItem]s rather than SDKs: a row states whether its interpreter can be used, and only the
- * interpreter can answer that. The items are read under a progress, off the EDT. The rows are the interpreters of the
- * `PyProject` of the module of the configuration, or of every `PyProject` of [project] when it has no module, from
- * [PythonInterpreterRegistry].
+ * interpreter can answer that. The rows are the interpreters of the `PyProject` of the module of the configuration, or
+ * of every `PyProject` of [project] when it has no module, from [PythonInterpreterRegistry].
+ *
+ * The combo reads the rows from the [EvoPyProjectModel] snapshot in the background while it is shown, see [initList].
+ * The read must not block the EDT: a modal progress over it held the synchronization with the JPS model back, and the
+ * read waited for it (PY-93821). Until the read ends, the combo holds only the interpreter of the configuration, so
+ * [apply] keeps it.
  */
 class PySdkComboBox @ApiStatus.Internal constructor(
   private val project: Project,
@@ -40,7 +46,27 @@ class PySdkComboBox @ApiStatus.Internal constructor(
   /** The interpreter of each row, see [initList]. The row for "the interpreter of the module" has none. */
   private var interpreters: Map<PyInterpreterItem, PythonInterpreter> = emptyMap()
 
+  /** Each new value asks for a new read of the rows, see [initList]. */
+  private val readRequests = MutableStateFlow(0)
+
+  init {
+    showRows(emptyList())
+    launchOnShow("PySdkComboBox.readInterpreters") {
+      readRequests.collectLatest {
+        val module = moduleProvider.compute()
+        val read = withContext(Dispatchers.Default) { readInterpreters(module) }
+        val selected = getSelectedInterpreter().takeUnless { isUseModuleSdk() }
+        // An interpreter that the read does not hold, such as one of another PyProject, keeps its row.
+        showRows(if (selected == null || selected in read) read else read + selected)
+        selectedItem = selected?.let { itemFor(it) }
+        updateRemoteInterpreterMode()
+      }
+    }
+  }
+
   fun reset(config: AbstractPythonRunConfigurationParams) {
+    // The rows of the last read stay. An interpreter that they do not hold is a row of its own until the next read.
+    config.pythonInterpreter?.takeIf { itemFor(it) == null }?.let { showRows(interpreters.values + it) }
     initList()
     selectedItem = config.pythonInterpreter?.let { itemFor(it) }
     setUseModuleSdk(config.isUseModuleSdk)
@@ -51,18 +77,25 @@ class PySdkComboBox @ApiStatus.Internal constructor(
     updateRemoteInterpreterMode()
   }
 
+  /** Asks for a new read of the rows. The read runs while the combo is shown, and it keeps the selected interpreter. */
   fun initList() {
-    interpreters = readInterpreters {
-      val pyProjects = moduleProvider.compute()?.asPyProject()?.let { listOf(it) } ?: project.getPyProjects()
-      val registry = PythonInterpreterRegistry.getInstance(project)
-      pyProjects.flatMap { registry.interpreters(it) }.distinct().associateBy { it.asItem() }
-    }
-    val items: MutableList<PyInterpreterItem?> = interpreters.keys.toMutableList()
+    readRequests.update { it + 1 }
+  }
+
+  private suspend fun readInterpreters(module: Module?): List<PythonInterpreter> {
+    val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
+    val pyProjects = module?.let { snapshot.forModule(it) }?.let { listOf(it.pyProject) } ?: snapshot.evoPyProjects.map { it.pyProject }.toList()
+    val registry = PythonInterpreterRegistry.getInstance(project)
+    return pyProjects.flatMap { registry.interpreters(it) }.distinct()
+  }
+
+  private fun showRows(rows: List<PythonInterpreter>) {
+    interpreters = rows.associateBy { it.asItem() }
+    removeAllItems()
     if (addDefault) {
-      items.add(0, null)
+      addItem(null)
     }
-    removeAllItems() // initList is called at least twice: on creation and on reset, so we need to clean it up
-    for (item in items) {
+    for (item in interpreters.keys) {
       addItem(item)
     }
   }
@@ -118,12 +151,4 @@ class PySdkComboBox @ApiStatus.Internal constructor(
   /** The row of [interpreter], or `null` when the combo holds no row for it. */
   private fun itemFor(interpreter: PythonInterpreter): PyInterpreterItem? = interpreters.entries.firstOrNull { it.value == interpreter }?.key
 
-  private fun <T> readInterpreters(read: suspend () -> T): T =
-    // Before the combo box is in a window, the progress cannot use it as the owner.
-    // An incomplete list of interpreters is not usable, so the user cannot cancel the read.
-    runWithModalProgressBlocking(if (isShowing) ModalTaskOwner.component(this) else ModalTaskOwner.guess(),
-                                 PyBundle.message("python.interpreters.reading.interpreters.progress"),
-                                 TaskCancellation.nonCancellable()) {
-      read()
-    }
 }

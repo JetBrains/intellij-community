@@ -28,6 +28,7 @@ import com.intellij.python.pyproject.model.api.InterpreterConfigurationResult
 import com.intellij.python.pyproject.model.api.ModuleSdkState
 import com.intellij.python.pyproject.model.api.autoConfigureSdkDoNotCreateFiles
 import com.intellij.python.pyproject.model.api.getModuleSdkState
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.pyproject.statistics.PyProjectTomlCollector
 import com.intellij.python.pytools.backend.PyTool
@@ -219,6 +220,10 @@ private class SuggestToolInstallationFix(
 }
 
 private suspend fun Module.getQuickFixBySdkSuggestion(): FindQuickFixResult {
+  // The snapshot does not wait for the JPS model, so a module with an interpreter gets its answer while the project opens.
+  if (EvoPyProjectModel.getInstance(project).snapshot().forModule(this)?.interpreter != null) return FindQuickFixResult.SdkAppliedAutomatically
+  // The configuration below can write the interpreter of the module. `asPyProject` waits for the JPS model first, because
+  // the synchronization with it replaces the module.
   // A module that is not a Python project has no suggestion, but it still needs an interpreter.
   val pyProject = asPyProject() ?: return FindQuickFixResult.ShowUserFix(null)
   return when (val r = pyProject.getModuleSdkState()) {

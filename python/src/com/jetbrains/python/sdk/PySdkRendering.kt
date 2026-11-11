@@ -2,8 +2,7 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.jetbrains.python.project.PyProject.Companion.getPyProjects
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.jetbrains.python.project.PyProject
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.asItem
@@ -105,10 +104,14 @@ fun List<Sdk>.interpreterItemsUnderProgress(project: Project): List<PyInterprete
 /**
  * The interpreters of the [PyProject] of [module], or of every [PyProject] of [project] when [module] is `null`. A run
  * configuration offers them before the user picks its module.
+ *
+ * The [PyProject]s come from the [EvoPyProjectModel] snapshot, which does not wait for the JPS model. The callers read
+ * under a modal progress, and a modal progress holds the synchronization with the JPS model back (PY-93821).
  */
 private suspend fun pyProjectInterpreters(project: Project, module: Module?): List<PythonInterpreter> {
   val registry = PythonInterpreterRegistry.getInstance(project)
-  val pyProjects = if (module != null) listOfNotNull(module.asPyProject()) else project.getPyProjects()
+  val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
+  val pyProjects = if (module != null) listOfNotNull(snapshot.forModule(module)?.pyProject) else snapshot.evoPyProjects.map { it.pyProject }.toList()
   return pyProjects.flatMap { registry.interpreters(it) }.distinct()
 }
 

@@ -32,15 +32,33 @@ interface PyProject {
   companion object {
     /**
      * `null` means module is non-python or disposed and must be ignored
+     *
+     * Waits for the synchronization with the JPS model. Do not call it under a modal progress or from a modal dialog,
+     * see [getPyProjectsWithoutJpsSync].
      */
     suspend fun Module.asPyProject(): PyProject? = service.getPyProject(this)
 
+    /**
+     * Waits for the synchronization with the JPS model. Do not call it under a modal progress or from a modal dialog,
+     * see [getPyProjectsWithoutJpsSync].
+     */
     suspend fun Project.getPyProjects(): List<PyProject> = service.getPyProjects(this)
 
 
     private val service get() = ApplicationManager.getApplication().service<PyProjectService>()
   }
 }
+
+/**
+ * The [PyProject]s of the current workspace model, without the wait for the synchronization with the JPS model that
+ * [PyProject.getPyProjects] makes. While the project opens, the workspace model can be the cache of the last session.
+ *
+ * For a reader that reads again on each module change, so the synchronization corrects it, and that a modal progress
+ * or a modal dialog can hold up: they hold the synchronization back.
+ */
+@ApiStatus.Internal
+fun Project.getPyProjectsWithoutJpsSync(): List<PyProject> =
+  ApplicationManager.getApplication().service<PyProjectService>().getPyProjectsWithoutJpsSync(this)
 
 /**
  * The machine this project lives on.

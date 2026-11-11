@@ -15,11 +15,23 @@ internal class PyProjectServiceImpl : PyProjectService {
     val storage = project.getSnapshot()
     return project.modules.mapNotNull { PyProjectImpl.create(it, storage) }
   }
+
+  override fun getPyProjectsWithoutJpsSync(project: Project): List<PyProject> = project.getPyProjectsWithCurrentStorage().first
 }
 
 /** Every `PyProject` of [this] project, and the storage they were read from. Read more data from the same storage. */
 internal suspend fun Project.getPyProjectsWithStorage(): Pair<List<PyProjectImpl>, ImmutableEntityStorage> {
   val storage = getSnapshot()
+  return modules.mapNotNull { PyProjectImpl.create(it, storage) } to storage
+}
+
+/**
+ * [getPyProjectsWithStorage] without the wait for the synchronization with the JPS model. While the project opens, the
+ * storage can be the workspace model cache of the last session. For a reader that recomputes on each change of the
+ * workspace model, such as `EvoPyProjectModel`: the synchronization is such a change.
+ */
+internal fun Project.getPyProjectsWithCurrentStorage(): Pair<List<PyProjectImpl>, ImmutableEntityStorage> {
+  val storage = WorkspaceModel.getInstance(this).currentSnapshot
   return modules.mapNotNull { PyProjectImpl.create(it, storage) } to storage
 }
 

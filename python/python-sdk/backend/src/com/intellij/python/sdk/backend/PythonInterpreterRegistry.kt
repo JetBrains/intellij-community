@@ -28,7 +28,7 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.project.PyProject.Companion.getPyProjects
+import com.jetbrains.python.project.getPyProjectsWithoutJpsSync
 import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
@@ -436,7 +436,9 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
    * so a later recompute builds the SDK, and a missing environment that comes back keeps the paths of the user.
    */
   private suspend fun buildSdk(key: PythonInterpreterKey, record: PythonInterpreterRecords.StoredInterpreter): Sdk? {
-    val pyProject = project.getPyProjects().firstOrNull { it.baseDir == key.ownerDir } ?: return null
+    // Not `getPyProjects`: the model waits for the first computation, and a modal dialog holds the JPS model back. A
+    // module change recomputes, so the synchronization with the JPS model corrects this read.
+    val pyProject = project.getPyProjectsWithoutJpsSync().firstOrNull { it.baseDir == key.ownerDir } ?: return null
     val fileSystem = key.ref.fileSystem(project) ?: return null
     val (homePath, data) = fileSystem.sdkHomeAndData(pyProject, key.ref).successOrNull ?: return null
     data.associatedModulePath = key.ownerDir.toString()

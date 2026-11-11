@@ -30,6 +30,7 @@ import com.intellij.platform.workspace.storage.entities
 import com.intellij.psi.PsiElement
 import com.intellij.python.community.common.sdk.sendPythonAvailableEvent
 import com.intellij.python.externalIndex.PyExternalFilesIndexService
+import com.intellij.python.pyproject.model.internal.pyProject.getPyProjectsWithCurrentStorage
 import com.intellij.python.pyproject.model.internal.pyProject.getPyProjectsWithStorage
 import com.intellij.python.pyproject.model.internal.workspaceBridge.affectsWorkspaceLayout
 import com.intellij.python.pyproject.model.internal.workspaceBridge.getWorkspaceLayout
@@ -339,8 +340,11 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     // The legacy flow lets the SDK table decide, so it recomputes on each change of the registry, as
     // [hasPendingSdkReferences] says.
     val libraryFlow = isInterpreterLibraryFlowEnabled()
-    // Read all module data from this one storage. It does not change, so a module removal cannot break the pass.
-    val (sources, storage) = project.getPyProjectsWithStorage()
+    // Read all module data from this one storage. It does not change, so a module removal cannot break the pass. It
+    // does not wait for the JPS model, so a reader gets a snapshot while the project opens, also under a modal dialog
+    // that holds the synchronization back (PY-93821). The synchronization changes the workspace model, so the next pass
+    // reads its result.
+    val (sources, storage) = project.getPyProjectsWithCurrentStorage()
     val hasPendingSdkReferences = !libraryFlow || hasPendingSdkReferences(project, storage)
     val layouts = sources.associate { it.residesOnModule to it.residesOnModule.getWorkspaceLayout(storage) }
     val references = sources.associate { pyProject ->
