@@ -9,6 +9,7 @@ import com.intellij.python.pytools.backend.runtime.cliArgs
 import com.intellij.python.pytools.backend.runtime.cliOption
 import com.intellij.python.uv.backend.PyUvBundle
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.psi.LanguageLevel
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializable
@@ -60,7 +61,21 @@ data class UvPythonEntry(
 
   /** True for a free-threaded (no-GIL) build. */
   val isFreeThreaded: Boolean get() = variant == FREE_THREADED_VARIANT
+
+  /** True for an alpha, a beta, a release candidate or a development build, such as `3.16.0a1`. */
+  val isPreRelease: Boolean get() = PRE_RELEASE_SUFFIX.containsMatchIn(version)
+
+  /**
+   * The [LanguageLevel] of [versionParts], or `null` when this IDE has no level for it, such as `3.16`.
+   *
+   * [LanguageLevel.fromPythonVersion] is not used: it gives `PYTHON310` for a version that it does not know.
+   */
+  val languageLevelOrNull: LanguageLevel?
+    get() = LanguageLevel.entries.firstOrNull { it.majorVersion == versionParts.major && it.minorVersion == versionParts.minor }
 }
+
+/** The PEP 440 suffix of a pre-release or a development build: `a1`, `b4`, `rc2`, `.dev0`. */
+private val PRE_RELEASE_SUFFIX: Regex = Regex("""\d(a|b|rc)\d+|\.dev\d*""")
 
 // Top level rather than a companion of the class it belongs to: the serialization plugin puts the generated
 // `serializer()` on whatever companion the class declares, so a private one makes it unreachable and decoding dies with

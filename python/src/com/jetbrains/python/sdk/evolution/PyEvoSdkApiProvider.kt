@@ -308,13 +308,16 @@ private suspend fun uvPythonOptions(
 ): List<EvoAddNewOptionDto> {
   val accepts = versionFilter(baseDir, envSpecifiers)
   val uvPythonDir = UvSystemPythonService.uvPythonDir(fileSystem, baseDir)
-  val entries = UvSystemPythonService.listEntries(fileSystem, baseDir)
+  return UvSystemPythonService.listEntries(fileSystem, baseDir)
     // CPython only. uv also offers PyPy and GraalPy, which are a different interpreter rather than another build of
     // this one, and nothing downstream is prepared to have an environment built on one.
     .filter { it.implementation == CPYTHON_IMPLEMENTATION }
-    .filter { level -> LanguageLevel.fromPythonVersion(level.versionParts.languageLevel)?.let(accepts) == true }
-  return entries.groupBy { it.versionParts.languageLevel }.entries.sortedByDescending { LanguageLevel.fromPythonVersion(it.key) }
-    .map { (level, group) -> group.toOption(level, uvPythonDir) }
+    // A version that this IDE has no level for, such as `3.16`, is not offered.
+    .mapNotNull { entry -> entry.languageLevelOrNull?.takeIf(accepts)?.let { it to entry } }
+    .groupBy({ it.first }, { it.second })
+    .entries
+    .sortedByDescending { it.key }
+    .map { (level, group) -> group.toOption(level.toPythonVersion(), uvPythonDir) }
 }
 
 /** uv's name for the interpreter this widget can build environments on. */
@@ -345,6 +348,7 @@ private fun List<UvPythonEntry>.toOption(level: @NlsSafe String, uvPythonDir: Pa
     token = default?.let { it.path ?: it.key } ?: level,
     bases = newestFirst.map { it.toBaseDto(uvPythonDir) },
     installable = default?.path == null,
+    preRelease = all { it.isPreRelease },
   )
 }
 

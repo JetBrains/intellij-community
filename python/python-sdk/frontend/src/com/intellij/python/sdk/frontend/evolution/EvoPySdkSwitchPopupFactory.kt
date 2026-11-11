@@ -250,7 +250,8 @@ class EvoPySdkSwitchPopupFactory(
    * It wears its tool's own icon, like the environments beside it. What tells the two apart is the version column: an
    * environment that exists reports the version it has, and this one names the Python it would be built on.
    *
-   * The Python it names is the first option, which every provider sorts newest first.
+   * The Python it names is the first option that is not a pre-release, see [EvoAddNewOptionDto.preRelease]. Every
+   * provider sorts the options newest first. When all options are pre-releases, the row names the first one.
    */
   private fun createEnvRow(
     nodeId: String,
@@ -267,7 +268,7 @@ class EvoPySdkSwitchPopupFactory(
     // otherwise the same row — same tool icon, same name — and only the version column separates them: one reports the
     // version it has, this one names the Python it would get.
     val fadedIcon = IconLoader.getTransparentIcon(icon, CREATE_ROW_ICON_ALPHA)
-    val best = options.first()
+    val best = options.firstOrNull { !it.preRelease } ?: options.first()
     fun create(token: String, source: PyEvoWidgetCollector.Source, installVersion: String? = null) =
       createEnv(nodeId, traceId, token, path, defaultName, source, installVersion)
     val action = object : AnAction({ name }, { "" }, fadedIcon), DumbAware, EvoBasePythonPanel {

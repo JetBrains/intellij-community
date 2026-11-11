@@ -172,7 +172,7 @@ internal fun List<UvPythonEntry>.toSystemPythons(uvPythonDir: Path?): List<UvSys
   val byRealPath = LinkedHashMap<Path, UvSystemPython>()
   for (entry in this) {
     val binary = entry.path?.let { Path.of(it) } ?: continue
-    val level = entry.languageLevelOrNull() ?: continue
+    val level = entry.languageLevelOrNull ?: continue
     byRealPath.putIfAbsent(binary.realPathOrSelf(), UvSystemPython(
       pythonBinary = binary,
       languageLevel = level,
@@ -188,10 +188,6 @@ internal fun List<UvPythonEntry>.toSystemPythons(uvPythonDir: Path?): List<UvSys
     compareBy<UvSystemPython> { it.freeThreaded }.thenByDescending { it.languageLevel }
   )
 }
-
-/** The `major.minor` of an entry as a [LanguageLevel], or null for one this IDE has no level for. */
-private fun UvPythonEntry.languageLevelOrNull(): LanguageLevel? =
-  LanguageLevel.fromPythonVersion(versionParts.languageLevel)
 
 /** The path with every symlink followed, or the path itself when it cannot be resolved. */
 private fun Path.realPathOrSelf(): Path =
