@@ -49,7 +49,7 @@ import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.ui.EDT
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 import com.intellij.workspaceModel.ide.ProjectSynchronizerUtil
 import com.intellij.workspaceModel.ide.impl.reactive.WmReactive
@@ -580,8 +580,8 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     if (project.isDisposed) return
     //it is important to update WorkspaceFileIndex before other listeners are called because they may rely on it
     logErrorOnEventHandling {
-      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.indexData?.onEntitiesChanged(change,
-                                                                                                                EntityStorageKind.MAIN)
+      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexEx)?.indexData?.onEntitiesChanged(
+        change, EntityStorageKind.MAIN)
     }
 
     // We emit async changes before running other listeners under write action
@@ -597,8 +597,8 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   private fun onUnloadedEntitiesChanged(change: VersionedStorageChange) {
     //it is important to update WorkspaceFileIndex before other listeners are called because they may rely on it
     logErrorOnEventHandling {
-      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexImpl)?.indexData?.onEntitiesChanged(change,
-                                                                                                                EntityStorageKind.UNLOADED)
+      (project.serviceIfCreated<WorkspaceFileIndex>() as? WorkspaceFileIndexEx)?.indexData?.onEntitiesChanged(
+        change, EntityStorageKind.UNLOADED)
     }
     logErrorOnEventHandling {
       project.messageBus.syncPublisher(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED).changed(change)
