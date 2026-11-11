@@ -4,11 +4,15 @@ package com.intellij.platform.compose.swing.components
 import androidx.compose.runtime.Composable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.compose.swing.components.style.OptionButtonKind
 import com.intellij.ui.components.JBOptionButton
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.compose.swing.components.style.ButtonStyleScope
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.listener.actionListener
 import org.jetbrains.compose.swing.node.SwingNode
+import org.jetbrains.compose.swing.style.SwingStyle
+import org.jetbrains.compose.swing.style.styleable
 
 /**
  * A button whose primary click runs [onClick] and whose drop-down offers the secondary [options].
@@ -22,12 +26,13 @@ public fun OptionButton(
   text: @NlsContexts.Button String,
   onClick: () -> Unit,
   modifier: SwingModifier = SwingModifier,
+  style: SwingStyle<ButtonStyleScope> = SwingStyle,
   options: List<AnAction> = emptyList(),
   addSeparator: Boolean = true,
 ) {
   SwingNode(
     factory = { JBOptionButton(null, null) },
-    modifier = modifier.actionListener { onClick() },
+    modifier = modifier.actionListener { onClick() }.styleable(OptionButtonKind, style),
     update = {
       set(text) { this.text = it }
       set(options) { setOptions(it) }

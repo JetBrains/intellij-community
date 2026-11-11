@@ -2,10 +2,12 @@
 package com.intellij.platform.compose.swing.components
 
 import androidx.compose.runtime.Composable
+import com.intellij.platform.compose.swing.components.style.ComboBoxKind
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.compose.swing.components.selection.ListItemScope
 import org.jetbrains.compose.swing.components.selection.listItemRenderer
 import org.jetbrains.compose.swing.components.selection.rememberListItemRenderer
+import org.jetbrains.compose.swing.components.style.ComboBoxStyleScope
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.listener.actionListener
 import org.jetbrains.compose.swing.node.SwingNode
@@ -15,6 +17,8 @@ import javax.swing.DefaultComboBoxModel
 import javax.swing.JComboBox
 import kotlin.reflect.KClass
 import com.intellij.openapi.ui.ComboBox as IdeaComboBox
+import org.jetbrains.compose.swing.style.SwingStyle
+import org.jetbrains.compose.swing.style.styleable
 
 /**
  * A drop-down of [items] the user picks one of, on the IDE's own combo box rather than a plain
@@ -45,9 +49,10 @@ public inline fun <reified T : Any> ComboBox(
   selectedItem: T?,
   noinline onSelectedItemChange: (T?) -> Unit,
   modifier: SwingModifier = SwingModifier,
+  style: SwingStyle<ComboBoxStyleScope> = SwingStyle,
   noinline itemContent: (@Composable ListItemScope.(item: T) -> Unit)? = null,
 ) {
-  ComboBox(T::class, items, selectedItem, onSelectedItemChange, modifier, itemContent)
+  ComboBox(T::class, items, selectedItem, onSelectedItemChange, modifier, style, itemContent)
 }
 
 /**
@@ -68,6 +73,7 @@ public fun <T : Any> ComboBox(
   selectedItem: T?,
   onSelectedItemChange: (T?) -> Unit,
   modifier: SwingModifier = SwingModifier,
+  style: SwingStyle<ComboBoxStyleScope> = SwingStyle,
   itemContent: (@Composable ListItemScope.(item: T) -> Unit)? = null,
 ) {
   val mirror = rememberMirrorState(selectedItem)
@@ -77,7 +83,8 @@ public fun <T : Any> ComboBox(
       // report narrows the change to the user's own choices: settling the declaration fires an action
       // event of its own, and that one is not a choice.
       mirror.report(this.selectedItemOrNull(), onSelectedItemChange)
-    }.then(if (itemContent == null) SwingModifier else SwingModifier.listItemRenderer(rememberListItemRenderer(itemType, itemContent))),
+    }.then(if (itemContent == null) SwingModifier else SwingModifier.listItemRenderer(rememberListItemRenderer(itemType, itemContent)))
+      .styleable(ComboBoxKind, style),
     update = {
       set(items) { newItems ->
         // The items go in as a whole new model rather than into the live one: installing a model raises no

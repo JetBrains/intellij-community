@@ -42,7 +42,7 @@ import com.intellij.platform.compose.swing.components.ComboBox
 import com.intellij.platform.compose.swing.components.Comment
 import com.intellij.platform.compose.swing.components.SegmentedButton
 import com.intellij.platform.compose.swing.composeSwingPanel
-import com.intellij.platform.compose.swing.modifier.actionLinkIcon
+import com.intellij.platform.compose.swing.components.style.actionLinkIcon
 import com.intellij.platform.eel.fs.EelFiles
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
@@ -931,7 +931,8 @@ private fun IconLink(icon: Icon, tooltip: String, onClick: () -> Unit) {
   ActionLink(
     text = "",
     onClick = onClick,
-    modifier = SwingModifier.actionLinkIcon(icon, atRight = false).styleable {
+    style = {
+      actionLinkIcon(icon)
       toolTip(tooltip)
       accessibleName(tooltip)
     },

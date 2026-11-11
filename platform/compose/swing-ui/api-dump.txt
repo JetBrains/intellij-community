@@ -10,5 +10,6 @@ f:com.intellij.platform.compose.swing.components.SearchTextFieldKt
 f:com.intellij.platform.compose.swing.components.SegmentedButtonKt
 f:com.intellij.platform.compose.swing.components.ThreeStateCheckBoxKt
 f:com.intellij.platform.compose.swing.components.TitledSeparatorKt
-f:com.intellij.platform.compose.swing.modifier.ActionLinkModifiersKt
-f:com.intellij.platform.compose.swing.modifier.OutlineKt
+f:com.intellij.platform.compose.swing.components.style.ActionLinkStylesKt
+f:com.intellij.platform.compose.swing.components.style.ComponentStylesKt
+f:com.intellij.platform.compose.swing.components.style.OutlineKt

@@ -5,6 +5,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.intellij.BundleBase
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.compose.swing.components.style.FormLabelKind
+import com.intellij.platform.compose.swing.components.style.FormPanelKind
+import com.intellij.platform.compose.swing.components.style.SeparatorKind
+import com.intellij.platform.compose.swing.components.style.TitledSeparatorKind
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.DslComponentProperty
@@ -23,6 +27,9 @@ import org.jetbrains.compose.swing.node.VirtualSwingNode
 import javax.swing.JLabel
 import javax.swing.JPanel
 import com.intellij.ui.TitledSeparator as IdeaTitledSeparator
+import org.jetbrains.compose.swing.style.ContainerStyleScope
+import org.jetbrains.compose.swing.style.SwingStyle
+import org.jetbrains.compose.swing.style.styleable
 
 /**
  * A form: rows with aligned labels, comments, groups, separators and indents, measured by the platform's
@@ -72,7 +79,7 @@ import com.intellij.ui.TitledSeparator as IdeaTitledSeparator
  * | `group("Title") { }`, `indent { }`, `separator()` | `FormGroup`, `FormIndent`, `FormSeparator` |
  * | `row { comment("...") }` | `FormComment("...")` |
  * | `.bindText(::property)`, `.bindSelected(...)` | state in, callback out; see `SettingState` |
- * | `.visibleIf(predicate)`, `.enabledIf(...)` | an `if` around the row, or a `SwingModifier` |
+ * | `.visibleIf(predicate)`, `.enabledIf(...)` | an `if` around the row, or a style |
  *
  * A cell is left-aligned and vertically centered unless [FormRowScope.align] says otherwise.
  * Exact gaps stay with `panel {}`.
@@ -92,12 +99,13 @@ import com.intellij.ui.TitledSeparator as IdeaTitledSeparator
 @ApiStatus.Experimental
 public fun FormPanel(
   modifier: SwingModifier = SwingModifier,
+  style: SwingStyle<ContainerStyleScope> = SwingStyle,
   content: @Composable FormScope.() -> Unit,
 ) {
   val scope = remember { FormScopeInstance(group = null, indentLevel = 0) }
   SwingNode(
     factory = { JPanel(newFormLayout()) },
-    modifier = modifier,
+    modifier = modifier.styleable(FormPanelKind, style),
     content = { scope.content() },
   )
 }
@@ -593,7 +601,7 @@ private fun FormRowStart(text: @NlsContexts.Label String, modifier: SwingModifie
         putClientProperty(DslComponentProperty.ROW_LABEL, true)
       }
     },
-    modifier = modifier,
+    modifier = modifier.styleable(FormLabelKind, SwingStyle),
     // A label spells a mnemonic the way every other IDE label does, with an ampersand before the letter.
     update = {
       set(text) { this.text = BundleBase.replaceMnemonicAmpersand(it) }
@@ -605,7 +613,7 @@ private fun FormRowStart(text: @NlsContexts.Label String, modifier: SwingModifie
 private fun FormSeparatorComponent(modifier: SwingModifier) {
   SwingNode(
     factory = { SeparatorComponent(0, 0, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), null) },
-    modifier = modifier,
+    modifier = modifier.styleable(SeparatorKind, SwingStyle),
   )
 }
 
@@ -614,7 +622,7 @@ private fun FormTitledSeparator(title: @NlsContexts.Separator String, modifier: 
   // A titled separator draws space of its own above and below, and a form decides that space.
   SwingNode(
     factory = { IdeaTitledSeparator().apply { border = null } },
-    modifier = modifier,
+    modifier = modifier.styleable(TitledSeparatorKind, SwingStyle),
     update = {
       set(title) { this.text = it }
     },

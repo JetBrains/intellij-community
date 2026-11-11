@@ -3,13 +3,17 @@ package com.intellij.platform.compose.swing.components
 
 import androidx.compose.runtime.Composable
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.compose.swing.components.style.CommentKind
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.compose.swing.components.style.TextStyleScope
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.node.SwingNode
+import org.jetbrains.compose.swing.style.SwingStyle
+import org.jetbrains.compose.swing.style.styleable
 
 /**
  * A secondary "comment" label: smaller, dimmed text that renders HTML and opens `<a href>` links in a
@@ -27,6 +31,7 @@ import org.jetbrains.compose.swing.node.SwingNode
 public fun Comment(
   text: @NlsContexts.DetailedDescription String,
   modifier: SwingModifier = SwingModifier,
+  style: SwingStyle<TextStyleScope> = SwingStyle,
   maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
 ) {
   SwingNode(
@@ -35,7 +40,7 @@ public fun Comment(
         action = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE
       }
     },
-    modifier = modifier,
+    modifier = modifier.styleable(CommentKind, style),
     update = {
       // A comment that wraps to the width it is given has no width of its own to ask for, so it is held to
       // the one it gets; the width is set before the text so the text is laid out to it straight away.

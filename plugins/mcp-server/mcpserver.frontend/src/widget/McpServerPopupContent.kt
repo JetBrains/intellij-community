@@ -24,7 +24,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.compose.swing.components.ActionLink
 import com.intellij.platform.compose.swing.components.Comment
-import com.intellij.platform.compose.swing.modifier.actionLinkIcon
+import com.intellij.platform.compose.swing.components.style.actionLinkIcon
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.util.ui.JBFont
@@ -220,7 +220,8 @@ private fun HeaderRow(
     )
     ActionLink(
       text = "",
-      modifier = SwingModifier.actionLinkIcon(AllIcons.General.Settings, atRight = false).styleable {
+      style = {
+        actionLinkIcon(AllIcons.General.Settings)
         toolTip(McpServerBundle.message("configurable.name.mcp.plugin"))
       },
       onClick = onSettingsClick,

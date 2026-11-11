@@ -4,6 +4,8 @@ package com.intellij.platform.compose.swing.components
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberUpdatedState
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.platform.compose.swing.components.style.ActionLinkKind
+import com.intellij.platform.compose.swing.components.style.ActionLinkStyleScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.compose.swing.modifier.SwingModifier
@@ -13,6 +15,8 @@ import org.jetbrains.compose.swing.node.declare
 import org.jetbrains.compose.swing.node.rememberMirrorState
 import java.awt.event.ItemEvent
 import com.intellij.ui.components.DropDownLink as IdeaDropDownLink
+import org.jetbrains.compose.swing.style.SwingStyle
+import org.jetbrains.compose.swing.style.styleable
 
 /**
  * A link that drops a list of [items] down when clicked and stands for the item currently chosen.
@@ -39,6 +43,7 @@ public fun <T> DropDownLink(
   selectedItem: T,
   onSelectedItemChange: (T) -> Unit,
   modifier: SwingModifier = SwingModifier,
+  style: SwingStyle<ActionLinkStyleScope> = SwingStyle,
   updateText: Boolean = true,
 ) {
   val currentItems = rememberUpdatedState(items)
@@ -65,7 +70,7 @@ public fun <T> DropDownLink(
         @Suppress("UNCHECKED_CAST")
         val item = event.item as T
         mirror.report(item, onSelectedItemChange)
-      },
+      }.styleable(ActionLinkKind, style),
     update = {
       declare(selectedItem, mirror, read = { this.selectedItem }, write = { this.selectedItem = it })
       // The constructor already put the initial item's text on the link, so only later ones are written;

@@ -3,6 +3,7 @@ package com.intellij.platform.compose.swing.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import com.intellij.platform.compose.swing.components.style.SearchTextFieldKind
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.compose.swing.modifier.SwingModifier
@@ -15,6 +16,9 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.text.Document
 import com.intellij.ui.SearchTextField as IdeaSearchTextField
+import org.jetbrains.compose.swing.style.SwingComponentStyleScope
+import org.jetbrains.compose.swing.style.SwingStyle
+import org.jetbrains.compose.swing.style.styleable
 
 /**
  * A single-line search field: a text field carrying the search icon, a clear button and a drop-down of
@@ -40,6 +44,7 @@ public fun SearchTextField(
   text: String,
   onTextChange: (String) -> Unit,
   modifier: SwingModifier = SwingModifier,
+  style: SwingStyle<SwingComponentStyleScope> = SwingStyle,
   historyPropertyName: @NonNls String? = null,
 ) {
   // The field's own content, mirrored: writing [text] onto the field raises the same document events an
@@ -54,7 +59,7 @@ public fun SearchTextField(
           if (mirror.observed(edited)) onTextChange(edited)
         },
         SEARCH_FIELD_DOCUMENT,
-      ),
+      ).styleable(SearchTextFieldKind, style),
       update = {
         set(text) { declared ->
           mirror.settle(declared, { this.text }, { this.text = it })

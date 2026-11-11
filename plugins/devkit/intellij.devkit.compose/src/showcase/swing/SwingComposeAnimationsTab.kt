@@ -18,7 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import com.intellij.platform.compose.swing.components.ComboBox
 import com.intellij.platform.compose.swing.components.Comment
-import com.intellij.platform.compose.swing.modifier.errorOutline
+import com.intellij.platform.compose.swing.components.style.errorOutline
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.OnOffButton
@@ -260,8 +260,8 @@ private fun ColumnScope.AnimationSettingsHeader(settings: AnimationSettings) {
     TextField(
       value = settings.durationText,
       onValueChange = settings::editDurationText,
-      modifier = SwingModifier.errorOutline(!settings.durationTextValid),
       style = {
+        errorOutline(!settings.durationTextValid)
         toolTip("From 0 to $MAX_DURATION ms")
         accessibleName("Duration")
       },

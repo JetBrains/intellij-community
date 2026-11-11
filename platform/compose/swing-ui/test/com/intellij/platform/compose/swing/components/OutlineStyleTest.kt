@@ -1,11 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.compose.swing.modifier
+package com.intellij.platform.compose.swing.components
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import org.jetbrains.compose.swing.components.text.TextField
-import org.jetbrains.compose.swing.modifier.SwingModifier
+import com.intellij.platform.compose.swing.components.style.Outline
+import com.intellij.platform.compose.swing.components.style.errorOutline
+import com.intellij.platform.compose.swing.components.style.outline
 import org.jetbrains.compose.swing.test.onNodeOfType
 import org.jetbrains.compose.swing.test.runComposeSwingTest
 import org.junit.jupiter.api.Test
@@ -17,14 +19,14 @@ import kotlin.test.assertNull
  * The outline is the look-and-feel's own, reached through the `JComponent.outline` client property, so
  * what these assert is the property the IDE painter reads.
  */
-class OutlineTest {
+class OutlineStyleTest {
 
   private fun JTextField.outlineProperty() = getClientProperty("JComponent.outline")
 
   @Test
   fun anErrorOutlineIsTheOneTheIdePaints() = runComposeSwingTest {
     setContent {
-      TextField(value = "", onValueChange = {}, modifier = SwingModifier.outline(Outline.ERROR))
+      TextField(value = "", onValueChange = {}, style = { outline(Outline.ERROR) })
     }
 
     assertEquals("error", onNodeOfType<JTextField>().fetch().outlineProperty())
@@ -33,7 +35,7 @@ class OutlineTest {
   @Test
   fun aWarningOutlineIsItsOwnValue() = runComposeSwingTest {
     setContent {
-      TextField(value = "", onValueChange = {}, modifier = SwingModifier.outline(Outline.WARNING))
+      TextField(value = "", onValueChange = {}, style = { outline(Outline.WARNING) })
     }
 
     assertEquals("warning", onNodeOfType<JTextField>().fetch().outlineProperty())
@@ -44,7 +46,7 @@ class OutlineTest {
     var rejected by mutableStateOf(true)
 
     setContent {
-      TextField(value = "", onValueChange = {}, modifier = SwingModifier.errorOutline(rejected))
+      TextField(value = "", onValueChange = {}, style = { errorOutline(rejected) })
     }
 
     assertEquals("error", onNodeOfType<JTextField>().fetch().outlineProperty())
