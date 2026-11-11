@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 class TransientFileContentIndexTest {
-  private static final TestExtension EXTENSION = new TestExtension();
+  private static final TestExtension EXTENSION = new TestExtension(/*traceKeyHashes: */false);
   private static final IdFilter FILTER = new IdFilter() {
     @Override
     public boolean containsFileId(int id) {
@@ -107,6 +107,20 @@ class TransientFileContentIndexTest {
     }
   }
 
+  @Test
+  void keyHashTracingTakesPriorityOverForwardIndexFiltering(@TempDir Path directory) throws Exception {
+    try (var index = new TestIndex(directory, new TestExtension(/*traceKeyHashes: */true))) {
+      index.update(1, Map.of(), Map.of(10, 1));
+      index.update(4, Map.of(), Map.of(40, 4));
+
+      int deserializedMapsBefore = MapExternalizer.DESERIALIZATION_COUNT.get();
+      // InMemoryIndexStorage ignores the IdFilter: a key of the rejected file 4 proves that the storage processed the keys
+      assertEquals(Set.of(10, 40), keys(index), "The storage, not the forward index, must process the keys of a tracing index");
+      assertEquals(deserializedMapsBefore, MapExternalizer.DESERIALIZATION_COUNT.get(),
+                   "A tracing index must not read the forward index to filter the keys");
+    }
+  }
+
   private static Set<Integer> keys(TestIndex index) throws StorageException {
     Set<Integer> keys = new HashSet<>();
     assertTrue(index.processAllKeys(key -> {
@@ -119,7 +133,11 @@ class TransientFileContentIndexTest {
   private static final class TestIndex extends TransientFileContentIndex<Integer, Integer, VfsAwareMapReduceIndex.IndexerIdHolder>
     implements AutoCloseable {
     TestIndex(Path directory) throws IOException {
-      super(EXTENSION, new VfsAwareIndexStorageLayout<>() {
+      this(directory, EXTENSION);
+    }
+
+    TestIndex(Path directory, TestExtension extension) throws IOException {
+      super(extension, new VfsAwareIndexStorageLayout<>() {
         private final ForwardIndexAccessor<Integer, Integer> accessor = new MapForwardIndexAccessor<>(new MapExternalizer());
 
         @Override
@@ -164,9 +182,20 @@ class TransientFileContentIndexTest {
   private static final class TestExtension extends FileBasedIndexExtension<Integer, Integer> {
     private static final ID<Integer, Integer> ID = com.intellij.util.indexing.ID.create("TransientFileContentIndexTest");
 
+    private final boolean traceKeyHashes;
+
+    private TestExtension(boolean traceKeyHashes) {
+      this.traceKeyHashes = traceKeyHashes;
+    }
+
     @Override
     public @NotNull ID<Integer, Integer> getName() {
       return ID;
+    }
+
+    @Override
+    public boolean traceKeyHashToVirtualFileMapping() {
+      return traceKeyHashes;
     }
 
     @Override

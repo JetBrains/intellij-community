@@ -284,7 +284,13 @@ public abstract class FileBasedIndex {
   public abstract <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project);
 
   /**
-   * If {@link FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()} is false {@link IdFilter} will be ignored.
+   * {@code idFilter} param is a hint: deliver only whose keys to {@code processor} that belongs to the files with fileIds accepted by
+   * {@code idFilter}.
+   * It is a hint, not a requirement: an optional possibility for an optimization -- an implementation is free to ignore it, and deliver
+   * _all_ keys to the {@code processor}.
+   *
+   * @see FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()
+   * @see FileBasedIndexExtension#USE_FORWARD_INDEX_FOR_KEYS_FILTERING
    */
   public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     return processAllKeys(indexId, processor, scope.getProject());

@@ -68,18 +68,6 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
       throw new IllegalArgumentException("extension.getName() (=" + indexId + ") should be instance of com.intellij.util.indexing.ID");
     }
     mySingleEntryIndex = extension instanceof SingleEntryFileBasedIndexExtension;
-
-    if (USE_FORWARD_INDEX_FOR_KEYS_FILTERING
-        && (extension instanceof FileBasedIndexExtension<?, ?> fileBasedExtension)
-        && fileBasedExtension.traceKeyHashToVirtualFileMapping()
-        && canFilterKeysByFileIdWithForwardIndex() && getForwardIndex() instanceof IterableForwardIndex) {
-      // The key-hash mapping costs a write on each update, but processAllKeys() filters via ForwardIndex, and never reads it:
-      LOG.warn("Index [" + indexId + "] enables traceKeyHashToVirtualFileMapping(), but actually keys will be filtered via ForwardIndex, " +
-               "so traceKeyHashToVirtualFileMapping is effectively ignored, and just waste resources on its' maintenance. " +
-               "Use traceKeyHashToVirtualFileMapping(){ return !FileBasedIndexExtension.USE_FORWARD_INDEX_FOR_KEYS_FILTERING; } to " +
-               "skip maintenance when forward index filtering is enabled"
-      );
-    }
   }
 
   @Override
@@ -93,7 +81,16 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
   public boolean processAllKeys(@NotNull Processor<? super Key> processor,
                                 @NotNull GlobalSearchScope scope,
                                 @Nullable IdFilter idFilter) throws StorageException {
+    // traceKeyHashToVirtualFileMapping() takes priority: the storage keeps a KeyHashLog, and filters keys with it.
+    // TODO RC: long-term, it is better to treat traceKeyHashToVirtualFileMapping() as a _hint_ 'fast keys filtering is important',
+    //          rather than a _requirement_.
+    //          Better let the index engine choose the optimal filtering approach, because index engine has more information to decide on:
+    //          e.g. an IndexLayout knows if a forward index is available and can filter keys -- while an extension doesn't have this info.
+    //          In this case the extensions need no `traceKeyHashToVirtualFileMapping() = !USE_FORWARD_INDEX_FOR_KEYS_FILTERING` idiom.
+    //          The implementation of this approach is more complex though: e.g. the same decision must be made at the storage creation,
+    //          the index version, and here.
     boolean filteringKeysWithForwardIndexAllowed = USE_FORWARD_INDEX_FOR_KEYS_FILTERING
+                                                   && !traceKeyHashToVirtualFileMapping()
                                                    && canFilterKeysByFileIdWithForwardIndex();
     long startedAtNs = System.nanoTime();
     try {
@@ -134,6 +131,12 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
         );
       }
     }
+  }
+
+  /// @return true if the extension requests use of [com.intellij.util.indexing.impl.storage.KeyHashLog] for faster keys filtering
+  private boolean traceKeyHashToVirtualFileMapping() {
+    return getExtension() instanceof FileBasedIndexExtension<?, ?> fileBasedExtension
+           && fileBasedExtension.traceKeyHashToVirtualFileMapping();
   }
 
   /** @return capability: true if forward index data could be used for [IdFilter] filtering */

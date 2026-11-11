@@ -63,8 +63,11 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
   /// This is an alternative to [#traceKeyHashToVirtualFileMapping()]: [#traceKeyHashToVirtualFileMapping()] is supported via
   /// additional persistent structure ([KeyHashLog]), which takes up disk space, memory, and costs CPU to maintain -- but
   /// provides faster filtering. Forward-index-based filtering, if enabled/supported, need no additional structures (=0 added
-  ///  cost), but the filtering is slightly slower. Forward-index-based filtering is still significantly faster than without
-  /// any of these optimizations, though.
+  ///  cost), but the filtering is slightly slower. Forward-index-based filtering is still significantly faster than plain
+  /// filtering, though.
+  ///
+  /// [#traceKeyHashToVirtualFileMapping()] takes priority: if it is true, the index does not use forward-index-based filtering
+  /// (even if it is enabled/supported), and uses key-hash-based filtering, as requested by the extension.
   ///
   /// Forward-index filtering optimization is only supported by the indexes with existing forward index: e.g. stub indexes do
   /// not have a forward index => forward-index-based filtering is not supported. For indexes without forward index, the
@@ -123,13 +126,22 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
 
   /**
    * If true then {@code <key hash> -> <virtual file id>} mapping will be saved in the persistent index structure.
-   * It will then be used inside {@link FileBasedIndex#processAllKeys(ID, Processor, Project)},
-   * accepting {@link IdFilter} as a coarse filter to exclude keys from unrelated virtual files from further processing.
-   * Otherwise, {@link IdFilter} parameter of this method will be ignored.
+   * It is then used in {@link FileBasedIndex#processAllKeys(ID, Processor, GlobalSearchScope, IdFilter)} with non-trivial
+   * {@code IdFilter} to speed up by-fileId filtering.
    * <p>
-   * This property might help optimize "Navigate | File/Symbol" and completion performance in the case of multiple indexed projects.
+   * If false, {@link FileBasedIndex#processAllKeys(ID, Processor, GlobalSearchScope, IdFilter)} may use other optimizations
+   * (e.g. a forward index), or no optimizations at all (slow), or ignore the {@link IdFilter} parameter and deliver all the keys
+   * (potentially a lot of unrelated keys reported to {@code Processor}) -- up to implementation to decide.
+   * <p>
+   * This capability may speed up index lookup in the case of multiple indexed projects, where significant part of indexes'
+   * content may be unrelated to the current project, and is better filtered away early on. It is unlikely to provide benefits
+   * on a single project case.
+   * <p>
+   * <b>BEWARE</b>: This capability is not a free lunch: it builds and maintains a special data structure, which takes up disk
+   * space, RAM, and CPU cycles. Also, the first (cold) lookup may be quite slow. I.e. do not enable it blindly: do before/after
+   * measurements, measure cold/hot lookups, create benchmarks to monitor the performance over time, etc.
    *
-   * @see IdFilter#buildProjectIdFilter(Project, boolean)
+   * @see IdFilter#getProjectIdFilter(Project, boolean) 
    * @see #USE_FORWARD_INDEX_FOR_KEYS_FILTERING
    */
   public boolean traceKeyHashToVirtualFileMapping() {
