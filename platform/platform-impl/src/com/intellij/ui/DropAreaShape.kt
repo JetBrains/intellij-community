@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 import java.awt.Shape
 import java.awt.geom.Area
@@ -14,7 +15,8 @@ import java.awt.geom.RoundRectangle2D
  * A side of [area] is at a side of [cornerArea] when the gap between them is less than [arc].
  * So the insets of [cornerArea] do not make a corner square.
  */
-internal fun createDropAreaShape(area: Rectangle, cornerArea: Rectangle, arc: Int): Shape {
+@ApiStatus.Internal
+fun createDropAreaShape(area: Rectangle, cornerArea: Rectangle, arc: Int): Shape {
   val atLeft = area.x - cornerArea.x < arc
   val atTop = area.y - cornerArea.y < arc
   val atRight = cornerArea.maxX - area.maxX < arc
