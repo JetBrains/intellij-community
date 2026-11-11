@@ -73,6 +73,8 @@ internal class ModuleList(
 
 }
 
+private const val IJ_PLUGIN_MODULE_RULE = "ij_plugin_module"
+
 /**
  * The `config_setting` which matches if the community repository is loaded inside the ultimate repository.
  */
@@ -826,8 +828,8 @@ internal class BazelBuildFileGenerator(
     val useIjPluginModule = shouldUseIjPluginModuleFunction(moduleDescriptor, moduleList, manuallyWrittenAttributes) && !moduleDescriptor.isTestModule
     val moduleTargetType: String
     if (useIjPluginModule) {
-      load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
-      moduleTargetType = "ij_plugin_module"
+      load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", IJ_PLUGIN_MODULE_RULE)
+      moduleTargetType = IJ_PLUGIN_MODULE_RULE
     }
     else {
       moduleTargetType = "jvm_library"
@@ -1044,8 +1046,17 @@ internal class BazelBuildFileGenerator(
     if (manuallyWrittenAttributes.getManuallyWrittenAttributes(moduleDescriptor, NON_CLASSPATH_DATA_ATTRIBUTE).isNotEmpty()) {
       return true
     }
-    val deps = moduleList.deps[moduleDescriptor]
-    return moduleDescriptor.module.name in moduleList.modulesIncludedInIjPluginRule && deps != null && deps.packedDeps.isNotEmpty()
+    val deps = moduleList.deps.get(moduleDescriptor)
+    if (deps == null || deps.packedDeps.isEmpty()) {
+      return false
+    }
+    if (moduleDescriptor.module.name in moduleList.modulesIncludedInIjPluginRule) {
+      return true
+    }
+
+    /* In the standalone community repository, a plugin from the ultimate part can include a community module.
+       The generator does not see such a plugin, so it keeps the `ij_plugin_module` rule of the existing BUILD file. */
+    return ultimateRoot == null && manuallyWrittenAttributes.getExistingTargetType(moduleDescriptor) == IJ_PLUGIN_MODULE_RULE
   }
 
   private fun ModuleDescriptor.isFleetModule(): Boolean {

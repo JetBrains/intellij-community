@@ -4,18 +4,35 @@ package org.jetbrains.intellij.build.bazel
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
-/** Reads and keeps the manually written attributes of a BUILD file. */
+/** Reads and keeps the manually written attributes and the rule names of the targets of a BUILD file. */
 internal class ManuallyWrittenAttributes(private val bazelFilesLoader: BazelFilesLoader) {
-  private val manuallyWrittenAttributes = ConcurrentHashMap<Path, List<ManuallyWrittenAttribute>>()
+  private val parsedBuildFiles = ConcurrentHashMap<Path, ParsedBuildFile>()
 
   fun getManuallyWrittenAttributes(module: ModuleDescriptor, attributeName: String): List<ManuallyWrittenAttribute> {
+    return getParsedBuildFile(module).attributes.filter { it.targetName == module.targetName && it.attributeName == attributeName }
+  }
+
+  /**
+   * Returns the rule name of the target of [module] in the existing BUILD file, for example `ij_plugin_module`.
+   * Returns `null` if the BUILD file or the target does not exist.
+   */
+  fun getExistingTargetType(module: ModuleDescriptor): String? {
+    return getParsedBuildFile(module).targetTypes.get(module.targetName)
+  }
+
+  private fun getParsedBuildFile(module: ModuleDescriptor): ParsedBuildFile {
     val bazelFile = module.bazelBuildFile
-    val allManuallyWrittenAttributes = manuallyWrittenAttributes.getOrPut(bazelFile) {
-      extractManuallyWrittenAttributes(bazelFile, bazelFilesLoader.getBuildFileContent(bazelFile))
+    return parsedBuildFiles.getOrPut(bazelFile) {
+      parseBuildFile(bazelFile, bazelFilesLoader.getBuildFileContent(bazelFile))
     }
-    return allManuallyWrittenAttributes.filter { it.targetName == module.targetName && it.attributeName == attributeName }
   }
 }
+
+private class ParsedBuildFile(
+  @JvmField val attributes: List<ManuallyWrittenAttribute>,
+  /** Maps the name of a target to the name of its rule. */
+  @JvmField val targetTypes: Map<String, String>,
+)
 
 internal class ManuallyWrittenAttribute(
   val targetName: String,
@@ -37,13 +54,14 @@ private val MANUALLY_WRITTEN_ATTRIBUTES = setOf(DATA_ATTRIBUTE, NON_CLASSPATH_DA
 private val FUNCTION_CALL_REGEX = Regex("""([a-zA-Z_][a-zA-Z0-9_]*)\(""")
 private val ATTRIBUTE_ASSIGNMENT_REGEX = Regex(""" *([a-zA-Z_][a-zA-Z0-9_]*) = (.*)""")
 
-private fun extractManuallyWrittenAttributes(bazelFile: Path, fileContent: String?): List<ManuallyWrittenAttribute> {
-  val lines = fileContent?.lineSequence() ?: return emptyList()
+private fun parseBuildFile(bazelFile: Path, fileContent: String?): ParsedBuildFile {
+  val lines = fileContent?.lineSequence() ?: return ParsedBuildFile(attributes = emptyList(), targetTypes = emptyMap())
   var lastTargetType: String? = null
   var lastTargetName: String? = null
   var manuallyWrittenAttributeName: String? = null
   val manuallyWrittenValue = StringBuilder()
   val result = ArrayList<ManuallyWrittenAttribute>()
+  val targetTypes = HashMap<String, String>()
   fun registerManuallyWrittenAttribute() {
     if (manuallyWrittenAttributeName != null) {
       result.add(
@@ -71,7 +89,9 @@ private fun extractManuallyWrittenAttributes(bazelFile: Path, fileContent: Strin
       val name = attributeMatch.groupValues[1]
       val valueStart = attributeMatch.groupValues[2]
       if (name == "name") {
-        lastTargetName = valueStart.removeSurrounding("\"", "\",")
+        val targetName = valueStart.removeSurrounding("\"", "\",")
+        lastTargetName = targetName
+        lastTargetType?.let { targetTypes.putIfAbsent(targetName, it) }
         continue
       }
       registerManuallyWrittenAttribute()
@@ -89,7 +109,7 @@ private fun extractManuallyWrittenAttributes(bazelFile: Path, fileContent: Strin
       manuallyWrittenValue.append('\n').append(line)
     }
   }
-  return result
+  return ParsedBuildFile(attributes = result, targetTypes = targetTypes)
 }
 
 private class ManuallyWrittenAttributeValue(val value: String): RenderableAttributeWithComment {

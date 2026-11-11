@@ -1,0 +1,31 @@
+{
+  "modules": {
+    "intellij.libraries.example": {
+      "productionTargets": [
+        "@community//content:libraries-example.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/content/libraries-example.jar"
+      ],
+      "testTargets": [],
+      "testJars": [],
+      "moduleLibraries": {
+        "library": {
+          "target": "//libs:libraries-example-library",
+          "jars": [
+            "execroot/_main/libs/library.jar"
+          ],
+          "jarTargets": [
+            "//libs:library.jar"
+          ],
+          "sourceJars": []
+        }
+      }
+    }
+  },
+  "imlTargets": [
+    "@community//content:intellij.libraries.example.iml"
+  ],
+  "projectLibraries": {},
+  "pluginDistributionTargets": {}
+}

@@ -462,6 +462,12 @@ class BazelGeneratorIntegrationTests {
    */
   @Test fun ijPluginModulePackedDeps() = doTest("ij-plugin-module-packed-deps")
 
+  /**
+   * IJPL-259523: in the standalone community repository, no `ij_plugin` target includes `intellij.libraries.example`.
+   * The existing BUILD file declares its target with `ij_plugin_module`, so the generator keeps this rule and adds `packed_deps`.
+   */
+  @Test fun ijPluginModuleCommunityOnly() = doTest("ij-plugin-module-community-only", allowBuildBazelFilesInTestDataProject = true)
+
   private fun doTest(
     testName: String,
     runWithoutUltimateRoot: Boolean = true,

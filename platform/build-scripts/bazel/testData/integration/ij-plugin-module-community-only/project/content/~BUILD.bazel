@@ -1,0 +1,27 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
+
+### auto-generated section `build intellij.libraries.example` start
+ij_plugin_module(
+    name = "libraries-example",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.example",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.libraries.example` end
+
+### auto-generated section `iml intellij.libraries.example` start
+exports_files(
+    [
+        "intellij.libraries.example.iml",
+        "resources/intellij.libraries.example.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.example` end

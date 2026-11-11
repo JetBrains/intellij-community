@@ -1,0 +1,16 @@
+load("@rules_java//java:defs.bzl", "java_import")
+
+### auto-generated section `local-libs` start
+java_import(
+    name = "libraries-example-library",
+    jars = ["library.jar"],
+    visibility = ["//visibility:public"],
+)
+
+exports_files(
+    [
+        "library.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `local-libs` end
