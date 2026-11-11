@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection.Ltr
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import kotlin.String
 import kotlin.math.ceil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -642,11 +643,15 @@ public open class DefaultMarkdownBlockRenderer(
         enabled: Boolean,
         onUrlClick: ((String) -> Unit)? = null,
     ): Pair<Map<String, InlineTextContent>, AnnotatedString> {
-        val (originalImages, failedImages) = resolveImages(block)
         val original =
             remember(block.inlineContent, styling, enabled, onUrlClick) {
                 inlineRenderer.renderAsAnnotatedString(block.inlineContent, styling, enabled, onUrlClick)
             }
+        val images = remember(block) { getImages(block) }
+        if (images.isEmpty()) return emptyMap<String, InlineTextContent>() to original
+
+        val (originalImages, failedImages) = resolveImages(block)
+
         // Note: failedImages is a SnapshotStateSet, so we use derivedStateOf to properly track
         // changes to its contents.
         val renderedContent by
@@ -664,10 +669,12 @@ public open class DefaultMarkdownBlockRenderer(
 
     @Composable
     protected open fun resolveImages(blockInlineContent: WithInlineMarkdown): ResolvedImages {
+        val images = remember(blockInlineContent) { getImages(blockInlineContent) }
+        if (images.isEmpty()) return emptyMap<String, InlineTextContent>() to emptySet()
+
         val map = remember(blockInlineContent) { mutableStateMapOf<String, InlineTextContent>() }
         val failedSources = remember(blockInlineContent) { mutableStateSetOf<String>() }
         val imagesRenderer = rendererExtensions.firstNotNullOfOrNull { it.imageRendererExtension }
-        val images = remember(blockInlineContent) { getImages(blockInlineContent) }
 
         for (image in images) {
             val imageId = image.inlineContentId()
@@ -1215,6 +1222,7 @@ private fun MimeType.Known.fromMimeTypeString(mimeType: String): MimeType =
 
         "application/typescript",
         "application/x-typescript" -> TYPESCRIPT
+
         "text/x-rust",
         "application/x-rust" -> RUST
 
@@ -1222,6 +1230,7 @@ private fun MimeType.Known.fromMimeTypeString(mimeType: String): MimeType =
         "application/yaml",
         "text/x-yaml",
         "application/x-yaml" -> YAML
+
         "application/x-patch" -> PATCH
 
         else -> UNKNOWN
