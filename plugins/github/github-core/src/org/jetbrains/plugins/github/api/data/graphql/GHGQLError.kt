@@ -4,8 +4,8 @@ package org.jetbrains.plugins.github.api.data.graphql
 import com.intellij.collaboration.api.dto.GraphQLErrorDTO
 
 /**
- * GitHub returns an additional field [type] here contrary to the spec
+ * GitHub returns additional fields [type] and [code] here contrary to the spec
  */
-class GHGQLError(message: String, val type: String?): GraphQLErrorDTO(message) {
+class GHGQLError @JvmOverloads constructor(message: String, val type: String?, val code: String? = null) : GraphQLErrorDTO(message) {
   override fun toString(): String = message
 }

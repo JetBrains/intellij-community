@@ -21,6 +21,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
+import org.jetbrains.plugins.github.api.data.graphql.GHGQLError
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
@@ -286,6 +287,9 @@ sealed class GithubApiRequestExecutor {
 
     private const val HTTP_TOO_MANY_REQUESTS = 429
 
+    private val GRAPHQL_RATE_LIMIT_ERROR_TYPES = setOf("RATE_LIMIT", "RATE_LIMITED")
+    private const val GRAPHQL_RATE_LIMIT_ERROR_CODE = "graphql_rate_limit"
+
     internal fun isAuthorizedUrl(serverPath: GithubServerPath, url: URL): Boolean {
       val targetHost = url.host
       val apiHost = serverPath.apiHost
@@ -392,6 +396,26 @@ sealed class GithubApiRequestExecutor {
         HttpURLConnection.HTTP_FORBIDDEN -> headers?.retryAfter != null || jsonError?.containsReasonMessage("secondary rate limit") == true
         else -> false
       }
+
+    /**
+     * The GraphQL API reports rate limit errors in the [errors] of a response with the status 200:
+     * https://docs.github.com/en/graphql/overview/rate-limits-and-query-limits-for-the-graphql-api#exceeding-the-rate-limit.
+     * * A secondary rate limit error has a message about the secondary rate limit.
+     * * The documentation doesn't name the type of primary rate limit error.
+     *   GitHub used to send `RATE_LIMITED`, and now sends `RATE_LIMIT` with the code `graphql_rate_limit`:
+     *   https://github.com/github/docs/issues/22607.
+     *
+     * @return the rate limit exception, or `null` if the errors aren't about a rate limit
+     */
+    internal fun createGraphQLRateLimitException(errors: List<GHGQLError>, headers: GHRateLimitHeaders): GithubRateLimitExceededException? {
+      errors.firstOrNull { it.message.contains("secondary rate limit", ignoreCase = true) }?.let {
+        return GithubSecondaryRateLimitExceededException(it.message, headers.retryAfter)
+      }
+      errors.firstOrNull { it.type in GRAPHQL_RATE_LIMIT_ERROR_TYPES || it.code == GRAPHQL_RATE_LIMIT_ERROR_CODE }?.let {
+        return GithubRateLimitExceededException(it.message, headers.resetAt)
+      }
+      return null
+    }
 
     internal fun getJsonError(requestName: String, errorText: String, contentType: String): GithubErrorMessage? {
       if (!contentType.startsWith(GithubApiContentHelper.JSON_MIME_TYPE)) return null

@@ -65,6 +65,9 @@ private val SECONDARY_RATE_LIMIT_WAIT: Duration = 1.minutes
  *   for the time that GitHub asks for.
  *   The failed request isn't sent again.
  *   See https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#about-secondary-rate-limits.
+ *
+ * The GraphQL API reports both rate limit errors in a response with the status 200, so the errors of the response tell about them:
+ * https://docs.github.com/en/graphql/overview/rate-limits-and-query-limits-for-the-graphql-api#exceeding-the-rate-limit.
  */
 @Service
 internal class GHApiRateLimiter {
@@ -111,7 +114,7 @@ internal class GHApiRateLimiter {
           server.pause(e.retryAfter ?: SECONDARY_RATE_LIMIT_WAIT)
         }
         else {
-          // a 403 or a 429
+          // a 403, a 429, or the errors of a GraphQL response with the status 200
           server.recordPrimaryRateLimitError(request, headers)
         }
         throw e
