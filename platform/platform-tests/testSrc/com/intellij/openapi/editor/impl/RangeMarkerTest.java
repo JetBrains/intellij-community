@@ -807,8 +807,8 @@ public class RangeMarkerTest {
 
   @Test
   public void testSwap() {
-    RangeMarkerEx marker1 = createMarker("012345678901234567", 5,6);
-    DocumentEx document = (DocumentEx)marker1.getDocument();
+    RangeMarker marker1 = createMarker("012345678901234567", 5,6);
+    Document document = marker1.getDocument();
     document.createRangeMarker(3, 5);
     document.createRangeMarker(6, 7);
     document.createRangeMarker(4, 4);
@@ -817,12 +817,12 @@ public class RangeMarkerTest {
 
   @Test
   public void testX() {
-    RangeMarkerEx marker1 = createMarker(StringUtil.repeatSymbol(' ', 10), 3,6);
+    RangeMarker marker1 = createMarker(StringUtil.repeatSymbol(' ', 10), 3,6);
     DocumentEx document = (DocumentEx)marker1.getDocument();
     document.createRangeMarker(2, 3);
     document.createRangeMarker(3, 8);
     document.createRangeMarker(7, 9);
-    RangeMarkerEx r1 = (RangeMarkerEx)document.createRangeMarker(6, 8);
+    RangeMarker r1 = document.createRangeMarker(6, 8);
 
     r1.dispose();
     marker1.dispose();
@@ -830,7 +830,7 @@ public class RangeMarkerTest {
 
   @Test
   public void testStickingToRight() {
-    RangeMarkerEx marker = createMarker("ab", 1, 1);
+    RangeMarker marker = createMarker("ab", 1, 1);
     marker.setStickingToRight(true);
     insertString(marker.getDocument(), 1, " ");
     assertTrue(marker.isValid());
@@ -1056,7 +1056,7 @@ public class RangeMarkerTest {
           for (int i = 0; i < 30; i++) {
             int x = gen.nextInt(N);
             int y = x + gen.nextInt(N - x);
-            RangeMarkerEx r = (RangeMarkerEx)finalDocument.createRangeMarker(x, y);
+            RangeMarker r = finalDocument.createRangeMarker(x, y);
             adds.add(Pair.create(r, r.getTextRange()));
           }
 
@@ -1078,7 +1078,7 @@ public class RangeMarkerTest {
             int size = candidates.size();
             int x = gen.nextInt(size);
             Pair<RangeMarker, TextRange> c = candidates.remove(x);
-            RangeMarkerEx r = (RangeMarkerEx)c.first;
+            RangeMarker r = c.first;
             assertEquals(size - 1, candidates.size());
             dels.add(c);
             r.dispose();
@@ -1117,7 +1117,7 @@ public class RangeMarkerTest {
         if (create || adds.isEmpty()) {
           int x = gen.nextInt(LEN);
           int y = x + gen.nextInt(LEN - x);
-          RangeMarkerEx r = (RangeMarkerEx)document.createRangeMarker(x, y);
+          RangeMarker r = document.createRangeMarker(x, y);
           adds.add(r);
         }
         else {
@@ -1220,7 +1220,7 @@ public class RangeMarkerTest {
   // Exercises specification replacement after the marker has acquired a lazy offset shift and checks handle identity.
   @Test
   public void testGreedinessChangeAfterLazyShiftPreservesMarker() {
-    RangeMarkerEx marker = createMarker("0123456789", 4, 6);
+    RangeMarker marker = createMarker("0123456789", 4, 6);
     Key<Object> key = Key.create("range.marker.shifted.data");
     Object value = new Object();
     marker.putUserData(key, value);
@@ -1245,7 +1245,7 @@ public class RangeMarkerTest {
   // Covers disposal of an already-invalid marker, including preservation of its last known range and enumeration cleanup.
   @Test
   public void testDisposeInvalidatedMarkerPreservesRangeAndRemovesItFromEnumeration() {
-    RangeMarkerEx marker = createMarker("0123456789", 2, 5);
+    RangeMarker marker = createMarker("0123456789", 2, 5);
     deleteString(document, 1, 6);
     assertFalse(marker.isValid());
     TextRange invalidRange = marker.getTextRange();
@@ -1270,7 +1270,7 @@ public class RangeMarkerTest {
     deleteString(document, 1, 6);
     assertFalse(markerRef.get().isValid());
 
-    Reference<RangeMarkerEx> reference = new WeakReference<>(markerRef.get());
+    Reference<RangeMarker> reference = new WeakReference<>(markerRef.get());
     markerRef.set(null);
     GCUtil.tryGcSoftlyReachableObjects(() -> reference.get() == null);
     assertNull(reference.get());
@@ -1292,8 +1292,8 @@ public class RangeMarkerTest {
   // Ensures explicit disposal immediately excludes only the disposed handle from overlapping-marker enumeration.
   @Test
   public void testDisposedMarkerIsNotEnumerated() {
-    RangeMarkerEx disposedMarker = createMarker("0123456789", 2, 6);
-    RangeMarkerEx liveMarker = (RangeMarkerEx)document.createRangeMarker(3, 7);
+    RangeMarker disposedMarker = createMarker("0123456789", 2, 6);
+    RangeMarker liveMarker = document.createRangeMarker(3, 7);
     disposedMarker.dispose();
 
     List<RangeMarker> processedMarkers = new ArrayList<>();
@@ -1338,7 +1338,7 @@ public class RangeMarkerTest {
   // Guards disposal idempotence for invalid markers and ensures repeated calls do not lose their retained offsets.
   @Test
   public void testRepeatedDisposeAfterInvalidationIsIdempotent() {
-    RangeMarkerEx marker = createMarker("0123456789", 2, 5);
+    RangeMarker marker = createMarker("0123456789", 2, 5);
     deleteString(document, 1, 6);
     assertFalse(marker.isValid());
     TextRange invalidRange = marker.getTextRange();
@@ -1447,7 +1447,7 @@ public class RangeMarkerTest {
 
   @Test
   public void testMoveTextRetargetsMarkers() {
-    RangeMarkerEx marker1 = createMarker("01234567890", 1, 3);
+    RangeMarker marker1 = createMarker("01234567890", 1, 3);
     DocumentEx document = (DocumentEx)marker1.getDocument();
     RangeMarker marker2 = document.createRangeMarker(2, 4);
 
@@ -1460,7 +1460,7 @@ public class RangeMarkerTest {
 
   @Test
   public void testMoveText2() {
-    RangeMarkerEx marker1 = createMarker(StringUtil.repeat(" ",100), 0, 0);
+    RangeMarker marker1 = createMarker(StringUtil.repeat(" ",100), 0, 0);
     DocumentEx document = (DocumentEx)marker1.getDocument();
     RangeMarker marker2 = document.createRangeMarker(49, 49);
 
@@ -1471,7 +1471,7 @@ public class RangeMarkerTest {
 
   @Test
   public void testMoveTextToTheBeginningRetargetsMarkers() {
-    RangeMarkerEx marker1 = createMarker("01234567890", 5, 5);
+    RangeMarker marker1 = createMarker("01234567890", 5, 5);
     DocumentEx document = (DocumentEx)marker1.getDocument();
     RangeMarker marker2 = document.createRangeMarker(5, 7);
 
@@ -1744,7 +1744,7 @@ public class RangeMarkerTest {
   }
 
   private void doTestGetStartEndOffsetPerformance(int documentLength) {
-    DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", documentLength / 4));
+    Document doc = new DocumentImpl(StringUtil.repeat("blah", documentLength / 4));
     int N = 100_000;
     RangeMarker[] markers = new RangeMarker[N];
     for (int i = 0; i < N; i++) {
@@ -1772,7 +1772,7 @@ public class RangeMarkerTest {
   @PerformanceUnitTest
   @Test
   public void testGetOffsetAfterStructuralModificationPerformance() {
-    DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
+    Document doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     List<RangeMarker> markers = new ArrayList<>();
     int N = 100_000;
     for (int i = 0; i < N; i++) {
@@ -1799,7 +1799,7 @@ public class RangeMarkerTest {
   @PerformanceUnitTest
   @Test
   public void testDocModificationPerformance() {
-    DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
+    Document doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     List<RangeMarker> markers = new ArrayList<>();
     int N = 100_000;
     for (int i = 0; i < N; i++) {
@@ -1826,7 +1826,7 @@ public class RangeMarkerTest {
     int N = 80_000;
     // a line for each marker
     String text = StringUtil.repeat("abcdefghij\n", N);
-    Ref<DocumentEx> doc = new Ref<>();
+    Ref<Document> doc = new Ref<>();
     List<RangeMarker> markers = new ArrayList<>(N);
     Benchmark.newBenchmark(classPlusTestName(), () -> {
       replaceString(doc.get(), text.length() / 4, text.length(), "replacement\n");
@@ -1845,7 +1845,7 @@ public class RangeMarkerTest {
   @PerformanceUnitTest
   @Test
   public void testRMInsertDisposePerformance() {
-    DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
+    Document doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     int N = 1_000_000;
     List<RangeMarker> markers = new ArrayList<>(N);
     Benchmark.newBenchmark(classPlusTestName(), ()->{
@@ -2044,9 +2044,9 @@ public class RangeMarkerTest {
     assertEquals(7, marker.getEndOffset());
   }
 
-  private void checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(@NotNull VirtualFile vf,
-                                                                  RangeMarker @NotNull [] marker,
-                                                                  RangeMarker @NotNull [] persistentMarker) {
+  private static void checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(@NotNull VirtualFile vf,
+                                                                         RangeMarker @NotNull [] marker,
+                                                                         RangeMarker @NotNull [] persistentMarker) {
     Reference<RangeMarker> markerRef = new WeakReference<>(marker[0]);
     Reference<RangeMarker> persistentMarkerRef = new WeakReference<>(persistentMarker[0]);
     marker[0] = null;
@@ -2129,7 +2129,7 @@ public class RangeMarkerTest {
   @Test
   public void testGetTextRangeMustBeAtomic_Stress() throws ExecutionException, InterruptedException {
     int len = 1000;
-    DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(" ".repeat(len));
+    Document document = EditorFactory.getInstance().createDocument(" ".repeat(len));
     RangeMarker marker = document.createRangeMarker(10, 11);
 
     TestTimeOut t = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
@@ -2221,21 +2221,21 @@ public class RangeMarkerTest {
 
   @Test
   public void testUnderlyingTextDeletionMustLeadToInvalidation() {
-    RangeMarkerEx marker = createMarker("12345", 1, 3);
+    RangeMarker marker = createMarker("12345", 1, 3);
     deleteString(document, 0, 4);
     assertFalse(marker.isValid());
   }
 
   @Test
   public void testReplaceNotGreedy() {
-    RangeMarkerEx marker = createMarker(" ".repeat(10), 1, 3);
+    RangeMarker marker = createMarker(" ".repeat(10), 1, 3);
     replaceString(document, 0, 2, "xxx");
     assertEquals(TextRange.create(3,4), marker.getTextRange());
   }
   
   @Test
   public void testReplaceBeforeGreedy() {
-    RangeMarkerEx marker = createMarker(" ".repeat(10), 1, 3);
+    RangeMarker marker = createMarker(" ".repeat(10), 1, 3);
     marker.setGreedyToLeft(true);
     replaceString(document, 0, 1, "xxx");
     assertTrue(marker.isValid());
