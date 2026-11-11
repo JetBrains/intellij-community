@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.mcpserver"/>
+    <module name="intellij.mcpserver.skills"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.python.community.common"/>
@@ -17,5 +18,12 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <mcpServer.mcpToolset implementation="com.intellij.python.mcp.environment.PythonEnvironmentMcpToolset"/>
+    <mcpServer.bundledSkillsProvider implementation="com.intellij.python.mcp.skills.PyCharmBundledSkillsProvider"/>
+    <registryKey defaultValue="true"
+                 description="Enable the PyCharm python-tools bundled skill (Python environment MCP tools)"
+                 key="llm.agents.contrib.pycharm.python.tools.skill.enabled"/>
+    <registryKey defaultValue="true"
+                 description="Enable the PyCharm code analysis bundled skill"
+                 key="llm.agents.contrib.pycharm.code.analysis.skill.enabled"/>
   </extensions>
 </idea-plugin>

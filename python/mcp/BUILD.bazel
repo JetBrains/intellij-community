@@ -42,6 +42,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/mcp-server:mcpserver",
+        "//plugins/mcp-server/mcpserver.skills",
         "//libraries/kotlinx/serialization/core",
         "//platform/core-api:core",
         "//platform/projectModel-api:projectModel",
@@ -76,7 +77,12 @@ jvm_library(
     ),
     associates = ["//python/mcp"],
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/mcp-server/mcpserver.plugin"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/mcp-server/mcpserver.plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -84,6 +90,11 @@ jvm_library(
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
         "//platform/testFramework/junit5",
         "//libraries/junit6",
+        "//platform/testFramework",
+        "//plugins/mcp-server:mcpserver",
+        "//plugins/mcp-server/mcpserver.skills",
+        "//plugins/mcp-server/mcpserver.testFramework",
+        "//plugins/mcp-server/mcpserver.toolsets",
     ],
 )
 ### auto-generated section `build intellij.python.mcp.tests` end
