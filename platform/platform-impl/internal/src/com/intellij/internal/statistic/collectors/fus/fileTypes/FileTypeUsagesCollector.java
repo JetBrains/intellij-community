@@ -19,9 +19,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeValidationRule;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.project.ProjectKt;
-import com.intellij.util.ArrayUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -32,6 +30,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.internal.statistic.project.ProjectContentFiles.getFileTypeWithoutContent;
+import static com.intellij.internal.statistic.project.ProjectContentFiles.processContentFilesInReadActions;
 import static java.util.Collections.emptySet;
 
 /**
@@ -82,7 +82,6 @@ public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
   protected @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     if (project.isDisposed()) return emptySet();
 
-    ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
     IProjectStore stateStore = ProjectKt.getStateStore(project);
     Object2IntMap<FileType> filesByTypeCount = new Object2IntOpenHashMap<>();
     var fileTypeMappingsCounter = new OriginalFileTypeCounter();
@@ -90,25 +89,24 @@ public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
 
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
 
-    projectFileIndex.iterateContent(
+    processContentFilesInReadActions(
+      project,
+      //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
+      file -> !stateStore.isProjectFile(file),
       file -> {
-        // do not trigger DetectedByContentFileType handling, do not read files
-        FileType type = fileTypeManager.getFileTypeByFile(file, ArrayUtil.EMPTY_BYTE_ARRAY);
+        FileType type = getFileTypeWithoutContent(file);
         filesByTypeCount.put(type, filesByTypeCount.getOrDefault(type, 0) + 1);
         String fileExtension = file.getExtension();
 
         if (fileExtension == null) {
           fileTypeMappingsCounter.recordOriginalFileType(type, null);
-          return true;
+          return;
         }
 
-        var fileTypeByExtension = FileTypeManager.getInstance().getFileTypeByExtension(fileExtension);
+        var fileTypeByExtension = fileTypeManager.getFileTypeByExtension(fileExtension);
         fileTypeMappingsCounter.recordOriginalFileType(type, fileTypeByExtension);
         fileExtensionCounter.recordOriginalFileType(fileExtension);
-        return true;
-      },
-      //skip files from .idea directory otherwise 99% of projects would have XML and PLAIN_TEXT file types
-      file -> !file.isDirectory() && !stateStore.isProjectFile(file)
+      }
     );
 
     final Set<MetricEvent> events = new HashSet<>();
