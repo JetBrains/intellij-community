@@ -81,6 +81,11 @@
 
     <statistics.validation.customValidationRule implementation="com.intellij.ide.startup.importSettings.fus.KnownPluginValidationRule"/>
     <transferSettings.externalProjectImportChecker implementation="com.intellij.ide.startup.importSettings.transfer.backend.CargoExternalProjectImportChecker"/>
+
+    <transferSettings.partialImportPerformer implementation="com.intellij.ide.startup.importSettings.transfer.backend.providers.LookAndFeelImportPerformer" />
+    <transferSettings.partialImportPerformer implementation="com.intellij.ide.startup.importSettings.transfer.backend.providers.SyntaxSchemeImportPerformer" />
+    <transferSettings.partialImportPerformer implementation="com.intellij.ide.startup.importSettings.transfer.backend.providers.KeymapSchemeImportPerformer" />
+    <transferSettings.partialImportPerformer implementation="com.intellij.ide.startup.importSettings.transfer.backend.providers.RecentProjectsImportPerformer" />
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.ide.startup.importSettings.jb.JbAfterRestartSettingsApplier" topic="com.intellij.ide.AppLifecycleListener" activeInHeadlessMode="false" activeInTestMode="false"/>
