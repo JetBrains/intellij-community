@@ -296,8 +296,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   private boolean myPaintBackground = true;
   private boolean myLeftFreePaintersAreaShown;
   private boolean myRightFreePaintersAreaShown;
-  private @NotNull EditorGutterFreePainterAreaState myLeftFreePaintersAreaState = EditorGutterFreePainterAreaState.ON_DEMAND;
-  private @NotNull EditorGutterFreePainterAreaState myRightFreePaintersAreaState = EditorGutterFreePainterAreaState.ON_DEMAND;
+  private volatile @NotNull EditorGutterFreePainterAreaState myLeftFreePaintersAreaState = EditorGutterFreePainterAreaState.ON_DEMAND;
+  private volatile @NotNull EditorGutterFreePainterAreaState myRightFreePaintersAreaState = EditorGutterFreePainterAreaState.ON_DEMAND;
   private int myLeftFreePaintersAreaReserveWidth = 0; // Unscaled
   private int myRightFreePaintersAreaReserveWidth = 0;
   private int myLastNonDumbModeIconAreaWidth;
