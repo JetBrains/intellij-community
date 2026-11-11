@@ -12,6 +12,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
@@ -52,7 +53,7 @@ public class ConsoleViewExceptionFilterPerformanceTest {
                                  }
                              }
                          }""");
-    Benchmark.newBenchmark("Many exceptions", () -> {
+    Benchmark.newBenchmark("Many exceptions", () -> EdtTestUtil.runInEdtAndWait(() -> {
       // instantiate console with exception filters only to avoid failures due to Node/Ruby/etc dog-slow sloppy regex-based filters
       TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(myFixture.getProject());
       consoleBuilder.filters(ExceptionFilters.getFilters(GlobalSearchScope.allScope(myFixture.getProject())));
@@ -84,6 +85,6 @@ public class ConsoleViewExceptionFilterPerformanceTest {
       finally {
         Disposer.dispose(console);
       }
-    }).start();
+    })).start();
   }
 }

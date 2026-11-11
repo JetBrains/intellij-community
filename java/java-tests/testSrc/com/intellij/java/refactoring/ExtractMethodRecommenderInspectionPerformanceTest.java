@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodRecommenderInspection;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -46,9 +47,9 @@ public final class ExtractMethodRecommenderInspectionPerformanceTest {
     PsiElementVisitor visitor =
       inspection.buildVisitor(new ProblemsHolder(InspectionManager.getInstance(myFixture.getProject()), file, false), false);
     Benchmark.newBenchmark(myFixture.getTestName(false), 
-                           () -> PsiTreeUtil.processElements(file, element -> {
+                           () -> EdtTestUtil.runInEdtAndWait(() -> PsiTreeUtil.processElements(file, element -> {
                              element.accept(visitor);
                              return true;
-                           })).start();
+                           }))).start();
   }
 }
