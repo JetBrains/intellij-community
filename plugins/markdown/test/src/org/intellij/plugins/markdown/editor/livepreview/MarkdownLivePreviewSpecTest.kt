@@ -684,6 +684,13 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     )
   }
 
+  fun testCodeFontCoversTheIndentOfEveryLineOfAnIndentedFence() {
+    val content = "\t```bash\n\tgit pull\n\t```"
+    val codeRanges = elements(content).filterIsInstance<MarkdownLivePreviewSpec.CodeFont>().flatMap { it.codeRanges }
+
+    assertEquals(listOf("\t```", "bash", "\tgit pull", "\t```"), codeRanges.map { [start, end] -> content.substring(start, end) })
+  }
+
   fun testDocumentVersionUsesLocalStampWithoutPatchVersion() {
     myFixture.configureByText("test.md", "text")
     val document = myFixture.editor.document as DocumentEx

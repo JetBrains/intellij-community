@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.fence.collectCodeSpanBackground
+import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
@@ -323,14 +324,21 @@ private fun PsiElement.toCodeFontSpec(): MarkdownLivePreviewSpec.CodeFont? {
 
 private fun PsiElement.toFenceMarkerSpec(): MarkdownLivePreviewSpec.Conceal? {
   val opening = node.findChildByType(MarkdownTokenTypes.CODE_FENCE_START) ?: return null
-  val openingMarker = codeFontRange(opening)
+  val openingMarker = fenceMarkerRange(opening)
   val openingLineEnd = node.findChildByType(MarkdownTokenTypes.FENCE_LANG) ?: opening
   val openingLine = TextRange(openingMarker.startOffset, openingLineEnd.textRange.endOffset)
   val closing = node.findChildByType(MarkdownTokenTypes.CODE_FENCE_END)
-  return if (closing == null) inlineConceal(openingLine) else inlineConceal(openingLine, codeFontRange(closing))
+  return if (closing == null) inlineConceal(openingLine) else inlineConceal(openingLine, fenceMarkerRange(closing))
 }
 
 private fun codeFontRange(token: ASTNode): TextRange {
+  if (token.elementType != MarkdownTokenTypes.CODE_FENCE_END) return token.textRange
+  val fence = token.treeParent.psi as? MarkdownCodeFence ?: return token.textRange
+  if (MarkdownCodeFenceUtils.getOpeningIndent(fence).isNotEmpty()) return token.textRange
+  return fenceMarkerRange(token)
+}
+
+private fun fenceMarkerRange(token: ASTNode): TextRange {
   if (token.elementType != MarkdownTokenTypes.CODE_FENCE_START && token.elementType != MarkdownTokenTypes.CODE_FENCE_END) {
     return token.textRange
   }
