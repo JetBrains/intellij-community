@@ -596,8 +596,13 @@ public final class PythonSdkUpdater {
         PythonInterpreter pythonInterpreter = pythonInterpreter(mySdk, true);
         PythonPackageManager manager = PythonPackageManager.Companion.forPythonInterpreter(myProject, pythonInterpreter);
         PyTargetsIntrospectionFacade targetsFacade = PyTargetsIntrospectionFacade.create(mySdk, myProject);
-        String version = targetsFacade.getInterpreterVersion();
-        commitSdkVersionIfChanged(mySdk, version);
+        try {
+          commitSdkVersionIfChanged(mySdk, targetsFacade.getInterpreterVersion());
+        }
+        catch (ExecutionException e) {
+          // The version last recorded stays, and the rest of the refresh still runs.
+          LOG.warn("Cannot read the version of SDK " + mySdk.getName(), e);
+        }
         if (targetsFacade.isLocalTarget()) {
           List<String> paths = targetsFacade.getInterpreterPaths();
           updateSdkPaths(pythonInterpreter, paths);
