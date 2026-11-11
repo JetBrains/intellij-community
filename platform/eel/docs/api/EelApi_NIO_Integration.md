@@ -129,19 +129,22 @@ val sysFolder = EelSystemFolderUtils.getSystemFolder(eelApi)
 fun transferLocalContentToRemote(
     source: Path,
     target: TransferTarget,
-    fileAttributesStrategy: FileTransferAttributesStrategy = FileTransferAttributesStrategy.Copy
+    fileAttributesStrategy: EelFileTransferAttributesStrategy = EelFileTransferAttributesStrategy.Copy
 ): Path
 ```
 
 Synchronizes (transfers) local content from source to a remote environment. If the source is already non-local, no transfer is performed and the original source is returned.
 
 **Target Types**:
-- `TransferTarget.Explicit(path)`: Transfer to a specific path
-- `TransferTarget.Temporary(descriptor)`: Create a temporary location
+- `TransferTarget.Temporary(descriptor, resyncOnEachCall = false)`: Create a temporary location in the remote environment (returns `source` immediately when `descriptor` is `LocalEelDescriptor`)
+- `TransferTarget.Explicit(descriptor, resyncOnEachCall = false) { source -> targetPath }`: Resolve the target path on `descriptor` and transfer the content to it. When the resolver returns the source path, no transfer happens. Use `EelSystemFolderUtils.createTransferTarget(descriptor, relativeDirectory, resyncOnEachCall = false)` to stage under the IDE system folder. For a local descriptor, it returns `source`.
+- `TransferTarget.Explicit(path, resyncOnEachCall = false)`: Transfer to a specific path
+
+By default (`resyncOnEachCall = false`), repeated calls within the same `EelApi` session reuse the already-transferred remote `Path` as long as it still exists. Pass `resyncOnEachCall = true` to run incremental content-hash synchronization on every call.
 
 **Example:**
 ```kotlin
-// Transfer local JAR to Docker container
+// Transfer local JAR to a temporary location in a Docker container
 val localJar = Path.of("C:\\workspace\\app.jar")
 val dockerDescriptor = dockerContainer.getEelDescriptor()
 
@@ -151,11 +154,17 @@ val remoteJar = EelPathUtils.transferLocalContentToRemote(
 )
 // remoteJar now points to the file inside Docker container
 
-// Or transfer to specific location
+// Or stage persistently under a relative directory in the remote IDE system folder
+val stagedJar = EelPathUtils.transferLocalContentToRemote(
+    source = localJar,
+    target = EelSystemFolderUtils.createTransferTarget(dockerDescriptor, Path.of("my-tool/v1"))
+)
+
+// Or transfer to a specific location
 val specificTarget = TransferTarget.Explicit(
     Path.of("\\docker\\container123\\opt\\app\\app.jar")
 )
-val remoteJar = EelPathUtils.transferLocalContentToRemote(localJar, specificTarget)
+val remoteExplicitJar = EelPathUtils.transferLocalContentToRemote(localJar, specificTarget)
 ```
 
 **File Attributes Strategy**:

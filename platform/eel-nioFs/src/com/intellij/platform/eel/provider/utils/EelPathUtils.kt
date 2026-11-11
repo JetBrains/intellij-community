@@ -7,7 +7,6 @@ package com.intellij.platform.eel.provider.utils
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelUserPosixInfo
-import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.fs.createTemporaryDirectory
@@ -19,6 +18,7 @@ import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.EelPathTransfer.IncrementalWalkingTransferAbsoluteSymlinkHandler
@@ -37,6 +37,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.URI
 import java.nio.file.AccessMode
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.Path
@@ -139,9 +140,29 @@ object EelPathUtils {
     /**
      * Represents an explicit target for content transfer.
      *
-     * @property path The explicit [Path] where the content should be transferred.
+     * [pathResolver] is invoked for every descriptor, including [LocalEelDescriptor].
+     * When it returns the source [Path] itself, no transfer is performed and the source is returned.
+     * Otherwise the content is transferred to the resolved [Path] on [descriptor], and missing parent directories
+     * are created automatically before transferring.
+     *
+     * @property descriptor The target [EelDescriptor].
+     * @property resyncOnEachCall Whether to re-synchronize content on every call within the same session (default is `false`).
+     * @property pathResolver Resolves the target [Path] on [descriptor] for the given local source [Path].
      */
-    data class Explicit(val path: Path) : TransferTarget
+    class Explicit(
+      val descriptor: EelDescriptor,
+      val resyncOnEachCall: Boolean,
+      val pathResolver: (source: Path) -> Path,
+    ) : TransferTarget {
+      constructor(descriptor: EelDescriptor, pathResolver: (source: Path) -> Path) : this(descriptor, false, pathResolver)
+
+      /**
+       * @param path The explicit [Path] where the content should be transferred.
+       * @param resyncOnEachCall Whether to re-synchronize content on every call within the same session (default is `false`).
+       */
+      constructor(path: Path, resyncOnEachCall: Boolean) : this(path.getEelDescriptor(), resyncOnEachCall, { path })
+      constructor(path: Path) : this(path, false)
+    }
 
     /**
      * Represents a temporary target for content transfer.
@@ -150,8 +171,14 @@ object EelPathUtils {
      * in the remote environment using the descriptor information.
      *
      * @property descriptor The [EelDescriptor] to be used for creating a temporary target.
+     * @property resyncOnEachCall Whether to re-synchronize content on every call within the same session (default is `false`).
      */
-    data class Temporary(val descriptor: EelDescriptor) : TransferTarget
+    class Temporary(
+      val descriptor: EelDescriptor,
+      val resyncOnEachCall: Boolean,
+    ) : TransferTarget {
+      constructor(descriptor: EelDescriptor) : this(descriptor, false)
+    }
   }
 
   /**
@@ -173,20 +200,24 @@ object EelPathUtils {
   }
 
   /**
+   * Obsolete: now [java.nio.file.Files.copy] can do the job along with [com.intellij.platform.eel.fs.EelCopyOption].
+   *
    * Synchronizes (transfers) local content from [source] to a remote environment.
    *
    * If the source is already non-local, no transfer is performed and the original [source] is returned.
    * For a local source, content is transferred based on the [target]:
    * - If [target] is [TransferTarget.Temporary], a temporary location is created in the remote environment.
-   * - If [target] is [TransferTarget.Explicit], content is transferred to the explicit target [Path].
+   * - If [target] is [TransferTarget.Explicit], [TransferTarget.Explicit.pathResolver] resolves the target [Path] on the descriptor.
+   *   The content is transferred unless the resolved path is the [source] itself.
    *
    * The file attributes are managed according to [fileAttributesStrategy].
    *
    * @param source the local source [Path] whose content is to be synchronized.
-   * @param target the transfer target, which can be explicit ([TransferTarget.Explicit]) or temporary ([TransferTarget.Temporary]).
+   * @param target the transfer target ([TransferTarget.Temporary] or [TransferTarget.Explicit]).
    * @param fileAttributesStrategy strategy for handling file attributes during transfer (default is [EelFileTransferAttributesStrategy.Copy]).
-   * @return a [Path] pointing to the location of the synchronized content in the remote environment.
+   * @return a [Path] pointing to the location of the synchronized content in the target environment.
    */
+  @ApiStatus.Obsolete
   @JvmStatic
   @JvmOverloads
   @Throws(IOException::class)
@@ -198,7 +229,11 @@ object EelPathUtils {
     return transferLocalContentToRemote(source, target, fileAttributesStrategy, null)
   }
 
+  /**
+   * Obsolete: now [java.nio.file.Files.copy] can do the job along with [com.intellij.platform.eel.fs.EelCopyOption].
+   */
   @ApiStatus.Internal
+  @ApiStatus.Obsolete
   @JvmStatic
   @JvmOverloads
   @Throws(IOException::class)
@@ -219,15 +254,43 @@ object EelPathUtils {
         }
 
         runBlocking {
-          TransferredContentHolder.transferIfNeeded(target.descriptor.toEelApi(), source, fileAttributesStrategy, absoluteSymlinkHandler)
+          TransferredContentHolder.transferIfNeeded(
+            eel = target.descriptor.toEelApi(),
+            source = source,
+            targetKey = TransferredContentHolder.TargetKey.Temporary,
+            resyncOnEachCall = target.resyncOnEachCall,
+            fileAttributesStrategy = fileAttributesStrategy,
+            absoluteSymlinkHandler = absoluteSymlinkHandler,
+          ) { eel ->
+            eel.createTempFor(source, true)
+          }
         }
       }
       is TransferTarget.Explicit -> {
-        val sink = target.path
-        runBlocking {
-          incrementalWalkingTransfer(source, sink, fileAttributesStrategy, absoluteSymlinkHandler, null)
+        val resolvedTarget = target.pathResolver(source)
+        // Compare paths, not files. The resolver may return a path on another file system, where Files.isSameFile is unspecified.
+        if (source == resolvedTarget) {
+          return source
         }
-        return sink
+
+        val resolvedDescriptor = resolvedTarget.getEelDescriptor()
+        require(resolvedDescriptor.equalsMayBeUsingMachine(target.descriptor)) {
+          "Resolved target path $resolvedTarget belongs to $resolvedDescriptor, expected ${target.descriptor}"
+        }
+
+        runBlocking {
+          TransferredContentHolder.transferIfNeeded(
+            eel = target.descriptor.toEelApi(),
+            source = source,
+            targetKey = TransferredContentHolder.TargetKey.Persistent(resolvedTarget.toString()),
+            resyncOnEachCall = target.resyncOnEachCall,
+            fileAttributesStrategy = fileAttributesStrategy,
+            absoluteSymlinkHandler = absoluteSymlinkHandler,
+          ) {
+            resolvedTarget.parent?.let(Files::createDirectories)
+            resolvedTarget
+          }
+        }
       }
     }
   }
@@ -241,8 +304,14 @@ object EelPathUtils {
    */
   private object TransferredContentHolder {
 
+    sealed interface TargetKey {
+      data object Temporary : TargetKey
+      data class Persistent(val targetPathString: String) : TargetKey
+    }
+
     data class CacheKey(
       val sourcePathString: String,
+      val targetKey: TargetKey,
       val fileAttributesStrategy: EelFileTransferAttributesStrategy,
       val absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?,
     )
@@ -253,7 +322,7 @@ object EelPathUtils {
 
     private class Cache : ConcurrentHashMap<CacheKey, Deferred<CacheValue>>()
 
-    // eel api instance -> (source path string -> transferred file)
+    // eel api instance -> (cache key -> transferred file)
     private val caches = CollectionFactory.createConcurrentWeakIdentityMap<EelApi, Cache>()
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -261,24 +330,34 @@ object EelPathUtils {
     suspend fun transferIfNeeded(
       eel: EelApi,
       source: Path,
+      targetKey: TargetKey,
+      resyncOnEachCall: Boolean,
       fileAttributesStrategy: EelFileTransferAttributesStrategy,
       absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?,
+      resolveTargetPath: suspend (EelApi) -> Path,
     ): Path {
       val cache = caches.computeIfAbsent(eel) { Cache() }
+      val key = CacheKey(source.toString(), targetKey, fileAttributesStrategy, absoluteSymlinkHandler)
 
-      return cache.compute(CacheKey(source.toString(), fileAttributesStrategy, absoluteSymlinkHandler)) { _, deferred ->
-        var targetPath: Path? = null
+      return cache.compute(key) { _, deferred ->
+        var previousTargetPath: Path? = null
         if (deferred != null) {
-          if (deferred.isCompleted) {
-            targetPath = deferred.getCompleted().transferredFilePath
-          }
-          else {
+          if (!deferred.isCompleted) {
             return@compute deferred
+          }
+          if (!deferred.isCancelled) {
+            val completedPath = deferred.getCompleted().transferredFilePath
+            if (Files.exists(completedPath)) {
+              if (!resyncOnEachCall) {
+                return@compute deferred
+              }
+              previousTargetPath = completedPath
+            }
           }
         }
 
         GlobalScope.async {
-          val targetPath = targetPath ?: eel.createTempFor(source, true)
+          val targetPath = previousTargetPath ?: resolveTargetPath(eel)
           incrementalWalkingTransfer(source, targetPath, fileAttributesStrategy, absoluteSymlinkHandler, null)
           CacheValue(targetPath)
         }
