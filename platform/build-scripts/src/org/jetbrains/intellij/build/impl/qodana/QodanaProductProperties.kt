@@ -30,6 +30,7 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dexternal.system.auto.import.headless.async=true",
   "-Dmaven.default.headless.import=true",
   "-Dide.do.not.check.ls.on.startup=true",
+  "-Dfull.scanning.on.startup.can.be.skipped=false", // remove when properly fixing indexing issue
 )
 
 private const val IS_EAP = true
