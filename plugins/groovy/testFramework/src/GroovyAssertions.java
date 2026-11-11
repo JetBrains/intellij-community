@@ -6,8 +6,11 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,6 +30,26 @@ public final class GroovyAssertions {
   public static <T> T assertOneElement(T @NotNull [] array) {
     assertEquals(1, array.length, () -> Arrays.toString(array));
     return array[0];
+  }
+
+  public static void assertSize(int expectedSize, @NotNull Collection<?> collection) {
+    assertEquals(expectedSize, collection.size(), collection::toString);
+  }
+
+  public static void assertSize(int expectedSize, Object @NotNull [] array) {
+    assertEquals(expectedSize, array.length, () -> Arrays.toString(array));
+  }
+
+  /**
+   * Checks that [collection] contains each of [expected], as {@code UsefulTestCase.assertContainsElements} does.
+   * Like the original, it fails when [collection] contains an expected element more often than [expected] does.
+   */
+  @SafeVarargs
+  public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, T @NotNull ... expected) {
+    List<T> found = new ArrayList<>(collection);
+    found.retainAll(Arrays.asList(expected));
+    assertEquals(expected.length, found.size(), collection::toString);
+    assertEquals(new HashSet<>(Arrays.asList(expected)), new HashSet<>(found), collection::toString);
   }
 
   public static void assertType(@Nullable String expected, @Nullable PsiType actual) {

@@ -2,91 +2,115 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.ExpressionTest;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ResolveAttributeTest extends GroovyLatestTest implements ExpressionTest {
-  @Before
+@TestApplication
+public class ResolveAttributeTest implements ExpressionTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_2_5);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
+  }
+
+  @BeforeEach
   public void addClasses() {
-    getFixture().addFileToProject("A.groovy", """
-      class A {
-        static staticProp = 'static prop'
-        public static staticField = 'static field'
+    runInEdtAndWait(() -> {
+      getFixture().addFileToProject("A.groovy", """
+        class A {
+          static staticProp = 'static prop'
+          public static staticField = 'static field'
       
-        def instanceProp = 'instance prop'
-        public instanceField = 'instance field'
+          def instanceProp = 'instance prop'
+          public instanceField = 'instance field'
       
-        def getAccessorOnly() { 'accessor only' }
-      }
-      """);
+          def getAccessorOnly() { 'accessor only' }
+        }
+        """);
+    });
   }
 
   @Test
   public void instance_field_in_instance_context() {
-    resolveTest("new A().@<caret>instanceField", GrField.class);
+    runInEdtAndWait(() -> resolveTest("new A().@<caret>instanceField", GrField.class));
   }
 
   @Test
   public void instance_property_in_instance_context() {
-    GroovyResolveResult result = advancedResolveByText("new A().@<caret>instanceProp");
-    assertTrue(result.getElement() instanceof GrField);
-    assertFalse(result.isAccessible());
-    assertFalse(result.isValidResult());
+    runInEdtAndWait(() -> {
+      GroovyResolveResult result = advancedResolveByText("new A().@<caret>instanceProp");
+      assertTrue(result.getElement() instanceof GrField);
+      assertFalse(result.isAccessible());
+      assertFalse(result.isValidResult());
+    });
   }
 
   @Test
   public void dont_resolve_accessor() {
-    resolveTest("new A().@<caret>accessorOnly", null);
+    runInEdtAndWait(() -> resolveTest("new A().@<caret>accessorOnly", null));
   }
 
   @Test
   public void static_field_in_static_context() {
-    resolveTest("A.@<caret>staticField", GrField.class);
-    resolveTest("A.class.@<caret>staticField", GrField.class);
+    runInEdtAndWait(() -> {
+      resolveTest("A.@<caret>staticField", GrField.class);
+      resolveTest("A.class.@<caret>staticField", GrField.class);
+    });
   }
 
   @Test
   public void static_property_in_static_context() {
-    resolveTest("A.@<caret>staticProp", GrField.class);
-    resolveTest("A.class.@<caret>staticProp", GrField.class);
+    runInEdtAndWait(() -> {
+      resolveTest("A.@<caret>staticProp", GrField.class);
+      resolveTest("A.class.@<caret>staticProp", GrField.class);
+    });
   }
 
   @Test
   public void static_property_in_instance_context() {
-    resolveTest("new A().@<caret>staticProp", GrField.class);
+    runInEdtAndWait(() -> resolveTest("new A().@<caret>staticProp", GrField.class));
   }
 
   @Test
   public void instance_property_in_static_context() {
-    GroovyResolveResult result = advancedResolveByText("A.@<caret>instanceProp");
-    assertTrue(result.getElement() instanceof GrField);
-    assertFalse(result.isStaticsOK());
-    assertFalse(result.isValidResult());
+    runInEdtAndWait(() -> {
+      GroovyResolveResult result = advancedResolveByText("A.@<caret>instanceProp");
+      assertTrue(result.getElement() instanceof GrField);
+      assertFalse(result.isStaticsOK());
+      assertFalse(result.isValidResult());
+    });
   }
 
   @Test
   public void attribute_in_call() {
-    resolveTest("new A().@<caret>instanceField()", GrField.class);
+    runInEdtAndWait(() -> resolveTest("new A().@<caret>instanceField()", GrField.class));
   }
 
   @Test
   public void spread_attribute() {
-    referenceExpressionTest("[new A()]*.@instanceField", GrField.class, "java.util.ArrayList<java.lang.String>");
+    runInEdtAndWait(() -> referenceExpressionTest("[new A()]*.@instanceField", GrField.class, "java.util.ArrayList<java.lang.String>"));
   }
 
   @Test
   public void spread_attribute_deep() {
-    referenceExpressionTest("[[new A()]]*.@instanceField", null, "java.util.List");
+    runInEdtAndWait(() -> referenceExpressionTest("[[new A()]]*.@instanceField", null, "java.util.List"));
   }
 
   @Test
   public void spread_static_attribute() {
-    referenceExpressionTest("[A]*.@staticField", GrField.class, "java.util.ArrayList<java.lang.String>");
+    runInEdtAndWait(() -> referenceExpressionTest("[A]*.@staticField", GrField.class, "java.util.ArrayList<java.lang.String>"));
   }
 }

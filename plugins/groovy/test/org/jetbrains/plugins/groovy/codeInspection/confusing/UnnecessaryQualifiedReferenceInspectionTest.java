@@ -2,40 +2,55 @@
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
-import org.jetbrains.plugins.groovy.util.LightProjectTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.List;
 
-public class UnnecessaryQualifiedReferenceInspectionTest extends LightProjectTest implements HighlightingTest {
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+
+@TestApplication
+public class UnnecessaryQualifiedReferenceInspectionTest implements HighlightingTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_6_0);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
+  }
+
   @Test
   public void attributeExpression() {
-    highlightingTest("""
-                       class A { static foo }
-                       A.@foo
-                       A.@foo()
-                       """);
+    runInEdtAndWait(() -> {
+      highlightingTest("""
+                         class A { static foo }
+                         A.@foo
+                         A.@foo()
+                         """);
+    });
   }
   
   @Test
   public void testStaticInterfaceMembers() {
-    highlightingTest("""
-                       interface Capibration {
-                           int PI = 3
-                           static void x() {
-                               println <warning descr="Unnecessary qualified reference">Capibration</warning>.PI
-                               <warning descr="Unnecessary qualified reference">Capibration</warning>.y()
-                           }
+    runInEdtAndWait(() -> {
+      highlightingTest("""
+                         interface Capibration {
+                             int PI = 3
+                             static void x() {
+                                 println <warning descr="Unnecessary qualified reference">Capibration</warning>.PI
+                                 <warning descr="Unnecessary qualified reference">Capibration</warning>.y()
+                             }
                        
-                           static void y() {}
-                       }
-                       """);
+                             static void y() {}
+                         }
+                         """);
+    });
   }
 
   @Override
@@ -43,8 +58,4 @@ public class UnnecessaryQualifiedReferenceInspectionTest extends LightProjectTes
     return List.of(UnnecessaryQualifiedReferenceInspection.class);
   }
 
-  @Override
-  public LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_6_0;
-  }
 }

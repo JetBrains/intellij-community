@@ -3,50 +3,71 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.BaseTest;
 import com.intellij.groovy.testFramework.GroovyAssertions;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_ARRAY_LIST;
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 
-public class SpreadOperatorTest extends GroovyLatestTest implements BaseTest {
+@TestApplication
+public class SpreadOperatorTest implements BaseTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_2_5);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
+  }
 
   @Test
   public void spreadProperty() {
-    GrReferenceExpression expression = lastExpression("[[['a']]]*.bytes", GrReferenceExpression.class);
-    GroovyResolveResult[] results = expression.multiResolve(false);
-    Assert.assertEquals(1, results.length);
-    Assert.assertNotNull(results[0].getSpreadState());
-    GroovyAssertions.assertType(JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<byte[]>>>",
-                                expression.getType());
+    runInEdtAndWait(() -> {
+      GrReferenceExpression expression = lastExpression("[[['a']]]*.bytes", GrReferenceExpression.class);
+      GroovyResolveResult[] results = expression.multiResolve(false);
+      Assertions.assertEquals(1, results.length);
+      Assertions.assertNotNull(results[0].getSpreadState());
+      GroovyAssertions.assertType(JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<byte[]>>>",
+                                  expression.getType());
+    });
   }
 
   @Test
   public void implicitSpreadProperty() {
-    GrReferenceExpression expression = lastExpression("[[['a']]].bytes", GrReferenceExpression.class);
-    GroovyResolveResult[] results = expression.multiResolve(false);
-    Assert.assertEquals(1, results.length);
-    Assert.assertNotNull(results[0].getSpreadState());
-    GroovyAssertions.assertType(JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<byte[]>>>",
-                                expression.getType());
+    runInEdtAndWait(() -> {
+      GrReferenceExpression expression = lastExpression("[[['a']]].bytes", GrReferenceExpression.class);
+      GroovyResolveResult[] results = expression.multiResolve(false);
+      Assertions.assertEquals(1, results.length);
+      Assertions.assertNotNull(results[0].getSpreadState());
+      GroovyAssertions.assertType(JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<byte[]>>>",
+                                  expression.getType());
+    });
   }
 
   @Test
   public void spreadMethod() {
-    GrMethodCall expression = lastExpression("[[['a']]]*.getBytes()", GrMethodCall.class);
-    GroovyResolveResult[] results = expression.multiResolveGroovy(false);
-    Assert.assertEquals(0, results.length);
-    GroovyAssertions.assertType(null, expression.getType());
+    runInEdtAndWait(() -> {
+      GrMethodCall expression = lastExpression("[[['a']]]*.getBytes()", GrMethodCall.class);
+      GroovyResolveResult[] results = expression.multiResolveGroovy(false);
+      Assertions.assertEquals(0, results.length);
+      GroovyAssertions.assertType(null, expression.getType());
+    });
   }
 
   @Test
   public void implicitSpreadMethod() {
-    GrMethodCall expression = lastExpression("[[['a']]].getBytes()", GrMethodCall.class);
-    GroovyResolveResult[] results = expression.multiResolveGroovy(false);
-    Assert.assertEquals(0, results.length);
-    GroovyAssertions.assertType(null, expression.getType());
+    runInEdtAndWait(() -> {
+      GrMethodCall expression = lastExpression("[[['a']]].getBytes()", GrMethodCall.class);
+      GroovyResolveResult[] results = expression.multiResolveGroovy(false);
+      Assertions.assertEquals(0, results.length);
+      GroovyAssertions.assertType(null, expression.getType());
+    });
   }
 }

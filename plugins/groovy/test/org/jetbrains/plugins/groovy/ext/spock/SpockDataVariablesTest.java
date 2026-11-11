@@ -2,18 +2,31 @@
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.groovy.testFramework.BaseTest;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
+import static com.intellij.groovy.testFramework.GroovyAssertions.assertContainsElements;
+import static com.intellij.groovy.testFramework.GroovyAssertions.assertSize;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
-import static com.intellij.testFramework.UsefulTestCase.assertContainsElements;
-import static com.intellij.testFramework.UsefulTestCase.assertSize;
-import static junit.framework.TestCase.assertEquals;
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class SpockDataVariablesTest extends SpockTestBase implements BaseTest {
+@TestApplication
+public class SpockDataVariablesTest implements BaseTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(SpockTestUtil.SPOCK_PROJECT);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
+  }
 
   private Map<String, SpockVariableDescriptor> variableMap(String text) {
     String fileText = """
@@ -37,64 +50,70 @@ public class SpockDataVariablesTest extends SpockTestBase implements BaseTest {
 
   @Test
   public void whereBlockWithAdditionalLabels() {
-    testVariableNames("foo: abc: where: bar = 1", "bar");
+    runInEdtAndWait(() -> testVariableNames("foo: abc: where: bar = 1", "bar"));
   }
 
   @Test
   public void derivedParameterization() {
-    testVariableNames("where: bar = 1", "bar");
+    runInEdtAndWait(() -> testVariableNames("where: bar = 1", "bar"));
   }
 
   @Test
   public void simpleParameterization() {
-    testVariableNames("where: bar << [1]", "bar");
+    runInEdtAndWait(() -> testVariableNames("where: bar << [1]", "bar"));
   }
 
   @Test
   public void multiParameterization() {
-    testVariableNames("where: [bar, baz] << [[1,2]]", "bar", "baz");
+    runInEdtAndWait(() -> testVariableNames("where: [bar, baz] << [[1,2]]", "bar", "baz"));
   }
 
   @Test
   public void emptySingleColumnTable() {
-    testVariableNames("where: bar | _", "bar");
+    runInEdtAndWait(() -> testVariableNames("where: bar | _", "bar"));
   }
 
   @Test
   public void emptyMultiColumnTable() {
-    testVariableNames("where: bar | baz | bad", "bar", "baz", "bad");
+    runInEdtAndWait(() -> testVariableNames("where: bar | baz | bad", "bar", "baz", "bad"));
   }
 
   @Test
   public void derivedParameterizationAfterTable() {
-    testVariableNames("""
-                where:
-                bar | baz | bad
-                1 | 2 | 3
-                foo = bar * baz
-                """, "bar", "baz", "bad", "foo");
+    runInEdtAndWait(() -> {
+      testVariableNames("""
+                  where:
+                  bar | baz | bad
+                  1 | 2 | 3
+                  foo = bar * baz
+                  """, "bar", "baz", "bad", "foo");
+    });
   }
 
   @Test
   public void derivedParameterizationWithLabelAfterTable() {
-    testVariableNames("""
-                where:
-                bar | baz | bad
-                1 | 2 | 3
-                and:
-                foo = bar * baz
-                """, "bar", "baz", "bad", "foo");
+    runInEdtAndWait(() -> {
+      testVariableNames("""
+                  where:
+                  bar | baz | bad
+                  1 | 2 | 3
+                  and:
+                  foo = bar * baz
+                  """, "bar", "baz", "bad", "foo");
+    });
   }
 
   @Test
   public void andLabelInsideTable() {
-    Map<String, SpockVariableDescriptor> variables = variableMap("""
-                where:
-                bar | _
-                and:
-                1   | _
-                """);
-    assertEquals(1, variables.size());
-    assertEquals(JAVA_LANG_INTEGER, variables.values().iterator().next().getType().getCanonicalText());
+    runInEdtAndWait(() -> {
+      Map<String, SpockVariableDescriptor> variables = variableMap("""
+                  where:
+                  bar | _
+                  and:
+                  1   | _
+                  """);
+      assertEquals(1, variables.size());
+      assertEquals(JAVA_LANG_INTEGER, variables.values().iterator().next().getType().getCanonicalText());
+    });
   }
 }

@@ -2,18 +2,35 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.ResolveTest;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class ResolveMethod2Test extends GroovyLatestTest implements ResolveTest {
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+
+@TestApplication
+public class ResolveMethod2Test implements ResolveTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_2_5);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
+  }
+
   @Test
   public void voidArgument() {
-    GroovyResolveResult result = advancedResolveByText("def foo(p); void bar(); <caret>foo(bar())");
-    Assert.assertTrue(result instanceof GroovyMethodResult);
-    Assert.assertEquals(Applicability.applicable, ((GroovyMethodResult)result).getApplicability());
+    runInEdtAndWait(() -> {
+      GroovyResolveResult result = advancedResolveByText("def foo(p); void bar(); <caret>foo(bar())");
+      Assertions.assertTrue(result instanceof GroovyMethodResult);
+      Assertions.assertEquals(Applicability.applicable, ((GroovyMethodResult)result).getApplicability());
+    });
   }
 }

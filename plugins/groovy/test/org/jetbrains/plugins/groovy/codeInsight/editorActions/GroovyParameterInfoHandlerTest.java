@@ -6,54 +6,70 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 
-public class GroovyParameterInfoHandlerTest extends GroovyLatestTest implements ResolveTest {
-  public GroovyParameterInfoHandlerTest() {
-    super("parameterInfo/");
+@TestApplication
+public class GroovyParameterInfoHandlerTest implements ResolveTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_2_5, "parameterInfo/");
+  private final TestFixture<String> testName = testNameFixture(false);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
+  }
+
+  public String getTestName() {
+    return testName.get();
   }
 
   @Test
   public void instanceMethodReferenceZeroParams() {
-    testParameterHint();
+    runInEdtAndWait(() -> testParameterHint());
   }
 
   @Test
   public void instanceMethodReferenceSingleParam() {
-    testParameterHint();
+    runInEdtAndWait(() -> testParameterHint());
   }
 
   @Test
   public void instanceMethodReferenceDefaultParam() {
-    testParameterHint();
+    runInEdtAndWait(() -> testParameterHint());
   }
 
   @Test
   public void instanceMethodReferenceOverloads() {
-    testParameterHint();
+    runInEdtAndWait(() -> testParameterHint());
   }
 
   @Test
   public void methodWithSeveralNamedParams() {
-    testParameterHint();
+    runInEdtAndWait(() -> testParameterHint());
   }
 
   @Test
   public void methodWithNamedParamsAnnotation() {
-    testParameterHint();
+    runInEdtAndWait(() -> testParameterHint());
   }
 
   @Test
   public void closureWithTypedParams() {
-    testParameterHint();
+    runInEdtAndWait(() -> testParameterHint());
   }
 
   @Test
   public void closureWithUntypedParams() {
-    testParameterHint();
+    runInEdtAndWait(() -> testParameterHint());
   }
 
   private void testParameterHint() {

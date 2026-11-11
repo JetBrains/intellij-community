@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessArithmeticInspection;
@@ -9,12 +12,22 @@ import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessBool
 import org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-public class SpockHighlightingTest extends SpockTestBase implements HighlightingTest {
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+
+@TestApplication
+public class SpockHighlightingTest implements HighlightingTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(SpockTestUtil.SPOCK_PROJECT);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
+  }
 
   @Override
   public @NotNull Collection<Class<? extends LocalInspectionTool>> getInspections() {
@@ -27,124 +40,136 @@ public class SpockHighlightingTest extends SpockTestBase implements Highlighting
 
   @Test
   public void singlePipeColumnSeparator() {
-    highlightingTest("""
-class FooSpec extends spock.lang.Specification {
-  def feature(int a, boolean b) {
-    where:
-    a | b
-    1 | true
-    and:
-    2 | false
-  }
+    runInEdtAndWait(() -> {
+      highlightingTest("""
+  class FooSpec extends spock.lang.Specification {
+    def feature(int a, boolean b) {
+      where:
+      a | b
+      1 | true
+      and:
+      2 | false
+    }
   
-  def feature(int a) {
-    where:
-    a | _
-    1 | _
-    and:
-    2 | _
+    def feature(int a) {
+      where:
+      a | _
+      1 | _
+      and:
+      2 | _
+    }
   }
-}
-""");
+  """);
+    });
   }
 
   @Test
   public void doublePipeColumnSeparator() {
-    highlightingTest("""
-class FooSpec extends spock.lang.Specification {
+    runInEdtAndWait(() -> {
+      highlightingTest("""
+  class FooSpec extends spock.lang.Specification {
   
-  def feature() {
-    where:
-    a    || false
-    "hi" || false
-  }
+    def feature() {
+      where:
+      a    || false
+      "hi" || false
+    }
   
-  def feature2() {
-    where:
-    a    || b
-    true || false
+    def feature2() {
+      where:
+      a    || b
+      true || false
+    }
   }
-}
-""");
+  """);
+    });
   }
 
   @Test
   public void interactions() {
-    enableInspectionAsWarning(new JavaStylePropertiesInvocationInspection());
-    highlightingTest("""
-interface Subscriber {
-  def receive(String event)
-  void setIncludeFollowUp(o)
-}
-
-class FooSpec extends spock.lang.Specification {
-
-  def sub = Mock(Subscriber)
-
-  def feature() {
-    when:
-    sub.receive("hi")
-
-    then:
-    1 * sub.receive(_)
-    0 * sub.setIncludeFollowUp(1)
+    runInEdtAndWait(() -> {
+      enableInspectionAsWarning(new JavaStylePropertiesInvocationInspection());
+      highlightingTest("""
+  interface Subscriber {
+    def receive(String event)
+    void setIncludeFollowUp(o)
   }
-}
-""");
+
+  class FooSpec extends spock.lang.Specification {
+
+    def sub = Mock(Subscriber)
+
+    def feature() {
+      when:
+      sub.receive("hi")
+
+      then:
+      1 * sub.receive(_)
+      0 * sub.setIncludeFollowUp(1)
+    }
+  }
+  """);
+    });
   }
 
   @Test
   public void dotInMethodName() {
-    highlightingTest("""
-class FooSpec extends spock.lang.Specification {
-  def <warning descr="Method name contains illegal character(s): '.'">'not.a.feature'</warning>() {}
-  def 'a.feature'() {
-    when:
-    42
+    runInEdtAndWait(() -> {
+      highlightingTest("""
+  class FooSpec extends spock.lang.Specification {
+    def <warning descr="Method name contains illegal character(s): '.'">'not.a.feature'</warning>() {}
+    def 'a.feature'() {
+      when:
+      42
+    }
   }
-}
-""");
+  """);
+    });
   }
 
   @Test
   public void indirectExtending() {
-    getFixture().enableInspections(new GrUnresolvedAccessInspection());
-    highlightingTest("""
-class A extends spock.lang.Specification {}
+    runInEdtAndWait(() -> {
+      getFixture().enableInspections(new GrUnresolvedAccessInspection());
+      highlightingTest("""
+  class A extends spock.lang.Specification {}
 
-class FooSpec extends A {
-  def foo() {
-    when:
-    def concat = a + b
+  class FooSpec extends A {
+    def foo() {
+      when:
+      def concat = a + b
     
-    where:
-    a     | b
-    "foo" | "bar"
+      where:
+      a     | b
+      "foo" | "bar"
+    }
   }
-}
-""");
+  """);
+    });
   }
 
   @Test
   public void useAnnotation() {
-    getFixture().enableInspections(new GrUnresolvedAccessInspection());
-    highlightingTest("""
-import spock.lang.Specification
-import spock.util.mop.Use
+    runInEdtAndWait(() -> {
+      getFixture().enableInspections(new GrUnresolvedAccessInspection());
+      highlightingTest("""
+  import spock.lang.Specification
+  import spock.util.mop.Use
 
-class A {
-     static String foo(Integer self) {
-        return "abs"
-    }
-}
+  class A {
+       static String foo(Integer self) {
+          return "abs"
+      }
+  }
 
-@Use(A)
-class HelloSpockSpec extends Specification {
-    def "length of Spock's and his friends' names"() {
-        expect:
-        1.foo() == "abs"
-    }
-}
-""");
+  @Use(A)
+  class HelloSpockSpec extends Specification {
+      def "length of Spock's and his friends' names"() {
+          expect:
+          1.foo() == "abs"
+      }
+  }
+  """);
+    });
   }
 }

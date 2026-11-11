@@ -3,15 +3,29 @@ package org.jetbrains.plugins.groovy.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.groovy.testFramework.BaseTest;
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
-import org.junit.Test;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class MakeClosureCallExplicitIntentionTest extends GroovyLatestTest implements BaseTest {
+@TestApplication
+public class MakeClosureCallExplicitIntentionTest implements BaseTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_2_5);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
+  }
+
   private void doTest(String before, String after) {
     configureByText(before);
     List<IntentionAction> intentions =
@@ -28,39 +42,53 @@ public class MakeClosureCallExplicitIntentionTest extends GroovyLatestTest imple
 
   @Test
   public void closure_local_variable() {
-    doTest("def local = {}; <caret>local()", "def local = {}; <caret>local.call()");
+    runInEdtAndWait(() -> {
+      doTest("def local = {}; <caret>local()", "def local = {}; <caret>local.call()");
+    });
   }
 
   @Test
   public void non_closure_local_variable() {
-    doTest("def local = \"\"; <caret>local()", null);
+    runInEdtAndWait(() -> {
+      doTest("def local = \"\"; <caret>local()", null);
+    });
   }
 
   @Test
   public void callable_local_variable() {
-    getFixture().addFileToProject("classes.groovy", "class Callable { def call() {} }");
-    doTest("def local = new Callable(); <caret>local()", null);
+    runInEdtAndWait(() -> {
+      getFixture().addFileToProject("classes.groovy", "class Callable { def call() {} }");
+      doTest("def local = new Callable(); <caret>local()", null);
+    });
   }
 
   @Test
   public void closure_property() {
-    getFixture().addFileToProject("classes.groovy", "class A { def prop = {} }");
-    doTest("new A().<caret>prop()", "new A().<caret>prop.call()");
+    runInEdtAndWait(() -> {
+      getFixture().addFileToProject("classes.groovy", "class A { def prop = {} }");
+      doTest("new A().<caret>prop()", "new A().<caret>prop.call()");
+    });
   }
 
   @Test
   public void non_closure_property() {
-    getFixture().addFileToProject("classes.groovy", "class A { def prop = \"\" }");
-    doTest("new A().<caret>prop()", null);
+    runInEdtAndWait(() -> {
+      getFixture().addFileToProject("classes.groovy", "class A { def prop = \"\" }");
+      doTest("new A().<caret>prop()", null);
+    });
   }
 
   @Test
   public void closure_method() {
-    doTest("Closure foo() {}; <caret>foo()", null);
+    runInEdtAndWait(() -> {
+      doTest("Closure foo() {}; <caret>foo()", null);
+    });
   }
 
   @Test
   public void closure_method_call() {
-    doTest("Closure foo() {}; foo().<caret>call()", null);
+    runInEdtAndWait(() -> {
+      doTest("Closure foo() {}; foo().<caret>call()", null);
+    });
   }
 }

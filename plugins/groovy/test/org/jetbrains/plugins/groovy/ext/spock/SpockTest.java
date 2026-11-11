@@ -2,212 +2,243 @@
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.groovy.testFramework.TypingTest;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
-import static junit.framework.TestCase.assertTrue;
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class SpockTest extends SpockTestBase implements TypingTest, HighlightingTest {
+@TestApplication
+public class SpockTest implements TypingTest, HighlightingTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(SpockTestUtil.SPOCK_PROJECT);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
+  }
 
   @Test
   public void testCompletion() {
-    configureByText(
-      """
-        class FooSpec extends spock.lang.Specification {
-          def "foo test"() {
-            expect:
-            <caret>
+    runInEdtAndWait(() -> {
+      configureByText(
+        """
+          class FooSpec extends spock.lang.Specification {
+            def "foo test"() {
+              expect:
+              <caret>
         
-            where:
-            varAssigment = "asdad"
-            varShl << ['aaa', 'bbb']
-            [varShl1, varShl2, varShl3] << [['aaa', 'bbb', 'ccc'], ['aaa', 'bbb', 'ccc'], ['aaa', 'bbb', 'ccc']]
+              where:
+              varAssigment = "asdad"
+              varShl << ['aaa', 'bbb']
+              [varShl1, varShl2, varShl3] << [['aaa', 'bbb', 'ccc'], ['aaa', 'bbb', 'ccc'], ['aaa', 'bbb', 'ccc']]
         
-            varTable1|varTable2|varTable3||varTable4
-            ""|""|""||""
+              varTable1|varTable2|varTable3||varTable4
+              ""|""|""||""
+            }
           }
-        }
-        """);
-    getFixture().completeBasic();
-    getFixture().assertPreferredCompletionItems(
-      0,
-      "varAssigment", "varShl", "varShl1", "varShl2", "varShl3", "varTable1", "varTable2", "varTable3", "varTable4"
-    );
+          """);
+      getFixture().completeBasic();
+      getFixture().assertPreferredCompletionItems(
+        0,
+        "varAssigment", "varShl", "varShl1", "varShl2", "varShl3", "varTable1", "varTable2", "varTable3", "varTable4"
+      );
+    });
   }
 
   @Test
   public void testEquals() {
-    typingTest(
-      """
-        class FooSpec extends spock.lang.Specification {
-          def "foo test"() {
-            expect:
-            <caret>name
+    runInEdtAndWait(() -> {
+      typingTest(
+        """
+          class FooSpec extends spock.lang.Specification {
+            def "foo test"() {
+              expect:
+              <caret>name
         
-            where:
-            name = "xxx"
+              where:
+              name = "xxx"
+            }
           }
-        }
-        """, JAVA_LANG_STRING);
+          """, JAVA_LANG_STRING);
+    });
   }
 
   @Test
   public void testTable() {
-    typingTest(
-      """
-        class FooSpec extends spock.lang.Specification {
-          def "foo test"() {
-            List<Byte> list = zzz()
-            expect:
-            <caret>name
+    runInEdtAndWait(() -> {
+      typingTest(
+        """
+          class FooSpec extends spock.lang.Specification {
+            def "foo test"() {
+              List<Byte> list = zzz()
+              expect:
+              <caret>name
         
-            where:
-            varTable1|varT.a.ble2|varTable3|name
-            ""|""|""|list
-            ""|""|""|[1,2L,3d]
-            ""|""|""|null
+              where:
+              varTable1|varT.a.ble2|varTable3|name
+              ""|""|""|list
+              ""|""|""|[1,2L,3d]
+              ""|""|""|null
+            }
           }
-        }
-        """, "java.util.List<? extends java.lang.Number>");
+          """, "java.util.List<? extends java.lang.Number>");
+    });
   }
 
   @Test
   public void testShlSimple() {
-    typingTest(
-      """
-        class FooSpec extends spock.lang.Specification {
-          def "foo test"() {
-            expect:
-            <caret>name
+    runInEdtAndWait(() -> {
+      typingTest(
+        """
+          class FooSpec extends spock.lang.Specification {
+            def "foo test"() {
+              expect:
+              <caret>name
         
-            where:
-            name << [new HashMap(), new TreeMap(), [aaa:1, bbb:2], null]
+              where:
+              name << [new HashMap(), new TreeMap(), [aaa:1, bbb:2], null]
+            }
           }
-        }
-        """, "[java.util.AbstractMap,java.lang.Cloneable,java.io.Serializable]");
+          """, "[java.util.AbstractMap,java.lang.Cloneable,java.io.Serializable]");
+    });
   }
 
   @Test
   public void testShlMulti1() {
-    typingTest(
-      """
-        class FooSpec extends spock.lang.Specification {
-          def "foo test"() {
-            def c = { return "1111" }
+    runInEdtAndWait(() -> {
+      typingTest(
+        """
+          class FooSpec extends spock.lang.Specification {
+            def "foo test"() {
+              def c = { return "1111" }
         
-            expect:
-            <caret>name
+              expect:
+              <caret>name
         
-            where:
-            [x1, _, name] << [['x', 'y', c()], ['x', 'y', null]]
+              where:
+              [x1, _, name] << [['x', 'y', c()], ['x', 'y', null]]
+            }
           }
-        }
-        """, JAVA_LANG_STRING);
+          """, JAVA_LANG_STRING);
+    });
   }
 
   @Test
   public void testShlMulti2() {
-    typingTest(
-      """
-        class FooSpec extends spock.lang.Specification {
-          def "foo test"() {
-            def list = ["a", "b", "c"]
+    runInEdtAndWait(() -> {
+      typingTest(
+        """
+          class FooSpec extends spock.lang.Specification {
+            def "foo test"() {
+              def list = ["a", "b", "c"]
         
-            expect:
-            <caret>name
+              expect:
+              <caret>name
         
-            where:
-            [x1, _, name] << [list, ['aaa', 'bbb', 'ccc']]
+              where:
+              [x1, _, name] << [list, ['aaa', 'bbb', 'ccc']]
+            }
           }
-        }
-        """, JAVA_LANG_STRING);
+          """, JAVA_LANG_STRING);
+    });
   }
 
   @Test
   public void testRename() {
-    getFixture().configureByText("FooSpec.groovy",
-                                 """
-                                   class FooSpec extends spock.lang.Specification {
-                                     @spock.lang.Unroll("xxx #name a #name #name    #name")
-                                     def "foo test"() {
-                                       expect:
-                                       name == null || name.length() == 1
+    runInEdtAndWait(() -> {
+      getFixture().configureByText("FooSpec.groovy",
+                                   """
+                                     class FooSpec extends spock.lang.Specification {
+                                       @spock.lang.Unroll("xxx #name a #name #name    #name")
+                                       def "foo test"() {
+                                         expect:
+                                         name == null || name.length() == 1
                                    
-                                       where:
-                                       [x1, _, name<caret>] << [['x', 'y', 'x'], ['x', 'y', null]]
+                                         where:
+                                         [x1, _, name<caret>] << [['x', 'y', 'x'], ['x', 'y', null]]
+                                       }
                                      }
-                                   }
-                                   """);
+                                     """);
 
-    getFixture().renameElementAtCaret("n");
+      getFixture().renameElementAtCaret("n");
 
-    getFixture().checkResult(
-      """
-        class FooSpec extends spock.lang.Specification {
-          @spock.lang.Unroll("xxx #n a #n #n    #n")
-          def "foo test"() {
-            expect:
-            n == null || n.length() == 1
+      getFixture().checkResult(
+        """
+          class FooSpec extends spock.lang.Specification {
+            @spock.lang.Unroll("xxx #n a #n #n    #n")
+            def "foo test"() {
+              expect:
+              n == null || n.length() == 1
         
-            where:
-            [x1, _, n] << [['x', 'y', 'x'], ['x', 'y', null]]
+              where:
+              [x1, _, n] << [['x', 'y', 'x'], ['x', 'y', null]]
+            }
           }
-        }
-        """);
+          """);
 
-    getFixture().renameElementAtCaret("z1234567890");
+      getFixture().renameElementAtCaret("z1234567890");
 
-    getFixture().checkResult(
-      """
-        class FooSpec extends spock.lang.Specification {
-          @spock.lang.Unroll("xxx #z1234567890 a #z1234567890 #z1234567890    #z1234567890")
-          def "foo test"() {
-            expect:
-            z1234567890 == null || z1234567890.length() == 1
+      getFixture().checkResult(
+        """
+          class FooSpec extends spock.lang.Specification {
+            @spock.lang.Unroll("xxx #z1234567890 a #z1234567890 #z1234567890    #z1234567890")
+            def "foo test"() {
+              expect:
+              z1234567890 == null || z1234567890.length() == 1
         
-            where:
-            [x1, _, z1234567890] << [['x', 'y', 'x'], ['x', 'y', null]]
+              where:
+              [x1, _, z1234567890] << [['x', 'y', 'x'], ['x', 'y', null]]
+            }
           }
-        }
-        """);
+          """);
+    });
   }
 
   @Test
   public void testVariable_NotExistingInCompletion() {
-    getFixture().configureByText("FooSpec.groovy",
-                                 """
-                                   class FooSpec extends spock.lang.Specification {
-                                     def "foo test"() {
-                                       String subscriber = Mock()
-                                       then: (0.._) * subscriber.concat(<caret>)
+    runInEdtAndWait(() -> {
+      getFixture().configureByText("FooSpec.groovy",
+                                   """
+                                     class FooSpec extends spock.lang.Specification {
+                                       def "foo test"() {
+                                         String subscriber = Mock()
+                                         then: (0.._) * subscriber.concat(<caret>)
+                                       }
                                      }
-                                   }
-                                   """);
-    getFixture().completeBasic();
-    List<String> elements = getFixture().getLookupElementStrings();
-    assertTrue(elements.contains("_"));
+                                     """);
+      getFixture().completeBasic();
+      List<String> elements = getFixture().getLookupElementStrings();
+      assertTrue(elements.contains("_"));
+    });
   }
 
-  @Ignore("see com.intellij.execution.junit2.inspection.JUnitCantBeStaticExtension")
+  @Disabled("see com.intellij.execution.junit2.inspection.JUnitCantBeStaticExtension")
   @Test
   public void testMethodMayBeStatic() {
-    GrMethodMayBeStaticInspection inspection = new GrMethodMayBeStaticInspection();
-    inspection.myIgnoreEmptyMethods = false;
-    highlightingTest(
-      """
-        class SomeSpec extends spock.lang.Specification {
-          def cleanup() {}
-          def setupSpec() {}
-          def <warning descr="Method may be static">regularMethod</warning>() {}
-          def featureMethod() {
-            expect: 1 == 1
+    runInEdtAndWait(() -> {
+      GrMethodMayBeStaticInspection inspection = new GrMethodMayBeStaticInspection();
+      inspection.myIgnoreEmptyMethods = false;
+      highlightingTest(
+        """
+          class SomeSpec extends spock.lang.Specification {
+            def cleanup() {}
+            def setupSpec() {}
+            def <warning descr="Method may be static">regularMethod</warning>() {}
+            def featureMethod() {
+              expect: 1 == 1
+            }
           }
-        }
-        """, inspection);
+          """, inspection);
+    });
   }
 }

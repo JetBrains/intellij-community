@@ -2,54 +2,72 @@
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.List;
 
-public class SpockInteractionsTest extends SpockTestBase implements HighlightingTest {
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+
+@TestApplication
+public class SpockInteractionsTest implements HighlightingTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(SpockTestUtil.SPOCK_PROJECT);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
+  }
+
   @Override
   public @NotNull Collection<Class<? extends LocalInspectionTool>> getInspections() {
     return List.of(
       GroovyAssignabilityCheckInspection.class, GrUnresolvedAccessInspection.class);
   }
 
-  @Before
+  @BeforeEach
   public void addClasses() {
-    getFixture().addFileToProject("classes.groovy", """
-      class Event {}
+    runInEdtAndWait(() -> {
+      getFixture().addFileToProject("classes.groovy", """
+        class Event {}
       
-      class Publisher {
-        List<Subscriber> subscribers = []
-        def send(Event event) {}
-      }
+        class Publisher {
+          List<Subscriber> subscribers = []
+          def send(Event event) {}
+        }
       
-      interface Subscriber {
-        def receive(Event event)
-      }
-      """);
+        interface Subscriber {
+          def receive(Event event)
+        }
+        """);
+    });
   }
 
   @Test
   public void interactions() {
-    highlightingTest("""
-                       class MySpec extends spock.lang.Specification {
-                         def sub1 = Mock(Subscriber)
-                         def feature() {
-                           sub1.receive<warning descr="'receive' in 'Subscriber' cannot be applied to '(java.lang.String)'">("event")</warning> // not an interaction
-                           (1..2) * sub1.receive("event") >> "1"
-                           sub1.receive<warning descr="'receive' in 'Subscriber' cannot be applied to '(groovy.lang.Closure<java.lang.Void>)'">({})</warning>
-                           1 * sub1.receive({})
-                           sub1.receive<warning descr="'receive' in 'Subscriber' cannot be applied to '(java.lang.Object)'">(_)</warning>
-                           _ * sub1.receive(_)
-                           _ * sub1.receive() >> 1 >>> 2 >> 3 >>> 4
+    runInEdtAndWait(() -> {
+      highlightingTest("""
+                         class MySpec extends spock.lang.Specification {
+                           def sub1 = Mock(Subscriber)
+                           def feature() {
+                             sub1.receive<warning descr="'receive' in 'Subscriber' cannot be applied to '(java.lang.String)'">("event")</warning> // not an interaction
+                             (1..2) * sub1.receive("event") >> "1"
+                             sub1.receive<warning descr="'receive' in 'Subscriber' cannot be applied to '(groovy.lang.Closure<java.lang.Void>)'">({})</warning>
+                             1 * sub1.receive({})
+                             sub1.receive<warning descr="'receive' in 'Subscriber' cannot be applied to '(java.lang.Object)'">(_)</warning>
+                             _ * sub1.receive(_)
+                             _ * sub1.receive() >> 1 >>> 2 >> 3 >>> 4
+                           }
                          }
-                       }
-                       """);
+                         """);
+    });
   }
 }

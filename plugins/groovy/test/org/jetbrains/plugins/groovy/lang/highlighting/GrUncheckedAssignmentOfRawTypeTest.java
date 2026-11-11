@@ -2,57 +2,71 @@
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.codehaus.groovy.runtime.StringGroovyMethods;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection;
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
 
-public class GrUncheckedAssignmentOfRawTypeTest extends GroovyLatestTest implements HighlightingTest {
-  public GrUncheckedAssignmentOfRawTypeTest() {
-    super("highlighting");
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+
+@TestApplication
+public class GrUncheckedAssignmentOfRawTypeTest implements HighlightingTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_2_5, "highlighting");
+  private final TestFixture<String> testName = testNameFixture(false);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
   }
 
   @Override
   public String getTestName() {
-    return StringGroovyMethods.capitalize(super.getTestName());
+    return StringGroovyMethods.capitalize(testName.get());
   }
 
   @Test
-  public void rawMethodAccess() { fileHighlightingTest(); }
+  public void rawMethodAccess() { runInEdtAndWait(() -> fileHighlightingTest()); }
 
   @Test
-  public void rawFieldAccess() { fileHighlightingTest(); }
+  public void rawFieldAccess() { runInEdtAndWait(() -> fileHighlightingTest()); }
 
   @Test
-  public void rawArrayStyleAccess() { fileHighlightingTest(); }
+  public void rawArrayStyleAccess() { runInEdtAndWait(() -> fileHighlightingTest()); }
 
   @Test
-  public void rawArrayStyleAccessToMap() { fileHighlightingTest(); }
+  public void rawArrayStyleAccessToMap() { runInEdtAndWait(() -> fileHighlightingTest()); }
 
   @Test
-  public void rawArrayStyleAccessToList() { fileHighlightingTest(); }
+  public void rawArrayStyleAccessToList() { runInEdtAndWait(() -> fileHighlightingTest()); }
 
   @Test
   public void rawClosureReturnType() {
-    highlightingTest("""
-class A<T> {
-  A(T t) {this.t = t}
+    runInEdtAndWait(() -> {
+      highlightingTest("""
+  class A<T> {
+    A(T t) {this.t = t}
 
-  T t
-  def cl = {
-    return t
+    T t
+    def cl = {
+      return t
+    }
   }
-}
 
 
-def a = new A(new Date())
-Date d = <warning descr="Cannot assign 'Object' to 'Date'">a.cl()</warning>
-""");
+  def a = new A(new Date())
+  Date d = <warning descr="Cannot assign 'Object' to 'Date'">a.cl()</warning>
+  """);
+    });
   }
 
   @Override

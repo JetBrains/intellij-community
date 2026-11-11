@@ -1,12 +1,26 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.control.finalVar.GrFinalVariableAccessInspection;
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class AutoFinalSupportTest extends GroovyLatestTest implements HighlightingTest {
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+
+@TestApplication
+public class AutoFinalSupportTest implements HighlightingTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_2_5);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
+  }
 
   private void doTest(String text) {
     String newText = text;
@@ -23,77 +37,87 @@ public class AutoFinalSupportTest extends GroovyLatestTest implements Highlighti
 
   @Test
   public void autoFinalWorksOnFields() {
-    doTest("""
-             @AutoFinal
-             @CompileStatic
-             class Bar {
-                 String s = ""
+    runInEdtAndWait(() -> {
+      doTest("""
+               @AutoFinal
+               @CompileStatic
+               class Bar {
+                   String s = ""
              
-                 def foo() {
-                     <error>s</error> = ""
-                 }
-             }
-             """);
+                   def foo() {
+                       <error>s</error> = ""
+                   }
+               }
+               """);
+    });
   }
 
   @Test
   public void autoFinalWorksOnParameters() {
-    doTest("""
-             @AutoFinal
-             @CompileStatic
-             class Bar {
+    runInEdtAndWait(() -> {
+      doTest("""
+               @AutoFinal
+               @CompileStatic
+               class Bar {
              
-                 def foo(p) {
-                     <error>p</error> = 1
-                 }
-             }
-             """);
+                   def foo(p) {
+                       <error>p</error> = 1
+                   }
+               }
+               """);
+    });
   }
 
   @Test
   public void autoFinalWorksOnNestedClasses() {
-    doTest("""
-             @AutoFinal
-             @CompileStatic
-             class Foo {
+    runInEdtAndWait(() -> {
+      doTest("""
+               @AutoFinal
+               @CompileStatic
+               class Foo {
              
-                 static class Bar {
-                     String s = ""
+                   static class Bar {
+                       String s = ""
              
-                     def foo() {
-                         <error>s</error> = ""
-                     }
-                 }
+                       def foo() {
+                           <error>s</error> = ""
+                       }
+                   }
              
-             }
-             """);
+               }
+               """);
+    });
   }
 
   @Test
   public void autoFinalWorksForClosureParameters() {
-    doTest("""
-             @AutoFinal
-             @CompileStatic
-             class Bar {
+    runInEdtAndWait(() -> {
+      doTest("""
+               @AutoFinal
+               @CompileStatic
+               class Bar {
              
-                 def foo() {
-                     1.with {a -> <error descr="Cannot assign a value to final variable 'a'">a</error> = 2}
-                 }
-             }
-             """);
+                   def foo() {
+                       1.with {a -> <error descr="Cannot assign a value to final variable 'a'">a</error> = 2}
+                   }
+               }
+               """);
+    });
   }
 
   @Test
   public void disabledAutoFinal() {
-    doTest("""
-             @AutoFinal
-             @CompileStatic
-             class Bar {
+    runInEdtAndWait(() -> {
+      doTest("""
+               @AutoFinal
+               @CompileStatic
+               class Bar {
              
-                 @AutoFinal(enabled = false)
-                 def foo(r) {
-                     r = 2
-                 }
-             }""");
+                   @AutoFinal(enabled = false)
+                   def foo(r) {
+                       r = 2
+                   }
+               }""");
+    });
   }
 }

@@ -2,14 +2,31 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.groovy.testFramework.BaseTest;
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
-import org.junit.Test;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.junit.jupiter.api.Test;
 
-public class GroovyBraceMatcherTest extends GroovyLatestTest implements BaseTest {
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+
+@TestApplication
+public class GroovyBraceMatcherTest implements BaseTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_2_5);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
+  }
+
   private void doTest(String before, String charsToType, String after) {
-    configureByText(before);
-    getFixture().type(charsToType);
-    getFixture().checkResult(after);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      configureByText(before);
+      getFixture().type(charsToType);
+      getFixture().checkResult(after);
+    });
   }
 
   @Test

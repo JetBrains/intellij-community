@@ -2,16 +2,29 @@
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.util.ActionTest;
-import org.jetbrains.plugins.groovy.util.Groovy50Test;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.List;
 
-public class GroovyPointlessBooleanInspectionTest extends Groovy50Test implements HighlightingTest, ActionTest {
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+
+@TestApplication
+public class GroovyPointlessBooleanInspectionTest implements HighlightingTest, ActionTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_5_0);
+
+  @Override
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
+  }
 
   @Override
   public @NotNull Collection<Class<? extends LocalInspectionTool>> getInspections() {
@@ -20,31 +33,39 @@ public class GroovyPointlessBooleanInspectionTest extends Groovy50Test implement
 
   @Test
   public void simpleUnary() {
-    doTest("<warning descr=\"Redundant boolean operations\">!false</warning>", "true");
-    doTest("<warning descr=\"Redundant boolean operations\">!true</warning>", "false");
+    runInEdtAndWait(() -> {
+      doTest("<warning descr=\"Redundant boolean operations\">!false</warning>", "true");
+      doTest("<warning descr=\"Redundant boolean operations\">!true</warning>", "false");
+    });
   }
 
   @Test
   public void doubleNegationUnary() {
-    doTest("<warning descr=\"Redundant boolean operations\">!!false</warning>", "false");
-    doTest("<warning descr=\"Redundant boolean operations\">!!true</warning>", "true");
+    runInEdtAndWait(() -> {
+      doTest("<warning descr=\"Redundant boolean operations\">!!false</warning>", "false");
+      doTest("<warning descr=\"Redundant boolean operations\">!!true</warning>", "true");
+    });
   }
 
   @Test
   public void tripleNegationUnary() {
-    doTest("!<caret><warning descr=\"Redundant boolean operations\">!!false</warning>", "!false");
-    doTest( "!<caret><warning descr=\"Redundant boolean operations\">!!true</warning>", "!true");
+    runInEdtAndWait(() -> {
+      doTest("!<caret><warning descr=\"Redundant boolean operations\">!!false</warning>", "!false");
+      doTest( "!<caret><warning descr=\"Redundant boolean operations\">!!true</warning>", "!true");
+    });
   }
 
   @Test
   public void implicationExpression() {
-    doTest("<warning descr=\"Redundant boolean operations\">false ==> (false)</warning>", "(false)");
-    doTest( "<warning descr=\"Redundant boolean operations\">(false) ==> true</warning>", "(false)");
+    runInEdtAndWait(() -> {
+      doTest("<warning descr=\"Redundant boolean operations\">false ==> (false)</warning>", "(false)");
+      doTest( "<warning descr=\"Redundant boolean operations\">(false) ==> true</warning>", "(false)");
+    });
   }
 
   @Test
   public void nonPrimitiveType() {
-    highlightingTest("Boolean x = null; x == true");
+    runInEdtAndWait(() -> highlightingTest("Boolean x = null; x == true"));
   }
 
   private void doTest(String before, String after) {

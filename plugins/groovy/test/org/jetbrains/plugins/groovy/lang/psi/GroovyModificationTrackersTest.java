@@ -3,52 +3,76 @@ package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import org.jetbrains.plugins.groovy.util.GroovyLatestTest;
-import org.junit.Ignore;
-import org.junit.Test;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Ignore
-public class GroovyModificationTrackersTest extends GroovyLatestTest {
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+
+@Disabled
+@TestApplication
+public class GroovyModificationTrackersTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_2_5);
+
+  public @NotNull JavaCodeInsightTestFixture getFixture() {
+    return groovy.get();
+  }
+
   @Test
   public void test_class_method() {
-    doTest("""
-             class A {
-               def foo() { <caret> }
-             }
-             """, false, false);
+    runInEdtAndWait(() -> {
+      doTest("""
+               class A {
+                 def foo() { <caret> }
+               }
+               """, false, false);
+    });
   }
 
   @Test
   public void test_class_initializer() {
-    doTest("""
-             class A {
-              {
-                <caret>
-              }
-             }
-             """, false, false);
+    runInEdtAndWait(() -> {
+      doTest("""
+               class A {
+                {
+                  <caret>
+                }
+               }
+               """, false, false);
+    });
   }
 
   @Test
   public void test_class_body() {
-    doTest("""
-             class A {
-               <caret>
-             }
-             """, false, true);
+    runInEdtAndWait(() -> {
+      doTest("""
+               class A {
+                 <caret>
+               }
+               """, false, true);
+    });
   }
 
   @Test
   public void test_script_body() {
-    doTest("<caret>", false, false);
+    runInEdtAndWait(() -> {
+      doTest("<caret>", false, false);
+    });
   }
 
   @Test
   public void test_script_variable() {
-    doTest("def a<caret>= 1", false, true);
+    runInEdtAndWait(() -> {
+      doTest("def a<caret>= 1", false, true);
+    });
   }
 
   public void doTest(String text, boolean structureShouldChange, boolean oocbShouldChange) {
