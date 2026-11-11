@@ -807,6 +807,15 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return null
     }
 
+    val projectToAttach = options.projectToAttach
+    if (projectToAttach != null && attachWithoutConfirmation(projectToAttach, options, projectIdentityFile)) {
+      LOG.info("Project $projectIdentityFile was given to an attach processor of ${projectToAttach.name} (locationHash=${projectToAttach.locationHash}).")
+      withContext(NonCancellable) {
+        cancelProjectOpening(options.project)
+      }
+      return null
+    }
+
     val projectToClose = getProjectToClose(options)
     if (!options.forceOpenInNewFrame && projectToClose != null) {
       if (attachToExistingOrOpenInTheSameFrame(projectToClose, options, projectIdentityFile)) {
@@ -1346,6 +1355,20 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         return true
       }
     }
+  }
+
+  /**
+   * Gives [projectDir] to the attach processor of [projectToAttach] with no question to the user,
+   * see [OpenProjectTask.projectToAttach].
+   *
+   * @return `true` when a processor took the request. The caller then opens no project, also after a failed attach.
+   */
+  private suspend fun attachWithoutConfirmation(projectToAttach: Project, options: OpenProjectTask, projectDir: Path): Boolean {
+    val processor = ProjectAttachProcessor.getProcessor(projectToAttach, projectDir, options.project) ?: return false
+    processor.beforeAttach(options.project)
+    attachToProjectAsync(projectToClose = projectToAttach, projectDir = projectDir, processor = processor,
+                         callback = options.callback, beforeOpen = options.beforeOpen)
+    return true
   }
 
   /**

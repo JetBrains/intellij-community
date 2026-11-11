@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -40,6 +41,14 @@ interface NewProjectEntryPoint {
      */
     @JvmField
     val PROJECT_LOCATION: DataKey<Path> = DataKey.create("NewProjectEntryPoint.projectLocation")
+
+    /**
+     * The open project that the new project attaches to with no question about the window, see `OpenProjectTask.projectToAttach`.
+     * When the key is absent, the platform asks the user where the new project opens.
+     * A New Project action that does not read the key asks too.
+     */
+    @JvmField
+    val ATTACH_TO_PROJECT: DataKey<Project> = DataKey.create("NewProjectEntryPoint.attachToProject")
 
     @JvmStatic
     fun getInstance(): NewProjectEntryPoint = service()

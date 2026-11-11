@@ -15,6 +15,7 @@ private data class OpenProjectTaskImplOptions(
   @JvmField val delegate: Any?,
   @JvmField val opensFileAfterProjectOpen: Boolean,
   @JvmField val initFrameEarlyForNewProject: Boolean = false,
+  @JvmField val projectToAttach: Project? = null,
 )
 
 private fun Any?.asOpenProjectTaskImplOptions(): OpenProjectTaskImplOptions {
@@ -87,6 +88,18 @@ class OpenProjectTask @ApiStatus.Internal @Deprecated("Use `OpenProjectTask { ..
   @get:ApiStatus.Internal
   val initFrameEarlyForNewProject: Boolean
     get() = (implOptions as? OpenProjectTaskImplOptions)?.initFrameEarlyForNewProject == true
+
+  /**
+   * The open project that this project attaches to with no question to the user. It is not [projectToClose]: it stays open.
+   * The attach needs a [com.intellij.projectImport.ProjectAttachProcessor] that takes the project. The project then opens
+   * no frame, so [forceOpenInNewFrame] and [forceReuseFrame] do not apply. Without a processor, the open continues as
+   * without this option.
+   *
+   * This property is deliberately not a primary-constructor parameter: adding one changes the generated data-class ABI.
+   */
+  @get:ApiStatus.Internal
+  val projectToAttach: Project?
+    get() = (implOptions as? OpenProjectTaskImplOptions)?.projectToAttach
 
   @get:ApiStatus.Internal
   val beforeInit: ((Project) -> Unit)?
@@ -323,6 +336,10 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
   @ApiStatus.Internal
   var initFrameEarlyForNewProject: Boolean = false
 
+  /** See [OpenProjectTask.projectToAttach]. */
+  @ApiStatus.Internal
+  var projectToAttach: Project? = null
+
   /** A shim for Java clients. */
   fun withBeforeOpenCallback(callback: Predicate<Project>) {
     beforeOpenTasks += { callback.test(it) }
@@ -368,6 +385,7 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
     implOptions = base.effectiveImplOptions
     opensFileAfterProjectOpen = base.opensFileAfterProjectOpen
     initFrameEarlyForNewProject = base.initFrameEarlyForNewProject
+    projectToAttach = base.projectToAttach
     line = base.line
     column = base.column
     projectRootDir = base.projectRootDir
@@ -399,7 +417,7 @@ class OpenProjectTaskBuilder @PublishedApi internal constructor() {
       preparedToOpenTasks = listOfNotNull(preparedToOpen),
       preventIprLookup, processorChooser,
       implOptions = implOptions.withOpensFileAfterProjectOpen(opensFileAfterProjectOpen)
-        .copy(initFrameEarlyForNewProject = initFrameEarlyForNewProject),
+        .copy(initFrameEarlyForNewProject = initFrameEarlyForNewProject, projectToAttach = projectToAttach),
       projectRootDir, createModule
     )
   }

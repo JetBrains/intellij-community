@@ -51,9 +51,15 @@ import java.util.concurrent.CancellationException
 
 private val LOG = logger<NewProjectUtil>()
 
+/**
+ * Shows [wizard] and creates its project. The new project attaches to [attachTo] with no question about the window,
+ * see [OpenProjectTask.projectToAttach]. Without [attachTo], the platform asks the user where the new project opens.
+ * An external plugin calls the signature without [attachTo]. Keep it binary compatible.
+ */
 @Suppress("DuplicatedCode")
 @Internal
-suspend fun createNewProjectAsync(wizard: AbstractProjectWizard) {
+@JvmOverloads
+suspend fun createNewProjectAsync(wizard: AbstractProjectWizard, attachTo: Project? = null) {
   // warm-up components
   serviceAsync<ProjectManager>().defaultProject
 
@@ -68,7 +74,7 @@ suspend fun createNewProjectAsync(wizard: AbstractProjectWizard) {
   try {
     val projectFile = Path.of(wizard.newProjectFilePath)
     WslUsagesCollector.beforeProjectCreated(projectFile)
-    val newProject = createProjectFromWizardImpl(wizard = wizard, projectFile = projectFile, projectToClose = null)
+    val newProject = createProjectFromWizardImpl(wizard = wizard, projectFile = projectFile, projectToClose = null, attachTo = attachTo)
     NewProjectWizardCollector.logProjectCreated(newProject, wizard.wizardContext)
   }
   catch (e: IOException) {
@@ -153,7 +159,12 @@ object NewProjectUtil {
 
 @VisibleForTesting
 @Internal
-suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFile: Path, projectToClose: Project?): Project? {
+suspend fun createProjectFromWizardImpl(
+  wizard: AbstractProjectWizard,
+  projectFile: Path,
+  projectToClose: Project?,
+  attachTo: Project? = null,
+): Project? {
   val projectManager = (serviceAsync<ProjectManager>() as ProjectManagerEx)
   for (p in projectManager.getOpenProjects()) {
     if (ProjectUtil.isSameProject(projectFile, p)) {
@@ -262,6 +273,10 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
         project = newProject
         projectName = projectFile.fileName.toString()
         projectRootDir = projectDir
+        // the wizard can outlive the frame that started it
+        if (attachTo != null && !attachTo.isDisposed) {
+          projectToAttach = attachTo
+        }
         callback = ProjectOpenedCallback { openedProject, _ ->
           if (openedProject != newProject) { // project attached to workspace
             VirtualFileManager.getInstance().refreshAndFindFileByNioPath(projectDir)?.let { dir ->

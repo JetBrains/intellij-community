@@ -39,7 +39,7 @@ private class NewProjectActionService(private val coroutineScope: CoroutineScope
     return job?.isActive == true
   }
 
-  fun actionPerformed(project: Project?, location: Path?) {
+  fun actionPerformed(project: Project?, location: Path?, attachTo: Project?) {
     if (isActionInProgress()) {
       thisLogger().warn("Previous execution hasn't finished yet")
       return
@@ -53,7 +53,7 @@ private class NewProjectActionService(private val coroutineScope: CoroutineScope
       val wizard = withContext(Dispatchers.EDT) {
         NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null, location)
       }
-      createNewProjectAsync(wizard)
+      createNewProjectAsync(wizard, attachTo)
     }
   }
 }
@@ -80,7 +80,11 @@ open class NewProjectAction : AnAction(), DumbAware, NewProjectOrModuleAction {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    service<NewProjectActionService>().actionPerformed(e.project, e.getData(NewProjectEntryPoint.PROJECT_LOCATION))
+    service<NewProjectActionService>().actionPerformed(
+      project = e.project,
+      location = e.getData(NewProjectEntryPoint.PROJECT_LOCATION),
+      attachTo = e.getData(NewProjectEntryPoint.ATTACH_TO_PROJECT),
+    )
   }
 
   override fun update(e: AnActionEvent) {

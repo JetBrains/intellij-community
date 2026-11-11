@@ -383,6 +383,72 @@ class TrustedProjectsTest {
     Assertions.assertEquals(ThreeState.YES, TrustedProjects.getProjectTrustedState(projectRoot))
   }
 
+  @Test
+  fun `a task with a project to attach gives the project to the processor while the setting asks`(): Unit = runBlocking {
+    val projectRoot = testRoot.resolve("project")
+    TrustedProjectStartupDialog.setDialogChoiceInTests(OpenUntrustedProjectChoice.TRUST_AND_OPEN, asDisposable())
+    val attachProcessor = RecordingAttachProcessor()
+    ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(attachProcessor), asDisposable())
+
+    // In a test, the question gives "new window". The project attaches only when the platform does not ask.
+    withProjectToClose(GeneralSettings.OPEN_PROJECT_ASK) { projectToAttach ->
+      openWithProjectToAttach(projectRoot, projectToAttach)
+    }
+
+    Assertions.assertEquals(listOf(projectRoot), attachProcessor.attachedDirs)
+    Assertions.assertEquals(ThreeState.YES, TrustedProjects.getProjectTrustedState(projectRoot))
+  }
+
+  @Test
+  fun `a project to attach stays open when the task forces the reuse of a frame`(): Unit = runBlocking {
+    val projectRoot = testRoot.resolve("project")
+    TrustedProjectStartupDialog.setDialogChoiceInTests(OpenUntrustedProjectChoice.TRUST_AND_OPEN, asDisposable())
+    val attachProcessor = RecordingAttachProcessor()
+    ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(attachProcessor), asDisposable())
+
+    withProjectToClose(confirmOpenNewProject = null) { projectToAttach ->
+      openWithProjectToAttach(projectRoot, projectToAttach, forceReuseFrame = true)
+    }
+
+    Assertions.assertEquals(listOf(projectRoot), attachProcessor.attachedDirs)
+  }
+
+  @Test
+  fun `a task with no attach processor reuses the frame of the project to close and keeps the project to attach`(): Unit = runBlocking {
+    val projectRoot = testRoot.resolve("project")
+    TrustedProjects.setProjectTrusted(projectRoot, true)
+    ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, emptyList(), asDisposable())
+    val projectManager = ProjectManagerEx.getInstanceEx()
+
+    withProjectToClose(GeneralSettings.OPEN_PROJECT_SAME_WINDOW) { projectToClose ->
+      val projectToAttachRoot = testRoot.resolve("projectToAttach")
+      TrustedProjects.setProjectTrusted(projectToAttachRoot, true)
+      val projectToAttach = projectManager.openProjectAsync(projectToAttachRoot, OpenProjectTask {
+        projectName = "projectToAttach"
+        forceOpenInNewFrame = true
+      }) ?: Assertions.fail("The project to attach did not open")
+      var project: Project? = null
+      try {
+        project = projectManager.openProjectAsync(projectRoot, OpenProjectTask {
+          projectName = "project"
+          this.projectToAttach = projectToAttach
+          this.projectToClose = projectToClose
+        })
+
+        Assertions.assertNotNull(project, "With no attach processor, the project opens in a frame")
+        Assertions.assertTrue(projectManager.isProjectOpened(projectToAttach), "The project to attach stays open")
+        Assertions.assertFalse(projectManager.isProjectOpened(projectToClose), "The project to close gives its frame")
+      }
+      finally {
+        for (opened in listOfNotNull(project, projectToAttach)) {
+          if (projectManager.isProjectOpened(opened)) {
+            opened.closeProjectAsync()
+          }
+        }
+      }
+    }
+  }
+
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun `failed attach does not open the project`(hasAttachProcessor: Boolean): Unit = runBlocking {
@@ -408,6 +474,17 @@ class TrustedProjectsTest {
     })
     Assertions.assertNull(project)
     Assertions.assertTrue(ProjectManagerEx.getInstanceEx().isProjectOpened(projectToClose))
+  }
+
+  private suspend fun openWithProjectToAttach(projectRoot: Path, projectToAttach: Project, forceReuseFrame: Boolean = false) {
+    val project = ProjectManagerEx.getInstanceEx().openProjectAsync(projectRoot, OpenProjectTask {
+      this.projectName = "project"
+      this.projectToAttach = projectToAttach
+      this.forceReuseFrame = forceReuseFrame
+    })
+    project?.closeProjectAsync()
+    Assertions.assertNull(project, "The project attaches and opens no frame")
+    Assertions.assertTrue(ProjectManagerEx.getInstanceEx().isProjectOpened(projectToAttach), "The project to attach stays open")
   }
 
   private class RecordingAttachProcessor(

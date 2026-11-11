@@ -23,38 +23,45 @@ internal class OpenProjectTaskTest {
   fun `implementation options preserve their payload and file marker`() {
     val originalImplOptions = Any()
     val replacementImplOptions = Any()
+    val projectToAttach = MockProject(null, disposable)
     val options = OpenProjectTask {
       implOptions = originalImplOptions
       opensFileAfterProjectOpen = true
       initFrameEarlyForNewProject = true
+      this.projectToAttach = projectToAttach
     }
 
     assertThat(options.implOptions).isNotSameAs(originalImplOptions)
     assertThat(options.effectiveImplOptions).isSameAs(originalImplOptions)
     assertThat(options.opensFileAfterProjectOpen).isTrue()
     assertThat(options.initFrameEarlyForNewProject).isTrue()
+    assertThat(options.projectToAttach).isSameAs(projectToAttach)
 
     val derivedOptions = OpenProjectTask(options) { projectName = "derived" }
     assertThat(derivedOptions.effectiveImplOptions).isSameAs(originalImplOptions)
     assertThat(derivedOptions.opensFileAfterProjectOpen).isTrue()
     assertThat(derivedOptions.initFrameEarlyForNewProject).isTrue()
+    assertThat(derivedOptions.projectToAttach).isSameAs(projectToAttach)
 
     val replacedOptions = derivedOptions.withImplOptions(replacementImplOptions)
     assertThat(replacedOptions.effectiveImplOptions).isSameAs(replacementImplOptions)
     assertThat(replacedOptions.opensFileAfterProjectOpen).isTrue()
     assertThat(replacedOptions.initFrameEarlyForNewProject).isTrue()
+    assertThat(replacedOptions.projectToAttach).isSameAs(projectToAttach)
 
     val defaultOptions = OpenProjectTask {}
     assertThat(defaultOptions.implOptions).isNotNull()
     assertThat(defaultOptions.effectiveImplOptions).isNull()
     assertThat(defaultOptions.opensFileAfterProjectOpen).isFalse()
     assertThat(defaultOptions.initFrameEarlyForNewProject).isFalse()
+    assertThat(defaultOptions.projectToAttach).isNull()
   }
 
   @Test
   fun `a derived task starts from every option of the base`() {
     val project = MockProject(null, disposable)
     val projectToClose = MockProject(null, disposable)
+    val projectToAttach = MockProject(null, disposable)
     val callback = ProjectOpenedCallback { _, _ -> }
     val beforeInitTask: (Project) -> Unit = {}
     val beforeOpenTask: suspend (Project) -> Boolean = { true }
@@ -85,6 +92,7 @@ internal class OpenProjectTaskTest {
       this.implOptions = implOptions
       opensFileAfterProjectOpen = true
       initFrameEarlyForNewProject = true
+      this.projectToAttach = projectToAttach
       line = 3
       column = 4
       projectRootDir = rootDir
@@ -115,6 +123,7 @@ internal class OpenProjectTaskTest {
     assertThat(derived.effectiveImplOptions).isSameAs(implOptions)
     assertThat(derived.opensFileAfterProjectOpen).isTrue()
     assertThat(derived.initFrameEarlyForNewProject).isTrue()
+    assertThat(derived.projectToAttach).isSameAs(projectToAttach)
     assertThat(derived.line).isEqualTo(3)
     assertThat(derived.column).isEqualTo(4)
     assertThat(derived.projectRootDir).isEqualTo(rootDir)
