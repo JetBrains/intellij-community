@@ -2131,6 +2131,7 @@ f:com.intellij.microservices.url.HttpMethods
 - sf:PATCH:java.lang.String
 - sf:POST:java.lang.String
 - sf:PUT:java.lang.String
+- sf:QUERY:java.lang.String
 - sf:TRACE:java.lang.String
 a:com.intellij.microservices.url.HttpUrlResolver
 - com.intellij.microservices.url.UrlResolver
