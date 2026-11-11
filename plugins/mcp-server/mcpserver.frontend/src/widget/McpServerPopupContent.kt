@@ -24,6 +24,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.compose.swing.components.ActionLink
 import com.intellij.platform.compose.swing.components.Comment
+import com.intellij.platform.compose.swing.modifier.actionLinkIcon
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.util.ui.JBFont
@@ -39,6 +40,7 @@ import org.jetbrains.compose.swing.components.button.CheckBox
 import org.jetbrains.compose.swing.components.button.RadioButton
 import org.jetbrains.compose.swing.components.layout.Glue
 import org.jetbrains.compose.swing.components.layout.RigidArea
+import org.jetbrains.compose.swing.components.style.icon
 import org.jetbrains.compose.swing.foundation.layout.Alignment
 import org.jetbrains.compose.swing.foundation.layout.Arrangement
 import org.jetbrains.compose.swing.foundation.layout.Column
@@ -46,19 +48,21 @@ import org.jetbrains.compose.swing.foundation.layout.ColumnScope
 import org.jetbrains.compose.swing.foundation.layout.Row
 import org.jetbrains.compose.swing.foundation.layout.fillMaxWidth
 import org.jetbrains.compose.swing.modifier.SwingModifier
-import org.jetbrains.compose.swing.modifier.appearance.background
-import org.jetbrains.compose.swing.modifier.appearance.emptyBorder
-import org.jetbrains.compose.swing.modifier.appearance.font
-import org.jetbrains.compose.swing.modifier.appearance.foreground
-import org.jetbrains.compose.swing.modifier.appearance.icon
-import org.jetbrains.compose.swing.modifier.appearance.opaque
-import org.jetbrains.compose.swing.modifier.appearance.toolTip
 import org.jetbrains.compose.swing.modifier.interaction.defaultButton
-import org.jetbrains.compose.swing.modifier.interaction.enabled
 import org.jetbrains.compose.swing.modifier.interaction.initialFocus
-import org.jetbrains.compose.swing.modifier.layout.maximumSize
 import org.jetbrains.compose.swing.modifier.listener.componentListener
 import org.jetbrains.compose.swing.node.SwingNode
+import org.jetbrains.compose.swing.style.ContainerStyleScope
+import org.jetbrains.compose.swing.style.SwingStyle
+import org.jetbrains.compose.swing.style.background
+import org.jetbrains.compose.swing.style.emptyBorder
+import org.jetbrains.compose.swing.style.enabled
+import org.jetbrains.compose.swing.style.font
+import org.jetbrains.compose.swing.style.foreground
+import org.jetbrains.compose.swing.style.maximumSize
+import org.jetbrains.compose.swing.style.opaque
+import org.jetbrains.compose.swing.style.styleable
+import org.jetbrains.compose.swing.style.toolTip
 import org.jetbrains.compose.swing.tooling.Preview
 
 private val spacing = IntelliJSpacingConfiguration()
@@ -75,7 +79,7 @@ private const val MAX_SHOWN_CLIENTS = 3
 //private val rowExitTransition = shrinkVertically(animationSpec = animationSpec())
 
 private fun SwingModifier.popupPadding(): SwingModifier = with(spacing.dialogUnscaledGaps) {
-  emptyBorder(JBUI.scale(top), JBUI.scale(left), JBUI.scale(bottom), JBUI.scale(right))
+  styleable { emptyBorder(JBUI.scale(top), JBUI.scale(left), JBUI.scale(bottom), JBUI.scale(right)) }
 }
 
 @Composable
@@ -83,7 +87,12 @@ internal fun McpServerPopupContent(model: McpServerPopupModel, modifier: SwingMo
   var isEnabled by remember(model) { mutableStateOf(model.initialEnabled) }
   var isConsentRequired by remember(model) { mutableStateOf(false) }
 
-  Column(modifier.background(JBUI.CurrentTheme.Popup.BACKGROUND).opaque(true)) {
+  Column(
+    modifier.styleable {
+      background(JBUI.CurrentTheme.Popup.BACKGROUND)
+      opaque(true)
+    },
+  ) {
     if (isConsentRequired) {
       ConsentContent(
         modifier = SwingModifier.fillMaxWidth().popupPadding(),
@@ -114,24 +123,37 @@ internal fun McpServerPopupContent(model: McpServerPopupModel, modifier: SwingMo
       if (isEnabled) EnabledMcpSettings(SwingModifier.fillMaxWidth().popupPadding(), model)
       else DisabledDescription(SwingModifier.fillMaxWidth().popupPadding(), model)
     }
-    FooterRow(SwingModifier.fillMaxWidth().background(UIUtil.getPanelBackground()).opaque(true).popupPadding(), model, isEnabled)
+    FooterRow(
+      SwingModifier.fillMaxWidth().styleable {
+        background(UIUtil.getPanelBackground())
+        opaque(true)
+      }.popupPadding(),
+      model,
+      isEnabled,
+    )
   }
 }
 
 @Composable
 private fun ConsentContent(modifier: SwingModifier, helpLink: String, onConfirm: () -> Unit, onCancel: () -> Unit) {
   Column(modifier, verticalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.verticalMediumGap))) {
-    Label(McpServerBundle.message("dialog.title.mcp.server.consent"),
-          SwingModifier.icon(AllIcons.General.Warning).font(JBFont.h4()))
+    Label(
+      McpServerBundle.message("dialog.title.mcp.server.consent"),
+      style = {
+        icon(AllIcons.General.Warning)
+        font(JBFont.h4())
+      },
+    )
     PopupText(McpServerBundle.message("dialog.message.mcp.server.consent", helpLink), SwingModifier.fillMaxWidth())
     Row(
       SwingModifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.horizontalSmallGap), Alignment.End),
     ) {
-      Button(McpServerBundle.message("dialog.mcp.server.consent.cancel.button"), onClick = onCancel, modifier = SwingModifier.opaque(false))
+      Button(McpServerBundle.message("dialog.mcp.server.consent.cancel.button"), onClick = onCancel, style = { opaque(false) })
       Button(McpServerBundle.message("dialog.mcp.server.consent.enable.button"),
              onClick = onConfirm,
-             modifier = SwingModifier.defaultButton().initialFocus().opaque(false))
+             modifier = SwingModifier.defaultButton().initialFocus(),
+             style = { opaque(false) })
     }
   }
 }
@@ -156,13 +178,19 @@ private fun ColumnScope.EnabledMcpSettings(modifier: SwingModifier, model: McpSe
       CheckBox(
         text = McpServerBundle.message("mcp.server.popup.brave.mode"),
         checked = isBraveMode,
-        modifier = SwingModifier.opaque(false),
+        style = { opaque(false) },
         onCheckedChange = { newValue ->
           model.setBraveMode(newValue)
           isBraveMode = newValue
         },
       )
-      Label("", SwingModifier.icon(AllIcons.General.Note).toolTip(McpServerBundle.message("mcp.server.popup.brave.mode.description")))
+      Label(
+        "",
+        style = {
+          icon(AllIcons.General.Note)
+          toolTip(McpServerBundle.message("mcp.server.popup.brave.mode.description"))
+        },
+      )
     }
   }
 }
@@ -180,17 +208,21 @@ private fun HeaderRow(
     CheckBox(
       text = McpServerBundle.message("mcp.server.configurable.name"),
       checked = isServerEnabled,
-      onCheckedChange = onEnabledChange, modifier = SwingModifier.opaque(false),
+      onCheckedChange = onEnabledChange, style = { opaque(false) },
     )
     Glue(modifier = SwingModifier.weight(1f))
     if (isServerEnabled) ActionLink(
       text = McpServerBundle.message("mcp.server.status.bar.popup.active.connections", connectionCount),
       onClick = onShowConnectionsClick,
-      modifier = SwingModifier.emptyBorder(left = spacing.horizontalSmallGap, right = spacing.horizontalSmallGap, top = 0, bottom = 0),
+      modifier = SwingModifier.styleable {
+        emptyBorder(left = spacing.horizontalSmallGap, right = spacing.horizontalSmallGap, top = 0, bottom = 0)
+      },
     )
     ActionLink(
       text = "",
-      modifier = SwingModifier.icon(AllIcons.General.Settings).toolTip(McpServerBundle.message("configurable.name.mcp.plugin")),
+      modifier = SwingModifier.actionLinkIcon(AllIcons.General.Settings, atRight = false).styleable {
+        toolTip(McpServerBundle.message("configurable.name.mcp.plugin"))
+      },
       onClick = onSettingsClick,
     )
   }
@@ -212,7 +244,7 @@ private fun DisabledDescription(modifier: SwingModifier, model: McpServerPopupMo
   Column(modifier, verticalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.verticalMediumGap))) {
     PopupText(
       text = HtmlChunk.text(McpServerBundle.message("mcp.server.status.bar.popup.description")).toString(),
-      modifier = SwingModifier.fillMaxWidth().font(JBFont.medium()),
+      modifier = SwingModifier.fillMaxWidth().styleable { font(JBFont.medium()) },
     )
     if (clientNames.isNotEmpty()) {
       @Suppress("HardCodedStringLiteral")
@@ -220,7 +252,10 @@ private fun DisabledDescription(modifier: SwingModifier, model: McpServerPopupMo
       PopupText(
         text = HtmlChunk.text(McpServerBundle.message("mcp.server.status.bar.popup.clients.hint")).toString() + "<br>" +
                HtmlChunk.text(names),
-        modifier = SwingModifier.fillMaxWidth().foreground(UIUtil.getContextHelpForeground()).font(JBFont.small()),
+        modifier = SwingModifier.fillMaxWidth().styleable {
+          foreground(UIUtil.getContextHelpForeground())
+          font(JBFont.small())
+        },
       )
     }
   }
@@ -241,11 +276,25 @@ private fun CopyConfigLink(model: McpServerPopupModel) {
   if (success != null) {
     Label(
       text = McpServerBundle.message(if (success) "mcp.server.popup.copy.config" else "mcp.server.popup.copy.config.failed"),
-      modifier = SwingModifier.foreground(if (success) UIUtil.getContextHelpForeground() else JBUI.CurrentTheme.Label.errorForeground()),
+      style = { foreground(if (success) UIUtil.getContextHelpForeground() else JBUI.CurrentTheme.Label.errorForeground()) },
     )
   }
   else {
-    SwingNode(factory = {
+    CopyConfigDropDownLink(model, onCopy = { copy -> copyWithFeedback.value(copy) })
+  }
+}
+
+/** A [DropDownLink] that lists what the server configuration can be copied as, and passes the chosen copy to [onCopy]. */
+@Composable
+private fun CopyConfigDropDownLink(
+  model: McpServerPopupModel,
+  onCopy: (copy: () -> Boolean) -> Unit,
+  modifier: SwingModifier = SwingModifier,
+  style: SwingStyle<ContainerStyleScope> = SwingStyle,
+) {
+  val currentOnCopy = rememberUpdatedState(onCopy)
+  SwingNode(
+    factory = {
       DropDownLink(McpServerBundle.message("copy.mcp.server.configuration")) {
         val entries = buildList {
           add(CopyEntry(McpServerBundle.message("copy.config.sse"), model::copySseConfig,
@@ -260,12 +309,13 @@ private fun CopyConfigLink(model: McpServerPopupModel) {
           override fun getTextFor(value: CopyEntry): String = value.text
           override fun getSeparatorAbove(value: CopyEntry): ListSeparator? = value.heading?.let { ListSeparator(it) }
           override fun onChosen(selectedValue: CopyEntry, finalChoice: Boolean): PopupStep<*>? = doFinalStep {
-            copyWithFeedback.value(selectedValue.copy)
+            currentOnCopy.value(selectedValue.copy)
           }
         })
       }
-    })
-  }
+    },
+    modifier = modifier.styleable(style),
+  )
 }
 
 private class CopyEntry(val text: @NlsSafe String, val copy: () -> Boolean, val heading: @Nls String? = null)
@@ -283,14 +333,16 @@ private fun DetectedClientList(modifier: SwingModifier, clients: List<DetectedCl
   when {
     clients.isEmpty() -> Label(
       text = McpServerBundle.message("mcp.server.popup.clients.empty"),
-      modifier = modifier.foreground(UIUtil.getContextHelpForeground()),
+      modifier = modifier,
+      style = { foreground(UIUtil.getContextHelpForeground()) },
     )
     pendingClients.isEmpty() /*all configured*/ -> Label(
       text = McpServerBundle.message("mcp.server.popup.clients.all.configured", clients.size),
-      modifier = SwingModifier
-        .icon(AllIcons.Status.Success)
-        .foreground(UIUtil.getContextHelpForeground())
-        .emptyBorder(JBUI.insets(spacing.verticalMediumGap, spacing.horizontalDefaultGap)),
+      style = {
+        icon(AllIcons.Status.Success)
+        foreground(UIUtil.getContextHelpForeground())
+        emptyBorder(JBUI.insets(spacing.verticalMediumGap, spacing.horizontalDefaultGap))
+      },
     )
     else -> Column(modifier, verticalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.verticalSmallGap))) {
       pendingClients.take(MAX_SHOWN_CLIENTS).forEach { client ->
@@ -309,15 +361,20 @@ private fun DetectedClientList(modifier: SwingModifier, clients: List<DetectedCl
               Label(client.displayName)
               if (buttonState == ClientButtonState.Configured) Label(
                 text = McpServerBundle.message("mcp.server.configured"),
-                modifier = SwingModifier.icon(AllIcons.Status.Success)
-                  .emptyBorder(
+                style = {
+                  icon(AllIcons.Status.Success)
+                  emptyBorder(
                     top = JBUI.scale(spacing.verticalComponentGap + 3), left = JBUI.scale(spacing.horizontalDefaultGap),
                     bottom = JBUI.scale(spacing.verticalComponentGap + 2), right = JBUI.scale(spacing.horizontalDefaultGap),
-                  ),
+                  )
+                },
               )
               else Button(
                 text = McpServerBundle.message("autoconfigure.mcp.server"),
-                modifier = SwingModifier.enabled(buttonState == ClientButtonState.Normal).opaque(false),
+                style = {
+                  enabled(buttonState == ClientButtonState.Normal)
+                  opaque(false)
+                },
                 onClick = {
                   scope.launch {
                     clientButtonStates[client.id] = ClientButtonState.Configuring
@@ -339,10 +396,10 @@ private fun DetectedClientList(modifier: SwingModifier, clients: List<DetectedCl
               verticalAlignment = Alignment.CenterVertically,
               horizontalArrangement = Arrangement.spacedBy(JBUI.scale(spacing.horizontalSmallGap)),
             ) {
-              Label("", SwingModifier.icon(AllIcons.General.Error))
+              Label("", style = { icon(AllIcons.General.Error) })
               PopupText(
                 text = HtmlChunk.text(currentError).toString(),
-                modifier = SwingModifier.weight(1f).foreground(JBUI.CurrentTheme.Label.errorForeground()),
+                modifier = SwingModifier.weight(1f).styleable { foreground(JBUI.CurrentTheme.Label.errorForeground()) },
               )
             }
           }
@@ -358,12 +415,21 @@ private fun DetectedClientList(modifier: SwingModifier, clients: List<DetectedCl
 
 @Composable
 private fun PopupText(text: @NlsContexts.DetailedDescription String, modifier: SwingModifier = SwingModifier) {
-  Comment(text, SwingModifier.font(JBFont.label()).foreground(JBUI.CurrentTheme.Label.foreground()) then modifier)
+  val base = SwingModifier.styleable {
+    font(JBFont.label())
+    foreground(JBUI.CurrentTheme.Label.foreground())
+  }
+  Comment(text, base then modifier)
 }
 
 @Composable
 private fun ColumnScope.PopupDivider(modifier: SwingModifier = SwingModifier) {
-  Column(modifier.fillMaxWidth().background(JBUI.CurrentTheme.Popup.separatorColor()).opaque(true)) {
+  Column(
+    modifier.fillMaxWidth().styleable {
+      background(JBUI.CurrentTheme.Popup.separatorColor())
+      opaque(true)
+    },
+  ) {
     RigidArea(0, 1)
   }
 }
@@ -408,20 +474,20 @@ fun McpPanelPreview() {
 
   var sizeText by remember { mutableStateOf("") }
   Column {
-    Label(sizeText, SwingModifier.emptyBorder(8))
+    Label(sizeText, style = { emptyBorder(8) })
     key(previewResetKey) {
       McpServerPopupContent(
         model = remember { PreviewMcpServerPopupModel() },
         modifier = SwingModifier
           .fillMaxWidth()
-          .maximumSize(JBUI.scale(POPUP_WIDTH), Int.MAX_VALUE)
           .componentListener { event ->
             val size = event.component.size
             sizeText = "${size.width} x ${size.height} px, ${JBUI.unscale(size.width)} x ${JBUI.unscale(size.height)} unscaled"
-          },
+          }
+          .styleable { maximumSize(JBUI.scale(POPUP_WIDTH), Int.MAX_VALUE) },
       )
     }
-    Column(SwingModifier.emptyBorder(spacing.horizontalDefaultGap), Arrangement.spacedBy(spacing.horizontalSmallGap)) {
+    Column(SwingModifier.styleable { emptyBorder(spacing.horizontalDefaultGap) }, Arrangement.spacedBy(spacing.horizontalSmallGap)) {
       Label("On configure click:")
       RadioButton("Configure successfully", previewConfigurationSucceeds, { previewConfigurationSucceeds = true })
       RadioButton("Show error", !previewConfigurationSucceeds, { previewConfigurationSucceeds = false })

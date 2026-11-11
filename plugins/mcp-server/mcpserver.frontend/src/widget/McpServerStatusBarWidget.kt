@@ -31,9 +31,10 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.compose.swing.modifier.SwingModifier
 import org.jetbrains.compose.swing.modifier.layout.layoutConstraint
-import org.jetbrains.compose.swing.modifier.layout.maximumSize
-import org.jetbrains.compose.swing.modifier.layout.minimumSize
 import org.jetbrains.compose.swing.modifier.listener.componentListener
+import org.jetbrains.compose.swing.style.maximumSize
+import org.jetbrains.compose.swing.style.minimumSize
+import org.jetbrains.compose.swing.style.styleable
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Point
@@ -130,8 +131,10 @@ internal class McpServerStatusBarWidget(
               adjustPopupLocation(popup, component)
             }
           })
-          .minimumSize(JBUI.scale(POPUP_WIDTH), 0)
-          .maximumSize(JBUI.scale(POPUP_WIDTH), Int.MAX_VALUE),
+          .styleable {
+            minimumSize(JBUI.scale(POPUP_WIDTH), 0)
+            maximumSize(JBUI.scale(POPUP_WIDTH), Int.MAX_VALUE)
+          },
       )
     }.apply {
       preferredSize = JBUI.size(POPUP_WIDTH, POPUP_HEIGHT)
