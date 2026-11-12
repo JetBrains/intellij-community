@@ -98,6 +98,7 @@ import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractInvocat
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.expressions.functionType
 import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiField
+import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -207,6 +208,7 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.KtWhileExpression
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolution.KtResolvable
+import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.concurrent.ConcurrentHashMap
 
@@ -374,6 +376,17 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(PushValueInstruction(DfTypes.referenceConstant("", stringType)))
             addInstruction(StringConcatInstruction(KotlinExpressionAnchor(expr), stringType, entries[0].isCharEntry(), false))
         }
+    }
+
+    /**
+     * @return true if the operator of this call resolves to a function in the `kotlin` package.
+     * A custom operator, like `operator fun Char.times(other: Char)`, gives false.
+     */
+    context(_: KaSession)
+    private fun KtResolvableCall.isBuiltInOperatorCall(): Boolean {
+        val call = tryResolveCall()?.single ?: return false
+        val functionCall = (call as? KaCompoundAccessCall)?.operationCall ?: call.function ?: return false
+        return functionCall.symbol.callableId?.packageName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME
     }
 
     context(_: KaSession)
@@ -568,7 +581,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         if (leftKtType?.toDfType() is DfIntegralType) {
             val mathOp = mathOpFromToken(expr.operationReference)
-            if (mathOp != null) {
+            if (mathOp != null && expr.isBuiltInOperatorCall()) {
                 processMathExpression(expr, mathOp)
                 return
             }
@@ -734,7 +747,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             return
         }
         val mathOp = mathOpFromAssignmentToken(token)
-        if (mathOp != null) {
+        if (mathOp != null && !expr.isBuiltInOperatorCall()) {
+            // Custom operator: the result is unknown
+            processExpression(left)
+            processExpression(right)
+            addInstruction(EvalUnknownInstruction(null, 2, leftType?.toDfType() ?: DfType.TOP))
+            addInstruction(FlushFieldsInstruction())
+        } else if (mathOp != null) {
             val resultType = balanceType(leftType, rightType)
             processExpression(left)
             addImplicitConversion(left, resultType)
@@ -1899,11 +1918,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         }
                     }
 
-                    "+" -> {
+                    "+" -> if (expr.isBuiltInOperatorCall()) {
                         return
                     }
 
-                    "-" -> {
+                    "-" -> if (expr.isBuiltInOperatorCall()) {
                         addInstruction(PushValueInstruction(dfType.meetRange(LongRangeSet.point(0))))
                         addInstruction(SwapInstruction())
                         addInstruction(NumericBinaryInstruction(LongRangeBinOp.MINUS, anchor))
