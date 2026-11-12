@@ -569,6 +569,7 @@ jvm_library(
         "//platform/eel-nioFs",
         "//platform/wsl-impl",
         "//libraries/commons/compress",
+        "//libraries/ini4j",
     ],
 )
 
@@ -739,6 +740,7 @@ jvm_library(
         "//platform/eel-nioFs:eel-nioFs_test_lib",
         "//platform/wsl-impl:wsl-impl_test_lib",
         "//libraries/commons/compress:compress_test_lib",
+        "//libraries/ini4j:ini4j_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.impl` end

@@ -1,0 +1,5 @@
+[console_scripts]
+widgets = pytest_widgets:main
+
+[pytest11]
+widgets = pytest_widgets:plugin [extra]
