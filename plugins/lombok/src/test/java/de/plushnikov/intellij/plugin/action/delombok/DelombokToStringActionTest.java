@@ -1,37 +1,43 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import de.plushnikov.intellij.plugin.action.LombokLightActionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import de.plushnikov.intellij.plugin.action.LombokActionFixture;
+import org.junit.jupiter.api.Test;
 
-public class DelombokToStringActionTest extends LombokLightActionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokActionFixture;
 
-  @Override
-  protected AnAction getAction() {
-    return new DelombokToStringAction();
-  }
+@TestApplication
+public class DelombokToStringActionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LombokActionFixture> lombokAction =
+    lombokActionFixture(projectFixture, "/action/delombok/tostring", () -> new DelombokToStringAction());
 
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/action/delombok/tostring";
-  }
-
+  @Test
   public void testClassToStringSimple() throws Exception {
-    doTest();
+    lombokAction.get().doTest();
   }
 
+  @Test
   public void testClassToStringOf() throws Exception {
-    doTest();
+    lombokAction.get().doTest();
   }
 
+  @Test
   public void testClassToStringNoGetters() throws Exception {
-    doTest();
+    lombokAction.get().doTest();
   }
 
+  @Test
   public void testClassToStringExclude() throws Exception {
-    doTest();
+    lombokAction.get().doTest();
   }
 
+  @Test
   public void testClassToStringCallSuper() throws Exception {
-    doTest();
+    lombokAction.get().doTest();
   }
 }

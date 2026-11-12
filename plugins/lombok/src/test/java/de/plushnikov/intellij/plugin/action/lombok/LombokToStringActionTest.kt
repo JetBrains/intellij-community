@@ -2,15 +2,22 @@
 package de.plushnikov.intellij.plugin.action.lombok
 
 import com.intellij.lombok.backend.action.lombok.LombokToStringAction
-import com.intellij.openapi.actionSystem.AnAction
-import de.plushnikov.intellij.plugin.action.LombokLightActionTestCase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import de.plushnikov.intellij.plugin.LombokTestUtil
+import de.plushnikov.intellij.plugin.lombokActionFixture
+import org.junit.jupiter.api.Test
 
-class LombokToStringActionTest : LombokLightActionTestCase() {
-  override fun getAction(): AnAction = LombokToStringAction()
+@TestApplication
+class LombokToStringActionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR)
+  }
 
-  override fun getBasePath(): String = super.getBasePath() + "/action/lombok/toString"
+  private val lombokAction by lombokActionFixture(projectFixture, "/action/lombok/toString") { LombokToStringAction() }
 
+  @Test
   fun testToStringSimple() {
-    doTest()
+    lombokAction.doTest()
   }
 }

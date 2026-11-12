@@ -2,55 +2,66 @@ package de.plushnikov.intellij.plugin.action.lombok;
 
 import com.intellij.lombok.backend.action.lombok.LombokLoggerAction;
 import com.intellij.lombok.shared.LombokBundle;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.ui.ConflictInterceptor;
 import com.intellij.ui.UiInterceptors;
-import de.plushnikov.intellij.plugin.action.LombokLightActionTestCase;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import de.plushnikov.intellij.plugin.action.LombokActionFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LombokLoggerActionTest extends LombokLightActionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokActionFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-  @Override
-  protected AnAction getAction() {
-    return new LombokLoggerAction();
-  }
+@TestApplication
+public class LombokLoggerActionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LombokActionFixture> lombokAction =
+    lombokActionFixture(projectFixture, "/action/lombok/log", () -> new LombokLoggerAction());
 
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/action/lombok/log";
-  }
-
+  @Test
   public void testLogSimple() throws Exception {
-    doTest();
+    lombokAction.get().doTest();
   }
 
+  @Test
   public void testLogCustomDeclarationWithBuiltInType() throws Exception {
-    myFixture.addFileToProject("lombok.config", """
+    lombokAction.get().getFixture().addFileToProject("lombok.config", """
       lombok.log.custom.declaration = java.util.logging.Logger.getLogger(NAME)
       config.stopBubbling = true
       """);
-    doTest();
+    lombokAction.get().doTest();
   }
 
+  @Test
   public void testLogRename() throws Exception {
     doTestWithConflicts("log324");
   }
 
+  @Test
   public void testLogRenameHidesOuterField() throws Exception {
     addJavaUtilLogger();
     doTestWithConflicts("log324");
-    myFixture.checkHighlighting(false, false, false);
+    EdtTestUtil.runInEdtAndWait(() -> lombokAction.get().getFixture().checkHighlighting(false, false, false));
   }
 
+  @Test
   public void testLogRenameQualifiedReference() throws Exception {
     addJavaUtilLogger();
     doTestWithConflicts("log324");
-    myFixture.checkHighlighting(false, false, false);
+    EdtTestUtil.runInEdtAndWait(() -> lombokAction.get().getFixture().checkHighlighting(false, false, false));
   }
 
+  @Test
   public void testLogRenameWithoutQualifier() {
+    var fixture = lombokAction.get().getFixture();
     var text = """
       class Test {
         Object object = new Object() {
@@ -62,31 +73,36 @@ public class LombokLoggerActionTest extends LombokLightActionTestCase {
         };
       }
       """;
-    myFixture.configureByText("Test.java", text);
+    fixture.configureByText("Test.java", text);
 
-    assertThrows(() -> myFixture.testAction(getAction()), RuntimeException.class,
-                 message -> assertEquals(LombokBundle.message("dialog.message.logger.cannot.update.references"), message));
-    myFixture.checkResult(text);
+    var exception = assertThrows(RuntimeException.class,
+                                 () -> EdtTestUtil.runInEdtAndWait(() -> fixture.testAction(new LombokLoggerAction())));
+    assertEquals(LombokBundle.message("dialog.message.logger.cannot.update.references"), exception.getMessage());
+    EdtTestUtil.runInEdtAndWait(() -> fixture.checkResult(text));
   }
 
+  @Test
   public void testLogPublic() throws Exception {
     doTestWithConflicts("log");
   }
 
+  @Test
   public void testLogNonStatic() throws Exception {
     doTestWithConflicts("log");
   }
 
+  @Test
   public void testLogNonFinal() throws Exception {
     doTestWithConflicts("log");
   }
 
+  @Test
   public void testLogMultiple() throws Exception {
     doTestWithConflicts("firstLog", "secondLog");
   }
 
   private void addJavaUtilLogger() {
-    myFixture.addClass("""
+    lombokAction.get().getFixture().addClass("""
       package java.util.logging;
       public class Logger {
         public static Logger getLogger(String name) {
@@ -106,6 +122,6 @@ public class LombokLoggerActionTest extends LombokLightActionTestCase {
                                          loggerFieldName, 1, "log"));
     }
     UiInterceptors.register(new ConflictInterceptor(conflicts));
-    doTest();
+    lombokAction.get().doTest();
   }
 }

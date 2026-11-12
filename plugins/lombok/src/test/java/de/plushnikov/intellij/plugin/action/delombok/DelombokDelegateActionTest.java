@@ -1,26 +1,29 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import de.plushnikov.intellij.plugin.action.LombokLightActionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import de.plushnikov.intellij.plugin.action.LombokActionFixture;
+import org.junit.jupiter.api.Test;
 
-public class DelombokDelegateActionTest extends LombokLightActionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokActionFixture;
 
-  @Override
-  protected AnAction getAction() {
-    return new DelombokDelegateAction();
-  }
+@TestApplication
+public class DelombokDelegateActionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LombokActionFixture> lombokAction =
+    lombokActionFixture(projectFixture, "/action/delombok/delegate", () -> new DelombokDelegateAction());
 
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/action/delombok/delegate";
-  }
-
+  @Test
   public void testDelegateOnField() throws Exception {
-    doTest();
+    lombokAction.get().doTest();
   }
 
+  @Test
   public void testDelegateOnMethod() throws Exception {
-    doTest();
+    lombokAction.get().doTest();
   }
 
 }

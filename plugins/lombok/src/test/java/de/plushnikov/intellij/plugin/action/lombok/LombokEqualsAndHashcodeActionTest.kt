@@ -2,15 +2,22 @@
 package de.plushnikov.intellij.plugin.action.lombok
 
 import com.intellij.lombok.backend.action.lombok.LombokEqualsAndHashcodeAction
-import com.intellij.openapi.actionSystem.AnAction
-import de.plushnikov.intellij.plugin.action.LombokLightActionTestCase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import de.plushnikov.intellij.plugin.LombokTestUtil
+import de.plushnikov.intellij.plugin.lombokActionFixture
+import org.junit.jupiter.api.Test
 
-class LombokEqualsAndHashcodeActionTest : LombokLightActionTestCase() {
-  override fun getAction(): AnAction = LombokEqualsAndHashcodeAction()
+@TestApplication
+class LombokEqualsAndHashcodeActionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR)
+  }
 
-  override fun getBasePath(): String = super.getBasePath() + "/action/lombok/equalsAndHashcode"
+  private val lombokAction by lombokActionFixture(projectFixture, "/action/lombok/equalsAndHashcode") { LombokEqualsAndHashcodeAction() }
 
+  @Test
   fun testEqualsAndHashcodeSimple() {
-    doTest()
+    lombokAction.doTest()
   }
 }

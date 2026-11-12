@@ -1,12 +1,33 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package de.plushnikov.intellij.plugin
 
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaProject
 import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import de.plushnikov.intellij.plugin.LombokParsingFixture.ModeRunnerType
+import de.plushnikov.intellij.plugin.action.LombokActionFixture
 import org.jetbrains.annotations.TestOnly
+import java.util.function.Supplier
+
+/**
+ * Creates the code insight fixture of a Lombok test. Declare it as an instance field.
+ *
+ * The test data path is [basePath] in the Lombok test data, as [LombokTestUtil.getTestDataPath] gives it.
+ * Give the project fixture the descriptor of the test, usually [LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR].
+ */
+@TestOnly
+@JvmOverloads
+fun lombokCodeInsightFixture(
+  projectFixture: TestFixture<LightJavaProject>,
+  basePath: String = "",
+): TestFixture<LightJavaCodeInsightTestFixture> = testFixture("lombokCodeInsightFixture") {
+  val fixture = lightJavaCodeInsightFixture(projectFixture).init()
+  fixture.testDataPath = LombokTestUtil.getTestDataPath() + basePath
+  initialized(fixture) {}
+}
 
 /**
  * Creates the [LombokParsingFixture] of a parsing test. Declare it as an instance field, and declare each test with [LombokParsingTest].
@@ -55,4 +76,19 @@ private fun lombokParsingFixture(
   val fixture = codeInsightFixture.init()
   fixture.testDataPath = LombokTestUtil.getTestDataPath() + basePath
   initialized(LombokParsingFixture(fixture, mode, options, configSystem)) {}
+}
+
+/**
+ * Creates the [LombokActionFixture] of an action test. Declare it as an instance field.
+ *
+ * [action] creates the action of the test for each run. The test data path is [basePath] in the Lombok test data.
+ */
+@TestOnly
+fun lombokActionFixture(
+  projectFixture: TestFixture<LightJavaProject>,
+  basePath: String,
+  action: Supplier<out AnAction>,
+): TestFixture<LombokActionFixture> = testFixture("lombokActionFixture") {
+  val fixture = lombokCodeInsightFixture(projectFixture, basePath).init()
+  initialized(LombokActionFixture(fixture, action)) {}
 }

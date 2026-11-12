@@ -1,27 +1,31 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import de.plushnikov.intellij.plugin.action.LombokLightActionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import de.plushnikov.intellij.plugin.action.LombokActionFixture;
+import org.junit.jupiter.api.Test;
 
-public class DelombokDataActionTest extends LombokLightActionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokActionFixture;
 
-  @Override
-  protected AnAction getAction() {
-    return new DelombokDataAction();
-  }
+@TestApplication
+public class DelombokDataActionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LombokActionFixture> lombokAction =
+    lombokActionFixture(projectFixture, "/action/delombok/data", () -> new DelombokDataAction());
 
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/action/delombok/data";
-  }
-
+  @Test
   public void testDataSimple() throws Exception {
-    doTest();
+    lombokAction.get().doTest();
   }
+  @Test
   public void testDataWithEAHCExclude() throws Exception {
-    doTest();
+    lombokAction.get().doTest();
   }
+  @Test
   public void testDataWithAnnotations() throws Exception {
-    doTest();
+    lombokAction.get().doTest();
   }
 }
