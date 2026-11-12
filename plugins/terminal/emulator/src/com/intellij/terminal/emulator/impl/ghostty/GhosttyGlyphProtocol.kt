@@ -10,12 +10,11 @@ import java.lang.foreign.Arena
 import java.lang.foreign.MemorySegment
 
 /**
- * Turns the Glyph protocol (`APC 25a1 ; ...`) off.
+ * Turns the Glyph protocol (`APC 25a1 ; ...`) off. The library default is off as well.
  *
- * The library enables the protocol by default, but the IDE draws every cell with fonts and
- * never uses a registered outline. With the protocol off the library ignores every protocol
- * command, including the support query, so a program that probes for the protocol gets no
- * reply and keeps its font glyphs.
+ * The IDE draws every cell with fonts and never uses a registered outline. With the protocol
+ * off the library ignores every protocol command, including the support query, so a program
+ * that probes for the protocol gets no reply and keeps its font glyphs.
  */
 internal object GhosttyGlyphProtocol {
   /**

@@ -85,8 +85,8 @@ internal enum class GhosttyStyleColorTag(val code: Int) {
 }
 
 /**
- * `GhosttySgrUnderline` (sgr.h) — a cell's underline style, read from
- * `GhosttyStyle.underline` (style.h).
+ * `GhosttySgrUnderline` (sgr.h) — a cell's underline style, read from the
+ * [GhosttyStyleFlags.UNDERLINE_MASK] bits of `GhosttyStyle.flags` (style.h).
  */
 internal enum class GhosttySgrUnderline(val code: Int) {
   NONE(0),
@@ -206,8 +206,8 @@ internal enum class GhosttyTerminalProgressState(val code: Int) {
 
   companion object {
     /**
-     * Map a raw C progress-state code, or null for one this bridge does not model — i.e. a state added to
-     * the (pre-1.0) C API after this enum was written. Such a report is dropped rather than guessed at:
+     * Map a raw C progress-state code, or null for one this bridge does not model — i.e. a state that a
+     * later library version adds. Such a report is dropped rather than guessed at:
      * for an unknown state neither hiding nor showing progress is a safe default.
      */
     fun of(code: Int): GhosttyTerminalProgressState? = when (code) {
