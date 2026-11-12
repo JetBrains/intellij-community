@@ -18,6 +18,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.DocumentUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.sun.jdi.IntegerValue
 import com.sun.jdi.Location
@@ -42,8 +43,10 @@ import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade
 import org.jetbrains.kotlin.idea.debugger.core.isInSuspendMethod
 import org.jetbrains.kotlin.idea.debugger.core.methodName
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.getJvmSignature
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
@@ -61,6 +64,24 @@ open class KotlinFunctionBreakpoint(
     project: Project,
     breakpoint: XBreakpoint<*>
 ) : MethodBreakpoint(project, breakpoint), SourcePositionRefiner {
+    @Volatile
+    private var isSuspendFunction: Boolean = false
+
+    @RequiresBackgroundThread
+    override fun reload() {
+        super.reload()
+        // There is a tiny chance of a race condition here where an outdated value can be set from an old
+        // background reload while the breakpoint has already changed.
+        // The pass count is wrong until the next reload in such a case, but it is very rare.
+        isSuspendFunction = sourcePosition?.isSuspendFunction(myProject) == true
+    }
+
+    /**
+     * Counts the hits in the debugger for a suspend function.
+     * The JDI count filter also counts each resumption of the coroutine, and [evaluateCondition] rejects these events.
+     */
+    override fun isCountFilterEmulated(): Boolean = isSuspendFunction || super.isCountFilterEmulated()
+
     override fun getPsiClass(): PsiClass? {
         val declaration = getKtClass() ?: return null
         return runSmartReadActionIfUnderProgressElseDumb(myProject, null) {
@@ -187,6 +208,12 @@ private fun getMethodDescriptorInReadActionInSmartMode(
     val psiMethod = declaration.toLightElements().firstIsInstanceOrNull<PsiMethod>() ?: return null
     return MethodBreakpoint.getMethodDescriptor(sourcePosition, psiMethod, document)
 }
+
+private fun SourcePosition.isSuspendFunction(project: Project): Boolean =
+    runSmartReadActionIfUnderProgressElseDumb(project, false) {
+        val declaration = findDeclaration(project, this)
+        declaration is KtNamedFunction && declaration.hasModifier(KtTokens.SUSPEND_KEYWORD)
+    }
 
 private fun findDeclaration(project: Project, sourcePosition: SourcePosition): KtDeclaration? {
     var declaration = PositionUtil.getPsiElementAt(project, KtDeclaration::class.java, sourcePosition)

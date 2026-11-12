@@ -92,7 +92,9 @@ internal class BreakpointCreator(
                         createLineBreakpoint(breakpointManager, file, lineIndex, lambdaOrdinal, conditionalReturn, condition, suspendPolicy)
                     }
                     comment.startsWith("//FunctionBreakpoint!") -> {
-                        createFunctionBreakpoint(breakpointManager, file, lineIndex, false)
+                        val condition = getPropertyFromComment(comment, "condition")
+                        val passCount = getPropertyFromComment(comment, "passCount")?.toInt()
+                        createFunctionBreakpoint(breakpointManager, file, lineIndex, false, condition, passCount)
                     }
                     else -> throw AssertionError("Cannot create breakpoint at line ${lineIndex + 1}")
                 }
@@ -165,12 +167,28 @@ internal class BreakpointCreator(
         }
     }
 
-    private fun createFunctionBreakpoint(breakpointManager: XBreakpointManager, file: PsiFile, lineIndex: Int, fromLibrary: Boolean) {
+    private fun createFunctionBreakpoint(
+        breakpointManager: XBreakpointManager,
+        file: PsiFile,
+        lineIndex: Int,
+        fromLibrary: Boolean,
+        condition: String? = null,
+        passCount: Int? = null,
+    ) {
         val breakpointType = findBreakpointType(KotlinFunctionBreakpointType::class.java)
         val breakpoint = createBreakpointOfType(breakpointManager, breakpointType, lineIndex, file.virtualFile)
         if (breakpoint is KotlinFunctionBreakpoint) {
-            val lineNumberSuffix = if (fromLibrary) "" else ":${lineIndex + 1}"
-            logger("FunctionBreakpoint created at ${file.virtualFile.name}$lineNumberSuffix")
+            var suffix = if (fromLibrary) "" else ":${lineIndex + 1}"
+            if (condition != null) {
+                breakpoint.setCondition(TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition))
+                suffix += " condition = $condition"
+            }
+            if (passCount != null) {
+                breakpoint.countFilter = passCount
+                breakpoint.isCountFilterEnabled = true
+                suffix += " passCount = $passCount"
+            }
+            logger("FunctionBreakpoint created at ${file.virtualFile.name}$suffix")
         }
     }
 

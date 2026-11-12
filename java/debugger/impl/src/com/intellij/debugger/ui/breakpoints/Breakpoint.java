@@ -495,7 +495,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   public boolean evaluateCondition(final EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    if (isCountFilterEnabled() && !isConditionEnabled()) {
+    if (isCountFilterEnabled() && !isCountFilterEmulated()) {
       context.getVirtualMachineProxy().suspend();
       debugProcess.getRequestsManager().deleteRequest(this);
       createRequest(debugProcess);
@@ -587,7 +587,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         );
       }
     }
-    if (isCountFilterEnabled() && isConditionEnabled()) {
+    if (isCountFilterEnabled() && isCountFilterEmulated()) {
       long hitCount = ObjectUtils.notNull((Long)event.request().getProperty(HIT_COUNTER), 0L) + 1;
       event.request().putProperty(HIT_COUNTER, hitCount);
       return hitCount % getCountFilter() == 0;

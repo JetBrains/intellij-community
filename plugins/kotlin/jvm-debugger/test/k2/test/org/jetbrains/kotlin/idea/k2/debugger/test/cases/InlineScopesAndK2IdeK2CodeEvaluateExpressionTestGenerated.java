@@ -599,6 +599,16 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                     runTest("../testData/evaluation/singleBreakpoint/coroutines/coroutineScopeReceiver.kt");
                 }
 
+                @TestMetadata("functionBreakpointPassCountInSuspendFun.kt")
+                public void testFunctionBreakpointPassCountInSuspendFun() throws Exception {
+                    runTest("../testData/evaluation/singleBreakpoint/coroutines/functionBreakpointPassCountInSuspendFun.kt");
+                }
+
+                @TestMetadata("functionBreakpointPassCountInSuspendFunNotEmulated.kt")
+                public void testFunctionBreakpointPassCountInSuspendFunNotEmulated() throws Exception {
+                    runTest("../testData/evaluation/singleBreakpoint/coroutines/functionBreakpointPassCountInSuspendFunNotEmulated.kt");
+                }
+
                 @TestMetadata("functionCallWithSuspendFunctionInside.kt")
                 public void testFunctionCallWithSuspendFunctionInside() throws Exception {
                     runTest("../testData/evaluation/singleBreakpoint/coroutines/functionCallWithSuspendFunctionInside.kt");

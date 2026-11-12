@@ -25,6 +25,14 @@ public interface FilteredRequestor extends LocatableEventRequestor {
     return 0;
   }
 
+  /**
+   * Returns {@code true} when the debugger counts the hits for the count filter itself.
+   * Returns {@code false} when the JDI count filter of the request counts the hits.
+   */
+  default boolean isCountFilterEmulated() {
+    return isConditionEnabled();
+  }
+
   default boolean isClassFiltersEnabled() {
     return false;
   }
