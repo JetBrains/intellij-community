@@ -2747,6 +2747,13 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="File" nameOfExprType="java\.io\.File" minCount="0" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="FileSystems.getDefault().rootDirectories" uuid="3f7a9c21-5b8e-4d6f-a1c3-8e2b7d4f6a90" description="&lt;code&gt;FileSystems.getDefault().getRootDirectories()&lt;/code&gt; knows only the local machine. On Windows, it also returns network drives: the IDE does not support a project on them, and a disconnected drive can block the call until a timeout.&#10;Use &lt;code&gt;com.intellij.platform.eel.fs.getRoots&lt;/code&gt; on the &lt;code&gt;EelFileSystemApi&lt;/code&gt; of the environment instead. It returns &lt;code&gt;/&lt;/code&gt; on POSIX and only the fixed drives on Windows." suppressId="DefaultFileSystemRoots" problemDescriptor="Do not use 'FileSystems.getDefault().getRootDirectories()'. Use 'EelFileSystemApi.getRoots()' instead." text="java.nio.file.FileSystems.getDefault().getRootDirectories()" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="FileSystems.getDefault().rootDirectories" uuid="3f7a9c21-5b8e-4d6f-a1c3-8e2b7d4f6a90" suppressId="DefaultFileSystemRoots" problemDescriptor="Do not use 'FileSystems.getDefault().rootDirectories'. Use 'EelFileSystemApi.getRoots()' instead." text="$FileSystems$.getDefault().rootDirectories" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="FileSystems" nameOfExprType="java\.nio\.file\.FileSystems" minCount="0" within="" contains="" />
+      </searchConfiguration>
       <replaceConfiguration name="findAnnotation(name) != null -&gt; hasAnnotation(name)" text="$Instance$.findAnnotation($Parameter$) != null" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="false" shortenFQN="false" replacement="$Instance$.hasAnnotation($Parameter$)">
         <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
         <constraint name="Parameter" within="" contains="" />
