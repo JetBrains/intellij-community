@@ -59,7 +59,7 @@ fun Project.setRemoteProjectBaseNioPath(rawHostPath: String) {
   "com.intellij.code.findings.simplified.prompt.FindingsPromptSupport",
   "com.intellij.lsp.ui.frontend.ConfigurableLspClientDescriptor",
   "com.intellij.lsp.ui.frontend.settings.LspServerConfigurable",
-  "com.intellij.platform.unified.workspace.members.IjLightMemberTabsActivity",
+  "com.intellij.platform.unified.workspace.frontend.members.IjLightMemberTabsActivity",
   "org.jetbrains.plugins.terminal.LocalTerminalDirectRunner",
   "org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider",
   "org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer",
