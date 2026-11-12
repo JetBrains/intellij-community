@@ -561,6 +561,10 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
 
     private val FAMILY_COLUMN_INFO: ColumnInfo<ConfigurableWebBrowser, BrowserFamily?> = object : ColumnInfo<ConfigurableWebBrowser, BrowserFamily?>(
       IdeBundle.message("settings.browsers.column.family")) {
+      override fun getColumnClass(): Class<*> {
+        return BrowserFamily::class.java
+      }
+
       override fun valueOf(item: ConfigurableWebBrowser): BrowserFamily? {
         return item.family
       }
