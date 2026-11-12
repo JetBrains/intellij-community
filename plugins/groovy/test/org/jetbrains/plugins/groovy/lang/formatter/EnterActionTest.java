@@ -15,155 +15,227 @@
  */
 package org.jetbrains.plugins.groovy.lang.formatter;
 
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class EnterActionTest extends GroovyFormatterTestCase {
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "groovy/enterAction/";
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterFixtureKt.groovyFormatterFixture;
+
+@TestApplication
+public class EnterActionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GroovyFormatterFixture> formatter =
+    groovyFormatterFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "groovy/enterAction/");
 
   public void doTest() throws Throwable {
-    final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
+    LightJavaCodeInsightTestFixture myFixture = formatter.get().getFixture();
+    final List<String> data = TestUtils.readInput(myFixture.getTestDataPath() + myFixture.getTestName(true) + ".test");
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
     doEnter();
     myFixture.checkResult(data.get(1));
   }
 
   private void doEnter() {
+    LightJavaCodeInsightTestFixture myFixture = formatter.get().getFixture();
     myFixture.type("\n");
   }
 
+  @Test
   public void testClos1() throws Throwable { doTest(); }
 
+  @Test
   public void testClos2() throws Throwable { doTest(); }
 
+  @Test
   public void testComment1() throws Throwable { doTest(); }
 
+  @Test
   public void testComment2() throws Throwable { doTest(); }
 
+  @Test
   public void testComment3() throws Throwable { doTest(); }
 
+  @Test
   public void testComment4() throws Throwable { doTest(); }
 
+  @Test
   public void testDef() throws Throwable { doTest(); }
 
+  @Test
   public void testDef2() throws Throwable { doTest(); }
 
+  @Test
   public void testGdoc1() throws Throwable { doTest(); }
 
+  @Test
   public void testGdoc2() throws Throwable { doTest(); }
 
+  @Test
   public void testGdoc3() throws Throwable { doTest(); }
 
+  @Test
   public void testGdoc4() throws Throwable { doTest(); }
 
+  @Test
   public void testGdoc5() throws Throwable { doTest(); }
 
+  @Test
   public void testGdoc6() throws Throwable { doTest(); }
 
+  @Test
   public void testGdoc7() throws Throwable { doTest(); }
 
+  @Test
   public void testGdoc8() throws Throwable { doTest(); }
 
+  @Test
   public void testGdoc9() throws Throwable { doTest(); }
 
+  @Test
   public void testGdoc10() throws Throwable { doTest(); }
 
+  @Test
   public void testGdoc11() throws Throwable { doTest(); }
 
+  @Test
   public void testBuildGdocPrecededByGNewLine() throws Throwable { doTest(); }
 
+  @Test
   public void testGRVY_953() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring1() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring10() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring11() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring12() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring13() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring14() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring15() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring16() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring2() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring3() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring4() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring5() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring6() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring7() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring8() throws Throwable { doTest(); }
 
+  @Test
   public void testGstring9() throws Throwable { doTest(); }
 
+  @Test
   public void testMultilineIndent() throws Throwable { doTest(); }
 
+  @Test
   public void testMultilineIndent2() throws Throwable { doTest(); }
 
+  @Test
   public void testSpaces1() throws Throwable { doTest(); }
 
+  @Test
   public void testString1() throws Throwable { doTest(); }
 
+  @Test
   public void testString2() throws Throwable { doTest(); }
 
+  @Test
   public void testString3() throws Throwable { doTest(); }
 
+  @Test
   public void testString4() throws Throwable { doTest(); }
 
+  @Test
   public void testString5() throws Throwable { doTest(); }
 
+  @Test
   public void testString6() throws Throwable { doTest(); }
 
+  @Test
   public void testString7() throws Throwable { doTest(); }
 
+  @Test
   public void testString8() throws Throwable { doTest(); }
 
+  @Test
   public void testString9() throws Throwable { doTest(); }
 
+  @Test
   public void testString10() throws Throwable { doTest(); }
 
+  @Test
   public void testRegex1() throws Throwable { doTest(); }
 
+  @Test
   public void testRegex2() throws Throwable { doTest(); }
 
+  @Test
   public void testRegex3() throws Throwable { doTest(); }
 
+  @Test
   public void testRegex4() throws Throwable { doTest(); }
 
+  @Test
   public void testRegex5() throws Throwable { doTest(); }
 
+  @Test
   public void testRegex6() throws Throwable { doTest(); }
 
+  @Test
   public void testRegex7() throws Throwable { doTest(); }
 
+  @Test
   public void testRegex8() throws Throwable { doTest(); }
 
+  @Test
   public void testRegex9() throws Throwable { doTest(); }
 
+  @Test
   public void testRegex10() throws Throwable { doTest(); }
 
   public void doTest(String before, String after) {
+    LightJavaCodeInsightTestFixture myFixture = formatter.get().getFixture();
     myFixture.configureByText("a.groovy", before);
     doEnter();
     myFixture.checkResult(after, true);
   }
 
+  @Test
   public void testAfterClosureArrow() {
     doTest("""
              def c = { a -><caret> }
@@ -174,6 +246,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testAfterClosureArrowWithBody() {
     doTest("""
              def c = { a -><caret> zzz }
@@ -183,6 +256,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testAfterClosureArrowWithBody2() {
     doTest("""
              def c = { a -> <caret>zzz }
@@ -192,6 +266,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testBeforeClosingClosureBrace() {
     doTest("""
              def c = { a ->
@@ -212,6 +287,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testAfterLambdaArrowWithExpressionBody() {
     doTest("""
              def c = a -><caret> zzz
@@ -221,6 +297,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testAfterLambdaArrowWithExpressionBody2() {
     doTest("""
              def c = a -> <caret>zzz
@@ -230,6 +307,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testAfterLambdaArrowWithBlockBody() {
     doTest("""
              def c = a -> {<caret> zzz}
@@ -239,6 +317,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testAfterLambdaArrowWithBlockBody2() {
     doTest("""
              def c = a -> {<caret>}
@@ -249,6 +328,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testBeforeClosingLambdaBrace() {
     doTest("""
              def c = a -> {
@@ -260,6 +340,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testAfterCase() {
     doTest("""
              switch(x) {
@@ -273,6 +354,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              }""");
   }
 
+  @Test
   public void testCaseBeforeReturn() {
     doTest("""  
              switch(x) {
@@ -286,6 +368,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              }""");
   }
 
+  @Test
   public void testCaseAfterBreak() {
     doTest("""
              switch(x) {
@@ -299,6 +382,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              }""");
   }
 
+  @Test
   public void testCaseAfterCall() {
     doTest("""
              switch(x) {
@@ -312,6 +396,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              }""");
   }
 
+  @Test
   public void testCaseAfterReturn() {
     doTest("""
              switch(x) {
@@ -325,6 +410,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              }""");
   }
 
+  @Test
   public void testWrapInSwitchBlock() {
     doTest("""
              switch(x) {
@@ -339,6 +425,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testWrapAfterSwitchArrowedExpression() {
     doTest("""
              switch(x) {
@@ -352,6 +439,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testWrapInSwitchExpressionList() {
     doTest("""
              
@@ -367,6 +455,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testAlmostBeforeClosingClosureBrace() {
     doTest("""
              def c = { a ->
@@ -378,8 +467,9 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testEnterWithAlignedParameters() {
-    getGroovySettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    formatter.get().getGroovySettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest("""
              foo(2,<caret>)
              """, """
@@ -388,8 +478,9 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testEnterWithAlignedParameters2() {
-    getGroovySettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    formatter.get().getGroovySettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest("""
              foo(2,<caret>
              """, """
@@ -398,6 +489,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testEnterAfterAssignmentInDeclaration() {
     doTest("""
              def greeting = <caret>
@@ -407,6 +499,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testEnterInAssignment() {
     doTest("""
              greeting = <caret>
@@ -416,6 +509,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testEnterInIf() {
     doTest("""
              if (2==2) <caret>
@@ -425,8 +519,9 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testGeese1() {
-    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES = true;
+    formatter.get().getTempSettings().getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES = true;
     doTest("""
              [1, 2, 3, 4].
                  toSet().
@@ -443,8 +538,9 @@ public class EnterActionTest extends GroovyFormatterTestCase {
                  } }""");
   }
 
+  @Test
   public void testGeese2() {
-    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES = true;
+    formatter.get().getTempSettings().getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES = true;
     doTest("""
              foo {
                bar {<caret>}
@@ -457,8 +553,9 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testGeese3() {
-    myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES = true;
+    formatter.get().getTempSettings().getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES = true;
     doTest("""
              foo {
                [1].bar {<caret>}
@@ -471,6 +568,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testEnterAfterSlash() {
     doTest("""
              print '\\<caret>'
@@ -480,6 +578,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testEnterAfterSlash2() {
     doTest("""
              print "\\<caret>"
@@ -489,6 +588,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void test_enter_after_doc_with_wrong_braces() {
     doTest("""
              /**
@@ -504,6 +604,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              }""");
   }
 
+  @Test
   public void testAfterArrow() {
     doTest("""
              def cl =  {
@@ -517,10 +618,11 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testIndentAfterLabelColon() {
-    getGroovySettings().getIndentOptions().LABEL_INDENT_SIZE = 2;
-    getGroovySettings().getIndentOptions().INDENT_SIZE = 2;
-    getGroovyCustomSettings().INDENT_LABEL_BLOCKS = true;
+    formatter.get().getGroovySettings().getIndentOptions().LABEL_INDENT_SIZE = 2;
+    formatter.get().getGroovySettings().getIndentOptions().INDENT_SIZE = 2;
+    formatter.get().getGroovyCustomSettings().INDENT_LABEL_BLOCKS = true;
     doTest("""
              class A extends spock.lang.Specification {
                def 'test'() {
@@ -537,6 +639,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
              """);
   }
 
+  @Test
   public void testCommentAtFileEnd() {
     doTest("""
              print 2
@@ -547,6 +650,7 @@ public class EnterActionTest extends GroovyFormatterTestCase {
               */""");
   }
 
+  @Test
   public void testIfCondition() {
     doTest("if (<caret>true) {}", """
       if (

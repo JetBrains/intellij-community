@@ -2,22 +2,34 @@
 package org.jetbrains.plugins.groovy.lang.formatter;
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterFixtureKt.groovyFormatterFixture;
 
 /**
  * @author Max Medvedev
  */
-public class WrappingTest extends GroovyFormatterTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myTempSettings.setRightMargin(GroovyLanguage.INSTANCE, 10);
+@TestApplication
+public class WrappingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GroovyFormatterFixture> formatter = groovyFormatterFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    formatter.get().getTempSettings().setRightMargin(GroovyLanguage.INSTANCE, 10);
   }
 
+  @Test
   public void testWrapChainedMethodCalls() {
-    getGroovySettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.get().getGroovySettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       foo().barbar().abcd()
                       """, """
                       foo()
@@ -26,11 +38,12 @@ public class WrappingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testWrapChainedMethodCallsWithDotAfter() {
-    getGroovySettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
-    getGroovyCustomSettings().WRAP_CHAIN_CALLS_AFTER_DOT = true;
+    formatter.get().getGroovySettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.get().getGroovyCustomSettings().WRAP_CHAIN_CALLS_AFTER_DOT = true;
 
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       foo().barbar().abcd()
                       """, """
                       foo().
@@ -39,25 +52,28 @@ public class WrappingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testWrappingInsideGString0() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       "abcdefghij${a+b}"
                       """, """
                       "abcdefghij${a + b}"
                       """);
   }
 
+  @Test
   public void testWrappingInsideGString1() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       ""\"abcdefghij${a+b}""\"
                       """, """
                       ""\"abcdefghij${a + b}""\"
                       """);
   }
 
+  @Test
   public void testWrappingInsideGString2() {
-    getGroovySettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false;
-    checkFormatting("""
+    formatter.get().getGroovySettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false;
+    formatter.get().checkFormatting("""
                       ""\"abcdefghij${a+b}""\"
                       """, """
                       ""\"abcdefghij${
@@ -66,17 +82,19 @@ public class WrappingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testWrappingInsideGString3() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       ""\"text with ${foo}""\"
                       """, """
                       ""\"text with ${foo}""\"
                       """);
   }
 
+  @Test
   public void testWrappingInsideGString4() {
-    getGroovySettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false;
-    checkFormatting("""
+    formatter.get().getGroovySettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false;
+    formatter.get().checkFormatting("""
                       ""\"text with ${foooo}""\"
                       """, """
                       ""\"text with ${
@@ -85,9 +103,10 @@ public class WrappingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testWrappingInsideGString5() {
-    getGroovySettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false;
-    checkFormatting("""
+    formatter.get().getGroovySettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false;
+    formatter.get().checkFormatting("""
                       ""\"text with ${foo}""\"
                       """, """
                       ""\"text with ${
@@ -95,9 +114,10 @@ public class WrappingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testWrapArgumentList() {
-    getGroovySettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    checkFormatting("""
+    formatter.get().getGroovySettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.get().checkFormatting("""
                       printxxxxxx(2)
                       """, """
                       printxxxxxx(
@@ -105,17 +125,19 @@ public class WrappingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testWrapOneLineClosure() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       ""\"def barbar = {foo}""\"
                       """, """
                       ""\"def barbar = {foo}""\"
                       """);
   }
 
+  @Test
   public void testWrapOneLineClosure2() {
-    getGroovySettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false;
-    checkFormatting("""
+    formatter.get().getGroovySettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false;
+    formatter.get().checkFormatting("""
                       def barbarbar = {foo}
                       """, """
                       def barbarbar = {

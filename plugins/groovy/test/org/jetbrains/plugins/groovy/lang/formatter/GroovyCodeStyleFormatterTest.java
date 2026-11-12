@@ -1,145 +1,219 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.formatter;
 
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
-public class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "groovy/codeStyle/";
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterFixtureKt.groovyFormatterFixture;
 
-  public void testClass_decl1() throws Throwable { doTest(); }
+@TestApplication
+public class GroovyCodeStyleFormatterTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GroovyFormatterFixture> formatter =
+    groovyFormatterFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "groovy/codeStyle/");
 
-  public void testClass_decl2() throws Throwable { doTest(); }
+  @Test
+  public void testClass_decl1() { doTest(); }
 
-  public void testClass_decl3() throws Throwable { doTest(); }
+  @Test
+  public void testClass_decl2() { doTest(); }
 
-  public void testClass_decl4() throws Throwable { doTest(); }
+  @Test
+  public void testClass_decl3() { doTest(); }
 
-  public void testComm_at_first_column1() throws Throwable { doTest(); }
+  @Test
+  public void testClass_decl4() { doTest(); }
 
-  public void testComm_at_first_column2() throws Throwable { doTest(); }
+  @Test
+  public void testComm_at_first_column1() { doTest(); }
 
-  public void testFor1() throws Throwable { doTest(); }
+  @Test
+  public void testComm_at_first_column2() { doTest(); }
 
-  public void testFor2() throws Throwable { doTest(); }
+  @Test
+  public void testFor1() { doTest(); }
 
-  public void testGRVY_1134() throws Throwable { doTest(); }
+  @Test
+  public void testFor2() { doTest(); }
 
-  public void testIf1() throws Throwable { doTest(); }
+  @Test
+  public void testGRVY_1134() { doTest(); }
 
-  public void testMethod_call_par1() throws Throwable { doTest(); }
+  @Test
+  public void testIf1() { doTest(); }
 
-  public void testMethod_call_par2() throws Throwable { doTest(); }
+  @Test
+  public void testMethod_call_par1() { doTest(); }
 
-  public void testArgumentsWrapIfLong() throws Throwable { doTest(); }
+  @Test
+  public void testMethod_call_par2() { doTest(); }
 
-  public void testArgumentsDontWrapAlign() throws Throwable { doTest(); }
+  @Test
+  public void testArgumentsWrapIfLong() { doTest(); }
 
-  public void testArgumentsWrapAlways() throws Throwable { doTest(); }
+  @Test
+  public void testArgumentsDontWrapAlign() { doTest(); }
 
-  public void testArgumentsWrapAlwaysNl() throws Throwable { doTest(); }
+  @Test
+  public void testArgumentsWrapAlways() { doTest(); }
 
-  public void testArgumentsWrapAlwaysAlign() throws Throwable { doTest(); }
+  @Test
+  public void testArgumentsWrapAlwaysNl() { doTest(); }
 
-  public void testParametersDontWrapAlign() throws Throwable { doTest(); }
+  @Test
+  public void testArgumentsWrapAlwaysAlign() { doTest(); }
 
-  public void testParametersWrapAlways() throws Throwable { doTest(); }
+  @Test
+  public void testParametersDontWrapAlign() { doTest(); }
 
-  public void testParametersWrapAlwaysDontAlign() throws Throwable { doTest(); }
+  @Test
+  public void testParametersWrapAlways() { doTest(); }
 
-  public void testParametersWrapAlwaysNl() throws Throwable { doTest(); }
+  @Test
+  public void testParametersWrapAlwaysDontAlign() { doTest(); }
 
-  public void testParametersComments() throws Throwable { doTest(); }
+  @Test
+  public void testParametersWrapAlwaysNl() { doTest(); }
 
-  public void testMethod_decl1() throws Throwable { doTest(); }
+  @Test
+  public void testParametersComments() { doTest(); }
 
-  public void testMethod_decl2() throws Throwable { doTest(); }
+  @Test
+  public void testMethod_decl1() { doTest(); }
 
-  public void testMethod_decl_par1() throws Throwable { doTest(); }
+  @Test
+  public void testMethod_decl2() { doTest(); }
 
-  public void testSwitch1() throws Throwable { doTest(); }
+  @Test
+  public void testMethod_decl_par1() { doTest(); }
 
-  public void testSwitchexpr1() throws Throwable { doTest(); }
+  @Test
+  public void testSwitch1() { doTest(); }
 
-  public void testSynch1() throws Throwable { doTest(); }
+  @Test
+  public void testSwitchexpr1() { doTest(); }
 
-  public void testTry1() throws Throwable { doTest(); }
+  @Test
+  public void testSynch1() { doTest(); }
 
-  public void testTry2() throws Throwable { doTest(); }
+  @Test
+  public void testTry1() { doTest(); }
 
-  public void testTryResourcesSpaces() throws Throwable { doTest(); }
+  @Test
+  public void testTry2() { doTest(); }
 
-  public void testTryResourcesDontWrap() throws Throwable { doTest(); }
+  @Test
+  public void testTryResourcesSpaces() { doTest(); }
 
-  public void testTryResourcesWrapAlways() throws Throwable { doTest(); }
+  @Test
+  public void testTryResourcesDontWrap() { doTest(); }
 
-  public void testTryResourcesWrapAlwaysDontAlign() throws Throwable { doTest(); }
+  @Test
+  public void testTryResourcesWrapAlways() { doTest(); }
 
-  public void testTryResourcesWrapAlwaysNl() throws Throwable { doTest(); }
+  @Test
+  public void testTryResourcesWrapAlwaysDontAlign() { doTest(); }
 
-  public void testWhile1() throws Throwable { doTest(); }
+  @Test
+  public void testTryResourcesWrapAlwaysNl() { doTest(); }
 
-  public void testWhile2() throws Throwable { doTest(); }
+  @Test
+  public void testWhile1() { doTest(); }
 
-  public void testDoWhileSpaces() throws Throwable { doTest(); }
+  @Test
+  public void testWhile2() { doTest(); }
 
-  public void testDoWhileWrapping() throws Throwable { doTest(); }
+  @Test
+  public void testDoWhileSpaces() { doTest(); }
 
-  public void testDoWhileForceBraces() throws Throwable { doTest(); }
+  @Test
+  public void testDoWhileWrapping() { doTest(); }
 
-  public void testDoWhileForceBracesMultiline() throws Throwable { doTest(); }
+  @Test
+  public void testDoWhileForceBraces() { doTest(); }
 
-  public void testWithin_brackets1() throws Throwable { doTest(); }
+  @Test
+  public void testDoWhileForceBracesMultiline() { doTest(); }
 
-  public void testSpace_in_named_arg_true() throws Throwable { doTest(); }
+  @Test
+  public void testWithin_brackets1() { doTest(); }
 
-  public void testSpace_in_named_arg_false() throws Throwable { doTest(); }
+  @Test
+  public void testSpace_in_named_arg_true() { doTest(); }
 
-  public void testAssertSeparatorSpace() throws Throwable { doTest(); }
+  @Test
+  public void testSpace_in_named_arg_false() { doTest(); }
 
-  public void testAssertSeparatorNoSpace() throws Throwable { doTest(); }
+  @Test
+  public void testAssertSeparatorSpace() { doTest(); }
 
-  public void testSpaceInNamedArgBeforeColon() throws Throwable { doTest(); }
+  @Test
+  public void testAssertSeparatorNoSpace() { doTest(); }
 
-  public void testAnonymousVsLBraceOnNewLine() throws Throwable { doTest(); }
+  @Test
+  public void testSpaceInNamedArgBeforeColon() { doTest(); }
 
-  public void testBracesNextLine() throws Throwable { doTest(); }
+  @Test
+  public void testAnonymousVsLBraceOnNewLine() { doTest(); }
 
-  public void testBracesNextLineShifted() throws Throwable { doTest(); }
+  @Test
+  public void testBracesNextLine() { doTest(); }
 
-  public void testBracesNextLineShifted2() throws Throwable { doTest(); }
+  @Test
+  public void testBracesNextLineShifted() { doTest(); }
 
-  public void testBracesEndLine() throws Throwable { doTest(); }
+  @Test
+  public void testBracesNextLineShifted2() { doTest(); }
 
-  public void testArrayInitializerSpaces() throws Throwable { doTest(); }
+  @Test
+  public void testBracesEndLine() { doTest(); }
 
-  public void testArrayInitializerDontWrap() throws Throwable { doTest(); }
+  @Test
+  public void testArrayInitializerSpaces() { doTest(); }
 
-  public void testArrayInitializerWrapAlways() throws Throwable { doTest(); }
+  @Test
+  public void testArrayInitializerDontWrap() { doTest(); }
 
-  public void testArrayInitializerWrapAlwaysAlign() throws Throwable { doTest(); }
+  @Test
+  public void testArrayInitializerWrapAlways() { doTest(); }
 
-  public void testArrayInitializerWrapAlwaysNl() throws Throwable { doTest(); }
+  @Test
+  public void testArrayInitializerWrapAlwaysAlign() { doTest(); }
 
-  public void testLabelIndentAbsolute() throws Throwable { doTest(); }
+  @Test
+  public void testArrayInitializerWrapAlwaysNl() { doTest(); }
 
-  public void testLabelIndentRelative() throws Throwable { doTest(); }
+  @Test
+  public void testLabelIndentAbsolute() { doTest(); }
 
-  public void testLabelIndentRelativeReverse() throws Throwable { doTest(); }
+  @Test
+  public void testLabelIndentRelative() { doTest(); }
 
-  public void testBlankLinesInCode() throws Throwable { doTest(); }
+  @Test
+  public void testLabelIndentRelativeReverse() { doTest(); }
 
-  public void testAlignFields0BlankLines() throws Throwable { doTest(); }
+  @Test
+  public void testBlankLinesInCode() { doTest(); }
 
-  public void testAlignFields1BlankLine() throws Throwable { doTest(); }
+  @Test
+  public void testAlignFields0BlankLines() { doTest(); }
 
-  public void testAlignFields2BlankLines() throws Throwable { doTest(); }
+  @Test
+  public void testAlignFields1BlankLine() { doTest(); }
 
-  public void testBooleanOperators() throws Throwable { doTest(); }
+  @Test
+  public void testAlignFields2BlankLines() { doTest(); }
 
-  private void doTest() throws Throwable {
-    doTest(getTestName(true) + ".test");
+  @Test
+  public void testBooleanOperators() { doTest(); }
+
+  private void doTest() {
+    LightJavaCodeInsightTestFixture myFixture = formatter.get().getFixture();
+    formatter.get().doTest(myFixture.getTestName(true) + ".test");
   }
 }

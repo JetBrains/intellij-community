@@ -2,20 +2,32 @@
 package org.jetbrains.plugins.groovy.ext.ginq;
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterFixtureKt.groovyFormatterFixture;
 
 @SuppressWarnings("SpellCheckingInspection")
-public class GinqFormattingTest extends GroovyFormatterTestCase {
+@TestApplication
+public class GinqFormattingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GinqTestUtils.getProjectDescriptor());
+  private final TestFixture<GroovyFormatterFixture> formatter = groovyFormatterFixture(projectFixture);
+
   public void doEnterTest(String before, String after) {
+    LightJavaCodeInsightTestFixture myFixture = formatter.get().getFixture();
     myFixture.configureByText("a.groovy", before);
     myFixture.type('\n');
     myFixture.checkResult(after, true);
   }
 
+  @Test
   public void testBasicFragmentFormatting() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                           select x
@@ -28,8 +40,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testBasicFragmentFormatting2() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       GQ {
                       from x in [1]
                       select x
@@ -42,8 +55,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testBasicFragmentFormatting3() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       GQ {
                           from x in [1]
                           select x
@@ -56,9 +70,10 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testOn() {
-    getGroovyCustomSettings().GINQ_ON_WRAP_POLICY = CommonCodeStyleSettings.DO_NOT_WRAP;
-    checkFormatting("""
+    formatter.get().getGroovyCustomSettings().GINQ_ON_WRAP_POLICY = CommonCodeStyleSettings.DO_NOT_WRAP;
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                         join y in [2]\s
@@ -74,9 +89,10 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testOn2() {
-    getGroovyCustomSettings().GINQ_ON_WRAP_POLICY = CommonCodeStyleSettings.WRAP_ALWAYS;
-    checkFormatting("""
+    formatter.get().getGroovyCustomSettings().GINQ_ON_WRAP_POLICY = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                         join y in [2] on x == y
@@ -92,9 +108,10 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testOn3() {
-    getGroovyCustomSettings().GINQ_ON_WRAP_POLICY = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    checkFormatting("""
+    formatter.get().getGroovyCustomSettings().GINQ_ON_WRAP_POLICY = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                         join y in [2] on x == y
@@ -109,9 +126,10 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testOn4() {
-    getGroovyCustomSettings().GINQ_ON_WRAP_POLICY = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    checkFormatting("""
+    formatter.get().getGroovyCustomSettings().GINQ_ON_WRAP_POLICY = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                         join y in [2]
@@ -128,8 +146,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testHaving() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                         groupby x
@@ -146,8 +165,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testFormattingForUntransformed() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                         where x == y
@@ -164,8 +184,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testUntransformedInFrom() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1     ]
                         select x
@@ -178,8 +199,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testUntransformedInJoin() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                         join y in [2     ]
@@ -194,8 +216,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testUntransformedInOn() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                         join y in [2     ]
@@ -210,8 +233,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testSpaceAfterCall() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                         select(x)
@@ -224,9 +248,10 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testNoSpaceAfterCall() {
-    getGroovyCustomSettings().GINQ_SPACE_AFTER_KEYWORD = false;
-    checkFormatting("""
+    formatter.get().getGroovyCustomSettings().GINQ_SPACE_AFTER_KEYWORD = false;
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                         select(x)
@@ -239,9 +264,10 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testWrapGinqFragments() {
-    getGroovyCustomSettings().GINQ_GENERAL_CLAUSE_WRAP_POLICY = CommonCodeStyleSettings.WRAP_ALWAYS;
-    checkFormatting("""
+    formatter.get().getGroovyCustomSettings().GINQ_GENERAL_CLAUSE_WRAP_POLICY = CommonCodeStyleSettings.WRAP_ALWAYS;
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1] select x
                       }
@@ -253,9 +279,10 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testWrapGinqFragments2() {
-    getGroovyCustomSettings().GINQ_GENERAL_CLAUSE_WRAP_POLICY = CommonCodeStyleSettings.DO_NOT_WRAP;
-    checkFormatting("""
+    formatter.get().getGroovyCustomSettings().GINQ_GENERAL_CLAUSE_WRAP_POLICY = CommonCodeStyleSettings.DO_NOT_WRAP;
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]\s
                         select x
@@ -267,9 +294,10 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testWrapGinqFragments3() {
-    getGroovyCustomSettings().GINQ_GENERAL_CLAUSE_WRAP_POLICY = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    checkFormatting("""
+    formatter.get().getGroovyCustomSettings().GINQ_GENERAL_CLAUSE_WRAP_POLICY = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                         select x
@@ -282,9 +310,10 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testWrapGinqFragments4() {
-    getGroovyCustomSettings().GINQ_GENERAL_CLAUSE_WRAP_POLICY = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    checkFormatting("""
+    formatter.get().getGroovyCustomSettings().GINQ_GENERAL_CLAUSE_WRAP_POLICY = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1] select x
                       }
@@ -295,8 +324,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testBlankLines() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                       
@@ -311,8 +341,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testFormatNestedGinq() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in (from y in [2] select y)
                         select x
@@ -326,6 +357,7 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testEnter() {
     doEnterTest("""
                   GQ {
@@ -341,6 +373,7 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                   """);
   }
 
+  @Test
   public void testEnter2() {
     doEnterTest("""
                   GQ {
@@ -358,6 +391,7 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                   """);
   }
 
+  @Test
   public void testEnter3() {
     doEnterTest("""
                   GQ {<caret>
@@ -373,9 +407,10 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                   """);
   }
 
+  @Test
   public void testIndentOn() {
-    getGroovyCustomSettings().GINQ_INDENT_ON_CLAUSE = false;
-    checkFormatting("""
+    formatter.get().getGroovyCustomSettings().GINQ_INDENT_ON_CLAUSE = false;
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                         join y in [2]
@@ -392,9 +427,10 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testIndentHaving() {
-    getGroovyCustomSettings().GINQ_INDENT_HAVING_CLAUSE = false;
-    checkFormatting("""
+    formatter.get().getGroovyCustomSettings().GINQ_INDENT_HAVING_CLAUSE = false;
+    formatter.get().checkFormatting("""
                       GQ {
                         from x in [1]
                         groupby x
@@ -411,8 +447,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testIncorrectGinq() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       GQ {
                           from x in [1]
                           orderby x in
@@ -429,8 +466,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testNested() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       def foo() {
                         GQ {
                           from x in [1]
@@ -447,8 +485,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testNested2() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       def baz() {
                         def foo() {
                           GQ {
@@ -469,8 +508,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testMethodGinq1() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       import groovy.ginq.transform.GQ
                       
                       @GQ
@@ -489,8 +529,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testMethodFormatNestedGinq() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       import groovy.ginq.transform.GQ
                       
                       @GQ
@@ -510,8 +551,9 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                       """);
   }
 
+  @Test
   public void testMethodIncorrectGinq() {
-    checkFormatting("""
+    formatter.get().checkFormatting("""
                       import groovy.ginq.transform.GQ
                       
                       @GQ
@@ -532,10 +574,5 @@ public class GinqFormattingTest extends GroovyFormatterTestCase {
                         select x
                       }
                       """);
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GinqTestUtils.getProjectDescriptor();
   }
 }
