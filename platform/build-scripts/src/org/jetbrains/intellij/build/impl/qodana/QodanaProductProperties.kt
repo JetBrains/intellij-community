@@ -33,7 +33,7 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dfull.scanning.on.startup.can.be.skipped=false", // remove when properly fixing indexing issue
 )
 
-private const val IS_EAP = true
+private const val IS_EAP = false
 
 /**
  * Represents a set of properties specific to the Qodana product.
