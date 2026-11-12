@@ -616,10 +616,6 @@
 - com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter$None
 - sort(java.util.List):java.util.List
-*f:com.intellij.collaboration.ui.codereview.issues.IssueIdsProcessorKt
-- sf:markdownLink(java.lang.String,java.lang.String):java.lang.String
-- sf:processIssueIdsHtml(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
-- sf:processIssueIdsMarkdown(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
 *f:com.intellij.collaboration.ui.codereview.list.NamedCollection
 - *sf:Companion:com.intellij.collaboration.ui.codereview.list.NamedCollection$Companion
 - f:component1():java.lang.String

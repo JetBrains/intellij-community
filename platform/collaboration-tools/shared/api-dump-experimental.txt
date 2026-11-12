@@ -502,6 +502,10 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - f:transferLineToAfter(java.util.List,I):I
 *f:com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtilKt
 - sf:asLst(com.intellij.diff.util.Range):com.intellij.openapi.vcs.ex.Range
+*f:com.intellij.collaboration.ui.codereview.issues.IssueIdsProcessorKt
+- sf:markdownLink(java.lang.String,java.lang.String):java.lang.String
+- sf:processIssueIdsHtml(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
+- sf:processIssueIdsMarkdown(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
 *f:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 - f:create(java.lang.Object,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter,com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory$Alignment):javax.swing.JComponent

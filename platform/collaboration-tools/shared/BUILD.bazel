@@ -50,6 +50,7 @@ jvm_library(
         "//platform/observable",
         "//platform/lang-api:lang",
         "//platform/lang-impl",
+        "//platform/projectModel-api:projectModel",
         "//platform/util/coroutines",
         "//platform/util/diff",
         "//platform/util-ex",
