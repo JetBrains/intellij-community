@@ -138,6 +138,8 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
 
     boolean closed = true;
     for (IdePopupEventDispatcher each : myDispatchStack) {
+      // the close of a popup removes each dispatcher that holds it
+      if (!myDispatchStack.contains(each)) continue;
       if (forceRestoreFocus) {
         each.setRestoreFocusSilently();
       }
