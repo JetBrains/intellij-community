@@ -926,10 +926,6 @@ c:com.jetbrains.python.run.PythonScriptCommandLineState
 - f:showCommandLineAfterwards():Z
 f:com.jetbrains.python.run.PythonScripts
 - sf:extendEnvs(com.jetbrains.python.run.PythonExecution,java.util.Map,com.intellij.execution.target.TargetPlatform):V
-com.jetbrains.python.run.RunnableScriptFilter
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- s:isIfNameMain(com.intellij.execution.Location):Z
-- a:isRunnableScript(com.intellij.psi.PsiFile,com.intellij.openapi.module.Module,com.intellij.execution.Location,com.jetbrains.python.psi.types.TypeEvalContext):Z
 a:com.jetbrains.python.run.configuration.AbstractPythonConfigurationFragmentedEditor
 - com.intellij.execution.ui.RunConfigurationFragmentedEditor
 - sf:Companion:com.jetbrains.python.run.configuration.AbstractPythonConfigurationFragmentedEditor$Companion

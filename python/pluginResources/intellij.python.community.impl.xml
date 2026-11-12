@@ -670,7 +670,6 @@
                     interface="com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyLaunchPreparer"
                     interface="com.jetbrains.python.run.PyLaunchPreparer" dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.runnableScriptFilter" interface="com.jetbrains.python.run.RunnableScriptFilter" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider"
                     interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"
                     dynamic="true"/>

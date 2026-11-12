@@ -17,7 +17,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +37,7 @@ public final class PythonRunConfigurationProducer extends LazyRunConfigurationPr
     final Location location = context.getLocation();
     if (location == null) return false;
     final PsiFile script = location.getPsiElement().getContainingFile();
-    if (!isAvailable(location, script)) return false;
+    if (!isAvailable(script)) return false;
 
     final VirtualFile vFile = script.getVirtualFile();
     if (vFile == null) return false;
@@ -61,7 +60,7 @@ public final class PythonRunConfigurationProducer extends LazyRunConfigurationPr
     final Location location = context.getLocation();
     if (location == null) return false;
     final PsiFile script = location.getPsiElement().getContainingFile();
-    if (!isAvailable(location, script)) return false;
+    if (!isAvailable(script)) return false;
     final VirtualFile virtualFile = script.getVirtualFile();
     if (virtualFile == null) return false;
     if (virtualFile instanceof LightVirtualFile) return false;
@@ -71,21 +70,9 @@ public final class PythonRunConfigurationProducer extends LazyRunConfigurationPr
     return scriptName.equals(path) || path.equals(new File(workingDirectory, scriptName).getAbsolutePath());
   }
 
-  private static boolean isAvailable(final @NotNull Location location, final @Nullable PsiFile script) {
-    if (script == null || script.getFileType() != PythonFileType.INSTANCE ||
-        !script.getViewProvider().getBaseLanguage().isKindOf(PythonLanguage.INSTANCE)) {
-      return false;
-    }
-    final Module module = ModuleUtilCore.findModuleForPsiElement(script);
-    if (module != null) {
-      for (RunnableScriptFilter f : RunnableScriptFilter.EP_NAME.getExtensionList()) {
-        // Configuration producers always called by user
-        if (f.isRunnableScript(script, module, location, TypeEvalContext.userInitiated(location.getProject(), null))) {
-          return false;
-        }
-      }
-    }
-    return true;
+  private static boolean isAvailable(final @Nullable PsiFile script) {
+    return script != null && script.getFileType() == PythonFileType.INSTANCE &&
+           script.getViewProvider().getBaseLanguage().isKindOf(PythonLanguage.INSTANCE);
   }
 
   // Only prefer over other regular config
