@@ -12,7 +12,6 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
 
 public final class WorkspaceShellPanel extends JPanel {
   private final Project project;
@@ -32,12 +31,13 @@ public final class WorkspaceShellPanel extends JPanel {
     header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
     header.setOpaque(false);
 
-    JBLabel title = new JBLabel(WorkspaceBundle.message("shell.title"));
+    JBLabel title = new JBLabel("Unified Workspace");
     title.setFont(title.getFont().deriveFont(Font.BOLD, 18f));
-    JBLabel subtitle = new JBLabel(WorkspaceBundle.message("shell.subtitle"));
-    subtitle.setForeground(JBUI.CurrentTheme.ContextHelp.FOREGROUND);
     header.add(title);
     header.add(Box.createVerticalStrut(4));
+
+    JBLabel subtitle = new JBLabel("Pick a repository and open or choose a local checkout.");
+    subtitle.setForeground(JBUI.CurrentTheme.ContextHelp.FOREGROUND);
     header.add(subtitle);
     header.add(Box.createVerticalStrut(12));
     return header;
@@ -48,72 +48,78 @@ public final class WorkspaceShellPanel extends JPanel {
     content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
     content.setOpaque(false);
 
-    List<WorkspaceRepo> repositories = workspaceService.getRepositories();
-    for (WorkspaceRepo repository : repositories) {
-      content.add(repoCard(repository));
+    List<WorkspaceRepository> repositories = workspaceService.getRepositories();
+    for (WorkspaceRepository repository : repositories) {
+      content.add(buildRepoRow(repository));
       content.add(Box.createVerticalStrut(8));
     }
 
-    JBLabel excluded = new JBLabel(WorkspaceBundle.message("shell.excluded"));
+    JBLabel excluded = new JBLabel("GitHub-Codespaces is excluded from this workspace.");
     excluded.setForeground(JBUI.CurrentTheme.ContextHelp.FOREGROUND);
-    content.add(Box.createVerticalStrut(8));
     content.add(excluded);
     return new JBScrollPane(content);
   }
 
-  private JComponent repoCard(WorkspaceRepo repository) {
-    JPanel card = new JPanel(new BorderLayout(JBUI.scale(12), 0));
-    card.setBorder(JBUI.Borders.compound(
+  private JComponent buildRepoRow(WorkspaceRepository repository) {
+    JPanel row = new JPanel(new BorderLayout(JBUI.scale(12), 0));
+    row.setBorder(JBUI.Borders.compound(
       JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
       JBUI.Borders.empty(10)
     ));
-    card.setOpaque(false);
+    row.setOpaque(false);
 
     JPanel details = new JPanel();
     details.setLayout(new BoxLayout(details, BoxLayout.Y_AXIS));
     details.setOpaque(false);
-    JBLabel name = new JBLabel(repository.getName());
+
+    JBLabel name = new JBLabel(repository.getDisplayName());
     name.setFont(name.getFont().deriveFont(Font.BOLD));
+    details.add(name);
+
     JBLabel description = new JBLabel(repository.getDescription());
     description.setForeground(JBUI.CurrentTheme.ContextHelp.FOREGROUND);
-    details.add(name);
     details.add(Box.createVerticalStrut(4));
     details.add(description);
 
     JPanel actions = new JPanel(new FlowLayout(FlowLayout.TRAILING, JBUI.scale(6), 0));
     actions.setOpaque(false);
-    JButton openButton = new JButton(WorkspaceBundle.message("repo.open"));
-    openButton.addActionListener(event -> openCheckout(repository));
-    JButton chooseButton = new JButton(WorkspaceBundle.message("repo.choose"));
-    chooseButton.addActionListener(event -> chooseCheckout(repository));
+
+    JButton openButton = new JButton("Open");
+    openButton.addActionListener(e -> openCheckout(repository));
+    JButton chooseButton = new JButton("Choose");
+    chooseButton.addActionListener(e -> chooseCheckout(repository));
+
     actions.add(openButton);
     actions.add(chooseButton);
 
-    card.add(details, BorderLayout.CENTER);
-    card.add(actions, BorderLayout.EAST);
-    card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
-    return card;
+    row.add(details, BorderLayout.CENTER);
+    row.add(actions, BorderLayout.EAST);
+    row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+    return row;
   }
 
-  private void openCheckout(WorkspaceRepo repository) {
-    String path = workspaceService.getCheckoutPath(repository);
-    VirtualFile directory = path == null ? null : LocalFileSystem.getInstance().findFileByPath(path);
-    if (directory != null && directory.isDirectory()) {
-      ProjectUtil.openOrImport(directory.getPath(), project, false);
+  private void openCheckout(WorkspaceRepository repository) {
+    String path = workspaceService.getCheckoutPath(repository.getId());
+    if (path != null) {
+      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+      if (file != null && file.isDirectory()) {
+        ProjectUtil.openOrImport(file.getPath(), project, false);
+        return;
+      }
     }
-    else {
-      chooseCheckout(repository);
-    }
+    chooseCheckout(repository);
   }
 
-  private void chooseCheckout(WorkspaceRepo repository) {
-    VirtualFile directory = FileChooser.chooseFile(
-      FileChooserDescriptorFactory.createSingleFolderDescriptor(), project, null
+  private void chooseCheckout(WorkspaceRepository repository) {
+    VirtualFile selected = FileChooser.chooseFile(
+      FileChooserDescriptorFactory.createSingleFolderDescriptor(),
+      project,
+      null
     );
-    if (directory == null) {
+    if (selected == null) {
       return;
     }
-    workspaceService.setCheckoutPath(repository, directory.getPath());
-    ProjectUtil.openOrImport(directory.getPath(), project, false);
+    workspaceService.setCheckoutPath(repository.getId(), selected.getPath());
+    ProjectUtil.openOrImport(selected.getPath(), project, false);
   }
 }

@@ -8,30 +8,36 @@ import org.jetbrains.annotations.Nullable;
 
 @Service(Service.Level.PROJECT)
 public final class WorkspaceProjectService {
-  private static final List<WorkspaceRepo> REPOSITORIES = List.of(
-    new WorkspaceRepo("Jupyterlab", "repo.jupyterlab", "https://github.com/joeyr64/Jupyterlab"),
-    new WorkspaceRepo("notebook", "repo.notebook", "https://github.com/joeyr64/notebook"),
-    new WorkspaceRepo("HUNT", "repo.hunt", "https://github.com/joeyr64/HUNT"),
-    new WorkspaceRepo("burpsuite", "repo.burpsuite", "https://github.com/joeyr64/burpsuite"),
-    new WorkspaceRepo("BurpKit", "repo.burpkit", "https://github.com/joeyr64/BurpKit")
-  );
-
   private final Project project;
 
   public WorkspaceProjectService(Project project) {
     this.project = project;
   }
 
-  public List<WorkspaceRepo> getRepositories() {
-    return REPOSITORIES;
+  public List<WorkspaceRepository> getRepositories() {
+    return WorkspaceRepositoryRegistry.INSTANCE.getRepositories();
   }
 
   @Nullable
-  public String getCheckoutPath(WorkspaceRepo repository) {
-    return PropertiesComponent.getInstance(project).getValue(repository.getCheckoutPropertyKey());
+  public String getCheckoutPath(String repositoryId) {
+    for (WorkspaceRepository repo : getRepositories()) {
+      if (repo.getId().equals(repositoryId)) {
+        return PropertiesComponent.getInstance(project).getValue(repo.getCheckoutPropertyKey());
+      }
+    }
+    return null;
   }
 
-  public void setCheckoutPath(WorkspaceRepo repository, String path) {
-    PropertiesComponent.getInstance(project).setValue(repository.getCheckoutPropertyKey(), path);
+  public void setCheckoutPath(String repositoryId, String path) {
+    for (WorkspaceRepository repo : getRepositories()) {
+      if (repo.getId().equals(repositoryId)) {
+        PropertiesComponent.getInstance(project).setValue(repo.getCheckoutPropertyKey(), path);
+        return;
+      }
+    }
+  }
+
+  public Project getProject() {
+    return project;
   }
 }
