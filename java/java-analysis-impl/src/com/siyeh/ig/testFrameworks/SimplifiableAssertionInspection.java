@@ -120,7 +120,7 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
 
   private static final CallMatcher ARRAYS_EQUALS = CallMatcher.staticCall("java.util.Arrays", "equals").parameterCount(2);
   private static boolean isArrayEqualityComparison(PsiExpression expression) {
-    return expression instanceof PsiMethodCallExpression && ARRAYS_EQUALS.test((PsiMethodCallExpression)expression);
+    return expression instanceof PsiMethodCallExpression callExpression && ARRAYS_EQUALS.test(callExpression);
   }
 
   private static boolean isInstanceOfMethodExistsWithMatchingParams(@NotNull AssertHint assertHint) {
@@ -283,8 +283,8 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
           lhs = check.getLeft();
           rhs = check.getRight();
         }
-        else if (firstArgument instanceof PsiMethodCallExpression && ARRAYS_EQUALS.test((PsiMethodCallExpression)firstArgument)) {
-          final PsiExpression[] args = ((PsiMethodCallExpression)firstArgument).getArgumentList().getExpressions();
+        else if (firstArgument instanceof PsiMethodCallExpression expression && ARRAYS_EQUALS.test(expression)) {
+          final PsiExpression[] args = expression.getArgumentList().getExpressions();
           lhs = args[0];
           rhs = args[1];
         }
@@ -334,7 +334,7 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
         final PsiExpression expression = methodName.equals("assertNotEquals")
                                          ? null
                                          : factory.createExpressionFromText(noDelta, originalExpression);
-        final PsiMethod method = expression instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expression).resolveMethod() : null;
+        final PsiMethod method = expression instanceof PsiMethodCallExpression callExpression ? callExpression.resolveMethod() : null;
         if (method == null || method.isDeprecated()) {
           final boolean isDouble = lhsType != null && TypeConversionUtil.isDoubleType(lhsType.getDeepComponentType()) ||
                                    rhsType != null && TypeConversionUtil.isDoubleType(rhsType.getDeepComponentType());
@@ -523,11 +523,11 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
       final PsiExpression firstArgument = assertHint.getFirstArgument();
       final PsiExpression secondArgument = assertHint.getSecondArgument();
       final PsiLiteralExpression literalExpression;
-      if (firstArgument instanceof PsiLiteralExpression) {
-        literalExpression = (PsiLiteralExpression)firstArgument;
+      if (firstArgument instanceof PsiLiteralExpression psiLiteralExpression) {
+        literalExpression = psiLiteralExpression;
       }
-      else if (secondArgument instanceof PsiLiteralExpression) {
-        literalExpression = (PsiLiteralExpression)secondArgument;
+      else if (secondArgument instanceof PsiLiteralExpression expression) {
+        literalExpression = expression;
       }
       else {
         return "";
