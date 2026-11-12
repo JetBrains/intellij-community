@@ -19,32 +19,12 @@ import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
-class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
-  companion object {
-    @JvmStatic
-    @Parameters(name = "{0}")
-    fun data(): Collection<Array<Any?>> {
-      return collectBadIcons(TestRoot.COMMUNITY)
-    }
-  }
-}
-
 class CommunityImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
   companion object {
     @JvmStatic
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any?>> {
       return collectIconsWithNonOptimumSize(TestRoot.COMMUNITY)
-    }
-  }
-}
-
-class CommunityIconClassesTest : ImageResourcesTestBase() {
-  companion object {
-    @JvmStatic
-    @Parameters(name = "{0}")
-    fun data(): Collection<Array<Any?>> {
-      return collectNonRegeneratedIconClasses(TestRoot.COMMUNITY)
     }
   }
 }

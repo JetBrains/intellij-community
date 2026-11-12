@@ -21,7 +21,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.WaitFor
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.execution.ScriptMavenExecutionTest.Companion.wrapperOutput
+import org.jetbrains.idea.maven.execution.wrapperOutput
 import org.jetbrains.idea.maven.fixtures.rebuildProject
 import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.tasks.MavenTasksManager

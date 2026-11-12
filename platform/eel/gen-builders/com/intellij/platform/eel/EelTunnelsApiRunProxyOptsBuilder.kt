@@ -39,7 +39,7 @@ class EelTunnelsApiRunProxyOptsBuilder {
    */
   @Suppress("PropertyName")
   @ApiStatus.Internal
-  @VisibleToClasses("com.intellij.platform.ijent.functional.tunnels.EelProxyTest")
+  @VisibleToClasses("com.intellij.platform.ijent.testFramework.tunnels.EelProxyTestBase")
   fun _acceptorInfo(arg: Pair<EelTunnelsApi, Any?>?): EelTunnelsApiRunProxyOptsBuilder = apply {
     this._acceptorInfo = arg
   }
@@ -49,7 +49,7 @@ class EelTunnelsApiRunProxyOptsBuilder {
    */
   @Suppress("PropertyName")
   @ApiStatus.Internal
-  @VisibleToClasses("com.intellij.platform.ijent.functional.tunnels.EelProxyTest")
+  @VisibleToClasses("com.intellij.platform.ijent.testFramework.tunnels.EelProxyTestBase")
   fun _connectorInfo(arg: Pair<EelTunnelsApi, Any?>?): EelTunnelsApiRunProxyOptsBuilder = apply {
     this._connectorInfo = arg
   }
@@ -59,7 +59,7 @@ class EelTunnelsApiRunProxyOptsBuilder {
    */
   @Suppress("PropertyName")
   @ApiStatus.Internal
-  @VisibleToClasses("com.intellij.platform.ijent.functional.tunnels.EelProxyTest")
+  @VisibleToClasses("com.intellij.platform.ijent.testFramework.tunnels.EelProxyTestBase")
   fun _fakeProxyPossible(arg: Boolean): EelTunnelsApiRunProxyOptsBuilder = apply {
     this._fakeProxyPossible = arg
   }

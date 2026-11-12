@@ -144,18 +144,18 @@ interface EelTunnelsApiRunProxyOpts {
   /** For internal use inside Eel only. */
   @Suppress("PropertyName")
   @get:ApiStatus.Internal
-  @get:VisibleToClasses("com.intellij.platform.ijent.functional.tunnels.EelProxyTest")
+  @get:VisibleToClasses("com.intellij.platform.ijent.testFramework.tunnels.EelProxyTestBase")
   val _acceptorInfo: Pair<EelTunnelsApi, Any?>? get() = null
 
   /** For internal use inside Eel only. */
   @Suppress("PropertyName")
   @get:ApiStatus.Internal
-  @get:VisibleToClasses("com.intellij.platform.ijent.functional.tunnels.EelProxyTest")
+  @get:VisibleToClasses("com.intellij.platform.ijent.testFramework.tunnels.EelProxyTestBase")
   val _connectorInfo: Pair<EelTunnelsApi, Any?>? get() = null
 
   /** For internal use inside Eel only. */
   @Suppress("PropertyName")
   @get:ApiStatus.Internal
-  @get:VisibleToClasses("com.intellij.platform.ijent.functional.tunnels.EelProxyTest")
+  @get:VisibleToClasses("com.intellij.platform.ijent.testFramework.tunnels.EelProxyTestBase")
   val _fakeProxyPossible: Boolean get() = true
 }

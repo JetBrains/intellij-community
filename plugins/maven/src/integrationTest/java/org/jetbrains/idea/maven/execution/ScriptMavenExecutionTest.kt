@@ -522,7 +522,6 @@ class ScriptMavenExecutionTest(mavenVersion: String, modelVersion: String) {
 
 
   companion object {
-    const val wrapperOutput = "WRAPPER REPLACEMENT in Intellij tests"
     const val mavenOutput = "MAVEN REPLACEMENT in Intellij tests"
   }
 }
