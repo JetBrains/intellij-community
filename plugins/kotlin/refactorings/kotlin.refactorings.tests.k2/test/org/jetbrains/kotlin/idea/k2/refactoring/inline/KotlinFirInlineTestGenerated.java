@@ -2444,6 +2444,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("testData/inline/namedFunction/explicitContextArgumentNameCapture.kt");
             }
 
+            @TestMetadata("explicitContextArgumentNameConflicts.kt")
+            public void testExplicitContextArgumentNameConflicts() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentNameConflicts.kt");
+            }
+
             @TestMetadata("explicitContextArgumentNestedAnonymousCalls.kt")
             public void testExplicitContextArgumentNestedAnonymousCalls() throws Exception {
                 runTest("testData/inline/namedFunction/explicitContextArgumentNestedAnonymousCalls.kt");

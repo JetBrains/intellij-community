@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.isAncestor
@@ -84,6 +86,7 @@ import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -101,6 +104,7 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.findLabelAndCall
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
@@ -111,6 +115,8 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
+import kotlin.collections.reduceRight
+import kotlin.math.max
 
 class CodeInliner(
     private val usageExpression: KtSimpleNameExpression?,
@@ -274,6 +280,11 @@ class CodeInliner(
     private fun findAndMarkNewDeclarations() {
         for (it in codeToInline.statementsBefore) {
             if (it is KtNamedDeclaration) {
+                it.putCopyableUserData(NEW_DECLARATION_KEY, Unit)
+            }
+        }
+        codeToInline.mainExpression?.forEachDescendantOfType<KtFunctionLiteral> { literal ->
+            literal.getValueParameters().forEach {
                 it.putCopyableUserData(NEW_DECLARATION_KEY, Unit)
             }
         }
@@ -473,7 +484,20 @@ class CodeInliner(
                 AddLabelUtil.addLabel(expression, labelName).putCopyableUserData(InlineDataKeys.GENERATED_LABEL_KEY, Unit)
             }
             val declarations =
-                pointers.mapNotNull { pointer -> pointer.element?.takeIf { it.getCopyableUserData(NEW_DECLARATION_KEY) != null } as? KtNamedDeclaration }
+                pointers.flatMap { pointer ->
+                    val decl = pointer.element ?: return@flatMap emptyList()
+                    if (decl.getCopyableUserData(NEW_DECLARATION_KEY) != null) listOfNotNull(decl as? KtNamedDeclaration)
+                    else {
+                        val lambdaParameters = mutableListOf<KtParameter>()
+                        decl.forEachDescendantOfType<KtFunctionLiteral> { lambda ->
+                            lambda.valueParameters
+                                .filter { it.getCopyableUserData(NEW_DECLARATION_KEY) != null }
+                                .forEach { lambdaParameters.add(it) }
+                        }
+                        lambdaParameters
+                    }
+                }
+
             if (declarations.isNotEmpty()) {
                 val endOfScope = pointers.last().element?.endOffset ?: error("Can't find the end of the scope")
                 renameDuplicates(declarations, names, endOfScope)
@@ -537,14 +561,17 @@ class CodeInliner(
         for (declaration in declarations) {
             val oldName = declaration.name
             if (oldName != null && !names.add(oldName)) {
+                if ((declaration as? KtParameter)?.isLambdaParameter == true &&
+                    !capturesUserCode(declaration, endOfScope)) {
+                    continue
+                }
                 declaration2Name[declaration] = KotlinNameSuggester.suggestNameByName(oldName, validator)
             }
         }
         declaration2Name.forEach { (declaration, newName) ->
-            for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent)).asIterable()) {
+            for (reference in searchLocalReferences(declaration)) {
                 val element = reference.element
-                if (element.parentsWithSelf.any { it.getCopyableUserData(USER_CODE_KEY) != null }) continue
-                if (element.startOffset < endOfScope) {
+                if (element.startOffset < endOfScope && !element.isInUserCode()) {
                     reference.handleElementRename(newName)
                 }
             }
@@ -552,6 +579,17 @@ class CodeInliner(
             declaration.nameIdentifier?.replace(psiFactory.createNameIdentifier(newName))
         }
     }
+
+    private fun capturesUserCode(declaration: KtNamedDeclaration, endOfScope: Int): Boolean =
+        searchLocalReferences(declaration).any { reference ->
+            val element = reference.element
+            element.startOffset < endOfScope && element.isInUserCode()
+        }
+
+    private fun searchLocalReferences(declaration: KtNamedDeclaration): Iterable<PsiReference> =
+        ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent))
+
+    private fun PsiElement.isInUserCode(): Boolean = parentsWithSelf.any { it.getCopyableUserData(USER_CODE_KEY) != null }
 }
 
 internal fun KtElement.treeUpToCall(): KtElement {
