@@ -468,6 +468,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
       }
       draft.setUseLigatures(useLigatures != null ? useLigatures : delegatePreferences.useLigatures());
       draft.setCharacterVariants(delegatePreferences.getCharacterVariants());
+      draft.setLetterSpacing(delegatePreferences.getLetterSpacing());
       draft.setRegularSubFamily(delegatePreferences.getRegularSubFamily());
       draft.setBoldSubFamily(delegatePreferences.getBoldSubFamily());
     });

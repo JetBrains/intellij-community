@@ -21,6 +21,8 @@ public abstract class ModifiableFontPreferences extends FontPreferences {
   public abstract void setTemplateFontSize(int size);
   public void setTemplateFontSize(float size) { setTemplateFontSize((int)(size + 0.5)); }
   public abstract void setLineSpacing(float lineSpacing);
+  @ApiStatus.Experimental
+  public void setLetterSpacing(float letterSpacing) {}
   public abstract void resetFontSizes();
   public abstract void setFontSize(@NotNull String fontFamily, int size);
   public void setFontSize(@NotNull String fontFamily, float size) { setFontSize(fontFamily, (int)(size + 0.5)); }

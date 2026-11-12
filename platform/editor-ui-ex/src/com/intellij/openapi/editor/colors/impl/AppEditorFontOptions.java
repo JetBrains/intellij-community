@@ -53,6 +53,8 @@ public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOpti
     public                    float   FONT_SCALE    = 1.0f;
     @ReportValue
     public                    float   LINE_SPACING  = FontPreferences.DEFAULT_LINE_SPACING;
+    @ApiStatus.Experimental
+    public                    float   LETTER_SPACING = 0;
     @ReportValue
     public                    boolean USE_LIGATURES = false;
     @ReportValue
@@ -78,6 +80,7 @@ public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOpti
       FONT_SIZE_2D = fontPreferences.getSize2D(FONT_FAMILY);
       FONT_SCALE = UISettings.getDefFontScale();
       LINE_SPACING = fontPreferences.getLineSpacing();
+      LETTER_SPACING = fontPreferences.getLetterSpacing();
       USE_LIGATURES = fontPreferences.useLigatures();
       List<String> fontFamilies = fontPreferences.getEffectiveFontFamilies();
       CHARACTER_VARIANTS = fontPreferences.getCharacterVariants();

@@ -74,6 +74,16 @@ public class FontPreferences {
   }
 
   /**
+   * Returns the extra space between the characters, as a fraction of the font size.
+   * For example, 0.05 adds 5% of the font size, and a negative value moves the characters closer together.
+   * The default value 0 keeps the advances of the font.
+   */
+  @ApiStatus.Experimental
+  public float getLetterSpacing() {
+    return 0;
+  }
+
+  /**
    * @return a set of enabled font features (e.g. {@code zero}, {@code ss01}) for the default font.
    */
   public @Unmodifiable @NotNull Set<@NotNull String> getCharacterVariants() {

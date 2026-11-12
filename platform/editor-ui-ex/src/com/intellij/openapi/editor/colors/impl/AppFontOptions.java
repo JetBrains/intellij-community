@@ -112,6 +112,7 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
       draft.setRegularSubFamily(names[1]);
       draft.setBoldSubFamily(names[2]);
       draft.setLineSpacing(state.LINE_SPACING);
+      draft.setLetterSpacing(state.LETTER_SPACING);
       draft.setUseLigatures(state.USE_LIGATURES);
       draft.setCharacterVariants(state.CHARACTER_VARIANTS);
       if (state.SECONDARY_FONT_FAMILY != null) {

@@ -3,6 +3,7 @@ package com.intellij.application.options;
 
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Konstantin Bulenkov
@@ -26,6 +27,15 @@ public final class EditorFontsConstants {
 
   public static float getDefaultEditorLineSpacing() { return 1f; }
 
+  @ApiStatus.Experimental
+  public static float getMinEditorLetterSpacing() { return -.5f; }
+
+  @ApiStatus.Experimental
+  public static float getMaxEditorLetterSpacing() { return 1f; }
+
+  @ApiStatus.Experimental
+  public static float getDefaultEditorLetterSpacing() { return 0f; }
+
   public static int checkAndFixEditorFontSize(int size) {
     return round(getMinEditorFontSize(), getMaxEditorFontSize(), size);
   }
@@ -36,6 +46,18 @@ public final class EditorFontsConstants {
 
   public static float checkAndFixEditorLineSpacing(float lineSpacing) {
     return round(getMinEditorLineSpacing(), getMaxEditorLineSpacing(), lineSpacing);
+  }
+
+  /**
+   * Returns the letter spacing in the range of the editor, or the default letter spacing for a value that is not a number.
+   * A persisted state can hold any value, for example after a manual edit of the settings file.
+   */
+  @ApiStatus.Experimental
+  public static float checkAndFixEditorLetterSpacing(float letterSpacing) {
+    if (Float.isNaN(letterSpacing)) {
+      return getDefaultEditorLetterSpacing();
+    }
+    return round(getMinEditorLetterSpacing(), getMaxEditorLetterSpacing(), letterSpacing);
   }
 
   private static int round(int min, int max, int val) {

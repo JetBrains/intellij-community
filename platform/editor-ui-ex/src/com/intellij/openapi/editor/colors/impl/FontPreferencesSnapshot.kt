@@ -22,6 +22,7 @@ class FontPreferencesSnapshot private constructor(
   private val fontSizes: FloatArray,
   private val templateFontSize: Float, // the size of a font family that has no size of its own
   private val lineSpacing: Float,
+  private val letterSpacing: Float,
   private val useLigatures: Boolean,
   private val regularSubFamily: String?,
   private val boldSubFamily: String?,
@@ -69,6 +70,7 @@ class FontPreferencesSnapshot private constructor(
     }
     preferences.setUseLigatures(useLigatures)
     preferences.setLineSpacing(lineSpacing)
+    preferences.setLetterSpacing(letterSpacing)
     preferences.setRegularSubFamily(regularSubFamily)
     preferences.setBoldSubFamily(boldSubFamily)
     preferences.setCharacterVariants(characterVariants)
@@ -81,6 +83,8 @@ class FontPreferencesSnapshot private constructor(
   }
 
   override fun getLineSpacing(): Float = lineSpacing
+
+  override fun getLetterSpacing(): Float = letterSpacing
 
   override fun getCharacterVariants(): Set<String> = characterVariants
 
@@ -141,6 +145,14 @@ class FontPreferencesSnapshot private constructor(
       return this
     }
     return copy(lineSpacing = fixedLineSpacing)
+  }
+
+  fun withLetterSpacing(letterSpacing: Float): FontPreferencesSnapshot {
+    val fixedLetterSpacing = EditorFontsConstants.checkAndFixEditorLetterSpacing(letterSpacing)
+    if (this.letterSpacing == fixedLetterSpacing) {
+      return this
+    }
+    return copy(letterSpacing = fixedLetterSpacing)
   }
 
   /**
@@ -253,7 +265,7 @@ class FontPreferencesSnapshot private constructor(
   }
 
   /**
-   * Compares the user settings: the real font families and their sizes, the ligatures and the line spacing.
+   * Compares the user settings: the real font families and their sizes, the ligatures, the line spacing and the letter spacing.
    * It also compares the subfamilies and the character variants.
    * It ignores the effective font families and the template font size.
    * To find any change of the values, compare the snapshots by identity.
@@ -269,6 +281,7 @@ class FontPreferencesSnapshot private constructor(
            realFontFamilies.all { hasSameStoredSize(it, other) } &&
            useLigatures == other.useLigatures &&
            lineSpacing == other.lineSpacing &&
+           letterSpacing == other.letterSpacing &&
            regularSubFamily == other.regularSubFamily &&
            boldSubFamily == other.boldSubFamily &&
            characterVariants == other.characterVariants
@@ -321,6 +334,7 @@ class FontPreferencesSnapshot private constructor(
     fontSizes: FloatArray = this.fontSizes,
     templateFontSize: Float = this.templateFontSize,
     lineSpacing: Float = this.lineSpacing,
+    letterSpacing: Float = this.letterSpacing,
     useLigatures: Boolean = this.useLigatures,
     regularSubFamily: String? = this.regularSubFamily,
     boldSubFamily: String? = this.boldSubFamily,
@@ -333,6 +347,7 @@ class FontPreferencesSnapshot private constructor(
       fontSizes = fontSizes,
       templateFontSize = templateFontSize,
       lineSpacing = lineSpacing,
+      letterSpacing = letterSpacing,
       useLigatures = useLigatures,
       regularSubFamily = regularSubFamily,
       boldSubFamily = boldSubFamily,
@@ -351,6 +366,7 @@ class FontPreferencesSnapshot private constructor(
     private var fontSizes: FloatArray = base.fontSizes
     private var templateFontSize: Float = base.templateFontSize
     private var lineSpacing: Float = base.lineSpacing
+    private var letterSpacing: Float = base.letterSpacing
     private var useLigatures: Boolean = base.useLigatures
     private var regularSubFamily: String? = base.regularSubFamily
     private var boldSubFamily: String? = base.boldSubFamily
@@ -387,6 +403,8 @@ class FontPreferencesSnapshot private constructor(
     }
 
     override fun getLineSpacing(): Float = lineSpacing
+
+    override fun getLetterSpacing(): Float = letterSpacing
 
     override fun getCharacterVariants(): Set<String> = characterVariants
 
@@ -444,6 +462,10 @@ class FontPreferencesSnapshot private constructor(
       this.lineSpacing = EditorFontsConstants.checkAndFixEditorLineSpacing(lineSpacing)
     }
 
+    override fun setLetterSpacing(letterSpacing: Float) {
+      this.letterSpacing = EditorFontsConstants.checkAndFixEditorLetterSpacing(letterSpacing)
+    }
+
     override fun resetFontSizes() {
       sizedFontFamilies = NO_FONT_FAMILIES
       fontSizes = NO_FONT_SIZES
@@ -489,6 +511,7 @@ class FontPreferencesSnapshot private constructor(
         fontSizes = fontSizes,
         templateFontSize = templateFontSize,
         lineSpacing = lineSpacing,
+        letterSpacing = letterSpacing,
         useLigatures = useLigatures,
         regularSubFamily = regularSubFamily,
         boldSubFamily = boldSubFamily,
@@ -503,6 +526,7 @@ class FontPreferencesSnapshot private constructor(
              fontSizes.contentEquals(other.fontSizes) &&
              templateFontSize == other.templateFontSize &&
              lineSpacing == other.lineSpacing &&
+             letterSpacing == other.letterSpacing &&
              useLigatures == other.useLigatures &&
              regularSubFamily == other.regularSubFamily &&
              boldSubFamily == other.boldSubFamily &&
@@ -516,7 +540,7 @@ class FontPreferencesSnapshot private constructor(
 
     /**
      * The snapshot of a new [FontPreferencesImpl].
-     * It has no font families, and its sizes and line spacing have the default values.
+     * It has no font families, and its sizes, line spacing and letter spacing have the default values.
      */
     @JvmField
     val EMPTY: FontPreferencesSnapshot = FontPreferencesSnapshot(
@@ -526,6 +550,7 @@ class FontPreferencesSnapshot private constructor(
       fontSizes = NO_FONT_SIZES,
       templateFontSize = DEFAULT_FONT_SIZE.toFloat(),
       lineSpacing = DEFAULT_LINE_SPACING,
+      letterSpacing = 0f,
       useLigatures = false,
       regularSubFamily = null,
       boldSubFamily = null,

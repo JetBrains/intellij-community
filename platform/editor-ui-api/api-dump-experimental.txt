@@ -246,10 +246,12 @@ com.intellij.openapi.editor.colors.EditorColors
 a:com.intellij.openapi.editor.colors.EditorColorsManager
 - *a:getSchemeModificationCounter():J
 c:com.intellij.openapi.editor.colors.FontPreferences
+- *:getLetterSpacing():F
 - *:getSnapshot():com.intellij.openapi.editor.colors.FontPreferences
 a:com.intellij.openapi.editor.colors.ModifiableFontPreferences
 - com.intellij.openapi.editor.colors.FontPreferences
 - *:runBatchUpdate(java.util.function.Consumer):V
+- *:setLetterSpacing(F):V
 com.intellij.openapi.editor.highlighter.EditorHighlighter
 - com.intellij.openapi.editor.event.DocumentListener
 - *:getTextAttributesFontFamilies():java.util.Set

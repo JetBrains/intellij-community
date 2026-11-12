@@ -28,7 +28,7 @@ import java.util.function.UnaryOperator;
 
 /**
  * Font preferences that can change: a list of font families with their sizes, the subfamilies and the character variants.
- * They also hold the ligatures setting and the line spacing.
+ * They also hold the ligatures setting, the line spacing and the letter spacing.
  * The editor tries the effective font families in order and uses the first one that can display a character.
  * When none of them can, it uses a fallback font.
  * The real font families are the families from the settings, and usually the effective font families are the same list.
@@ -87,6 +87,12 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   @Override
   public float getLineSpacing() {
     return current().getLineSpacing();
+  }
+
+  @Override
+  @ApiStatus.Experimental
+  public float getLetterSpacing() {
+    return current().getLetterSpacing();
   }
 
   @Override
@@ -156,6 +162,12 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   @Override
   public void setLineSpacing(float lineSpacing) {
     updateSnapshot(current -> current.withLineSpacing(lineSpacing));
+  }
+
+  @Override
+  @ApiStatus.Experimental
+  public void setLetterSpacing(float letterSpacing) {
+    updateSnapshot(current -> current.withLetterSpacing(letterSpacing));
   }
 
   @Override

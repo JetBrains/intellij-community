@@ -74,6 +74,11 @@ public final class DelegatingFontPreferences extends FontPreferences {
   }
 
   @Override
+  public float getLetterSpacing() {
+    return myDelegateSupplier.get().getLetterSpacing();
+  }
+
+  @Override
   public @NotNull @Unmodifiable Set<@NotNull String> getCharacterVariants() {
     return myDelegateSupplier.get().getCharacterVariants();
   }

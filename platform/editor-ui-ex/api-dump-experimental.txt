@@ -1,7 +1,16 @@
+f:com.intellij.application.options.EditorFontsConstants
+- *s:checkAndFixEditorLetterSpacing(F):F
+- *s:getDefaultEditorLetterSpacing():F
+- *s:getMaxEditorLetterSpacing():F
+- *s:getMinEditorLetterSpacing():F
+c:com.intellij.openapi.editor.colors.impl.AppEditorFontOptions$PersistentFontPreferences
+- *:LETTER_SPACING:F
 c:com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 - com.intellij.openapi.editor.colors.ModifiableFontPreferences
+- *:getLetterSpacing():F
 - *:getSnapshot():com.intellij.openapi.editor.colors.FontPreferences
 - *:runBatchUpdate(java.util.function.Consumer):V
+- *:setLetterSpacing(F):V
 *f:com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
 - <init>(java.lang.String,com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition):V
 - <init>(java.lang.String,com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition,java.lang.String):V

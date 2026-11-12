@@ -32,6 +32,7 @@ import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -135,6 +136,40 @@ public class FontPreferencesTest {
     FontPreferencesImpl copy = new FontPreferencesImpl();
     myPreferences.copyTo(copy);
     assertEquals(Set.of("zero", "ss01"), copy.getCharacterVariants());
+  }
+
+  @Test
+  public void testLetterSpacingIsZeroByDefault() {
+    assertEquals(0f, myPreferences.getLetterSpacing(), 0f);
+    assertEquals(0f, new FontPreferences().getLetterSpacing(), 0f);
+  }
+
+  @Test
+  public void testSetLetterSpacingKeepsTheValueInRange() {
+    myPreferences.setLetterSpacing(0.05f);
+    assertEquals(0.05f, myPreferences.getLetterSpacing(), 0f);
+    myPreferences.setLetterSpacing(5f);
+    assertEquals(1f, myPreferences.getLetterSpacing(), 0f);
+    myPreferences.setLetterSpacing(-5f);
+    assertEquals(-0.5f, myPreferences.getLetterSpacing(), 0f);
+    myPreferences.setLetterSpacing(Float.NaN);
+    assertEquals(0f, myPreferences.getLetterSpacing(), 0f);
+  }
+
+  @Test
+  public void testCopyToCopiesLetterSpacing() {
+    myPreferences.setLetterSpacing(0.05f);
+    FontPreferencesImpl copy = new FontPreferencesImpl();
+    myPreferences.copyTo(copy);
+    assertEquals(0.05f, copy.getLetterSpacing(), 0f);
+    assertEquals(myPreferences, copy);
+  }
+
+  @Test
+  public void testOtherLetterSpacingIsNotEqual() {
+    FontPreferencesImpl other = new FontPreferencesImpl();
+    other.setLetterSpacing(0.05f);
+    assertNotEquals(myPreferences, other);
   }
 
   @Test
@@ -400,6 +435,7 @@ public class FontPreferencesTest {
     preferences.setFontSize("Unregistered", 9);
     preferences.setTemplateFontSize(11.5f);
     preferences.setLineSpacing(1.5f);
+    preferences.setLetterSpacing(0.05f);
     preferences.setUseLigatures(true);
     preferences.setRegularSubFamily("Light");
     preferences.setBoldSubFamily("SemiBold");
@@ -431,6 +467,7 @@ public class FontPreferencesTest {
       assertEquals(fontFamily, bySetters.getSize2D(fontFamily), byBatchUpdate.getSize2D(fontFamily), 0f);
     }
     assertEquals(bySetters.getLineSpacing(), byBatchUpdate.getLineSpacing(), 0f);
+    assertEquals(bySetters.getLetterSpacing(), byBatchUpdate.getLetterSpacing(), 0f);
     assertEquals(bySetters.useLigatures(), byBatchUpdate.useLigatures());
     assertEquals(bySetters.getRegularSubFamily(), byBatchUpdate.getRegularSubFamily());
     assertEquals(bySetters.getBoldSubFamily(), byBatchUpdate.getBoldSubFamily());
