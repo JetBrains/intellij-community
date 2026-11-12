@@ -771,42 +771,58 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
     assertTrue("No child thread executed the coarse task", testedCancellation);
   }
 
-  public void testInvokeConcurrentlyMustExecuteMultipleTasksConcurrentlyEvenIfOneOfThemIsWildlySlowStress() {
+  public void testInvokeConcurrentlyMustExecuteMultipleTasksConcurrentlyEvenIfOneOfThemIsWildlySlowStress() throws Exception {
     int parallelism = myPool.getParallelism();
     // values higher than this can lead to too coarse tasks in FJP queue which means some of them may contain more than one element which means long-delay task and some short-delay tasks can be scheduled to one chunk which means some of the tasks will not be stolen for a (relatively)long time.
     // so it's a TODO for ApplierCompleter
     int N = 1 << parallelism;
-    Integer[] times = new Integer[N];
-    Arrays.fill(times, 0);
     int longDelay = (int)TimeUnit.MINUTES.toMillis(2);
+    Thread caller = Thread.currentThread();
+    CountDownLatch slowProcessorsFinished = new CountDownLatch(100);
     for (int i=0; i<100; i++) {
-      times[(i + N - 1) % N] = 0;
-      times[i % N] = longDelay;
-
       AtomicInteger executed = new AtomicInteger();
+      AtomicBoolean slowProcessorClaimed = new AtomicBoolean();
+      CountDownLatch slowProcessorStarted = new CountDownLatch(1);
       DaemonProgressIndicator progress = new DaemonProgressIndicator();
       assertThrows(MyException.class, "myMsg", () -> {
         TestTimeOut deadline = TestTimeOut.setTimeout(2, TimeUnit.SECONDS);
         ProgressManager.getInstance().runProcess(() -> {
-          myJobLauncher.invokeConcurrentlyUnderContextProgress(Arrays.asList(times.clone()), time -> {
-            while ((time -= 100) >= 0) {
-              ProgressManager.checkCanceled();
-              TimeoutUtil.sleep(100);
-              if (deadline.isTimedOut()) {
-                String s = ThreadDumper.dumpThreadsToString();
-                throw new AssertionError("Timed out at " + time + "; parallelism:"+parallelism+"; executed:"+executed+"; threads:\n" + s);
+          myJobLauncher.invokeConcurrentlyUnderContextProgress(Collections.nCopies(N, null), _ -> {
+            if (Thread.currentThread() == caller) {
+              awaitOrFail(slowProcessorStarted);
+            }
+            boolean slow = slowProcessorClaimed.compareAndSet(false, true);
+            try {
+              if (slow) {
+                assertNotSame("The caller must not run the slow processor", caller, Thread.currentThread());
+                slowProcessorStarted.countDown();
+              }
+              int time = slow ? longDelay : 0;
+              while ((time -= 100) >= 0) {
+                ProgressManager.checkCanceled();
+                TimeoutUtil.sleep(100);
+                if (deadline.isTimedOut()) {
+                  String s = ThreadDumper.dumpThreadsToString();
+                  throw new AssertionError("Timed out at " + time + "; parallelism:"+parallelism+"; executed:"+executed+"; threads:\n" + s);
+                }
+              }
+
+              if (executed.incrementAndGet() >= N - 1) {
+                awaitOrFail(slowProcessorStarted);
+                throw new MyException("myMsg");
+              }
+              return true;
+            }
+            finally {
+              if (slow) {
+                slowProcessorsFinished.countDown();
               }
             }
-
-            if (executed.incrementAndGet() >= times.length - 1) {
-              // executed all but the slowest one
-              throw new MyException("myMsg");
-            }
-            return true;
           });
         }, progress);
       });
     }
+    assertTrue("The slow processors did not finish", slowProcessorsFinished.await(10, TimeUnit.SECONDS));
   }
 
   public void testReturningFalseWaitsForOtherProcessors() throws Exception {
