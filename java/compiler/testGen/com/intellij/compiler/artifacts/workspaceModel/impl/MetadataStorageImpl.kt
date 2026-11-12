@@ -1,9 +1,46 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts.workspaceModel.impl
 
-import com.intellij.compiler.artifacts.propertybased.impl.MetadataStorageImpl
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.metadata.MetadataStorageBridge
+import com.intellij.platform.workspace.storage.metadata.impl.MetadataStorageBase
+import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
+import com.intellij.platform.workspace.storage.metadata.model.OwnPropertyMetadata
+import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
+import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
 @OptIn(WorkspaceEntityInternalApi::class)
-internal object MetadataStorageImpl : MetadataStorageBridge(MetadataStorageImpl)
+internal object MetadataStorageImpl : MetadataStorageBase() {
+  override fun initializeMetadata() {
+    var typeMetadata: StorageTypeMetadata
+    typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.compiler.artifacts.workspaceModel.ArtifactTest\$MySource",
+                                                     properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                                             isKey = false,
+                                                                                             isOpen = false,
+                                                                                             name = "virtualFileUrl",
+                                                                                             valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                               isNullable = true,
+                                                                                               typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                                 fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                                             withDefault = false)),
+                                                     supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+    addMetadata(typeMetadata)
+    typeMetadata =
+      FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.compiler.artifacts.workspaceModel.ArtifactWatchRootsTest\$MySource",
+                                        properties = listOf(OwnPropertyMetadata(isComputable = false,
+                                                                                isKey = false,
+                                                                                isOpen = false,
+                                                                                name = "virtualFileUrl",
+                                                                                valueType = ValueTypeMetadata.SimpleType.CustomType(
+                                                                                  isNullable = true,
+                                                                                  typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                                withDefault = false)),
+                                        supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+    addMetadata(typeMetadata)
+  }
+
+  override fun initializeMetadataHash() {
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1303447744)
+    addMetadataHash(typeFqn = "com.intellij.compiler.artifacts.workspaceModel.ArtifactTest\$MySource", metadataHash = -905168511)
+    addMetadataHash(typeFqn = "com.intellij.compiler.artifacts.workspaceModel.ArtifactWatchRootsTest\$MySource", metadataHash = 457239199)
+  }
+}
