@@ -142,27 +142,39 @@ public final class ComplexTextFragment extends TextFragment {
     for (int i = 0; i < numGlyphs; i++) {
       int visualGlyphIndex = isRtl ? numGlyphs - 1 - i : i;
       int charIndex = myGlyphVector.getGlyphCharIndex(visualGlyphIndex);
-      if (charIndex > lastCharIndex) {
+      if (charIndex <= lastCharIndex) {
+        continue;
+      }
+      float minX;
+      float maxX;
+      if (cells == null) {
         Rectangle2D bounds = myGlyphVector.getGlyphLogicalBounds(visualGlyphIndex).getBounds2D();
-        if (!bounds.isEmpty()) {
-          if (charIndex > lastCharIndex + 1) {
-            for (int j = Math.max(0, lastCharIndex); j < charIndex; j++) {
-              setCharPosition(j, prevX + (lastX - prevX) * (j - lastCharIndex + 1) / (charIndex - lastCharIndex), isRtl, numChars);
-            }
-          }
-          float minX = cells == null ? (float)bounds.getMinX() : cells.left()[visualGlyphIndex];
-          float maxX = cells == null ? (float)bounds.getMaxX() : cells.right()[visualGlyphIndex];
-          float newX = isRtl ? Math.min(lastX, minX) : Math.max(lastX, maxX);
-          if (alignments != null) {
-            newX = isRtl ? newX - alignments[visualGlyphIndex] : newX + alignments[visualGlyphIndex];
-          }
-          newX = Math.clamp(newX, 0, totalWidth);
-          setCharPosition(charIndex, newX, isRtl, numChars);
-          prevX = lastX;
-          lastX = newX;
-          lastCharIndex = charIndex;
+        if (bounds.isEmpty()) {
+          continue;
+        }
+        minX = (float)bounds.getMinX();
+        maxX = (float)bounds.getMaxX();
+      } else {
+        if (cells.emptyBounds()[visualGlyphIndex]) {
+          continue;
+        }
+        minX = cells.left()[visualGlyphIndex];
+        maxX = cells.right()[visualGlyphIndex];
+      }
+      if (charIndex > lastCharIndex + 1) {
+        for (int j = Math.max(0, lastCharIndex); j < charIndex; j++) {
+          setCharPosition(j, prevX + (lastX - prevX) * (j - lastCharIndex + 1) / (charIndex - lastCharIndex), isRtl, numChars);
         }
       }
+      float newX = isRtl ? Math.min(lastX, minX) : Math.max(lastX, maxX);
+      if (alignments != null) {
+        newX = isRtl ? newX - alignments[visualGlyphIndex] : newX + alignments[visualGlyphIndex];
+      }
+      newX = Math.clamp(newX, 0, totalWidth);
+      setCharPosition(charIndex, newX, isRtl, numChars);
+      prevX = lastX;
+      lastX = newX;
+      lastCharIndex = charIndex;
     }
     if (lastCharIndex < numChars - 1) {
       for (int j = Math.max(0, lastCharIndex); j < numChars - 1; j++) {
@@ -216,13 +228,16 @@ public final class ComplexTextFragment extends TextFragment {
     }
     boolean[] clusterStarts = new boolean[numChars];
     boolean[] isBase = new boolean[numGlyphs];
+    boolean[] emptyBounds = new boolean[numGlyphs];
     int[] baseAtChar = new int[numChars];
     Arrays.fill(baseAtChar, -1);
     for (int i = 0; i < numGlyphs; i++) {
       int charIndex = myGlyphVector.getGlyphCharIndex(i);
       clusterStarts[charIndex] = true;
       int codePoint = Character.codePointAt(lineChars, start + charIndex, end);
-      isBase[i] = !FontInfo.isMarkOrFormat(codePoint) && myGlyphVector.getGlyphLogicalBounds(i).getBounds2D().getWidth() > 0;
+      Rectangle2D bounds = myGlyphVector.getGlyphLogicalBounds(i).getBounds2D();
+      emptyBounds[i] = bounds.isEmpty();
+      isBase[i] = !FontInfo.isMarkOrFormat(codePoint) && bounds.getWidth() > 0;
       if (isBase[i] && baseAtChar[charIndex] < 0) {
         baseAtChar[charIndex] = i;
       }
@@ -272,7 +287,8 @@ public final class ComplexTextFragment extends TextFragment {
       left[i] = (float)cellLeft;
       right[i] = (float)(cellLeft + advance + cellSpacing);
       double offsetInCell = cellSpacing / 2;
-      if (ligatures && !Character.isLetterOrDigit(lineChars[start + myGlyphVector.getGlyphCharIndex(i)])) {
+      char glyphChar = lineChars[start + myGlyphVector.getGlyphCharIndex(i)];
+      if (ligatures && !Character.isLetterOrDigit(glyphChar) && !Character.isWhitespace(glyphChar)) {
         int covered = coveredCells(i, advance, cells);
         for (int c = 1; c <= covered; c++) {
           offsetInCell -= cellSpacings[cells - c] / 2;
@@ -292,7 +308,7 @@ public final class ComplexTextFragment extends TextFragment {
       moveGlyph(i, newX[i]);
     }
     moveGlyph(numGlyphs, originalX[numGlyphs] + shift);
-    return new GlyphCells(left, right);
+    return new GlyphCells(left, right, emptyBounds);
   }
 
   /**
@@ -338,8 +354,9 @@ public final class ComplexTextFragment extends TextFragment {
 
   /**
    * The cell edges of each glyph, see {@link #addLetterSpacing}. A glyph that is not a base has the cell of its base.
+   * {@code emptyBounds} tells for each glyph if its logical bounds are empty. A move of the glyph keeps this value.
    */
-  private record GlyphCells(float @NotNull [] left, float @NotNull [] right) {
+  private record GlyphCells(float @NotNull [] left, float @NotNull [] right, boolean @NotNull [] emptyBounds) {
   }
 
   private void moveGlyph(int glyphIndex, double x) {
