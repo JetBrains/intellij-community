@@ -1,7 +1,7 @@
 package com.intellij.database.extensions
 
 import com.intellij.database.GridScopeProvider
-import com.intellij.ide.plugins.PluginManagerCore.getPlugin
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -92,16 +92,17 @@ object ScriptsCleanup {
   private fun getHashes(name: String): Map<String, Set<String?>> {
     val nameToHashes: MutableMap<String, Set<String?>> = HashMap()
     val id = ExtractorScripts.getPluginId()
-    val plugin = getPlugin(id)
-    if (plugin == null) return emptyMap()
-    val pluginClassLoader = plugin.classLoader
     try {
-      val resources = pluginClassLoader.getResources("extensions_old/$name")
-      if (!resources.hasMoreElements()) {
+      val dirUrl = PluginManagerCore.getPluginSet().getEnabledModules()
+        .asSequence()
+        .filter { it.pluginId == id }.firstNotNullOfOrNull { module ->
+          val resources = module.pluginClassLoader?.getResources("extensions_old/$name") ?: return@firstNotNullOfOrNull null
+          if (resources.hasMoreElements()) resources.nextElement() else null
+        }
+      if (dirUrl == null) {
         LOG.warn("Cannot find $id resource")
         return emptyMap()
       }
-      val dirUrl = resources.nextElement()
       val bundledResourcesDir = VfsUtil.findFileByURL(dirUrl)
       if (bundledResourcesDir == null || !bundledResourcesDir.isDirectory) {
         return emptyMap()
