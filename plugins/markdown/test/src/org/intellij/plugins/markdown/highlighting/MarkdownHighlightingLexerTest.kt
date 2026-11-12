@@ -50,6 +50,18 @@ class MarkdownHighlightingLexerTest : BasePlatformTestCase() {
     }
   }
 
+  fun `test footnote definition followed by an indented table`() {
+    val text = """
+      Text[^n]
+
+      [^n]:
+          | File | Reason |
+          | ---- | ------ |
+          | a.h  | b      |
+    """.trimIndent()
+    assertEquals(text.length, tokenize(text, 0, 0).last().end)
+  }
+
   private fun createLexer(): Lexer = MarkdownHighlightingLexer(null)
 
   private fun tokenize(text: String, start: Int, state: Int): List<Token> {

@@ -27,7 +27,12 @@ class CommentAwareLinkReferenceDefinitionProvider: MarkerBlockProvider<MarkerPro
     }
     val textFromPosition = CharSequenceSubSequence(position.originalText, position.offset, position.originalText.length)
     val matchResult = LinkReferenceDefinitionProvider.matchLinkDefinition(textFromPosition, 0) ?: return emptyList()
-    for ((index, range) in matchResult.withIndex()) {
+    val matchLength = matchResult.last().last + 1
+    val endPosition = position.nextPosition(matchLength)
+    if (endPosition != null && !isEndOfLine(endPosition)) {
+      return emptyList()
+    }
+    for ([index, range] in matchResult.withIndex()) {
       val type = when (index) {
         0 -> MarkdownElementTypes.LINK_LABEL
         1 -> MarkdownElementTypes.LINK_DESTINATION
@@ -37,15 +42,10 @@ class CommentAwareLinkReferenceDefinitionProvider: MarkerBlockProvider<MarkerPro
       val node = SequentialParser.Node(addToRangeAndWiden(range, position.offset), type)
       productionHolder.addProduction(listOf(node))
     }
-    val matchLength = matchResult.last().last + 1
     val titleRange = matchResult.getOrNull(2)
     if (titleRange != null) {
       val nodes = processTitle(position, titleRange)
       productionHolder.addProduction(nodes)
-    }
-    val endPosition = position.nextPosition(matchLength)
-    if (endPosition != null && !isEndOfLine(endPosition)) {
-      return emptyList()
     }
     val block = LinkReferenceDefinitionMarkerBlock(
       stateInfo.currentConstraints,
