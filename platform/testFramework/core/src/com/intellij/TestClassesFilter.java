@@ -20,17 +20,12 @@ public abstract class TestClassesFilter {
     }
   };
 
-  private static final boolean PATTERNS_ARE_ESCAPED = Boolean.getBoolean("intellij.build.test.patterns.escaped");
-
   public abstract boolean matches(String className, @Nullable String moduleName);
 
   public boolean matches(String className) { return matches(className, null); }
 
   protected static Pattern compilePattern(String filter) {
-    if (!PATTERNS_ARE_ESCAPED) {
-      filter = filter.replace("$", "\\$").replace(".", "\\.").replace("*", ".*");
-    }
-    return Pattern.compile(filter);
+    return Pattern.compile(filter.replace("$", "\\$").replace(".", "\\.").replace("*", ".*"));
   }
 
   protected static boolean matchesAnyPattern(Collection<Pattern> patterns, String className) {
