@@ -16,6 +16,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphMetrics;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -107,6 +108,21 @@ public class ComplexTextFragmentTest {
   }
 
   @Test
+  public void testGlyphsSitInTheMiddleOfTheirCells() {
+    MyGlyphVector gv = glyph(0, 10).glyph(10, 20).glyph(20, 30);
+    assertCaretPositionsForGlyphVector(2, gv, 12, 24, 36);
+    assertGlyphPositions(gv, 1, 13, 25, 36);
+  }
+
+  @Test
+  public void testLigatureOverSpacerCellsSitsInTheMiddleOfAllItsCells() {
+    // a spacer glyph without ink, and a ligature glyph whose ink reaches over the spacer cell, as in JetBrains Mono
+    MyGlyphVector gv = glyph(0, 10).ink(0, 0).glyph(10, 20).ink(-9, 9);
+    assertCaretPositionsForGlyphVector(2, gv, 12, 24);
+    assertGlyphPositions(gv, 1, 12, 24);
+  }
+
+  @Test
   public void testHbLigatureGetsLetterSpacingForEachChar() {
     assertCaretPositionsForGlyphVector(
       2,
@@ -128,7 +144,7 @@ public class ComplexTextFragmentTest {
   public void testArabicLettersTakeNoLetterSpacingAndTheSpaceTakesIt() {
     assertCaretPositionsForGlyphVector(
       2,
-      new char[]{'\u0628', ' ', '\u062A'}, // beh, space, teh
+      new char[]{'ب', ' ', 'ت'}, // beh, space, teh
       rtl().glyph(0, 10).glyph(10, 20).glyph(20, 30),
       10, 22, 32
     );
@@ -148,10 +164,7 @@ public class ComplexTextFragmentTest {
       char[] text = {'a', '\u0301', 'b'};
       ComplexTextFragment fragment = new ComplexTextFragment(text, 0, text.length, false, createFontInfo(2), null);
       assertEquals(24, fragment.visualColumnToX(0, 3), 0);
-      assertEquals(0, gv.getGlyphPosition(0).getX(), 0);
-      assertEquals(10, gv.getGlyphPosition(1).getX(), 0);
-      assertEquals(12, gv.getGlyphPosition(2).getX(), 0);
-      assertEquals(24, gv.getGlyphPosition(3).getX(), 0);
+      assertGlyphPositions(gv, 1, 11, 13, 24);
     }
     finally {
       FontLayoutService.setInstance(null);
@@ -198,6 +211,14 @@ public class ComplexTextFragmentTest {
 
   private static void assertCaretPositionsForGlyphVector(MyGlyphVector gv, int... expectedPositions) {
     assertCaretPositionsForGlyphVector(0, gv, expectedPositions);
+  }
+
+  private static void assertGlyphPositions(GlyphVector gv, double... expectedPositions) {
+    double[] positions = new double[gv.getNumGlyphs() + 1];
+    for (int i = 0; i < positions.length; i++) {
+      positions[i] = gv.getGlyphPosition(i).getX();
+    }
+    assertArrayEquals(expectedPositions, positions, 0.001);
   }
 
   private static void assertCaretPositionsForGlyphVector(float letterSpacing, MyGlyphVector gv, int... expectedPositions) {
@@ -294,33 +315,62 @@ public class ComplexTextFragmentTest {
   }
 
   private static MyGlyphVector rtl() {
-    return new MyGlyphVector(true, new Integer[0], new Integer[0]);
+    return new MyGlyphVector(true, new Integer[0], new Integer[0], new Rectangle2D[0]);
   }
 
   /// @noinspection SameParameterValue
   private static MyGlyphVector glyph(int xStart, int xEnd) {
-    return new MyGlyphVector(false, new Integer[]{xStart}, new Integer[]{xEnd - xStart});
+    return new MyGlyphVector(false, new Integer[0], new Integer[0], new Rectangle2D[0]).glyph(xStart, xEnd);
   }
 
   private static final class MyGlyphVector extends AbstractMockGlyphVector {
     private final boolean myRtl;
     private final Integer[] myGlyphPositions;
     private final Integer[] myGlyphWidths;
+    private final Rectangle2D[] myInk; // the ink bounds of each glyph, relative to its position
     private @Nullable Point2D @Nullable [] myMovedPositions; // the positions from setGlyphPosition, by glyph index
 
-    private MyGlyphVector(boolean rtl, Integer[] glyphPositions, Integer[] glyphWidths) {
+    private MyGlyphVector(boolean rtl, Integer[] glyphPositions, Integer[] glyphWidths, Rectangle2D[] ink) {
       assertEquals(glyphWidths.length, glyphPositions.length);
+      assertEquals(ink.length, glyphPositions.length);
       myRtl = rtl;
       myGlyphPositions = glyphPositions;
       myGlyphWidths = glyphWidths;
+      myInk = ink;
     }
 
     private MyGlyphVector glyph(int xStart, int xEnd) {
-      return new MyGlyphVector(myRtl, ArrayUtil.append(myGlyphPositions, xStart), ArrayUtil.append(myGlyphWidths, xEnd - xStart));
+      Rectangle2D ink = new Rectangle2D.Double(0, -TEST_DESCENT, xEnd - xStart, TEST_LINE_HEIGHT);
+      return new MyGlyphVector(
+        myRtl,
+        ArrayUtil.append(myGlyphPositions, xStart),
+        ArrayUtil.append(myGlyphWidths, xEnd - xStart),
+        ArrayUtil.append(myInk, ink)
+      );
+    }
+
+    /**
+     * Gives the last glyph the ink from {@code inkStart} to {@code inkEnd}, relative to its position. Equal values give no ink.
+     */
+    private MyGlyphVector ink(double inkStart, double inkEnd) {
+      Rectangle2D[] ink = myInk.clone();
+      ink[ink.length - 1] = new Rectangle2D.Double(inkStart, -TEST_DESCENT, inkEnd - inkStart, TEST_LINE_HEIGHT);
+      return new MyGlyphVector(myRtl, myGlyphPositions, myGlyphWidths, ink);
+    }
+
+    @Override
+    public GlyphMetrics getGlyphMetrics(int glyphIndex) {
+      int index = getGlyphIndexInArray(glyphIndex);
+      return new GlyphMetrics(myGlyphWidths[index], myInk[index], GlyphMetrics.STANDARD);
     }
 
     private MyGlyphVector noGlyph() {
-      return new MyGlyphVector(myRtl, ArrayUtil.append(myGlyphPositions, null), ArrayUtil.append(myGlyphWidths, null));
+      return new MyGlyphVector(
+        myRtl,
+        ArrayUtil.append(myGlyphPositions, null),
+        ArrayUtil.append(myGlyphWidths, null),
+        ArrayUtil.append(myInk, null)
+      );
     }
 
     @Override

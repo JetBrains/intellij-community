@@ -81,6 +81,24 @@ public final class FontInfo {
     return FONT_METRICS_ACCESSOR.getMetrics(font, fontRenderContext);
   }
 
+  /**
+   * Returns the letter spacing in pixels at the font size, see {@link com.intellij.openapi.editor.colors.FontPreferences#getLetterSpacing()}.
+   * Without fractional metrics, the value is a whole number of device pixels, so all gaps between the glyphs are equal.
+   * A {@code null} context counts as a context without fractional metrics and without a transform.
+   */
+  @ApiStatus.Internal
+  public static float letterSpacingPixels(float letterSpacing, float size, @Nullable FontRenderContext context) {
+    float pixels = letterSpacing * size;
+    if (pixels == 0 || context != null && context.usesFractionalMetrics()) {
+      return pixels;
+    }
+    double scale = context == null ? 1 : Math.abs(context.getTransform().getScaleX());
+    if (scale == 0) {
+      scale = 1;
+    }
+    return (float)(Math.round(pixels * scale) / scale);
+  }
+
   public static @NotNull FontRenderContext getFontRenderContext(@Nullable Component component) {
     if (component == null) {
       return DEFAULT_CONTEXT;
@@ -128,7 +146,7 @@ public final class FontInfo {
   ) {
     mySize = size;
     myFont = EditorFontFeatures.withFeatures(font.deriveFont(size), useLigatures, variants);
-    myLetterSpacingPixels = letterSpacing * size;
+    myLetterSpacingPixels = letterSpacingPixels(letterSpacing, size, fontRenderContext);
     myContext = fontRenderContext;
   }
 

@@ -23,6 +23,7 @@ public final class SimpleTextFragment extends TextFragment {
   private final @NotNull Font myFont;
   private final float @Nullable [] myCharAlignment;
   private final float myLetterSpacing;
+  private final boolean @Nullable [] myTakesLetterSpacing; // null when the font has no letter spacing
 
   @VisibleForTesting
   public SimpleTextFragment(
@@ -36,6 +37,7 @@ public final class SimpleTextFragment extends TextFragment {
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();
     myLetterSpacing = fontInfo.getLetterSpacingPixels();
+    myTakesLetterSpacing = myLetterSpacing == 0 ? null : new boolean[end - start];
     float x = 0;
     char[] text = myText;
     float[] charAlignment = null;
@@ -43,6 +45,9 @@ public final class SimpleTextFragment extends TextFragment {
     for (int i = 0; i < text.length; i++) {
       int codePoint = text[i]; // SimpleTextFragment only handles BMP characters, so no need for codePointAt here
       float charWidth = fontInfo.charWidth2D(codePoint);
+      if (myTakesLetterSpacing != null) {
+        myTakesLetterSpacing[i] = fontInfo.takesLetterSpacing(codePoint);
+      }
       if (gridCellAlignmentEnabled) {
         float newWidth = adjustedWidth(codePoint);
         if (!isTooClose(charWidth, newWidth)) {
@@ -107,8 +112,8 @@ public final class SimpleTextFragment extends TextFragment {
       int yAsInt = (int)y;
       if (myCharAlignment != null) {
         drawAligned(g, myText, startColumn, endColumn - startColumn, x, y);
-      } else if (myLetterSpacing != 0) {
-        drawSpaced(g, startColumn, endColumn, x, y);
+      } else if (myTakesLetterSpacing != null) {
+        drawSpaced(g, myTakesLetterSpacing, startColumn, endColumn, x, y);
       } else if (x == xAsInt && y == yAsInt) { // avoid creating garbage if possible
         g.drawChars(myText, startColumn, endColumn - startColumn, xAsInt, yAsInt);
       } else {
@@ -118,15 +123,16 @@ public final class SimpleTextFragment extends TextFragment {
   }
 
   /**
-   * Draws the chars at their positions, which include the letter spacing.
+   * Draws each char in the middle of its cell, which is its advance and its letter spacing.
    * The text needs no layout, so the glyph vector has one glyph for each char.
    */
-  private void drawSpaced(@NotNull Graphics2D g, int start, int end, float x, float y) {
+  private void drawSpaced(@NotNull Graphics2D g, boolean @NotNull [] takesLetterSpacing, int start, int end, float x, float y) {
     GlyphVector glyphs = myFont.createGlyphVector(g.getFontRenderContext(), Arrays.copyOfRange(myText, start, end));
     float startX = getX(start);
     Point2D.Float position = new Point2D.Float();
-    for (int i = 1; i < end - start; i++) {
-      position.setLocation(getX(start + i) - startX, 0);
+    for (int i = 0; i < end - start; i++) {
+      float offsetInCell = takesLetterSpacing[start + i] ? myLetterSpacing / 2 : 0;
+      position.setLocation(getX(start + i) - startX + offsetInCell, 0);
       glyphs.setGlyphPosition(i, position);
     }
     g.drawGlyphVector(glyphs, x, y);

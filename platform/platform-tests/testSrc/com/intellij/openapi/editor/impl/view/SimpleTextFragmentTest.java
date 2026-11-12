@@ -59,7 +59,7 @@ public class SimpleTextFragmentTest {
         }
       }
     });
-    assertEquals(List.of(0.0, 12.0, 24.0), positions);
+    assertEquals(List.of(1.0, 13.0, 25.0), positions); // each glyph in the middle of its cell
   }
 
   @Test

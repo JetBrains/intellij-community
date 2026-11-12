@@ -970,7 +970,11 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     Font font = colorsScheme.getFont(EditorFontType.PLAIN);
     FontMetrics fm = FontInfo.getFontMetrics(font, fontRenderContext);
     // The fonts have no letter spacing, so the metrics add it as FontInfo.charWidth2D does
-    float letterSpacing = colorsScheme.getFontPreferences().getLetterSpacing() * font.getSize2D();
+    float letterSpacing = FontInfo.letterSpacingPixels(
+      colorsScheme.getFontPreferences().getLetterSpacing(),
+      font.getSize2D(),
+      fontRenderContext
+    );
     float width = fontLayout.charWidth2D(fm, ' ') + letterSpacing;
 
     float newPlainSpaceWidth = width > 0 ? width : 1;
