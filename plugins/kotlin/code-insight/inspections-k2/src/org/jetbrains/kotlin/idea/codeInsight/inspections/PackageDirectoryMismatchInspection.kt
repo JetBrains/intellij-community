@@ -13,6 +13,8 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.PackageIndex
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -55,6 +57,7 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
             val file = directive.containingKtFile
             // an outsider (a diff side, a language server scratch) does not live in its directory, so the directory gives no package
             if (file.virtualFile?.let(::isOutsiderFile) == true) return
+            if (file.isInSourceDirectoryWithoutPackage()) return
             val packageMatches = if (reportImplicitPackagePrefix)
                 file.packageFqName == file.getFqNameByDirectory()
             else
@@ -97,6 +100,17 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
               *fixes.toTypedArray()
             )
         }
+    }
+
+    /**
+     * Returns `true` if the file is in source content, but its directory has no package.
+     * This is the case under a source root whose `packageMatchesDirectory` is `false`.
+     * The directory then gives no package to compare with the package directive.
+     */
+    private fun KtFile.isInSourceDirectoryWithoutPackage(): Boolean {
+        val directory = virtualFile?.parent ?: return false
+        return ProjectFileIndex.getInstance(project).isInSourceContent(directory) &&
+                PackageIndex.getInstance(project).getPackageNameByDirectory(directory) == null
     }
 
     private class MoveFileToPackageFix(val dirName: String) : LocalQuickFix {
