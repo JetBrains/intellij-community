@@ -29,7 +29,6 @@ class TestData {
   private Instant finished = null;
   private String reason;
   private TestExecutionResult result;
-  private boolean dynamic;
 
   TestData(TestIdentifier id) {
     this.id = id;
@@ -143,15 +142,6 @@ class TestData {
       .orElse(null);
   }
 
-  public TestData setDynamic(boolean isDynamic) {
-    this.dynamic = isDynamic;
-    return this;
-  }
-
-  public boolean isDynamic() {
-    return dynamic;
-  }
-
   public Instant getStarted() {
     return this.started;
   }
@@ -172,8 +162,6 @@ class TestData {
            + '\''
            + ", result="
            + result
-           + ", dynamic="
-           + dynamic
            + '}';
   }
 }
