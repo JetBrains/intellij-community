@@ -620,7 +620,7 @@ enum class GutterIcon(val path: String) {
   NEXT_STATEMENT("expui/debugger/nextStatement.svg"),
   GOTO("icons/expui/assocFile@14x14.svg"),
   IMPLEMENT("expui/gutter/implementingMethod.svg"),
-  CONSTEXPR_DEBUG("resharper/RunMarkers/DebugThis.svg")
+  CONSTEXPR_DEBUG("resharper/RunMarkers/CTDebugThis.svg")
 }
 
 data class GutterState(
