@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.inspection.modifiers;
 
-import de.plushnikov.intellij.plugin.LombokBundle;
+import com.intellij.lombok.shared.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 
 import static com.intellij.psi.PsiModifier.FINAL;

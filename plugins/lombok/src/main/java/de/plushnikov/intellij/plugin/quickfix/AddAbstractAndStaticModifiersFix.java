@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.quickfix;
 
+import com.intellij.lombok.shared.LombokBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -7,7 +8,6 @@ import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

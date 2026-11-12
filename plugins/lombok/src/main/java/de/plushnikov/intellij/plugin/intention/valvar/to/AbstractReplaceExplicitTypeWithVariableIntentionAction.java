@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.intention.valvar.to;
 
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
+import com.intellij.lombok.shared.LombokBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
@@ -19,7 +20,6 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceVariableUtil;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.intention.valvar.AbstractValVarIntentionAction;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;

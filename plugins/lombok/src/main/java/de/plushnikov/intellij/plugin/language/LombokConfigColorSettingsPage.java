@@ -1,13 +1,13 @@
 package de.plushnikov.intellij.plugin.language;
 
+import com.intellij.lombok.shared.LombokBundle;
+import com.intellij.lombok.shared.icons.LombokSharedIcons;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.NlsContexts;
-import de.plushnikov.intellij.plugin.LombokBundle;
-import icons.LombokIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +25,7 @@ public final class LombokConfigColorSettingsPage implements ColorSettingsPage {
 
   @Override
   public @Nullable Icon getIcon() {
-    return LombokIcons.Config;
+    return LombokSharedIcons.Config;
   }
 
   @Override

@@ -6,6 +6,16 @@ class Test {
     log324.info("Hello!");
   }
 
+  public void logLocal() {
+    String log = "Hello!";
+    log324.info(log);
+  }
+
+  public void logParameter(String log) {
+    log324.info(log);
+    Test.log324.info(log);
+  }
+
   public static void main(String[] args) {
     Test test = new Test();
     test.logHallo();

@@ -1,0 +1,35 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.lombok"/>
+    <module name="intellij.lombok.shared"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <actions resource-bundle="messages.LombokBundle">
+    <group id="LombokActionGroup" popup="true"
+           icon="com.intellij.lombok.shared.icons.LombokSharedIcons.Lombok"
+           class="com.intellij.lombok.backend.action.lombok.BackendLombokActionGroup">
+      <action id="defaultLombokData" class="com.intellij.lombok.backend.action.lombok.LombokDataAction"/>
+      <separator/>
+      <action id="defaultLombokGetter" class="com.intellij.lombok.backend.action.lombok.LombokGetterAction"/>
+      <action id="defaultLombokSetter" class="com.intellij.lombok.backend.action.lombok.LombokSetterAction"/>
+      <action id="defaultLombokEqualsAndHashcode"
+              class="com.intellij.lombok.backend.action.lombok.LombokEqualsAndHashcodeAction"/>
+      <action id="defaultLombokToString" class="com.intellij.lombok.backend.action.lombok.LombokToStringAction"/>
+      <separator/>
+      <action id="defaultLombokLogger" class="com.intellij.lombok.backend.action.lombok.LombokLoggerAction"/>
+
+      <add-to-group group-id="RefactoringMenu" anchor="before" relative-to-action="DelombokActionGroup"/>
+    </group>
+  </actions>
+</idea-plugin>

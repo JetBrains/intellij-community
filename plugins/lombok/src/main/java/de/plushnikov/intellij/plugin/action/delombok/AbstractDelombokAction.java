@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lombok.shared.LombokBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -35,7 +36,6 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.containers.ContainerUtil;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;

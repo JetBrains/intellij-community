@@ -2,6 +2,7 @@
 package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lombok.shared.LombokBundle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -9,9 +10,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiTypes;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.handler.LombokSetterHandler;
+import de.plushnikov.intellij.plugin.util.LombokAccessorMethodUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +108,7 @@ public final class LombokSetterMayBeUsedInspection extends LombokGetterOrSetterM
       }
     }
 
-    final PsiField field = LombokSetterHandler.findFieldIfMethodIsSimpleSetter(method);
+    final PsiField field = LombokAccessorMethodUtil.findFieldIfMethodIsSimpleSetter(method);
     if (field == null) return false;
 
     if (method.hasModifierProperty(PsiModifier.STATIC)) {

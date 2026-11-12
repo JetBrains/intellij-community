@@ -38,8 +38,6 @@ jvm_library(
     resource_strip_prefix = "src/main/resources",
     resources = glob(
         ["src/main/resources/**/*"],
-        allow_empty = True,
-        exclude = ["src/main/resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
     runtime_deps = [
@@ -54,6 +52,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//plugins/lombok/generated",
+        "//plugins/lombok/shared",
         "//platform/analysis-api:analysis",
         "//platform/util/concurrency",
         "//platform/core-api:core",
@@ -135,6 +134,7 @@ jvm_library(
     runtime_deps = ["//platform/main/intellij.platform.monolith.main:monolith-main"],
     deps = [
         # do not sort,
+        "@lib//:kotlin-stdlib",
         "//platform/analysis-api:analysis",
         "//platform/util/concurrency",
         "//platform/core-api:core",
@@ -166,7 +166,10 @@ jvm_library(
         "//platform/code-style-api:codeStyle",
         "//platform/util:util-ui",
         "//plugins/lombok",
+        "//plugins/lombok/backend",
+        "//plugins/lombok/shared",
         "//plugins/lombok/plugin",
+        "//platform/project/shared:project",
         "//platform/statistics",
         "//libraries/junit6",
         "//java/java-impl-inspections:impl-inspections",

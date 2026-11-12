@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.problem;
 
-import de.plushnikov.intellij.plugin.LombokBundle;
+import com.intellij.lombok.shared.LombokBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 

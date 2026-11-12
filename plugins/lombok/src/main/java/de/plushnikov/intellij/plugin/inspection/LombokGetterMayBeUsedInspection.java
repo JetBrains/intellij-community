@@ -1,15 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package de.plushnikov.intellij.plugin.inspection;
 
+import com.intellij.lombok.shared.LombokBundle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.handler.LombokGetterHandler;
+import de.plushnikov.intellij.plugin.util.LombokAccessorMethodUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,7 +76,7 @@ public final class LombokGetterMayBeUsedInspection extends LombokGetterOrSetterM
       return false;
     }
 
-    final PsiField field = LombokGetterHandler.findFieldIfMethodIsSimpleGetter(method);
+    final PsiField field = LombokAccessorMethodUtil.findFieldIfMethodIsSimpleGetter(method);
     if (field == null) return false;
 
     if (method.hasModifierProperty(PsiModifier.STATIC)) {

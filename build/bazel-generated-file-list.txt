@@ -1745,9 +1745,11 @@ plugins/kotlin/util/test-generator-fir
 plugins/laf/macos
 plugins/laf/win10
 plugins/lombok
+plugins/lombok/backend
 plugins/lombok/compiler
 plugins/lombok/generated
 plugins/lombok/plugin
+plugins/lombok/shared
 plugins/lsp.client.playground
 plugins/lsp.ui/idea.product.modules
 plugins/lsp.ui/lsp.ui.frontend

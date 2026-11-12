@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
@@ -13,12 +14,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiPrefixExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +38,38 @@ import java.util.List;
  * @author Plushnikov Michail
  */
 public final class PsiAnnotationUtil {
+  public static void addAnnotation(@NotNull PsiModifierListOwner targetElement, @NotNull PsiModifierListOwner sourceElement,
+                                   String annotationClassName) {
+    PsiAnnotation newPsiAnnotation = LombokProcessorUtil.createAnnotationWithAccessLevel(sourceElement, annotationClassName);
+    addAnnotation(targetElement, newPsiAnnotation, annotationClassName);
+  }
+
+  public static void addAnnotation(@NotNull PsiClass targetElement,
+                                   String annotationClassName) {
+    PsiAnnotation newPsiAnnotation = createPsiAnnotation(targetElement, annotationClassName);
+    addAnnotation(targetElement, newPsiAnnotation, annotationClassName);
+  }
+
+  private static void addAnnotation(@NotNull PsiModifierListOwner targetElement,
+                                    @NotNull PsiAnnotation newPsiAnnotation,
+                                    String annotationClassName) {
+    PsiAnnotation presentAnnotation = PsiAnnotationSearchUtil.findAnnotation(targetElement, annotationClassName);
+    Project project = targetElement.getProject();
+    JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+    javaCodeStyleManager.shortenClassReferences(newPsiAnnotation);
+
+    if (null == presentAnnotation) {
+      PsiModifierList modifierList = targetElement.getModifierList();
+      if (null != modifierList) {
+        modifierList.addAfter(newPsiAnnotation, null);
+      }
+    }
+    else {
+      presentAnnotation.setDeclaredAttributeValue(
+        PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME,
+        newPsiAnnotation.findDeclaredAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
+    }
+  }
 
   public static @NotNull PsiAnnotation createPsiAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, String annotationClassName) {
     return createPsiAnnotation(psiModifierListOwner, "", annotationClassName);

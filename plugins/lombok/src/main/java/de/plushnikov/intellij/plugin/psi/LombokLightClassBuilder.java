@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.psi;
 
+import com.intellij.lombok.shared.icons.LombokSharedIcons;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiClass;
@@ -17,7 +18,6 @@ import com.intellij.psi.impl.light.LightPsiClassBuilder;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
-import icons.LombokIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +48,7 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
     myIsEnum = false;
     myIsAnnotationType = false;
     myQualifiedName = qualifiedName;
-    myBaseIcon = LombokIcons.Nodes.LombokClass;
+    myBaseIcon = LombokSharedIcons.Nodes.LombokClass;
     myModifierList = new LombokLightModifierList(context.getManager(), context.getLanguage()).withParent(this);
   }
 

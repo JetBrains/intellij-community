@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.action.lombok;
 
+import com.intellij.lombok.backend.action.lombok.LombokSetterAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import de.plushnikov.intellij.plugin.action.LombokLightActionTestCase;
 

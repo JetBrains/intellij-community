@@ -1,11 +1,14 @@
 package de.plushnikov.intellij.plugin.action.lombok;
 
+import com.intellij.lombok.backend.action.lombok.LombokLoggerAction;
+import com.intellij.lombok.shared.LombokBundle;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.ui.TestDialog;
+import com.intellij.ui.ConflictInterceptor;
+import com.intellij.ui.UiInterceptors;
 import de.plushnikov.intellij.plugin.action.LombokLightActionTestCase;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LombokLoggerActionTest extends LombokLightActionTestCase {
 
@@ -20,47 +23,89 @@ public class LombokLoggerActionTest extends LombokLightActionTestCase {
   }
 
   public void testLogSimple() throws Exception {
-    setTestDialog(TestDialog.DEFAULT);
+    doTest();
+  }
+
+  public void testLogCustomDeclarationWithBuiltInType() throws Exception {
+    myFixture.addFileToProject("lombok.config", """
+      lombok.log.custom.declaration = java.util.logging.Logger.getLogger(NAME)
+      config.stopBubbling = true
+      """);
     doTest();
   }
 
   public void testLogRename() throws Exception {
-    setTestDialog(TestDialog.OK);
-    doTest();
+    doTestWithConflicts("log324");
+  }
+
+  public void testLogRenameHidesOuterField() throws Exception {
+    addJavaUtilLogger();
+    doTestWithConflicts("log324");
+    myFixture.checkHighlighting(false, false, false);
+  }
+
+  public void testLogRenameQualifiedReference() throws Exception {
+    addJavaUtilLogger();
+    doTestWithConflicts("log324");
+    myFixture.checkHighlighting(false, false, false);
+  }
+
+  public void testLogRenameWithoutQualifier() {
+    var text = """
+      class Test {
+        Object object = new Object() {
+          private static final java.util.logging.Logger <caret>LOGGER = java.util.logging.Logger.getLogger("test");
+
+          void logMessage(String log) {
+            LOGGER.info(log);
+          }
+        };
+      }
+      """;
+    myFixture.configureByText("Test.java", text);
+
+    assertThrows(() -> myFixture.testAction(getAction()), RuntimeException.class,
+                 message -> assertEquals(LombokBundle.message("dialog.message.logger.cannot.update.references"), message));
+    myFixture.checkResult(text);
   }
 
   public void testLogPublic() throws Exception {
-    setTestDialog(TestDialog.OK);
-    doTest();
+    doTestWithConflicts("log");
   }
 
   public void testLogNonStatic() throws Exception {
-    setTestDialog(TestDialog.OK);
-    doTest();
+    doTestWithConflicts("log");
   }
 
   public void testLogNonFinal() throws Exception {
-    setTestDialog(TestDialog.OK);
-    doTest();
+    doTestWithConflicts("log");
   }
 
-  private static void setTestDialog(TestDialog newValue) {
-    try {
-      // TestDialogManager.setTestDialog(newValue); IntelliJ>=2020.3
-      callPerReflection("com.intellij.openapi.ui.TestDialogManager", newValue);
-    } catch (Exception ignore) {
-      try {
-        // Messages.setTestDialog(newValue); IntelliJ<=2020.2
-        callPerReflection("com.intellij.openapi.ui.Messages", newValue);
-      } catch (Exception ignore2) {
-        fail("No supported DialogManager classes found!");
+  public void testLogMultiple() throws Exception {
+    doTestWithConflicts("firstLog", "secondLog");
+  }
+
+  private void addJavaUtilLogger() {
+    myFixture.addClass("""
+      package java.util.logging;
+      public class Logger {
+        public static Logger getLogger(String name) {
+          return null;
+        }
+
+        public void info(String message) {
+        }
       }
-    }
+      """);
   }
 
-  private static void callPerReflection(String className, TestDialog newValue) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-    Class<?> dialogManagerClass = Class.forName(className);
-    Method setTestDialogMethod = dialogManagerClass.getDeclaredMethod("setTestDialog", TestDialog.class);
-    setTestDialogMethod.invoke(null, newValue);
+  private void doTestWithConflicts(String... loggerFieldNames) throws Exception {
+    List<String> conflicts = new ArrayList<>();
+    for (String loggerFieldName : loggerFieldNames) {
+      conflicts.add(LombokBundle.message("dialog.message.logger.field.s.not.private.sfinal.field.named.s.refactor.anyway",
+                                         loggerFieldName, 1, "log"));
+    }
+    UiInterceptors.register(new ConflictInterceptor(conflicts));
+    doTest();
   }
 }

@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.quickfix;
 
+import com.intellij.lombok.shared.LombokBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
@@ -13,7 +14,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.containers.ContainerUtil;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import org.jetbrains.annotations.NotNull;
 

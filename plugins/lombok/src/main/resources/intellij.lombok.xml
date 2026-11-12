@@ -32,6 +32,7 @@
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.refactoring"/>
+    <module name="intellij.lombok.shared"/>
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.util.ui"/>
   </dependencies>
@@ -296,20 +297,8 @@
   </extensions>
 
   <actions>
-    <group id="LombokActionGroup" class="de.plushnikov.intellij.plugin.action.LombokMenuGroup" icon="LombokIcons.Lombok" popup="true">
-      <action id="defaultLombokData" class="de.plushnikov.intellij.plugin.action.lombok.LombokDataAction"/>
-      <separator/>
-      <action id="defaultLombokGetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokGetterAction"/>
-      <action id="defaultLombokSetter" class="de.plushnikov.intellij.plugin.action.lombok.LombokSetterAction"/>
-      <action id="defaultLombokEqualsAndHashcode" class="de.plushnikov.intellij.plugin.action.lombok.LombokEqualsAndHashcodeAction"/>
-      <action id="defaultLombokToString" class="de.plushnikov.intellij.plugin.action.lombok.LombokToStringAction"/>
-      <separator/>
-      <action id="defaultLombokLogger" class="de.plushnikov.intellij.plugin.action.lombok.LombokLoggerAction"/>
-
-      <add-to-group group-id="RefactoringMenu" anchor="last"/>
-    </group>
-
-    <group id="DelombokActionGroup" class="de.plushnikov.intellij.plugin.action.LombokMenuGroup" icon="LombokIcons.Lombok" popup="true">
+    <group id="DelombokActionGroup" class="de.plushnikov.intellij.plugin.action.LombokMenuGroup"
+           icon="com.intellij.lombok.shared.icons.LombokSharedIcons.Lombok" popup="true">
       <action id="delombokAny" class="de.plushnikov.intellij.plugin.action.delombok.DelombokEverythingAction"/>
       <separator/>
       <action id="delombokData" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDataAction"/>

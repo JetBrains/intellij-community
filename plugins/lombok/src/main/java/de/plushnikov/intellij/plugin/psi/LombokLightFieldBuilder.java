@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.psi;
 
+import com.intellij.lombok.shared.icons.LombokSharedIcons;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.TextRange;
@@ -17,7 +18,6 @@ import com.intellij.psi.impl.PsiVariableEx;
 import com.intellij.psi.impl.light.LightFieldBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.util.IncorrectOperationException;
-import icons.LombokIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     myName = name;
     myNameIdentifier = new LombokLightIdentifier(manager, name);
     myModifierList = new LombokLightModifierList(manager).withParent(this);
-    setBaseIcon(LombokIcons.Nodes.LombokField);
+    setBaseIcon(LombokSharedIcons.Nodes.LombokField);
   }
 
   @Override

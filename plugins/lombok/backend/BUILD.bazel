@@ -1,0 +1,51 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.lombok.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.lombok.backend` end
+
+### auto-generated section `build intellij.lombok.backend` start
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.lombok.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//plugins/lombok",
+        "//plugins/lombok/shared",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-api:ide",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//java/java-psi-api:psi",
+        "//java/java-impl:impl",
+    ],
+)
+### auto-generated section `build intellij.lombok.backend` end
+
+### auto-generated section `iml intellij.lombok.backend` start
+exports_files(
+    [
+        "intellij.lombok.backend.iml",
+        "resources/intellij.lombok.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.lombok.backend` end

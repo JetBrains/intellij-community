@@ -6,6 +6,7 @@
     <module name="intellij.java.compiler.impl"/>
     <module name="intellij.java.frontback.psi.impl"/>
     <module name="intellij.lombok"/>
+    <module name="intellij.lombok.shared"/>
     <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>

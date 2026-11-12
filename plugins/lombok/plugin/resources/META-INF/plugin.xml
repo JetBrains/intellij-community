@@ -53,6 +53,8 @@
     <module name="intellij.lombok" loading="required"/>
     <module name="intellij.lombok.generated" loading="required"/>
     <module name="intellij.lombok.compiler"/>
+    <module name="intellij.lombok.shared" loading="required"/>
+    <module name="intellij.lombok.backend" required-if-available="intellij.platform.backend"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

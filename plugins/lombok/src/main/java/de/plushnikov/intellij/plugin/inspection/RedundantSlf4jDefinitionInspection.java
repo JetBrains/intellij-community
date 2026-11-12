@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lombok.shared.LombokBundle;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassObjectAccessExpression;
@@ -11,7 +12,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Slf4jProcessor;
 import de.plushnikov.intellij.plugin.quickfix.UseSlf4jAnnotationQuickFix;
 import org.jetbrains.annotations.NotNull;

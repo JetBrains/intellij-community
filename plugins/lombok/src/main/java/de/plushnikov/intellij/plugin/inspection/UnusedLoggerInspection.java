@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.RemoveAnnotationQuickFix;
+import com.intellij.lombok.shared.LombokBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotation;
@@ -12,7 +13,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.clazz.log.AbstractLogProcessor;
 import org.jetbrains.annotations.NotNull;

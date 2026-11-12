@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin.problem;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
-import de.plushnikov.intellij.plugin.LombokBundle;
+import com.intellij.lombok.shared.LombokBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;

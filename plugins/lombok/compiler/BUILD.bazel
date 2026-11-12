@@ -25,6 +25,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//plugins/lombok",
+        "//plugins/lombok/shared",
         "//java/java-analysis-api:analysis",
         "//java/compiler/openapi:java-compiler",
         "//java/compiler/impl",

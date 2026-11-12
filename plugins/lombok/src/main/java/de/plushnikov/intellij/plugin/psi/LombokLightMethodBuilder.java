@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.psi;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lombok.shared.icons.LombokSharedIcons;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
@@ -34,7 +35,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.IncorrectOperationException;
 import de.plushnikov.intellij.plugin.extension.LombokInferredAnnotationProvider;
-import icons.LombokIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +77,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
           new LombokLightReferenceListBuilder(manager, JavaLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST),
           new LightTypeParameterListBuilder(manager, JavaLanguage.INSTANCE));
     getModifierList().withParent(this);
-    setBaseIcon(LombokIcons.Nodes.LombokMethod);
+    setBaseIcon(LombokSharedIcons.Nodes.LombokMethod);
   }
 
   public LombokLightMethodBuilder withRelatedMembers(@NotNull Function<LombokLightMethodBuilder, Collection<PsiElement>> buildFunction) {

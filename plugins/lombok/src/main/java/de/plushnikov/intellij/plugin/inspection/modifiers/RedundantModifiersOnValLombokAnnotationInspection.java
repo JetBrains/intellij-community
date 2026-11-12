@@ -1,8 +1,8 @@
 package de.plushnikov.intellij.plugin.inspection.modifiers;
 
+import com.intellij.lombok.shared.LombokBundle;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiVariable;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
 
 import static com.intellij.psi.PsiModifier.FINAL;

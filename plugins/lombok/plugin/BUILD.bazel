@@ -8,6 +8,8 @@ dev_dist_plugin(
         "intellij.lombok",
         "intellij.lombok.generated",
         "intellij.lombok.compiler",
+        "intellij.lombok.shared",
+        "intellij.lombok.backend",
     ],
     descriptor = "resources/META-INF/plugin.xml",
     jars = {
@@ -15,7 +17,10 @@ dev_dist_plugin(
     },
     main_module = "intellij.lombok.plugin",
     mode_refused_content_modules = {
-        "frontend": ["intellij.lombok.compiler"],
+        "frontend": [
+            "intellij.lombok.compiler",
+            "intellij.lombok.backend",
+        ],
     },
 )
 ### auto-generated section `dev intellij.lombok.plugin` end
