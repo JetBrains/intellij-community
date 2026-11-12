@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.idea.TestFor
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.UsefulTestCase.assertContainsElements
 import com.intellij.testFramework.UsefulTestCase.assertDoesntContain
 import com.jetbrains.python.allure.Components
@@ -26,6 +28,9 @@ import org.junit.jupiter.api.Test
  * A test that asserts a `TYPE` from a `.py` file of the class root turns off the check of the parsed class roots. The `TYPE`
  * directive also evaluates the user-initiated context, which reads the annotations of these files from their trees.
  * The highlighting test keeps the check on, so the code analysis of a plugin fixture stays on the stubs.
+ *
+ * The completion and the navigation tests also turn off the check, though they do not run it. They load trees of the
+ * class root, and a loaded tree stays in the fixture. The option is part of the fixture key, so they get another fixture.
  */
 @Subsystems.TestRunner
 @Components.Pytest
@@ -142,7 +147,8 @@ class PyTestEntryPointPluginFixtureTest : PyCodeInsightTestCase() {
     """)
 
   @Test
-  @TestCaseOptions(testFileName = TEST_FILE_NAME, additionalSdkRoots = [SdkRoot(PLUGINS_ROOT, OrderRootTypeEnum.CLASSES)])
+  @TestCaseOptions(testFileName = TEST_FILE_NAME, additionalSdkRoots = [SdkRoot(PLUGINS_ROOT, OrderRootTypeEnum.CLASSES)],
+                   assertSdkRootsNotParsed = false)
   fun `a fixture of the plugin resolves to its declaration`() {
     val declaration = withCaret("""
       def test_home(client):
@@ -154,7 +160,8 @@ class PyTestEntryPointPluginFixtureTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  @TestCaseOptions(testFileName = TEST_FILE_NAME, additionalSdkRoots = [SdkRoot(PLUGINS_ROOT, OrderRootTypeEnum.CLASSES)])
+  @TestCaseOptions(testFileName = TEST_FILE_NAME, additionalSdkRoots = [SdkRoot(PLUGINS_ROOT, OrderRootTypeEnum.CLASSES)],
+                   assertSdkRootsNotParsed = false)
   fun `the members of the type of a fixture of the plugin complete`() {
     assertContainsElements(completeWithCaret("""
       def test_home(client):
@@ -164,7 +171,8 @@ class PyTestEntryPointPluginFixtureTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  @TestCaseOptions(testFileName = TEST_FILE_NAME, additionalSdkRoots = [SdkRoot(PLUGINS_ROOT, OrderRootTypeEnum.CLASSES)])
+  @TestCaseOptions(testFileName = TEST_FILE_NAME, additionalSdkRoots = [SdkRoot(PLUGINS_ROOT, OrderRootTypeEnum.CLASSES)],
+                   assertSdkRootsNotParsed = false)
   fun `the markers of the plugins complete after pytest mark`() {
     val variants = completeWithCaret("""
       import pytest
@@ -179,7 +187,28 @@ class PyTestEntryPointPluginFixtureTest : PyCodeInsightTestCase() {
   }
 
   @Test
-  @TestCaseOptions(testFileName = TEST_FILE_NAME, additionalSdkRoots = [SdkRoot(PLUGINS_ROOT, OrderRootTypeEnum.CLASSES)])
+  @TestCaseOptions(testFileName = TEST_FILE_NAME, additionalSdkRoots = [SdkRoot(PLUGINS_ROOT, OrderRootTypeEnum.CLASSES)],
+                   assertSdkRootsNotParsed = false)
+  fun `the completion after pytest mark offers no marker of the plugins during indexing`() {
+    val variants = withCaret("""
+      import pytest
+
+      @pytest.mark.django_db
+      #            └ CARET
+      def test_home():
+          pass
+      """) {
+      DumbModeTestUtils.computeInDumbModeSynchronously(myFixture.project) {
+        myFixture.complete(CompletionType.BASIC)
+        myFixture.lookupElementStrings.orEmpty()
+      }
+    }
+    assertDoesntContain(variants, "django_db", "urls")
+  }
+
+  @Test
+  @TestCaseOptions(testFileName = TEST_FILE_NAME, additionalSdkRoots = [SdkRoot(PLUGINS_ROOT, OrderRootTypeEnum.CLASSES)],
+                   assertSdkRootsNotParsed = false)
   fun `the keyword parameters of a marker of the plugins complete in its call`() {
     val variants = completeWithCaret("""
       import pytest
