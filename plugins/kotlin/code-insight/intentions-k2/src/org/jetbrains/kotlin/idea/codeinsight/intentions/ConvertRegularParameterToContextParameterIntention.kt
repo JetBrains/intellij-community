@@ -3,12 +3,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.impl.Utils.computeWithProgressIcon
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.ui.awt.RelativePoint
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
@@ -35,20 +30,11 @@ class ConvertRegularParameterToContextParameterIntention : SelfTargetingIntentio
         val ownerFunction = element.ownerFunction as? KtNamedFunction ?: return false
         if (!ownerFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return true
 
-        val canModifyOverrides = {
+        val editor = element.findExistingEditor() ?: return false
+        return computeWithProgressIconIfNeeded(editor, caretOffset) {
             analyze(ownerFunction) {
                 overridesOnlyModifiableDeclarations(ownerFunction)
             }
-        }
-        return if (ApplicationManager.getApplication().isDispatchThread) {
-            val editor = element.findExistingEditor() ?: return false
-            val component = editor.contentComponent
-            val point = RelativePoint(component, editor.logicalPositionToXY(editor.offsetToLogicalPosition(caretOffset)))
-            computeWithProgressIcon(point, component, ActionPlaces.UNKNOWN) {
-                readAction { canModifyOverrides() }
-            }
-        } else {
-            canModifyOverrides()
         }
     }
 
