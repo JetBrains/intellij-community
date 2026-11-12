@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.ide.CopyProvider;
@@ -52,6 +52,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,6 +73,9 @@ import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.function.IntFunction;
 
+import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
+import static kotlinx.coroutines.CoroutineScopeKt.cancel;
+
 final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow, EditorEx {
   private final DocumentWindowImpl myDocumentWindow;
   private final EditorImpl myDelegate;
@@ -84,11 +89,15 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
   private final FoldingModelWindow myFoldingModelWindow;
   private final SoftWrapModelWindow mySoftWrapModel;
   private final InlayModelWindow myInlayModel;
+  private final InjectedEditorWindowTrackerImpl myTracker;
+  private volatile CoroutineScope myCoroutineScope;
 
   EditorWindowImpl(@NotNull DocumentWindowImpl documentWindow,
                    final @NotNull EditorImpl delegate,
                    @NotNull PsiFile injectedFile,
-                   boolean oneLine) {
+                   boolean oneLine,
+                   @NotNull InjectedEditorWindowTrackerImpl tracker) {
+    myTracker = tracker;
     myDocumentWindow = documentWindow;
     myDelegate = delegate;
     myInjectedFile = injectedFile;
@@ -172,6 +181,7 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
     myEditorMouseMotionListeners.clear();
 
     myDisposed = true;
+    cancelCoroutineScope();
     Disposer.dispose(myDocumentWindow);
 
     InjectedLanguageUtilBase.clearCaches(myInjectedFile.getProject(), getDocument());
@@ -860,5 +870,38 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
   @Override
   public int getAscent() {
     return myDelegate.getAscent();
+  }
+
+  /**
+   * {@link #dispose()} and the release of the host editor cancel the scope.
+   */
+  @Override
+  public @NotNull CoroutineScope getCoroutineScope() {
+    CoroutineScope scope = myCoroutineScope;
+    if (scope != null) {
+      return scope;
+    }
+    synchronized (this) {
+      scope = myCoroutineScope;
+      if (scope == null) {
+        scope = childScope(myDelegate.getCoroutineScope(), "EditorWindow", EmptyCoroutineContext.INSTANCE, true);
+        myTracker.holdWhileActive(this, scope);
+        if (myDisposed) {
+          cancel(scope, null);
+        }
+        myCoroutineScope = scope;
+      }
+      return scope;
+    }
+  }
+
+  private void cancelCoroutineScope() {
+    CoroutineScope scope;
+    synchronized (this) {
+      scope = myCoroutineScope;
+    }
+    if (scope != null) {
+      cancel(scope, null);
+    }
   }
 }

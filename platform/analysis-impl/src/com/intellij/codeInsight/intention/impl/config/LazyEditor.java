@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.editor.CaretModel;
@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiFile;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -232,6 +233,12 @@ public class LazyEditor extends UserDataHolderBase implements Editor {
   @Override
   public boolean isDisposed() {
     return getEditor().isDisposed();
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull CoroutineScope getCoroutineScope() {
+    return getEditor().getCoroutineScope();
   }
 
   @Override

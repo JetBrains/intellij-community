@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.EditorProjection.Provider
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -42,6 +43,17 @@ interface EditorProjection : Editor {
    * A range can be empty.
    */
   fun toHostRange(range: TextRange): TextRange?
+
+  /**
+   * The scope of this editor, as [Editor.getCoroutineScope] defines it.
+   *
+   * The scope can be cancelled before the scope of [hostEditor].
+   * Work that must live as long as [hostEditor] uses the scope of [hostEditor].
+   */
+  @ApiStatus.Internal
+  override fun getCoroutineScope(): CoroutineScope {
+    return hostEditor.coroutineScope
+  }
 
   /** The projections of one host editor. */
   fun interface Provider {

@@ -493,6 +493,12 @@ public interface Editor extends UserDataHolder {
     return 0;
   }
 
+  /**
+   * The scope is cancelled when this editor {@linkplain #isDisposed() is disposed}, or earlier.
+   * <p>
+   * The cancellation does not stop a running coroutine at once,
+   * so a coroutine that reads the state of this editor checks {@link #isDisposed()}.
+   */
   @ApiStatus.Experimental
   @ApiStatus.Internal
   default @NotNull CoroutineScope getCoroutineScope() {

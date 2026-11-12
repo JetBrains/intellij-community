@@ -2,6 +2,7 @@
 
 package com.intellij.psi.impl.source.tree.injected;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -9,15 +10,20 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.UnsafeWeakList;
+import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
 
 @ApiStatus.Internal
 public final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowTracker {
   private final Collection<EditorWindowImpl> allEditors = new UnsafeWeakList<>(); // guarded by allEditors
+  private final Set<EditorWindowImpl> editorsWithActiveScope = ConcurrentCollectionFactory.createConcurrentIdentitySet();
 
   @NotNull
   @Override
@@ -39,7 +45,13 @@ public final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowT
         }
       }
       editorImpl.executeNonCancelableBlock(()-> {
-        EditorWindowImpl newEditorWindow = new EditorWindowImpl(documentRangeImpl, editorImpl, injectedFile, documentRange.isOneLine());
+        EditorWindowImpl newEditorWindow = new EditorWindowImpl(
+          documentRangeImpl,
+          editorImpl,
+          injectedFile,
+          documentRange.isOneLine(),
+          this
+        );
         editorWindow.set(newEditorWindow);
         allEditors.add(newEditorWindow);
         newEditorWindow.assertValid();
@@ -78,5 +90,16 @@ public final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowT
         }
       }
     }
+  }
+
+  /**
+   * Keeps {@code editor} strongly reachable until {@code scope} completes.
+   */
+  void holdWhileActive(@NotNull EditorWindowImpl editor, @NotNull CoroutineScope scope) {
+    editorsWithActiveScope.add(editor);
+    JobKt.getJob(scope.getCoroutineContext()).invokeOnCompletion(_ -> {
+      editorsWithActiveScope.remove(editor);
+      return Unit.INSTANCE;
+    });
   }
 }
