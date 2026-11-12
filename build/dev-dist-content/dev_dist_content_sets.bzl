@@ -130,7 +130,7 @@ DEV_DIST_PLUGIN_COMPONENTS = {
             "intellij.keymap.visualStudio": "//plugins/keymaps/visual-studio-keymap:intellij.keymap.visualStudio_dev_plugin",
             "intellij.keymap.netbeans": "//plugins/keymaps/netbeans5.6-keymap:intellij.keymap.netbeans_dev_plugin",
             "intellij.performanceTesting": "//build/dev-dist-descriptors/intellij.performanceTesting:intellij.performanceTesting_dev_plugin",
-            "intellij.compose.ide.plugin": "//plugins/compose:intellij.compose.ide.plugin_dev_plugin",
+            "intellij.compose.ide.plugin": "//build/dev-dist-descriptors/intellij.compose.ide.plugin:intellij.compose.ide.plugin_dev_plugin",
             "intellij.idea.customization.plugin": "//build/dev-dist-descriptors/intellij.idea.customization.plugin:intellij.idea.customization.plugin_dev_plugin",
             "intellij.javaFX.community": "//build/dev-dist-descriptors/intellij.javaFX.community:intellij.javaFX.community_dev_plugin",
         },
@@ -253,7 +253,7 @@ DEV_DIST_PLUGIN_COMPONENTS = {
             "intellij.keymap.visualStudio": "//plugins/keymaps/visual-studio-keymap:intellij.keymap.visualStudio_dev_plugin",
             "intellij.keymap.netbeans": "//plugins/keymaps/netbeans5.6-keymap:intellij.keymap.netbeans_dev_plugin",
             "intellij.performanceTesting": "//build/dev-dist-descriptors/intellij.performanceTesting:intellij.performanceTesting_dev_plugin",
-            "intellij.compose.ide.plugin": "//plugins/compose:intellij.compose.ide.plugin_dev_plugin",
+            "intellij.compose.ide.plugin": "//build/dev-dist-descriptors/intellij.compose.ide.plugin:intellij.compose.ide.plugin_dev_plugin",
             "intellij.android.compose-ide-plugin": "//android/compose-ide-plugin:intellij.android.compose-ide-plugin_dev_plugin",
             "intellij.android.design-plugin.descriptor": "//android/design-plugin/descriptor:intellij.android.design-plugin.descriptor_dev_plugin",
             "intellij.android.plugin.descriptor": {
