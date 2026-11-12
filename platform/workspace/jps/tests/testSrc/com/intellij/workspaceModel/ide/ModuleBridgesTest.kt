@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
@@ -237,7 +236,7 @@ class ModuleBridgesTest {
       val module = withContext(Dispatchers.EDT) {
         runWriteAction {
           val model = moduleManager.getModifiableModel()
-          val module = model.newModule(oldNameFile.path, ModuleType.EMPTY.id)
+          val module = model.newModule(oldNameFile.path, EmptyModuleType.EMPTY_MODULE)
           model.commit()
           module
         }
@@ -307,8 +306,8 @@ class ModuleBridgesTest {
     val (antModule, mavenModule) = withContext(Dispatchers.EDT) {
       runWriteAction {
         val model = moduleManager.getModifiableModel()
-        val antModule = model.newModule(antModuleFile.path, ModuleType.EMPTY.id)
-        val mavenModule = model.newModule(mavenModuleFile.path, ModuleType.EMPTY.id)
+        val antModule = model.newModule(antModuleFile.path, EmptyModuleType.EMPTY_MODULE)
+        val mavenModule = model.newModule(mavenModuleFile.path, EmptyModuleType.EMPTY_MODULE)
         model.commit()
         Pair(antModule, mavenModule)
       }

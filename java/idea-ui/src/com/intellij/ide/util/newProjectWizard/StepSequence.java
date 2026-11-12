@@ -5,7 +5,7 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.ide.util.projectWizard.AbstractModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
@@ -138,7 +138,7 @@ public class StepSequence {
   }
 
   public void setType(final @Nullable @NonNls String type) {
-    setTypes(Collections.singletonList(type == null ? ModuleType.EMPTY.getId() : type));
+    setTypes(Collections.singletonList(type == null ? EmptyModuleType.EMPTY_MODULE : type));
   }
 
   public String getSelectedType() {
