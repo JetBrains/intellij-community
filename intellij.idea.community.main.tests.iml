@@ -357,6 +357,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.mcp.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.terminal.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.terminal.frontend.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.mcpserver.toolsets.skills.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />

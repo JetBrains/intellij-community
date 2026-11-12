@@ -360,6 +360,7 @@ jvm_library(
         "//platform/platform-impl/presentation-assistant",
         "//platform/platform-impl/tab-in-editor",
         "//plugins/github/plugin",
+        "//plugins/mcp-server/mcpserver.toolsets/skills:skills-tests_test_lib",
         "//python:python-community-tests_test_lib",
         "//python/python-markdown:markdown-tests_test_lib",
         "//plugins/settings-repository:settingsRepository-tests_test_lib",
