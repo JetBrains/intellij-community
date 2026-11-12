@@ -36,4 +36,11 @@ enum class InlayHintStage {
   }
 
   val isEnabled: Boolean get() = this != DISABLED
+
+  fun next(): InlayHintStage = when (this) {
+    DISABLED -> ADDITIONAL
+    ADDITIONAL -> ESSENTIAL
+    ESSENTIAL -> ALWAYS
+    ALWAYS -> DISABLED
+  }
 }

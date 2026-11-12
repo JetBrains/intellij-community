@@ -96,7 +96,7 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
     groups = models.groupBy { it.group }.toSortedMap()
     val globalSettings = groups.keys.associateWith { InlayGroupSettingProvider.EP.findForGroup(it) }
 
-    val root = CheckedTreeNode()
+    val root = XRayTreeNode()
     val lastSelected = InlayHintsSettings.instance().getLastViewedProviderId()
     var nodeToSelect: CheckedTreeNode? = null
 
@@ -106,7 +106,7 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
     }
 
     for (group in groups) {
-      val groupNode = CheckedTreeNode(globalSettings[group.key] ?: group.key)
+      val groupNode = XRayTreeNode(globalSettings[group.key] ?: group.key, StageKey.GroupSettingsKey(group.key.key))
       root.add(groupNode)
       val primaryLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
       val sortedMap = group.value.groupBy { it.language }.toSortedMap(
@@ -117,13 +117,13 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
         })
       for (lang in sortedMap) {
         val firstModel = lang.value.first()
-        val langNode: CheckedTreeNode
+        val langNode: XRayTreeNode
         val startFrom: Int
         if ((lang.value.size == 1 || group.key.toString() == firstModel.name && firstModel.language == sortedMap.firstKey()) &&
             InlayGroup.OTHER_GROUP != group.key) {
           nodeToSelect = addModelNode(firstModel, groupNode, lastSelected, nodeToSelect)
           firstModel.isMergedNode = true
-          langNode = groupNode.firstChild as CheckedTreeNode
+          langNode = groupNode.firstChild as XRayTreeNode
           startFrom = 1
         }
         else if (lang.key == Language.ANY) {
@@ -131,7 +131,7 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
           startFrom = 0
         }
         else {
-          langNode = CheckedTreeNode(lang.key)
+          langNode = XRayTreeNode(lang.key, StageKey.GroupSettingsKey(getLanguageForSettingKey(lang.key).id))
           groupNode.add(langNode)
           startFrom = 0
         }
@@ -142,11 +142,23 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
       }
     }
 
-    tree = object : CheckboxTree(InlaySettingsTreeRenderer(), root, CheckPolicy(true, true, true, false)) {
+    tree = object : CheckboxTree(InlaySettingsTreeRenderer(), root, CheckPolicy(false, false, false, false)) {
       override fun installSpeedSearch() {
         TreeSpeedSearch.installOn(this, true) {
           getName(it.lastPathComponent as DefaultMutableTreeNode,
                   it.parentPath?.lastPathComponent as DefaultMutableTreeNode?)
+        }
+      }
+
+      override fun onNodeStateChanged(node: CheckedTreeNode?) {
+        super.onNodeStateChanged(node)
+        (node as? XRayTreeNode)?.let { xRayNode ->
+          xRayNode.stageKey?.let {
+            propagateStage(xRayNode, xRayNode.stage)
+            if (tree.lastSelectedPathComponent === xRayNode) {
+              updateRightPanel(xRayNode)
+            }
+          }
         }
       }
     }
@@ -194,13 +206,17 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
         }
       }
     }
-    val node = object : CheckedTreeNode(model) {
+
+    val key: StageKey? = model.settingsKey(null)?.let { StageKey.LeafSettingsKey(it) }
+
+    val node = object : XRayTreeNode(model, key) {
       override fun setChecked(checked: Boolean) {
         super.setChecked(checked)
-        model.isEnabled = checked
+        model.isEnabled = stage.isEnabled
         model.onChangeListener?.settingsChanged()
       }
     }
+
     parent.add(node)
     model.cases.forEach {
       val caseNode = CaseCheckedNode(it, { currentEditor }, model)
@@ -216,10 +232,10 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
     private val case: ImmediateConfigurable.Case,
     private val editorProvider: () -> Editor?,
     private val model: InlayProviderSettingsModel,
-  ) : CheckedTreeNode(case) {
+  ) : XRayTreeNode(case, model.settingsKey(case)?.let { StageKey.LeafSettingsKey(it) }) {
     override fun setChecked(checked: Boolean) {
       super.setChecked(checked)
-      case.value = checked
+      case.value = stage.isEnabled
       if (PREVIEW_KEY.get(editorProvider()) == this) {
         model.onChangeListener?.settingsChanged()
       }
@@ -227,6 +243,16 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
   }
 
   private fun propagateStage(treeNode: CheckedTreeNode, stage: InlayHintStage) {
+
+    (treeNode as? XRayTreeNode)?.let {
+      if (it.stageKey != null) {
+        it.stage = stage
+      }
+      else {
+        it.isChecked = stage.isEnabled
+      }
+    }
+
     when (val item = treeNode.userObject) {
       is InlayGroup -> pendingGroupStages[item.key] = stage
       is InlayGroupSettingProvider -> pendingGroupStages[item.group.key] = stage
@@ -236,7 +262,6 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
         if (key != null) {
           pendingStages[key] = stage
         }
-        treeNode.isChecked = stage.isEnabled
         (tree.model as DefaultTreeModel).nodeChanged(treeNode)
       }
       is ImmediateConfigurable.Case -> {
@@ -246,11 +271,22 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
         if (key != null) {
           pendingStages[key] = stage
         }
-        treeNode.isChecked = stage.isEnabled
         (tree.model as DefaultTreeModel).nodeChanged(treeNode)
       }
     }
     treeNode.children().iterator().forEach { propagateStage(it as CheckedTreeNode, stage) }
+  }
+
+  private fun checkConsistency(treeNode: CheckedTreeNode, stage: InlayHintStage): Boolean {
+    (treeNode as? XRayTreeNode)?.let {
+      if (it.stageKey != null) {
+        if (it.stage != stage) return false
+      }
+    }
+
+    if (!treeNode.children().iterator().hasNext()) return true
+
+    return treeNode.children().iterator().asSequence().map { checkConsistency(it as CheckedTreeNode, stage) }.fold(true, Boolean::and)
   }
 
   private fun updateRightPanel(treeNode: CheckedTreeNode?) {
@@ -480,14 +516,19 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
 
       storeStage(selected)
 
-      val checked = selected.isEnabled
-      if (treeNode.isChecked != checked) {
-        treeNode.isChecked = checked
+      val xRayNode = treeNode as? XRayTreeNode
+      if (xRayNode?.stageKey != null) {
+        xRayNode.stage = selected
+        (tree.model as DefaultTreeModel).nodeChanged(treeNode)
+      }
+      else if (treeNode.isChecked != selected.isEnabled) {
+        treeNode.isChecked = selected.isEnabled
         (tree.model as DefaultTreeModel).nodeChanged(treeNode)
       }
 
       updateXRayCommentLabel(commentLabel, selected)
       onChanged()
+      tree.repaint()
     }
 
     val col = JPanel(GridBagLayout())
@@ -523,34 +564,53 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
     return ""
   }
 
+  private fun loadStages(store: XRayStageStore) {
+    val root = tree.model.root as DefaultMutableTreeNode
+    root.preorderEnumeration().iterator().forEach { node ->
+      (node as? XRayTreeNode)?.let { xRayNode ->
+        (xRayNode.stageKey)?.let { key ->
+          xRayNode.stage = when (key) {
+            is StageKey.LeafSettingsKey -> store.getStage(key.key)
+            is StageKey.GroupSettingsKey -> store.getGroupStage(key.key)
+          }
+        }
+      }
+    }
+    tree.repaint()
+  }
+
   fun reset() {
     pendingStages.clear()
     pendingGroupStages.clear()
-    reset(tree.model.root as CheckedTreeNode, InlayHintsSettings.instance())
+    XRayStageStore.getInstanceOrNull()?.let { loadStages(it) }
+    reset(tree.model.root as XRayTreeNode, InlayHintsSettings.instance())
     updateRightPanel(tree.lastSelectedPathComponent as? CheckedTreeNode)
   }
 
-  private fun reset(node: CheckedTreeNode, settings: InlayHintsSettings) {
+  private fun reset(node: XRayTreeNode, settings: InlayHintsSettings) {
+    val hasStageKey = node.stageKey != null
     when (val item = node.userObject) {
       is InlayGroupSettingProvider -> {
         item.reset()
-        node.isChecked = item.isEnabled
+        if (!hasStageKey) node.isChecked = item.isEnabled
       }
       is InlayProviderSettingsModel -> {
         item.reset()
-        resetNode(node, isModelEnabled(item, settings))
+        if (!hasStageKey) resetNode(node, isModelEnabled(item, settings))
       }
       is ImmediateConfigurable.Case -> {
-        resetNode(node, isCaseEnabled(item, node.parent, settings))
+        if (!hasStageKey) resetNode(node, isCaseEnabled(item, node.parent, settings))
       }
       is Language -> {
-        resetNode(node, isLanguageEnabled(settings, item))
+        if (!hasStageKey) resetNode(node, isLanguageEnabled(settings, item))
       }
     }
-    node.children().toList().forEach { reset(it as CheckedTreeNode, settings) }
+    node.children().toList().forEach {
+      reset(it as XRayTreeNode, settings)
+    }
     when (val item = node.userObject) {
       is InlayGroup -> {
-        node.isChecked = groups[item]?.any { it.isEnabled } == true
+        if (!hasStageKey) node.isChecked = groups[item]?.any { it.isEnabled } == true
       }
     }
   }
@@ -746,6 +806,11 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
       row: Int,
       hasFocus: Boolean,
     ) {
+
+      val ui = (checkbox.ui as? XRayStageCheckBoxUI) ?: XRayStageCheckBoxUI().also { checkbox.ui = it }
+      ui.stage = (value as? XRayTreeNode)?.takeIf { it.stageKey != null }?.stage
+      ui.isInconsistent = ui.stage?.let { stage -> !checkConsistency(value as CheckedTreeNode, stage) } ?: false
+
       if (value !is DefaultMutableTreeNode) return
 
       val name = getName(value, value.parent as? DefaultMutableTreeNode)
