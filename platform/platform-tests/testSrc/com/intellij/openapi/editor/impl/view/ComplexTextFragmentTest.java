@@ -125,6 +125,16 @@ public class ComplexTextFragmentTest {
   }
 
   @Test
+  public void testArabicLettersTakeNoLetterSpacingAndTheSpaceTakesIt() {
+    assertCaretPositionsForGlyphVector(
+      2,
+      new char[]{'\u0628', ' ', '\u062A'}, // beh, space, teh
+      rtl().glyph(0, 10).glyph(10, 20).glyph(20, 30),
+      10, 22, 32
+    );
+  }
+
+  @Test
   public void testCombiningMarkTakesNoLetterSpacingAndStaysAtItsBase() {
     MyGlyphVector gv = glyph(0, 10).glyph(10, 10).glyph(10, 20); // 'a', a combining acute accent, 'b'
     FontLayoutService.setInstance(new MockFontLayoutService(c -> c == 0x301 ? 0 : TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT) {
@@ -191,6 +201,11 @@ public class ComplexTextFragmentTest {
   }
 
   private static void assertCaretPositionsForGlyphVector(float letterSpacing, MyGlyphVector gv, int... expectedPositions) {
+    assertCaretPositionsForGlyphVector(letterSpacing, new char[gv.getNumChars()], gv, expectedPositions);
+  }
+
+  private static void assertCaretPositionsForGlyphVector(float letterSpacing, char[] text, MyGlyphVector gv, int... expectedPositions) {
+    assertEquals(gv.getNumChars(), text.length);
     FontLayoutService.setInstance(new MockFontLayoutService(TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT) {
       @NotNull
       @Override
@@ -200,8 +215,7 @@ public class ComplexTextFragmentTest {
       }
     });
     try {
-      int length = gv.getNumChars();
-      char[] text = new char[length];
+      int length = text.length;
       FontInfo fontInfo = createFontInfo(letterSpacing);
       ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
                                                              fontInfo, null);

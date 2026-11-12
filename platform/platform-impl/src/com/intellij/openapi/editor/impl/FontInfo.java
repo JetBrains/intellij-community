@@ -17,6 +17,7 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.font.FontRenderContext;
+import java.util.EnumSet;
 import java.util.Set;
 
 /**
@@ -31,6 +32,47 @@ public final class FontInfo {
 
   private static final Font DUMMY_FONT = new Font(null);
   private static final @Nullable FontMetricsAccessor FONT_METRICS_ACCESSOR = JBR.getFontMetricsAccessor();
+
+  /**
+   * The scripts whose letters join or hang from one head line, so the letter spacing would break their words apart.
+   * Their letters take no letter spacing.
+   * The joining scripts are the scripts with joining letters in the Unicode file {@code ArabicShaping.txt}.
+   */
+  private static final Set<Character.UnicodeScript> SCRIPTS_WITHOUT_LETTER_SPACING = EnumSet.of(
+    // joining scripts
+    Character.UnicodeScript.ADLAM,
+    Character.UnicodeScript.ARABIC,
+    Character.UnicodeScript.CHORASMIAN,
+    Character.UnicodeScript.HANIFI_ROHINGYA,
+    Character.UnicodeScript.MANDAIC,
+    Character.UnicodeScript.MANICHAEAN,
+    Character.UnicodeScript.MONGOLIAN,
+    Character.UnicodeScript.NKO,
+    Character.UnicodeScript.OLD_UYGHUR,
+    Character.UnicodeScript.PHAGS_PA,
+    Character.UnicodeScript.PSALTER_PAHLAVI,
+    Character.UnicodeScript.SOGDIAN,
+    Character.UnicodeScript.SYRIAC,
+    // scripts with a head line or a stem line
+    Character.UnicodeScript.BENGALI,
+    Character.UnicodeScript.DEVANAGARI,
+    Character.UnicodeScript.GURMUKHI,
+    Character.UnicodeScript.MODI,
+    Character.UnicodeScript.OGHAM,
+    Character.UnicodeScript.SHARADA,
+    Character.UnicodeScript.SYLOTI_NAGRI,
+    Character.UnicodeScript.TIRHUTA
+  );
+
+  /**
+   * The Arabic tatweel joins the letters around it, but its script is Common, so it is not in {@link #SCRIPTS_WITHOUT_LETTER_SPACING}.
+   */
+  private static final int ARABIC_TATWEEL = 0x0640;
+
+  /**
+   * No script of {@link #SCRIPTS_WITHOUT_LETTER_SPACING} has a code point below this one, the first Arabic code point.
+   */
+  private static final int FIRST_CODE_POINT_WITHOUT_LETTER_SPACING = 0x0600;
 
   public static @NotNull FontMetrics getFontMetrics(@NotNull Font font, @NotNull FontRenderContext fontRenderContext) {
     if (FONT_METRICS_ACCESSOR == null) {
@@ -124,7 +166,7 @@ public final class FontInfo {
   public int charWidth(int codePoint) {
     FontMetrics metrics = fontMetrics();
     int width = FontLayoutService.getInstance().charWidth(metrics, codePoint);
-    if (width <= 0) {
+    if (width <= 0 || myLetterSpacingPixels == 0 || !isInScriptWithLetterSpacing(codePoint)) {
       return width;
     }
     return Math.max(0, Math.round(width + myLetterSpacingPixels));
@@ -136,7 +178,7 @@ public final class FontInfo {
    */
   public float charWidth2D(int codePoint) {
     float width = advance(codePoint);
-    if (width <= 0) {
+    if (width <= 0 || myLetterSpacingPixels == 0 || !isInScriptWithLetterSpacing(codePoint)) {
       return width;
     }
     return Math.max(0, width + myLetterSpacingPixels);
@@ -145,10 +187,11 @@ public final class FontInfo {
   /**
    * Returns true when the text layout adds the letter spacing after the code point.
    * A code point without an advance, such as a combining mark, takes no letter spacing.
+   * A letter of a script whose letters join, such as Arabic or Devanagari, takes none too.
    */
   @ApiStatus.Internal
   public boolean takesLetterSpacing(int codePoint) {
-    return advance(codePoint) > 0;
+    return advance(codePoint) > 0 && isInScriptWithLetterSpacing(codePoint);
   }
 
   /**
@@ -158,6 +201,13 @@ public final class FontInfo {
   @ApiStatus.Internal
   public float getLetterSpacingPixels() {
     return myLetterSpacingPixels;
+  }
+
+  private static boolean isInScriptWithLetterSpacing(int codePoint) {
+    if (codePoint < FIRST_CODE_POINT_WITHOUT_LETTER_SPACING || !Character.isValidCodePoint(codePoint)) {
+      return true;
+    }
+    return codePoint != ARABIC_TATWEEL && !SCRIPTS_WITHOUT_LETTER_SPACING.contains(Character.UnicodeScript.of(codePoint));
   }
 
   private float advance(int codePoint) {

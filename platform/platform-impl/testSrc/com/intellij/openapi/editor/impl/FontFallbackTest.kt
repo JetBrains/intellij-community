@@ -10,6 +10,14 @@ import java.awt.Font
 import java.util.function.IntToDoubleFunction
 
 private const val COMBINING_ACUTE = 0x301
+private const val ARABIC_BEH = 0x628
+private const val ARABIC_TATWEEL = 0x640
+private const val ADLAM_ALIF = 0x1E900
+private const val DEVANAGARI_NA = 0x928
+private const val SYRIAC_ALAPH = 0x710
+private const val MONGOLIAN_A = 0x1820
+private const val HEBREW_SHIN = 0x5E9
+private const val CJK_SUN = 0x65E5
 
 @TestApplication
 internal class FontFallbackTest {
@@ -66,6 +74,24 @@ internal class FontFallbackTest {
       assertThat(spaced.charWidth2D(COMBINING_ACUTE)).isEqualTo(0f)
       assertThat(spaced.takesLetterSpacing('a'.code)).isTrue()
       assertThat(spaced.takesLetterSpacing(COMBINING_ACUTE)).isFalse()
+    } finally {
+      FontLayoutService.setInstance(null)
+    }
+  }
+
+  @Test
+  fun `the letters of a script whose letters join take no letter spacing`() {
+    FontLayoutService.setInstance(MockFontLayoutService(IntToDoubleFunction { 7.0 }, 15, 3))
+    try {
+      val spaced = fallback.getFontInfo(8f, false, 0.25f, setOf(), null)
+      for (letter in listOf(ARABIC_BEH, ARABIC_TATWEEL, DEVANAGARI_NA, SYRIAC_ALAPH, MONGOLIAN_A, ADLAM_ALIF)) {
+        assertThat(spaced.takesLetterSpacing(letter)).isFalse()
+        assertThat(spaced.charWidth2D(letter)).isEqualTo(7f)
+      }
+      for (letter in listOf(HEBREW_SHIN, CJK_SUN, ' '.code)) {
+        assertThat(spaced.takesLetterSpacing(letter)).isTrue()
+        assertThat(spaced.charWidth2D(letter)).isEqualTo(9f)
+      }
     } finally {
       FontLayoutService.setInstance(null)
     }
