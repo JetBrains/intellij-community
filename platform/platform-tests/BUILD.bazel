@@ -247,6 +247,7 @@ jvm_library(
         "//libraries/junit6-params",
         "//plugins/webp/tests:tests_test_lib",
         "//platform/searchEverywhere/backend",
+        "//platform/searchEverywhere/shared:searchEverywhere",
         "//aether-dependency-resolver/plugin",
         "//java/java-backend:backend",
         "//java/plugin",

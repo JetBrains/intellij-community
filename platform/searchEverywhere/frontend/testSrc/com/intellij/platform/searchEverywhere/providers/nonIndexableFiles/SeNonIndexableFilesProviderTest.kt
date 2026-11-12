@@ -1,27 +1,30 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.actions.searcheverywhere
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.searchEverywhere.providers.nonIndexableFiles
 
 import com.intellij.find.DirectorySearchEngine
 import com.intellij.find.DirectorySearchEngine.FileSearchCandidate
 import com.intellij.find.FindModel
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
 import com.intellij.ide.util.gotoByName.FileTypeRef
-import com.intellij.ide.util.scopeChooser.ScopeDescriptor
-import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.searchEverywhere.SeFilterState
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeParams
+import com.intellij.platform.searchEverywhere.SeTypeFilterKeys
+import com.intellij.platform.searchEverywhere.providers.SeEverywhereFilterImpl
+import com.intellij.platform.searchEverywhere.providers.target.SeScopeById
+import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.SearchScope
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
@@ -39,7 +42,6 @@ import com.intellij.util.indexing.testEntities.NonRecursiveTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.toPath
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
@@ -52,22 +54,24 @@ import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
-
+/**
+ * [SeNonIndexableFilesProvider] finds the files under the non-indexable roots of the project.
+ *
+ * Most cases search in the Files tab without a selected scope, so the provider checks no scope.
+ */
 @TestApplication
 @RegistryKey("se.enable.non.indexable.files.contributor", "true")
-open class NonIndexableFilesSEContributorTest {
+class SeNonIndexableFilesProviderTest {
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
 
   @TestDisposable
   private lateinit var disposable: Disposable
 
-
   private val baseDir get() = projectModel.baseProjectDir
   private val project get() = projectModel.project
   private val workspaceModel get() = project.workspaceModel
   private val urlManager get() = workspaceModel.getVirtualFileUrlManager()
-
 
   @BeforeEach
   fun setUp() {
@@ -76,34 +80,11 @@ open class NonIndexableFilesSEContributorTest {
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonRecursiveFileSetContributor(), disposable)
   }
 
-
-  private fun searchNonIndexableFiles(pattern: String, scope: SearchScope? = null): Set<PsiFileSystemItem> {
-    val contributor = NonIndexableFilesSEContributor(createEvent(project))
-    contributor.setScope(ScopeDescriptor(scope))
-    Disposer.register(disposable, contributor)
-
-    val items = contributor.search(pattern, MockProgressIndicator().apply { start() }).toSet()
-
-    assertThat(items).allSatisfy { it is PsiFileSystemItem }
-    return items.filterIsInstance<PsiFileSystemItem>().toSet()
-  }
-
-  private fun registerNameSearchEngine(
-    getWeight: (VirtualFile) -> Int = { if (it.isDirectory) 1 else -1 },
-    searchNames: (VirtualFile, String, Consumer<FileSearchCandidate>) -> Unit,
-  ) {
-    val engine = TestDirectorySearchEngine(getWeight, searchNames)
-    ExtensionTestUtil.maskExtensions(DirectorySearchEngine.EP_NAME, listOf(engine), disposable)
-  }
-
   @Test
   fun `name search receives the path pattern`(): Unit = timeoutRunBlocking {
     val root = baseDir.newVirtualDirectory("root")
     val file = baseDir.newVirtualFile("root/sub/file.txt")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
     var receivedPattern: String? = null
     registerNameSearchEngine { _, pathPattern, consumer ->
       receivedPattern = pathPattern
@@ -120,10 +101,7 @@ open class NonIndexableFilesSEContributorTest {
   fun `name search receives the pattern without a line suffix`(): Unit = timeoutRunBlocking {
     val root = baseDir.newVirtualDirectory("root")
     val file = baseDir.newVirtualFile("root/file.txt")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
     var receivedPattern: String? = null
     registerNameSearchEngine { _, pathPattern, consumer ->
       receivedPattern = pathPattern
@@ -139,10 +117,7 @@ open class NonIndexableFilesSEContributorTest {
   @Test
   fun `name search accepts a path without a cached virtual file`(): Unit = timeoutRunBlocking {
     val root = baseDir.newVirtualDirectory("root")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
     val path = Files.createFile(baseDir.rootPath.resolve("root/path-file.txt"))
     registerNameSearchEngine { _, _, consumer -> consumer.accept(FileSearchCandidate.fromPath(path)) }
 
@@ -155,10 +130,7 @@ open class NonIndexableFilesSEContributorTest {
   fun `name search returns the root and its descendants`(): Unit = timeoutRunBlocking {
     val root = baseDir.newVirtualDirectory("root")
     val file = baseDir.newVirtualFile("root/root-file.txt")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
     var searchCalls = 0
     registerNameSearchEngine { directory, _, consumer ->
       searchCalls++
@@ -194,10 +166,7 @@ open class NonIndexableFilesSEContributorTest {
   fun `an unavailable name search engine falls back to the local walk`(): Unit = timeoutRunBlocking {
     val root = baseDir.newVirtualDirectory("root")
     baseDir.newVirtualFile("root/file.txt")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
     registerNameSearchEngine(getWeight = { -1 }) { _, _, _ -> error("The engine is unavailable") }
 
     val names = searchNonIndexableFiles("file").map { it.name }
@@ -209,10 +178,7 @@ open class NonIndexableFilesSEContributorTest {
   fun `name search falls back to the local walk when its engine fails`(): Unit = timeoutRunBlocking {
     val root = baseDir.newVirtualDirectory("root")
     baseDir.newVirtualFile("root/file.txt")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
     val engineCalled = AtomicBoolean()
     registerNameSearchEngine { _, _, _ ->
       engineCalled.set(true)
@@ -230,11 +196,7 @@ open class NonIndexableFilesSEContributorTest {
     val failedRoot = baseDir.newVirtualDirectory("dead")
     val healthyRoot = baseDir.newVirtualDirectory("healthy")
     val healthyFile = baseDir.newVirtualFile("healthy/healthy-file.txt")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(failedRoot.url), NonPersistentEntitySource))
-      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(healthyRoot.url), NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(failedRoot, healthyRoot)
     val failedRootSearched = AtomicBoolean()
     val healthyRootSearched = AtomicBoolean()
     registerNameSearchEngine { directory, _, consumer ->
@@ -256,52 +218,40 @@ open class NonIndexableFilesSEContributorTest {
   }
 
   @Test
-  fun `consumer rejection stops name search result delivery`(): Unit = timeoutRunBlocking {
+  fun `collector rejection stops name search result delivery`(): Unit = timeoutRunBlocking {
     val root = baseDir.newVirtualDirectory("root")
     val first = baseDir.newVirtualFile("root/first-file.txt")
     val second = baseDir.newVirtualFile("root/second-file.txt")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
     registerNameSearchEngine { _, _, consumer ->
       consumer.accept(FileSearchCandidate.fromVirtualFile(first))
       consumer.accept(FileSearchCandidate.fromVirtualFile(second))
     }
-    val contributor = NonIndexableFilesSEContributor(createEvent(project))
-    Disposer.register(disposable, contributor)
-    var consumerCalls = 0
+    var collectorCalls = 0
 
-    contributor.fetchWeightedElements("file", MockProgressIndicator().apply { start() }) {
-      consumerCalls++
+    collectItems("file") {
+      collectorCalls++
       false
     }
 
-    assertThat(consumerCalls).isEqualTo(1)
+    assertThat(collectorCalls).isEqualTo(1)
   }
 
   @Test
   fun `absolute path pattern resolves the file as an exact match`(): Unit = timeoutRunBlocking {
     val root = baseDir.newVirtualDirectory("root")
     val file = baseDir.newVirtualFile("root/sub/file.txt")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
 
-    val found = fetchDescriptors("${file.path}:12")
+    val found = collectItems("${file.path}:12")
 
-    assertThat(found.map { (it.item as PsiFileSystemItem).virtualFile }).containsExactly(file)
-    assertThat(found.single().weight).isEqualTo(DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE)
+    assertThat(found.map { it.psiItem.virtualFile }).containsExactly(file)
+    assertThat(found.single().item.weight()).isEqualTo(DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE)
   }
 
   @Test
   fun `absolute path pattern resolves a file outside the non-indexable roots`(): Unit = timeoutRunBlocking {
-    baseDir.newVirtualDirectory("root").let { root ->
-      workspaceModel.update { storage ->
-        storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
-      }
-    }
+    addNonIndexableRoots(baseDir.newVirtualDirectory("root"))
     val outside = baseDir.newVirtualFile("outside/other.txt")
     VfsTestUtil.syncRefresh()
 
@@ -312,64 +262,41 @@ open class NonIndexableFilesSEContributorTest {
   fun `relative path pattern yields the file once`(): Unit = timeoutRunBlocking {
     val root = baseDir.newVirtualDirectory("root")
     val file = baseDir.newVirtualFile("root/sub/file.txt")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
 
-    val found = fetchDescriptors("root/sub/file.txt")
+    val found = collectItems("root/sub/file.txt")
 
-    assertThat(found.map { (it.item as PsiFileSystemItem).virtualFile }).containsExactly(file)
+    assertThat(found.map { it.psiItem.virtualFile }).containsExactly(file)
   }
 
   @Test
   fun `project relative path pattern resolves a file that no search lists`(): Unit = timeoutRunBlocking {
-    baseDir.newVirtualDirectory("root").let { root ->
-      workspaceModel.update { storage ->
-        storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
-      }
-    }
+    addNonIndexableRoots(baseDir.newVirtualDirectory("root"))
     // outside the walked roots and not in VFS, as a git-ignored file that a file search skips
     Files.writeString(Files.createDirectories(baseDir.root.toPath().resolve(".ignored")).resolve("plan.md"), "")
 
-    val found = fetchDescriptors(".ignored/plan.md")
+    val found = collectItems(".ignored/plan.md")
 
-    assertThat(found.map { (it.item as PsiFileSystemItem).virtualFile.path }).containsExactly("${project.basePath}/.ignored/plan.md")
-    assertThat(found.single().weight).isEqualTo(DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE)
+    assertThat(found.map { it.psiItem.virtualFile.path }).containsExactly("${project.basePath}/.ignored/plan.md")
+    assertThat(found.single().item.weight()).isEqualTo(DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE)
   }
 
   @Test
-  fun `consumer rejection of the path match stops the search`(): Unit = timeoutRunBlocking {
+  fun `collector rejection of the path match stops the search`(): Unit = timeoutRunBlocking {
     val root = baseDir.newVirtualDirectory("root")
     val file = baseDir.newVirtualFile("root/file.txt")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
     val walkStarted = AtomicBoolean(false)
     registerNameSearchEngine { _, _, _ -> walkStarted.set(true) }
-    val contributor = NonIndexableFilesSEContributor(createEvent(project))
-    Disposer.register(disposable, contributor)
-    var consumerCalls = 0
+    var collectorCalls = 0
 
-    contributor.fetchWeightedElements(file.path, MockProgressIndicator().apply { start() }) {
-      consumerCalls++
+    collectItems(file.path) {
+      collectorCalls++
       false
     }
 
-    assertThat(consumerCalls).isEqualTo(1)
+    assertThat(collectorCalls).isEqualTo(1)
     assertThat(walkStarted.get()).isFalse()
-  }
-
-  private fun fetchDescriptors(pattern: String): List<FoundItemDescriptor<Any>> {
-    val contributor = NonIndexableFilesSEContributor(createEvent(project))
-    Disposer.register(disposable, contributor)
-    val found = mutableListOf<FoundItemDescriptor<Any>>()
-    contributor.fetchWeightedElements(pattern, MockProgressIndicator().apply { start() }) {
-      synchronized(found) { found.add(it) }
-      true
-    }
-    return found
   }
 
   @Test
@@ -389,31 +316,21 @@ open class NonIndexableFilesSEContributorTest {
   }
 
   @Test
-  fun `consumer rejection stops optimal and suboptimal result delivery`(): Unit = timeoutRunBlocking {
+  fun `collector rejection stops optimal and suboptimal result delivery`(): Unit = timeoutRunBlocking {
     val root = baseDir.newVirtualDirectory("a")
     baseDir.newVirtualFile("a/b/c/abc-first.txt")
     baseDir.newVirtualFile("a/b/c/abc-second.txt")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
     assertThat(searchNonIndexableFiles("abc").map { it.name })
       .containsExactlyInAnyOrder("abc-first.txt", "abc-second.txt", "c")
 
-    val contributor = NonIndexableFilesSEContributor(createEvent(project))
-    Disposer.register(disposable, contributor)
-    val consumedNames = mutableListOf<String>()
+    val collectedNames = collectItems("abc") { false }.map { it.psiItem.name }
 
-    contributor.fetchWeightedElements("abc", MockProgressIndicator().apply { start() }) {
-      consumedNames.add((it.item as PsiFileSystemItem).name)
-      false
-    }
-
-    assertThat(consumedNames).singleElement().isIn("abc-first.txt", "abc-second.txt")
+    assertThat(collectedNames).singleElement().isIn("abc-first.txt", "abc-second.txt")
   }
 
   @Test
-  fun `unindexed under exclude`(): Unit = runBlocking {
+  fun `unindexed under exclude`(): Unit = timeoutRunBlocking {
     val unindexed = baseDir.newVirtualDirectory("u1").toVirtualFileUrl(urlManager)
     val exclude = baseDir.newVirtualDirectory("u1/exclude").toVirtualFileUrl(urlManager)
     val unindexed2 = baseDir.newVirtualDirectory("u1/exclude/u2").toVirtualFileUrl(urlManager)
@@ -426,13 +343,12 @@ open class NonIndexableFilesSEContributorTest {
     }
     VfsTestUtil.syncRefresh()
 
-    val items = searchNonIndexableFiles("u")
-    val names = items.map { it.name }
+    val names = searchNonIndexableFiles("u").map { it.name }
     assertThat(names).containsExactlyInAnyOrder("u1", "u2")
   }
 
   @Test
-  fun `2 non-indexable roots on one directory`(): Unit = runBlocking {
+  fun `2 non-indexable roots on one directory`(): Unit = timeoutRunBlocking {
     val unindexed = baseDir.newVirtualDirectory("u1").toVirtualFileUrl(urlManager)
     baseDir.newVirtualFile("u1/d1/f1")
     baseDir.newVirtualFile("u1/d1/f2")
@@ -443,35 +359,42 @@ open class NonIndexableFilesSEContributorTest {
     }
     VfsTestUtil.syncRefresh()
 
-    val items = searchNonIndexableFiles("f")
-    val names = items.map { it.name }
+    val names = searchNonIndexableFiles("f").map { it.name }
     assertThat(names).containsExactlyInAnyOrder("f1", "f2")
   }
 
   @Test
-  fun `search scope includes only one file of two`(): Unit = runBlocking {
-    val unindexed1 = baseDir.newVirtualDirectory("u1").toVirtualFileUrl(urlManager)
-    val unindexed2 = baseDir.newVirtualDirectory("u2").toVirtualFileUrl(urlManager)
+  fun `the current file scope includes only one file of two`(): Unit = timeoutRunBlocking {
+    val roots = arrayOf(baseDir.newVirtualDirectory("u1"), baseDir.newVirtualDirectory("u2"))
     baseDir.newVirtualFile("u1/d1/f1")
     val f2 = baseDir.newVirtualFile("u2/d2/f2")
+    addNonIndexableRoots(*roots)
+    val f2PsiFile = readAction { f2.getPsiFile(project) }
+    val currentFileScopeId = SeScopeById.generateScopeId(IdeBundle.message("scope.current.file"))
 
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(unindexed1, NonPersistentEntitySource))
-      storage.addEntity(NonIndexableTestEntity(unindexed2, NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    val names = searchNonIndexableFiles("f", filesTabFilter(currentFileScopeId), psiContext = f2PsiFile).map { it.name }
 
-    val scope = readAction {
-      val f2PsiFile = f2.getPsiFile(project)
-      GlobalSearchScope.projectScope(project).intersectWith(GlobalSearchScope.fileScope(f2PsiFile))
-    }
-    val items = searchNonIndexableFiles("f", scope)
-    val names = items.map { it.name }
     assertThat(names).containsExactlyInAnyOrder("f2")
   }
 
   @Test
-  fun `unindexed under content`(): Unit = runBlocking {
+  @RegistryKey("lookup.non.indexable.content.in.project.scope", "false")
+  fun `the project scope finds nothing when the registry turns off its search`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("root")
+    baseDir.newVirtualFile("root/needle.txt")
+    addNonIndexableRoots(root)
+    val projectScopeId = SeScopeById.generateScopeId(GlobalSearchScope.projectScope(project).displayName)
+    val everywhereScopeId = SeScopeById.generateScopeId(GlobalSearchScope.everythingScope(project).displayName)
+
+    val inProject = searchNonIndexableFiles("needle", filesTabFilter(projectScopeId)).map { it.name }
+    val everywhere = searchNonIndexableFiles("needle", filesTabFilter(everywhereScopeId)).map { it.name }
+
+    assertThat(inProject).isEmpty()
+    assertThat(everywhere).containsExactly("needle.txt")
+  }
+
+  @Test
+  fun `unindexed under content`(): Unit = timeoutRunBlocking {
     val unindexed = baseDir.newVirtualDirectory("u1").toVirtualFileUrl(urlManager)
     val content = baseDir.newVirtualDirectory("u1/content").toVirtualFileUrl(urlManager)
     val unindexed2 = baseDir.newVirtualDirectory("u1/content/u2").toVirtualFileUrl(urlManager)
@@ -484,13 +407,12 @@ open class NonIndexableFilesSEContributorTest {
     }
     VfsTestUtil.syncRefresh()
 
-    val items = searchNonIndexableFiles("u")
-    val names = items.map { it.name }
+    val names = searchNonIndexableFiles("u").map { it.name }
     assertThat(names).containsExactlyInAnyOrder("u1") // `u2` is excluded because it's under content root
   }
 
   @Test
-  fun `unindexed under unindexed`(): Unit = runBlocking {
+  fun `unindexed under unindexed`(): Unit = timeoutRunBlocking {
     val unindexed = baseDir.newVirtualDirectory("u1").toVirtualFileUrl(urlManager)
     baseDir.newVirtualDirectory("u1/justDir").toVirtualFileUrl(urlManager)
     val unindexed2 = baseDir.newVirtualDirectory("u1/justDir/u2").toVirtualFileUrl(urlManager)
@@ -502,13 +424,12 @@ open class NonIndexableFilesSEContributorTest {
     }
     VfsTestUtil.syncRefresh()
 
-    val items = searchNonIndexableFiles("u")
-    val names = items.map { it.name }
+    val names = searchNonIndexableFiles("u").map { it.name }
     assertThat(names).containsExactlyInAnyOrder("u1", "u2", "justDir")
   }
 
   @Test
-  fun `indexable non-recursive file set inside non-indexable`(): Unit = runBlocking {
+  fun `indexable non-recursive file set inside non-indexable`(): Unit = timeoutRunBlocking {
     val nonIndexable = baseDir.newVirtualDirectory("non-indexable").toVirtualFileUrl(urlManager)
     val indexableNonRecursive = baseDir.newVirtualDirectory("non-indexable/indexable-non-recursive").toVirtualFileUrl(urlManager)
     baseDir.newVirtualFile("non-indexable/indexable-non-recursive/non-indexable-file.txt")
@@ -519,13 +440,12 @@ open class NonIndexableFilesSEContributorTest {
     }
     VfsTestUtil.syncRefresh()
 
-    val items = searchNonIndexableFiles("non-indexable")
-    val names = items.map { it.name }
+    val names = searchNonIndexableFiles("non-indexable").map { it.name }
     assertThat(names).containsExactlyInAnyOrder("non-indexable-file.txt", "non-indexable")
   }
 
   @Test
-  fun `unindexed and non-recursive file set at the same level`(): Unit = runBlocking {
+  fun `unindexed and non-recursive file set at the same level`(): Unit = timeoutRunBlocking {
     val root = baseDir.newVirtualDirectory("root-file").toVirtualFileUrl(urlManager)
     baseDir.newVirtualFile("root-file/file.txt")
 
@@ -535,14 +455,13 @@ open class NonIndexableFilesSEContributorTest {
     }
     VfsTestUtil.syncRefresh()
 
-    val items = searchNonIndexableFiles("file")
-    val names = items.map { it.name }
+    val names = searchNonIndexableFiles("file").map { it.name }
     assertThat(names).containsExactlyInAnyOrder("file.txt") // `root` is excluded because it's under non-recursive content root
   }
 
   @Test
   @DisabledOnOs(OS.WINDOWS)
-  fun `symlink to file`(): Unit = runBlocking {
+  fun `symlink to file`(): Unit = timeoutRunBlocking {
     val unindexed = baseDir.newVirtualDirectory("u1").toVirtualFileUrl(urlManager)
     val f = baseDir.newVirtualFile("u1/d2/f3-1").toNioPath()
     Files.createSymbolicLink(baseDir.rootPath.resolve("u1/d2/f3-2"), f)
@@ -551,14 +470,13 @@ open class NonIndexableFilesSEContributorTest {
     }
     VfsTestUtil.syncRefresh()
 
-    val items = searchNonIndexableFiles("f")
-    val names = items.map { it.name }
+    val names = searchNonIndexableFiles("f").map { it.name }
     assertThat(names).contains("f3-1", "f3-2")
   }
 
   @Test
   @DisabledOnOs(OS.WINDOWS)
-  fun `circular symlinks`(): Unit = runBlocking {
+  fun `circular symlinks`(): Unit = timeoutRunBlocking {
     val unindexed1 = baseDir.newVirtualDirectory("u1").toVirtualFileUrl(urlManager)
     val unindexed2 = baseDir.newVirtualDirectory("u2").toVirtualFileUrl(urlManager)
     Files.createSymbolicLink(baseDir.rootPath.resolve("u1/u-link-1"), unindexed2.toPath())
@@ -570,94 +488,109 @@ open class NonIndexableFilesSEContributorTest {
     }
     VfsTestUtil.syncRefresh()
 
-    val items = searchNonIndexableFiles("u")
-    val names = items.map { it.name }
+    val names = searchNonIndexableFiles("u").map { it.name }
     assertThat(names).containsExactlyInAnyOrder("u1", "u2", "u-link-1", "u-link-1", "u-link-2", "u-link-2")
   }
 
   @Test
-  fun `default search everywhere doesn't work`(): Unit = runBlocking {
-    val unindexed1 = baseDir.newVirtualDirectory("dir1").toVirtualFileUrl(urlManager)
+  fun `the All tab finds a file`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("dir1")
     baseDir.newVirtualFile("dir1/file1")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(unindexed1, NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
+    val allTabFilter = SeEverywhereFilterImpl(isAllTab = true, isEverywhere = true, disabledProviderIds = emptyList()).toState()
 
-    val contributor = FileSearchEverywhereContributor(createEvent(project))
-    Disposer.register(disposable, contributor)
+    val names = searchNonIndexableFiles("file1", allTabFilter).map { it.name }
 
-    val items = contributor.search("file1", MockProgressIndicator().apply { start() })
-    assertThat(items).isEmpty()
-  }
-
-  @Test
-  fun `search everywhere`(): Unit = runBlocking {
-    val unindexed1 = baseDir.newVirtualDirectory("dir1").toVirtualFileUrl(urlManager)
-    baseDir.newVirtualFile("dir1/file1")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(unindexed1, NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
-
-    val contributor = NonIndexableFilesSEContributor(createEvent(project))
-    Disposer.register(disposable, contributor)
-
-    val items = contributor.search("file1", MockProgressIndicator().apply { start() }).toSet()
-
-    assertThat(items).allSatisfy { it is PsiFileSystemItem }
-    val names = items.map { (it as PsiFileSystemItem).name }
     assertThat(names).containsExactlyInAnyOrder("file1")
   }
 
-
   @Test
-  fun `file is not found because it has hidden type`(): Unit = runBlocking {
-    val unindexed1 = baseDir.newVirtualDirectory("dir1").toVirtualFileUrl(urlManager)
+  fun `the Files tab hides a file of a hidden type`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("dir1")
     val file1 = baseDir.newVirtualFile("dir1/file1")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(unindexed1, NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
+    val hiddenTypeName = readAction { FileTypeRef.forFileType(file1.fileType).displayName }
 
-    val contributor = NonIndexableFilesSEContributor(createEvent(project))
-    contributor.setHiddenTypes(listOf(FileTypeRef.forFileType(file1.fileType)))
-    Disposer.register(disposable, contributor)
+    val visible = searchNonIndexableFiles("file1").map { it.name }
+    val hidden = searchNonIndexableFiles("file1", filesTabFilter(hiddenTypes = listOf(hiddenTypeName)))
 
-    val items = contributor.search("file1", MockProgressIndicator().apply { start() }).toSet()
-
-    assertThat(items).isEmpty()
+    assertThat(visible).containsExactly("file1")
+    assertThat(hidden).isEmpty()
   }
 
   @Test
-  fun `search everywhere with slashes`(): Unit = runBlocking {
-    val unindexed1 = baseDir.newVirtualDirectory("dir1").toVirtualFileUrl(urlManager)
+  fun `search everywhere with slashes`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("dir1")
     baseDir.newVirtualFile("dir1/file1")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(unindexed1, NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
 
-    val items = searchNonIndexableFiles("dir1/file1")
-    val names = items.map { it.name }
+    val names = searchNonIndexableFiles("dir1/file1").map { it.name }
     assertThat(names).containsExactlyInAnyOrder("file1")
   }
 
   @Test
-  fun `search everywhere with slashes, inner dir in pattern`(): Unit = runBlocking {
-    val unindexed1 = baseDir.newVirtualDirectory("dir1").toVirtualFileUrl(urlManager)
+  fun `search everywhere with slashes, inner dir in pattern`(): Unit = timeoutRunBlocking {
+    val root = baseDir.newVirtualDirectory("dir1")
     baseDir.newVirtualFile("dir1/folder/file1")
-    workspaceModel.update { storage ->
-      storage.addEntity(NonIndexableTestEntity(unindexed1, NonPersistentEntitySource))
-    }
-    VfsTestUtil.syncRefresh()
+    addNonIndexableRoots(root)
 
-
-    val items = searchNonIndexableFiles("folder/file1")
-    val names = items.map { it.name }
+    val names = searchNonIndexableFiles("folder/file1").map { it.name }
     assertThat(names).containsExactlyInAnyOrder("file1")
   }
+
+  private suspend fun addNonIndexableRoots(vararg roots: VirtualFile) {
+    workspaceModel.update { storage ->
+      for (root in roots) {
+        storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(root.url), NonPersistentEntitySource))
+      }
+    }
+    VfsTestUtil.syncRefresh()
+  }
+
+  private fun registerNameSearchEngine(
+    getWeight: (VirtualFile) -> Int = { if (it.isDirectory) 1 else -1 },
+    searchNames: (VirtualFile, String, Consumer<FileSearchCandidate>) -> Unit,
+  ) {
+    val engine = TestDirectorySearchEngine(getWeight, searchNames)
+    ExtensionTestUtil.maskExtensions(DirectorySearchEngine.EP_NAME, listOf(engine), disposable)
+  }
+
+  private suspend fun searchNonIndexableFiles(
+    pattern: String,
+    filter: SeFilterState = filesTabFilter(),
+    psiContext: PsiElement? = null,
+  ): Set<PsiFileSystemItem> =
+    collectItems(pattern, filter, psiContext).mapTo(HashSet()) { it.psiItem }
+
+  /**
+   * Collects the items of the provider for [pattern]. [collector] returns `false` to stop the search.
+   */
+  private suspend fun collectItems(
+    pattern: String,
+    filter: SeFilterState = filesTabFilter(),
+    psiContext: PsiElement? = null,
+    collector: (SeItem) -> Boolean = { true },
+  ): List<CollectedItem> {
+    val psiContextPointer = psiContext?.let { readAction { SmartPointerManager.getInstance(project).createSmartPsiElementPointer(it) } }
+    val provider = SeNonIndexableFilesProvider(project, psiContextPointer)
+    try {
+      val collected = mutableListOf<CollectedItem>()
+      provider.collectItems(SeParams(pattern, filter)) { item ->
+        collected.add(CollectedItem(item, provider.getPsiElementForItem(item) as PsiFileSystemItem))
+        collector(item)
+      }
+      return collected
+    }
+    finally {
+      Disposer.dispose(provider)
+    }
+  }
+
+  private class CollectedItem(val item: SeItem, val psiItem: PsiFileSystemItem)
 }
+
+private fun filesTabFilter(scopeId: String? = null, hiddenTypes: List<String> = emptyList()): SeFilterState =
+  SeTargetsFilter(scopeId, isAutoTogglePossible = false, mapOf(SeTypeFilterKeys.DEFAULT to hiddenTypes)).toState()
 
 private class TestDirectorySearchEngine(
   private val weight: (VirtualFile) -> Int,
@@ -678,10 +611,4 @@ private class TestDirectorySearchEngine(
   override fun searchNames(directory: VirtualFile, pathPattern: String, consumer: Consumer<FileSearchCandidate>) {
     nameSearch(directory, pathPattern, consumer)
   }
-}
-
-
-private fun createEvent(project: Project): AnActionEvent {
-  val projectContext = SimpleDataContext.getProjectContext(project)
-  return TestActionEvent.createTestEvent(projectContext)
 }

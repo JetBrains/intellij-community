@@ -124,6 +124,7 @@ private class PairProgressIndicator(val delegateMain: ProgressIndicator, val del
 
 @ApiStatus.Internal
 @OptIn(ExperimentalAtomicApi::class)
+@Deprecated("Use SeNonIndexableFilesProvider instead")
 class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEverywhereContributor<Any>,
                                                              DumbAware,
                                                              FilesTabSEContributor,
