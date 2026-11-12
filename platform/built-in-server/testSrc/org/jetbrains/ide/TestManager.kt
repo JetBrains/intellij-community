@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.intellij.openapi.application.runWriteAction
@@ -24,13 +24,15 @@ class TestManager(private val projectRule: ProjectRule, private val tempDirManag
   var filePath: String? = null
 
   @Target(AnnotationTarget.FUNCTION)
-  annotation class TestDescriptor(val filePath: String,
-                                  val line: Int = -1,
-                                  val column: Int = -1,
-                                  val relativeToProject: Boolean = false,
-                                  val excluded: Boolean = false,
-                                  val doNotCreate: Boolean = false,
-                                  val status: Int = 200)
+  annotation class TestDescriptor(
+    val filePath: String,
+    val line: Int = -1,
+    val column: Int = -1,
+    val relativeToProject: Boolean = false,
+    val excluded: Boolean = false,
+    val doNotCreate: Boolean = false,
+    val status: Int = 200,
+  )
 
   override fun starting(description: Description) {
     annotation = description.getAnnotation(TestDescriptor::class.java) ?: return
@@ -86,7 +88,7 @@ class TestManager(private val projectRule: ProjectRule, private val tempDirManag
     }
   }
 
-  override fun finished(description: Description?) {
+  override fun finished(description: Description) {
     if (annotation?.excluded == true) {
       ModuleRootModificationUtil.updateModel(projectRule.module) { model -> model.contentEntries[0].removeExcludeFolder(EXCLUDED_DIR_NAME) }
     }

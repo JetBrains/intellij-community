@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.testFramework.DisposeModulesRule
 import com.intellij.testFramework.ProjectRule
@@ -10,8 +11,8 @@ import com.intellij.testFramework.runInEdtAndWait
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
-import org.jetbrains.builtInWebServer.acquireToken
 import org.junit.BeforeClass
 import org.junit.ClassRule
 import org.junit.Rule
@@ -100,7 +101,7 @@ internal fun testUrl(url: String, expectedStatus: HttpResponseStatus, asSignedRe
     builder.header(HttpHeaderNames.ORIGIN.toString(), it)
   }
   if (asSignedRequest) {
-    builder.header(TOKEN_HEADER_NAME, acquireToken())
+    builder.header(TOKEN_HEADER_NAME, service<BuiltInWebServerAuth>().acquireToken())
   }
 
   val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()

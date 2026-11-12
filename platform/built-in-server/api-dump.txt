@@ -9,7 +9,6 @@ c:org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider
 f:org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 - f:acquireToken():java.lang.String
 f:org.jetbrains.builtInWebServer.BuiltInWebServerKt
-- sf:acquireToken():java.lang.String
 - sf:findIndexFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 org.jetbrains.builtInWebServer.FileResolver
 - a:resolve(java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,org.jetbrains.builtInWebServer.PathQuery):org.jetbrains.builtInWebServer.PathInfo

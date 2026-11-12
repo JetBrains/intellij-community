@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.ide.browsers.OpenInBrowserRequest
@@ -21,13 +21,9 @@ import org.jetbrains.ide.BuiltInServerManager
 
 open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
   override fun canHandleElement(request: OpenInBrowserRequest): Boolean {
-    if (request.virtualFile is HttpVirtualFile) {
-      return true
-    }
-
     // we must use base language because we serve file - not part of file, but the entire Handlebars file, for example,
     // contains HTML and HBS trees, so regardless of context, we should not handle such a file
-    return request.isPhysicalFile() && isFileOfMyLanguage(request.file)
+    return request.virtualFile is HttpVirtualFile || request.isPhysicalFile() && isFileOfMyLanguage(request.file)
   }
 
   protected open fun isFileOfMyLanguage(psiFile: PsiFile): Boolean = WebBrowserXmlService.getInstance().isHtmlOrXmlFile(psiFile)
@@ -53,7 +49,6 @@ fun getBuiltInServerUrls(
   val effectivePort = BuiltInServerOptions.getInstance().effectiveBuiltInServerPort
   val path = info.path
   val authority = currentAuthority ?: "localhost:${effectivePort}"
-  @Suppress("MISSING_DEPENDENCY_SUPERCLASS_IN_TYPE_ARGUMENT")
   val reloadMode = reloadMode ?: WebBrowserManager.getInstance().webServerReloadMode
   val appendReloadOnSave = reloadMode != ReloadMode.DISABLED
   val queryBuilder = StringBuilder()

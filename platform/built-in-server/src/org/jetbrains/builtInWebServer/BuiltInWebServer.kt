@@ -253,9 +253,6 @@ internal class BuiltInWebServer : HttpRequestHandler() {
   }
 }
 
-@Deprecated("Please use `BuiltInWebServerAuth.acquireToken` instead")
-fun acquireToken(): String = service<BuiltInWebServerAuth>().acquireToken()
-
 fun compareNameAndProjectBasePath(projectName: String, project: Project): Boolean {
   val basePath = project.basePath
   return basePath != null && endsWithName(basePath, projectName)
