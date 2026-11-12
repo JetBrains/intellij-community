@@ -78,11 +78,26 @@ public final class TestLocationStorage {
 
   private static String escapeJson(String str) {
     if (str == null) return "";
-    return str.replace("\\", "\\\\")
-      .replace("\"", "\\\"")
-      .replace("\n", "\\n")
-      .replace("\r", "\\r")
-      .replace("\t", "\\t");
+    var result = new StringBuilder(str.length());
+    for (int i = 0; i < str.length(); i++) {
+      char c = str.charAt(i);
+      switch (c) {
+        case '\\' -> result.append("\\\\");
+        case '"' -> result.append("\\\"");
+        case '\n' -> result.append("\\n");
+        case '\r' -> result.append("\\r");
+        case '\t' -> result.append("\\t");
+        default -> {
+          if (c < 0x20) {
+            result.append(String.format("\\u%04x", (int)c));
+          }
+          else {
+            result.append(c);
+          }
+        }
+      }
+    }
+    return result.toString();
   }
 
   public static void recordTestLocation(String testName, Class<?> testClass, boolean failed) {
