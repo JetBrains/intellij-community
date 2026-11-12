@@ -53,6 +53,9 @@ internal class TextFonts private constructor(
   /** The font family of each code point that is not ASCII, in a lossy cache. See [familyIndex]. */
   private val familyIndices by lazy { AtomicLongArray(FAMILY_INDICES_SIZE) }
 
+  /** The editor font of each ASCII char in each style, for [fontRenderContext]. See [editorAsciiFont]. */
+  private val editorAsciiFonts = arrayOfNulls<FontInfo>(STYLE_COUNT * FIRST_NON_ASCII)
+
   @Volatile private var maxPrintableAsciiWidth = -1f
 
   private val ascent: Int = families.maxOfOrNull { family -> family.fonts.maxOf { fontAscent(it) } } ?: 0
@@ -75,6 +78,9 @@ internal class TextFonts private constructor(
         return familyFont(index, validStyle, context)
       }
     }
+    if (end - start == 1 && text[start].code < FIRST_NON_ASCII && context === fontRenderContext) {
+      return editorAsciiFont(text[start].code, style)
+    }
     return editorFontLookup.fontAbleToDisplay(text, start, end, style, context)
   }
 
@@ -91,6 +97,9 @@ internal class TextFonts private constructor(
       if (index >= 0) {
         return familyFont(index, validStyle, context)
       }
+    }
+    if (end - start == 1 && text[start].code < FIRST_NON_ASCII && context === fontRenderContext) {
+      return editorAsciiFont(text[start].code, style)
     }
     return editorFontLookup.fontAbleToDisplay(text, start, end, style, context)
   }
@@ -178,6 +187,22 @@ internal class TextFonts private constructor(
       }
     }
     return fontAbleToDisplay(codePoint, fontStyle).charWidth2D(codePoint)
+  }
+
+  /**
+   * Returns the editor font of the ASCII char [codePoint] in [style], for [fontRenderContext].
+   * It is the font that the registry gives, see [RegistryFontLookup].
+   */
+  private fun editorAsciiFont(codePoint: Int, @FontStyle style: Int): FontInfo {
+    val validStyle = validStyle(style)
+    val index = validStyle * FIRST_NON_ASCII + codePoint
+    val cached = editorAsciiFonts[index]
+    if (cached != null) {
+      return cached
+    }
+    val font = editorFontLookup.fontAbleToDisplay(codePoint, validStyle, fontRenderContext)
+    editorAsciiFonts[index] = font
+    return font
   }
 
   private fun fontAbleToDisplay(codePoint: Int, @FontStyle fontStyle: Int): FontInfo {

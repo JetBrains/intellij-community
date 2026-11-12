@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.view
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry
+import com.intellij.openapi.editor.impl.RegistryFontLookup
 import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test
 import java.awt.Font
 import java.awt.FontMetrics
 import java.awt.font.FontRenderContext
+import java.awt.geom.AffineTransform
 
 private val STYLES = intArrayOf(Font.PLAIN, Font.BOLD, Font.ITALIC, Font.BOLD or Font.ITALIC)
 private val PRINTABLE_ASCII = ' '.code..'~'.code
@@ -43,6 +45,35 @@ internal class TextFontsTest {
   @AfterEach
   fun tearDown() {
     FontLayoutService.setInstance(null)
+  }
+
+  @Test
+  fun `the font of each ASCII char is the font from the fallback search`() {
+    val fonts = TextFonts(preferences, context, null)
+    val lookup = RegistryFontLookup(preferences)
+    // the second pass reads the cached fonts
+    repeat(2) {
+      for (style in STYLES) {
+        for (code in 0 until 128) {
+          val text = charArrayOf(code.toChar())
+          val expected = lookup.fontAbleToDisplay(text, 0, 1, style, context)
+          assertThat(fonts.fontAbleToDisplay(text, 0, 1, style, context)).describedAs("U+%04X in style %d", code, style)
+            .isEqualTo(expected)
+          assertThat(fonts.fontAbleToDisplay(String(text), 0, 1, style, context)).describedAs("U+%04X in style %d", code, style)
+            .isEqualTo(expected)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `an ASCII char in another render context gets the font of that context`() {
+    val fonts = TextFonts(preferences, context, null)
+    val otherContext = FontRenderContext(AffineTransform.getScaleInstance(2.0, 2.0), true, true)
+    val text = charArrayOf('a')
+    fonts.fontAbleToDisplay(text, 0, 1, Font.PLAIN, context)
+
+    assertThat(fonts.fontAbleToDisplay(text, 0, 1, Font.PLAIN, otherContext).fontRenderContext).isEqualTo(otherContext)
   }
 
   @Test
