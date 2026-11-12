@@ -26,6 +26,243 @@ import org.junit.jupiter.api.Test
 class PyNarrowingTypeTest : PyCodeInsightTestCase() {
 
   @Nested
+  @TestInspections(enableInspections = [PyUnreachableCodeInspection::class])
+  inner class LiteralComparisonNarrowing {
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
+    fun `decimal equality with integer zero keeps the branch reachable`() = test("""
+      from decimal import Decimal
+
+      def decimal_equals_int(value: Decimal) -> bool:
+          expr = value
+      #   └ TYPE Decimal
+          if value == 0:
+              expr = value
+      #       └ TYPE Decimal
+              return True
+          return False
+
+      def int_equals_decimal(value: Decimal) -> bool:
+          if 0 == value:
+              return True
+          return False
+
+      def decimal_equals_decimal(value: Decimal) -> bool:
+          if value == Decimal(0):
+              return True
+          return False
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `decimal inequality keeps the equal branch reachable`() = test("""
+      from decimal import Decimal
+
+      def f(value: Decimal):
+          if value != 0:
+              expr = value
+      #       └ TYPE Decimal
+          else:
+              expr = value
+      #       └ TYPE Decimal
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `literal equality preserves custom equality in a union`() = test("""
+      from typing import final
+
+      @final
+      class EqualToZero:
+          def __eq__(self, other: object) -> bool:
+              return other == 0
+
+      def f(value: EqualToZero | int):
+          if value == 0:
+              expr = value
+      #       └ TYPE EqualToZero | Literal[0]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93035"], classes = [PyTypeAssertionEvaluator::class])
+    fun `callable equality with a literal keeps the branch reachable`() = test("""
+      from typing import Callable
+
+      def f(fn: Callable[[int], None]):
+          if fn == "asdf":
+              expr = fn
+      #       └ TYPE (int) -> None
+              fn(1)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `literal identity still excludes disjoint types`() = test("""
+      from decimal import Decimal
+      from typing import Literal
+
+      def f(value: Decimal, zero: Literal[0]):
+          if value is zero:
+              return True
+      #       ^^^^^^^^^^^ WARNING This code is unreachable
+          return False
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `final default equality excludes an unrelated literal`() = test("""
+      from typing import final
+
+      @final
+      class Token:
+          pass
+
+      def f(value: Token):
+          if value == 0:
+              return True
+      #       ^^^^^^^^^^^ WARNING This code is unreachable
+          return False
+
+      def g[T: Token](value: T):
+          if value == 0:
+              return True
+      #       ^^^^^^^^^^^ WARNING This code is unreachable
+          return False
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `equality preserves a decimal bound type parameter`() = test("""
+      from decimal import Decimal
+
+      def f[T: Decimal](value: T):
+          if value == 0:
+              expr = value
+      #       └ TYPE T
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `equality preserves a constrained type parameter`() = test("""
+      from decimal import Decimal
+
+      def f[T: (Decimal, int)](value: T):
+          if value == 0:
+              expr = value
+      #       └ TYPE T
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `final classes retain inherited and assigned equality`() = test("""
+      from typing import final
+
+      class Base:
+          def __eq__(self, other: object) -> bool:
+              return True
+
+      @final
+      class Inherited(Base):
+          pass
+
+      @final
+      class Assigned:
+          __eq__ = lambda self, other: True
+
+      def f(value: Inherited):
+          if value == 0:
+              expr = value
+      #       └ TYPE Inherited
+
+      def g(value: Assigned):
+          if value == 0:
+              expr = value
+      #       └ TYPE Assigned
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `literal equality can be implemented by the other operand`() = test("""
+      from enum import Enum
+      from typing import final
+
+      @final
+      class Token:
+          pass
+
+      class E(Enum):
+          A = 1
+          def __eq__(self, other: object) -> bool:
+              return True
+
+      def f(value: Token):
+          if value == E.A:
+              expr = value
+      #       └ TYPE Token
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `open classes can inherit custom equality in a subclass`() = test("""
+      class Token:
+          pass
+
+      def f(value: Token):
+          if value == 0:
+              expr = value
+      #       └ TYPE Token
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `custom inequality counts as custom comparison`() = test("""
+      from typing import final
+
+      @final
+      class Token:
+          def __ne__(self, other: object) -> bool:
+              return False
+
+      def f(value: Token):
+          if value != 0:
+              return False
+          else:
+              expr = value
+      #       └ TYPE Token
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `builtin classes of different equality groups are still excluded`() = test("""
+      def f(value: int | str):
+          if value == "a":
+              expr = value
+      #       └ TYPE Literal["a"]
+              value.upper()
+
+      def g(value: str):
+          if value == 0:
+              return True
+      #       ^^^^^^^^^^^ WARNING This code is unreachable
+          return False
+
+      def h(value: float):
+          if value == 0:
+              expr = value
+      #       └ TYPE float | Literal[0]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `equality preserves a type parameter with a matching bound`() = test("""
+      def f[T: int](value: T):
+          if value == 0:
+              expr = value
+      #       └ TYPE T
+      """.trimIndent())
+  }
+
+  @Nested
   inner class IsinstanceNarrowing {
     @Test
     @TestFor(classes = [PyCustomType::class])
