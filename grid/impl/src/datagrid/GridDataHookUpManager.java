@@ -92,16 +92,13 @@ public class GridDataHookUpManager implements GridHookUpRegistry, Disposable {
 
   private Disposable createHookUpReferenceDisposable(final @NotNull HookUpReference ref, final @Nullable VirtualFile editorFile) {
     boolean parkable = ref.isReusable() || editorFile != null;
-    if (parkable || !isClosingToReopen(ref, editorFile)) {
-      ref.myReferenceCount++;
-    }
+    ref.myReferenceCount++;
     return new Disposable() {
       private final AtomicBoolean myDisposed = new AtomicBoolean(false);
 
       @Override
       public void dispose() {
         if (!myDisposed.compareAndSet(false, true)) return;
-        if (!parkable && isClosingToReopen(ref, editorFile)) return;
 
         synchronized (myLock) {
           if (--ref.myReferenceCount > 0) return;
