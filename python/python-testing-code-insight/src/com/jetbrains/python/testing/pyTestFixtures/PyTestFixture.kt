@@ -26,9 +26,9 @@ import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyReferenceExpression
-import com.jetbrains.python.psi.PyStarImportElement
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.stubs.PyDecoratorStub
 import com.jetbrains.python.psi.stubs.PyDecoratorStubIndex
 import com.jetbrains.python.psi.stubs.PyTestFixtureDecoratorStub
@@ -74,7 +74,7 @@ private fun getFixtureAsExpressionLink(
   val pyExpression = element.expression
   val func = PsiTreeUtil.getParentOfType(pyExpression, PyFunction::class.java) ?: return null
   val fixtureCandidates = getFixtures(module, func, typeEvalContext).filter { o -> o.name == pyExpression.name }
-  return module.baseDir?.path?.let { return findRightFixture(fixtureCandidates, func, pyExpression, typeEvalContext, it) }
+  return module.baseDir?.path?.let { return findRightFixture(fixtureCandidates, func, pyExpression, typeEvalContext, module, it) }
 }
 
 /**
@@ -86,7 +86,7 @@ private fun getFixtureAsStringLink(
   module: Module,
 ): NamedFixtureLink? {
   val fixtureCandidates = getModuleFixtures(module).filter { o -> o.name == element.stringValue }
-  return module.baseDir?.path?.let { return findRightFixture(fixtureCandidates, null, element, typeEvalContext, it) }
+  return module.baseDir?.path?.let { return findRightFixture(fixtureCandidates, null, element, typeEvalContext, module, it) }
 }
 
 @ApiStatus.Internal
@@ -108,11 +108,13 @@ private fun PyTestFixture.isInConftestInDir(directory: PsiDirectory): Boolean {
  * 3. Import statements in fixture file
  * 4. "conftest.py" files in parent directories
  * 5. Import statements in "conftest.py" file
- * 6. Reserved fixtures in "_pytest" dir
+ * 6. Plugins of the `pytest11` entry points of the installed distributions, and their import statements
+ * 7. Reserved fixtures in "_pytest" dir
  *
  * [fixtureCandidates] All pytest fixtures in a project that could be used by [func].forWhat
  * [func] PyFunction using [pyFixtureElement]
  * [pyFixtureElement] Fixture provided as PyNamedParameter or PyStringLiteralExpression
+ * [module] Module of [pyFixtureElement]
  * [projectPath] Project directory path
  *
  * @return Fixture and import element if fixture was imported or null
@@ -122,6 +124,7 @@ private fun findRightFixture(
   func: PyFunction?,
   pyFixtureElement: PyElement,
   typeEvalContext: TypeEvalContext,
+  module: Module,
   projectPath: String,
 ): NamedFixtureLink? {
   val elementName = pyFixtureElement.getFixtureName() ?: return null
@@ -171,6 +174,11 @@ private fun findRightFixture(
     }
   }
 
+  // search in plugins of the `pytest11` entry points
+  if (!fixtureCandidates.isEmpty()) {
+    searchInEntryPointPlugins(fixtureCandidates, module, elementName, func)?.let { return it }
+  }
+
   // search reserved fixture in "_pytest" dir
   if (!fixtureCandidates.isEmpty()) {
     fixtureCandidates.find { fixtureCandidate ->
@@ -200,6 +208,23 @@ private fun searchInConftest(
   (currentDirectory.findFile(CONFTEST_PY) as? PyFile)?.let { pyFile ->
     getFixtureFromImports(pyFile, elementName, func, fixtureCandidates)?.let { return it }
     getFixtureFromPytestPlugins(pyFile, fixtureCandidates)?.let { return it }
+  }
+  return null
+}
+
+/**
+ * Search fixture or imported fixture in the plugins of the `pytest11` entry points.
+ * The import element of the plugin is not in the file of the fixture usage, so the link has no import element.
+ */
+private fun searchInEntryPointPlugins(
+  fixtureCandidates: List<PyTestFixture>,
+  module: Module,
+  elementName: String,
+  func: PyFunction?,
+): NamedFixtureLink? {
+  for (pluginFile in getPytestEntryPointPluginFiles(module)) {
+    fixtureCandidates.find { it.getContainingFile() == pluginFile }?.let { return NamedFixtureLink(it, null) }
+    getFixtureFromImports(pluginFile, elementName, func, fixtureCandidates)?.let { return NamedFixtureLink(it.fixture, null) }
   }
   return null
 }
@@ -258,15 +283,15 @@ private fun findImportedFixtureWithWildcard(
   func: PyFunction?,
   fixtureCandidates: List<PyTestFixture>,
 ): NamedFixtureLink? {
-  val starImportElements = targetFile.importBlock.filter { importStatement -> importStatement.children.any { it is PyStarImportElement } }
-  if (starImportElements.isNotEmpty()) {
+  val starImportStatements = targetFile.fromImports.filter { it.isStarImport }
+  if (starImportStatements.isNotEmpty()) {
     // Map: containing file to fixture
     val fileToFixture =
       fixtureCandidates.mapNotNull { candidate -> (candidate.getContainingFile() as? PyFile)?.let { it to candidate } }.toMap()
     // Map: resolved source file to PyStarImportElement (needs for import reference)
-    val sourceToImport = starImportElements.mapNotNull { elem ->
-      val sourceFile = elem.children.firstOrNull { it is PyReferenceExpression }?.let { it.reference?.resolve() as? PyFile }
-      val starImportElement = elem.children.firstOrNull { it is PyStarImportElement } as? PyStarImportElement
+    val sourceToImport = starImportStatements.mapNotNull { statement ->
+      val sourceFile = statement.resolveImportSource()?.let { PyUtil.turnDirIntoInit(it) } as? PyFile
+      val starImportElement = statement.starImportElement
       if (sourceFile == null || starImportElement == null) {
         null
       }

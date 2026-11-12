@@ -1,6 +1,7 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.ini4j"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
@@ -28,6 +29,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.testing.PyTestParameterCompletionContributor"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.testing.pyTestFixtures.PyTestPluginMarkerArgumentCompletionContributor"/>
 
     <localInspection language="Python" shortName="PyTestParametrizedInspection" suppressId="PyTestParametrized"
                      bundle="messages.PyPsiBundle" key="INSP.NAME.pytest-parametrized"
@@ -65,6 +68,7 @@
 
     <!--pytest fixture -->
     <inspectionExtension implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureInspectionExtension"/>
+    <pyClassMembersProvider implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestPluginMarkerMembersProvider"/>
     <inspectionExtension implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspectionExtension"/>
     <inspectionExtension implementation="com.jetbrains.python.testing.pyMock.PyMockInspectionExtension"/>
     <typeProvider id="pyTestParametrizedTypeProvider"
