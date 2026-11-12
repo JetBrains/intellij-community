@@ -195,9 +195,6 @@
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.handleTypeFactory" interface="com.intellij.openapi.vcs.readOnlyHandler.HandleTypeFactory"
                     area="IDEA_PROJECT" dynamic="false"/>
-    <extensionPoint qualifiedName="com.intellij.undoProvider" interface="com.intellij.openapi.command.impl.UndoProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.projectUndoProvider" interface="com.intellij.openapi.command.impl.UndoProvider"
-                    area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.undoReportHandler" interface="com.intellij.openapi.command.impl.UndoReportHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.multipleFileOpener"
                     interface="com.intellij.ide.impl.MultipleFileOpener"

@@ -90,7 +90,7 @@ internal class UndoClearDocumentReferencesTest {
   @Test
   fun `a directory deleted outside a command is not kept`() {
     val deleted = timeoutRunBlocking(context = Dispatchers.EDT) {
-      loadUndoProviders()
+      createFileUndoProvider()
       val directory = createDirectory("deleted-outside-command")
       delete(directory)
       directory
@@ -216,10 +216,10 @@ internal class UndoClearDocumentReferencesTest {
   }
 
   /**
-   * Runs an empty command. The first command of a project loads the undo providers, and `FileUndoProvider` is one of them.
+   * Runs an empty command. The first command of a project creates `FileUndoProvider`, because it is a project listener of commands.
    */
-  private fun loadUndoProviders() {
-    CommandProcessor.getInstance().executeCommand(project.get(), {}, "load undo providers", null)
+  private fun createFileUndoProvider() {
+    CommandProcessor.getInstance().executeCommand(project.get(), {}, "create FileUndoProvider", null)
   }
 
   private fun createDirectory(name: String): VirtualFile {

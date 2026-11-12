@@ -71,8 +71,3 @@ c:com.intellij.openapi.command.impl.UndoManagerImpl
 - setOverriddenEditorProvider(com.intellij.openapi.fileEditor.impl.CurrentEditorProvider):V
 - undo(com.intellij.openapi.fileEditor.FileEditor):V
 - undoableActionPerformed(com.intellij.openapi.command.undo.UndoableAction):V
-com.intellij.openapi.command.impl.UndoProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- sf:PROJECT_EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:commandFinished(com.intellij.openapi.project.Project):V
-- a:commandStarted(com.intellij.openapi.project.Project):V

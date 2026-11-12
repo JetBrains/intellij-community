@@ -36,7 +36,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.function.BooleanSupplier;
 
@@ -277,17 +276,11 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   }
 
   void onCommandStarted(@NotNull CmdEvent cmdStartEvent) {
-    for (UndoProvider undoProvider : getUndoProviders()) {
-      undoProvider.commandStarted(cmdStartEvent.project());
-    }
     state.commandStarted(cmdStartEvent, getEditorProvider());
   }
 
   void onCommandFinished(@NotNull CmdEvent cmdFinishEvent) {
     state.commandFinished(cmdFinishEvent);
-    for (UndoProvider undoProvider : getUndoProviders()) {
-      undoProvider.commandFinished(cmdFinishEvent.project());
-    }
   }
 
   void onCommandFakeFinished(@NotNull CmdEvent cmdFakeFinishEvent) {
@@ -374,12 +367,6 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   private boolean isUndoRedoAvailable(@Nullable FileEditor editor, boolean undo) {
     ThreadingAssertions.assertEventDispatchThread();
     return state.isUndoRedoAvailable(editor, undo);
-  }
-
-  private @NotNull List<UndoProvider> getUndoProviders() {
-    return project == null
-           ? UndoProvider.EP_NAME.getExtensionList()
-           : UndoProvider.PROJECT_EP_NAME.getExtensionList(project);
   }
 
   @TestOnly

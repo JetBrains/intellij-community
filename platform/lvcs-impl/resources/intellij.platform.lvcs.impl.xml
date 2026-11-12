@@ -121,9 +121,6 @@
                  restartRequired="false"
                  description="Whether to store VFS file id instead of file name to avoid VFS access on shutdown"/>
 
-    <undoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
-    <projectUndoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
-
     <applicationService serviceInterface="com.intellij.history.LocalHistory"
                         serviceImplementation="com.intellij.history.integration.LocalHistoryImpl"/>
     <applicationService serviceImplementation="com.intellij.history.integration.IdeaGateway"/>
@@ -153,4 +150,9 @@
     <listener class="com.intellij.history.integration.LocalHistoryEventDispatcher$LocalHistoryBulkFileListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable"/>
   </applicationListeners>
+
+  <projectListeners>
+    <listener class="com.intellij.openapi.command.impl.FileUndoProvider"
+              topic="com.intellij.openapi.command.impl.SeparatedCommandListener"/>
+  </projectListeners>
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.configurationStore.StorageManagerFileWriteRequestor;
@@ -28,33 +28,30 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.FileContentUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
 
-public final class FileUndoProvider implements UndoProvider, BulkFileListener {
+@ApiStatus.Internal
+public final class FileUndoProvider extends ProjectCommandTracker implements BulkFileListener {
   public static final Logger LOG = Logger.getInstance(FileUndoProvider.class);
 
   private final Key<DocumentReference> DELETION_WAS_UNDOABLE = new Key<>(FileUndoProvider.class.getName() + ".DeletionWasUndoable");
 
-  private final Project myProject;
-  private boolean myIsInsideCommand;
+  private final @NotNull Project myProject;
 
   private LocalHistoryFacade myLocalHistory;
   private IdeaGateway myGateway;
 
   private long myLastChangeId;
 
-  @SuppressWarnings("UnusedDeclaration")
-  public FileUndoProvider() {
-    this(null);
-  }
-
-  private FileUndoProvider(Project project) {
+  @SuppressWarnings("unused")
+  private FileUndoProvider(@NotNull Project project) {
+    super(project);
     myProject = project;
-    if (myProject == null) return;
 
     @NotNull LocalHistory localHistory = LocalHistory.getInstance();
     if (!(localHistory instanceof LocalHistoryImpl)) return;
@@ -70,18 +67,6 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
         myLastChangeId = c.getId();
       }
     }, myProject);
-  }
-
-  @Override
-  public void commandStarted(Project p) {
-    if (myProject != p) return;
-    myIsInsideCommand = true;
-  }
-
-  @Override
-  public void commandFinished(Project p) {
-    if (myProject != p) return;
-    myIsInsideCommand = false;
   }
 
   @Override
@@ -156,7 +141,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
   }
 
   private boolean shouldProcess(@NotNull VFileEvent e, VirtualFile file) {
-    if (!myIsInsideCommand || myProject.isDisposed()) {
+    if (!isInsideCommand() || myProject.isDisposed()) {
       return false;
     }
     if (UndoUtil.isUndoDisabledFor(file)) {
@@ -187,7 +172,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
   }
 
   private void invalidateActionsFor(@NotNull VirtualFile file) {
-    if (myProject == null || !myProject.isDisposed()) {
+    if (!myProject.isDisposed()) {
       getUndoManager().invalidateActionsFor(createDocumentReference(file));
     }
   }
@@ -197,10 +182,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
   }
 
   private UndoManagerImpl getUndoManager() {
-    if (myProject != null) {
-      return (UndoManagerImpl)UndoManager.getInstance(myProject);
-    }
-    return (UndoManagerImpl)UndoManager.getGlobalInstance();
+    return (UndoManagerImpl)UndoManager.getInstance(myProject);
   }
 
   private final class MyUndoableAction extends GlobalUndoableAction {
