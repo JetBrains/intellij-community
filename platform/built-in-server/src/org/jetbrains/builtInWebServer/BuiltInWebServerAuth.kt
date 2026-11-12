@@ -30,7 +30,7 @@ class BuiltInWebServerAuth {
     val settingsDirHash = Integer.toHexString(PathManager.getConfigDir().toString().hashCode())
     DefaultCookie("${productName}-${settingsDirHash}", token).apply {
       isHttpOnly = true
-      setMaxAge(TimeUnit.DAYS.toSeconds(365 * 10))
+      setMaxAge(TimeUnit.DAYS.toSeconds(30))  // actual expiration time is one IDE session
       setPath("/")
     }
   }
