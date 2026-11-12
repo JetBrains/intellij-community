@@ -74,6 +74,8 @@ internal class ConvertParameterToReceiverIntention : SelfTargetingIntention<KtPa
         val changeInfo = KotlinChangeInfo(methodDescriptor)
         changeInfo.receiverParameterInfo = changeInfo.newParameters.filterNot { it.isContextParameter  }[parameterIndex]
 
-        KotlinChangeSignatureProcessor(element.project, changeInfo).run()
+        val processor = KotlinChangeSignatureProcessor(element.project, changeInfo)
+        processor.prepareSuccessfulSwingThreadCallback = Runnable { }
+        processor.run()
     }
 }

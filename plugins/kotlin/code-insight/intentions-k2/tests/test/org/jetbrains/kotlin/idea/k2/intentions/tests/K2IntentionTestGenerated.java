@@ -13877,6 +13877,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/vararg.kt");
         }
 
+        @TestMetadata("withConflicts.kt")
+        public void testWithConflicts() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/withConflicts.kt");
+        }
+
         @TestMetadata("withContextParameter.kt")
         public void testWithContextParameter() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertParameterToReceiver/withContextParameter.kt");
