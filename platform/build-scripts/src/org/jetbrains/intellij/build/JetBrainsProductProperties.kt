@@ -23,6 +23,9 @@ import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
 import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName
 import com.jetbrains.plugin.structure.intellij.verifiers.DEFAULT_ILLEGAL_PREFIXES
 import com.jetbrains.plugin.structure.intellij.verifiers.PRODUCT_ID_RESTRICTED_WORDS
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
@@ -60,6 +63,16 @@ val PRESIGNED_NATIVE_LIBS: Map<String, String> = mapOf(
   "intellij-deps-rocksdbjni" to "rocksdbjni",
 )
 
+/**
+ * The monorepo modules that map a test class to its code owner.
+ * The published test frameworks use them only inside the monorepo, so no Maven artifact may reference them.
+ */
+internal val CODE_OWNER_MODULES: PersistentList<String> = persistentListOf(
+  "intellij.codeowners",
+  "intellij.codeowners.monorepo.resolver",
+  "intellij.codeowners.runtime.resolver",
+)
+
 private val ALLOWED_PLUGIN_VENDORS: Set<String> = java.util.Set.of(
   "JetBrains", "JetBrains s.r.o.",
   "JetBrains, Google",
@@ -78,6 +91,7 @@ abstract class JetBrainsProductProperties : ProductProperties() {
     sbomOptions.license = SoftwareBillOfMaterials.Options.DistributionLicense.JETBRAINS
 
     productLayout.addPlatformSpec { layout -> layout.withModule(IJENT_BOOT_CLASSPATH_MODULE, PLATFORM_CORE_NIO_FS) }
+    mavenArtifacts.omittedModules += CODE_OWNER_MODULES
   }
 
   final override fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>): List<PluginProblem> {

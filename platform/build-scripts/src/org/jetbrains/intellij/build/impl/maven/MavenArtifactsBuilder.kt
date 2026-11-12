@@ -289,8 +289,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     val squashingMavenArtifactsData = generateMavenArtifactData(moduleNamesToSquashAndPublish, ignoreNonMavenizable)
     for (moduleName in moduleNamesToSquashAndPublish) {
       val module = context.outputProvider.findRequiredModule(moduleName)
-      val modules = JpsJavaExtensionService.dependencies(module)
-        .recursively().withoutSdk().includedIn(JpsJavaClasspathKind.runtime(false)).modules
+      val modules = squashedModules(module)
 
       val moduleCoordinates = modules.mapTo(HashSet()) { aModule -> generateMavenCoordinatesForModule(aModule) }
       val dependencies = modules
@@ -314,6 +313,18 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     if (validate) {
       validate(builtArtifacts)
     }
+  }
+
+  /**
+   * Returns the runtime modules that the squashed artifact of [module] contains.
+   * It does not enter the omitted modules, so the squashed jar holds none of their classes.
+   */
+  internal fun squashedModules(module: JpsModule): Set<JpsModule> {
+    val omittedModules = context.productProperties.mavenArtifacts.omittedModules
+    return JpsJavaExtensionService.dependencies(module)
+      .recursively().withoutSdk().includedIn(JpsJavaClasspathKind.runtime(false))
+      .satisfying { it !is JpsModuleDependency || it.moduleReference.moduleName !in omittedModules }
+      .modules
   }
 
   internal fun generateMavenArtifactData(moduleNames: Collection<String>, ignoreNonMavenizable: Boolean): Map<JpsModule, MavenArtifactData> {
@@ -465,6 +476,9 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
   }
 
   protected open fun shouldSkipModule(moduleName: String, moduleIsDependency: Boolean): Boolean {
+    if (moduleName in context.productProperties.mavenArtifacts.omittedModules) {
+      return true
+    }
     val moduleShouldBePublished = moduleIsDependency || moduleName in FLEET_MODULES_ALLOWED_FOR_PUBLICATION || moduleName.startsWith("intellij.")
     return !moduleShouldBePublished
   }

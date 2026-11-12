@@ -53,6 +53,13 @@ class MavenArtifactsProperties {
   var proprietaryModules: PersistentList<String> = persistentListOf()
 
   /**
+   * Names of modules for which the builder generates no Maven artifact, also when a published module depends on them.
+   * No generated `pom.xml` declares them, and no squashed artifact holds them.
+   * So a published module that depends on one of them must work without it.
+   */
+  var omittedModules: PersistentList<String> = persistentListOf()
+
+  /**
    * Extra Maven "aggregator" artifacts to generate — each is a single pom.xml (packaging=pom, no jar)
    * that declares runtime-scope &lt;dependency&gt; entries on every Maven artifact produced by this build
    * matching the spec's filter. Downstream Maven consumers can depend on the aggregator with

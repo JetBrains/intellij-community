@@ -167,4 +167,31 @@ class MavenArtifactsBuilderTest {
       }
     }
   }
+
+  /**
+   * The benchmark module depends on the code owner resolver directly.
+   * Its artifact must stay published, but no artifact of [CODE_OWNER_MODULES] may appear in the result or in a `pom.xml`.
+   */
+  @Test
+  fun `code owner modules are neither published nor declared in a pom`() {
+    val benchmarkModule = "intellij.tools.ide.metrics.benchmark"
+    val artifacts = builder.generateMavenArtifactData(listOf(benchmarkModule), ignoreNonMavenizable = false).values
+    Assert.assertTrue("Module '$benchmarkModule' is not published anymore", artifacts.any { it.module.name == benchmarkModule })
+    Assert.assertEquals(emptyList<String>(), artifacts.map { it.module.name }.filter { it in CODE_OWNER_MODULES })
+    val codeOwnerDependencies = artifacts.flatMap { artifact ->
+      artifact.dependencies.filter { it.coordinates.groupId == "com.jetbrains.intellij.codeowners" }.map { "${artifact.module.name} -> ${it.coordinates}" }
+    }
+    Assert.assertEquals(emptyList<String>(), codeOwnerDependencies)
+  }
+
+  /**
+   * A squashed artifact holds the classes of its runtime modules.
+   * When it reaches a module of [CODE_OWNER_MODULES], the squashed jar must not hold that module or its dependencies.
+   */
+  @Test
+  fun `a squashed artifact holds no code owner module`() {
+    val modules = builder.squashedModules(context.outputProvider.findRequiredModule("intellij.tools.ide.metrics.benchmark"))
+    Assert.assertTrue("The benchmark module is not in its own squashed artifact", modules.any { it.name == "intellij.tools.ide.metrics.benchmark" })
+    Assert.assertEquals(emptyList<String>(), modules.map { it.name }.filter { it.startsWith("intellij.codeowners") })
+  }
 }
