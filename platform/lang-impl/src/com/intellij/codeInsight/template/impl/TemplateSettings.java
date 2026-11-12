@@ -23,7 +23,7 @@ import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -56,6 +57,7 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 
 import static com.intellij.codeInsight.template.impl.TemplateContext.contextsEqual;
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 
 @State(
   name = "TemplateSettings",
@@ -118,6 +120,8 @@ public final class TemplateSettings implements PersistentStateComponent<Template
 
   private State myState = new State();
   private final Map<Pair<String, String>, PluginInfo> myPredefinedTemplates = new HashMap<>();
+
+  private volatile List<ParsedDefaultTemplateGroup> myParsedDefaultTemplates;
 
   static final class ShortcutConverter extends Converter<Character> {
     @Override
@@ -215,7 +219,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       @Override
       public @Nullable TemplateGroup readScheme(@NotNull Element element, boolean duringLoad) {
         TemplateGroup readGroup = parseTemplateGroup(element, element.getAttributeValue("group"), getClass().getClassLoader());
-        TemplateGroup group = readGroup == null ? null : mergeParsedGroup(element, false, false, readGroup);
+        TemplateGroup group = readGroup == null ? null : mergeParsedGroup(false, false, readGroup);
         if (group != null) {
           group.setModified(false);
         }
@@ -304,7 +308,23 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       }
     }, ApplicationManager.getApplication());
 
-    EP_NAME.addChangeListener(mySchemeManager::reload, ApplicationManager.getApplication());
+    // Listener runs on the EDT, under the WA;
+    // Parse resources on the BG
+    EP_NAME.addChangeListener(
+      () -> ApplicationManager.getApplication().getService(TemplateSettingsReloader.class).schedule(),
+      ApplicationManager.getApplication());
+  }
+
+  /** Applies the {@code parsed} default templates together with a reload of the user schemes. */
+  @RequiresWriteLock
+  void reloadWithParsedDefaults(@NotNull List<ParsedDefaultTemplateGroup> parsed) {
+    myParsedDefaultTemplates = parsed;
+    try {
+      mySchemeManager.reload();
+    }
+    finally {
+      myParsedDefaultTemplates = null;
+    }
   }
 
   private void doLoadTemplates(@NotNull Collection<? extends TemplateGroup> groups) {
@@ -501,10 +521,16 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   }
 
   private void loadDefaultLiveTemplates() {
+    List<ParsedDefaultTemplateGroup> parsed = myParsedDefaultTemplates;
+    applyParsedDefaultTemplates(parsed == null ? parseDefaultLiveTemplates() : parsed);
+  }
+
+  /** Reads and parses the default live templates of every provider and extension. It touches no settings state, so it can run in the background. */
+  static @NotNull List<ParsedDefaultTemplateGroup> parseDefaultLiveTemplates() {
+    List<ParsedDefaultTemplateGroup> result = new ArrayList<>();
     try {
-      myPredefinedTemplates.clear();
       for (DefaultLiveTemplatesProvider provider : DefaultLiveTemplatesProvider.EP_NAME.getExtensionList()) {
-        loadDefaultLiveTemplatesFromProvider(provider);
+        parseDefaultLiveTemplatesOfProvider(provider, result);
       }
 
       EP_NAME.processWithPluginDescriptor((ep, pluginDescriptor) -> {
@@ -513,34 +539,50 @@ public final class TemplateSettings implements PersistentStateComponent<Template
           return Unit.INSTANCE;
         }
 
+        // a pending write action cancels the read action of the background reload here, between the files
+        ProgressManager.checkCanceled();
         try {
           ClassLoader pluginClassLoader = pluginDescriptor.getClassLoader();
-          readDefTemplate(file, !ep.hidden, pluginClassLoader, PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
+          ParsedDefaultTemplateGroup parsed =
+            parseDefTemplate(file, !ep.hidden, pluginClassLoader, PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor));
+          if (parsed != null) {
+            result.add(parsed);
+          }
         }
         catch (Exception e) {
+          rethrowControlFlowException(e);
           LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
         }
         return Unit.INSTANCE;
       });
     }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
     catch (Exception e) {
+      rethrowControlFlowException(e);
       LOG.error(e);
     }
+    return result;
   }
 
-  private void loadDefaultLiveTemplatesFromProvider(DefaultLiveTemplatesProvider provider) throws JDOMException {
+  private static void parseDefaultLiveTemplatesOfProvider(@NotNull DefaultLiveTemplatesProvider provider,
+                                                          @NotNull List<ParsedDefaultTemplateGroup> result) throws JDOMException {
     for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
-      readDefTemplate(defTemplate, true, provider.getClass().getClassLoader(),
-                      PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+      ProgressManager.checkCanceled();
+      ParsedDefaultTemplateGroup parsed =
+        parseDefTemplate(defTemplate, true, provider.getClass().getClassLoader(), PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+      if (parsed != null) {
+        result.add(parsed);
+      }
     }
     try {
       String[] hidden = provider.getHiddenLiveTemplateFiles();
       if (hidden != null) {
         for (String s : hidden) {
-          readDefTemplate(s, false, provider.getClass().getClassLoader(), PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+          ProgressManager.checkCanceled();
+          ParsedDefaultTemplateGroup parsed =
+            parseDefTemplate(s, false, provider.getClass().getClassLoader(), PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
+          if (parsed != null) {
+            result.add(parsed);
+          }
         }
       }
     }
@@ -548,10 +590,42 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     }
   }
 
-  private void readDefTemplate(@NotNull String defTemplate,
-                               boolean registerTemplate,
-                               @NotNull ClassLoader loader,
-                               PluginInfo info) throws JDOMException {
+  private void applyParsedDefaultTemplates(@NotNull List<ParsedDefaultTemplateGroup> parsed) {
+    myPredefinedTemplates.clear();
+    for (ParsedDefaultTemplateGroup parsedGroup : parsed) {
+      try {
+        applyDefTemplate(parsedGroup);
+      }
+      catch (Exception e) {
+        rethrowControlFlowException(e);
+        String pluginId = parsedGroup.pluginInfo().getId();
+        LOG.error(new PluginException(e, pluginId == null ? null : PluginId.getId(pluginId)));
+      }
+    }
+  }
+
+  private void applyDefTemplate(@NotNull ParsedDefaultTemplateGroup parsed) {
+    TemplateGroup defGroup = parsed.group();
+    for (TemplateImpl template : defGroup.getElements()) {
+      String key = template.getKey();
+      String groupName = template.getGroupName();
+      if (Strings.isNotEmpty(key) && Strings.isNotEmpty(groupName)) {
+        myPredefinedTemplates.put(new Pair<>(key, groupName), parsed.pluginInfo());
+      }
+    }
+
+    TemplateGroup group = mergeParsedGroup(true, parsed.registerTemplate(), defGroup);
+    if (group != null && group.getReplace() != null) {
+      for (TemplateImpl template : myTemplates.get(group.getReplace())) {
+        removeTemplate(template);
+      }
+    }
+  }
+
+  private static @Nullable ParsedDefaultTemplateGroup parseDefTemplate(@NotNull String defTemplate,
+                                                                       boolean registerTemplate,
+                                                                       @NotNull ClassLoader loader,
+                                                                       PluginInfo info) throws JDOMException {
     String pluginId = info.getId();
     Element element;
     try {
@@ -565,7 +639,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       if (data == null) {
         LOG.error(new PluginException("Unable to find template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info,
                                       pluginId == null ? null : PluginId.getId(pluginId)));
-        return;
+        return null;
       }
 
       element = JDOMUtil.load(data);
@@ -574,27 +648,15 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       LOG.error(
         new PluginException("Unable to read template resource: " + defTemplate + "; classLoader: " + loader + "; plugin: " + info, e,
                             pluginId == null ? null : PluginId.getId(pluginId)));
-      return;
+      return null;
     }
 
     TemplateGroup defGroup = parseTemplateGroup(element, getDefaultTemplateName(defTemplate), loader);
-    if (defGroup != null) {
-      for (TemplateImpl template : defGroup.getElements()) {
-        String key = template.getKey();
-        String groupName = template.getGroupName();
-        if (Strings.isNotEmpty(key) && Strings.isNotEmpty(groupName)) {
-          myPredefinedTemplates.put(new Pair<>(key, groupName), info);
-        }
-      }
-
-      TemplateGroup group = mergeParsedGroup(element, true, registerTemplate, defGroup);
-      if (group != null && group.getReplace() != null) {
-        for (TemplateImpl template : myTemplates.get(group.getReplace())) {
-          removeTemplate(template);
-        }
-      }
-    }
+    return defGroup == null ? null : new ParsedDefaultTemplateGroup(defGroup, registerTemplate, info);
   }
+
+  /** The default live templates of one file, parsed and not applied to the settings. */
+  record ParsedDefaultTemplateGroup(@NotNull TemplateGroup group, boolean registerTemplate, @NotNull PluginInfo pluginInfo) {}
 
   private static String appendExt(@NotNull String head) {
     return head.endsWith(ComponentStorageUtil.DEFAULT_EXT) ? head : head + ComponentStorageUtil.DEFAULT_EXT;
@@ -635,11 +697,10 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     return result;
   }
 
-  private @Nullable TemplateGroup mergeParsedGroup(@NotNull Element element,
-                                                   boolean isDefault,
+  private @Nullable TemplateGroup mergeParsedGroup(boolean isDefault,
                                                    boolean registerTemplate,
                                                    TemplateGroup parsedGroup) {
-    TemplateGroup result = new TemplateGroup(parsedGroup.getName(), element.getAttributeValue("REPLACE"));
+    TemplateGroup result = new TemplateGroup(parsedGroup.getName(), parsedGroup.getReplace());
 
     Map<String, TemplateImpl> created = new LinkedHashMap<>();
 
