@@ -429,6 +429,7 @@ libraries/ai-grazie-semantic-engine
 libraries/ai.grazie.spell.gec.engine.local
 libraries/allure/java-commons
 libraries/androidx-collections
+libraries/antlr4-runtime
 libraries/asm
 libraries/asm-tools
 libraries/assertj-core

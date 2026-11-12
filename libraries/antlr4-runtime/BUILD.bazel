@@ -1,0 +1,29 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.antlr4.runtime` start
+jvm_library(
+    name = "antlr4-runtime",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.antlr4.runtime",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-antlr4-runtime-antlr4-runtime"],
+    runtime_deps = ["@lib//:libraries-antlr4-runtime-antlr4-runtime"],
+)
+### auto-generated section `build intellij.libraries.antlr4.runtime` end
+
+### auto-generated section `iml intellij.libraries.antlr4.runtime` start
+exports_files(
+    [
+        "intellij.libraries.antlr4.runtime.iml",
+        "resources/intellij.libraries.antlr4.runtime.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.antlr4.runtime` end

@@ -5919,6 +5919,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "org.antlr/antlr4-runtime-4.13.2.jar_copy",
+    src = "@org_antlr-antlr4-runtime-4_13_2_http//file",
+    out = "org.antlr/antlr4-runtime-4.13.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-antlr4-runtime-antlr4-runtime",
+    jar = "@org_antlr-antlr4-runtime-4_13_2_http//file",
+    source_jar = "@org_antlr-antlr4-runtime-4_13_2-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.jetbrains.intellij.deps/asm-all-9.6.1.jar_copy",
     src = "@org_jetbrains_intellij_deps-asm-all-9_6_1_http//file",
     out = "org.jetbrains.intellij.deps/asm-all-9.6.1.jar",
