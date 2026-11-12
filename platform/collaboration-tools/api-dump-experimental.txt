@@ -859,12 +859,6 @@
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 - s:values():com.intellij.collaboration.ui.codereview.list.search.ShowDirection[]
-*:com.intellij.collaboration.ui.codereview.review.CodeReviewSubmitViewModel
-- a:cancel():V
-- a:getDraftCommentsCount():kotlinx.coroutines.flow.StateFlow
-- a:getError():kotlinx.coroutines.flow.StateFlow
-- a:getText():kotlinx.coroutines.flow.MutableStateFlow
-- a:isBusy():kotlinx.coroutines.flow.StateFlow
 *f:com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder
 - *sf:Companion:com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder$Companion
 - sf:REVIEW_BRANCH_CHECKOUT_FAILED:java.lang.String
@@ -936,8 +930,6 @@
 - <init>(javax.swing.JList):V
 - mouseClicked(java.awt.event.MouseEvent):V
 - mouseMoved(java.awt.event.MouseEvent):V
-*f:com.intellij.collaboration.ui.util.ListSelectionUtilKt
-- sf:getSelectedItem(com.intellij.openapi.ListSelection):java.lang.Object
 *f:com.intellij.collaboration.ui.util.popup.CollaborationToolsPopupUtilKt
 - sf:showAndAwait(com.intellij.openapi.ui.popup.JBPopup,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.coroutines.Continuation):java.lang.Object
 - sf:showAndAwaitListSubmission(com.intellij.openapi.ui.popup.JBPopup,com.intellij.ui.awt.RelativePoint,com.intellij.collaboration.ui.codereview.list.search.ShowDirection,kotlin.coroutines.Continuation):java.lang.Object

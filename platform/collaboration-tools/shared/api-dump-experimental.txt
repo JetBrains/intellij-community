@@ -558,6 +558,12 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - sf:HEIGHT:I
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionsUIUtil$Picker
 - sf:WIDTH:I
+*:com.intellij.collaboration.ui.codereview.review.CodeReviewSubmitViewModel
+- a:cancel():V
+- a:getDraftCommentsCount():kotlinx.coroutines.flow.StateFlow
+- a:getError():kotlinx.coroutines.flow.StateFlow
+- a:getText():kotlinx.coroutines.flow.MutableStateFlow
+- a:isBusy():kotlinx.coroutines.flow.StateFlow
 *:com.intellij.collaboration.ui.codereview.timeline.CollapsibleTimelineItemViewModel
 - a:getCollapsed():kotlinx.coroutines.flow.Flow
 - a:getCollapsible():kotlinx.coroutines.flow.Flow
@@ -705,6 +711,8 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 *f:com.intellij.collaboration.ui.util.JComponentOverlay
 - sf:INSTANCE:com.intellij.collaboration.ui.util.JComponentOverlay
 - f:createCentered(javax.swing.JComponent,javax.swing.JComponent):javax.swing.JLayeredPane
+*f:com.intellij.collaboration.ui.util.ListSelectionUtilKt
+- sf:getSelectedItem(com.intellij.openapi.ListSelection):java.lang.Object
 *f:com.intellij.collaboration.ui.util.SwingBindingsKt
 - sf:bindBackgroundIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindBorderIn(javax.swing.JComponent,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
