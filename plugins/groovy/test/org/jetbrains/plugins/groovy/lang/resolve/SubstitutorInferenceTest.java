@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.groovy.testFramework.GroovyAssertions;
 import com.intellij.groovy.testFramework.ResolveTest;
 import com.intellij.groovy.testFramework.TypingTest;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiTypeParameter;
@@ -33,10 +34,12 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 
 @TestApplication
 public class SubstitutorInferenceTest implements TypingTest, ResolveTest {
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK);
+  private static final TestFixture<Project> project = groovyProjectFixture();
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK);
 
   @Override
   public @NotNull JavaCodeInsightTestFixture getFixture() {

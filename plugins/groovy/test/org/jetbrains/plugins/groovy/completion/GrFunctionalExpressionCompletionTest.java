@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.completion;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
@@ -17,8 +18,8 @@ public abstract class GrFunctionalExpressionCompletionTest {
   private final TestFixture<GroovyCompletionTestFixture> completion;
   private final TestFixture<String> testName = testNameFixture(false);
 
-  protected GrFunctionalExpressionCompletionTest(@NotNull LightProjectDescriptor descriptor, @NotNull String testDataPath) {
-    groovy = groovyFixture(descriptor, testDataPath);
+  protected GrFunctionalExpressionCompletionTest(@NotNull TestFixture<Project> project, @NotNull LightProjectDescriptor descriptor, @NotNull String testDataPath) {
+    groovy = groovyFixture(project, descriptor, testDataPath);
     completion = groovyCompletionFixture(groovy);
   }
 

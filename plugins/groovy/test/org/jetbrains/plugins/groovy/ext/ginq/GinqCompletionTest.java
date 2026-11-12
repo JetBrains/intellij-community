@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.ext.ginq;
 
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
@@ -14,10 +15,12 @@ import org.junit.jupiter.api.Test;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 
 @TestApplication
 public class GinqCompletionTest {
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GinqTestUtils.getProjectDescriptor());
+  private static final TestFixture<Project> project = groovyProjectFixture();
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GinqTestUtils.getProjectDescriptor());
   private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
 
   @BeforeEach

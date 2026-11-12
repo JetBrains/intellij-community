@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
@@ -25,10 +26,12 @@ import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 
 @TestApplication
 public class GroovyResolveCacheTest {
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_2_5);
+  private static final TestFixture<Project> project = groovyProjectFixture();
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_2_5);
 
   public @NotNull JavaCodeInsightTestFixture getFixture() {
     return groovy.get();

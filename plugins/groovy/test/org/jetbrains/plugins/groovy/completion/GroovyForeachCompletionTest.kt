@@ -5,11 +5,16 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.util.groovyFixture
+import org.jetbrains.plugins.groovy.util.groovyProjectFixture
 import org.junit.jupiter.api.Test
 
 @TestApplication
 class GroovyForeachCompletionTest {
-  private val groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_5_0, "groovy/completion/foreach")
+  companion object {
+    private val project = groovyProjectFixture()
+  }
+
+  private val groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_5_0, "groovy/completion/foreach")
   private val completion by groovyCompletionFixture(groovy)
 
   @Test

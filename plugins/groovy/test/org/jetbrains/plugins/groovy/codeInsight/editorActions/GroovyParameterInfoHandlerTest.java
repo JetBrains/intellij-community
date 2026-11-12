@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.codeInsight.editorActions;
 import com.intellij.groovy.testFramework.ResolveTest;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
@@ -17,10 +18,12 @@ import org.junit.jupiter.api.Test;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 
 @TestApplication
 public class GroovyParameterInfoHandlerTest implements ResolveTest {
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_2_5, "parameterInfo/");
+  private static final TestFixture<Project> project = groovyProjectFixture();
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_2_5, "parameterInfo/");
   private final TestFixture<String> testName = testNameFixture(false);
 
   @Override

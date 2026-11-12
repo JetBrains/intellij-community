@@ -4,6 +4,8 @@
 package org.jetbrains.plugins.groovy.util
 
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -19,19 +21,21 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.javaCodeInsightFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.disposableFixture
+import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
+import com.intellij.testFramework.junit5.fixture.vfsDeletedTempPathFixture
 import org.jetbrains.annotations.TestOnly
 import kotlin.io.path.Path
 
 /**
  * Creates a [JavaCodeInsightTestFixture] in a new project for each test.
- * It replaces the JUnit 4 base `LightProjectTest` and its subclasses, such as `GroovyLatestTest`.
+ * The project directory is the module directory.
+ * Use it only when the code under test needs the project directory. Otherwise, use the overload with a shared project.
  *
  * The module gets the SDK, the language level, and the libraries of [descriptor], as a light module of [descriptor] does.
  * The test data path is [testDataPath] under [TestUtils.getAbsoluteTestDataPath].
- *
- * The JUnit 4 base ran each test on the EDT. Put the EDT calls of a JUnit 6 test in `EdtTestUtil.runInEdtAndWait`.
  */
 @TestOnly
 @JvmOverloads
@@ -40,19 +44,54 @@ fun groovyFixture(descriptor: LightProjectDescriptor, testDataPath: String = "")
     val projectFixture = codeInsightProjectFixture()
     val disposable = disposableFixture().init()
     val fixture = javaCodeInsightFixture(projectFixture, projectFixture.pathInProjectFixture(Path(""))).init()
-    val module = fixture.module
-    // configureModule is public only on DefaultLightProjectDescriptor.
-    val defaultDescriptor = descriptor as DefaultLightProjectDescriptor
-    val sdk = defaultDescriptor.sdk!!
-    WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().addJdk(sdk, disposable) }
-    ModuleRootModificationUtil.setModuleSdk(module, sdk)
-    ModuleRootModificationUtil.updateModel(module) { defaultDescriptor.configureModule(module, it, it.contentEntries.single()) }
-    IndexingTestUtil.waitUntilIndexesAreReady(fixture.project)
-    // LightGroovyTestCase loads the extensions before the test, so that the highlighting does not load them.
-    EntryPointsManagerBase.DEAD_CODE_EP_NAME.extensionList
-    fixture.testDataPath = TestUtils.getAbsoluteTestDataPath() + testDataPath
+    configureGroovyModule(fixture, descriptor, disposable, testDataPath)
     initialized(fixture) {}
   }
+
+/**
+ * Creates an opened project to share between the tests of a class. Declare it in a static field, and pass it to [groovyFixture].
+ */
+@TestOnly
+fun groovyProjectFixture(): TestFixture<Project> = projectFixture(openAfterCreation = true)
+
+/**
+ * Creates a [JavaCodeInsightTestFixture] with a new module and a new temporary directory for each test in the shared [projectFixture].
+ * It replaces the JUnit 3 and JUnit 4 light Groovy bases, such as `LightGroovyTestCase` and `GroovyLatestTest`.
+ * The project directory is not the module directory.
+ *
+ * The module gets the SDK, the language level, and the libraries of [descriptor], as a light module of [descriptor] does.
+ * The test data path is [testDataPath] under [TestUtils.getAbsoluteTestDataPath].
+ */
+@TestOnly
+@JvmOverloads
+fun groovyFixture(
+  projectFixture: TestFixture<Project>,
+  descriptor: LightProjectDescriptor,
+  testDataPath: String = "",
+): TestFixture<JavaCodeInsightTestFixture> =
+  testFixture("groovyFixture") {
+    val disposable = disposableFixture().init()
+    val pathFixture = vfsDeletedTempPathFixture()
+    val moduleFixture = projectFixture.moduleFixture(pathFixture, addPathToSourceRoot = true)
+    // The editors of the test must close before the module is disposed.
+    val fixture = javaCodeInsightFixture(projectFixture, pathFixture).dependsOn(moduleFixture).init()
+    configureGroovyModule(fixture, descriptor, disposable, testDataPath)
+    initialized(fixture) {}
+  }
+
+private fun configureGroovyModule(fixture: JavaCodeInsightTestFixture, descriptor: LightProjectDescriptor, disposable: Disposable, testDataPath: String) {
+  val module = fixture.module
+  // configureModule is public only on DefaultLightProjectDescriptor.
+  val defaultDescriptor = descriptor as DefaultLightProjectDescriptor
+  val sdk = defaultDescriptor.sdk!!
+  WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().addJdk(sdk, disposable) }
+  ModuleRootModificationUtil.setModuleSdk(module, sdk)
+  ModuleRootModificationUtil.updateModel(module) { defaultDescriptor.configureModule(module, it, it.contentEntries.single()) }
+  IndexingTestUtil.waitUntilIndexesAreReady(fixture.project)
+  // LightGroovyTestCase loads the extensions before the test, so that the highlighting does not load them.
+  EntryPointsManagerBase.DEAD_CODE_EP_NAME.extensionList
+  fixture.testDataPath = TestUtils.getAbsoluteTestDataPath() + testDataPath
+}
 
 /**
  * Adds a stub of the annotation `groovy.transform.CompileStatic` to the project of [fixture].

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.completion;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.StaticallyImportable;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -19,12 +20,14 @@ import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.gr
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.addCompileStatic;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.configureByExactName;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 public class GroovySmartCompletionTest {
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST, "groovy/completion/smart");
+  private static final TestFixture<Project> project = groovyProjectFixture();
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, LightJavaCodeInsightFixtureTestCase.JAVA_LATEST, "groovy/completion/smart");
   private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
   private final TestFixture<String> testName = testNameFixture(false);
 

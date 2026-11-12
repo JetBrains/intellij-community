@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.groovy.testFramework.TypingTest;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
@@ -16,11 +17,13 @@ import java.util.List;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 public class SpockTest implements TypingTest, HighlightingTest {
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(SpockTestUtil.SPOCK_PROJECT);
+  private static final TestFixture<Project> project = groovyProjectFixture();
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, SpockTestUtil.SPOCK_PROJECT);
 
   @Override
   public @NotNull JavaCodeInsightTestFixture getFixture() {

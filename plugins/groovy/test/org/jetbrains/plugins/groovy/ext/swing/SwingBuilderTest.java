@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.ext.swing;
 
 import com.intellij.groovy.testFramework.ResolveTest;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
@@ -14,10 +15,12 @@ import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 
 @TestApplication
 public final class SwingBuilderTest implements ResolveTest {
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private static final TestFixture<Project> project = groovyProjectFixture();
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_2_1);
 
   @Override
   public @NotNull JavaCodeInsightTestFixture getFixture() {

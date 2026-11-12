@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -17,6 +18,7 @@ import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixtu
 import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.configureByExactName;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -24,7 +26,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 @TestApplication
 public class GrCompletionWithLibraryTest {
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_1_7, "groovy/completion/");
+  private static final TestFixture<Project> project = groovyProjectFixture();
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_1_7, "groovy/completion/");
   private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
   private final TestFixture<String> testName = testNameFixture(false);
 

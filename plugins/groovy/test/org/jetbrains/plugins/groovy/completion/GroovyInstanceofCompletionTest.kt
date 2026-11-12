@@ -6,11 +6,16 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.plugins.groovy.util.groovyFixture
+import org.jetbrains.plugins.groovy.util.groovyProjectFixture
 import org.junit.jupiter.api.Test
 
 @TestApplication
 class GroovyInstanceofCompletionTest {
-  private val groovy = groovyFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST, "groovy/completion/instanceof")
+  companion object {
+    private val project = groovyProjectFixture()
+  }
+
+  private val groovy = groovyFixture(project, LightJavaCodeInsightFixtureTestCase.JAVA_LATEST, "groovy/completion/instanceof")
   private val completion by groovyCompletionFixture(groovy)
 
   @Test
