@@ -6,7 +6,7 @@ import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 import de.plushnikov.intellij.plugin.LombokTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static de.plushnikov.intellij.plugin.intention.LombokIntentionActionTest.TEST_DATA_INTENTION_DIRECTORY;
+import static de.plushnikov.intellij.plugin.intention.LombokIntentionFixture.TEST_DATA_INTENTION_DIRECTORY;
 
 public class ValAndVarIntentionActionTest extends AbstractLombokLightCodeInsightTestCase {
 

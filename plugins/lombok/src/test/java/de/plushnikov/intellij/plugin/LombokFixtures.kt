@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package de.plushnikov.intellij.plugin
 
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaProject
@@ -9,7 +10,9 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import de.plushnikov.intellij.plugin.LombokParsingFixture.ModeRunnerType
 import de.plushnikov.intellij.plugin.action.LombokActionFixture
+import de.plushnikov.intellij.plugin.intention.LombokIntentionFixture
 import org.jetbrains.annotations.TestOnly
+import java.util.function.BooleanSupplier
 import java.util.function.Supplier
 
 /**
@@ -91,4 +94,21 @@ fun lombokActionFixture(
 ): TestFixture<LombokActionFixture> = testFixture("lombokActionFixture") {
   val fixture = lombokCodeInsightFixture(projectFixture, basePath).init()
   initialized(LombokActionFixture(fixture, action)) {}
+}
+
+/**
+ * Creates the [LombokIntentionFixture] of an intention test. Declare it as an instance field.
+ *
+ * [action] creates the intention of the test. [invocationCheck] returns true when the intention changed the file as expected.
+ * The test data path is [basePath] in the Lombok test data. It usually starts with [LombokIntentionFixture.TEST_DATA_INTENTION_DIRECTORY].
+ */
+@TestOnly
+fun lombokIntentionFixture(
+  projectFixture: TestFixture<LightJavaProject>,
+  basePath: String,
+  action: Supplier<out ModCommandAction>,
+  invocationCheck: BooleanSupplier,
+): TestFixture<LombokIntentionFixture> = testFixture("lombokIntentionFixture") {
+  val fixture = lombokCodeInsightFixture(projectFixture, basePath).init()
+  initialized(LombokIntentionFixture(fixture, action, invocationCheck)) {}
 }
