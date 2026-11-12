@@ -22,6 +22,10 @@ jvm_library(
     ),
     associates = ["//python/python-pyproject:pyproject"],
     kotlinc_opts = ":custom_junit5Env",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,

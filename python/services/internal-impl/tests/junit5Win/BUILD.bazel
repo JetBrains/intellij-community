@@ -22,6 +22,10 @@ jvm_library(
     ),
     associates = ["//python/services/internal-impl:python-community-services-internal-impl"],
     kotlinc_opts = ":custom_junit5Win",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     runtime_deps = ["//python/services/internal-impl:python-community-services-internal-impl-tests_test_lib"],
     deps = [

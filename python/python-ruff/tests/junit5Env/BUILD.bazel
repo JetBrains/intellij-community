@@ -14,6 +14,10 @@ jvm_library(
         allow_empty = True,
     ),
     associates = ["//python/python-ruff:ruff"],
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     runtime_deps = ["//python/python-ruff/tests:tests_test_lib"],
     deps = [
