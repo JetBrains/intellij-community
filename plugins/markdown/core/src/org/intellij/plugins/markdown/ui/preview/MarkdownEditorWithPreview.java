@@ -3,6 +3,9 @@ package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -15,13 +18,15 @@ import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.TextEditorWithPreview;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.JBSplitter;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.MarkdownUsageCollector;
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecKt;
+import org.intellij.plugins.markdown.settings.MarkdownPreviewMode;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
+import org.intellij.plugins.markdown.ui.actions.MarkdownLivePreviewLayoutAction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.Point;
@@ -29,13 +34,12 @@ import java.util.Objects;
 
 public final class MarkdownEditorWithPreview extends TextEditorWithPreview implements MarkdownHeaderNavigationHandler {
   @VisibleForTesting
-  public static final String LIVE_PREVIEW_PROPERTY = "markdown.editor.live.preview.layout";
-  public static final String LIVE_PREVIEW_REGISTRY_KEY = "markdown.live.preview.enabled";
+  public static final String LIVE_PREVIEW_PROPERTY = "markdown.editor.live.preview.layout.v2";
   private static final String EDITOR_ONLY_ACTION_ID = "Markdown.Layout.EditorOnly";
-  private static final String LIVE_PREVIEW_ACTION_ID = "Markdown.Layout.LivePreview";
 
+  private final MarkdownLivePreviewLayoutAction livePreviewAction = new MarkdownLivePreviewLayoutAction();
   private final MarkdownSettings settings;
-  private final boolean previewAvailable;
+  private boolean previewAvailable;
   private boolean autoScrollPreview;
 
   /**
@@ -50,7 +54,7 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview imple
                                    @NotNull MarkdownPreviewFileEditor preview,
                                    @NotNull Project project,
                                    @NotNull MarkdownSettings settings) {
-    this(editor, preview, project, settings, MarkdownHtmlPanelProvider.hasAvailableProviders());
+    this(editor, preview, project, settings, isPreviewAvailable(settings));
   }
 
   private MarkdownEditorWithPreview(@NotNull TextEditor editor,
@@ -76,9 +80,9 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview imple
 
     this.settings = settings;
     this.previewAvailable = previewAvailable;
+    var properties = PropertiesComponent.getInstance();
     MarkdownLivePreviewSpecKt.setLivePreviewEnabledness(
-      editor.getEditor(),
-      RegistryManager.getInstance().is(LIVE_PREVIEW_REGISTRY_KEY) && PropertiesComponent.getInstance().getBoolean(LIVE_PREVIEW_PROPERTY)
+      editor.getEditor(), !previewAvailable && properties.getBoolean(LIVE_PREVIEW_PROPERTY, true)
     );
 
     // allow launching actions while in preview mode;
@@ -100,6 +104,7 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview imple
       @Override
       public void settingsChanged(@NotNull MarkdownSettings settings1) {
         setAutoScrollPreview(settings1.isAutoScrollEnabled());
+        updatePreviewAvailability(settings1);
         if (wasVerticalSplitBefore != settings1.isVerticalSplit()) {
           handleLayoutChange(!settings1.isVerticalSplit());
         }
@@ -165,7 +170,7 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview imple
   private void setViewMode(@NotNull Layout layout, boolean livePreview) {
     var oldLayout = getLayout();
     var oldLivePreview = isLivePreviewLayout();
-    PropertiesComponent.getInstance().setValue(LIVE_PREVIEW_PROPERTY, livePreview, false);
+    PropertiesComponent.getInstance().setValue(LIVE_PREVIEW_PROPERTY, livePreview, true);
     MarkdownLivePreviewSpecKt.setLivePreviewEnabledness(myEditor.getEditor(), livePreview);
     var newLayout = supportedLayout(layout);
     super.setLayout(newLayout);
@@ -178,13 +183,38 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview imple
     return previewAvailable ? layout : Layout.SHOW_EDITOR;
   }
 
+  private void updatePreviewAvailability(@NotNull MarkdownSettings settings) {
+    previewAvailable = isPreviewAvailable(settings);
+    if (!previewAvailable && getLayout() != Layout.SHOW_EDITOR) {
+      setLivePreviewLayout();
+    }
+    else if (previewAvailable && isLivePreviewLayout()) {
+      setLayout(Layout.SHOW_EDITOR_AND_PREVIEW);
+    }
+  }
+
+  private static boolean isPreviewAvailable(@NotNull MarkdownSettings settings) {
+    return settings.getPreviewMode() == MarkdownPreviewMode.JCEF && MarkdownHtmlPanelProvider.hasAvailableProviders();
+  }
+
   @Override
   protected @NotNull ActionGroup createViewActionGroup() {
-    var livePreviewAction = Objects.requireNonNull(ActionUtil.getAction(LIVE_PREVIEW_ACTION_ID));
-    if (!previewAvailable) {
-      return new DefaultActionGroup(getShowEditorAction(), livePreviewAction);
-    }
-    return new DefaultActionGroup(getShowEditorAction(), getShowEditorAndPreviewAction(), livePreviewAction, getShowPreviewAction());
+    var editorAction = getShowEditorAction();
+    var editorAndPreviewAction = getShowEditorAndPreviewAction();
+    var previewAction = getShowPreviewAction();
+    return new DefaultActionGroup(new ActionGroup() {
+      @Override
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+        return previewAvailable
+               ? new AnAction[]{editorAction, editorAndPreviewAction, previewAction}
+               : new AnAction[]{editorAction, livePreviewAction};
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+    });
   }
 
   @Override

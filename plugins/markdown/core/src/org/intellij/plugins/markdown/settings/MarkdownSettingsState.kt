@@ -19,6 +19,7 @@ class MarkdownSettingsState: BaseState() {
   var splitLayout by enum(TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW)
   var previewPanelProviderInfo by property(MarkdownSettings.defaultProviderInfo) { it == MarkdownSettings.defaultProviderInfo }
   var isVerticalSplit by property(true)
+  var previewMode: MarkdownPreviewMode by enum(MarkdownPreviewMode.EDITOR)
   var isAutoScrollEnabled by property(true)
   var isRunnerEnabled by property(true)
   var useFileDirectoryForCommands: Boolean? by property(null) { it == null }

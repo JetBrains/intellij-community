@@ -98,6 +98,12 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
     return panel {
       showPreviewUnavailableWarningIfNeeded()
       previewDependentOptionsBlock {
+        row(MarkdownBundle.message("markdown.settings.render.preview.in.label")) {
+          comboBox(
+            model = DefaultComboBoxModel(MarkdownPreviewMode.entries.toTypedArray()),
+            renderer = textListCellRenderer("", ::previewModeText)
+          ).bindItem(settings::previewMode.toNullableProperty()).widthGroup(comboBoxWidthGroup)
+        }
         htmlPanelProvidersRow(MarkdownHtmlPanelProvider.getAvailableProviders())
         row(MarkdownBundle.message("markdown.settings.preview.layout.label")) {
           comboBox(
@@ -428,6 +434,13 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
       return when (splitLayout) {
         false -> MarkdownBundle.message("markdown.settings.preview.layout.horizontal")
         true -> MarkdownBundle.message("markdown.settings.preview.layout.vertical")
+      }
+    }
+
+    private fun previewModeText(mode: MarkdownPreviewMode): @Nls String {
+      return when (mode) {
+        MarkdownPreviewMode.JCEF -> MarkdownBundle.message("markdown.settings.render.preview.in.jcef")
+        MarkdownPreviewMode.EDITOR -> MarkdownBundle.message("markdown.settings.render.preview.in.editor")
       }
     }
 

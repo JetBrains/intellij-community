@@ -5,8 +5,10 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -22,7 +24,6 @@ import com.intellij.openapi.fileEditor.TextEditorWithPreview.Layout
 import com.intellij.openapi.fileEditor.TextEditorWithPreview.MyFileEditorState
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.PersistentFSConstants
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.limits.FileSizeLimit
@@ -33,6 +34,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ui.StartupUiUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
+import org.intellij.plugins.markdown.settings.MarkdownPreviewMode
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import java.awt.Insets
@@ -47,7 +49,10 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     super.setUp()
     val properties = PropertiesComponent.getInstance()
     Disposer.register(testRootDisposable) { properties.unsetValue(MarkdownEditorWithPreview.LIVE_PREVIEW_PROPERTY) }
-    Registry.get(MarkdownEditorWithPreview.LIVE_PREVIEW_REGISTRY_KEY).setValue(true, testRootDisposable)
+    val settings = MarkdownSettings.getInstance()
+    val previousRenderer = settings.previewMode
+    Disposer.register(testRootDisposable) { settings.update { it.previewMode = previousRenderer } }
+    settings.update { it.previewMode = MarkdownPreviewMode.JCEF }
     ExtensionTestUtil.maskExtensions(MarkdownHtmlPanelProvider.EP_NAME, listOf(panelProvider), testRootDisposable)
     myFixture.configureByText("test.md", "# Heading\n\ntext\n")
   }
@@ -71,6 +76,7 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
   }
 
   fun testNewEditorStartsInTheLastChosenLivePreviewLayout() {
+    MarkdownSettings.getInstance().update { it.previewMode = MarkdownPreviewMode.EDITOR }
     createEditor().setLivePreviewLayout()
     assertTrue(createEditor().editor.isLivePreviewEnabled())
   }
@@ -94,20 +100,9 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     assertEquals(Layout.SHOW_EDITOR_AND_PREVIEW, createEditor().getLayout())
   }
 
-  fun testDisabledRegistryKeyHidesLivePreview() {
-    assertTrue(createEditor().isViewActionVisible(LIVE_PREVIEW_ACTION_ID))
-    createEditor().setLivePreviewLayout()
-    Registry.get(MarkdownEditorWithPreview.LIVE_PREVIEW_REGISTRY_KEY).setValue(false, testRootDisposable)
-
-    val editorWithPreview = createEditor()
-
-    assertFalse("A new editor must ignore the saved live preview layout", editorWithPreview.editor.isLivePreviewEnabled())
-    assertFalse("The live preview action must be hidden", editorWithPreview.isViewActionVisible(LIVE_PREVIEW_ACTION_ID))
-  }
-
   fun testRestoredLayoutWithPreviewTurnsLivePreviewOff() {
-    createEditor().setLivePreviewLayout()
     val editorWithPreview = createEditor()
+    editorWithPreview.setLivePreviewLayout()
 
     editorWithPreview.setState(MyFileEditorState(Layout.SHOW_PREVIEW, null, null, false))
 
@@ -129,8 +124,8 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
   }
 
   fun testRestoredLayoutWithPreviewShowsTheEditorFont() {
-    createEditor().setLivePreviewLayout()
     val editorWithPreview = createEditor()
+    editorWithPreview.setLivePreviewLayout()
     editorWithPreview.waitForFont(StartupUiUtil.labelFont.fontName)
 
     editorWithPreview.setState(MyFileEditorState(Layout.SHOW_PREVIEW, null, null, false))
@@ -286,16 +281,10 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     }
   }
 
-  fun testViewActionsPutLivePreviewBeforePreviewOnly() {
+  fun testJcefRendererHidesLivePreview() {
     val editorWithPreview = createEditor()
-    editorWithPreview.setLivePreviewLayout()
 
-    assertEquals(listOf(EDITOR_ONLY_ACTION_ID, EDITOR_AND_PREVIEW_ACTION_ID, LIVE_PREVIEW_ACTION_ID, PREVIEW_ONLY_ACTION_ID),
-                 editorWithPreview.viewActionIds())
-    assertEquals(listOf(LIVE_PREVIEW_ACTION_ID), editorWithPreview.selectedViewActionIds())
-
-    editorWithPreview.setLayout(Layout.SHOW_EDITOR)
-    assertEquals(listOf(EDITOR_ONLY_ACTION_ID), editorWithPreview.selectedViewActionIds())
+    assertEquals(listOf(EDITOR_ONLY_ACTION_ID, EDITOR_AND_PREVIEW_ACTION_ID, PREVIEW_ONLY_ACTION_ID), editorWithPreview.viewActionIds())
   }
 
   fun testWithoutPreviewOnlyEditorAndLivePreviewAreOffered() {
@@ -303,7 +292,7 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     val editorWithPreview = createEditor()
 
     assertEquals(listOf(EDITOR_ONLY_ACTION_ID, LIVE_PREVIEW_ACTION_ID), editorWithPreview.viewActionIds())
-    assertEquals(listOf(EDITOR_ONLY_ACTION_ID), editorWithPreview.selectedViewActionIds())
+    assertEquals(listOf(LIVE_PREVIEW_ACTION_ID), editorWithPreview.selectedViewActionIds())
 
     editorWithPreview.setState(MyFileEditorState(Layout.SHOW_EDITOR_AND_PREVIEW, null, null, false))
     assertEquals(Layout.SHOW_EDITOR, editorWithPreview.getLayout())
@@ -331,6 +320,47 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
 
   private fun FileEditor.htmlPanel(): StubHtmlPanel? = getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER)?.get() as StubHtmlPanel?
 
+  fun testEditorRendererOffersOnlyEditorAndLivePreview() {
+    MarkdownSettings.getInstance().update { it.previewMode = MarkdownPreviewMode.EDITOR }
+    val editorWithPreview = createEditor()
+
+    assertEquals(listOf(EDITOR_ONLY_ACTION_ID, LIVE_PREVIEW_ACTION_ID), editorWithPreview.viewActionIds())
+    assertEquals(Layout.SHOW_EDITOR, editorWithPreview.getLayout())
+  }
+
+  fun testFirstEditorOpensInLivePreviewOnce() {
+    MarkdownSettings.getInstance().update { it.previewMode = MarkdownPreviewMode.EDITOR }
+    val properties = PropertiesComponent.getInstance()
+    properties.unsetValue(MarkdownEditorWithPreview.LIVE_PREVIEW_PROPERTY)
+
+    val firstEditor = createEditor()
+    assertTrue("The first editor must open in the live preview", firstEditor.isLivePreviewLayout)
+
+    firstEditor.setLayout(Layout.SHOW_EDITOR)
+    assertFalse("The next editor must open in the chosen layout", createEditor().isLivePreviewLayout)
+  }
+
+  fun testEditorRendererKeepsTheChosenEditorOnlyLayout() {
+    MarkdownSettings.getInstance().update { it.previewMode = MarkdownPreviewMode.EDITOR }
+    createEditor().setLayout(Layout.SHOW_EDITOR)
+
+    assertFalse(createEditor().isLivePreviewLayout)
+  }
+
+  fun testEditorRendererSwitchesAnOpenEditor() {
+    val editorWithPreview = createEditor()
+    editorWithPreview.setLayout(Layout.SHOW_EDITOR_AND_PREVIEW)
+
+    MarkdownSettings.getInstance().update { it.previewMode = MarkdownPreviewMode.EDITOR }
+    assertTrue(editorWithPreview.isLivePreviewLayout)
+    assertEquals(listOf(EDITOR_ONLY_ACTION_ID, LIVE_PREVIEW_ACTION_ID), editorWithPreview.viewActionIds())
+
+    MarkdownSettings.getInstance().update { it.previewMode = MarkdownPreviewMode.JCEF }
+    assertFalse(editorWithPreview.isLivePreviewLayout)
+    assertEquals(Layout.SHOW_EDITOR_AND_PREVIEW, editorWithPreview.getLayout())
+    assertEquals(listOf(EDITOR_ONLY_ACTION_ID, EDITOR_AND_PREVIEW_ACTION_ID, PREVIEW_ONLY_ACTION_ID), editorWithPreview.viewActionIds())
+  }
+
   /** The test root disposable restores the last used layout of the Markdown editors. */
   private fun restoreLastUsedLayoutAfterTest() {
     val properties = PropertiesComponent.getInstance()
@@ -345,7 +375,7 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     val file = myFixture.file.virtualFile
     val textEditor = TextEditorProvider.getInstance().createEditor(project, file) as TextEditor
     val preview = MarkdownPreviewFileEditor(project, file, textEditor.editor.document)
-    val editorWithPreview = MarkdownEditorWithPreview(textEditor, preview, project, MarkdownSettings.getInstance(project))
+    val editorWithPreview = MarkdownEditorWithPreview(textEditor, preview, project, MarkdownSettings.getInstance())
     Disposer.register(testRootDisposable, editorWithPreview)
     // The UI resolves the initial layout.
     editorWithPreview.component
@@ -399,26 +429,28 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
   }
 
   private fun MarkdownEditorWithPreview.viewActions(): List<AnAction> {
-    val event = TestActionEvent.createTestEvent(SimpleDataContext.getSimpleContext(PlatformCoreDataKeys.FILE_EDITOR, this))
-    val actions = tabActions.getChildren(event).toList()
+    val context = SimpleDataContext.getSimpleContext(PlatformCoreDataKeys.FILE_EDITOR, this)
+    val event = TestActionEvent.createTestEvent(context)
+    val actions = tabActions.getChildren(event)
+      .flatMap { (it as? ActionGroup)?.getChildren(event)?.asList() ?: listOf(it) }
+      .filter { isVisible(it, context) }
     assertFalse("The tab header must show the view actions", actions.isEmpty())
     return actions
   }
 
-  private fun MarkdownEditorWithPreview.viewActionIds(): List<String?> {
-    return viewActions().map { ActionManager.getInstance().getId(it) }
+  private fun MarkdownEditorWithPreview.viewActionIds(): List<String> {
+    return viewActions().map { ActionManager.getInstance().getId(it) ?: it.javaClass.name }
   }
 
-  private fun MarkdownEditorWithPreview.selectedViewActionIds(): List<String?> {
+  private fun MarkdownEditorWithPreview.selectedViewActionIds(): List<String> {
     val context = SimpleDataContext.getSimpleContext(PlatformCoreDataKeys.FILE_EDITOR, this)
     return viewActions()
       .filter { it is ToggleAction && it.isSelected(TestActionEvent.createTestEvent(it, context)) }
-      .map { ActionManager.getInstance().getId(it) }
+      .map { ActionManager.getInstance().getId(it) ?: it.javaClass.name }
   }
 
-  private fun MarkdownEditorWithPreview.isViewActionVisible(actionId: String): Boolean {
-    val action = ActionManager.getInstance().getAction(actionId)
-    val event = TestActionEvent.createTestEvent(action, SimpleDataContext.getSimpleContext(PlatformCoreDataKeys.FILE_EDITOR, this))
+  private fun isVisible(action: AnAction, context: DataContext): Boolean {
+    val event = TestActionEvent.createTestEvent(action, context)
     ActionUtil.updateAction(action, event)
     return event.presentation.isVisible
   }
@@ -451,7 +483,7 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
   private companion object {
     const val EDITOR_ONLY_ACTION_ID = "Markdown.Layout.EditorOnly"
     const val EDITOR_AND_PREVIEW_ACTION_ID = "TextEditorWithPreview.Layout.EditorAndPreview"
-    const val LIVE_PREVIEW_ACTION_ID = "Markdown.Layout.LivePreview"
+    const val LIVE_PREVIEW_ACTION_ID = "org.intellij.plugins.markdown.ui.actions.MarkdownLivePreviewLayoutAction"
     const val PREVIEW_ONLY_ACTION_ID = "TextEditorWithPreview.Layout.PreviewOnly"
     const val TIMEOUT_SECONDS = 10
 

@@ -62,6 +62,10 @@ class MarkdownSettings private constructor(private val legacyProject: Project?):
     get() = preferences.isVerticalSplit
     set(value) { preferences.isVerticalSplit = value }
 
+  var previewMode: MarkdownPreviewMode
+    get() = preferences.previewMode
+    set(value) { preferences.previewMode = value }
+
   var isAutoScrollEnabled: Boolean
     get() = preferences.isAutoScrollEnabled
     set(value) { preferences.isAutoScrollEnabled = value }
@@ -221,4 +225,9 @@ class MarkdownSettings private constructor(private val legacyProject: Project?):
 
     suspend fun getInstanceAsync(): MarkdownSettings = serviceAsync()
   }
+}
+
+enum class MarkdownPreviewMode {
+  JCEF,
+  EDITOR,
 }

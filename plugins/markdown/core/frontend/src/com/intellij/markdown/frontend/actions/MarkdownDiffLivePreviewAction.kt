@@ -10,16 +10,14 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.util.registry.RegistryManager
 import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
 import org.intellij.plugins.markdown.editor.livepreview.setLivePreviewEnabledness
 import org.intellij.plugins.markdown.lang.supportsMarkdown
-import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 
 internal class MarkdownDiffLivePreviewAction : ToggleAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun update(event: AnActionEvent) {
     super.update(event)
-    event.presentation.isEnabledAndVisible = isDiffLivePreviewAvailable() && getMarkdownEditors(event).isNotEmpty()
+    event.presentation.isEnabledAndVisible = getMarkdownEditors(event).isNotEmpty()
   }
 
   override fun isSelected(event: AnActionEvent): Boolean {
@@ -43,8 +41,4 @@ internal class MarkdownDiffLivePreviewAction : ToggleAction(), DumbAware, Action
 /** Holds the last state that the user chose. */
 private const val PROPERTY = "markdown.diff.live.preview"
 
-internal fun isDiffLivePreviewEnabled(): Boolean =
-  isDiffLivePreviewAvailable() && PropertiesComponent.getInstance().getBoolean(PROPERTY)
-
-internal fun isDiffLivePreviewAvailable(): Boolean =
-  RegistryManager.getInstance().`is`(MarkdownEditorWithPreview.LIVE_PREVIEW_REGISTRY_KEY)
+internal fun isDiffLivePreviewEnabled(): Boolean = PropertiesComponent.getInstance().getBoolean(PROPERTY)

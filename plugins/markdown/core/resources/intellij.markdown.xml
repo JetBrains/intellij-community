@@ -361,6 +361,7 @@
     <advancedSetting id="markdown.squash.multiple.dashes.in.header.anchors" default="false" groupKey="markdown.settings.name"/>
 
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
+    <statistics.applicationUsagesCollector implementation="org.intellij.plugins.markdown.settings.MarkdownSettingsCollector"/>
     <applicationSettings service="org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings"/>
     <projectSettings service="org.intellij.plugins.markdown.settings.DocumentLinksSafeState"/>
     <projectSettings service="org.intellij.plugins.markdown.settings.pandoc.PandocSettings"/>

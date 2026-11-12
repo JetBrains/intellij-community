@@ -25,20 +25,17 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.lang.MarkdownFileType
-import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 
 class MarkdownDiffLivePreviewTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
     val properties = PropertiesComponent.getInstance()
     Disposer.register(testRootDisposable) { properties.unsetValue(PROPERTY) }
-    Registry.get(MarkdownEditorWithPreview.LIVE_PREVIEW_REGISTRY_KEY).setValue(true, testRootDisposable)
     HeadlessDataManager.fallbackToProductionDataManager(testRootDisposable)
   }
 
@@ -85,15 +82,6 @@ class MarkdownDiffLivePreviewTest : BasePlatformTestCase() {
 
     diff.setSelected(false)
     assertEquals(listOf(false), diff.livePreviewStates())
-  }
-
-  fun testDisabledRegistryKeyHidesTheAction() {
-    openDiff().setSelected(true)
-    Registry.get(MarkdownEditorWithPreview.LIVE_PREVIEW_REGISTRY_KEY).setValue(false, testRootDisposable)
-
-    val diff = openDiff()
-    assertEquals("A new viewer must ignore the saved state", listOf(false, false), diff.livePreviewStates())
-    assertFalse("The action must be hidden", diff.isActionVisible())
   }
 
   fun testPlainTextDiffHidesTheAction() {
