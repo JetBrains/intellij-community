@@ -34,6 +34,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.LocalPathCellEditor
 import com.intellij.util.ui.table.TableModelEditor
 import com.intellij.util.ui.table.TableModelEditor.DialogItemEditor
@@ -57,7 +58,6 @@ import kotlin.io.path.Path
  * For an installed browser, [installed] is what [detectInstalledBrowsers] found.
  * Apply adds a selected installed browser to the list, see [BrowserSettingsConfigurable.addInstalledBrowser].
  * The last item of each dropdown is [addItem]. It opens [BrowserDialog] and is never the selected item.
- * The [icon] takes part in the equality, so the page builds each [systemDefault] item with the same icon.
  */
 internal data class BrowserChoice(val id: UUID, @NlsSafe val name: String, val icon: Icon, val installed: InstalledBrowser? = null) {
   val isAddItem: Boolean
@@ -66,10 +66,9 @@ internal data class BrowserChoice(val id: UUID, @NlsSafe val name: String, val i
   companion object {
     private val ADD_ITEM_ID: UUID = UUID.nameUUIDFromBytes("BrowserChoice.addItem".toByteArray())
 
-    fun addItem(): BrowserChoice = BrowserChoice(ADD_ITEM_ID, IdeBundle.message("settings.browsers.add.browser"), AllIcons.General.Add)
+    fun addItem(): BrowserChoice = BrowserChoice(ADD_ITEM_ID, IdeBundle.message("settings.browsers.add.browser"), EmptyIcon.ICON_16)
 
-    /** [icon] is the icon of the browser that the OS opens, see [SystemDefaultBrowserDetector]. */
-    fun systemDefault(icon: Icon): BrowserChoice = BrowserChoice(SystemDefaultBrowser.id, SystemDefaultBrowser.name, icon)
+    fun systemDefault(): BrowserChoice = BrowserChoice(SystemDefaultBrowser.id, SystemDefaultBrowser.name, EmptyIcon.ICON_16)
 
     fun of(browser: WebBrowser): BrowserChoice = BrowserChoice(browser.id, browser.name, browser.icon)
 
@@ -83,14 +82,13 @@ internal data class BrowserChoice(val id: UUID, @NlsSafe val name: String, val i
 /**
  * The Web Browsers settings page.
  *
- * When the page opens, it detects the installed browsers and the OS default browser in the background.
+ * When the page opens, it detects the installed browsers in the background.
  * It keeps the result while it is open.
- * The OS default item shows the icon of the OS default browser, see [SystemDefaultBrowserDetector].
  * The "Default Browser" dropdown offers each installed browser that no browser of the list opens, see [InstalledBrowser.isSameAs].
  * The "JavaScript Debugger" dropdown does the same for the Chromium-based browsers, see [WebBrowserManager.getChromiumBasedBrowser].
  *
  * The "Edit Browser…" icon button of a dropdown opens [BrowserDialog] for the selected browser of the list or installed browser.
- * The "Add Browser…" item of a dropdown opens [BrowserDialog] for a new browser.
+ * The "Custom Path or Command…" item of a dropdown opens [BrowserDialog] for a new browser.
  * The dialog changes only the table, and Apply stores the table as for the edits in the table.
  *
  * The sections of [WebBrowserSettingsSectionEP] come after the dropdowns.
@@ -100,8 +98,6 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   private lateinit var browsersEditor: TableModelEditor<ConfigurableWebBrowser>
   private var installedBrowsers: List<InstalledBrowser> = emptyList()
 
-  /** The icon of each [BrowserChoice.systemDefault] item. The detection of the OS default browser sets it. */
-  private var systemDefaultIcon: Icon = SystemDefaultBrowser.icon
   private val defaultBrowserModel = BrowserChoiceModel(isChromiumBased = false)
   private val chromiumBasedBrowserModel = BrowserChoiceModel(isChromiumBased = true)
   private lateinit var showBrowserHover: JBCheckBox
@@ -198,6 +194,8 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
    * In the "JavaScript Debugger" dropdown, [isChromiumBased] is `true`, and the dialog keeps the [BrowserFamily.CHROME] family.
    */
   private inner class BrowserChoiceModel(val isChromiumBased: Boolean) : CollectionComboBoxModel<BrowserChoice>() {
+    var externalGroupStart: BrowserChoice? = null
+
     override fun setSelectedItem(item: Any?) {
       if (item is BrowserChoice && item.isAddItem) {
         // open the dialog after the popup of the dropdown closes
@@ -265,18 +263,14 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
 
   /**
    * Detects the installed browsers in the background, and adds them to the dropdown.
-   * It also detects the OS default browser for the icon of the OS default item.
    * The page keeps the result while it is open.
    */
   private fun startDetection() {
     val modality = ModalityState.current()
     AppExecutorUtil.getAppExecutorService().execute {
-      val knownBrowser = SystemDefaultBrowserDetector.getInstance().detectKnownBrowser()
       val detected = detectInstalledBrowsers(Path(SystemProperties.getUserHome()), EnvironmentUtil.getEnvironmentMap())
       ApplicationManager.getApplication().invokeLater({
         installedBrowsers = detected
-        // the dropdowns get new items with the icon, and keep the selection by id
-        systemDefaultIcon = knownBrowser?.let(SystemDefaultBrowserDetector::iconOf) ?: SystemDefaultBrowser.icon
         updateBrowserChoices()
       }, modality) { root == null }
     }
@@ -290,13 +284,15 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
 
   private fun updateDefaultBrowserChoices() {
     val choice = defaultBrowserModel.selected
-    val systemDefault = if (canUseSystemDefaultBrowserPolicy()) listOf(BrowserChoice.systemDefault(systemDefaultIcon)) else emptyList()
+    val systemDefault = if (canUseSystemDefaultBrowserPolicy()) listOf(BrowserChoice.systemDefault()) else emptyList()
     val provided = EditorTabWebBrowserProvider.getAvailableBrowsers().map { BrowserChoice.of(it) }
     val listed = listedBrowsers()
     val installed = installedChoices()
+    defaultBrowserModel.externalGroupStart =
+      if (provided.isEmpty()) null else (systemDefault.firstOrNull() ?: listed.firstOrNull() ?: installed.firstOrNull())
     defaultBrowserModel.replaceAll(buildList {
-      addAll(systemDefault)
       addAll(provided)
+      addAll(systemDefault)
       addAll(listed)
       addAll(installed)
       add(BrowserChoice.addItem())
@@ -329,7 +325,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
 
   /** Returns `null` when the system default is not available and the list has no active browser. */
   private fun fallbackChoice(): BrowserChoice? =
-    if (canUseSystemDefaultBrowserPolicy()) BrowserChoice.systemDefault(systemDefaultIcon) else listedBrowsers().firstOrNull()
+    if (canUseSystemDefaultBrowserPolicy()) BrowserChoice.systemDefault() else listedBrowsers().firstOrNull()
 
   /** The default browser that [WebBrowserManager] stores, as an item of the current dropdown. */
   private fun storedChoice(manager: WebBrowserManager): BrowserChoice? {
@@ -432,7 +428,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   /** A dropdown of [model] with the "Edit Browser…" icon button, see [editBrowser]. */
   private fun Panel.browserChoiceRow(@NlsContexts.Label label: String, model: BrowserChoiceModel) {
     row(label) {
-      val comboBox = comboBox(model, browserChoiceRenderer()).component
+      val comboBox = comboBox(model, browserChoiceRenderer(model)).component
       val editAction = DumbAwareAction.create(IdeBundle.message("settings.browsers.edit.browser"), AllIcons.Actions.Edit) {
         editBrowser(model)
       }
@@ -605,8 +601,8 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
       PATH_COLUMN_INFO
     )
 
-    private fun browserChoiceRenderer(): ListCellRenderer<BrowserChoice?> = listCellRenderer("") {
-      if (value.isAddItem) {
+    private fun browserChoiceRenderer(model: BrowserChoiceModel): ListCellRenderer<BrowserChoice?> = listCellRenderer("") {
+      if (value.isAddItem || value == model.externalGroupStart) {
         separator {}
       }
       icon(value.icon)

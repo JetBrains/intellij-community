@@ -97,13 +97,13 @@ class DefaultBrowserDropdownTest {
   }
 
   @Test
-  fun `dropdown offers a provided browser after the system default browser`() {
+  fun `dropdown offers a provided browser before the external browsers`() {
     loadState("""<state />""")
     val providedBrowser = withProvidedBrowser()
 
     withPage { page, comboBox ->
       val ids = (0 until comboBox.itemCount).map { comboBox.getItemAt(it).id }
-      val expectedIndex = if (canUseSystemDefaultBrowserPolicy()) 1 else 0
+      val expectedIndex = 0
       assertEquals(expectedIndex, ids.indexOf(providedBrowser.id))
 
       comboBox.selectedItem = comboBox.getItemAt(expectedIndex)
