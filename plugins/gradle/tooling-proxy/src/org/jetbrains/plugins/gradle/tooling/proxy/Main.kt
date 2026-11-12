@@ -25,6 +25,7 @@ import java.io.File
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.system.exitProcess
 
 object Main {
   const val LOCAL_BUILD_PROPERTY = "idea.gradle.target.local"
@@ -37,14 +38,21 @@ object Main {
   @JvmStatic
   fun main(args: Array<String>) {
     initLogging(args)
+    var exitCode = 1
     try {
       doMain()
+      exitCode = 0
+    }
+    catch (t: Throwable) {
+      t.printStackTrace()
     }
     finally {
       if (::serverConnector.isInitialized) {
         serverConnector.stop()
       }
     }
+    // Gradle Tooling API can leave non-daemon threads, they could prevent JDK from shutting down
+    exitProcess(exitCode)
   }
 
   private object LoggingConnectionErrorHandler : Runnable {
