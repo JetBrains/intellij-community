@@ -19,7 +19,15 @@ class SystemRuntimeCollectorTest : BareTestFixtureTestCase() {
     assertThat(cores["value"]).isIn(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64)
 
     val ram = metric("memory.size")
-    assertThat(ram["gigabytes"]).isIn(1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 128, 256)
+    assertThat(ram["gigabytes"]).isIn(1, 2, 4, 8, 12, 16, 24, 32, 36, 48, 64, 96, 128, 192, 256)
+    assertThat(ram["type"]).isIn(HardwareMetrics.MEMORY_TYPES)
+
+    val gpus = metrics.filter { it.first == "gpu" }.map { it.second }
+    assertThat(gpus.map { it["gpu_index"] }).isEqualTo(gpus.indices.toList())
+    assertThat(gpus).allSatisfy { gpu ->
+      assertThat(gpu["vendor"]).isIn(HardwareMetrics.GPU_VENDORS)
+      assertThat(gpu["type"]).isIn(HardwareMetrics.GPU_TYPES)
+    }
 
     val gc = metric("garbage.collector")
     assertThat(gc["name"]).isNotNull.isNotEqualTo("Other")

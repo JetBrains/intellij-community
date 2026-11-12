@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.eventLog.events.EventFields.Int
 import com.intellij.internal.statistic.eventLog.events.EventFields.Long
 import com.intellij.internal.statistic.eventLog.events.EventFields.String
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.PathManager
@@ -17,8 +18,11 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.util.currentJavaVersion
 import com.intellij.util.system.CpuArch
+import com.intellij.util.system.GraphicsCardInfo
+import com.intellij.util.system.GraphicsCards
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.MacHardwareInfo
+import com.intellij.util.system.MemoryModules
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
 import com.sun.management.OperatingSystemMXBean
@@ -33,7 +37,7 @@ import kotlin.math.roundToInt
 @ApiStatus.Internal
 @OptIn(LowLevelLocalMachineAccess::class)
 class SystemRuntimeCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("system.runtime", 25)
+  private val GROUP = EventLogGroup("system.runtime", 26)
 
   private val COLLECTORS = listOf("Serial", "Parallel", "CMS", "G1", "Z", "Shenandoah", "Epsilon", "Other")
   private val ARCHITECTURES = listOf("x86", "x86_64", "arm64", "other", "unknown")
@@ -49,10 +53,25 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     "cores",
     EventFields.BoundedInt("value", (IntArray(20) { 1 shl it } + intArrayOf(6, 10, 12, 14, 20, 24, 28, 48, 192)).sortedArray())
   )
-  private val MEMORY_SIZE = GROUP.registerEvent(
-    "memory.size",
-    EventFields.BoundedInt("gigabytes", (IntArray(20) { 1 shl it } + intArrayOf(12, 24, 36, 48, 96, 192)).sortedArray())
+  private val MEMORY_GIGABYTES = EventFields.BoundedInt(
+    "gigabytes",
+    (IntArray(9) { 1 shl it } + intArrayOf(12, 24, 36, 48, 96, 192)).sortedArray()
   )
+  private val MEMORY_TYPE = String("type", HardwareMetrics.MEMORY_TYPES)
+  private val MEMORY_SPEED = EventFields.BoundedLong(
+    "speed_mts",
+    longArrayOf(1866, 2133, 2400, 2666, 3200, 3600, 4266, 4800, 5200, 5600, 6000, 6400, 7200, 8000, 8533)
+  )
+  private val MEMORY_SIZE = GROUP.registerVarargEvent("memory.size", MEMORY_GIGABYTES, MEMORY_TYPE, MEMORY_SPEED)
+
+  private val GPU_INDEX = Int("gpu_index")
+  private val GPU_VENDOR = String("vendor", HardwareMetrics.GPU_VENDORS)
+  private val GPU_TYPE = String("type", HardwareMetrics.GPU_TYPES)
+  private val GPU_VRAM = EventFields.BoundedLong(
+    "vram_mb",
+    longArrayOf(2048, 4096, 6144, 8192, 12288, 16384, 24576, 32768, 49152, 65536, 98304, 131072)
+  )
+  private val GPU = GROUP.registerVarargEvent("gpu", GPU_INDEX, GPU_VENDOR, GPU_TYPE, GPU_VRAM)
 
   private val SWAP_SIZE = GROUP.registerEvent("swap.size", Int("gigabytes"))
   private val DISK_SIZE = GROUP.registerEvent("disk.size", Int("index_partition_size"), Int("index_partition_free"))
@@ -76,8 +95,12 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     val physicalMemoryData = getPhysicalMemoryAndSwapSize()
     if (physicalMemoryData != null) {
       val (physicalMemory, swapSize) = physicalMemoryData
-      result += MEMORY_SIZE.metric(physicalMemory)
+      result += getMemoryMetric(physicalMemory)
       result += SWAP_SIZE.metric(swapSize)
+    }
+
+    GraphicsCards.list().forEachIndexed { index, card ->
+      result += getGpuMetric(index, card)
     }
 
     val indexVolumeData = getIndexVolumeSizeAndFreeSpace()
@@ -115,6 +138,25 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     }
 
     return result
+  }
+
+  private fun getMemoryMetric(gigabytes: Int): MetricEvent {
+    val modules = MemoryModules.list()
+    val data = mutableListOf<EventPair<*>>(MEMORY_GIGABYTES.with(gigabytes), MEMORY_TYPE.with(HardwareMetrics.memoryType(modules)))
+    HardwareMetrics.memorySpeedMts(modules)?.let { data += MEMORY_SPEED.with(it) }
+    return MEMORY_SIZE.metric(data)
+  }
+
+  private fun getGpuMetric(index: Int, card: GraphicsCardInfo): MetricEvent {
+    val data = mutableListOf<EventPair<*>>(
+      GPU_INDEX.with(index),
+      GPU_VENDOR.with(HardwareMetrics.gpuVendor(card.vendor)),
+      GPU_TYPE.with(HardwareMetrics.gpuType(card)),
+    )
+    if (card.vramBytes > 0) {
+      data += GPU_VRAM.with(card.vramBytes shr 20)
+    }
+    return GPU.metric(data)
   }
 
   private fun getPhysicalMemoryAndSwapSize(): Pair<Int, Int>? {
