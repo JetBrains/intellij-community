@@ -57,10 +57,14 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
     consoleSettings: BuildViewSettingsProvider,
   ) : AbstractExternalSystemOutputMessageDispatcher(buildId, listener, parsers, consoleSettings) {
 
+    private val taskEventsLock = Any()
+    private val outputLock = Any()
+    private var isOutputClosed: Boolean = false
     private val tasksEventIds: MutableMap<TaskNameId, StartId> = ConcurrentHashMap()
     private val deferredTaskEvents: MutableMap<TaskNameId, MutableList<BuildEvent>> = ConcurrentHashMap()
     private val lineProcessors: MutableMap<ProcessOutputType, GradleOutputLineProcessor> = ConcurrentHashMap()
 
+    @Volatile
     private var currentTaskId: StartId = buildId
 
     private inner class GradleOutputLineProcessor(
@@ -119,12 +123,11 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         delegate.notifyTextAvailable(text)
       }
 
-      suspend fun close() {
+      suspend fun flushAndTakeParserDispatchers(): List<BuildOutputParserDispatcher> {
         delegate.close()
-
-        for (parserDispatcher in parserDispatchers.values) {
-          parserDispatcher.close()
-        }
+        val result = parserDispatchers.values.toList()
+        parserDispatchers.clear()
+        return result
       }
     }
 
@@ -132,15 +135,20 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       val buildEvent = when (val parentId = event.parentId) {
         buildId -> event
         is TaskNameId -> {
-          val taskEventId = tasksEventIds[parentId] ?: run {
-            deferredTaskEvents.getOrPut(parentId) { ArrayList() }
-              .add(event)
-            return
-          }
+          val taskEventId = synchronized(taskEventsLock) {
+            val id = tasksEventIds[parentId]
+            if (id == null) {
+              deferredTaskEvents.getOrPut(parentId) { ArrayList() }
+                .add(event)
+            }
+            id
+          } ?: return
           BuildEventInvocationHandler.wrap(event, taskEventId)
         }
         is String -> {
-          val taskEventId = tasksEventIds[TaskNameId(parentId)]
+          val taskEventId = synchronized(taskEventsLock) {
+            tasksEventIds[TaskNameId(parentId)]
+          }
           if (taskEventId != null) {
             LOG.error(
               "The implicit API for the event redefinition via String parent event ID is deprecated. Use TaskNameId instead.",
@@ -160,39 +168,65 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
       if (event.parentId == buildId && event is StartEvent) {
         val taskEventId = event.id
         val taskNameId = TaskNameId(event.message)
-        tasksEventIds[taskNameId] = taskEventId
-
-        val deferredEvents = deferredTaskEvents.remove(taskNameId) ?: emptyList()
-        for (deferredEvent in deferredEvents) {
-          notifyBuildEvent(buildId, deferredEvent)
+        while (true) {
+          val deferredEvents = synchronized(taskEventsLock) {
+            val events = deferredTaskEvents.remove(taskNameId)
+            if (events.isNullOrEmpty()) {
+              tasksEventIds[taskNameId] = taskEventId
+              null
+            }
+            else {
+              tasksEventIds.remove(taskNameId)
+              deferredTaskEvents[taskNameId] = ArrayList()
+              events
+            }
+          } ?: break
+          for (deferredEvent in deferredEvents) {
+            super.notifyBuildEvent(buildId, BuildEventInvocationHandler.wrap(deferredEvent, taskEventId))
+          }
         }
       }
     }
 
     override fun doClose() {
+      val dispatchersToClose: List<BuildOutputParserDispatcher>
+      synchronized(outputLock) {
+        if (isOutputClosed) return
+        isOutputClosed = true
+        val processors = lineProcessors.values.toList()
+        lineProcessors.clear()
+        @Suppress("RAW_RUN_BLOCKING")
+        dispatchersToClose = runBlocking {
+          processors.flatMap { it.flushAndTakeParserDispatchers() }
+        }
+      }
+
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking {
-        for (lineProcessor in lineProcessors.values) {
-          lineProcessor.close()
+        for (parserDispatcher in dispatchersToClose) {
+          parserDispatcher.close()
         }
       }
     }
 
     override fun notifyTextAvailable(text: String, outputType: ProcessOutputType) {
-      val outputId = OutputId()
+      synchronized(outputLock) {
+        if (isOutputClosed) return
+        val outputId = OutputId()
 
-      notifyBuildEvent(
-        buildId,
-        OutputBuildEvent.builder(text) //NON-NLS
-          .withId(outputId)
-          .withOutputType(outputType)
-          .build()
-      )
+        notifyBuildEvent(
+          buildId,
+          OutputBuildEvent.builder(text) //NON-NLS
+            .withId(outputId)
+            .withOutputType(outputType)
+            .build()
+        )
 
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking {
-        lineProcessors.getOrPut(outputType) { GradleOutputLineProcessor(outputType) }
-          .notifyTextAvailable(BuildOutputText.createOutputText(outputId, text))
+        @Suppress("RAW_RUN_BLOCKING")
+        runBlocking {
+          lineProcessors.getOrPut(outputType) { GradleOutputLineProcessor(outputType) }
+            .notifyTextAvailable(BuildOutputText.createOutputText(outputId, text))
+        }
       }
     }
 

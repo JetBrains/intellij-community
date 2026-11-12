@@ -37,6 +37,8 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
@@ -505,6 +507,140 @@ class GradleOutputMessageDispatcherTest(private val useSingleBuildConsole: Boole
       },
       listener.events
     )
+  }
+
+  @Test
+  fun `test concurrent task events racing with start event are not lost`() {
+    repeat(50) {
+      val buildId = BuildId()
+      val startBuildEvent = StartBuildEvent.builder("Build", DefaultBuildDescriptor(buildId, "Build", "/", 0L)).build()
+      val startEvent = StartEvent.builder(StartId(), ":task").withParentId(buildId).build()
+      val finishEvent = FinishEvent.builder(startEvent.id, ":task", SuccessResultImpl()).withParentId(buildId).build()
+      val finishBuildEvent = FinishBuildEvent.builder(buildId, "Build", SuccessResultImpl()).build()
+
+      val messageCount = 64
+      val expectedMessages = (0 until messageCount).map { "message-$it" }
+      val listener = RecordingBuildProgressListener()
+      val startLatch = CountDownLatch(1)
+      val pool = Executors.newFixedThreadPool(4)
+      try {
+        GradleOutputMessageDispatcher(buildId, listener, emptyList(), TestSettingsProvider(useSingleBuildConsole)).use { dispatcher ->
+          dispatcher.notifyBuildEvent(buildId, startBuildEvent)
+          val futures = ArrayList<Future<*>>()
+          for (chunk in expectedMessages.chunked(16)) {
+            futures.add(pool.submit {
+              startLatch.await()
+              for (msg in chunk) {
+                dispatcher.notifyBuildEvent(
+                  buildId,
+                  MessageEvent.builder(msg, MessageEvent.Kind.WARNING)
+                    .withParentId(TaskNameId(":task"))
+                    .build()
+                )
+              }
+            })
+          }
+          futures.add(pool.submit {
+            startLatch.await()
+            dispatcher.notifyBuildEvent(buildId, startEvent)
+          })
+          startLatch.countDown()
+          for (future in futures) {
+            future.get()
+          }
+          dispatcher.notifyBuildEvent(buildId, finishEvent)
+          dispatcher.notifyBuildEvent(buildId, finishBuildEvent)
+        }
+      }
+      finally {
+        pool.shutdownNow()
+      }
+
+      val collected = listener.events.toCollectedEvents()
+      assertEquals(listOf(CollectedEvent.Event(startBuildEvent), CollectedEvent.Event(finishBuildEvent)), collected.getValue(null))
+      assertEquals(listOf(CollectedEvent.Event(startEvent), CollectedEvent.Event(finishEvent)), collected.getValue(buildId))
+      assertEqualsUnordered(
+        expectedMessages.map { CollectedEvent.Message(MessageEvent.Kind.WARNING, it) },
+        collected.getValue(startEvent.id)
+      )
+    }
+  }
+
+  @Test
+  fun `test concurrent output and start events across tasks do not lose output`() {
+    val buildId = BuildId()
+    val startBuildEvent = StartBuildEvent.builder("Build", DefaultBuildDescriptor(buildId, "Build", "/", 0L)).build()
+    val startEvent = StartEvent.builder(StartId(), ":task").withParentId(buildId).build()
+    val finishEvent = FinishEvent.builder(startEvent.id, ":task", SuccessResultImpl()).withParentId(buildId).build()
+    val finishBuildEvent = FinishBuildEvent.builder(buildId, "Build", SuccessResultImpl()).build()
+
+    val parser = BuildOutputParser { line, reader, messageConsumer ->
+      if (line.startsWith("error:")) {
+        messageConsumer.accept(
+          MessageEvent.builder(line, MessageEvent.Kind.ERROR)
+            .withParentId(reader.parentEventId)
+            .build()
+        )
+        true
+      }
+      else {
+        false
+      }
+    }
+
+    val lineCount = 32
+    val expectedLines = (0 until lineCount).map { "error: line $it" }
+    val listener = RecordingBuildProgressListener()
+    val startLatch = CountDownLatch(1)
+    val pool = Executors.newFixedThreadPool(4)
+    try {
+      GradleOutputMessageDispatcher(buildId, listener, listOf(parser), TestSettingsProvider(useSingleBuildConsole)).use { dispatcher ->
+        dispatcher.notifyBuildEvent(buildId, startBuildEvent)
+        dispatcher.notifyTextAvailable("> Task :task\n", ProcessOutputType.STDOUT)
+        val futures = ArrayList<Future<*>>()
+        for (chunk in expectedLines.chunked(16)) {
+          futures.add(pool.submit {
+            startLatch.await()
+            for (line in chunk) {
+              dispatcher.notifyTextAvailable("$line\n", ProcessOutputType.STDOUT)
+            }
+          })
+        }
+        futures.add(pool.submit {
+          startLatch.await()
+          dispatcher.notifyBuildEvent(buildId, startEvent)
+        })
+        startLatch.countDown()
+        for (future in futures) {
+          future.get()
+        }
+        dispatcher.notifyBuildEvent(buildId, finishEvent)
+        dispatcher.notifyBuildEvent(buildId, finishBuildEvent)
+      }
+    }
+    finally {
+      pool.shutdownNow()
+    }
+
+    val collected = listener.events.toCollectedEvents()
+    val rootEvents = collected.getValue(null)
+    assertEquals(CollectedEvent.Event(startBuildEvent), rootEvents.first())
+    assertEquals(CollectedEvent.Output("> Task :task\n"), rootEvents[1])
+    assertEquals(CollectedEvent.Event(finishBuildEvent), rootEvents.last())
+    assertEqualsUnordered(
+      expectedLines.map { CollectedEvent.Output("$it\n") },
+      rootEvents.subList(2, rootEvents.size - 1)
+    )
+    assertEquals(listOf(CollectedEvent.Event(startEvent), CollectedEvent.Event(finishEvent)), collected.getValue(buildId))
+
+    val expectedTaskEvents = ExpectedNodeBuilder(useSingleBuildConsole).apply {
+      taskOutput("> Task :task\n")
+      for (line in expectedLines) {
+        taskOutput("$line\n")
+        messageEvent(MessageEvent.Kind.ERROR, line)
+      }
+    }.build()
+    assertEqualsUnordered(expectedTaskEvents, collected.getValue(startEvent.id))
   }
 
   sealed class TestBuildOutputParser : BuildOutputParser {

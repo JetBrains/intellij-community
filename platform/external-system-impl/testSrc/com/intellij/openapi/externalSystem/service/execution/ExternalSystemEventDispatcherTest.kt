@@ -16,6 +16,11 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.concurrency.Semaphore
 import org.assertj.core.api.Assertions.assertThat
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.LongAdder
 
 class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
@@ -82,6 +87,55 @@ class ExternalSystemEventDispatcherTest : LightPlatformTestCase() {
                         "completion message 2")
 
     assertEquals(3, parserInvocations.toInt())
+  }
+
+  fun `test concurrent output and completion handlers`() {
+    val parsedLines = CopyOnWriteArrayList<String>()
+    val parsers = listOf(
+      BuildOutputParser { line, _, _ ->
+        parsedLines += line
+        true
+      }
+    )
+    val receivedEvents = CopyOnWriteArrayList<String>()
+    val completionCalls = AtomicInteger()
+    val expectedLines = (0 until 64).map { "line-$it" }
+    val startLatch = CountDownLatch(1)
+    val pool = Executors.newFixedThreadPool(4)
+    try {
+      val dispatcher = ExternalSystemOutputMessageDispatcherImpl(
+        taskId,
+        BuildProgressListener { _, event -> receivedEvents += event.message },
+        parsers,
+        BuildViewSettingsProvider.EMPTY
+      )
+      dispatcher.use {
+        val futures = ArrayList<Future<*>>()
+        for (chunk in expectedLines.chunked(16)) {
+          futures.add(pool.submit {
+            startLatch.await()
+            for (line in chunk) {
+              dispatcher.notifyTextAvailable("$line\n", ProcessOutputType.STDOUT)
+              dispatcher.invokeOnCompletion { completionCalls.incrementAndGet() }
+            }
+          })
+        }
+        startLatch.countDown()
+        for (future in futures) {
+          future.get()
+        }
+      }
+      // Second close and post-close completion handler must be ignored.
+      dispatcher.close()
+      dispatcher.invokeOnCompletion { completionCalls.incrementAndGet() }
+    }
+    finally {
+      pool.shutdownNow()
+    }
+
+    assertSameElements(parsedLines, expectedLines)
+    assertSameElements(receivedEvents, expectedLines.map { "$it\n" })
+    assertEquals(expectedLines.size, completionCalls.get())
   }
 
   private class TestParserProvider(val parsers: List<BuildOutputParser>) : ExternalSystemOutputParserProvider {

@@ -52,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -135,21 +136,33 @@ public class BuildView extends CompositeView<ExecutionConsole>
     if (event instanceof StartBuildEvent) {
       ApplicationManager.getApplication().invokeAndWait(() -> {
         onStartBuild(buildId, (StartBuildEvent)event);
-        for (BuildEvent buildEvent : myAfterStartEvents) {
-          processEvent(buildId, buildEvent);
+        while (true) {
+          List<BuildEvent> deferredEvents;
+          synchronized (myAfterStartEvents) {
+            if (myAfterStartEvents.isEmpty()) {
+              isBuildStartEventProcessed.set(true);
+              break;
+            }
+            deferredEvents = new ArrayList<>(myAfterStartEvents);
+            myAfterStartEvents.clear();
+          }
+          for (BuildEvent buildEvent : deferredEvents) {
+            processEvent(buildId, buildEvent);
+          }
         }
-        myAfterStartEvents.clear();
-        isBuildStartEventProcessed.set(true);
       });
       return;
     }
 
     if (!isBuildStartEventProcessed.get()) {
-      myAfterStartEvents.add(event);
+      synchronized (myAfterStartEvents) {
+        if (!isBuildStartEventProcessed.get()) {
+          myAfterStartEvents.add(event);
+          return;
+        }
+      }
     }
-    else {
-      processEvent(buildId, event);
-    }
+    processEvent(buildId, event);
   }
 
   private void processEvent(@NotNull Object buildId, @NotNull BuildEvent event) {

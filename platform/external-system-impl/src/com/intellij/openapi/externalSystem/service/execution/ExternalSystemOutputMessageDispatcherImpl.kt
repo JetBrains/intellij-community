@@ -23,27 +23,40 @@ class ExternalSystemOutputMessageDispatcherImpl(
   consoleSettings: BuildViewSettingsProvider,
 ) : AbstractExternalSystemOutputMessageDispatcher(buildId, listener, parsers, consoleSettings) {
 
+  private val outputLock = Any()
+  private var isOutputClosed: Boolean = false
   private val parserDispatchers: MutableMap<ProcessOutputType, BuildOutputParserDispatcher> = ConcurrentHashMap()
 
   override fun notifyTextAvailable(text: @NlsSafe String, outputType: ProcessOutputType) {
-    val outputId = OutputId()
+    synchronized(outputLock) {
+      if (isOutputClosed) return
+      val outputId = OutputId()
 
-    notifyBuildEvent(buildId, OutputBuildEvent.builder(text)
-      .withId(outputId)
-      .withOutputType(outputType)
-      .build())
+      notifyBuildEvent(buildId, OutputBuildEvent.builder(text)
+        .withId(outputId)
+        .withOutputType(outputType)
+        .build())
 
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking {
-      parserDispatchers.getOrPut(outputType) { createParserDispatcher(buildId) }
-        .notifyTextAvailable(BuildOutputText.createOutputText(outputId, text))
+      @Suppress("RAW_RUN_BLOCKING")
+      runBlocking {
+        parserDispatchers.getOrPut(outputType) { createParserDispatcher(buildId) }
+          .notifyTextAvailable(BuildOutputText.createOutputText(outputId, text))
+      }
     }
   }
 
   override fun doClose() {
+    val dispatchersToClose: List<BuildOutputParserDispatcher>
+    synchronized(outputLock) {
+      if (isOutputClosed) return
+      isOutputClosed = true
+      dispatchersToClose = parserDispatchers.values.toList()
+      parserDispatchers.clear()
+    }
+
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
-      for (parserDispatcher in parserDispatchers.values) {
+      for (parserDispatcher in dispatchersToClose) {
         parserDispatcher.close()
       }
     }
