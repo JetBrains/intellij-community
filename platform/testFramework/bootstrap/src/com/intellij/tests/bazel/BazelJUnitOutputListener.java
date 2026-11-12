@@ -310,8 +310,10 @@ public class BazelJUnitOutputListener implements TestExecutionListener, Closeabl
       // (because tests and containers are arranged in a hierarchy --- the
       // containers only complete when all the things they contain are
       // finished. We are leaving all the test data that we have _not_ written
-      // to the XML file.
-      Stream.concat(testCases.stream(), testSuites.keySet().stream())
+      // to the XML file. The written tests include the descendants added for a
+      // suite that did not succeed, so an interrupted run does not write them again.
+      Stream.of(testCases.stream(), testSuites.keySet().stream(), testSuites.values().stream().flatMap(List::stream))
+        .flatMap(data -> data)
         .forEach(data -> results.remove(data.getId().getUniqueIdObject()));
     }
   }

@@ -11,6 +11,10 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
@@ -62,6 +66,17 @@ class BazelJUnitOutputListenerTest {
     assertThat(getOnlyTestCase(xml, "successfulTest").getElementsByTagName("skipped").getLength()).isEqualTo(0);
   }
 
+  /** An interrupted run writes the tests that are not written yet. The descendants of a failed class are written already. */
+  @Test
+  void writesNoTestTwiceWhenTheRunIsInterrupted(@TempDir Path tempDir) throws Exception {
+    List<String> closed = getTestCaseNames(executeAndReadXml(BeforeAllFailureWithNestedScenario.class, tempDir.resolve("closed.xml")));
+    List<String> interrupted = getTestCaseNames(executeAndReadXml(BeforeAllFailureWithNestedScenario.class,
+                                                                  tempDir.resolve("interrupted.xml"), true));
+
+    assertThat(closed).isNotEmpty().doesNotHaveDuplicates();
+    assertThat(interrupted).containsExactlyInAnyOrderElementsOf(closed);
+  }
+
   @Test
   void includesParameterizedMethodNameInXmlReport(@TempDir Path tempDir) throws Exception {
     Document xml = executeAndReadXml(ParameterizedScenario.class, tempDir.resolve("parameterized.xml"));
@@ -100,6 +115,11 @@ class BazelJUnitOutputListenerTest {
   }
 
   private static Document executeAndReadXml(Class<?> scenarioRootClass, Path xmlOutputFile) throws Exception {
+    return executeAndReadXml(scenarioRootClass, xmlOutputFile, false);
+  }
+
+  private static Document executeAndReadXml(Class<?> scenarioRootClass, Path xmlOutputFile, boolean interruptAfterJupiter)
+    throws Exception {
     // Keep this helper isolated from globally auto-registered launcher session listeners:
     // they enable IDE-wide test extensions and first/last-in-suite leak checks that are not
     // part of the XML listener contract under test here.
@@ -112,13 +132,49 @@ class BazelJUnitOutputListenerTest {
       .build();
 
     try (var listener = new BazelJUnitOutputListener(xmlOutputFile)) {
-      launcher.registerTestExecutionListeners(listener);
+      launcher.registerTestExecutionListeners(interruptAfterJupiter ? interruptedAfterJupiter(listener) : listener);
       launcher.execute(request);
     }
 
     var documentBuilderFactory = DocumentBuilderFactory.newInstance();
     documentBuilderFactory.setNamespaceAware(false);
     return documentBuilderFactory.newDocumentBuilder().parse(xmlOutputFile.toFile());
+  }
+
+  /**
+   * As the shutdown hook of JUnit5BazelRunner after the Jupiter engine: its root is written, and the test plan has not
+   * finished yet. Another engine, such as Vintage, can finish its root before Jupiter.
+   */
+  private static TestExecutionListener interruptedAfterJupiter(BazelJUnitOutputListener listener) {
+    return new TestExecutionListener() {
+      @Override
+      public void testPlanExecutionStarted(TestPlan testPlan) {
+        listener.testPlanExecutionStarted(testPlan);
+      }
+
+      @Override
+      public void dynamicTestRegistered(TestIdentifier testIdentifier) {
+        listener.dynamicTestRegistered(testIdentifier);
+      }
+
+      @Override
+      public void executionSkipped(TestIdentifier testIdentifier, String reason) {
+        listener.executionSkipped(testIdentifier, reason);
+      }
+
+      @Override
+      public void executionStarted(TestIdentifier testIdentifier) {
+        listener.executionStarted(testIdentifier);
+      }
+
+      @Override
+      public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
+        listener.executionFinished(testIdentifier, testExecutionResult);
+        if (testIdentifier.getParentId().isEmpty() && testIdentifier.getUniqueIdObject().getEngineId().orElse("").equals("junit-jupiter")) {
+          listener.closeForInterrupt();
+        }
+      }
+    };
   }
 
   private static Element getOnlyElement(Document xml, String tagName) {
@@ -192,6 +248,25 @@ class BazelJUnitOutputListenerTest {
       @AfterAll
       void afterAll() {
         throw new IllegalStateException("afterAll failure");
+      }
+    }
+  }
+
+  @Disabled(SCENARIO_DISABLED_REASON)
+  static class BeforeAllFailureWithNestedScenario {
+    @BeforeAll
+    static void beforeAll() {
+      throw new IllegalStateException("beforeAll failure");
+    }
+
+    @Test
+    void test() {
+    }
+
+    @Nested
+    class Inner {
+      @Test
+      void inner() {
       }
     }
   }
