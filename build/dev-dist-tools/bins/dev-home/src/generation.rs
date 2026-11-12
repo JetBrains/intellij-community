@@ -12,7 +12,7 @@ use std::process;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context as _, Result, bail};
-use component::layout::{LOCAL_LAYOUT_VERSION, LocalLayout};
+use component::layout::{LocalLayout, read_layout};
 use rayon::prelude::*;
 
 use crate::lock::StoreLock;
@@ -259,15 +259,6 @@ pub(crate) fn check_path_length(path: &Path, limit: Option<usize>) -> Result<()>
         }
     }
     Ok(())
-}
-
-fn read_layout(path: &Path) -> Result<LocalLayout> {
-    let text = fs::read_to_string(path).with_context(|| format!("cannot read {}", path.display()))?;
-    let layout: LocalLayout = serde_json::from_str(&text).with_context(|| format!("{} is not a local layout", path.display()))?;
-    if layout.version != LOCAL_LAYOUT_VERSION {
-        bail!("{} has the version {}, not {LOCAL_LAYOUT_VERSION}", path.display(), layout.version);
-    }
-    Ok(layout)
 }
 
 /// Touches `.used` and `.targets/<target>` of the generation.

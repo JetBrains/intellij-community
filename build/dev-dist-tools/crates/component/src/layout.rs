@@ -1,6 +1,10 @@
 //! `local-layout.json`: the file that names the runfile of each distribution file instead of a copy. The composer
-//! writes it for local launch metadata.
+//! writes it for local launch metadata. The generation writer and the updater read it with [`read_layout`].
 
+use std::fs;
+use std::path::Path;
+
+use anyhow::{Context as _, Result, bail};
 use serde::{Deserialize, Serialize};
 
 /// The name of the layout file in the metadata tree.
@@ -53,3 +57,16 @@ impl LocalLayoutFile {
         self.kind == Some(LocalFileKind::Directory)
     }
 }
+
+/// Reads a layout file. A layout of another version fails with its version.
+pub fn read_layout(path: &Path) -> Result<LocalLayout> {
+    let text = fs::read_to_string(path).with_context(|| format!("cannot read {}", path.display()))?;
+    let layout: LocalLayout = serde_json::from_str(&text).with_context(|| format!("{} is not a local layout", path.display()))?;
+    if layout.version != LOCAL_LAYOUT_VERSION {
+        bail!("{} has the version {}, not {LOCAL_LAYOUT_VERSION}", path.display(), layout.version);
+    }
+    Ok(layout)
+}
+
+#[cfg(test)]
+mod tests;

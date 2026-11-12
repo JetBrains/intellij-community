@@ -5,8 +5,8 @@ The component contract that the collector and the composer share. Each line name
 
 The crate implements only the inputs that the repository produces. Every other input fails with an error that names
 it. The collector writes the manifests, and the composer reads them. `intellij_dev_dist.bzl` writes the metadata
-catalogue with `json.encode`, and the collector reads it with `json::read`. The composer still writes the local layout, and
-no tool reads it now.
+catalogue with `json.encode`, and the collector reads it with `json::read`. The composer writes the local layout, and
+`dev-home` and `dev-dist` read it with `layout::read_layout`.
 
 A host path is a `Path` or a `PathBuf`. A path inside a distribution is a `str` in slash form. A list of names is a
 `&[S]` with `S: AsRef<str>`.
@@ -102,3 +102,5 @@ The collector writes and checks the record of each plugin component. The compose
   component entry, so `dev-home` keys the file of a generation without reading it.
 - `LocalFileKind { Directory }`: the JSON `kind`, which is `directory`.
 - `LocalLayoutFile::is_directory() -> bool`: `kind` is `Directory`.
+- `layout::read_layout(path: &Path) -> Result<LocalLayout>`: reads and decodes a layout file. The error names the file.
+  A layout of another version fails with its version.
