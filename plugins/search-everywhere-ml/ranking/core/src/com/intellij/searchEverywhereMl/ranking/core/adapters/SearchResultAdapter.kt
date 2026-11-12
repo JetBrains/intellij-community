@@ -7,6 +7,8 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeItemDataKeys
+import com.intellij.platform.searchEverywhere.equalityProviders.platformProviderPriority
+import com.intellij.platform.searchEverywhere.equalityProviders.providerPriorityToSortWeight
 import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeSpellCorrectionAwareItem
 import com.intellij.platform.searchEverywhere.isSemantic
 
@@ -103,7 +105,7 @@ private class SeItemDataAdapter(private val seItemData: SeItemData) : SearchResu
 
   override val provider: SearchResultProviderAdapter = SearchResultProviderAdapter.createAdapterFor(seItemData.providerId.value)
   override val originalWeight: Int = seItemData.weight
-  override val providerWeight: Int? = seItemData.additionalInfo[SeItemDataKeys.PROVIDER_SORT_WEIGHT]?.toIntOrNull()
+  override val providerWeight: Int = providerPriorityToSortWeight(platformProviderPriority(seItemData.providerId.value))
   override val isSemantic: Boolean = seItemData.isSemantic
   override val correction: SearchEverywhereSpellCheckResult
     get() = (seItemData.fetchItemIfExists() as? SeSpellCorrectionAwareItem)?.correction ?: SearchEverywhereSpellCheckResult.NoCorrection

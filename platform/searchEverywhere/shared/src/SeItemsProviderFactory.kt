@@ -9,6 +9,10 @@ import org.jetbrains.annotations.Contract
 
 /**
  * Extension point interface for creating instances of [SeItemsProvider].
+ *
+ * If a legacy contributor with this [id] has a separate tab, register a
+ * `com.intellij.platform.searchEverywhere.frontend.SeTabFactory` with this [id] too.
+ * Without it, Search Everywhere shows no separate tab for this provider.
  */
 @ApiStatus.Experimental
 interface SeItemsProviderFactory {

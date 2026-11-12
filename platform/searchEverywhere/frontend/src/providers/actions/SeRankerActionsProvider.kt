@@ -20,7 +20,6 @@ import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
-import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import com.intellij.platform.util.coroutines.mapNotNullConcurrent
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -49,7 +48,7 @@ private val LOG = logger<SeRankerActionsProvider>()
  * When the ranker fails or times out, this provider returns no items.
  *
  * The provider uses [actionsProvider] for the item selection, the extended action and the item data.
- * It takes the actions and their presentations from [actionModel], the model of the [actionsProvider] contributor.
+ * It takes the actions and their presentations from the action model of [actionsProvider].
  * The [candidatesStrategy] decides which candidates each ranker call gets.
  *
  * Search Everywhere starts a search on each keystroke and cancels the previous one.
@@ -57,8 +56,7 @@ private val LOG = logger<SeRankerActionsProvider>()
  */
 @Internal
 class SeRankerActionsProvider internal constructor(
-  private val actionsProvider: SeActionsAdaptedProvider,
-  private val actionModel: GotoActionModel,
+  private val actionsProvider: SeActionsProvider,
   private val ranker: SeActionsRanker,
   private val candidatesStrategy: SeActionsCandidatesStrategy,
   private val debounce: Duration,
@@ -71,6 +69,7 @@ class SeRankerActionsProvider internal constructor(
 
   override val id: String get() = SeProviderIdUtils.RANKER_ACTIONS_ID
   override val displayName: @Nls String get() = actionsProvider.displayName
+  private val actionModel: GotoActionModel get() = actionsProvider.actionModel
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val query = params.inputQuery.trim().take(MAX_QUERY_LENGTH)
@@ -181,15 +180,7 @@ class SeRankerActionsProvider internal constructor(
 
   private fun createItem(actionWrapper: ActionWrapper, weight: Int, searchText: String, diagnostics: @NonNls String?): SeActionItem {
     val matchedValue = MatchedValue(actionWrapper, searchText, MatchedValueType.ACTION)
-    val contributor = actionsProvider.contributor
-    return SeActionItem(matchedValue,
-                        weight,
-                        contributor,
-                        contributor.getExtendedInfo(matchedValue),
-                        contributor.isMultiSelectionSupported,
-                        searchText,
-                        SearchEverywhereSpellCheckResult.NoCorrection,
-                        diagnostics)
+    return actionsProvider.createItem(matchedValue, weight, searchText, SearchEverywhereSpellCheckResult.NoCorrection, diagnostics)
   }
 
   private class Candidate(val rankerCandidate: SeActionsRankerCandidate, val actionWrapper: ActionWrapper)

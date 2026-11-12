@@ -179,7 +179,7 @@ private class DummySearchEverywhereContributor<Any>(private val providerId: Stri
     @Suppress("HardCodedStringLiteral")
     "Dummy"
 
-  override fun getSortWeight(): Int = priorityToSortWeight(platformProviderPriority(providerId))
+  override fun getSortWeight(): Int = providerPriorityToSortWeight(platformProviderPriority(providerId))
   override fun showInFindResults(): Boolean = false
 
   override fun fetchElements(
@@ -207,4 +207,5 @@ private fun sortWeightToPriority(sortWeight: Int): Int =
   (DEFAULT_SORT_WEIGHT.toLong() - sortWeight).coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt()
 
 /** Converts a provider priority back to a sort weight. It is the reverse of [sortWeightToPriority]. */
-private fun priorityToSortWeight(priority: Int): Int = DEFAULT_SORT_WEIGHT - priority
+@ApiStatus.Internal
+fun providerPriorityToSortWeight(priority: Int): Int = DEFAULT_SORT_WEIGHT - priority

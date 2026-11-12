@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.minutes
@@ -40,6 +41,15 @@ class SeProvidersTestFixtureTest {
       assertEquals(providerId, fixture.getProvider(providerId).id)
     }
     assertThrows(AssertionError::class.java) { fixture.getProvider("NoSuchProvider") }
+  }
+
+  @Test
+  fun `test the separate tab uses the provider of the All tab instead of the adapted legacy contributor`(): Unit = timeoutRunBlocking(TIMEOUT) {
+    val fixture = SeProvidersTestFixture.create(myFixture.project, myFixture.testRootDisposable)
+
+    // The actions provider has no provider for the separate tab, and the legacy actions contributor is shown in a separate tab.
+    assertSame(fixture.getProvider(SeProviderIdUtils.ACTIONS_ID, isAllTab = true),
+               fixture.getProvider(SeProviderIdUtils.ACTIONS_ID, isAllTab = false))
   }
 
   @Test

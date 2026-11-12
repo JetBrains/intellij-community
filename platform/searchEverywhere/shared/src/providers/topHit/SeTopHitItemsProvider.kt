@@ -66,7 +66,7 @@ open class SeTopHitItemsProvider(
       if (shouldClose) {
         // Close the popup in the same EDT event as processSelectedItem — top-hit
         // OptionDescription items reach GotoActionAction.openOptionOrPerformAction
-        // which defers via invokeLater. See SeActionsAdaptedProvider for details (IJPL-243358).
+        // which defers via invokeLater. See SeActionsProvider for details (IJPL-243358).
         closeRequester?.close?.invoke()
       }
       shouldClose

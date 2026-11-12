@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.searchEverywhereMl.ranking.core.TestItemDataFactory
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
@@ -109,6 +110,13 @@ class SearchResultAdapterTest {
     val adapter = SearchResultAdapter.createAdapterFor(itemDataFactory.create("element", "id", uuid = "my-uuid-value"))
 
     assertEquals("my-uuid-value", adapter.stateLocalId.value)
+  }
+
+  @Test
+  fun `item data adapter gives the sort weight of the actions contributor to an action item`() = runBlocking {
+    val adapter = SearchResultAdapter.createAdapterFor(itemDataFactory.create("element", SeProviderIdUtils.ACTIONS_ID))
+
+    assertEquals(400, adapter.providerWeight)
   }
 
   @Test

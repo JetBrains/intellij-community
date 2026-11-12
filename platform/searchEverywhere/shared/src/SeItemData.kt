@@ -58,8 +58,6 @@ class SeItemDataFactory {
     }
 
     if (item is SeLegacyItem) {
-      additionalInfo[SeItemDataKeys.PROVIDER_SORT_WEIGHT] = item.contributor.sortWeight.toString()
-
       // A target provider runs a goto model, so it never returns a semantic element. Only a legacy
       // item needs this key, and it needs the contributor to answer.
       computeCatchingOrNull(true, { e -> "Couldn't add isSemantic info (${providerId.value}): $e" }) {

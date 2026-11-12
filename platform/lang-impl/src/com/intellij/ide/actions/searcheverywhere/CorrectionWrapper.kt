@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 @Deprecated("The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere (com.intellij.platform.searchEverywhere). " +
-            "This functionality is implemented via SeActionsAdaptedProvider.spellingCorrector")
+            "This functionality is implemented via SeActionsProvider.spellingCorrector")
 class CorrectionWrapper<I : Any>(
   private val delegate: WeightedSearchEverywhereContributor<I>,
   val correction: SearchEverywhereSpellCheckResult,

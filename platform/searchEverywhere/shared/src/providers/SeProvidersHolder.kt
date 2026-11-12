@@ -135,8 +135,10 @@ class SeProvidersHolder(
 
       if (withAdaptedLegacyContributors) {
         val presentationProviders = SeLegacyItemPresentationProvider.EP_NAME.extensionList.associateBy { it.id.toProviderId() }
+        // A provider of the All tab serves the separate tab too, see [get].
+        val providers = allTabProviders + separateTabProviders
         allTabProviders.putAll(createAdaptedProvidersIfNecessary(legacyContributors, allTabProviders, presentationProviders, session, logLabel))
-        separateTabProviders.putAll(createAdaptedProvidersIfNecessary(separateTabLegacyContributors, separateTabProviders, presentationProviders, session, logLabel))
+        separateTabProviders.putAll(createAdaptedProvidersIfNecessary(separateTabLegacyContributors, providers, presentationProviders, session, logLabel))
       }
 
       return SeProvidersHolder(allTabProviders,
