@@ -1,4 +1,5 @@
 <idea-plugin>
+  <resource-bundle>messages.GitLabBundle</resource-bundle>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.jackson3"/>
