@@ -104,7 +104,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     myKeepAliveTimeout = keepAliveTimeout;
   }
 
-  public void start(int listenPort) throws UnknownHostException {
+  public void start() throws UnknownHostException {
     final ChannelHandler compilationRequestsHandler = new CompilationRequestsHandler();
     myEventLoopGroup = new NioEventLoopGroup(1, myExecutor);
     final ServerBootstrap bootstrap = new ServerBootstrap()
@@ -125,8 +125,9 @@ public class ExternalJavacManager extends ProcessAdapter {
       });
     // javac process forked in a Linux VM can only access ExternalJavacManager, which is listening in a host machine, using real IP
     myListenAddress = WslToLinuxPathConverter.isWslPath(myWorkingDir)? InetAddress.getLocalHost() : InetAddress.getLoopbackAddress();
-    myChannelRegistrar.add(bootstrap.bind(myListenAddress, listenPort).syncUninterruptibly().channel());
-    myListenPort = listenPort;
+    var channel = (NioServerSocketChannel)bootstrap.bind(myListenAddress, 0).syncUninterruptibly().channel();
+    myChannelRegistrar.add(channel);
+    myListenPort = channel.localAddress().getPort();
   }
 
 

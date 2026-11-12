@@ -103,7 +103,6 @@ import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -860,7 +859,6 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     if (server != null) {
       return server;
     }
-    final int listenPort = findFreePort();
     server = new ExternalJavacManager(Utils.getSystemRoot(), SharedThreadPool.getInstance(), 2 * 60 * 1000L /*keep idle builds for 2 minutes*/) {
       @Override
       protected ExternalJavacProcessHandler createProcessHandler(UUID processId, @NotNull Process process, @NotNull String commandLine, boolean keepProcessAlive) {
@@ -877,34 +875,9 @@ public final class JavaBuilder extends ModuleLevelBuilder {
         };
       }
     };
-    server.start(listenPort);
+    server.start();
     ExternalJavacManagerKey.KEY.set(context, server);
     return server;
-  }
-
-  private static int findFreePort() {
-    try {
-      final ServerSocket serverSocket = new ServerSocket(0);
-      try {
-        return serverSocket.getLocalPort();
-      }
-      finally {
-        //workaround for linux : calling close() immediately after opening socket
-        //may result that socket is not closed
-        synchronized (serverSocket) {
-          try {
-            serverSocket.wait(1);
-          }
-          catch (Throwable ignored) {
-          }
-        }
-        serverSocket.close();
-      }
-    }
-    catch (IOException e) {
-      e.printStackTrace(System.err);
-      return ExternalJavacManager.DEFAULT_SERVER_PORT;
-    }
   }
 
   private static final Key<String> USER_DEFINED_BYTECODE_TARGET = Key.create("_user_defined_bytecode_target_");

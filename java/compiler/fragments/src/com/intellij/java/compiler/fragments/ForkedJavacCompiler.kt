@@ -19,7 +19,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.FileCollectionFactory
-import com.intellij.util.net.NetUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.api.CanceledStatus
@@ -127,9 +126,8 @@ class ForkedJavacCompiler(private val project: Project, private val workingDir: 
     synchronized(lock) {
       manager?.let { return it }
       val compilerWorkingDir = workingDir.get() ?: return null // should not happen for real projects
-      val listenPort = NetUtils.findAvailableSocketPort()
       // the manager lives as long as its owner, so its event loop must not become a child of the first caller's job (e.g. the debugger's)
-      val started = resetThreadContext { startManager(compilerWorkingDir, listenPort) }
+      val started = resetThreadContext { startManager(compilerWorkingDir) }
       manager = started
       return started
     }
@@ -160,12 +158,12 @@ private fun kindToCategory(kind: Diagnostic.Kind): CompilerMessageCategory {
 }
 
 @Throws(IOException::class)
-private fun startManager(compilerWorkingDir: File, listenPort: Int): ExternalJavacManager {
+private fun startManager(compilerWorkingDir: File): ExternalJavacManager {
   val manager = ExternalJavacManager(
     compilerWorkingDir, ProcessIOExecutorService.INSTANCE, Registry.intValue("compiler.external.javac.keep.alive.timeout", 5 * 60 * 1000).toLong()
   )
   manager.setWslExecutablePath(WSLDistribution.findWslExe())
-  manager.start(listenPort)
+  manager.start()
   val task = IdleTask(manager)
   if (ApplicationManager.getApplication().isHeadlessEnvironment) {
     // IdleTracker starts the Swing event queue, which a headless app must not do
