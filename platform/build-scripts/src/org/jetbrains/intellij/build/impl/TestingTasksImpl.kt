@@ -1402,7 +1402,6 @@ private fun publishTestDiscovery(messages: BuildMessages, file: String?) {
 private val COMMUNITY_AGGREGATOR_JPS_MODULES_ALLOWLIST = setOf(
   "intellij.devkit.kotlin.tests",
   "intellij.devkit.themes.tests",
-  "intellij.gradle.java.toml.tests",
   "intellij.gradle.tests",
   "intellij.java.dumb.completion.tests",
   "intellij.kotlin.common.tests",

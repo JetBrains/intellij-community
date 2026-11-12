@@ -69,6 +69,7 @@ intellij.gradle.completion.kotlin.tests.benchmark
 intellij.gradle.completion.tests
 intellij.gradle.java.maven.tests
 intellij.gradle.java.tests.benchmark
+intellij.gradle.java.toml.tests
 intellij.gradle.tests.benchmark
 intellij.gradle.toolingExtension.tests.compatibility
 intellij.gradle.toolingExtension.tests.util
