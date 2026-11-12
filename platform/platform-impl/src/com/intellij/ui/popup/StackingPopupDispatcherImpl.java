@@ -30,6 +30,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.InputMethodEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
 import java.util.Collection;
 import java.util.stream.Stream;
 
@@ -274,12 +275,21 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
     if (myStack.isEmpty()) return false;
 
     final AbstractPopup popup = (AbstractPopup)myStack.peek();
-    if (popup != null && popup.isVisible() && popup.isCancelOnWindowDeactivation() && popup.canClose()) {
+    if (popup != null && popup.isVisible() &&
+        (popup.isCancelOnWindowDeactivation() || popup.isCancelOnClickOutside() && !isWindowDeactivation()) &&
+        popup.canClose()) {
       popup.cancel();
       // setCancelCallback(..) can override cancel()
       return !popup.isVisible();
     }
     return false;
+  }
+
+  // IdePopupManager closes the popups on a window deactivation while IdeEventQueue dispatches the window event
+  private static boolean isWindowDeactivation() {
+    AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+    return event instanceof WindowEvent &&
+           (event.getID() == WindowEvent.WINDOW_LOST_FOCUS || event.getID() == WindowEvent.WINDOW_DEACTIVATED);
   }
 
   @Override
