@@ -1,13 +1,11 @@
 import pytest
 
-
-class Widget:
-    pass
+from . import plugin as plugin
 
 
-@pytest.fixture(name="widget")
-def widget_fixture() -> Widget:
-    return Widget()
+@pytest.fixture()
+def package_widget() -> int:
+    return 1
 
 
 def main() -> None:

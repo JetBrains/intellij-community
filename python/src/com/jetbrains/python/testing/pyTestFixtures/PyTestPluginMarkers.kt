@@ -28,6 +28,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 private const val MARK_GENERATOR_CLASS = "_pytest.mark.structures.MarkGenerator"
 
+private const val MARK_GENERATOR_NAME = "mark"
+
 private const val ADD_INI_VALUE_LINE = "addinivalue_line"
 
 private const val MARKERS_INI_OPTION = "markers"
@@ -69,7 +71,8 @@ private object PyTestPluginMarkerArgumentCompletionProvider : CompletionProvider
     if (argument.isQualified) return
     val call = (argument.parent as? PyArgumentList)?.callExpression ?: return
     val callee = call.callee as? PyReferenceExpression ?: return
-    val markGenerator = callee.qualifier ?: return
+    val markGenerator = callee.qualifier as? PyReferenceExpression ?: return
+    if (markGenerator.referencedName != MARK_GENERATOR_NAME) return
     val markerName = callee.referencedName ?: return
     val typeEvalContext = TypeEvalContext.codeCompletion(call.project, call.containingFile)
     val markGeneratorType = typeEvalContext.getType(markGenerator) as? PyClassType ?: return
