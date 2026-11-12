@@ -37,10 +37,10 @@ interface CharacterGrid {
   /**
    * The strategy to differentiate between single and double width characters.
    *
-   * If not set, then all characters will be considered single width,
-   * so it's necessary to set it explicitly for double-width character support.
+   * The strategy comes from [CharacterGridSpec], so it stays the same for as long as the spec stays the same.
    *
-   * @param doubleWidthCharacterStrategy the strategy to use
+   * The setter is only for the transition to [EditorImpl.setCharacterGridSpec]. It writes a new spec with the new
+   * strategy, and the editor then reloads its layouts and its soft wraps.
    */
   var doubleWidthCharacterStrategy: DoubleWidthCharacterStrategy
 
@@ -125,9 +125,9 @@ internal class CharacterGridImpl(
   private val view: EditorView
     get() = editor.view
 
-  private val columnSpacing: Float
-    get() = checkNotNull(editor.settings.characterGridWidthMultiplier) {
-      "The editor must be in the grid mode to create an instance of a character grid"
+  private val spec: CharacterGridSpec
+    get() = checkNotNull(editor.characterGridSpec) {
+      "The editor must be in the grid mode to use a character grid"
     }
 
   private val size: Dimension
@@ -137,7 +137,7 @@ internal class CharacterGridImpl(
    * The cell width comes from the editor fonts alone, so the font families of the text do not change the grid.
    */
   override val charWidth: Float
-    get() = view.metrics.maxCharWidth() * columnSpacing
+    get() = view.metrics.maxCharWidth() * spec.columnSpacing
 
   override val columns: Int
     get() {
@@ -152,20 +152,24 @@ internal class CharacterGridImpl(
       return if (height > 0) (height.toFloat() / lineHeight.toFloat()).toInt() else 0
     }
 
-  override var doubleWidthCharacterStrategy: DoubleWidthCharacterStrategy = DoubleWidthCharacterStrategy { false }
+  override var doubleWidthCharacterStrategy: DoubleWidthCharacterStrategy
+    get() = spec.doubleWidthCharacterStrategy
+    set(value) {
+      editor.setCharacterGridSpec(spec.copy(doubleWidthCharacterStrategy = value))
+    }
 
   override fun codePointWidth(codePoint: Int): Float {
-    return (if (doubleWidthCharacterStrategy.isDoubleWidth(codePoint)) 2.0f else 1.0f) * charWidth
+    return spec.cells(codePoint) * charWidth
   }
 
   override fun iterator(startOffset: Int, endOffset: Int): CharacterGridIterator =
-    CharacterGridIteratorImpl(editor.document.immutableCharSequence, doubleWidthCharacterStrategy, startOffset, endOffset)
+    CharacterGridIteratorImpl(editor.document.immutableCharSequence, spec, startOffset, endOffset)
 
 }
 
 private class CharacterGridIteratorImpl(
   text: @NlsSafe CharSequence,
-  private val doubleWidthCharacterStrategy: DoubleWidthCharacterStrategy,
+  private val spec: CharacterGridSpec,
   private val startOffset: Int,
   private val endOffset: Int,
 ) : CharacterGridIterator {
@@ -238,7 +242,7 @@ private class CharacterGridIteratorImpl(
       cellEndColumn = 0
     }
     else {
-      cellEndColumn += if (doubleWidthCharacterStrategy.isDoubleWidth(codePoint)) 2 else 1
+      cellEndColumn += spec.cells(codePoint)
     }
   }
 }

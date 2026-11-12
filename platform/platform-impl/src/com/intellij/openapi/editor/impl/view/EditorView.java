@@ -420,16 +420,18 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     SettingsSnapshot settings = myEditor.getSettingsSnapshot();
     int newBidiFlags = readBidiFlags(settings);
     int newTabSize = readTabSize(settings);
+    CharacterGridSpec newGridSpec = myEditor.getCharacterGridSpec();
     SNAPSHOT_UPDATER.updateAndGet(this, snapshot -> {
       FontRenderContext newFontRenderContext = readFontRenderContext(snapshot);
       return snapshot
         .withFontRenderContext(newFontRenderContext)
         .withMetrics(EditorViewMetrics.UNINITIALIZED)
-        .withFontResolver(createFontResolver(newFontRenderContext, snapshot.fontResolver().resolvedFontFamilies()))
+        .withFontResolver(createFontResolver(newFontRenderContext, snapshot.fontResolver().resolvedFontFamilies(), newGridSpec))
         .withTabSize(newTabSize)
         .withBidiFlags(newBidiFlags)
         .withRtlEnabled(settings.isRtlEnabled())
-        .withPrefixLayout(NOT_INITIALIZED_PREFIX);
+        .withPrefixLayout(NOT_INITIALIZED_PREFIX)
+        .withGridSpec(newGridSpec);
     });
     myLogicalPositionCache.reset(false, getTabSize());
     myTextLayoutCache.resetToDocumentSize(false);
@@ -631,12 +633,11 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
-    var grid = myEditor.getCharacterGrid();
-    if (grid != null) {
-      return grid.codePointWidth(codePoint);
+    if (mySnapshot.gridSpec() == null) {
+      return getFontResolver().editorFonts().codePointWidth(codePoint, fontStyle);
     }
     else {
-      return getFontResolver().editorFonts().codePointWidth(codePoint, fontStyle);
+      return getSnapshotWithMetrics().gridCodePointWidth(codePoint);
     }
   }
 
@@ -652,7 +653,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       if (resolver != EditorFontResolver.UNINITIALIZED) {
         return resolver;
       }
-      EditorFontResolver newResolver = createFontResolver(snapshot.fontRenderContext(), List.of());
+      EditorFontResolver newResolver = createFontResolver(snapshot.fontRenderContext(), List.of(), snapshot.gridSpec());
       if (SNAPSHOT_UPDATER.compareAndSet(this, snapshot, snapshot.withFontResolver(newResolver))) {
         return newResolver;
       }
@@ -692,12 +693,16 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
    * So the text of the editor highlighter gets the fonts of its font families.
    * Like {@link #createNewMetrics}, it can run on any thread.
    */
-  private @NotNull EditorFontResolver createFontResolver(FontRenderContext context, Collection<FontFamilies> fontFamilies) {
+  private @NotNull EditorFontResolver createFontResolver(
+    FontRenderContext context,
+    Collection<FontFamilies> fontFamilies,
+    @Nullable CharacterGridSpec gridSpec
+  ) {
     EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
     Font specialCharacterFont = myEditor.getSettings().isShowingSpecialChars() ? colorsScheme.getFont(EditorFontType.PLAIN) : null;
     boolean fontFamiliesEnabled = EditorRegistry.current().isFontFamiliesEnabled();
     return EditorFontResolver.create(
-      layoutFontPreferences(colorsScheme),
+      layoutFontPreferences(colorsScheme, gridSpec),
       context,
       specialCharacterFont,
       fontFamiliesEnabled,
@@ -709,9 +714,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
    * Returns the font preferences of the text layout.
    * A grid editor, such as the terminal, has its own column spacing, so its text layout has no letter spacing.
    */
-  private @NotNull FontPreferences layoutFontPreferences(@NotNull EditorColorsScheme colorsScheme) {
+  private static @NotNull FontPreferences layoutFontPreferences(@NotNull EditorColorsScheme colorsScheme, @Nullable CharacterGridSpec gridSpec) {
     FontPreferences preferences = colorsScheme.getFontPreferences();
-    if (myEditor.getCharacterGrid() == null || preferences.getLetterSpacing() == 0) {
+    if (gridSpec == null || preferences.getLetterSpacing() == 0) {
       return preferences;
     }
     FontPreferences current = preferences.getSnapshot();
@@ -725,7 +730,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
    * Returns true when the text layout adds a letter spacing, see {@link FontPreferences#getLetterSpacing()}.
    */
   public boolean hasLetterSpacing() {
-    return layoutFontPreferences(myEditor.getColorsScheme()).getLetterSpacing() != 0;
+    return layoutFontPreferences(myEditor.getColorsScheme(), mySnapshot.gridSpec()).getLetterSpacing() != 0;
   }
 
   private Collection<FontFamilies> withSourceFontFamilies(Collection<FontFamilies> fontFamilies, EditorColorsScheme scheme) {
@@ -984,7 +989,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     FontMetrics fm = FontInfo.getFontMetrics(font, fontRenderContext);
     // The fonts have no letter spacing, so the metrics add it as FontInfo.charWidth2D does
     float letterSpacing = FontInfo.letterSpacingPixels(
-      layoutFontPreferences(colorsScheme).getLetterSpacing(),
+      layoutFontPreferences(colorsScheme, snapshot.gridSpec()).getLetterSpacing(),
       font.getSize2D(),
       fontRenderContext
     );
@@ -1117,7 +1122,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       EditorViewSnapshot newSnapshot = snapshot
         .withFontRenderContext(newContext)
         .withMetrics(EditorViewMetrics.UNINITIALIZED)
-        .withFontResolver(createFontResolver(newContext, snapshot.fontResolver().resolvedFontFamilies()))
+        .withFontResolver(createFontResolver(newContext, snapshot.fontResolver().resolvedFontFamilies(), snapshot.gridSpec()))
         .withPrefixLayout(NOT_INITIALIZED_PREFIX);
       if (SNAPSHOT_UPDATER.compareAndSet(this, snapshot, newSnapshot)) {
         return true;
