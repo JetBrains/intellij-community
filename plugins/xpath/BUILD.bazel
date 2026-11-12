@@ -175,7 +175,6 @@ jvm_library(
         "//xml/xml-psi-api:psi",
         "//plugins/xpath/xslt-rt:rt",
         "//libraries/jaxen",
-        "//libraries/junit4",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5/codeInsight",
         "//libraries/junit6",

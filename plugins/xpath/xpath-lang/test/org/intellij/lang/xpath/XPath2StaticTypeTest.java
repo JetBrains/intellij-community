@@ -15,19 +15,24 @@
  */
 package org.intellij.lang.xpath;
 
-import junit.framework.TestCase;
 import org.intellij.lang.xpath.psi.XPath2SequenceType;
 import org.intellij.lang.xpath.psi.XPath2Type;
 import org.intellij.lang.xpath.psi.XPathType;
+import org.junit.jupiter.api.Test;
 
-public class XPath2StaticTypeTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+public class XPath2StaticTypeTest {
+
+  @Test
   public void testStatic() {
     assertTrue(XPathType.isAssignable(XPath2Type.NODE, XPath2Type.ITEM));
 
     assertFalse(XPathType.isAssignable(XPath2Type.NODE, XPath2Type.STRING));
   }
 
+  @Test
   public void testBooleanAssignability() {
     // via "effective boolean value"
     assertTrue(XPathType.isAssignable(XPath2Type.BOOLEAN, XPath2Type.STRING));
@@ -37,12 +42,14 @@ public class XPath2StaticTypeTest extends TestCase {
     assertFalse(XPathType.isAssignable(XPath2Type.BOOLEAN_STRICT, XPath2Type.STRING));
   }
 
+  @Test
   public void testAnyAssignability() {
     assertTrue(XPathType.isAssignable(XPath2Type.ITEM, XPath2Type.STRING));
     assertTrue(XPathType.isAssignable(XPath2Type.ITEM, XPath2Type.BOOLEAN));
     assertTrue(XPathType.isAssignable(XPath2Type.ITEM, XPath2Type.DATE));
   }
 
+  @Test
   public void testNumericAssignability() {
     assertTrue(XPathType.isAssignable(XPath2Type.FLOAT, XPath2Type.INTEGER));
     assertTrue(XPathType.isAssignable(XPath2Type.FLOAT, XPath2Type.DECIMAL));
@@ -57,6 +64,7 @@ public class XPath2StaticTypeTest extends TestCase {
     assertFalse(XPathType.isAssignable(XPath2Type.NUMERIC, XPath2Type.BOOLEAN));
   }
 
+  @Test
   public void testStringAssignability() {
     assertTrue(XPathType.isAssignable(XPath2Type.STRING, XPath2Type.ANYURI));
     assertTrue(XPathType.isAssignable(XPath2Type.STRING, XPath2SequenceType.create(XPath2Type.STRING)));

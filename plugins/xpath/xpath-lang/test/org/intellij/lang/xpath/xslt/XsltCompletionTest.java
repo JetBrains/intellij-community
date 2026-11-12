@@ -15,53 +15,78 @@
  */
 package org.intellij.lang.xpath.xslt;
 
-import org.intellij.lang.xpath.TestBase;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.intellij.lang.xpath.XPathTestUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
-public class XsltCompletionTest extends TestBase {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.sharedCodeInsightFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.sharedCodeInsightProjectFixture;
 
+@TestApplication
+public class XsltCompletionTest {
+    private static final TestFixture<Project> projectFixture = sharedCodeInsightProjectFixture();
+    private final TestFixture<CodeInsightTestFixture> codeInsightFixture = sharedCodeInsightFixture(projectFixture);
+    private String testFileName;
+
+    @BeforeEach
+    void setUp(TestInfo testInfo) {
+      codeInsightFixture.get().setTestDataPath(XPathTestUtil.getTestDataPath("xslt/completion"));
+      testFileName = XPathTestUtil.getTestFileName(testInfo);
+    }
+
+    @Test
     public void testLocalVariable() {
         doXsltCompletion();
     }
 
+    @Test
     public void testGlobalVariable() {
         doXsltCompletion();
     }
 
+    @Test
     public void testTemplates() {
         doXsltCompletion();
     }
 
+    @Test
     public void testModes() {
         doXsltCompletion();
     }
 
+    @Test
     public void testNamedTemplateParams() {
         doXsltCompletion();
     }
 
+    @Test
     public void testIncludedTemplateParam() {
         doXsltCompletion("included.xsl");
     }
 
+    @Test
     public void testApplyTemplateParams() {
         doXsltCompletion();
     }
 
+    @Test
     public void testIncludedVariable() {
         doXsltCompletion("included.xsl");
     }
 
+    @Test
     public void testUsedNames() {
         doXsltCompletion();
     }
 
     private void doXsltCompletion(String... moreFiles) {
-        final String name = getTestFileName();
+        CodeInsightTestFixture myFixture = codeInsightFixture.get();
+        final String name = testFileName;
         myFixture.testCompletion(name + ".xsl", name + "_after.xsl", moreFiles);
-    }
-
-    @Override
-    protected String getSubPath() {
-        return "xslt/completion";
     }
 }

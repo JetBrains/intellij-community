@@ -15,12 +15,17 @@
  */
 package org.intellij.lang.xpath.xslt;
 
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ArrayUtil;
-import org.intellij.lang.xpath.TestBase;
+import org.intellij.lang.xpath.XPathTestUtil;
 import org.intellij.lang.xpath.psi.XPathFunctionCall;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.psi.XsltElement;
@@ -31,50 +36,82 @@ import org.intellij.lang.xpath.xslt.psi.XsltVariable;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
-public class XsltResolveTest extends TestBase {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.sharedCodeInsightFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.sharedCodeInsightProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class XsltResolveTest {
+    private static final TestFixture<Project> projectFixture = sharedCodeInsightProjectFixture();
+    private final TestFixture<CodeInsightTestFixture> codeInsightFixture = sharedCodeInsightFixture(projectFixture);
+    private String testFileName;
+
+    @BeforeEach
+    void setUp(TestInfo testInfo) {
+      codeInsightFixture.get().setTestDataPath(XPathTestUtil.getTestDataPath("xslt/resolve"));
+      testFileName = XPathTestUtil.getTestFileName(testInfo);
+    }
+
+    @Test
     public void testResolveSingleVariableGlobal() {
         doVariableResolveTest(true);
     }
 
+    @Test
     public void testResolveForwardVariable() {
         doVariableResolveTest(true);
     }
 
+    @Test
     public void testResolveSingleVariable() {
         doVariableResolveTest(false);
     }
 
+    @Test
     public void testResolveShadowedVariable() {
         doVariableResolveTest(false);
     }
 
+    @Test
     public void testResolveIncludedFunction() {
         doFunctionResolveTest("included-2.xsl");
     }
 
+    @Test
     public void testResolveFunction() {
         doFunctionResolveTest();
     }
 
+    @Test
     public void testResolveSameName() {
         final XsltVariable variable = doVariableResolveTest(false);
 
-        final XsltTemplate template = XsltCodeInsightUtil.getTemplate(variable, false);
-        assertNotNull(template);
-        assertNotNull(template.getName());
+        ReadAction.runBlocking(() -> {
+            final XsltTemplate template = XsltCodeInsightUtil.getTemplate(variable, false);
+            assertNotNull(template);
+            assertNotNull(template.getName());
+        });
     }
 
+    @Test
     public void testResolveIncludedTemplateParam() {
-        final String name = getTestFileName();
+        CodeInsightTestFixture myFixture = codeInsightFixture.get();
+        final String name = testFileName;
         final PsiReference reference = myFixture.getReferenceAtCaretPositionWithAssertion(name + ".xsl", "included.xsl");
 
-        final PsiElement element = resolveXsltReference(reference);
-        assertNotNull("reference did not resolve to XsltElement: " + reference, element);
+        ReadAction.runBlocking(() -> {
+            final PsiElement element = resolveXsltReference(reference);
+            assertNotNull(element, "reference did not resolve to XsltElement: " + reference);
 
-        assertTrue(element instanceof XsltParameter);
-        assertEquals("foo", ((XsltParameter)element).getName());
+            assertTrue(element instanceof XsltParameter);
+            assertEquals("foo", ((XsltParameter)element).getName());
+        });
     }
 
     @Nullable
@@ -97,47 +134,50 @@ public class XsltResolveTest extends TestBase {
     private XsltVariable doVariableResolveTest(boolean global) {
         final PsiReference reference = findInjectedReferenceAtCaret();
 
-        final PsiElement element = reference.resolve();
-        assertTrue(element instanceof XsltVariable);
+        return ReadAction.computeBlocking(() -> {
+            final PsiElement element = reference.resolve();
+            assertTrue(element instanceof XsltVariable);
 
-        final XsltVariable var = (XsltVariable)element;
-        assertEquals(var.getName(), ((XPathVariableReference)reference).getReferencedName());
-        assertEquals(global, XsltSupport.isTopLevelElement(var.getTag()));
+            final XsltVariable var = (XsltVariable)element;
+            assertEquals(var.getName(), ((XPathVariableReference)reference).getReferencedName());
+            assertEquals(global, XsltSupport.isTopLevelElement(var.getTag()));
 
-        return var;
+            return var;
+        });
     }
 
     private XsltFunction doFunctionResolveTest(String... files) {
         final PsiReference reference = findInjectedReferenceAtCaret(files);
 
-        final PsiElement element = reference.resolve();
-        assertTrue(element instanceof XsltFunction);
+        return ReadAction.computeBlocking(() -> {
+            final PsiElement element = reference.resolve();
+            assertTrue(element instanceof XsltFunction);
 
-        final XsltFunction func = (XsltFunction)element;
-        final XPathFunctionCall call = (XPathFunctionCall)reference.getElement();
-        assertEquals(func.getName(), call.getFunctionName());
-        assertEquals(func.getParameters().length, call.getArgumentList().length);
-        return func;
+            final XsltFunction func = (XsltFunction)element;
+            final XPathFunctionCall call = (XPathFunctionCall)reference.getElement();
+            assertEquals(func.getName(), call.getFunctionName());
+            assertEquals(func.getParameters().length, call.getArgumentList().length);
+            return func;
+        });
     }
 
     @NotNull
     private PsiReference findInjectedReferenceAtCaret(String... moreFiles) {
+        CodeInsightTestFixture myFixture = codeInsightFixture.get();
         configure(moreFiles);
 
-        final PsiElement e = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
-        assertNotNull(e);
+        return ReadAction.computeBlocking(() -> {
+            final PsiElement e = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+            assertNotNull(e);
 
-        final PsiReference reference = e.getContainingFile().findReferenceAt(e.getTextOffset());
-        assertNotNull(reference);
-        return reference;
+            final PsiReference reference = e.getContainingFile().findReferenceAt(e.getTextOffset());
+            assertNotNull(reference);
+            return reference;
+        });
     }
 
     private void configure(String... moreFiles) {
-      myFixture.configureByFiles(ArrayUtil.mergeArrays(new String[]{getTestFileName() + ".xsl"}, moreFiles));
-    }
-
-    @Override
-    protected String getSubPath() {
-        return "xslt/resolve";
+      CodeInsightTestFixture myFixture = codeInsightFixture.get();
+      myFixture.configureByFiles(ArrayUtil.mergeArrays(new String[]{testFileName + ".xsl"}, moreFiles));
     }
 }

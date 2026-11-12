@@ -24,7 +24,7 @@ import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.Lex
 
 @TestFixtures
 public class XPath2LexerTest {
-  private final TestFixture<LexerTestFixture> lexer = lexerFixture(TestBase.getTestDataPath("xpath2/parsing/lexer"), () -> XPathLexer.create(true));
+  private final TestFixture<LexerTestFixture> lexer = lexerFixture(XPathTestUtil.getTestDataPath("xpath2/parsing/lexer"), () -> XPathLexer.create(true));
 
   @Test
   public void testNonKeywords() {

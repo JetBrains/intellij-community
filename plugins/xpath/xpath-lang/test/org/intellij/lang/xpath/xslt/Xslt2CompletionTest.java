@@ -15,30 +15,50 @@
  */
 package org.intellij.lang.xpath.xslt;
 
-import org.intellij.lang.xpath.TestBase;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.intellij.lang.xpath.XPathTestUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
-public class Xslt2CompletionTest extends TestBase {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.sharedCodeInsightFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.sharedCodeInsightProjectFixture;
 
+@TestApplication
+public class Xslt2CompletionTest {
+    private static final TestFixture<Project> projectFixture = sharedCodeInsightProjectFixture();
+    private final TestFixture<CodeInsightTestFixture> codeInsightFixture = sharedCodeInsightFixture(projectFixture);
+    private String testFileName;
+
+    @BeforeEach
+    void setUp(TestInfo testInfo) {
+      codeInsightFixture.get().setTestDataPath(XPathTestUtil.getTestDataPath("xslt2/completion"));
+      testFileName = XPathTestUtil.getTestFileName(testInfo);
+    }
+
+    @Test
     public void testCustomFunctions() {
         doXsltCompletion();
     }
 
+    @Test
     public void testTypeCompletion() {
         doXsltCompletion();
     }
 
+    @Test
     public void testSchemaTypeCompletion() {
-      final String name = getTestFileName();
+      CodeInsightTestFixture myFixture = codeInsightFixture.get();
+      final String name = testFileName;
       myFixture.testCompletionTyping(name + ".xsl", "\n", name + "_after.xsl");
     }
 
     private void doXsltCompletion(String... moreFiles) {
-        final String name = getTestFileName();
+        CodeInsightTestFixture myFixture = codeInsightFixture.get();
+        final String name = testFileName;
         myFixture.testCompletion(name + ".xsl", name + "_after.xsl", moreFiles);
-    }
-
-    @Override
-    protected String getSubPath() {
-        return "xslt2/completion";
     }
 }

@@ -15,74 +15,114 @@
  */
 package org.intellij.lang.xpath;
 
-public class XPath2HighlightingTest extends XPath2HighlightingTestBase {
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.intellij.lang.xpath.validation.inspections.RedundantTypeConversion;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.sharedCodeInsightFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.sharedCodeInsightProjectFixture;
+
+@TestApplication
+public class XPath2HighlightingTest {
+  private static final TestFixture<Project> projectFixture = sharedCodeInsightProjectFixture();
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = sharedCodeInsightFixture(projectFixture);
+  private String testFileName;
+
+  @BeforeEach
+  void setUp(TestInfo testInfo) {
+    codeInsightFixture.get().setTestDataPath(XPathTestUtil.getTestDataPath("xpath2/highlighting"));
+    testFileName = XPathTestUtil.getTestFileName(testInfo);
+    codeInsightFixture.get().enableInspections(RedundantTypeConversion.class);
+  }
+
+  @Test
   public void testIfInsideArgumentList() {
     doXPathHighlighting();
   }
 
+  @Test
   public void testConsecutiveComparison() {
     doXPathHighlighting();
   }
 
+  @Test
   public void testNumberFollowedByToken() {
     doXPathHighlighting();
   }
 
+  @Test
   public void testNumberFollowedByToken2() {
     doXPathHighlighting();
   }
 
+  @Test
   public void testMalformedStringLiteral() {
     doXPathHighlighting();
   }
 
+  @Test
   public void testQuotedStringLiteral() {
     doXPathHighlighting();
   }
 
+  @Test
   public void testEmptyStringLiteral() {
     doXPathHighlighting();
   }
 
+  @Test
   public void testNodeKindTest() {
     doXPathHighlighting();
   }
 
+  @Test
   public void testIncorrectNodeKindTests() {
     doXPathHighlighting();
   }
 
+  @Test
   public void testValidOperations() {
     doXPathHighlighting();
   }
 
+  @Test
   public void testValidOperations2() {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
+  @Test
   public void testPlusOperatorNotApplicable() {
     doXPathHighlighting();
   }
 
+  @Test
   public void testToOperatorNotApplicable() {
     doXPathHighlighting();
   }
 
+  @Test
   public void testIntersectOperatorNotApplicable() {
     doXPathHighlighting();
   }
 
+  @Test
   public void testUnionOperatorNotApplicable() {
     doXPathHighlighting();
   }
 
+  @Test
   public void testInvalidNodeTypePredicate() {
     doXPathHighlighting();
   }
 
-  @Override
-  protected String getSubPath() {
-    return "xpath2/highlighting";
+  private void doXPathHighlighting() {
+    codeInsightFixture.get().testHighlighting(true, false, false, testFileName + ".xpath2");
   }
 }

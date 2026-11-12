@@ -17,89 +17,124 @@ package org.intellij.lang.xpath.xslt;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.intellij.lang.xpath.TestBase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.intellij.lang.xpath.XPathTestUtil;
 import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.refactoring.VariableInlineHandler;
 import org.intellij.lang.xpath.xslt.refactoring.extractTemplate.XsltExtractTemplateAction;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
-public class XsltRefactoringTest extends TestBase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.sharedCodeInsightFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.sharedCodeInsightProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class XsltRefactoringTest {
+  private static final TestFixture<Project> projectFixture = sharedCodeInsightProjectFixture();
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = sharedCodeInsightFixture(projectFixture);
+  private String testFileName;
+
+  @BeforeEach
+  void setUp(TestInfo testInfo) {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.setTestDataPath(XPathTestUtil.getTestDataPath("xslt/refactoring"));
+    testFileName = XPathTestUtil.getTestFileName(testInfo);
     final CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
     XmlCodeStyleSettings xmlSettings = settings.getCustomSettings(XmlCodeStyleSettings.class);
     xmlSettings.XML_SPACE_INSIDE_EMPTY_TAG = true;
     settings.getIndentOptions(XmlFileType.INSTANCE).INDENT_SIZE = 2;
   }
 
+  @Test
   public void testExtractTemplate() {
     doExtractTemplate();
   }
 
+  @Test
   public void testExtractTemplateWithComment() {
     doExtractTemplate();
   }
 
+  @Test
   public void testExtractTemplateOneVar() {
     doExtractTemplate();
   }
 
+  @Test
   public void testExtractTemplateOneVar2() {
     doExtractTemplate();
   }
 
+  @Test
   public void testExtractTemplateTwoVars() {
     doExtractTemplate();
   }
 
+  @Test
   public void testExtractTemplateTwoVars2() {
     doExtractTemplate();
   }
 
+  @Test
   public void testExtractTemplateUnresolvedVar() {
     doExtractTemplate();
   }
 
+  @Test
   public void testExtractTemplateUnresolvedVar2() {
     doExtractTemplate();
   }
 
   private void doExtractTemplate() {
-    myFixture.configureByFile(getTestFileName() + ".xsl");
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(testFileName + ".xsl");
 
     final XsltExtractTemplateAction action = new XsltExtractTemplateAction();
-    assertTrue(action.invokeImpl(myFixture.getEditor(), myFixture.getFile(), "foo"));
+    assertTrue(EdtTestUtil.runInEdtAndGet(() -> action.invokeImpl(myFixture.getEditor(), myFixture.getFile(), "foo")));
 
-    myFixture.checkResultByFile(getTestFileName() + "_after.xsl");
+    myFixture.checkResultByFile(testFileName + "_after.xsl");
   }
 
+  @Test
   public void testInlineVariable() {
     doInlineVariable();
   }
 
+  @Test
   public void testInlineVariableOnDecl() {
     doInlineVariable();
   }
 
   private void doInlineVariable() {
-    myFixture.configureByFile(getTestFileName() + ".xsl");
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(testFileName + ".xsl");
 
-    final XPathVariable variable = findVariable();
-    assertNotNull(variable);
-    VariableInlineHandler.invoke(variable, myFixture.getEditor());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      final XPathVariable variable = findVariable();
+      assertNotNull(variable);
+      VariableInlineHandler.invoke(variable, myFixture.getEditor());
+    });
 
-    myFixture.checkResultByFile(getTestFileName() + "_after.xsl");
+    myFixture.checkResultByFile(testFileName + "_after.xsl");
   }
 
   @Nullable
   private XPathVariable findVariable() {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     final PsiElement elementAtCaret = myFixture.getElementAtCaret();
     XPathVariableReference ref = PsiTreeUtil.getParentOfType(elementAtCaret, XPathVariableReference.class, false);
     if (ref != null) {
@@ -117,10 +152,5 @@ public class XsltRefactoringTest extends TestBase {
       }
     }
     return null;
-  }
-
-  @Override
-  protected String getSubPath() {
-    return "xslt/refactoring";
   }
 }

@@ -15,34 +15,62 @@
  */
 package org.intellij.lang.xpath;
 
-public class XPathCompletionTest extends TestBase {
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.sharedCodeInsightFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.sharedCodeInsightProjectFixture;
+
+@TestApplication
+public class XPathCompletionTest {
+  private static final TestFixture<Project> projectFixture = sharedCodeInsightProjectFixture();
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = sharedCodeInsightFixture(projectFixture);
+  private String testFileName;
+
+  @BeforeEach
+  void setUp(TestInfo testInfo) {
+    codeInsightFixture.get().setTestDataPath(XPathTestUtil.getTestDataPath("xpath/completion"));
+    testFileName = XPathTestUtil.getTestFileName(testInfo);
+  }
+
+  @Test
   public void testAxis() {
         doXPathCompletion("ancestor", "ancestor-or-self", "attribute");
     }
 
+    @Test
     public void testAxisInsert() {
         doXPathCompletion();
     }
 
+    @Test
     public void testPartialAxis() {
         doXPathCompletion("ancestor", "ancestor-or-self");
     }
 
+    @Test
     public void testFunctions() {
         doXPathCompletion("text()", "translate(string, string, string)", "true()");
     }
 
+    @Test
     public void testFunctionInsert1() {
         doXPathCompletion();
     }
 
+    @Test
     public void testFunctionInsert2() {
         doXPathCompletion();
     }
 
     private void doXPathCompletion() {
-        final String name = getTestFileName();
+        CodeInsightTestFixture myFixture = codeInsightFixture.get();
+        final String name = testFileName;
         myFixture.configureByFile(name + ".xpath");
         if (myFixture.completeBasic() != null) {
           myFixture.type('\n');
@@ -51,13 +79,9 @@ public class XPathCompletionTest extends TestBase {
     }
 
     private void doXPathCompletion(String... expectedVariants) {
-        myFixture.configureByFile(getTestFileName() + ".xpath");
+        CodeInsightTestFixture myFixture = codeInsightFixture.get();
+        myFixture.configureByFile(testFileName + ".xpath");
         myFixture.completeBasic();
         myFixture.assertPreferredCompletionItems(0, expectedVariants);
-    }
-
-    @Override
-    protected String getSubPath() {
-        return "xpath/completion";
     }
 }

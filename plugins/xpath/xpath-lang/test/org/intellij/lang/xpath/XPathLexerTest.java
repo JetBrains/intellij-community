@@ -24,7 +24,7 @@ import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.Lex
 
 @TestFixtures
 public class XPathLexerTest {
-  private final TestFixture<LexerTestFixture> lexer = lexerFixture(TestBase.getTestDataPath("xpath/parsing/lexer"), () -> XPathLexer.create(false));
+  private final TestFixture<LexerTestFixture> lexer = lexerFixture(XPathTestUtil.getTestDataPath("xpath/parsing/lexer"), () -> XPathLexer.create(false));
 
   @Test
   public void testAttributeAxis() {
