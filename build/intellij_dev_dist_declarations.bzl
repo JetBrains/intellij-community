@@ -311,10 +311,6 @@ def _runtime_executable_lists(platform):
 # files action renders from the launch model of the product.
 _PLATFORM_RESOURCES_FRAGMENT = "platform_resources"
 
-# The dev marker of a dev distribution. The product files action appends it to `additionalJvmArguments`, so a bare
-# start of the export through the native launcher is a dev-mode IDE. Production states none.
-_DEV_JVM_ARGUMENTS = ["-Didea.use.dev.build.server=true"]
-
 def _launch_destinations(plan, os):
     """The destinations of the launch files, as `struct(vm_options, product_info, frontend_vm_options)`.
 
@@ -579,8 +575,7 @@ def _platform_set(tables, product, name, target_platform, visibility):
         # The rendered files have fixed names, and the component maps each one to its path in the distribution.
         # `_launch_destinations` states the paths of the vmoptions files and of `product-info.json`. The component also
         # declares the main class of the launch model. A classic-loader launch takes its boot class path from the core
-        # classpath of the platform payload. A modular-loader launch states `platform-loader.jar` in the model. The
-        # launch and each custom command with JVM arguments of its own get the dev marker `_DEV_JVM_ARGUMENTS`.
+        # classpath of the platform payload. A modular-loader launch states `platform-loader.jar` in the model.
         files = name + "_product_files"
         frontend_vmoptions = getattr(plan.launch, "frontend_vmoptions", None)
         application_info = tables.application_infos[product]
@@ -599,7 +594,6 @@ def _platform_set(tables, product, name, target_platform, visibility):
             product_info = files + "/product-info.json",
             frontend_vmoptions = files + "/frontend.vmoptions" if frontend_vmoptions else None,
             platform_payload = None if _modular_loader(tables, product) else ":" + name + "_platform_payload",
-            dev_jvm_arguments = _DEV_JVM_ARGUMENTS,
         )
 
         def placed(platform):

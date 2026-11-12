@@ -74,6 +74,9 @@ def dev_launch_jvm_flags(name, jvm_flags = [], workspace = _LAUNCHER_WORKSPACE):
     `workspace` spells the workspace root. A launch target keeps the default, which its rule resolves at analysis.
     The sibling vmoptions file of an export passes the absolute root, because no rule expands its lines. So a launch
     target and a bare start of an export get the same flags.
+
+    The flags end with the dev marker `idea.use.dev.build.server`, so a row flag cannot override it. `product-info.json`
+    of a distribution states no marker, as in production.
     """
     for flag in jvm_flags:
         for key in _DATA_PROPERTIES:
@@ -91,6 +94,7 @@ def dev_launch_jvm_flags(name, jvm_flags = [], workspace = _LAUNCHER_WORKSPACE):
         # Not a build-time input: `AppMode.getDevIdeaProjectDir` and the webview native bridge read it at runtime.
         # A `DevMainImpl` launch has it because `DevMainImpl` sets it from the project root it just built against.
         "-Didea.dev.project.root=" + workspace,
+        "-Didea.use.dev.build.server=true",
     ]
 
 # The runtime module repository of a home, and the property that names it.
