@@ -84,6 +84,17 @@ class BazelJUnitOutputListenerTest {
     assertThat(interrupted).containsExactlyInAnyOrderElementsOf(closed);
   }
 
+  /** The nested class and its failure are two suites, and only the first one holds the time of the class. */
+  @Test
+  void countsTheTimeOfAContainerOnce(@TempDir Path tempDir) throws Exception {
+    Document xml = executeAndReadXml(SlowAfterAllFailureScenario.class, tempDir.resolve("slowAfterAllFailure.xml"));
+
+    NodeList suites = xml.getElementsByTagName("testsuite");
+    assertThat(suites.getLength()).isEqualTo(2);
+    assertThat(Double.parseDouble(((Element)suites.item(0)).getAttribute("time"))).isGreaterThanOrEqualTo(0.2);
+    assertThat(((Element)suites.item(1)).getAttribute("time")).isEqualTo("0");
+  }
+
   /** The failed container is a suite of its own, so TeamCity names the failure as in JPS: `<container>: Class Configuration`. */
   @Test
   void namesAClassConfigurationFailureAsJps(@TempDir Path tempDir) throws Exception {
@@ -394,6 +405,24 @@ class BazelJUnitOutputListenerTest {
     class Inner {
       @Test
       void inner() {
+      }
+    }
+  }
+
+  /** A nested class: the suite of its failure, `Outer$Inner.Inner`, is not the suite of its tests, `Outer$Inner`. */
+  @Disabled(SCENARIO_DISABLED_REASON)
+  static class SlowAfterAllFailureScenario {
+    @Nested
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class Inner {
+      @Test
+      void slowTest() throws InterruptedException {
+        Thread.sleep(200);
+      }
+
+      @AfterAll
+      void afterAll() {
+        throw new IllegalStateException("afterAll failure");
       }
     }
   }

@@ -38,7 +38,7 @@ class TestSuiteXmlRenderer {
   /**
    * Writes a `testsuite` element for each suite name of the tests, see {@link TeamCityTestNames#getSuiteName}.
    * The tests of one container can need several suites: a failed container is a suite of its own.
-   * Only the first suite holds the output of the container.
+   * Only the first suite holds the time and the output of the container, so a sum over the suites counts them once.
    */
   public void toXml(XMLStreamWriter xml, TestData suite, Collection<TestData> tests)
     throws XMLStreamException {
@@ -67,7 +67,7 @@ class TestSuiteXmlRenderer {
     DecimalFormat decimalFormat = new DecimalFormat("#.##", new DecimalFormatSymbols(Locale.ROOT));
     /* @Nullable */ Duration maybeDuration = suite.getDuration();
     Duration duration =
-      maybeDuration == null ? Duration.between(suite.getStarted(), Instant.now()) : maybeDuration;
+      !first ? Duration.ZERO : maybeDuration == null ? Duration.between(suite.getStarted(), Instant.now()) : maybeDuration;
     xml.writeAttribute("time", decimalFormat.format(duration.toMillis() / 1000f));
 
     int errors = 0;
