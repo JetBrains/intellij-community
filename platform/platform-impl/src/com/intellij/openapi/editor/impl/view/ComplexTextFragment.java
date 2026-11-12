@@ -12,7 +12,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Shape;
-import java.awt.font.GlyphMetrics;
 import java.awt.font.GlyphVector;
 import java.awt.font.TextAttribute;
 import java.awt.geom.Point2D;
@@ -289,7 +288,7 @@ public final class ComplexTextFragment extends TextFragment {
       double offsetInCell = cellSpacing / 2;
       char glyphChar = lineChars[start + myGlyphVector.getGlyphCharIndex(i)];
       if (ligatures && !Character.isLetterOrDigit(glyphChar) && !Character.isWhitespace(glyphChar)) {
-        int covered = coveredCells(i, advance, cells);
+        int covered = coveredCells(i, advance, cells, fontInfo);
         for (int c = 1; c <= covered; c++) {
           offsetInCell -= cellSpacings[cells - c] / 2;
         }
@@ -343,12 +342,15 @@ public final class ComplexTextFragment extends TextFragment {
    *
    * @param previousCells the number of cells before the glyph in this fragment
    */
-  private int coveredCells(int glyphIndex, double advance, int previousCells) {
-    GlyphMetrics metrics = myGlyphVector.getGlyphMetrics(glyphIndex);
-    if (advance <= 0 || metrics.getBounds2D().isEmpty()) {
+  private int coveredCells(int glyphIndex, double advance, int previousCells, @NotNull FontInfo fontInfo) {
+    if (advance <= 0) {
       return 0;
     }
-    long cells = Math.round(-metrics.getLSB() / advance);
+    float leftSideBearing = fontInfo.glyphLeftSideBearing(myGlyphVector, glyphIndex);
+    if (Float.isNaN(leftSideBearing)) {
+      return 0;
+    }
+    long cells = Math.round(-leftSideBearing / advance);
     return Math.clamp(cells, 0, previousCells);
   }
 

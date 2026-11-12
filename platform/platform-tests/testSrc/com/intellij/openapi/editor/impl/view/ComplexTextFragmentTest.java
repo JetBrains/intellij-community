@@ -416,6 +416,14 @@ public class ComplexTextFragmentTest {
       return new GlyphMetrics(myGlyphWidths[index], myInk[index], GlyphMetrics.STANDARD);
     }
 
+    /**
+     * Gives each glyph its own code, so each glyph can have its own ink.
+     */
+    @Override
+    public int getGlyphCode(int glyphIndex) {
+      return getGlyphIndexInArray(glyphIndex);
+    }
+
     private MyGlyphVector noGlyph() {
       return new MyGlyphVector(
         myRtl,

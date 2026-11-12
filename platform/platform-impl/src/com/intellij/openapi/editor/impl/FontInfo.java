@@ -6,6 +6,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.jetbrains.Extensions;
 import com.jetbrains.FontMetricsAccessor;
 import com.jetbrains.JBR;
+import it.unimi.dsi.fastutil.ints.Int2FloatMap;
+import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,6 +19,8 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphMetrics;
+import java.awt.font.GlyphVector;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -134,6 +138,7 @@ public final class FontInfo {
   private final float myLetterSpacingPixels;
   private final @Nullable FontRenderContext myContext;
   private final @NotNull IntSet mySafeCharacters = new IntOpenHashSet();
+  private final @NotNull Int2FloatMap myGlyphLeftSideBearings = new Int2FloatOpenHashMap(); // by glyph code, see glyphLeftSideBearing
   private @Nullable FontMetrics myFontMetrics = null;
 
   /**
@@ -246,6 +251,28 @@ public final class FontInfo {
   @ApiStatus.Internal
   public float getLetterSpacingPixels() {
     return myLetterSpacingPixels;
+  }
+
+  /**
+   * Returns the left side bearing of the ink of a glyph, or {@link Float#NaN} when the glyph has no ink.
+   * A negative value means that the ink starts before the position of the glyph, as for a ligature over spacer glyphs.
+   * The glyph vector must come from the font and the render context of this instance.
+   */
+  @ApiStatus.Internal
+  public float glyphLeftSideBearing(@NotNull GlyphVector glyphVector, int glyphIndex) {
+    int glyphCode = glyphVector.getGlyphCode(glyphIndex);
+    synchronized (this) {
+      float cached = myGlyphLeftSideBearings.getOrDefault(glyphCode, Float.POSITIVE_INFINITY);
+      if (cached != Float.POSITIVE_INFINITY) {
+        return cached;
+      }
+    }
+    GlyphMetrics metrics = glyphVector.getGlyphMetrics(glyphIndex);
+    float leftSideBearing = metrics.getBounds2D().isEmpty() ? Float.NaN : metrics.getLSB();
+    synchronized (this) {
+      myGlyphLeftSideBearings.put(glyphCode, leftSideBearing);
+    }
+    return leftSideBearing;
   }
 
   /**
