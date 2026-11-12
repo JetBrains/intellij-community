@@ -16,6 +16,7 @@ import com.intellij.testFramework.junit5.drainUncaughtExceptions
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withTimeoutOrNull
@@ -23,6 +24,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /** The `[project].name` of the root `pyproject.toml`, which is also the name of the module the sync creates for it. */
@@ -136,12 +138,21 @@ internal class PyUvWorkspaceInterpreterTest {
    * class saw it" is a stable statement.
    *
    * The predicate names this one failure. Any other uncaught exception is left in place and still fails the test.
+   *
+   * The wait is what makes this work: the configurator throws on a coroutine of its own, so the exception reaches the
+   * handler after the body of the test is over, and a drain that only looks once takes nothing and leaves the
+   * exception to the extension, see build 1128368029.
    */
   @AfterEach
-  fun drainTheKnownConfiguratorFailure() {
-    if (drainUncaughtExceptions { it is IllegalStateException && it.message?.contains(NO_INTERPRETER) == true }.isNotEmpty()) {
-      configuratorFailed = true
+  fun drainTheKnownConfiguratorFailure(): Unit = timeoutRunBlocking(60.seconds) {
+    val drained = withTimeoutOrNull(40.seconds) {
+      while (true) {
+        if (drainUncaughtExceptions { it is IllegalStateException && it.message?.contains(NO_INTERPRETER) == true }.isNotEmpty()) break
+        delay(200.milliseconds)
+      }
+      true
     }
+    if (drained == true) configuratorFailed = true
   }
 
   private fun describeWorkspaces(): String =
