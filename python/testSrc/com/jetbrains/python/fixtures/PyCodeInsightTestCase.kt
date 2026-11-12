@@ -1,5 +1,6 @@
 package com.jetbrains.python.fixtures
 
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.python.sdk.backend.classRoots
 import com.intellij.python.sdk.backend.PythonInterpreter
@@ -105,6 +106,9 @@ import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrIn
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.TypeEvalContext.Companion.codeAnalysis
 import com.jetbrains.python.psi.types.TypeEvalContext.Companion.userInitiated
+import com.jetbrains.python.testing.PyAbstractTestFactory
+import com.jetbrains.python.testing.PythonTestConfigurationType
+import com.jetbrains.python.testing.TestRunnerService
 import com.jetbrains.python.tools.sdkTools.deriveRootsForTests
 import com.jetbrains.python.tools.sdkTools.writeAddedPathsForTests
 import org.intellij.lang.annotations.Language
@@ -242,6 +246,14 @@ abstract class PyCodeInsightTestCase {
     /** The boolean registry keys that the test sets to false. */
     val disableRegistryKeys: Array<String> = [],
   )
+
+  /**
+   * Selects pytest as the test runner of the fixture module for a test method or a test class.
+   * Code insight of pytest, such as the fixtures, works only in a module that runs its tests with pytest.
+   */
+  @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+  @Retention(AnnotationRetention.RUNTIME)
+  annotation class UsePyTestRunner
 
   annotation class CopyDirectory(
     val source: String,
@@ -396,7 +408,15 @@ abstract class PyCodeInsightTestCase {
     myTestInspections = findTestAnnotation(TestInspections::class.java) ?: TestInspections()
     myTestCaseOptions = myTestMethod?.getAnnotation(TestCaseOptions::class.java) ?: TestCaseOptions()
     ensureFixture(this, myTestCaseOptions)
+    if (findTestAnnotation(UsePyTestRunner::class.java) != null) {
+      val testRunnerService = TestRunnerService.getInstance(myFixture.module)
+      originalTestRunnerFactory = testRunnerService.selectedFactory
+      testRunnerService.selectedFactory = PythonTestConfigurationType.getInstance().pyTestFactory
+    }
   }
+
+  /** The test runner of the fixture module before [UsePyTestRunner] changed it. */
+  private var originalTestRunnerFactory: PyAbstractTestFactory<*>? = null
 
   private var myTestMethod: Method? = null
   private var myTestClass: Class<*>? = null
@@ -417,6 +437,10 @@ abstract class PyCodeInsightTestCase {
   fun tearDownPerTest() {
     RunAll.runAll(
       {
+        originalTestRunnerFactory?.let { TestRunnerService.getInstance(myFixture.module).selectedFactory = it }
+        originalTestRunnerFactory = null
+      },
+      {
         runInEdtAndWait {
           // close any open editors
           val fem = FileEditorManager.getInstance(myFixture.project)
@@ -430,7 +454,7 @@ abstract class PyCodeInsightTestCase {
       },
       { if (myFixture.module != null) PyNamespacePackagesService.getInstance(myFixture.module).resetAllNamespacePackages() },
       { waitUntilIndexesAreReady(myFixture.project) },
-      { Assertions.assertTrue(testCallCount < 2, "One of `test`, `testQuickFix` and `assertNoQuickFix` should be called only once per JUnit test") },
+      { Assertions.assertTrue(testCallCount < 2, "One of `test`, `testQuickFix`, `assertNoQuickFix`, `withCaret` and `completeWithCaret` should be called only once per JUnit test") },
     )
   }
 
@@ -514,6 +538,51 @@ abstract class PyCodeInsightTestCase {
     val file = myFixture.configureByText(fileName, code)
     myFixture.editor.caretModel.moveToOffset(marker.codeOffsetStart)
     return file
+  }
+
+  /**
+   * Creates [otherFiles], configures [fileContent] with [configureWithCaret], and runs [action] on the EDT.
+   *
+   * The options of [TestCaseOptions] apply, as for [test]. For example, the [TestCaseOptions.additionalSdkRoots] are class roots.
+   * A test calls one of [test], [withCaret] and [completeWithCaret] only once.
+   */
+  protected fun <T> withCaret(
+    @PyTestAssertionText @Language("Python") fileContent: String,
+    vararg otherFiles: Pair<String, String>,
+    action: (PsiFile) -> T,
+  ): T {
+    var result: Result<T>? = null
+    runTestBody {
+      runInEdtAndWait {
+        createOtherFiles(otherFiles)
+        result = runCatching { action(configureWithCaret(fileContent)) }
+      }
+    }
+    return checkNotNull(result).getOrThrow()
+  }
+
+  /**
+   * Completes at the `CARET` marker of [fileContent] and returns the lookup strings. See [withCaret].
+   *
+   * The completion inserts no item, also when only one item matches. An insertion can start a suggested refactoring,
+   * which can fail in a later test.
+   */
+  protected fun completeWithCaret(
+    @PyTestAssertionText @Language("Python") fileContent: String,
+    vararg otherFiles: Pair<String, String>,
+  ): List<String> {
+    val settings = CodeInsightSettings.getInstance()
+    val autocomplete = settings.AUTOCOMPLETE_ON_CODE_COMPLETION
+    settings.AUTOCOMPLETE_ON_CODE_COMPLETION = false
+    try {
+      return withCaret(fileContent, *otherFiles) {
+        myFixture.completeBasic()
+        myFixture.lookupElementStrings.orEmpty()
+      }
+    }
+    finally {
+      settings.AUTOCOMPLETE_ON_CODE_COMPLETION = autocomplete
+    }
   }
 
   /** Runs [action] with [format] as the docstring format of the module, and restores the previous format after it. */
