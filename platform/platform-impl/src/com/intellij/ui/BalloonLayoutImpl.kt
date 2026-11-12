@@ -5,10 +5,12 @@ package com.intellij.ui
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationLocation
+import com.intellij.notification.NotificationsConfiguration
 import com.intellij.notification.impl.NotificationCollector
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
@@ -87,9 +89,12 @@ open class BalloonLayoutImpl(private val parent: JRootPane, insets: Insets) : Ba
       relayoutRequests
         .debounce(200.milliseconds)
         .collect {
+          // preload off EDT
+          val notificationLocation = serviceAsync<NotificationsConfiguration>().notificationLocation
+
           withContext(Dispatchers.UI) {
             if (layeredPane != null) {
-              relayout()
+              relayout(notificationLocation)
               fireRelayout()
             }
           }
@@ -258,6 +263,10 @@ open class BalloonLayoutImpl(private val parent: JRootPane, insets: Insets) : Ba
   }
 
   protected fun relayout() {
+    relayout(NotificationsConfigurationImpl.getInstanceImpl().notificationLocation)
+  }
+
+  protected fun relayout(settingsNotificationLocation: NotificationLocation) {
     if (layeredPane == null) return
     val size = layeredPane!!.size
     JBInsets.removeFrom(size, insets)
@@ -272,7 +281,7 @@ open class BalloonLayoutImpl(private val parent: JRootPane, insets: Insets) : Ba
     val location = if (this is WelcomeBalloonLayoutImpl) {
       NotificationLocation.BOTTOM_RIGHT
     } else {
-      NotificationsConfigurationImpl.getInstanceImpl().notificationLocation
+      settingsNotificationLocation
     }
     val pane = UIUtil.findComponentOfType(parent, ToolWindowPane::class.java)
     val layeredPane = pane?.getLayeredPane()
