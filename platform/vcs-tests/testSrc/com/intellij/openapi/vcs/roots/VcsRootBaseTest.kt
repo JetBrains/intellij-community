@@ -2,8 +2,8 @@
 package com.intellij.openapi.vcs.roots
 
 import com.intellij.openapi.extensions.ExtensionPoint
-import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.cd
@@ -34,7 +34,7 @@ abstract class VcsRootBaseTest : VcsPlatformTest() {
     super.setUp()
 
     cd(projectRoot)
-    rootModule = doCreateRealModuleIn("foo", myProject, EmptyModuleType.getInstance())
+    rootModule = doCreateRealModuleIn("foo", myProject, ModuleType.EMPTY)
     mkdir("repository")
     projectRoot.refresh(false, true)
 
