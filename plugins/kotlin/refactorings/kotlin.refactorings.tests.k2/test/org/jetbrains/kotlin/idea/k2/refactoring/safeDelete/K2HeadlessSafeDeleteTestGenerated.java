@@ -1082,6 +1082,21 @@ public abstract class K2HeadlessSafeDeleteTestGenerated extends AbstractK2Headle
             runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/extNamedParam2.kt");
         }
 
+        @TestMetadata("hierarchyDeleteOnlySelected.kt")
+        public void testHierarchyDeleteOnlySelected() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyDeleteOnlySelected.kt");
+        }
+
+        @TestMetadata("hierarchyDeleteOnlySelectedContextParameterInProperty.kt")
+        public void testHierarchyDeleteOnlySelectedContextParameterInProperty() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyDeleteOnlySelectedContextParameterInProperty.kt");
+        }
+
+        @TestMetadata("hierarchyDeleteOnlySelectedOverride.kt")
+        public void testHierarchyDeleteOnlySelectedOverride() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyDeleteOnlySelectedOverride.kt");
+        }
+
         @TestMetadata("hierarchyDeletedByDefault.kt")
         public void testHierarchyDeletedByDefault() throws Exception {
             runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameter/hierarchyDeletedByDefault.kt");
@@ -1403,6 +1418,11 @@ public abstract class K2HeadlessSafeDeleteTestGenerated extends AbstractK2Headle
         @TestMetadata("dataClassComponent.kt")
         public void testDataClassComponent() throws Exception {
             runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/dataClassComponent.kt");
+        }
+
+        @TestMetadata("hierarchyDeleteOnlySelectedJavaOverride.kt")
+        public void testHierarchyDeleteOnlySelectedJavaOverride() throws Exception {
+            runTest("testData/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/hierarchyDeleteOnlySelectedJavaOverride.kt");
         }
 
         @TestMetadata("hierarchyWithSafeUsages1.kt")

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete
 import com.intellij.ide.IdeBundle
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Key
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -16,6 +17,8 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
+
+internal val REMOVE_OVERRIDES = Key.create<Unit>("REMOVE_OVERRIDES")
 
 /** @return [element] and the same parameter of the other declarations of its hierarchy */
 internal fun parameterHierarchy(element: KtParameter): List<PsiElement> {
@@ -32,6 +35,7 @@ internal fun parameterHierarchyQuestion(parameter: KtParameter): ModPlanSubjectC
         "0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.parameters",
         parameter.ownerDeclaration?.let { ElementDescriptionUtil.getElementDescription(it, RefactoringDescriptionLocation.WITHOUT_PARENT) }
     )
+
     val key = parameter.ownerDeclaration?.let { "${declarationKey(it)} ${parameter.name}" }
     return ModPlanSubjectConfirmation(
         ModPlanSafeDeleteOptions.DELETE_HIERARCHY, ModPlanSafeDeleteOptions.HIERARCHY_OF, key
@@ -40,7 +44,7 @@ internal fun parameterHierarchyQuestion(parameter: KtParameter): ModPlanSubjectC
     }
 }
 
-private fun collectParameterHierarchy(parameter: KtParameter): Set<PsiElement> {
+internal fun collectParameterHierarchy(parameter: KtParameter): Set<PsiElement> {
     val function = parameter.ownerDeclaration as? KtCallableDeclaration ?: return emptySet()
     val parameterIndex = parameter.parameterIndex()
     val parametersToDelete = HashSet<PsiElement>()

@@ -11,6 +11,7 @@ import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.InheritanceUtil
@@ -182,8 +183,8 @@ internal fun findKotlinUsages(
 ): NonCodeUsageSearchInfo {
 
     fun isInside (t: PsiElement, ancestors : Array<out PsiElement>) : Boolean =
-         ancestors.any { elementToDelete -> SafeDeleteProcessor.isInside(t, elementToDelete) } 
-    
+         ancestors.any { elementToDelete -> SafeDeleteProcessor.isInside(t, elementToDelete) }
+
     val isInside: (t: PsiElement) -> Boolean = { isInside(it, allElementsToDelete) }
 
     val additionalElementsToDelete = arrayListOf<PsiElement>()
@@ -239,6 +240,7 @@ internal fun findKotlinUsages(
     }
 
     if (element is KtParameter) {
+        findOverrideModifiersToDelete(element, allElementsToDelete, result)
         if (element.isContextParameter) {
             findCallsWithContextParameters(result, element, element.ownerDeclaration)
         } else {
@@ -251,6 +253,41 @@ internal fun findKotlinUsages(
     }
 
     return NonCodeUsageSearchInfo(isInside, element)
+}
+
+private fun findOverrideModifiersToDelete(
+    parameter: KtParameter,
+    allElementsToDelete: Array<out PsiElement>,
+    result: MutableList<in UsageInfo>
+) {
+    if (parameter.getCopyableUserData(REMOVE_OVERRIDES) == null) return
+    parameter.putCopyableUserData(REMOVE_OVERRIDES, null)
+
+    val changedDeclarations = allElementsToDelete.mapNotNullTo(HashSet<PsiElement>()) { element ->
+        when (element) {
+            is KtParameter -> element.ownerDeclaration
+            is PsiParameter -> element.declarationScope as? PsiMethod
+            else -> null
+        }
+    }
+
+    collectParameterHierarchy(parameter).forEach { hierarchyParameter ->
+        //the declaration the parameter belongs to loses it, the rest of the hierarchy keeps it
+        if (hierarchyParameter != parameter && hierarchyParameter in allElementsToDelete) return@forEach
+        val declaration = (hierarchyParameter as? KtParameter)?.ownerDeclaration as? KtCallableDeclaration
+            ?: (hierarchyParameter as? PsiParameter)?.declarationScope as? PsiMethod ?: return@forEach
+        //`override` survives as long as one overridden declaration is changed the same way as `declaration` itself
+        val keepsParameter = declaration !in changedDeclarations
+        val losesOverride = analyze(hierarchyParameter) {
+            val overridden = ((declaration as? KtCallableDeclaration)?.symbol as? KaCallableSymbol
+                ?: (declaration as? PsiMethod)?.callableSymbol)?.directlyOverriddenSymbols?.toList().orEmpty()
+            overridden.isNotEmpty() && overridden.all { ((it.psi?.unwrapped ?: it.psi) !in changedDeclarations) != keepsParameter }
+        }
+        if (losesOverride) {
+            JavaSafeDeleteDelegate.EP.forLanguage(declaration.language)
+                ?.createCleanupOverriding(declaration, allElementsToDelete, result)
+        }
+    }
 }
 
 private fun findCallsWithContextParameters(
@@ -466,7 +503,15 @@ private fun declarationsToSearch(
             val hierarchyQuestion = parameterHierarchyQuestion(element)
             chainBuilder.ask(hierarchyQuestion) { answered ->
                 val deletesHierarchy = hierarchyQuestion.isConfirmed(answered.request.optionValues())
-                val searchedSubjects = if (deletesHierarchy) { parameterSubjects } else { elementSubjects }
+                val searchedSubjects = if (deletesHierarchy) {
+                    parameterSubjects
+                } else {
+                    elementSubjects.also {
+                        for (pointer in it) {
+                            pointer.element()?.putCopyableUserData(REMOVE_OVERRIDES, Unit)
+                        }
+                    }
+                }
                 answered.passValue(ModPlanSafeDeleteUsageInfoUtil.elementsOf(searchedSubjects).toList())
             }
         }
