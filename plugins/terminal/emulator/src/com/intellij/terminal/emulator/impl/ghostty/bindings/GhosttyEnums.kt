@@ -337,6 +337,23 @@ internal object GhosttyMods {
   const val NUM_LOCK: Int = 1 shl 5
 }
 
+/**
+ * `GhosttyStyleFlags` (style.h) bit values — the `uint16_t` attribute bits of `GhosttyStyle.flags`.
+ * Only the attributes that the bridge reads are listed.
+ */
+internal object GhosttyStyleFlags {
+  const val BOLD: Int = 1 shl 0
+  const val ITALIC: Int = 1 shl 1
+  const val FAINT: Int = 1 shl 2
+  const val BLINK: Int = 1 shl 3
+  const val INVERSE: Int = 1 shl 4
+  const val INVISIBLE: Int = 1 shl 5
+
+  /** The underline style ([GhosttySgrUnderline]) is the 3-bit field at this bit position. */
+  const val UNDERLINE_SHIFT: Int = 8
+  const val UNDERLINE_MASK: Int = 0x7 shl UNDERLINE_SHIFT
+}
+
 /** `GhosttyMouseAction` (mouse/event.h) — what happened to the mouse. */
 internal enum class GhosttyMouseAction(val code: Int) {
   PRESS(0),

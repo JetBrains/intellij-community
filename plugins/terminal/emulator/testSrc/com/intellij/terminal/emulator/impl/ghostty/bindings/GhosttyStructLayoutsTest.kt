@@ -17,7 +17,7 @@ import java.lang.foreign.MemoryLayout.PathElement.groupElement
  * description compiled into the bundled library: the layouts in [GhosttyLayouts] and
  * the ones a feature class owns, such as [GhosttySizeHandler.SIZE_REPORT_SIZE].
  *
- * The C API is pre-1.0 and free to reorder or resize fields. Without this check, a
+ * A library release can reorder or resize fields. Without this check, a
  * library upgrade whose layouts drifted would not fail anywhere, and the bridge
  * would silently read garbage.
  */
@@ -105,29 +105,38 @@ internal class GhosttyStructLayoutsTest {
   @Test
   fun style() {
     val style = struct("GhosttyStyle")
-    // fg/bg tag and value offsets compose through the nested `GhosttyStyleColor`
     val color = struct("GhosttyStyleColor")
     assertThat(GhosttyLayouts.STYLE_SIZE).isEqualTo(style.byteSize)
-    assertThat(GhosttyLayouts.STYLE_OFF_FG_TAG).isEqualTo(style.offset("fg_color") + color.offset("tag"))
-    assertThat(GhosttyLayouts.STYLE_OFF_FG_VAL).isEqualTo(style.offset("fg_color") + color.offset("value"))
-    assertThat(GhosttyLayouts.STYLE_OFF_BG_TAG).isEqualTo(style.offset("bg_color") + color.offset("tag"))
-    assertThat(GhosttyLayouts.STYLE_OFF_BG_VAL).isEqualTo(style.offset("bg_color") + color.offset("value"))
-    assertThat(color.sizeOf("tag")).isEqualTo(GhosttyLayouts.C_INT.byteSize())
+    assertThat(GhosttyLayouts.STYLE_OFF_FG).isEqualTo(style.offset("fg_color"))
+    assertThat(GhosttyLayouts.STYLE_OFF_BG).isEqualTo(style.offset("bg_color"))
+    assertThat(color.offset("tag")).isEqualTo(0L)
+    assertThat(color.sizeOf("tag")).isEqualTo(GhosttyLayouts.C_BYTE.byteSize())
+    assertThat(GhosttyLayouts.STYLE_COLOR_OFF_VALUE).isEqualTo(color.offset("value"))
+    assertThat(GhosttyLayouts.STYLE_OFF_FLAGS).isEqualTo(style.offset("flags"))
+    assertThat(style.sizeOf("flags")).isEqualTo(GhosttyLayouts.C_SHORT.byteSize())
+  }
 
-    listOf(
-      GhosttyLayouts.STYLE_OFF_BOLD to "bold",
-      GhosttyLayouts.STYLE_OFF_ITALIC to "italic",
-      GhosttyLayouts.STYLE_OFF_FAINT to "faint",
-      GhosttyLayouts.STYLE_OFF_BLINK to "blink",
-      GhosttyLayouts.STYLE_OFF_INVERSE to "inverse",
-      GhosttyLayouts.STYLE_OFF_INVISIBLE to "invisible",
-    ).forEach { (offset, field) ->
-      assertThat(offset).describedAs(field).isEqualTo(style.offset(field))
-      assertThat(style.sizeOf(field)).describedAs(field).isEqualTo(GhosttyLayouts.C_BYTE.byteSize())
+  @Test
+  fun styleFlags() {
+    val bits = struct("GhosttyStyleFlags").getValue("bits").jsonObject
+    fun JsonObject.mask(): Int {
+      val lsb = getValue("lsb").jsonPrimitive.long.toInt()
+      val width = getValue("width").jsonPrimitive.long.toInt()
+      return ((1 shl width) - 1) shl lsb
     }
-
-    assertThat(GhosttyLayouts.STYLE_OFF_UNDERLINE).isEqualTo(style.offset("underline"))
-    assertThat(style.sizeOf("underline")).isEqualTo(GhosttyLayouts.C_INT.byteSize())
+    listOf(
+      GhosttyStyleFlags.BOLD to "bold",
+      GhosttyStyleFlags.ITALIC to "italic",
+      GhosttyStyleFlags.FAINT to "faint",
+      GhosttyStyleFlags.BLINK to "blink",
+      GhosttyStyleFlags.INVERSE to "inverse",
+      GhosttyStyleFlags.INVISIBLE to "invisible",
+      GhosttyStyleFlags.UNDERLINE_MASK to "underline",
+    ).forEach { (mask, bit) ->
+      assertThat(mask).describedAs(bit).isEqualTo(bits.getValue(bit).jsonObject.mask())
+    }
+    assertThat(GhosttyStyleFlags.UNDERLINE_SHIFT.toLong())
+      .isEqualTo(bits.getValue("underline").jsonObject.getValue("lsb").jsonPrimitive.long)
   }
 
   /** Checks [layout]'s total size, alignment, and named [fields] offsets against [json]. */

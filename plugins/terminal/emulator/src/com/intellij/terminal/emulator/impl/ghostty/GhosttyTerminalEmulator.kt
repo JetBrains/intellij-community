@@ -57,17 +57,10 @@ import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGR
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGRESS_REPORT_SIZE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STRING
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STRING_OFF_LEN
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BG_TAG
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BG_VAL
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BLINK
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BOLD
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_FAINT
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_FG_TAG
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_FG_VAL
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_INVERSE
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_INVISIBLE
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_ITALIC
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_UNDERLINE
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_COLOR_OFF_VALUE
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BG
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_FG
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_FLAGS
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_SIZE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.allocateString
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyMode
@@ -86,6 +79,7 @@ import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyResult
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyRowData
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttySgrUnderline
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyStyleColorTag
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyStyleFlags
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyTerminalData
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyTerminalOption
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyTerminalProgressState
@@ -1270,24 +1264,24 @@ internal class GhosttyTerminalEmulator(
   /** Read the current grid ref's style; the default style if the engine fails the read. */
   private fun readStyleFromGridRef(): CellStyle {
     scratchStyle.fill(0.toByte())
-    scratchStyle.set(C_LONG, 0L, STYLE_SIZE) // GHOSTTY_INIT_SIZED
     val styleRead = LibGhosttyVt.gridRefStyle(scratchGridRef, scratchStyle)
     if (styleRead != GhosttyResult.SUCCESS) {
       logGridReadFailure("ghostty_grid_ref_style", styleRead)
       return CellStyle.Default
     }
-    val fgTag = GhosttyStyleColorTag.of(scratchStyle.get(C_INT, STYLE_OFF_FG_TAG))
-    val bgTag = GhosttyStyleColorTag.of(scratchStyle.get(C_INT, STYLE_OFF_BG_TAG))
+    val fgTag = GhosttyStyleColorTag.of(scratchStyle.get(C_BYTE, STYLE_OFF_FG).toInt() and 0xFF)
+    val bgTag = GhosttyStyleColorTag.of(scratchStyle.get(C_BYTE, STYLE_OFF_BG).toInt() and 0xFF)
+    val flags = scratchStyle.get(C_SHORT, STYLE_OFF_FLAGS).toInt() and 0xFFFF
     return CellStyle(
-      foreground = toColor(fgTag, readColorValue(fgTag, STYLE_OFF_FG_VAL)),
-      background = toColor(bgTag, readColorValue(bgTag, STYLE_OFF_BG_VAL)),
-      bold = scratchStyle.get(C_BYTE, STYLE_OFF_BOLD).toInt() != 0,
-      faint = scratchStyle.get(C_BYTE, STYLE_OFF_FAINT).toInt() != 0,
-      italic = scratchStyle.get(C_BYTE, STYLE_OFF_ITALIC).toInt() != 0,
-      blink = scratchStyle.get(C_BYTE, STYLE_OFF_BLINK).toInt() != 0,
-      inverse = scratchStyle.get(C_BYTE, STYLE_OFF_INVERSE).toInt() != 0,
-      hidden = scratchStyle.get(C_BYTE, STYLE_OFF_INVISIBLE).toInt() != 0,
-      underline = when (GhosttySgrUnderline.of(scratchStyle.get(C_INT, STYLE_OFF_UNDERLINE))) {
+      foreground = toColor(fgTag, readColorValue(fgTag, STYLE_OFF_FG + STYLE_COLOR_OFF_VALUE)),
+      background = toColor(bgTag, readColorValue(bgTag, STYLE_OFF_BG + STYLE_COLOR_OFF_VALUE)),
+      bold = (flags and GhosttyStyleFlags.BOLD) != 0,
+      faint = (flags and GhosttyStyleFlags.FAINT) != 0,
+      italic = (flags and GhosttyStyleFlags.ITALIC) != 0,
+      blink = (flags and GhosttyStyleFlags.BLINK) != 0,
+      inverse = (flags and GhosttyStyleFlags.INVERSE) != 0,
+      hidden = (flags and GhosttyStyleFlags.INVISIBLE) != 0,
+      underline = when (GhosttySgrUnderline.of((flags and GhosttyStyleFlags.UNDERLINE_MASK) shr GhosttyStyleFlags.UNDERLINE_SHIFT)) {
         GhosttySgrUnderline.NONE -> Underline.NONE
         GhosttySgrUnderline.SINGLE -> Underline.SINGLE
         GhosttySgrUnderline.DOUBLE -> Underline.DOUBLE
