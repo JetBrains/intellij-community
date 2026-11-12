@@ -1,61 +1,97 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.testFramework.DisposeModulesRule
-import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.RuleChain
-import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
+import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpResponseStatus
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
-import org.junit.BeforeClass
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.rules.Timeout
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Timeout
 import java.io.InputStream
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import java.util.concurrent.TimeUnit
+import java.nio.file.Path
 
+@Timeout(value = 60, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
 abstract class BuiltInServerTestCase {
   companion object {
-    @JvmField
-    @ClassRule
-    val projectRule = ProjectRule()
+    @JvmStatic
+    protected val projectFixture: TestFixture<Project> = projectFixture(openAfterCreation = true)
 
-    @BeforeClass
+    @BeforeAll
     @JvmStatic
     fun runServer() {
       BuiltInServerManager.getInstance().waitForStart()
     }
   }
 
-  protected val tempDirManager = TemporaryDirectory()
-  protected val manager = TestManager(projectRule, tempDirManager)
+  private val tempDirFixture: TestFixture<Path> = tempPathFixture()
+  private val testManagerFixture: TestFixture<TestManager> = testManagerFixture(projectFixture, tempDirFixture)
 
-  @Rule
-  @JvmField
-  val ruleChain = RuleChain(
-    tempDirManager,
-    Timeout(60, TimeUnit.SECONDS),
-    manager,
-    DisposeModulesRule(projectRule)
-  )
+  protected val project: Project
+    get() = projectFixture.get()
+
+  protected val tempDir: Path
+    get() = tempDirFixture.get()
+
+  protected val manager: TestManager
+    get() = testManagerFixture.get()
 
   protected open val urlPathPrefix = ""
 
-  protected fun doTest(urlSuffix: String? = null,
-                       asSignedRequest: Boolean = true,
-                       origin: String? = null,
-                       responseStatus: Int = 200,
-                       additionalCheck: ((connection: HttpResponse<InputStream>) -> Unit)? = null) {
+  @AfterEach
+  fun disposeProjectModules() {
+    val moduleManager = project.serviceIfCreated<ModuleManager>() ?: return
+    timeoutRunBlocking {
+      if (readAction { moduleManager.modules.isNotEmpty() }) {
+        edtWriteAction {
+          for (module in moduleManager.modules) {
+            if (!module.isDisposed) {
+              moduleManager.disposeModule(module)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  protected fun closeAllFiles() {
+    if (project.serviceIfCreated<FileEditorManager>() == null) {
+      return
+    }
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        EditorTestUtil.closeAllFilesAndClearEditorHistory(project)
+      }
+    }
+  }
+
+  protected fun doTest(
+    urlSuffix: String? = null,
+    asSignedRequest: Boolean = true,
+    origin: String? = null,
+    responseStatus: Int = 200,
+    additionalCheck: ((connection: HttpResponse<InputStream>) -> Unit)? = null,
+  ) {
     val serviceUrl = "http://localhost:${BuiltInServerManager.getInstance().port}${urlPathPrefix}"
     var url = serviceUrl
     if (urlSuffix != null) {
@@ -82,20 +118,20 @@ abstract class BuiltInServerTestCase {
         additionalCheck?.invoke(response)
       }
       finally {
-        projectRule.projectIfOpened?.let {
-          runInEdtAndWait {
-            FileEditorManagerEx.getInstanceEx(it).closeAllFiles()
-          }
-        }
+        closeAllFiles()
       }
     }
   }
 
-  protected open fun check(serviceUrl: String, expectedStatus: HttpResponseStatus) {
-  }
+  protected open fun check(serviceUrl: String, expectedStatus: HttpResponseStatus) {}
 }
 
-internal fun testUrl(url: String, expectedStatus: HttpResponseStatus, asSignedRequest: Boolean, origin: String? = null): HttpResponse<InputStream> {
+internal fun testUrl(
+  url: String,
+  expectedStatus: HttpResponseStatus,
+  asSignedRequest: Boolean,
+  origin: String? = null,
+): HttpResponse<InputStream> {
   val builder = HttpRequest.newBuilder(URI(url))
   origin?.let {
     builder.header(HttpHeaderNames.ORIGIN.toString(), it)

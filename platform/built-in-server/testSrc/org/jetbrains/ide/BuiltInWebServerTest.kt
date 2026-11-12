@@ -3,6 +3,7 @@ package org.jetbrains.ide
 
 import com.google.common.net.UrlEscapers
 import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.EmptyModuleType
@@ -12,11 +13,11 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.TrustedProjectsTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.refreshVfs
 import com.intellij.testFramework.useProject
 import io.netty.handler.codec.http.HttpHeaderNames
@@ -25,23 +26,23 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
 import org.jetbrains.builtInWebServer.TOKEN_PARAM_NAME
-import org.junit.BeforeClass
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.writeText
 
+@TestApplication
 internal class BuiltInWebServerTest : BuiltInServerTestCase() {
   override val urlPathPrefix: String
-    get() = "/${projectRule.project.name}"
+    get() = "/${project.name}"
 
   @Test
   @TestManager.TestDescriptor(filePath = "foo/index.html", doNotCreate = true, status = 200)
@@ -62,8 +63,7 @@ internal class BuiltInWebServerTest : BuiltInServerTestCase() {
   }
 
   private fun testIndex(vararg paths: String) {
-    val project = projectRule.project
-    val newPath = tempDirManager.newPath()
+    val newPath = tempDir
     newPath.resolve(manager.filePath!!).createParentDirectories().writeText("hello")
     VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newPath)
 
@@ -84,35 +84,29 @@ private fun createModule(projectDir: Path, project: Project) {
   }
 }
 
+@TestApplication
 internal class HeavyBuiltInWebServerTest {
   companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-
-    @BeforeClass
+    @BeforeAll
     @JvmStatic
     fun runServer() {
       BuiltInServerManager.getInstance().waitForStart()
     }
   }
 
-  @Rule
-  @JvmField
-  val tempDirManager = TemporaryDirectory()
+  private val tempDir by tempPathFixture()
 
-  @Rule
-  @JvmField
-  val disposableRule = DisposableRule()
+  @TestDisposable
+  lateinit var disposable: Disposable
 
   @Test
   fun `path outside of project`() {
-    val projectDir = tempDirManager.newPath()
-    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).useProject { project ->
+    val projectDir = tempDir.resolve("project")
+    PlatformTestUtil.loadAndOpenProject(projectDir, disposable).useProject { project ->
       projectDir.createDirectories()
       createModule(projectDir, project)
 
-      val path = tempDirManager.newPath("doNotExposeMe.txt").apply { writeText("doNotExposeMe") }
+      val path = tempDir.resolve("doNotExposeMe.txt").apply { writeText("doNotExposeMe") }
       val relativePath = Path.of(project.basePath!!).relativize(path).invariantSeparatorsPathString
       val webPath = StringUtil.replace(UrlEscapers.urlPathSegmentEscaper().escape("${project.name}/${relativePath}"), "%2F", "/")
       testUrl("http://localhost:${BuiltInServerManager.getInstance().port}/$webPath", HttpResponseStatus.NOT_FOUND, asSignedRequest = true)
@@ -121,8 +115,8 @@ internal class HeavyBuiltInWebServerTest {
 
   @Test
   fun `file in hidden folder`() {
-    val projectDir = tempDirManager.newPath()
-    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).useProject { project ->
+    val projectDir = tempDir.resolve("project")
+    PlatformTestUtil.loadAndOpenProject(projectDir, disposable).useProject { project ->
       projectDir.createDirectories()
       createModule(projectDir, project)
 
@@ -139,8 +133,8 @@ internal class HeavyBuiltInWebServerTest {
 
   @Test
   fun `untrusted project is not served`() {
-    val projectDir = tempDirManager.newPath()
-    PlatformTestUtil.loadAndOpenProject(projectDir, disposableRule.disposable).useProject { project ->
+    val projectDir = tempDir.resolve("project")
+    PlatformTestUtil.loadAndOpenProject(projectDir, disposable).useProject { project ->
       projectDir.createDirectories()
       projectDir.resolve("index.html").writeText("hello")
       projectDir.resolve("sw.js").writeText("")
@@ -179,7 +173,7 @@ internal class HeavyBuiltInWebServerTest {
   @Test
   fun `cross-project requests resolve target project regardless of open project order`() {
     for (openProjectAFirst in listOf(true, false)) {
-      val rootDir = tempDirManager.newPath()
+      val rootDir = Files.createTempDirectory(tempDir, "")
       val projectADir = rootDir.resolve("project-a").createDirectories()
       projectADir.resolve("index.html").writeText("index-from-a")
       projectADir.resolve("script.js").writeText("script-from-a")
@@ -214,7 +208,7 @@ internal class HeavyBuiltInWebServerTest {
   @Test
   fun `renamed project resolves by base directory name regardless of open project order`() {
     for (openProjectAFirst in listOf(true, false)) {
-      val rootDir = tempDirManager.newPath()
+      val rootDir = Files.createTempDirectory(tempDir, "")
       val projectADir = rootDir.resolve("project-a").createDirectories()
       projectADir.resolve("index.html").writeText("index-from-a")
       projectADir.refreshVfs()
@@ -247,9 +241,9 @@ internal class HeavyBuiltInWebServerTest {
   ) {
     val firstDir = if (openProjectAFirst) projectADir else projectBDir
     val secondDir = if (openProjectAFirst) projectBDir else projectADir
-    PlatformTestUtil.loadAndOpenProject(firstDir, disposableRule.disposable).useProject { first ->
+    PlatformTestUtil.loadAndOpenProject(firstDir, disposable).useProject { first ->
       createModule(firstDir, first)
-      PlatformTestUtil.loadAndOpenProject(secondDir, disposableRule.disposable).useProject { second ->
+      PlatformTestUtil.loadAndOpenProject(secondDir, disposable).useProject { second ->
         createModule(secondDir, second)
         val openProjects = ProjectManager.getInstance().openProjects
         assertThat(openProjects.indexOf(first)).isLessThan(openProjects.indexOf(second))
@@ -281,11 +275,11 @@ internal class HeavyBuiltInWebServerTest {
   }
 }
 
+@TestApplication
 internal class BuiltInWebServerAbsolutePathTest : BuiltInServerTestCase() {
   @Test
   fun `absolute path reference`() {
-    val project = projectRule.project
-    val newPath = tempDirManager.newPath().createDirectories()
+    val newPath = tempDir
     newPath.resolve("script.js").writeText("hello")
     VirtualFileManager.getInstance().refreshAndFindFileByNioPath(newPath)
     createModule(newPath, project)

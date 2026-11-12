@@ -138,6 +138,8 @@ jvm_library(
         "//platform/platform-util-netty:ide-util-netty",
         "//platform/util:util-ui",
         "//platform/util-ex",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
         "//libraries/junit4",
     ],
 )

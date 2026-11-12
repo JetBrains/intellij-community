@@ -1,26 +1,22 @@
 package org.jetbrains.ide
 
 import com.google.gson.stream.JsonWriter
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.junit5.TestApplication
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.ide.TestManager.TestDescriptor
-import org.junit.After
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
 import java.net.HttpURLConnection
-import java.net.URL
+import java.net.URI
 
+@TestApplication
 internal class RestApiTest : BuiltInServerTestCase() {
   override val urlPathPrefix = "/api/file"
 
-  @After
+  @AfterEach
   fun closeAllEditors() {
-    projectRule.projectIfOpened?.let {
-      runInEdtAndWait {
-        FileEditorManagerEx.getInstanceEx(it).closeAllFiles()
-      }
-    }
+    closeAllFiles()
   }
 
   @Test
@@ -75,11 +71,11 @@ internal class RestApiTest : BuiltInServerTestCase() {
     val line = manager.annotation?.line ?: -1
     val column = manager.annotation?.column ?: -1
 
-    var connection = URL("$serviceUrl?file=${manager.filePath ?: ""}&line=$line&column=$column").openConnection() as HttpURLConnection
+    var connection = URI("$serviceUrl?file=${manager.filePath ?: ""}&line=$line&column=$column").toURL().openConnection() as HttpURLConnection
     BuiltInServerManager.getInstance().configureRequestToWebServer(connection)
     assertThat(HttpResponseStatus.valueOf(connection.responseCode)).isEqualTo(expectedStatus)
 
-    connection = URL(serviceUrl).openConnection() as HttpURLConnection
+    connection = URI(serviceUrl).toURL().openConnection() as HttpURLConnection
     BuiltInServerManager.getInstance().configureRequestToWebServer(connection)
     connection.requestMethod = "POST"
     connection.doOutput = true

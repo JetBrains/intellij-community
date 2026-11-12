@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
+import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
+@TestApplication
 internal class AboutRestApiTest : BuiltInServerTestCase() {
   override val urlPathPrefix = "/api/about"
 
@@ -20,7 +22,6 @@ internal class AboutRestApiTest : BuiltInServerTestCase() {
     doTest("?registeredFileTypes=true", origin = "https://jetbrains.com", asSignedRequest = false, responseStatus = 404)
   }
 
-  @Suppress("SpellCheckingInspection")
   @Test
   fun `registeredFileTypes is not allowed for hyperskill origin`() {
     // must be failed with 404
