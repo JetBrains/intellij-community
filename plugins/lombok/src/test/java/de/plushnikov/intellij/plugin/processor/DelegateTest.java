@@ -1,70 +1,85 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokParsingFixture;
+import de.plushnikov.intellij.plugin.LombokParsingTest;
 import de.plushnikov.intellij.plugin.LombokTestUtil;
-import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokParsingFixture;
 
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
-public class DelegateTest extends AbstractLombokParsingTestCase {
+@TestApplication
+public class DelegateTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LombokParsingFixture> parsing = lombokParsingFixture(projectFixture);
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptorForNormalMode() {
-    return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR;
-  }
-
+  @LombokParsingTest
   public void testDelegate$DelegateAlreadyImplemented() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testDelegate$DelegateGenerics() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
   public void ignore_testDelegate$DelegateOnGetter() {
     //TODO known problem, try to fix later
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testDelegate$DelegateOnGetterNone() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testDelegate$DelegateOnMethods() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testDelegate$DelegateRecursion() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testDelegate$DelegateTypesAndExcludes() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testDelegate$DelegateWithDeprecated() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testDelegate$DelegateWithException() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testDelegate$DelegateWithVarargs() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testDelegate$DelegateWithVarargs2() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testDelegate$DelegateGenericInterfaceIssue88() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testDelegate$DelegateWithInterfaces() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 }

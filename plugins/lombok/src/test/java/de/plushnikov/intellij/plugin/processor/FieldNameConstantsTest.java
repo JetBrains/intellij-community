@@ -1,45 +1,43 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokParsingFixture;
+import de.plushnikov.intellij.plugin.LombokParsingTest;
 import de.plushnikov.intellij.plugin.LombokTestUtil;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokParsingFixture;
 
 /**
  * Unit tests for @FieldNameConstants annotation from current version of lombok
  */
-public class FieldNameConstantsTest extends AbstractLombokParsingTestCase {
+@TestApplication
+public class FieldNameConstantsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  //now incomplete mode is not supported for this processor, because it depends on the lombok version
+  //after returning to normal mode, caches will be dropped
+  private final TestFixture<LombokParsingFixture> parsing = lombokParsingFixture(projectFixture);
 
+  @LombokParsingTest(incompleteMode = false)
   public void testFieldnameconstants$FieldNameConstantsBasic() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest(incompleteMode = false)
   public void testFieldnameconstants$FieldNameConstantsEnum() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest(incompleteMode = false)
   public void testFieldnameconstants$FieldNameConstantsHandrolled() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest(incompleteMode = false)
   public void testFieldnameconstants$FieldNameConstantsOnRecord() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptorForNormalMode() {
-    return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR;
-  }
-
-  @Override
-  protected @NotNull List<ModeRunnerType> modes() {
-    //now incomplete mode is not supported for this processor, because it depends on the lombok version
-    //after returning to normal mode, caches will be dropped
-    return super.modes()
-      .stream().filter(t -> t != ModeRunnerType.INCOMPLETE)
-      .toList();
-  }
 }

@@ -1,30 +1,29 @@
 package de.plushnikov.intellij.plugin.configsystem;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokParsingFixture;
+import de.plushnikov.intellij.plugin.LombokParsingTest;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
 
-import java.util.List;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokConfigSystemFixture;
 
-public class FieldNameConstantsTest extends AbstractLombokConfigSystemTestCase {
+@TestApplication
+public class FieldNameConstantsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  //now incomplete mode is not supported for this processor, because it depends on the lombok version
+  //after returning to normal mode, caches will be dropped
+  private final TestFixture<LombokParsingFixture> parsing = lombokConfigSystemFixture(projectFixture, "/configsystem/fieldnameconstants");
 
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/configsystem/fieldnameconstants";
-  }
-
+  @LombokParsingTest(incompleteMode = false)
   public void testConfiguration$FieldNameConstantsConfigKeys() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest(incompleteMode = false)
   public void testUppercase$FieldNameConstantsUppercased() {
-    doTest();
-  }
-
-  @Override
-  protected @NotNull List<ModeRunnerType> modes() {
-    //now incomplete mode is not supported for this processor, because it depends on the lombok version
-    //after returning to normal mode, caches will be dropped
-    return super.modes()
-      .stream().filter(t -> t != ModeRunnerType.INCOMPLETE)
-      .toList();
+    parsing.get().doTest();
   }
 }

@@ -8,7 +8,9 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.platform.bazel.runfiles.BazelLabel;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
@@ -89,6 +91,15 @@ public final class LombokTestUtil {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
     }
   };
+
+  /**
+   * Copies {@code fileName} of the test data to the same path in the project, configures it in the editor, and returns its PSI file.
+   */
+  public static PsiFile loadToPsiFile(@NotNull JavaCodeInsightTestFixture fixture, @NotNull String fileName) {
+    VirtualFile virtualFile = fixture.copyFileToProject(fileName, fileName);
+    fixture.configureFromExistingVirtualFile(virtualFile);
+    return fixture.getFile();
+  }
 
   /**
    * Creates the inspection fixture of a Lombok test. The test data path is {@code basePath} in the Lombok test data.

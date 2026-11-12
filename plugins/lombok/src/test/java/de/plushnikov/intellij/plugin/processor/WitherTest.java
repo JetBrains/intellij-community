@@ -1,55 +1,74 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokParsingFixture;
+import de.plushnikov.intellij.plugin.LombokParsingOptions;
+import de.plushnikov.intellij.plugin.LombokParsingTest;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
 
-public class WitherTest extends AbstractLombokParsingTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokParsingFixture;
 
-  @Override
-  protected boolean shouldCompareCodeBlocks() {
-    return false;
-  }
+@TestApplication
+public class WitherTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LombokParsingFixture> parsing =
+    lombokParsingFixture(projectFixture, "", new LombokParsingOptions().compareCodeBlocks(false));
 
+  @LombokParsingTest
   public void testWither$WitherAccessLevel() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testWither$WitherAlreadyExists() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testWither$WitherAndAccessors() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testWither$WitherAndAllArgsConstructor() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testWither$WitherDeprecated() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testWither$WitherOnClass() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testWither$WitherOnStatic() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testWither$WitherPlain() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testWither$WitherWithDollar() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testWither$WitherWithGenerics() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testWither$WitherWithAbstract() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 }

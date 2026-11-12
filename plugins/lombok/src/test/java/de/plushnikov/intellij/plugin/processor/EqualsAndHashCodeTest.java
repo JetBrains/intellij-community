@@ -1,65 +1,90 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokParsingFixture;
+import de.plushnikov.intellij.plugin.LombokParsingTest;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokParsingFixture;
 
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
-public class EqualsAndHashCodeTest extends AbstractLombokParsingTestCase {
+@TestApplication
+public class EqualsAndHashCodeTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LombokParsingFixture> parsing = lombokParsingFixture(projectFixture);
 
+  @LombokParsingTest
   public void testEqualsandhashcode$EqualsAndHashCode() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testEqualsandhashcode$EqualsAndHashCodeAutoExclude() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testEqualsandhashcode$EqualsAndHashCodeExplicitEmptyOf() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testEqualsandhashcode$EqualsAndHashCodeExplicitOfAndExclude() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testEqualsandhashcode$EqualsAndHashCodeExplicitInclude() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testEqualsandhashcode$EqualsAndHashCodeNestedShadow() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testEqualsandhashcode$EqualsAndHashCodeNewStyle() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testEqualsandhashcode$EqualsAndHashCodeOfAndExclude() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testEqualsandhashcode$EqualsAndHashCodeWithExistingMethods() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testEqualsandhashcode$EqualsAndHashCodeWithGenericsOnInners() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testEqualsandhashcode$EqualsAndHashCodeWithGenericsOnInnersInInterfaces() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testEqualsandhashcode$EqualsAndHashCodeWithOnParam() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testEqualsandhashcode$EqualsAndHashCodeWithSomeExistingMethods() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testEqualsandhashcode$EqualsAndHashCodeWithNamedExistingMethods() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 }

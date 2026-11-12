@@ -1,110 +1,137 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokParsingFixture;
+import de.plushnikov.intellij.plugin.LombokParsingOptions;
+import de.plushnikov.intellij.plugin.LombokParsingTest;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokParsingFixture;
 
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
-public class GetterTest extends AbstractLombokParsingTestCase {
+@TestApplication
+public class GetterTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LombokParsingFixture> parsing =
+    lombokParsingFixture(projectFixture, "", new LombokParsingOptions().compareCodeBlocks(false));
 
-  @Override
-  protected boolean shouldCompareCodeBlocks() {
-    return false;
-  }
-
+  @LombokParsingTest
   public void testGetter$GetterAccessLevel() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$GetterAlreadyExists() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$GetterBoolean() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$GetterDeprecated() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$GetterEnum() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
   public void ignore_testGetter$GetterLazy() {
     //TODO known problem, try to fix later
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
   public void ignore_testGetter$GetterLazyBoolean() {
     //TODO known problem, try to fix later
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
   public void ignore_testGetter$GetterLazyEahcToString() {
     //TODO known problem, try to fix later
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$GetterLazyInvalid() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
   public void ignore_testGetter$GetterLazyNative() {
     //TODO known problem, try to fix later
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$GetterNone() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$GetterOnClass() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$GetterOnMethod() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$GetterOnMethodErrors() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$GetterOnMethodErrors2() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$GetterOnStatic() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$GetterPlain() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$GetterWithDollar() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$MultiFieldGetter() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$TrickyTypeResolution() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$ClassNamedAfterGetter() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$CommentsInterspersed() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testGetter$FluentAccessorsBoolean() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 }

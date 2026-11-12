@@ -1,46 +1,62 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokParsingFixture;
+import de.plushnikov.intellij.plugin.LombokParsingOptions;
+import de.plushnikov.intellij.plugin.LombokParsingTest;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import org.junit.jupiter.api.BeforeEach;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokParsingFixture;
 
 /**
  * Unit tests for @SuperBuilder support
  */
-public class SuperBuilderTest extends AbstractLombokParsingTestCase {
+@TestApplication
+public class SuperBuilderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LombokParsingFixture> parsing =
+    lombokParsingFixture(projectFixture, "", new LombokParsingOptions().annotationToComparePattern("java.lang.Deprecated"));
 
-  @Override
-  protected String annotationToComparePattern() {
-    return "java.lang.Deprecated";
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = parsing.get().getFixture();
     // Add dummy classes, which are absent in mockJDK
     myFixture.addClass("package java.util;\n  public interface NavigableMap<K,V> extends java.util.SortedMap<K,V> {}");
   }
 
+  @LombokParsingTest
   public void testSuperbuilder$SuperBuilderAbstract() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testSuperbuilder$SuperBuilderAbstractToBuilder() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testSuperbuilder$SuperBuilderBasic() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testSuperbuilder$SuperBuilderBasicToBuilder() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testSuperbuilder$SuperBuilderCustomized() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testSuperbuilder$SuperBuilderToBuilderOverride() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
   //TODO Implement AnnotatedTypes handling/delombok
@@ -48,8 +64,9 @@ public class SuperBuilderTest extends AbstractLombokParsingTestCase {
 //    doTest(true);
 //  }
 
+  @LombokParsingTest
   public void testSuperbuilder$SuperBuilderWithCustomBuilderMethod() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
 // TODO Implement defaults handling/delombok
@@ -57,16 +74,19 @@ public class SuperBuilderTest extends AbstractLombokParsingTestCase {
 //    doTest(true);
 //  }
 
+  @LombokParsingTest
   public void testSuperbuilder$SuperBuilderWithGenerics() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testSuperbuilder$SuperBuilderWithGenerics2() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testSuperbuilder$SuperBuilderWithGenericsAndToBuilder() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
   // TODO Implement NonNull handling/delombok
@@ -74,12 +94,14 @@ public class SuperBuilderTest extends AbstractLombokParsingTestCase {
 //    doTest(true);
 //  }
 
+  @LombokParsingTest
   public void testSuperbuilder$SuperBuilderWithSupportClass() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testSuperbuilder$SuperBuilderWithDefinedBasicConstructor() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
 }

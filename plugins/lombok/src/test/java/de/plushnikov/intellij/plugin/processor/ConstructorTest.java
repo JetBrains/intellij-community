@@ -1,45 +1,65 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokParsingFixture;
+import de.plushnikov.intellij.plugin.LombokParsingTest;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokParsingFixture;
 
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
-public class ConstructorTest extends AbstractLombokParsingTestCase {
+@TestApplication
+public class ConstructorTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LombokParsingFixture> parsing = lombokParsingFixture(projectFixture);
 
+  @LombokParsingTest
   public void testConstructors$Constructors() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testConstructors$ConflictingStaticConstructorNames() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testConstructors$NoArgsConstructorForced() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testConstructors$NoArgsWithDefinedConstructorsIsForced() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testConstructors$ConstructorEnum() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testConstructors$RequiredArgsConstructorWithGeneric136() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testConstructors$RequiredArgsConstructorWithGeneric157() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testConstructors$RequiredArgsConstructorStaticNameAccess() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testConstructors$AllArgsConstructorStaticNameAccess() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 }

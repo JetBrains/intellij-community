@@ -1,188 +1,226 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokParsingFixture;
+import de.plushnikov.intellij.plugin.LombokParsingOptions;
+import de.plushnikov.intellij.plugin.LombokParsingTest;
 import de.plushnikov.intellij.plugin.LombokTestUtil;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokParsingFixture;
 
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
-public class BuilderTest extends AbstractLombokParsingTestCase {
+@TestApplication
+public class BuilderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR);
+  private final TestFixture<LombokParsingFixture> parsing =
+    lombokParsingFixture(projectFixture, "", new LombokParsingOptions().annotationToComparePattern("java.lang.Deprecated"));
 
-  @Override
-  protected String annotationToComparePattern() {
-    return "java.lang.Deprecated";
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptorForNormalMode() {
-    return LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR;
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = parsing.get().getFixture();
     // Add dummy classes, which are absent in mockJDK
     myFixture.addClass("package java.util;\n  public interface NavigableMap<K,V> extends java.util.SortedMap<K,V> {}");
   }
 
   // This test is lombok's homepage example.
+  @LombokParsingTest
   public void testBuilder$BuilderExample() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
   // This test is lombok's homepage customized example.
+  @LombokParsingTest
   public void testBuilder$BuilderExampleCustomized() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderSimple() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderComplex() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderWithAccessors() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderWithAccessorsWithSetterPrefix() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderWithFieldAccessors() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
   // This test is lombok's homepage example with predefined elements and another inner class.
+  @LombokParsingTest
   public void testBuilder$BuilderPredefined() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderWithExistingBuilderClass() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderConstructorException() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderMultipleConstructorException() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderAndAllArgsConstructor() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderMethodException() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderValueData() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderSingularGuavaListsSets() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderSingularGuavaMaps() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderSingularSets() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderSingularSetsWithSetterPrefix() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderSingularLists() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderSingularMaps() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
   // ignored because of disabled auto singularization
   public void ignore_testBuilder$BuilderSingularNoAuto() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
   // ignored because of disabled guava redirection
   public void ignore_testBuilder$BuilderSingularRedirectToGuava() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderInstanceMethod() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderSingularWithPrefixes() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$ObjectApiResponse() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderGenericsOnConstructor() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderWithDeprecatedField() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderWithDeprecatedParam() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderWithNoBuilderMethod() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderSimpleProtected() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderWithTolerate() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$MultipleMethodBuilderWithExistedClass() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderWithDefaultInnerFields() {
     // Initializer should be removed
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderWithSetterPrefixAndExistedMethods() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderWithXArgsConstructor() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderWithBuilderClassName() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testBuilder$BuilderWithBuilderClassNameOnConstructor() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
   // Verifies that builder class names start lowercase when the target class starts lowercase
+  @LombokParsingTest
   public void testBuilder$BuilderWithLowercaseInnerClass() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 }

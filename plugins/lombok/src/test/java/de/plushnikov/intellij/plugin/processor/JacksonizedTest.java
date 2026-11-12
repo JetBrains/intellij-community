@@ -1,49 +1,56 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokParsingFixture;
+import de.plushnikov.intellij.plugin.LombokParsingOptions;
+import de.plushnikov.intellij.plugin.LombokParsingTest;
 import de.plushnikov.intellij.plugin.LombokTestUtil;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokParsingFixture;
 
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
-public class JacksonizedTest extends AbstractLombokParsingTestCase {
+@TestApplication
+public class JacksonizedTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR);
+  private final TestFixture<LombokParsingFixture> parsing =
+    lombokParsingFixture(projectFixture, "", new LombokParsingOptions().compareAnnotations(true));
 
-  @Override
-  protected boolean shouldCompareAnnotations() {
-    return true;
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptorForNormalMode() {
-    return LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR;
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = parsing.get().getFixture();
     // Add dummy classes, which are absent in mockJDK
     myFixture.addClass("package java.util;\n  public interface NavigableMap<K,V> extends java.util.SortedMap<K,V> {}");
   }
 
+  @LombokParsingTest
   public void testJacksonized$JacksonizedBuilderSimple() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testJacksonized$JacksonizedSuperBuilderSimple() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testJacksonized$JacksonizedSuperBuilderWithJsonDeserialize() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testJacksonized$JacksonBuilderSingular() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 
+  @LombokParsingTest
   public void testJacksonized$JacksonJsonProperty() {
-    doTest(true);
+    parsing.get().doTest(true);
   }
 }

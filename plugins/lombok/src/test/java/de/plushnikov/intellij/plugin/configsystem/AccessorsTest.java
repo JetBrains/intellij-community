@@ -1,106 +1,131 @@
 package de.plushnikov.intellij.plugin.configsystem;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokParsingFixture;
+import de.plushnikov.intellij.plugin.LombokParsingOptions;
+import de.plushnikov.intellij.plugin.LombokParsingTest;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokConfigSystemFixture;
+
 /**
  * Unit tests for IntelliJPlugin for Lombok with activated config system
  */
-public class AccessorsTest extends AbstractLombokConfigSystemTestCase {
+@TestApplication
+public class AccessorsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LombokParsingFixture> parsing =
+    lombokConfigSystemFixture(projectFixture, "/configsystem/accessors", new LombokParsingOptions().compareAnnotations(true));
 
-  @Override
-  protected boolean shouldCompareAnnotations() {
-    return true;
-  }
-
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/configsystem/accessors";
-  }
-
+  @LombokParsingTest
   public void testChain$GetterSetterFieldTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testChain$GetterSetterFieldAnnotationOverwriteTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testChain$GetterSetterClassTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testChain$GetterSetterClassAnnotationOverwriteTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testChain$GetterSetterWithoutAccessorsAnnotationTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
   /// /////////
 
+  @LombokParsingTest
   public void testFluent$GetterSetterFieldTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFluent$GetterSetterFieldAnnotationOverwriteTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFluent$GetterSetterClassTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFluent$GetterSetterClassAnnotationOverwriteTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFluent$GetterSetterWithoutAccessorsAnnotationTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
   /// /////////
 
+  @LombokParsingTest
   public void testPrefix$GetterSetterClassTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testPrefix$GetterSetterWithoutAccessorsAnnotationClassTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
   /// /////////
+  @LombokParsingTest
   public void testEmptyprefix$AccessorsWithEmptyPrefix() {
-    doTest();
+    parsing.get().doTest();
   }
 
   /// /////////
+  @LombokParsingTest
   public void testMakefinal$AccessorsMakeFinalLombokConfig() {
-    doTest();
+    parsing.get().doTest();
   }
 
   /// /////////
 
+  @LombokParsingTest
   public void testSuperbuilder$SuperBuilderWithPrefixes() {
-    doTest();
+    parsing.get().doTest();
   }
 
   /// /////////
+  @LombokParsingTest
   public void testCapitalization$BuilderWithJavaBeansSpecCapitalization() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testCapitalization$GetterWithJavaBeansSpecCapitalization() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testCapitalization$SetterWithJavaBeansSpecCapitalization() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testCapitalization$ValueWithJavaBeansSpecCapitalization() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testCapitalization$WithWithJavaBeansSpecCapitalization() {
-    doTest();
+    parsing.get().doTest();
   }
 }

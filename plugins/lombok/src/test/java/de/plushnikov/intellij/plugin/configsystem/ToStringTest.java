@@ -1,53 +1,67 @@
 package de.plushnikov.intellij.plugin.configsystem;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokParsingFixture;
+import de.plushnikov.intellij.plugin.LombokParsingOptions;
+import de.plushnikov.intellij.plugin.LombokParsingTest;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokConfigSystemFixture;
+
 /**
  * Unit tests for IntelliJPlugin for Lombok with activated config system
  */
-public class ToStringTest extends AbstractLombokConfigSystemTestCase {
+@TestApplication
+public class ToStringTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LombokParsingFixture> parsing =
+    lombokConfigSystemFixture(projectFixture, "/configsystem/tostring", new LombokParsingOptions().compareAnnotations(true));
 
-  @Override
-  protected boolean shouldCompareAnnotations() {
-    return true;
-  }
-
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/configsystem/tostring";
-  }
-
+  @LombokParsingTest
   public void testConfiguration$ToStringConfiguration() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testDoNotUseGetters$SomeTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testDoNotUseGetters$AnnotationOverwriteTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testIncludeFieldNames$SomeTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testIncludeFieldNames$AnnotationOverwriteTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testCallSuper$AnnotationOverwriteTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testCallSuper$SomeTestWithSuper() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testCallSuper$SomeTestWithoutSuper() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testOnlyExplicitlyIncluded$SomeTest() {
-    doTest();
+    parsing.get().doTest();
   }
 }

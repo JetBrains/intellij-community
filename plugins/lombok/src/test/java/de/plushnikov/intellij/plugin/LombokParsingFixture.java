@@ -1,10 +1,12 @@
 package de.plushnikov.intellij.plugin;
 
 import com.google.common.base.Objects;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IncompleteDependenciesService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomNamedTarget;
@@ -28,14 +30,15 @@ import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.DumbModeTestUtils;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.util.DumbIncompleteModeUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,19 +52,45 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.project.IncompleteDependenciesServiceKt.asAutoCloseable;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- * Base test case for testing that the Lombok plugin parses the Lombok annotations correctly.
+ * The fixture of the Lombok parsing tests. Create it with {@code lombokParsingFixture} or {@code lombokConfigSystemFixture}.
+ * <p>
+ * A parsing test compares the PSI that Lombok augments in {@code before/<test name>.java} with the PSI of {@code after/<test name>.java}.
+ * A {@code $} in the test name is a directory separator.
+ * Declare each test with {@link LombokParsingTest}, so that it runs once in each {@link ModeRunnerType}.
+ * A plain {@code @Test} runs in the {@link ModeRunnerType#NORMAL} mode only.
  */
-public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightCodeInsightTestCase {
+@TestOnly
+public final class LombokParsingFixture {
 
-  private static final Logger LOG = Logger.getInstance(AbstractLombokParsingTestCase.class);
+  private static final Logger LOG = Logger.getInstance(LombokParsingFixture.class);
+  private static final Collection<String> ANNOTATIONS_TO_IGNORE =
+    Set.of("java.lang.SuppressWarnings", "java.lang.Override", "com.fasterxml.jackson.databind.annotation.JsonDeserialize");
 
-  @Nullable
-  protected ModeRunnerType myRunnerType;
+  private final @NotNull LightJavaCodeInsightTestFixture myFixture;
+  private final @NotNull ModeRunnerType myRunnerType;
+  private final @NotNull LombokParsingOptions myOptions;
+  private final boolean myConfigSystem;
 
-  @NotNull
-  protected List<ModeRunnerType> modes() {
+  LombokParsingFixture(@NotNull LightJavaCodeInsightTestFixture fixture,
+                       @NotNull ModeRunnerType runnerType,
+                       @NotNull LombokParsingOptions options,
+                       boolean configSystem) {
+    myFixture = fixture;
+    myRunnerType = runnerType;
+    myOptions = options;
+    myConfigSystem = configSystem;
+  }
+
+  /**
+   * Returns the modes of a parsing test: {@link ModeRunnerType#INCOMPLETE} and {@link ModeRunnerType#DUMB} when their registry keys
+   * are on, and {@link ModeRunnerType#NORMAL}. {@link LombokParsingTest} runs a test in these modes.
+   */
+  static @NotNull List<ModeRunnerType> modes() {
     ArrayList<ModeRunnerType> types = new ArrayList<>();
     if (Registry.is("lombok.incomplete.mode.enabled", false)) {
       types.add(ModeRunnerType.INCOMPLETE);
@@ -74,34 +103,13 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
   }
 
   /**
-   * All tests are run in three modes: normal, incomplete and dumb mode.
-   * If it is necessary to skip some of them, use @SkipMode
-   */
-  @Override
-  protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    String testName = getName();
-
-    for (ModeRunnerType value : modes()) {
-      myRunnerType = value;
-      try {
-        LOG.info("Method: " + testName + " starts with " + value);
-        super.runBare(testRunnable);
-        LOG.info("Method: " + testName + " finish with " + value);
-      }
-      catch (Throwable e) {
-        LOG.warn("Method: " + testName + "failed for " + value);
-        throw e;
-      }
-    }
-  }
-
-  /**
    * Represents the different modes for tests:
    * <ul>
    *     <li>NORMAL - uses to test mode when downloading and indexing are finished (indexes are available)</li>
    *     <li>DUMB - uses to test dumb mode, indexing is in progress (all libraries are downloaded, indexes are not available)</li>
    *     <li>INCOMPLETE - uses to test incomplete mode (libraries are being downloaded, indexes are available, but they don't contain all data)</li>
    * </ul>
+   * In the incomplete mode, the module has the descriptor of {@link LombokParsingOptions#incompleteDescriptor}.
    *
    * @see DumbService
    * @see IncompleteDependenciesService
@@ -112,59 +120,42 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     NORMAL
   }
 
-  protected boolean shouldCompareAnnotations() {
-    return !".*".equals(annotationToComparePattern());
+  public @NotNull LightJavaCodeInsightTestFixture getFixture() {
+    return myFixture;
   }
 
-  @Override
-  protected final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return (myRunnerType == ModeRunnerType.INCOMPLETE) ? getProjectDescriptorForIncompleteMode() : getProjectDescriptorForNormalMode();
+  public @NotNull String getTestName(boolean lowercaseFirstLetter) {
+    return myFixture.getTestName(lowercaseFirstLetter);
   }
 
-  /**
-   * @return the project descriptor for incomplete mode
-   *
-   * @see ModeRunnerType
-   */
-  protected @NotNull LightProjectDescriptor getProjectDescriptorForIncompleteMode() {
-    return LombokTestUtil.WITHOUT_LOMBOK_JAVA_21_DESCRIPTOR;
+  private boolean shouldCompareAnnotations() {
+    Boolean compareAnnotations = myOptions.getCompareAnnotations();
+    return compareAnnotations != null ? compareAnnotations : !".*".equals(myOptions.getAnnotationToComparePattern());
   }
 
   /**
-   * @return the project descriptor for normal mode
-   *
-   * @see ModeRunnerType
+   * Compares the files of the test. A config system fixture lowercases the first letter of the test name, a parsing fixture does not.
    */
-  protected @NotNull LightProjectDescriptor getProjectDescriptorForNormalMode() {
-    return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR;
-  }
-
-  protected String annotationToComparePattern() {
-    return ".*";
-  }
-
-  protected Collection<String> annotationsToIgnoreList() {
-    return Set.of("java.lang.SuppressWarnings", "java.lang.Override", "com.fasterxml.jackson.databind.annotation.JsonDeserialize");
-  }
-
-  protected boolean shouldCompareCodeBlocks() {
-    return true;
-  }
-
   public void doTest() {
-    doTest(false);
+    doTest(myConfigSystem);
   }
 
-  public final void doTest(final boolean lowercaseFirstLetter) {
-    PsiManager.getInstance(getProject()).dropPsiCaches();
+  public void doTest(final boolean lowercaseFirstLetter) {
+    Project project = myFixture.getProject();
+    EdtTestUtil.runInEdtAndWait(() -> PsiManager.getInstance(project).dropPsiCaches());
     if (myRunnerType == ModeRunnerType.DUMB) {
-      DumbModeTestUtils.runInDumbModeSynchronously(getProject(),
+      DumbModeTestUtils.runInDumbModeSynchronously(project,
                                                    () -> compareFiles(lowercaseFirstLetter));
     }
     else if (myRunnerType == ModeRunnerType.INCOMPLETE) {
-      IncompleteDependenciesService service = getProject().getService(IncompleteDependenciesService.class);
-      try (var ignored = asAutoCloseable(WriteAction.compute(() -> service.enterIncompleteState(this)))) {
+      IncompleteDependenciesService service = project.getService(IncompleteDependenciesService.class);
+      IncompleteDependenciesService.IncompleteDependenciesAccessToken token =
+        EdtTestUtil.runInEdtAndGet(() -> WriteAction.compute(() -> service.enterIncompleteState(this)));
+      try {
         compareFiles(lowercaseFirstLetter);
+      }
+      finally {
+        EdtTestUtil.runInEdtAndWait(() -> asAutoCloseable(token).close());
       }
     }
     else {
@@ -172,31 +163,50 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     }
   }
 
-  protected void compareFiles(boolean lowercaseFirstLetter) {
+  private void compareFiles(boolean lowercaseFirstLetter) {
+    if (myConfigSystem) {
+      final String fullFileName = getTestName(lowercaseFirstLetter).replace('$', '/') + ".java";
+      final int lastIndexOf = fullFileName.lastIndexOf('/');
+      final String subPath = fullFileName.substring(0, lastIndexOf);
+      final String fileName = fullFileName.substring(lastIndexOf + 1);
+
+      myFixture.copyFileToProject(subPath + "/before/lombok.config", subPath + "/before/lombok.config");
+
+      doTest(subPath + "/before/" + fileName, subPath + "/after/" + fileName);
+      return;
+    }
     String testName = getTestName(lowercaseFirstLetter);
-    compareFiles(loadBeforeLombokFile(testName), loadAfterDeLombokFile(testName));
+    PsiJavaFile beforeLombokFile = getPsiJavaFile(testName, "before");
+    PsiJavaFile afterDelombokFile = getPsiJavaFile(testName, "after");
+    ReadAction.runBlocking(() -> compareFiles(beforeLombokFile, afterDelombokFile));
   }
 
-  protected PsiJavaFile loadBeforeLombokFile(String testName) {
-    return getPsiJavaFile(testName, "before");
-  }
+  /**
+   * Loads {@code afterFileName} and then {@code beforeFileName} of the test data, and compares them.
+   */
+  public void doTest(final String beforeFileName, final String afterFileName) {
+    final PsiFile psiDelombokFile = LombokTestUtil.loadToPsiFile(myFixture, afterFileName);
+    final PsiFile psiLombokFile = LombokTestUtil.loadToPsiFile(myFixture, beforeFileName);
 
-  protected PsiJavaFile loadAfterDeLombokFile(String testName) {
-    return getPsiJavaFile(testName, "after");
+    if (!(psiLombokFile instanceof PsiJavaFile) || !(psiDelombokFile instanceof PsiJavaFile)) {
+      fail("The test file type is not supported");
+    }
+
+    ReadAction.runBlocking(() -> compareFiles((PsiJavaFile)psiLombokFile, (PsiJavaFile)psiDelombokFile));
   }
 
   @NotNull
   private PsiJavaFile getPsiJavaFile(String testName, String type) {
     final String fileName = testName.replace('$', '/') + ".java";
     final String filePath = type + "/" + fileName;
-    final PsiFile psiFile = loadToPsiFile(filePath);
+    final PsiFile psiFile = LombokTestUtil.loadToPsiFile(myFixture, filePath);
     if (!(psiFile instanceof PsiJavaFile)) {
       fail("The test file type is not supported");
     }
     return (PsiJavaFile)psiFile;
   }
 
-  protected void compareFiles(PsiJavaFile beforeLombokFile, PsiJavaFile afterDelombokFile) {
+  private void compareFiles(PsiJavaFile beforeLombokFile, PsiJavaFile afterDelombokFile) {
     PsiClass[] beforeClasses = beforeLombokFile.getClasses();
     PsiClass[] afterClasses = afterDelombokFile.getClasses();
 
@@ -207,7 +217,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     String before = "Before classes: " + Arrays.toString(beforeClasses);
     String after = "After classes: " + Arrays.toString(afterClasses);
 
-    assertEquals("Class counts are different " + before + " <> " + after, afterClasses.length, beforeClasses.length);
+    assertEquals(afterClasses.length, beforeClasses.length, "Class counts are different " + before + " <> " + after);
 
     for (PsiClass afterClass : afterClasses) {
       boolean compared = false;
@@ -217,7 +227,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
           compared = true;
         }
       }
-      assertTrue("Class names are not equal, class (" + afterClass.getName() + ") not found", compared);
+      assertTrue(compared, "Class names are not equal, class (" + afterClass.getName() + ") not found");
     }
   }
 
@@ -245,8 +255,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     LOG.debug("IntelliJ fields for class " + beforeClass.getName() + ": " + Arrays.toString(beforeClassFields));
     LOG.debug("Theirs fields for class " + afterClass.getName() + ": " + Arrays.toString(afterClassFields));
 
-    assertEquals("Field are different for Class: " + beforeClass.getName(),
-                 Arrays.toString(toList(afterClassFields)), Arrays.toString(toList(beforeClassFields)));
+    assertEquals(Arrays.toString(toList(afterClassFields)), Arrays.toString(toList(beforeClassFields)), "Field are different for Class: " + beforeClass.getName());
 
     for (PsiField afterField : afterClassFields) {
       boolean compared = false;
@@ -263,22 +272,22 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
           compared = true;
         }
       }
-      assertTrue("Fieldnames are not equal, Field (" + afterField.getName() + ") not found", compared);
+      assertTrue(compared, "Fieldnames are not equal, Field (" + afterField.getName() + ") not found");
     }
   }
 
   private static void compareInitializers(PsiExpression beforeInitializer, PsiExpression afterInitializer) {
     String beforeInitializerText = null == beforeInitializer ? "" : beforeInitializer.getText();
     String afterInitializerText = null == afterInitializer ? "" : afterInitializer.getText();
-    assertEquals("Initializers are not equals ", afterInitializerText, beforeInitializerText);
+    assertEquals(afterInitializerText, beforeInitializerText, "Initializers are not equals ");
   }
 
   private void compareType(PsiType beforeType, PsiType afterType, PomNamedTarget whereTarget) {
     if (null != beforeType && null != afterType) {
-      DumbService.getInstance(getProject()).runWithAlternativeResolveEnabled(() -> {
+      DumbService.getInstance(myFixture.getProject()).runWithAlternativeResolveEnabled(() -> {
         final String afterText = stripJavaLang(afterType.getCanonicalText());
         final String beforeText = stripJavaLang(beforeType.getCanonicalText());
-        assertEquals(String.format("Types are not equal for element: %s", whereTarget.getName()), afterText, beforeText);
+        assertEquals(afterText, beforeText, String.format("Types are not equal for element: %s", whereTarget.getName()));
       });
     }
   }
@@ -316,29 +325,27 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
       Collection<String> beforeAnnotations = Arrays.stream(beforeModifierList.getAnnotations())
         .map(an -> getAnnotationQualifiedName(an))
         .filter(Pattern.compile("lombok.*").asPredicate().negate().or(LombokClassNames.NON_NULL::equals))
-        .filter(Pattern.compile(annotationToComparePattern()).asPredicate())
-        .filter(Predicate.not(annotationsToIgnoreList()::contains))
+        .filter(Pattern.compile(myOptions.getAnnotationToComparePattern()).asPredicate())
+        .filter(Predicate.not(ANNOTATIONS_TO_IGNORE::contains))
         .toList();
       Collection<String> afterAnnotations = Arrays.stream(afterModifierList.getAnnotations())
         .map(an -> getAnnotationQualifiedName(an))
-        .filter(Pattern.compile(annotationToComparePattern()).asPredicate())
-        .filter(Predicate.not(annotationsToIgnoreList()::contains))
+        .filter(Pattern.compile(myOptions.getAnnotationToComparePattern()).asPredicate())
+        .filter(Predicate.not(ANNOTATIONS_TO_IGNORE::contains))
         .toList();
 
       if (DumbIncompleteModeUtil.isIncompleteMode(beforeModifierList.getProject())) {
         //In this case, it is impossible to resolve, and even if there are annotations we can't guess their fqn correctly.
         //Let's check one by one considering import statements
         for (String annotation : afterAnnotations) {
-          assertTrue("For " + afterModifierList.getParent() + " " + beforeAnnotations + " doesn't contain the annotation: " + annotation,
-                     ContainerUtil.or(beforeModifierList.getAnnotations(),
-                                      an -> PsiAnnotationSearchUtil.checkAnnotationHasOneOfFQNs(an, Set.of(annotation))));
+          assertTrue(ContainerUtil.or(beforeModifierList.getAnnotations(),
+                                      an -> PsiAnnotationSearchUtil.checkAnnotationHasOneOfFQNs(an, Set.of(annotation))), "For " + afterModifierList.getParent() + " " + beforeAnnotations + " doesn't contain the annotation: " + annotation);
         }
       }
       else {
-        assertTrue("Annotations are different for " + afterModifierList.getParent() + ": " + beforeAnnotations + "/" + afterAnnotations,
-                   beforeAnnotations.size() == afterAnnotations.size()
+        assertTrue(beforeAnnotations.size() == afterAnnotations.size()
                    && beforeAnnotations.containsAll(afterAnnotations)
-                   && afterAnnotations.containsAll(beforeAnnotations));
+                   && afterAnnotations.containsAll(beforeAnnotations), "Annotations are different for " + afterModifierList.getParent() + ": " + beforeAnnotations + "/" + afterAnnotations);
       }
 
       // compare annotations parameter list
@@ -350,7 +357,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
             .collect(Collectors.toMap(PsiNameValuePair::getAttributeName, p -> p.getValue().getText()));
           Map<String, String> afterParameter = Stream.of(afterAnnotation.getParameterList().getAttributes())
             .collect(Collectors.toMap(PsiNameValuePair::getAttributeName, p -> p.getValue().getText()));
-          assertEquals("Annotation parameter are not same for " + qualifiedName, afterParameter, beforeParameter);
+          assertEquals(afterParameter, beforeParameter, "Annotation parameter are not same for " + qualifiedName);
         }
       }
     }
@@ -370,8 +377,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     PsiMethod[] beforeMethods = beforeClass.getMethods();
     PsiMethod[] afterMethods = afterClass.getMethods();
 
-    assertEquals("Methods are different for Class: " + beforeClass.getName(),
-                 Arrays.toString(toList(afterMethods)), Arrays.toString(toList(beforeMethods)));
+    assertEquals(Arrays.toString(toList(afterMethods)), Arrays.toString(toList(beforeMethods)), "Methods are different for Class: " + beforeClass.getName());
 
     for (PsiMethod afterMethod : afterMethods) {
 
@@ -398,7 +404,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     compareParams(beforeMethod.getParameterList(), afterMethod.getParameterList());
     compareThrows(beforeMethod.getThrowsList(), afterMethod.getThrowsList(), afterMethod);
 
-    if (shouldCompareCodeBlocks()) {
+    if (myOptions.isCompareCodeBlocks()) {
       final PsiCodeBlock beforeMethodBody = beforeMethod.getBody();
       final PsiCodeBlock afterMethodBody = afterMethod.getBody();
       if (null != beforeMethodBody && null != afterMethodBody) {
@@ -407,7 +413,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
         if (!codeBlocksAreEqual) {
           String text1 = beforeMethodBody.getText().replaceAll("java\\.lang\\.", "").replaceAll("\\s+", "");
           String text2 = afterMethodBody.getText().replaceAll("java\\.lang\\.", "").replaceAll("\\s+", "");
-          assertEquals("Method: (" + afterMethod.getName() + ") in Class:" + afterClass.getName() + " different", text2, text1);
+          assertEquals(text2, text1, "Method: (" + afterMethod.getName() + ") in Class:" + afterClass.getName() + " different");
         }
       }
       else {
@@ -456,7 +462,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     PsiClassType[] beforeTypes = beforeThrows.getReferencedTypes();
     PsiClassType[] afterTypes = afterThrows.getReferencedTypes();
 
-    assertEquals("Throws counts are different for Method :" + psiMethod.getName(), beforeTypes.length, afterTypes.length);
+    assertEquals(beforeTypes.length, afterTypes.length, "Throws counts are different for Method :" + psiMethod.getName());
     DumbService dumbService = DumbService.getInstance(psiMethod.getProject());
     for (PsiClassType beforeType : beforeTypes) {
       boolean found = false;
@@ -467,7 +473,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
           break;
         }
       }
-      assertTrue("Expected throw: " + beforeType.getClassName() + " not found on " + psiMethod.getName(), found);
+      assertTrue(found, "Expected throw: " + beforeType.getClassName() + " not found on " + psiMethod.getName());
     }
   }
 
@@ -478,8 +484,8 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     LOG.debug("IntelliJ constructors for class " + beforeClass.getName() + ": " + Arrays.toString(beforeConstructors));
     LOG.debug("Theirs constructors for class " + afterClass.getName() + ": " + Arrays.toString(afterConstructors));
 
-    assertEquals("Constructor counts are different for Class: " + beforeClass.getName(), afterConstructors.length,
-                 beforeConstructors.length);
+    assertEquals(afterConstructors.length,
+                 beforeConstructors.length, "Constructor counts are different for Class: " + beforeClass.getName());
 
     for (PsiMethod afterConstructor : afterConstructors) {
       boolean compared = false;
@@ -488,7 +494,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
         ContainerUtil.map(afterConstructor.getParameterList().getParameters(), PsiParameter::getType);
 
       for (PsiMethod beforeConstructor : beforeConstructors) {
-        boolean methodMatches = DumbService.getInstance(getProject()).computeWithAlternativeResolveEnabled(
+        boolean methodMatches = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
           () -> PsiElementUtil.methodMatches(beforeConstructor, null, null, afterConstructor.getName(), afterConstructorParameterTypes));
         if (methodMatches) {
           final PsiModifierList intellijConstructorModifierList = beforeConstructor.getModifierList();
@@ -498,10 +504,10 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
           break;
         }
       }
-      assertTrue("Constructors are not equal, Constructor: '" +
+      assertTrue(compared, "Constructors are not equal, Constructor: '" +
                  afterConstructor.getName() +
                  "' (with same parameters) not found in class : " +
-                 beforeClass.getName(), compared);
+                 beforeClass.getName());
     }
   }
 
@@ -515,7 +521,7 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
     LOG.debug("IntelliJ containing class for class " + intellij.getName() + ": " + intellijContainingClassName);
     LOG.debug("Theirs containing class for class " + theirs.getName() + ": " + theirsContainingClassName);
 
-    assertEquals("Containing classes different for class: " + intellij.getName(), intellijContainingClassName, theirsContainingClassName);
+    assertEquals(intellijContainingClassName, theirsContainingClassName, "Containing classes different for class: " + intellij.getName());
   }
 
   private void compareInnerClasses(PsiClass intellij, PsiClass theirs) {

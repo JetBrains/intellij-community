@@ -1,80 +1,105 @@
 package de.plushnikov.intellij.plugin.configsystem;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokParsingFixture;
+import de.plushnikov.intellij.plugin.LombokParsingTest;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokConfigSystemFixture;
+
 /**
  * Unit tests for IntelliJPlugin for Lombok with activated config system
  */
-public class LoggerTest extends AbstractLombokConfigSystemTestCase {
+@TestApplication
+public class LoggerTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LombokParsingFixture> parsing = lombokConfigSystemFixture(projectFixture, "/configsystem/log");
 
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/configsystem/log";
-  }
-
+  @LombokParsingTest
   public void testFieldIsStatic$LogTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFieldIsStatic$Log4jTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFieldIsStatic$Log4j2Test() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFieldIsStatic$CommonsLogTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFieldIsStatic$Slf4jTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFieldIsStatic$XSlf4jTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFieldIsStatic$JBossLogTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFieldIsStatic$Slf4jWithReqConstructor() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFieldName$LogTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFieldName$Log4jTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFieldName$Log4j2Test() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFieldName$CommonsLogTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFieldName$Slf4jTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFieldName$XSlf4jTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testFieldName$JBossLogTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testCustomSimple$CustomLogTest() {
-    doTest();
+    parsing.get().doTest();
   }
 
+  @LombokParsingTest
   public void testCustomComplex$CustomLogTest() {
-    doTest();
+    parsing.get().doTest();
   }
 }
