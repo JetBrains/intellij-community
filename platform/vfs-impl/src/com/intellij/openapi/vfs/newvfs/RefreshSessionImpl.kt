@@ -100,8 +100,8 @@ internal class RefreshSessionImpl internal constructor(
     for (file in files) doAddFile(file)
   }
 
-  override fun addNewChildren(parent: VirtualFile, childrenNames: Collection<String>) {
-    addNewChildren(parent, childrenNames, null, VFileEvent.REFRESH_REQUESTOR)
+  override fun addNewChildren(parent: VirtualFile, childrenNames: Collection<String>, requestor: Any?) {
+    addNewChildren(parent, childrenNames, null, requestor)
   }
 
   override fun addCopyFile(newParent: VirtualFile, newName: String, file: VirtualFile, requestor: Any?) {
