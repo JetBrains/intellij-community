@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Presentation
@@ -18,28 +19,44 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator
 import com.intellij.openapi.actionSystem.impl.EMPTY_MENU_ACTION_ICON
 import com.intellij.openapi.actionSystem.impl.PoppedIcon
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
 import com.intellij.openapi.actionSystem.impl.isEnterKeyStroke
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.getShortcutSetForDisplay
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.awaitFocusSettlesDown
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.icons.getMenuBarIcon
 import com.intellij.ui.mac.screenmenu.MenuItem
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.awt.EventQueue
 import java.awt.event.InputEvent
 import javax.swing.Icon
+import javax.swing.JFrame
 import javax.swing.KeyStroke
+
+private val LOG = logger<MacNativeActionMenuItem>()
 
 internal class MacNativeActionMenuItem(
   action: AnAction,
   private val place: String,
   private val context: DataContext,
+  private val frame: JFrame,
   private val isMnemonicEnabled: Boolean,
   private val insideCheckedGroup: Boolean,
   private val useDarkIcons: Boolean,
@@ -61,12 +78,12 @@ internal class MacNativeActionMenuItem(
       }
       EventQueue.invokeLater {
         if (presentation.isEnabledInModalContext || !isModalContextForMainMenu(context)) {
-          (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-            //todo fix all clients and remove global lock here
-            WriteIntentReadAction.run {
-              performAction(actionRef.getAction(), place, presentation.clone(), context)
-            }
-          }
+          performAction(actionRef.getAction(), place, presentation.clone(), context)
+        }
+        else if (ModalityState.current() == ModalityState.nonModal() &&
+                 PopupUtil.getPopupContainerFor(context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) != null &&
+                 IdeEventQueue.getInstance().popupManager.closeAllPopups(false)) {
+          performAfterPopupsClose(actionRef.getAction(), place, frame)
         }
       }
     }
@@ -133,16 +150,40 @@ internal class MacNativeActionMenuItem(
 }
 
 private fun performAction(action: AnAction, place: String, presentation: Presentation, context: DataContext) {
-  val id = ActionManager.getInstance().getId(action)
-  if (id != null) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats.${id.replace(' ', '.')}")
+  (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+    //todo fix all clients and remove global lock here
+    WriteIntentReadAction.run {
+      val id = ActionManager.getInstance().getId(action)
+      if (id != null) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats.${id.replace(' ', '.')}")
+      }
+      IdeFocusManager.findInstanceByContext(context).runOnOwnContext(context, Runnable {
+        val currentEvent = IdeEventQueue.getInstance().trueCurrentEvent
+        val event = AnActionEvent.createEvent(
+          context, presentation, place, ActionUiKind.MAIN_MENU, currentEvent as? InputEvent)
+        ActionUtil.performAction(action, event)
+      })
+    }
   }
-  IdeFocusManager.findInstanceByContext(context).runOnOwnContext(context, Runnable {
-    val currentEvent = IdeEventQueue.getInstance().trueCurrentEvent
-    val event = AnActionEvent.createEvent(
-      context, presentation, place, ActionUiKind.MAIN_MENU, currentEvent as? InputEvent)
-    ActionUtil.performAction(action, event)
-  })
+}
+
+/**
+ * Performs the [action] after the popups close.
+ * The function waits for the focus, takes a new data context of the [frame] and updates the [action] in it.
+ * It does nothing when the new data context is a modal context.
+ */
+private fun performAfterPopupsClose(action: AnAction, place: String, frame: JFrame) {
+  service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
+    IdeFocusManager.getGlobalInstance().awaitFocusSettlesDown()
+    val context = Utils.createAsyncDataContext(getDataContext(frame))
+    if (isModalContextForMainMenu(context)) {
+      LOG.debug { "The popups are closed, but the data context is a modal context. The main menu does not perform $action" }
+      return@launch
+    }
+    val presentationFactory = PresentationFactory()
+    Utils.expandActionGroupSuspend(DefaultActionGroup(action), presentationFactory, context, place, ActionUiKind.MAIN_MENU, false)
+    performAction(action, place, presentationFactory.getPresentation(action), context)
+  }
 }
 
 /**

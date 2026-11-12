@@ -125,7 +125,7 @@ internal fun createMacNativeActionMenu(context: DataContext?,
   return menuPeer
 }
 
-private fun getDataContext(frame: JFrame): DataContext {
+internal fun getDataContext(frame: JFrame): DataContext {
   val dataManager = DataManager.getInstance()
 
   @Suppress("DEPRECATION")

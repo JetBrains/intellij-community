@@ -785,7 +785,7 @@ object Utils {
         action is ActionGroup && !isSubmenuSuppressed(presentation) -> createMacNativeActionMenu(
           context, place, action, presentationFactory, enableMnemonics, frame, useDarkIcons)
         else -> MacNativeActionMenuItem(
-          action, place, context, enableMnemonics, checked, useDarkIcons).apply {
+          action, place, context, frame, enableMnemonics, checked, useDarkIcons).apply {
           updateFromPresentation(presentation)
         }.menuItemPeer
       }
@@ -794,7 +794,7 @@ object Utils {
     if (filtered.isEmpty()) {
       val presentation = presentationFactory.getPresentation(EMPTY_MENU_FILLER)
       items.add(MacNativeActionMenuItem(
-        EMPTY_MENU_FILLER, place, context, enableMnemonics, checked, useDarkIcons).apply {
+        EMPTY_MENU_FILLER, place, context, frame, enableMnemonics, checked, useDarkIcons).apply {
         updateFromPresentation(presentation)
       }.menuItemPeer)
     }
