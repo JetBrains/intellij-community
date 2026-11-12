@@ -8,9 +8,13 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 
 /**
- * The facade of all things related to the character grid mode of the editor.
+ * The read API of the character grid mode of the editor, see [CharacterGridSpec].
  *
- * Accessed with [EditorImpl.getCharacterGrid].
+ * [EditorImpl.getCharacterGrid] gives the facade, and it gives the same instance for as long as the grid mode stays on.
+ * Each read gives the current value. The cell width follows the editor fonts and the spec, and the columns and the
+ * rows follow the visible area.
+ *
+ * To change the grid, give [EditorImpl.setCharacterGridSpec] a new spec. The facade only reads.
  */
 @ApiStatus.Internal
 interface CharacterGrid {
@@ -30,7 +34,10 @@ interface CharacterGrid {
   val rows: Int
 
   /**
-   * The width of a single-width character in pixels.
+   * The width of a single-width character in pixels, which is the width of one cell.
+   *
+   * The width is the width estimate of the widest editor character times the column spacing of the spec. It comes
+   * from the editor fonts alone, so the font families of the text do not change it.
    */
   val charWidth: Float
 
@@ -131,9 +138,6 @@ internal class CharacterGridImpl(
   private val size: Dimension
     get() = editor.scrollingModel.visibleArea.size
 
-  /**
-   * The cell width comes from the editor fonts alone, so the font families of the text do not change the grid.
-   */
   override val charWidth: Float
     get() = view.metrics.maxCharWidth() * spec.columnSpacing
 

@@ -42,6 +42,8 @@ public final class GridTextFragment extends TextFragment {
   private volatile @Nullable CellGlyphs myCellGlyphs; // the glyphs of the last draw
 
   /**
+   * @param isRtl     the direction of the run; a right-to-left run keeps its cells in logical order, and its first
+   *                  cell is on the right
    * @param gridSpec  the grid of the editor; the fragment reads the cell rule of {@link CharacterGridSpec#cells} from it
    * @param cellWidth the width of one cell in pixels, see {@link EditorViewSnapshot#gridCellWidth}; it holds the
    *                  column spacing of {@code gridSpec} already
