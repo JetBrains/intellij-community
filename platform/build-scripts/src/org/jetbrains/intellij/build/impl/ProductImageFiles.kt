@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.LinuxDistributionCustomizer
 import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -28,25 +29,31 @@ internal fun locateIcoFileForWindowsLauncher(customizer: WindowsDistributionCust
          ?: error("Path to ico file is not specified")
 }
 
+/** The icon of the macOS app of [properties], for an EAP build when [isEap] is set. */
 @Suppress("DEPRECATION")
-internal fun locateIcnsForMacApp(customizer: MacDistributionCustomizer, context: BuildContext): Path {
-  if (context.productProperties.productMode == ProductMode.FRONTEND) {
-    val frontendIcnsPath = locateIcnsForFrontendMacApp(context)
+internal fun locateIcnsForMacApp(customizer: MacDistributionCustomizer, properties: ProductProperties, isEap: Boolean): Path {
+  if (properties.productMode == ProductMode.FRONTEND) {
+    val frontendIcnsPath = locateIcnsForFrontendMacApp(properties.imagesDirectoryPath, isEap)
     if (frontendIcnsPath != null) {
       return frontendIcnsPath
     }
   }
-  if (context.applicationInfo.isEAP) {
-    val eapIcnsPath = customizer.icnsPathForEAP ?: context.productProperties.imagesDirectoryPath?.resolve(MAC_ICNS_EAP_PATH)?.takeIf { it.exists() }
+  if (isEap) {
+    val eapIcnsPath = customizer.icnsPathForEAP ?: properties.imagesDirectoryPath?.resolve(MAC_ICNS_EAP_PATH)?.takeIf { it.exists() }
     if (eapIcnsPath != null) {
       return eapIcnsPath
     }
   }
-  return customizer.icnsPath ?: context.productProperties.imagesDirectoryPath?.resolve(MAC_ICNS_PATH) ?: error("Path to icns file is not specified")
+  return customizer.icnsPath ?: properties.imagesDirectoryPath?.resolve(MAC_ICNS_PATH) ?: error("Path to icns file is not specified")
 }
 
 internal fun locateIcnsForFrontendMacApp(context: BuildContext): Path? {
-  return locateFrontendImageFile(filePath = MAC_ICNS_FRONTEND_PATH, eapFilePath = MAC_ICNS_FRONTEND_EAP_PATH, context = context)
+  return locateIcnsForFrontendMacApp(context.productProperties.imagesDirectoryPath, context.applicationInfo.isEAP)
+}
+
+/** The icon of the macOS app of the embedded frontend in [imagesDirectoryPath], or `null` without one. */
+internal fun locateIcnsForFrontendMacApp(imagesDirectoryPath: Path?, isEap: Boolean): Path? {
+  return locateFrontendImageFile(MAC_ICNS_FRONTEND_PATH, MAC_ICNS_FRONTEND_EAP_PATH, imagesDirectoryPath, isEap)
 }
 
 @Suppress("DEPRECATION")
@@ -103,7 +110,7 @@ private fun locateProductFrontendImageFile(filePath: String, eapFilePath: String
 
 /** Whether [imagesDirectoryPath] has the icon the macOS app of the embedded frontend shows, see [locateIcnsForFrontendMacApp]. */
 internal fun hasIcnsForFrontendMacApp(imagesDirectoryPath: Path?, isEap: Boolean): Boolean {
-  return locateFrontendImageFile(MAC_ICNS_FRONTEND_PATH, MAC_ICNS_FRONTEND_EAP_PATH, imagesDirectoryPath, isEap) != null
+  return locateIcnsForFrontendMacApp(imagesDirectoryPath, isEap) != null
 }
 
 private fun locateFrontendImageFile(filePath: String, eapFilePath: String, context: BuildContext): Path? {

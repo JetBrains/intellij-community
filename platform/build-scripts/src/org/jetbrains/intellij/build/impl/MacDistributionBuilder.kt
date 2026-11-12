@@ -23,7 +23,6 @@ import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.NativeBinaryDownloader
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.executeStep
-import org.jetbrains.intellij.build.getMacBundleSuffix
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.macOS.MachOUuid
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
@@ -42,7 +41,6 @@ import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
 import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.isLanguageServer
-import org.jetbrains.intellij.build.isMacEapBundle
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
@@ -54,11 +52,9 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.extension
-import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
-import kotlin.io.path.walk
 import kotlin.io.path.writeText
 
 private const val NO_RUNTIME_SUFFIX = "-no-jdk"
@@ -78,46 +74,10 @@ class MacDistributionBuilder(
     get() = MacLibcImpl.DEFAULT
 
   private val targetIcnsFileName: String
-    get() = "${context.productProperties.baseFileName}.icns"
+    get() = macAppIcnsFileName(context.productProperties.baseFileName)
 
   private val productInfoPathPrefix: String
     get() = if (context.isLanguageServer) "" else "Resources/"
-
-  private fun getDocTypes(): String {
-    val associations = mutableListOf<String>()
-
-    if (customizer.associateIpr) {
-      associations += """
-        |<dict>
-        |        <key>CFBundleTypeExtensions</key>
-        |        <array>
-        |          <string>ipr</string>
-        |        </array>
-        |        <key>CFBundleTypeIconFile</key>
-        |        <string>${targetIcnsFileName}</string>
-        |        <key>CFBundleTypeName</key>
-        |        <string>${context.applicationInfo.fullProductName} Project File</string>
-        |        <key>CFBundleTypeRole</key>
-        |        <string>Editor</string>
-        |      </dict>""".trimMargin()
-    }
-
-    for ((extension, iconPath) in customizer.fileAssociations) {
-      associations += """
-        |<dict>
-        |        <key>CFBundleTypeExtensions</key>
-        |        <array>
-        |          <string>${extension}</string>
-        |        </array>
-        |        <key>CFBundleTypeIconFile</key>
-        |        <string>${if (iconPath.isEmpty()) targetIcnsFileName else Path.of(iconPath).name}</string>        
-        |        <key>CFBundleTypeRole</key>
-        |        <string>Editor</string>
-        |      </dict>""".trimMargin()
-    }
-
-    return associations.joinToString(separator = "\n      ", postfix = customizer.additionalDocTypes)
-  }
 
   override fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
     doCopyFilesForOsDistribution(targetPath = targetPath, arch = arch, copyDistFiles = true)
@@ -169,7 +129,7 @@ class MacDistributionBuilder(
       layoutMacCli(targetPath, arch)
     }
     else {
-      layoutMacApp(getDocTypes(), targetPath, arch)
+      layoutMacApp(targetPath, arch)
     }
     generateBuildTxt(targetPath.resolve(productInfoPathPrefix), context)
 
@@ -297,8 +257,8 @@ class MacDistributionBuilder(
     macDistDir.resolve("Resources").createDirectories()
   }
 
-  private fun layoutMacApp(docTypes: String?, macDistDir: Path, arch: JvmArchitecture) {
-    copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
+  private fun layoutMacApp(macDistDir: Path, arch: JvmArchitecture) {
+    copyDir(context.paths.communityHomeDir.resolve(MAC_APP_TEMPLATE_PATH), macDistDir)
 
     val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, arch)
     val copy = macDistDir.resolve("MacOS/${context.productProperties.baseFileName}")
@@ -306,33 +266,29 @@ class MacDistributionBuilder(
     MachOUuid(copy, customizer, context).patch()
     copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))
 
-    val icnsPath = locateIcnsForMacApp(customizer, context)
     val resourcesDistDir = macDistDir.resolve("Resources")
-    copyFile(icnsPath, resourcesDistDir.resolve(targetIcnsFileName))
-
-    @Suppress("DEPRECATION")
-    val alternativeIcon = customizer.icnsPathForAlternativeIconForEAP?.takeIf { context.applicationInfo.isEAP } ?: customizer.icnsPathForAlternativeIcon
-    if (alternativeIcon != null) {
-      copyFile(alternativeIcon, resourcesDistDir.resolve("custom.icns"))
-    }
-    if (context.isEmbeddedFrontendEnabled) {
-      val icnsForFrontendApp = locateIcnsForFrontendMacApp(context)
-      if (icnsForFrontendApp != null) {
-        //path to the copied file will be passed as the value of `apple.awt.application.icon` property in `getAdditionalEmbeddedClientVmOptions`
-        copyFile(icnsForFrontendApp, resourcesDistDir.resolve("frontend.icns"))
-      }
+    val icons = macAppIcons(
+      customizer = customizer,
+      properties = context.productProperties,
+      isEap = context.applicationInfo.isEAP,
+      embeddedFrontendEnabled = context.isEmbeddedFrontendEnabled,
+    )
+    for ((name, source) in icons) {
+      val dest = resourcesDistDir.resolve(name)
+      Files.deleteIfExists(dest)
+      copyFile(source, dest)
     }
 
-    for ((_, iconPath) in customizer.fileAssociations) {
-      if (!iconPath.isEmpty()) {
-        val source = Path.of(iconPath)
-        val dest = resourcesDistDir.resolve(source.fileName)
-        Files.deleteIfExists(dest)
-        copyFile(source, dest)
-      }
-    }
-
-    substitutePlaceholdersInInfoPlist(macDistDir, docTypes, arch)
+    substituteMacAppPlaceholders(
+      macAppDir = macDistDir,
+      customizer = customizer,
+      applicationInfo = context.applicationInfo,
+      fullBuildNumber = context.fullBuildNumber,
+      baseFileName = context.productProperties.baseFileName,
+      docTypes = macDocTypes(customizer, context.applicationInfo.fullProductName, targetIcnsFileName),
+      arch = arch,
+      year = LocalDate.now().year.toString(),
+    )
   }
 
   override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, libc: LibcImpl): Sequence<String> {
@@ -527,72 +483,6 @@ class MacDistributionBuilder(
     val vmOptionsPath = distBinDir.resolve("${executable}.vmoptions")
     writeVmOptions(vmOptionsPath, vmOptions, separator = "\n")
     return vmOptionsPath
-  }
-
-  private fun substitutePlaceholdersInInfoPlist(macAppDir: Path, docTypes: String?, arch: JvmArchitecture) {
-    val fullName = context.applicationInfo.fullProductName
-    //todo improve
-    val minor = context.applicationInfo.minorVersion
-    val isNotRelease = isMacEapBundle(context.applicationInfo)
-    val version = if (isNotRelease) "EAP ${context.fullBuildNumber}" else "${context.applicationInfo.majorVersion}.${minor}"
-    val isEap = getMacBundleSuffix(context.applicationInfo)
-    val urlSchemes = customizer.urlSchemes
-    val urlSchemesString = if (urlSchemes.isEmpty()) ""
-    else """
-      |<key>CFBundleURLTypes</key>
-      |    <array>
-      |      <dict>
-      |        <key>CFBundleTypeRole</key>
-      |        <string>Editor</string>
-      |        <key>CFBundleURLName</key>
-      |        <string>Stacktrace</string>
-      |        <key>CFBundleURLSchemes</key>
-      |        <array>
-      |          ${urlSchemes.joinToString(separator = "\n          ") { "<string>${it}</string>" }}
-      |        </array>
-      |      </dict>
-      |    </array>""".trimMargin()
-    val architecture = when (arch) {
-      JvmArchitecture.x64 -> "x86_64"
-      JvmArchitecture.aarch64 -> "arm64"
-    }
-    val todayYear = LocalDate.now().year.toString()
-
-    substituteTemplatePlaceholders(
-      inputFile = macAppDir.resolve("Info.plist"),
-      outputFile = macAppDir.resolve("Info.plist"),
-      placeholder = "@@",
-      values = listOf(
-        Pair("build", context.fullBuildNumber),
-        Pair("doc_types", docTypes ?: ""),
-        Pair("executable", context.productProperties.baseFileName),
-        Pair("icns", targetIcnsFileName),
-        Pair("bundle_name", fullName),
-        Pair("product_state", isEap),
-        Pair("bundle_identifier", customizer.bundleIdentifier),
-        Pair("year", todayYear),
-        Pair("version", version),
-        Pair("url_schemes", urlSchemesString),
-        Pair("architecture", architecture),
-        Pair("min_osx", customizer.minOSXVersion),
-      )
-    )
-
-    macAppDir.resolve("Resources").walk()
-      .filter { it.extension == "strings" && it.isRegularFile() }
-      .forEach { file ->
-        substituteTemplatePlaceholders(
-          inputFile = file,
-          outputFile = file,
-          placeholder = "@@",
-          values = listOf(
-            Pair("bundle_name", fullName),
-            Pair("version", version),
-            Pair("year", todayYear),
-            Pair("build", context.fullBuildNumber)
-          )
-        )
-      }
   }
 
   private fun getMacZipRoot(customizer: MacDistributionCustomizer, context: BuildContext): String {
