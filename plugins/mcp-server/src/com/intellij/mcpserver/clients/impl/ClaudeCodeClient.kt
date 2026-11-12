@@ -7,7 +7,7 @@ import com.intellij.mcpserver.clients.configs.ClaudeCodeNetworkConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import java.nio.file.Path
 
-class ClaudeCodeClient(scope: McpClientInfo.McpClientScope, configPath: Path) : McpClient(
+open class ClaudeCodeClient(scope: McpClientInfo.McpClientScope, configPath: Path) : McpClient(
   mcpClientInfo = McpClientInfo(McpClientInfo.Name.CLAUDE_CODE, scope),
   configPath = configPath
 ) {
