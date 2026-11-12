@@ -41,6 +41,7 @@ pub struct ApplicationInfo { // Clone + Debug + PartialEq + Eq
     pub edition: Option<String>,
     pub version: String,
     pub major_version: String,
+    pub minor_version: String,
     pub minor_version_main_part: String,
     pub version_suffix: Option<String>,
     pub is_eap: bool,

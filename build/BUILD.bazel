@@ -16,6 +16,16 @@ load(":jps_library_derivation_pipeline_test.bzl", "jps_library_derivation_pipeli
 load(":jps_library_derivation_test.bzl", "jps_library_derivation_test_suite")
 load(":tests-options.bzl", "jps_test")
 
+# The macOS app icons that the `platform_resources` component of a split dev distribution places in
+# `Contents/Resources`. The plan generator names each file. The export precedes every rule that names the files.
+exports_files(
+    [
+        "idea-community-images/mac/product.icns",
+        "idea-community-images/mac/product_EAP.icns",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 jps_library_derivation_test_suite(name = "jps_library_derivation_test")
 
 downloads_test_suite(name = "downloads_test")

@@ -18,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ContentModuleFilter
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
@@ -45,6 +46,7 @@ import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
 import org.jetbrains.intellij.build.impl.nativeBinFiles
 import org.jetbrains.intellij.build.impl.productInfo.ProductLaunchModel
 import org.jetbrains.intellij.build.impl.productInfo.computeDevProductLaunchModel
+import org.jetbrains.intellij.build.impl.productInfo.devMacAppIcons
 import org.jetbrains.intellij.build.impl.productInfo.encodeProductLaunchModel
 import org.jetbrains.intellij.build.impl.productInfo.frontendVmOptionsFileName
 import org.jetbrains.intellij.build.impl.productInfo.vmOptionsFileName
@@ -793,6 +795,8 @@ private data class ProductFragmentPlan(
   @JvmField val platformAssets: PlatformAssets,
   /** What the `platform_resources` component renders. */
   @JvmField val launchModel: ProductLaunchModel,
+  /** The icons of the macOS app, keyed by file name, see [macAppIconLabels]. `null` when [launchModel] states no `macBundle`. */
+  @JvmField val macAppIcons: Map<String, MacAppIconLabels>?,
   /** Where [launchModel] lives, under the case-safe name of the product. */
   @JvmField val launchModelRelativePath: String,
   /** The label of the base `idea.properties` of [launchModel], see [DevDistHalf.baseIdeaProperties]. */
@@ -1896,7 +1900,9 @@ private fun collectFragmentPlan(
       descriptorCollector = descriptorCollector,
     )
   }
-  val launchModel = computeDevProductLaunchModel(properties, outputProvider, PINNED_BUILD_DATE_IN_SECONDS)
+  val macCustomizer = properties.createMacCustomizer(index.projectRoot)
+  val launchModel = computeDevProductLaunchModel(properties, outputProvider, PINNED_BUILD_DATE_IN_SECONDS, macCustomizer)
+  val macAppIcons = if (launchModel.macBundle == null) null else macAppIconLabels(checkNotNull(macCustomizer), properties, index)
   val windowsCustomizer = properties.createWindowsCustomizer(index.projectRoot)
   return ProductFragmentPlan(
     platformPrefix = product.name,
@@ -1908,6 +1914,7 @@ private fun collectFragmentPlan(
     payloads = listOf(platformLibPayload) + runtimeModuleRepositoryPayload,
     platformAssets = collectPlatformAssets(layout = layout, properties = properties, index = index),
     launchModel = launchModel,
+    macAppIcons = macAppIcons,
     launchModelRelativePath = launchModelRelativePath(half.caseSafeProductName(product.name)),
     ideaProperties = index.planLabel(half.baseIdeaProperties(product.name, languageServerBase = launchModel.ideaProperties.languageServerBase)),
     windowsGuiLauncher = windowsCustomizer?.includeGuiLauncher == true,
@@ -2226,6 +2233,68 @@ private fun layoutPlacedLibraryLabels(
     index.libraryLabel(jpsName = library.libraryName, owner = null, dependentIsCommunity = index.planPackageIsCommunity)
     ?: refuse("the layout-placed project library '${library.libraryName}' has no Bazel target")
   }
+}
+
+/** The labels of one icon of a macOS app: the icon of a release build and the icon of an EAP build. They can be one label. */
+internal data class MacAppIconLabels(@JvmField val release: String, @JvmField val eap: String)
+
+/**
+ * The icons that `MacDistributionBuilder` copies into `Contents/Resources` of the macOS app of [properties], keyed by
+ * file name, such as `idea.icns`.
+ *
+ * The plan names the icon of both EAP flags, and the product files action picks one by the flag of the application info.
+ * So the EAP flip changes no generated file.
+ */
+internal fun macAppIconLabels(
+  customizer: MacDistributionCustomizer,
+  properties: ProductProperties,
+  index: DevDistBazelIndex,
+): Map<String, MacAppIconLabels> {
+  val release = devMacAppIcons(customizer, properties, isEap = false)
+  val eap = devMacAppIcons(customizer, properties, isEap = true)
+  check(release.keys == eap.keys) {
+    "${properties.platformPrefix}: the macOS app has the icons ${release.keys} in a release build and ${eap.keys} in an EAP build. " +
+    "The product files action renders one set of outputs, so both builds must name the same icons."
+  }
+  return release.entries.associateTo(TreeMap()) { (name, file) ->
+    name to MacAppIconLabels(release = checkoutFileLabel(file, index), eap = checkoutFileLabel(eap.getValue(name), index))
+  }
+}
+
+/** An `exports_files` call over a list literal. Its group is the text of the list. */
+private val EXPORTS_FILES_LIST = Regex("""exports_files\(\s*\[([^\]]*)]""")
+
+/**
+ * The source-file label of the checkout file [file], spelled for a plan package of [index].
+ *
+ * The package is the nearest directory with a `BUILD.bazel` file at or below the root of the repository of [file]. A
+ * source file is a target of other packages only when its package exports it. So the function fails when the file does
+ * not exist, or when no `exports_files` list of the build file names the package-relative path of [file].
+ */
+internal fun checkoutFileLabel(file: Path, index: DevDistBazelIndex): String {
+  val path = file.toAbsolutePath().normalize()
+  require(Files.isRegularFile(path)) { "The checkout file $path does not exist" }
+  val communityRoot = index.communityRoot.toAbsolutePath().normalize()
+  val projectRoot = index.projectRoot.toAbsolutePath().normalize()
+  val (root, repository) = when {
+    path.startsWith(communityRoot) -> communityRoot to COMMUNITY_REPOSITORY_PREFIX
+    path.startsWith(projectRoot) -> projectRoot to "//"
+    else -> throw IllegalArgumentException("The checkout file $path is outside $projectRoot")
+  }
+  var packageDir = path.parent
+  while (packageDir != root && !Files.isRegularFile(packageDir.resolve("BUILD.bazel"))) {
+    packageDir = packageDir.parent
+  }
+  val buildFile = packageDir.resolve("BUILD.bazel")
+  val relative = packageDir.relativize(path).invariantSeparatorsPathString
+  val label = "$repository${root.relativize(packageDir).invariantSeparatorsPathString}:$relative"
+  val exported = Files.isRegularFile(buildFile) &&
+                 EXPORTS_FILES_LIST.findAll(Files.readString(buildFile)).any { "\"$relative\"" in it.groupValues[1] }
+  check(exported) {
+    "The label $label does not resolve: no exports_files list of $buildFile names \"$relative\". " +
+    "Add it to an exports_files call outside the generated sections."
+  }
+  return index.planLabel(label)
 }
 
 /** A download repository label, `@<repository>//:files`. Bazel unpacks the same archive as `@<repository>_extracted`. */
@@ -3511,6 +3580,15 @@ private fun planFieldBodies(product: ProductFragmentPlan): List<PlanFieldBody> {
       append("    frontend_vmoptions = {")
       osTokens.joinTo(this, separator = ", ") { (token, os) -> "\"$token\": \"${model.frontendVmOptionsFileName(os)}\"" }
       append("},\n")
+    }
+    // The release and the EAP icon of each name of the macOS app. The product files action picks one by the EAP flag.
+    product.macAppIcons?.let { icons ->
+      append("    mac_bundle = struct(icons = {\n")
+      for ((name, labels) in icons) {
+        append("        \"").append(name).append("\": struct(release = \"").append(labels.release)
+          .append("\", eap = \"").append(labels.eap).append("\"),\n")
+      }
+      append("    }),\n")
     }
     append("    main_class = \"").append(model.launch.mainClass).append("\",\n")
     // The facts the native launcher files derive from, see `_launcher_files` in `intellij_dev_dist_declarations.bzl`.

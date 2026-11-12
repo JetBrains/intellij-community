@@ -42,6 +42,34 @@ pub(crate) struct LaunchModel {
     /// The vmoptions file of the embedded frontend, with the parts of `vm_options`. The `thinClient` command names it.
     pub frontend_vm_options: Option<VmOptions>,
     pub idea_properties: IdeaProperties,
+    /// The facts of `Info.plist` of the macOS app. A product without a macOS app and a language server state none.
+    pub mac_bundle: Option<MacBundle>,
+}
+
+/// `ProductMacBundle`: the `MacDistributionCustomizer` facts that `Info.plist` states.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct MacBundle {
+    pub bundle_identifier: String,
+    #[serde(rename = "minOSXVersion")]
+    pub min_osx_version: String,
+    #[serde(default)]
+    pub url_schemes: Vec<String>,
+    #[serde(default)]
+    pub associate_ipr: bool,
+    #[serde(default)]
+    pub file_associations: Vec<MacFileAssociation>,
+    /// The XML text after the other document types, as the customizer states it.
+    #[serde(default)]
+    pub additional_doc_types: String,
+}
+
+/// One file association of the macOS app. An association without an icon file shows the icon of the app.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct MacFileAssociation {
+    pub extension: String,
+    pub icon_file_name: Option<String>,
 }
 
 /// A custom property. `product-info.json` writes it with the same fields.

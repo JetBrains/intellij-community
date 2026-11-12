@@ -1,0 +1,13 @@
+CFBundleGetInfoString = "IntelliJ IDEA EAP IU-263.SNAPSHOT、ビルド IU-263.SNAPSHOT、Copyright JetBrains s.r.o., (c) 2000-2026";
+
+NSCameraUsageDescription = "IntelliJ IDEA のアプリケーションがデバイスのカメラへのアクセス許可をリクエストしています。";
+NSMicrophoneUsageDescription = "IntelliJ IDEA のアプリケーションがデバイスのマイクへのアクセス許可をリクエストしています。";
+NSLocationUsageDescription = "IntelliJ IDEA のアプリケーションがユーザーの位置情報へのアクセス許可をリクエストしています。";
+NSDesktopFolderUsageDescription = "IntelliJ IDEA のアプリケーションがユーザーのデスクトップフォルダーへのアクセス許可をリクエストしています。";
+NSDocumentsFolderUsageDescription = "IntelliJ IDEA のアプリケーションがユーザーのドキュメントフォルダーへのアクセス許可をリクエストしています。";
+NSDownloadsFolderUsageDescription = "IntelliJ IDEA のアプリケーションがデバイスのダウンロードフォルダーへのアクセス許可をリクエストしています。";
+NSNetworkVolumesUsageDescription = "IntelliJ IDEA のアプリケーションがネットワークボリュームにあるファイルへのアクセス許可をリクエストしています。";
+NSRemovableVolumesUsageDescription = "IntelliJ IDEA のアプリケーションがリムーバブルボリュームにあるファイルへのアクセス許可をリクエストしています。";
+NSBluetoothAlwaysUsageDescription = "IntelliJ IDEA のアプリケーションが Bluetooth へのアクセス許可をリクエストしています。";
+NSAppleEventsUsageDescription = "IntelliJ IDEA のアプリケーションが Apple イベントを送信する機能をリクエストしています。";
+NSLocalNetworkUsageDescription = "SSH やデータベース接続などの IntelliJ IDEA の機能には、ローカルネットワークにアクセスし、ブロードキャストリクエストを送信するための権限が必要です。";

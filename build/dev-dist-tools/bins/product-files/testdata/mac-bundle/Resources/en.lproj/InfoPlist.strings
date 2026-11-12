@@ -1,0 +1,13 @@
+CFBundleGetInfoString = "IntelliJ IDEA EAP IU-263.SNAPSHOT, build IU-263.SNAPSHOT. Copyright JetBrains s.r.o., (c) 2000-2026";
+
+NSCameraUsageDescription = "An application in IntelliJ IDEA requests access to the device's camera.";
+NSMicrophoneUsageDescription = "An application in IntelliJ IDEA requests access to the device's microphone.";
+NSLocationUsageDescription = "An application in IntelliJ IDEA requests access to the user's location information.";
+NSDesktopFolderUsageDescription = "An application in IntelliJ IDEA requests access to the user's Desktop folder.";
+NSDocumentsFolderUsageDescription = "An application in IntelliJ IDEA requests access to the user's Documents folder.";
+NSDownloadsFolderUsageDescription = "An application in IntelliJ IDEA requests access to the user's Downloads folder.";
+NSNetworkVolumesUsageDescription = "An application in IntelliJ IDEA requests access to files on a network volume.";
+NSRemovableVolumesUsageDescription = "An application in IntelliJ IDEA requests access to files on a removable volume.";
+NSBluetoothAlwaysUsageDescription = "An application in IntelliJ IDEA requests access to Bluetooth.";
+NSAppleEventsUsageDescription = "An application in IntelliJ IDEA requests the ability to send Apple events.";
+NSLocalNetworkUsageDescription = "IntelliJ IDEA's features, such as SSH and database connectivity, require permissions for accessing the local network and sending broadcast requests.";

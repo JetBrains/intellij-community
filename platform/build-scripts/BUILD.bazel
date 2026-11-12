@@ -10,6 +10,17 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 
+# The template of the `Contents` directory of a macOS app: `Info.plist` and the `InfoPlist.strings` of each language.
+# The product files action of a dev distribution fills it, as `MacDistributionBuilder` does.
+filegroup(
+    name = "mac_app_template",
+    srcs = glob([
+        "resources/mac/Contents/Info.plist",
+        "resources/mac/Contents/Resources/**",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build intellij.platform.buildScripts` start
 create_kotlinc_options(
     name = "custom_build-scripts",

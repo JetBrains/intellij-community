@@ -70,6 +70,9 @@ _LAUNCH = struct(
         "linux": "idea64.vmoptions",
         "windows": "idea64.exe.vmoptions",
     },
+    mac_bundle = struct(icons = {
+        "idea.icns": struct(release = "//build:idea-community-images/mac/product.icns", eap = "//build:idea-community-images/mac/product_EAP.icns"),
+    }),
     main_class = "com.intellij.idea.Main",
     launcher = struct(base_file_name = "idea", language_server = False, windows_gui = True, windows_console = True),
     env_var_base_name = "IDEA",

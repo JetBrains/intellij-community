@@ -24,6 +24,8 @@ pub struct ApplicationInfo {
     pub version: String,
     /// `majorVersion` (line 72).
     pub major_version: String,
+    /// `minorVersion` (line 73): the `minor` attribute, or `0` when it states none.
+    pub minor_version: String,
     /// `minorVersionMainPart` (line 83): the minor version up to its first dot.
     pub minor_version_main_part: String,
     /// `versionSuffix` (lines 80-82): the suffix, or `EAP` for an EAP product that states none.
@@ -211,6 +213,7 @@ fn read_facts(content: &str, file: &Path, host: Option<&HostOverride>, pinned_bu
         edition,
         version: version_text,
         major_version: major,
+        minor_version: minor,
         minor_version_main_part,
         version_suffix,
         is_eap,

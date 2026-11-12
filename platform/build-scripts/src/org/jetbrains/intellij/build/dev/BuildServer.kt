@@ -12,9 +12,16 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.classPath.launchBootClassPathJarNames
 import org.jetbrains.intellij.build.classPath.splitDistributionCoreClassPathJarNames
+import org.jetbrains.intellij.build.impl.MAC_APP_TEMPLATE_PATH
 import org.jetbrains.intellij.build.impl.createPlatformLayout
+import org.jetbrains.intellij.build.impl.macAppIcnsFileName
+import org.jetbrains.intellij.build.impl.macAppIcons
+import org.jetbrains.intellij.build.impl.macDocTypes
 import org.jetbrains.intellij.build.impl.productInfo.ProductLaunchModel
 import org.jetbrains.intellij.build.impl.productInfo.computeDevProductLaunchModel
+import org.jetbrains.intellij.build.impl.productInfo.devMacAppIcons
+import org.jetbrains.intellij.build.impl.substituteMacAppPlaceholders
+import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.productLayout.discovery.PRODUCT_REGISTRY_PATH
 import org.jetbrains.intellij.build.productLayout.discovery.ProductConfiguration
 import org.jetbrains.intellij.build.productLayout.discovery.ProductConfigurationRegistry
@@ -22,6 +29,8 @@ import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.Instant
+import java.time.ZoneOffset
 import kotlin.io.path.invariantSeparatorsPathString
 
 /**
@@ -47,12 +56,20 @@ fun buildProductInProcess(request: BuildRequest): DevBuildResult {
  *
  * [coreClassPathJarNames] is the core classpath of the split distribution, see [splitDistributionCoreClassPathJarNames].
  * It is `null` for a modular-loader product, whose launch does not read it.
+ *
+ * [macBundleFiles] holds `Info.plist` and the `InfoPlist.strings` files of each macOS platform, keyed by the path
+ * below `Contents`. [macAppIcons] holds the icon that the production writer copies into `Contents/Resources`, keyed by
+ * file name. [macAppIconSources] holds the release and the EAP icon of each name, as the plan names them. All three
+ * are empty for a product without a macOS app.
  */
 @ApiStatus.Internal
 class SplitPlatformResources(
   @JvmField val model: ProductLaunchModel,
   @JvmField val files: Map<Pair<OsFamily, JvmArchitecture>, Map<String, String>>,
   @JvmField val coreClassPathJarNames: List<String>?,
+  @JvmField val macBundleFiles: Map<Pair<OsFamily, JvmArchitecture>, Map<String, String>>,
+  @JvmField val macAppIcons: Map<String, Path>,
+  @JvmField val macAppIconSources: Map<String, Pair<Path, Path>>,
 )
 
 /**
@@ -111,10 +128,65 @@ fun renderSplitPlatformResources(
       val runDir = Files.createDirectories(scratchDir.resolve("${os.osId}-${arch.name}"))
       writePlatformResourceFiles(context, os, arch, runDir).associate { runDir.relativize(it).invariantSeparatorsPathString to Files.readString(it) }
     }
+    // A dev build context has an empty macOS customizer, so the customizer comes from the product, as a release build
+    // context creates it.
+    val macCustomizer = context.productProperties.createMacCustomizer(context.paths.projectHome)
+    val model = computeDevProductLaunchModel(context.productProperties, context.outputProvider, buildDateInSeconds, macCustomizer)
+    val macBundleFiles = if (model.macBundle == null || macCustomizer == null) {
+      emptyMap()
+    }
+    else {
+      // The year of the pinned build date, in UTC, as the product files action takes it.
+      val year = Instant.ofEpochSecond(buildDateInSeconds).atZone(ZoneOffset.UTC).year.toString()
+      val baseFileName = context.productProperties.baseFileName
+      val docTypes = macDocTypes(macCustomizer, context.applicationInfo.fullProductName, macAppIcnsFileName(baseFileName))
+      platforms.filter { it.first == OsFamily.MACOS }.associateWith { (_, arch) ->
+        val appDir = scratchDir.resolve("mac-app-${arch.name}")
+        copyDir(context.paths.communityHomeDir.resolve(MAC_APP_TEMPLATE_PATH), appDir)
+        substituteMacAppPlaceholders(
+          macAppDir = appDir,
+          customizer = macCustomizer,
+          applicationInfo = context.applicationInfo,
+          fullBuildNumber = context.fullBuildNumber,
+          baseFileName = baseFileName,
+          docTypes = docTypes,
+          arch = arch,
+          year = year,
+        )
+        Files.walk(appDir).use { paths ->
+          paths.filter { Files.isRegularFile(it) }.toList().associate {
+            appDir.relativize(it).invariantSeparatorsPathString to Files.readString(it)
+          }
+        }
+      }
+    }
+    val hasMacApp = model.macBundle != null && macCustomizer != null
+    val macAppIcons = if (!hasMacApp) {
+      emptyMap()
+    }
+    else {
+      macAppIcons(
+        customizer = macCustomizer,
+        properties = context.productProperties,
+        isEap = context.applicationInfo.isEAP,
+        embeddedFrontendEnabled = context.isEmbeddedFrontendEnabled,
+      )
+    }
+    val macAppIconSources = if (!hasMacApp) {
+      emptyMap()
+    }
+    else {
+      val release = devMacAppIcons(macCustomizer, context.productProperties, isEap = false)
+      val eap = devMacAppIcons(macCustomizer, context.productProperties, isEap = true)
+      release.mapValues { (name, path) -> path to eap.getValue(name) }
+    }
     return SplitPlatformResources(
-      model = computeDevProductLaunchModel(context.productProperties, context.outputProvider, buildDateInSeconds),
+      model = model,
       files = files,
       coreClassPathJarNames = coreClassPathJarNames,
+      macBundleFiles = macBundleFiles,
+      macAppIcons = macAppIcons,
+      macAppIconSources = macAppIconSources,
     )
   }
 }

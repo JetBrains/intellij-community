@@ -762,6 +762,140 @@ fn the_tool_writes_the_frontend_vmoptions_file_when_the_model_states_it() {
     }
 }
 
+/// The files of the macOS app template of the repository, which Bazel puts in the runfiles five directories above
+/// `testdata/`.
+fn mac_template_files() -> Vec<String> {
+    let root = testkit::testdata_dir().join("../../../../../platform/build-scripts/resources/mac/Contents");
+    let mut files = vec![root.join("Info.plist").display().to_string()];
+    for language in ["en", "ja", "ko", "zh-Hans", "zh-Hant"] {
+        files.push(
+            root.join(format!("Resources/{language}.lproj/InfoPlist.strings"))
+                .display()
+                .to_string(),
+        );
+    }
+    files
+}
+
+/// On macOS, a model with `macBundle` needs `--mac-bundle-out` and the template. Any other run refuses both.
+#[test]
+fn the_tool_writes_the_mac_bundle_on_macos() {
+    let tool = ToolRun::new();
+    let mut model: Value = serde_json::from_str(&read_text(testdata("model.json"))).unwrap();
+    model["macBundle"] = serde_json::json!({"bundleIdentifier": "com.example", "minOSXVersion": "10.13"});
+    let mac_model = tool.write("mac-model.json", &model.to_string());
+    let plain_model = testdata("model.json").display().to_string();
+    let args_of = |model: &str, platform: &str, extra: &[String]| -> Vec<String> {
+        let mut args = tool.base_args();
+        args[0] = format!("--model={model}");
+        args[1] = format!("--platform={platform}");
+        args.extend(IDEA.inputs());
+        args.extend(extra.iter().cloned());
+        args
+    };
+    let mut mac_options: Vec<String> = mac_template_files()
+        .iter()
+        .map(|file| format!("--mac-bundle-template={file}"))
+        .collect();
+    mac_options.push(format!("--mac-bundle-icon=idea.icns={}", tool.write("product.icns", "release")));
+    mac_options.push(format!("--mac-bundle-eap-icon=idea.icns={}", tool.write("product_EAP.icns", "eap")));
+    mac_options.push(format!("--mac-bundle-out={}", tool.out("Contents")));
+
+    let result = run_tool(&args_of(&mac_model, "darwin_x64", &mac_options));
+    assert_eq!((result.code, result.errors.as_str()), (0, ""), "a run that succeeds writes nothing");
+    // The test product is EAP, so it takes the EAP icon.
+    assert_eq!(std::fs::read_to_string(tool.out("Contents/Resources/idea.icns")).unwrap(), "eap");
+    let plist = std::fs::read_to_string(tool.out("Contents/Info.plist")).unwrap();
+    assert!(
+        plist.contains("<string>com.example-EAP</string>") && plist.contains("<string>x86_64</string>"),
+        "{plist}"
+    );
+    for language in ["en", "ja", "ko", "zh-Hans", "zh-Hant"] {
+        let strings = std::fs::read_to_string(tool.out(&format!("Contents/Resources/{language}.lproj/InfoPlist.strings"))).unwrap();
+        assert!(
+            strings.contains("IntelliJ IDEA") && !strings.contains("@@"),
+            "{language}: {strings}"
+        );
+    }
+
+    // A Linux run of the same model writes no bundle and needs no option.
+    let result = run_tool(&args_of(&mac_model, "linux_x64", &[]));
+    assert_eq!((result.code, result.errors.as_str()), (0, ""));
+
+    for (model, platform, extra, want) in [
+        (
+            &mac_model,
+            "darwin_aarch64",
+            Vec::new(),
+            (
+                1,
+                format!("ERROR: {mac_model} states macBundle, so --mac-bundle-out is required on darwin_aarch64\n"),
+            ),
+        ),
+        (
+            &mac_model,
+            "linux_x64",
+            mac_options.clone(),
+            (
+                1,
+                "ERROR: --mac-bundle-out is set, but linux_x64 is not a macOS platform\n".to_owned(),
+            ),
+        ),
+        (
+            &plain_model,
+            "darwin_aarch64",
+            mac_options.clone(),
+            (
+                1,
+                format!("ERROR: --mac-bundle-out is set, but {plain_model} states no macBundle\n"),
+            ),
+        ),
+        (
+            &mac_model,
+            "darwin_aarch64",
+            mac_options[..1].to_vec(),
+            (2, "ERROR: --mac-bundle-out and --mac-bundle-template go together\n".to_owned()),
+        ),
+        (
+            &mac_model,
+            "linux_x64",
+            vec![mac_options[6].clone()],
+            (
+                2,
+                "ERROR: --mac-bundle-icon and --mac-bundle-eap-icon need --mac-bundle-out\n".to_owned(),
+            ),
+        ),
+        (
+            &mac_model,
+            "darwin_aarch64",
+            vec![
+                mac_options[0].clone(),
+                "--mac-bundle-icon=idea.icns".to_owned(),
+                mac_options.last().unwrap().clone(),
+            ],
+            (2, "ERROR: --mac-bundle-icon is not <name>=<path>: \"idea.icns\"\n".to_owned()),
+        ),
+        (
+            &mac_model,
+            "darwin_aarch64",
+            vec![
+                format!("--mac-bundle-template={}", tool.write("Info.plist", "")),
+                mac_options.last().unwrap().clone(),
+            ],
+            (
+                1,
+                format!(
+                    "ERROR: the macOS app template file {} is not below a Contents directory\n",
+                    tool.out("Info.plist")
+                ),
+            ),
+        ),
+    ] {
+        let result = run_tool(&args_of(model, platform, &extra));
+        assert_eq!((result.code, result.errors), want, "{platform} {extra:?}");
+    }
+}
+
 /// A classic-loader launch needs `--core-classpath-jar-names`, and a modular-loader launch refuses it.
 #[test]
 fn the_tool_reads_the_core_classpath_for_a_classic_launch() {

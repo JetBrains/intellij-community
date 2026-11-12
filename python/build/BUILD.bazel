@@ -3,6 +3,16 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+# The macOS app icons that the `platform_resources` component of a split dev distribution places in
+# `Contents/Resources`. The plan generator names each file. The export precedes every rule that names the files.
+exports_files(
+    [
+        "images/mac/product.icns",
+        "images/mac/product_EAP.icns",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 # The product images directory of PyCharm Community. The split platform set of the ultimate checkout reads it as an
 # extra project file.
 filegroup(

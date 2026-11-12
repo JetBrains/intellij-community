@@ -93,5 +93,27 @@
   },
   "ideaProperties": {
     "fatalErrorNotification": true
+  },
+  "macBundle": {
+    "bundleIdentifier": "com.jetbrains.intellij.ce",
+    "minOSXVersion": "10.13",
+    "urlSchemes": [
+      "idea"
+    ],
+    "associateIpr": true,
+    "fileAssociations": [
+      {
+        "extension": "java"
+      },
+      {
+        "extension": "groovy"
+      },
+      {
+        "extension": "kt"
+      },
+      {
+        "extension": "kts"
+      }
+    ]
   }
 }

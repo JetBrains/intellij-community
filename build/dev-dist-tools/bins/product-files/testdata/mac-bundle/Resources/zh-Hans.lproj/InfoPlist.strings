@@ -1,0 +1,13 @@
+CFBundleGetInfoString = "IntelliJ IDEA EAP IU-263.SNAPSHOT，内部版本号 IU-263.SNAPSHOT. Copyright JetBrains s.r.o., (c) 2000-2026";
+
+NSCameraUsageDescription = "IntelliJ IDEA 中的应用程序请求使用设备的摄像头。";
+NSMicrophoneUsageDescription = "IntelliJ IDEA 中的应用程序请求使用设备的麦克风。";
+NSLocationUsageDescription = "IntelliJ IDEA 中的应用程序请求使用用户的位置信息。";
+NSDesktopFolderUsageDescription = "IntelliJ IDEA 中的应用程序请求访问用户的“桌面”文件夹。";
+NSDocumentsFolderUsageDescription = "IntelliJ IDEA 中的应用程序请求访问用户的“文档”文件夹。";
+NSDownloadsFolderUsageDescription = "IntelliJ IDEA 中的应用程序请求访问用户的“下载”文件夹。";
+NSNetworkVolumesUsageDescription = "IntelliJ IDEA 中的应用程序请求访问网络卷上的文件。";
+NSRemovableVolumesUsageDescription = "IntelliJ IDEA 中的应用程序请求访问可移动卷上的文件。";
+NSBluetoothAlwaysUsageDescription = "IntelliJ IDEA 中的应用程序请求使用蓝牙。";
+NSAppleEventsUsageDescription = "IntelliJ IDEA 中的应用程序请求发送 Apple 事件的功能。";
+NSLocalNetworkUsageDescription = "IntelliJ IDEA 的功能(如 SSH 和数据库连接)需要权限以访问本地网络和发送广播请求。";

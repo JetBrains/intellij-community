@@ -34,6 +34,70 @@ def home_prefix(os, language_server):
         return "Contents"
     return ""
 
+# The files of the macOS app template below `Contents`, which `//platform/build-scripts:mac_app_template` holds. The
+# rule checks this list against the template at analysis, so a new language fails until this list names it.
+MAC_APP_FILES = [
+    "Info.plist",
+    "Resources/en.lproj/InfoPlist.strings",
+    "Resources/ja.lproj/InfoPlist.strings",
+    "Resources/ko.lproj/InfoPlist.strings",
+    "Resources/zh-Hans.lproj/InfoPlist.strings",
+    "Resources/zh-Hant.lproj/InfoPlist.strings",
+]
+
+def mac_app_icon_roles(icons):
+    """The `mac_app_icons` value of a plan's `mac_bundle.icons`: each label with its roles, as `<role>:<name>,...`.
+
+    `icons` maps an icon file name to `struct(release, eap)`. The release and the EAP icon can be one label.
+    """
+    roles = {}
+    for name, labels in icons.items():
+        for role, label in [("release", labels.release), ("eap", labels.eap)]:
+            roles[label] = roles[label] + "," + role + ":" + name if label in roles else role + ":" + name
+    return roles
+
+def _mac_app_args(ctx, args, inputs, outputs):
+    """Adds the macOS app template and icons to the action, or writes the declared files empty on another platform.
+
+    A distribution of another OS places none of these files, so no build reads the empty files.
+    """
+    mac_files = ctx.outputs.mac_app_files
+    template = ctx.files.mac_app_template
+    if not mac_files:
+        if template or ctx.attr.mac_app_icons:
+            fail("%s: mac_app_template and mac_app_icons need mac_app_files" % ctx.label)
+        return
+    if not template:
+        if ctx.attr.mac_app_icons:
+            fail("%s: mac_app_icons needs mac_app_template" % ctx.label, attr = "mac_app_icons")
+        for file in mac_files:
+            ctx.actions.write(file, "")
+        return
+    info_plists = [file for file in mac_files if file.basename == MAC_APP_FILES[0]]
+    if len(info_plists) != 1:
+        fail("%s: mac_app_files must name one %s" % (ctx.label, MAC_APP_FILES[0]), attr = "mac_app_files")
+    contents = info_plists[0].dirname
+    icon_names = {}
+    for target, roles in ctx.attr.mac_app_icons.items():
+        files = target[DefaultInfo].files.to_list()
+        if len(files) != 1:
+            fail("%s: the icon %s must be one file" % (ctx.label, target.label), attr = "mac_app_icons")
+        inputs.append(files[0])
+        for entry in roles.split(","):
+            role, _, name = entry.partition(":")
+            if role not in ("release", "eap") or not name:
+                fail("%s: '%s' is not <release|eap>:<name>" % (ctx.label, entry), attr = "mac_app_icons")
+            args.add("--mac-bundle-%s=%s=%s" % ("icon" if role == "release" else "eap-icon", name, files[0].path))
+            icon_names["Resources/" + name] = True
+    declared = sorted([file.path[len(contents) + 1:] for file in mac_files])
+    found = sorted([file.path.rpartition("/Contents/")[2] for file in template] + icon_names.keys())
+    if declared != found:
+        fail("%s: the macOS app template and icons hold %s, but mac_app_files names %s; update MAC_APP_FILES" % (ctx.label, found, declared))
+    args.add_all(template, format_each = "--mac-bundle-template=%s")
+    args.add("--mac-bundle-out=" + contents)
+    inputs.extend(template)
+    outputs.extend(mac_files)
+
 def _dev_dist_product_files_impl(ctx):
     outputs = [ctx.outputs.build_txt, ctx.outputs.idea_properties_out, ctx.outputs.vmoptions, ctx.outputs.product_info]
     args = ctx.actions.args()
@@ -74,6 +138,7 @@ def _dev_dist_product_files_impl(ctx):
         )
         args.add("--core-classpath-jar-names=" + core_classpath.path)
         inputs.append(core_classpath)
+    _mac_app_args(ctx, args, inputs, outputs)
     ctx.actions.run(
         executable = ctx.executable.tool,
         tools = dev_dist_tool_inputs(ctx.attr.tool),
@@ -100,6 +165,11 @@ dev_dist_product_files = rule(
 
     A classic-loader launch also reads the core classpath of the platform payload, as a file that the rule writes at
     analysis. The tool renders the `bootClassPathJarNames` of the launch from it, as production does.
+
+    A product with a macOS app also gets `Info.plist`, the `InfoPlist.strings` files of `MAC_APP_FILES` and the icons of
+    the app. On macOS the action reads the template and writes them. The year of the copyright line is the year of the
+    pinned build date. The action takes the release or the EAP variant of each icon by the EAP flag of the application
+    info, so the macOS icons follow the flag too.
     """,
     implementation = _dev_dist_product_files_impl,
     attrs = {
@@ -141,6 +211,18 @@ dev_dist_product_files = rule(
         "product_info": attr.output(mandatory = True),
         "frontend_vmoptions": attr.output(
             doc = "The vmoptions file of the embedded frontend. Set it when the launch model states `frontendVmOptions`, and only then.",
+        ),
+        "mac_app_files": attr.output_list(
+            doc = "The files of `MAC_APP_FILES` and `Resources/<icon>` for each icon, below one `Contents` directory, in any order. " +
+                  "Set them for a product with a macOS app.",
+        ),
+        "mac_app_icons": attr.label_keyed_string_dict(
+            allow_files = True,
+            doc = "The icons of the macOS app, with the value of `mac_app_icon_roles`. Set it on macOS for a product with `mac_app_files`.",
+        ),
+        "mac_app_template": attr.label(
+            allow_files = True,
+            doc = "The macOS app template, `//platform/build-scripts:mac_app_template`. Set it on macOS for a product with `mac_app_files`.",
         ),
         "platform_payload": attr.label(
             providers = [DevDistPlatformPayloadInfo],

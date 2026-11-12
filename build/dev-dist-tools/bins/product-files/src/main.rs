@@ -2,6 +2,7 @@
 
 //! `product-files` renders the launch files of one product for one platform: `build.txt`, `bin/idea.properties`, the
 //! vmoptions file, `product-info.json` and, for a product with an embedded frontend, the vmoptions file of the frontend.
+//! On macOS, a product whose model states a `macBundle` also gets `Info.plist` and the `InfoPlist.strings` files of its app.
 //!
 //! The input is the launch model that the dev distribution plan generator writes for the product (`ProductLaunchModel`
 //! in `community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/productInfo`). The model states the facts
@@ -11,6 +12,7 @@
 //! of the build scripts write, byte for byte. `DevDistProductLaunchModelTest` checks that for every split product and
 //! every host platform.
 
+mod mac;
 mod model;
 mod render;
 
@@ -53,6 +55,26 @@ struct Options {
     core_class_path_jar_names: Option<PathBuf>,
     /// `ProductProperties.appInfoXmlReplacements`, in their order.
     replacements: Vec<Replacement>,
+    /// The files of the macOS app template, each below a `Contents` directory. See [`mac::template_relative_path`].
+    mac_bundle_template: Vec<PathBuf>,
+    /// The `Contents` directory that gets the rendered template files. It is required on macOS when the model states
+    /// `macBundle`, and refused otherwise.
+    mac_bundle_out: Option<PathBuf>,
+    /// The icon of each `Contents/Resources/<name>` of a release build, keyed by the name.
+    mac_bundle_icons: Vec<(String, PathBuf)>,
+    /// The icon of each `Contents/Resources/<name>` of an EAP build, keyed by the name.
+    mac_bundle_eap_icons: Vec<(String, PathBuf)>,
+}
+
+/// Reads each `<name>=<path>` value of `option`.
+fn parse_icons(option: &str, values: Vec<String>) -> anyhow::Result<Vec<(String, PathBuf)>> {
+    values
+        .into_iter()
+        .map(|value| match value.split_once('=') {
+            Some((name, path)) if !name.is_empty() && !path.is_empty() => Ok((name.to_owned(), PathBuf::from(path))),
+            _ => anyhow::bail!("{option} is not <name>=<path>: {value:?}"),
+        })
+        .collect()
 }
 
 /// Runs the tool and returns the exit code: 2 for a usage error, 1 for a render error. A run that succeeds writes nothing.
@@ -67,8 +89,9 @@ fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
 }
 
 /// Reads the options. Every option but `--frontend-vmoptions-out`, `--host-application-info`,
-/// `--core-classpath-jar-names` and `--replacement` is required, and the first missing one fails in this order. A request
-/// can state `--replacement` more than once. A replacement is `KEY=VALUE`.
+/// `--core-classpath-jar-names`, `--replacement`, `--mac-bundle-template` and `--mac-bundle-out` is required, and the
+/// first missing one fails in this order. A request can state `--replacement` and `--mac-bundle-template` more than once.
+/// A replacement is `KEY=VALUE`.
 fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Options> {
     let mut options = cli::parse(args)?;
     let model = options.require("--model")?.into();
@@ -96,7 +119,20 @@ fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Opt
         value => value.map(PathBuf::from),
     };
     let replacements = Replacement::parse_all(&options.take_all("--replacement")?)?;
+    let mac_bundle_template: Vec<PathBuf> = options.take_all("--mac-bundle-template")?.into_iter().map(PathBuf::from).collect();
+    let mac_bundle_out = match options.take("--mac-bundle-out")? {
+        Some(value) if value.is_empty() => anyhow::bail!("--mac-bundle-out must not be empty"),
+        value => value.map(PathBuf::from),
+    };
+    let mac_bundle_icons = parse_icons("--mac-bundle-icon", options.take_all("--mac-bundle-icon")?)?;
+    let mac_bundle_eap_icons = parse_icons("--mac-bundle-eap-icon", options.take_all("--mac-bundle-eap-icon")?)?;
     options.finish()?;
+    if mac_bundle_out.is_some() == mac_bundle_template.is_empty() {
+        anyhow::bail!("--mac-bundle-out and --mac-bundle-template go together");
+    }
+    if mac_bundle_out.is_none() && !(mac_bundle_icons.is_empty() && mac_bundle_eap_icons.is_empty()) {
+        anyhow::bail!("--mac-bundle-icon and --mac-bundle-eap-icon need --mac-bundle-out");
+    }
     let Ok(build_date_seconds) = build_date_seconds.parse::<i64>() else {
         anyhow::bail!("--build-date-seconds is not a number of seconds: {build_date_seconds:?}");
     };
@@ -117,6 +153,10 @@ fn parse_options(args: impl IntoIterator<Item = OsString>) -> anyhow::Result<Opt
         host_application_info,
         core_class_path_jar_names,
         replacements,
+        mac_bundle_template,
+        mac_bundle_out,
+        mac_bundle_icons,
+        mac_bundle_eap_icons,
     })
 }
 
@@ -202,10 +242,64 @@ fn render_to_files(options: &Options) -> anyhow::Result<()> {
             options.model.display()
         ),
     }
+    let (mac_bundle, mac_icons) = match (&model.mac_bundle, target.os == render::OS_MAC, &options.mac_bundle_out) {
+        (Some(bundle), true, Some(directory)) => {
+            let template = read_mac_template(&options.mac_bundle_template)?;
+            let files = mac::render_mac_bundle(&product, bundle, target, options.build_date_seconds, &template)
+                .with_context(|| options.model.display().to_string())?;
+            let icons = mac::select_icons(
+                &options.mac_bundle_icons,
+                &options.mac_bundle_eap_icons,
+                application_info.is_eap,
+                &model.base_file_name,
+            )?;
+            (
+                files
+                    .into_iter()
+                    .map(|(relative_path, content)| (directory.join(relative_path), content))
+                    .collect(),
+                icons
+                    .into_iter()
+                    .map(|(name, source)| (directory.join("Resources").join(name), source.to_path_buf()))
+                    .collect(),
+            )
+        }
+        (None, _, None) | (Some(_), false, None) => (Vec::new(), Vec::new()),
+        (Some(_), true, None) => anyhow::bail!(
+            "{} states macBundle, so --mac-bundle-out is required on {}",
+            options.model.display(),
+            options.platform
+        ),
+        (None, _, Some(_)) => anyhow::bail!("--mac-bundle-out is set, but {} states no macBundle", options.model.display()),
+        (Some(_), false, Some(_)) => anyhow::bail!("--mac-bundle-out is set, but {} is not a macOS platform", options.platform),
+    };
     for (path, content) in outputs {
         std::fs::write(path, content).with_context(|| format!("cannot write {}", path.display()))?;
     }
+    for (path, content) in &mac_bundle {
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent).with_context(|| format!("cannot create {}", parent.display()))?;
+        }
+        std::fs::write(path, content).with_context(|| format!("cannot write {}", path.display()))?;
+    }
+    for (path, source) in &mac_icons {
+        let bytes = std::fs::read(source).with_context(|| format!("cannot read {}", source.display()))?;
+        std::fs::write(path, bytes).with_context(|| format!("cannot write {}", path.display()))?;
+    }
     Ok(())
+}
+
+/// Reads each template file with its path below `Contents`.
+fn read_mac_template(files: &[PathBuf]) -> anyhow::Result<Vec<mac::TemplateFile>> {
+    files
+        .iter()
+        .map(|file| {
+            Ok(mac::TemplateFile {
+                relative_path: mac::template_relative_path(&file.display().to_string())?,
+                text: read_text(file)?,
+            })
+        })
+        .collect()
 }
 
 #[cfg(test)]

@@ -8,6 +8,7 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
+import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
@@ -18,6 +19,7 @@ import org.jetbrains.intellij.build.impl.SnapshotBuildNumber
 import org.jetbrains.intellij.build.impl.getBundledPluginModules
 import org.jetbrains.intellij.build.impl.hasIcnsForFrontendMacApp
 import org.jetbrains.intellij.build.impl.ideaPropertiesSettingsDir
+import org.jetbrains.intellij.build.impl.macAppIcons
 import org.jetbrains.intellij.build.impl.memoryVmOptions
 import org.jetbrains.intellij.build.impl.multiRoutingFileSystemVmOptions
 import org.jetbrains.intellij.build.impl.osVmOptions
@@ -34,6 +36,8 @@ import org.jetbrains.intellij.build.productLayout.PTY4J_PLUGIN_MODULE
 import org.jetbrains.intellij.build.productLayout.SKIKO_NATIVE_DIR
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.name
 
 /**
  * The launch facts of one product: what `build.txt`, `bin/idea.properties`, the vmoptions file and
@@ -85,7 +89,35 @@ data class ProductLaunchModel(
    */
   @JvmField val frontendVmOptions: ProductVmOptions? = null,
   @JvmField val ideaProperties: ProductLaunchIdeaProperties,
+  /**
+   * The facts of `Info.plist` and `InfoPlist.strings` of the macOS app, or `null` for a product without one. A product
+   * without a [MacDistributionCustomizer] and a language server have no app.
+   */
+  @JvmField val macBundle: ProductMacBundle? = null,
 )
+
+/**
+ * The [MacDistributionCustomizer] facts that `Info.plist` of the macOS app states.
+ *
+ * The tool fills the template of [org.jetbrains.intellij.build.impl.MAC_APP_TEMPLATE_PATH] with them, as
+ * [org.jetbrains.intellij.build.impl.substituteMacAppPlaceholders] does. It reads the names, the version and the EAP flag
+ * from the application info, and the year from the pinned build date.
+ */
+@ApiStatus.Internal
+@Serializable
+data class ProductMacBundle(
+  @JvmField val bundleIdentifier: String,
+  @JvmField val minOSXVersion: String,
+  @JvmField val urlSchemes: List<String> = emptyList(),
+  @JvmField val associateIpr: Boolean = false,
+  @JvmField val fileAssociations: List<ProductMacFileAssociation> = emptyList(),
+  @JvmField val additionalDocTypes: String = "",
+)
+
+/** One file association of the macOS app. [iconFileName] is `null` for an association that shows the icon of the app. */
+@ApiStatus.Internal
+@Serializable
+data class ProductMacFileAssociation(@JvmField val extension: String, @JvmField val iconFileName: String? = null)
 
 /**
  * The parts of the vmoptions file of a release build: [memory], the lines of `bin/common.vmoptions`, [product], then the
@@ -270,6 +302,7 @@ private const val FRONTEND_MAC_ICON_JVM_ARGUMENT = $$"-Dapple.awt.application.ic
  * [embeddedFrontend] is the frontend the product embeds, or `null`. [minRequiredJavaVersion] is the language level of
  * the project, and [bundledRuntimeBuild] the `runtimeBuild` of the dependencies. [pluginRepositoryVmOptions] and
  * [frontendPluginRepositoryVmOptions] are the custom plugin repository lines of the product and of the frontend.
+ * [macCustomizer] is the macOS customizer of the product, or `null` without a macOS app.
  */
 @ApiStatus.Internal
 fun computeProductLaunchModel(
@@ -279,6 +312,7 @@ fun computeProductLaunchModel(
   bundledRuntimeBuild: String,
   pluginRepositoryVmOptions: List<String> = emptyList(),
   frontendPluginRepositoryVmOptions: List<String> = emptyList(),
+  macCustomizer: MacDistributionCustomizer? = null,
 ): ProductLaunchModel {
   val properties = product.properties
   val applicationInfo = product.applicationInfo
@@ -388,6 +422,23 @@ fun computeProductLaunchModel(
       additions = properties.additionalIDEPropertiesFilePaths.map { Files.readString(it) },
       fatalErrorNotification = !product.isLanguageServer,
     ),
+    // `MacDistributionBuilder.layoutMacCli` writes no `Info.plist` for a language server.
+    macBundle = macCustomizer?.takeUnless { product.isLanguageServer }?.let(::productMacBundle),
+  )
+}
+
+/** The facts of `Info.plist` that [customizer] states. */
+private fun productMacBundle(customizer: MacDistributionCustomizer): ProductMacBundle {
+  return ProductMacBundle(
+    bundleIdentifier = customizer.bundleIdentifier,
+    minOSXVersion = customizer.minOSXVersion,
+    urlSchemes = customizer.urlSchemes,
+    associateIpr = customizer.associateIpr,
+    fileAssociations = customizer.fileAssociations.map {
+      val iconFileName = if (it.iconPath.isEmpty()) null else Path.of(it.iconPath).name
+      ProductMacFileAssociation(extension = it.extension, iconFileName = iconFileName)
+    },
+    additionalDocTypes = customizer.additionalDocTypes,
   )
 }
 
@@ -440,9 +491,15 @@ internal fun productJvmArguments(product: ProductLaunchInputs, bundledRuntimeVer
  *
  * It reads what the `platform_resources` fragment of that distribution reads: the development build options, a
  * build number from `build.txt`, and an embedded frontend whose context generates the runtime module repository.
+ * [macCustomizer] is `ProductProperties.createMacCustomizer` of the product.
  */
 @ApiStatus.Internal
-fun computeDevProductLaunchModel(properties: ProductProperties, outputProvider: ModuleOutputProvider, buildDateInSeconds: Long): ProductLaunchModel {
+fun computeDevProductLaunchModel(
+  properties: ProductProperties,
+  outputProvider: ModuleOutputProvider,
+  buildDateInSeconds: Long,
+  macCustomizer: MacDistributionCustomizer?,
+): ProductLaunchModel {
   val project = outputProvider.findRequiredModule(properties.applicationInfoModule).project
   val buildNumber = SnapshotBuildNumber.VALUE
   val applicationInfoOf = { productProperties: ProductProperties -> loadDevDistributionApplicationInfo(project, productProperties, buildDateInSeconds) }
@@ -469,7 +526,33 @@ fun computeDevProductLaunchModel(properties: ProductProperties, outputProvider: 
     embeddedFrontend = properties.embeddedFrontendProperties?.invoke()?.let { inputs(it, generateRuntimeModuleRepository = true) },
     minRequiredJavaVersion = languageLevel.feature(),
     bundledRuntimeBuild = DependenciesProperties(COMMUNITY_ROOT).property("runtimeBuild"),
+    // A product whose app icons are not files of the checkout gets no app, because the bundle would show no icon. A
+    // product with no icon path and no images directory has none. The ultimate half creates `AndroidStudioProperties`
+    // with the ultimate root, where its images directory does not exist.
+    macCustomizer = macCustomizer?.takeIf { hasMacAppIcons(it, properties) },
   )
+}
+
+/**
+ * Whether [properties] states the icon of its macOS app and each icon of [devMacAppIcons] is a file, for both EAP flags.
+ * The model states no value that the EAP flag decides, so both flags must give the same answer.
+ */
+@Suppress("DEPRECATION")
+private fun hasMacAppIcons(customizer: MacDistributionCustomizer, properties: ProductProperties): Boolean {
+  if (customizer.icnsPath == null && properties.imagesDirectoryPath == null) {
+    return false
+  }
+  return listOf(false, true).all { isEap -> devMacAppIcons(customizer, properties, isEap).values.all(Files::isRegularFile) }
+}
+
+/**
+ * The icons of the macOS app of [properties] in a split dev distribution, keyed by file name, see [macAppIcons].
+ *
+ * [isEap] picks the EAP variant of an icon. The embedded frontend follows the default build options, which enable it.
+ */
+@ApiStatus.Internal
+fun devMacAppIcons(customizer: MacDistributionCustomizer, properties: ProductProperties, isEap: Boolean): Map<String, Path> {
+  return macAppIcons(customizer, properties, isEap, embeddedFrontendEnabled = properties.embeddedFrontendRootModule != null)
 }
 
 private val launchModelJson = Json {
