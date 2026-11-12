@@ -10,14 +10,14 @@ abstract class GitLabMergeRequestURLAction : DumbAwareAction() {
   final override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   final override fun update(e: AnActionEvent) {
-    val selection = e.getData(GitLabMergeRequestsActionKeys.SELECTED)
+    val selection = e.getData(GitLabMergeRequestDataKeys.SELECTED)
     val detailsVm = e.getData(GitLabMergeRequestViewModel.DATA_KEY)
 
     e.presentation.isEnabledAndVisible = selection != null || detailsVm != null
   }
 
   final override fun actionPerformed(e: AnActionEvent) {
-    val selection = e.getData(GitLabMergeRequestsActionKeys.SELECTED)
+    val selection = e.getData(GitLabMergeRequestDataKeys.SELECTED)
     val detailsVm = e.getData(GitLabMergeRequestViewModel.DATA_KEY)
     val url = selection?.webUrl ?: detailsVm?.url ?: return
     handleURL(url)
