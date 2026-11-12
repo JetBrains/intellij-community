@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public class DependenciesUsagesPanel extends UsagesPanel {
@@ -64,39 +65,50 @@ public class DependenciesUsagesPanel extends UsagesPanel {
       final ProgressIndicator progress = new PanelProgressIndicator(component -> setToComponent(component));
       myCurrentProgress = progress;
       ProgressManager.getInstance().runProcess(() -> {
-        ReadAction.runBlocking(() -> {
-          UsageInfo[] usages = UsageInfo.EMPTY_ARRAY;
-          Set<PsiFile> elementsToSearch = null;
+        FoundUsages found;
+        try {
+          // The search can go through every file of a large scope. A non-blocking read action restarts when a write action
+          // is pending, so it does not block typing for the whole search.
+          found = ReadAction.nonBlocking(() -> findUsagesInReadAction(searchIn, searchFor))
+            .expireWith(this)
+            .executeSynchronously();
+        }
+        catch (ProcessCanceledException e) {
+          // A newer request or the disposal of the panel canceled the search: nothing to show.
+          found = null;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          found = new FoundUsages(PsiElement.EMPTY_ARRAY, UsageInfo.EMPTY_ARRAY);
+        }
 
-          try {
-            if (myBuilders.get(0).isBackward()) {
-              elementsToSearch = searchIn;
-              usages = FindDependencyUtil.findBackwardDependencies(myBuilders, searchFor, searchIn);
-            }
-            else {
-              elementsToSearch = searchFor;
-              usages = FindDependencyUtil.findDependencies(myBuilders, searchIn, searchFor);
-            }
-            assert !new HashSet<>(elementsToSearch).contains(null);
-          }
-          catch (ProcessCanceledException e) {
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
-
-          if (!progress.isCanceled()) {
-            final UsageInfo[] finalUsages = usages;
-            final PsiElement[] _elementsToSearch =
-              elementsToSearch != null ? PsiUtilCore.toPsiElementArray(elementsToSearch) : PsiElement.EMPTY_ARRAY;
-            ApplicationManager.getApplication()
-              .invokeLater(() -> showUsages(_elementsToSearch, finalUsages), ModalityState.stateForComponent(
-                this));
-          }
-        });
+        if (found != null && !progress.isCanceled()) {
+          final FoundUsages result = found;
+          ApplicationManager.getApplication()
+            .invokeLater(() -> showUsages(result.elementsToSearch(), result.usages()), ModalityState.stateForComponent(
+              this));
+        }
         myCurrentProgress = null;
       }, progress);
     }), 300);
+  }
+
+  private @NotNull FoundUsages findUsagesInReadAction(@NotNull Set<PsiFile> searchIn, @NotNull Set<PsiFile> searchFor) {
+    final Set<PsiFile> elementsToSearch;
+    final UsageInfo[] usages;
+    if (myBuilders.get(0).isBackward()) {
+      elementsToSearch = searchIn;
+      usages = FindDependencyUtil.findBackwardDependencies(myBuilders, searchFor, searchIn);
+    }
+    else {
+      elementsToSearch = searchFor;
+      usages = FindDependencyUtil.findDependencies(myBuilders, searchIn, searchFor);
+    }
+    assert !new HashSet<>(elementsToSearch).contains(null);
+    return new FoundUsages(PsiUtilCore.toPsiElementArray(elementsToSearch), usages);
+  }
+
+  private record FoundUsages(PsiElement @NotNull [] elementsToSearch, UsageInfo @NotNull [] usages) {
   }
 
   public void addBuilder(DependenciesBuilder builder) {
