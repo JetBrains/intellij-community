@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.DumbService
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
@@ -86,9 +87,11 @@ private object PyTestPluginMarkerArgumentCompletionProvider : CompletionProvider
 
 /**
  * Returns the markers of the plugins of the `pytest11` entry points when [markGeneratorType] is the type of `pytest.mark`.
+ * The entry points are in an index, so the result is empty during indexing.
  */
 private fun getPluginMarkers(markGeneratorType: PyClassType, location: PsiElement?): List<PyTestPluginMarker> {
   if (markGeneratorType.isDefinition || markGeneratorType.classQName != MARK_GENERATOR_CLASS || location == null) return emptyList()
+  if (DumbService.isDumb(location.project)) return emptyList()
   val module = ModuleUtilCore.findModuleForPsiElement(location) ?: return emptyList()
   return getPytestEntryPointPluginFiles(module).flatMap { getRegisteredMarkers(it) }.distinctBy { it.name }
 }
