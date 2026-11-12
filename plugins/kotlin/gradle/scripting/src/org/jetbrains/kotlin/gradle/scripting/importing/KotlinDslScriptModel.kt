@@ -26,12 +26,15 @@ data class KotlinDslScriptModel(
     enum class Severity { WARNING, ERROR }
 }
 
+/**
+ * Reads a script location from the exception strings exposed by the
+ * [Gradle script model](https://github.com/gradle/gradle/blob/v9.8.1/platforms/ide/tooling-api/src/main/java/org/gradle/tooling/model/kotlin/dsl/KotlinDslScriptModel.java#L63).
+ */
 fun parsePositionFromException(e: String): Pair<String, KotlinDslScriptModel.Position>? {
-    //org.gradle.internal.exceptions.LocationAwareException: Build file '...\build.gradle.kts' line: 21
     if (e.startsWith("org.gradle.internal.exceptions.LocationAwareException:")) {
-        val message = e.substringBefore(System.lineSeparator())
-        val file = message.substringAfter("Build file '").substringBefore("'")
-        val line = message.substringAfter("line: ").toIntOrNull()
+        val message = e.lineSequence().first()
+        val file = message.substringAfter("'", "").substringBeforeLast("'", "")
+        val line = message.substringAfterLast("line: ", "").toIntOrNull()
         if (file.isNotBlank() && line != null) {
             return file to KotlinDslScriptModel.Position(line, 0)
         }
