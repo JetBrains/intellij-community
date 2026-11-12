@@ -8,6 +8,7 @@ import com.intellij.facet.mock.registerFacetType
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.module.Module
@@ -20,6 +21,7 @@ import com.intellij.openapi.vfs.ProjectBulkFileListener
 import com.intellij.openapi.vfs.ProjectBulkFileListenerRegistry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -33,9 +35,11 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readText
@@ -51,13 +55,53 @@ internal class FileBasedStorageTest {
   private lateinit var projectDir: Path
 
   @Test
+  fun `lookup does not resolve a foreign path as a local file`(): Unit = timeoutRunBlocking {
+    val localFile = projectDir.resolve("test.xml")
+    localFile.writeText("<state />")
+    val fileManager = VirtualFileManager.getInstance()
+    assertThat(fileManager.refreshAndFindFileByNioPath(localFile)).isNotNull()
+
+    FileSystems.newFileSystem(projectDir.resolve("test.zip"), mapOf("create" to "true")).use { fileSystem ->
+      val foreignPath = fileSystem.getPath(localFile.toAbsolutePath().toString())
+      assertThat(fileManager.findFileByNioPath(foreignPath)).isNull()
+      assertThat(findFileByNioPathRefreshIfNeeded(foreignPath, requestor = null)).isNull()
+    }
+  }
+
+  @Test
+  fun `lookup refreshes new directories with the requestor`(): Unit = timeoutRunBlocking {
+    val fileManager = VirtualFileManager.getInstance()
+    val root = fileManager.refreshAndFindFileByNioPath(projectDir)!!
+    assertThat(root.children).isEmpty()
+    val file = projectDir.resolve("new/nested/test.xml")
+    file.parent.createDirectories()
+    file.writeText("<state />")
+    val observed = CopyOnWriteArrayList<VFileEvent>()
+    ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) {
+        observed.addAll(events.filter { it.path.startsWith(projectDir.invariantSeparatorsPathString + "/") })
+      }
+    })
+    val requestor = object : StorageManagerFileWriteRequestor {}
+
+    assertThat(findFileByNioPathRefreshIfNeeded(file, requestor)).isNotNull()
+    assertThat(observed).isNotEmpty()
+    assertThat(observed).allSatisfy { assertThat(it.requestor).isSameAs(requestor) }
+
+    observed.clear()
+    assertThat(findFileByNioPathRefreshIfNeeded(file, requestor)).isEqualTo(fileManager.findFileByNioPath(file))
+    assertThat(findFileByNioPathRefreshIfNeeded(file.resolveSibling("missing.xml"), requestor = null)).isNull()
+    assertThat(observed).isEmpty()
+  }
+
+  @Test
   fun `saving a new file reports only storage write events`(): Unit = timeoutRunBlocking(timeout = 60.seconds) {
     withProject { project, _, _ ->
       val file = projectDir.resolve(".idea/test.iml")
       val observed = CopyOnWriteArrayList<VFileEvent>()
       ProjectBulkFileListenerRegistry.getInstance(project).addListener(object : ProjectBulkFileListener {
         override fun afterVfsChange(events: List<VFileEvent>, project: Project) {
-          observed.addAll(events.filter { it.path == file.invariantSeparatorsPathString })
+          observed.addAll(events.filter { it.path == file.invariantSeparatorsPathString || it.path == file.parent.invariantSeparatorsPathString })
         }
       }, disposable)
 
@@ -70,7 +114,11 @@ internal class FileBasedStorageTest {
       val events = ArrayList<VFileEvent>()
       session.createSaveSession()!!.save(events)
 
-      assertThat(observed).isEmpty()
+      assertThat(observed).hasSize(1)
+      assertThat(observed.single()).isInstanceOf(VFileCreateEvent::class.java)
+      assertThat(observed.single().path).isEqualTo(file.parent.invariantSeparatorsPathString)
+      assertThat(observed.single().requestor).isSameAs(RELOADING_STORAGE_WRITE_REQUESTOR)
+      observed.clear()
       RefreshQueue.getInstance().processEvents(events)
       assertThat(observed).hasSize(1)
       assertThat(observed.single()).isInstanceOf(VFileCreateEvent::class.java)

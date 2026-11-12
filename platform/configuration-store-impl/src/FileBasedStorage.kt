@@ -13,8 +13,11 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.FileNavigator
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
@@ -26,6 +29,7 @@ import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.StringReader
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -109,7 +113,7 @@ abstract class FileBasedStorage internal constructor(
       }
       val virtualFile = if (events == null) null else storage.getVirtualFile()
       val parentVirtualFile = if (events != null && virtualFile == null) {
-        VirtualFileManager.getInstance().findFileByNioPath(storage.file.parent)
+        findFileByNioPathRefreshIfNeeded(storage.file.parent, requestor = this)
       }
       else {
         null
@@ -140,7 +144,7 @@ abstract class FileBasedStorage internal constructor(
   fun getVirtualFile(): VirtualFile? {
     var result = cachedVirtualFile
     if (result == null) {
-      result = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file)
+      result = findFileByNioPathRefreshIfNeeded(file, requestor = RELOADING_STORAGE_WRITE_REQUESTOR)
       if (result != null && result.isValid) {
         // otherwise virtualFile.contentsToByteArray() will query expensive FileTypeManager.getInstance()).getByFile()
         result.setCharset(Charsets.UTF_8, null, false)
@@ -238,6 +242,25 @@ abstract class FileBasedStorage internal constructor(
   }
 
   override fun toString(): String = "FileBasedStorage(file=$file, fileSpec=$fileSpec, isBlockSavingTheContent=$blockSaving)"
+}
+
+internal fun findFileByNioPathRefreshIfNeeded(path: Path, requestor: Any?): VirtualFile? {
+  if (path.fileSystem != FileSystems.getDefault()) {
+    return null
+  }
+  val navigator = object : FileNavigator<NewVirtualFile> by FileNavigator.POSIX_LIGHT {
+    override fun childOf(parent: NewVirtualFile, childName: String): NewVirtualFile? {
+      val child = parent.findChild(childName)
+      if (child != null) {
+        return child
+      }
+      val session = RefreshQueue.getInstance().createSession(async = false, recursive = false, finishRunnable = null)
+      session.addNewChildren(parent, listOf(childName), requestor)
+      session.launch()
+      return parent.findChild(childName)
+    }
+  }
+  return FileNavigator.navigate(LocalFileSystem.getInstance(), path.toAbsolutePath().toString(), navigator).resolvedFileOr(null)
 }
 
 internal fun writeFile(
