@@ -72,8 +72,8 @@ fun <X> Flow<X>.throttle(timeMs: Long): Flow<X> {
       }
     }
     finally {
+      // The latch stays open: a latch job inside `send` must end with the cancellation, not with `ClosedSendChannelException`.
       latchJob.cancel()
-      latch.close()
     }
   }
 }
