@@ -60,14 +60,6 @@ internal data class EditorViewSnapshot(
     return metrics.maxCharWidth * requireGridSpec().columnSpacing
   }
 
-  /**
-   * Returns the width of the code point in pixels, as its cells of [gridCellWidth]. The editor must be in the grid
-   * mode.
-   */
-  fun gridCodePointWidth(codePoint: Int): Float {
-    return requireGridSpec().cells(codePoint) * gridCellWidth()
-  }
-
   private fun requireGridSpec(): CharacterGridSpec {
     return checkNotNull(gridSpec) { "The editor must be in the grid mode to read a grid width" }
   }

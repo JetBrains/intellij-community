@@ -14,7 +14,6 @@ import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.font.GlyphVector;
 import java.awt.font.TextAttribute;
-import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.function.Consumer;
@@ -35,8 +34,7 @@ public final class ComplexTextFragment extends TextFragment {
     int start,
     int end,
     boolean isRtl,
-    @NotNull FontInfo fontInfo,
-    @Nullable EditorView view
+    @NotNull FontInfo fontInfo
   ) {
     this(
       lineChars,
@@ -44,8 +42,7 @@ public final class ComplexTextFragment extends TextFragment {
       end,
       isRtl,
       layoutGlyphVector(lineChars, start, end, isRtl, fontInfo),
-      fontInfo,
-      view
+      fontInfo
     );
     assert start >= 0              : assertMessage(lineChars, start, end, isRtl, fontInfo);
     assert end <= lineChars.length : assertMessage(lineChars, start, end, isRtl, fontInfo);
@@ -58,56 +55,17 @@ public final class ComplexTextFragment extends TextFragment {
     int end,
     boolean isRtl,
     @NotNull GlyphVector glyphVector,
-    @NotNull FontInfo fontInfo,
-    @Nullable EditorView view
+    @NotNull FontInfo fontInfo
   ) {
     // RTL-ness is derived from the glyph vector, not from the isRtl parameter: FLAG_RUN_RTL reflects
     // the actual glyph order, which may differ from the requested direction (e.g., for single-glyph runs)
     super(
       end - start,
       BitUtil.isSet(glyphVector.getLayoutFlags(), GlyphVector.FLAG_RUN_RTL),
-      view,
       codePointOffsets(lineChars, start, end)
     );
     myGlyphVector = glyphVector;
-    float[] alignments = null;
-    if (isGridCellAlignmentEnabled()) {
-      // This thing assumes that one glyph = one character.
-      // This seems to work "well enough" for the terminal
-      // (the only place where it's used at the moment of writing),
-      // but may need to be updated as unusual edge cases are discovered.
-      // PASS 1: store the original widths.
-      float[] originalWidths = new float[myGlyphVector.getNumGlyphs()];
-      alignments = new float[myGlyphVector.getNumGlyphs()];
-      for (int i = 0; i < myGlyphVector.getNumGlyphs(); i++) {
-        originalWidths[i] = (float)(myGlyphVector.getGlyphPosition(i + 1).getX() - myGlyphVector.getGlyphPosition(i).getX());
-      }
-      // PASS 2: use the original widths to calculate the new widths, update the positions to match the new widths.
-      double x = myGlyphVector.getGlyphPosition(0).getX();
-      for (int i = 0; i < myGlyphVector.getNumGlyphs(); i++) {
-        float originalWidth = originalWidths[i];
-        int charIndex = myGlyphVector.getGlyphCharIndex(i);
-        int codePoint = Character.codePointAt(lineChars, start + charIndex);
-        float adjustedWidth = adjustedWidth(codePoint);
-        x += isTooClose(adjustedWidth, originalWidth) ? originalWidth : adjustedWidth;
-        Point2D nextPos = myGlyphVector.getGlyphPosition(i + 1);
-        nextPos.setLocation(x, nextPos.getY());
-        myGlyphVector.setGlyphPosition(i + 1, nextPos);
-      }
-      // PASS 3: use the differences between the original and the new widths to center the characters.
-      for (int i = 0; i < myGlyphVector.getNumGlyphs(); i++) {
-        float originalWidth = originalWidths[i];
-        Point2D prevPos = myGlyphVector.getGlyphPosition(i);
-        Point2D nextPos = myGlyphVector.getGlyphPosition(i + 1);
-        double newWidth = nextPos.getX() - prevPos.getX();
-        if (newWidth < originalWidth + 0.001) continue;
-        double alignment = (newWidth - originalWidth) / 2;
-        alignments[i] = (float)alignment;
-        prevPos.setLocation(prevPos.getX() + alignment, prevPos.getY());
-        myGlyphVector.setGlyphPosition(i, prevPos);
-      }
-    }
-    GlyphCells cells = alignments == null ? addLetterSpacing(lineChars, start, end, isRtl, fontInfo) : null;
+    GlyphCells cells = addLetterSpacing(lineChars, start, end, isRtl, fontInfo);
     int numChars = end - start;
     int numGlyphs = myGlyphVector.getNumGlyphs();
     float totalWidth = (float)myGlyphVector.getGlyphPosition(numGlyphs).getX();
@@ -154,11 +112,7 @@ public final class ComplexTextFragment extends TextFragment {
           setCharPosition(j, prevX + (lastX - prevX) * (j - lastCharIndex + 1) / (charIndex - lastCharIndex), isRtl, numChars);
         }
       }
-      float newX = isRtl ? Math.min(lastX, minX) : Math.max(lastX, maxX);
-      if (alignments != null) {
-        newX = isRtl ? newX - alignments[visualGlyphIndex] : newX + alignments[visualGlyphIndex];
-      }
-      newX = Math.clamp(newX, 0, totalWidth);
+      float newX = Math.clamp(isRtl ? Math.min(lastX, minX) : Math.max(lastX, maxX), 0, totalWidth);
       setCharPosition(charIndex, newX, isRtl, numChars);
       prevX = lastX;
       lastX = newX;

@@ -4,12 +4,18 @@ package com.intellij.openapi.editor.impl.view
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.testFramework.AbstractMockGlyphVector
 import com.intellij.testFramework.MockFontLayoutService
+import com.intellij.ui.Graphics2DDelegate
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.awt.Font
+import java.awt.Graphics2D
+import java.awt.Shape
 import java.awt.font.FontRenderContext
 import java.awt.font.GlyphVector
+import java.awt.geom.AffineTransform
 import java.awt.geom.Point2D
+import java.awt.image.BufferedImage
 
 private const val CELL_WIDTH = 10f
 private const val LINE_HEIGHT = 10
@@ -17,8 +23,17 @@ private const val DESCENT = 2
 
 /**
  * The cell layout of [GridTextFragment]: the cells of each char, the glyphs of each cluster, and the caret edges.
+ * A case reads the glyphs of a draw, because the fragment lays them out at the first draw.
  */
 class GridTextFragmentTest {
+  private val image = BufferedImage(200, 20, BufferedImage.TYPE_INT_RGB)
+  private val graphics: Graphics2D = image.createGraphics()
+
+  @AfterEach
+  fun tearDown() {
+    graphics.dispose()
+    FontLayoutService.setInstance(null)
+  }
 
   @Test
   fun `each ASCII char takes one cell`() {
@@ -108,6 +123,62 @@ class GridTextFragmentTest {
     assertThat(layout.glyphPositions).containsExactly(0.0, 10.0, 23.5, 40.0)
   }
 
+  @Test
+  fun `the layout of the glyphs waits for the first draw`() {
+    val layout = layOut("abc", glyph(0, 10.0), glyph(1, 10.0), glyph(2, 10.0))
+
+    assertThat(layout.columnEdges).containsExactly(10f, 20f, 30f)
+    assertThat(layout.layoutCount).isEqualTo(0)
+
+    layout.draw()
+
+    assertThat(layout.layoutCount).isEqualTo(1)
+  }
+
+  @Test
+  fun `a repeated draw of the same range keeps the glyphs`() {
+    val layout = layOut("abc", glyph(0, 10.0), glyph(1, 10.0), glyph(2, 10.0))
+
+    val first = layout.draw()
+    val second = layout.draw()
+
+    assertThat(second.glyphs).isSameAs(first.glyphs)
+    assertThat(layout.layoutCount).isEqualTo(1)
+
+    val other = layout.draw(startOffset = 1)
+
+    assertThat(other.glyphs).isNotSameAs(first.glyphs)
+    assertThat(layout.layoutCount).isEqualTo(2)
+  }
+
+  @Test
+  fun `a draw in another render context lays the glyphs out again`() {
+    val layout = layOut("abc", glyph(0, 10.0), glyph(1, 10.0), glyph(2, 10.0))
+
+    val first = layout.draw()
+    val second = layout.draw(context = FontRenderContext(AffineTransform.getScaleInstance(2.0, 2.0), true, true))
+
+    assertThat(second.glyphs).isNotSameAs(first.glyphs)
+    assertThat(layout.layoutCount).isEqualTo(2)
+  }
+
+  @Test
+  fun `a draw of a part of the fragment keeps the cells of that part`() {
+    val layout = layOut(
+      "a\u4E2Db",
+      glyph(0, 10.0),
+      glyph(1, 13.0),
+      glyph(2, 10.0),
+      wide = setOf(0x4E2D),
+    )
+
+    val part = layout.draw(startOffset = 1, x = 100f)
+
+    assertThat(layout.lastRange).isEqualTo(1 until 3)
+    assertThat(part.x).isEqualTo(100f - 10f) // the glyphs keep the x of the whole fragment
+    assertThat(part.positions).containsExactly(13.5, 30.0, 40.0)
+  }
+
   private fun layOut(
     text: String,
     vararg glyphs: TestGlyph,
@@ -115,38 +186,25 @@ class GridTextFragmentTest {
     cellWidth: Float = CELL_WIDTH,
     wide: Set<Int> = emptySet(),
   ): Layout {
-    val glyphVector = TestGlyphVector(glyphs.asList(), rtl)
-    FontLayoutService.setInstance(object : MockFontLayoutService(CELL_WIDTH.toInt(), LINE_HEIGHT, DESCENT) {
-      override fun layoutGlyphVector(
-        font: Font,
-        fontRenderContext: FontRenderContext,
-        chars: CharArray,
-        start: Int,
-        end: Int,
-        isRtl: Boolean,
-      ): GlyphVector = glyphVector
-    })
-    try {
-      val font = Font(Font.MONOSPACED, Font.PLAIN, 1)
-      val fontInfo = FontInfo(font, 1f, false, 0f, setOf(), FontRenderContext(null, false, false))
-      val gridSpec = CharacterGridSpec(1f, DoubleWidthCharacterStrategy { wide.contains(it) })
-      val fragment = GridTextFragment(text.toCharArray(), 0, text.length, rtl, fontInfo, null, gridSpec, cellWidth)
-      return Layout(fragment, glyphVector)
-    }
-    finally {
-      FontLayoutService.setInstance(null)
-    }
+    val service = TestFontLayoutService(glyphs.asList())
+    FontLayoutService.setInstance(service)
+    val font = Font(Font.MONOSPACED, Font.PLAIN, 1)
+    val fontInfo = FontInfo(font, 1f, false, 0f, setOf(), FontRenderContext(null, false, false))
+    val gridSpec = CharacterGridSpec(1f, DoubleWidthCharacterStrategy { wide.contains(it) })
+    val fragment = GridTextFragment(text.toCharArray(), 0, text.length, rtl, fontInfo, gridSpec, cellWidth)
+    return Layout(fragment, graphics, service)
   }
 }
 
 private fun glyph(charIndex: Int, advance: Double): TestGlyph = TestGlyph(charIndex, advance)
 
 /**
- * The layout of one fragment: the x of each visual column edge, and the x of each glyph.
+ * The layout of one fragment: the x of each visual column edge, and the glyphs of a draw.
  */
 private class Layout(
   private val fragment: GridTextFragment,
-  private val glyphVector: TestGlyphVector,
+  private val graphics: Graphics2D,
+  private val service: TestFontLayoutService,
 ) {
   /**
    * The x of the right edge of each visual column. A column of a grid fragment is a code point.
@@ -155,10 +213,92 @@ private class Layout(
     get() = (1..fragment.getVisualColumnCount(0f)).map { fragment.visualColumnToX(0f, it) }
 
   /**
-   * The x of each glyph, and the x after the last one.
+   * The x of each glyph of a draw of the whole fragment, and the x after the last one.
    */
   val glyphPositions: List<Double>
-    get() = (0..glyphVector.numGlyphs).map { glyphVector.getGlyphPosition(it).x }
+    get() = draw().positions
+
+  /**
+   * The number of text layouts that the fragment asked for.
+   */
+  val layoutCount: Int
+    get() = service.ranges.size
+
+  /**
+   * The chars of the last text layout.
+   */
+  val lastRange: IntRange
+    get() = service.ranges.last()
+
+  fun draw(
+    startOffset: Int = 0,
+    endOffset: Int = fragment.length,
+    x: Float = 0f,
+    context: FontRenderContext? = null,
+  ): DrawnGlyphs {
+    val recorder = DrawRecorder(graphics, context)
+    fragment.draw(x, 0f, startOffset, endOffset).accept(recorder)
+    return DrawnGlyphs(checkNotNull(recorder.glyphs), recorder.x)
+  }
+}
+
+/**
+ * The glyph vector of one draw, and the x of the draw.
+ */
+private class DrawnGlyphs(val glyphs: GlyphVector, val x: Float) {
+  /**
+   * The x of each glyph, and the x after the last one.
+   */
+  val positions: List<Double>
+    get() = (0..glyphs.numGlyphs).map { glyphs.getGlyphPosition(it).x }
+}
+
+/**
+ * Keeps the glyph vector of the draw. It rejects a clip, because the grid fragment draws its range without one.
+ */
+private class DrawRecorder(
+  graphics: Graphics2D,
+  private val context: FontRenderContext?,
+) : Graphics2DDelegate(graphics) {
+  var glyphs: GlyphVector? = null
+  var x: Float = Float.NaN
+
+  override fun drawGlyphVector(g: GlyphVector, x: Float, y: Float) {
+    glyphs = g
+    this.x = x
+  }
+
+  override fun getFontRenderContext(): FontRenderContext = context ?: super.getFontRenderContext()
+
+  override fun clip(s: Shape?) {
+    throw AssertionError("the grid fragment draws without a clip")
+  }
+
+  override fun setClip(s: Shape?) {
+    throw AssertionError("the grid fragment draws without a clip")
+  }
+}
+
+/**
+ * Lays the glyphs of each range out as [TestGlyphVector], and keeps the range of each layout.
+ */
+private class TestFontLayoutService(
+  private val glyphs: List<TestGlyph>,
+) : MockFontLayoutService(CELL_WIDTH.toInt(), LINE_HEIGHT, DESCENT) {
+  val ranges: MutableList<IntRange> = mutableListOf()
+
+  override fun layoutGlyphVector(
+    font: Font,
+    fontRenderContext: FontRenderContext,
+    chars: CharArray,
+    start: Int,
+    end: Int,
+    isRtl: Boolean,
+  ): GlyphVector {
+    ranges.add(start until end)
+    val ofRange = glyphs.filter { it.charIndex in start until end }.map { TestGlyph(it.charIndex - start, it.advance) }
+    return TestGlyphVector(ofRange)
+  }
 }
 
 /**
@@ -172,7 +312,6 @@ private class TestGlyph(val charIndex: Int, val advance: Double)
  */
 private class TestGlyphVector(
   private val glyphs: List<TestGlyph>,
-  private val rtl: Boolean,
 ) : AbstractMockGlyphVector() {
   private val positions: DoubleArray = DoubleArray(glyphs.size + 1).also {
     for (i in glyphs.indices) {
@@ -189,6 +328,4 @@ private class TestGlyphVector(
   override fun setGlyphPosition(glyphIndex: Int, newPos: Point2D) {
     positions[glyphIndex] = newPos.x
   }
-
-  override fun getLayoutFlags(): Int = if (rtl) FLAG_RUN_RTL else 0
 }

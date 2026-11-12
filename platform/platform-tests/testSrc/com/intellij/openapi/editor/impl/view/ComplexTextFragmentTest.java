@@ -204,7 +204,7 @@ public class ComplexTextFragmentTest {
     });
     try {
       char[] text = {'a', '\u0301', 'b'};
-      ComplexTextFragment fragment = new ComplexTextFragment(text, 0, text.length, false, createFontInfo(2), null);
+      ComplexTextFragment fragment = new ComplexTextFragment(text, 0, text.length, false, createFontInfo(2));
       assertEquals(24, fragment.visualColumnToX(0, 3), 0);
       assertGlyphPositions(gv, 1, 11, 13, 24);
     }
@@ -233,7 +233,7 @@ public class ComplexTextFragmentTest {
     var graphics = new BufferedImage(20, 20, BufferedImage.TYPE_INT_RGB).createGraphics();
     try {
       var fontInfo = createFontInfo();
-      var fragment = new ComplexTextFragment(new char[]{'a'}, 0, 1, false, fontInfo, null);
+      var fragment = new ComplexTextFragment(new char[]{'a'}, 0, 1, false, fontInfo);
       var failingGraphics = new Graphics2DDelegate(graphics) {
         @Override
         public void drawGlyphVector(GlyphVector glyphVector, float x, float y) {
@@ -284,7 +284,7 @@ public class ComplexTextFragmentTest {
     try {
       int length = text.length;
       ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
-                                                             fontInfo, null);
+                                                             fontInfo);
       int[] charPositions = new int[length];
       for (int i = 0; i < length; i++) {
         charPositions[i] = (int)fragment.visualColumnToX(0, i + 1);
@@ -330,7 +330,7 @@ public class ComplexTextFragmentTest {
       char[] text = new char[length];
       FontInfo fontInfo = createFontInfo();
       ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
-                                                             fontInfo, null);
+                                                             fontInfo);
       VisualColumn column = fragment.xToVisualColumn(0, x);
       assertEquals(length, column.column);
       assertEquals(expectedLeansRight, column.leansRight);
@@ -354,7 +354,7 @@ public class ComplexTextFragmentTest {
       char[] text = {'a', '\uD83D', '\uDE00', 'b'};
       FontInfo fontInfo = createFontInfo();
       ComplexTextFragment fragment = new ComplexTextFragment(text, 0, text.length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
-                                                             fontInfo, null);
+                                                             fontInfo);
       LineFragment window = fragment.subFragment(3, 4); // the trailing 'b'
       assertEquals(1, window.getLength());
       assertEquals(0, window.visualColumnToOffset(0, 0));

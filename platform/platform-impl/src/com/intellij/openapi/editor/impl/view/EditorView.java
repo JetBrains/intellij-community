@@ -47,7 +47,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentInternalUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -630,15 +629,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       foldRegion.putUserData(FOLD_REGION_TEXT_LAYOUT, layout);
     }
     return layout;
-  }
-
-  float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
-    if (mySnapshot.gridSpec() == null) {
-      return getFontResolver().editorFonts().codePointWidth(codePoint, fontStyle);
-    }
-    else {
-      return getSnapshotWithMetrics().gridCodePointWidth(codePoint);
-    }
   }
 
   /**

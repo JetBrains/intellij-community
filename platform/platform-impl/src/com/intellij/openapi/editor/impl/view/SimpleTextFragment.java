@@ -23,7 +23,6 @@ import java.util.function.Consumer;
 public final class SimpleTextFragment extends TextFragment {
   private final char @NotNull [] myText;
   private final @NotNull Font myFont;
-  private final float @Nullable [] myCharAlignment;
   private final float myLetterSpacing;
   private final float @Nullable [] myCharSpacing; // the letter spacing of each char, or null when each char has myLetterSpacing
   private volatile @Nullable SpacedGlyphs mySpacedGlyphs; // the glyphs of the last drawSpaced
@@ -33,18 +32,15 @@ public final class SimpleTextFragment extends TextFragment {
     char @NotNull [] lineChars,
     int start,
     int end,
-    @NotNull FontInfo fontInfo,
-    @Nullable EditorView view
+    @NotNull FontInfo fontInfo
   ) {
-    super(end - start, false, view, null); // SimpleTextFragment only handles BMP characters, so each code point takes one char
+    super(end - start, false, null); // SimpleTextFragment only handles BMP characters, so each code point takes one char
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();
     myLetterSpacing = fontInfo.getLetterSpacingPixels();
     float[] charSpacing = null;
     float x = 0;
     char[] text = myText;
-    float[] charAlignment = null;
-    boolean gridCellAlignmentEnabled = text.length == 0 || isGridCellAlignmentEnabled();
     FontMetrics fm = fontInfo.fontMetrics();
     FontLayoutService fontService = FontLayoutService.getInstance();
     for (int i = 0; i < text.length; i++) {
@@ -70,20 +66,9 @@ public final class SimpleTextFragment extends TextFragment {
           charSpacing[i] = spacing;
         }
       }
-      if (gridCellAlignmentEnabled) {
-        float newWidth = adjustedWidth(codePoint);
-        if (!isTooClose(charWidth, newWidth)) {
-          if (charAlignment == null) {
-            charAlignment = new float[text.length];
-          }
-          charAlignment[i] = newWidth - charWidth;
-          charWidth = newWidth;
-        }
-      }
       x += charWidth;
       myCharPositions[i] = x;
     }
-    myCharAlignment = charAlignment;
     myCharSpacing = charSpacing;
   }
 
@@ -93,9 +78,7 @@ public final class SimpleTextFragment extends TextFragment {
       g.setFont(myFont);
       int xAsInt = (int)x;
       int yAsInt = (int)y;
-      if (myCharAlignment != null) {
-        drawAligned(g, myText, startColumn, endColumn - startColumn, x, y);
-      } else if (myLetterSpacing != 0) {
+      if (myLetterSpacing != 0) {
         drawSpaced(g, startColumn, endColumn, x, y);
       } else if (x == xAsInt && y == yAsInt) { // avoid creating garbage if possible
         g.drawChars(myText, startColumn, endColumn - startColumn, xAsInt, yAsInt);
@@ -142,37 +125,5 @@ public final class SimpleTextFragment extends TextFragment {
    * The glyphs of a range of chars for a render context, see {@link #drawSpaced}.
    */
   private record SpacedGlyphs(int start, int end, @NotNull FontRenderContext context, @NotNull GlyphVector glyphs) {
-  }
-
-  private void drawAligned(Graphics2D g, char[] text, int start, int length, float startX, float y) {
-    assert myCharAlignment != null;
-    if (length == 0) return;
-    int end = start + length;
-    int i = start;
-    int j = start;
-    float firstCharPosition = start == 0 ? 0.0f : myCharPositions[start - 1];
-    float x = startX;
-    while (i < end) {
-      while (j < end && myCharAlignment[j] == 0.0f) {
-        ++j;
-      }
-      // Postcondition: either j == end or j is the index of the first non-standard-width character.
-      // In the first case, we just draw the rest until j.
-      // In the second case, we also draw the rest until j, and then draw the non-standard-width character.
-      if (j > i) { // draw the normal part, if any
-        g.drawString(new String(text, i, j - i), x, y);
-        x = startX + (myCharPositions[j - 1] - firstCharPosition);
-        i = j;
-      }
-      // Postcondition: i == j == end or the next non-standard-width character.
-      if (i < end) { // draw the unusual character, if any
-        x += myCharAlignment[i] / 2.0f; // center the character within the grid
-        j = i + 1;
-        g.drawString(new String(text, i, j - i), x, y);
-        x = startX + (myCharPositions[j - 1] - firstCharPosition);
-        i = j;
-      }
-      // Postcondition: i == j == end or the next character to draw.
-    }
   }
 }

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Font;
+import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Point2D;
 import java.util.Arrays;
@@ -27,14 +28,12 @@ public abstract sealed class TextFragment implements LineFragment permits Simple
   protected final short @Nullable [] myCodePoint2Offset;
 
   private final boolean myIsRtl;
-  private final @Nullable EditorView myView;
 
-  TextFragment(int charCount, boolean isRtl, @Nullable EditorView view, short @Nullable [] codePoint2Offset) {
+  TextFragment(int charCount, boolean isRtl, short @Nullable [] codePoint2Offset) {
     assert charCount > 0;
     this.myCharPositions = new float[charCount]; // populated by subclasses' constructors
     this.myCodePoint2Offset = codePoint2Offset;
     this.myIsRtl = isRtl;
-    this.myView = view;
   }
 
   /**
@@ -69,17 +68,31 @@ public abstract sealed class TextFragment implements LineFragment permits Simple
     boolean isRtl,
     @NotNull FontInfo fontInfo
   ) {
-    return FontLayoutService.getInstance().layoutGlyphVector(
+    return layoutGlyphVector(
+      lineChars,
+      start,
+      end,
+      isRtl,
       fontInfo.getFont(),
       Objects.requireNonNull(
         fontInfo.getFontRenderContext(),
         "FontFallbackIterator.getFontInfo() always gives a FontRenderContext"
-      ),
-      lineChars,
-      start,
-      end,
-      isRtl
+      )
     );
+  }
+
+  /**
+   * Lays out the glyphs of the chars from {@code start} to {@code end} with {@code font} in {@code context}.
+   */
+  protected static @NotNull GlyphVector layoutGlyphVector(
+    char @NotNull [] lineChars,
+    int start,
+    int end,
+    boolean isRtl,
+    @NotNull Font font,
+    @NotNull FontRenderContext context
+  ) {
+    return FontLayoutService.getInstance().layoutGlyphVector(font, context, lineChars, start, end, isRtl);
   }
 
   /**
@@ -173,26 +186,12 @@ public abstract sealed class TextFragment implements LineFragment permits Simple
     return myCharPositions[Math.min(myCharPositions.length, offset) - 1];
   }
 
-  protected boolean isGridCellAlignmentEnabled() {
-    return myView != null && myView.getEditor().getCharacterGrid() != null;
-  }
-
-  protected float adjustedWidth(int codePoint) {
-    assert myView != null;
-    // in the grid mode all font styles should have identical widths
-    return myView.getCodePointWidth(codePoint, Font.PLAIN);
-  }
-
   int visualOffsetShift(int startOffset, int endOffset) {
     return isRtl() ? myCharPositions.length - endOffset : startOffset;
   }
 
   int visualColumnShift(int startColumn, int endColumn) {
     return isRtl() ? getVisualColumnCount(0) - endColumn : startColumn;
-  }
-
-  protected static boolean isTooClose(float width, float newWidth) {
-    return Math.abs(width - newWidth) < 0.001;
   }
 
   private int offsetToLogicalColumn(int offset) {
