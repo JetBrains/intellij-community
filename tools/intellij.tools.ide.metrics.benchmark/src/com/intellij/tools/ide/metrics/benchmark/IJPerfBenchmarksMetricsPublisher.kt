@@ -109,7 +109,7 @@ internal class IJPerfBenchmarksMetricsPublisher {
         methodName = uniqueTestIdentifier,
         buildNumber = BuildNumber.currentVersion(),
         metrics = metrics,
-        owner = testClass?.let { runCatching { codeOwners?.getOwnerGroupName(it) }.getOrNull() } ?: ""
+        owner = testClass?.let { codeOwnerGroupName(it) } ?: ""
       )
     }
 
