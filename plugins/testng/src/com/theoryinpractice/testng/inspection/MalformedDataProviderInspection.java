@@ -156,8 +156,8 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
         return false;
       }
 
-      private static LocalQuickFix[] toArray(@Nullable LocalQuickFix fix) {
-        return (fix == null) ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{fix};
+      private static LocalQuickFix[] toArray(@Nullable CreateMethodQuickFix fix) {
+        return (fix == null) ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{LocalQuickFix.from(fix)};
       }
     };
   }

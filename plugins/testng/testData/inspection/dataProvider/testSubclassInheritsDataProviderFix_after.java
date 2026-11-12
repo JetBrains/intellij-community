@@ -8,6 +8,6 @@ abstract class AbstractBaseForFix {
 class SubclassWithFix extends AbstractBaseForFix {
     @DataProvider
     public static Object[][] data() {
-        return null;
+        return new Object[][]{};
     }
 }
