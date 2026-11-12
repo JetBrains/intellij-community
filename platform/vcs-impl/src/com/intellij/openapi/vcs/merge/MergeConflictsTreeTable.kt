@@ -5,12 +5,13 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.treeStructure.treetable.DefaultTreeTableExpander
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.ColumnInfo
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Point
 import java.awt.event.MouseEvent
 import kotlin.math.max
 
@@ -50,14 +51,24 @@ class MergeConflictsTreeTable(private val tableModel: ListTreeTableModelOnColumn
     return max(maxCellWidth, columnWidth)
   }
 
-  var toolTipTextProvider: ((file: VirtualFile) -> String?)? = null
+  var toolTipTextProvider: ((e: MouseEvent) -> String?)? = null
 
-  override fun getToolTipText(e: MouseEvent): String? {
-    return toolTipTextProvider?.let { toolTipProvider ->
-      MergeUIUtil.getFileAtRow(this, rowAtPoint(e.point))?.let { file ->
-        toolTipProvider.invoke(file)
-      }
-    } ?: super.getToolTipText(e)
+  override fun getToolTipText(e: MouseEvent): String? = toolTipTextProvider?.invoke(e) ?: super.getToolTipText(e)
+
+  /**
+   * Returns the tag of the tree renderer fragment at [point], or `null` if no tagged fragment is there.
+   * [point] is in the table coordinates.
+   */
+  fun getTreeFragmentTagAt(point: Point): Any? {
+    val row = rowAtPoint(point)
+    val column = columnAtPoint(point)
+    if (row == -1 || column == -1 || !isTreeColumn(column)) return null
+    val path = tree.getPathForRow(row) ?: return null
+    val pathBounds = tree.getPathBounds(path) ?: return null
+    val node = path.lastPathComponent
+    val renderer = tree.cellRenderer.getTreeCellRendererComponent(tree, node, isRowSelected(row), tree.isExpanded(row),
+                                                                  tree.model.isLeaf(node), row, false)
+    return (renderer as? SimpleColoredComponent)?.getFragmentTagAt(point.x - pathBounds.x)
   }
 
   private val treeExpander = DefaultTreeTableExpander(this)

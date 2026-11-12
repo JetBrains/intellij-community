@@ -69,6 +69,7 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.awt.Point
 import java.awt.Rectangle
 import java.awt.RenderingHints
 import java.awt.event.ActionEvent
@@ -145,8 +146,8 @@ internal class IterativeMergeFlowDelegate(
       }
       acceptForResolution(resolution, SideAppliedFrom.BUTTON)
     }
-    table.toolTipTextProvider = { file ->
-      iterativeDataHolder.getMergeConflictModel(file)?.let {
+    table.toolTipTextProvider = { e ->
+      table.getBadgeFileAt(e.point)?.let { iterativeDataHolder.getMergeConflictModel(it) }?.let {
         VcsBundle.message("multiple.file.iterative.merge.tooltip", it.getResolvedChanges().size, it.getAllChanges().size)
       }
     }
@@ -613,7 +614,7 @@ private fun TreeTable.createCellRenderer(
     }
 
     override fun doPaintFragmentBackground(g: Graphics2D, index: Int, bgColor: Color, x: Int, y: Int, width: Int, height: Int) {
-      val yOffset = JBUI.scale(6)
+      val yOffset = JBUI.scale(BADGE_VERTICAL_INSET)
       val badgeHeight = height - 2 * yOffset
       g.color = bgColor
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
@@ -638,7 +639,7 @@ private fun TreeTable.createCellRenderer(
                                                 null,
                                                 SimpleTextAttributes.STYLE_OPAQUE)
           // Pad to get the capsule look without having to worry about horizontal alignment
-          append("  ${extraText.value}  ", badgeAttrs)
+          append("  ${extraText.value}  ", badgeAttrs, BadgeFragmentTag)
         }
       }
 
@@ -649,11 +650,26 @@ private fun TreeTable.createCellRenderer(
   }
 }
 
+/**
+ * Returns the file whose badge capsule contains [point], or `null` if no capsule is there.
+ */
+private fun MergeConflictsTreeTable.getBadgeFileAt(point: Point): VirtualFile? {
+  if (getTreeFragmentTagAt(point) !== BadgeFragmentTag) return null
+  val row = rowAtPoint(point)
+  val rowBounds = getCellRect(row, 0, true)
+  val inset = JBUI.scale(BADGE_VERTICAL_INSET)
+  if (point.y < rowBounds.y + inset || point.y >= rowBounds.y + rowBounds.height - inset) return null
+  return MergeUIUtil.getFileAtRow(this, row)
+}
+
+private object BadgeFragmentTag
+
 private data class ColoredString(val value: @Nls String, val background: JBColor, val foreground: JBColor)
 private data class ButtonRectKey(val row: Int, val column: Int)
 
 private const val ROW_HEIGHT = 28
 private const val MIN_COLUMN_WIDTH = 160
+private const val BADGE_VERTICAL_INSET = 6
 
 private fun MergeConflictsTreeTable.installButtonRenderer(
   iterativeDataHolder: MergeConflictIterativeDataHolder,
