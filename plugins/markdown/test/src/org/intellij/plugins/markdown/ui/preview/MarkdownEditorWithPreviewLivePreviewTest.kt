@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview
 
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.ActionManager
@@ -9,10 +11,12 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview.Layout
 import com.intellij.openapi.fileEditor.TextEditorWithPreview.MyFileEditorState
@@ -311,6 +315,22 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     assertEquals(listOf(LIVE_PREVIEW_ACTION_ID), editorWithPreview.selectedViewActionIds())
   }
 
+  fun testThemeChangeReloadsTheStylesOfAPreviewThatIsNotShowing() {
+    restoreLastUsedLayoutAfterTest()
+    val editorWithPreview = createEditor()
+    editorWithPreview.setLayout(Layout.SHOW_EDITOR_AND_PREVIEW)
+    val preview = editorWithPreview.previewEditor
+    waitFor({ "The preview must attach its HTML panel" }) { preview.htmlPanel() != null }
+    val panel = preview.htmlPanel()!!
+    assertFalse("The preview must not be showing, as in a background tab", preview.component.isShowing)
+
+    ApplicationManager.getApplication().messageBus.syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(LafManager.getInstance())
+
+    waitFor({ "The preview must reload its styles" }) { panel.stylesReloaded }
+  }
+
+  private fun FileEditor.htmlPanel(): StubHtmlPanel? = getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER)?.get() as StubHtmlPanel?
+
   /** The test root disposable restores the last used layout of the Markdown editors. */
   private fun restoreLastUsedLayoutAfterTest() {
     val properties = PropertiesComponent.getInstance()
@@ -415,8 +435,12 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
 
   private class StubHtmlPanel : MarkdownHtmlPanel {
     private val component = JPanel()
+    var stylesReloaded = false
 
     override fun getComponent(): JComponent = component
+    override fun reloadStyles() {
+      stylesReloaded = true
+    }
     override fun setHtml(html: String, initialScrollOffset: Int, document: VirtualFile?) = Unit
     override fun reloadWithOffset(offset: Int) = Unit
     override fun addScrollListener(listener: MarkdownHtmlPanel.ScrollListener) = Unit
