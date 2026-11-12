@@ -539,7 +539,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       // at the moment when we write the queue, VFS might have already been disposed via shutdown hook (in the case on emergency shutdown)
       vfsCreationStamp = ManagingFS.getInstance().getCreationTimestamp();
       // the light mode defers the VFS file-by-name index until the file-based index loads
-      FSRecords.startFileNameIndexFill();
+      if (FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
+        FSRecords.startFileNameIndexFill();
+      }
     }
     else {
       LOG.info("Indexes are already loaded");

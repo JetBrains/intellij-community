@@ -43,6 +43,7 @@ import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -223,8 +224,11 @@ public final class FSRecordsImpl implements Closeable {
 
       FileRecordLock fileRecordLock = new FileRecordLock();
       // the light mode has no file-based index, so the file-by-name index fills on the move to the smart mode,
-      // see startFileNameIndexFill()
-      boolean fillOnDemand = CurrentProductMode.INSTANCE.getValue().isLight();
+      // see startFileNameIndexFill(). The same holds when the file-based index itself serves the filename index
+      // from a content index instead of this one (FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX=false):
+      // nothing here is ever queried then, so there is nothing to fill eagerly for.
+      boolean fillOnDemand = CurrentProductMode.INSTANCE.getValue().isLight() ||
+                             !FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX;
       InvertedNameIndexLazy invertedNameIndexLazy = new InvertedNameIndexLazy(
         () -> fillInvertedNameIndex(connection.records(), fileRecordLock),
         fillOnDemand
