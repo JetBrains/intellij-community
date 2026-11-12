@@ -22,4 +22,8 @@ public final class WorkspaceRepo {
   public String getRepositoryUrl() {
     return repositoryUrl;
   }
+
+  public String getCheckoutPropertyKey() {
+    return "aggregate.workspace.checkout." + name;
+  }
 }
