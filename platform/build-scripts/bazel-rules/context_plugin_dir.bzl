@@ -2,9 +2,10 @@
 
 A test reads the pool through the manifest that the `context_plugin_manifest` output group holds, so a change of the
 plugin reaches the IDE with no distribution compose. The module index beside the manifest names the plugin directory of
-each main module, so a test gets only the plugins that it asks for. IDE Starter, for `starter_test` and its UI agent,
-gives the IDE each plugin directory of the runfiles through `-Dplugin.path`, and the IDE loads it in place. The Air lane
-daemon installs the files into `<context>/plugins`.
+each main module, so a test gets only the plugins that it asks for. The executable list beside the manifest names each
+file that needs the executable bit. IDE Starter, for `starter_test` and its UI agent, gives the IDE each plugin
+directory of the runfiles through `-Dplugin.path`, and the IDE loads it in place. The Air lane daemon installs the files
+into `<context>/plugins`.
 """
 
 load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_CONSUMER_ATTRS", "dev_dist_stamp_class_consumer_transition")
@@ -22,6 +23,11 @@ no digest, so a change of a file keeps it.""",
         "directories": "Dictionary from the main module of each plugin to its plugin directory below `<context>/plugins`.",
         "modules": """The module index `File`: one `<main module>\t<plugin directory>` line per plugin, in module order. It
 is the sibling `<name>.context-plugin-modules.txt` of the manifest.""",
+        "executables": """The destinations of `files` that a component marks executable, sorted. Analysis knows them. A file
+below a directory tree can be executable too, and only `executable_list` names it.""",
+        "executable_list": """The executable list `File`: one `<destination>` line per executable file of the pool, below a
+directory tree too, in destination order. The composer writes it from the component manifests. It is the sibling
+`<name>.context-plugin-executables.txt` of the manifest, and it is empty for a pool without an executable file.""",
     },
 )
 
@@ -35,8 +41,9 @@ def _parents(destination):
 def _placed_directory(plugin):
     """The one plugin directory that `plugin` places its files and directory trees in, below `plugins/`."""
     placement = plugin[DevDistPlacementInfo]
-    if placement.executables:
-        fail("%s marks %s executable; a context plugin holds no executable" % (plugin.label, placement.executables), attr = "plugins")
+    for executable in placement.executables:
+        if executable not in placement.files:
+            fail("%s marks '%s' executable, and it places no file there" % (plugin.label, executable), attr = "plugins")
     destinations = list(placement.files) + list(placement.trees)
     if not destinations:
         fail("%s places no file" % plugin.label, attr = "plugins")
@@ -74,8 +81,10 @@ def _context_plugin_dir_impl(ctx):
 
     files = {}
     trees = {}
+    executables = []
     for plugin in ctx.attr.plugins:
         placement = plugin[DevDistPlacementInfo]
+        executables.extend([destination[len(_PLUGINS_PREFIX):] for destination in placement.executables])
         for destination in sorted(placement.files):
             relative = destination[len(_PLUGINS_PREFIX):]
             output = ctx.actions.declare_file(ctx.label.name + "/" + relative)
@@ -96,23 +105,52 @@ def _context_plugin_dir_impl(ctx):
         "%s\t%s\n" % (module, directories[module])
         for module in sorted(directories)
     ]))
+    executable_list = ctx.actions.declare_file(ctx.label.name + ".context-plugin-executables.txt")
+    component_manifests = [plugin[IntellijDevFragmentInfo].manifest for plugin in ctx.attr.plugins]
+    arguments = ctx.actions.args()
+    arguments.add(executable_list, format = "--context-plugin-executables=%s")
+    arguments.add_all(component_manifests, format_each = "--component-manifest=%s")
+    ctx.actions.run(
+        mnemonic = "ContextPluginExecutables",
+        executable = ctx.executable._composer,
+        inputs = component_manifests,
+        outputs = [executable_list],
+        arguments = [arguments],
+        # The component manifests stay out of the remote cache, so the list stays out too.
+        execution_requirements = {"block-network": "1", "no-remote-cache": "1", "no-remote-exec": "1"},
+        progress_message = "Listing the executable files of the context plugins %{label}",
+    )
     outputs = files.values() + trees.values()
     return [
-        DefaultInfo(files = depset(outputs), runfiles = ctx.runfiles(files = outputs + [manifest, modules])),
-        ContextPluginInfo(files = files, trees = trees, manifest = manifest, directories = directories, modules = modules),
-        OutputGroupInfo(context_plugin_manifest = depset([manifest]), context_plugin_modules = depset([modules])),
+        DefaultInfo(files = depset(outputs), runfiles = ctx.runfiles(files = outputs + [manifest, modules, executable_list])),
+        ContextPluginInfo(
+            files = files,
+            trees = trees,
+            manifest = manifest,
+            directories = directories,
+            modules = modules,
+            executables = sorted(executables),
+            executable_list = executable_list,
+        ),
+        OutputGroupInfo(
+            context_plugin_manifest = depset([manifest]),
+            context_plugin_modules = depset([modules]),
+            context_plugin_executables = depset([executable_list]),
+        ),
     ]
 
 context_plugin_dir = rule(
     doc = """The plugin directories of an IDE context, as one output per placed file and per placed directory tree.
 
 Each entry of `plugins` is the generated `dev_plugin` component of one plugin, and it places one plugin directory. Two
-plugins never place the same directory. A component can place directory trees in its plugin directory, and no
-executable. The stamp class transition gives the components the mode they require, and `stamp_class` names that mode.
+plugins never place the same directory. A component can place directory trees in its plugin directory. The stamp class
+transition gives the components the mode they require, and `stamp_class` names that mode.
 Each output is a link to the packed file or directory tree, at `<name>/<destination below plugins/>`. The manifest
 `<name>.context-plugins.txt` names the files and the directory trees of every plugin. It is a runfile beside them and the
 `context_plugin_manifest` output group. The module index `<name>.context-plugin-modules.txt` names the plugin directory of
-each main module. It is a runfile too and the `context_plugin_modules` output group.""",
+each main module. It is a runfile too and the `context_plugin_modules` output group. The executable list
+`<name>.context-plugin-executables.txt` names each executable file of the component manifests, below a directory tree
+too. The composer writes it. It is a runfile too and the `context_plugin_executables` output group.""",
     implementation = _context_plugin_dir_impl,
     attrs = dict(
         DEV_DIST_STAMP_CLASS_CONSUMER_ATTRS,
@@ -123,5 +161,6 @@ each main module. It is a runfile too and the `context_plugin_modules` output gr
             providers = [DevDistPlacementInfo, IntellijDevFragmentInfo],
             cfg = dev_dist_stamp_class_consumer_transition,
         ),
+        _composer = attr.label(default = "//platform/build-scripts/bazel-rules:dev_dist_composer", executable = True, cfg = "exec"),
     ),
 )

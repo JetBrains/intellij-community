@@ -420,3 +420,31 @@ fn compose_cli_refuses_the_mac_binaries_for_local_launch_metadata() {
         (1, "ERROR: Local launch metadata must not name --mac-binaries\n")
     );
 }
+
+#[test]
+fn compose_cli_writes_only_the_executable_list_of_a_context_plugin_pool() {
+    let _directory = WorkingDirectory::enter();
+    write_file(
+        "fragments/tool.json",
+        concat!(
+            r#"{"version":12,"kind":"tool","os":"","arch":"","plugin":true,"#,
+            r#""mainClass":null,"coreClassPath":[],"entries":["#,
+            r#"{"type":"directory","relativePath":"plugins/tool/bin","mode":493},"#,
+            r#"{"type":"component-file","relativePath":"plugins/tool/bin/tool","hash":3,"executable":true,"source":"inputs/tool"},"#,
+            r#"{"type":"component-file","relativePath":"plugins/tool/lib/tool.jar","hash":4,"source":"inputs/tool.jar"}]}"#
+        ),
+    );
+    let args = [
+        "--context-plugin-executables=pool.context-plugin-executables.txt",
+        "--component-manifest=fragments/tool.json",
+    ]
+    .map(str::to_owned);
+    let (code, errors) = run_cli(&args);
+    assert_eq!(code, 0, "{errors}");
+    assert_eq!(read_text("pool.context-plugin-executables.txt"), "tool/bin/tool\n");
+    require_absent("out/dist");
+
+    let mixed = [args[0].clone(), args[1].clone(), "--output-dir=out/dist".to_owned()];
+    let (code, errors) = run_cli(&mixed);
+    assert_eq!((code, errors.as_str()), (1, "ERROR: unknown option: --output-dir\n"));
+}

@@ -16,6 +16,10 @@
 //! writes the layout of launch metadata. [`plugin_classpath`] joins the plugin
 //! records, [`fingerprint`] computes fingerprint v5, and [`ide_config`] writes the file of `DevIdeConfig`.
 //! [`placement`] checks the home placement of the spec against the manifests.
+//!
+//! The rule `context_plugin_dir` runs it with `--context-plugin-executables` and one `--component-manifest` per plugin
+//! component. Then the composer composes nothing and writes only the executable list of the pool, see
+//! [`context_plugins`].
 
 use std::ffi::OsString;
 use std::fs;
@@ -29,6 +33,7 @@ use component::{classpath, manifest, paths};
 use crate::compose::{ComposeOptions, DevBuildComponent};
 
 mod compose;
+mod context_plugins;
 mod fingerprint;
 mod ide_config;
 mod local_layout;
@@ -55,6 +60,12 @@ fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
     let Some(mut options) = cli::ok_or_report(errors, cli::parse(args)) else {
         return 1;
     };
+    let Some(executables) = cli::ok_or_report(errors, optional_path(&mut options, "--context-plugin-executables")) else {
+        return 1;
+    };
+    if let Some(output) = executables {
+        return cli::exit_code(errors, write_context_plugin_executables(options, &output), 1);
+    }
     let Some(trace_file) = cli::ok_or_report(errors, optional_path(&mut options, "--trace-file")) else {
         return 1;
     };
@@ -75,6 +86,18 @@ fn optional_path(options: &mut cli::Options, name: &str) -> Result<Option<PathBu
         Some(value) if !value.is_empty() => paths::absolute_path(&value).map(Some),
         _ => Ok(None),
     }
+}
+
+/// Writes the executable list of a context plugin pool to `output`, from the manifests of the `--component-manifest`
+/// options. It refuses every other option.
+fn write_context_plugin_executables(mut options: cli::Options, output: &Path) -> Result<()> {
+    let manifests = options
+        .take_all("--component-manifest")?
+        .iter()
+        .map(paths::absolute_path)
+        .collect::<Result<Vec<_>>>()?;
+    options.finish()?;
+    context_plugins::write_executables(output, &manifests)
 }
 
 fn required_path(options: &mut cli::Options, name: &str) -> Result<PathBuf> {

@@ -23,6 +23,7 @@ import kotlin.io.path.readLines
  * `<main module>\t<plugin directory>` line per plugin.
  *
  * [pluginDirectory] returns one plugin directory of the pool. The IDE loads it in place through `-Dplugin.path`.
+ * So this class copies no file and reads no executable list `<pool>.context-plugin-executables.txt`.
  */
 @ApiStatus.Internal
 class ContextPluginDirs private constructor(
