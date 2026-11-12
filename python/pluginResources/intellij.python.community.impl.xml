@@ -9,6 +9,7 @@
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.http.client"/>
+    <module name="intellij.libraries.ini4j"/>
     <module name="intellij.libraries.jackson3"/>
     <module name="intellij.libraries.jackson3.databind"/>
     <module name="intellij.libraries.jackson3.dataformat.yaml"/>
@@ -364,6 +365,8 @@
     <stripTrailingSpacesFilterFactory implementation="com.jetbrains.python.editor.PyStripTrailingSpacesFilterFactory"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.testing.PyTestParameterCompletionContributor"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.testing.pyTestFixtures.PyTestPluginMarkerArgumentCompletionContributor"/>
     <completion.contributor language="Python" id="pythonConsoleCompletionBlocking" order="first"
                             implementationClass="com.jetbrains.python.console.completion.PythonConsoleCompletionBlockingContributor"/>
 
@@ -1146,6 +1149,7 @@
 
     <!--pytest fixture -->
     <inspectionExtension implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureInspectionExtension"/>
+    <pyClassMembersProvider implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestPluginMarkerMembersProvider"/>
     <inspectionExtension implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspectionExtension"/>
     <inspectionExtension implementation="com.jetbrains.python.testing.pyMock.PyMockInspectionExtension"/>
     <typeProvider id="pyTestParametrizedTypeProvider"
