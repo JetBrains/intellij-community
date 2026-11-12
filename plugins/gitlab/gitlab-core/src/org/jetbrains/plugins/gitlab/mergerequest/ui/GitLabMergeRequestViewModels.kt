@@ -10,7 +10,6 @@ import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
@@ -27,6 +26,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabReviewSettings
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.loadRevisionsAndParseChanges
@@ -90,7 +90,7 @@ internal class GitLabMergeRequestViewModels(
     LoadAllGitLabMergeRequestTimelineViewModel(project,
                                                cs,
                                                projectData,
-                                               project.service(),
+                                               GitLabReviewSettings.getInstance(project),
                                                currentUser,
                                                mergeRequest,
                                                htmlConverter,

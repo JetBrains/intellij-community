@@ -18,7 +18,6 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.Side
 import com.intellij.openapi.ListSelection
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
@@ -58,7 +57,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
-import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabReviewSettings
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestParsedChanges
 import org.jetbrains.plugins.gitlab.mergerequest.ui.createDiffDataFlow
@@ -85,9 +84,9 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
 ) : GitLabMergeRequestReviewViewModelBase(
   parentCs.childScope("GitLab Merge Request Editor Review VM"),
   project, currentUser, mergeRequest,
-  if (project.service<GitLabMergeRequestsPreferences>().editorReviewEnabled) DiscussionsViewOption.UNRESOLVED_ONLY else DiscussionsViewOption.DONT_SHOW
+  if (GitLabReviewSettings.getInstance(project).editorReviewEnabled) DiscussionsViewOption.UNRESOLVED_ONLY else DiscussionsViewOption.DONT_SHOW
 ), CodeReviewInEditorViewModel {
-  private val preferences = project.service<GitLabMergeRequestsPreferences>()
+  private val preferences = GitLabReviewSettings.getInstance(project)
 
   private val gitRepository: GitRepository = gitRemote.repository
 

@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabReviewSettings
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNewDiscussionPositionFactory
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
@@ -153,7 +153,7 @@ internal class GitLabMergeRequestDiffReviewViewModelTest {
 
   private class ReviewFixture(cs: CoroutineScope) {
     private val project = mockk<Project> {
-      every { getService(GitLabMergeRequestsPreferences::class.java) } returns mockk {
+      every { getService(GitLabReviewSettings::class.java) } returns mockk {
         every { usedAsDraftSubmitActionLastState } returns MutableStateFlow(false)
       }
     }
