@@ -7,7 +7,9 @@ import com.intellij.driver.sdk.settings.waitForVcsActivated
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound
 import com.intellij.driver.sdk.waitFor
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 private val TOOL_WINDOW_STATE_TIMEOUT = 30.seconds
@@ -21,9 +23,9 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
   val projectButton: StripeButtonUi = stripeButton("Project")
   val runButton: StripeButtonUi = stripeButton("Run")
   val buildButton: StripeButtonUi = stripeButton("Build")
-  val gitButton: StripeButtonUi get() = vcsStripeButton("Git")
-  val vcsButton: StripeButtonUi get() = vcsStripeButton("Version Control")
-  val commitButton: StripeButtonUi get() = vcsStripeButton("Commit")
+  val gitButton: StripeButtonUi by lazy { vcsStripeButton("Git") }
+  val vcsButton: StripeButtonUi by lazy { vcsStripeButton("Version Control") }
+  val commitButton: StripeButtonUi by lazy { vcsStripeButton("Commit") }
   val structureButton: StripeButtonUi = stripeButton("Structure")
   val servicesButton: StripeButtonUi = stripeButton("Services")
   val terminalButton: StripeButtonUi = stripeButton("Terminal")
@@ -43,12 +45,12 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
   }
 
   /**
-   * Returns the stripe button of a VCS tool window after [waitForVcsActivated].
-   * Without the wait, the button search can time out on a slow IDE startup.
+   * Waits for the button of a VCS tool window after [waitForVcsActivated].
+   * In split mode, the frontend can show the button late, so the search waits longer.
    */
   private fun vcsStripeButton(accessibleName: String): StripeButtonUi {
     driver.waitForVcsActivated()
-    return stripeButton(accessibleName)
+    return stripeButton(accessibleName).waitFound(if (driver.isRemDevMode) 1.minutes else null)
   }
 }
 
