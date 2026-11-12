@@ -5,7 +5,9 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
-import java.awt.event.InputEvent;
+import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -267,11 +271,44 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       }
 
       private static @NotNull MouseEvent getMouseEvent(@NotNull AnActionEvent e) {
-        InputEvent inputEvent = e.getInputEvent();
-        if (inputEvent instanceof MouseEvent mouseEvent) {
-          return mouseEvent;
+        if (e.getInputEvent() instanceof MouseEvent mouseEvent) {
+          Component source = mouseEvent.getComponent();
+          if (source != null && source.isShowing()) {
+            return mouseEvent;
+          }
+          MouseEvent moved = moveToShowingComponent(mouseEvent, e);
+          return moved != null ? moved : mouseEvent;
         }
         return JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext()).toMouseEvent();
+      }
+
+      private static @Nullable MouseEvent moveToShowingComponent(@NotNull MouseEvent event, @NotNull AnActionEvent e) {
+        MouseEvent moved = moveTo(event, e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+        if (moved != null) {
+          return moved;
+        }
+        var editor = e.getData(CommonDataKeys.EDITOR);
+        return editor == null ? null : moveTo(event, editor.getContentComponent());
+      }
+
+      /**
+       * Returns a copy of the event on the visible part of the target.
+       * The point of the copy is the point of the visible part that is nearest to the screen location of the event.
+       */
+      private static @Nullable MouseEvent moveTo(@NotNull MouseEvent event, @Nullable Component target) {
+        if (!(target instanceof JComponent component) || !component.isShowing()) {
+          return null;
+        }
+        var visible = component.getVisibleRect();
+        if (visible.isEmpty()) {
+          return null;
+        }
+        var point = event.getLocationOnScreen();
+        SwingUtilities.convertPointFromScreen(point, component);
+        int x = Math.clamp(point.x, visible.x, visible.x + visible.width - 1);
+        int y = Math.clamp(point.y, visible.y, visible.y + visible.height - 1);
+        return new MouseEvent(component, event.getID(), event.getWhen(), event.getModifiersEx(), x, y,
+                              event.getClickCount(), event.isPopupTrigger(), event.getButton());
       }
 
       @Override
