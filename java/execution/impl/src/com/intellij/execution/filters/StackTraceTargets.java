@@ -102,6 +102,12 @@ public final class StackTraceTargets {
     }
     int lineStart = document.getLineStartOffset(line);
     int lineEnd = document.getLineEndOffset(line);
+    CharSequence text = document.getCharsSequence();
+    int start = lineStart;
+    while (start < lineEnd && StringUtil.isWhiteSpace(text.charAt(start))) start++;
+    int end = lineEnd;
+    while (end > start && StringUtil.isWhiteSpace(text.charAt(end - 1))) end--;
+    int codeStart = start;
     if (refiner != null) {
       Set<ExceptionLineRefiner.RefinerMatchResult> matches =
         ExceptionLineParserImpl.ExceptionFinder.getExceptionOrigin(file, refiner, lineStart, lineEnd);
@@ -112,16 +118,13 @@ public final class StackTraceTargets {
       if (matches.isEmpty()) {
         Collection<PsiElement> divergedTargets =
           FindDivergedExceptionLineHandler.findDivergedTargets(file, className, methodName, refiner, lineStart, lineEnd);
-        if (divergedTargets != null && !divergedTargets.isEmpty()) {
+        // a target that holds the line is its method or initializer: the code of the line, such as a for-each loop, hides the call
+        if (divergedTargets != null && !divergedTargets.isEmpty() &&
+            !ContainerUtil.exists(divergedTargets, target -> target.getTextRange().contains(codeStart))) {
           return ContainerUtil.map(divergedTargets, target -> target instanceof PsiMethod ? new Target(target, null) : new Target(target, target.getTextRange()));
         }
       }
     }
-    CharSequence text = document.getCharsSequence();
-    int start = lineStart;
-    while (start < lineEnd && StringUtil.isWhiteSpace(text.charAt(start))) start++;
-    int end = lineEnd;
-    while (end > start && StringUtil.isWhiteSpace(text.charAt(end - 1))) end--;
     return List.of(new Target(file, new TextRange(start, end)));
   }
 }
