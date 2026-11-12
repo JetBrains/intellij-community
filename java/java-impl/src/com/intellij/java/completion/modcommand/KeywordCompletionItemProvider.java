@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.completion.modcommand;
 
 import com.intellij.application.options.CodeStyle;
@@ -519,7 +519,7 @@ final class KeywordCompletionItemProvider extends JavaModCompletionItemProvider 
         for (String primitiveType : PsiTypes.primitiveTypeNames()) {
           PsiType array = Objects.requireNonNull(PsiTypes.primitiveTypeByName(primitiveType)).createArrayType();
           if (addAll || expected.contains(array)) {
-            addKeyword(PsiTypeCompletionItem.create(array));
+            addKeyword(JavaTypeCompletionItem.create(array));
           }
         }
         return;
@@ -1381,7 +1381,7 @@ final class KeywordCompletionItemProvider extends JavaModCompletionItemProvider 
 
         final JavaPsiClassReferenceElement item = AllClassesGetter.createLookupItem(inheritor, AllClassesGetter.TRY_SHORTENING);
         item.setForcedPresentableName("case " + inheritor.getName());
-        addKeyword(new ClassReferenceCompletionItem(inheritor).withPresentableName("case " + inheritor.getName()));
+        addKeyword(JavaTypeCompletionItem.create(inheritor).withPresentableName("case " + inheritor.getName()));
       }
     }
 

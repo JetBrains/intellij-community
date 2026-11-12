@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.completion.modcommand;
 
 import com.intellij.application.options.CodeStyle;
@@ -272,18 +272,19 @@ final class ReferenceItemProvider extends JavaModCompletionItemProvider {
     PsiType plainQualifier = processor.getQualifierType();
 
     List<PsiType> runtimeQualifiers = getQualifierCastTypes(javaReference, parameters.invocationCount());
+    PsiJavaCodeReferenceElement variantsReference = javaReference;
     if (!runtimeQualifiers.isEmpty()) {
       PsiType[] conjuncts = JBIterable.of(plainQualifier).append(runtimeQualifiers).toArray(PsiType.EMPTY_ARRAY);
       PsiType composite = PsiIntersectionType.createIntersection(false, conjuncts);
       PsiElement ctx = JavaCompletionUtil.createContextWithXxxVariable(element, composite);
-      javaReference = (PsiReferenceExpression)JavaPsiFacade.getElementFactory(parameters.getProject())
+      variantsReference = (PsiReferenceExpression)JavaPsiFacade.getElementFactory(parameters.getProject())
         .createExpressionFromText("xxx.xxx", ctx);
       processor.setQualifierType(composite);
     }
 
-    javaReference.processVariants(processor);
+    variantsReference.processVariants(processor);
 
-    List<PsiTypeCompletionItem> castItems = ContainerUtil.map(runtimeQualifiers, q -> new PsiTypeCompletionItem(q, q.getPresentableText()));
+    List<JavaTypeCompletionItem> castItems = ContainerUtil.map(runtimeQualifiers, JavaTypeCompletionItem::create);
 
     boolean pkgContext = JavaCompletionUtil.inSomePackage(element);
 
@@ -310,7 +311,7 @@ final class ReferenceItemProvider extends JavaModCompletionItemProvider {
           }
           mentioned.add(CompletionUtil.getOriginalOrSelf(member));
         }
-        PsiTypeCompletionItem qualifierCast = null;
+        JavaTypeCompletionItem qualifierCast = null;
         PsiMember member = ObjectUtils.tryCast(item.contextObject(), PsiMember.class);
         if (member != null) {
           qualifierCast = ContainerUtil.find(castItems, c -> {
@@ -374,7 +375,7 @@ final class ReferenceItemProvider extends JavaModCompletionItemProvider {
     PsiSubstitutor substitutor = completionElement.getSubstitutor();
     if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
     if (completion instanceof PsiClass cls) {
-      return ConstructorCallCompletionItem.tryWrap(new ClassReferenceCompletionItem(cls).withSubstitutor(substitutor), reference.getElement());
+      return ConstructorCallCompletionItem.tryWrap(JavaTypeCompletionItem.create(cls).withSubstitutor(substitutor), reference.getElement());
     }
     if (completion instanceof PsiMethod method) {
       if (reference instanceof PsiMethodReferenceExpression mr) {
@@ -414,7 +415,7 @@ final class ReferenceItemProvider extends JavaModCompletionItemProvider {
     return List.of();
   }
   
-  private static CommonCompletionItem castQualifier(CommonCompletionItem item, PsiTypeCompletionItem castTypeItem) {
+  private static CommonCompletionItem castQualifier(CommonCompletionItem item, JavaTypeCompletionItem castTypeItem) {
     return item.withAdditionalUpdater((completionStart, updater) -> {
       Document document = updater.getDocument();
       PsiDocumentManager.getInstance(updater.getProject()).commitDocument(document);
@@ -435,9 +436,11 @@ final class ReferenceItemProvider extends JavaModCompletionItemProvider {
           int exprStart = qualifier.getTextRange().getStartOffset();
           document.insertString(exprStart, prefix + spaceWithin + ")" + spaceAfter);
 
+          PsiDocumentManager.getInstance(updater.getProject()).commitDocument(document);
+          //move to cast
+          int castTypeOffset = exprStart + prefix.length();
           ActionContext ctx = new ActionContext(updater.getProject(), updater.getPsiFile(),
-                                                    updater.getCaretOffset(), TextRange.from(updater.getCaretOffset(), 0),
-                                                    null);
+                                                castTypeOffset, TextRange.from(castTypeOffset, 0), null);
           ModCommand command = castTypeItem.perform(ctx, ModCompletionItem.DEFAULT_INSERTION_CONTEXT);
           ModCommandExecutor.getInstance().executeForFileCopy(command, updater.getPsiFile());
         }

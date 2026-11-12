@@ -25,13 +25,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiResolveHelper;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
@@ -40,62 +40,53 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.Set;
 
 @NotNullByDefault
-public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem<PsiType> {
+public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem<PsiType> implements JavaTypeCompletionItem {
   private final boolean myIndicateAnonymous;
   private final boolean myAddArrayInitializer;
-  private final String myLocationString;
   private final boolean myStrikeout;
-  private final @Nullable String myForcedPresentableName;
+  private final @Nullable @NlsSafe String myForcedPresentableName;
   private final double myPriority;
 
-  private PsiTypeCompletionItem(PsiType type, boolean indicateAnonymous, boolean addArrayInitializer, String locationString,
-                                @NonNls String lookupString, double priority) {
+  private PsiTypeCompletionItem(PsiType type, boolean indicateAnonymous, boolean addArrayInitializer, @NonNls String lookupString,
+                                @Nullable String forcedPresentableName, double priority) {
     super(lookupString, type);
     myIndicateAnonymous = indicateAnonymous;
     myAddArrayInitializer = addArrayInitializer;
-    myLocationString = locationString;
-    myForcedPresentableName = null;
+    myForcedPresentableName = forcedPresentableName;
     myPriority = priority;
     PsiClass psiClass = PsiUtil.resolveClassInType(type);
     myStrikeout = psiClass != null && psiClass.isDeprecated();
   }
 
-  public PsiTypeCompletionItem(PsiType type, @NonNls String lookupString) {
-    this(type, false, false, "", lookupString, 0);
+  PsiTypeCompletionItem(PsiType type, @NonNls String lookupString) {
+    this(type, false, false, lookupString, null, 0);
   }
 
-  @Contract(pure = true)
+  @Override
   public PsiTypeCompletionItem withPresentableName(@Nullable String forcedPresentableName) {
-    return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, myAddArrayInitializer, myLocationString, mainLookupString(),
+    return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, myAddArrayInitializer, mainLookupString(),
+                                     forcedPresentableName, myPriority);
+  }
+
+  @Override
+  public PsiTypeCompletionItem indicateAnonymous() {
+    return new PsiTypeCompletionItem(getType(), true, myAddArrayInitializer, mainLookupString(), myForcedPresentableName,
                                      myPriority);
   }
 
   @Contract(pure = true)
-  public PsiTypeCompletionItem indicateAnonymous() {
-    return new PsiTypeCompletionItem(getType(), true, myAddArrayInitializer, myLocationString, mainLookupString(), myPriority);
+  PsiTypeCompletionItem addArrayInitializer() {
+    return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, true, mainLookupString(), myForcedPresentableName,
+                                     myPriority);
   }
 
-  @Contract(pure = true)
-  public PsiTypeCompletionItem addArrayInitializer() {
-    return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, true, myLocationString, mainLookupString(), myPriority);
-  }
-
-  @Contract(pure = true)
-  public PsiTypeCompletionItem showPackage() {
-    PsiClass psiClass = PsiUtil.resolveClassInType(getType());
-    if (psiClass != null) {
-      return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, myAddArrayInitializer,
-                                       " (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", mainLookupString(), myPriority);
-    }
-    return this;
-  }
-
-  @Contract(pure = true)
+  @Override
   public PsiTypeCompletionItem withPriority(double priority) {
-    return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, myAddArrayInitializer, myLocationString, mainLookupString(),
-                                     priority);
+    return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, myAddArrayInitializer, mainLookupString(),
+                                     myForcedPresentableName, priority);
   }
 
   @Override
@@ -103,17 +94,23 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem<PsiType
     return myPriority;
   }
 
+  @Override
   public PsiType getType() {
     return contextObject();
+  }
+
+  public @Nullable String getForcedPresentableName() {
+    return myForcedPresentableName;
+  }
+
+  @Override
+  public Set<@NlsSafe String> additionalLookupStrings() {
+    return myForcedPresentableName == null ? Set.of() : Set.of(myForcedPresentableName);
   }
 
   @Override
   public boolean isValid() {
     return getType().isValid();
-  }
-
-  public @Nullable String getForcedPresentableName() {
-    return myForcedPresentableName;
   }
 
   @Override
@@ -199,18 +196,11 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem<PsiType
     return PsiSubstitutor.EMPTY;
   }
 
-  public static PsiTypeCompletionItem create(PsiType type) {
-    PsiType typeToPresent = type.getDeepComponentType();
-    if (typeToPresent instanceof PsiClassType classType) {
-      typeToPresent = classType.rawType();
-    }
-    return new PsiTypeCompletionItem(type, typeToPresent.getPresentableText());
-  }
-
   @Override
   public ModCompletionItemPresentation presentation() {
-    MarkupText text = MarkupText.plainText(mainLookupString());
-    text = text.concat(calcGenerics(null, PsiUtil.resolveClassInType(getType())), MarkupText.Kind.NORMAL);
+    PsiClass psiClass = PsiUtil.resolveClassInType(getType());
+    MarkupText text = MarkupText.plainText(Objects.requireNonNullElse(myForcedPresentableName, mainLookupString()));
+    text = text.concat(calcGenerics(null, psiClass), MarkupText.Kind.NORMAL);
     text = text.concat("[]".repeat(getType().getArrayDimensions()), MarkupText.Kind.NORMAL);
     if (getType() instanceof PsiPrimitiveType) {
       text = text.highlightAll(MarkupText.Kind.STRONG);
@@ -218,15 +208,12 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem<PsiType
     if (myStrikeout) {
       text = text.highlightAll(MarkupText.Kind.STRIKEOUT);
     }
-    if (myAddArrayInitializer) {
+    if (myAddArrayInitializer || myIndicateAnonymous && psiClass != null && psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
       text = text.concat("{...}", MarkupText.Kind.GRAYED);
     }
     return new ModCompletionItemPresentation(text)
-      .withMainIcon(() -> {
-        PsiClass psiClass = PsiUtil.resolveClassInType(contextObject());
-        return psiClass == null ? null : 
-               psiClass.getIcon(Registry.is("ide.completion.show.visibility.icon") ? Iconable.ICON_FLAG_VISIBILITY : 0);
-      });
+      .withMainIcon(() -> psiClass == null ? null :
+                          psiClass.getIcon(Registry.is("ide.completion.show.visibility.icon") ? Iconable.ICON_FLAG_VISIBILITY : 0));
   }
 
   public static void addImportForItem(PsiClass aClass, PsiFile file, int startOffset, ModPsiUpdater updater) {

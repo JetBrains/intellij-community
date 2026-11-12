@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.completion.modcommand;
 
 import com.intellij.application.options.CodeStyle;
@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiDocumentManager;
@@ -25,6 +26,7 @@ import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiImportStaticStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
@@ -43,24 +45,29 @@ import java.util.Objects;
 import java.util.Set;
 
 @NotNullByDefault
-public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<PsiClass> {
+public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<PsiClass> implements JavaTypeCompletionItem {
   private final @Nullable String myQualifiedName;
   private final @Nullable String myForcedPresentableName;
   @NlsSafe private final String myPackageDisplayName;
   private final boolean myStrikeout;
   private final PsiSubstitutor mySubstitutor;
+  private final double myPriority;
+  private final boolean myIndicateAnonymous;
   
-  private ClassReferenceCompletionItem(PsiClass psiClass, PsiSubstitutor substitutor, @Nullable String forcedPresentableName) {
+  private ClassReferenceCompletionItem(PsiClass psiClass, PsiSubstitutor substitutor, @Nullable String forcedPresentableName,
+                                       double priority, boolean indicateAnonymous) {
     super(Objects.requireNonNullElseGet(forcedPresentableName, () -> Objects.requireNonNull(psiClass.getName())), psiClass);
     myQualifiedName = psiClass.getQualifiedName();
     myForcedPresentableName = forcedPresentableName;
     myPackageDisplayName = PsiFormatUtil.getPackageDisplayName(psiClass);
     myStrikeout = JavaDeprecationUtils.isDeprecated(psiClass, null);
     mySubstitutor = substitutor;
+    myPriority = priority;
+    myIndicateAnonymous = indicateAnonymous;
   }
   
-  public ClassReferenceCompletionItem(PsiClass psiClass) {
-    this(psiClass, PsiSubstitutor.EMPTY, null);
+  ClassReferenceCompletionItem(PsiClass psiClass) {
+    this(psiClass, PsiSubstitutor.EMPTY, null, 0, false);
   }
 
   @Override
@@ -68,12 +75,33 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<
     return myForcedPresentableName == null ? Set.of() : Set.of(myForcedPresentableName);
   }
 
+  @Override
   public ClassReferenceCompletionItem withPresentableName(@Nullable String forcedPresentableName) {
-    return new ClassReferenceCompletionItem(contextObject(), mySubstitutor, forcedPresentableName);
+    return new ClassReferenceCompletionItem(contextObject(), mySubstitutor, forcedPresentableName, myPriority, myIndicateAnonymous);
   }
   
   public ClassReferenceCompletionItem withSubstitutor(PsiSubstitutor substitutor) {
-    return new ClassReferenceCompletionItem(contextObject(), substitutor, myForcedPresentableName);
+    return new ClassReferenceCompletionItem(contextObject(), substitutor, myForcedPresentableName, myPriority, myIndicateAnonymous);
+  }
+
+  @Override
+  public ClassReferenceCompletionItem withPriority(double priority) {
+    return new ClassReferenceCompletionItem(contextObject(), mySubstitutor, myForcedPresentableName, priority, myIndicateAnonymous);
+  }
+
+  @Override
+  public ClassReferenceCompletionItem indicateAnonymous() {
+    return new ClassReferenceCompletionItem(contextObject(), mySubstitutor, myForcedPresentableName, myPriority, true);
+  }
+
+  @Override
+  public PsiType getType() {
+    return JavaPsiFacade.getElementFactory(contextObject().getProject()).createType(contextObject(), mySubstitutor);
+  }
+
+  @Override
+  public double priority() {
+    return myPriority;
   }
 
   public PsiSubstitutor getSubstitutor() {
@@ -85,7 +113,7 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<
     if (!contextObject().isValid()) return;
     PsiDocumentManager.getInstance(updater.getProject()).commitDocument(updater.getDocument());
     if (processInImport(updater)) return;
-    if (processJavaDoc(actionContext.offset(), updater)) return;
+    if (processJavaDoc(actionContext.selection().getStartOffset(), updater)) return;
     AllClassesGetter.tryShorten(updater.getPsiFile(), updater, contextObject());
   }
 
@@ -137,8 +165,8 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem<
   @Override
   public ModCompletionItemPresentation presentation() {
     String name = getName();
-    String tailText = " " + myPackageDisplayName;
     PsiClass psiClass = contextObject();
+    String tailText = (myIndicateAnonymous && psiClass.hasModifierProperty(PsiModifier.ABSTRACT) ? "{...}" : "") + " " + myPackageDisplayName;
     if (mySubstitutor == PsiSubstitutor.EMPTY && psiClass.getTypeParameters().length > 0) {
       String separator = "," + (showSpaceAfterComma(psiClass) ? " " : "");
       tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), PsiTypeParameter::getName, separator) + ">" + tailText;

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.java.completion.modcommand.ClassReferenceCompletionItem;
+import com.intellij.java.completion.modcommand.JavaTypeCompletionItem;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcompletion.ModCompletionItem;
@@ -61,7 +62,7 @@ final class NewExpressionModExpandAction implements ExpressionSelectorModExpande
 
       updater.moveCaretTo(classNameEnd);
 
-      ClassReferenceCompletionItem classItem = new ClassReferenceCompletionItem(psiClass);
+      ClassReferenceCompletionItem classItem = JavaTypeCompletionItem.create(psiClass);
       classItem.update(ctx.withOffset(classNameEnd), ModCompletionItem.DEFAULT_INSERTION_CONTEXT, updater);
 
       pdm.commitDocument(document);

@@ -138,7 +138,7 @@ public final class NonImportedClassProvider extends JavaModCompletionItemProvide
     if (JavaCompletionContributor.getAnnotationNameIfInside(insertedElement) != null) {
       MultiMap<String, PsiClass> annoMap = getAllAnnotationClasses(insertedElement, matcher);
       Processor<PsiClass> processor = new LimitedAccessibleClassPreprocessor(parameters, filterByScope, anno -> {
-        sink.accept(new ClassReferenceCompletionItem(anno));
+        sink.accept(JavaTypeCompletionItem.create(anno));
         return true;
       });
       for (String name : matcher.sortMatching(annoMap.keySet())) {
@@ -159,13 +159,13 @@ public final class NonImportedClassProvider extends JavaModCompletionItemProvide
         final PsiType type = info.getType();
         final PsiClass psiClass = PsiUtil.resolveClassInType(type);
         if (psiClass != null && psiClass.getName() != null && !(psiClass.hasModifierProperty(PsiModifier.SEALED) && psiClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
-          sink.accept(new ClassReferenceCompletionItem(psiClass));
+          sink.accept(JavaTypeCompletionItem.create(psiClass));
         }
         final PsiType defaultType = info.getDefaultType();
         if (!defaultType.equals(type)) {
           final PsiClass defClass = PsiUtil.resolveClassInType(defaultType);
           if (defClass != null && defClass.getName() != null) {
-            sink.accept(new ClassReferenceCompletionItem(defClass));
+            sink.accept(JavaTypeCompletionItem.create(defClass));
           }
         }
       }
@@ -189,7 +189,7 @@ public final class NonImportedClassProvider extends JavaModCompletionItemProvide
 
         if (filter.isAcceptable(psiClass, insertedElement)) {
           if (!inJavaContext) {
-            sink.accept(new ClassReferenceCompletionItem(psiClass));
+            sink.accept(JavaTypeCompletionItem.create(psiClass));
           }
           else {
             Predicate<PsiClass> condition = eachClass ->
@@ -273,7 +273,7 @@ public final class NonImportedClassProvider extends JavaModCompletionItemProvide
     if (name == null) return Collections.emptyList();
     List<ClassReferenceCompletionItem> result = new ArrayList<>();
     if (condition.test(psiClass)) {
-      result.add(new ClassReferenceCompletionItem(psiClass));
+      result.add(JavaTypeCompletionItem.create(psiClass));
     }
     if (withInners) {
       for (PsiClass inner : psiClass.getInnerClasses()) {
