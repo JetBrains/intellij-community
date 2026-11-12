@@ -349,7 +349,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             return
         }
         val lastEntry = entries.last()
-        for ((index, entry) in entries.withIndex()) {
+        for ([index, entry] in entries.withIndex()) {
             when (entry) {
                 is KtEscapeStringTemplateEntry ->
                     addInstruction(PushValueInstruction(DfTypes.referenceConstant(entry.unescapedValue, stringType)))
@@ -613,7 +613,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     else -> null
                 }
                 if (relationType != null) {
-                    val (left, right) = range.left to range.right
+                    val [left, right] = range.left to range.right
                     val leftType = left?.getKotlinType()
                     val rightType = right?.getKotlinType()
                     if (leftType.toDfType() is DfIntegralType && rightType.toDfType() is DfIntegralType) {
@@ -879,7 +879,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(ResultOfInstruction(anchor))
     }
 
-    context(_: KaSession)
     private fun KtExpressionWithLabel.targetLoop(): KtLoopExpression? {
         val label = getTargetLabel() as? KtLabelReferenceExpression
         return if (label == null) {
@@ -1336,7 +1335,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
                 is KtBinaryExpression -> {
                     val op = range.operationReference.getReferencedNameAsName().asString()
-                    val (leftRelation, rightRelation) = when (op) {
+                    val [leftRelation, rightRelation] = when (op) {
                         "..", "rangeTo" -> RelationType.GE to RelationType.LE
                         "..<", "rangeUntil", "until" -> RelationType.GE to RelationType.LT
                         "downTo" -> RelationType.LE to RelationType.GE
@@ -1390,7 +1389,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return { pushUnknown() }
     }
 
-    context(_: KaSession)
     private fun rangeFunction(
         expr: KtForExpression,
         parameterVar: DfaVariableValue,
@@ -1415,7 +1413,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         setOffset(finalOffset)
     }
 
-    context(_: KaSession)
     private inline fun inlinedBlock(element: KtElement, fn: () -> Unit) {
         // Transfer value is pushed to avoid emptying stack beyond this point
         trapTracker.pushTrap(InsideInlinedBlockTrap(element))
@@ -1813,7 +1810,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         var varArgCount = 0
         var varArgType: DfType = DfType.BOTTOM
 
-        for ((argExpr, signature) in functionCall.valueArgumentMapping) {
+        for ([argExpr, signature] in functionCall.valueArgumentMapping) {
             val parameterSymbol = signature.symbol
             val parent = argExpr.parent
             if (parameterSymbol.isVararg && (parent as? KtValueArgument)?.isSpread != true) {
@@ -1968,7 +1965,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(_: KaSession)
     private fun processThisExpression(expr: KtThisExpression) {
         val exprType = expr.getKotlinType()
-        val (varDesc, declType) = KtThisDescriptor.descriptorFromThis(expr)
+        val [varDesc, declType] = KtThisDescriptor.descriptorFromThis(expr)
         if (varDesc != null) {
             addInstruction(PushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
             addImplicitConversion(declType, exprType)
