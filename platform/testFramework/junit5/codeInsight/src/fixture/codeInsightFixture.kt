@@ -2,10 +2,13 @@
 package com.intellij.platform.testFramework.junit5.codeInsight.fixture
 
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.TestDataProvider
@@ -189,6 +192,62 @@ fun codeInsightModuleFixture(
     val codeInsightFixture = codeInsightFixture(projectFixture, pathFixture).dependsOn(moduleFixture)
     initialized(codeInsightFixture.init()) {}
   }
+
+private val SHARED_MODULE_ROOT = Key.create<Path>("codeInsight.shared.module.root")
+
+/**
+ * Creates an opened project with one module of the [moduleTypeId] type for all the tests of a class.
+ *
+ * Declare it in a companion object, and use it with [sharedCodeInsightFixture]:
+ *
+ * ```kotlin
+ * companion object {
+ *   private val projectFixture = sharedCodeInsightProjectFixture()
+ * }
+ *
+ * private val myFixture by sharedCodeInsightFixture(projectFixture)
+ * ```
+ *
+ * The module directory is the content root and the source root of the module. It is not the project directory.
+ * A change of the module or of the project, for example a new source root or a setting, stays for the next test of the class.
+ * When a test creates a `package.json` or a `node_modules` directory, declare the fixture as an instance property.
+ * Then each test gets its own project.
+ */
+@JvmOverloads
+@TestOnly
+fun sharedCodeInsightProjectFixture(moduleTypeId: String = ""): TestFixture<Project> = testFixture("sharedCodeInsightProjectFixture") {
+  val moduleRootFixture = tempPathFixture()
+  val projectFixture = projectFixture(openAfterCreation = true)
+  projectFixture.moduleFixture(moduleRootFixture, addPathToSourceRoot = true, moduleTypeId = moduleTypeId).init()
+  val project = projectFixture.init()
+  project.putUserData(SHARED_MODULE_ROOT, moduleRootFixture.init())
+  initialized(project) {}
+}
+
+/**
+ * Creates a [CodeInsightTestFixture] on the module of [projectFixture]. [projectFixture] must come from [sharedCodeInsightProjectFixture].
+ *
+ * The module directory is the temporary directory of the fixture.
+ * After the test, the fixture deletes the files of the test through the VFS.
+ * Declare the result as an instance property, so that each test gets its own [CodeInsightTestFixture].
+ */
+@TestOnly
+fun sharedCodeInsightFixture(projectFixture: TestFixture<Project>): TestFixture<CodeInsightTestFixture> =
+  codeInsightFixture(projectFixture, sharedModuleRootFixture(projectFixture))
+
+private fun sharedModuleRootFixture(projectFixture: TestFixture<Project>): TestFixture<Path> = testFixture("sharedModuleRootFixture") {
+  val project = projectFixture.init()
+  val root = checkNotNull(project.getUserData(SHARED_MODULE_ROOT)) { "Create the project with sharedCodeInsightProjectFixture()" }
+  initialized(root) {
+    val directory = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root) ?: return@initialized
+    directory.refresh(false, true)
+    writeAction {
+      for (child in directory.children) {
+        child.delete(this)
+      }
+    }
+  }
+}
 
 private fun getTestDataPathString(context: TestContext): String {
   val rootPath = context.findAnnotation(TestDataPath::class.java)?.value?.removePrefix($$"$PROJECT_ROOT/") ?: ""
