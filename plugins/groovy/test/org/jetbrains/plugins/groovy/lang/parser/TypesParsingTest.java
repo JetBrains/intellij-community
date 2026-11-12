@@ -1,102 +1,188 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parser;
 
-public class TypesParsingTest extends GroovyParsingTestCase {
-  @Override
-  public String getTestDataPath() {
-    return super.getTestDataPath() + "types";
-  }
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
-  public void testAnn_def1() { doTest(); }
-  public void testAnn_def2() { doTest(); }
-  public void testAnn_def3() { doTest(); }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyParsingFixtureKt.groovyParsingFixture;
 
-  public void testIdentifierAfterAnnotationMethod() { doTest(); }
+@TestApplication
+public class TypesParsingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GroovyParsingFixture> parsing =
+    groovyParsingFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "parsing/groovy/" + "types");
 
-  public void testDefault1() { doTest(); }
-  public void testDefault2() { doTest(); }
+  @Test
+  public void testAnn_def1() { parsing.get().doTest(); }
+  @Test
+  public void testAnn_def2() { parsing.get().doTest(); }
+  @Test
+  public void testAnn_def3() { parsing.get().doTest(); }
 
-  public void testType1() { doTest(); }
-  public void testType2() { doTest(); }
-  public void testType3() { doTest(); }
-  public void testType4() { doTest(); }
-  public void testType5() { doTest(); }
-  public void testType6() { doTest(); }
-  public void testType7() { doTest(); }
-  public void testType8() { doTest(); }
-  public void testType9() { doTest(); }
-  public void testType10() { doTest(); }
-  public void testType11() { doTest(); }
-  public void testType12() { doTest(); }
-  public void testType13() { doTest(); }
-  public void testType14() { doTest(); }
-  public void testType15() { doTest(); }
-  public void testType16() { doTest(); }
-  public void testType17() { doTest(); }
+  @Test
+  public void testIdentifierAfterAnnotationMethod() { parsing.get().doTest(); }
 
-  public void testIdentifierInsteadOfImplements() { doTest(); }
+  @Test
+  public void testDefault1() { parsing.get().doTest(); }
+  @Test
+  public void testDefault2() { parsing.get().doTest(); }
 
-  public void testInnerEnum() { doTest(); }
+  @Test
+  public void testType1() { parsing.get().doTest(); }
+  @Test
+  public void testType2() { parsing.get().doTest(); }
+  @Test
+  public void testType3() { parsing.get().doTest(); }
+  @Test
+  public void testType4() { parsing.get().doTest(); }
+  @Test
+  public void testType5() { parsing.get().doTest(); }
+  @Test
+  public void testType6() { parsing.get().doTest(); }
+  @Test
+  public void testType7() { parsing.get().doTest(); }
+  @Test
+  public void testType8() { parsing.get().doTest(); }
+  @Test
+  public void testType9() { parsing.get().doTest(); }
+  @Test
+  public void testType10() { parsing.get().doTest(); }
+  @Test
+  public void testType11() { parsing.get().doTest(); }
+  @Test
+  public void testType12() { parsing.get().doTest(); }
+  @Test
+  public void testType13() { parsing.get().doTest(); }
+  @Test
+  public void testType14() { parsing.get().doTest(); }
+  @Test
+  public void testType15() { parsing.get().doTest(); }
+  @Test
+  public void testType16() { parsing.get().doTest(); }
+  @Test
+  public void testType17() { parsing.get().doTest(); }
 
-  public void testNewlineBeforeClassBrace() { doTest(); }
-  public void testNewLineBeforeClassBraceAfterExtends() { doTest(); }
-  public void testNewLineBeforeClassBraceAfterImplements() { doTest(); }
-  public void testNewlineBeforeExtends() { doTest(); }
-  public void testNewLineAfterMethodModifiers() { doTest(); }
-  public void testNewLineAfterLAngleInTypeArgumentList() { doTest(); }
-  public void testNewLineBeforeRAngleInTypeArgumentList() { doTest(); }
-  public void testNewLineBetweenTypeArguments() { doTest(); }
-  public void testNewLineBetweenTypeArgumentsError() { doTest(); }
-  public void testNewLineBetweenExtendsImplements() { doTest(); }
+  @Test
+  public void testIdentifierInsteadOfImplements() { parsing.get().doTest(); }
 
-  public void testStaticInitializer() { doTest(); }
+  @Test
+  public void testInnerEnum() { parsing.get().doTest(); }
 
-  public void testInterfaceWithGroovyDoc() { doTest(); }
+  @Test
+  public void testNewlineBeforeClassBrace() { parsing.get().doTest(); }
+  @Test
+  public void testNewLineBeforeClassBraceAfterExtends() { parsing.get().doTest(); }
+  @Test
+  public void testNewLineBeforeClassBraceAfterImplements() { parsing.get().doTest(); }
+  @Test
+  public void testNewlineBeforeExtends() { parsing.get().doTest(); }
+  @Test
+  public void testNewLineAfterMethodModifiers() { parsing.get().doTest(); }
+  @Test
+  public void testNewLineAfterLAngleInTypeArgumentList() { parsing.get().doTest(); }
+  @Test
+  public void testNewLineBeforeRAngleInTypeArgumentList() { parsing.get().doTest(); }
+  @Test
+  public void testNewLineBetweenTypeArguments() { parsing.get().doTest(); }
+  @Test
+  public void testNewLineBetweenTypeArgumentsError() { parsing.get().doTest(); }
+  @Test
+  public void testNewLineBetweenExtendsImplements() { parsing.get().doTest(); }
 
-  public void testIncorrectParam1() { doTest(); }
-  public void testIncorrectParameter2() { doTest(); }
-  public void testIncorrectParam3() { doTest(); }
+  @Test
+  public void testStaticInitializer() { parsing.get().doTest(); }
 
-  public void testEmptyTypeArgs() { doTest(); }
+  @Test
+  public void testInterfaceWithGroovyDoc() { parsing.get().doTest(); }
 
-  public void testIncompleteConstructor() { doTest(); }
+  @Test
+  public void testIncorrectParam1() { parsing.get().doTest(); }
+  @Test
+  public void testIncorrectParameter2() { parsing.get().doTest(); }
+  @Test
+  public void testIncorrectParam3() { parsing.get().doTest(); }
 
-  public void testWeakKeywordType1() { doTest(); }
+  @Test
+  public void testEmptyTypeArgs() { parsing.get().doTest(); }
 
-  public void testWeakKeywordType2() { doTest(); }
+  @Test
+  public void testIncompleteConstructor() { parsing.get().doTest(); }
 
-  public void testMembers$identifierOnly() { doTest(); }
-  public void testMembers$capitalIdentifierOnly() { doTest(); }
-  public void testMembers$constructorIdentifierOnly() { doTest(); }
-  public void testMembers$modifierListOnly() { doTest(); }
-  public void testMembers$modifierListAndIdentifier() { doTest(); }
-  public void testMembers$modifierListAndCapitalIdentifier() { doTest(); }
-  public void testMembers$modifierListAndConstructorIdentifier() { doTest(); }
-  public void testMembers$modifierListAndPrimitive() { doTest(); }
-  public void testMembers$modifierListAndRefQualified() { doTest(); }
-  public void testMembers$modifierListAndRefTypeArgs() { doTest(); }
-  public void testMembers$modifierListAndTypeParameters() { doTest(); }
-  public void testMembers$modifierListTypeParametersAndIdentifier() { doTest(); }
-  public void testMembers$modifierListTypeParametersAndCapitalIdentifier() { doTest(); }
-  public void testMembers$modifierListTypeParametersAndConstructorIdentifier() { doTest(); }
-  public void testMembers$modifierListTypeParametersAndPrimitive() { doTest(); }
-  public void testMembers$modifierListTypeParametersAndRefQualified() { doTest(); }
-  public void testMembers$modifierListTypeParametersAndRefTypeArgs() { doTest(); }
-  public void testMembers$modifierListTypeParametersIdentifierAndLeftParen() { doTest(); }
-  public void testMembers$modifierListTypeParametersCapitalIdentifierAndLeftParen() { doTest(); }
-  public void testMembers$modifierListTypeParametersConstructorIdentifierAndLeftParen() { doTest(); }
-  public void testMembers$capitalIdentifierAndLeftParen() { doTest(); }
-  public void testMembers$constructorIdentifierAndLeftParen() { doTest(); }
-  public void testMembers$identifierAndLeftParen() { doTest(); }
-  public void testMembers$constructorAfterInnerClass() { doTest(); }
-  public void testMembers$varField1() { doTest(); }
-  public void testMembers$varField2() { doTest(); }
-  public void testMembers$varField3() { doTest(); }
-  public void testMembers$varField4() { doTest(); }
-  public void testMembers$varField5() { doTest(); }
-  public void testMembers$varField6() { doTest(); }
-  public void testMembers$varField7() { doTest(); }
-  public void testMembers$varField8() { doTest(); }
+  @Test
+  public void testWeakKeywordType1() { parsing.get().doTest(); }
 
-  public void testLowercaseTypeElement() { doTest(); }
+  @Test
+  public void testWeakKeywordType2() { parsing.get().doTest(); }
+
+  @Test
+  public void testMembers$identifierOnly() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$capitalIdentifierOnly() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$constructorIdentifierOnly() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListOnly() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListAndIdentifier() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListAndCapitalIdentifier() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListAndConstructorIdentifier() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListAndPrimitive() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListAndRefQualified() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListAndRefTypeArgs() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListAndTypeParameters() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListTypeParametersAndIdentifier() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListTypeParametersAndCapitalIdentifier() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListTypeParametersAndConstructorIdentifier() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListTypeParametersAndPrimitive() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListTypeParametersAndRefQualified() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListTypeParametersAndRefTypeArgs() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListTypeParametersIdentifierAndLeftParen() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListTypeParametersCapitalIdentifierAndLeftParen() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$modifierListTypeParametersConstructorIdentifierAndLeftParen() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$capitalIdentifierAndLeftParen() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$constructorIdentifierAndLeftParen() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$identifierAndLeftParen() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$constructorAfterInnerClass() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$varField1() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$varField2() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$varField3() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$varField4() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$varField5() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$varField6() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$varField7() { parsing.get().doTest(); }
+  @Test
+  public void testMembers$varField8() { parsing.get().doTest(); }
+
+  @Test
+  public void testLowercaseTypeElement() { parsing.get().doTest(); }
 }

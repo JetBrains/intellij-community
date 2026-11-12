@@ -1,73 +1,114 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parser;
 
-public class SwitchExpressionParsingTest extends GroovyParsingTestCase {
-  @Override
-  public String getTestDataPath() {
-    return super.getTestDataPath() + "statements/switch/expression";
-  }
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
-  public void testAsInCompiler1() { doTest(); }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyParsingFixtureKt.groovyParsingFixture;
 
-  public void testAsInCompiler2() { doTest(); }
+@TestApplication
+public class SwitchExpressionParsingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GroovyParsingFixture> parsing =
+    groovyParsingFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "parsing/groovy/" + "statements/switch/expression");
 
-  public void testAsInCompiler3() { doTest(); }
+  @Test
+  public void testAsInCompiler1() { parsing.get().doTest(); }
 
-  public void testAsInCompiler4() { doTest(); }
+  @Test
+  public void testAsInCompiler2() { parsing.get().doTest(); }
 
-  public void testAsInCompiler5() { doTest(); }
+  @Test
+  public void testAsInCompiler3() { parsing.get().doTest(); }
 
-  public void testAsInCompiler6() { doTest(); }
+  @Test
+  public void testAsInCompiler4() { parsing.get().doTest(); }
 
-  public void testAsInCompiler7() { doTest(); }
+  @Test
+  public void testAsInCompiler5() { parsing.get().doTest(); }
 
-  public void testAsInCompiler8() { doTest(); }
+  @Test
+  public void testAsInCompiler6() { parsing.get().doTest(); }
 
-  public void testAsInCompiler9() { doTest(); }
+  @Test
+  public void testAsInCompiler7() { parsing.get().doTest(); }
 
-  public void testAsInCompiler10() { doTest(); }
+  @Test
+  public void testAsInCompiler8() { parsing.get().doTest(); }
 
-  public void testAsInCompiler11() { doTest(); }
+  @Test
+  public void testAsInCompiler9() { parsing.get().doTest(); }
 
-  public void testAsInCompiler12() { doTest(); }
+  @Test
+  public void testAsInCompiler10() { parsing.get().doTest(); }
 
-  public void testAsInCompiler13() { doTest(); }
+  @Test
+  public void testAsInCompiler11() { parsing.get().doTest(); }
 
-  public void testAsInCompiler14() { doTest(); }
+  @Test
+  public void testAsInCompiler12() { parsing.get().doTest(); }
 
-  public void testAsInCompiler15() { doTest(); }
+  @Test
+  public void testAsInCompiler13() { parsing.get().doTest(); }
 
-  public void testAsInCompiler16() { doTest(); }
+  @Test
+  public void testAsInCompiler14() { parsing.get().doTest(); }
 
-  public void testAsInCompiler17() { doTest(); }
+  @Test
+  public void testAsInCompiler15() { parsing.get().doTest(); }
 
-  public void testAsInCompiler18() { doTest(); }
+  @Test
+  public void testAsInCompiler16() { parsing.get().doTest(); }
 
-  public void testAsInCompiler19() { doTest(); }
+  @Test
+  public void testAsInCompiler17() { parsing.get().doTest(); }
 
-  public void testAsInCompiler20() { doTest(); }
+  @Test
+  public void testAsInCompiler18() { parsing.get().doTest(); }
 
-  public void testAsInCompiler21() { doTest(); }
+  @Test
+  public void testAsInCompiler19() { parsing.get().doTest(); }
 
-  public void testAsInCompiler22() { doTest(); }
+  @Test
+  public void testAsInCompiler20() { parsing.get().doTest(); }
 
-  public void testAsInCompilerFail1() { doTest(); }
+  @Test
+  public void testAsInCompiler21() { parsing.get().doTest(); }
 
-  public void testAsInCompilerFail2() { doTest(); }
+  @Test
+  public void testAsInCompiler22() { parsing.get().doTest(); }
 
-  public void testAsInCompilerFail3() { doTest(); }
+  @Test
+  public void testAsInCompilerFail1() { parsing.get().doTest(); }
 
-  public void testCustom1() { doTest(); }
+  @Test
+  public void testAsInCompilerFail2() { parsing.get().doTest(); }
 
-  public void testCustom2() { doTest(); }
+  @Test
+  public void testAsInCompilerFail3() { parsing.get().doTest(); }
 
-  public void testCustom3() { doTest(); }
+  @Test
+  public void testCustom1() { parsing.get().doTest(); }
 
-  public void testCustom4() { doTest(); }
+  @Test
+  public void testCustom2() { parsing.get().doTest(); }
 
-  public void testCustom5() { doTest(); }
+  @Test
+  public void testCustom3() { parsing.get().doTest(); }
 
-  public void testCustom6() { doTest(); }
+  @Test
+  public void testCustom4() { parsing.get().doTest(); }
 
-  public void testCustom7() { doTest(); }
+  @Test
+  public void testCustom5() { parsing.get().doTest(); }
+
+  @Test
+  public void testCustom6() { parsing.get().doTest(); }
+
+  @Test
+  public void testCustom7() { parsing.get().doTest(); }
 }

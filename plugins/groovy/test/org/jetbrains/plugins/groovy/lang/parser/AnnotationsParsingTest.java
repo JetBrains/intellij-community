@@ -1,55 +1,87 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parser;
 
-public class AnnotationsParsingTest extends GroovyParsingTestCase {
-  public void testAnn1() { doTest(); }
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
-  public void testAnn2() { doTest(); }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyParsingFixtureKt.groovyParsingFixture;
 
-  public void testAnn3() { doTest(); }
+@TestApplication
+public class AnnotationsParsingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GroovyParsingFixture> parsing =
+    groovyParsingFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "parsing/groovy/" + "annotations");
 
-  public void testAnn4() { doTest(); }
+  @Test
+  public void testAnn1() { parsing.get().doTest(); }
 
-  public void testAnn5() { doTest(); }
+  @Test
+  public void testAnn2() { parsing.get().doTest(); }
 
-  public void testAnn6() { doTest(); }
+  @Test
+  public void testAnn3() { parsing.get().doTest(); }
 
-  public void testAnn7() { doTest(); }
+  @Test
+  public void testAnn4() { parsing.get().doTest(); }
 
-  public void testClassLiteral() { doTest(); }
+  @Test
+  public void testAnn5() { parsing.get().doTest(); }
 
-  public void testImportAnn() { doTest(); }
+  @Test
+  public void testAnn6() { parsing.get().doTest(); }
 
-  public void testPackageAnn() { doTest(); }
+  @Test
+  public void testAnn7() { parsing.get().doTest(); }
 
-  public void testDefAttribute() { doTest(); }
+  @Test
+  public void testClassLiteral() { parsing.get().doTest(); }
 
-  public void testLineFeedAfterRef() { doTest(); }
+  @Test
+  public void testImportAnn() { parsing.get().doTest(); }
 
-  public void testKeywordsAttributes() { doTest(); }
+  @Test
+  public void testPackageAnn() { parsing.get().doTest(); }
 
-  public void testMess() { doTest(); }
+  @Test
+  public void testDefAttribute() { parsing.get().doTest(); }
 
-  public void testTypeParameters() { doTest(); }
+  @Test
+  public void testLineFeedAfterRef() { parsing.get().doTest(); }
 
-  public void testUnfinishedReference() { doTest(); }
+  @Test
+  public void testKeywordsAttributes() { parsing.get().doTest(); }
 
-  public void testEmptyArrayValue() { doTest(); }
+  @Test
+  public void testMess() { parsing.get().doTest(); }
 
-  public void testTrailingCommaInArrayValue() { doTest(); }
+  @Test
+  public void testTypeParameters() { parsing.get().doTest(); }
 
-  public void testMethodParameters() { doTest(); }
+  @Test
+  public void testUnfinishedReference() { parsing.get().doTest(); }
 
-  public void testTypeParametersInClass() { doTest(); }
+  @Test
+  public void testEmptyArrayValue() { parsing.get().doTest(); }
 
-  public void testTypeParametersInClassRespectNewLine() { doTest(); }
+  @Test
+  public void testTrailingCommaInArrayValue() { parsing.get().doTest(); }
 
-  public void testTypeParametersInMethod() { doTest(); }
+  @Test
+  public void testMethodParameters() { parsing.get().doTest(); }
 
-  public void testTypeParametersInMethodRespectNewLine() { doTest(); }
+  @Test
+  public void testTypeParametersInClass() { parsing.get().doTest(); }
 
-  @Override
-  public final String getTestDataPath() {
-    return super.getTestDataPath() + "annotations";
-  }
+  @Test
+  public void testTypeParametersInClassRespectNewLine() { parsing.get().doTest(); }
+
+  @Test
+  public void testTypeParametersInMethod() { parsing.get().doTest(); }
+
+  @Test
+  public void testTypeParametersInMethodRespectNewLine() { parsing.get().doTest(); }
 }

@@ -1,48 +1,79 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parser
 
-class PatternVariableInstanceofParsingTest : GroovyParsingTestCase() {
-  override fun getTestDataPath() = super.getTestDataPath() + "expressions/instanceof"
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.plugins.groovy.util.TestUtils
+import org.junit.jupiter.api.Test
 
-  fun testNoPatternVariable() = doTest()
+@TestApplication
+class PatternVariableInstanceofParsingTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  fun testSimple() = doTest()
+  private val parsing by groovyParsingFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "parsing/groovy/" + "expressions/instanceof")
 
-  fun testNewLine() = doTest()
+  @Test
+  fun testNoPatternVariable(): Unit = parsing.doTest()
 
-  fun testNewLineRespectDotCall() = doTest()
+  @Test
+  fun testSimple(): Unit = parsing.doTest()
 
-  fun testNewLineRespectMemberAccess() = doTest()
+  @Test
+  fun testNewLine(): Unit = parsing.doTest()
 
-  fun testNewLineRespectKeyword() = doTest()
+  @Test
+  fun testNewLineRespectDotCall(): Unit = parsing.doTest()
 
-  fun testNewLineRespectSafeMemberAccess() = doTest()
+  @Test
+  fun testNewLineRespectMemberAccess(): Unit = parsing.doTest()
 
-  fun testNewLineRespectBinaryExpression() = doTest()
+  @Test
+  fun testNewLineRespectKeyword(): Unit = parsing.doTest()
 
-  fun testNewLineRespectAssignmentStatement() = doTest()
+  @Test
+  fun testNewLineRespectSafeMemberAccess(): Unit = parsing.doTest()
 
-  fun testNewLineInsideParentheses() = doTest()
+  @Test
+  fun testNewLineRespectBinaryExpression(): Unit = parsing.doTest()
 
-  fun testNewLineInsideIfStatement() = doTest()
+  @Test
+  fun testNewLineRespectAssignmentStatement(): Unit = parsing.doTest()
 
-  fun testNewLineInsideWhileStatement() = doTest()
+  @Test
+  fun testNewLineInsideParentheses(): Unit = parsing.doTest()
 
-  fun testNewLineInsideForStatement() = doTest()
+  @Test
+  fun testNewLineInsideIfStatement(): Unit = parsing.doTest()
 
-  fun testNewLineInsideSwitchStatement() = doTest()
+  @Test
+  fun testNewLineInsideWhileStatement(): Unit = parsing.doTest()
 
-  fun testNewLineInsideDoWhileStatement() = doTest()
+  @Test
+  fun testNewLineInsideForStatement(): Unit = parsing.doTest()
 
-  fun testNewLineInsideSynchronizedStatement() = doTest()
+  @Test
+  fun testNewLineInsideSwitchStatement(): Unit = parsing.doTest()
 
-  fun testNewLineInsideTryWithResources() = doTest()
+  @Test
+  fun testNewLineInsideDoWhileStatement(): Unit = parsing.doTest()
 
-  fun testAfterDot() = doTest()
+  @Test
+  fun testNewLineInsideSynchronizedStatement(): Unit = parsing.doTest()
 
-  fun testAfterSafeDot() = doTest()
+  @Test
+  fun testNewLineInsideTryWithResources(): Unit = parsing.doTest()
 
-  fun testAfterParentheses() = doTest()
+  @Test
+  fun testAfterDot(): Unit = parsing.doTest()
 
-  fun testAfterComments() = doTest()
+  @Test
+  fun testAfterSafeDot(): Unit = parsing.doTest()
+
+  @Test
+  fun testAfterParentheses(): Unit = parsing.doTest()
+
+  @Test
+  fun testAfterComments(): Unit = parsing.doTest()
 }

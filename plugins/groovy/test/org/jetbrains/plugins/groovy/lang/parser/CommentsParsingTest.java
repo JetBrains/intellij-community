@@ -1,23 +1,39 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parser;
 
-public class CommentsParsingTest extends GroovyParsingTestCase {
-  @Override
-  public String getTestDataPath() {
-    return super.getTestDataPath() + "comments";
-  }
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
-  public void testBrown() { doTest(); }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyParsingFixtureKt.groovyParsingFixture;
 
-  public void testError1205() { doTest(); }
+@TestApplication
+public class CommentsParsingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GroovyParsingFixture> parsing =
+    groovyParsingFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "parsing/groovy/" + "comments");
 
-  public void testMax() { doTest(); }
+  @Test
+  public void testBrown() { parsing.get().doTest(); }
 
-  public void testNls1() { doTest(); }
+  @Test
+  public void testError1205() { parsing.get().doTest(); }
 
-  public void testNls2() { doTest(); }
+  @Test
+  public void testMax() { parsing.get().doTest(); }
 
-  public void testRocher3() { doTest(); }
+  @Test
+  public void testNls1() { parsing.get().doTest(); }
 
-  public void testAfterIdentifier() { doTest(); }
+  @Test
+  public void testNls2() { parsing.get().doTest(); }
+
+  @Test
+  public void testRocher3() { parsing.get().doTest(); }
+
+  @Test
+  public void testAfterIdentifier() { parsing.get().doTest(); }
 }
