@@ -70,7 +70,7 @@ public final class DebuggerTreeNodeExpression {
       if (type != null) {
         if (type instanceof PsiClassType classType) {
           PsiClass psiClass = classType.resolve();
-          if (psiClass != null && (psiClass == thisClass || psiClass.isInheritor(thisClass, true))) {
+          if (psiClass != null && (psiClass.isEquivalentTo(thisClass) || psiClass.isInheritor(thisClass, true))) {
             castNeeded = false;
           }
         }

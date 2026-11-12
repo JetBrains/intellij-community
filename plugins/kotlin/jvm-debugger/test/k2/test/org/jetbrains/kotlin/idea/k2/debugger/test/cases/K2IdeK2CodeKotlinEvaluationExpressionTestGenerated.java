@@ -43,6 +43,11 @@ public class K2IdeK2CodeKotlinEvaluationExpressionTestGenerated extends Abstract
         runTest("../testData/evaluationExpression/genericCastKeepsStarProjections.kt");
     }
 
+    @TestMetadata("mapEntry.kt")
+    public void testMapEntry() throws Exception {
+        runTest("../testData/evaluationExpression/mapEntry.kt");
+    }
+
     @TestMetadata("redundantCastOnCollectionElement.kt")
     public void testRedundantCastOnCollectionElement() throws Exception {
         runTest("../testData/evaluationExpression/redundantCastOnCollectionElement.kt");
@@ -56,6 +61,11 @@ public class K2IdeK2CodeKotlinEvaluationExpressionTestGenerated extends Abstract
     @TestMetadata("redundantCastOnSuperClassField.kt")
     public void testRedundantCastOnSuperClassField() throws Exception {
         runTest("../testData/evaluationExpression/redundantCastOnSuperClassField.kt");
+    }
+
+    @TestMetadata("setElement.kt")
+    public void testSetElement() throws Exception {
+        runTest("../testData/evaluationExpression/setElement.kt");
     }
 
     @TestMetadata("strictSubtypeKeepsCast.kt")

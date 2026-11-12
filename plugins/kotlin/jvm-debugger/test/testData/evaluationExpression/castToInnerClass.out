@@ -1,7 +1,7 @@
-LineBreakpoint created at castToInnerClass.kt:8
+LineBreakpoint created at castToInnerClass.kt:13
 Run Java
 Connected to the target VM
-castToInnerClass.kt:8
+castToInnerClass.kt:13
 Disconnected from the target VM
 
 Process finished with exit code 0
