@@ -81,6 +81,10 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <kotlinCompilerReferenceIndexStorageProvider
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.jps.JpsBtaKotlinCompilerReferenceIndexStorageProvider"
+            id="JpsBtaKotlinCompilerReferenceIndexStorageProvider"
+            order="after BazelKotlinCompilerReferenceIndexStorageProvider, before BtaKotlinCompilerReferenceIndexStorageProvider"/>
+    <kotlinCompilerReferenceIndexStorageProvider
             implementation="org.jetbrains.kotlin.idea.search.refIndex.bta.BtaKotlinCompilerReferenceIndexStorageProvider"
             id="BtaKotlinCompilerReferenceIndexStorageProvider"
             order="before JpsKotlinCompilerReferenceIndexStorageProvider"/>

@@ -50,7 +50,9 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//plugins/kotlin/compiler-reference-index",
+        "//plugins/kotlin/base/compiler-configuration",
         "//plugins/kotlin/compiler-reference-index/maven",
         "//plugins/maven",
         "//platform/projectModel-api:projectModel",
@@ -77,6 +79,7 @@ jvm_library(
         "//plugins/kotlin/fir/tests:tests_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//platform/scratch/plugin",
+        "//jps/jps-builders:build",
     ],
 )
 ### auto-generated section `build intellij.kotlin.compilerReferenceIndex.tests` end
