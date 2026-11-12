@@ -115,14 +115,9 @@ public class GitExecutableDetector {
    */
   public static @NotNull GitExecutable getGitExecutable(@Nullable Project project, @NotNull String pathToGit, @Nullable Path gitDirectory) {
     Path pathToGitParsed = Path.of(pathToGit);
-    var eel = GitEelExecutableDetectionHelper.tryGetEel(project, pathToGitParsed.isAbsolute() ? pathToGitParsed : gitDirectory);
-
-    if (eel != null) {
-      if (pathToGitParsed.isAbsolute()) {
-        return new GitExecutable.Eel(eel, EelNioBridgeServiceKt.asEelPath(pathToGitParsed));
-      }
-      return new GitExecutable.Eel(eel, pathToGit);
-    }
+    GitExecutable eelExecutable =
+      GitEelExecutableDetectionHelper.tryGetEelExecutable(project, pathToGit, pathToGitParsed.isAbsolute() ? pathToGitParsed : gitDirectory);
+    if (eelExecutable != null) return eelExecutable;
 
     WslPath wslPath = WslPath.parseWindowsUncPath(pathToGit);
     if (wslPath != null) {
