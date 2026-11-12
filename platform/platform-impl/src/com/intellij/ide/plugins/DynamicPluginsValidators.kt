@@ -5,7 +5,6 @@ import com.intellij.DynamicBundle.LanguageBundleEP
 import com.intellij.ide.plugins.DynamicPluginsValidators.IssueReporter
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UIThemeProvider
-import com.intellij.openapi.actionSystem.impl.canUnloadActionGroup
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.impl.BundledColorSchemeEPName
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
@@ -170,11 +169,10 @@ internal object DynamicPluginsValidators {
 
   fun IssueReporter.validateActionsCanBeUnloaded(descriptor: IdeaPluginDescriptorImpl) {
     for (action in descriptor.actions) {
-      val element = action.element
       val elementName = action.name
       val canUnload = elementName == ActionElement.ActionElementName.action ||
                       elementName == ActionElement.ActionElementName.reference ||
-                      (elementName == ActionElement.ActionElementName.group && canUnloadActionGroup(element))
+                      elementName == ActionElement.ActionElementName.group
       if (!canUnload) {
         reportIssue(DynamicReconfigurationIsNotPossibleReason.of(
           "${descriptor.shortLogDescription} cannot be dynamically unloaded because of the action element $action",

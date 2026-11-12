@@ -316,6 +316,28 @@ class DynamicPluginsTest {
   }
 
   @Test
+  fun unloadGroupWithoutId() {
+    val disposable = loadPluginWithText(plugin {
+      dependsIntellijModulesLang()
+      actions = """
+          <group id="Foo">
+            <group>
+              <action id="foo.bar" class="${MyAction::class.java.name}"/>
+            </group>
+          </group>
+          <group>
+            <action id="foo.bar2" class="${MyAction2::class.java.name}"/>
+          </group>"""
+    })
+    assertThat(ActionManager.getInstance().getAction("foo.bar")).isNotNull()
+    assertThat(ActionManager.getInstance().getAction("foo.bar2")).isNotNull()
+    Disposer.dispose(disposable)
+    assertThat(ActionManager.getInstance().getAction("foo.bar")).isNull()
+    assertThat(ActionManager.getInstance().getAction("foo.bar2")).isNull()
+    assertThat(ActionManager.getInstance().getAction("Foo")).isNull()
+  }
+
+  @Test
   fun unloadActionOverride() {
     val disposable = loadPluginWithText(plugin {
       dependsIntellijModulesLang()

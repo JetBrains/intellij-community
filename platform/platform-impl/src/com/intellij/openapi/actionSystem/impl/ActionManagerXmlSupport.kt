@@ -332,18 +332,6 @@ internal fun getReferenceActionId(element: XmlElement): String? {
   return element.attributes.get(REF_ATTR_NAME) ?: element.attributes.get(ID_ATTR_NAME)
 }
 
-internal fun canUnloadActionGroup(element: XmlElement): Boolean {
-  if (element.attributes[ID_ATTR_NAME] == null) {
-    return false
-  }
-  for (child in element.children) {
-    if (child.name == GROUP_ELEMENT_NAME && !canUnloadActionGroup(child)) {
-      return false
-    }
-  }
-  return true
-}
-
 internal fun updateHandlers(action: Any?) {
   if (action is EditorAction) {
     action.clearDynamicHandlersCache()

@@ -32,6 +32,7 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.Act
 import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.ActionElementGroup
 import com.intellij.platform.pluginSystem.parser.impl.elements.ActionElement.ActionElementName
 import com.intellij.util.xml.dom.XmlElement
+import java.util.IdentityHashMap
 import java.util.ResourceBundle
 import java.util.concurrent.CancellationException
 
@@ -57,7 +58,8 @@ internal class ActionPluginRegistrar {
     unregisterAction: (String) -> Unit,
     replaceAction: (String, AnAction) -> Unit,
   ) {
-    unloadActionsImpl(module = module,
+    unloadActionsImpl(state = state,
+                      module = module,
                       actionRegistrar = actionRegistrar,
                       unregisterAction = unregisterAction,
                       replaceAction = replaceAction)
@@ -69,6 +71,8 @@ private class ActionPluginRegistrarState {
   // ids removed via <unregister>; unlike prohibited ids they stay open for later re-registration
   private val unregisteredActionIds = HashSet<String>()
   private var anonymousGroupIdCounter = 0
+  // a `<group>` without an id gets a generated id at load; the unload path looks it up by the element
+  private val anonymousGroupIds = IdentityHashMap<XmlElement, String>()
 
   fun rememberNotRegisteredInternalActionId(id: String) {
     notRegisteredInternalActionIds.add(id)
@@ -82,7 +86,13 @@ private class ActionPluginRegistrarState {
 
   fun wasActionUnregistered(id: String): Boolean = unregisteredActionIds.contains(id)
 
-  fun nextAnonymousGroupId(): String = "<anonymous-group-${anonymousGroupIdCounter++}>"
+  fun registerAnonymousGroupId(element: XmlElement): String {
+    val id = "<anonymous-group-${anonymousGroupIdCounter++}>"
+    anonymousGroupIds.put(element, id)
+    return id
+  }
+
+  fun removeAnonymousGroupId(element: XmlElement): String? = anonymousGroupIds.remove(element)
 }
 
 private fun registerActionsImpl(
@@ -495,7 +505,7 @@ private fun processGroupElement(
     }
 
     @Suppress("NAME_SHADOWING")
-    val id = id ?: state.nextAnonymousGroupId()
+    val id = id ?: state.registerAnonymousGroupId(element)
     val popup = element.attributes.get("popup")
     if (popup != null) {
       group.isPopup = popup.toBoolean()
@@ -961,6 +971,7 @@ private fun processReferenceElement(
 }
 
 private fun unloadActionsImpl(
+  state: ActionPluginRegistrarState,
   module: IdeaPluginDescriptorImpl,
   actionRegistrar: PostInitActionRegistrar,
   unregisterAction: (String) -> Unit,
@@ -972,7 +983,7 @@ private fun unloadActionsImpl(
     val element = descriptor.element
     when (descriptor.name) {
       ActionElementName.action -> unloadActionElement(element, actionRegistrar, unregisterAction, replaceAction)
-      ActionElementName.group -> unloadGroupElement(element, actionRegistrar, unregisterAction, replaceAction)
+      ActionElementName.group -> unloadGroupElement(element, state, actionRegistrar, unregisterAction, replaceAction)
       ActionElementName.reference -> {
         val actionId = getReferenceActionId(element)
         // the reversed walk unregisters an action of this module, and removes it from its groups, before an earlier reference to it
@@ -1002,20 +1013,24 @@ private fun unloadActionsImpl(
 
 private fun unloadGroupElement(
   element: XmlElement,
+  state: ActionPluginRegistrarState,
   actionRegistrar: PostInitActionRegistrar,
   unregisterAction: (String) -> Unit,
   replaceAction: (String, AnAction) -> Unit,
 ) {
-  val id = element.attributes.get(ID_ATTR_NAME) ?: throw IllegalStateException("Cannot unload groups with no ID")
+  val id = element.attributes.get(ID_ATTR_NAME) ?: state.removeAnonymousGroupId(element)
   for (groupChild in element.children) {
     if (groupChild.name == ACTION_ELEMENT_NAME) {
       unloadActionElement(groupChild, actionRegistrar, unregisterAction, replaceAction)
     }
     else if (groupChild.name == GROUP_ELEMENT_NAME) {
-      unloadGroupElement(groupChild, actionRegistrar, unregisterAction, replaceAction)
+      unloadGroupElement(groupChild, state, actionRegistrar, unregisterAction, replaceAction)
     }
   }
-  unregisterAction(id)
+  // an internal group that was skipped at load has no id to unregister
+  if (id != null) {
+    unregisterAction(id)
+  }
 }
 
 private fun unloadActionElement(
