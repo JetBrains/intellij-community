@@ -11,6 +11,7 @@ object WindowsEnvVariables {
   val applicationData: String = EnvironmentUtil.getValue("APPDATA").toString()
   val localApplicationData: String = EnvironmentUtil.getValue("LOCALAPPDATA").toString()
   val userProfile: String = EnvironmentUtil.getValue("USERPROFILE").toString()
+  val programData: String? = EnvironmentUtil.getValue("ProgramData")
 
   fun expandPath(path: String): String? =
     RunConfigurationEnvironmentUtils.expandVariables("%", "%", path, EnvironmentUtil::getValue, false, null)

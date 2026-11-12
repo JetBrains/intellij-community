@@ -14,6 +14,7 @@ import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersio
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.VSParser
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.VSHiveDetourFileNotFoundException
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.VSPossibleVersionsEnumerator
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.VSProductName
 import com.intellij.ide.startup.importSettings.ui.representation.TransferSettingsRightPanelChooser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Messages
@@ -23,6 +24,7 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 import kotlin.time.Duration
@@ -41,7 +43,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
   private val vsEnumerator = VSPossibleVersionsEnumerator()
 
   override fun getIdeVersions(skipIds: List<String>): List<BaseIdeVersion> {
-    var speedResult = ""
+    var speedResult: @NonNls String = ""
 
     val badVersions = mutableListOf<FailedIdeVersion>()
     val accessibleVSInstallations = vsEnumerator.get().mapNotNull { hive ->
@@ -57,11 +59,12 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
 
       speedResult += "START $instanceIdForIdeVersion ---------------------------\n" // NON-NLS
 
+      val productName = hive.productName
       val name = if (System.getProperty("trl.transfer.debug")?.toBoolean() == true) {
-        "${hive.presentationString.replace("Visual Studio", "VS")} ${hive.hiveString}"
+        "${productName.text.replace("Visual Studio", "VS")} ${hive.hiveString}"
       }
       else {
-        hive.presentationString
+        productName.text
       }
 
       val failedIde = FailedIdeVersion(
@@ -111,7 +114,10 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
       val subNameTime = timeFn()
       val subName = StringBuilder().apply {
         try {
-          append(hive.edition ?: "")
+          when (productName) {
+            is VSProductName.InstallerTitle -> Unit
+            is VSProductName.FromVersion -> append(hive.edition ?: "")
+          }
           append(if (hive.isolation?.isPreview == true) " Preview" else "")
         }
         catch (_: Throwable) {
@@ -171,7 +177,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
       )
 
       val res4 = convertTimeFn(timeFn() - start)
-      speedResult += "${hive.hiveString} $res4\n\n"
+      speedResult += "${hive.hiveString} $res4\n\n" // NON-NLS
       l
     }
 
