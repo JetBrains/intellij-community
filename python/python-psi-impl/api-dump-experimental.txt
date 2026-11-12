@@ -235,6 +235,3 @@ f:com.jetbrains.python.psi.types.PyTypeUtilKt
 - showIntroduceTargetChooser(com.jetbrains.python.refactoring.introduce.IntroduceOperation,com.intellij.openapi.editor.Editor,java.util.List,java.util.function.Consumer):V
 - showOccurrencesChooser(com.jetbrains.python.refactoring.introduce.IntroduceOperation,com.intellij.openapi.editor.Editor,java.util.function.Consumer):V
 - showPyInlineFunctionDialog(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.jetbrains.python.psi.PyFunction,com.intellij.psi.PsiReference):V
-f:com.jetbrains.python.sdk.PythonSdkUtil
-- *s:getAllSdks(com.intellij.openapi.project.Project):java.util.List
-- *s:getAllSdks(com.jetbrains.python.project.PyProject):java.util.List

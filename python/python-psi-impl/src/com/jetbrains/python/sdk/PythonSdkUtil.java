@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,7 +10,6 @@ import com.intellij.python.sdk.backend.PythonEnvironmentExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterKt;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.jetbrains.python.project.PyProject;
 import com.jetbrains.python.psi.resolve.MainPythonSdkKt;
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -38,21 +36,11 @@ public final class PythonSdkUtil {
   }
 
   /**
-   * @deprecated Use {@link #getAllSdks(Project)} or {@link #getAllSdks(PyProject)}
+   * @deprecated Do not use SDK, it will be dropped soon
    */
   @Deprecated(forRemoval = true)
   public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks() {
     return com.jetbrains.python.sdk.legacy.PythonSdkUtil.getAllSdks();
-  }
-
-  @ApiStatus.Experimental
-  public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks(@NotNull Project project) {
-    return com.jetbrains.python.sdk.legacy.PythonSdkUtil.getAllSdks(project);
-  }
-
-  @ApiStatus.Experimental
-  public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks(@NotNull PyProject pyProject) {
-    return com.jetbrains.python.sdk.legacy.PythonSdkUtil.getAllSdks(pyProject);
   }
 
   /**
@@ -61,8 +49,7 @@ public final class PythonSdkUtil {
    *
    * @deprecated Use the interpreter of the Python project, {@code PyProject.getInterpreter}.
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
+  @Deprecated(forRemoval = true)
   public static @Nullable Sdk findPythonSdk(@Nullable Module module) {
     return module == null ? null : MainPythonSdkKt.pythonSdkIfReady(module);
   }

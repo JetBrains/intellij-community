@@ -3,7 +3,6 @@ com/jetbrains/python/codeInsight/DataclassParameterArgumentMapping
 com/jetbrains/python/codeInsight/controlflow/PyDataFlow
 com/jetbrains/python/codeInsight/controlflow/Reachability
 com/jetbrains/python/codeInsight/typing/PyTypingTypeProvider$Context
-com/jetbrains/python/project/PyProject
 com/jetbrains/python/psi/impl/stubs/PyDataclassMetadata
 com/jetbrains/python/psi/types/PyExpectedVariance
 com/jetbrains/python/psi/types/PyNarrowedType
