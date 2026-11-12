@@ -55,6 +55,8 @@ import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.POINT
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGRESS_REPORT_MIN_SIZE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGRESS_REPORT_OFF_PROGRESS
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGRESS_REPORT_OFF_STATE
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STRING
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STRING_OFF_LEN
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BG_TAG
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BG_VAL
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BLINK
@@ -239,6 +241,7 @@ internal class GhosttyTerminalEmulator(
   private var scratchEncode: MemorySegment = scratchArena.allocate(128L)  // grows on OUT_OF_SPACE
   private val scratchEncodeLen: MemorySegment = scratchArena.allocate(C_LONG)
   private var scratchKeyText: MemorySegment = scratchArena.allocate(64L)  // grows on demand (IME strings)
+  private val scratchKeyTextString: MemorySegment = scratchArena.allocate(STRING) // GhosttyString over scratchKeyText
   private val scratchMousePosition: MemorySegment = scratchArena.allocate(GhosttyLayouts.MOUSE_POSITION)
   private val scratchMouseSize: MemorySegment = scratchArena.allocate(GhosttyLayouts.MOUSE_ENCODER_SIZE_BYTES)
 
@@ -763,7 +766,9 @@ internal class GhosttyTerminalEmulator(
       scratchKeyText = scratchArena.allocate(bytes.size.toLong())
     }
     MemorySegment.copy(bytes, 0, scratchKeyText, C_BYTE, 0L, bytes.size)
-    LibGhosttyVt.keyEventSetUtf8(keyEvent, scratchKeyText, bytes.size.toLong()).requireSuccess("ghostty_key_event_set_utf8")
+    scratchKeyTextString.set(C_PTR, 0L, scratchKeyText)
+    scratchKeyTextString.set(C_LONG, STRING_OFF_LEN, bytes.size.toLong())
+    LibGhosttyVt.keyEventSetUtf8(keyEvent, scratchKeyTextString).requireSuccess("ghostty_key_event_set_utf8")
   }
 
   private fun modsBits(modifiers: Set<TerminalInputModifier>): Short {

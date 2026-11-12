@@ -226,9 +226,12 @@ internal object LibGhosttyVt {
   fun keyEventSetConsumedMods(event: MemorySegment, mods: Short): GhosttyResult =
     GhosttyResult.of(KEY_EVENT_SET_CONSUMED_MODS.invokeExact(event, mods) as Int)
 
-  /** `ghostty_key_event_set_utf8`: set the layout-produced text; the event borrows [utf8] until re-set. */
-  fun keyEventSetUtf8(event: MemorySegment, utf8: MemorySegment, len: Long): GhosttyResult =
-    GhosttyResult.of(KEY_EVENT_SET_UTF8.invokeExact(event, utf8, len) as Int)
+  /**
+   * `ghostty_key_event_set_utf8`: set the layout-produced text. [utf8] is a `GhosttyString` passed by value.
+   * The event borrows its bytes until the text is set again.
+   */
+  fun keyEventSetUtf8(event: MemorySegment, utf8: MemorySegment): GhosttyResult =
+    GhosttyResult.of(KEY_EVENT_SET_UTF8.invokeExact(event, utf8) as Int)
 
   /** `ghostty_key_event_set_unshifted_codepoint`: set the unmodified code point of the key. */
   fun keyEventSetUnshiftedCodepoint(event: MemorySegment, codepoint: Int): GhosttyResult =
@@ -476,7 +479,7 @@ internal object LibGhosttyVt {
   private val KEY_EVENT_SET_CONSUMED_MODS: MethodHandle by lazy { downcall("ghostty_key_event_set_consumed_mods",
     FunctionDescriptor.of(C_INT, C_PTR, C_SHORT)) }
   private val KEY_EVENT_SET_UTF8: MethodHandle by lazy { downcall("ghostty_key_event_set_utf8",
-    FunctionDescriptor.of(C_INT, C_PTR, C_PTR, C_LONG)) }
+    FunctionDescriptor.of(C_INT, C_PTR, GhosttyLayouts.STRING)) }
   private val KEY_EVENT_SET_UNSHIFTED_CODEPOINT: MethodHandle by lazy { downcall("ghostty_key_event_set_unshifted_codepoint",
     FunctionDescriptor.of(C_INT, C_PTR, C_INT)) }
   private val KEY_EVENT_SET_COMPOSING: MethodHandle by lazy { downcall("ghostty_key_event_set_composing",
