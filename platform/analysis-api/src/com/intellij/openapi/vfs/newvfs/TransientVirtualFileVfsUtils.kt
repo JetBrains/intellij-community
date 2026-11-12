@@ -14,6 +14,9 @@ object TransientVirtualFileVfsRefreshUtils {
    * This method must only be used for VFS refresh to avoid iterating over cached virtual files.
    *
    * Resulting child may already not exist on disk. Check `exists()` before usage
+   *
+   * [isDirectory] avoids reading attributes for directory checks.
+   * Supply at most one of [attributes] and [isDirectory]. Supplying both throws [IllegalArgumentException].
    */
   @JvmStatic
   @JvmOverloads
@@ -22,13 +25,16 @@ object TransientVirtualFileVfsRefreshUtils {
     childName: String,
     fs: NewVirtualFileSystem,
     attributes: FileAttributes? = null,
+    isDirectory: Boolean? = null,
   ): VirtualFile {
+    require(attributes == null || isDirectory == null) { "Specify at most one of attributes and isDirectory" }
     val parentPath = parent.path
     val path = when {
       parentPath.endsWith('/') -> parent.path + childName
       else -> "$parentPath/$childName"
     }
-    return TransientVirtualFileImpl(childName, path, fs, parent, attributes)
+    return if (isDirectory != null) TransientVirtualFileImpl(childName, path, fs, parent, isDirectory)
+    else TransientVirtualFileImpl(childName, path, fs, parent, attributes)
   }
 
   /**

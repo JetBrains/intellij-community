@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo
@@ -48,6 +49,87 @@ internal class ProjectVfsEventBatchTest {
   @JvmField
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
+
+  @ParameterizedTest
+  @CsvSource("create, true", "create, false", "copy, true", "copy, false",
+             "move, true", "move, false", "rename, true", "rename, false")
+  fun `events without attributes apply directory exclusions at the destination`(operation: String, isDirectory: Boolean) {
+    val root = contentRoot()
+    val destination = runWriteActionAndWait { root.createChildDirectory(this, "destination") }
+    val sourceParent = if (operation == "rename") destination else root
+    val sourceName = if (operation == "rename") "source" else "target"
+    val source = runWriteActionAndWait {
+      if (isDirectory) sourceParent.createChildDirectory(this, sourceName) else sourceParent.createChildData(this, sourceName)
+    }
+    val directoryChecks = ArrayList<Boolean>()
+    val condition = object : WorkspaceFileSetExclusionCondition {
+      override fun shouldExclude(file: VirtualFile): Boolean {
+        if (file.name != "target" || file.parent != destination) return false
+        val directory = file.isDirectory
+        if (file is CacheAvoidingVirtualFile) directoryChecks.add(directory)
+        return directory
+      }
+
+      override fun equals(other: Any?): Boolean = other === this
+
+      override fun hashCode(): Int = System.identityHashCode(this)
+    }
+    runWriteActionAndWait {
+      WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(object : WorkspaceFileIndexContributor<ContentRootEntity> {
+        override val entityClass: Class<ContentRootEntity> get() = ContentRootEntity::class.java
+
+        override fun registerFileSets(entity: ContentRootEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+          registrar.registerExclusionCondition(entity.url, condition, entity)
+        }
+      }, projectModel.disposableRule.disposable)
+      WorkspaceFileIndexEx.getInstance(projectModel.project).reset()
+    }
+    val event = when (operation) {
+      "create" -> VFileCreateEvent(this, destination, "target", isDirectory, null, null, null)
+      "copy" -> VFileCopyEvent(this, source, destination, "target")
+      "move" -> VFileMoveEvent(this, source, destination)
+      "rename" -> VFilePropertyChangeEvent(this, source, VirtualFile.PROP_NAME, source.name, "target")
+      else -> error("Unknown operation: $operation")
+    }
+    val batch = prepare(event)
+    assertEquals(listOf(isDirectory), directoryChecks)
+    runWriteActionAndWait {
+      when (operation) {
+        "create" -> if (isDirectory) destination.createChildDirectory(this, "target") else destination.createChildData(this, "target")
+        "copy" -> source.copy(this, destination, "target")
+        "move" -> source.move(this, destination)
+        "rename" -> source.rename(this, "target")
+      }
+    }
+
+    val events = after(batch)
+    when {
+      !isDirectory -> assertSame(event, events.single())
+      operation == "move" || operation == "rename" -> assertSame(source, (events.single() as VFileDeleteEvent).file)
+      else -> assertTrue(events.isEmpty())
+    }
+  }
+
+  @ParameterizedTest
+  @CsvSource("true, true", "true, false", "false, true", "false, false")
+  fun `create and copy accept cached attributes`(copy: Boolean, isDirectory: Boolean) {
+    val root = contentRoot()
+    val attributes = FileAttributes(isDirectory, false, false, false, 0, 0, true)
+    val event = if (copy) {
+      val source = if (isDirectory) projectModel.baseProjectDir.newVirtualDirectory("source")
+      else projectModel.baseProjectDir.newVirtualFile("source")
+      VFileCopyEvent(this, source, root, "created", attributes, null, null, false)
+    }
+    else {
+      VFileCreateEvent(this, root, "created", isDirectory, attributes, null, null)
+    }
+    val batch = prepare(event)
+    runWriteActionAndWait {
+      if (isDirectory) root.createChildDirectory(this, "created") else root.createChildData(this, "created")
+    }
+
+    assertSame(event, after(batch).single())
+  }
 
   @Test
   fun `create filters before materialization and uses real parents after`() {
