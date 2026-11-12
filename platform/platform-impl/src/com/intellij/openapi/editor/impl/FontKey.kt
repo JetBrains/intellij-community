@@ -10,17 +10,20 @@ import java.awt.font.FontRenderContext
 internal class FontKey(
   private val size: Float,
   private val useLigatures: Boolean,
+  private val letterSpacing: Float,
   private val variants: Set<String>,
   private val context: FontRenderContext?,
 ) {
   fun matches(
     size: Float,
     useLigatures: Boolean,
+    letterSpacing: Float,
     variants: Set<String>,
     context: FontRenderContext?,
   ): Boolean {
     return this.size.toBits() == size.toBits() &&
            this.useLigatures == useLigatures &&
+           this.letterSpacing.toBits() == letterSpacing.toBits() &&
            this.variants == variants &&
            this.context == context
   }
@@ -32,18 +35,19 @@ internal class FontKey(
     if (other !is FontKey) {
       return false
     }
-    return matches(other.size, other.useLigatures, other.variants, other.context)
+    return matches(other.size, other.useLigatures, other.letterSpacing, other.variants, other.context)
   }
 
   override fun hashCode(): Int {
     var result = size.hashCode()
     result = 31 * result + useLigatures.hashCode()
+    result = 31 * result + letterSpacing.hashCode()
     result = 31 * result + variants.hashCode()
     result = 31 * result + context.hashCode()
     return result
   }
 
   override fun toString(): String {
-    return "FontKey(size=$size, useLigatures=$useLigatures, variants=$variants, context=$context)"
+    return "FontKey(size=$size, useLigatures=$useLigatures, letterSpacing=$letterSpacing, variants=$variants, context=$context)"
   }
 }

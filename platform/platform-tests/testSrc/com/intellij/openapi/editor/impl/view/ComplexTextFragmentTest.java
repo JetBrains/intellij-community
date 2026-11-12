@@ -87,6 +87,24 @@ public class ComplexTextFragmentTest {
   }
 
   @Test
+  public void testLetterSpacingPutsTheBoundaryAtTheEndOfTheSpacing() {
+    assertCaretPositionsForGlyphVector(
+      2,
+      glyph(0, 10).glyph(12, 22).glyph(24, 34), // the font adds 2 after each glyph
+      12, 24, 34
+    );
+  }
+
+  @Test
+  public void testLetterSpacingKeepsTheRtlBoundaries() {
+    assertCaretPositionsForGlyphVector(
+      2,
+      rtl().glyph(0, 10).glyph(12, 22).glyph(24, 34), // the font adds 2 after each glyph
+      12, 24, 34
+    );
+  }
+
+  @Test
   public void testEndPositionLeaning() {
     assertEndVisualColumnForGlyphVector(glyph(0, 10).glyph(10, 20), 20, false);
     assertEndVisualColumnForGlyphVector(glyph(0, 10).glyph(10, 20), 21, true);
@@ -125,6 +143,10 @@ public class ComplexTextFragmentTest {
   }
 
   private static void assertCaretPositionsForGlyphVector(MyGlyphVector gv, int... expectedPositions) {
+    assertCaretPositionsForGlyphVector(0, gv, expectedPositions);
+  }
+
+  private static void assertCaretPositionsForGlyphVector(float letterSpacing, MyGlyphVector gv, int... expectedPositions) {
     FontLayoutService.setInstance(new MockFontLayoutService(TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT) {
       @NotNull
       @Override
@@ -136,7 +158,7 @@ public class ComplexTextFragmentTest {
     try {
       int length = gv.getNumChars();
       char[] text = new char[length];
-      FontInfo fontInfo = createFontInfo();
+      FontInfo fontInfo = createFontInfo(letterSpacing);
       ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
                                                              fontInfo, null);
       int[] charPositions = new int[length];
@@ -151,9 +173,16 @@ public class ComplexTextFragmentTest {
   }
 
   private static @NotNull FontInfo createFontInfo() {
+    return createFontInfo(0);
+  }
+
+  /**
+   * Creates a font of size 1, so the letter spacing is also the spacing in pixels.
+   */
+  private static @NotNull FontInfo createFontInfo(float letterSpacing) {
     Font font = new Font(Font.MONOSPACED, Font.PLAIN, 1);
     FontRenderContext context = new FontRenderContext(null, false, false);
-    return new FontInfo(font, 1, false, Set.of(), context);
+    return new FontInfo(font, 1, false, letterSpacing, Set.of(), context);
   }
 
   private static void assertEndVisualColumnForGlyphVector(MyGlyphVector gv, float x, boolean expectedLeansRight) {

@@ -969,7 +969,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     FontLayoutService fontLayout = FontLayoutService.getInstance();
     Font font = colorsScheme.getFont(EditorFontType.PLAIN);
     FontMetrics fm = FontInfo.getFontMetrics(font, fontRenderContext);
-    float width = fontLayout.charWidth2D(fm, ' ');
+    // The fonts of the scheme have no tracking, see EditorFontFeatures.withLetterSpacing
+    float letterSpacing = colorsScheme.getFontPreferences().getLetterSpacing() * font.getSize2D();
+    float width = fontLayout.charWidth2D(fm, ' ') + letterSpacing;
 
     float newPlainSpaceWidth = width > 0 ? width : 1;
     int newCharHeight = fontLayout.charWidth(fm, 'a');
@@ -989,7 +991,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
     // assuming that bold italic 'W' gives a good approximation of font's widest character
     FontMetrics fmBI = FontInfo.getFontMetrics(colorsScheme.getFont(EditorFontType.BOLD_ITALIC), fontRenderContext);
-    float newMaxCharWidth = fontLayout.charWidth2D(fmBI, 'W');
+    float newMaxCharWidth = fontLayout.charWidth2D(fmBI, 'W') + letterSpacing;
     int newCapHeight = (int)font.createGlyphVector(fontRenderContext, "H").getVisualBounds().getHeight();
 
     return new EditorViewMetrics(

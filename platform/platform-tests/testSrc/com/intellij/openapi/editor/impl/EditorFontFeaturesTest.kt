@@ -26,12 +26,40 @@ internal class EditorFontFeaturesTest {
 
   @Test
   fun `character variants derive a new font`() {
-    assertThat(EditorFontFeatures.withFeatures(font, false, setOf("zero"))).isNotSameAs(font)
+    assertThat(EditorFontFeatures.withFeatures(font, false, 0f, setOf("zero"))).isNotSameAs(font)
   }
 
   @Test
   fun `no character variants keep the same font when the ligatures are off`() {
-    assertThat(EditorFontFeatures.withFeatures(font, false, emptySet())).isSameAs(font)
+    assertThat(EditorFontFeatures.withFeatures(font, false, 0f, emptySet())).isSameAs(font)
+  }
+
+  @Test
+  fun `letter spacing adds the tracking attribute`() {
+    val result = EditorFontFeatures.withLetterSpacing(font, 0.1f)
+    assertThat(result.attributes[TextAttribute.TRACKING]).isEqualTo(0.1f)
+  }
+
+  @Test
+  fun `zero letter spacing keeps the same font`() {
+    assertThat(EditorFontFeatures.withLetterSpacing(font, 0f)).isSameAs(font)
+  }
+
+  @Test
+  fun `the ligatures and the character variants keep the tracking`() {
+    val spaced = EditorFontFeatures.withLetterSpacing(font, 0.1f)
+    val result = EditorFontFeatures.withFeatures(spaced, true, 0f, setOf("zero"))
+    assertThat(result.attributes[TextAttribute.TRACKING]).isEqualTo(0.1f)
+    assertThat(result.attributes[TextAttribute.LIGATURES]).isEqualTo(TextAttribute.LIGATURES_ON)
+  }
+
+  @Test
+  fun `createFont gives a font without the tracking`() {
+    val preferences = FontPreferencesImpl()
+    preferences.register(FontPreferences.DEFAULT_FONT_NAME, 13f)
+    preferences.letterSpacing = 0.1f
+    val result = EditorFontFeatures.createFont(FontPreferences.DEFAULT_FONT_NAME, Font.PLAIN, 13f, preferences, false)
+    assertThat(result.attributes[TextAttribute.TRACKING]).isNotEqualTo(0.1f)
   }
 
   @Test

@@ -31,20 +31,21 @@ internal class FontFallback(private val baseFont: Font) {
   fun getFontInfo(
     size: Float,
     useLigatures: Boolean,
+    letterSpacing: Float,
     variants: Set<String>,
     fontRenderContext: FontRenderContext?,
   ): FontInfo {
     val lastKey = lastFontKey
     val lastInfo = lastFontInfo
     if (lastKey != null && lastInfo != null) {
-      if (lastKey.matches(size, useLigatures, variants, fontRenderContext)) {
+      if (lastKey.matches(size, useLigatures, letterSpacing, variants, fontRenderContext)) {
         return lastInfo
       }
     }
     val immutableVariants = java.util.Set.copyOf(variants)
-    val key = FontKey(size, useLigatures, immutableVariants, fontRenderContext)
+    val key = FontKey(size, useLigatures, letterSpacing, immutableVariants, fontRenderContext)
     val fontInfo = fontInfoMap.getOrPut(key) {
-      FontInfo(baseFont, size, useLigatures, immutableVariants, fontRenderContext)
+      FontInfo(baseFont, size, useLigatures, letterSpacing, immutableVariants, fontRenderContext)
     }
     lastFontKey = key
     lastFontInfo = fontInfo

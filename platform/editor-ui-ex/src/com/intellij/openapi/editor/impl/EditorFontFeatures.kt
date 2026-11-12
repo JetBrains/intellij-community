@@ -11,6 +11,7 @@ import java.awt.font.TextAttribute
 /**
  * Applies the OpenType features of the editor fonts.
  * These are the ligatures and the character variants.
+ * It also applies the letter spacing to the fonts of the text layout.
  */
 @ApiStatus.Internal
 object EditorFontFeatures {
@@ -29,7 +30,21 @@ object EditorFontFeatures {
     useLigatures: Boolean,
   ): Font {
     val font = FontFamilyService.getFont(familyName, preferences.regularSubFamily, preferences.boldSubFamily, style, size)
-    return withFeatures(font, useLigatures, preferences.characterVariants)
+    return withFeatures(font, useLigatures, 0f, preferences.characterVariants)
+  }
+
+  /**
+   * Returns the font with the letter spacing, the ligatures and the character variants of the editor settings.
+   * Each of them that is off or empty leaves the font as it is.
+   */
+  @JvmStatic
+  fun withFeatures(font: Font, useLigatures: Boolean, letterSpacing: Float, characterVariants: Set<String>): Font {
+    var featured = withLetterSpacing(font, letterSpacing)
+    featured = withLigatures(featured, useLigatures)
+    if (characterVariants.isEmpty()) {
+      return featured
+    }
+    return JBR.getFontExtensions().deriveFontWithFeatures(featured, *characterVariants.toTypedArray())
   }
 
   /**
@@ -45,15 +60,15 @@ object EditorFontFeatures {
   }
 
   /**
-   * Returns the font with the ligatures and the character variants of the editor settings.
-   * When [characterVariants] is empty, the font gets only the ligatures.
+   * Returns the font with the letter spacing as its tracking, see [FontPreferences.getLetterSpacing].
+   * When [letterSpacing] is 0, it returns the same font.
+   * Only the fonts of the text layout get the tracking. The fonts of a colors scheme stay without it.
    */
   @JvmStatic
-  fun withFeatures(font: Font, useLigatures: Boolean, characterVariants: Set<String>): Font {
-    val fontWithLigatures = withLigatures(font, useLigatures)
-    if (characterVariants.isEmpty()) {
-      return fontWithLigatures
+  fun withLetterSpacing(font: Font, letterSpacing: Float): Font {
+    if (letterSpacing == 0f) {
+      return font
     }
-    return JBR.getFontExtensions().deriveFontWithFeatures(fontWithLigatures, *characterVariants.toTypedArray())
+    return font.deriveFont(mapOf(TextAttribute.TRACKING to letterSpacing))
   }
 }

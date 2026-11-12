@@ -59,6 +59,7 @@ public final class ComplexTextFragment extends TextFragment {
         end,
         isRtl
       ),
+      fontInfo.getLetterSpacingPixels(),
       view
     );
     assert start >= 0              : assertMessage(lineChars, start, end, isRtl, fontInfo);
@@ -72,6 +73,7 @@ public final class ComplexTextFragment extends TextFragment {
     int end,
     boolean isRtl,
     @NotNull GlyphVector glyphVector,
+    float letterSpacing,
     @Nullable EditorView view
   ) {
     // RTL-ness is derived from the glyph vector, not from the isRtl parameter: FLAG_RUN_RTL reflects
@@ -132,6 +134,9 @@ public final class ComplexTextFragment extends TextFragment {
     // In a glyph vector this glyph is associated with the first character,
     // other characters either don't have an associated glyph, or they are associated with empty glyphs.
     // (in RTL case real glyph will be associated with first logical character, i.e. last visual character)
+    //
+    // The letter spacing of the font follows each glyph with an advance, and the logical bounds of a glyph do not include it.
+    // So in LTR text a boundary is at the end of the spacing. In RTL text the start of the next glyph is already there.
     for (int i = 0; i < numGlyphs; i++) {
       int visualGlyphIndex = isRtl ? numGlyphs - 1 - i : i;
       int charIndex = myGlyphVector.getGlyphCharIndex(visualGlyphIndex);
@@ -143,7 +148,7 @@ public final class ComplexTextFragment extends TextFragment {
               setCharPosition(j, prevX + (lastX - prevX) * (j - lastCharIndex + 1) / (charIndex - lastCharIndex), isRtl, numChars);
             }
           }
-          float newX = isRtl ? Math.min(lastX, (float)bounds.getMinX()) : Math.max(lastX, (float)bounds.getMaxX());
+          float newX = isRtl ? Math.min(lastX, (float)bounds.getMinX()) : Math.max(lastX, (float)bounds.getMaxX() + letterSpacing);
           if (alignments != null) {
             newX = isRtl ? newX - alignments[visualGlyphIndex] : newX + alignments[visualGlyphIndex];
           }

@@ -2743,7 +2743,7 @@ f:com.intellij.openapi.editor.impl.FontFallbackIterator
 - setFontStyle(I):com.intellij.openapi.editor.impl.FontFallbackIterator
 - setPreferredFonts(com.intellij.openapi.editor.colors.FontPreferences):com.intellij.openapi.editor.impl.FontFallbackIterator
 f:com.intellij.openapi.editor.impl.FontInfo
-- <init>(java.awt.Font,F,Z,java.util.Set,java.awt.font.FontRenderContext):V
+- <init>(java.awt.Font,F,Z,F,java.util.Set,java.awt.font.FontRenderContext):V
 - charWidth(I):I
 - charWidth2D(I):F
 - fontMetrics():java.awt.FontMetrics

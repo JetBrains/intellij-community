@@ -8,6 +8,7 @@ import com.jetbrains.FontMetricsAccessor;
 import com.jetbrains.JBR;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -66,22 +67,31 @@ public final class FontInfo {
 
   private final @NotNull Font myFont;
   private final float mySize;
+  private final float myLetterSpacingPixels;
   private final @Nullable FontRenderContext myContext;
   private final @NotNull IntSet mySafeCharacters = new IntOpenHashSet();
   private @Nullable FontMetrics myFontMetrics = null;
 
   /**
    * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
+   * The letter spacing becomes the tracking of the font, and the widths of this instance include it.
    */
   public FontInfo(
     @NotNull Font font,
     float size,
     boolean useLigatures,
+    float letterSpacing,
     @Unmodifiable @NotNull Set<@NotNull String> variants,
     @Nullable FontRenderContext fontRenderContext
   ) {
     mySize = size;
-    myFont = EditorFontFeatures.withFeatures(font.deriveFont(size), useLigatures, variants);
+    myFont = EditorFontFeatures.withFeatures(
+      font.deriveFont(size),
+      useLigatures,
+      letterSpacing,
+      variants
+    );
+    myLetterSpacingPixels = letterSpacing * size;
     myContext = fontRenderContext;
   }
 
@@ -112,14 +122,39 @@ public final class FontInfo {
     return myFont;
   }
 
+  /**
+   * Returns the integer advance of the code point plus the letter spacing, rounded to an integer.
+   * A code point without an advance gets no letter spacing, as in {@link #charWidth2D}.
+   */
   public int charWidth(int codePoint) {
     FontMetrics metrics = fontMetrics();
-    return FontLayoutService.getInstance().charWidth(metrics, codePoint);
+    int width = FontLayoutService.getInstance().charWidth(metrics, codePoint);
+    if (width <= 0) {
+      return width;
+    }
+    return Math.max(0, Math.round(width + myLetterSpacingPixels));
   }
 
+  /**
+   * Returns the advance of the code point plus the letter spacing.
+   * A code point without an advance, such as a combining mark, gets no letter spacing.
+   */
   public float charWidth2D(int codePoint) {
     FontMetrics metrics = fontMetrics();
-    return FontLayoutService.getInstance().charWidth2D(metrics, codePoint);
+    float width = FontLayoutService.getInstance().charWidth2D(metrics, codePoint);
+    if (width <= 0) {
+      return width;
+    }
+    return Math.max(0, width + myLetterSpacingPixels);
+  }
+
+  /**
+   * Returns the letter spacing in pixels at the size of this font.
+   * The font adds it after each glyph with an advance.
+   */
+  @ApiStatus.Internal
+  public float getLetterSpacingPixels() {
+    return myLetterSpacingPixels;
   }
 
   public synchronized @NotNull FontMetrics fontMetrics() {
@@ -160,6 +195,7 @@ public final class FontInfo {
     return "FontInfo{" +
            "myFont=" + myFont +
            ", mySize=" + mySize +
+           ", myLetterSpacingPixels=" + myLetterSpacingPixels +
            ", mySafeCharacters=" + mySafeCharacters +
            ", myContext=" + myContext +
            ", myFontMetrics=" + myFontMetrics +
