@@ -109,17 +109,9 @@ internal class GhosttyEnumsTest {
     assertMirrors<TerminalKey>("GhosttyKey", Coverage.EXHAUSTIVE) { it.ordinal }
   }
 
-  // GhosttyCursorVisualStyle mirrors two distinct C enums that happen to share one numeric layout
-  // (see its KDoc) — check both independently so a future drift between them is caught either way.
-
   @Test
-  fun ghosttyCursorVisualStyleMatchesRenderState() {
-    assertMirrors<GhosttyCursorVisualStyle>("GhosttyRenderStateCursorVisualStyle", Coverage.EXHAUSTIVE) { it.code }
-  }
-
-  @Test
-  fun ghosttyCursorVisualStyleMatchesTerminalCursorStyle() {
-    assertMirrors<GhosttyCursorVisualStyle>("GhosttyTerminalCursorStyle", Coverage.EXHAUSTIVE) { it.code }
+  fun ghosttyCursorStyle() {
+    assertMirrors<GhosttyCursorStyle>("GhosttyCursorStyle", Coverage.EXHAUSTIVE) { it.code }
   }
 
   // ---- selector enums: GhosttyEnums's own doc calls these out as intentionally partial ----

@@ -247,13 +247,10 @@ internal enum class GhosttyRenderStateRowOption(val code: Int) {
 }
 
 /**
- * `GhosttyRenderStateCursorVisualStyle` (render.h) — the shape the renderer would draw the cursor.
- *
- * Also doubles as the input value for [GhosttyTerminalOption.DEFAULT_CURSOR_STYLE]
- * (`GhosttyTerminalCursorStyle`, terminal.h): the two C enums share this exact numeric layout, so
- * one Kotlin enum serves both the render-state read and the default-cursor-style write.
+ * `GhosttyCursorStyle` (types.h) — the shape of the cursor. It is the value of
+ * [GhosttyRenderStateData.CURSOR_VISUAL_STYLE] and the input of [GhosttyTerminalOption.DEFAULT_CURSOR_STYLE].
  */
-internal enum class GhosttyCursorVisualStyle(val code: Int) {
+internal enum class GhosttyCursorStyle(val code: Int) {
   BAR(0),
   BLOCK(1),
   UNDERLINE(2),
@@ -261,7 +258,7 @@ internal enum class GhosttyCursorVisualStyle(val code: Int) {
 
   companion object {
     /** Map a raw C visual-style code; any unmodeled code is coerced to [BLOCK]. */
-    fun of(code: Int): GhosttyCursorVisualStyle = when (code) {
+    fun of(code: Int): GhosttyCursorStyle = when (code) {
       0 -> BAR
       1 -> BLOCK
       2 -> UNDERLINE

@@ -34,7 +34,7 @@ import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCellContentTa
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCellData
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCellWide
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyColorScheme
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCursorVisualStyle
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCursorStyle
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyKeyAction
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyKeyEncoderOption
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts
@@ -459,7 +459,7 @@ internal class GhosttyTerminalEmulator(
   override fun setDefaultCursorShape(shape: CursorShape) {
     ensureOpen()
     try {
-      scratchOut.set(C_INT, 0L, shape.toGhosttyCursorVisualStyle().code)
+      scratchOut.set(C_INT, 0L, shape.toGhosttyCursorStyle().code)
       val r = LibGhosttyVt.terminalSet(terminal, GhosttyTerminalOption.DEFAULT_CURSOR_STYLE.code, scratchOut)
       if (r != GhosttyResult.SUCCESS) {
         throw IllegalStateException("ghostty_terminal_set(DEFAULT_CURSOR_STYLE) returned $r")
@@ -482,10 +482,10 @@ internal class GhosttyTerminalEmulator(
     }
   }
 
-  private fun CursorShape.toGhosttyCursorVisualStyle(): GhosttyCursorVisualStyle = when (this) {
-    CursorShape.BAR -> GhosttyCursorVisualStyle.BAR
-    CursorShape.BLOCK -> GhosttyCursorVisualStyle.BLOCK
-    CursorShape.UNDERLINE -> GhosttyCursorVisualStyle.UNDERLINE
+  private fun CursorShape.toGhosttyCursorStyle(): GhosttyCursorStyle = when (this) {
+    CursorShape.BAR -> GhosttyCursorStyle.BAR
+    CursorShape.BLOCK -> GhosttyCursorStyle.BLOCK
+    CursorShape.UNDERLINE -> GhosttyCursorStyle.UNDERLINE
   }
 
   override val title: String
@@ -985,12 +985,12 @@ internal class GhosttyTerminalEmulator(
       if (LibGhosttyVt.renderStateGet(renderState, GhosttyRenderStateData.CURSOR_VISUAL_STYLE.code, scratchOut) != GhosttyResult.SUCCESS) {
         return CursorShape.BLOCK
       }
-      return when (GhosttyCursorVisualStyle.of(scratchOut.get(C_INT, 0L))) {
-        GhosttyCursorVisualStyle.BAR -> CursorShape.BAR
-        GhosttyCursorVisualStyle.UNDERLINE -> CursorShape.UNDERLINE
+      return when (GhosttyCursorStyle.of(scratchOut.get(C_INT, 0L))) {
+        GhosttyCursorStyle.BAR -> CursorShape.BAR
+        GhosttyCursorStyle.UNDERLINE -> CursorShape.UNDERLINE
         // BLOCK, and BLOCK_HOLLOW (the unfocused-window render variant this headless engine never
         // emits), both surface as BLOCK; the embedder owns the hollow-on-unfocus decision.
-        GhosttyCursorVisualStyle.BLOCK, GhosttyCursorVisualStyle.BLOCK_HOLLOW -> CursorShape.BLOCK
+        GhosttyCursorStyle.BLOCK, GhosttyCursorStyle.BLOCK_HOLLOW -> CursorShape.BLOCK
       }
     } catch (t: Throwable) {
       throw RuntimeException("ghostty render-state cursor shape read failed", t)
