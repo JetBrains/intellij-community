@@ -8,6 +8,7 @@ import com.intellij.platform.testFramework.teamCity.bazelReporter.BazelJUnitXmlT
 import com.intellij.platform.testFramework.teamCity.bazelReporter.BazelJUnitXmlTestMetadataReporter.createBazelTestLogMetadataWorkflow
 import com.intellij.platform.testFramework.teamCity.bazelReporter.BazelJUnitXmlTestMetadataReporter.createBazelTestOwnersMetadataWorkflow
 import com.intellij.platform.testFramework.teamCity.bazelReporter.BazelJUnitXmlTestMetadataReporter.runBazelTestReportsWorkflow
+import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
@@ -221,6 +222,60 @@ class BazelJUnitXmlTestMetadataBuildTargetTest {
     lines[1].shouldContain("value='First Team'")
   }
 
+  /** TeamCity leaves out a suite that the test name starts with, and keeps another suite before the test name. */
+  @Test
+  fun `names each test case as TeamCity names it`(@TempDir tempRoot: Path) {
+    val testCases = listOf(
+      testCase(suiteName = "com.example.FirstTest", className = "com.example.FirstTest", name = "simpleTest()"),
+      testCase(suiteName = "com.example.FirstTest", className = null, name = "Class Configuration"),
+      testCase(suiteName = "com.example.AllTests", className = "com.example.SecondTest", name = "test"),
+      testCase(suiteName = "com.example.ThirdTest", className = "com.example.ThirdTest", name = "com.example.ThirdTest.dynamic"),
+      testCase(suiteName = null, className = "com.example.FourthTest", name = "test"),
+    )
+
+    testCases.map(TestNameFormat.CLASSNAME_AND_NAME::format).shouldBe(listOf(
+      "com.example.FirstTest.simpleTest()",
+      "com.example.FirstTest: Class Configuration",
+      "com.example.AllTests: com.example.SecondTest.test",
+      "com.example.ThirdTest.dynamic",
+      "com.example.FourthTest.test",
+    ))
+  }
+
+  @Test
+  fun `reports the code owner of a class configuration failure from its suite name`(@TempDir tempRoot: Path) {
+    val execroot = tempRoot / "2bd3cb95011b89f245615c4315705f58" / "execroot" / "_main"
+    val javaRunfiles = execroot / "bazel-out" / "local_linux-fastbuild" / "bin" / "build" / "report.runfiles"
+    javaRunfiles.createDirectories()
+    val testDir = execroot / "bazel-out" / "local_linux-fastbuild" / "testlogs" / "alpha" / "test"
+    testDir.createDirectories()
+    testDir.resolve("test.xml").writeText(
+      """
+      <testsuites>
+        <testsuite name="com.example.FirstTest${'$'}Nested[MONOLITH].SPLIT">
+          <testcase classname="" name="Class Configuration"/>
+        </testsuite>
+        <testsuite name="com.example.UnownedTest">
+          <testcase classname="" name="Class Configuration"/>
+        </testsuite>
+      </testsuites>
+      """.trimIndent()
+    )
+    val testClassOwners = tempRoot / "test-class-owners.ndjson"
+    testClassOwners.writeText("""{"fqn":"com.example.FirstTest","owner":"First Team"}""")
+
+    val lines = captureStdout {
+      runBazelTestReportsWorkflow(
+        javaRunfilesPath = javaRunfiles,
+        workflow = createBazelTestOwnersMetadataWorkflow(testClassOwners = testClassOwners),
+      )
+    }
+
+    withClue(lines.joinToString("\n")) { lines.size.shouldBe(1) }
+    lines[0].shouldContain("testName='com.example.FirstTest${'$'}Nested|[MONOLITH|].SPLIT: Class Configuration'")
+    lines[0].shouldContain("value='First Team'")
+  }
+
   @Test
   fun `warns and reports nothing when test class owners file is missing`(@TempDir tempRoot: Path) {
     val execroot = tempRoot / "2bd3cb95011b89f245615c4315705f58" / "execroot" / "_main"
@@ -319,15 +374,20 @@ class BazelJUnitXmlTestMetadataBuildTargetTest {
         BazelJUnitXmlTestMetadataReporter.JUnitXmlTestCase(
           name = "firstTest",
           className = "com.example.FirstTest",
+          suiteName = "FirstSuite",
         ),
         BazelJUnitXmlTestMetadataReporter.JUnitXmlTestCase(
           name = "secondTest",
           className = "com.example.SecondTest",
+          suiteName = "SecondSuite",
         ),
       )
     )
-    TestNameFormat.CLASSNAME_AND_NAME.format(testCases.first()).shouldBe("com.example.FirstTest.firstTest")
+    TestNameFormat.CLASSNAME_AND_NAME.format(testCases.first()).shouldBe("FirstSuite: com.example.FirstTest.firstTest")
   }
+
+  private fun testCase(suiteName: String?, className: String?, name: String) =
+    BazelJUnitXmlTestMetadataReporter.JUnitXmlTestCase(name = name, className = className, suiteName = suiteName)
 
   private fun junitXml(vararg testCases: String): String =
     """
