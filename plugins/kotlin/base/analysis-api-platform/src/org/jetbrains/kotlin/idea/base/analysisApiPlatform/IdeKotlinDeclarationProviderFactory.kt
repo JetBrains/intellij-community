@@ -175,16 +175,31 @@ private class IdeKotlinDeclarationProvider(
         val callableIdString = callableId.asTopLevelStringForIndexes()
 
         buildSet {
-            stubIndex.getContainingFilesIterator(KotlinTopLevelPropertyFqnNameIndex.indexKey, callableIdString, project, scope)
-                .forEach { file ->
-                    //check canceled is done inside findFile
-                    (psiManager.findFile(file) as? KtFile)?.let { add(it) }
-                }
-            stubIndex.getContainingFilesIterator(KotlinTopLevelFunctionFqnNameIndex.indexKey, callableIdString, project, scope)
-                .forEach { file ->
-                    //check canceled is done inside findFile
-                    (psiManager.findFile(file) as? KtFile)?.let { add(it) }
-                }
+            collectContainingFilesTo(this, KotlinTopLevelPropertyFqnNameIndex.indexKey, callableIdString)
+            collectContainingFilesTo(this, KotlinTopLevelFunctionFqnNameIndex.indexKey, callableIdString)
+        }
+    }
+
+    override fun getTopLevelFunctionFiles(callableId: CallableId): Collection<KtFile> = withRestrictedDataAccess {
+        buildSet {
+            collectContainingFilesTo(this, KotlinTopLevelFunctionFqnNameIndex.indexKey, callableId.asTopLevelStringForIndexes())
+        }
+    }
+
+    override fun getTopLevelPropertyFiles(callableId: CallableId): Collection<KtFile> = withRestrictedDataAccess {
+        buildSet {
+            collectContainingFilesTo(this, KotlinTopLevelPropertyFqnNameIndex.indexKey, callableId.asTopLevelStringForIndexes())
+        }
+    }
+
+    private fun collectContainingFilesTo(
+        destination: MutableSet<KtFile>,
+        indexKey: StubIndexKey<String, out KtCallableDeclaration>,
+        callableIdString: String,
+    ) {
+        stubIndex.getContainingFilesIterator(indexKey, callableIdString, project, scope).forEach { file ->
+            //check canceled is done inside findFile
+            (psiManager.findFile(file) as? KtFile)?.let(destination::add)
         }
     }
 
