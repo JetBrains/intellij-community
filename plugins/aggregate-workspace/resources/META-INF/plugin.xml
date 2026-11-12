@@ -6,7 +6,7 @@
 
   <description><![CDATA[
     Unified workspace shell for IntelliJ Community.
-    The IDE manages local checkouts for the included repositories.
+    Manage the included repositories and launch them as local checkouts.
     GitHub-Codespaces is intentionally excluded.
   ]]></description>
 
@@ -19,25 +19,21 @@
       factoryClass="com.intellij.aggregateworkspace.WorkspaceShellToolWindowFactory"
       secondary="true"
       canCloseContents="true"/>
+
+    <applicationService serviceImplementation="com.intellij.aggregateworkspace.WorkspaceProjectService"/>
+    <projectConfigurable
+      id="aggregate.workspace"
+      displayName="Workspace Shell"
+      instance="com.intellij.aggregateworkspace.WorkspaceConfigurable"/>
   </extensions>
 
   <actions>
     <group id="WorkspaceShell.RepositoryGroup" text="Workspace Repositories">
-      <action id="Workspace.OpenJupyterlab"
-              class="com.intellij.aggregateworkspace.OpenJupyterlabAction"
-              text="Open Jupyterlab"/>
-      <action id="Workspace.OpenNotebook"
-              class="com.intellij.aggregateworkspace.OpenNotebookAction"
-              text="Open notebook"/>
-      <action id="Workspace.OpenHunt"
-              class="com.intellij.aggregateworkspace.OpenHuntAction"
-              text="Open HUNT"/>
-      <action id="Workspace.OpenBurpSuite"
-              class="com.intellij.aggregateworkspace.OpenBurpSuiteAction"
-              text="Open burpsuite"/>
-      <action id="Workspace.OpenBurpKit"
-              class="com.intellij.aggregateworkspace.OpenBurpKitAction"
-              text="Open BurpKit"/>
+      <action id="Workspace.OpenJupyterlab" class="com.intellij.aggregateworkspace.OpenJupyterlabAction" text="Open Jupyterlab"/>
+      <action id="Workspace.OpenNotebook" class="com.intellij.aggregateworkspace.OpenNotebookAction" text="Open notebook"/>
+      <action id="Workspace.OpenHunt" class="com.intellij.aggregateworkspace.OpenHuntAction" text="Open HUNT"/>
+      <action id="Workspace.OpenBurpSuite" class="com.intellij.aggregateworkspace.OpenBurpSuiteAction" text="Open burpsuite"/>
+      <action id="Workspace.OpenBurpKit" class="com.intellij.aggregateworkspace.OpenBurpKitAction" text="Open BurpKit"/>
     </group>
   </actions>
 </idea-plugin>
