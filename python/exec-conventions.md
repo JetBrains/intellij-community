@@ -58,6 +58,11 @@ An API must always be consistent and logical:
 * To implement a union (a function accepts either A or B), use a sealed class.
 * When a caller can provide a project or a module, use `ModuleOrProject`.
 
+## Prefer PythonInterpreter to Sdk
+
+Always use `com.intellij.python.sdk.backend.PythonInterpreter` to represent a Python interpreter.
+Do not use `Sdk` in new code. `Sdk` is a legacy API.
+
 ## Threading rules
 
 * If a function is IO bound or CPU bound, call it on a background thread.
