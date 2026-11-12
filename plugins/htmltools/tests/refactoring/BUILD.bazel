@@ -59,8 +59,10 @@ jvm_library(
         "//platform/util/concurrency",
         "//platform/ide-core",
         "//platform/util:util-ui",
-        "//libraries/junit4",
         "//java/testFramework",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5/codeInsight",
+        "//libraries/junit6",
     ],
 )
 ### auto-generated section `build intellij.html.tools.tests.refactoring` end
