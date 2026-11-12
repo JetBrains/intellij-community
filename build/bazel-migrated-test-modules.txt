@@ -18,6 +18,7 @@ intellij.python.community.services.internal.impl.tests
 intellij.python.community.tests.env
 intellij.python.community.tests.junit5
 intellij.python.community.tests.junit5.win
+intellij.python.markdown.tests
 intellij.python.pyproject.tests
 intellij.python.sdk.tests
 intellij.vcs.gitlab.tests
