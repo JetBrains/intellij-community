@@ -174,24 +174,24 @@ internal enum class GhosttyRowData(val code: Int) {
 
 /** `GhosttyTerminalOption` (terminal.h) — key for `ghostty_terminal_set`. */
 internal enum class GhosttyTerminalOption(val code: Int) {
-  WRITE_PTY(1),
-  BELL(2),
-  XTVERSION(4),
-  SIZE(6),
-  COLOR_SCHEME(7),
-  COLOR_FOREGROUND(11),
-  COLOR_BACKGROUND(12),
-  COLOR_PALETTE(14),
+  WRITE_PTY(2),
+  BELL(3),
+  XTVERSION(5),
+  SIZE(7),
+  COLOR_SCHEME(8),
+  COLOR_FOREGROUND(12),
+  COLOR_BACKGROUND(13),
+  COLOR_PALETTE(15),
   /** Takes a `uint64_t*`; zero disables the Kitty graphics protocol entirely. */
-  KITTY_IMAGE_STORAGE_LIMIT(15),
-  DEFAULT_CURSOR_STYLE(22),
-  DEFAULT_CURSOR_BLINK(23),
+  KITTY_IMAGE_STORAGE_LIMIT(16),
+  DEFAULT_CURSOR_STYLE(23),
+  DEFAULT_CURSOR_BLINK(24),
   /** Takes a `bool*`; false disables the Glyph protocol entirely. */
-  GLYPH_PROTOCOL(24),
-  SCROLLBACK_MAX_BYTES(27),
-  PROGRESS_REPORT(30),
-  TERMINFO_NAME(37),
-  RESIZE_PULL_SCROLLBACK(40),
+  GLYPH_PROTOCOL(25),
+  SCROLLBACK_MAX_BYTES(28),
+  PROGRESS_REPORT(31),
+  TERMINFO_NAME(38),
+  RESIZE_PULL_SCROLLBACK(41),
 }
 
 /** `GhosttyTerminalProgressState` (terminal.h) — the state of an `OSC 9;4` progress report. */
@@ -243,7 +243,7 @@ internal enum class GhosttyRenderStateRowData(val code: Int) {
 
 /** `GhosttyRenderStateRowOption` (render.h) — key for `ghostty_render_state_row_set`. */
 internal enum class GhosttyRenderStateRowOption(val code: Int) {
-  DIRTY(0),
+  DIRTY(1),
 }
 
 /**
@@ -273,7 +273,7 @@ internal enum class GhosttyCursorVisualStyle(val code: Int) {
 
 /** `GhosttyRenderStateOption` (render.h) — key for `ghostty_render_state_set`. */
 internal enum class GhosttyRenderStateOption(val code: Int) {
-  DIRTY(0),
+  DIRTY(1),
 }
 
 /** `GhosttyRenderStateDirty` (render.h) — global dirty level a render state reports after update. */
@@ -295,7 +295,7 @@ internal enum class GhosttyRenderStateDirty(val code: Int) {
 
 /** `GhosttySysOption` (sys.h) — key for `ghostty_sys_set`. */
 internal enum class GhosttySysOption(val code: Int) {
-  LOG(2),
+  LOG(3),
 }
 
 /** `GhosttySysLogLevel` (sys.h) — severity of a message delivered to the sys log callback. */
@@ -357,14 +357,16 @@ internal enum class GhosttyMouseButton(val code: Int) {
 /** `GhosttyKeyEncoderOption` (key/encoder.h) — key for `ghostty_key_encoder_setopt`. */
 @Suppress("unused") // the complete option set is the API, referenced or not
 internal enum class GhosttyKeyEncoderOption(val code: Int) {
-  CURSOR_KEY_APPLICATION(0),
-  KEYPAD_KEY_APPLICATION(1),
-  IGNORE_KEYPAD_WITH_NUMLOCK(2),
-  ALT_ESC_PREFIX(3),
-  MODIFY_OTHER_KEYS_STATE_2(4),
-  KITTY_FLAGS(5),
-  MACOS_OPTION_AS_ALT(6),
-  BACKARROW_KEY_MODE(7),
+  /** Not a real option: `ghostty_key_encoder_set` rejects it. */
+  INVALID(0),
+  CURSOR_KEY_APPLICATION(1),
+  KEYPAD_KEY_APPLICATION(2),
+  IGNORE_KEYPAD_WITH_NUMLOCK(3),
+  ALT_ESC_PREFIX(4),
+  MODIFY_OTHER_KEYS_STATE_2(5),
+  KITTY_FLAGS(6),
+  MACOS_OPTION_AS_ALT(7),
+  BACKARROW_KEY_MODE(8),
 }
 
 /** `GhosttyOptionAsAlt` (key/encoder.h) — the C `int` value of [GhosttyKeyEncoderOption.MACOS_OPTION_AS_ALT]. */
@@ -377,11 +379,11 @@ internal enum class GhosttyOptionAsAlt(val code: Int) {
 
 /** `GhosttyMouseEncoderOption` (mouse/encoder.h) — key for `ghostty_mouse_encoder_setopt`. */
 internal enum class GhosttyMouseEncoderOption(val code: Int) {
-  EVENT(0),
-  FORMAT(1),
-  SIZE(2),
-  ANY_BUTTON_PRESSED(3),
-  TRACK_LAST_CELL(4),
+  EVENT(1),
+  FORMAT(2),
+  SIZE(3),
+  ANY_BUTTON_PRESSED(4),
+  TRACK_LAST_CELL(5),
 }
 
 /**
