@@ -121,12 +121,22 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
         cell(primaryCombo)
       }
 
-      row(sizeLabel) {
+      val sizeRow = row(sizeLabel) {
         cell(editorFontSizeField)
 
         cell(lineSpacingField)
           .label(lineSpacingLabel)
-      }.bottomGap(BottomGap.SMALL)
+      }
+
+      if (isLetterSpacingSupported()) {
+        row(letterSpacingLabel) {
+          cell(letterSpacingField)
+            .gap(RightGap.SMALL)
+          contextHelp(ApplicationBundle.message("editbox.letter.spacing.help"))
+        }.bottomGap(BottomGap.SMALL)
+      } else {
+        sizeRow.bottomGap(BottomGap.SMALL)
+      }
 
       row {
         cell(enableLigaturesCheckbox)
@@ -204,6 +214,11 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
   }
 
   protected open fun createCustomComponent() : JComponent? = null
+
+  /**
+   * The application editor font and the application console font save the letter spacing.
+   */
+  override fun isLetterSpacingSupported(): Boolean = true
 
   private fun Panel.createTypographySettings() {
     collapsibleGroup(ApplicationBundle.message("settings.editor.font.typography.settings")) {

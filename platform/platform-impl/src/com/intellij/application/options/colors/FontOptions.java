@@ -50,6 +50,14 @@ public class FontOptions extends AbstractFontOptionsPanel {
     myOptions = options;
   }
 
+  /**
+   * The editor font and the console font of a colors scheme save the letter spacing.
+   */
+  @Override
+  protected boolean isLetterSpacingSupported() {
+    return true;
+  }
+
   protected @Nullable @NlsContexts.LinkLabel String getInheritedFontTitle() {
     return ApplicationBundle.message("settings.editor.font.default");
   }

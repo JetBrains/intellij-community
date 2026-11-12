@@ -4,17 +4,23 @@ package com.intellij.application.options.colors;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.HelpTooltipKt;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AbstractFontCombo;
+import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FontComboBox;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.fields.valueEditors.TextFieldValueEditor;
 import com.intellij.ui.dsl.builder.impl.UtilsKt;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.MathUtil;
@@ -22,6 +28,7 @@ import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +49,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -70,6 +79,8 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   private JLabel mySecondaryFontLabel;
   private final JLabel myLineSpacingLabel = new JLabel(ApplicationBundle.message("editbox.line.spacing"));
   private final JTextField myLineSpacingField = new JBTextField(4);
+  private final JLabel myLetterSpacingLabel = new JLabel(ApplicationBundle.message("editbox.letter.spacing"));
+  private final JTextField myLetterSpacingField = new JBTextField(6);
 
   protected AbstractFontOptionsPanel() {
     this(null);
@@ -82,6 +93,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     mySizeLabel.setLabelFor(myEditorFontSizeField);
     myEditorFontSizeField.setColumns(4);
     myLineSpacingLabel.setLabelFor(myLineSpacingField);
+    myLetterSpacingLabel.setLabelFor(myLetterSpacingField);
     enableLigaturesHintLabel.setToolTipText(ApplicationBundle.message("ligatures.tooltip"));
     myOnlyMonospacedCheckBox.setFont(JBUI.Fonts.smallFont());
 
@@ -158,6 +170,22 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
       EditorFontsConstants.getMaxEditorLineSpacing(),
       "%.1f"
     );
+    new LetterSpacingEditor(myLetterSpacingField).addListener(letterSpacing -> {
+      if (myIsInSchemeChange) {
+        return;
+      }
+      if (getFontPreferences() instanceof ModifiableFontPreferences preferences && preferences.getLetterSpacing() != letterSpacing) {
+        preferences.setLetterSpacing(letterSpacing);
+      }
+      updateDescription(true);
+    });
+    addArrowKeySteps(
+      myLetterSpacingField,
+      .01F,
+      EditorFontsConstants.getMinEditorLetterSpacing(),
+      EditorFontsConstants.getMaxEditorLetterSpacing(),
+      "%.2f"
+    );
     myEnableLigaturesCheckbox.addActionListener(e -> {
       FontPreferences preferences = getFontPreferences();
       if (preferences instanceof ModifiableFontPreferences) {
@@ -197,6 +225,14 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
   protected JTextField getLineSpacingField() {
     return myLineSpacingField;
+  }
+
+  protected JLabel getLetterSpacingLabel() {
+    return myLetterSpacingLabel;
+  }
+
+  protected JTextField getLetterSpacingField() {
+    return myLetterSpacingField;
   }
 
   protected JCheckBox getEnableLigaturesCheckbox() {
@@ -265,6 +301,21 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     sizePanel.add(myLineSpacingLabel);
     sizePanel.add(myLineSpacingField);
     fontPanel.add(sizePanel,c);
+
+    if (isLetterSpacingSupported()) {
+      c.gridx = 0;
+      c.gridy ++;
+      fontPanel.add(myLetterSpacingLabel, c);
+      c.gridx = 1;
+      FlowLayout letterSpacingLayout = new FlowLayout(FlowLayout.LEFT);
+      letterSpacingLayout.setHgap(0);
+      JPanel letterSpacingPanel = new JPanel(letterSpacingLayout);
+      letterSpacingPanel.setBorder(JBUI.Borders.empty());
+      letterSpacingPanel.add(myLetterSpacingField);
+      letterSpacingPanel.add(Box.createHorizontalStrut(JBUI.scale(BASE_INSET)));
+      letterSpacingPanel.add(ContextHelpLabel.create(ApplicationBundle.message("editbox.letter.spacing.help")));
+      fontPanel.add(letterSpacingPanel, c);
+    }
 
     c.gridy ++;
     c.gridx = 0;
@@ -347,6 +398,15 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   }
 
   /**
+   * Returns the letter spacing with two decimals, or three when the third is not 0, such as {@code -0.05} or {@code 0.025}.
+   */
+  private static @NotNull String formatLetterSpacing(float letterSpacing) {
+    DecimalFormat format = new DecimalFormat("0.00#", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+    // Adding 0 turns -0 into 0, so the field never shows "-0.00"
+    return format.format(letterSpacing + 0.0f);
+  }
+
+  /**
    * Changes the number in the field by the step on the Up and Down keys, and keeps the number in the range.
    */
   private static void addArrowKeySteps(@NotNull JTextField field, float step, float min, float max, @NotNull String format) {
@@ -419,6 +479,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
     myLineSpacingField.setText(Float.toString(getLineSpacing()));
     FontPreferences fontPreferences = getFontPreferences();
+    myLetterSpacingField.setText(formatLetterSpacing(fontPreferences.getLetterSpacing()));
     List<String> fontFamilies = fontPreferences.getEffectiveFontFamilies();
     myPrimaryCombo.setFontName(fontPreferences.getFontFamily());
     boolean isThereSecondaryFont = fontFamilies.size() > 1;
@@ -435,6 +496,8 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     myOnlyMonospacedCheckBox.setEnabled(!readOnly);
     myLineSpacingField.setEnabled(!readOnly);
     myLineSpacingLabel.setEnabled(!readOnly);
+    myLetterSpacingField.setEnabled(!readOnly);
+    myLetterSpacingLabel.setEnabled(!readOnly);
     myEditorFontSizeField.setEnabled(!readOnly);
     mySizeLabel.setEnabled(!readOnly);
 
@@ -445,6 +508,57 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   }
 
   protected void updateCustomOptions() {
+  }
+
+  /**
+   * Parses the letter spacing field.
+   * A value that is not a number in the editor range gets the error outline and a tooltip with the range, and changes nothing.
+   */
+  private static final class LetterSpacingEditor extends TextFieldValueEditor<Float> {
+    private final @NotNull JTextField field;
+
+    LetterSpacingEditor(@NotNull JTextField field) {
+      super(field, null, EditorFontsConstants.getDefaultEditorLetterSpacing());
+      this.field = field;
+    }
+
+    @Override
+    public @NotNull Float parseValue(@Nullable String text) throws InvalidDataException {
+      try {
+        float value = Float.parseFloat(StringUtil.notNullize(text).trim());
+        if (isValid(value)) {
+          return value;
+        }
+      } catch (NumberFormatException ignored) {
+      }
+      String min = formatLetterSpacing(EditorFontsConstants.getMinEditorLetterSpacing());
+      String max = formatLetterSpacing(EditorFontsConstants.getMaxEditorLetterSpacing());
+      throw new InvalidDataException(ApplicationBundle.message("editbox.letter.spacing.error", min, max));
+    }
+
+    @Override
+    public String valueToString(@NotNull Float value) {
+      return formatLetterSpacing(value);
+    }
+
+    @Override
+    public boolean isValid(@NotNull Float value) {
+      return value >= EditorFontsConstants.getMinEditorLetterSpacing() && value <= EditorFontsConstants.getMaxEditorLetterSpacing();
+    }
+
+    @Override
+    protected void setErrorText(@Nls @Nullable String errorText) {
+      HelpTooltipKt.setToolTipText(field, errorText == null ? null : HtmlChunk.text(errorText));
+    }
+  }
+
+  /**
+   * Returns true when the page shows the letter spacing field, see {@link FontPreferences#getLetterSpacing()}.
+   * Only a page whose settings save the letter spacing shows the field.
+   * {@link #createControls()} calls it from the constructor, so an override must not read the fields of its class.
+   */
+  protected boolean isLetterSpacingSupported() {
+    return false;
   }
 
   protected abstract boolean isReadOnly();
