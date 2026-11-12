@@ -1,5 +1,3 @@
-f:com.intellij.execution.wsl.WslDistributionExKt
-- sf:getRootMappings(com.intellij.execution.wsl.WSLDistribution):java.util.List
 f:com.intellij.execution.wsl.target.WslTargetEnvironment
 - com.intellij.execution.target.TargetEnvironment
 - com.intellij.execution.target.ExternallySynchronized

@@ -12,7 +12,7 @@ import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.applyWslOptions
-import com.intellij.execution.wsl.rootMappings
+import com.intellij.execution.wsl.listWindowsLocalDriveRoots
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -25,7 +25,9 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.util.asSafely
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.PathMappingSettings
 import java.nio.file.Path
+import kotlin.io.path.pathString
 
 /**
  * WSL Target Environment implementation that delegates all operations to EelTargetEnvironment.
@@ -141,3 +143,11 @@ class WslTargetEnvironment(
     private val logger = logger<WslTargetEnvironment>()
   }
 }
+/**
+ * Win drives -> /mnt
+ */
+private val WSLDistribution.rootMappings: List<PathMappingSettings.PathMapping>
+  get() = listWindowsLocalDriveRoots().map { PathMappingSettings.PathMapping(it.pathString, getWslPath(it)) } + listOf(
+    PathMappingSettings.PathMapping(getWindowsPath("/"), "/")
+  )
+

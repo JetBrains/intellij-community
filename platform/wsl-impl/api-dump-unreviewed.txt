@@ -1,5 +1,3 @@
-f:com.intellij.execution.wsl.WslDistributionExKt
-- sf:getSynchronizedVolumes(com.intellij.execution.wsl.WSLDistribution):java.util.List
 f:com.intellij.execution.wsl.target.WslTargetEnvironment
 - <init>(com.intellij.execution.wsl.target.WslTargetEnvironmentRequest,com.intellij.execution.wsl.WSLDistribution):V
 - createProcess(com.intellij.execution.target.TargetedCommandLine,com.intellij.openapi.progress.ProgressIndicator):java.lang.Process
