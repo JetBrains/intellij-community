@@ -591,24 +591,30 @@ public final class JUnit5BazelRunner {
   }
 
   /**
-   * The selectors of the methods named {@code methodName} in the class {@code className}, with any parameter list.
+   * The selectors of the methods that {@code methodName} names in the class {@code className}.
    * <p>
+   * {@code methodName} is a method name, or a test name of the Bazel JUnit XML: {@code test()} or {@code test(TestInfo)}.
+   * The parameter types of a test name are simple names, as JUnit writes them in the display name.
+   * A name with no parameter list selects every method of that name, with any parameter list.
    * {@code selectMethod(classLoader, className, methodName)} finds only a method without parameters. A test method can take
-   * a parameter that JUnit injects, such as {@code @TempDir root: Path}. The test XML names it without its parameter list,
-   * so the rerun line of bt names it so too.
+   * a parameter that JUnit injects, such as {@code @TempDir root: Path}.
    * <p>
    * The method can also be inherited. Its selector names the filter class, so the test runs in that class.
-   * A name with {@code (} and a name that no method has keep the selector that JUnit resolves.
-   * Then JUnit reports a missing method as before.
+   * A name that no method has keeps the selector that JUnit resolves. Then JUnit reports a missing method as before.
    */
   private static List<MethodSelector> selectMethodsByName(ClassLoader classLoader, String className, String methodName) {
     MethodSelector byJUnit = selectMethod(classLoader, className, methodName);
-    if (methodName.indexOf('(') != -1) {
-      return List.of(byJUnit);
-    }
+    int parametersStart = methodName.endsWith(")") ? methodName.lastIndexOf('(') : -1;
+    String name = parametersStart > 0 ? methodName.substring(0, parametersStart).strip() : methodName;
+    String parameters = parametersStart > 0 ? methodName.substring(parametersStart + 1, methodName.length() - 1) : null;
     try {
       Class<?> type = Class.forName(className, false, classLoader);
-      List<Method> methods = ReflectionSupport.findMethods(type, method -> method.getName().equals(methodName), HierarchyTraversalMode.TOP_DOWN);
+      List<Method> methods = ReflectionSupport.findMethods(
+        type,
+        method -> method.getName().equals(name) &&
+                  (parameters == null ||
+                   Arrays.stream(method.getParameterTypes()).map(Class::getSimpleName).collect(Collectors.joining(", ")).equals(parameters)),
+        HierarchyTraversalMode.TOP_DOWN);
       if (methods.isEmpty()) {
         return List.of(byJUnit);
       }
