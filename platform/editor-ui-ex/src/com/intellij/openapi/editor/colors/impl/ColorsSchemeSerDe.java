@@ -62,6 +62,8 @@ final class ColorsSchemeSerDe {
   private static final @NonNls String BACKGROUND_COLOR_NAME = "BACKGROUND";
   private static final @NonNls String LINE_SPACING = "LINE_SPACING";
   private static final @NonNls String CONSOLE_LINE_SPACING = "CONSOLE_LINE_SPACING";
+  private static final @NonNls String LETTER_SPACING = "LETTER_SPACING";
+  private static final @NonNls String CONSOLE_LETTER_SPACING = "CONSOLE_LETTER_SPACING";
   private static final @NonNls String FONT_SCALE = "FONT_SCALE";
   private static final @NonNls String EDITOR_FONT_SIZE = "EDITOR_FONT_SIZE";
   private static final @NonNls String CONSOLE_FONT_SIZE = "CONSOLE_FONT_SIZE";
@@ -141,6 +143,7 @@ final class ColorsSchemeSerDe {
     int editorFontSize = editorFontPreferences.getSize(editorFontPreferences.getFontFamily());
     float editorFontSize2D = editorFontPreferences.getSize2D(editorFontPreferences.getFontFamily());
     float lineSpacing = editorFontPreferences.getLineSpacing();
+    float letterSpacing = editorFontPreferences.getLetterSpacing();
     boolean editorDelegating = current.useAppFontPreferencesInEditor();
     boolean consoleDelegating = current.useEditorFontPreferencesInConsole();
     Properties metaInfo = scheme.getMetaProperties();
@@ -178,6 +181,10 @@ final class ColorsSchemeSerDe {
     boolean useOldFontFormat = fontPreferences.getEffectiveFontFamilies().size() <= 1;
     if (!editorDelegating) {
       JdomKt.addOptionTag(parentNode, LINE_SPACING, String.valueOf(lineSpacing));
+      // A missing option means 0, see fillMissingLetterSpacing
+      if (letterSpacing != 0) {
+        JdomKt.addOptionTag(parentNode, LETTER_SPACING, String.valueOf(letterSpacing));
+      }
       if (useOldFontFormat) {
         JdomKt.addOptionTag(parentNode, EDITOR_FONT_SIZE, String.valueOf(editorFontSize));
         JdomKt.addOptionTag(parentNode, EDITOR_FONT_NAME, fontPreferences.getFontFamily());
@@ -202,6 +209,11 @@ final class ColorsSchemeSerDe {
       float consoleLineSpacing = consoleFontPreferences.getLineSpacing();
       if (editorDelegating || consoleLineSpacing != lineSpacing) {
         JdomKt.addOptionTag(parentNode, CONSOLE_LINE_SPACING, Float.toString(consoleLineSpacing));
+      }
+      // A missing option means the letter spacing of the own editor font or 0, see fillMissingLetterSpacing
+      float consoleLetterSpacing = consoleFontPreferences.getLetterSpacing();
+      if (consoleLetterSpacing != (editorDelegating ? 0 : letterSpacing)) {
+        JdomKt.addOptionTag(parentNode, CONSOLE_LETTER_SPACING, Float.toString(consoleLetterSpacing));
       }
     }
     Element colorElements = new Element(COLORS_ELEMENT);
@@ -278,6 +290,7 @@ final class ColorsSchemeSerDe {
         case META_INFO_ELEMENT -> readMetaInfo(childNode, metaInfo);
       }
     }
+    fillMissingLetterSpacing(fonts, hasOption(node, LETTER_SPACING), hasOption(node, CONSOLE_LETTER_SPACING));
     fillEmptyConsoleFont(fonts);
     ColorsSchemeSnapshot readFonts = fonts.snapshot();
     Color deprecatedBackgroundColor = backgroundColor.get();
@@ -292,6 +305,35 @@ final class ColorsSchemeSerDe {
       }
       return withDeprecatedBackgroundColor(loaded, deprecatedBackgroundColor);
     });
+  }
+
+  /**
+   * Gives an own font without its letter spacing option the value that {@link #writeScheme} leaves out.
+   * The editor font gets 0. The console font gets the letter spacing of the own editor font, or 0.
+   * An own font starts as a copy of another font, so without this step it keeps the letter spacing of that font.
+   */
+  private static void fillMissingLetterSpacing(
+    @NotNull ColorsSchemeFontDraft fonts,
+    boolean hasLetterSpacing,
+    boolean hasConsoleLetterSpacing
+  ) {
+    ColorsSchemeSnapshot current = fonts.snapshot();
+    boolean ownEditorFont = !current.useAppFontPreferencesInEditor();
+    if (ownEditorFont && !hasLetterSpacing) {
+      fonts.setLetterSpacing(0);
+    }
+    if (!current.useEditorFontPreferencesInConsole() && !hasConsoleLetterSpacing) {
+      fonts.setConsoleLetterSpacing(ownEditorFont ? fonts.editorFontPreferences().getLetterSpacing() : 0);
+    }
+  }
+
+  private static boolean hasOption(@NotNull Element node, @NotNull String name) {
+    for (Element option : node.getChildren(OPTION_ELEMENT)) {
+      if (name.equals(option.getAttributeValue(NAME_ATTR))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -392,6 +434,18 @@ final class ColorsSchemeSerDe {
         Float value = valueReader.read(Float.class, childNode);
         if (value != null) {
           fonts.setConsoleLineSpacing(value);
+        }
+      }
+      case LETTER_SPACING -> {
+        Float value = valueReader.read(Float.class, childNode);
+        if (value != null) {
+          fonts.setLetterSpacing(value);
+        }
+      }
+      case CONSOLE_LETTER_SPACING -> {
+        Float value = valueReader.read(Float.class, childNode);
+        if (value != null) {
+          fonts.setConsoleLetterSpacing(value);
         }
       }
       case CONSOLE_FONT_SIZE -> {

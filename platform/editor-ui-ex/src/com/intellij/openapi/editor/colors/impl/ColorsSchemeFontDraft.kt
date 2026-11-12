@@ -104,6 +104,10 @@ class ColorsSchemeFontDraft(
     changeFont { draft -> draft.lineSpacing = lineSpacing }
   }
 
+  fun setLetterSpacing(letterSpacing: Float) {
+    changeFont { draft -> draft.letterSpacing = letterSpacing }
+  }
+
   fun setUseLigatures(useLigatures: Boolean) {
     changeFont { draft -> draft.setUseLigatures(useLigatures) }
   }
@@ -136,6 +140,10 @@ class ColorsSchemeFontDraft(
 
   fun setConsoleLineSpacing(lineSpacing: Float) {
     changeConsoleFont { draft -> draft.lineSpacing = lineSpacing }
+  }
+
+  fun setConsoleLetterSpacing(letterSpacing: Float) {
+    changeConsoleFont { draft -> draft.letterSpacing = letterSpacing }
   }
 
   fun setConsoleUseLigatures(useLigatures: Boolean) {

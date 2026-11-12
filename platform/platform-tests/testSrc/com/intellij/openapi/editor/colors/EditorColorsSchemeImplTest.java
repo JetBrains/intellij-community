@@ -940,6 +940,43 @@ public class EditorColorsSchemeImplTest {
   }
 
   @Test
+  public void testOwnFontsWriteAndReadTheLetterSpacing() throws Exception {
+    EditorColorsScheme scheme = loadScheme(letterSpacingScheme("""
+      <option name="LETTER_SPACING" value="0.05" />
+      <option name="CONSOLE_LETTER_SPACING" value="0.1" />
+      """));
+    assertEquals(0.05f, scheme.getFontPreferences().getLetterSpacing());
+    assertEquals(0.1f, scheme.getConsoleFontPreferences().getLetterSpacing());
+    Element root = serialize(scheme);
+    assertEquals("0.05", optionValue(root, "LETTER_SPACING"));
+    assertEquals("0.1", optionValue(root, "CONSOLE_LETTER_SPACING"));
+  }
+
+  @Test
+  public void testOwnFontWithoutLetterSpacingGetsZeroWhenTheAppFontHasLetterSpacing() throws Exception {
+    ModifiableFontPreferences appPrefs = (ModifiableFontPreferences)AppEditorFontOptions.getInstance().getFontPreferences();
+    float appLetterSpacing = appPrefs.getLetterSpacing();
+    try {
+      appPrefs.setLetterSpacing(0.05f);
+      EditorColorsScheme scheme = loadScheme(fontOptionsScheme(14, "1.2"));
+      assertEquals(0f, scheme.getFontPreferences().getLetterSpacing());
+      assertNull(optionValue(serialize(scheme), "LETTER_SPACING"));
+    }
+    finally {
+      appPrefs.setLetterSpacing(appLetterSpacing);
+    }
+  }
+
+  @Test
+  public void testOwnConsoleFontWithoutLetterSpacingGetsTheLetterSpacingOfTheEditorFont() throws Exception {
+    EditorColorsScheme scheme = loadScheme(letterSpacingScheme("""
+      <option name="LETTER_SPACING" value="0.05" />
+      """));
+    assertEquals(0.05f, scheme.getConsoleFontPreferences().getLetterSpacing());
+    assertNull(optionValue(serialize(scheme), "CONSOLE_LETTER_SPACING"));
+  }
+
+  @Test
   public void testEa124005() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
@@ -1678,6 +1715,20 @@ public class EditorColorsSchemeImplTest {
         <option name="EDITOR_FONT_SIZE" value="%d" />
       </scheme>
       """.formatted(lineSpacing, fontSize);
+  }
+
+  /**
+   * Returns a scheme with an own editor font and an own console font, and with the letter spacing options.
+   */
+  private static @NotNull String letterSpacingScheme(@NotNull String letterSpacingOptions) {
+    return """
+      <scheme name="LetterSpacing" version="142">
+        <option name="FONT_SCALE" value="1.0" />
+        <option name="LINE_SPACING" value="1.2" />
+        <option name="EDITOR_FONT_SIZE" value="13" />
+        <option name="CONSOLE_FONT_NAME" value="%s" />
+      %s</scheme>
+      """.formatted(FontPreferences.DEFAULT_FONT_NAME, letterSpacingOptions);
   }
 
   private static boolean sameSizeAndLineSpacing(@NotNull FontPreferences preferences1, @NotNull FontPreferences preferences2) {
