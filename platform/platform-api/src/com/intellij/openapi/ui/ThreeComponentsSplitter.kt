@@ -564,10 +564,38 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
 
     private var wasPressedOnMe = false
 
+    /**
+     * The cursor override in all windows that [setGlassPaneCursor] keeps, see [IdeGlassPaneUtil.overrideCursorInAllWindows].
+     */
+    private var cursorOverride: AutoCloseable? = null
+
     init {
       setFocusable(false)
       enableEvents(AWTEvent.MOUSE_EVENT_MASK or AWTEvent.MOUSE_MOTION_EVENT_MASK)
       setOrientation(splitter.verticalSplit)
+    }
+
+    override fun removeNotify() {
+      setGlassPaneCursor(null)
+      super.removeNotify()
+    }
+
+    /**
+     * Sets the [cursor] of this divider on the glass pane.
+     * While the user drags this divider, the [cursor] also overrides the cursor in all windows.
+     * Outside of a drag, or for `null`, the function removes the override.
+     */
+    private fun setGlassPaneCursor(cursor: Cursor?) {
+      splitter.glassPane?.setCursor(cursor, this)
+      if (isDragging && cursor != null) {
+        if (cursorOverride == null) {
+          cursorOverride = IdeGlassPaneUtil.overrideCursorInAllWindows(cursor)
+        }
+      }
+      else {
+        cursorOverride?.close()
+        cursorOverride = null
+      }
     }
 
     override fun getBackground(): Color? = if (isOnePixel) UIUtil.CONTRAST_BORDER_COLOR else super.getBackground()
@@ -709,14 +737,14 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
     public override fun processMouseMotionEvent(e: MouseEvent) {
       super.processMouseMotionEvent(e)
       if (!isShowing()) {
+        setGlassPaneCursor(null)
         return
       }
 
-      val glassPane = splitter.glassPane
       if (MouseEvent.MOUSE_DRAGGED == e.id && wasPressedOnMe) {
         isDragging = true
         setCursor(resizeCursor)
-        glassPane?.setCursor(resizeCursor, this)
+        setGlassPaneCursor(resizeCursor)
         point = SwingUtilities.convertPoint(this, e.getPoint(), splitter)
         val size = if (splitter.orientation) splitter.height else splitter.width
         if (splitter.orientation) {
@@ -741,15 +769,19 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
         }
         splitter.doLayout()
       }
+      else if (MouseEvent.MOUSE_DRAGGED == e.id) {
+        // The drag started on another component.
+        setGlassPaneCursor(null)
+      }
       else if (MouseEvent.MOUSE_MOVED == e.id) {
-        if (glassPane != null) {
-          if (isInside(e.getPoint())) {
-            glassPane.setCursor(resizeCursor, this)
-            e.consume()
-          }
-          else {
-            glassPane.setCursor(null, this)
-          }
+        // AWT reports a move only when no mouse button is down, so the drag ended, also after a missed release.
+        isDragging = false
+        if (isInside(e.getPoint())) {
+          setGlassPaneCursor(resizeCursor)
+          e.consume()
+        }
+        else {
+          setGlassPaneCursor(null)
         }
       }
       if (wasPressedOnMe) {
@@ -768,10 +800,10 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
     public override fun processMouseEvent(e: MouseEvent) {
       super.processMouseEvent(e)
       if (!isShowing()) {
+        setGlassPaneCursor(null)
         return
       }
 
-      val glassPane = splitter.glassPane
       when (e.id) {
         MouseEvent.MOUSE_ENTERED -> setCursor(resizeCursor)
         MouseEvent.MOUSE_EXITED -> {
@@ -780,21 +812,21 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
           }
         }
         MouseEvent.MOUSE_PRESSED -> {
+          // A press starts a new gesture, so a drag with a missed release ends here.
+          isDragging = false
           if (isInside(e.getPoint())) {
             wasPressedOnMe = true
-            glassPane?.setCursor(resizeCursor, this)
+            setGlassPaneCursor(resizeCursor)
             e.consume()
           }
           else {
             wasPressedOnMe = false
+            setGlassPaneCursor(null)
           }
         }
         MouseEvent.MOUSE_RELEASED -> {
           if (wasPressedOnMe) {
             e.consume()
-          }
-          if (isInside(e.getPoint()) && glassPane != null) {
-            glassPane.setCursor(resizeCursor, this)
           }
           if (isDragging && splitter.dividerDispatcher != null) {
             splitter.dividerDispatcher!!.getMulticaster().componentResized(ComponentEvent(this, ComponentEvent.COMPONENT_RESIZED))
@@ -802,6 +834,7 @@ open class ThreeComponentsSplitter @JvmOverloads constructor(vertical: Boolean =
           wasPressedOnMe = false
           isDragging = false
           point = null
+          setGlassPaneCursor(if (isInside(e.getPoint())) resizeCursor else null)
         }
         MouseEvent.MOUSE_CLICKED -> {
           if (e.clickCount == 2) {
