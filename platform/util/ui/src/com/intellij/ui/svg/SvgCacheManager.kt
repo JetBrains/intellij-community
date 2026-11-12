@@ -24,12 +24,8 @@ import org.h2.mvstore.WriteBuffer
 import org.h2.mvstore.type.BasicDataType
 import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.image.SunWritableRaster
-import java.awt.Point
-import java.awt.Transparency
-import java.awt.color.ColorSpace
 import java.awt.image.BufferedImage
-import java.awt.image.ComponentColorModel
-import java.awt.image.DataBuffer
+import java.awt.image.ColorModel
 import java.awt.image.DataBufferByte
 import java.awt.image.DataBufferInt
 import java.awt.image.Raster
@@ -218,18 +214,7 @@ fun createIconCacheKey(imageBytes: ByteArray, compoundKey: SvgCacheClassifier, c
   return longArrayOf(hashStream.asLong, hashStream2.asLong)
 }
 
-// BGRA order
-private val bgraBandOffsets = intArrayOf(2, 1, 0, 3)
-
-private val colorModel = ComponentColorModel(
-  ColorSpace.getInstance(ColorSpace.CS_sRGB),
-  true,
-  false,
-  Transparency.TRANSLUCENT,
-  DataBuffer.TYPE_BYTE
-)
-
-private val ZERO_POINT = Point(0, 0)
+private val argbBitMasks = intArrayOf(0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000.toInt())
 
 private fun writeImage(image: BufferedImage): ByteArray {
   val w = image.width
@@ -256,19 +241,17 @@ private fun writeImage(image: BufferedImage): ByteArray {
   }
 }
 
+/**
+ * Returns a [BufferedImage.TYPE_INT_ARGB] image. [writeImage] stores its pixels as little-endian ARGB ints.
+ */
 private fun readImage(value: IconValue): BufferedImage {
-  val dataBuffer = DataBufferByte(value.data, value.data.size)
-  SunWritableRaster.makeTrackable(dataBuffer)
   val w = value.w
   val h = value.h
-  val raster = Raster.createInterleavedRaster(
-    dataBuffer,
-    w,
-    h,
-    w * 4, 4,
-    bgraBandOffsets,
-    ZERO_POINT
-  )
+  val pixels = IntArray(w * h)
+  ByteBuffer.wrap(value.data).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer().get(pixels)
+  val dataBuffer = DataBufferInt(pixels, pixels.size)
+  SunWritableRaster.makeTrackable(dataBuffer)
+  val raster = Raster.createPackedRaster(dataBuffer, w, h, w, argbBitMasks, null)
   @Suppress("UndesirableClassUsage")
-  return BufferedImage(/* cm = */ colorModel, /* raster = */ raster, /* isRasterPremultiplied = */ false, /* properties = */ null)
+  return BufferedImage(/* cm = */ ColorModel.getRGBdefault(), /* raster = */ raster, /* isRasterPremultiplied = */ false, /* properties = */ null)
 }
