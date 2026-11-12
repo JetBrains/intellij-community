@@ -33,7 +33,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -50,8 +49,6 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assume;
-import org.junit.runner.RunWith;
 
 import javax.swing.SwingUtilities;
 import java.util.ArrayList;
@@ -78,7 +75,7 @@ import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@RunWith(JUnit38AssumeSupportRunner.class)
+@SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class JobLauncherImplTest extends LightPlatformTestCase {
   private static final AtomicInteger COUNT = new AtomicInteger();
   private ForkJoinPool myPool;
@@ -90,11 +87,9 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
     super.setUp();
     COUNT.set(0);
     t = TestTimeOut.setTimeout(2, TimeUnit.MINUTES);
-    myPool = new ForkJoinPool(JobSchedulerImpl.getJobPoolParallelism());
+    myPool = new ForkJoinPool(4);
     Disposer.register(getTestRootDisposable(), myPool::close);
-    myJobLauncher = new JobLauncherImpl(myPool);
-    int parallelism = JobSchedulerImpl.getJobPoolParallelism();
-    Assume.assumeTrue("Too low parallelism: " + parallelism + ", but I need at least 4, I give up", parallelism >= 4);
+    myJobLauncher = new JobLauncherImpl(myPool, myPool.getParallelism());
   }
 
   public void testProcessQueueWorksWithSingleThreadPool() {
@@ -105,7 +100,7 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
     ArrayList<String> processed = new ArrayList<>();
 
     try (ForkJoinPool pool = new ForkJoinPool(1)) {
-      boolean result = new JobLauncherImpl(pool).processQueue(
+      boolean result = new JobLauncherImpl(pool, pool.getParallelism()).processQueue(
         queue,
         new ConcurrentLinkedQueue<>(),
         new EmptyProgressIndicator(),
@@ -118,6 +113,28 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
       assertTrue(result);
       assertEquals(List.of("item"), processed);
     }
+  }
+
+  public void testSingleConfiguredWorkerRunsProcessorsOnCaller() {
+    JobLauncherImpl launcher = new JobLauncherImpl(myPool, 1);
+    Thread caller = Thread.currentThread();
+    List<Integer> processed = new ArrayList<>();
+    assertTrue(ProgressManager.getInstance().runProcess(() -> launcher.processConcurrentlyAsync(List.of(1, 2), item -> {
+      assertSame(caller, Thread.currentThread());
+      processed.add(item);
+      return true;
+    }, () -> assertTrue(processed.isEmpty())), new EmptyProgressIndicator()));
+    assertEquals(List.of(1, 2), processed);
+
+    Integer tombStone = 3;
+    processed.clear();
+    assertTrue(launcher.processQueue(new LinkedBlockingQueue<>(List.of(1, 2, tombStone)), new ConcurrentLinkedQueue<>(),
+                                    new EmptyProgressIndicator(), tombStone, item -> {
+      assertSame(caller, Thread.currentThread());
+      processed.add(item);
+      return true;
+    }));
+    assertEquals(List.of(1, 2), processed);
   }
 
   @PerformanceUnitTest
@@ -145,8 +162,9 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
           return true;
         }),
         new ProgressIndicatorBase())));
-    long expected = sum / JobSchedulerImpl.getJobPoolParallelism();
-    String message = "Elapsed: " + elapsed + "; expected: " + expected + "; parallelism=" + JobSchedulerImpl.getJobPoolParallelism() + "; current cores=" + Runtime.getRuntime().availableProcessors();
+    long expected = sum / myPool.getParallelism();
+    String message = "Elapsed: " + elapsed + "; expected: " + expected + "; parallelism=" + myPool.getParallelism() +
+                     "; current cores=" + Runtime.getRuntime().availableProcessors();
     assertTrue(message, elapsed <= 2 * expected);
   }
 
@@ -619,7 +637,7 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     AtomicInteger jobsStarted = new AtomicInteger();
     final int N_EVENTS = 50;
-    int N_JOBS = 10_000 * JobSchedulerImpl.getJobPoolParallelism();
+    int N_JOBS = 10_000 * myPool.getParallelism();
     ProgressIndicator indicator = new DaemonProgressIndicator();
 
     Job job = myJobLauncher.submitToJobThread(
@@ -754,7 +772,7 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
   }
 
   public void testInvokeConcurrentlyMustExecuteMultipleTasksConcurrentlyEvenIfOneOfThemIsWildlySlowStress() {
-    int parallelism = JobSchedulerImpl.getJobPoolParallelism();
+    int parallelism = myPool.getParallelism();
     // values higher than this can lead to too coarse tasks in FJP queue which means some of them may contain more than one element which means long-delay task and some short-delay tasks can be scheduled to one chunk which means some of the tasks will not be stolen for a (relatively)long time.
     // so it's a TODO for ApplierCompleter
     int N = 1 << parallelism;
@@ -859,7 +877,7 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
   public void testEvenTwoJobsAreParallelized() throws Exception {
     ThreadingAssertions.assertEventDispatchThread();
     try (ForkJoinPool pool = new ForkJoinPool(4)) {
-      JobLauncherImpl launcher = new JobLauncherImpl(pool);
+      JobLauncherImpl launcher = new JobLauncherImpl(pool, pool.getParallelism());
       for (int i = 0; i < 1000 && checkTestTimeout(i); i++) {
         CountDownLatch backgroundStarted = new CountDownLatch(3);
         AtomicBoolean releaseBackground = new AtomicBoolean();
@@ -936,7 +954,7 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
     CountDownLatch foreignTaskForked = new CountDownLatch(1);
     CountDownLatch foreignTaskDone = new CountDownLatch(1);
     try (ForkJoinPool pool = new ForkJoinPool(2)) {
-      JobLauncherImpl launcher = new JobLauncherImpl(pool);
+      JobLauncherImpl launcher = new JobLauncherImpl(pool, pool.getParallelism());
       ForkJoinTask<Boolean> future = pool.submit(() -> ProgressManager.getInstance().runProcess(() -> {
         caller.set(Thread.currentThread());
         return guard.doPreventingRecursion("key", false, () -> launcher.processConcurrentlyAsync(List.of(1, 2), _ -> {
@@ -971,7 +989,6 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
   // a restart after a write action re-enters processQueue() with `things` drained down to the tombstone
   // and the real work sitting in `failedToProcess` - it must still process that work in parallel
   public void testProcessQueueAccountsForFailedQueueWhenChoosingParallelism() throws Exception {
-    Assume.assumeTrue(JobSchedulerImpl.getJobPoolParallelism() > 2);
     String TOMB_STONE = "TOMB_STONE";
     BlockingQueue<String> things = new ArrayBlockingQueue<>(100);
     things.put(TOMB_STONE);                                  // producer already finished
