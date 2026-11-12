@@ -20,12 +20,15 @@ import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ref.DebugReflectionUtil
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Field
 import java.util.IdentityHashMap
 import java.util.concurrent.CancellationException
 import java.util.function.Predicate
+import kotlin.time.Duration.Companion.milliseconds as ms
 
 /**
  * Check for workspace model snapshot leak after every unit test
@@ -138,6 +141,24 @@ private val IGNORED_FIELDS = setOf(
 private const val LEAKED_WSM = "leakedWorkspaceModel"
 
 @TestOnly
+private fun Project.collectEntityStorages(): List<EntityStorage> {
+  val storages = mutableListOf<EntityStorage>()
+  val event = timeoutRunBlocking {
+    withTimeoutOrNull(100.ms) {
+      workspaceModel.eventLog.first()
+    }
+  }
+  if (event != null) {
+    storages += event.storageBefore
+    storages += event.storageAfter
+  }
+  storages += workspaceModel.currentSnapshot
+  storages.addIfNotNull((workspaceModel as? WorkspaceModelInternal)?.currentSnapshotOfUnloadedEntities)
+  storages += service<EntitiesOrphanage>().currentSnapshot
+  return storages
+}
+
+@TestOnly
 private fun doTestWorkspaceModelLeak(unitTestProject: Project? = null, testClass: Class<*>? = null) {
   if (ApplicationManager.getApplication() == null) {
     return
@@ -155,9 +176,7 @@ private fun doTestWorkspaceModelLeak(unitTestProject: Project? = null, testClass
           val realStorages = mutableListOf<EntityStorage>()
 
           for (project in projects) {
-            realStorages += project.workspaceModel.currentSnapshot
-            realStorages.addIfNotNull((project.workspaceModel as? WorkspaceModelInternal)?.currentSnapshotOfUnloadedEntities)
-            realStorages += project.service<EntitiesOrphanage>().currentSnapshot
+            realStorages += project.collectEntityStorages()
           }
           realStorages += GlobalWorkspaceModel.getInstancesBlocking().map { it.currentSnapshot }
 
