@@ -529,7 +529,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final TextDrawingCallback myTextDrawingCallback;
 
   private volatile @Nullable CharacterGridSpec myCharacterGridSpec;
-  private @Nullable CharacterGridImpl myCharacterGrid;
+  private volatile @Nullable CharacterGridImpl myCharacterGrid;
 
   private boolean myCharKeyPressed;
   private boolean myNeedToSelectPreviousChar;
