@@ -4,7 +4,6 @@
 package com.intellij.execution.wsl.ui
 
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.listWindowsLocalDriveRoots
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -12,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.eel.impl.local.listWindowsLocalDriveRoots
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 

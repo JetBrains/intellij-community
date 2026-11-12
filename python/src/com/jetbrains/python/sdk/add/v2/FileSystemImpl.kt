@@ -6,7 +6,6 @@ import com.intellij.execution.target.TargetBrowserHints
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.getTargetType
 import com.intellij.execution.target.joinTargetPaths
-import com.intellij.execution.wsl.listWindowsLocalDriveRoots
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileChooser.FileChooser
@@ -29,8 +28,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.environmentVariables
-import com.intellij.platform.eel.isWindows
-import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.fs.getRoots
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
@@ -123,7 +121,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ActionListener
-import java.nio.file.FileSystems
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import javax.swing.JComponent
@@ -165,7 +162,7 @@ data class EelFileSystem(
       owner = ModalTaskOwner.component(textField),
       title = message("sdk.create.custom.browse.roots.progress")
     ) {
-      withContext(Dispatchers.IO) { descriptor.withEelRoots() }
+      descriptor.withEelRoots()
     }
     ComponentWithBrowseButton.BrowseFolderActionListener(textField, null, browseDescriptor, fieldAccessor).actionPerformed(event)
   }
@@ -178,20 +175,15 @@ data class EelFileSystem(
   ): PyRemotePathMapper = PyEelPathMapper(eelApi.descriptor)
 
   /**
-   * Limits the chooser to the file system of this eel: the file system roots for the local eel, and the root of the home
-   * directory for another eel. On Windows, the local roots are the fixed drives only, see [listWindowsLocalDriveRoots].
+   * Limits the chooser to the roots of the file system of this eel, see [getRoots].
+   * The chooser does not show a root that the VFS cannot find.
    */
-  @RequiresBackgroundThread
-  private fun FileChooserDescriptor.withEelRoots(): FileChooserDescriptor {
-    // TODO: get the roots from the eel API, not from FileSystems.getDefault()
-    val roots = when {
-      eelDescriptor != LocalEelDescriptor -> listOf(eelApi.userInfo.home.root.asNioPath())
-      eelDescriptor.osFamily.isWindows -> listWindowsLocalDriveRoots()
-      else -> FileSystems.getDefault().rootDirectories.toList()
+  private suspend fun FileChooserDescriptor.withEelRoots(): FileChooserDescriptor =
+    withContext(Dispatchers.IO) {
+      val roots = eelApi.fs.getRoots().map { it.asNioPath() }
+      val vfs = LocalFileSystem.getInstance()
+      withRoots(roots.mapNotNull { vfs.findFileByNioFile(it) ?: vfs.refreshAndFindFileByNioFile(it) })
     }
-    val vfs = LocalFileSystem.getInstance()
-    return withRoots(roots.mapNotNull { vfs.findFileByNioFile(it) ?: vfs.refreshAndFindFileByNioFile(it) })
-  }
 
   override fun getBinaryToExec(path: PathHolder.Eel, workingDir: Path?): BinaryToExec {
     // Only an absolute path names a directory on the eel. A relative one would resolve against the current directory

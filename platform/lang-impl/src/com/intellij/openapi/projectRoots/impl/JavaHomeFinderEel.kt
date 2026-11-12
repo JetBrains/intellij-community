@@ -14,12 +14,12 @@ import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.expandPathEnvVar
 import com.intellij.platform.eel.fs.EelFileInfo
-import com.intellij.platform.eel.fs.EelFileSystemPosixApi
-import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
 import com.intellij.platform.eel.fs.EelPosixFileInfo
+import com.intellij.platform.eel.fs.getRoots
 import com.intellij.platform.eel.fs.stat
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
@@ -77,20 +77,10 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
   }
 
   override fun getFsRoots(): Collection<Path> = runBlockingMaybeCancellable {
-    val paths = when (val fs = eel.fs) {
-      is EelFileSystemPosixApi -> listOf(EelPath.build(listOf("/"), eel.descriptor))
-      is EelFileSystemWindowsApi -> fs.getRootDirectories()
-      else -> error(fs)
-    }
-    paths.map { it.asNioPath() }
+    eel.fs.getRoots().map { it.asNioPath() }
   }
 
-  override fun getPathSeparator(): String? =
-    when (val fs = eel.fs) {
-      is EelFileSystemPosixApi -> ":"
-      is EelFileSystemWindowsApi -> ";"
-      else -> error(fs)
-    }
+  override fun getPathSeparator(): String = eel.descriptor.osFamily.pathSeparator
 
   private val isCaseSensitive = service<ScopeService>().suspendingLazy {
     val testDir = eel.fs.user.home

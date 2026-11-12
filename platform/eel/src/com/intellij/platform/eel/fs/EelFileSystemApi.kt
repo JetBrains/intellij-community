@@ -1205,6 +1205,11 @@ interface LocalEelFileSystemWindowsApi : EelFileSystemWindowsApi, LocalEelFileSy
 interface EelFileSystemWindowsApi : EelFileSystemApi {
   override val user: EelUserWindowsInfo
 
+  /**
+   * Returns the roots of the fixed drives, for example `C:\`.
+   * The list does not include network, removable, or optical drives: the IDE does not support a project on them,
+   * and access to them can be slow.
+   */
   suspend fun getRootDirectories(): Collection<EelPath>
 
   @CheckReturnValue

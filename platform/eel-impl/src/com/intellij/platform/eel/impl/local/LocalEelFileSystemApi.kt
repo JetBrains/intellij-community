@@ -34,9 +34,11 @@ import com.intellij.platform.eel.impl.base.fs.WalkDirectoryEntryResultImpl
 import com.intellij.platform.eel.impl.base.fs.WalkDirectoryEntryWindowsImpl
 import com.intellij.platform.eel.impl.base.fs.readFileImpl
 import com.intellij.platform.eel.isPosix
+import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.eel.provider.utils.EelPathTransfer.convertPosixPermissionsToMask
@@ -46,6 +48,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -57,7 +60,6 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.FileSystem
 import java.nio.file.FileSystemException
 import java.nio.file.FileSystemLoopException
-import java.nio.file.FileSystems
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -578,8 +580,8 @@ abstract class WindowsNioBasedEelFileSystemApi(
 ) : NioBasedEelFileSystemApi(fs), LocalEelFileSystemWindowsApi {
 
   override suspend fun getRootDirectories(): Collection<EelPath> =
-    FileSystems.getDefault().rootDirectories.map { path ->
-      EelPath.parse(path.toString(), LocalEelDescriptor)
+    withContext(Dispatchers.IO) {
+      listWindowsLocalDriveRoots().map { it.asEelPath() }
     }
 
   override suspend fun createDirectory(
@@ -628,6 +630,23 @@ abstract class WindowsNioBasedEelFileSystemApi(
     target: EelFileSystemPosixApi.SymbolicLinkTarget,
     linkPath: EelPath,
   ): EelResult<Unit, EelFileSystemPosixApi.CreateSymbolicLinkError> = createSymbolicLinkImpl(target, linkPath)
+}
+
+/**
+ * Returns the roots of the fixed drives of the local Windows, for example `C:\`.
+ * The list does not include network, removable, or optical drives.
+ *
+ * Do not use this function in new code. Use [com.intellij.platform.eel.fs.getRoots] instead.
+ * Some WSL modules still use this function. When they stop, it becomes `internal`.
+ *
+ * Call it only on Windows, because it loads `kernel32.dll`.
+ */
+@ApiStatus.Internal
+fun listWindowsLocalDriveRoots(): List<Path> = if (LocalEelDescriptor.osFamily.isWindows){
+  WindowsDrives.fixedDriveRoots().map { Path.of(it) }
+} else {
+  // TODO: This workaround is here because old WSL code might call it on other OSes. Drop as soon as we get rid of it.
+  emptyList()
 }
 
 private fun copyTimes(

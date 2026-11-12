@@ -9,9 +9,9 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetId
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
-import com.intellij.execution.wsl.listWindowsLocalDriveRoots
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.platform.eel.impl.local.listWindowsLocalDriveRoots
 import java.nio.file.Path
 import kotlin.io.path.pathString
 

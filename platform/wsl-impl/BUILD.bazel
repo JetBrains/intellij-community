@@ -51,6 +51,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//libraries/jediterm-core",
         "//libraries/jediterm-ui",
+        "//platform/eel-impl",
     ],
 )
 ### auto-generated section `build intellij.platform.wsl.impl` end

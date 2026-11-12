@@ -3,6 +3,7 @@ package com.intellij.execution.wsl
 
 import com.intellij.execution.wsl.ui.createFileChooserDescriptor
 import com.intellij.execution.wsl.ui.getBestWindowsPathFromLinuxPath
+import com.intellij.platform.eel.impl.local.listWindowsLocalDriveRoots
 import com.intellij.testFramework.fixtures.TestFixtureRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

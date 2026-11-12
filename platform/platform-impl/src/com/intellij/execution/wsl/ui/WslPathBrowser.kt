@@ -2,7 +2,6 @@
 package com.intellij.execution.wsl.ui
 
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.listWindowsLocalDriveRoots
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -11,6 +10,7 @@ import com.intellij.openapi.fileChooser.impl.UniversalFileChooserFactory
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.platform.eel.impl.local.listWindowsLocalDriveRoots
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.ui.TextAccessor

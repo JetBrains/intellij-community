@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.wsl;
+package com.intellij.platform.eel.impl.local;
 
-import com.intellij.util.system.WindowsKernel32;
 import com.intellij.util.system.WindowsSystemLibraries;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +21,7 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
 
 /** Drive roots through {@code kernel32.dll} downcalls. Windows only: the first call loads the DLL. */
 @ApiStatus.Internal
-public final class WindowsDrives {
+final class WindowsDrives {
   private WindowsDrives() { }
 
   /** {@code DRIVE_FIXED} */
@@ -31,7 +30,7 @@ public final class WindowsDrives {
   /**
    * @return the roots of the fixed drives, for example {@code C:\\}, from {@code GetLogicalDriveStringsW} filtered by {@code GetDriveTypeW}
    */
-  public static @NotNull List<String> fixedDriveRoots() {
+  static @NotNull List<String> fixedDriveRoots() {
     try (var arena = Arena.ofConfined()) {
       var length = (int)Handles.GET_LOGICAL_DRIVE_STRINGS.invokeExact(0, MemorySegment.NULL);
       if (length <= 0) {
