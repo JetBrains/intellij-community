@@ -33,7 +33,9 @@ interface McpToolDisallowListSettings {
     val routerOnly: Boolean = true,
   ) {
     companion object {
-      fun defaultFor(tool: McpTool): ToolState = ToolState(routerOnly = !tool.descriptor.category.alwaysIncluded)
+      fun defaultFor(tool: McpTool): ToolState {
+        return ToolState(enabled = tool.isEnabledByDefault, routerOnly = !tool.descriptor.category.alwaysIncluded)
+      }
     }
   }
 }

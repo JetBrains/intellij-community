@@ -71,6 +71,12 @@ interface McpToolset {
   fun isUserConfigurable(): Boolean = true
 
   /**
+   * Whether tools from this toolset are enabled until the user changes their state in MCP tool settings.
+   * A toolset that needs an explicit opt-in should return `false`.
+   */
+  fun isEnabledByDefault(): Boolean = true
+
+  /**
    * Human-readable display name for this toolset group, shown in
    * Settings | AI | IDE as MCP Server | Exposed Tools and other UI surfaces.
    *

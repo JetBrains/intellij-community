@@ -65,6 +65,12 @@ class ToolsetReflectionTest {
     assertTrue(tools.none { it.isUserConfigurable })
   }
 
+  @Test
+  fun `toolset default state is propagated to reflected tools`() {
+    assertTrue(LaunchManagedToolset().asTools().all { it.isEnabledByDefault })
+    assertTrue(OptInToolset().asTools().none { it.isEnabledByDefault })
+  }
+
   private class ParallelToolset : McpToolset {
     val conversionThreadNames: MutableSet<String> = ConcurrentHashMap.newKeySet()
     private val firstConversion = AtomicBoolean(true)
@@ -107,6 +113,14 @@ class ToolsetReflectionTest {
 
     @McpTool
     fun failingTool() {
+    }
+  }
+
+  private class OptInToolset : McpToolset {
+    override fun isEnabledByDefault(): Boolean = false
+
+    @McpTool
+    fun optInTool() {
     }
   }
 

@@ -15,6 +15,14 @@ interface McpTool {
     get() = true
 
   /**
+   * Whether this tool is enabled while MCP tool settings hold no state for it.
+   *
+   * A tool that needs an explicit opt-in should return `false`. The user then enables it in MCP tool settings.
+   */
+  val isEnabledByDefault: Boolean
+    get() = true
+
+  /**
    * Descriptor of the tool: name, description, and input parameters.
    */
   val descriptor: McpToolDescriptor

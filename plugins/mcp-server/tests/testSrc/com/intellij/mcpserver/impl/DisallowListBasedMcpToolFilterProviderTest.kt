@@ -132,9 +132,37 @@ class DisallowListBasedMcpToolFilterProviderTest {
     assertThat(context.routerOnlyTools).containsExactly(tool)
   }
 
-  private fun fakeTool(name: String, fullName: String, userConfigurable: Boolean = true): McpTool {
+  @Test
+  fun `applyFilters keeps a tool off when it is disabled by default and has no stored state`() {
+    val tool = fakeTool(name = "opt_in_tool", fullName = "com.example.toolset.opt_in_tool", enabledByDefault = false)
+    val context = McpToolFilterContext(listOf(tool))
+
+    provider.applyFilters(context, null, null, McpToolInvocationMode.DIRECT)
+
+    assertThat(context.onTools).doesNotContain(tool)
+    assertThat(context.routerOnlyTools).doesNotContain(tool)
+  }
+
+  @Test
+  fun `applyFilters enables a tool that is disabled by default when the stored state enables it`() {
+    val tool = fakeTool(name = "opt_in_tool", fullName = "com.example.toolset.opt_in_tool", enabledByDefault = false)
+    val context = McpToolFilterContext(listOf(tool))
+    settings.toolStates = mapOf(tool.descriptor.fullyQualifiedName to ToolState(enabled = true, routerOnly = true))
+
+    provider.applyFilters(context, null, null, McpToolInvocationMode.DIRECT)
+
+    assertThat(context.routerOnlyTools).containsExactly(tool)
+  }
+
+  private fun fakeTool(
+    name: String,
+    fullName: String,
+    userConfigurable: Boolean = true,
+    enabledByDefault: Boolean = true,
+  ): McpTool {
     return object : McpTool {
       override val isUserConfigurable: Boolean = userConfigurable
+      override val isEnabledByDefault: Boolean = enabledByDefault
       override val descriptor = McpToolDescriptor(
         name = name,
         description = name,

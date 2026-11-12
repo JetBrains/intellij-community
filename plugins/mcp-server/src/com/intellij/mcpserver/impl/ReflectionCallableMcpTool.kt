@@ -12,8 +12,12 @@ class ReflectionCallableMcpTool(
   override val descriptor: McpToolDescriptor,
   private val callableBridge: CallableBridge,
   override val isUserConfigurable: Boolean,
+  override val isEnabledByDefault: Boolean,
 ) : McpTool {
   constructor(descriptor: McpToolDescriptor, callableBridge: CallableBridge) : this(descriptor, callableBridge, true)
+
+  constructor(descriptor: McpToolDescriptor, callableBridge: CallableBridge, isUserConfigurable: Boolean)
+    : this(descriptor, callableBridge, isUserConfigurable, true)
 
   override suspend fun call(args: JsonObject): McpToolCallResult {
     val result = callableBridge.call(args)
