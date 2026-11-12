@@ -64,6 +64,9 @@ pub struct CaseFailure {
 pub struct TestCase {
     pub class_name: String,
     pub name: String,
+    /// The name of the `<testsuite>` that holds the case. A case with no class name, such as `Class Configuration`,
+    /// has its class at the start of the suite name.
+    pub suite_name: String,
     pub outcome: Outcome,
     pub failure: Option<CaseFailure>,
     pub time_seconds: f64,
@@ -412,6 +415,7 @@ fn scan(xml: &str) -> (Vec<Suite>, Integrity) {
             let case = TestCase {
                 class_name: tag.attribute("classname").unwrap_or_default(),
                 name: tag.attribute("name").unwrap_or_default(),
+                suite_name: state.current.as_ref().map(|suite| suite.name.clone()).unwrap_or_default(),
                 outcome: Outcome::Passed,
                 failure: None,
                 time_seconds: tag.seconds("time"),

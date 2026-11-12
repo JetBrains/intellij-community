@@ -212,6 +212,7 @@ fn digest_failure(apply: impl FnOnce(&mut TestCase)) -> TestCase {
     let mut failure = TestCase {
         class_name: "com.intellij.air.threads.AgentThreadCliTest".to_owned(),
         name: "resolvesWorktreeCwd".to_owned(),
+        suite_name: String::new(),
         outcome: Outcome::Failed,
         failure: Some(CaseFailure {
             kind: FailureKind::Failure,
@@ -592,6 +593,16 @@ fn rerun_selector_keeps_a_method_only_when_the_method_is_selectable() {
         // A `@Nested` class reaches test.xml as `Outer$Nested`. The outer class alone runs the nested one, and
         // `Outer#method` would look for the method in the outer class.
         ("com.intellij.air.x.FooTest$Inner", "resolvesCwd", "FooTest"),
+        ("com.intellij.air.x.FooTest$Inner", "resolvesCwd()[MONOLITH]", "FooTest"),
+        // The name of a test as TeamCity shows it: the method ends at the first `[`.
+        ("com.intellij.air.x.FooTest", "resolvesCwd()", "FooTest#resolvesCwd()"),
+        ("com.intellij.air.x.FooTest", "resolvesCwd(Path)", "FooTest#resolvesCwd(Path)"),
+        ("com.intellij.air.x.FooTest", "renders()[MONOLITH]", "FooTest#renders()"),
+        ("com.intellij.air.x.FooTest", "renders[custom name]", "FooTest#renders"),
+        ("com.intellij.air.x.FooTest", "parameterized[FIRST]", "FooTest#parameterized"),
+        // An array parameter type keeps its brackets.
+        ("com.intellij.air.x.FooTest", "main(String[])", "FooTest"),
+        ("com.intellij.air.x.FooTest", "main(String[])[MONOLITH]", "FooTest"),
         // A suite that named no class leaves the name as the only thing there is to print.
         ("", "orphan", "orphan"),
     ] {
@@ -600,6 +611,37 @@ fn rerun_selector_keeps_a_method_only_when_the_method_is_selectable() {
             failure.name = name.to_owned();
         });
         assert_eq!(rerun_selector(&failure), want, "{class_name} / {name:?}");
+    }
+}
+
+/// Two failed containers of one target keep apart in the digest: each id takes the class from the suite.
+#[test]
+fn a_class_configuration_id_names_the_class_of_its_suite() {
+    let failure = digest_failure(|failure| {
+        failure.class_name = String::new();
+        failure.name = "Class Configuration".to_owned();
+        failure.suite_name = "com.intellij.air.x.FooTest".to_owned();
+    });
+    assert_eq!(test_case_id(&failure), "FooTest#Class Configuration");
+}
+
+/// A failed container has no class name in test.xml. Its suite name starts with the class.
+#[test]
+fn rerun_selector_takes_the_class_of_a_class_configuration_from_its_suite() {
+    for (suite_name, want) in [
+        ("com.intellij.air.x.FooTest", "FooTest"),
+        ("com.intellij.air.x.FooTest$Inner.Inner", "FooTest"),
+        ("com.intellij.air.x.FooTest$Inner[MONOLITH].SPLIT", "FooTest"),
+        ("com.intellij.air.x.FooTest.factory()", "FooTest"),
+        ("com.intellij.air.x.AllTests: com.intellij.air.x.FooTest", "FooTest"),
+        ("", "Class Configuration"),
+    ] {
+        let failure = digest_failure(|failure| {
+            failure.class_name = String::new();
+            failure.name = "Class Configuration".to_owned();
+            failure.suite_name = suite_name.to_owned();
+        });
+        assert_eq!(rerun_selector(&failure), want, "{suite_name:?}");
     }
 }
 

@@ -108,10 +108,14 @@ pub(crate) fn failure_detail(case: &TestCase) -> &str {
 ///
 /// An identifier and not a selector; see [`rerun_selector`] for the selector, and for why the two differ.
 pub(crate) fn test_case_id(case: &TestCase) -> String {
-    let simple_class = case
-        .class_name
-        .rsplit_once('.')
-        .map_or(case.class_name.as_str(), |(_, simple)| simple);
+    let simple_class = if case.class_name.is_empty() {
+        // `Class Configuration` names no class; its suite starts with the class.
+        suite_class_name(&case.suite_name)
+    } else {
+        case.class_name
+            .rsplit_once('.')
+            .map_or(case.class_name.as_str(), |(_, simple)| simple)
+    };
     if simple_class.is_empty() {
         return case.name.clone();
     }
@@ -125,34 +129,53 @@ const JVM_FORBIDDEN_METHOD_CHARACTERS: &[char] = &['.', ';', '[', ']', '/', '<',
 /// alone otherwise.
 ///
 /// The class alone is a real answer rather than a degradation, because a class rerun works.
-/// `community/platform/testFramework/bootstrap/src/com/intellij/tests/bazel/TestCaseXmlRenderer.java` writes the
-/// display name for a dynamic test, truncates a legacy reporting name at the first `(`, and prefixes a
-/// test-template child with its parent name and a dot. So the name in test.xml is not always a method name, and a
-/// `#` selector built from one reaches the runner as a method it cannot find. The run then reports NO TESTS for a
-/// class that plainly failed.
+/// `community/platform/testFramework/bootstrap/src/com/intellij/tests/bazel/TeamCityTestNames.java` writes the name
+/// of a test as TeamCity shows it: `test()`, `test(TestInfo)`, `test()[MONOLITH]`, `parameterized[FIRST]`. The method
+/// ends at the first `[`, and the runner selects `test()`, `test(TestInfo)` and every method of a name. A name with
+/// no method, such as a `@DisplayName` that starts with the method name, reaches the runner as a method it cannot
+/// find. The run then reports NO TESTS for a class that plainly failed.
 ///
 /// The method survives three checks. Its class must be a top-level class, because the selector of an `@Nested` class is
 /// its outer class (see [`rerun_class_name`]). It must round-trip through [`Selector::classify`], the parser this tool
 /// already owns, so the hint grows no second grammar. It must also hold no character a JVM method name forbids.
 ///
-/// The name of a method that takes a parameter, such as `@TempDir root: Path`, is a selectable method. The runner finds
-/// a method by its name with any parameter list.
+/// A case with no class name, such as `Class Configuration`, reruns the class at the start of its suite name.
 pub(crate) fn rerun_selector(case: &TestCase) -> String {
-    let simple_class = rerun_class_name(&case.class_name);
-    if simple_class.is_empty() {
-        // No class to fall back to. The name is all there is, and a caller at least reads what failed.
-        return case.name.clone();
+    if case.class_name.is_empty() {
+        let suite_class = suite_class_name(&case.suite_name);
+        if suite_class.is_empty() {
+            // No class to fall back to. The name is all there is, and a caller at least reads what failed.
+            return case.name.clone();
+        }
+        return suite_class.to_owned();
     }
+    let simple_class = rerun_class_name(&case.class_name);
     if case.class_name.contains('$') {
         return simple_class.to_owned();
     }
-    let candidate = format!("{simple_class}#{}", case.name);
-    if !case.name.contains(JVM_FORBIDDEN_METHOD_CHARACTERS)
+    let method = method_name(&case.name);
+    let candidate = format!("{simple_class}#{method}");
+    if !method.is_empty()
+        && !method.contains(JVM_FORBIDDEN_METHOD_CHARACTERS)
         && Selector::classify(&candidate).is_ok_and(|selector| selector.method.is_some())
     {
         return candidate;
     }
     simple_class.to_owned()
+}
+
+/// The test name up to the first `[` outside the parameter types: `test(String[])[1]` gives `test(String[])`.
+fn method_name(name: &str) -> &str {
+    let mut depth = 0usize;
+    for (index, char) in name.char_indices() {
+        match char {
+            '(' => depth += 1,
+            ')' => depth = depth.saturating_sub(1),
+            '[' if depth == 0 => return &name[..index],
+            _ => {}
+        }
+    }
+    name
 }
 
 /// The class part of a rerun selector: the last dotted segment, and the outer half of a nested pair.
@@ -164,6 +187,18 @@ pub(crate) fn rerun_selector(case: &TestCase) -> String {
 fn rerun_class_name(class_name: &str) -> &str {
     let simple = class_name.rsplit_once('.').map_or(class_name, |(_, simple)| simple);
     simple.split_once('$').map_or(simple, |(outer, _)| outer)
+}
+
+/// The simple name of the class at the start of a suite name: the first dotted segment with an upper-case first
+/// letter, up to a `$`, `[` or `(`. The innermost suite comes last, after the last `: `.
+///
+/// `com.x.FooTest$Inner[MONOLITH].SPLIT`, `com.x.FooTest.factory()` and `S: com.x.FooTest` all give `FooTest`.
+fn suite_class_name(suite_name: &str) -> &str {
+    let innermost = suite_name.rsplit_once(": ").map_or(suite_name, |(_, innermost)| innermost);
+    innermost
+        .split('.')
+        .find(|segment| segment.starts_with(|first: char| first.is_ascii_uppercase()))
+        .map_or("", |segment| segment.split(['$', '[', '(']).next().unwrap_or_default())
 }
 
 /// One failure: its id, its headline, and its trimmed stack.

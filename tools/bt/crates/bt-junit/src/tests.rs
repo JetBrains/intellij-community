@@ -36,6 +36,7 @@ fn a_complete_document_is_complete() {
     };
     assert_eq!((suite.tests, suite.failures, suite.time_seconds), (2, 1, 1.5));
     assert_eq!(suite.cases.len(), 2);
+    assert_eq!(suite.cases[0].suite_name, "A");
     assert_eq!(suite.cases[0].outcome, Outcome::Passed);
     assert_eq!(suite.cases[0].time_seconds, 0.5);
     let failed = &suite.cases[1];
