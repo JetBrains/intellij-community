@@ -3,7 +3,7 @@ resolution/conversion to XML.
 """
 
 import pickle
-from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, iter_chars, silence_warnings_decorator, get_global_debugger
+from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, iter_chars, silence_warnings_decorator, get_global_debugger, STATE_SUSPEND
 
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
 from _pydev_bundle import pydev_log
@@ -17,7 +17,7 @@ import sys  # @Reimport
 from _pydev_bundle._pydev_saved_modules import threading
 from _pydevd_bundle import pydevd_save_locals, pydevd_timeout, pydevd_constants
 from _pydev_bundle.pydev_imports import Exec, execfile
-from _pydevd_bundle.pydevd_utils import to_string, ScopeRequest
+from _pydevd_bundle.pydevd_utils import to_string, ScopeRequest, get_non_pydevd_threads
 import inspect
 from _pydevd_bundle.pydevd_daemon_thread import PyDBDaemonThread
 from _pydevd_bundle.pydevd_save_locals import update_globals_and_locals
@@ -310,6 +310,16 @@ def _run_with_interrupt_thread(original_func, py_db, curr_thread, frame, express
             return original_func(py_db, frame, expression, is_exec)
 
 
+def _has_other_suspended_thread(curr_thread):
+    for t in get_non_pydevd_threads():
+        if t is curr_thread:
+            continue
+        info = getattr(t, "additional_info", None)
+        if info is not None and info.pydev_state == STATE_SUSPEND:
+            return True
+    return False
+
+
 @contextmanager
 def unblock_threads_on_timeout(py_db, curr_thread, timeout, on_timeout_message=None):
     """
@@ -343,6 +353,11 @@ def unblock_threads_on_timeout(py_db, curr_thread, timeout, on_timeout_message=N
             with suspend_threads_lock:
                 if unblock_state["finished"]:
                     # The block already finished; don't resume threads that are meant to stay suspended.
+                    return
+                if not _has_other_suspended_thread(curr_thread):
+                    # Nothing to resume, so nothing to report either. The 'continued' and 'stopped' events
+                    # sent below make a client reload the variables, which runs into this timeout again.
+                    pydev_log.info("No other suspended thread to resume after timeout.")
                     return
                 unblock_state["resumed"] = True
                 pydev_log.info("Resuming threads after timeout.")
