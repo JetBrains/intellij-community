@@ -25,8 +25,10 @@ import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.getShortcutSetForDisplay
+import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.icons.getMenuBarIcon
 import com.intellij.ui.mac.screenmenu.MenuItem
 import java.awt.EventQueue
@@ -58,7 +60,7 @@ internal class MacNativeActionMenuItem(
         setState(isToggled)
       }
       EventQueue.invokeLater {
-        if (presentation.isEnabledInModalContext || context.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) != true) {
+        if (presentation.isEnabledInModalContext || !isModalContextForMainMenu(context)) {
           (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
             //todo fix all clients and remove global lock here
             WriteIntentReadAction.run {
@@ -141,4 +143,17 @@ private fun performAction(action: AnAction, place: String, presentation: Present
       context, presentation, place, ActionUiKind.MAIN_MENU, currentEvent as? InputEvent)
     ActionUtil.performAction(action, event)
   })
+}
+
+/**
+ * Returns `true` when the main menu must not perform an action that is not enabled in a modal context.
+ * The check uses the window of the context component, as [IdeKeyEventDispatcher] does for a shortcut.
+ * So a popup window is a modal context only when its popup is a modal context.
+ */
+private fun isModalContextForMainMenu(context: DataContext): Boolean {
+  if (context.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) != true) {
+    return false
+  }
+  val window = ComponentUtil.getWindow(context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) ?: return true
+  return IdeKeyEventDispatcher.isModalContext(window)
 }
