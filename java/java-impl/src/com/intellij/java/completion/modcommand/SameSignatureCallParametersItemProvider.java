@@ -11,6 +11,7 @@ import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.Icon;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -59,6 +61,14 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 @ApiStatus.Internal
 @NotNullByDefault
 public final class SameSignatureCallParametersItemProvider extends JavaModCompletionItemProvider implements DumbAware {
+  private static final NotNullLazyValue<Icon> PARAMETERS_ICON = NotNullLazyValue.atomicLazy(() -> {
+    Icon parameterIcon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Parameter);
+    LayeredIcon icon = new LayeredIcon(2);
+    icon.setIcon(parameterIcon, 0, 2 * parameterIcon.getIconWidth() / 5, 0);
+    icon.setIcon(parameterIcon, 1);
+    return icon;
+  });
+
   private static final PsiElementPattern.Capture<PsiElement> IN_CALL_ARGUMENT =
     psiElement().afterLeaf("(").withParent(
       psiElement(PsiReferenceExpression.class).withParent(
@@ -120,19 +130,10 @@ public final class SameSignatureCallParametersItemProvider extends JavaModComple
     int makeFinalMethodOffset = PsiTreeUtil.isAncestor(takeParametersFrom, call, true) ? takeParametersFrom.getTextRange().getStartOffset() : -1;
     return new CommonCompletionItem(lookupString)
       .withPresentation(new ModCompletionItemPresentation(MarkupText.plainText(lookupString))
-                          .withMainIcon(SameSignatureCallParametersItemProvider::createIcon))
+                          .withMainIcon(PARAMETERS_ICON))
       .withObject(new Arguments(lookupString))
       .withTail(ExpectedTypesProvider.getFinalCallParameterTailType(call, invoked.getReturnType(), invoked))
       .withAdditionalUpdater((ignored, updater) -> removeRestArguments(updater, makeFinalMethodOffset));
-  }
-
-  private static LayeredIcon createIcon() {
-    IconManager iconManager = IconManager.getInstance();
-    int w = iconManager.getPlatformIcon(PlatformIcons.Parameter).getIconWidth();
-    LayeredIcon icon = new LayeredIcon(2);
-    icon.setIcon(iconManager.getPlatformIcon(PlatformIcons.Parameter), 0, 2 * w / 5, 0);
-    icon.setIcon(iconManager.getPlatformIcon(PlatformIcons.Parameter), 1);
-    return icon;
   }
 
   /** Deletes the text between the inserted arguments and the {@code )} of the call, and makes the parameters final if needed. */
