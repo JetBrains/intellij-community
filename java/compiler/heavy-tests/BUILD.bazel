@@ -42,6 +42,7 @@ jvm_library(
         "//platform/todo/plugin",
         "//xml/plugin",
         "//community-resources:customization",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
     deps = [
         # do not sort,
