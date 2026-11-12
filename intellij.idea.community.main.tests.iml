@@ -375,6 +375,17 @@
     <orderEntry type="module" module-name="intellij.python.community.tests.junit5" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.tests.junit5.win" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.testng.rt.tests.ideaTestFrameworks" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests.compatibility" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests.util" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.html.tools.tests.refactoring" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis.java.tests.codeInspection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis.java.tests.console" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis.java.tests.logging" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis.java.tests.refactoring" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared.tests.changes" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared.tests.log" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared.tests.ui" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.tests.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.tests.wslPyEnv" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl.tests" scope="RUNTIME" />
   </component>
