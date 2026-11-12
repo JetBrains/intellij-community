@@ -3,7 +3,7 @@ package com.intellij.compose.ide.plugin.projectStructureTests
 
 import com.intellij.compose.ide.plugin.shared.TARGET_GRADLE_VERSION
 import com.intellij.openapi.application.ex.PathManagerEx
-import org.junit.jupiter.api.Test
+import org.junit.Test
 import java.nio.file.Path
 import java.util.Properties
 import kotlin.io.path.inputStream
