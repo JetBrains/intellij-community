@@ -28,17 +28,10 @@ internal class BtaKotlinCompilerReferenceIndexStorageImpl(
 
     private val fileManager = VirtualFileManager.getInstance()
 
-    override fun getUsages(fqName: FqName): List<VirtualFile> = lookupStoragesByRoot.values
-        .asSequence()
-        .flatMap { it[fqName] }
-        .distinct()
-        .mapNotNull { fileManager.findFileByNioPath(it) }
-        .toList()
+    override fun getUsages(fqName: FqName): List<VirtualFile> =
+        lookupStoragesByRoot.values.getMergedUsagePaths(fqName).mapNotNull { fileManager.findFileByNioPath(it) }
 
-    override fun getSubtypesOf(fqName: FqName, deep: Boolean) = subtypeStoragesByRoot.values
-        .asSequence()
-        .flatMap { it[fqName, deep] }
-        .distinct()
+    override fun getSubtypesOf(fqName: FqName, deep: Boolean) = subtypeStoragesByRoot.values.getMergedSubtypes(fqName, deep)
 
     override fun refreshModules(modules: Collection<Module>): Boolean {
         // Rebuild from the current project roots so stale CRI directories

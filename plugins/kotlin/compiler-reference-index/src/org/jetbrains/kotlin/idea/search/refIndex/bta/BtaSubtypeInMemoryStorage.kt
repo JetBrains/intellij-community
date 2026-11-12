@@ -72,3 +72,15 @@ class BtaSubtypeInMemoryStorage private constructor(
 @OptIn(ExperimentalBuildToolsApi::class)
 @ApiStatus.Internal
 fun Path.hasSubtypeData(): Boolean = resolve(CriToolchain.SUBTYPES_FILENAME).exists()
+
+/**
+ * Returns the subtypes of [fqName] merged over the receiver's storages. With [deep], the walk follows the hierarchy
+ * across storages, because a subtype chain can pass through a class that another storage compiled.
+ */
+internal fun Collection<BtaSubtypeInMemoryStorage>.getMergedSubtypes(fqName: FqName, deep: Boolean): Sequence<FqName> {
+    fun directSubtypesOf(name: FqName) = asSequence().flatMap { it[name, false] }
+    val direct = directSubtypesOf(fqName)
+    val subtypes = if (deep) generateRecursiveSequence(direct, ::directSubtypesOf) else direct
+    // The shallow walk can see one subtype from several roots, for example when Gradle modules share a CRI directory
+    return subtypes.distinct()
+}

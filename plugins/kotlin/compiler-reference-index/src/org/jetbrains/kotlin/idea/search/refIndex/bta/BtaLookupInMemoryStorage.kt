@@ -87,3 +87,9 @@ class BtaLookupInMemoryStorage private constructor(
 @ApiStatus.Internal
 fun Path.hasLookupData(): Boolean = resolve(CriToolchain.LOOKUPS_FILENAME).exists() &&
         resolve(CriToolchain.FILE_IDS_TO_PATHS_FILENAME).exists()
+
+/**
+ * Returns the paths of the files that use [fqName], merged over the receiver's storages.
+ */
+internal fun Collection<BtaLookupInMemoryStorage>.getMergedUsagePaths(fqName: FqName): List<Path> =
+    flatMapTo(mutableSetOf()) { it[fqName] }.toList()

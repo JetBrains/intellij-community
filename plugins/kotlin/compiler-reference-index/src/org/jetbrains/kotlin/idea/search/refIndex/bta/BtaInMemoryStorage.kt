@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.search.refIndex.bta
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * A marker interface for Gradle/Maven CRI in-memory storages
+ * A marker interface for BTA CRI in-memory storages
  */
 @ApiStatus.Internal
 interface BtaInMemoryStorage
