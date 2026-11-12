@@ -85,6 +85,10 @@ internal class GradleProjectTestFixtureImpl(
 
     gradleJvmFixture.withProjectSettingsConfigurator {
       fileFixture = FileTestFixtureImpl("GradleTestFixture/$gradleVersion/$fixtureName", projectName) {
+        val eelDescriptor = fileFixture.projectRoot.toNioPath().getEelDescriptor()
+        val gradleUserHome = gradleUserHomeDir(eelDescriptor).findOrCreateDirectory().toRealPath()
+        VfsRootAccess.allowRootAccess(testDisposable, gradleUserHome.toString())
+
         configureProject()
         excludeFilePatterns("glob:**/.gradle{,/**}", "glob:**/build{,/**}")
         withGradleWrapper(gradleVersion)
@@ -100,8 +104,6 @@ internal class GradleProjectTestFixtureImpl(
         openProjectAsync(fileFixture.projectRoot)
       }
     }
-    val gradleUserHome = gradleUserHomeDir(project.getEelDescriptor()).findOrCreateDirectory().toRealPath()
-    VfsRootAccess.allowRootAccess(testDisposable, gradleUserHome.toString())
   }
 
   override fun tearDown() {
