@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.util
 import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabHttpStatusError.HttpStatusErrorType
 import org.jetbrains.plugins.gitlab.api.asGitLabStatusError
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
@@ -47,6 +46,3 @@ object GitLabMergeRequestErrorUtil {
     }
   )
 }
-
-internal fun Throwable.localizedMessageOrClassName(): @Nls String =
-  localizedMessage ?: this::class.simpleName ?: "${javaClass.name} occurred"

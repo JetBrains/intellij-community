@@ -11,7 +11,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
-import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabThrowableUtil
 import org.jetbrains.plugins.gitlab.notification.GitLabNotificationIds.GL_NOTIFICATION_UPLOAD_FILE_ERROR
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
 import java.awt.Image
@@ -66,7 +66,7 @@ internal object GitLabUploadFileUtil {
     }
     catch (e: Exception) {
       VcsNotifier.getInstance(project).notifyError(GL_NOTIFICATION_UPLOAD_FILE_ERROR, message("upload.file.action.error.title"),
-                                                   e.localizedMessageOrClassName())
+                                                   GitLabThrowableUtil.localizedMessageOrClassName(e))
     }
     return null
   }
