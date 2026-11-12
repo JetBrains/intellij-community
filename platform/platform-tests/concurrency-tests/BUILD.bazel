@@ -50,7 +50,6 @@ jvm_library(
         "//plugins/yaml/plugin",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
-        "//platform/platform-tests:tests_test_lib",
     ],
     deps = [
         # do not sort,
@@ -243,6 +242,7 @@ jvm_library(
         "//platform/platform-tests/concurrency:util-concurrency-tests_test_lib",
         "//platform/scratch/plugin",
         "//libraries/kotlinx/coroutines/test",
+        "//platform/platform-tests:tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.tests.concurrency` end
