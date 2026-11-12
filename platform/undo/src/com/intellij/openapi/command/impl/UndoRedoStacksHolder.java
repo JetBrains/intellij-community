@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
  * There are four physical stack locations:
  * 1. globalStack stores project-wide groups.
  * 2. documentStacks strongly keeps local-file stacks by DocumentReference, so undo can survive local file removal.
+ *    It keeps only stacks that are not empty, because a key keeps its VirtualFile.
  * 3. documentsWithStacks stores file-less Document stacks in Document user data to avoid retaining every created document.
  * 4. nonlocalVirtualFilesWithStacks stores non-local VirtualFile stacks in VirtualFile user data for the same weak-tracking reason.
  */
@@ -158,13 +159,16 @@ final class UndoRedoStacksHolder {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Adding to " + getStacksDescription() + ": " + group.dumpState());
     }
+    // a trim can empty a stack that gets the group later in this loop, so empty stacks leave after the loop
+    Set<DocumentReference> trimmed = new HashSet<>();
     for (UndoRedoList<UndoableGroup> stack : getStacksToAdd(group)) {
       if (isUndo && !group.isTemporary()) {
         convertTemporaryActionsToPermanent(stack);
       }
       int undoLimit = stack == globalStack ? UndoManagerImpl.getGlobalUndoLimit() : UndoManagerImpl.getDocumentUndoLimit();
-      doAddToStack(stack, group, undoLimit);
+      doAddToStack(stack, group, undoLimit, trimmed);
     }
+    removeEmptyStacksOf(trimmed);
   }
 
   void removeFromStacks(@NotNull UndoableGroup group) {
@@ -175,6 +179,7 @@ final class UndoRedoStacksHolder {
       assert stack.getLast() == group;
       stack.removeLast();
     }
+    removeEmptyStacksOf(group.getAffectedDocuments());
   }
 
   boolean replaceOnStacks(@NotNull UndoableGroup group, @NotNull UndoableGroup newGroup) {
@@ -193,9 +198,10 @@ final class UndoRedoStacksHolder {
   }
 
   void clearStacks(@NotNull Collection<DocumentReference> refs, boolean clearGlobal) {
+    Set<DocumentReference> cleared = new HashSet<>();
     for (UndoRedoList<UndoableGroup> stack : getAffectedStacks(refs, clearGlobal)) {
       while(!stack.isEmpty()) {
-        clearStacksFrom(stack.getLast());
+        clearStacksFrom(stack.getLast(), cleared);
       }
     }
     removeEmptyStacks();
@@ -251,6 +257,11 @@ final class UndoRedoStacksHolder {
       return new UndoRedoList<UndoableGroup>().snapshot();
     }
     return stack.snapshot();
+  }
+
+  void resetTo(@NotNull DocumentReference ref, @NotNull UndoRedoListSnapshot<UndoableGroup> snapshot) {
+    getStack(ref).resetTo(snapshot);
+    removeEmptyStacksOf(List.of(ref));
   }
 
   /**
@@ -371,17 +382,38 @@ final class UndoRedoStacksHolder {
     nonlocalVirtualFileStacks.removeEmptyStacks();
   }
 
-  private void doAddToStack(@NotNull UndoRedoList<UndoableGroup> stack, @NotNull UndoableGroup group, int limit) {
+  /**
+   * Removes the empty local-file stacks of {@code refs} from {@link #documentStacks}.
+   */
+  private void removeEmptyStacksOf(@NotNull Collection<DocumentReference> refs) {
+    for (DocumentReference ref : refs) {
+      UndoRedoList<UndoableGroup> stack = documentStacks.get(ref);
+      if (stack != null && stack.isEmpty()) {
+        documentStacks.remove(ref);
+      }
+    }
+  }
+
+  private void doAddToStack(
+    @NotNull UndoRedoList<UndoableGroup> stack,
+    @NotNull UndoableGroup group,
+    int limit,
+    @NotNull Set<DocumentReference> trimmed
+  ) {
     if (!group.isUndoable() && stack.isEmpty()) {
       return;
     }
     stack.add(group);
     while (stack.size() > limit) {
-      clearStacksFrom(stack.getFirst());
+      clearStacksFrom(stack.getFirst(), trimmed);
     }
   }
 
-  private void clearStacksFrom(@NotNull UndoableGroup from) {
+  /**
+   * Removes {@code from} and all older groups of its stacks.
+   * Adds the documents of each removed group to {@code cleared}. The caller removes the stacks that became empty.
+   */
+  private void clearStacksFrom(@NotNull UndoableGroup from, @NotNull Set<DocumentReference> cleared) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Clearing " + getStacksDescription() + " from " + from.dumpState());
     }
@@ -392,11 +424,12 @@ final class UndoRedoStacksHolder {
       }
       if (pos > 0) {
         int top = stack.size() - pos;
-        clearStacksFrom(stack.get(pos - 1));
+        clearStacksFrom(stack.get(pos - 1), cleared);
         assert stack.size() == top && stack.indexOf(from) == 0;
       }
       stack.removeFirstSlow();
     }
+    cleared.addAll(from.getAffectedDocuments());
   }
 
   /**

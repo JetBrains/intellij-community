@@ -4,7 +4,10 @@ package com.intellij.openapi.editor.undo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.impl.UndoManagerImpl
+import com.intellij.openapi.command.undo.DocumentReference
 import com.intellij.openapi.command.undo.DocumentReferenceManager
+import com.intellij.openapi.command.undo.GlobalUndoableAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
@@ -91,6 +94,25 @@ internal class UndoClearDocumentReferencesTest {
       val directory = createDirectory("deleted-outside-command")
       delete(directory)
       directory
+    }
+    assertUndoDoesNotKeep(deleted)
+  }
+
+  @Test
+  fun `a directory whose group leaves at the global limit is not kept`() {
+    val deleted = timeoutRunBlocking(context = Dispatchers.EDT) {
+      val directories = (0..UndoManagerImpl.getGlobalUndoLimit()).map { index ->
+        val directory = createDirectory("trimmed-$index")
+        val action = DirectoryAction(DocumentReferenceManager.getInstance().create(directory))
+        val command = Runnable {
+          undoManager(project.get()).undoableActionPerformed(action)
+        }
+        CommandProcessor.getInstance().executeCommand(project.get(), command, "change trimmed-$index", null)
+        directory
+      }
+      undoManager(project.get()).flushCurrentCommandMerger()
+      delete(directories.first())
+      directories.first()
     }
     assertUndoDoesNotKeep(deleted)
   }
@@ -238,3 +260,15 @@ internal class UndoClearDocumentReferencesTest {
 }
 
 private const val VFS_CACHE_SEGMENT = $$"com.intellij.openapi.vfs.newvfs.impl.VfsData$Segment"
+
+/**
+ * A global change of one directory that undo and redo do nothing for.
+ * It is a top-level class, so it keeps no test instance.
+ */
+private class DirectoryAction(reference: DocumentReference) : GlobalUndoableAction(reference) {
+  override fun undo() {
+  }
+
+  override fun redo() {
+  }
+}

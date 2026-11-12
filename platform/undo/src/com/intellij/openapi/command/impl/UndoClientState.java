@@ -262,8 +262,8 @@ final class UndoClientState {
     if (!commandMerger.resetLocalHistory(snapshot.getLocalCommandMergerSnapshot())) {
       return false;
     }
-    undoStacksHolder.getStack(reference).resetTo(snapshot.getUndoStackSnapshot());
-    redoStacksHolder.getStack(reference).resetTo(snapshot.getRedoStackSnapshot());
+    undoStacksHolder.resetTo(reference, snapshot.getUndoStackSnapshot());
+    redoStacksHolder.resetTo(reference, snapshot.getRedoStackSnapshot());
     return true;
   }
 
