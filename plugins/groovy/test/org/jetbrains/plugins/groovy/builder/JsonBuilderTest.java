@@ -1,30 +1,39 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.builder;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
-public class JsonBuilderTest extends LightGroovyTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
-  }
+@TestApplication
+public class JsonBuilderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
 
+  @Test
   public void testHighlighting() {
-    getFixture().configureByText("a.groovy", """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("a.groovy", """
       def builder = new groovy.json.JsonBuilder()
       builder.people {
           person {
@@ -48,11 +57,13 @@ public class JsonBuilderTest extends LightGroovyTestCase {
       builder.root<warning>([new Object(), new Object()])</warning>
       builder.root<warning>([], new Object(), {})</warning>
       """);
-    getFixture().enableInspections(GroovyAssignabilityCheckInspection.class, GrUnresolvedAccessInspection.class);
-    getFixture().checkHighlighting(true, false, true);
+    myFixture.enableInspections(GroovyAssignabilityCheckInspection.class, GrUnresolvedAccessInspection.class);
+    myFixture.checkHighlighting(true, false, true);
   }
 
+  @Test
   public void testBuilderCallsResolveAndReturnType() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     for (Map.Entry<String, String> entry : Map.of(
       "builder.root()", "java.util.Map",
       "builder.root {}", "java.util.Map",
@@ -67,15 +78,19 @@ public class JsonBuilderTest extends LightGroovyTestCase {
     ).entrySet()) {
       String text = entry.getKey();
       String returnType = entry.getValue();
-      var file = (GroovyFile)getFixture().configureByText("a.groovy", "def builder = new groovy.json.JsonBuilder(); " + text);
-      GrTopStatement[] statements = file.getTopStatements();
-      var call = (GrCallExpression)statements[statements.length - 1];
-      assertNotNull(call.resolveMethod());
-      assertEquals(returnType, call.getType().getCanonicalText());
+      var file = (GroovyFile)myFixture.configureByText("a.groovy", "def builder = new groovy.json.JsonBuilder(); " + text);
+      ReadAction.runBlocking(() -> {
+        GrTopStatement[] statements = file.getTopStatements();
+        var call = (GrCallExpression)statements[statements.length - 1];
+        assertNotNull(call.resolveMethod());
+        assertEquals(returnType, call.getType().getCanonicalText());
+      });
     }
   }
 
+  @Test
   public void testBuilderInnerCallsResolveAndReturnType() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     for (Map.Entry<String, String> entry : Map.of(
       "noArg()", "java.util.List",
       "singleArg(1)", "java.lang.Integer",
@@ -94,15 +109,19 @@ public class JsonBuilderTest extends LightGroovyTestCase {
         "builder.root([a:1]) {<caret>" + callText + "}",
         "builder.root({<caret>" + callText + "}, a:1)"
       )) {
-        getFixture().configureByText("a.groovy", "def builder = new groovy.json.JsonBuilder(); " + text);
-        var reference = (GrReferenceExpression)getFixture().getReferenceAtCaretPosition();
-        assertInstanceOf(reference.resolve(), PsiMethod.class);
-        assertEquals(returnType, reference.getType().getCanonicalText());
+        myFixture.configureByText("a.groovy", "def builder = new groovy.json.JsonBuilder(); " + text);
+        ReadAction.runBlocking(() -> {
+          var reference = (GrReferenceExpression)myFixture.getReferenceAtCaretPosition();
+          assertInstanceOf(PsiMethod.class, reference.resolve());
+          assertEquals(returnType, reference.getType().getCanonicalText());
+        });
       }
     }
   }
 
+  @Test
   public void testBuilderDelegateInnerCallsResolveAndReturnType() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     for (Map.Entry<String, String> entry : Map.of(
       "noArg()", "java.util.List",
       "singleArg(1)", "java.lang.Integer",
@@ -123,12 +142,14 @@ public class JsonBuilderTest extends LightGroovyTestCase {
           "builder.root {" + callText + "}",
           "builder.root([a:1]) {" + callText + "}",
           "builder.root({" + callText + "}, a:1)")) {
-          getFixture().configureByText("a.groovy",
+          myFixture.configureByText("a.groovy",
                                        "def builder = new groovy.json.JsonBuilder(); " + text);
-          var reference =
-            (GrReferenceExpression)getFixture().getReferenceAtCaretPosition();
-          assertInstanceOf(reference.resolve(), PsiMethod.class);
-          assertEquals(returnType, reference.getType().getCanonicalText());
+          ReadAction.runBlocking(() -> {
+            var reference =
+              (GrReferenceExpression)myFixture.getReferenceAtCaretPosition();
+            assertInstanceOf(PsiMethod.class, reference.resolve());
+            assertEquals(returnType, reference.getType().getCanonicalText());
+          });
         }
       }
     }

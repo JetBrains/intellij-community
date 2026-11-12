@@ -1,27 +1,38 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class GroovyHighlighting60Test extends LightGroovyTestCase implements HighlightingTest {
+@TestApplication
+public class GroovyHighlighting60Test implements HighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_6_0_REAL_JDK);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public @NotNull LightJavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
   }
 
   @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_6_0_REAL_JDK;
+  public String getTestName() {
+    return LightGroovyFixtures.groovyTestName(codeInsightFixture.get());
   }
 
+  @Test
   public void testSimpleVal() {
     highlightingTest("""
                        val x = 1
@@ -36,6 +47,7 @@ public class GroovyHighlighting60Test extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testIncorrectVal() {
     highlightingTest(
       """
@@ -46,12 +58,15 @@ public class GroovyHighlighting60Test extends LightGroovyTestCase implements Hig
         }""");
   }
 
+  @Test
   public void testFinalEnum() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     highlightingTest("<error descr=\"Modifier 'final' not allowed here\"><caret>final</error> enum E {}");
     myFixture.launchAction(myFixture.findSingleIntention("Remove 'final'"));
     myFixture.checkResult("enum E {}");
   }
 
+  @Test
   public void testWeakKeywordTypeDefinitions() {
     highlightingTest("""
                        class as {
@@ -84,6 +99,7 @@ public class GroovyHighlighting60Test extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testModuleImport() {
     highlightingTest("""
                        import module java.sql
@@ -93,6 +109,7 @@ public class GroovyHighlighting60Test extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testAnnotatedImport() {
     highlightingTest("""
                        @<error descr="'@Deprecated' annotation not allowed on import">Deprecated</error>
@@ -100,6 +117,7 @@ public class GroovyHighlighting60Test extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testAnnotatedLoop() {
     highlightingTest("""
                        import groovy.transform.Parallel
@@ -110,6 +128,7 @@ public class GroovyHighlighting60Test extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testWeakKeywordImportAlias() {
     highlightingTest("""
                        import java.lang.String as trait
@@ -117,6 +136,7 @@ public class GroovyHighlighting60Test extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testWeakKeywordLabeledStatement() {
     highlightingTest("""
                        trait: for (val x in [1, 2, 4]) {

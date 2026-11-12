@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.inspections;
 
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.CaretModel;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -14,17 +16,28 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class GrChangeToOperatorTest extends LightGroovyTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    getFixture().addFileToProject("Operators.groovy", """
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class GrChangeToOperatorTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addFileToProject("Operators.groovy", """
       class Operators {
         def bitwiseNegate(a = null) { null }
         def negative(a = null) { null }
@@ -53,15 +66,17 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
         int compareTo(b) { 0 }
       }
       """);
-    getFixture().enableInspections(getInspection());
+    myFixture.enableInspections(getInspection());
   }
 
+  @Test
   public void testSimpleUnaryExpression() {
     doTest("a.bitwiseNegate()", "~a");
     doTest("a.negative()", "-a");
     doTest("a.positive()", "+a");
   }
 
+  @Test
   public void testIncDecUnary() {
     doTest("a.next()");
     doTest("a.previous()");
@@ -77,6 +92,7 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
     doTest("while(a = a.<caret>previous()) {}", "while(--a) {}");
   }
 
+  @Test
   public void testAsBoolean() {
     doTest("a.asBoolean()", "!!a");
     doTest("!a.asBoolean()", "!a");
@@ -89,6 +105,7 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
     doTest("if ('a'.intern().asBool<caret>ean());", "if ('a'.intern());");
   }
 
+  @Test
   public void test_unary_expression_with_wrong_number_arguments() {
     doTest("a.bitwiseNegate(1)");
     doTest("a.negative(1)");
@@ -96,6 +113,7 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
     doTest("a.asBoolean(1)");
   }
 
+  @Test
   public void testNegatedOption() {
     inspection.useDoubleNegation = false;
     doTest("a.asBoolean()");
@@ -106,6 +124,7 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
     doTest("a ? a.as<caret>Boolean() : 0");
   }
 
+  @Test
   public void testSimpleBinaryExpression() {
     LinkedHashMap<String, String> map = new LinkedHashMap<>(13);
     map.put("a.plus(b)", "a + b");
@@ -124,6 +143,7 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
     map.forEach(this::doTest);
   }
 
+  @Test
   public void test_binary_expression_with_wrong_number_of_arguments() {
     doTest("a.plus()");
     doTest("a.minus()");
@@ -158,6 +178,7 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
     doTest("a.pl<caret>us(1) {return 1}");
   }
 
+  @Test
   public void testComplexBinaryExpression() {
     LinkedHashMap<String, String> map = new LinkedHashMap<>(9);
     map.put("(a.toString() as Operators).minus(b.hashCode())", "(a.toString() as Operators) - b.hashCode()");
@@ -172,11 +193,13 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
     map.forEach(this::doTest);
   }
 
+  @Test
   public void testNegatableBinaryExpression() {
     doTest("a.equals(b)", "a == b");
     doTest("!a.equals(b)", "a != b");
   }
 
+  @Test
   public void testSamePrioritiesExpression() {
     doTest("a.eq<caret>uals(b) == 1", "a == b == 1");
     doTest("(a == b).eq<caret>uals(1)", "(a == b) == 1");
@@ -196,6 +219,7 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
     doTest("a.p<caret>lus(b) + 1", "a + b + 1");
   }
 
+  @Test
   public void testAsType() {
     doTest("a.asType(String)", "a as String");
     doTest("!a.asType(String)", "!(a as String)");
@@ -204,11 +228,14 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
     doTest("a.asType(UnknownClass)");
   }
 
+  @Test
   public void test_asType_with_context() {
-    getFixture().addClass("package com.foo; class Node {}");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addClass("package com.foo; class Node {}");
     doTest("import com.foo.Node\n\na.asType(Node)", "import com.foo.Node\n\na as Node");
   }
 
+  @Test
   public void testComplex() {
     doTest("a.eq<caret>uals(b * c) == 1", "a == b * c == 1");
 
@@ -216,10 +243,12 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
     doTest("(Boolean) a.eq<caret>uals(b)", "(Boolean) (a == b)");
   }
 
+  @Test
   public void testComplexNegatableBinaryExpression() {
     doTest("!(1.toString().replace('1', '2')+\"\").equals(2.toString())", "(1.toString().replace('1', '2') + \"\") != 2.toString()");
   }
 
+  @Test
   public void test_compareTo() {
     doTest("a.compareTo(b)", "a <=> b");
     doTest("a.compareTo(b) < 1", "(a <=> b) < 1");
@@ -230,6 +259,7 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
     doTest("a.compareTo(b) > 1", "(a <=> b) > 1");
   }
 
+  @Test
   public void test_compareTo_0() {
     doTest("a.compareTo(b) < 0", "a < b");
     doTest("a.compareTo(b) <= 0l", "a <= b");
@@ -243,12 +273,14 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
     doTest("(2 - 1).<caret>compareTo(2 | 1) > 0", "(2 - 1) > (2 | 1)");
   }
 
+  @Test
   public void test_compareTo_0_off() {
     inspection.shouldChangeCompareToEqualityToEquals = false;
     doTest("a.compareTo(b) == 0");
     doTest("a.compareTo(b) != 0");
   }
 
+  @Test
   public void testGetAndPut() {
     doTest("a.getAt(b)", "a[b]");
     doTest("a.g<caret>etAt(b).toString()", "a[b].toString()");
@@ -271,6 +303,7 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
              };""");
   }
 
+  @Test
   public void testWithoutAdditionalParenthesesOption() {
     inspection.withoutAdditionalParentheses = true;
     doTest("a.eq<caret>uals(b) == 1", "a == b == 1");
@@ -301,8 +334,10 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
     doTest("a.asBoolean().toString()");
   }
 
+  @Test
   public void test_super_calls() {
-    getFixture().configureByText("_.groovy", """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("_.groovy", """
       class Inheritor extends Operators {
         def testStuff(o) {
           super.bitwiseNegate()  \s
@@ -332,9 +367,10 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
         }
       }
       """);
-    getFixture().checkHighlighting();
+    myFixture.checkHighlighting();
   }
 
+  @Test
   public void test_non_dots() {
     doTest("a*.<caret>equals(String)");
     doTest("a?.<caret>equals(String)");
@@ -342,23 +378,26 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
   }
 
   private void doTest(String before, String after) {
-    try (Closeable ignored = () -> getFixture().getEditor().getCaretModel().moveToOffset(0)) {
-      getFixture().configureByText("_.groovy", "def (Operators a, Operators b) = [null, null]\n" + before);
-      moveCaret();
-      List<IntentionAction> intentions = getFixture().filterAvailableIntentions("Replace ");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      try (Closeable ignored = () -> myFixture.getEditor().getCaretModel().moveToOffset(0)) {
+        myFixture.configureByText("_.groovy", "def (Operators a, Operators b) = [null, null]\n" + before);
+        moveCaret();
+        List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Replace ");
 
-      if (after != null) {
-        assertNotNull("Intentions should not be null for: " + before, intentions);
-        getFixture().launchAction(intentions.get(0));
-        getFixture().checkResult("def (Operators a, Operators b) = [null, null]\n" + after);
+        if (after != null) {
+          assertNotNull(intentions, "Intentions should not be null for: " + before);
+          myFixture.launchAction(intentions.get(0));
+          myFixture.checkResult("def (Operators a, Operators b) = [null, null]\n" + after);
+        }
+        else {
+          assertThat(intentions).isNullOrEmpty();
+        }
       }
-      else {
-        assertEmpty(intentions);
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    });
   }
 
   private void doTest(String before) {
@@ -366,7 +405,8 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
   }
 
   private void moveCaret() {
-    GrStatement statement = last(((GroovyFile)getFixture().getFile()).getStatements());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    GrStatement statement = last(((GroovyFile)myFixture.getFile()).getStatements());
     GrMethodCall call = null;
 
     if (statement instanceof GrMethodCall method) {
@@ -385,16 +425,11 @@ public class GrChangeToOperatorTest extends LightGroovyTestCase {
       }
     }
 
-    CaretModel caretModel = getFixture().getEditor().getCaretModel();
+    CaretModel caretModel = myFixture.getEditor().getCaretModel();
     if (call != null && caretModel.getLogicalPosition().column == 0) {
       GrReferenceExpression invoked = (GrReferenceExpression)call.getInvokedExpression();
       caretModel.moveToOffset(invoked.getReferenceNameElement().getTextRange().getStartOffset());
     }
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
   }
 
   public final ChangeToOperatorInspection getInspection() {

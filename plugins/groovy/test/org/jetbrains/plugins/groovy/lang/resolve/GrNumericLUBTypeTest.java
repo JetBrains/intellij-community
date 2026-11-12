@@ -1,21 +1,33 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
 
-public class GrNumericLUBTypeTest extends LightGroovyTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    getFixture().addFileToProject("constants.groovy", """
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class GrNumericLUBTypeTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addFileToProject("constants.groovy", """
       interface Constants {
         Byte nB = 0
         Short nS = 0
@@ -28,14 +40,18 @@ public class GrNumericLUBTypeTest extends LightGroovyTestCase {
   }
 
   private void doTest(String expressionText, String expectedType) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     GroovyFile file = DefaultGroovyMethods.asType(
-      getFixture().configureByText("_.groovy", "import static Constants.*\n" + expressionText),
+      myFixture.configureByText("_.groovy", "import static Constants.*\n" + expressionText),
       GroovyFile.class
     );
-    GrExpression expression = DefaultGroovyMethods.asType(DefaultGroovyMethods.last(file.getStatements()), GrExpression.class);
-    assertTrue("'" + expression.getText() + "' : " + expression.getType(), expression.getType().equalsToText(expectedType));
+    ReadAction.runBlocking(() -> {
+      GrExpression expression = DefaultGroovyMethods.asType(DefaultGroovyMethods.last(file.getStatements()), GrExpression.class);
+      assertTrue(expression.getType().equalsToText(expectedType), "'" + expression.getText() + "' : " + expression.getType());
+    });
   }
 
+  @Test
   public void test_elvis_types() {
     LinkedHashMap<String, String> map = new LinkedHashMap<>(36);
     map.put("nB ?: nB", "java.lang.Byte");
@@ -78,6 +94,7 @@ public class GrNumericLUBTypeTest extends LightGroovyTestCase {
     map.forEach((k, v) -> doTest(k, v));
   }
 
+  @Test
   public void test_ternary_types() {
     LinkedHashMap<String, String> map = new LinkedHashMap<>(6);
     map.put("42 ? nB : nB", "java.lang.Byte");
@@ -90,6 +107,7 @@ public class GrNumericLUBTypeTest extends LightGroovyTestCase {
     map.forEach((k, v) -> doTest(k, v));
   }
 
+  @Test
   public void test_if_branches_assignment() {
     LinkedHashMap<String, String> map = new LinkedHashMap<>(6);
     map.put("def a; if (42) { a = nB } else { a = nB }; a", "java.lang.Byte");
@@ -101,11 +119,4 @@ public class GrNumericLUBTypeTest extends LightGroovyTestCase {
 
     map.forEach((k, v) -> doTest(k, v));
   }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
 }

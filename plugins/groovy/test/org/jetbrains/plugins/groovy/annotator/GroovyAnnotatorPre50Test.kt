@@ -1,13 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator
 
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors.GROOVY_4_0
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.lightGroovyFixture
+import org.junit.jupiter.api.Test
 
-class GroovyAnnotatorPre50Test: LightGroovyTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = GROOVY_4_0
+@TestApplication
+class GroovyAnnotatorPre50Test {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(GROOVY_4_0)
+  }
 
+  private val myFixture by lightGroovyFixture(projectFixture)
+
+  @Test
   fun testPatternVariable() {
     myFixture.configureByText("a.groovy", """
       class A{}
@@ -21,6 +29,7 @@ class GroovyAnnotatorPre50Test: LightGroovyTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testArrayInitializer() {
     myFixture.configureByText("a.groovy", """
       class A{}
@@ -36,6 +45,7 @@ class GroovyAnnotatorPre50Test: LightGroovyTestCase() {
     myFixture.testHighlighting()
   }
 
+  @Test
   fun testIndexVariableInForeachLoop() {
     myFixture.configureByText("a.groovy", """
       def foo() {

@@ -15,28 +15,46 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.dependencies;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyVisitorFactory;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
-import org.junit.Assert;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class GrDependencyVisitorTest extends LightGroovyTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class GrDependencyVisitorTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @Test
   public void test() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.addFileToProject("C.groovy", "import groovy.util.ConfigObject\nclass C { }");
 
-    final List<Object> deps = new ArrayList<>();
-    DependenciesBuilder.analyzeFileDependencies(file, (place, dependency) -> {
-      deps.add(dependency);
-    }, DependencyVisitorFactory.VisitorOptions.SKIP_IMPORTS);
-    Assert.assertTrue(deps.isEmpty());
+    ReadAction.runBlocking(() -> {
+      final List<Object> deps = new ArrayList<>();
+      DependenciesBuilder.analyzeFileDependencies(file, (place, dependency) -> {
+        deps.add(dependency);
+      }, DependencyVisitorFactory.VisitorOptions.SKIP_IMPORTS);
+      assertTrue(deps.isEmpty());
 
-    DependenciesBuilder.analyzeFileDependencies(file, (place, dependency) -> {
-      deps.add(dependency);
-    }, DependencyVisitorFactory.VisitorOptions.INCLUDE_IMPORTS);
-    Assert.assertEquals(3, deps.size());
+      DependenciesBuilder.analyzeFileDependencies(file, (place, dependency) -> {
+        deps.add(dependency);
+      }, DependencyVisitorFactory.VisitorOptions.INCLUDE_IMPORTS);
+      assertEquals(3, deps.size());
+    });
   }
 }

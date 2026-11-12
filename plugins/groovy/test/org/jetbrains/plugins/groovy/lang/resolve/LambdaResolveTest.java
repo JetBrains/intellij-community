@@ -1,34 +1,40 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.junit.jupiter.api.Test;
 
-public class LambdaResolveTest extends GroovyResolveTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveFixtureKt.groovyResolveFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-  @NotNull
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0;
+@TestApplication
+public class LambdaResolveTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_3_0);
+  private final TestFixture<GroovyResolveFixture> resolve = groovyResolveFixture(projectFixture);
 
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
+  @Test
   public void testResolveUpperBoundTypeMethod() {
-    PsiMethod method = resolveByText(
+    PsiMethod method = resolve.get().resolveByText(
       """
         @groovy.transform.CompileStatic
         def filter(Collection<? extends Number> numbers) {
             numbers.findAll(it -> it.double<caret>Value())
         }
         """, PsiMethod.class);
-    assertEquals("java.lang.Number", method.getContainingClass().getQualifiedName());
+    ReadAction.runBlocking(() -> {
+      assertEquals("java.lang.Number", method.getContainingClass().getQualifiedName());
+    });
   }
 
+  @Test
   public void testIntersect() {
-    resolveByText(
+    resolve.get().resolveByText(
       """
         class Base {
             void foo() {}
@@ -46,8 +52,9 @@ public class LambdaResolveTest extends GroovyResolveTestCase {
         """, PsiMethod.class);
   }
 
+  @Test
   public void testInferPlusType() {
-    resolveByText(
+    resolve.get().resolveByText(
       """
         [[1, 2, 3], [2, 3], [0, 2]].
           collect((it) -> {it + [56]}).
@@ -55,15 +62,17 @@ public class LambdaResolveTest extends GroovyResolveTestCase {
         """, PsiMethod.class);
   }
 
+  @Test
   public void testStringInjectionDontOverrideItParameter() {
-    resolveByText(
+    resolve.get().resolveByText(
       """
         [2, 3, 4].collect (it) -> {"${it.toBigDeci<caret>mal()}"}
         """, PsiMethod.class);
   }
 
+  @Test
   public void testRuntimeMixin() {
-    resolveByText(
+    resolve.get().resolveByText(
       """
         class ReentrantLock {}
         
@@ -75,8 +84,9 @@ public class LambdaResolveTest extends GroovyResolveTestCase {
         """);
   }
 
+  @Test
   public void testMixin() {
-    resolveByText(
+    resolve.get().resolveByText(
       """
         def foo() {
             Integer.metaClass.abc = () -> { print 'something' }
@@ -85,8 +95,9 @@ public class LambdaResolveTest extends GroovyResolveTestCase {
         """, PsiMethod.class);
   }
 
+  @Test
   public void testCurry() {
-    resolveByText(
+    resolve.get().resolveByText(
       """
         def c = (int i, j, k) -> i
         

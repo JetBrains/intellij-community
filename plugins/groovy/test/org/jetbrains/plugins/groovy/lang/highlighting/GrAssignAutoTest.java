@@ -9,19 +9,27 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import groovy.lang.GroovyShell;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.util.Slow;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
 
 /**
  * Character and char are skipped intentionally.
@@ -30,7 +38,17 @@ import java.util.Set;
  * Bug: https://issues.apache.org/jira/browse/GROOVY-7557
  */
 @Slow
-public class GrAssignAutoTest extends GrHighlightingTestBase {
+@TestApplication
+public class GrAssignAutoTest {
+  private static final LightProjectDescriptor DESCRIPTOR = new LibraryLightProjectDescriptor(GroovyProjectDescriptors.LIB_GROOVY_2_5) {
+    @Override
+    public Sdk getSdk() {
+      return IdeaTestUtil.getMockJdk18();
+    }
+  };
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(DESCRIPTOR);
+  private final TestFixture<GrHighlightingFixture> grHighlighting =
+    grHighlightingFixture(projectFixture, GrHighlightingFixture.getHighlightingTestDataPath(), () -> new InspectionProfileEntry[]{new GroovyAssignabilityCheckInspection()});
 
   private static final String CS = """
     import groovy.transform.CompileStatic
@@ -70,20 +88,7 @@ public class GrAssignAutoTest extends GrHighlightingTestBase {
     return result;
   }
 
-  @Override
-  @NotNull
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return new LibraryLightProjectDescriptor(GroovyProjectDescriptors.LIB_GROOVY_2_5) {
-      @Override
-      public Sdk getSdk() {
-        return IdeaTestUtil.getMockJdk18();
-      }
-    };
-  }
-
-  @Override
-  public InspectionProfileEntry[] getCustomInspections() { return new InspectionProfileEntry[]{new GroovyAssignabilityCheckInspection()}; }
-
+  @Test
   public void testParameterToLocal() {
     doTest("""
              @CompileStatic
@@ -113,6 +118,7 @@ public class GrAssignAutoTest extends GrHighlightingTestBase {
              "Thread[] -> String[]", "Thread[] -> boolean[]"));
   }
 
+  @Test
   public void testParameterToReturn() {
     doTest("""
              @CompileStatic
@@ -134,6 +140,7 @@ public class GrAssignAutoTest extends GrHighlightingTestBase {
              "Thread[] -> boolean[]", "Thread[] -> String[]"));
   }
 
+  @Test
   public void testParameterMethodCall() {
     doTest("""
              def bar%3$s(%2$s param) {
@@ -149,6 +156,7 @@ public class GrAssignAutoTest extends GrHighlightingTestBase {
            List.of("BigDecimal -> double", "BigDecimal -> double[]"));
   }
 
+  @Test
   public void testReturnAssignValue() {
     doTest("""
              @CompileStatic
@@ -170,6 +178,7 @@ public class GrAssignAutoTest extends GrHighlightingTestBase {
                    "[new Thread()] -> List<Object>"));
   }
 
+  @Test
   public void testLocalAssignValue() {
     doTest("""
              @CompileStatic
@@ -214,13 +223,14 @@ public class GrAssignAutoTest extends GrHighlightingTestBase {
         }
       }
     }
-    assertEmpty(falseDiff.toString(), falseDiff);
-    assertEmpty(trueDiff.toString(), trueDiff);
-    assertEmpty(falseIssues.toString(), falseIssues);
-    assertEmpty(trueIssues.toString(), trueIssues);
+    assertThat(falseDiff).as(falseDiff.toString()).isEmpty();
+    assertThat(trueDiff).as(trueDiff.toString()).isEmpty();
+    assertThat(falseIssues).as(falseIssues.toString()).isEmpty();
+    assertThat(trueIssues).as(trueIssues.toString()).isEmpty();
   }
 
   private Set<Integer> ideaTest(String body, List<List<String>> arguments) {
+    LightJavaCodeInsightTestFixture myFixture = grHighlighting.get().getFixture();
     StringBuilder text = new StringBuilder(CS);
     for (int i = 0; i < arguments.size(); i++) {
       List<String> argument = arguments.get(i);
@@ -232,7 +242,7 @@ public class GrAssignAutoTest extends GrHighlightingTestBase {
 
     final HashSet<Integer> res = new HashSet<>();
     myFixture.configureByText("_.groovy", text.toString());
-    myFixture.enableInspections(getCustomInspections());
+    myFixture.enableInspections(grHighlighting.get().getCustomInspections());
     List<HighlightInfo> highlighting = myFixture.doHighlighting(HighlightSeverity.ERROR);
     Document document = myFixture.getEditor().getDocument();
     for (HighlightInfo info : highlighting) {

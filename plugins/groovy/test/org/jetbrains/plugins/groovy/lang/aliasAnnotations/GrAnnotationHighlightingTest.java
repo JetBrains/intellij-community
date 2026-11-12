@@ -1,15 +1,28 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.aliasAnnotations;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
-import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
+import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
 
 /**
  * @author Max Medvedev
  */
-public class GrAnnotationHighlightingTest extends GrHighlightingTestBase {
+@TestApplication
+public class GrAnnotationHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<GrHighlightingFixture> highlighting = grHighlightingFixture(projectFixture);
+
+  @Test
   public void testAnnotatedAliasIsCorrect() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.*
                          
                          @AnnotationCollector([ToString, EqualsAndHashCode, Immutable])
@@ -22,8 +35,9 @@ public class GrAnnotationHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAliasWithProperties() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.*
                          
                          @ToString(excludes = ['a', 'b'])
@@ -37,8 +51,9 @@ public class GrAnnotationHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAliasWithMissedProperty() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.*
                          
                          @interface X {
@@ -56,8 +71,9 @@ public class GrAnnotationHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testInapplicableAlias() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.*
                          
                          @ToString(excludes = ['a', 'b'])
@@ -69,8 +85,9 @@ public class GrAnnotationHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testCorrectAnnotation() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.*
                          
                          @EqualsAndHashCode(excludes = ["a"])
@@ -80,8 +97,9 @@ public class GrAnnotationHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testInapplicableAttributeInAliasDeclaration() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.*
                          
                          @ToString(excludes = ['a', 'b'], <error descr="@interface 'groovy.transform.ToString' does not contain attribute 'foo'">foo</error> = 4)
@@ -93,8 +111,9 @@ public class GrAnnotationHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testUnknownAttributeInAliasUsage() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.*
                          
                          @ToString(excludes = ['a', 'b'])
@@ -108,8 +127,9 @@ public class GrAnnotationHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testInapplicableAttributeInAliasUsage() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.*
                          
                          @ToString(excludes = ['a', 'b'])
@@ -123,8 +143,9 @@ public class GrAnnotationHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAnnotationCollectorInterfaceWithAttrs() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @interface Foo {
                            int foo()
                          }
@@ -140,8 +161,9 @@ public class GrAnnotationHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAnnotationCollectorClass() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @interface Foo {
                            int foo()
                          }
@@ -160,8 +182,9 @@ public class GrAnnotationHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testInapplicableAlias2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.AnnotationCollector
                          import groovy.transform.Immutable
                          import groovy.transform.ToString
@@ -182,8 +205,9 @@ public class GrAnnotationHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testCompileDynamic() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileDynamic
                          import groovy.transform.CompileStatic
                          

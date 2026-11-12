@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -11,9 +12,13 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import junit.framework.TestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -29,133 +34,204 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.jetbrains.plugins.groovy.util.ThrowingTransformation;
+import org.junit.jupiter.api.Test;
 
-public class ResolvePropertyTest extends GroovyResolveTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveFixtureKt.groovyResolveFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class ResolvePropertyTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<GroovyResolveFixture> resolveFixture =
+    groovyResolveFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "resolve/property/");
+
+  @Test
   public void testParameter1() {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
-    resolve("A.groovy", GrParameter.class);
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
+    resolveFixture.get().resolve("A.groovy", GrParameter.class);
   }
 
+  @Test
   public void testClosureParameter1() {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
-    resolve("A.groovy", GrParameter.class);
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
+    resolveFixture.get().resolve("A.groovy", GrParameter.class);
   }
 
+  @Test
   public void testClosureOwner() {
-    PsiReference ref = configureByFile("closureOwner/A.groovy");
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, PsiMethod.class);
+    PsiReference ref = resolveFixture.get().configureByFile("closureOwner/A.groovy");
+    ReadAction.runBlocking(() -> {
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(PsiMethod.class, resolved);
+    });
   }
 
+  @Test
   public void testLocal1() throws Exception {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
     doTest("local1/A.groovy");
   }
 
+  @Test
   public void testField1() throws Exception {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
     doTest("field1/A.groovy");
   }
 
+  @Test
   public void testField2() throws Exception {
     doTest("field2/A.groovy");
   }
 
+  @Test
   public void testArrayLength() throws Exception {
     doTest("arrayLength/A.groovy");
   }
 
+  @Test
   public void testFromGetter() {
-    PsiReference ref = configureByFile("fromGetter/A.groovy");
-    TestCase.assertTrue(ref.resolve() instanceof GrAccessorMethod);
+    PsiReference ref = resolveFixture.get().configureByFile("fromGetter/A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertTrue(ref.resolve() instanceof GrAccessorMethod);
+    });
   }
 
+  @Test
   public void testFromGetter2() {
-    PsiReference ref = configureByFile("fromGetter2/A.groovy");
-    TestCase.assertTrue(ref.resolve() instanceof GrAccessorMethod);
+    PsiReference ref = resolveFixture.get().configureByFile("fromGetter2/A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertTrue(ref.resolve() instanceof GrAccessorMethod);
+    });
   }
 
+  @Test
   public void testFromSetter2() {
-    PsiReference ref = configureByFile("fromSetter2/A.groovy");
-    TestCase.assertTrue(ref.resolve() instanceof GrAccessorMethod);
+    PsiReference ref = resolveFixture.get().configureByFile("fromSetter2/A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertTrue(ref.resolve() instanceof GrAccessorMethod);
+    });
   }
 
+  @Test
   public void testFromSetter() {
-    PsiReference ref = configureByFile("fromSetter/A.groovy");
-    TestCase.assertTrue(ref.resolve() instanceof GrAccessorMethod);
+    PsiReference ref = resolveFixture.get().configureByFile("fromSetter/A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertTrue(ref.resolve() instanceof GrAccessorMethod);
+    });
   }
 
+  @Test
   public void testCatchParameter() {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
-    resolve("CatchParameter.groovy", GrParameter.class);
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
+    resolveFixture.get().resolve("CatchParameter.groovy", GrParameter.class);
   }
 
+  @Test
   public void testCaseClause() throws Exception {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
     doTest("caseClause/CaseClause.groovy");
   }
 
+  @Test
   public void testGrvy104() throws Exception {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
     doTest("grvy104/Test.groovy");
   }
 
+  @Test
   public void testGrvy270() {
-    PsiReference ref = configureByFile("grvy270/Test.groovy");
-    TestCase.assertNull(ref.resolve());
+    PsiReference ref = resolveFixture.get().configureByFile("grvy270/Test.groovy");
+    ReadAction.runBlocking(() -> {
+      assertNull(ref.resolve());
+    });
   }
 
+  @Test
   public void testGrvy1483() {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
-    resolve("Test.groovy", GrVariable.class);
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
+    resolveFixture.get().resolve("Test.groovy", GrVariable.class);
   }
 
+  @Test
   public void testField3() {
-    GrReferenceElement ref = (GrReferenceElement)configureByFile("field3/A.groovy").getElement();
-    GroovyResolveResult resolveResult = ref.advancedResolve();
-    TestCase.assertTrue(resolveResult.getElement() instanceof GrField);
-    TestCase.assertFalse(resolveResult.isValidResult());
+    GrReferenceElement ref = (GrReferenceElement)resolveFixture.get().configureByFile("field3/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      GroovyResolveResult resolveResult = ref.advancedResolve();
+      assertTrue(resolveResult.getElement() instanceof GrField);
+      assertFalse(resolveResult.isValidResult());
+    });
   }
 
+  @Test
   public void testToGetter() {
-    GrReferenceElement ref = (GrReferenceElement)configureByFile("toGetter/A.groovy").getElement();
-    PsiElement resolved = ref.resolve();
-    TestCase.assertTrue(resolved instanceof GrMethod);
-    TestCase.assertTrue(PropertyUtil.isSimplePropertyGetter((PsiMethod)resolved));
+    GrReferenceElement ref = (GrReferenceElement)resolveFixture.get().configureByFile("toGetter/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      PsiElement resolved = ref.resolve();
+      assertTrue(resolved instanceof GrMethod);
+      assertTrue(PropertyUtil.isSimplePropertyGetter((PsiMethod)resolved));
+    });
   }
 
+  @Test
   public void testToSetter() {
-    GrReferenceElement ref = (GrReferenceElement)configureByFile("toSetter/A.groovy").getElement();
-    PsiElement resolved = ref.resolve();
-    TestCase.assertTrue(resolved instanceof GrMethod);
-    TestCase.assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod)resolved));
+    GrReferenceElement ref = (GrReferenceElement)resolveFixture.get().configureByFile("toSetter/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      PsiElement resolved = ref.resolve();
+      assertTrue(resolved instanceof GrMethod);
+      assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod)resolved));
+    });
   }
 
+  @Test
   public void testUndefinedVar1() {
-    PsiReference ref = configureByFile("undefinedVar1/A.groovy");
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrBindingVariable.class);
+    PsiReference ref = resolveFixture.get().configureByFile("undefinedVar1/A.groovy");
+    ReadAction.runBlocking(() -> {
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrBindingVariable.class, resolved);
+    });
   }
 
+  @Test
   public void testRecursive1() {
-    PsiReference ref = configureByFile("recursive1/A.groovy");
-    PsiElement resolved = ref.resolve();
-    TestCase.assertTrue(resolved instanceof GrField);
+    PsiReference ref = resolveFixture.get().configureByFile("recursive1/A.groovy");
+    ReadAction.runBlocking(() -> {
+      PsiElement resolved = ref.resolve();
+      assertTrue(resolved instanceof GrField);
+    });
   }
 
+  @Test
   public void testRecursive2() {
-    PsiReference ref = configureByFile("recursive2/A.groovy");
-    PsiElement resolved = ref.resolve();
-    TestCase.assertTrue(resolved instanceof GrMethod);
-    TestCase.assertEquals(CommonClassNames.JAVA_LANG_OBJECT, ((GrMethod)resolved).getReturnType().getCanonicalText());
+    PsiReference ref = resolveFixture.get().configureByFile("recursive2/A.groovy");
+    ReadAction.runBlocking(() -> {
+      PsiElement resolved = ref.resolve();
+      assertTrue(resolved instanceof GrMethod);
+      assertEquals(CommonClassNames.JAVA_LANG_OBJECT, ((GrMethod)resolved).getReturnType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testUndefinedVar2() throws Exception {
     doUndefinedVarTest("undefinedVar2/A.groovy");
   }
 
+  @Test
   public void testUndefinedVar3() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     
                       (aa, b) = [1, 4]
                       c = a<caret>a
@@ -163,78 +239,117 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrBindingVariable.class);
   }
 
+  @Test
   public void testDefinedVar1() {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
-    resolve("A.groovy", GrVariable.class);
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
+    resolveFixture.get().resolve("A.groovy", GrVariable.class);
   }
 
+  @Test
   public void testOperatorOverload() throws Exception {
     doTest("operatorOverload/A.groovy");
   }
 
+  @Test
   public void testEnumConstant() throws Exception {
-    PsiReference ref = configureByFile("enumConstant/A.groovy");
-    TestCase.assertTrue(ref.resolve() instanceof GrEnumConstant);
+    PsiReference ref = resolveFixture.get().configureByFile("enumConstant/A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertTrue(ref.resolve() instanceof GrEnumConstant);
+    });
   }
 
+  @Test
   public void testStackOverflow() throws Exception {
     doTest("stackOverflow/A.groovy");
   }
 
+  @Test
   public void testFromDifferentCaseClause() {
-    PsiReference ref = configureByFile("fromDifferentCaseClause/A.groovy");
-    TestCase.assertNull(ref.resolve());
+    PsiReference ref = resolveFixture.get().configureByFile("fromDifferentCaseClause/A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertNull(ref.resolve());
+    });
   }
 
+  @Test
   public void testNotSettingProperty() {
-    PsiReference ref = configureByFile("notSettingProperty/A.groovy");
-    TestCase.assertNull(ref.resolve());
+    PsiReference ref = resolveFixture.get().configureByFile("notSettingProperty/A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertNull(ref.resolve());
+    });
   }
 
+  @Test
   public void testGrvy633() {
-    PsiReference ref = configureByFile("grvy633/A.groovy");
-    TestCase.assertNull(ref.resolve());
+    PsiReference ref = resolveFixture.get().configureByFile("grvy633/A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertNull(ref.resolve());
+    });
   }
 
+  @Test
   public void testGrvy575() throws Exception {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
     doTest("grvy575/A.groovy");
   }
 
+  @Test
   public void testGrvy747() {
-    PsiReference ref = configureByFile("grvy747/A.groovy");
-    TestCase.assertTrue(ref.resolve() instanceof GrField);
+    PsiReference ref = resolveFixture.get().configureByFile("grvy747/A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertTrue(ref.resolve() instanceof GrField);
+    });
   }
 
+  @Test
   public void testClosureCall() {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
-    PsiReference ref = configureByFile("closureCall/ClosureCall.groovy");
-    TestCase.assertTrue(ref.resolve() instanceof GrVariable);
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
+    PsiReference ref = resolveFixture.get().configureByFile("closureCall/ClosureCall.groovy");
+    ReadAction.runBlocking(() -> {
+      assertTrue(ref.resolve() instanceof GrVariable);
+    });
   }
 
+  @Test
   public void testUnderscoredField() {
-    PsiReference ref = configureByFile("underscoredField/UnderscoredField.groovy");
-    final GrField field = UsefulTestCase.assertInstanceOf(ref.resolve(), GrField.class);
-    TestCase.assertFalse(ref.isReferenceTo(field.getGetters()[0]));
-    TestCase.assertTrue(ref.isReferenceTo(field));
+    PsiReference ref = resolveFixture.get().configureByFile("underscoredField/UnderscoredField.groovy");
+    ReadAction.runBlocking(() -> {
+      final GrField field = assertInstanceOf(GrField.class, ref.resolve());
+      assertFalse(ref.isReferenceTo(field.getGetters()[0]));
+      assertTrue(ref.isReferenceTo(field));
+    });
   }
 
+  @Test
   public void testPropertyWithoutField1() {
-    PsiReference ref = configureByFile("propertyWithoutField1/PropertyWithoutField1.groovy");
-    UsefulTestCase.assertInstanceOf(ref.resolve(), GrMethod.class);
+    PsiReference ref = resolveFixture.get().configureByFile("propertyWithoutField1/PropertyWithoutField1.groovy");
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(GrMethod.class, ref.resolve());
+    });
   }
 
+  @Test
   public void testPropertyWithoutField2() {
-    PsiReference ref = configureByFile("propertyWithoutField2/PropertyWithoutField2.groovy");
-    UsefulTestCase.assertInstanceOf(ref.resolve(), GrMethod.class);
+    PsiReference ref = resolveFixture.get().configureByFile("propertyWithoutField2/PropertyWithoutField2.groovy");
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(GrMethod.class, ref.resolve());
+    });
   }
 
+  @Test
   public void testFieldAssignedInTheSameMethod() {
-    PsiReference ref = configureByFile("fieldAssignedInTheSameMethod/FieldAssignedInTheSameMethod.groovy");
-    UsefulTestCase.assertInstanceOf(ref.resolve(), GrField.class);
+    PsiReference ref = resolveFixture.get().configureByFile("fieldAssignedInTheSameMethod/FieldAssignedInTheSameMethod.groovy");
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(GrField.class, ref.resolve());
+    });
   }
 
+  @Test
   public void testPrivateFieldAssignment() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
       
                                   class Aaaaa {
@@ -245,11 +360,15 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                                     }
                                   }\
       """);
-    PsiReference reference = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
-    UsefulTestCase.assertInstanceOf(reference.resolve(), GrField.class);
+    ReadAction.runBlocking(() -> {
+      PsiReference reference = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
+      assertInstanceOf(GrField.class, reference.resolve());
+    });
   }
 
+  @Test
   public void testOverriddenGetter() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByText("a.groovy", """
       interface Foo {
                                                       def getFoo()
@@ -260,28 +379,41 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
        \s
                                                     Bar b
                                                     b.fo<caret>o""");
-    PsiReference reference = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
-    TestCase.assertEquals("Bar", UsefulTestCase.assertInstanceOf(reference.resolve(), GrMethod.class).getContainingClass().getName());
+    ReadAction.runBlocking(() -> {
+      PsiReference reference = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
+      assertEquals("Bar", assertInstanceOf(GrMethod.class, reference.resolve()).getContainingClass().getName());
+    });
   }
 
+  @Test
   public void testIDEADEV40403() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByFile("IDEADEV40403/A.groovy");
-    PsiReference reference = findReference();
-    PsiElement resolved = reference.resolve();
-    PsiClass clazz = UsefulTestCase.assertInstanceOf(resolved, PsiMethod.class).getContainingClass();
-    TestCase.assertEquals("Script", clazz.getName());
+    ReadAction.runBlocking(() -> {
+      PsiReference reference = findReference();
+      PsiElement resolved = reference.resolve();
+      PsiClass clazz = assertInstanceOf(PsiMethod.class, resolved).getContainingClass();
+      assertEquals("Script", clazz.getName());
+    });
   }
 
+  @Test
   public void testBooleanGetterPropertyAccess() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByText("a.groovy", "print([].em<caret>pty)");
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, PsiMethod.class);
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(PsiMethod.class, resolved);
+    });
   }
 
-  public PsiReference findReference() { return myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset()); }
+  public PsiReference findReference() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture(); return myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset()); }
 
+  @Test
   public void testTriplePropertyUsages() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByText("a.groovy", """
       
         class Foo {
@@ -290,14 +422,18 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
         }
        \s\
       """);
-    PsiReference ref = findReference();
-    GrField target = UsefulTestCase.assertInstanceOf(ref.resolve(), GrField.class);
-    TestCase.assertTrue(ref.isReferenceTo(target));
-    TestCase.assertFalse(ref.isReferenceTo(target.getGetters()[0]));
-    TestCase.assertFalse(ref.isReferenceTo(target.getSetter()));
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      GrField target = assertInstanceOf(GrField.class, ref.resolve());
+      assertTrue(ref.isReferenceTo(target));
+      assertFalse(ref.isReferenceTo(target.getGetters()[0]));
+      assertFalse(ref.isReferenceTo(target.getSetter()));
+    });
   }
 
+  @Test
   public void testAliasedStaticImport() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addClass("""
                          class Main {
                          static def foo=4
@@ -308,24 +444,32 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       print ba<caret>r
       }
       """);
-    PsiReference ref = findReference();
-    PsiField target = UsefulTestCase.assertInstanceOf(ref.resolve(), PsiField.class);
-    TestCase.assertEquals("foo", target.getName());
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiField target = assertInstanceOf(PsiField.class, ref.resolve());
+      assertEquals("foo", target.getName());
+    });
   }
 
   private void doTest(String fileName) {
-    PsiReference ref = configureByFile(fileName);
-    PsiElement resolved = ref.resolve();
-    TestCase.assertTrue(resolved instanceof GrVariable);
+    PsiReference ref = resolveFixture.get().configureByFile(fileName);
+    ReadAction.runBlocking(() -> {
+      PsiElement resolved = ref.resolve();
+      assertTrue(resolved instanceof GrVariable);
+    });
   }
 
   private void doUndefinedVarTest(String fileName) {
-    PsiReference ref = configureByFile(fileName);
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrBindingVariable.class);
+    PsiReference ref = resolveFixture.get().configureByFile(fileName);
+    ReadAction.runBlocking(() -> {
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrBindingVariable.class, resolved);
+    });
   }
 
+  @Test
   public void testBooleanProperty() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByText("Abc.groovy", """
       class A{
          boolean getFoo(){return true}
@@ -333,32 +477,44 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       }
       print new A().f<caret>oo
       """);
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    TestCase.assertNotNull(resolved);
-    assertEquals("getFoo", ((PsiMethod)resolved).getName());
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertNotNull(resolved);
+      assertEquals("getFoo", ((PsiMethod)resolved).getName());
+    });
   }
 
+  @Test
   public void testExplicitBooleanProperty() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByText("Abc.groovy", """
       class A{
          boolean foo
       }
       print new A().f<caret>oo
       """);
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    assertEquals("getFoo", ((PsiMethod)resolved).getName());
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertEquals("getFoo", ((PsiMethod)resolved).getName());
+    });
   }
 
+  @Test
   public void testStaticFieldAndNonStaticGetter() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByText("Abc.groovy", "print Float.N<caret>aN");
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, PsiField.class);
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(PsiField.class, resolved);
+    });
   }
 
+  @Test
   public void testPropertyAndFieldDeclarationInsideClass() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByText("a.groovy", """
        class Foo {
         def foo
@@ -368,13 +524,17 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
         }
       }
       """);
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrField.class);
-    TestCase.assertTrue(((GrField)resolved).getModifierList().hasExplicitVisibilityModifiers());
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrField.class, resolved);
+      assertTrue(((GrField)resolved).getModifierList().hasExplicitVisibilityModifiers());
+    });
   }
 
+  @Test
   public void testPropertyAndFieldDeclarationOutsideClass() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByText("a.groovy", """
       class Foo {
         def foo
@@ -386,12 +546,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       }
       print new Foo().fo<caret>o
       """);
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrAccessorMethod.class);
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrAccessorMethod.class, resolved);
+    });
   }
 
+  @Test
   public void testPropertyAndFieldDeclarationWithSuperClass1() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByText("a.groovy", """
       class Bar{
         def foo
@@ -405,12 +569,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       }
       print new Foo().fo<caret>o
       """);
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrAccessorMethod.class);
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrAccessorMethod.class, resolved);
+    });
   }
 
+  @Test
   public void testPropertyAndFieldDeclarationWithSuperClass2() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByText("a.groovy", """
       class Bar{
         def foo
@@ -424,13 +592,17 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       }
       print new Foo().foo
       """);
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrField.class);
-    TestCase.assertTrue(((GrField)resolved).getModifierList().hasExplicitVisibilityModifiers());
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrField.class, resolved);
+      assertTrue(((GrField)resolved).getModifierList().hasExplicitVisibilityModifiers());
+    });
   }
 
+  @Test
   public void testPropertyAndFieldDeclarationWithSuperClass3() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByText("a.groovy", """
       class Bar{
         public def foo
@@ -444,12 +616,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       }
       print new Foo().fo<caret>o
       """);
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrAccessorMethod.class);
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrAccessorMethod.class, resolved);
+    });
   }
 
+  @Test
   public void testPropertyAndFieldDeclarationWithSuperClass4() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByText("a.groovy", """
       class Bar{
         public def foo
@@ -463,13 +639,17 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       }
       print new Foo().foo
       """);
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrField.class);
-    TestCase.assertFalse(((GrField)resolved).getModifierList().hasExplicitVisibilityModifiers());
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrField.class, resolved);
+      assertFalse(((GrField)resolved).getModifierList().hasExplicitVisibilityModifiers());
+    });
   }
 
+  @Test
   public void testReadAccessToStaticallyImportedProperty() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
 
     myFixture.addFileToProject("a.groovy", """
       class Foo {
@@ -480,12 +660,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       import static Foo.bar
       print ba<caret>r
       """);
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrAccessorMethod.class);
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrAccessorMethod.class, resolved);
+    });
   }
 
+  @Test
   public void testWriteAccessToStaticallyImportedProperty() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addFileToProject("a.groovy", """
       class Foo {
         static def bar
@@ -495,12 +679,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       import static Foo.bar
       ba<caret>r = 2
       """);
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrAccessorMethod.class);
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrAccessorMethod.class, resolved);
+    });
   }
 
+  @Test
   public void testGetterToStaticallyImportedProperty() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addFileToProject("a.groovy", """
       class Foo {
         static def bar
@@ -510,12 +698,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       import static Foo.bar
       set<caret>Bar(2)
       """);
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrAccessorMethod.class);
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrAccessorMethod.class, resolved);
+    });
   }
 
+  @Test
   public void testPropertyInCallExpression() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.configureByText("a.groovy", """
       class Foo {
         def foo = {
@@ -528,24 +720,31 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       }
       new Foo().fo<caret>o(2)\
       """);
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
 
-    UsefulTestCase.assertInstanceOf(resolved, GrAccessorMethod.class);
+      assertInstanceOf(GrAccessorMethod.class, resolved);
+    });
   }
 
+  @Test
   public void test_property_vs_field_in_call_from_outside() {
-    GrMethod method = resolveByText("""
+    GrMethod method = resolveFixture.get().resolveByText("""
                                       class C {
                                         def foo = { 42 }
                                         def getFoo() { return { 43 } }
                                       }
                                       new C().<caret>foo(2)
                                       """, GrMethod.class);
-    assertFalse(method instanceof GrAccessorMethod);
+    ReadAction.runBlocking(() -> {
+      assertFalse(method instanceof GrAccessorMethod);
+    });
   }
 
+  @Test
   public void testPropertyImportedOnDemand() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addFileToProject("foo/A.groovy", "package foo; class Foo {static def foo}");
     myFixture.configureByText("B.groovy", """
       package foo
@@ -553,12 +752,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       print fo<caret>o
       """);
 
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrAccessorMethod.class);
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrAccessorMethod.class, resolved);
+    });
   }
 
+  @Test
   public void testSetterToAliasedImportedProperty() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addFileToProject("a.groovy", """
       class Foo {
         static def bar
@@ -568,12 +771,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       import static Foo.bar as foo
       set<caret>Foo(2)
       """);
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrAccessorMethod.class);
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrAccessorMethod.class, resolved);
+    });
   }
 
+  @Test
   public void testPhysicalSetterToStaticallyImportedProperty() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addFileToProject("a.groovy", """
       class Foo {
         static def bar
@@ -584,170 +791,244 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       import static Foo.bar as foo
       set<caret>Foo(2)
       """);
-    PsiReference ref = findReference();
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrMethod.class);
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = findReference();
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrMethod.class, resolved);
+    });
   }
 
+  @Test
   public void testPropertyUseInCategory() {
-    PsiReference ref = configureByFile("propertyUseInCategory/a.groovy");
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, PsiMethod.class);
+    PsiReference ref = resolveFixture.get().configureByFile("propertyUseInCategory/a.groovy");
+    ReadAction.runBlocking(() -> {
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(PsiMethod.class, resolved);
+    });
   }
 
+  @Test
   public void testCollectionItemFields() {
-    PsiReference ref = configureByFile("collectionItemFields/A.groovy");
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, PsiField.class);
+    PsiReference ref = resolveFixture.get().configureByFile("collectionItemFields/A.groovy");
+    ReadAction.runBlocking(() -> {
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(PsiField.class, resolved);
+    });
   }
 
+  @Test
   public void testFieldAccessInStaticContext() {
-    PsiReference ref = configureByFile("fieldAccessInStaticContext/A.groovy");
-    GroovyResolveResult resolveResult = ((GrReferenceExpression)ref).advancedResolve();
-    TestCase.assertFalse(resolveResult.isStaticsOK());
+    PsiReference ref = resolveFixture.get().configureByFile("fieldAccessInStaticContext/A.groovy");
+    ReadAction.runBlocking(() -> {
+      GroovyResolveResult resolveResult = ((GrReferenceExpression)ref).advancedResolve();
+      assertFalse(resolveResult.isStaticsOK());
+    });
   }
 
+  @Test
   public void testFieldAccessInClosureVsStaticContext() {
-    PsiReference ref = configureByFile("fieldAccessInClosureVsStaticContext/A.groovy");
-    GroovyResolveResult resolveResult = ((GrReferenceExpression)ref).advancedResolve();
-    TestCase.assertTrue(resolveResult.isStaticsOK());
+    PsiReference ref = resolveFixture.get().configureByFile("fieldAccessInClosureVsStaticContext/A.groovy");
+    ReadAction.runBlocking(() -> {
+      GroovyResolveResult resolveResult = ((GrReferenceExpression)ref).advancedResolve();
+      assertTrue(resolveResult.isStaticsOK());
+    });
   }
 
+  @Test
   public void testUpperCaseFieldAndGetter() {
-    TestCase.assertTrue(resolve("A.groovy") instanceof GrField);
+    assertTrue(resolveFixture.get().resolve("A.groovy") instanceof GrField);
   }
 
+  @Test
   public void testUpperCaseFieldWithoutGetter() {
-    UsefulTestCase.assertInstanceOf(resolve("A.groovy"), GrField.class);
+    assertInstanceOf(GrField.class, resolveFixture.get().resolve("A.groovy"));
   }
 
+  @Test
   public void testGetterWithUpperCaseFieldReference() {
-    TestCase.assertNull(resolve("A.groovy"));
+    assertNull(resolveFixture.get().resolve("A.groovy"));
   }
 
+  @Test
   public void testCommandExpressions() {
-    UsefulTestCase.assertInstanceOf(resolve("A.groovy"), GrAccessorMethod.class);
+    assertInstanceOf(GrAccessorMethod.class, resolveFixture.get().resolve("A.groovy"));
   }
 
+  @Test
   public void testStaticFieldOfInterface() {
-    final GroovyResolveResult result = advancedResolve("A.groovy");
-    TestCase.assertTrue(result.isStaticsOK());
+    final GroovyResolveResult result = resolveFixture.get().advancedResolve("A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertTrue(result.isStaticsOK());
+    });
   }
 
+  @Test
   public void testNonStaticFieldInStaticContext() {
-    final GroovyResolveResult result = advancedResolve("A.groovy");
-    TestCase.assertFalse(result.isStaticsOK());
+    final GroovyResolveResult result = resolveFixture.get().advancedResolve("A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertFalse(result.isStaticsOK());
+    });
   }
 
+  @Test
   public void testPropertyInExprStatement() {
-    PsiElement result = resolve("A.groovy");
-    UsefulTestCase.assertInstanceOf(result, GrAccessorMethod.class);
+    PsiElement result = resolveFixture.get().resolve("A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(GrAccessorMethod.class, result);
+    });
   }
 
+  @Test
   public void testPreferAlias() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addFileToProject("a/B.groovy", "package a; class B {public static def f1; public static def f2}");
-    TestCase.assertEquals("f2", ((GrField)resolve("A.groovy")).getName());
+    GrField field = (GrField)resolveFixture.get().resolve("A.groovy");
+    assertEquals("f2", ReadAction.computeBlocking(() -> field.getName()));
   }
 
+  @Test
   public void testF1property() {
-    UsefulTestCase.assertInstanceOf(resolve("A.groovy"), GrAccessorMethod.class);
+    assertInstanceOf(GrAccessorMethod.class, resolveFixture.get().resolve("A.groovy"));
   }
 
+  @Test
   public void testAnonymousClassFieldAndLocalVar() {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
-    final PsiElement resolved = resolve("A.groovy");
-    UsefulTestCase.assertInstanceOf(resolved, PsiVariable.class);
-    TestCase.assertTrue(PsiUtil.isLocalVariable(resolved));
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
+    final PsiElement resolved = resolveFixture.get().resolve("A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(PsiVariable.class, resolved);
+      assertTrue(PsiUtil.isLocalVariable(resolved));
+    });
   }
 
   public void _testResolveForVarOutsideOfFor() {
-    final PsiElement resolved = resolve("A.groovy");
-    UsefulTestCase.assertInstanceOf(resolved, GrParameter.class);
+    final PsiElement resolved = resolveFixture.get().resolve("A.groovy");
+    assertInstanceOf(GrParameter.class, resolved);
   }
 
+  @Test
   public void testDontResolveForVarOutsideOfFor() {
-    TestCase.assertNull(resolve("A.groovy"));
+    assertNull(resolveFixture.get().resolve("A.groovy"));
   }
 
+  @Test
   public void testOperatorOverloading() {
-    UsefulTestCase.assertInstanceOf(resolve("A.groovy"), GrAccessorMethod.class);
+    assertInstanceOf(GrAccessorMethod.class, resolveFixture.get().resolve("A.groovy"));
   }
 
+  @Test
   public void testResolveClosureOverloader() {
-    UsefulTestCase.assertInstanceOf(resolve("A.groovy"), GrAccessorMethod.class);
+    assertInstanceOf(GrAccessorMethod.class, resolveFixture.get().resolve("A.groovy"));
   }
 
+  @Test
   public void testJavaLoggingTransform() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addClass("package groovy.util.logging; public @interface Log { String value() default \"\"; }");
-    PsiReference ref = configureByText("@groovy.util.logging.Log class Foo { { lo<caret>g.inf } }");
-    assertEquals("java.util.logging.Logger",
-                 UsefulTestCase.assertInstanceOf(ref.resolve(), PsiVariable.class).getType().getCanonicalText());
+    PsiReference ref = resolveFixture.get().configureByText("@groovy.util.logging.Log class Foo { { lo<caret>g.inf } }");
+    ReadAction.runBlocking(() -> {
+      assertEquals("java.util.logging.Logger",
+                   assertInstanceOf(PsiVariable.class, ref.resolve()).getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testNonLoggingField() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addClass("package groovy.util.logging; public @interface Log { String value() default \"\"; }");
-    assertNull(configureByText("@groovy.util.logging.Log class Foo { { alo<caret>g.inf } }").resolve());
+    PsiReference ref = resolveFixture.get().configureByText("@groovy.util.logging.Log class Foo { { alo<caret>g.inf } }");
+    assertNull(ReadAction.computeBlocking(() -> ref.resolve()));
   }
 
+  @Test
   public void testJavaLoggingTransformCustomName() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addClass("package groovy.util.logging; public @interface Log { String value() default \"\"; }");
-    PsiReference ref = configureByText("@groovy.util.logging.Log('myLog') class Foo { { myLo<caret>g.inf } }");
-    assertEquals("java.util.logging.Logger",
-                 UsefulTestCase.assertInstanceOf(ref.resolve(), PsiVariable.class).getType().getCanonicalText());
+    PsiReference ref = resolveFixture.get().configureByText("@groovy.util.logging.Log('myLog') class Foo { { myLo<caret>g.inf } }");
+    ReadAction.runBlocking(() -> {
+      assertEquals("java.util.logging.Logger",
+                   assertInstanceOf(PsiVariable.class, ref.resolve()).getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testCommonsLoggingTransform() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addClass("package groovy.util.logging; public @interface Commons { String value() default \"\"; }");
-    PsiReference ref = configureByText("@groovy.util.logging.Commons('myLog') class Foo { { myLo<caret>g.inf } }");
-    assertEquals("org.apache.commons.logging.Log",
-                 UsefulTestCase.assertInstanceOf(ref.resolve(), PsiVariable.class).getType().getCanonicalText());
+    PsiReference ref = resolveFixture.get().configureByText("@groovy.util.logging.Commons('myLog') class Foo { { myLo<caret>g.inf } }");
+    ReadAction.runBlocking(() -> {
+      assertEquals("org.apache.commons.logging.Log",
+                   assertInstanceOf(PsiVariable.class, ref.resolve()).getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testFieldTransform() {
-    addGroovyTransformField();
-    PsiReference ref = configureByText("""
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    LightGroovyFixtures.addGroovyTransformField(myFixture);
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          @groovy.transform.Field def aaa = 2
                                            def foo() { println <caret>aaa }
                                           \s""");
-    assertTrue(ref.resolve() instanceof GrVariable);
+    ReadAction.runBlocking(() -> {
+      assertTrue(ref.resolve() instanceof GrVariable);
+    });
   }
 
+  @Test
   public void testScriptFieldVariableOutside() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addFileToProject("Foo.groovy", "if (true) { @groovy.transform.Field def a = 2 }");
 
-    PsiReference ref = configureByText("println new Foo().<caret>a");
-    assertTrue(ref.resolve() instanceof GrVariable);
+    PsiReference ref = resolveFixture.get().configureByText("println new Foo().<caret>a");
+    ReadAction.runBlocking(() -> {
+      assertTrue(ref.resolve() instanceof GrVariable);
+    });
   }
 
+  @Test
   public void testScriptVariableFromScriptMethod() {
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          def aaa = 2
                                          def foo() { println <caret>aaa }
                                          """);
-    assertNull(ref.resolve());
+    ReadAction.runBlocking(() -> {
+      assertNull(ref.resolve());
+    });
   }
 
+  @Test
   public void testConfigObject() {
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          def config = new ConfigObject()
                                          print config.config<caret>File
                                          """);
-    assertNotNull(ref.resolve());
+    ReadAction.runBlocking(() -> {
+      assertNotNull(ref.resolve());
+    });
   }
 
+  @Test
   public void testResolveInsideWith0() {
-    PsiElement resolved = resolve("a.groovy", GrAccessorMethod.class);
-    assertEquals("A", ((PsiMember)resolved).getContainingClass().getName());
+    PsiElement resolved = resolveFixture.get().resolve("a.groovy", GrAccessorMethod.class);
+    ReadAction.runBlocking(() -> {
+      assertEquals("A", ((PsiMember)resolved).getContainingClass().getName());
+    });
   }
 
+  @Test
   public void testResolveInsideWith1() {
-    PsiElement resolved = resolve("a.groovy", GrAccessorMethod.class);
-    assertEquals("B", ((PsiMember)resolved).getContainingClass().getName());
+    PsiElement resolved = resolveFixture.get().resolve("a.groovy", GrAccessorMethod.class);
+    ReadAction.runBlocking(() -> {
+      assertEquals("B", ((PsiMember)resolved).getContainingClass().getName());
+    });
   }
 
+  @Test
   public void testLocalVarVsFieldInWithClosure() {
     // TODO disableTransformations getTestRootDisposable()
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          class Test {
                                            def var
                                          }
@@ -756,67 +1037,85 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                                            print v<caret>ar
                                          }
                                          """);
-    TestCase.assertFalse(ref.resolve() instanceof GrField);
-    TestCase.assertTrue(ref.resolve() instanceof GrVariable);
+    ReadAction.runBlocking(() -> {
+      assertFalse(ref.resolve() instanceof GrField);
+      assertTrue(ref.resolve() instanceof GrVariable);
+    });
   }
 
+  @Test
   public void testCapitalizedProperty1() {
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          class A {
                                            def Prop
                                          }
                                          
                                          new A().Pro<caret>p
                                          """);
-    TestCase.assertNotNull(ref.resolve());
+    ReadAction.runBlocking(() -> {
+      assertNotNull(ref.resolve());
+    });
   }
 
+  @Test
   public void testCapitalizedProperty2() {
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          class A {
                                            def Prop
                                          }
                                          
                                          new A().pro<caret>p
                                          """);
-    TestCase.assertNotNull(ref.resolve());
+    ReadAction.runBlocking(() -> {
+      assertNotNull(ref.resolve());
+    });
   }
 
+  @Test
   public void testCapitalizedProperty3() {
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          class A {
                                            def prop
                                          }
                                          
                                          new A().Pro<caret>p
                                          """);
-    TestCase.assertNull(ref.resolve());
+    ReadAction.runBlocking(() -> {
+      assertNull(ref.resolve());
+    });
   }
 
+  @Test
   public void testCapitalizedProperty4() {
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          class A {
                                            def prop
                                          }
                                          
                                          new A().pro<caret>p
                                          """);
-    TestCase.assertNotNull(ref.resolve());
+    ReadAction.runBlocking(() -> {
+      assertNotNull(ref.resolve());
+    });
   }
 
+  @Test
   public void testGetChars() {
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          'abc'.cha<caret>rs
                                          """);
-    PsiElement resolved = ref.resolve();
-    UsefulTestCase.assertInstanceOf(resolved, GrGdkMethod.class);
-    PsiMethod method = ((GrGdkMethod)resolved).getStaticMethod();
+    ReadAction.runBlocking(() -> {
+      PsiElement resolved = ref.resolve();
+      assertInstanceOf(GrGdkMethod.class, resolved);
+      PsiMethod method = ((GrGdkMethod)resolved).getStaticMethod();
 
-    TestCase.assertEquals("java.lang.CharSequence", method.getParameterList().getParameters()[0].getType().getCanonicalText());
+      assertEquals("java.lang.CharSequence", method.getParameterList().getParameters()[0].getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testLocalVarNotAvailableInClass() {
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          def aa = 5
                                          
                                          class Inner {
@@ -825,23 +1124,30 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                                            }
                                          }
                                          """);
-    TestCase.assertNull(ref.resolve());
+    ReadAction.runBlocking(() -> {
+      assertNull(ref.resolve());
+    });
   }
 
+  @Test
   public void testLocalVarNotAvailableInMethod() {
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          def aa = 5
                                          
                                          def foo() {
                                            print a<caret>a
                                          }
                                          """);
-    TestCase.assertNull(ref.resolve());
+    ReadAction.runBlocking(() -> {
+      assertNull(ref.resolve());
+    });
   }
 
+  @Test
   public void testScriptFieldNotAvailableInClass() {
-    addGroovyTransformField();
-    PsiReference ref = configureByText("""
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    LightGroovyFixtures.addGroovyTransformField(myFixture);
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          import groovy.transform.Field
                                          
                                          @Field
@@ -853,24 +1159,32 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                                            }
                                          }
                                          """);
-    TestCase.assertNull(ref.resolve());
+    ReadAction.runBlocking(() -> {
+      assertNull(ref.resolve());
+    });
   }
 
+  @Test
   public void testInitializerOfScriptField() {
-    addGroovyTransformField();
-    PsiReference ref = configureByText("""
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    LightGroovyFixtures.addGroovyTransformField(myFixture);
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          import groovy.transform.Field
                                          
                                          def xx = 5
                                          @Field
                                          def aa = 5 + x<caret>x
                                          """);
-    TestCase.assertNull(ref.resolve());
+    ReadAction.runBlocking(() -> {
+      assertNull(ref.resolve());
+    });
   }
 
+  @Test
   public void testInitializerOfScriptField2() {
-    addGroovyTransformField();
-    PsiReference ref = configureByText("""
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    LightGroovyFixtures.addGroovyTransformField(myFixture);
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          import groovy.transform.Field
                                          
                                          @Field
@@ -879,29 +1193,37 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                                          @Field
                                          def aa = 5 + x<caret>x
                                          """);
-    UsefulTestCase.assertInstanceOf(ref.resolve(), GrVariable.class);
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(GrVariable.class, ref.resolve());
+    });
   }
 
+  @Test
   public void testAliasedImportedPropertyWithGetterInAlias() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addFileToProject("Foo.groovy", """
       class Foo {
         static def prop = 2
       }
       """);
 
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          import static Foo.getProp as getOther
                                          
                                          print othe<caret>r
                                          """);
 
-    UsefulTestCase.assertInstanceOf(ref.resolve(), GrAccessorMethod.class);
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(GrAccessorMethod.class, ref.resolve());
+    });
   }
 
+  @Test
   public void testPrefLocalVarToScriptName() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addFileToProject("foo.groovy", "print 2");
 
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          class Bar {
                                              public float FOO = 1.23f
                                              public float ZZZ = 5.78f
@@ -921,11 +1243,14 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                                          }
                                          """);
 
-    UsefulTestCase.assertInstanceOf(ref.resolve(), GrField.class);
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(GrField.class, ref.resolve());
+    });
   }
 
+  @Test
   public void testResolveEnumConstantInsideItsInitializer() {
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          enum MyEnum {
                                              CONST {
                                                  void get() {
@@ -934,11 +1259,14 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                                              }
                                          }
                                          """);
-    TestCase.assertNotNull(ref);
+    ReadAction.runBlocking(() -> {
+      assertNotNull(ref);
+    });
   }
 
+  @Test
   public void testSpreadWithIterator() {
-    final PsiReference ref = configureByText("""
+    final PsiReference ref = resolveFixture.get().configureByText("""
                                                class Person { String name }
                                                class Twin {
                                                    Person one, two
@@ -952,13 +1280,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                                                assert tw*.nam<caret>e == ['Tom', 'Tim']
                                                """);
 
-    final PsiMember resolved = UsefulTestCase.assertInstanceOf(ref.resolve(), PsiMember.class);
-    TestCase.assertNotNull(resolved.getContainingClass());
-    TestCase.assertEquals("Person", resolved.getContainingClass().getName());
+    ReadAction.runBlocking(() -> {
+      final PsiMember resolved = assertInstanceOf(PsiMember.class, ref.resolve());
+      assertNotNull(resolved.getContainingClass());
+      assertEquals("Person", resolved.getContainingClass().getName());
+    });
   }
 
+  @Test
   public void testAutoSpread() {
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          class A {
                                              String getString() {return "a";}
                                          }
@@ -966,12 +1297,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                                          println ([[new A()]].stri<caret>ng)
                                          """);
 
-    final PsiElement resolved = ref.resolve();
+    ReadAction.runBlocking(() -> {
+      final PsiElement resolved = ref.resolve();
 
-    TestCase.assertNotNull(resolved);
+      assertNotNull(resolved);
+    });
   }
 
+  @Test
   public void testImportedProperty() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addFileToProject("pack/Const.groovy", """
       package pack
       
@@ -979,14 +1314,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
         static final int Field1 = 2
       }
       """);
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     import static pack.Const.getField1
                     
                     print Fie<caret>ld1
                     """, null);
   }
 
+  @Test
   public void testImportedProperty2() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addFileToProject("pack/Const.groovy", """
       package pack
       
@@ -995,14 +1332,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       }
       """);
 
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     import static pack.Const.getField1
                     
                     print fie<caret>ld1
                     """, GrAccessorMethod.class);
   }
 
+  @Test
   public void testImportedProperty3() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addFileToProject("pack/Const.groovy", """
       package pack
       
@@ -1011,14 +1350,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       }
       """);
 
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     import static pack.Const.getField1 as getBar
                     
                     print Ba<caret>r
                     """, null);
   }
 
+  @Test
   public void testImportedProperty4() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addFileToProject("pack/Const.groovy", """
       package pack
       
@@ -1027,14 +1368,16 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       }
       """);
 
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     import static pack.Const.getField1 as getBar
                     
                     print ba<caret>r
                     """, GrAccessorMethod.class);
   }
 
+  @Test
   public void testImportedProperty5() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addFileToProject("pack/Const.groovy", """
       package pack
       
@@ -1043,16 +1386,18 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
       }
       """);
 
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     import static pack.Const.getField1
                     
                     print Fie<caret>ld1
                     """, null);
   }
 
+  @Test
   public void testLocalVarVsClassFieldInAnonymous() {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
-    GrVariable resolved = resolveByText("""
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
+    GrVariable resolved = resolveFixture.get().resolveByText("""
                                           class A {
                                             public foo
                                           }
@@ -1065,11 +1410,14 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                                             }
                                           }
                                           """, GrVariable.class);
-    assertFalse(resolved instanceof PsiField);
+    ReadAction.runBlocking(() -> {
+      assertFalse(resolved instanceof PsiField);
+    });
   }
 
+  @Test
   public void testInterfaceDoesNotResolveWithExpressionQualifier() {
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          class Foo {
                                            interface Inner {
                                            }
@@ -1080,11 +1428,14 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                                          new Foo().Inn<caret>er
                                          """);
 
-    UsefulTestCase.assertInstanceOf(ref.resolve(), PsiField.class);
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(PsiField.class, ref.resolve());
+    });
   }
 
+  @Test
   public void testInterfaceDoesNotResolveWithExpressionQualifier2() {
-    PsiReference ref = configureByText("""
+    PsiReference ref = resolveFixture.get().configureByText("""
                                          class Foo {
                                            interface Inner {
                                            }
@@ -1096,11 +1447,14 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                                          print foo.Inn<caret>er
                                          """);
 
-    UsefulTestCase.assertInstanceOf(ref.resolve(), PsiField.class);
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(PsiField.class, ref.resolve());
+    });
   }
 
+  @Test
   public void testResolveBinding1() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     abc = 4
                     
                     print ab<caret>c
@@ -1108,31 +1462,34 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   }
 
   public void ignoreTestResolveBinding2() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     print ab<caret>c
                     
                     abc = 4
                     """, GrBindingVariable.class);
   }
 
+  @Test
   public void testResolveBinding3() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     a<caret>bc = 4
                     
                     print abc
                     """, GrBindingVariable.class);
   }
 
+  @Test
   public void testResolveBinding4() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     print abc
                     
                     a<caret>bc = 4
                     """, GrBindingVariable.class);
   }
 
+  @Test
   public void testResolveBinding5() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     def foo() {
                       abc = 4
                     }
@@ -1143,8 +1500,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, null);
   }
 
+  @Test
   public void testResolveBinding6() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     def foo() {
                       print ab<caret>c
                     }
@@ -1155,8 +1513,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, null);
   }
 
+  @Test
   public void testResolveBinding7() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     def foo() {
                       a<caret>bc = 4
                     }
@@ -1167,8 +1526,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, null);
   }
 
+  @Test
   public void testResolveBinding8() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     def foo() {
                       print abc
                     }
@@ -1179,8 +1539,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, null);
   }
 
+  @Test
   public void testBinding9() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     a<caret>a = 5
                     print aa
                     aa = 6
@@ -1188,8 +1549,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrBindingVariable.class);
   }
 
+  @Test
   public void testBinding10() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     aa = 5
                     print a<caret>a
                     aa = 6
@@ -1197,8 +1559,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrBindingVariable.class);
   }
 
+  @Test
   public void testBinding11() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     aa = 5
                     print aa
                     a<caret>a = 6
@@ -1206,8 +1569,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrBindingVariable.class);
   }
 
+  @Test
   public void testBinding12() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     aa = 5
                     print aa
                     aa = 6
@@ -1215,8 +1579,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrBindingVariable.class);
   }
 
+  @Test
   public void testBinding13() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     aaa = 1
                     
                     def foo() {
@@ -1225,8 +1590,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrBindingVariable.class);
   }
 
+  @Test
   public void testBinding14() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     def foo() {
                       aa<caret>a
                     }
@@ -1235,71 +1601,84 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, null);
   }
 
+  @Test
   public void testVarVsPackage1() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addClass("package p; public class A {}");
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     def p = [A:5]
                     
                     print <caret>p.A
                     """, PsiPackage.class);
   }
 
+  @Test
   public void testVarVsPackage2() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addClass("package p; public class A {}");
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
 
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     def p = [A:5]
                     
                     print <caret>p
                     """, GrVariable.class);
   }
 
+  @Test
   public void testVarVsPackage3() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addClass("package p; public class A {}");
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
 
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     def p = [A:{2}]
                     
                     print <caret>p.A()
                     """, GrVariable.class);
   }
 
+  @Test
   public void testVarVsPackage4() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addClass("package p; public class A {public static int foo(){return 2;}}");
 
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     def p = [A:[foo:{-2}]]
                     
                     print <caret>p.A.foo()
                     """, PsiPackage.class);
   }
 
+  @Test
   public void testVarVsClass1() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addClass("package p; public class A {public static int foo() {return 1;}}");
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
 
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     import p.A
                     def A = [a:{-1}]
                     print <caret>A
                     """, GrVariable.class);
   }
 
+  @Test
   public void testVarVsClass2() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addClass("package p; public class A {public static int foo() {return 1;}}");
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
 
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     import p.A
                     def A = [a:{-1}]
                     print <caret>A.a()
                     """, GrVariable.class);
   }
 
+  @Test
   public void testTraitPublicField1() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     trait T {
                       public int field = 4
                     }
@@ -1313,8 +1692,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrField.class);
   }
 
+  @Test
   public void testTraitPublicField2() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     trait T {
                       public int field = 4
                     
@@ -1325,8 +1705,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrField.class);
   }
 
+  @Test
   public void testTraitPublicField3() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     trait T {
                       public int field = 4
                     
@@ -1337,8 +1718,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrField.class);
   }
 
+  @Test
   public void testTraitPublicField4() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     trait T {
                       public int field = 4
                     }
@@ -1349,8 +1731,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrField.class);
   }
 
+  @Test
   public void testTraitProperty1() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     trait T {
                       int prop = 4
                     }
@@ -1361,8 +1744,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrTraitMethod.class);
   }
 
+  @Test
   public void testTraitProperty2() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     trait T {
                       int prop = 4
                     }
@@ -1375,8 +1759,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrTraitMethod.class);
   }
 
+  @Test
   public void testTraitProperty3() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     trait T {
                       int prop = 4
                     
@@ -1387,8 +1772,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrField.class);
   }
 
+  @Test
   public void testTraitPropertyFromAsOperator1() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     trait A {
                       def foo = 5
                     }
@@ -1401,8 +1787,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrAccessorMethod.class);
   }
 
+  @Test
   public void testTraitPropertyFromAsOperator2() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     trait A {
                       public foo = 5
                     }
@@ -1415,8 +1802,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrField.class);
   }
 
+  @Test
   public void testTraitField1() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                           trait T {
                             public foo = 4
                           }
@@ -1429,8 +1817,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, null);
   }
 
+  @Test
   public void testTraitField2() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                           trait T {
                             public foo
                     
@@ -1441,8 +1830,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, PsiField.class);
   }
 
+  @Test
   public void testSetterOverloading() {
-    PsiMethod method = resolveByText("""
+    PsiMethod method = resolveFixture.get().resolveByText("""
                                        class A {
                                            void setFoo(File f) {}
                                        
@@ -1451,10 +1841,14 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                                        
                                        new A().fo<caret>o = ""
                                        """, GrMethod.class);
-    assertEquals("java.lang.String", method.getParameterList().getParameters()[0].getType().getCanonicalText());
+    ReadAction.runBlocking(() -> {
+      assertEquals("java.lang.String", method.getParameterList().getParameters()[0].getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testOnDemandStaticImport() {
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
     myFixture.addClass("""
                          package somepackage;
                          public class Holder {
@@ -1462,34 +1856,42 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                          }
                          """);
 
-    PsiMethod method = resolveByText("""
+    PsiMethod method = resolveFixture.get().resolveByText("""
                                        import static somepackage.Holder.*
                                        class Foo {
                                          static field = stu<caret>ff
                                        }
                                        """, PsiMethod.class);
-    assertEquals("getStuff", method.getName());
+    ReadAction.runBlocking(() -> {
+      assertEquals("getStuff", method.getName());
+    });
   }
 
+  @Test
   public void testPreferLocalOverMapKey() {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = resolveFixture.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
 
-    resolveByText("def abc = 42; [:].with { <caret>abc }", GrVariable.class);
+    resolveFixture.get().resolveByText("def abc = 42; [:].with { <caret>abc }", GrVariable.class);
   }
 
+  @Test
   public void testClassPropertyVsInstanceProperty() {
-    PsiMethod property = resolveByText("""
+    PsiMethod property = resolveFixture.get().resolveByText("""
                                          class A {
                                            int getName() { 42 }
                                          }
                                          
                                          println A.<caret>name
                                          """, PsiMethod.class);
-    assertEquals("java.lang.Class", property.getContainingClass().getQualifiedName());
+    ReadAction.runBlocking(() -> {
+      assertEquals("java.lang.Class", property.getContainingClass().getQualifiedName());
+    });
   }
 
+  @Test
   public void testDontResolveToFieldInMethodCall() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     class Fff {
                       List<String> testThis = [""]
                       def usage() { <caret>testThis(1) }
@@ -1498,16 +1900,18 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrMethod.class);
   }
 
+  @Test
   public void testStaticFieldViaClassInstance() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     class A { public static someStaticField = 42 }
                     def a = A // class instance
                     a.<caret>someStaticField
                     """, GrField.class);
   }
 
+  @Test
   public void testGPathInArray() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     class A {
                         int foo
                         A(int x) { foo = x }
@@ -1519,8 +1923,9 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     """, GrAccessorMethod.class);
   }
 
+  @Test
   public void testGPathInArray2() {
-    resolveByText("""
+    resolveFixture.get().resolveByText("""
                     class A {
                         int length
                         A(int x) { length = x }
@@ -1530,10 +1935,5 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
                     
                     println(ai.len<caret>gth)
                     """, GrField.class);
-  }
-
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "resolve/property/";
   }
 }

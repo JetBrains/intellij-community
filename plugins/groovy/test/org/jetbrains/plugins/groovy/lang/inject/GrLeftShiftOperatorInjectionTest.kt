@@ -2,37 +2,52 @@
 package org.jetbrains.plugins.groovy.lang.inject
 
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.InjectionTestFixture
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.lightGroovyFixture
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class GrLeftShiftOperatorInjectionTest : LightGroovyTestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+class GrLeftShiftOperatorInjectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1)
+  }
+
+  private val myFixture by lightGroovyFixture(projectFixture, "${TestUtils.getAbsoluteTestDataPath()}/groovy/inject/")
+
+  @BeforeEach
+  fun setUp() {
     injectionTestFixture = InjectionTestFixture(myFixture)
-    ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse)
+    ModuleRootModificationUtil.updateModel(myFixture.module, DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse)
   }
 
   private lateinit var injectionTestFixture: InjectionTestFixture
 
-  override fun getTestDataPath(): String {
-    return "${TestUtils.getAbsoluteTestDataPath()}/groovy/inject/"
-  }
+  @Test
+  fun testMethodCallWithLiteral(): Unit = doTest()
 
-  fun testMethodCallWithLiteral() = doTest()
+  @Test
+  fun testMethodCallWithVariable(): Unit = doTest()
 
-  fun testMethodCallWithVariable() = doTest()
+  @Test
+  fun testOperatorCallWithLiteral(): Unit = doTest()
 
-  fun testOperatorCallWithLiteral() = doTest()
-
-  fun testOperatorCallWithVariable() = doTest()
+  @Test
+  fun testOperatorCallWithVariable(): Unit = doTest()
 
   private fun doTest() {
-    val name = getTestName(false)
+    val name = myFixture.getTestName(false)
     myFixture.configureByFiles("${name}.groovy", "SomeClass.java")
-    injectionTestFixture.assertInjectedLangAtCaret(JavaLanguage.INSTANCE.id)
-    injectionTestFixture.assertInjectedContent("int x = 1;")
+    runReadActionBlocking {
+      injectionTestFixture.assertInjectedLangAtCaret(JavaLanguage.INSTANCE.id)
+      injectionTestFixture.assertInjectedContent("int x = 1;")
+    }
   }
 }

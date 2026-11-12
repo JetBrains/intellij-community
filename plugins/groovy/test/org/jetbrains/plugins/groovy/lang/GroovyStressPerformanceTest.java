@@ -8,16 +8,18 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SyntaxTraverser;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.StressTestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.codehaus.groovy.runtime.StringGroovyMethods;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
@@ -33,25 +35,28 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
 import org.jetbrains.plugins.groovy.util.Slow;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 @Slow
 @PerformanceUnitTest
-public class GroovyStressPerformanceTest extends LightGroovyTestCase {
-  @Override
-  public String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "highlighting/";
-  }
-
-  @Override
-  public @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_2_3;
-  }
+@StressTestApplication
+public class GroovyStressPerformanceTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_3);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "highlighting/");
 
   public ThrowableRunnable configureAndHighlight(String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     return () -> {
       myFixture.getPsiManager().dropPsiCaches();
       myFixture.configureByText("a.groovy", text);
@@ -59,8 +64,10 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     };
   }
 
+  @Test
   public void testDontWalkLongInferenceChain() {
-    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    RecursionManager.disableMissedCacheAssertions(myFixture.getTestRootDisposable());
     Map<Integer, PsiClass> classes = new LinkedHashMap<>();
     myFixture.addFileToProject("Foo0.groovy", """
       class Foo0 {
@@ -84,11 +91,11 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     List<PsiClass> values = classes.values().stream().toList();
 
     int border = ContainerUtil.indexOf(values, (clazz) -> {
-      PsiManager.getInstance(getProject()).dropPsiCaches();
+      PsiManager.getInstance(myFixture.getProject()).dropPsiCaches();
       return inferredType(clazz, "foo").equals(Object.class.getName());
     }) + 1;
 
-    PsiManager.getInstance(getProject()).dropPsiCaches();
+    PsiManager.getInstance(myFixture.getProject()).dropPsiCaches();
     assertEquals(Object.class.getName(), inferredType(classes.get(border), "foo"));
     assertEquals(Integer.class.getName(), inferredType(classes.get(border - 1), "foo"));
   }
@@ -98,7 +105,9 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     return grMethod.getInferredReturnType().getCanonicalText();
   }
 
+  @Test
   public void testQuickIncrementalReparse() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String story = """
       scenario {
         given "some precondition", {
@@ -113,12 +122,12 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
       }
       """;
     myFixture.configureByText("a.groovy", StringGroovyMethods.multiply(story, 200) + "<caret>");
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
 
     myFixture.type("foo {}\n");
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
 
-    Benchmark.newBenchmark(getTestName(false), () -> {
+    Benchmark.newBenchmark(myFixture.getTestName(false), () -> {
       for (char c : story.toCharArray()) {
         myFixture.type(c);
         PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
@@ -126,6 +135,7 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     }).start();
   }
 
+  @Test
   public void testManyAnnotatedFields() {
     String text = "class Foo {\n";
     for (int i = 0; i < 10; i++) {
@@ -137,10 +147,13 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   private void measureHighlighting(String text) {
-    Benchmark.newBenchmark(getTestName(false), configureAndHighlight(text)).start();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    Benchmark.newBenchmark(myFixture.getTestName(false), configureAndHighlight(text)).start();
   }
 
+  @Test
   public void testDeeplyNestedClosures() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
     String text = "println 'hi'";
     String defs = "";
@@ -153,7 +166,9 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     measureHighlighting(defs + text);
   }
 
+  @Test
   public void testDeeplyNestedClosuresInCompileStatic() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
 
     String text = "println 'hi'";
@@ -165,11 +180,13 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
 
     myFixture.enableInspections(new MissingReturnInspection());
 
-    addCompileStatic();
+    LightGroovyFixtures.addCompileStatic(myFixture);
     measureHighlighting(defs + "\n @groovy.transform.CompileStatic def compiledStatically() {\ndef a = ''\n" + text + "\n}");
   }
 
+  @Test
   public void testDeeplyNestedClosuresInGenericCalls() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
     String text = "println it";
     for (int i = 0; i < 10; i++) {
@@ -179,7 +196,9 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     measureHighlighting("def <T> void foo(T t, Closure cl) {}\n" + text);
   }
 
+  @Test
   public void testDeeplyNestedClosuresInGenericCalls2() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
     String text = "println it";
     for (int i = 0; i < 10; i++) {
@@ -189,6 +208,7 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     measureHighlighting("def <T> void foo(T t, Closure<T> cl) {}\n" + text);
   }
 
+  @Test
   public void testManyAnnotatedScriptVariables() {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 100; i++) {
@@ -197,13 +217,17 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     measureHighlighting(sb.toString());
   }
 
+  @Test
   public void test_no_recursion_prevention_when_resolving_supertype() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
     myFixture.addClass("interface Bar {}");
     measureHighlighting("class Foo implements Bar {}");
   }
 
+  @Test
   public void test_no_recursion_prevention_when_contributing_constructors() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
     myFixture.addClass("interface Bar {}");
     String text = """
@@ -219,7 +243,9 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     measureHighlighting(text);
   }
 
+  @Test
   public void test_using_non_reassigned_for_loop_parameters() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
     String text = """
                     def foo(List<File> list) {
@@ -233,6 +259,7 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     measureHighlighting(text);
   }
 
+  @Test
   public void test_using_SSA_variables_in_a_for_loop() {
     String text = """
                     
@@ -261,7 +288,9 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     measureHighlighting(text);
   }
 
+  @Test
   public void test_constructor_call_s() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String text = """
                     class Cl {
                       Cl(Map<String, Integer> a, Condition<Cl> con, String s) { }
@@ -278,10 +307,12 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
                         }
                       }
                     """;
-    Benchmark.newBenchmark(getTestName(false), configureAndHighlight(text)).attempts(20).start();
+    Benchmark.newBenchmark(myFixture.getTestName(false), configureAndHighlight(text)).attempts(20).start();
   }
 
+  @Test
   public void testSlowNewExpression() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String text = """
         class DosMap {
             static Map<String, DosObject> getStandardMembers() {
@@ -310,10 +341,12 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
             }
         }
         """;
-    Benchmark.newBenchmark(getTestName(false), configureAndHighlight(text)).start();
+    Benchmark.newBenchmark(myFixture.getTestName(false), configureAndHighlight(text)).start();
   }
 
+  @Test
   public void test_infer_only_the_variable_types_that_are_needed() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     addGdsl("""
               contribute(currentType(String.name)) {
                 println 'sleeping'
@@ -330,9 +363,10 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
            f.canoPath<caret>
          }
       """;
-    Benchmark.newBenchmark(getTestName(false), configureAndComplete(text)).attempts(1).start();
+    Benchmark.newBenchmark(myFixture.getTestName(false), configureAndComplete(text)).attempts(1).start();
   }
 
+  @Test
   public void testClosureRecursion() {
     String text = """
       class AwsService {
@@ -507,6 +541,7 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   public ThrowableRunnable configureAndComplete(String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     return () -> {
       myFixture.configureByText("a.groovy", text);
       myFixture.completeBasic();
@@ -514,11 +549,14 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   private void addGdsl(String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.addFileToProject("Enhancer.gdsl", text);
     GroovyDslFileIndex.activate(file.getVirtualFile());
   }
 
+  @Test
   public void test_performance_of_resolving_methods_with_many_siblings() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     int classMethodCount = 50000;
     StringBuilder fooBodyBuilder = new StringBuilder();
     for (int i = 0; i < classMethodCount; i++) {
@@ -539,14 +577,14 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     }
     barBodyBuilder.append("}");
     myFixture.configureByText("a.groovy", "");
-    assertInstanceOf(myFixture.getFile(), GroovyFile.class);
+    assertInstanceOf(GroovyFile.class, myFixture.getFile());
     Benchmark.newBenchmark("many siblings", () -> {
       // clear caches
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
         myFixture.getEditor().getDocument().setText("");
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
         myFixture.getEditor().getDocument().setText(barBodyBuilder.toString());
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
       });
       List<GrReferenceElement> refs = SyntaxTraverser.psiTraverser(myFixture.getFile()).filter(GrReferenceElement.class).toList();
       assertTrue(refs.size() > refCountInBlock * blockCount);
@@ -557,6 +595,7 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   private void configureTroubleClass(int i) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a" + i + ".groovy", """
                                                      class TroubleCase""" +
                                                    i +
@@ -677,7 +716,9 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
                                                      """);
   }
 
+  @Test
   public void testVeryLongDfaWithComplexGenerics() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Benchmark.newBenchmark("testing dfa", () -> {
       myFixture.checkHighlighting(true, false, false);
     }).setup(() -> {
@@ -688,7 +729,9 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     }).attempts(1).start();
   }
 
+  @Test
   public void test_resolve_long_chain_of_references() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String header = """
       class Node {
         public Node nn
@@ -696,12 +739,14 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
       def a = new Node()
       """;
     // a.nn.nn ... .nn
-    GroovyFile file = (GroovyFile)getFixture().configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(".nn", 500) + ".nn");
+    GroovyFile file = (GroovyFile)myFixture.configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(".nn", 500) + ".nn");
     GrReferenceExpression reference = (GrReferenceExpression)DefaultGroovyMethods.last(file.getStatements());
     assertNotNull(reference.resolve());
   }
 
+  @Test
   public void test_resolve_long_chain_of_method_calls() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String header = """
       class Node {
         public Node nn
@@ -711,12 +756,14 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
       """;
     // a.nn() ... .nn().nn
     GroovyFile file =
-      (GroovyFile)getFixture().configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(".nn()", 250) + ".nn");
+      (GroovyFile)myFixture.configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(".nn()", 250) + ".nn");
     GrReferenceExpression reference = (GrReferenceExpression)DefaultGroovyMethods.last(file.getStatements());
     assertNotNull(reference.resolve());
   }
 
+  @Test
   public void test_resolve_long_chain_of_operators() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String header = """
       class Node {
         public Node plus(Node n) {n}
@@ -725,12 +772,14 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
       """;
     // a += a ... += a += new Node()
     GroovyFile file =
-      (GroovyFile)getFixture().configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(" += a", 500) + " += new Node()");
+      (GroovyFile)myFixture.configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(" += a", 500) + " += new Node()");
     GroovyCallReference reference = ((GrAssignmentExpression)DefaultGroovyMethods.last(file.getStatements())).getReference();
     assertNotNull(reference.resolve());
   }
 
+  @Test
   public void test_do_not_resolve_LHS_and_RHS_of_assignment_when_name_doesn_t_match() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     StringBuilder text = new StringBuilder("a0 = 1\n");
     int n = 1000;
     for (int i = 1; i <= n; i++) {
@@ -738,29 +787,33 @@ public class GroovyStressPerformanceTest extends LightGroovyTestCase {
     }
 
     text.append("a").append(n);
-    GroovyFile file = (GroovyFile)getFixture().configureByText("_.groovy", text.toString());
+    GroovyFile file = (GroovyFile)myFixture.configureByText("_.groovy", text.toString());
     GrReferenceExpression last = (GrReferenceExpression)DefaultGroovyMethods.last(file.getStatements());
-    assertInstanceOf(last.resolve(), GrBindingVariable.class);
+    assertInstanceOf(GrBindingVariable.class, last.resolve());
   }
 
+  @Test
   public void test_method_processing_does_not_depend_on_the_number_of_other_methods() {
-    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    RecursionManager.disableMissedCacheAssertions(myFixture.getTestRootDisposable());
     StringBuilder builder = new StringBuilder();
     int n = 1000;
     builder.append("def foo0 (a) { a }\n");
     for (int i = 0; i <= n; i++) {
       builder.append("foo").append(n).append("(a) {\n  foo").append(n - 1).append("(1)\n }");
     }
-    GroovyFile file = DefaultGroovyMethods.asType(getFixture().configureByText("_.groovy", builder.toString()), GroovyFile.class);
-    Benchmark.newBenchmark(getTestName(false), () -> {
+    GroovyFile file = DefaultGroovyMethods.asType(myFixture.configureByText("_.groovy", builder.toString()), GroovyFile.class);
+    Benchmark.newBenchmark(myFixture.getTestName(false), () -> {
       myFixture.getPsiManager().dropPsiCaches();
       ((GrExpression)DefaultGroovyMethods.last(DefaultGroovyMethods.last(file.getMethods()).getBlock().getStatements())).getType();
     }).attempts(5).start();
   }
 
+  @Test
   public void test_complex_DFA_with_a_lot_of_closures() {
-    getFixture().configureByFile("stress/dfa.groovy");
-    Benchmark.newBenchmark(getTestName(false), () -> {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile("stress/dfa.groovy");
+    Benchmark.newBenchmark(myFixture.getTestName(false), () -> {
       myFixture.getPsiManager().dropPsiCaches();
       myFixture.doHighlighting();
     }).attempts(10).start();

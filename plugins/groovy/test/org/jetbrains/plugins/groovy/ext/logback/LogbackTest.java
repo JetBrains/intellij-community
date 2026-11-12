@@ -2,30 +2,35 @@
 package org.jetbrains.plugins.groovy.ext.logback;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.RepositoryTestLibrary;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
-import org.junit.Assert;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.LIB_GROOVY_LATEST;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class LogbackTest extends LightGroovyTestCase {
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LOGBACK;
-  }
+@TestApplication
+public class LogbackTest {
 
   private static final RepositoryTestLibrary LIB_LOGBACK =
     new RepositoryTestLibrary("ch.qos.logback:logback-classic:1.2.3", DependencyScope.RUNTIME);
@@ -35,8 +40,12 @@ public class LogbackTest extends LightGroovyTestCase {
       return JavaResourceRootType.RESOURCE;
     }
   };
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LOGBACK);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
 
+  @Test
   public void testHighlighting() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("logback.groovy", """
       appender("FULL_STACKTRACE", FileAppender) {
           file = "./stacktrace.log"
@@ -56,8 +65,9 @@ public class LogbackTest extends LightGroovyTestCase {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testComponentDelegateCompletion() {
-    JavaCodeInsightTestFixture fixture = getFixture();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("logback.groovy", """
       appender("FULL_STACKTRACE", FileAppender) {
           <caret>
@@ -66,21 +76,25 @@ public class LogbackTest extends LightGroovyTestCase {
       logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
       """);
     myFixture.completeBasic();
-    List<String> lookupElementStrings = fixture.getLookupElementStrings();
-    Assert.assertTrue(ContainerUtil.all(List.of("file", "append", "encoder"), it -> lookupElementStrings.contains(it)));
+    List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertTrue(ContainerUtil.all(List.of("file", "append", "encoder"), it -> lookupElementStrings.contains(it)));
   }
 
+  @Test
   public void testTargetCompletion() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("logback.groovy", """
       appender('FOO_APP', ConsoleAppender)
       appender("BAR_APP", FileAppender) {}
       logger("", ERROR, ['<caret>'])
       """);
     myFixture.completeBasic();
-    Assert.assertEquals(Set.of("FOO_APP", "BAR_APP"), new HashSet<>(getFixture().getLookupElementStrings()));
+    assertEquals(Set.of("FOO_APP", "BAR_APP"), new HashSet<>(myFixture.getLookupElementStrings()));
   }
 
+  @Test
   public void testTargetNavigation() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("logback.groovy", """
       appender('FOO_APP', ConsoleAppender)
       appender("BAR_APP", FileAppender) {}
@@ -94,17 +108,23 @@ public class LogbackTest extends LightGroovyTestCase {
                   """);
   }
 
+  @Test
   public void testElementToFindUsagesOfExists() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("logback.groovy", """
       appender('FOO_<caret>APP', ConsoleAppender)
       """);
-    PomTargetPsiElement targetElement = (PomTargetPsiElement) GotoDeclarationAction.findElementToShowUsagesOf(getEditor(), myFixture.getCaretOffset());
+    ReadAction.runBlocking(() -> {
+      PomTargetPsiElement targetElement = (PomTargetPsiElement) GotoDeclarationAction.findElementToShowUsagesOf(myFixture.getEditor(), myFixture.getCaretOffset());
 
-    Assert.assertNotNull(targetElement);
-    Assert.assertTrue(targetElement.getTarget() instanceof AppenderTarget);
+      assertNotNull(targetElement);
+      assertTrue(targetElement.getTarget() instanceof AppenderTarget);
+    });
   }
 
+  @Test
   public void testNoErrorWhenClassWithSameNameExists() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                package pckg1;
                public class SomeClass {}

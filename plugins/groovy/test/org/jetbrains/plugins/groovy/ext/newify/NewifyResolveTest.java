@@ -1,25 +1,35 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.newify;
 
+import com.intellij.psi.PsiReference;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveTestCase;
-import org.junit.Assert;
+import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class NewifyResolveTest extends GroovyResolveTestCase {
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_2_5;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveFixtureKt.groovyResolveFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+@TestApplication
+public class NewifyResolveTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_5);
+  private final TestFixture<GroovyResolveFixture> resolve = groovyResolveFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.addClass("""
                             class Aa {
                               String name;
@@ -34,6 +44,7 @@ public class NewifyResolveTest extends GroovyResolveTestCase {
                             """);
   }
 
+  @Test
   public void testAutoNewify() {
     checkResolve("""
                    
@@ -76,6 +87,7 @@ public class NewifyResolveTest extends GroovyResolveTestCase {
                    """);
   }
 
+  @Test
   public void testNewifyByPattern() {
     checkResolve("""
                    
@@ -136,6 +148,7 @@ public class NewifyResolveTest extends GroovyResolveTestCase {
                    }""", PsiMethod.class, "B.zz");
   }
 
+  @Test
   public void testNewifyByClass() {
     checkResolve("""
                    
@@ -177,7 +190,6 @@ public class NewifyResolveTest extends GroovyResolveTestCase {
                    }
                    """, PsiMethod.class, "Aa");
 
-
     checkResolve("""
                    
                    class B {
@@ -188,17 +200,20 @@ public class NewifyResolveTest extends GroovyResolveTestCase {
   }
 
   public void checkResolve(@NotNull String text, @Nullable Class<?> refType, @Nullable String returnType) {
-    PsiElement resolved = configureByText(text).resolve();
-    if (refType != null) {
-      UsefulTestCase.assertInstanceOf(resolved, refType);
-    }
-    else {
-      Assert.assertNull(resolved);
-    }
+    PsiReference ref = resolve.get().configureByText(text);
+    ReadAction.runBlocking(() -> {
+      PsiElement resolved = ref.resolve();
+      if (refType != null) {
+        assertInstanceOf(refType, resolved);
+      }
+      else {
+        assertNull(resolved);
+      }
 
-    if (returnType != null && resolved instanceof PsiMethod method) {
-      Assert.assertEquals(returnType, method.getReturnType().getCanonicalText());
-    }
+      if (returnType != null && resolved instanceof PsiMethod method) {
+        assertEquals(returnType, method.getReturnType().getCanonicalText());
+      }
+    });
   }
 
   public void checkResolve(@NotNull String text, @Nullable Class<?> refType) {

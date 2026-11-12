@@ -3,25 +3,38 @@ package org.jetbrains.plugins.groovy.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.changeToMethod.ChangeToMethodInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class GrChangeToMethodTest extends LightGroovyTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    getFixture().addFileToProject("Operators.groovy", """
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class GrChangeToMethodTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addFileToProject("Operators.groovy", """
       class Operators {
         def bitwiseNegate(a = null) { null }
         def negative(a = null) { null }
@@ -50,9 +63,10 @@ public class GrChangeToMethodTest extends LightGroovyTestCase {
         int compareTo(b) { 0 }
       }
       """);
-    getFixture().enableInspections(getInspection());
+    myFixture.enableInspections(getInspection());
   }
 
+  @Test
   public void testSimpleUnaryExpression() {
     doTest("~a", "a.bitwiseNegate()");
     doTest("-a", "a.negative()");
@@ -61,6 +75,7 @@ public class GrChangeToMethodTest extends LightGroovyTestCase {
     doTest("--a", "a.previous()");
   }
 
+  @Test
   public void testSimpleBinaryExpression() {
     LinkedHashMap<String, String> map = new LinkedHashMap<String, String>(14);
     map.put("a + b", "a.plus(b)");
@@ -80,6 +95,7 @@ public class GrChangeToMethodTest extends LightGroovyTestCase {
     map.forEach(this::doTest);
   }
 
+  @Test
   public void testAsType() {
     doTest("a as String", "a.asType(String)");
     doTest("!(a a<caret>s String)", "!a.asType(String)");
@@ -87,6 +103,7 @@ public class GrChangeToMethodTest extends LightGroovyTestCase {
     doTest("a a<caret>s List", "a.asType(List)");
   }
 
+  @Test
   public void testCompareTo() {
     doTest("a <=> b", "a.compareTo(b)");
     doTest("a < b", "a.compareTo(b) < 0");
@@ -97,11 +114,13 @@ public class GrChangeToMethodTest extends LightGroovyTestCase {
     doTest("!(a <<caret> b)", "!(a.compareTo(b) < 0)");
   }
 
+  @Test
   public void testEqualsExpression() {
     doTest("a == b", "a.equals(b)");
     doTest("a != b", "!a.equals(b)");
   }
 
+  @Test
   public void testComplexBinaryExpression() {
     doTest("new Object() as List", "new Object().asType(List)");
     doTest("(a =<caret>= b * c) == 1", "a.equals(b * c) == 1");
@@ -115,6 +134,7 @@ public class GrChangeToMethodTest extends LightGroovyTestCase {
     doTest("(Boolean) (a =<caret>= b)", "(Boolean) a.eq<caret>uals(b)");
   }
 
+  @Test
   public void testSamePrioritiesExpression() {
     doTest("1 << 1 <<<caret> 1", "(1 << 1).leftShift(1)");
     doTest("1 <<<caret> 1 << 1", "1.leftShift(1) << 1");
@@ -123,17 +143,20 @@ public class GrChangeToMethodTest extends LightGroovyTestCase {
   }
 
   private void doTest(String before, String after) {
-    getFixture().configureByText("_.groovy", getDECLARATIONS() + before);
-    moveCaret();
-    List<IntentionAction> intentions = getFixture().filterAvailableIntentions("Replace with");
-    if (after != null) {
-      assertNotNull(before, intentions);
-      getFixture().launchAction(intentions.get(0));
-      getFixture().checkResult(getDECLARATIONS() + after);
-    }
-    else {
-      assertEmpty(intentions);
-    }
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("_.groovy", getDECLARATIONS() + before);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      moveCaret();
+      List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Replace with");
+      if (after != null) {
+        assertNotNull(intentions, before);
+        myFixture.launchAction(intentions.get(0));
+        myFixture.checkResult(getDECLARATIONS() + after);
+      }
+      else {
+        assertThat(intentions).isNullOrEmpty();
+      }
+    });
   }
 
   private void doTest(String before) {
@@ -141,7 +164,8 @@ public class GrChangeToMethodTest extends LightGroovyTestCase {
   }
 
   private void moveCaret() {
-    GrStatement statement = last(((GroovyFile)getFixture().getFile()).getStatements());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    GrStatement statement = last(((GroovyFile)myFixture.getFile()).getStatements());
     PsiElement element = null;
     if (statement instanceof GrUnaryExpression unary) {
       element = unary.getOperationToken();
@@ -153,14 +177,9 @@ public class GrChangeToMethodTest extends LightGroovyTestCase {
       element = safeCast.getOperationToken();
     }
 
-    if (element != null && getFixture().getEditor().getCaretModel().getLogicalPosition().getColumn() == 0) {
-      getFixture().getEditor().getCaretModel().moveToOffset(element.getTextRange().getStartOffset());
+    if (element != null && myFixture.getEditor().getCaretModel().getLogicalPosition().getColumn() == 0) {
+      myFixture.getEditor().getCaretModel().moveToOffset(element.getTextRange().getStartOffset());
     }
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
   }
 
   public final ChangeToMethodInspection getInspection() {

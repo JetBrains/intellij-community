@@ -1,6 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyDocCheckInspection;
@@ -23,51 +28,73 @@ import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMetho
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
 
 /**
  * @author Max Medvedev
  */
-public class GrInspectionTest extends GrHighlightingTestBase {
-  public void testDontSimplifyString() { doTest(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection()); }
+@TestApplication
+public class GrInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<GrHighlightingFixture> highlighting = grHighlightingFixture(projectFixture);
 
-  public void testSingleAllocationInClosure() { doTest(new GroovyResultOfObjectAllocationIgnoredInspection()); }
+  @Test
+  public void testDontSimplifyString() { highlighting.get().doTest(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection()); }
 
-  public void testUnusedAllocationInClosure() { doTest(new GroovyResultOfObjectAllocationIgnoredInspection()); }
+  @Test
+  public void testSingleAllocationInClosure() { highlighting.get().doTest(new GroovyResultOfObjectAllocationIgnoredInspection()); }
 
-  public void testUsedLabel() { doTest(new GroovyLabeledStatementInspection()); }
+  @Test
+  public void testUnusedAllocationInClosure() { highlighting.get().doTest(new GroovyResultOfObjectAllocationIgnoredInspection()); }
 
+  @Test
+  public void testUsedLabel() { highlighting.get().doTest(new GroovyLabeledStatementInspection()); }
+
+  @Test
   public void testOverlyLongMethodInspection() {
     GroovyOverlyLongMethodInspection inspection = new GroovyOverlyLongMethodInspection();
     inspection.m_limit = 5;
-    doTest(inspection);
+    highlighting.get().doTest(inspection);
   }
 
-  public void testRangeType() { doTest(new GroovyRangeTypeCheckInspection()); }
+  @Test
+  public void testRangeType() { highlighting.get().doTest(new GroovyRangeTypeCheckInspection()); }
 
-  public void testResolveMetaClass() { doTest(); }
+  @Test
+  public void testResolveMetaClass() { highlighting.get().doTest(); }
 
+  @Test
   public void testResultOfAssignmentUsed() {
     GroovyResultOfAssignmentUsedInspection inspection = new GroovyResultOfAssignmentUsedInspection();
     inspection.inspectClosures = true;
-    doTest(inspection);
+    highlighting.get().doTest(inspection);
   }
 
-  public void testSuppressions() { doTest(new GrUnresolvedAccessInspection(), new GroovyUntypedAccessInspection()); }
+  @Test
+  public void testSuppressions() { highlighting.get().doTest(new GrUnresolvedAccessInspection(), new GroovyUntypedAccessInspection()); }
 
+  @Test
   public void testInnerClassConstructorThis() {
     GroovyResultOfAssignmentUsedInspection inspection = new GroovyResultOfAssignmentUsedInspection();
     inspection.inspectClosures = true;
-    doTest(true, true, true, inspection);
+    highlighting.get().doTest(true, true, true, inspection);
   }
 
-  public void testUnnecessaryReturnInSwitch() { doTest(new GroovyUnnecessaryReturnInspection()); }
+  @Test
+  public void testUnnecessaryReturnInSwitch() { highlighting.get().doTest(new GroovyUnnecessaryReturnInspection()); }
 
-  public void testMemberShipOperatorCheck() { doTest(new GroovyInArgumentCheckInspection()); }
+  @Test
+  public void testMemberShipOperatorCheck() { highlighting.get().doTest(new GroovyInArgumentCheckInspection()); }
 
-  public void testOctalInspection() { doTest(new GroovyOctalIntegerInspection()); }
+  @Test
+  public void testOctalInspection() { highlighting.get().doTest(new GroovyOctalIntegerInspection()); }
 
+  @Test
   public void testClashingGetters() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
 
                            boolean <warning descr="Clash occurred: 'Getter getX' with 'Getter isX'">getX</warning>() { true }
@@ -84,8 +111,9 @@ public class GrInspectionTest extends GrHighlightingTestBase {
                          def result = new Foo().x""", true, false, false, ClashingGettersInspection.class);
   }
 
+  @Test
   public void testDeprecated() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          /**
                           @deprecated
                          */
@@ -99,8 +127,9 @@ public class GrInspectionTest extends GrHighlightingTestBase {
                          }""", true, false, false, GrDeprecatedAPIUsageInspection.class);
   }
 
+  @Test
   public void testDeprecated2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class X {
                            @Deprecated
                            def X(){}
@@ -111,8 +140,9 @@ public class GrInspectionTest extends GrHighlightingTestBase {
                          }""", true, false, false, GrDeprecatedAPIUsageInspection.class);
   }
 
+  @Test
   public void testDeprecated3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class TestService {
 
                              @Deprecated
@@ -127,8 +157,9 @@ public class GrInspectionTest extends GrHighlightingTestBase {
                          }""", true, false, false, GrDeprecatedAPIUsageInspection.class);
   }
 
+  @Test
   public void testDeprecated4() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class TestService {
 
                              static void test() {}
@@ -143,10 +174,10 @@ public class GrInspectionTest extends GrHighlightingTestBase {
                          }""", true, false, false, GrDeprecatedAPIUsageInspection.class);
   }
 
+  @Test
   public void testSuppressedErrorInGroovyDoc() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Class2 {
-
 
                            /** dependency injection for {@link GrailsFilterInvocationDefinition} */
                            @SuppressWarnings("GroovyDocCheck")
@@ -157,8 +188,9 @@ public class GrInspectionTest extends GrHighlightingTestBase {
                          }""", GroovyDocCheckInspection.class);
   }
 
+  @Test
   public void testMissingReturnInBinaryOr() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          private boolean onWinOrMacOS_() {
                              OperatingSystem.isWindows() || OperatingSystem.isMacOsX()
                          }
@@ -171,8 +203,9 @@ public class GrInspectionTest extends GrHighlightingTestBase {
                          """, MissingReturnInspection.class);
   }
 
+  @Test
   public void testMissingReturnInUnary() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          boolean foo(def list) {
                            !list
                          }
@@ -183,8 +216,9 @@ public class GrInspectionTest extends GrHighlightingTestBase {
                          """, MissingReturnInspection.class);
   }
 
+  @Test
   public void testMissingReturnInBinary() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          boolean foo(def list) {
                            !list && list
                          }
@@ -195,7 +229,9 @@ public class GrInspectionTest extends GrHighlightingTestBase {
                          """, MissingReturnInspection.class);
   }
 
+  @Test
   public void testPackageDefinition() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addFileToProject("cde/bar.groovy", "//empty file");
     myFixture.addFileToProject("abc/foo.groovy", """
       <warning descr="Package name mismatch. Actual: 'cde', expected: 'abc'">package cde</warning>
@@ -206,7 +242,9 @@ public class GrInspectionTest extends GrHighlightingTestBase {
     myFixture.testHighlighting(true, false, false, "abc/foo.groovy");
   }
 
+  @Test
   public void testPackageDefinition2() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addFileToProject("abc/foo.groovy", """
       <warning descr="Package name mismatch. Actual: 'cde', expected: 'abc'">package cde</warning>
 
@@ -216,10 +254,12 @@ public class GrInspectionTest extends GrHighlightingTestBase {
     myFixture.testHighlighting(true, false, false, "abc/foo.groovy");
   }
 
-  public void testUntypedAccess() { doTest(new GroovyUntypedAccessInspection()); }
+  @Test
+  public void testUntypedAccess() { highlighting.get().doTest(new GroovyUntypedAccessInspection()); }
 
+  @Test
   public void testMethodMayBeStaticForCategoryClasses() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Cat{
                            def <warning descr="Method may be static">foo</warning>() {
                                print 2
@@ -235,8 +275,9 @@ public class GrInspectionTest extends GrHighlightingTestBase {
                          """, GrMethodMayBeStaticInspection.class);
   }
 
+  @Test
   public void testDelegatesTo() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
 
 
                          def with1(@DelegatesTo.Target() Object target, @DelegatesTo() Closure arg) { //unused
@@ -272,8 +313,9 @@ public class GrInspectionTest extends GrHighlightingTestBase {
                          """, DelegatesToInspection.class);
   }
 
+  @Test
   public void testUnnecessaryContinue() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
 
                          for(i in []) {
                            print 2
@@ -324,8 +366,9 @@ public class GrInspectionTest extends GrHighlightingTestBase {
                          """, GroovyUnnecessaryContinueInspection.class);
   }
 
+  @Test
   public void testEmptyCatchBlock1() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
 
                          try{} <warning descr="Empty 'catch' block">catch</warning>(IOException e) {}
                          try{} catch(IOException ignored) {}
@@ -334,26 +377,33 @@ public class GrInspectionTest extends GrHighlightingTestBase {
                          """, GroovyEmptyCatchBlockInspection.class);
   }
 
+  @Test
   public void testEmptyCatchBlock2() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection();
     inspection.myIgnore = false;
     myFixture.enableInspections(inspection);
-    doTestHighlighting("try{} <warning descr=\"Empty 'catch' block\">catch</warning>(IOException ignored) {}");
+    highlighting.get().doTestHighlighting("try{} <warning descr=\"Empty 'catch' block\">catch</warning>(IOException ignored) {}");
   }
 
+  @Test
   public void testEmptyCatchBlock3() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection();
     inspection.myIgnore = false;
     myFixture.enableInspections(inspection);
-    doTestHighlighting("try{} <warning descr=\"Empty 'catch' block\">catch</warning>(IOException ignored) {}");
+    highlighting.get().doTestHighlighting("try{} <warning descr=\"Empty 'catch' block\">catch</warning>(IOException ignored) {}");
   }
 
+  @Test
   public void testEmptyCatchBlock4() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     GroovyEmptyCatchBlockInspection inspection = new GroovyEmptyCatchBlockInspection();
     inspection.myCountCommentsAsContent = false;
     myFixture.enableInspections(inspection);
-    doTestHighlighting("try{} <warning descr=\"Empty 'catch' block\">catch</warning>(IOException e) {/*comment*/}");
+    highlighting.get().doTestHighlighting("try{} <warning descr=\"Empty 'catch' block\">catch</warning>(IOException e) {/*comment*/}");
   }
 
-  public void testInvokingMethodReferenceWithDefaultParameters() { doTest(new GroovyAssignabilityCheckInspection()); }
+  @Test
+  public void testInvokingMethodReferenceWithDefaultParameters() { highlighting.get().doTest(new GroovyAssignabilityCheckInspection()); }
 }

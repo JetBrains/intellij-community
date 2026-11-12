@@ -4,10 +4,24 @@ package org.jetbrains.plugins.groovy.lang.actions;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.junit.jupiter.api.Test;
 
-public class JoinLineTest extends GroovyEditorActionTestBase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+
+@TestApplication
+public class JoinLineTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @Test
   public void testVariable() {
     doTest("""
              d<caret>ef a;
@@ -17,6 +31,7 @@ public class JoinLineTest extends GroovyEditorActionTestBase {
              """);
   }
 
+  @Test
   public void testVar2() {
     doTest("""
              d<caret>ef a, b;
@@ -26,6 +41,7 @@ public class JoinLineTest extends GroovyEditorActionTestBase {
              """);
   }
 
+  @Test
   public void testVar3() {
     doTest("""
              d<caret>ef a
@@ -35,6 +51,7 @@ public class JoinLineTest extends GroovyEditorActionTestBase {
              """);
   }
 
+  @Test
   public void testVar4() {
     doTest("""
              d<caret>ef a, b
@@ -44,6 +61,7 @@ public class JoinLineTest extends GroovyEditorActionTestBase {
              """);
   }
 
+  @Test
   public void testIf() {
     doTest("""
              if (cond)<caret> {
@@ -54,6 +72,7 @@ public class JoinLineTest extends GroovyEditorActionTestBase {
              """);
   }
 
+  @Test
   public void testElse() {
     doTest("""
              if (cond) {
@@ -70,6 +89,7 @@ public class JoinLineTest extends GroovyEditorActionTestBase {
              """);
   }
 
+  @Test
   public void testJoinStatements1() {
     doTest("""
              prin<caret>t 2
@@ -79,6 +99,7 @@ public class JoinLineTest extends GroovyEditorActionTestBase {
              """);
   }
 
+  @Test
   public void testJoinStatements2() {
     doTest("""
              print 2;
@@ -88,6 +109,7 @@ public class JoinLineTest extends GroovyEditorActionTestBase {
              """);
   }
 
+  @Test
   public void testJoinStatements3() {
     doTest("""
              prin<caret>t 2
@@ -99,6 +121,7 @@ public class JoinLineTest extends GroovyEditorActionTestBase {
              """);
   }
 
+  @Test
   public void testJoinStatements4() {
     doTest("""
              <selection>print 2
@@ -109,6 +132,7 @@ public class JoinLineTest extends GroovyEditorActionTestBase {
              """);
   }
 
+  @Test
   public void testFor() {
     doTest("""
              for (;a<caret>;) {
@@ -117,8 +141,10 @@ public class JoinLineTest extends GroovyEditorActionTestBase {
              for (;a;) <caret>print 2""");
   }
 
+  @Test
   public void testIfWithForceBraces() {
-    CommonCodeStyleSettings settings = CodeStyle.getSettings(getProject()).getCommonSettings(GroovyLanguage.INSTANCE);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    CommonCodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject()).getCommonSettings(GroovyLanguage.INSTANCE);
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     doTest("""
              if (a)
@@ -129,8 +155,9 @@ public class JoinLineTest extends GroovyEditorActionTestBase {
   }
 
   private void doTest(String before, String after) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before);
-    performAction(IdeActions.ACTION_EDITOR_JOIN_LINES);
+    GroovyEditorActionTestUtil.performAction(myFixture, IdeActions.ACTION_EDITOR_JOIN_LINES);
     myFixture.checkResult(after);
   }
 }

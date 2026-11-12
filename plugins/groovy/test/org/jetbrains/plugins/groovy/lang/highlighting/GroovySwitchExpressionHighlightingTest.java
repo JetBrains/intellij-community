@@ -1,20 +1,43 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrSwitchExhaustivenessCheckInspection;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
+import org.junit.jupiter.api.Test;
 
-public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase implements HighlightingTest {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+
+@TestApplication
+public class GroovySwitchExpressionHighlightingTest implements HighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_4_0);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @Override
+  public @NotNull LightJavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
+  }
+
+  @Override
+  public String getTestName() {
+    return LightGroovyFixtures.groovyTestName(codeInsightFixture.get());
+  }
+
   public void doTest(String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("_.groovy", text);
     myFixture.doHighlighting();
     myFixture.checkResult(text);
   }
 
+  @Test
   public void testNoMixingArrowsAndColons() {
     doTest("""
              def x = switch (10) {
@@ -24,6 +47,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
              }""");
   }
 
+  @Test
   public void testRequireYieldInColonStyleSwitchExpression() {
     doTest("""
              def x = switch (10) {
@@ -32,6 +56,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
              }""");
   }
 
+  @Test
   public void testForbidReturnInColonStyleSwitchExpression() {
     doTest("""
              def x = switch (10) {
@@ -40,6 +65,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
              }""");
   }
 
+  @Test
   public void testThrowInColonStyleSwitchExpression() {
     doTest("""
              def x = switch (10) {
@@ -48,11 +74,13 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
              }""");
   }
 
+  @Test
   public void testEmptySwitch() {
     doTest("""
              def x = <error>switch</error> (10) {}""");
   }
 
+  @Test
   public void testCheckBooleanExhaustiveness() {
     highlightingTest("""
                        def foo(boolean b) {
@@ -88,6 +116,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
                        """, GrSwitchExhaustivenessCheckInspection.class);
   }
 
+  @Test
   public void testNumericalRangeExhaustiveness() {
     highlightingTest("""
                        def foo(byte b) {
@@ -108,6 +137,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
                        """, GrSwitchExhaustivenessCheckInspection.class);
   }
 
+  @Test
   public void testIncompleteEnum() {
     highlightingTest("""
                        enum A { X, Y }
@@ -120,6 +150,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
                        """, GrSwitchExhaustivenessCheckInspection.class);
   }
 
+  @Test
   public void testCompleteEnum() {
     highlightingTest("""
                        enum A { X, Y }
@@ -133,6 +164,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
                        """, GrSwitchExhaustivenessCheckInspection.class);
   }
 
+  @Test
   public void testIncompleteSealedClass() {
     highlightingTest("""
                        sealed class A {}
@@ -147,6 +179,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
                        """, GrSwitchExhaustivenessCheckInspection.class);
   }
 
+  @Test
   public void testCompleteSealedClass() {
     highlightingTest("""
                        abstract sealed class A {}
@@ -162,6 +195,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
                        """, GrSwitchExhaustivenessCheckInspection.class);
   }
 
+  @Test
   public void testCompleteMatchingOnTypes() {
     highlightingTest("""
                        def foo(IOException b) {
@@ -172,6 +206,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
                        """, GrSwitchExhaustivenessCheckInspection.class);
   }
 
+  @Test
   public void testUntypedCondition() {
     highlightingTest("""
                        def foo(b) {
@@ -182,6 +217,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
                        """, GrSwitchExhaustivenessCheckInspection.class);
   }
 
+  @Test
   public void testPlainSwitchStatementIsNotHighligted() {
     highlightingTest("""
                        void main(String[] args) {
@@ -192,6 +228,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
                            }""");
   }
 
+  @Test
   public void testUnmatchedNull() {
     GrSwitchExhaustivenessCheckInspection inspection = new GrSwitchExhaustivenessCheckInspection();
     inspection.enableNullCheck();
@@ -205,6 +242,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
                        """, inspection);
   }
 
+  @Test
   public void testExplicitlyMatchedNull() {
     GrSwitchExhaustivenessCheckInspection inspection = new GrSwitchExhaustivenessCheckInspection();
     inspection.enableNullCheck();
@@ -219,6 +257,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
                        """, inspection);
   }
 
+  @Test
   public void testHighlightWithOnlyOneSubclassMatched() {
     highlightingTest("""
                        class A {
@@ -235,6 +274,7 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
                        }""", GrSwitchExhaustivenessCheckInspection.class);
   }
 
+  @Test
   public void testNestedSealed() {
     highlightingTest("""
                        abstract sealed class A {}
@@ -251,10 +291,5 @@ public class GroovySwitchExpressionHighlightingTest extends LightGroovyTestCase 
                          }
                        }
                        """, GrSwitchExhaustivenessCheckInspection.class);
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_4_0;
   }
 }

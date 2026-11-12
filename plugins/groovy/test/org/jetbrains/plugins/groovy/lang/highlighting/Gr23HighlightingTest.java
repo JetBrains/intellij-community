@@ -1,33 +1,39 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
 
 /**
  * Created by Max Medvedev on 27/02/14
  */
-public class Gr23HighlightingTest extends GrHighlightingTestBase {
-  @Override
-  public InspectionProfileEntry[] getCustomInspections() {
-    return new LocalInspectionTool[]{new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection()};
-  }
+@TestApplication
+public class Gr23HighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_3);
+  private final TestFixture<GrHighlightingFixture> highlighting =
+    grHighlightingFixture(projectFixture, GrHighlightingFixture.getHighlightingTestDataPath(), () -> new LocalInspectionTool[]{new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection()});
 
   public void assertScript(String text) {
-    doTestHighlighting("import groovy.transform.CompileStatic\nimport groovy.transform.stc.ClosureParams\n" + text);
+    highlighting.get().doTestHighlighting("import groovy.transform.CompileStatic\nimport groovy.transform.stc.ClosureParams\n" + text);
   }
 
   public void shouldFailWithMessages(String text) {
     assertScript(text);
   }
 
+  @Test
   public void testInferenceOnNonExtensionMethod() {
     assertScript("""
                    import groovy.transform.stc.FirstParam
@@ -41,6 +47,7 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                    """);
   }
 
+  @Test
   public void testFromStringWithSimpleType() {
     assertScript("""
                    import groovy.transform.stc.FromString
@@ -64,6 +71,7 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                              """);
   }
 
+  @Test
   public void testFromStringWithGenericType() {
     assertScript("""
                    import groovy.transform.stc.FromString
@@ -87,6 +95,7 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                              """);
   }
 
+  @Test
   public void testFromStringWithDirectGenericPlaceholder() {
     assertScript("""
                    import groovy.transform.stc.FromString
@@ -100,6 +109,7 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                    """);
   }
 
+  @Test
   public void testFromStringWithGenericPlaceholder() {
     assertScript("""
                    import groovy.transform.stc.FromString
@@ -113,6 +123,7 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                    """);
   }
 
+  @Test
   public void testFromStringWithGenericPlaceholderFromClass() {
     assertScript("""
                    import groovy.transform.stc.FromString
@@ -129,6 +140,7 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                    }""");
   }
 
+  @Test
   public void testFromStringWithGenericPlaceholderFromClassWithTwoGenerics() {
     assertScript("""
                    import groovy.transform.stc.FromString
@@ -145,6 +157,7 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                    }""");
   }
 
+  @Test
   public void testFromStringWithGenericPlaceholderFromClassWithTwoGenericsAndNoExplicitSignature() {
     assertScript("""
                    import groovy.transform.stc.FromString
@@ -161,6 +174,7 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                    }""");
   }
 
+  @Test
   public void testFromStringWithGenericPlaceholderFromClassWithTwoGenericsAndNoExplicitSignatureAndNoFQN() {
     assertScript("""
                    import groovy.transform.stc.FromString
@@ -177,6 +191,7 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                    }""");
   }
 
+  @Test
   public void testFromStringWithGenericPlaceholderFromClassWithTwoGenericsAndNoExplicitSignatureAndNoFQNAndReferenceToSameUnitClass() {
     assertScript("""
                    import groovy.transform.stc.FromString
@@ -199,6 +214,7 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                    }""");
   }
 
+  @Test
   public void testFromStringWithGenericPlaceholderFromClassWithTwoGenericsAndNoExplicitSignatureAndNoFQNAndReferenceToSameUnitClassAndTwoArgs() {
     assertScript("""
                    import groovy.transform.stc.FromString
@@ -223,6 +239,7 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                    """);
   }
 
+  @Test
   public void testFromStringWithGenericPlaceholderFromClassWithTwoGenericsAndPolymorphicSignature() {
     assertScript("""
                    import groovy.transform.stc.FromString
@@ -253,16 +270,18 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                    """);
   }
 
+  @Test
   public void testTrait1() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait X {
                            void foo() {}
                          }
                          """);
   }
 
+  @Test
   public void testTrait2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface A {}
                          trait X implements A {
                            void foo() {}
@@ -270,8 +289,9 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTrait3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {}
                          trait X extends <error descr="Only traits are expected here">A</error> {
                            void foo() {}
@@ -279,8 +299,9 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTrait4() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait A {}
                          trait X extends A {
                            void foo() {}
@@ -288,12 +309,14 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTraitExtendsList() {
-    doTestHighlighting("trait B extends <error descr=\"Only traits are expected here\">HashMap</error> {}");
+    highlighting.get().doTestHighlighting("trait B extends <error descr=\"Only traits are expected here\">HashMap</error> {}");
   }
 
+  @Test
   public void testIncIsNotAllowedInTraits() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait C {
                            def x = 5
                            def foo() {
@@ -303,16 +326,18 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTraitAsAnonymous() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait T {}
 
                          new <error descr="Anonymous classes from traits are available since Groovy 2.5.2">T</error>(){}
                          """);
   }
 
+  @Test
   public void testAbstractMethodsInTrait() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait T {
                            def foo() {}
                            def <error descr="Not abstract method should have body">bar</error>()
@@ -322,35 +347,40 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTraitImplementsInterfaceMethod() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface A {def foo()}
                          trait B implements A { def foo() {}}
                          class C implements B {}
                          """);
   }
 
+  @Test
   public void testNotImplementedTraitMethod() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait T {abstract def foo()}
                          <error descr="Method 'foo' is not implemented">class C implements T</error> {}
                          """);
   }
 
+  @Test
   public void testNotImplementedInterfaceMethodWithTraitInHierarchy() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface T {def foo()}
                          trait X implements T {}
                          <error descr="Method 'foo' is not implemented">class C implements X</error> {}
                          """);
   }
 
+  @Test
   public void testTraitMethodsCannotBeProtected() {
-    doTestHighlighting("trait T {<error descr=\"Trait methods are not allowed to be protected\">protected</error> foo(){}}");
+    highlighting.get().doTestHighlighting("trait T {<error descr=\"Trait methods are not allowed to be protected\">protected</error> foo(){}}");
   }
 
+  @Test
   public void testTraitCanImplementNumerousTraits() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait A{}
                          trait B{}
 
@@ -361,8 +391,9 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTraitWithGenericMethodNoErrors() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait TraitGenericMethod {
                              def <X> X bar(X x) { x }
                          }
@@ -370,8 +401,9 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testGenericTraitWithGenericMethodNoErrors() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait GenericTraitGenericMethod<X> {
                              public <T> T bar(T a) { a }
                          }
@@ -380,8 +412,9 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testGenericTraitNoErrors() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
 
                          trait GenericTrait<X> {
                              def X bar(X a) { a }
@@ -391,29 +424,33 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAbstractMethodWithDefaultParametersInAbstractClass() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          abstract class A { abstract foo(x, y = 3) }
                          <error descr="Method 'foo' is not implemented">class B extends A</error> {}
                          """);
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          abstract class A { abstract foo(x, y = 3) }
                          class B extends A { def foo(x,y) {} }
                          """);
   }
 
+  @Test
   public void testAbstractMethodWithDefaultParametersInTrait() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait A { abstract foo(x, y = 3) }
                          <error descr="Method 'foo' is not implemented">class B implements A</error> {}
                          """);
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait A { abstract foo(x, y = 3) }
                          class B implements A { def foo(x,y) {} }
                          """);
   }
 
+  @Test
   public void testAbstractMethodWithDefaultParametersInTraitFromJava() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addFileToProject("test.groovy", "trait T { abstract foo(x, y = 4) }");
 
     myFixture.configureByText(JavaFileType.INSTANCE, """
@@ -439,8 +476,9 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
     myFixture.testHighlighting(false, false, false);
   }
 
+  @Test
   public void testTraitMethodUsages() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait T {
                              def getFoo() {}
                          }
@@ -451,8 +489,9 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                          """, GroovyUnusedDeclarationInspection.class);
   }
 
+  @Test
   public void testNoExceptionOnSuperReferenceInTraitWithoutSupertypes() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait SimpleTrait {
                            void foo() {
                              super.<warning descr="Cannot resolve symbol 'foo'">foo</warning>()
@@ -461,8 +500,9 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testSpreadArgumentHighlight() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -475,10 +515,5 @@ public class Gr23HighlightingTest extends GrHighlightingTestBase {
                              }
                          }
                          """);
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_2_3;
   }
 }

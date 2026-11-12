@@ -1,30 +1,45 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 import java.util.List;
 
-public class NumberMathTypingTest extends LightGroovyTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    addBigInteger();
-    addBigDecimal();
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class NumberMathTypingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    LightGroovyFixtures.addBigInteger(myFixture);
+    LightGroovyFixtures.addBigDecimal(myFixture);
   }
 
+  @Test
   public void test__() {
     List<List<String>> data = List.<List<String>>of(List.of("Byte", "Byte", "Integer"),
                                                     List.of("Byte", "Character", "Integer"),
@@ -118,24 +133,29 @@ public class NumberMathTypingTest extends LightGroovyTestCase {
   }
 
   private void doTest(final String left, final String operator, final String right, final String expected) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     GroovyFile file = (GroovyFile)myFixture.configureByText("_.groovy", "def foo(" + left + " a, " + right + " b) {\n" +
                                                                         "  a " + operator + " b\n" +
                                                                         "}\n");
-    try {
-      GrStatement expr = DefaultGroovyMethods.first(DefaultGroovyMethods.first(file.getMethods()).getBlock().getStatements());
-      assertTrue(expr instanceof GrExpression);
-      PsiType type = ((GrExpression)expr).getType();
-      assertTrue(type instanceof PsiClassType);
-      String name = ((PsiClassType)type).getClassName();
-      assertEquals(expected, name);
-    }
-    catch (Throwable e) {
-      throw new RuntimeException(left + " " + operator + " " + right + " (expected: " + expected + ")", e);
-    }
+    ReadAction.runBlocking(() -> {
+      try {
+        GrStatement expr = DefaultGroovyMethods.first(DefaultGroovyMethods.first(file.getMethods()).getBlock().getStatements());
+        assertTrue(expr instanceof GrExpression);
+        PsiType type = ((GrExpression)expr).getType();
+        assertTrue(type instanceof PsiClassType);
+        String name = ((PsiClassType)type).getClassName();
+        assertEquals(expected, name);
+      }
+      catch (Throwable e) {
+        throw new RuntimeException(left + " " + operator + " " + right + " (expected: " + expected + ")", e);
+      }
+    });
   }
 
+  @Test
   public void test_resolve_Number_Number_math_methods() {
-    getFixture().configureByText("_.groovy", """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("_.groovy", """
         def foo(Number m, Number n) {
           m.plus n
           m.minus n
@@ -143,12 +163,7 @@ public class NumberMathTypingTest extends LightGroovyTestCase {
           m.multiply n
         }
         """);
-    getFixture().enableInspections(GrUnresolvedAccessInspection.class, GroovyAssignabilityCheckInspection.class);
-    getFixture().checkHighlighting();
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
+    myFixture.enableInspections(GrUnresolvedAccessInspection.class, GroovyAssignabilityCheckInspection.class);
+    myFixture.checkHighlighting();
   }
 }

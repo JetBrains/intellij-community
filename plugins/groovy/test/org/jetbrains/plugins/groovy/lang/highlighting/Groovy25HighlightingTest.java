@@ -1,49 +1,88 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
-public class Groovy25HighlightingTest extends LightGroovyTestCase implements HighlightingTest {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class Groovy25HighlightingTest implements HighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_5);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "highlighting/v25/");
+
+  @Override
+  public @NotNull LightJavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
+  }
+
+  @Override
+  public String getTestName() {
+    return LightGroovyFixtures.groovyTestName(codeInsightFixture.get());
+  }
+
+
+  @Test
   public void testVarDeclarations() { fileHighlightingTest(); }
 
+  @Test
   public void testDuplicatingNamedParams() { fileHighlightingTest(); }
 
+  @Test
   public void testDuplicatingNamedParamsWithSetter() { fileHighlightingTest(); }
 
+  @Test
   public void testTwoIdenticalNamedDelegates() { fileHighlightingTest(); }
 
+  @Test
   public void testDuplicatingNamedDelegatesWithUsualParameter() { fileHighlightingTest(); }
 
+  @Test
   public void testNamedParamsTypeCheck() { fileHighlightingTest(); }
 
+  @Test
   public void testNamedParamsTypeCheckWithSetter() { fileHighlightingTest(); }
 
+  @Test
   public void testNamedParamsUnusedCheck() { fileHighlightingTest(GroovyUnusedDeclarationInspection.class); }
 
+  @Test
   public void testNamedParamsRequired() { fileHighlightingTest(); }
 
+  @Test
   public void testSeveralAbsentRequiredNamedParams() { fileHighlightingTest(); }
 
+  @Test
   public void testRequiredNamedParamInNamedVariant() { fileHighlightingTest(); }
 
+  @Test
   public void testNamedDelegateWithoutProperties() { fileHighlightingTest(); }
 
+  @Test
   public void testImmutableFields() { fileHighlightingTest(); }
 
+  @Test
   public void testImmutableOptionsAbsentField() { fileHighlightingTest(); }
 
+  @Test
   public void testImmutableConstructor() {
     highlightingTest("""
                        import groovy.transform.Immutable
@@ -55,6 +94,7 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testGetterInImmutable() {
     highlightingTest("""
                        import groovy.transform.Immutable
@@ -70,6 +110,7 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testGetterInImmutable2() {
     highlightingTest("""
                        import groovy.transform.Immutable
@@ -83,6 +124,7 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testTupleConstructorInImmutable() {
     highlightingTest("""
                        @groovy.transform.Immutable\s
@@ -97,7 +139,9 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
                        }""");
   }
 
+  @Test
   public void testCopyWithInImmutable() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     highlightingTest("""
                        @groovy.transform.ImmutableBase(copyWith = true)
                        class CopyWith {
@@ -110,12 +154,15 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
                        }
                        """);
 
-    PsiReference ref = getFixture().getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
-    assertNotNull(ref);
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof GrField);
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
+      assertNotNull(ref);
+      PsiElement resolved = ref.resolve();
+      assertTrue(resolved instanceof GrField);
+    });
   }
 
+  @Test
   public void testIDEA_218376() {
     highlightingTest("""
                        import groovy.transform.CompileStatic
@@ -135,6 +182,7 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testMapConstructorFromRawMap() {
     highlightingTest("""
                        @groovy.transform.MapConstructor
@@ -150,6 +198,7 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
                        """, GroovyConstructorNamedArgumentsInspection.class);
   }
 
+  @Test
   public void testNamedVariant() {
     highlightingTest("""
                        class Rr {
@@ -166,6 +215,7 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testNamedVariantWithAutoDelegate() {
     highlightingTest("""
                        class Foo {
@@ -182,8 +232,10 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
                        }""");
   }
 
+  @Test
   public void testVisibilityOptionsForNamedVariant() {
-    getFixture().addFileToProject("other.groovy", """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addFileToProject("other.groovy", """
       import groovy.transform.options.Visibility
 
       @groovy.transform.CompileStatic
@@ -204,6 +256,7 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
                        }""");
   }
 
+  @Test
   public void testTraitAsAnonymous() {
     highlightingTest("""
                        trait T {}
@@ -212,12 +265,14 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testSafeChainDot() {
     highlightingTest("""
                        a<error>??.</error>b
                        """);
   }
 
+  @Test
   public void testPutAtOperator() {
     highlightingTest("""
                        def summary = ['Imported rules': 0,
@@ -225,6 +280,7 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
                        summary['Imported rules'] += 1""", GroovyAssignabilityCheckInspection.class);
   }
 
+  @Test
   public void testTupleDeclaration() {
     highlightingTest(
          """
@@ -239,15 +295,5 @@ public class Groovy25HighlightingTest extends LightGroovyTestCase implements Hig
          }
          """
     );
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_2_5;
-  }
-
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "highlighting/v25/";
   }
 }

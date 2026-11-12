@@ -2,27 +2,27 @@
 package org.jetbrains.plugins.groovy.fixes;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
-import org.junit.Assert;
+import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class GrSpreadArgumentTest extends GrHighlightingTestBase {
-  @Override
-  @NotNull
-  public final LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-  }
+@TestApplication
+public class GrSpreadArgumentTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<GrHighlightingFixture> highlighting = grHighlightingFixture(projectFixture);
 
+  @Test
   public void testThrowingOutListLiteral() {
     doTest("""
              
@@ -53,6 +53,7 @@ public class GrSpreadArgumentTest extends GrHighlightingTestBase {
              """);
   }
 
+  @Test
   public void testReplaceWithIndexAccess() {
     doTest("""
              
@@ -81,6 +82,7 @@ public class GrSpreadArgumentTest extends GrHighlightingTestBase {
              """);
   }
 
+  @Test
   public void testReplaceWithIndexAccessOnExtractedVariable() {
     doTest("""
              
@@ -111,10 +113,11 @@ public class GrSpreadArgumentTest extends GrHighlightingTestBase {
   }
 
   private void doTest(final String before, final String after) {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("_.groovy", before);
-    myFixture.enableInspections(getCustomInspections());
+    myFixture.enableInspections(highlighting.get().getCustomInspections());
     List<IntentionAction> fixes = myFixture.getAllQuickFixes("_.groovy");
-    Assert.assertEquals(before, 1, fixes.size());
+    assertEquals(1, fixes.size(), before);
     myFixture.launchAction(ContainerUtil.getFirstItem(fixes));
     myFixture.checkResult(after);
   }

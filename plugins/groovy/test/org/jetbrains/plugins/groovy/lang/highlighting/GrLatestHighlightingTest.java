@@ -1,42 +1,43 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class GrLatestHighlightingTest extends GrHighlightingTestBase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
 
-  @Override
-  public InspectionProfileEntry[] getCustomInspections() {
-    return new LocalInspectionTool[]{
+@TestApplication
+public class GrLatestHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK);
+  private final TestFixture<GrHighlightingFixture> highlighting =
+    grHighlightingFixture(projectFixture, GrHighlightingFixture.getHighlightingTestDataPath(), () -> new LocalInspectionTool[]{
       new GroovyAssignabilityCheckInspection(),
       new GrUnresolvedAccessInspection(),
       new GroovyAccessibilityInspection(),
       new MissingReturnInspection()
-    };
-  }
+    });
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
   }
 
+  @Test
   public void testIDEA_184690() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -47,8 +48,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_184690_2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -58,8 +60,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA184690_3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -69,8 +72,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_185371() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -80,8 +84,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_185371_2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          static <K,V> Map<K, V> getMap() {
@@ -96,7 +101,7 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
   }
 
   public void _testIDEA_185371_3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
                          import groovy.transform.stc.ClosureParams
                          import groovy.transform.stc.FirstParam
@@ -118,8 +123,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_185371_4() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -131,8 +137,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_185758_2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          interface A {}
@@ -150,8 +157,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_185758() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          interface A {}
@@ -169,17 +177,20 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testOverloadedInClosure() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     RecursionManager.disableAssertOnRecursionPrevention(myFixture.getTestRootDisposable());
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def <T> void foo(T t, Closure cl) {}
 
                          foo(1) { println <weak_warning descr="Cannot infer argument types">it</weak_warning> }
                          """);
   }
 
+  @Test
   public void testOverloadedInClosureCS() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          def <T> void foo(T t, Closure<T> cl) {}
@@ -194,10 +205,12 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testOverloadedInClosureCS2() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.enableInspections(new MissingReturnInspection());
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          def <T> void foo(T t, Closure<T> cl) {}
@@ -209,8 +222,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testOverloadedInClosureCS3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
                          import groovy.transform.stc.ClosureParams
                          import groovy.transform.stc.FirstParam
@@ -224,8 +238,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_171738() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
                          import java.util.stream.Collectors
 
@@ -236,8 +251,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_171738_2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          import java.util.stream.Collectors
@@ -249,8 +265,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_171738_2_5() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import java.util.stream.Collectors
 
                          @groovy.transform.CompileStatic
@@ -261,7 +278,7 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
   }
 
   public void _testIDEA_171738_3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @groovy.transform.CompileStatic
                          public class G<T> {
 
@@ -292,7 +309,7 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
   }
 
   public void _testIDEA_171738_4() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @groovy.transform.CompileStatic
                          public class G<T> {
                              T t;
@@ -312,8 +329,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_189792() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          import java.nio.file.Files
@@ -327,8 +345,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_189274() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          import java.time.LocalDateTime
@@ -350,8 +369,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_188105() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -370,8 +390,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_191019() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          import java.util.stream.Collectors
@@ -387,9 +408,11 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void test_recursive_generics() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     RecursionManager.disableAssertOnRecursionPrevention(myFixture.getTestRootDisposable());
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -415,8 +438,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void test_constructor_with_generic_parameter() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -441,8 +465,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void test_constructor__parameter() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -465,8 +490,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void test_call_without_reference() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class E {
                              E call() {
                                  null
@@ -480,8 +506,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void test_with_closeable_IDEA_197035() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -497,8 +524,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void test_SOE_on_map_literal() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          static method(a) {}
                          static method(a, b) {}
                          def q\s
@@ -524,8 +552,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_198057_1() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          Optional<BigDecimal> foo(Optional<String> string) {
                              string.flatMap {
                                  try {
@@ -538,8 +567,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_198057_2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          Optional<BigDecimal> foo(Optional<String> string) {
                            string.flatMap {
                               return Optional.<BigDecimal> empty()   \s
@@ -548,8 +578,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_198057_3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          void foo() {
                              def o = Optional.<BigDecimal> empty()
                              Optional<BigDecimal>  d = o \s
@@ -557,8 +588,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void test_call_without_reference_with_generics() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class E {
                              def <K,V> Map<K, V> call(Map<K, V> m) { m }
                          }
@@ -572,8 +604,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTypeSubstitutionWithClosureArg() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          def <T> T foo(T t) {
@@ -587,16 +620,19 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void test_assign_empty_list_literal_to_Set() {
-    doTestHighlighting("Set<String> x = []");
+    highlighting.get().doTestHighlighting("Set<String> x = []");
   }
 
+  @Test
   public void test_assign_empty_list_literal_to_Set__CS() {
-    doTestHighlighting("@groovy.transform.CompileStatic def bar() { Set<String> x = [] }");
+    highlighting.get().doTestHighlighting("@groovy.transform.CompileStatic def bar() { Set<String> x = [] }");
   }
 
+  @Test
   public void test_nested_closures_expected_type() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @groovy.transform.TypeChecked
                          int mmm(Closeable cc) {
                              1.with {
@@ -607,8 +643,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_216095() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
                          @CompileStatic
                          class AmbigousProblem {
@@ -628,8 +665,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_216095_2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
                          @CompileStatic
                          class AmbigousProblem {
@@ -648,8 +686,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_216095_3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          void foo(Integer i, Object... objects){
                          }
 
@@ -660,8 +699,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_219842() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -673,8 +713,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_221874() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -689,8 +730,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_221874_2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -704,8 +746,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """, true, false, false);
   }
 
+  @Test
   public void testResolveCallsInsideClosureWithCompileStatic() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -715,14 +758,16 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          }""", true, false, false);
   }
 
+  @Test
   public void testOperatorAssignment() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          properties[""] += sourceSets
                          """, false);
   }
 
+  @Test
   public void testDispatchToConsumer() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface MyRunnable { void run() }
                          interface MyConsumer { void consume(int x) }
 
@@ -733,8 +778,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """, GroovyAssignabilityCheckInspection.class);
   }
 
+  @Test
   public void testDispatchToConsumer2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface MyRunnable { void run() }
                          interface MyConsumer { void consume(int x) }
 
@@ -745,7 +791,9 @@ public class GrLatestHighlightingTest extends GrHighlightingTestBase {
                          """, GroovyAssignabilityCheckInspection.class);
   }
 
+  @Test
   public void testNoConstantValueWarning() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addFileToProject("A.groovy", "class A { public static final String CONST = \"1\" }");
     myFixture.addClass("@Deprecated(since = A.CONST) public class Main {}");
     myFixture.configureByText("Main.java", "@Deprecated(since = A.CONST) public class Main {}");

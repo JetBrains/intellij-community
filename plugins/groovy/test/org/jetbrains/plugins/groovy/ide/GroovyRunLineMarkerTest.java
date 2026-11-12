@@ -2,63 +2,77 @@
 package org.jetbrains.plugins.groovy.ide;
 
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
-import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class GroovyRunLineMarkerTest extends LightGroovyTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    Registry.get("ide.jvm.run.marker").setValue(true, getTestRootDisposable());
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class GroovyRunLineMarkerTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    Registry.get("ide.jvm.run.marker").setValue(true, myFixture.getTestRootDisposable());
   }
 
-  @Override
-  @NotNull
-  public final LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
-  }
-
+  @Test
   public void testSimple() {
-    getFixture().configureByText("_.groovy", """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("_.groovy", """
       class MainTest {
         static void <caret>foo(String[] args) {}
         static void main(String[] args) {}
       }
       """);
-    Assert.assertTrue(getFixture().findGuttersAtCaret().isEmpty());
-    Assert.assertEquals(2, getFixture().findAllGutters().size());
+    assertTrue(myFixture.findGuttersAtCaret().isEmpty());
+    assertEquals(2, myFixture.findAllGutters().size());
   }
 
+  @Test
   public void testImplicitStringArray() {
-    getFixture().configureByText("_.groovy", """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("_.groovy", """
       class MainTest {
         static void main(args) {}
       }
       """);
-    assertSize(2, getFixture().findAllGutters());
+    assertThat(myFixture.findAllGutters()).hasSize(2);
   }
 
+  @Test
   public void testJavaClassInheritor() {
-    getFixture().addClass("""
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addClass("""
                               class Main {
                               public static void main(String[] args){}
                             }
                             """);
-    getFixture().configureByText("_.groovy", """
+    myFixture.configureByText("_.groovy", """
       class MainTest extends Main {}
       """);
-    Assert.assertEquals(1, getFixture().findAllGutters().size());
+    assertEquals(1, myFixture.findAllGutters().size());
   }
 
+  @Test
   public void testDefaultParameters() {
-    getFixture().configureByText("_.groovy", """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("_.groovy", """
       class MainTest {
         static void main(String[] args, b = 2) {}
       }
       """);
-    Assert.assertEquals(2, getFixture().findAllGutters().size());
+    assertEquals(2, myFixture.findAllGutters().size());
   }
 }

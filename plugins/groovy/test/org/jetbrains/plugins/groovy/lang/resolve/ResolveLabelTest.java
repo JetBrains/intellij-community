@@ -2,38 +2,63 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveFixtureKt.groovyResolveFixture;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * @author Maxim.Medvedev
  */
 
-public class ResolveLabelTest extends GroovyResolveTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath()+"resolve/label";
-  }
+@TestApplication
+public class ResolveLabelTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<GroovyResolveFixture> resolve =
+    groovyResolveFixture(projectFixture, TestUtils.getAbsoluteTestDataPath()+"resolve/label");
 
+  @Test
   public void testLabelResolve() {
-    final PsiReference ref = configureByFile(getTestName(true)+"/"+getTestName(false) + ".groovy");
-    final PsiElement resolved = ref.resolve();
-    assertNotNull(resolved);
-    assertInstanceOf(resolved, GrLabeledStatement.class);
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
+    final PsiReference ref = resolve.get().configureByFile(myFixture.getTestName(true)+"/"+myFixture.getTestName(false) + ".groovy");
+    ReadAction.runBlocking(() -> {
+      final PsiElement resolved = ref.resolve();
+      assertNotNull(resolved);
+      assertInstanceOf(GrLabeledStatement.class, resolved);
+    });
   }
 
+  @Test
   public void testLabelResolve2() {
-    final PsiReference ref = configureByFile(getTestName(true)+"/"+getTestName(false) + ".groovy");
-    final PsiElement resolved = ref.resolve();
-    assertNotNull(resolved);
-    assertInstanceOf(resolved, GrLabeledStatement.class);
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
+    final PsiReference ref = resolve.get().configureByFile(myFixture.getTestName(true)+"/"+myFixture.getTestName(false) + ".groovy");
+    ReadAction.runBlocking(() -> {
+      final PsiElement resolved = ref.resolve();
+      assertNotNull(resolved);
+      assertInstanceOf(GrLabeledStatement.class, resolved);
+    });
   }
 
+  @Test
   public void testLabelNotResolved() {
-    final PsiReference ref = configureByFile(getTestName(true)+"/"+getTestName(false) + ".groovy");
-    final PsiElement resolved = ref.resolve();
-    assertNull(resolved);
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
+    final PsiReference ref = resolve.get().configureByFile(myFixture.getTestName(true)+"/"+myFixture.getTestName(false) + ".groovy");
+    ReadAction.runBlocking(() -> {
+      final PsiElement resolved = ref.resolve();
+      assertNull(resolved);
+    });
   }
 }

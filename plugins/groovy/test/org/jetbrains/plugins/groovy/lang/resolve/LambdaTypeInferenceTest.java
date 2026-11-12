@@ -2,13 +2,24 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.junit.jupiter.api.Test;
 
-public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.resolve.TypeInferenceFixtureKt.typeInferenceFixture;
+
+@TestApplication
+public class LambdaTypeInferenceTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_3_0);
+  private final TestFixture<TypeInferenceFixture> inference = typeInferenceFixture(projectFixture);
+
+  @Test
   public void testPlusEquals() {
-    doTest("""
+    inference.get().doTest("""
              class Test {
                  def plus = (a) -> "a"
              }
@@ -18,8 +29,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testGetAtLambda() {
-    doTest("""
+    inference.get().doTest("""
              class Test {
                  def getAt = a -> "a"
              }
@@ -30,12 +42,14 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void test_binding_from_inside() {
-    doTest("list = ['a', 'b']; list.each (it) -> <caret>it", "java.lang.String");
+    inference.get().doTest("list = ['a', 'b']; list.each (it) -> <caret>it", "java.lang.String");
   }
 
+  @Test
   public void testMethodCallInvokedOnArrayAccess() {
-    doTest("""
+    inference.get().doTest("""
              def foo(String s) {
                return this
              }
@@ -51,8 +65,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.Integer");
   }
 
+  @Test
   public void testInferWithClosureType() {
-    doTest("""
+    inference.get().doTest("""
              class C {
                Date field
              }
@@ -67,7 +82,7 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
   }
 
   public void _test_return_type_1() {
-    doTest("""
+    inference.get().doTest("""
              class A {
                static def fact = (int i) -> {
                  if (i > 1) {
@@ -85,9 +100,11 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.Integer");
   }
 
+  @Test
   public void test_return_type_2() {
-    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
-    doTest("""
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    RecursionManager.disableMissedCacheAssertions(myFixture.getTestRootDisposable());
+    inference.get().doTest("""
              class A {
                static def fact = (int i) -> {
                  if (i > 1) {
@@ -105,8 +122,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.Integer");
   }
 
+  @Test
   public void test_return_type_3() {
-    doTest("""
+    inference.get().doTest("""
              class A {
                static def fact = int i -> {
                  if (i > 1) {
@@ -125,8 +143,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "int");
   }
 
+  @Test
   public void testWildcardClosureParam() {
-    doTest("""
+    inference.get().doTest("""
              class Tx {
                  def methodOfT() {}
              }
@@ -137,8 +156,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "? extends Tx");
   }
 
+  @Test
   public void testTypeOfGroupBy() {
-    doTest("""
+    inference.get().doTest("""
              [1, 2, 3].with {
                def by = groupBy((i)->{2})
                print b<caret>y
@@ -146,16 +166,18 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.util.Map<java.lang.Integer,java.util.List<java.lang.Integer>>");
   }
 
+  @Test
   public void testTypeOfCall() {
-    doTest("""
+    inference.get().doTest("""
                def by = () -> {2}
                def res = by()
                re<caret>s
              """, "java.lang.Integer");
   }
 
+  @Test
   public void testContravariantType() {
-    doTest("""
+    inference.get().doTest("""
              import groovy.transform.CompileStatic
              import java.util.concurrent.Callable
              
@@ -196,8 +218,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.Integer");
   }
 
+  @Test
   public void testSAMInference() {
-    doTest("""
+    inference.get().doTest("""
              import groovy.transform.CompileStatic
              
              interface CustomCallable<T> {
@@ -217,8 +240,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "boolean");
   }
 
+  @Test
   public void testSAMInference2() {
-    doTest("""
+    inference.get().doTest("""
              import groovy.transform.CompileStatic
              
              interface CustomCallable<T> {
@@ -238,8 +262,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "boolean");
   }
 
+  @Test
   public void testSAMInference3() {
-    doTest("""
+    inference.get().doTest("""
              import groovy.transform.CompileStatic
              
              interface CustomCallable<K, V> {
@@ -259,8 +284,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.Integer");
   }
 
+  @Test
   public void testSamInference4() {
-    doTest("""
+    inference.get().doTest("""
              interface Action<T> {
                  void execute(T t)
              }
@@ -275,8 +301,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testSamInference5() {
-    doTest("""
+    inference.get().doTest("""
              interface Action<T> {
                  void execute(T t)
              }
@@ -291,8 +318,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testSamInference6() {
-    doTest("""
+    inference.get().doTest("""
              interface Action<T> {
                  void execute(T t)
              }
@@ -307,8 +335,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testSamInference7() {
-    doTest("""
+    inference.get().doTest("""
              interface CustomCallable<T> {
                  T call()
              }
@@ -324,8 +353,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, null);
   }
 
+  @Test
   public void testClosureParamsUsingGenerics() {
-    doTest("""
+    inference.get().doTest("""
              import groovy.transform.CompileStatic
              
              @CompileStatic
@@ -338,7 +368,7 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
   }
 
   public void _test_owner_type() {
-    doTest("""
+    inference.get().doTest("""
              class W {
                def c = ()->{
                  <caret>owner
@@ -347,8 +377,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "W");
   }
 
+  @Test
   public void test_use_parent_DFA() {
-    doTest("""
+    inference.get().doTest("""
              def foo(a) {
                a = 1
                1.with(x -> {
@@ -358,8 +389,9 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.Integer");
   }
 
+  @Test
   public void test_use_outer_types_inside_unknown_lambdas() {
-    doTest("""
+    inference.get().doTest("""
              def foo() {
                def a = 1
                lambda = x -> {
@@ -368,10 +400,5 @@ public class LambdaTypeInferenceTest extends TypeInferenceTestBase {
                a = ""
              }
              """, "java.lang.Integer");
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_3_0;
   }
 }

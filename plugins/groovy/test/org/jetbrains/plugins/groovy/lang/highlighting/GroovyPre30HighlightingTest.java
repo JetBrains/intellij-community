@@ -1,20 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.GroovyVersionBasedTest;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-public class GroovyPre30HighlightingTest extends GroovyVersionBasedTest {
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_2_5_REAL_JDK;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "highlighting/pre30/";
+@TestApplication
+public class GroovyPre30HighlightingTest extends GroovyVersionBasedTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_5_REAL_JDK);
+
+  public GroovyPre30HighlightingTest() {
+    super(projectFixture, TestUtils.getAbsoluteTestDataPath() + "highlighting/pre30/");
   }
 }

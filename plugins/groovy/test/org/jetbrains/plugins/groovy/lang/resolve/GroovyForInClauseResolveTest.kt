@@ -1,17 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.junit.jupiter.api.Test
 
-class GroovyForInClauseResolveTest : GroovyResolveTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return GroovyProjectDescriptors.GROOVY_5_0
+@TestApplication
+class GroovyForInClauseResolveTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_5_0)
   }
 
+  private val resolve by groovyResolveFixture(projectFixture)
+
+  @Test
   fun testResolveToValueVariable() {
-    resolveByText(
+    resolve.resolveByText(
       """
         for(int value in 1..10) {
           println val<caret>ue
@@ -21,8 +27,9 @@ class GroovyForInClauseResolveTest : GroovyResolveTestCase() {
     )
   }
 
+  @Test
   fun testResolveToValueVariableWithIndexVariable() {
-    resolveByText(
+    resolve.resolveByText(
       """
         for(int idx, int value in 1..10) {
           println val<caret>ue
@@ -32,8 +39,9 @@ class GroovyForInClauseResolveTest : GroovyResolveTestCase() {
     )
   }
 
+  @Test
   fun testResolveToIndexVariableWithIndexVariable() {
-    resolveByText(
+    resolve.resolveByText(
       """
         for(int idx, int value in 1..10) {
           println id<caret>x

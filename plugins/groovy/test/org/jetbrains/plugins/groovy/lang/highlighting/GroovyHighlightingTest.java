@@ -1,10 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.util.PsiTreeUtil;
-import junit.framework.TestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
 import org.jetbrains.plugins.groovy.annotator.intentions.GroovyStaticImportMethodFix;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection;
@@ -12,80 +18,129 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
+import org.junit.jupiter.api.Test;
 
-public class GroovyHighlightingTest extends GrHighlightingTestBase {
-  public void testDuplicateClosurePrivateVariable() { doTest(); }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-  public void testClosureRedefiningVariable() { doTest(); }
+@TestApplication
+public class GroovyHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<GrHighlightingFixture> highlighting = grHighlightingFixture(projectFixture);
 
+  @Test
+  public void testDuplicateClosurePrivateVariable() { highlighting.get().doTest(); }
+
+  @Test
+  public void testClosureRedefiningVariable() { highlighting.get().doTest(); }
+
+  @Test
   public void testCircularInheritance() {
-    TransformationUtilKt.disableAssertOnRecursion(getTestRootDisposable());
-    doTest();
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    TransformationUtilKt.disableAssertOnRecursion(myFixture.getTestRootDisposable());
+    highlighting.get().doTest();
   }
 
-  public void testEmptyTupleType() { doTest(); }
+  @Test
+  public void testEmptyTupleType() { highlighting.get().doTest(); }
 
-  public void testMapDeclaration() { doTest(); }
+  @Test
+  public void testMapDeclaration() { highlighting.get().doTest(); }
 
+  @Test
   public void testShouldNotImplementGroovyObjectMethods() {
-    addGroovyObject();
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    LightGroovyFixtures.addGroovyObject(myFixture);
     myFixture.addFileToProject("Foo.groovy", "class Foo {}");
-    myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
+    myFixture.testHighlighting(false, false, false, myFixture.getTestName(false) + ".java");
   }
 
+  @Test
   public void testJavaClassImplementingGroovyInterface() {
-    addGroovyObject();
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    LightGroovyFixtures.addGroovyObject(myFixture);
     myFixture.addFileToProject("Foo.groovy", "interface Foo {}");
-    myFixture.testHighlighting(false, false, false, getTestName(false) + ".java");
+    myFixture.testHighlighting(false, false, false, myFixture.getTestName(false) + ".java");
   }
 
-  public void testDuplicateFields() { doTest(); }
+  @Test
+  public void testDuplicateFields() { highlighting.get().doTest(); }
 
+  @Test
   public void testNoDuplicationThroughClosureBorder() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("package groovy.lang; public interface Closure {}");
-    doTest();
+    highlighting.get().doTest();
   }
 
-  public void testRecursiveMethodTypeInference() { doTest(); }
+  @Test
+  public void testRecursiveMethodTypeInference() { highlighting.get().doTest(); }
 
-  public void testSuperClassNotExists() { doRefTest(); }
+  @Test
+  public void testSuperClassNotExists() { highlighting.get().doRefTest(); }
 
-  public void testAnonymousClassConstructor() { doTest(); }
+  @Test
+  public void testAnonymousClassConstructor() { highlighting.get().doTest(); }
 
-  public void testAnonymousClassAbstractMethod() { doTest(); }
+  @Test
+  public void testAnonymousClassAbstractMethod() { highlighting.get().doTest(); }
 
-  public void testAnonymousClassShouldImplementMethods() { doTest(); }
+  @Test
+  public void testAnonymousClassShouldImplementMethods() { highlighting.get().doTest(); }
 
-  public void testAnonymousClassShouldImplementSubstitutedMethod() { doTest(); }
+  @Test
+  public void testAnonymousClassShouldImplementSubstitutedMethod() { highlighting.get().doTest(); }
 
-  public void testUnresolvedLhsAssignment() { doRefTest(); }
+  @Test
+  public void testUnresolvedLhsAssignment() { highlighting.get().doRefTest(); }
 
-  public void testUnresolvedAccess() { doRefTest(); }
+  @Test
+  public void testUnresolvedAccess() { highlighting.get().doRefTest(); }
 
-  public void testBooleanProperties() { doRefTest(); }
+  @Test
+  public void testBooleanProperties() { highlighting.get().doRefTest(); }
 
-  public void testDuplicateInnerClass() { doTest(); }
+  @Test
+  public void testDuplicateInnerClass() { highlighting.get().doTest(); }
 
-  public void testThisInStaticContext() { doTest(); }
+  @Test
+  public void testThisInStaticContext() { highlighting.get().doTest(); }
 
-  public void testLocalVariableInStaticContext() { doTest(); }
+  @Test
+  public void testLocalVariableInStaticContext() { highlighting.get().doTest(); }
 
+  @Test
   public void testModifiersInPackageAndImportStatements() {
-    myFixture.copyFileToProject(getTestName(false) + ".groovy", "x/" + getTestName(false) + ".groovy");
-    myFixture.testHighlighting(true, false, false, "x/" + getTestName(false) + ".groovy");
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    myFixture.copyFileToProject(myFixture.getTestName(false) + ".groovy", "x/" + myFixture.getTestName(false) + ".groovy");
+    myFixture.testHighlighting(true, false, false, "x/" + myFixture.getTestName(false) + ".groovy");
   }
 
-  public void testBreakOutside() { doTest(); }
-  public void testUndefinedLabel() { doTest(); }
-  public void testNestedMethods() { doTest(); }
-  public void testNestedClasses() { doTest(); }
-  public void testRawOverriddenMethod() { doTest(); }
-  public void testFQNJavaClassesUsages() { doTest(); }
-  public void testGstringAssignableToString() { doTest(); }
-  public void testGstringAssignableToStringInClosureParameter() { doTest(); }
-  public void testEachOverRange() { doTest(); }
+  @Test
+  public void testBreakOutside() { highlighting.get().doTest(); }
+  @Test
+  public void testUndefinedLabel() { highlighting.get().doTest(); }
+  @Test
+  public void testNestedMethods() { highlighting.get().doTest(); }
+  @Test
+  public void testNestedClasses() { highlighting.get().doTest(); }
+  @Test
+  public void testRawOverriddenMethod() { highlighting.get().doTest(); }
+  @Test
+  public void testFQNJavaClassesUsages() { highlighting.get().doTest(); }
+  @Test
+  public void testGstringAssignableToString() { highlighting.get().doTest(); }
+  @Test
+  public void testGstringAssignableToStringInClosureParameter() { highlighting.get().doTest(); }
+  @Test
+  public void testEachOverRange() { highlighting.get().doTest(); }
 
+  @Test
   public void testEllipsisParam() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("a.groovy", """
       class A {
         def foo(int... x){}
@@ -95,104 +150,147 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.checkHighlighting(true, false, false);
   }
 
-  public void testStringAndGStringUpperBound() { doTest(); }
+  @Test
+  public void testStringAndGStringUpperBound() { highlighting.get().doTest(); }
 
-  public void testWithMethod() { doTest(); }
+  @Test
+  public void testWithMethod() { highlighting.get().doTest(); }
 
-  public void testArrayLikeAccess() { doTest(); }
+  @Test
+  public void testArrayLikeAccess() { highlighting.get().doTest(); }
 
-  public void testSetInitializing() { doTest(); }
+  @Test
+  public void testSetInitializing() { highlighting.get().doTest(); }
 
-  public void testEmptyTupleAssignability() { doTest(); }
+  @Test
+  public void testEmptyTupleAssignability() { highlighting.get().doTest(); }
 
+  @Test
   public void testGrDefFieldsArePrivateInJavaCode() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("X.groovy", "public class X{def x=5}");
-    myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
+    myFixture.testHighlighting(true, false, false, myFixture.getTestName(false) + ".java");
   }
 
-  public void testSuperConstructorInvocation() { doTest(new GroovyAssignabilityCheckInspection()); }
+  @Test
+  public void testSuperConstructorInvocation() { highlighting.get().doTest(new GroovyAssignabilityCheckInspection()); }
 
-  public void testDuplicateMapKeys() { doTest(); }
+  @Test
+  public void testDuplicateMapKeys() { highlighting.get().doTest(); }
 
-  public void testIndexPropertyAccess() { doTest(); }
+  @Test
+  public void testIndexPropertyAccess() { highlighting.get().doTest(); }
 
-  public void testPropertyAndFieldDeclaration() { doTest(); }
+  @Test
+  public void testPropertyAndFieldDeclaration() { highlighting.get().doTest(); }
 
-  public void testGenericsMethodUsage() { doTest(); }
+  @Test
+  public void testGenericsMethodUsage() { highlighting.get().doTest(); }
 
-  public void testWildcardInExtendsList() { doTest(); }
+  @Test
+  public void testWildcardInExtendsList() { highlighting.get().doTest(); }
 
-  public void testOverrideAnnotation() { doTest(); }
+  @Test
+  public void testOverrideAnnotation() { highlighting.get().doTest(); }
 
-  public void testClosureCallWithTupleTypeArgument() { doTest(); }
+  @Test
+  public void testClosureCallWithTupleTypeArgument() { highlighting.get().doTest(); }
 
-  public void testMethodDuplicates() { doTest(); }
+  @Test
+  public void testMethodDuplicates() { highlighting.get().doTest(); }
 
-  public void testNotAmbiguousClosableBlock() { doTest(); }
+  @Test
+  public void testNotAmbiguousClosableBlock() { highlighting.get().doTest(); }
 
-  public void testDuplicateParameterInClosableBlock() { doTest(); }
+  @Test
+  public void testDuplicateParameterInClosableBlock() { highlighting.get().doTest(); }
 
+  @Test
   public void testCyclicInheritance() {
-    TransformationUtilKt.disableAssertOnRecursion(getTestRootDisposable());
-    doTest();
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    TransformationUtilKt.disableAssertOnRecursion(myFixture.getTestRootDisposable());
+    highlighting.get().doTest();
   }
 
-  public void testNoDefaultConstructor() { doTest(); }
+  @Test
+  public void testNoDefaultConstructor() { highlighting.get().doTest(); }
 
-  public void testNumberDuplicatesInMaps() { doTest(); }
+  @Test
+  public void testNumberDuplicatesInMaps() { highlighting.get().doTest(); }
 
-  public void testBuiltInTypeInstantiation() { doTest(); }
+  @Test
+  public void testBuiltInTypeInstantiation() { highlighting.get().doTest(); }
 
+  @Test
   public void testVoidArrayType() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          <error descr="Illegal type: 'void'">void</error>[] foo() {}
                          <error descr="Illegal type: 'void'">void</error>[] bar = foo()
                          """);
   }
 
-  public void testSOEInFieldDeclarations() { doTest(); }
+  @Test
+  public void testSOEInFieldDeclarations() { highlighting.get().doTest(); }
 
-  public void testWrongAnnotation() { doTest(); }
+  @Test
+  public void testWrongAnnotation() { highlighting.get().doTest(); }
 
+  @Test
   public void testAmbiguousMethods() {
-    myFixture.copyFileToProject(getTestName(false) + ".java");
-    doTest();
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    myFixture.copyFileToProject(myFixture.getTestName(false) + ".java");
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testGroovyEnumInJavaFile() {
-    myFixture.copyFileToProject(getTestName(false) + ".groovy");
-    myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    myFixture.copyFileToProject(myFixture.getTestName(false) + ".groovy");
+    myFixture.testHighlighting(true, false, false, myFixture.getTestName(false) + ".java");
   }
 
+  @Test
   public void testSOFInDelegate() {
-    TransformationUtilKt.disableAssertOnRecursion(getTestRootDisposable());
-    doTest();
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    TransformationUtilKt.disableAssertOnRecursion(myFixture.getTestRootDisposable());
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testMethodImplementedByDelegate() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testGdslWildcardTypes() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("a.groovy", "List<? extends String> la = []; la.get(1); " +
                                           "List<? super String> lb = []; lb.get(1); " +
                                           "List<?> lc = []; lc.get(1); ");
     myFixture.checkHighlighting(true, false, false);
   }
 
-  public void testDuplicatedNamedArgs() { doTest(); }
+  @Test
+  public void testDuplicatedNamedArgs() { highlighting.get().doTest(); }
 
-  public void testConstructorWithAllParametersOptional() { doTest(); }
+  @Test
+  public void testConstructorWithAllParametersOptional() { highlighting.get().doTest(); }
 
-  public void testTupleConstructorAttributes() { doTest(new GroovyAssignabilityCheckInspection()); }
+  @Test
+  public void testTupleConstructorAttributes() { highlighting.get().doTest(new GroovyAssignabilityCheckInspection()); }
 
-  public void testDelegatedMethodIsImplemented() { doTest(); }
+  @Test
+  public void testDelegatedMethodIsImplemented() { highlighting.get().doTest(); }
 
-  public void testEnumImplementsAllGroovyObjectMethods() { doTest(); }
+  @Test
+  public void testEnumImplementsAllGroovyObjectMethods() { highlighting.get().doTest(); }
 
-  public void testRecursiveConstructors() { doTest(); }
+  @Test
+  public void testRecursiveConstructors() { highlighting.get().doTest(); }
 
+  @Test
   public void testImmutableConstructorFromJava() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addFileToProject("a.groovy", """
       @groovy.transform.Immutable class Foo { int a; String b }""");
     myFixture.configureByText("a.java", """
@@ -204,7 +302,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.checkHighlighting(false, false, false);
   }
 
+  @Test
   public void testTupleConstructorFromJava() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addFileToProject("a.groovy", """
       @groovy.transform.TupleConstructor class Foo { int a; String b }""");
     myFixture.configureByText("a.java", """
@@ -217,7 +317,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.checkHighlighting(false, false, false);
   }
 
+  @Test
   public void testInheritConstructorsFromJava() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addFileToProject("a.groovy", """
       class Person {
         Person(String first, String last) { }
@@ -240,15 +342,21 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.checkHighlighting(false, false, false);
   }
 
-  public void testDefaultInitializersAreNotAllowedInAbstractMethods() { doTest(); }
+  @Test
+  public void testDefaultInitializersAreNotAllowedInAbstractMethods() { highlighting.get().doTest(); }
 
-  public void testConstructorTypeArgs() { doTest(); }
+  @Test
+  public void testConstructorTypeArgs() { highlighting.get().doTest(); }
 
-  public void testIncorrectEscaping() { doTest(); }
+  @Test
+  public void testIncorrectEscaping() { highlighting.get().doTest(); }
 
-  public void testExtendingOwnInner() { doTest(); }
+  @Test
+  public void testExtendingOwnInner() { highlighting.get().doTest(); }
 
+  @Test
   public void testDuplicateMethods() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("a.groovy", """
       class A {
         <error descr="Method with signature foo() is already defined in the class 'A'">def foo()</error>{}
@@ -258,7 +366,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.checkHighlighting(true, false, false);
   }
 
+  @Test
   public void testPrivateTopLevelClassInJava() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addFileToProject("pack/Foo.groovy", "package pack; private class Foo{}");
     myFixture.configureByText("Abc.java", """
       import pack.Foo;
@@ -273,7 +383,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.testHighlighting(false, false, false);
   }
 
+  @Test
   public void testDelegateToMethodWithItsOwnTypeParams() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("a.groovy", """
       interface I<S> {
           def <T> void foo(List<T> a);
@@ -295,7 +407,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.testHighlighting(false, false, false);
   }
 
+  @Test
   public void testMethodDelegate() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("""
                           package groovy.lang;
                           @Target({ElementType.FIELD, ElementType.METHOD})
@@ -313,10 +427,12 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
       new B().foo()
       """);
 
-    getFixture().checkHighlighting();
+    myFixture.checkHighlighting();
   }
 
+  @Test
   public void testMethodDelegateError() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("a.groovy", """
       class A {
         def foo(){}
@@ -329,10 +445,12 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
       new B().foo()
       """);
 
-    getFixture().checkHighlighting();
+    myFixture.checkHighlighting();
   }
 
+  @Test
   public void testBuilderSimpleStrategyError() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("""
                           package groovy.transform.builder;
                           @Target({ ElementType.TYPE})
@@ -361,10 +479,12 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
       }
       """);
 
-    getFixture().checkHighlighting();
+    myFixture.checkHighlighting();
   }
 
+  @Test
   public void testBuilderSimpleStrategy() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("""
                           package groovy.transform.builder;
                           @Target({ ElementType.TYPE})
@@ -395,10 +515,12 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
       new Pojo().setName("sd").setCounter(5)
       """);
 
-    getFixture().checkHighlighting();
+    myFixture.checkHighlighting();
   }
 
+  @Test
   public void testPrimitiveTypeParams() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("a.groovy", """
       List<<error descr="Primitive type parameters are not allowed in type parameter list">int</error>> list = new ArrayList<int><EOLError descr="'(' expected"></EOLError>
       List<? extends <error descr="Primitive bound types are not allowed">double</error>> l = new ArrayList<double>()
@@ -407,7 +529,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.testHighlighting(true, false, false);
   }
 
+  @Test
   public void testAliasInParameterType() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("a_.groovy", """
       import java.awt.event.ActionListener
       import java.awt.event.ActionEvent as AE
@@ -425,11 +549,15 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.testHighlighting(true, false, false);
   }
 
+  @Test
   public void testReassignedHighlighting() {
-    myFixture.testHighlighting(true, true, true, getTestName(false) + ".groovy");
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    myFixture.testHighlighting(true, true, true, myFixture.getTestName(false) + ".groovy");
   }
 
+  @Test
   public void testInstanceOf() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("_a.groovy", """
       class DslPointcut {}
 
@@ -442,7 +570,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.testHighlighting(true, false, false);
   }
 
+  @Test
   public void testIncorrectTypeArguments() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("_.groovy", """
       class C <T extends String> {}
       C<<warning descr="Type parameter 'java.lang.Double' is not in its bound; should extend 'java.lang.String'">Double</warning>> c
@@ -452,68 +582,80 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.testHighlighting(true, false, true);
   }
 
+  @Test
   public void testTryCatch1() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          try {}
                          catch (Exception e){}
                          catch (<warning descr="Exception 'java.io.IOException' has already been caught">IOException</warning> e){}
                          """);
   }
 
+  @Test
   public void testTryCatch2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          try {}
                          catch (e){}
                          catch (<warning descr="Exception 'java.lang.Exception' has already been caught">e</warning>){}
                          """);
   }
 
+  @Test
   public void testTryCatch3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          try {}
                          catch (e){}
                          catch (<warning descr="Exception 'java.io.IOException' has already been caught">IOException</warning> e){}
                          """);
   }
 
+  @Test
   public void testTryCatch4() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          try {}
                          catch (Exception | <warning descr="Unnecessary exception 'java.io.IOException'. 'java.lang.Exception' is already declared">IOException</warning> e){}
                          """);
   }
 
+  @Test
   public void testTryCatch5() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          try {}
                          catch (RuntimeException | IOException e){}
                          catch (<warning descr="Exception 'java.lang.NullPointerException' has already been caught">NullPointerException</warning> e){}
                          """);
   }
 
+  @Test
   public void testTryCatch6() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          try {}
                          catch (NullPointerException | IOException e){}
                          catch (ClassNotFoundException | <warning descr="Exception 'java.lang.NullPointerException' has already been caught">NullPointerException</warning> e){}
                          """);
   }
 
-  public void testTryWithoutCatchFinally() { doTest(); }
+  @Test
+  public void testTryWithoutCatchFinally() { highlighting.get().doTest(); }
 
-  public void testVariableDeclarationTypeParameters() { doTest(); }
+  @Test
+  public void testVariableDeclarationTypeParameters() { highlighting.get().doTest(); }
 
-  public void testAnnotationFieldWithoutType() { doTest(); }
+  @Test
+  public void testAnnotationFieldWithoutType() { highlighting.get().doTest(); }
 
-  public void testVariableDeclarationDuplicateModifiers() { doTest(); }
+  @Test
+  public void testVariableDeclarationDuplicateModifiers() { highlighting.get().doTest(); }
 
+  @Test
   public void testCompileStatic() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("""
                           package groovy.transform;
                           public @interface CompileStatic {
                           }""");
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          class A {
@@ -535,8 +677,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """, true, false, false, GrUnresolvedAccessInspection.class);
   }
 
+  @Test
   public void testUnresolvedVarInStaticMethod() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          static def foo() {
                            print <error descr="Cannot resolve symbol 'abc'">abc</error>
 
@@ -547,8 +690,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """, GrUnresolvedAccessInspection.class);
   }
 
+  @Test
   public void testStaticOkForClassMembersWithThisQualifier() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            def foo(){}
                            static bar() {
@@ -560,9 +704,11 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """, GrUnresolvedAccessInspection.class);
   }
 
+  @Test
   public void testScriptFieldsAreAllowedOnlyInScriptBody() {
-    addGroovyTransformField();
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    LightGroovyFixtures.addGroovyTransformField(myFixture);
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.Field
 
                          @Field
@@ -585,9 +731,11 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testDuplicatedScriptField() {
-    addGroovyTransformField();
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    LightGroovyFixtures.addGroovyTransformField(myFixture);
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.Field
 
                          while(true) {
@@ -606,9 +754,11 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testReturnTypeInStaticallyCompiledMethod() {
-    addCompileStatic();
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    LightGroovyFixtures.addCompileStatic(myFixture);
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
                          @CompileStatic
                          int method(x, y, z) {
@@ -625,8 +775,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testOverrideForVars() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class S {
                            @<error descr="'@Override' annotation not allowed on field">Override</error> def foo;
 
@@ -636,11 +787,13 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testUnusedImportToList() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("""
                          package java.awt;
                          public class Component{}""");
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import java.awt.Component
                          <warning descr="Unused import">import java.util.List</warning>
 
@@ -649,7 +802,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testUsedImportToList() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("""
                          package java.awt;
                          public class Component{}""");
@@ -659,7 +814,7 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.addClass("""
                          package java.util.concurrent;
                          public class ConcurrentHashMap{}""");
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import java.awt.*
                          import java.util.List
                          <warning descr="Unused import">import java.util.concurrent.ConcurrentHashMap</warning>
@@ -669,8 +824,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIncompatibleTypeOfImplicitGetter() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          abstract class Base {
                              abstract String getFoo()
                          }
@@ -680,8 +836,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testIncompatibleTypeOfInheritedMethod() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          abstract class Base {
                            abstract String getFoo()
                          }
@@ -691,8 +848,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testIncompatibleTypeOfInheritedMethod2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          abstract class Base {
                            abstract String getFoo()
                          }
@@ -702,8 +860,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testIncompatibleTypeOfInheritedMethodInAnonymous() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          abstract class Base {
                            abstract String getFoo()
                          }
@@ -713,8 +872,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testAnnotationArgs() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @interface Int {
                            int value()
                            String s() default 'a'
@@ -732,8 +892,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testDefaultAttributeValue() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @interface Int {
                            int value1() default 2
                            String value2() default <error descr="Cannot assign 'Integer' to 'String'">2</error>
@@ -742,8 +903,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAnnotationMethodThrowsList() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @interface A {
                            int aaa() <error descr="'throws' clause is not allowed in @interface members">throws IOException</error>;
                            int aab() throws<error descr="<type> expected, got ';'"> </error>;
@@ -751,8 +913,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAnnotationAttributeTypes() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @interface Int {
                            int a()
                            String b()
@@ -767,8 +930,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testDefaultAnnotationValue() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @interface A {
                            int a() default 2
                            String b() default <error descr="Cannot assign 'List<String>' to 'String'">['a']</error>
@@ -779,8 +943,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAbstractMethodWithBody() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface A {
                            def foo()<error descr="Interface abstract methods must not have body">{}</error>
                          
@@ -801,12 +966,14 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTupleVariableDeclarationWithRecursion() {
-    doTestHighlighting("def (a, b) = [a, a]");
+    highlighting.get().doTestHighlighting("def (a, b) = [a, a]");
   }
 
+  @Test
   public void testSwitchInLoopNoSoe() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def foo(File f) {
                            while (true) {
                              switch (f.name) {
@@ -819,8 +986,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testInstanceMethodUsedInStaticClosure() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                              static staticClosure = {
                                  foo()
@@ -835,8 +1003,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testStaticOk() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            class B {}
                          }
@@ -845,23 +1014,26 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """, GrUnresolvedAccessInspection.class);
   }
 
+  @Test
   public void testDuplicatedVar0() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def a = 5
                          def <error descr="Variable 'a' already defined">a</error> = 7
                          """);
   }
 
+  @Test
   public void testDuplicatedVarInIf() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def a = 5
                          if (cond)
                            def <error descr="Variable 'a' already defined">a</error> = 7
                          """);
   }
 
+  @Test
   public void testDuplicatedVarInAnonymous() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def foo() {
                            def a = 5
 
@@ -874,8 +1046,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testDuplicatedVarInClosure() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def foo() {
                            def a = 5
 
@@ -886,8 +1059,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testDuplicatedVarInClosureParameter() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def foo() {
                            def a = 5
 
@@ -898,8 +1072,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testDuplicatedVarInAnonymousParameter() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def a = -1
 
                          def foo() {
@@ -912,8 +1087,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testNoDuplicateErrors() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            def foo
 
@@ -940,8 +1116,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testPropertySelectionMayBeLValue() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def methodMissing(String methodName, args) {
                              def closure = {
                                  callSomeOtherMethodInstead()
@@ -952,23 +1129,27 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testEnumExtendsList() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          enum Ee <error descr="Enums may not have 'extends' clause">extends Enum</error> {
                          }
                          """);
   }
 
+  @Test
   public void testVarInTupleDuplicate() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def (a, b) = []
                          def (<error descr="Variable 'b' already defined">b</error>, c, <error descr="Variable 'c' already defined">c</error>) = []
                          """);
   }
 
+  @Test
   public void testCreateMethodFromUsageIsAvailableInStaticMethod() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.enableInspections(GrUnresolvedAccessInspection.class);
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            static foo() {
                              <warning descr="Cannot resolve symbol 'abc'">a<caret>bc</warning>()
@@ -976,11 +1157,12 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          }
                          """);
 
-    TestCase.assertNotNull(myFixture.findSingleIntention("Create method 'abc'"));
+    assertNotNull(myFixture.findSingleIntention("Create method 'abc'"));
   }
 
+  @Test
   public void testTypeParameterIsCorrect() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Component{}
 
                          class Window extends Component{
@@ -997,8 +1179,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAnonymousBodyOnNewLineWithinParenthesizedExpression() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            def i
                          }
@@ -1090,8 +1273,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAnonymousBodyOnNewLineWithinArgumentList() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {}
 
                          def foo(param) {}
@@ -1142,9 +1326,11 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testGenerics() {
-    addHashSet();
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    LightGroovyFixtures.addHashSet(myFixture);
+    highlighting.get().doTestHighlighting("""
                          class NodeInfo{}
 
                          interface NodeEvent<T> {}
@@ -1160,16 +1346,18 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTypeInConstructor() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class X {
                            public <error descr="Return type element is not allowed in constructor">void</error> X() {}
                          }
                          """);
   }
 
+  @Test
   public void testFinalMethodOverriding() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                              final void foo() {}
                          }
@@ -1180,8 +1368,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testWeakerMethodAccess0() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                              void foo() {}
                          }
@@ -1192,8 +1381,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testWeakerMethodAccess1() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                              void foo() {}
                          }
@@ -1204,8 +1394,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testWeakerMethodAccess2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                              public void foo() {}
                          }
@@ -1216,8 +1407,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testWeakerMethodAccess3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                              protected void foo() {}
                          }
@@ -1228,8 +1420,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testOverriddenProperty() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                              final foo = 2
                          }
@@ -1240,18 +1433,21 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testUnresolvedQualifierHighlighting() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          <error descr="Cannot resolve symbol 'Abc'">Abc</error>.<error descr="Cannot resolve symbol 'Cde'">Cde</error> abc
                          """);
   }
 
+  @Test
   public void testVarargParameterWithoutTypeElement() {
-    doTestHighlighting("def foo(def <error descr=\"Ellipsis type is not allowed here\">...</error> vararg, def last) {}");
+    highlighting.get().doTestHighlighting("def foo(def <error descr=\"Ellipsis type is not allowed here\">...</error> vararg, def last) {}");
   }
 
+  @Test
   public void testTupleInstanceCreatingInDefaultConstructor() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Book {
                              String title
                              Author author
@@ -1269,8 +1465,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testArrayAccessForMapProperty() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def bar() {
                              return [list:[1, 2, 3]]
                          }
@@ -1281,8 +1478,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """, true, false, true, GrUnresolvedAccessInspection.class, GroovyAssignabilityCheckInspection.class);
   }
 
+  @Test
   public void testGStringInjectionLFs() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          print "${<error descr="GString injection must not contain line feeds">
                          </error>}"
 
@@ -1308,8 +1506,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testListOrMapErrors() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          print([1])
                          print([1:2])
                          print(<error descr="Collection literal contains named and expression arguments at the same time">[1:2, 4]</error>)
@@ -1317,7 +1516,7 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
   }
 
   public void _testDelegatesToApplicability() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def with(@DelegatesTo.Target Object target, @DelegatesTo Closure arg) {
                            arg.delegate = target
                            arg()
@@ -1330,10 +1529,12 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testClosureParameterInferenceDoesNotWorkIfCompileStatic() {
-    addCompileStatic();
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    LightGroovyFixtures.addCompileStatic(myFixture);
     myFixture.enableInspections(GrUnresolvedAccessInspection.class);
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @groovy.transform.CompileStatic
                          def foo() {
                              final collector = [1, 2].find {a ->
@@ -1343,16 +1544,18 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIllegalLiteralName() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def <error descr="Illegal escape character in string literal">'a\\obc'</error>() {
 
                          }
                          """);
   }
 
+  @Test
   public void testExceptionParameterAlreadyDeclared() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          int missing() {
                            InputStream i = null
 
@@ -1366,16 +1569,18 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testInnerAnnotationType() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            @interface <error descr="Annotation type cannot be inner">X</error> {}
                          }
                          """);
   }
 
+  @Test
   public void testDuplicatingAnnotations() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @interface A {
                            String value()
                          }
@@ -1392,8 +1597,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAnnotationAttribute() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @interface A {
                            String value() default 'a'
                            String[] values() default []
@@ -1442,8 +1648,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testDuplicateMethodsWithGenerics() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A<T, E> {
                            <error descr="Method with signature foo(Object) is already defined in the class 'A'">def foo(T t)</error> {}
                            <error descr="Method with signature foo(Object) is already defined in the class 'A'">def foo(E e)</error> {}
@@ -1466,10 +1673,12 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testOverriddenReturnType0() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("class Base{}");
     myFixture.addClass("class Inh extends Base{}");
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            List<Base> foo() {}
                          }
@@ -1480,10 +1689,12 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testOverriddenReturnType1() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("class Base extends SuperBase {}");
     myFixture.addClass("class Inh extends Base{}");
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            List<Base> foo() {}
                          }
@@ -1494,10 +1705,12 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testOverriddenReturnType2() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("class Base extends SuperBase {}");
     myFixture.addClass("class Inh extends Base{}");
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            List<Base> foo() {}
                          }
@@ -1508,10 +1721,12 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testOverriddenReturnType3() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("class Base extends SuperBase {}");
     myFixture.addClass("class Inh extends Base{}");
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            Base[] foo() {}
                          }
@@ -1522,10 +1737,12 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testOverriddenReturnType4() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("class Base extends SuperBase {}");
     myFixture.addClass("class Inh extends Base{}");
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            Base[] foo() {}
                          }
@@ -1536,8 +1753,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testEnumConstantAsAnnotationAttribute() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          enum A {CONST}
 
                          @interface I {
@@ -1549,8 +1767,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testUnassignedFieldAsAnnotationAttribute() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface A {
                            String CONST
                          }
@@ -1564,8 +1783,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testFinalFieldRewrite() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            final foo = 1
 
@@ -1582,8 +1802,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testStaticFinalFieldRewrite() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            static final foo = 1
 
@@ -1608,9 +1829,11 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testSOEIfExtendsItself() {
-    TransformationUtilKt.disableAssertOnRecursion(getTestRootDisposable());
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    TransformationUtilKt.disableAssertOnRecursion(myFixture.getTestRootDisposable());
+    highlighting.get().doTestHighlighting("""
                          <error descr="Cyclic inheritance involving 'A'">class A extends A</error> {
                            def foo
                          }
@@ -1624,8 +1847,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testFinalParameter() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def foo0(final i) {
                            <error descr="Cannot assign a value to final parameter 'i'">i</error> = 5
                            print i
@@ -1647,8 +1871,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testNonStaticInnerClass1() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class MyController {
                               static def list() {
                                   def myInnerClass = new MyCommand.<error descr="Cannot reference non-static symbol 'MyCommand.MyInnerClass' from static context">MyInnerClass</error>()
@@ -1663,8 +1888,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """, GrUnresolvedAccessInspection.class);
   }
 
+  @Test
   public void testNonStaticInnerClass2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class MyController {
                               def list() {
                                   def myInnerClass = new MyCommand.MyInnerClass()
@@ -1679,7 +1905,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """, GrUnresolvedAccessInspection.class);
   }
 
+  @Test
   public void testNonStaticInnerClass3() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("_.groovy", """
       class MyController {
            static def list() {
@@ -1698,7 +1926,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.testHighlighting(true, false, true);
   }
 
+  @Test
   public void testNonStaticInnerClass4() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("_.groovy", """
       class MyController {
            def list() {
@@ -1717,8 +1947,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.testHighlighting(true, false, true);
   }
 
+  @Test
   public void testInnerClassWithStaticMethod() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                              class B {
                                  static foo() {}
@@ -1735,7 +1966,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testUnresolvedPropertyWhenGetPropertyDeclared() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     GrUnresolvedAccessInspection inspection = new GrUnresolvedAccessInspection();
     inspection.myHighlightIfGroovyObjectOverridden = false;
     myFixture.enableInspections(inspection);
@@ -1769,7 +2002,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.testHighlighting(true, false, true);
   }
 
+  @Test
   public void testImplementInaccessibleAbstractMethod() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("""
                           package p;
 
@@ -1777,14 +2012,15 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                             abstract void foo();
                           }
                           """);
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          <error>class Foo extends p.Base</error> {
                          }
                          """);
   }
 
+  @Test
   public void testInjectedLiterals() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          //language=Groovy
                          def groovy1 = '''print 'abc\\' '''
 
@@ -1794,8 +2030,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAnnotationAsAnnotationValue() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @interface A {}
                          @interface B {
                            A[] foo()
@@ -1812,8 +2049,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testSameNameMethodWithDifferentAccessModifiers() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            def foo(){}
                            def foo(int x) {}
@@ -1846,8 +2084,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testImmutable() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.Immutable
 
                          @Immutable
@@ -1864,8 +2103,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testConstructorInImmutable() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.Immutable
 
                          @Immutable
@@ -1878,8 +2118,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testGetterInImmutable() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.Immutable
 
                          @Immutable
@@ -1893,8 +2134,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testGetterInImmutable2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.Immutable
 
                          @Immutable
@@ -1906,8 +2148,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testMinusInAnnotationArg() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @interface Xx {
                              int value()
                          }
@@ -1923,7 +2166,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testImportStaticFix() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("a.groovy", """
       class A {
         static void foo(String s){}
@@ -1935,21 +2180,26 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
     myFixture.getAvailableIntention("Static import method 'A.foo'");
   }
 
+  @Test
   public void testStaticImportFixFamilyNameAfterCallDeletion() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     var file = myFixture.configureByText("a.groovy", "foo()");
-    var call = PsiTreeUtil.findChildOfType(file, GrMethodCall.class);
-    assertNotNull(call);
-    var fix = new GroovyStaticImportMethodFix(call);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      var call = PsiTreeUtil.findChildOfType(file, GrMethodCall.class);
+      assertNotNull(call);
+      var fix = new GroovyStaticImportMethodFix(call);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), call::delete);
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), call::delete);
 
-    assertFalse(call.isValid());
-    assertEquals(GroovyBundle.message("static.import.method.fix"), fix.getFamilyName());
-    assertFalse(fix.isAvailable(getProject(), myFixture.getEditor(), file));
+      assertFalse(call.isValid());
+      assertEquals(GroovyBundle.message("static.import.method.fix"), fix.getFamilyName());
+      assertFalse(fix.isAvailable(myFixture.getProject(), myFixture.getEditor(), file));
+    });
   }
 
+  @Test
   public void testNoSOEInIndexPropertyAssignmentWithGenericFunction() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Main {
 
                              static <T> T foo() {}
@@ -1964,7 +2214,7 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                              }
                          }
                          """);
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Main {
 
                              static <T> T foo() {}
@@ -1981,34 +2231,42 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testStaticGDKMethodApplicable() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def doParse() {
                            Date.parse('dd.MM.yyyy', '01.12.2016')
                          }
                          """, GroovyAssignabilityCheckInspection.class);
   }
 
+  @Test
   public void testUnresolvedAnonymousBaseClass() {
-    doTestHighlighting("def foo = new <error descr=\"Cannot resolve symbol 'Rrrrrrrr'\">Rrrrrrrr</error>() {}");
+    highlighting.get().doTestHighlighting("def foo = new <error descr=\"Cannot resolve symbol 'Rrrrrrrr'\">Rrrrrrrr</error>() {}");
   }
 
-  public void testLocalVariableModifiers() { doTest(); }
+  @Test
+  public void testLocalVariableModifiers() { highlighting.get().doTest(); }
 
-  public void testFieldModifiers() { doTest(); }
+  @Test
+  public void testFieldModifiers() { highlighting.get().doTest(); }
 
-  public void testScriptFieldModifiers() { doTest(); }
+  @Test
+  public void testScriptFieldModifiers() { highlighting.get().doTest(); }
 
+  @Test
   public void testAllowAndDoNotHighlightWithinPackage() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("""
                           package a.b.c.trait.d.as.e.def.f.in.g;
                           public class Foo {}\s
                           """);
-    doTestHighlighting("import a.b.c.<info>trait</info>.d.<info>as</info>.e.<info>def</info>.f.<info>in</info>.g.*", false, true);
+    highlighting.get().doTestHighlighting("import a.b.c.<info>trait</info>.d.<info>as</info>.e.<info>def</info>.f.<info>in</info>.g.*", false, true);
   }
 
+  @Test
   public void testResolveMethodsOfBoxedTypesOnPrimitiveQualifiers() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Widget {
                              float width = 1.1f
                          }
@@ -2020,12 +2278,14 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """, GrUnresolvedAccessInspection.class);
   }
 
+  @Test
   public void testNoWarningOnExtensionMethodWithSpreadOperator() {
-    doTestHighlighting("[1, 2, 3]*.multiply(4)", GrUnresolvedAccessInspection.class, GroovyAssignabilityCheckInspection.class);
+    highlighting.get().doTestHighlighting("[1, 2, 3]*.multiply(4)", GrUnresolvedAccessInspection.class, GroovyAssignabilityCheckInspection.class);
   }
 
+  @Test
   public void testTypeArgumentsInImportReferences() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import java.util.List<error descr="Newline, '.' or ';' expected"><</error>String>
                          import java.util.Map<error descr="Newline, '.' or ';' expected"><</error>Integer, String>.Entry
                          import static java.util.Map<error descr="Newline, '.' or ';' expected"><</error>Integer, String>.*
@@ -2033,8 +2293,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """, false);
   }
 
+  @Test
   public void testAssignCollectionToAnArrayInCS() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          Collection<? extends Runnable> foo() {}
 
                          @groovy.transform.CompileStatic
@@ -2049,8 +2310,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testMapConstructorWithMapLiteral() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            String s
                          }
@@ -2059,8 +2321,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """, GroovyConstructorNamedArgumentsInspection.class);
   }
 
+  @Test
   public void testMapConstructorWithFinalField() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            final String s
                          }
@@ -2069,8 +2332,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """, GroovyConstructorNamedArgumentsInspection.class);
   }
 
+  @Test
   public void testMapConstructorWithRawMapAssignment() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            final String s
                          }
@@ -2079,10 +2343,12 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """, GroovyConstructorNamedArgumentsInspection.class);
   }
 
-  public void testIllegalMethodName() { doTest(); }
+  @Test
+  public void testIllegalMethodName() { highlighting.get().doTest(); }
 
+  @Test
   public void testMethodReferenceWithJustTypeArgument() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @groovy.transform.CompileStatic
                          class A {
                            String key = ""
@@ -2097,8 +2363,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testVariableInAnonymousClassConstructor() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                              int y;
 
@@ -2113,8 +2380,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """, UnusedDefInspection.class);
   }
 
+  @Test
   public void testClosureWithNullMapping() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                              static def cl = {}
                          }
@@ -2122,8 +2390,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          A.cl()""", GroovyAssignabilityCheckInspection.class);
   }
 
+  @Test
   public void testFieldClosure() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            Closure<?> f
                           \s
@@ -2133,8 +2402,9 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testIDEA_280481() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def output = ''
                          for (something5 in something4) {
                            [].eachLine { line ->
@@ -2151,11 +2421,13 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIDEA_291580() {
-    doTestHighlighting("<error>class Foo extends Foo</error> {}");
+    highlighting.get().doTestHighlighting("<error>class Foo extends Foo</error> {}");
   }
 
+  @Test
   public void testLegalColonInName() {
-    doTestHighlighting("def \"foo:bar\"() {}");
+    highlighting.get().doTestHighlighting("def \"foo:bar\"() {}");
   }
 }

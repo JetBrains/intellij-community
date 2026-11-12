@@ -1,23 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingTraitMethodsInspection;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
 
 /**
  * Created by Max Medvedev on 09/06/14
  */
-public class ClashingTraitMethodsTest extends GrHighlightingTestBase {
-  @Override
-  public InspectionProfileEntry[] getCustomInspections() {
-    return new ClashingTraitMethodsInspection[]{new ClashingTraitMethodsInspection()};
-  }
+@TestApplication
+public class ClashingTraitMethodsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_3_0);
+  private final TestFixture<GrHighlightingFixture> highlighting =
+    grHighlightingFixture(projectFixture, GrHighlightingFixture.getHighlightingTestDataPath(), () -> new ClashingTraitMethodsInspection[]{new ClashingTraitMethodsInspection()});
 
+  @Test
   public void testClash() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait T1 {
                            def foo(){}
                          }
@@ -32,8 +37,9 @@ public class ClashingTraitMethodsTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testCustomImplementationNoClash() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait T1 {
                            def foo(){}
                          }
@@ -48,8 +54,9 @@ public class ClashingTraitMethodsTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testNoClash() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait T1 {
                            def foo(){}
                          }
@@ -63,8 +70,9 @@ public class ClashingTraitMethodsTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testNoClashWithInterface() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait T1 {
                            def foo(){}
                          }
@@ -78,8 +86,9 @@ public class ClashingTraitMethodsTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testClashWithDefaultMethodInterfaces() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface T1 {
                            default foo(){}
                          }
@@ -93,8 +102,9 @@ public class ClashingTraitMethodsTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testClashTraitWithDefaultMethodInterface() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait T1 {
                            def foo(){}
                          }
@@ -108,8 +118,9 @@ public class ClashingTraitMethodsTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testNoClashInInheritor() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait T1 {
                            def foo(){}
                          }
@@ -123,10 +134,5 @@ public class ClashingTraitMethodsTest extends GrHighlightingTestBase {
 
                          class B extends A{}
                          """);
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_3_0;
   }
 }

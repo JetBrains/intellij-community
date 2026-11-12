@@ -2,15 +2,39 @@
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
-public class GroovyLambdaHighlightingTest extends GrHighlightingTestBase implements HighlightingTest {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
+
+@TestApplication
+public class GroovyLambdaHighlightingTest implements HighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_3_0);
+  private final TestFixture<GrHighlightingFixture> highlighting =
+    grHighlightingFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "highlighting/lambda/", () -> new InspectionProfileEntry[]{new GrUnresolvedAccessInspection(), new GroovyAssignabilityCheckInspection()});
+
+  @Override
+  public @NotNull LightJavaCodeInsightTestFixture getFixture() {
+    return highlighting.get().getFixture();
+  }
+
+  @Override
+  public String getTestName() {
+    return LightGroovyFixtures.groovyTestName(highlighting.get().getFixture());
+  }
+
+  @Test
   public void testLambdaAssignment() {
     highlightingTest("""
                        import groovy.transform.CompileStatic
@@ -22,6 +46,7 @@ public class GroovyLambdaHighlightingTest extends GrHighlightingTestBase impleme
                        """);
   }
 
+  @Test
   public void testLambdaArgument() {
     highlightingTest("""
                        import groovy.transform.CompileStatic
@@ -34,6 +59,7 @@ public class GroovyLambdaHighlightingTest extends GrHighlightingTestBase impleme
                        """);
   }
 
+  @Test
   public void testIncorrectSingleArgument() {
     highlightingTest("""
                        interface Consumer<T> {
@@ -43,64 +69,92 @@ public class GroovyLambdaHighlightingTest extends GrHighlightingTestBase impleme
                        """);
   }
 
-  public void testLambdaApplicability() { doTest(); }
+  @Test
+  public void testLambdaApplicability() { highlighting.get().doTest(); }
 
-  public void testCastLambdaToInterface() { doTest(); }
+  @Test
+  public void testCastLambdaToInterface() { highlighting.get().doTest(); }
 
-  public void _testCastInsideLambda() { doTest(); }
+  public void _testCastInsideLambda() { highlighting.get().doTest(); }
 
-  public void testAssignabilityOfCategoryMethod() { doTest(); }
+  @Test
+  public void testAssignabilityOfCategoryMethod() { highlighting.get().doTest(); }
 
-  public void testPathCallIsNotApplicable() { doTest(); }
+  @Test
+  public void testPathCallIsNotApplicable() { highlighting.get().doTest(); }
 
-  public void testCallIsNotApplicable() { doTest(); }
+  @Test
+  public void testCallIsNotApplicable() { highlighting.get().doTest(); }
 
-  public void testCategoryWithPrimitiveType() { doTest(); }
+  @Test
+  public void testCategoryWithPrimitiveType() { highlighting.get().doTest(); }
 
-  public void testCollectionAssignments() { doTest(); }
+  @Test
+  public void testCollectionAssignments() { highlighting.get().doTest(); }
 
-  public void testCurrying() { doTest(); }
+  @Test
+  public void testCurrying() { highlighting.get().doTest(); }
 
-  public void testAnotherCurrying() { doTest(); }
+  @Test
+  public void testAnotherCurrying() { highlighting.get().doTest(); }
 
-  public void testLambdaWithDefaultParameters() { doTest(); }
+  @Test
+  public void testLambdaWithDefaultParameters() { highlighting.get().doTest(); }
 
-  public void testFromStringWithGenericPlaceholderFromClass() { doTest(); }
+  @Test
+  public void testFromStringWithGenericPlaceholderFromClass() { highlighting.get().doTest(); }
 
-  public void testFromStringWithSimpleType() { doTest(); }
+  @Test
+  public void testFromStringWithSimpleType() { highlighting.get().doTest(); }
 
-  public void testFromStringWithGeneric() { doTest(); }
+  @Test
+  public void testFromStringWithGeneric() { highlighting.get().doTest(); }
 
-  public void testFromStringWithGenericPlaceholderFromClassWithTwoGenericsAndPolymorphicSignature() { doTest(); }
+  @Test
+  public void testFromStringWithGenericPlaceholderFromClassWithTwoGenericsAndPolymorphicSignature() { highlighting.get().doTest(); }
 
-  public void testFromStringWithDirectGenericPlaceholder() { doTest(); }
+  @Test
+  public void testFromStringWithDirectGenericPlaceholder() { highlighting.get().doTest(); }
 
-  public void testInferenceOnNonExtensionMethod() { doTest(); }
+  @Test
+  public void testInferenceOnNonExtensionMethod() { highlighting.get().doTest(); }
 
-  public void testFromStringWithGenericPlaceholderFromClassWithTwoGenericsAndNoExplicitSignature() { doTest(); }
+  @Test
+  public void testFromStringWithGenericPlaceholderFromClassWithTwoGenericsAndNoExplicitSignature() { highlighting.get().doTest(); }
 
-  public void testFromStringWithGenericPlaceholderFromClassWithTwoGenerics() { doTest(); }
+  @Test
+  public void testFromStringWithGenericPlaceholderFromClassWithTwoGenerics() { highlighting.get().doTest(); }
 
-  public void testFromStringWithGenericPlaceholderFromClassWithTwoGenericsAndNoExplicitSignatureAndNoFQN() { doTest(); }
+  @Test
+  public void testFromStringWithGenericPlaceholderFromClassWithTwoGenericsAndNoExplicitSignatureAndNoFQN() { highlighting.get().doTest(); }
 
-  public void testFromStringWithGenericPlaceholder() { doTest(); }
+  @Test
+  public void testFromStringWithGenericPlaceholder() { highlighting.get().doTest(); }
 
-  public void testFromStringWithGenericPlaceholderFromClassWithTwoGenericsAndNoExplicitSignatureAndNoFQNAndReferenceToSameUnitClass() { doTest(); }
+  @Test
+  public void testFromStringWithGenericPlaceholderFromClassWithTwoGenericsAndNoExplicitSignatureAndNoFQNAndReferenceToSameUnitClass() { highlighting.get().doTest(); }
 
+  @Test
   public void testFromStringWithGenericPlaceholderFromClassWithTwoGenericsAndNoExplicitSignatureAndNoFQNAndReferenceToSameUnitClassAndTwoArgs() {
-    doTest();
+    highlighting.get().doTest();
   }
 
-  public void testCastArgumentError() { doTest(); }
+  @Test
+  public void testCastArgumentError() { highlighting.get().doTest(); }
 
-  public void testCastArgument() { doTest(); }
+  @Test
+  public void testCastArgument() { highlighting.get().doTest(); }
 
-  public void testCastSeveralArgumentError() { doTest(); }
+  @Test
+  public void testCastSeveralArgumentError() { highlighting.get().doTest(); }
 
-  public void testSeveralSignatures() { doTest(); }
+  @Test
+  public void testSeveralSignatures() { highlighting.get().doTest(); }
 
+  @Test
   public void testFromStringWithNonFqnOptionsNoError() {
-    addBigInteger();
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    LightGroovyFixtures.addBigInteger(myFixture);
     myFixture.addClass("""
                          import groovy.lang.Closure;
                          import groovy.transform.stc.ClosureParams;
@@ -110,10 +164,12 @@ public class GroovyLambdaHighlightingTest extends GrHighlightingTestBase impleme
                            public static void foo(@ClosureParams(value = FromString.class, options = "BigInteger") Closure c) {}
                          }
                          """);
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testFromStringResolveDefaultPackageGeneric() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("""
                          package com.foo.baz;
 
@@ -128,21 +184,6 @@ public class GroovyLambdaHighlightingTest extends GrHighlightingTestBase impleme
     myFixture.addClass("""
                          public class MyClass<U> {}
                          """);
-    doTest();
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_3_0;
-  }
-
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "highlighting/lambda/";
-  }
-
-  @Override
-  public InspectionProfileEntry[] getCustomInspections() {
-    return new InspectionProfileEntry[]{new GrUnresolvedAccessInspection(), new GroovyAssignabilityCheckInspection()};
+    highlighting.get().doTest();
   }
 }

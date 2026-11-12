@@ -1,42 +1,58 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.control
 
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
+import org.jetbrains.plugins.groovy.lang.highlighting.grHighlightingFixture
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class GroovyMultipleMainMethodsInspectionTest : GrHighlightingTestBase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return GroovyProjectDescriptors.GROOVY_5_0
+@TestApplication
+class GroovyMultipleMainMethodsInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_5_0)
   }
 
-  override fun getTestDataPath(): String = TestUtils.getAbsoluteTestDataPath() + "inspections/multipleMainMethods/"
+  private val highlighting by grHighlightingFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "inspections/multipleMainMethods/")
+  private val myFixture get() = highlighting.fixture
 
-  override fun setUp() {
-    super.setUp()
-    fixture.enableInspections(GroovyMultipleMainMethodsInspection::class.java)
+  @BeforeEach
+  fun setUp() {
+    myFixture.enableInspections(GroovyMultipleMainMethodsInspection::class.java)
   }
 
-  fun testNoMethodInClass() = doTest()
+  @Test
+  fun testNoMethodInClass(): Unit = highlighting.doTest()
 
-  fun testSingleMethodInClass() = doTest()
+  @Test
+  fun testSingleMethodInClass(): Unit = highlighting.doTest()
 
-  fun testMultipleMethodsInClass() = doTest()
+  @Test
+  fun testMultipleMethodsInClass(): Unit = highlighting.doTest()
 
-  fun testNoMethodInScript() = doTest()
+  @Test
+  fun testNoMethodInScript(): Unit = highlighting.doTest()
 
-  fun testSingleMethodInScript() = doTest()
+  @Test
+  fun testSingleMethodInScript(): Unit = highlighting.doTest()
 
-  fun testMultipleMethodsInScript() = doTest()
+  @Test
+  fun testMultipleMethodsInScript(): Unit = highlighting.doTest()
 
-  fun testNoMethodInNestedClass() = doTest()
+  @Test
+  fun testNoMethodInNestedClass(): Unit = highlighting.doTest()
 
-  fun testSingleMethodInNestedClass() = doTest()
+  @Test
+  fun testSingleMethodInNestedClass(): Unit = highlighting.doTest()
 
-  fun testMultipleMethodsInNestedClass() = doTest()
+  @Test
+  fun testMultipleMethodsInNestedClass(): Unit = highlighting.doTest()
 
-  fun testMethodInNestedAndOuterClass() = doTest()
+  @Test
+  fun testMethodInNestedAndOuterClass(): Unit = highlighting.doTest()
 
-  fun testMethodInNestedAndScriptClass() = doTest()
+  @Test
+  fun testMethodInNestedAndScriptClass(): Unit = highlighting.doTest()
 }

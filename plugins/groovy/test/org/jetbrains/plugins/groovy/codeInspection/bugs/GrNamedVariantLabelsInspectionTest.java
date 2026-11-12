@@ -1,18 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.junit.jupiter.api.Test;
 
-public class GrNamedVariantLabelsInspectionTest extends LightGroovyTestCase {
-  @Override
-  @NotNull
-  public final LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_2_5;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
 
+@TestApplication
+public class GrNamedVariantLabelsInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_5);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @Test
   public void testBasic() {
     doTest("""
              
@@ -23,6 +27,7 @@ public class GrNamedVariantLabelsInspectionTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testConstructor() {
     doTest("""
              
@@ -35,6 +40,7 @@ public class GrNamedVariantLabelsInspectionTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testNoinspection() {
     doTest("""
              
@@ -47,6 +53,7 @@ public class GrNamedVariantLabelsInspectionTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testNoinspection2() {
     doTest("""
              
@@ -58,6 +65,7 @@ public class GrNamedVariantLabelsInspectionTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testRawNamedParam() {
     doTest("""
              
@@ -69,6 +77,7 @@ public class GrNamedVariantLabelsInspectionTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testNamedDelegateInStaticMethod() {
     doTest("""
              
@@ -88,6 +97,7 @@ public class GrNamedVariantLabelsInspectionTest extends LightGroovyTestCase {
   }
 
   private void doTest(String before) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new GrNamedVariantLabelsInspection());
     if (before.contains("NamedVariant")) before = "import groovy.transform.NamedVariant\n" + before;
     if (before.contains("NamedParam")) before = "import groovy.transform.NamedParam\n" + before;

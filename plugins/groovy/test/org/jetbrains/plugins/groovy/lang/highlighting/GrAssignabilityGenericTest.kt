@@ -1,25 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
-import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LibraryLightProjectDescriptor
 import org.jetbrains.plugins.groovy.RepositoryTestLibrary
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
+@TestApplication
+class GrAssignabilityGenericTest {
+  private val highlighting by grHighlightingFixture(projectFixture, "${TestUtils.getAbsoluteTestDataPath()}/highlighting/assignabilityGeneric", customInspections = { arrayOf(GroovyAssignabilityCheckInspection()) })
+  private val myFixture get() = highlighting.fixture
 
-class GrAssignabilityGenericTest : GrHighlightingTestBase() {
-  override fun getTestDataPath(): String = "${TestUtils.getAbsoluteTestDataPath()}/highlighting/assignabilityGeneric";
-
-  override fun getCustomInspections(): Array<InspectionProfileEntry> = arrayOf(GroovyAssignabilityCheckInspection())
-
-  override fun getProjectDescriptor(): LightProjectDescriptor = PROJECT_DESCRIPTOR
-
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
 
     myFixture.addClass("""
       package org.example;
@@ -40,8 +39,10 @@ class GrAssignabilityGenericTest : GrHighlightingTestBase() {
     """.trimIndent())
   }
 
-  fun testGroovyNamedParamsInSource() = doTest()
+  @Test
+  fun testGroovyNamedParamsInSource(): Unit = highlighting.doTest()
 
+  @Test
   fun testJavaNamedParamsInSource() {
     @Language("JAVA") val classText = """
       package org.example;    
@@ -67,14 +68,16 @@ class GrAssignabilityGenericTest : GrHighlightingTestBase() {
 
     myFixture.addClass(classText)
 
-    doTest()
+    highlighting.doTest()
   }
 
-  fun testSpockMethods() = doTest()
+  @Test
+  fun testSpockMethods(): Unit = highlighting.doTest()
 
   companion object {
     private val PROJECT_DESCRIPTOR = LibraryLightProjectDescriptor(
       GroovyProjectDescriptors.LIB_GROOVY_2_5 + RepositoryTestLibrary("org.spockframework:spock-core:2.0-groovy-2.5")
     )
+    private val projectFixture = lightJavaProjectFixture(PROJECT_DESCRIPTOR)
   }
 }

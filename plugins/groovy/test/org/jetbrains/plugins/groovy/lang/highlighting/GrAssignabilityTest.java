@@ -2,173 +2,228 @@
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyResultOfIncrementOrDecrementUsedInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
 
 /**
  * @author Max Medvedev
  */
-public class GrAssignabilityTest extends GrHighlightingTestBase {
-  @Override
-  public InspectionProfileEntry[] getCustomInspections() {
-    return new GroovyAssignabilityCheckInspection[]{new GroovyAssignabilityCheckInspection()};
-  }
+@TestApplication
+public class GrAssignabilityTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<GrHighlightingFixture> highlighting =
+    grHighlightingFixture(projectFixture, GrHighlightingFixture.getHighlightingTestDataPath(), () -> new GroovyAssignabilityCheckInspection[]{new GroovyAssignabilityCheckInspection()});
 
-  public void testIncompatibleTypesAssignments() { doTest(); }
+  @Test
+  public void testIncompatibleTypesAssignments() { highlighting.get().doTest(); }
 
+  @Test
   public void testDefaultMapConstructorNamedArgs() {
-    addBigDecimal();
-    doTest(new GroovyConstructorNamedArgumentsInspection());
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    LightGroovyFixtures.addBigDecimal(myFixture);
+    highlighting.get().doTest(new GroovyConstructorNamedArgumentsInspection());
   }
 
+  @Test
   public void testDefaultMapConstructorNamedArgsError() {
-    addBigDecimal();
-    doTest(new GroovyConstructorNamedArgumentsInspection());
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    LightGroovyFixtures.addBigDecimal(myFixture);
+    highlighting.get().doTest(new GroovyConstructorNamedArgumentsInspection());
   }
 
+  @Test
   public void testDefaultMapConstructorWhenDefConstructorExists() {
-    doTest(new GroovyConstructorNamedArgumentsInspection());
+    highlighting.get().doTest(new GroovyConstructorNamedArgumentsInspection());
   }
 
+  @Test
   public void testUnresolvedMethodCallWithTwoDeclarations() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testConstructor() {
-    doTest(new GroovyConstructorNamedArgumentsInspection());
+    highlighting.get().doTest(new GroovyConstructorNamedArgumentsInspection());
   }
 
-  public void testEverythingAssignableToString() { doTest(); }
+  @Test
+  public void testEverythingAssignableToString() { highlighting.get().doTest(); }
 
-  public void testMethodCallWithDefaultParameters() { doTest(); }
+  @Test
+  public void testMethodCallWithDefaultParameters() { highlighting.get().doTest(); }
 
-  public void testClosureWithDefaultParameters() { doTest(); }
+  @Test
+  public void testClosureWithDefaultParameters() { highlighting.get().doTest(); }
 
+  @Test
   public void testMethodWithDefaultParametersAndVarargs() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def go(String a, String b = 'b', String c, int ... i) {}
                          go('a', 'c', 1, 2, 3)
                          """);
   }
 
-  public void testClosureApplicability() { doTest(); }
+  @Test
+  public void testClosureApplicability() { highlighting.get().doTest(); }
 
-  public void testSingleParameterMethodApplicability() { doTest(); }
+  @Test
+  public void testSingleParameterMethodApplicability() { highlighting.get().doTest(); }
 
-  public void testCallIsNotApplicable() { doTest(); }
+  @Test
+  public void testCallIsNotApplicable() { highlighting.get().doTest(); }
 
-  public void testPathCallIsNotApplicable() { doTest(); }
+  @Test
+  public void testPathCallIsNotApplicable() { highlighting.get().doTest(); }
 
-  public void testByteArrayArgument() { doTest(); }
+  @Test
+  public void testByteArrayArgument() { highlighting.get().doTest(); }
 
-  public void testPutValueToEmptyMap() { doTest(); }
+  @Test
+  public void testPutValueToEmptyMap() { highlighting.get().doTest(); }
 
-  public void _testPutIncorrectValueToMap() { doTest(); }
+  public void _testPutIncorrectValueToMap() { highlighting.get().doTest(); }
 
+  @Test
   public void testTupleTypeAssignments() {
-    addBigDecimal();
-    doTest();
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    LightGroovyFixtures.addBigDecimal(myFixture);
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testSignatureIsNotApplicableToList() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testInheritConstructorsAnnotation() {
-    doTest();
+    highlighting.get().doTest();
   }
 
-  public void testCollectionAssignments() { doTest(); }
+  @Test
+  public void testCollectionAssignments() { highlighting.get().doTest(); }
 
-  public void testReturnAssignability() { doTest(); }
+  @Test
+  public void testReturnAssignability() { highlighting.get().doTest(); }
 
-  public void testMapNotAcceptedAsStringParameter() { doTest(); }
+  @Test
+  public void testMapNotAcceptedAsStringParameter() { highlighting.get().doTest(); }
 
-  public void testRawTypeInAssignment() { doTest(); }
+  @Test
+  public void testRawTypeInAssignment() { highlighting.get().doTest(); }
 
-  public void testMapParamWithNoArgs() { doTest(); }
+  @Test
+  public void testMapParamWithNoArgs() { highlighting.get().doTest(); }
 
+  @Test
   public void testInheritInterfaceInDelegate() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testThisTypeInStaticContext() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testAnonymousClassArgList() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testTupleConstructorAttributes() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testCanonicalConstructorApplicability() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("package groovy.transform; public @interface Canonical {}");
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testStringAssignableToChar() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testCurrying() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testAnotherCurrying() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testResultOfIncUsed() {
-    doTest(new GroovyResultOfIncrementOrDecrementUsedInspection());
+    highlighting.get().doTest(new GroovyResultOfIncrementOrDecrementUsedInspection());
   }
 
+  @Test
   public void testNativeMapAssignability() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testTwoLevelGrMap() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testPassingCollectionSubtractionIntoGenericMethod() {
-    doTest(new GrUnresolvedAccessInspection());
+    highlighting.get().doTest(new GrUnresolvedAccessInspection());
   }
 
+  @Test
   public void testImplicitEnumCoercion() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testUnknownVarInArgList() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testCallableProperty() {
-    doTest(new GrUnresolvedAccessInspection());
+    highlighting.get().doTest(new GrUnresolvedAccessInspection());
   }
 
+  @Test
   public void testEnumConstantConstructors21() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testSpreadArguments() {
-    doTest();
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testDiamondTypeInferenceSOE() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          Map<Integer, String> a; a[2] = [:]""", false, false, false);
   }
 
   public void _testThisInStaticMethodOfAnonymousClass() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                              static abc
                              def foo() {
@@ -181,11 +236,12 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          }""", true, false, false);
   }
 
+  @Test
   public void testNonInferrableArgsOfDefParams() {
     boolean registryValue = Registry.is(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE);
     Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(true);
     try {
-      doTestHighlighting("""
+      highlighting.get().doTestHighlighting("""
                            def foo0(def a) { }
                            def bar0(def b) { foo0(b) }
 
@@ -201,21 +257,24 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
     }
   }
 
+  @Test
   public void testPutAtApplicability() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("""
                           package java.util;
                           public class LinkedHashMap<K,V> extends HashMap<K,V> implements Map<K,V> {}
                           """);
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          LinkedHashMap<File, List<File>> files = [:]
                          files[new File('a')] = [new File('b')]
                          files<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.io.File, java.io.File)'">[new File('a')]</warning> = new File('b')
                          """);
   }
 
+  @Test
   public void testStringToCharAssignability() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def foo(char c){}
 
                          foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.String)'">('a')</warning>
@@ -226,8 +285,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testMethodRefs1() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            int foo(){2}
 
@@ -243,8 +303,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testMethodRefs2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Bar {
                            def foo(int i, String s2) {s2}
                            def foo(int i, int i2) {i2}
@@ -259,8 +320,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testThrowObject() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def foo() {
                            throw new RuntimeException()
                          }
@@ -274,8 +336,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testCategoryWithPrimitiveType() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Cat {
                            static foo(Integer x) {}
                          }
@@ -299,13 +362,15 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """, GrUnresolvedAccessInspection.class);
   }
 
+  @Test
   public void testCompileStaticWithAssignabilityCheck() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("""
                           package groovy.transform;
                           public @interface CompileStatic {
                           }""");
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          class A {
@@ -322,8 +387,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testClosuresInAnnotations() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @interface Test {
                            Class value()
                          }
@@ -340,8 +406,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTupleAssignment() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          String x
                          int y
                          (x, <warning descr="Cannot assign 'String' to 'int'">y</warning>) = foo()
@@ -352,16 +419,18 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTupleDeclaration() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def (int <warning descr="Cannot assign 'String' to 'int'">x</warning>, String y) = foo()
 
                          List<String> foo() {[]}
                          """);
   }
 
+  @Test
   public void testCastClosureToInterface() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface Function<D, F> {
                              F fun(D d)
                          }
@@ -379,8 +448,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testVarargsWithoutTypeName() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def foo(String key, ... params) {
 
                          }
@@ -391,8 +461,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIncorrectReturnValue() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          private int getObjects() {
                              try {
                                  def t = "test";
@@ -407,14 +478,16 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testForInAssignability() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          for (<warning descr="Cannot assign 'String' to 'int'">int x</warning> in ['a']){}
                          """);
   }
 
+  @Test
   public void testAssignabilityOfMethodProvidedByCategoryAnnotation() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @Category(List)
                          class EvenSieve {
                              def getNo2() {
@@ -425,8 +498,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAssignabilityOfCategoryMethod() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
 
                          class Cat {
                            static foo(Class c, int x) {}
@@ -441,8 +515,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testImplicitConversionToArray() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          String[] foo() {
                              return 'ab'
                          }
@@ -457,8 +532,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAssignNullToPrimitiveTypesAndWrappers() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          int <warning descr="Cannot assign 'null' to 'int'">x</warning> = null
                          double <warning descr="Cannot assign 'null' to 'double'">y</warning> = null
                          boolean a = null
@@ -468,8 +544,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAssignNullToPrimitiveParameters() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def _int(int x) {}
                          def _boolean(boolean x) {}
                          def _Boolean(Boolean x) {}
@@ -480,8 +557,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testInnerWarning() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          public static void main(String[] args) {
                              bar <warning descr="'bar' in '_' cannot be applied to '(T)'">(foo(foo(foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.String)'">('2')</warning>)))</warning>
                          }
@@ -496,8 +574,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testLiteralConstructorWithNamedArgs() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.Immutable
 
                          @Immutable class Money {
@@ -510,8 +589,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testBooleanIsAssignableToAny() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                                boolean b1 = new Object()
                                boolean b2 = null
                                Boolean b3 = new Object()
@@ -519,8 +599,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testArrayAccess() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          int [] i = [1, 2]
 
                          print i[1]
@@ -531,8 +612,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testArrayAccess2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          int[] i() { [1, 2] }
 
                          print i()[1]
@@ -543,8 +625,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testArrayAccess3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class X {
                            def getAt(int x) {''}
                          }
@@ -559,8 +642,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testArrayAccess4() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class X {
                            def getAt(int x) {''}
                          }
@@ -575,14 +659,16 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testArrayAccess5() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          print a<warning descr="'getAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '([java.lang.Integer, java.lang.Integer])'">[1, 2]</warning>
                          """);
   }
 
+  @Test
   public void testArrayAccess6() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          int[] i = [1, 2]
 
                          i[1] = 2
@@ -593,8 +679,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testArrayAccess7() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          int[] i() { [1, 2] }
 
                          i()[1] = 2
@@ -605,8 +692,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testArrayAccess8() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class X {
                            def putAt(int x, int y) {''}
                          }
@@ -621,8 +709,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testArrayAccess9() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class X {
                            def putAt(int x, int y) {''}
                          }
@@ -637,14 +726,16 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testArrayAccess10() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          a<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '([java.lang.Integer, java.lang.Integer], java.lang.Integer)'">[1, 3]</warning> = 2
                          """);
   }
 
+  @Test
   public void testVarWithInitializer() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          Object o = new Date()
                          foo(o)
                          bar<warning descr="'bar' in '_' cannot be applied to '(java.util.Date)'">(o)</warning>
@@ -654,8 +745,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testClassTypesWithMadGenerics() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          //no warnings are expected!
 
                          class CollectionTypeTest {
@@ -686,8 +778,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testParameterInitializerWithGenericType() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class PsiElement {}
                          class Foo extends PsiElement implements I {}
 
@@ -701,11 +794,12 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testFixVariableType() {
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    highlighting.get().doTestHighlighting("""
                          int <warning>x<caret>x</warning> = 'abc'
                          """);
-
 
     final IntentionAction intention = myFixture.findSingleIntention("Change variable");
     myFixture.launchAction(intention);
@@ -714,8 +808,10 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                             """);
   }
 
+  @Test
   public void testFixVariableType2() {
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    highlighting.get().doTestHighlighting("""
                          int xx = 5
 
                          <warning>x<caret>x</warning> = 'abc'
@@ -730,16 +826,21 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                             """);
   }
 
-  public void testInnerClassConstructorDefault() { doTest(); }
+  @Test
+  public void testInnerClassConstructorDefault() { highlighting.get().doTest(); }
 
-  public void testInnerClassConstructorNoArg() { doTest(); }
+  @Test
+  public void testInnerClassConstructorNoArg() { highlighting.get().doTest(); }
 
-  public void testInnerClassConstructorWithArg() { doTest(); }
+  @Test
+  public void testInnerClassConstructorWithArg() { highlighting.get().doTest(); }
 
-  public void testInnerClassConstructorWithAnotherArg() { doTest(); }
+  @Test
+  public void testInnerClassConstructorWithAnotherArg() { highlighting.get().doTest(); }
 
+  @Test
   public void testClosureIsNotAssignableToSAMInGroovy2_1() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface X {
                            def foo()
                          }
@@ -748,8 +849,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testVoidMethodAssignability() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          void foo() {}
 
                          def foo = foo()
@@ -764,24 +866,27 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testBinaryOperatorApplicability() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          void bug(Collection<String> foo, Collection<String> bar) {
                              foo <warning descr="'leftShift' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.util.Collection<java.lang.String>)'"><<</warning> bar   // warning missed
                              foo << "a"
                          }""");
   }
 
+  @Test
   public void testPlusIsApplicable() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          print 1 + 2
 
                          print <weak_warning descr="Cannot infer argument types">4 <warning descr="'plus' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.util.ArrayList)'">+</warning> new ArrayList()</weak_warning>
                          """);
   }
 
+  @Test
   public void testMultiAssignmentCS() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
 
                          import groovy.transform.CompileStatic
 
@@ -793,8 +898,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testMultiAssignmentWithTypeError() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
 
                          import groovy.transform.CompileStatic
 
@@ -806,8 +912,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testMultiAssignmentLiteralWithTypeError() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
 
                          import groovy.transform.CompileStatic
 
@@ -818,8 +925,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testMultiAssignment() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
 
                          import groovy.transform.CompileStatic
 
@@ -830,8 +938,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testRawListReturn() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
 
                          import groovy.transform.CompileStatic
 
@@ -842,8 +951,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testOptionalArgumentOnCompileStatic() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -857,8 +967,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testOptionalVarargArgumentOnCompileStatic() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -872,8 +983,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testOptionalClosureArgOnCompileStatic() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -884,8 +996,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testStringTupleAssignment() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          @CompileStatic
@@ -897,8 +1010,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testUnknownArgumentPlus() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A1{}
 
                          class E {
@@ -914,8 +1028,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testUnknownArgumentPlus2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A1{}
                          class A2{}
 
@@ -936,8 +1051,9 @@ public class GrAssignabilityTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testInapplicableWithUnknownArgument() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def foo(String s, int x) {}
                          def foo(String s, Object o) {}
                          def foo(String s, String x) {}

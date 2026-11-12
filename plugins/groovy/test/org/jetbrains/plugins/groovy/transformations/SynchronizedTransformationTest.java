@@ -3,24 +3,31 @@ package org.jetbrains.plugins.groovy.transformations;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiReference;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.junit.Assert;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-public class SynchronizedTransformationTest extends LightGroovyTestCase {
-  @Override
-  @NotNull
-  public LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class SynchronizedTransformationTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @Test
   public void testLockIsUsedByAnnotatedInstanceMethod() {
     testHighlighting("""
                        final $lock = new Object()
@@ -29,6 +36,7 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
                        """);
   }
 
+  @Test
   public void testLockIsNotUsedByAnnotatedStaticMethod() {
     testHighlighting("""
                        final <warning descr="Property $lock is unused">$lock</warning> = new Object()
@@ -37,6 +45,7 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
                        """);
   }
 
+  @Test
   public void testStaticLockIsUsedByAnnotatedInstanceMethod() {
     testHighlighting("""
                        static final <error descr="Lock field '$lock' must not be static">$lock</error> = new Object()
@@ -45,6 +54,7 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
                        """);
   }
 
+  @Test
   public void testLockIsUsedByAnnotatedStaticMethod() {
     testHighlighting("""
                        static final $LOCK = new Object()
@@ -53,6 +63,7 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
                        """);
   }
 
+  @Test
   public void testLOCKIsNotUsedByAnnotatedInstanceMethod() {
     testHighlighting("""
                        static final <warning descr="Property $LOCK is unused">$LOCK</warning> = new Object()
@@ -61,6 +72,7 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
                        """);
   }
 
+  @Test
   public void testInstanceLOCKIsUsedByAnnotatedStaticMethod() {
     testHighlighting("""
                        final <error descr="Lock field '$LOCK' must be static">$LOCK</error> = new Object()
@@ -69,6 +81,7 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
                        """);
   }
 
+  @Test
   public void testLockNotFound() {
     testHighlighting("""
                        @Synchronized("<error descr="Lock field 'myLock' not found">myLock</error>")
@@ -76,6 +89,7 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
                        """);
   }
 
+  @Test
   public void testCustomInstanceLockIsUsedByInstanceMethod() {
     testHighlighting("""
                        final myLock = new Object()
@@ -84,6 +98,7 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
                        """);
   }
 
+  @Test
   public void testCustomInstanceLockIsUsedByStaticMethod() {
     testHighlighting("""
                        final <error descr="Lock field 'myLock' must be static">myLock</error> = new Object()
@@ -92,6 +107,7 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
                        """);
   }
 
+  @Test
   public void testCustomStaticLockIsUsedByStaticMethod() {
     testHighlighting("""
                        static final myStaticLock = new Object()
@@ -100,6 +116,7 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
                        """);
   }
 
+  @Test
   public void testCustomStaticLockIsUsedByInstanceMethod() {
     testHighlighting("""
                        static final myStaticLock = new Object()
@@ -108,6 +125,7 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
                        """);
   }
 
+  @Test
   public void testNotAllowedOnAbstractMethods() {
     testHighlighting("""
                        import groovy.transform.Synchronized
@@ -137,7 +155,9 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
                        """, new InspectionProfileEntry[0]);
   }
 
+  @Test
   public void testResolveToField() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
           class A {
             final myLock = new Object()
@@ -145,12 +165,16 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
             def foo() {}
           }
           """);
-    PsiReference ref = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
-    Assert.assertNotNull(ref);
-    Assert.assertTrue(ref.resolve() instanceof GrField);
+    ReadAction.runBlocking(() -> {
+      PsiReference ref = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
+      assertNotNull(ref);
+      assertTrue(ref.resolve() instanceof GrField);
+    });
   }
 
+  @Test
   public void testCompleteFields() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
       class A {
       final foo = 1, bar = 2, baz = 3
@@ -159,9 +183,10 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
       }
       """);
     myFixture.completeBasic();
-    Assert.assertTrue(myFixture.getLookupElementStrings().containsAll(Arrays.asList("foo", "bar", "baz")));
+    assertTrue(myFixture.getLookupElementStrings().containsAll(Arrays.asList("foo", "bar", "baz")));
   }
 
+  @Test
   public void testRenameCustomLock() {
     testRename("""
                  final myLock = new Object()
@@ -174,6 +199,7 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testRenameLock() {
     testRename("""
                  final $l<caret>ock = new Object()
@@ -203,12 +229,14 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
   }
 
   private void testHighlighting(final String text, final InspectionProfileEntry[] inspections) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("_.groovy", text);
     myFixture.enableInspections(inspections);
     myFixture.checkHighlighting();
   }
 
   private void testRename(final String before, final String newName, final String after) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("_.groovy", """
                                             import groovy.transform.Synchronized
                                             class A {
@@ -216,13 +244,15 @@ public class SynchronizedTransformationTest extends LightGroovyTestCase {
                                             
                                             }
                                             """);
-    myFixture.renameElementAtCaret(newName);
-    myFixture.checkResult("""
-                            import groovy.transform.Synchronized
-                            class A {
-                            """ + after + """
-                            
-                            }
-                            """);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.renameElementAtCaret(newName);
+      myFixture.checkResult("""
+                              import groovy.transform.Synchronized
+                              class A {
+                              """ + after + """
+                              
+                              }
+                              """);
+    });
   }
 }

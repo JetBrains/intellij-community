@@ -15,12 +15,25 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.junit.jupiter.api.Test;
 
-public class GrDocResolveTest extends GroovyResolveTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveFixtureKt.groovyResolveFixture;
+
+@TestApplication
+public class GrDocResolveTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<GroovyResolveFixture> resolve = groovyResolveFixture(projectFixture);
+
+  @Test
   public void test_resolve_to_property_from_within_class() {
-    resolveByText("""
+    resolve.get().resolveByText("""
                     class Doc {
                       static String C = "123"
                       /**
@@ -31,8 +44,9 @@ public class GrDocResolveTest extends GroovyResolveTestCase {
                     """, GrField.class);
   }
 
+  @Test
   public void test_resolve_to_method_from_within_class() {
-    resolveByText("""
+    resolve.get().resolveByText("""
                     class Doc {
                       /**
                        * {@link #<caret>f}
@@ -43,8 +57,9 @@ public class GrDocResolveTest extends GroovyResolveTestCase {
                     """, GrMethod.class);
   }
 
+  @Test
   public void test_resolve_to_property_from_class_comment() {
-    resolveByText("""
+    resolve.get().resolveByText("""
                     /**
                      * {@link #<caret>C}
                      */
@@ -56,8 +71,9 @@ public class GrDocResolveTest extends GroovyResolveTestCase {
                     """, GrField.class);
   }
 
+  @Test
   public void test_resolve_to_method_from_class_comment() {
-    resolveByText("""
+    resolve.get().resolveByText("""
                     /**
                      * {@link #<caret>f}
                      */

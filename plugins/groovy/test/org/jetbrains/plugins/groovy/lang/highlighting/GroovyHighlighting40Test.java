@@ -1,15 +1,38 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.UnnecessaryQualifiedReferenceInspection;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
+import org.junit.jupiter.api.Test;
 
-public class GroovyHighlighting40Test extends LightGroovyTestCase implements HighlightingTest {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+
+@TestApplication
+public class GroovyHighlighting40Test implements HighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_4_0);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @Override
+  public @NotNull LightJavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
+  }
+
+  @Override
+  public String getTestName() {
+    return LightGroovyFixtures.groovyTestName(codeInsightFixture.get());
+  }
+
+  @Test
   public void testPermitsWithoutSealed() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                           public interface Bar {
                               static void foo() {
@@ -27,10 +50,12 @@ public class GroovyHighlighting40Test extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testVarInForLoop() {
     highlightingTest("for (var i : []) {}");
   }
 
+  @Test
   public void testTupleDeclaration() {
     highlightingTest(
       """
@@ -47,7 +72,9 @@ public class GroovyHighlighting40Test extends LightGroovyTestCase implements Hig
     );
   }
 
+  @Test
   public void testDuplicateNames() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("foo/Bar.groovy",
       """
       package foo;
@@ -69,6 +96,7 @@ public class GroovyHighlighting40Test extends LightGroovyTestCase implements Hig
     myFixture.testHighlighting(false, false, false);
   }
 
+  @Test
   public void testUnnamedVariableDuplicateInVariableDefinitions() {
     highlightingTest("""
                        void f() {
@@ -77,6 +105,7 @@ public class GroovyHighlighting40Test extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testUnnamedVariableDuplicateInVariableDefinitionsWithOuterScope() {
     highlightingTest("""
                        void f() {
@@ -86,6 +115,7 @@ public class GroovyHighlighting40Test extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testUnnamedVariableDuplicateInLambdaExpression() {
     highlightingTest("""
                        void f() {
@@ -94,6 +124,7 @@ public class GroovyHighlighting40Test extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testUnnamedVariableDuplicateInLambdaExpressionWithScope() {
     highlightingTest("""
                        void f() {
@@ -105,6 +136,7 @@ public class GroovyHighlighting40Test extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testUnnamedVariableDuplicateInClosure() {
     highlightingTest("""
                        void f() {
@@ -113,6 +145,7 @@ public class GroovyHighlighting40Test extends LightGroovyTestCase implements Hig
                        """);
   }
 
+  @Test
   public void testUnnamedVariableDuplicateInClosureWithScope() {
     highlightingTest("""
                        void f() {
@@ -121,10 +154,5 @@ public class GroovyHighlighting40Test extends LightGroovyTestCase implements Hig
                             }
                        }
                        """);
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_4_0;
   }
 }

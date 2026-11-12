@@ -1,24 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
-import org.junit.Assert;
+import org.junit.jupiter.api.Test;
 
-public class DefaultMethodSupportTest extends GroovyResolveTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveFixtureKt.groovyResolveFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0;
+@TestApplication
+public class DefaultMethodSupportTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_3_0);
+  private final TestFixture<GroovyResolveFixture> resolve = groovyResolveFixture(projectFixture);
 
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
+  @Test
   public void testSuperReferenceWithQualifier() {
-    PsiMethod method = resolveByText(
+    PsiMethod method = resolve.get().resolveByText(
       """
         interface A {
             default String exec() { 'A' }
@@ -31,11 +35,14 @@ public class DefaultMethodSupportTest extends GroovyResolveTestCase {
             String exec() {A.super.exe<caret>c() }
         }
         """, PsiMethod.class);
-    Assert.assertEquals("A", method.getContainingClass().getName());
+    ReadAction.runBlocking(() -> {
+      assertEquals("A", method.getContainingClass().getName());
+    });
   }
 
+  @Test
   public void testSuperReferenceWithQualifier2() {
-    PsiMethod method = resolveByText(
+    PsiMethod method = resolve.get().resolveByText(
       """
         interface A {
             default String exec() { 'A' }
@@ -48,11 +55,14 @@ public class DefaultMethodSupportTest extends GroovyResolveTestCase {
             String exec() {B.super.exe<caret>c() }
         }
         """, PsiMethod.class);
-    Assert.assertEquals("B", method.getContainingClass().getName());
+    ReadAction.runBlocking(() -> {
+      assertEquals("B", method.getContainingClass().getName());
+    });
   }
 
+  @Test
   public void testClashingMethods() {
-    GrTraitMethod method = resolveByText(
+    GrTraitMethod method = resolve.get().resolveByText(
       """
         interface A {
             default String exec() { 'A' }
@@ -65,11 +75,14 @@ public class DefaultMethodSupportTest extends GroovyResolveTestCase {
             String foo() {exe<caret>c() }
         }
         """, GrTraitMethod.class);
-    Assert.assertEquals("B", method.getPrototype().getContainingClass().getName());
+    ReadAction.runBlocking(() -> {
+      assertEquals("B", method.getPrototype().getContainingClass().getName());
+    });
   }
 
+  @Test
   public void testDefaultMethodFromAsOperator1() {
-    resolveByText(
+    resolve.get().resolveByText(
       """
         interface A {
           default foo(){}
@@ -83,8 +96,9 @@ public class DefaultMethodSupportTest extends GroovyResolveTestCase {
         """, PsiMethod.class);
   }
 
+  @Test
   public void testDefaultMethodFromAsOperator2() {
-    resolveByText(
+    resolve.get().resolveByText(
       """
         interface A {
           default foo(){}
@@ -98,8 +112,9 @@ public class DefaultMethodSupportTest extends GroovyResolveTestCase {
         """, PsiMethod.class);
   }
 
+  @Test
   public void testDefaultMethodFromAssigning() {
-    resolveByText(
+    resolve.get().resolveByText(
       """
         interface I {
             int foo()
@@ -113,7 +128,9 @@ public class DefaultMethodSupportTest extends GroovyResolveTestCase {
         """, PsiMethod.class);
   }
 
+  @Test
   public void testDefaultMethodFromJavaInterface() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.addClass(
       """
         interface IServiceJava<T> {
@@ -122,7 +139,7 @@ public class DefaultMethodSupportTest extends GroovyResolveTestCase {
             }
         }
         """);
-    resolveByText(
+    resolve.get().resolveByText(
       """
         class TestGenericGroovy implements IServiceJava<String> {
           void save(String entity) {

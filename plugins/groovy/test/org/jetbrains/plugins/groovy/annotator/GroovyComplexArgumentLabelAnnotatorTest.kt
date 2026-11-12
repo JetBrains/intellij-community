@@ -1,19 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator
 
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.lightGroovyFixture
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.junit.jupiter.api.Test
 
+@TestApplication
+class GroovyComplexArgumentLabelAnnotatorTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_4_0)
+  }
 
-class GroovyComplexArgumentLabelAnnotatorTest : LightGroovyTestCase() {
-  override fun getTestDataPath() = "${TestUtils.getAbsoluteTestDataPath()}/annotator/"
+  private val myFixture by lightGroovyFixture(projectFixture, "${TestUtils.getAbsoluteTestDataPath()}/annotator/")
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = GroovyProjectDescriptors.GROOVY_4_0
-
+  @Test
   fun `test should not highlight literals`() {
     val tripleQuote = "\"\"\""
     myFixture.configureByText("main.groovy", """
@@ -38,6 +47,7 @@ class GroovyComplexArgumentLabelAnnotatorTest : LightGroovyTestCase() {
     myFixture.testHighlighting(false, false, false)
   }
 
+  @Test
   fun `test should not highlight lists and dicts`() {
     myFixture.configureByText("main.groovy", """
       static void main(String[] args) {  
@@ -51,6 +61,7 @@ class GroovyComplexArgumentLabelAnnotatorTest : LightGroovyTestCase() {
     myFixture.testHighlighting(false, false, false)
   }
 
+  @Test
   fun `test should not highlight lambdas`() {
     myFixture.configureByText("main.groovy", """
       static void main(String[] args) {  
@@ -64,6 +75,7 @@ class GroovyComplexArgumentLabelAnnotatorTest : LightGroovyTestCase() {
     myFixture.testHighlighting(false, false, false)
   }
 
+  @Test
   fun `test should not highlight simple references`() {
     myFixture.configureByText("main.groovy", """
       class MyClass {
@@ -81,6 +93,7 @@ class GroovyComplexArgumentLabelAnnotatorTest : LightGroovyTestCase() {
     myFixture.testHighlighting(false, false, false)
   }
 
+  @Test
   fun `test should not highlight complex references in parenthesis`() {
     myFixture.configureByText("main.groovy", """
       class MyClass {
@@ -112,6 +125,7 @@ class GroovyComplexArgumentLabelAnnotatorTest : LightGroovyTestCase() {
     myFixture.testHighlighting(false, false, false)
   }
 
+  @Test
   fun `test should highlight complex references`() {
     myFixture.configureByText("main.groovy", """
       class MyClass {
@@ -143,6 +157,7 @@ class GroovyComplexArgumentLabelAnnotatorTest : LightGroovyTestCase() {
     myFixture.testHighlighting(false, false, false)
   }
 
+  @Test
   fun `test should highlight complex operators`() {
     myFixture.configureByText("main.groovy", """      
       static void main(String[] args) {
@@ -204,6 +219,7 @@ class GroovyComplexArgumentLabelAnnotatorTest : LightGroovyTestCase() {
     myFixture.testHighlighting(false, false, false)
   }
 
+  @Test
   fun `test should not highlight complex operators in parenthesis`() {
     myFixture.configureByText("main.groovy", """      
       static void main(String[] args) {
@@ -265,9 +281,12 @@ class GroovyComplexArgumentLabelAnnotatorTest : LightGroovyTestCase() {
     myFixture.testHighlighting(false, false, false)
   }
 
-  fun `test quickfix`() {
-    val testName = getTestName(true).trim()
-    CodeInsightTestUtil.doIntentionTest(myFixture, GroovyBundle.message("groovy.complex.argument.label.quick.fix.message"), "${testName}_before.groovy", "${testName}_after.groovy")
-    myFixture.availableIntentions
+  @Test
+  fun `test quickfix`(): Unit = timeoutRunBlocking {
+    val testName = myFixture.getTestName(true).trim()
+    withContext(Dispatchers.EDT) {
+      CodeInsightTestUtil.doIntentionTest(myFixture, GroovyBundle.message("groovy.complex.argument.label.quick.fix.message"), "${testName}_before.groovy", "${testName}_after.groovy")
+      myFixture.availableIntentions
+    }
   }
 }

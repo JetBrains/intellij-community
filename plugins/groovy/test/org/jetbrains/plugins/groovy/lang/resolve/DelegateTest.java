@@ -2,51 +2,68 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMirrorElement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReference;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.junit.Assert;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveFixtureKt.groovyResolveFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * @author Max Medvedev
  */
-public class DelegateTest extends GroovyResolveTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "resolve/delegate/";
-  }
+@TestApplication
+public class DelegateTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<GroovyResolveFixture> resolve =
+    groovyResolveFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "resolve/delegate/");
 
   private <T> T doTest(String text, Class<T> clazz) {
-    PsiReference ref = configureByText(text);
-    PsiElement resolved = ref.resolve();
+    PsiReference ref = resolve.get().configureByText(text);
+    return ReadAction.computeBlocking(() -> {
+      PsiElement resolved = ref.resolve();
 
-    if (clazz != null) {
-      Assert.assertNotNull(resolved);
-      return UsefulTestCase.assertInstanceOf(resolved, clazz);
-    }
-    else {
-      Assert.assertNull(resolved);
-    }
+      if (clazz != null) {
+        assertNotNull(resolved);
+        return assertInstanceOf(clazz, resolved);
+      }
+      else {
+        assertNull(resolved);
+      }
 
-    return null;
+      return null;
+    });
   }
 
   private PsiMirrorElement doTest(String text) {
     return doTest(text, PsiMirrorElement.class);
   }
 
+  @Test
   public void testSimple() {
     doTest("""
              class A {
@@ -61,6 +78,7 @@ public class DelegateTest extends GroovyResolveTestCase {
              """);
   }
 
+  @Test
   public void testSimple2() {
     doTest("""
              class A {
@@ -75,6 +93,7 @@ public class DelegateTest extends GroovyResolveTestCase {
              """);
   }
 
+  @Test
   public void testMethodDelegateUnresolved() {
     doTest("""
              class A {
@@ -89,6 +108,7 @@ public class DelegateTest extends GroovyResolveTestCase {
              """, null);
   }
 
+  @Test
   public void testInheritance() {
     doTest("""
              class Base {
@@ -105,6 +125,7 @@ public class DelegateTest extends GroovyResolveTestCase {
              """);
   }
 
+  @Test
   public void testSelectFirst1() {
     PsiMirrorElement resolved = doTest(
       """
@@ -124,11 +145,14 @@ public class DelegateTest extends GroovyResolveTestCase {
         new B().fo<caret>o()
         """);
 
-    PsiMethod prototype = (PsiMethod)resolved.getPrototype();
-    PsiClass cc = prototype.getContainingClass();
-    Assert.assertEquals("A1", cc.getName());
+    ReadAction.runBlocking(() -> {
+      PsiMethod prototype = (PsiMethod)resolved.getPrototype();
+      PsiClass cc = prototype.getContainingClass();
+      assertEquals("A1", cc.getName());
+    });
   }
 
+  @Test
   public void testSelectFirst2() {
     PsiMirrorElement resolved = doTest(
       """
@@ -149,11 +173,14 @@ public class DelegateTest extends GroovyResolveTestCase {
         new B().fo<caret>o()
         """);
 
-    PsiMethod prototype = (PsiMethod)resolved.getPrototype();
-    PsiClass cc = prototype.getContainingClass();
-    Assert.assertEquals("A2", cc.getName());
+    ReadAction.runBlocking(() -> {
+      PsiMethod prototype = (PsiMethod)resolved.getPrototype();
+      PsiClass cc = prototype.getContainingClass();
+      assertEquals("A2", cc.getName());
+    });
   }
 
+  @Test
   public void testSelectFirst3() {
     PsiMirrorElement resolved = doTest(
       """
@@ -174,11 +201,14 @@ public class DelegateTest extends GroovyResolveTestCase {
         new B().fo<caret>o()
         """);
 
-    PsiMethod prototype = (PsiMethod)resolved.getPrototype();
-    PsiClass cc = prototype.getContainingClass();
-    Assert.assertEquals("A2", cc.getName());
+    ReadAction.runBlocking(() -> {
+      PsiMethod prototype = (PsiMethod)resolved.getPrototype();
+      PsiClass cc = prototype.getContainingClass();
+      assertEquals("A2", cc.getName());
+    });
   }
 
+  @Test
   public void testSelectFirst4() {
     PsiMirrorElement resolved = doTest(
       """
@@ -199,11 +229,14 @@ public class DelegateTest extends GroovyResolveTestCase {
         new B().fo<caret>o()
         """);
 
-    PsiMethod prototype = (PsiMethod)resolved.getPrototype();
-    PsiClass cc = prototype.getContainingClass();
-    Assert.assertEquals("A2", cc.getName());
+    ReadAction.runBlocking(() -> {
+      PsiMethod prototype = (PsiMethod)resolved.getPrototype();
+      PsiClass cc = prototype.getContainingClass();
+      assertEquals("A2", cc.getName());
+    });
   }
 
+  @Test
   public void testSubstitutor1() {
     PsiMirrorElement resolved = doTest("""
                                          
@@ -222,13 +255,17 @@ public class DelegateTest extends GroovyResolveTestCase {
                                          new B().fo<caret>o([''])
                                          """);
 
-    PsiMethod method = UsefulTestCase.assertInstanceOf(resolved, PsiMethod.class);
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    Assert.assertEquals("java.util.List<java.lang.String>", parameters[0].getType().getCanonicalText());
+    ReadAction.runBlocking(() -> {
+      PsiMethod method = assertInstanceOf(PsiMethod.class, resolved);
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      assertEquals("java.util.List<java.lang.String>", parameters[0].getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testCycle() {
-    TransformationUtilKt.disableAssertOnRecursion(getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
+    TransformationUtilKt.disableAssertOnRecursion(myFixture.getTestRootDisposable());
     GroovyFile file = (GroovyFile)myFixture.configureByText("a.groovy", """
       class A {
           def foo() {}
@@ -258,13 +295,17 @@ public class DelegateTest extends GroovyResolveTestCase {
       new C().test()
       """);
 
-    Collection<GrStatement> result = Arrays.stream(file.getStatements())
-      .filter(t -> t instanceof GrMethodCall call && call.resolveMethod() == null).toList();
+    ReadAction.runBlocking(() -> {
+      Collection<GrStatement> result = Arrays.stream(file.getStatements())
+        .filter(t -> t instanceof GrMethodCall call && call.resolveMethod() == null).toList();
 
-    Assert.assertTrue(result.size() <= 1);
+      assertTrue(result.size() <= 1);
+    });
   }
 
+  @Test
   public void testJavaDelegate() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.addFileToProject("A.java",
                                """
                                  class Base {
@@ -282,8 +323,10 @@ public class DelegateTest extends GroovyResolveTestCase {
         new B().fo<caret>o()""");
   }
 
+  @Test
   public void testInheritanceCycle() {
-    TransformationUtilKt.disableAssertOnRecursion(getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
+    TransformationUtilKt.disableAssertOnRecursion(myFixture.getTestRootDisposable());
     GroovyFile file = (GroovyFile)myFixture.configureByText("a.groovy", """
       
       class Base {
@@ -296,12 +339,16 @@ public class DelegateTest extends GroovyResolveTestCase {
       new Base().foo()
       new A().foo()""");
 
-    for (GrStatement statement : file.getStatements()) {
-      Assert.assertNotNull(((GrMethodCall)statement).resolveMethod());
-    }
+    ReadAction.runBlocking(() -> {
+      for (GrStatement statement : file.getStatements()) {
+        assertNotNull(((GrMethodCall)statement).resolveMethod());
+      }
+    });
   }
 
+  @Test
   public void testCompoundHierarchy() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.addFileToProject("Foo.java", """
       public interface Foo {
           String getA();
@@ -336,15 +383,20 @@ public class DelegateTest extends GroovyResolveTestCase {
   }
 
   private void assertAllMethodsImplemented(String fileName, String text) {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     GroovyFile file = (GroovyFile)myFixture.configureByText(fileName, text);
 
-    Assert.assertNotNull(file);
-    final PsiClass clazz = file.getClasses()[0];
-    Assert.assertNotNull(clazz);
-    UsefulTestCase.assertEmpty(OverrideImplementExploreUtil.getMethodSignaturesToImplement(clazz));
+    ReadAction.runBlocking(() -> {
+      assertNotNull(file);
+      final PsiClass clazz = file.getClasses()[0];
+      assertNotNull(clazz);
+      assertThat(OverrideImplementExploreUtil.getMethodSignaturesToImplement(clazz)).isNullOrEmpty();
+    });
   }
 
+  @Test
   public void testDeprecatedFalse() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.addFileToProject("Foo.groovy",
                                """
                                  interface Foo {
@@ -360,6 +412,7 @@ public class DelegateTest extends GroovyResolveTestCase {
                                   """);
   }
 
+  @Test
   public void testDelegateWithGenerics() {
     assertAllMethodsImplemented("a.groovy",
                                 """
@@ -370,6 +423,7 @@ public class DelegateTest extends GroovyResolveTestCase {
                                   """);
   }
 
+  @Test
   public void testDelegateMethodWithGenerics() {
     assertAllMethodsImplemented("a.groovy",
                                 """

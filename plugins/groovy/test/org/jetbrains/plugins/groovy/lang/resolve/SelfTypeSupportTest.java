@@ -1,16 +1,31 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.junit.jupiter.api.Test;
 
-public class SelfTypeSupportTest extends LightGroovyTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+@TestApplication
+public class SelfTypeSupportTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @Test
   public void test_resolve_from_within_trait() {
     PsiElement resolved = resolveByText("""
                                           interface I { def foo() }
@@ -21,9 +36,12 @@ public class SelfTypeSupportTest extends LightGroovyTestCase {
                                             }
                                           }
                                           """);
-    assertEquals("I", ((GrMethod)resolved).getContainingClass().getName());
+    ReadAction.runBlocking(() -> {
+      assertEquals("I", ((GrMethod)resolved).getContainingClass().getName());
+    });
   }
 
+  @Test
   public void test_resolve_outside_trait() {
     PsiElement resolved = resolveByText("""
                                           interface I { def foo() }
@@ -33,9 +51,12 @@ public class SelfTypeSupportTest extends LightGroovyTestCase {
                                             t.f<caret>oo()
                                           }
                                           """);
-    assertEquals("I", ((GrMethod)resolved).getContainingClass().getName());
+    ReadAction.runBlocking(() -> {
+      assertEquals("I", ((GrMethod)resolved).getContainingClass().getName());
+    });
   }
 
+  @Test
   public void test_resolve_inside_trait_extending_trait() {
     PsiElement resolved = resolveByText("""
                                           interface I { def foo() }
@@ -47,9 +68,12 @@ public class SelfTypeSupportTest extends LightGroovyTestCase {
                                             }
                                           }
                                           """);
-    assertEquals("I", ((GrMethod)resolved).getContainingClass().getName());
+    ReadAction.runBlocking(() -> {
+      assertEquals("I", ((GrMethod)resolved).getContainingClass().getName());
+    });
   }
 
+  @Test
   public void test_do_not_count__SelfType_on_interfaces_in_hierarchy() {
     assertNull(resolveByText("""
                            interface I { def foo() }
@@ -63,6 +87,7 @@ public class SelfTypeSupportTest extends LightGroovyTestCase {
                            """));
   }
 
+  @Test
   public void test_highlighting() {
     doTestHighlighting("""
                          interface I {}
@@ -76,32 +101,33 @@ public class SelfTypeSupportTest extends LightGroovyTestCase {
   }
 
   public PsiElement resolveByText(String text) {
-    getFixture().configureByText("_.groovy", getDefaultImports() + text);
-    return getFile().findReferenceAt(getEditor().getCaretModel().getOffset()).resolve();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("_.groovy", getDefaultImports() + text);
+    return ReadAction.computeBlocking(() -> {
+      return myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset()).resolve();
+    });
   }
 
   public void doTestHighlighting(String text) {
-    getFixture().configureByText("_.groovy", getDefaultImports() + text);
-    getFixture().checkHighlighting();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("_.groovy", getDefaultImports() + text);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.checkHighlighting();
+    });
   }
 
+  @Test
   public void test_do_not_process_self_types_when_not_needed() {
-    GroovyFile file = (GroovyFile)getFixture().configureByText("_.groovy", getDefaultImports() + """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    GroovyFile file = (GroovyFile)myFixture.configureByText("_.groovy", getDefaultImports() + """
       interface I {}
       @SelfType(I)\s
       trait T implements I {}
       """);
-    GrTypeDefinition[] definitions = file.getTypeDefinitions();
-    assertFalse(definitions[definitions.length - 1].getSuperTypes().length == 0);
-  }
-
-  @Override
-  public @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  public void setProjectDescriptor(LightProjectDescriptor projectDescriptor) {
-    this.projectDescriptor = projectDescriptor;
+    ReadAction.runBlocking(() -> {
+      GrTypeDefinition[] definitions = file.getTypeDefinitions();
+      assertFalse(definitions[definitions.length - 1].getSuperTypes().length == 0);
+    });
   }
 
   public String getDefaultImports() {
@@ -109,6 +135,4 @@ public class SelfTypeSupportTest extends LightGroovyTestCase {
       import groovy.transform.SelfType
       """;
   }
-
-  private LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
 }

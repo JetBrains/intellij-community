@@ -1,25 +1,48 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
-public class CodeBlockGenerationTest extends CodeBlockGenerationBaseTest {
-  public void testSwitch1() { doTest(); }
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
+import org.junit.jupiter.api.Test;
 
-  public void testSwitch2() { doTest(); }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
 
-  public void testSwitch3() { doTest(); }
+@TestApplication
+public class CodeBlockGenerationTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture, CodeBlockGenerationTestUtil.TEST_DATA_PATH);
 
-  public void testSwitch4() { doTest(); }
+  @Test
+  public void testSwitch1() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testSwitch5() { doTest(); }
+  @Test
+  public void testSwitch2() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testSwitch6() { doTest(); }
+  @Test
+  public void testSwitch3() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void _testWhile1() { doTest(); }
+  @Test
+  public void testSwitch4() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void _testWhile2() { doTest(); }
+  @Test
+  public void testSwitch5() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void _testWhile3() { doTest(); }
+  @Test
+  public void testSwitch6() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
+  public void _testWhile1() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
+
+  public void _testWhile2() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
+
+  public void _testWhile3() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
+
+  @Test
   public void testRefExpr() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Bar.groovy", """
 
       class Bar {
@@ -34,21 +57,26 @@ public class CodeBlockGenerationTest extends CodeBlockGenerationBaseTest {
       }
       """);
 
-    doTest();
+    CodeBlockGenerationTestUtil.doTest(myFixture);
   }
 
-  public void testMemberPointer() { doTest(); }
+  @Test
+  public void testMemberPointer() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
+  @Test
   public void testCompareMethods() {
-    addFile("""
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    CodeBlockGenerationTestUtil.addFile(myFixture, """
 
               class Bar {
                 def compareTo(def other) {1}
               }""");
   }
 
+  @Test
   public void testPrefixInc() {
-    addFile("""
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    CodeBlockGenerationTestUtil.addFile(myFixture, """
 
               class Bar {
                   def next() {
@@ -67,11 +95,13 @@ public class CodeBlockGenerationTest extends CodeBlockGenerationBaseTest {
                   void setBar(def bar) {println "set";state = bar}
               }
               """);
-    doTest();
+    CodeBlockGenerationTestUtil.doTest(myFixture);
   }
 
+  @Test
   public void testUnaryMethods() {
-    addFile("""
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    CodeBlockGenerationTestUtil.addFile(myFixture, """
 
               class Bar {
                 def positive(){}
@@ -80,7 +110,9 @@ public class CodeBlockGenerationTest extends CodeBlockGenerationBaseTest {
               }""");
   }
 
+  @Test
   public void testRegex() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("java/util/regex/Pattern.java", """
 
       package java.util.regex;
@@ -100,69 +132,100 @@ public class CodeBlockGenerationTest extends CodeBlockGenerationBaseTest {
       }
 
       """);
-    doTest();
+    CodeBlockGenerationTestUtil.doTest(myFixture);
   }
 
-  public void testAsBoolean() { doTest(); }
+  @Test
+  public void testAsBoolean() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testCharInitializer() { doTest(); }
+  @Test
+  public void testCharInitializer() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testAnonymousFromMap() { doTest(); }
+  @Test
+  public void testAnonymousFromMap() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testClosure() { doTest(); }
+  @Test
+  public void testClosure() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testListAsArray() { doTest(); }
+  @Test
+  public void testListAsArray() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testUnresolvedArrayAccess() { doTest(); }
+  @Test
+  public void testUnresolvedArrayAccess() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testArrayAccess() { doTest(); }
+  @Test
+  public void testArrayAccess() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
+  @Test
   public void testCastWithEquality() {
-    addBigDecimal();
-    doTest();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    LightGroovyFixtures.addBigDecimal(myFixture);
+    CodeBlockGenerationTestUtil.doTest(myFixture);
   }
 
-  public void testAsserts() { doTest(); }
+  @Test
+  public void testAsserts() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testConditional() { doTest(); }
+  @Test
+  public void testConditional() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testBinary() { doTest(); }
+  @Test
+  public void testBinary() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testSafeCast() { doTest(); }
+  @Test
+  public void testSafeCast() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testNewExpr() { doTest(); }
+  @Test
+  public void testNewExpr() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testMapNameAlreadyused() { doTest(); }
+  @Test
+  public void testMapNameAlreadyused() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testEmptyMap() { doTest(); }
+  @Test
+  public void testEmptyMap() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testEmptyList() { doTest(); }
+  @Test
+  public void testEmptyList() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testErasedArrayInitializer() { doTest(); }
+  @Test
+  public void testErasedArrayInitializer() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testTupleVariableDeclaration() { doTest(); }
+  @Test
+  public void testTupleVariableDeclaration() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testEmptyVarargs() { doTest(); }
+  @Test
+  public void testEmptyVarargs() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testClassReference() { doTest(); }
+  @Test
+  public void testClassReference() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testClassMethod() { doTest(); }
+  @Test
+  public void testClassMethod() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testEquals() { doTest(); }
+  @Test
+  public void testEquals() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testSelfNavigatingOperator() { doTest(); }
+  @Test
+  public void testSelfNavigatingOperator() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testComparisonToNull() { doTest(); }
+  @Test
+  public void testComparisonToNull() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testStringConverting() { doTest(); }
+  @Test
+  public void testStringConverting() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testMultilineString() { doTest(); }
+  @Test
+  public void testMultilineString() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testInWitchClassCheck() { doTest(); }
+  @Test
+  public void testInWitchClassCheck() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testSwitch() { doTest(); }
+  @Test
+  public void testSwitch() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testPropSelection() { doTest(); }
+  @Test
+  public void testPropSelection() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 
-  public void testSafeChain() { doTest(); }
+  @Test
+  public void testSafeChain() { CodeBlockGenerationTestUtil.doTest(codeInsightFixture.get()); }
 }

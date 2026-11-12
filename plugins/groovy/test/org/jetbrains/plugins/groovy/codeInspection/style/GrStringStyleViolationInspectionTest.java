@@ -2,18 +2,23 @@
 package org.jetbrains.plugins.groovy.codeInspection.style;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
-import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection;
 import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind;
+import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
 import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.DOLLAR_SLASHY_QUOTED;
 import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.DOUBLE_QUOTED;
 import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.SINGLE_QUOTED;
@@ -22,32 +27,34 @@ import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringS
 import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.TRIPLE_QUOTED;
 import static org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleViolationInspection.InspectionStringQuotationKind.UNDEFINED;
 
+@TestApplication
+public class GrStringStyleViolationInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
 
-public class GrStringStyleViolationInspectionTest extends LightGroovyTestCase {
   private static final String PLAIN_KEY = "plain";
   private static final String ESCAPE_KEY = "escape";
   private static final String INTERPOLATION_KEY = "interpolation";
   private static final String MULTILINE_KEY = "multiline";
 
-  @Override
-  public @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
-  }
-
   private final GrStringStyleViolationInspection inspection = new GrStringStyleViolationInspection();
 
+  @Test
   public void testPlainStringCorrection() {
     doTest("\"abc\"", "'abc'", Map.of(PLAIN_KEY, SINGLE_QUOTED));
   }
 
+  @Test
   public void testNoComplaintForCorrectKind() {
     doTest("'abc'", Map.of(PLAIN_KEY, SINGLE_QUOTED));
   }
 
+  @Test
   public void testCorrectionSlashyString() {
     doTest("'''abc'''", "/abc/", Map.of(PLAIN_KEY, SLASHY));
   }
 
+  @Test
   public void testMultilineString() {
     doTest("""
                   '''abc
@@ -57,6 +64,7 @@ public class GrStringStyleViolationInspectionTest extends LightGroovyTestCase {
                   cde/""", Map.of(MULTILINE_KEY, SLASHY));
   }
 
+  @Test
   public void testNoComplaintOnMultilineStringWithDisabledSettings() {
     doTest("""
                   '''abc
@@ -64,42 +72,51 @@ public class GrStringStyleViolationInspectionTest extends LightGroovyTestCase {
                   """, Map.of(MULTILINE_KEY, UNDEFINED));
   }
 
+  @Test
   public void testNoComplaintOnMultilineStringWithMatchingSettings() {
     doTest("\n\"\"\"abc\ncde\"\"\"", Map.of(MULTILINE_KEY, TRIPLE_DOUBLE_QUOTED));
   }
 
+  @Test
   public void testInterpolatedString() {
     doTest("\"abc${1}de\"", "/abc${1}de/", Map.of(INTERPOLATION_KEY, SLASHY));
   }
 
+  @Test
   public void testNoComplaintOnInterpolatedStringWithDisabledSettings() {
     doTest("\"${1}\"", Map.of(INTERPOLATION_KEY, UNDEFINED));
   }
 
+  @Test
   public void testNoComplaintOnInterpolatedStringWithMatchingSettings() {
     doTest("\"\"\"${1}\"\"\"", Map.of(INTERPOLATION_KEY, TRIPLE_DOUBLE_QUOTED));
   }
 
+  @Test
   public void testEscapingMinimization() {
     doTest("\"ab\\\"c\"", "'ab\"c'", Map.of(PLAIN_KEY, DOUBLE_QUOTED, ESCAPE_KEY, SINGLE_QUOTED));
   }
 
+  @Test
   public void testEscapingMinimization2() {
     doTest("\"ab\\\"'c\"", "$/ab\"'c/$", Map.of(PLAIN_KEY, DOUBLE_QUOTED,
                                        ESCAPE_KEY, SINGLE_QUOTED));
   }
 
+  @Test
   public void testConsiderSlashesForSlashyStrings() {
     doTest("\"ab//\\\"c\"",
            "$/ab//\"c/$", Map.of(PLAIN_KEY, DOUBLE_QUOTED,
                                         ESCAPE_KEY, SLASHY));
   }
 
+  @Test
   public void testComplexMinimization() {
     doTest("'$ /$ $$$ //\\n'", Map.of(PLAIN_KEY, DOUBLE_QUOTED,
                                       ESCAPE_KEY, SLASHY));
   }
 
+  @Test
   public void testConversionToDollarSlashyString() {
     doTest("'abc$de'", "$/abc$$de/$", Map.of(PLAIN_KEY, DOLLAR_SLASHY_QUOTED,
                                              ESCAPE_KEY, UNDEFINED));
@@ -110,6 +127,7 @@ public class GrStringStyleViolationInspectionTest extends LightGroovyTestCase {
   }
 
   private void doTest(@NotNull String before, @Nullable String after, Map<String, InspectionStringQuotationKind> map) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     inspection.setPlainStringQuotation$intellij_groovy_psi(map.getOrDefault(PLAIN_KEY, SINGLE_QUOTED));
     inspection.setEscapedStringQuotation$intellij_groovy_psi(map.getOrDefault(ESCAPE_KEY, UNDEFINED));
     inspection.setInterpolatedStringQuotation$intellij_groovy_psi(map.getOrDefault(INTERPOLATION_KEY, UNDEFINED));

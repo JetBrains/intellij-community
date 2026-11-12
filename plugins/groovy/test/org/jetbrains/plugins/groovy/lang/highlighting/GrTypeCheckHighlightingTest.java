@@ -2,37 +2,52 @@
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
+import org.junit.jupiter.api.Test;
 
-public class GrTypeCheckHighlightingTest extends GrHighlightingTestBase {
-  @Override
-  public String getTestDataPath() { return super.getTestDataPath() + "typecheck/"; }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
 
-  @Override
-  public InspectionProfileEntry[] getCustomInspections() {
-    return new InspectionProfileEntry[]{new GroovyAssignabilityCheckInspection()};
-  }
+@TestApplication
+public class GrTypeCheckHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<GrHighlightingFixture> highlighting =
+    grHighlightingFixture(projectFixture, GrHighlightingFixture.getHighlightingTestDataPath() + "typecheck/", () -> new InspectionProfileEntry[]{new GroovyAssignabilityCheckInspection()});
 
+  @Test
   public void testTypeCheckClass() { doTest(); }
 
+  @Test
   public void testTypeCheckBool() { doTest(); }
 
+  @Test
   public void testTypeCheckChar() { doTest(); }
 
+  @Test
   public void testTypeCheckEnum() { doTest(); }
 
+  @Test
   public void testTypeCheckString() { doTest(); }
 
+  @Test
   public void testCastBuiltInTypes() { doTest(); }
 
-  public void doTest() {
-    addBigDecimal();
-    addBigInteger();
-    super.doTest();
+  private void doTest() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    LightGroovyFixtures.addBigDecimal(myFixture);
+    LightGroovyFixtures.addBigInteger(myFixture);
+    highlighting.get().doTest();
   }
 
+  @Test
   public void testBoxPrimitiveTypesInListLiterals() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          void method(List<Integer> ints) {}
                          void method2(Map<String, Integer> map) {}
 
@@ -46,16 +61,18 @@ public class GrTypeCheckHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testMapWithoutStringKeysAndValues() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def foo(int a) {}
                          def m = [(aa): (<error descr="<expression> expected, got ')'">)</error>]
                          foo<warning descr="'foo' in '_' cannot be applied to '(java.util.LinkedHashMap)'">(m)</warning>
                          """);
   }
 
+  @Test
   public void testAssignmentWhenGetterAndSetterHaveDifferentTypes() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface MavenArtifactRepository {
                            URI getUrl()
                            void setUrl(Object var1)
@@ -66,12 +83,14 @@ public class GrTypeCheckHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testParameterWithSingleCharacterStringInitializer() {
-    doTestHighlighting("@groovy.transform.CompileStatic def ff(char c = '\\n') {}");
+    highlighting.get().doTestHighlighting("@groovy.transform.CompileStatic def ff(char c = '\\n') {}");
   }
 
+  @Test
   public void testAmbiguousCallCompileStatic() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def ff(String s, Object o) {}
                          def ff(Object o, String s) {}
 
@@ -82,8 +101,9 @@ public class GrTypeCheckHighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testNoWarningForTypeParameterAssigning() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A<T> {
                          
                              T value

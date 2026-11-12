@@ -3,42 +3,47 @@ package org.jetbrains.plugins.groovy.fixes;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class GrCreateConstantFromJavaUsageTest extends GrHighlightingTestBase {
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "fixes/createConstantFromJava/" + getTestName(true) + "/";
-  }
+@TestApplication
+public class GrCreateConstantFromJavaUsageTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GROOVY_LATEST_REAL_JDK);
+  private final TestFixture<GrHighlightingFixture> highlighting = grHighlightingFixture(projectFixture);
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return GROOVY_LATEST_REAL_JDK;
+  @BeforeEach
+  void setUpTestDataPath() {
+    highlighting.get().getFixture().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "fixes/createConstantFromJava/" + highlighting.get().getFixture().getTestName(true) + "/");
   }
 
   private void doTest(String action, int actionsCount) {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     final String beforeGroovy = "Before.groovy";
     final String afterGroovy = "After.groovy";
     final String javaClass = "Area.java";
 
     myFixture.configureByFiles(javaClass, beforeGroovy);
 
-    myFixture.enableInspections(getCustomInspections());
+    myFixture.enableInspections(highlighting.get().getCustomInspections());
     List<IntentionAction> fixes = myFixture.filterAvailableIntentions(action);
-    Assert.assertEquals(fixes.size(), actionsCount);
+    assertEquals(fixes.size(), actionsCount);
     if (actionsCount == 0) return;
 
     myFixture.launchAction(fixes.get(0));
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
     myFixture.checkResultByFile(beforeGroovy, afterGroovy, true);
   }
 
@@ -46,14 +51,17 @@ public class GrCreateConstantFromJavaUsageTest extends GrHighlightingTestBase {
     doTest("Create constant", 1);
   }
 
+  @Test
   public void testInterface() {
     doTest();
   }
 
+  @Test
   public void testConstantInitializer() {
     doTest();
   }
 
+  @Test
   public void testUppercaseInSuperInterface() {
     doTest("Create constant field 'BAR' in 'I'", 0);
   }

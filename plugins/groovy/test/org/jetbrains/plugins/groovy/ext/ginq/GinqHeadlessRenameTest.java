@@ -7,41 +7,56 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.HeadlessRenameProcessor;
 import com.intellij.refactoring.rename.HeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.HeadlessRenameResult;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.refactoring.rename.GrInlineTransformationElementRenamer;
+import org.junit.jupiter.api.Test;
 
-public class GinqHeadlessRenameTest extends LightGroovyTestCase {
-  @Override
-  public @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GinqTestUtils.getProjectDescriptor();
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class GinqHeadlessRenameTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GinqTestUtils.getProjectDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @Test
   public void testAliasOfADataSourceIsRenamed() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.addFileToProject("query.groovy", """
       GQ {
         from n in [1, 2, 3]
         select n
       }
       """);
-    PsiElement alias = file.findElementAt(file.getText().indexOf("n in")).getParent();
-    assertInstanceOf(HeadlessRenamePsiElementProcessor.processorOf(alias), GrInlineTransformationElementRenamer.class);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PsiElement alias = file.findElementAt(file.getText().indexOf("n in")).getParent();
+      assertInstanceOf(GrInlineTransformationElementRenamer.class, HeadlessRenamePsiElementProcessor.processorOf(alias));
 
-    HeadlessRenameResult planned = HeadlessRenameProcessor.analyze(getProject(), alias, "m");
-    HeadlessRenameResult result = assertInstanceOf(planned, HeadlessRenameResult.Planned.class).getPlan().apply();
+      HeadlessRenameResult planned = HeadlessRenameProcessor.analyze(myFixture.getProject(), alias, "m");
+      HeadlessRenameResult result = assertInstanceOf(HeadlessRenameResult.Planned.class, planned).getPlan().apply();
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    assertEquals("""
-                   GQ {
-                     from m in [1, 2, 3]
-                     select m
-                   }
-                   """, file.getText());
+      assertInstanceOf(HeadlessRenameResult.Applied.class, result);
+      assertEquals("""
+                     GQ {
+                       from m in [1, 2, 3]
+                       select m
+                     }
+                     """, file.getText());
+    });
   }
 
   /** The macro GQ has another name, so it overrides no usage of the renamed field. */
+  @Test
   public void testMacroIsNoCollisionOfAFieldRename() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Counter.groovy", """
       class Counter {
         int hits
@@ -54,13 +69,15 @@ public class GinqHeadlessRenameTest extends LightGroovyTestCase {
         }
       }
       """);
-    PsiField hits = myFixture.findClass("Counter").findFieldByName("hits", false);
-    assertNotNull("no field hits in the fixture", hits);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PsiField hits = myFixture.findClass("Counter").findFieldByName("hits", false);
+      assertNotNull(hits, "no field hits in the fixture");
 
-    HeadlessRenameResult planned = HeadlessRenameProcessor.analyze(getProject(), hits, "count");
-    HeadlessRenameResult result = assertInstanceOf(planned, HeadlessRenameResult.Planned.class).getPlan().apply();
+      HeadlessRenameResult planned = HeadlessRenameProcessor.analyze(myFixture.getProject(), hits, "count");
+      HeadlessRenameResult result = assertInstanceOf(HeadlessRenameResult.Planned.class, planned).getPlan().apply();
 
-    assertInstanceOf(result, HeadlessRenameResult.Applied.class);
-    assertTrue("the usage kept the old name: " + reader.getText(), reader.getText().contains("counter.getCount()"));
+      assertInstanceOf(HeadlessRenameResult.Applied.class, result);
+      assertTrue(reader.getText().contains("counter.getCount()"), "the usage kept the old name: " + reader.getText());
+    });
   }
 }

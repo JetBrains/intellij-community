@@ -1,22 +1,27 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.singleton;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
-import org.junit.Assert;
+import org.junit.jupiter.api.Test;
 
-public class SingletonTransformationSupportTest extends LightGroovyTestCase {
-  @Override
-  @NotNull
-  public final LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
+@TestApplication
+public class SingletonTransformationSupportTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @Test
   public void testHighlighting() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     GroovyFileImpl file = (GroovyFileImpl) myFixture.addFileToProject("singletons.groovy", """
         @Singleton
         class Simple {}
@@ -118,6 +123,6 @@ public class SingletonTransformationSupportTest extends LightGroovyTestCase {
         }
         """);
     myFixture.checkHighlighting();
-    Assert.assertFalse(file.isContentsLoaded());
+    assertFalse(file.isContentsLoaded());
   }
 }

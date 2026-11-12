@@ -1,27 +1,33 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.util.ThrowingTransformation;
-import org.junit.Assert;
+import org.junit.jupiter.api.Test;
 
-public class ResolveFieldVsAccessorTest extends GroovyResolveTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveFixtureKt.groovyResolveFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
+@TestApplication
+public class ResolveFieldVsAccessorTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<GroovyResolveFixture> resolve = groovyResolveFixture(projectFixture);
 
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
+  @Test
   public void testImplicitThis() {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
-    resolveByText("""
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
+    resolve.get().resolveByText("""
                     class A {
                       def prop = "field"
                       def getProp() { "getter" }
@@ -32,9 +38,11 @@ public class ResolveFieldVsAccessorTest extends GroovyResolveTestCase {
                     """, GrField.class);
   }
 
+  @Test
   public void testExplicitThis() {
-    ThrowingTransformation.disableTransformations(getTestRootDisposable());
-    resolveByText("""
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
+    ThrowingTransformation.disableTransformations(myFixture.getTestRootDisposable());
+    resolve.get().resolveByText("""
                     class A {
                       def prop = "field"
                       def getProp() { "getter" }
@@ -46,8 +54,9 @@ public class ResolveFieldVsAccessorTest extends GroovyResolveTestCase {
                     """, GrField.class);
   }
 
+  @Test
   public void testQualified() {
-    GrMethod method = resolveByText("""
+    GrMethod method = resolve.get().resolveByText("""
                                       class A {
                                         def prop = "field"
                                         def getProp() { "getter" }
@@ -57,11 +66,14 @@ public class ResolveFieldVsAccessorTest extends GroovyResolveTestCase {
                                         }
                                       }
                                       """, GrMethod.class);
-    Assert.assertEquals("getProp", method.getName());
+    ReadAction.runBlocking(() -> {
+      assertEquals("getProp", method.getName());
+    });
   }
 
+  @Test
   public void testInnerClass() {
-    resolveByText("""
+    resolve.get().resolveByText("""
                     class A {
                       def prop = "field"
                       def getProp() { "getter" }
@@ -77,8 +89,9 @@ public class ResolveFieldVsAccessorTest extends GroovyResolveTestCase {
                     """, GrMethod.class);
   }
 
+  @Test
   public void testInnerClassExplicitThis() {
-    resolveByText("""
+    resolve.get().resolveByText("""
                     class A {
                       def prop = "field"
                       def getProp() { "getter" }
@@ -92,8 +105,9 @@ public class ResolveFieldVsAccessorTest extends GroovyResolveTestCase {
                     """, GrMethod.class);
   }
 
+  @Test
   public void testInnerVsOuter() {
-    GrMethod method = resolveByText(
+    GrMethod method = resolve.get().resolveByText(
       """
         class A {
           def prop = "field"
@@ -108,11 +122,14 @@ public class ResolveFieldVsAccessorTest extends GroovyResolveTestCase {
           }
         }
         """, GrMethod.class);
-    Assert.assertTrue(method.getContainingClass() instanceof GrAnonymousClassDefinition);
+    ReadAction.runBlocking(() -> {
+      assertTrue(method.getContainingClass() instanceof GrAnonymousClassDefinition);
+    });
   }
 
+  @Test
   public void testImplicitSuper() {
-    resolveByText("""
+    resolve.get().resolveByText("""
                     class A {
                       def prop = "field"
                       def getProp() { "getter" }
@@ -126,8 +143,9 @@ public class ResolveFieldVsAccessorTest extends GroovyResolveTestCase {
                     """, GrMethod.class);
   }
 
+  @Test
   public void testExplicitSuper() {
-    resolveByText("""
+    resolve.get().resolveByText("""
                     class A {
                       def prop = "field"
                       def getProp() { "getter" }

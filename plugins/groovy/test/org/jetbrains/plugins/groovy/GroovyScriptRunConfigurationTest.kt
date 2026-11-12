@@ -2,16 +2,22 @@
 package org.jetbrains.plugins.groovy
 
 import com.intellij.execution.util.ScriptFileUtil
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.plugins.groovy.bundled.bundledGroovyFile
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-internal class GroovyScriptRunConfigurationTest : LightGroovyTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = DESCRIPTOR
+@TestApplication
+internal class GroovyScriptRunConfigurationTest {
+  private val myFixture by lightGroovyFixture(projectFixture)
 
+  @Test
   fun testConfigureCommandLineUsesBundledGroovyWithoutGroovyModule() {
     val file = myFixture.configureByText("script.groovy", "println 'hi'")
     val configuration = GroovyScriptRunConfiguration(
@@ -33,5 +39,6 @@ internal class GroovyScriptRunConfigurationTest : LightGroovyTestCase() {
 
   companion object {
     private val DESCRIPTOR = DefaultLightProjectDescriptor()
+    private val projectFixture = lightJavaProjectFixture(DESCRIPTOR)
   }
 }

@@ -5,16 +5,33 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.Iterator;
 
-public class GrAliasedImportInheritorsTest extends LightGroovyTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class GrAliasedImportInheritorsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @Test
   public void test_aliased_import() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass iface = myFixture.addClass("""
                                           package pckg;
                                           public interface MyInterface {}
@@ -33,7 +50,9 @@ public class GrAliasedImportInheritorsTest extends LightGroovyTestCase {
     assertEquals(4, inheritors.size());
   }
 
+  @Test
   public void test_aliased_import_with_generics() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     final PsiClass iface = myFixture.addClass("""
                                                 package pckg;
                                                 public interface MyInterface<T> {}
@@ -53,15 +72,19 @@ public class GrAliasedImportInheritorsTest extends LightGroovyTestCase {
     Collection<PsiClass> inheritors = ReadAction.computeBlocking(() -> DirectClassInheritorsSearch.search(iface).findAll());
     assertEquals(4, inheritors.size());
     for (PsiClass inheritor : inheritors) {
-      PsiClassType type = ContainerUtil.find(((GrTypeDefinition)inheritor).getSuperTypes(false), t -> t.resolve() == iface);
-      assertNotNull(type);
-      PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
-      assertEquals(iface, resolveResult.getElement());
-      assertNotNull(resolveResult.getSubstitutor().substitute(iface.getTypeParameters()[0]));
+      ReadAction.runBlocking(() -> {
+        PsiClassType type = ContainerUtil.find(((GrTypeDefinition)inheritor).getSuperTypes(false), t -> t.resolve() == iface);
+        assertNotNull(type);
+        PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
+        assertEquals(iface, resolveResult.getElement());
+        assertNotNull(resolveResult.getSubstitutor().substitute(iface.getTypeParameters()[0]));
+      });
     }
   }
 
+  @Test
   public void test_aliased_import_fqn() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
                          package foo;
                          public interface Foo{}
@@ -90,7 +113,9 @@ public class GrAliasedImportInheritorsTest extends LightGroovyTestCase {
     assertTrue(clazz instanceof GrAnonymousClassDefinition);
   }
 
+  @Test
   public void test_aliased_import_redefined_in_same_package() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass iface = myFixture.addClass("""
                                           package foo;
                                           public interface Foo {}
@@ -116,7 +141,9 @@ public class GrAliasedImportInheritorsTest extends LightGroovyTestCase {
     assertNotNull(iterator.next());
   }
 
+  @Test
   public void test_aliased_import_redefined_in_same_file() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass iface = myFixture.addClass("""
                                           package foo;
                                           public interface Foo {}

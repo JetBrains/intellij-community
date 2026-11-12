@@ -1,25 +1,30 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
 
 /**
  * @author Max Medvedev
  */
-public class GrAssignabilityClosureToSamTest extends GrHighlightingTestBase {
-  @Override
-  public InspectionProfileEntry[] getCustomInspections() {
-    return new GroovyAssignabilityCheckInspection[]{new GroovyAssignabilityCheckInspection()};
-  }
+@TestApplication
+public class GrAssignabilityClosureToSamTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_2);
+  private final TestFixture<GrHighlightingFixture> highlighting =
+    grHighlightingFixture(projectFixture, GrHighlightingFixture.getHighlightingTestDataPath(), () -> new GroovyAssignabilityCheckInspection[]{new GroovyAssignabilityCheckInspection()});
 
+  @Test
   public void testAssignability() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface A {
                            def foo()
                          }
@@ -32,11 +37,12 @@ public class GrAssignabilityClosureToSamTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAmbiguous() {
     boolean registryValue = Registry.is(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE);
     Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(true);
     try {
-      doTestHighlighting("""
+      highlighting.get().doTestHighlighting("""
                            interface SAM1 { def foo(String s)}
                            interface SAM2 { def bar(Integer i)}
 
@@ -53,8 +59,9 @@ public class GrAssignabilityClosureToSamTest extends GrHighlightingTestBase {
     }
   }
 
+  @Test
   public void testGenerics() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface A<T> {
                            def foo(T t)
                          }
@@ -69,8 +76,9 @@ public class GrAssignabilityClosureToSamTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testGenerics2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface A<T> {
                            def foo(T t)
                          }
@@ -81,10 +89,5 @@ public class GrAssignabilityClosureToSamTest extends GrHighlightingTestBase {
                          B b2 = {String s -> print 1}
                          B b3 = {int s -> print 1}
                          """);
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_2_2;
   }
 }

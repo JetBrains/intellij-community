@@ -1,11 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GrImportContributor;
@@ -14,29 +15,25 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.RegularImport;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.StarImport;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticImport;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticStarImport;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class GrImportContributorTest extends LightGroovyTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
 
-  @NotNull
-  private LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
+@TestApplication
+public class GrImportContributorTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
 
-  @Override
-  public @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  public void setProjectDescriptor(@NotNull LightProjectDescriptor projectDescriptor) {
-    this.projectDescriptor = projectDescriptor;
-  }
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    getFixture().enableInspections(GrUnresolvedAccessInspection.class);
-    getFixture().addClass(
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.enableInspections(GrUnresolvedAccessInspection.class);
+    myFixture.addClass(
       """
         package foo.bar;
         public class MyClass {
@@ -46,66 +43,71 @@ public class GrImportContributorTest extends LightGroovyTestCase {
         }""");
   }
 
+  @Test
   public void testRegularImport() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     GrImportContributor.EP_NAME.getPoint().registerExtension(new GrImportContributor() {
       @Override
       public @NotNull List<GroovyImport> getFileImports(@NotNull GroovyFile file) {
         return Arrays.asList(new RegularImport("foo.bar.MyClass"));
       }
     }, myFixture.getTestRootDisposable());
-    JavaCodeInsightTestFixture fixture = getFixture();
-    fixture.configureByText("a.groovy", "new MyClass()");
-    fixture.checkHighlighting();
+    myFixture.configureByText("a.groovy", "new MyClass()");
+    myFixture.checkHighlighting();
   }
 
+  @Test
   public void testStaticImportMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     GrImportContributor.EP_NAME.getPoint().registerExtension(new GrImportContributor() {
       @Override
       public @NotNull List<GroovyImport> getFileImports(@NotNull GroovyFile file) {
         return Arrays.asList(new StaticImport("foo.bar.MyClass", "foo"));
       }
     }, myFixture.getTestRootDisposable());
-    JavaCodeInsightTestFixture fixture = getFixture();
-    fixture.configureByText("a.groovy", "foo()");
-    fixture.checkHighlighting();
+    myFixture.configureByText("a.groovy", "foo()");
+    myFixture.checkHighlighting();
   }
 
+  @Test
   public void testStaticImportField() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     GrImportContributor.EP_NAME.getPoint().registerExtension(new GrImportContributor() {
       @Override
       public @NotNull List<GroovyImport> getFileImports(@NotNull GroovyFile file) {
         return Arrays.asList(new StaticImport("foo.bar.MyClass", "BAR"));
       }
     }, myFixture.getTestRootDisposable());
-    JavaCodeInsightTestFixture fixture = getFixture();
-    fixture.configureByText("a.groovy", "println BAR");
-    fixture.checkHighlighting();
+    myFixture.configureByText("a.groovy", "println BAR");
+    myFixture.checkHighlighting();
   }
 
+  @Test
   public void testStarImport() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     GrImportContributor.EP_NAME.getPoint().registerExtension(new GrImportContributor() {
       @Override
       public @NotNull List<GroovyImport> getFileImports(@NotNull GroovyFile file) {
         return Arrays.asList(new StarImport("foo.bar"));
       }
     }, myFixture.getTestRootDisposable());
-    JavaCodeInsightTestFixture fixture = getFixture();
-    fixture.configureByText("a.groovy", "new MyClass()");
-    fixture.checkHighlighting();
+    myFixture.configureByText("a.groovy", "new MyClass()");
+    myFixture.checkHighlighting();
   }
 
+  @Test
   public void testStaticStarImport() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     GrImportContributor.EP_NAME.getPoint().registerExtension(new GrImportContributor() {
       @Override
       public @NotNull List<GroovyImport> getFileImports(@NotNull GroovyFile file) {
         return Arrays.asList(new StaticStarImport("foo.bar.MyClass"));
       }
     }, myFixture.getTestRootDisposable());
-    JavaCodeInsightTestFixture fixture = getFixture();
-    fixture.configureByText("a.groovy", """
+    myFixture.configureByText("a.groovy", """
       println foo()
       println <warning>hello</warning>()
       println BAR""");
-    fixture.checkHighlighting();
+    myFixture.checkHighlighting();
   }
 }

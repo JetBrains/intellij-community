@@ -2,35 +2,55 @@
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
+import org.junit.jupiter.api.Test;
 
-public class GrClosureParamsTest extends GrHighlightingTestBase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
+
+@TestApplication
+public class GrClosureParamsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<GrHighlightingFixture> highlighting =
+    grHighlightingFixture(projectFixture, GrHighlightingFixture.getHighlightingTestDataPath() + "closureParams/");
+
+  @Test
   public void testFromStringWithNonFqnOptionsNoError() {
-    addBigInteger();
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    LightGroovyFixtures.addBigInteger(myFixture);
     doTest("fromString/nonFqnOptions");
   }
 
+  @Test
   public void testFromStringDoNotResolveUsageContext() {
     doTest("fromString/doNotResolveUsageContext", "com/foo/bar/test.groovy");
   }
 
+  @Test
   public void testFromStringDoNotResolveUsageImportContext() {
     doTest("fromString/doNotResolveUsageImportContext", "com/foo/bar/test.groovy");
   }
 
+  @Test
   public void testFromStringDoNotResolveMethodContext() {
     doTest("fromString/doNotResolveMethodContext");
   }
 
+  @Test
   public void testFromStringResolveDefaultPackage() {
     doTest("fromString/resolveDefaultPackage");
   }
 
+  @Test
   public void testFromStringResolveDefaultPackageGeneric() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("""
                           package com.foo.baz;
 
@@ -55,7 +75,9 @@ public class GrClosureParamsTest extends GrHighlightingTestBase {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testCastArgument() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("a.groovy", """
       import groovy.transform.CompileStatic
 
@@ -70,7 +92,9 @@ public class GrClosureParamsTest extends GrHighlightingTestBase {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testCastArgumentError() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("a.groovy", """
       import groovy.transform.CompileStatic
 
@@ -85,7 +109,9 @@ public class GrClosureParamsTest extends GrHighlightingTestBase {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testSeveralSignatures() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.enableInspections(GroovyAssignabilityCheckInspection.class);
     myFixture.configureByText("a.groovy", """
       import groovy.transform.CompileStatic
@@ -106,7 +132,9 @@ public class GrClosureParamsTest extends GrHighlightingTestBase {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testCastSeveralArguments() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("a.groovy", """
       import groovy.transform.CompileStatic
       import groovy.transform.stc.ClosureParams
@@ -130,6 +158,7 @@ public class GrClosureParamsTest extends GrHighlightingTestBase {
   }
 
   private void doTest(String dir, String path) {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.enableInspections(new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection());
     myFixture.copyDirectoryToProject(dir, ".");
     VirtualFile file = myFixture.findFileInTempDir(path);
@@ -140,15 +169,5 @@ public class GrClosureParamsTest extends GrHighlightingTestBase {
 
   private void doTest(String dir) {
     doTest(dir, "test.groovy");
-  }
-
-  @Override
-  public final String getTestDataPath() {
-    return super.getTestDataPath() + "closureParams/";
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
   }
 }

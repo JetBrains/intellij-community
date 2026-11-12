@@ -4,70 +4,92 @@ package org.jetbrains.plugins.groovy.lang.highlighting;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import junit.framework.TestCase;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection;
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Max Medvedev
  */
-public class GrUnusedDefTest extends GrHighlightingTestBase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
-  }
+@TestApplication
+public class GrUnusedDefTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<GrHighlightingFixture> highlighting =
+    grHighlightingFixture(projectFixture, GrHighlightingFixture.getHighlightingTestDataPath(), () -> new InspectionProfileEntry[]{new UnusedDefInspection(), new GrUnusedIncDecInspection(), new GroovyUnusedDeclarationInspection(),
+      new UnusedDeclarationInspectionBase(true)});
 
-  @Override
-  public InspectionProfileEntry[] getCustomInspections() {
-    return new InspectionProfileEntry[]{new UnusedDefInspection(), new GrUnusedIncDecInspection(), new GroovyUnusedDeclarationInspection(),
-      new UnusedDeclarationInspectionBase(true)};
-  }
+  @Test
+  public void testUnusedVariable() { highlighting.get().doTest(); }
 
-  public void testUnusedVariable() { doTest(); }
+  @Test
+  public void testDefinitionUsedInClosure() { highlighting.get().doTest(); }
 
-  public void testDefinitionUsedInClosure() { doTest(); }
+  @Test
+  public void testDefinitionUsedInClosure2() { highlighting.get().doTest(); }
 
-  public void testDefinitionUsedInClosure2() { doTest(); }
+  @Test
+  public void testDefinitionUsedInSwitchCase() { highlighting.get().doTest(); }
 
-  public void testDefinitionUsedInSwitchCase() { doTest(); }
+  @Test
+  public void testUnusedDefinitionForMethodMissing() { highlighting.get().doTest(); }
 
-  public void testUnusedDefinitionForMethodMissing() { doTest(); }
+  @Test
+  public void testPrefixIncrementCfa() { highlighting.get().doTest(); }
 
-  public void testPrefixIncrementCfa() { doTest(); }
+  @Test
+  public void testIfIncrementElseReturn() { highlighting.get().doTest(); }
 
-  public void testIfIncrementElseReturn() { doTest(); }
+  @Test
+  public void testSwitchControlFlow() { highlighting.get().doTest(); }
 
-  public void testSwitchControlFlow() { doTest(); }
+  @Test
+  public void testUsageInInjection() { highlighting.get().doTest(); }
 
-  public void testUsageInInjection() { doTest(); }
+  @Test
+  public void testUnusedDefsForArgs() { highlighting.get().doTest(); }
 
-  public void testUnusedDefsForArgs() { doTest(); }
+  @Test
+  public void testUsedDefBeforeTry1() { highlighting.get().doTest(); }
 
-  public void testUsedDefBeforeTry1() { doTest(); }
+  @Test
+  public void testUsedDefBeforeTry2() { highlighting.get().doTest(); }
 
-  public void testUsedDefBeforeTry2() { doTest(); }
+  @Test
+  public void testUnusedInc() { highlighting.get().doTest(); }
 
-  public void testUnusedInc() { doTest(); }
+  @Test
+  public void testUsedInCatch() { highlighting.get().doTest(); }
 
-  public void testUsedInCatch() { doTest(); }
+  @Test
+  public void testGloballyUnusedSymbols() { highlighting.get().doTest(); }
 
-  public void testGloballyUnusedSymbols() { doTest(); }
+  @Test
+  public void testUnusedTypeDefinitions() { highlighting.get().doTest(); }
 
-  public void testUnusedTypeDefinitions() { doTest(); }
-
+  @Test
   public void testGloballyUnusedInnerMethods() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.addClass("package junit.framework; public class TestCase {}");
-    doTest();
+    highlighting.get().doTest();
   }
 
-  public void testUnusedParameter() { doTest(); }
+  @Test
+  public void testUnusedParameter() { highlighting.get().doTest(); }
 
+  @Test
   public void testSuppressUnusedMethod() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class <warning descr="Class Foo is unused">Foo</warning> {
                              @SuppressWarnings("GroovyUnusedDeclaration")
                              static def foo(int x) {
@@ -79,8 +101,9 @@ public class GrUnusedDefTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testUsedVar() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                             def <warning descr="Method foo is unused">foo</warning>(xxx) {
                               if ((xxx = 5) || xxx) {
                                 <warning descr="Assignment is not used">xxx</warning>=4
@@ -97,8 +120,9 @@ public class GrUnusedDefTest extends GrHighlightingTestBase {
                          \s""");
   }
 
+  @Test
   public void testFallthroughInSwitch() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def <warning descr="Method f is unused">f</warning>(String foo, int mode) {
                              switch (mode) {
                                  case 0: foo = foo.reverse()
@@ -115,26 +139,30 @@ public class GrUnusedDefTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testUnusedUnassignedVar() {
-    doTestHighlighting("def <warning descr=\"Variable is not used\">abc</warning>");
+    highlighting.get().doTestHighlighting("def <warning descr=\"Variable is not used\">abc</warning>");
   }
 
+  @Test
   public void testMethodReferencedViaIncapplicableCallIsUsed() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          static boolean fsdasdfsgsdsfadfgs(a, b) { a == b }
                          def bar() { fsdasdfsgsdsfadfgs("s") }
                          bar()
                          """);
   }
 
+  @Test
   public void testDelegate() {
-    getFixture().addClass("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    myFixture.addClass("""
                              package groovy.lang;
                              @Target({ElementType.FIELD, ElementType.METHOD})
                              public @interface Delegate {}
                              """);
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            @Delegate
                            Integer i
@@ -146,33 +174,39 @@ public class GrUnusedDefTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testUnusedSuppressesWarning() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @SuppressWarnings("unused")
                          class Aaaa {}\s
                          """);
   }
 
+  @Test
   public void testSuppressWithUnused_() {
-    doTestHighlighting("class <caret><warning descr=\"Class Aaaa is unused\">Aaaa</warning> {}");
-    IntentionAction action = getFixture().findSingleIntention("Suppress for class");
-    getFixture().launchAction(action);
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    highlighting.get().doTestHighlighting("class <caret><warning descr=\"Class Aaaa is unused\">Aaaa</warning> {}");
+    IntentionAction action = myFixture.findSingleIntention("Suppress for class");
+    myFixture.launchAction(action);
 
-    getFixture().checkResult("""
+    myFixture.checkResult("""
                                @SuppressWarnings('unused')
                                class <caret>Aaaa {}""");
   }
 
+  @Test
   public void testSafeDeletePreviewWithSingleClassInFile() {
-    doTestHighlighting("class <caret><warning descr=\"Class Aaaa is unused\">Aaaa</warning> {}");
-    IntentionAction action = getFixture().findSingleIntention("Safe delete 'Aaaa'");
-    String actualPreview = getFixture().getIntentionPreviewText(action);
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    highlighting.get().doTestHighlighting("class <caret><warning descr=\"Class Aaaa is unused\">Aaaa</warning> {}");
+    IntentionAction action = myFixture.findSingleIntention("Safe delete 'Aaaa'");
+    String actualPreview = myFixture.getIntentionPreviewText(action);
 
-    TestCase.assertEquals("", actualPreview);
+    assertEquals("", actualPreview);
   }
 
+  @Test
   public void testUnusedDefForFieldsWithUnderscores() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class B {
                              int <warning descr="Property _ is unused">_</warning>
                          }

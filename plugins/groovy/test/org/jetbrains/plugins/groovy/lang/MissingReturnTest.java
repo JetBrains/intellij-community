@@ -1,54 +1,82 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang;
 
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
-public class MissingReturnTest extends LightGroovyTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "highlighting/missingReturn";
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
 
+@TestApplication
+public class MissingReturnTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "highlighting/missingReturn");
+
+  @Test
   public void testMissingReturnWithLastLoop() { doTest(); }
 
+  @Test
   public void testMissingReturnWithUnknownCall() { doTest(); }
 
+  @Test
   public void testMissingReturnWithIf() { doTest(); }
 
+  @Test
   public void testMissingReturnWithAssertion() { doTest(); }
 
+  @Test
   public void testMissingReturnThrowException() { doTest(); }
 
+  @Test
   public void testMissingReturnTryCatch() { doTest(); }
 
+  @Test
   public void testMissingReturnLastNull() { doTest(); }
 
+  @Test
   public void testMissingReturnImplicitReturns() { doTest(); }
 
+  @Test
   public void testMissingReturnOvertReturnType() { doTest(); }
 
+  @Test
   public void testMissingReturnFromClosure() { doTest(); }
 
+  @Test
   public void testReturnsWithoutValue() { doTest(); }
 
+  @Test
   public void testEndlessLoop() { doTest(); }
 
+  @Test
   public void testEndlessLoop2() { doTest(); }
 
+  @Test
   public void testExceptionWithFinally() { doTest(); }
 
+  @Test
   public void testOnlyAssert() { doTest(); }
 
+  @Test
   public void testImplicitReturnNull() { doTest(); }
 
+  @Test
   public void testMissingReturnInClosure() { doTest(); }
 
+  @Test
   public void testFinally() { doTest(); }
 
+  @Test
   public void testClosureWithExplicitExpectedType() { doTest(); }
 
+  @Test
   public void testAssert() {
     doTextText("""
                  Integer.with {
@@ -66,6 +94,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testInterruptFlowInElseBranch() {
     doTextText("""
                  //correct
@@ -93,6 +122,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testSwitch() {
     doTextText("""
                  //correct
@@ -115,6 +145,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testSwitchWithIf() {
     doTextText("""
                  //correct
@@ -149,6 +180,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testConditional() {
     doTextText("""
                  //correct
@@ -167,6 +199,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testReturnWithoutValue0() {
     doTextText("""
                  int foo() {
@@ -179,6 +212,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testReturnWithoutValue1() {
     doTextText("""
                  int foo() {
@@ -187,6 +221,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testReturnWithoutValue2() {
     doTextText("""
                  void foo() {
@@ -199,6 +234,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testReturnWithoutValue3() {
     doTextText("""
                  void foo() {
@@ -207,6 +243,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testSingleThrow1() {
     doTextText("""
                  int foo() {
@@ -215,6 +252,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testSingleThrow2() {
     doTextText("""
                  void foo() {
@@ -223,6 +261,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testSingleThrow3() {
     doTextText("""
                  def foo() {
@@ -231,6 +270,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testThrowFromIf1() {
     doTextText("""
                  int foo() {
@@ -241,6 +281,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testThrowFromIf2() {
     doTextText("""
                  void foo() {
@@ -251,6 +292,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testThrowFromIf3() {
     doTextText("""
                  def foo() {
@@ -261,6 +303,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testThrowFromIf4() {
     doTextText("""
                  int foo() {
@@ -274,6 +317,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testThrowFromIf5() {
     doTextText("""
                  void foo() {
@@ -287,6 +331,7 @@ public class MissingReturnTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void testThrowFromIf6() {
     doTextText("""
                  def foo() {
@@ -301,13 +346,17 @@ public class MissingReturnTest extends LightGroovyTestCase {
   }
 
   public void doTextText(String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("___.groovy", text);
-    myFixture.enableInspections(MissingReturnInspection.class);
-    myFixture.testHighlighting(true, false, false);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.enableInspections(MissingReturnInspection.class);
+      myFixture.testHighlighting(true, false, false);
+    });
   }
 
   private void doTest() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new MissingReturnInspection());
-    myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");
+    myFixture.testHighlighting(true, false, false, myFixture.getTestName(false) + ".groovy");
   }
 }

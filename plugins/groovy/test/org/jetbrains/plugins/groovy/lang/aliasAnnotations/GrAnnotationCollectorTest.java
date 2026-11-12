@@ -1,20 +1,38 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.aliasAnnotations;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import junit.framework.TestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Max Medvedev
  */
-public class GrAnnotationCollectorTest extends LightGroovyTestCase {
+@TestApplication
+public class GrAnnotationCollectorTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @Test
   public void testAnnotatedAlias() {
     doTest("""
              import groovy.transform.*
@@ -33,6 +51,7 @@ public class GrAnnotationCollectorTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testAliasWithProperties() {
     doTest("""
              import groovy.transform.*
@@ -52,6 +71,7 @@ public class GrAnnotationCollectorTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testMixedProperties() {
     doTest("""
              import groovy.transform.*
@@ -71,6 +91,7 @@ public class GrAnnotationCollectorTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testAliasDeclarationWithoutParams() {
     doTest("""
              @interface X {}
@@ -89,14 +110,17 @@ public class GrAnnotationCollectorTest extends LightGroovyTestCase {
   }
 
   public void doTest(@NotNull String text, @NotNull String expectedAnnotations) {
-    addAnnotationCollector();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    LightGroovyFixtures.addAnnotationCollector(myFixture);
     myFixture.configureByText("_a.groovy", text);
-    final PsiElement atCaret = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
-    final GrTypeDefinition clazz = PsiTreeUtil.getParentOfType(atCaret, GrTypeDefinition.class);
-    TestCase.assertNotNull(clazz);
+    ReadAction.runBlocking(() -> {
+      final PsiElement atCaret = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+      final GrTypeDefinition clazz = PsiTreeUtil.getParentOfType(atCaret, GrTypeDefinition.class);
+      assertNotNull(clazz);
 
-    final String actual = getActualAnnotations(clazz);
-    TestCase.assertEquals(expectedAnnotations, actual);
+      final String actual = getActualAnnotations(clazz);
+      assertEquals(expectedAnnotations, actual);
+    });
   }
 
   @NotNull
@@ -122,8 +146,10 @@ public class GrAnnotationCollectorTest extends LightGroovyTestCase {
     return buffer.toString();
   }
 
+  @Test
   public void test_recursive_alias() {
-    getFixture().configureByText("_.groovy", """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("_.groovy", """
       @Alias
       @groovy.transform.AnnotationCollector
       @interface Alias {}
@@ -131,7 +157,9 @@ public class GrAnnotationCollectorTest extends LightGroovyTestCase {
       @Alias
       class <caret>Usage {}
       """);
-    getFixture().checkHighlighting();
-    assertEmpty(getActualAnnotations((GrTypeDefinition)getFixture().findClass("Usage")));
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.checkHighlighting();
+      assertThat(getActualAnnotations((GrTypeDefinition)myFixture.findClass("Usage"))).isNullOrEmpty();
+    });
   }
 }

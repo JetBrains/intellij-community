@@ -1,23 +1,37 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.actions
 
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.lightGroovyFixture
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.junit.jupiter.api.Test
 
-class GrRenameActionTest : LightGroovyTestCase() {
-  override fun getTestDataPath(): @NonNls String {
-    return TestUtils.getAbsoluteTestDataPath() + "rename"
+@TestApplication
+class GrRenameActionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1)
   }
 
-  fun testPatternVariableSimple() = doTest("newB")
+  private val myFixture by lightGroovyFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "rename")
 
-  fun testPatternVariableAfter() = doTest("newB")
+  @Test
+  fun testPatternVariableSimple(): Unit = doTest("newB")
 
-  private fun doTest(newName: String) {
-    val testName = getTestName(true)
+  @Test
+  fun testPatternVariableAfter(): Unit = doTest("newB")
+
+  private fun doTest(newName: String): Unit = timeoutRunBlocking {
+    val testName = myFixture.getTestName(true)
     myFixture.configureByFile("$testName/before.groovy")
-    myFixture.renameElementAtCaret(newName)
+    withContext(Dispatchers.EDT) {
+      myFixture.renameElementAtCaret(newName)
+    }
     myFixture.checkResultByFile("$testName/after.groovy")
   }
 }

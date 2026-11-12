@@ -2,32 +2,44 @@
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
 
 /**
  * @author Max Medvedev
  */
-public class GrUnassignedVariableAccessTest extends GrHighlightingTestBase {
-  @Override
-  public InspectionProfileEntry[] getCustomInspections() {
-    return new InspectionProfileEntry[]{new UnassignedVariableAccessInspection()};
-  }
+@TestApplication
+public class GrUnassignedVariableAccessTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_5_0);
+  private final TestFixture<GrHighlightingFixture> highlighting =
+    grHighlightingFixture(projectFixture, GrHighlightingFixture.getHighlightingTestDataPath(), () -> new InspectionProfileEntry[]{new UnassignedVariableAccessInspection()});
 
-  public void testUnassigned1() { doTest(); }
+  @Test
+  public void testUnassigned1() { highlighting.get().doTest(); }
 
-  public void testUnassigned2() { doTest(); }
+  @Test
+  public void testUnassigned2() { highlighting.get().doTest(); }
 
-  public void testUnassigned3() { doTest(); }
+  @Test
+  public void testUnassigned3() { highlighting.get().doTest(); }
 
-  public void testUnassigned4() { doTest(); }
+  @Test
+  public void testUnassigned4() { highlighting.get().doTest(); }
 
-  public void testUnassignedTryFinally() { doTest(); }
+  @Test
+  public void testUnassignedTryFinally() { highlighting.get().doTest(); }
 
+  @Test
   public void testVarIsNotInitialized() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def xxx() {
                            def category = null
                            for (def update : updateIds) {
@@ -43,8 +55,9 @@ public class GrUnassignedVariableAccessTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testSimple() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def bar() {
                            def p
                            print <warning descr="Variable 'p' might not be assigned">p</warning>
@@ -52,8 +65,9 @@ public class GrUnassignedVariableAccessTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAssignedAfterReadInLoop() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def xxx() {
                            def p
                            for (def update : updateIds) {
@@ -64,7 +78,9 @@ public class GrUnassignedVariableAccessTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testUnassignedAccessInCheck() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     UnassignedVariableAccessInspection inspection = new UnassignedVariableAccessInspection();
     inspection.myIgnoreBooleanExpressions = true;
 
@@ -82,39 +98,42 @@ public class GrUnassignedVariableAccessTest extends GrHighlightingTestBase {
     myFixture.testHighlighting(true, false, true);
   }
 
+  @Test
   public void testUnassignedAccessInBooleanExpressionsEnabled() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     UnassignedVariableAccessInspection inspection = new UnassignedVariableAccessInspection();
     inspection.myIgnoreBooleanExpressions = false;
     myFixture.enableInspections(inspection);
 
-    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
 
     myFixture.testHighlighting(true, false, true);
   }
 
-
+  @Test
   public void testUnassignedAccessInBooleanExpressionsDisabled() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     UnassignedVariableAccessInspection inspection = new UnassignedVariableAccessInspection();
     inspection.myIgnoreBooleanExpressions = true;
     myFixture.enableInspections(inspection);
 
-    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
 
     myFixture.testHighlighting(true, false, true);
   }
 
-  public void testVarNotAssigned() { doTest(); }
+  @Test
+  public void testVarNotAssigned() { highlighting.get().doTest(); }
 
-  public void testMultipleVarNotAssigned() { doTest(); }
+  @Test
+  public void testMultipleVarNotAssigned() { highlighting.get().doTest(); }
 
-  public void testForLoopWithNestedEndlessLoop() { doTest(); }
+  @Test
+  public void testForLoopWithNestedEndlessLoop() { highlighting.get().doTest(); }
 
-  public void testVariableAssignedOutsideForLoop() { doTest(); }
+  @Test
+  public void testVariableAssignedOutsideForLoop() { highlighting.get().doTest(); }
 
-  public void testTryResource() { doTest(); }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_5_0;
-  }
+  @Test
+  public void testTryResource() { highlighting.get().doTest(); }
 }

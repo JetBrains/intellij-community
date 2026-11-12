@@ -2,22 +2,26 @@
 package org.jetbrains.plugins.groovy.transformations;
 
 import com.intellij.groovy.testFramework.GroovyAssertions;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
 
-public class GrAutoCloneTransformationSupportTest extends LightGroovyTestCase {
-  @Override
-  @NotNull
-  public LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
-  }
-  
+@TestApplication
+public class GrAutoCloneTransformationSupportTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @Test
   public void testCloneReturnType() {
     doExpressionTypeTest("""
                            @groovy.transform.AutoClone
@@ -26,6 +30,7 @@ public class GrAutoCloneTransformationSupportTest extends LightGroovyTestCase {
                            """, "A1");
   }
 
+  @Test
   public void testCloneReturnTypeOverridden() {
     doExpressionTypeTest("""
                            @groovy.transform.AutoClone
@@ -37,7 +42,9 @@ public class GrAutoCloneTransformationSupportTest extends LightGroovyTestCase {
                            """, "A2");
   }
 
+  @Test
   public void testCloneUsageFromJava() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Pogo.groovy", """
           @groovy.transform.AutoClone
           class Pogo {}\s
@@ -55,7 +62,9 @@ public class GrAutoCloneTransformationSupportTest extends LightGroovyTestCase {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testCopyConstructorUsageFromJava() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Pogo.groovy", """
           @groovy.transform.AutoClone(style=groovy.transform.AutoCloneStyle.COPY_CONSTRUCTOR)
           class Pogo {}\s
@@ -71,7 +80,9 @@ public class GrAutoCloneTransformationSupportTest extends LightGroovyTestCase {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testCloneOrCopyMembersUsageFromJava() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("Pogo.groovy", """
           @groovy.transform.AutoClone(style=groovy.transform.AutoCloneStyle.SIMPLE)
           class Pogo {}\s
@@ -89,9 +100,12 @@ public class GrAutoCloneTransformationSupportTest extends LightGroovyTestCase {
   }
 
   private void doExpressionTypeTest(String text, String expectedType) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("_.groovy", text);
-    GrReferenceExpression ref =(GrReferenceExpression) file.findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
-    PsiType actual = ref.getType();
-    GroovyAssertions.assertType(expectedType, actual);
+    ReadAction.runBlocking(() -> {
+      GrReferenceExpression ref =(GrReferenceExpression) file.findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
+      PsiType actual = ref.getType();
+      GroovyAssertions.assertType(expectedType, actual);
+    });
   }
 }

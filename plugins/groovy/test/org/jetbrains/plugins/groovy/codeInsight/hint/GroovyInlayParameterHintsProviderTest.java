@@ -5,20 +5,32 @@ import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Inlay;
-import com.intellij.testFramework.LightProjectDescriptor;
-import junit.framework.TestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class GroovyInlayParameterHintsProviderTest extends LightGroovyTestCase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    getFixture().addFileToProject("Foo.groovy", """
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class GroovyInlayParameterHintsProviderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addFileToProject("Foo.groovy", """
       class Foo {
         Foo() {}
         Foo(a, b, c) {}
@@ -33,24 +45,25 @@ public class GroovyInlayParameterHintsProviderTest extends LightGroovyTestCase {
       """);
   }
 
-  @Override
-  public void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     ParameterNameHintsSettings.getInstance().loadState(new Element("element"));
-    super.tearDown();
   }
 
   private void testInlays(String text) {
-    getFixture().configureByText("_.groovy", text.replaceAll("<hint name=\"([.\\w]*)\">", ""));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("_.groovy", text.replaceAll("<hint name=\"([.\\w]*)\">", ""));
     checkResult(text.replaceAll("<caret>", ""));
   }
 
   private void checkResult(String expected) {
-    getFixture().doHighlighting();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.doHighlighting();
 
     final ParameterHintsPresentationManager manager = ParameterHintsPresentationManager.getInstance();
-    List<Inlay<?>> inlays = manager.getParameterHintsInRange(getEditor(), 0, getEditor().getDocument().getTextLength());
+    List<Inlay<?>> inlays = manager.getParameterHintsInRange(myFixture.getEditor(), 0, myFixture.getEditor().getDocument().getTextLength());
 
-    final StringBuilder actualText = new StringBuilder(getFixture().getFile().getText());
+    final StringBuilder actualText = new StringBuilder(myFixture.getFile().getText());
     int offset = 0;
     for (Inlay<?> inlay : inlays) {
       String hintName = manager.getHintText(inlay);
@@ -60,9 +73,10 @@ public class GroovyInlayParameterHintsProviderTest extends LightGroovyTestCase {
       actualText.insert(inlay.getOffset() + offset, hintString);
       offset += hintString.length();
     }
-    TestCase.assertEquals(expected, actualText.toString());
+    assertEquals(expected, actualText.toString());
   }
 
+  @Test
   public void test_method_call_expressions() {
     testInlays("""
                  def aa = new Object()
@@ -89,6 +103,7 @@ public class GroovyInlayParameterHintsProviderTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void test_method_call_applications() {
     testInlays("""
                  def aa = new Object()
@@ -109,10 +124,12 @@ public class GroovyInlayParameterHintsProviderTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void test_new_expression() {
     testInlays("new Foo(<hint name=\"a\">1, <hint name=\"b\">2, <hint name=\"c\">4)");
   }
 
+  @Test
   public void test_constructor_invocation() {
     testInlays("""
                  class Bar {
@@ -125,6 +142,7 @@ public class GroovyInlayParameterHintsProviderTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void test_enum_constants() {
     testInlays("""
                  enum Baz {
@@ -135,10 +153,12 @@ public class GroovyInlayParameterHintsProviderTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void test_no_DGM_inlays() {
     testInlays("[].each {}");
   }
 
+  @Test
   public void test_closure_arguments() {
     testInlays("""
                  new Foo().with {
@@ -149,6 +169,7 @@ public class GroovyInlayParameterHintsProviderTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void test_lambda_arguments() {
     testInlays("""
                  new Foo().with {
@@ -159,26 +180,23 @@ public class GroovyInlayParameterHintsProviderTest extends LightGroovyTestCase {
                  """);
   }
 
+  @Test
   public void test_method_with_default_arguments_blacklist() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     testInlays("""
                  new Foo().with {
                     defaultArgs(<hint name="a">1, <hint name="c">2)
                     defaultArgs(aa, <hint name="b"><caret>2, <hint name="c">3)
                  }
                  """);
-    IntentionAction intention = getFixture().getAvailableIntention("Do not show hints for current method");
+    IntentionAction intention = myFixture.getAvailableIntention("Do not show hints for current method");
     assertNotNull(intention);
-    getFixture().launchAction(intention);
+    myFixture.launchAction(intention);
     checkResult("""
                   new Foo().with {
                      defaultArgs(1, 2)
                      defaultArgs(aa, 2, 3)
                   }
                   """);
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
   }
 }

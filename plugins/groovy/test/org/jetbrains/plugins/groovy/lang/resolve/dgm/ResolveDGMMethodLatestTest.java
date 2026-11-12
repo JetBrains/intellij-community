@@ -1,35 +1,37 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.dgm;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveTestCase;
-import org.junit.Assert;
+import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveFixture;
+import org.junit.jupiter.api.Test;
 
-public class ResolveDGMMethodLatestTest extends GroovyResolveTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveFixtureKt.groovyResolveFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-  @NotNull
-  private LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
+@TestApplication
+public class ResolveDGMMethodLatestTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<GroovyResolveFixture> resolve = groovyResolveFixture(projectFixture);
 
-  @Override
-  public @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  public void setProjectDescriptor(@NotNull LightProjectDescriptor projectDescriptor) {
-    this.projectDescriptor = projectDescriptor;
-  }
-
+  @Test
   public void testCloseable() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.addClass("package java.io; class Closeable {}");
-    GrGdkMethod resolved = resolveByText(
+    GrGdkMethod resolved = resolve.get().resolveByText(
       """
         class A implements Closeable {}
         new A().withC<caret>loseable {}
         """, GrGdkMethod.class);
-    Assert.assertEquals("org.codehaus.groovy.runtime.IOGroovyMethods",
-                        resolved.getStaticMethod().getContainingClass().getQualifiedName());
+    ReadAction.runBlocking(() -> {
+      assertEquals("org.codehaus.groovy.runtime.IOGroovyMethods",
+                          resolved.getStaticMethod().getContainingClass().getQualifiedName());
+    });
   }
 }

@@ -1,21 +1,28 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.style;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import junit.framework.TestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @SuppressWarnings({"GrUnresolvedAccess", "GroovyEmptyStatementBody", "GrMethodMayBeStatic", "GrPackage", "GrUnnecessaryPublicModifier"})
-public class GrUnnecessarySemicolonInspectionTest extends LightGroovyTestCase {
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
-  }
+@TestApplication
+public class GrUnnecessarySemicolonInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
 
+  @Test
   public void testSimple() {
     doTest("""
               ;<caret> print 1;
@@ -41,6 +48,7 @@ public class GrUnnecessarySemicolonInspectionTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testClosure() {
     doTest("""
              print(a);
@@ -62,18 +70,22 @@ public class GrUnnecessarySemicolonInspectionTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testTraditionalFor() {
     doTest("for(int i = 0; i < 5; i++);<caret>");
   }
 
+  @Test
   public void testTraditionalForWithoutUpdate() {
     doTest("for (int i = 0; i < 10;<caret>) {}");
   }
 
+  @Test
   public void testTraditionalForWithoutCondition() {
     doTest("for (int i = 0; ;<caret> i++) {}");
   }
 
+  @Test
   public void testForFollowedByStatement() {
     doTest("""
              for(int i = 0; i < 5; i++);<caret>
@@ -82,10 +94,12 @@ public class GrUnnecessarySemicolonInspectionTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testIf() {
     doTest("if (false);<caret>\n");
   }
 
+  @Test
   public void testMethodCallFollowedByBlock() {
     doTest("""
              def myFunc() {
@@ -99,21 +113,25 @@ public class GrUnnecessarySemicolonInspectionTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testWithinMethod() {
     doTest("def foo() {; ;1;;/*asd*/;54; ;<caret>;; }",
            "def foo() { 1;/*asd*/54  }");
   }
 
+  @Test
   public void testWithinClosure() {
     doTest("foo {; ;1;;/*asd*/;54; ;<caret>;; }",
            "foo { 1;/*asd*/54  }");
   }
 
+  @Test
   public void testWithinClosureWithArrow() {
     doTest("foo { -> ; ;1;;/*asd*/;54; ;<caret>;; }",
            "foo { ->  1;/*asd*/54  }");
   }
 
+  @Test
   public void testClassMembers() {
     doTest("""
              class A {
@@ -131,6 +149,7 @@ public class GrUnnecessarySemicolonInspectionTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testAfterPackageDefinition() {
     doTest("package com.foo<caret>; import java.lang.String");
     doTest("""
@@ -143,6 +162,7 @@ public class GrUnnecessarySemicolonInspectionTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testAfterImportDefinition() {
     doTest("import java.lang.String<caret>; import java.lang.String");
     doTest("""
@@ -155,6 +175,7 @@ public class GrUnnecessarySemicolonInspectionTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testAfterEnumConstants() {
     doTest("""
              enum E {
@@ -174,7 +195,9 @@ public class GrUnnecessarySemicolonInspectionTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testBig() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(GrUnresolvedAccessInspection.class);
     doTest("""
              package com.intellij.refactoring.util;<caret>
@@ -611,15 +634,19 @@ public class GrUnnecessarySemicolonInspectionTest extends LightGroovyTestCase {
   }
 
   private void doTest(@Language("Groovy") String before, @Language("Groovy") String after) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(GrUnnecessarySemicolonInspection.class);
     myFixture.configureByText("_.groovy", before);
-    myFixture.launchAction(myFixture.findSingleIntention("Fix all 'Unnecessary semicolon'"));
-    myFixture.checkResult(after);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.launchAction(myFixture.findSingleIntention("Fix all 'Unnecessary semicolon'"));
+      myFixture.checkResult(after);
+    });
   }
 
   private void doTest(@Language("Groovy") String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(GrUnnecessarySemicolonInspection.class);
     myFixture.configureByText("_.groovy", text);
-    TestCase.assertNull(myFixture.getAvailableIntention("Remove semicolon"));
+    assertNull(myFixture.getAvailableIntention("Remove semicolon"));
   }
 }

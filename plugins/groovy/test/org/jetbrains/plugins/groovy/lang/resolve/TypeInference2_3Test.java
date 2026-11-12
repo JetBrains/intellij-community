@@ -1,28 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.resolve.TypeInferenceFixtureKt.typeInferenceFixture;
 
 /**
  * Created by Max Medvedev on 10/02/14
  */
-public class TypeInference2_3Test extends TypeInferenceTestBase {
+@TestApplication
+public class TypeInference2_3Test {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_3);
+  private final TestFixture<TypeInferenceFixture> inference = typeInferenceFixture(projectFixture);
 
-  @NotNull
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_3;
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
+  @Test
   public void testContravariantType() {
-    doTest("""
+    inference.get().doTest("""
              import groovy.transform.CompileStatic
              import java.util.concurrent.Callable
              
@@ -67,8 +67,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, "java.lang.Integer");
   }
 
+  @Test
   public void testSAMInference() {
-    doTest("""
+    inference.get().doTest("""
              import groovy.transform.CompileStatic
              
              interface CustomCallable<T> {
@@ -88,8 +89,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, "boolean");
   }
 
+  @Test
   public void testSAMInference2() {
-    doTest("""
+    inference.get().doTest("""
              import groovy.transform.CompileStatic
              
              interface CustomCallable<T> {
@@ -109,8 +111,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, "boolean");
   }
 
+  @Test
   public void testSAMInference3() {
-    doTest("""
+    inference.get().doTest("""
              import groovy.transform.CompileStatic
              
              interface CustomCallable<K, V> {
@@ -131,8 +134,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, "java.lang.Integer");
   }
 
+  @Test
   public void testSamInference4() {
-    doTest("""
+    inference.get().doTest("""
              
              interface Action<T> {
                  void execute(T t)
@@ -149,8 +153,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testSamInference5() {
-    doTest("""
+    inference.get().doTest("""
              
              interface Action<T> {
                  void execute(T t)
@@ -167,8 +172,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testSamInference6() {
-    doTest("""
+    inference.get().doTest("""
              
              interface Action<T> {
                  void execute(T t)
@@ -185,8 +191,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testSamInference7() {
-    doTest("""
+    inference.get().doTest("""
              
              interface CustomCallable<T> {
                  T call()
@@ -202,8 +209,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              }""", null);
   }
 
+  @Test
   public void testClosureParamsUsingGenerics() {
-    doTest("""
+    inference.get().doTest("""
                  import groovy.transform.CompileStatic
              
                  @CompileStatic
@@ -215,8 +223,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testSmartTypeOnDef() {
-    doTest("""
+    inference.get().doTest("""
                  class Idea {
                    public static void main(String[] args) {
                     def aa = new Object()
@@ -227,8 +236,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testSmartType() {
-    doTest("""
+    inference.get().doTest("""
                  class Idea {
                    public static void main(String[] args) {
                     Object aa = new Object()
@@ -239,8 +249,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testSmartTypeIf() {
-    doTest("""
+    inference.get().doTest("""
                  import groovy.transform.CompileStatic
              
                  @CompileStatic
@@ -255,8 +266,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testSmartTypeIfOnDef() {
-    doTest("""
+    inference.get().doTest("""
                  class Idea {
                    public static void main(String[] args) {
                     def aa = new Object()
@@ -268,8 +280,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testSmartTypeAssert() {
-    doTest("""
+    inference.get().doTest("""
                  class Idea {
                    public static void main(String[] args) {
                     Object aa = new Object()
@@ -280,8 +293,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testSmartTypeAssertOnDef() {
-    doTest("""
+    inference.get().doTest("""
                  class Idea {
                    public static void main(String[] args) {
                     def aa = new Object()
@@ -292,8 +306,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testInferenceFromExplicitTypedSamArgument() {
-    doTest("""
+    inference.get().doTest("""
              
              interface SAM<O> {
                  void accept(O out)
@@ -307,8 +322,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testInferenceFromExplicitTypedSamArgumentNestedGeneric() {
-    doTest("""
+    inference.get().doTest("""
              
              interface SAM<O> {
                  void accept(Collection<List<O>> out)
@@ -322,8 +338,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testInferenceFromExplicitTypedSamArgumentSeveralTypeParams() {
-    doTest("""
+    inference.get().doTest("""
              
              public interface SAM<T, O> {
                  void flatMap(T value, Collection<O> out) throws Exception;
@@ -341,8 +358,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testInferenceFromExplicitTypedSamArgumentWithReturnType() {
-    doTest("""
+    inference.get().doTest("""
              
              public interface SAM<T, O> {
                  void flatMap(T value, Collection<O> out) throws Exception;
@@ -360,8 +378,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testInferenceFromExplicitTypedSamArgumentWithLambda() {
-    doTest("""
+    inference.get().doTest("""
              
              public interface SAM<T, O> {
                  void flatMap(T value, Collection<O> out) throws Exception;
@@ -377,8 +396,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testInferenceFromExplicitTypedSamArgumentWithDefaultValues() {
-    doTest("""
+    inference.get().doTest("""
              
              public interface SAM<T, O> {
                  void flatMap(T value, Collection<O> out) throws Exception;
@@ -396,8 +416,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testInferenceFromExplicitTypedSamArgumentWithSamInheritance() {
-    doTest("""
+    inference.get().doTest("""
              
              public interface SAM<T, O> {
                  void flatMap(T value, Collection<O> out) throws Exception;
@@ -418,8 +439,9 @@ public class TypeInference2_3Test extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testTypeOfMethodReturningNullInCompileStatic() {
-    doTest("""
+    inference.get().doTest("""
              @groovy.transform.CompileStatic
              class B {
                  void m() { <caret>method() }

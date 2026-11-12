@@ -2,23 +2,29 @@
 package org.jetbrains.plugins.groovy.codeInspection.style;
 
 import com.intellij.codeInspection.actions.CleanupAllIntention;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase {
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+
+@TestApplication
+public class GrUnnecessaryDefModifierInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.addClass("public @interface DummyAnno {}");
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    getFixture().addClass("public @interface DummyAnno {}");
-  }
-
+  @Test
   public void testMethodParameter() {
     doTest(false, """
              def parameter1(<warning descr="Modifier 'def' is not necessary">def</warning> Object a) {}
@@ -36,6 +42,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testMethodParameterTypedOnly() {
     doTest("""
              def parameter1(<warning descr="Modifier 'def' is not necessary">def</warning> Object a) {}
@@ -46,6 +53,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testLocalVariable() {
     doTest(false, """
              <warning descr="Modifier 'def' is not necessary">def</warning> Object localVar1
@@ -61,6 +69,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testLocalVariableTypedOnly() {
     doTest("""
              <warning descr="Modifier 'def' is not necessary">def</warning> Object localVar1
@@ -70,6 +79,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testReturnType() {
     doTest(false, """
              <warning descr="Modifier 'def' is not necessary">def</warning> void returnType1() {}
@@ -89,6 +99,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testReturnTypeTypedOnly() {
     doTest("""
              <warning descr="Modifier 'def' is not necessary">def</warning> void returnType1() {}
@@ -100,6 +111,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testGenerics() {
     doTest(false, """
              def <T> void generics1() {}
@@ -119,6 +131,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testGenericsTypedOnly() {
     doTest("""
              def <T> void generics1() {}
@@ -130,6 +143,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testConstructor() {
     doTest(false, """
              class A {
@@ -143,6 +157,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testConstructorTypedOnly() {
     doTest("""
              class A {
@@ -151,6 +166,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testJavaForEach() {
     doTest(false, """
              def list = []
@@ -166,6 +182,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testJavaForEachTypedOnly() {
     doTest("""
              def list = []
@@ -175,6 +192,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testJavaFor() {
     doTest(false, """
              def list = []
@@ -190,6 +208,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testJavaForTypedOnly() {
     doTest("""
              def list = []
@@ -199,6 +218,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testForEach() {
     doTest(false, """
              def list = []
@@ -214,6 +234,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
              """);
   }
 
+  @Test
   public void testForEachTypedOnly() {
     doTest("""
              def list = []
@@ -224,6 +245,7 @@ public class GrUnnecessaryDefModifierInspectionTest extends LightGroovyTestCase 
   }
 
   private void doTest(boolean typed, String before, String after) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     GrUnnecessaryDefModifierInspection inspection = new GrUnnecessaryDefModifierInspection();
     inspection.reportExplicitTypeOnly = typed;
     myFixture.enableInspections(inspection);

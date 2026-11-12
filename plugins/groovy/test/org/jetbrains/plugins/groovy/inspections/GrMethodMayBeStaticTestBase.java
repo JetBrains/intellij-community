@@ -1,12 +1,26 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.inspections;
 
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection;
+import org.junit.jupiter.api.Test;
 
-public abstract class GrMethodMayBeStaticTestBase extends LightGroovyTestCase {
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+
+/**
+ * The tests of {@link GrMethodMayBeStaticInspection} that each subclass runs with its own descriptor.
+ */
+public abstract class GrMethodMayBeStaticTestBase {
   private final GrMethodMayBeStaticInspection inspection = new GrMethodMayBeStaticInspection();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture;
 
+  protected GrMethodMayBeStaticTestBase(TestFixture<LightJavaProject> projectFixture) {
+    codeInsightFixture = lightGroovyFixture(projectFixture);
+  }
+
+  @Test
   public void testSimple() {
     doTest("""
              class A {
@@ -52,6 +66,7 @@ public abstract class GrMethodMayBeStaticTestBase extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testAbstractMethodWithCodeBlockNoError() {
     doTest("""
              abstract class A {
@@ -63,6 +78,7 @@ public abstract class GrMethodMayBeStaticTestBase extends LightGroovyTestCase {
   }
 
   protected void doTest(final String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("_.groovy", text);
     myFixture.enableInspections(getInspection());
     myFixture.checkHighlighting(true, false, false);
@@ -72,8 +88,9 @@ public abstract class GrMethodMayBeStaticTestBase extends LightGroovyTestCase {
     return inspection;
   }
 
+  @Test
   public void testOtherClasses() {
-    myFixture.addFileToProject("Fooo.groovy", """
+    codeInsightFixture.get().addFileToProject("Fooo.groovy", """
       class Fooo {
         static def foo() {}
       }
@@ -89,6 +106,7 @@ public abstract class GrMethodMayBeStaticTestBase extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testThis() {
     doTest("""
              class Foo {
@@ -106,6 +124,7 @@ public abstract class GrMethodMayBeStaticTestBase extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testSuper() {
     doTest("""
              class Base {
@@ -126,6 +145,7 @@ public abstract class GrMethodMayBeStaticTestBase extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testUnresolvedRef() {
     doTest("""
              class Bar {
@@ -139,6 +159,7 @@ public abstract class GrMethodMayBeStaticTestBase extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testTraitMethods() {
     doTest("""
              trait A {
@@ -148,6 +169,7 @@ public abstract class GrMethodMayBeStaticTestBase extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testTraitMethodsWith() {
     getInspection().myIgnoreTraitMethods = false;
     doTest("""

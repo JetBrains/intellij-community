@@ -5,14 +5,17 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.groovy.testFramework.ResolveTest;
 import com.intellij.groovy.testFramework.TypingTest;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.LightGroovyFixtures;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl;
@@ -20,78 +23,121 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrM
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-public class MethodReferenceTest extends LightGroovyTestCase implements TypingTest, ResolveTest, HighlightingTest {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class MethodReferenceTest implements TypingTest, ResolveTest, HighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_3_0);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "lang/methodReferences/");
+
+  @Override
+  public @NotNull LightJavaCodeInsightTestFixture getFixture() {
+    return codeInsightFixture.get();
+  }
+
+  @Override
+  public String getTestName() {
+    return LightGroovyFixtures.groovyTestName(codeInsightFixture.get());
+  }
+
+
+  @Test
   public void testMethodReferenceInStaticContext() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("classes.groovy", """
       class C {\s
         C(int a) {}
         static foo() {}
       }
       """);
-    Collection<? extends GroovyResolveResult> results = multiResolveByText("C::<caret>foo");
-    assertEquals(1, results.size());
-    assertTrue(ContainerUtil.getFirstItem(results).getElement() instanceof GrMethodImpl);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      Collection<? extends GroovyResolveResult> results = multiResolveByText("C::<caret>foo");
+      assertEquals(1, results.size());
+      assertTrue(ContainerUtil.getFirstItem(results).getElement() instanceof GrMethodImpl);
+    });
   }
 
+  @Test
   public void testMultipleConstructors() {
-    Collection<? extends GroovyResolveResult> results = multiResolveByText("""
-                                                                             class D {
-                                                                               D(a) {}
-                                                                               D(a, b) {}
-                                                                             }
-                                                                             D::<caret>new
-                                                                             """);
-    assertEquals(2, results.size());
-    for (GroovyResolveResult result : results) {
-      assertTrue(result.getElement() instanceof GrConstructorImpl);
-    }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      Collection<? extends GroovyResolveResult> results = multiResolveByText("""
+                                                                               class D {
+                                                                                 D(a) {}
+                                                                                 D(a, b) {}
+                                                                               }
+                                                                               D::<caret>new
+                                                                               """);
+      assertEquals(2, results.size());
+      for (GroovyResolveResult result : results) {
+        assertTrue(result.getElement() instanceof GrConstructorImpl);
+      }
+    });
   }
 
+  @Test
   public void testConstructorInStaticContext() {
-    Collection<? extends GroovyResolveResult> results = multiResolveByText("""
-                                                                             class D { D() {} }
-                                                                             D::<caret>new
-                                                                             """);
-    assertEquals(1, results.size());
-    assertTrue(ContainerUtil.getFirstItem(results).getElement() instanceof GrConstructorImpl);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      Collection<? extends GroovyResolveResult> results = multiResolveByText("""
+                                                                               class D { D() {} }
+                                                                               D::<caret>new
+                                                                               """);
+      assertEquals(1, results.size());
+      assertTrue(ContainerUtil.getFirstItem(results).getElement() instanceof GrConstructorImpl);
+    });
   }
 
+  @Test
   public void testStaticMethodInStaticContext() {
-    Collection<? extends GroovyResolveResult> results = multiResolveByText("""
-                                                                             class D { static 'new'() {} }
-                                                                             D::<caret>new
-                                                                             """);
-    assertEquals(2, results.size());
-    Iterator<? extends GroovyResolveResult> iterator = results.iterator();
-    assertTrue(iterator.next().getElement() instanceof GrMethodImpl);
-    assertTrue(iterator.next().getElement() instanceof DefaultConstructor);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      Collection<? extends GroovyResolveResult> results = multiResolveByText("""
+                                                                               class D { static 'new'() {} }
+                                                                               D::<caret>new
+                                                                               """);
+      assertEquals(2, results.size());
+      Iterator<? extends GroovyResolveResult> iterator = results.iterator();
+      assertTrue(iterator.next().getElement() instanceof GrMethodImpl);
+      assertTrue(iterator.next().getElement() instanceof DefaultConstructor);
+    });
   }
 
+  @Test
   public void testConstructorInInstanceContext() {
-    Collection<? extends GroovyResolveResult> results = multiResolveByText("""
-                                                                             class D { D() {} }
-                                                                             def d = new D()
-                                                                             d::<caret>new
-                                                                             """);
-    assertEmpty(results);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      Collection<? extends GroovyResolveResult> results = multiResolveByText("""
+                                                                               class D { D() {} }
+                                                                               def d = new D()
+                                                                               d::<caret>new
+                                                                               """);
+      assertThat(results).isNullOrEmpty();
+    });
   }
 
+  @Test
   public void testInstanceMethodInInstanceContext() {
-    Collection<? extends GroovyResolveResult> results = multiResolveByText("""
-                                                                             class D { def 'new'() {} }
-                                                                             def d = new D()
-                                                                             d::<caret>new
-                                                                             """);
-    assertEquals(1, results.size());
-    assertTrue(ContainerUtil.getFirstItem(results).getElement() instanceof GrMethodImpl);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      Collection<? extends GroovyResolveResult> results = multiResolveByText("""
+                                                                               class D { def 'new'() {} }
+                                                                               def d = new D()
+                                                                               d::<caret>new
+                                                                               """);
+      assertEquals(1, results.size());
+      assertTrue(ContainerUtil.getFirstItem(results).getElement() instanceof GrMethodImpl);
+    });
   }
 
+  @Test
   public void testTyping() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("classes.groovy", """
       class D {
         def prop1
@@ -100,21 +146,30 @@ public class MethodReferenceTest extends LightGroovyTestCase implements TypingTe
         static long 'new'(String b) { 42l }
       }
       """);
-    expressionTypeTest("def ref = D::new; ref(1)", "D");
-    expressionTypeTest("def ref = D::new; ref(\"hello\")", "long");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      expressionTypeTest("def ref = D::new; ref(1)", "D");
+      expressionTypeTest("def ref = D::new; ref(\"hello\")", "long");
+    });
   }
 
+  @Test
   public void testArrayTyping() {
-    expressionTypeTest("Integer[]::new(0)", "java.lang.Integer[]");
-    expressionTypeTest("int[][]::new(0)", "int[][]");
-    expressionTypeTest("int[][]::new(1, 2)", "int[][]");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      expressionTypeTest("Integer[]::new(0)", "java.lang.Integer[]");
+      expressionTypeTest("int[][]::new(0)", "int[][]");
+      expressionTypeTest("int[][]::new(1, 2)", "int[][]");
+    });
   }
 
+  @Test
   public void testConstructorsHighlighting() { fileHighlightingTest(); }
 
+  @Test
   public void testArrayConstructorsHighlighting() { fileHighlightingTest(); }
 
+  @Test
   public void testConstructorSearchAndRename() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("classes.groovy", "class A { A(String p){} }");
     configureByText("""
                       <caret>A::new
@@ -122,26 +177,15 @@ public class MethodReferenceTest extends LightGroovyTestCase implements TypingTe
                       A::"new"
                       """);
 
-    PsiClass clazz = myFixture.findClass("A");
-    PsiMethod constructor = clazz.getConstructors()[0];
+    PsiMethod constructor = ReadAction.computeBlocking(() -> myFixture.findClass("A").getConstructors()[0]);
     assertEquals(3, ReadAction.computeBlocking(()->MethodReferencesSearch.search(constructor).findAll()).size());
 
-    myFixture.renameElementAtCaret("B");
+    EdtTestUtil.runInEdtAndWait(() -> myFixture.renameElementAtCaret("B"));
     myFixture.checkResult("""
                                B::new
                                B::'new'
                                B::"new"
                                """);
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_3_0;
-  }
-
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "lang/methodReferences/";
   }
 
   @Override

@@ -3,35 +3,46 @@ package org.jetbrains.plugins.groovy.fixes;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
-import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
+import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class GrCreateMethodFromUsageTest extends GrHighlightingTestBase {
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "fixes/createMethodFromUsage/" + getTestName(true) + "/";
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    getFixture().enableInspections(GrUnresolvedAccessInspection.class, GroovyAssignabilityCheckInspection.class);
+@TestApplication
+public class GrCreateMethodFromUsageTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<GrHighlightingFixture> highlighting = grHighlightingFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    highlighting.get().getFixture().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "fixes/createMethodFromUsage/" + highlighting.get().getFixture().getTestName(true) + "/");
+    myFixture.enableInspections(GrUnresolvedAccessInspection.class, GroovyAssignabilityCheckInspection.class);
   }
 
   private void doTest(String action, int actionCount, String[] files) {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByFiles(files);
     List<IntentionAction> fixes = myFixture.filterAvailableIntentions(action);
-    Assert.assertEquals(fixes.size(), actionCount);
+    assertEquals(fixes.size(), actionCount);
     if (actionCount == 0) return;
 
     myFixture.launchAction(ContainerUtil.getFirstItem(fixes));
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
     myFixture.checkResultByFile(BEFORE, AFTER, true);
   }
 
@@ -47,6 +58,7 @@ public class GrCreateMethodFromUsageTest extends GrHighlightingTestBase {
     doTest(CREATE_METHOD);
   }
 
+  @Test
   public void testSimple1() {
     doTest();
   }
@@ -59,62 +71,77 @@ public class GrCreateMethodFromUsageTest extends GrHighlightingTestBase {
     doTest();
   }
 
+  @Test
   public void testSimple4() {
     doTest();
   }
 
+  @Test
   public void testApplicationStatement() {
     doTest(CREATE_METHOD, 1, new String[]{BEFORE});
   }
 
+  @Test
   public void testInapplicableApplicationStatement() {
     doTest(CREATE_METHOD, 1, new String[]{BEFORE});
   }
 
+  @Test
   public void testAbstract() {
     doTest(CREATE_ABSTRACT_METHOD);
   }
 
+  @Test
   public void testAbstractStatic() {
     doTest(CREATE_ABSTRACT_METHOD, 0);
   }
 
+  @Test
   public void testAbstractInNonAbstract() {
     doTest(CREATE_ABSTRACT_METHOD, 0);
   }
 
+  @Test
   public void testAbstractInInterface() {
     doTest();
   }
 
+  @Test
   public void testArrayParam() {
     doTest();
   }
 
+  @Test
   public void testAssertDescription() {
     doTest();
   }
 
+  @Test
   public void testGeneric() {
     doTest();
   }
 
+  @Test
   public void testMultiMap() {
     doTest();
   }
 
+  @Test
   public void testClosureArgument() {
     doTest();
   }
 
+  @Test
   public void testMethodReference() {
     doTest();
   }
 
+  @Test
   public void testSeveralReturnTypes() {
     doTest();
   }
 
+  @Test
   public void testCapturedWildcard() {
     doTest();
   }
@@ -127,70 +154,87 @@ public class GrCreateMethodFromUsageTest extends GrHighlightingTestBase {
     doTest();
   }
 
+  @Test
   public void testNestedExpression() {
     doTest();
   }
 
+  @Test
   public void testInAnonymousClass() {
     doTest();
   }
 
+  @Test
   public void testTypeParameterFromWildcard() {
     doTest();
   }
 
+  @Test
   public void testUnresolvedArg() {
     doTest(CREATE_METHOD, 1);
   }
 
+  @Test
   public void testIntegerCast() {
     doTest();
   }
 
+  @Test
   public void testSeveralArguments() {
     doTest();
   }
 
+  @Test
   public void testConstructor1() {
     doTest(CREATE_CONSTRUCTOR);
   }
 
+  @Test
   public void testConstructor2() {
     doTest(CREATE_CONSTRUCTOR);
   }
 
+  @Test
   public void testConstructorAnon() {
     doTest(CREATE_CONSTRUCTOR);
   }
 
+  @Test
   public void testConstructorInterface() {
     doTest(CREATE_CONSTRUCTOR, 0);
   }
 
+  @Test
   public void testConstructorTrait() {
     doTest(CREATE_CONSTRUCTOR, 0);
   }
 
+  @Test
   public void testConstructorEnum() {
     doTest(CREATE_CONSTRUCTOR, 0);
   }
 
+  @Test
   public void testConstructorInvocation() {
     doTest(CREATE_CONSTRUCTOR, 1, new String[]{BEFORE});
   }
 
+  @Test
   public void testSuperConstructorInvocation() {
     doTest(CREATE_CONSTRUCTOR, 1, new String[]{BEFORE});
   }
 
+  @Test
   public void testSameParameterNames1() {
     doTest();
   }
 
+  @Test
   public void testSameParameterNames2() {
     doTest();
   }
 
+  @Test
   public void testSameParameterNames3() {
     doTest();
   }

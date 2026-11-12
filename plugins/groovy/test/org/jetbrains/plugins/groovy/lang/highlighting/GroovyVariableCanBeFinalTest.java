@@ -2,24 +2,26 @@
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.dataflow.GroovyVariableCanBeFinalInspection;
+import org.junit.jupiter.api.Test;
 
-public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
-  @Override
-  public InspectionProfileEntry[] getCustomInspections() {
-    return new InspectionProfileEntry[]{new GroovyVariableCanBeFinalInspection()};
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_6_0;
-  }
+@TestApplication
+public class GroovyVariableCanBeFinalTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_6_0);
+  private final TestFixture<GrHighlightingFixture> highlighting =
+    grHighlightingFixture(projectFixture, GrHighlightingFixture.getHighlightingTestDataPath(), () -> new InspectionProfileEntry[]{new GroovyVariableCanBeFinalInspection()});
 
+  @Test
   public void testSimpleLocalVariable() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def simpleLocalVariableTest() {
                              def <warning descr="Variable 'a' can be final">a</warning> = 1
                              final def b = a
@@ -28,8 +30,10 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testSimpleVar() {
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    highlighting.get().doTestHighlighting("""
                          def method() {
                            var <warning descr="Variable 'x' can be final"><caret>x</warning> = 1
                            println x
@@ -44,16 +48,18 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                             """);
   }
 
+  @Test
   public void testClosureParam() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def closureParamTest() {
                              { <warning descr="Parameter 'a' can be final">a</warning> -> print a }
                          }
                          """);
   }
 
+  @Test
   public void testClosureOuterScope() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def closureOuterScopeTest() {
                              def <warning descr="Variable 'outer' can be final">outer</warning> = 1
                              def outer2 = 2
@@ -68,8 +74,9 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAnonymousClass() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          Runnable foo() {
                              def <warning descr="Variable 'a' can be final">a</warning> = 1
                              def b = 2             // more than 1 assignment
@@ -87,8 +94,9 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testMethodParameter() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def methodParameterTest(String <warning descr="Parameter 's' can be final">s</warning>, String ss, final String sss) {
                              ss = s
                              println ss
@@ -97,8 +105,9 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testFor() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def forTest() {
                              for (int <warning descr="Variable 'i' can be final">i</warning> in 1..<10) {
                                  println i
@@ -116,8 +125,9 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTernary() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def ternaryTest() {
                              def <warning descr="Variable 'ternary' can be final">ternary</warning> = rand() ? rand() : 500
                              final f = ternary
@@ -126,8 +136,9 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTernaryDeep() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def deepTernaryTest() {
                              def <warning descr="Variable 'ternary' can be final">ternary</warning> = rand() ? (rand() ? 100 : 500) : (rand() ? { -> } : 300)
                              final f = ternary
@@ -136,8 +147,9 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testSwitch() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def switchTest() {
                              def <warning descr="Variable 'sw' can be final">sw</warning>
                              switch (rand()) {
@@ -155,8 +167,9 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testDeepSwitch() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def deepSwitchTest() {
                              def <warning descr="Variable 'sw' can be final">sw</warning>
                              switch (rand()) {
@@ -184,8 +197,9 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIf() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def ifTest() {
                              def <warning descr="Variable 'a' can be final">a</warning>
                              if (rand()) a = 1
@@ -196,8 +210,9 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIfTriBranch() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def triBranchIfTest() {
                              def <warning descr="Variable 'a' can be final">a</warning>
                              if (rand()) {
@@ -213,8 +228,9 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testIfDeep() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def deepIfTest() {
                              def <warning descr="Variable 'a' can be final">a</warning>
                              if (rand()) {
@@ -236,8 +252,9 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testSameVariableName() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                           def testSameVariableName() {
                              if (rand()) {
                                  def <warning descr="Variable 'a' can be final">a</warning> = 5
@@ -251,8 +268,9 @@ public class GroovyVariableCanBeFinalTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testSeveralAssignments() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          def testSeveralAssignments() {
                              def a = 1
                              a = 2

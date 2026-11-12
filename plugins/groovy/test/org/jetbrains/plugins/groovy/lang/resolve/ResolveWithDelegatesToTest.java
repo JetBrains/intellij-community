@@ -1,10 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -12,18 +15,21 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveFixtureKt.groovyResolveFixture;
 import static org.jetbrains.plugins.groovy.util.ThrowingTransformation.disableTransformations;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
+@TestApplication
+public class ResolveWithDelegatesToTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<GroovyResolveFixture> resolve = groovyResolveFixture(projectFixture);
 
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
+  @Test
   public void testOwnerFirstMethod() {
     assertScript("""
       class Delegate {
@@ -41,6 +47,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "Owner");
   }
 
+  @Test
   public void testDelegateFirstMethod() {
     assertScript("""
       class Delegate {
@@ -58,6 +65,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "Delegate");
   }
 
+  @Test
   public void testOwnerClosureMethod() {
     assertScript("""
       class Xml {
@@ -70,7 +78,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "Xml");
   }
 
+  @Test
   public void testNestedClosureDelegatesWithSameMethod() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.addFileToProject("classes.groovy", """
       class A {
           int foo() { 1 }
@@ -78,7 +88,6 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       class B {
           int foo() { 2 }
       }""");
-
 
     assertScript("""
       new A().with {
@@ -97,7 +106,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "A");
   }
 
+  @Test
   public void testNestedClosureDelegatesWithSameMethodAndOwner() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.addFileToProject("classes.groovy", """
       class A {
           int foo() { 1 }
@@ -133,6 +144,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "C");
   }
 
+  @Test
   public void testShouldDelegateToParameter() {
     assertScript("""
       class Foo {
@@ -154,6 +166,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "Foo");
   }
 
+  @Test
   public void testShouldDelegateToParameterUsingExplicitId() {
     assertScript("""
       class Foo {
@@ -175,6 +188,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "Foo");
   }
 
+  @Test
   public void testNamedArgs() {
     assertScript ("""
       def with(@DelegatesTo.Target Object target, @DelegatesTo(strategy = Closure.DELEGATE_FIRST) Closure arg) {
@@ -196,6 +210,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "java.util.LinkedHashMap");
   }
 
+  @Test
   public void testEllipsisArgs() {
     assertScript ("""
     def with(@DelegatesTo.Target Object target, @DelegatesTo(strategy = Closure.DELEGATE_FIRST) Closure... arg) {
@@ -219,7 +234,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
     """, "java.util.LinkedHashMap");
   }
 
+  @Test
   public void testShouldChooseMethodFromOwnerInJava() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.configureByText("Abc.java", """
       import groovy.lang.Closure;
       import groovy.lang.DelegatesTo;
@@ -257,7 +274,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
     """, "Owner");
   }
 
+  @Test
   public void testShouldChooseMethodFromDelegateInJava() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.configureByText("Abc.java", """
       import groovy.lang.Closure;
       import groovy.lang.DelegatesTo;
@@ -295,7 +314,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "Delegate");
   }
 
+  @Test
   public void testShouldAcceptMethodCallInJava() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.configureByText("Abc.java", """
       import groovy.lang.Closure;
       import groovy.lang.DelegatesTo;
@@ -324,7 +345,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "ExecSpec");
   }
 
+  @Test
   public void testCallMethodFromOwnerInJava() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.configureByText("Abc.java", """
       import groovy.lang.Closure;
       import groovy.lang.DelegatesTo;
@@ -346,7 +369,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "Xml");
   }
 
+  @Test
   public void testShouldDelegateToParameterInJava() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.configureByText("Abc.java", """
       import groovy.lang.Closure;
       import groovy.lang.DelegatesTo;
@@ -375,7 +400,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "Foo");
   }
 
+  @Test
   public void testShouldDelegateToParameterUsingExplicitIdInJava() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.configureByText("Abc.java", """
       import groovy.lang.Closure;
       import groovy.lang.DelegatesTo;
@@ -402,7 +429,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "Foo");
   }
 
+  @Test
   public void testIgnoreTestInConstructorInJava() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.configureByText("Abc.java", """
       import groovy.lang.Closure;
       import groovy.lang.DelegatesTo;
@@ -422,7 +451,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "Foo");
   }
 
+  @Test
   public void testNamedArgsInJava() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.configureByText("Abc.java", """
       import groovy.lang.Closure;
       import groovy.lang.DelegatesTo;
@@ -450,7 +481,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "java.util.LinkedHashMap");
   }
 
+  @Test
   public void testEllipsisArgsInJava() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.configureByText("Abc.java", """
       import groovy.lang.Closure;
       import groovy.lang.DelegatesTo;
@@ -481,6 +514,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "java.util.LinkedHashMap");
   }
 
+  @Test
   public void testTarget() {
     assertScript("""
       def foo(@DelegatesTo.Target def o, @DelegatesTo Closure c) {}
@@ -491,6 +525,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "java.lang.Integer");
   }
 
+  @Test
   public void testTarget2() {
     assertScript("""
       def foo(@DelegatesTo.Target('t') def o, @DelegatesTo(target = 't') Closure c) {}
@@ -501,6 +536,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "java.lang.Integer");
   }
 
+  @Test
   public void testGenericTypeIndex() {
     assertScript("""
       public <K, V> void foo(@DelegatesTo.Target Map<K, V> map, @DelegatesTo(genericTypeIndex = 1) Closure c) {}
@@ -511,6 +547,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "java.lang.String");
   }
 
+  @Test
   public void testGenericTypeIndex1() {
     assertScript("""
       public <K, V> void foo(@DelegatesTo.Target Map<K, V> map, @DelegatesTo(genericTypeIndex = 0) Closure c) {}
@@ -521,6 +558,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "java.lang.Integer");
   }
 
+  @Test
   public void testDelegateAndDelegatesTo() {
     assertScript("""
       import groovy.transform.CompileStatic
@@ -549,6 +587,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "java.util.List");
   }
 
+  @Test
   public void testClassTest() {
     assertScript("""
       class DelegatesToTest {
@@ -568,7 +607,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "Person");
   }
 
- 
+ @Test
  public void testAccessViaDelegate() {
     assertScript("""
       class X {
@@ -585,9 +624,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "X");
   }
 
- 
+ @Test
  public void testDelegateType() {
-    var ref = configureByText("_.groovy", """
+    var ref = resolve.get().configureByText("_.groovy", """
       class X {
           void method() {}
       }
@@ -600,9 +639,12 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
           deleg<caret>ate
       }
       """, GrReferenceExpression.class);
-    assertTrue(ref.getType().equalsToText("X"));
+    ReadAction.runBlocking(() -> {
+      assertTrue(ref.getType().equalsToText("X"));
+    });
   }
 
+  @Test
   public void testDelegateWithinImplicitCall() {
     assertScript("""
       class A {
@@ -620,6 +662,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "Boo");
   }
 
+  @Test
   public void testDelegateWithinConstructorArgument() {
     assertScript("""
       class A {
@@ -636,6 +679,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "Boo");
   }
 
+  @Test
   public void testDelegatesToType() {
     assertScript("""
       def foo(@DelegatesTo(type = 'String') Closure datesProcessor) {}
@@ -646,6 +690,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "java.lang.String");
   }
 
+  @Test
   public void testDelegatesToTypeWithGenerics() {
     assertScript("""
       def foo(@DelegatesTo(type = 'List<Date>') Closure datesProcessor) {}
@@ -655,6 +700,7 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "java.util.Date");
   }
 
+  @Test
   public void testDelegateToInTraitMethod() {
     assertScript("""
       trait T {
@@ -677,24 +723,26 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, "java.lang.String");
   }
 
+  @Test
   public void testDelegateOnlyLocalVariables() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.addFileToProject("Methods.groovy", """
       class Methods {
         static m1(@DelegatesTo(value = String, strategy = Closure.DELEGATE_ONLY) Closure c) {}
       }
       """);
 
-    disableTransformations(getTestRootDisposable());
+    disableTransformations(myFixture.getTestRootDisposable());
 
     // resolve to outer closure parameter
-    resolveByText("""
+    resolve.get().resolveByText("""
       def c = { String s1 ->
         Methods.m1 { s<caret>1 + toUpperCase() }
       }
       """, GrParameter.class);
 
     // resolve to outer closure local variable
-    final var grVar = resolveByText("""
+    final var grVar = resolve.get().resolveByText("""
       def c = { String s1 ->
         def s2 = "123"
         Methods.m1 { s<caret>2 + toUpperCase() }
@@ -703,39 +751,46 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
     assertTrue(!(grVar instanceof GrField) && !(grVar instanceof GrParameter));
 
     // resolve to outer method parameter
-    resolveByText("""
+    resolve.get().resolveByText("""
       def m(String s1) {
         Methods.m1 {s<caret>1 + toUpperCase() }
       }
       """, GrParameter.class);
 
     // resolve to outer method local variable
-    final var grVar2 = resolveByText("""
+    final var grVar2 = resolve.get().resolveByText("""
       def m(String s1) {
         def s2 = "123"
         Methods.m1 { s1 + s<caret>2 + toUpperCase() }
       }
       """, GrVariable.class);
-    assertTrue(!(grVar2 instanceof GrField) && !(grVar2 instanceof GrParameter));
+    ReadAction.runBlocking(() -> {
+      assertTrue(!(grVar2 instanceof GrField) && !(grVar2 instanceof GrParameter));
+    });
   }
 
+  @Test
   public void testDelegateOnlyClasses() {
+    LightJavaCodeInsightTestFixture myFixture = resolve.get().getFixture();
     myFixture.addFileToProject("Methods.groovy", """
       class Methods {
         static m1(@DelegatesTo(value = String, strategy = Closure.DELEGATE_ONLY) Closure c) {}
       }
       """);
 
-    final var grClass = resolveByText("""
+    final var grClass = resolve.get().resolveByText("""
       Methods.m1 {
         <caret>String
       }
       """);
-    assertInstanceOf(grClass, PsiClass.class);
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(PsiClass.class, grClass);
+    });
   }
 
+  @Test
   public void testImplicitCall() {
-    resolveByText("""
+    resolve.get().resolveByText("""
       class D { def foo() { 42 } }
       
       class C {
@@ -752,8 +807,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, GrMethod.class);
   }
 
+  @Test
   public void testNamedTarget() {
-    resolveByText("""
+    resolve.get().resolveByText("""
       class Book {
         String title = "";
       }
@@ -773,8 +829,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, GrAccessorMethod.class);
   }
 
+  @Test
   public void testNamedTargetWithImplicitTarget() {
-    resolveByText("""
+    resolve.get().resolveByText("""
       class Book {
         String title = "";
       }
@@ -794,8 +851,9 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
       """, GrAccessorMethod.class);
   }
 
+  @Test
   public void testTwoNamedTargets() {
-    resolveByText("""
+    resolve.get().resolveByText("""
       class Book {
           String title = "LoTR"
       }
@@ -817,8 +875,10 @@ public class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
   }
 
   private void assertScript(String text, String resolvedClass) {
-    final var resolved = resolveByText(text, PsiMethod.class);
-    final var containingClass = resolved.getContainingClass().getQualifiedName();
-    assertEquals(resolvedClass, containingClass);
+    final var resolved = resolve.get().resolveByText(text, PsiMethod.class);
+    ReadAction.runBlocking(() -> {
+      final var containingClass = resolved.getContainingClass().getQualifiedName();
+      assertEquals(resolvedClass, containingClass);
+    });
   }
 }

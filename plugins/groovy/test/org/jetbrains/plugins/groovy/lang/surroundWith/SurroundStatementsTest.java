@@ -1,44 +1,68 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
-public class SurroundStatementsTest extends SurroundTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "groovy/surround/statements/";
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
 
-  public void testClosure1() { doTest(new SurrounderByClosure()); }
+@TestApplication
+public class SurroundStatementsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "groovy/surround/statements/");
 
-  public void testClosure2() { doTest(new SurrounderByClosure()); }
+  @Test
+  public void testClosure1() { SurroundTestUtil.doTest(codeInsightFixture.get(), new SurrounderByClosure()); }
 
-  public void testClosure3() { doTest(new SurrounderByClosure()); }
+  @Test
+  public void testClosure2() { SurroundTestUtil.doTest(codeInsightFixture.get(), new SurrounderByClosure()); }
 
-  public void testIf1() { doTest(new IfSurrounder()); }
+  @Test
+  public void testClosure3() { SurroundTestUtil.doTest(codeInsightFixture.get(), new SurrounderByClosure()); }
 
-  public void testIf_else1() { doTest(new IfElseSurrounder()); }
+  @Test
+  public void testIf1() { SurroundTestUtil.doTest(codeInsightFixture.get(), new IfSurrounder()); }
 
-  public void testShouldFailWithType() { doTest(new ShouldFailWithTypeStatementsSurrounder()); }
+  @Test
+  public void testIf_else1() { SurroundTestUtil.doTest(codeInsightFixture.get(), new IfElseSurrounder()); }
 
-  public void testTry_catch1() { doTest(new TryCatchSurrounder()); }
+  @Test
+  public void testShouldFailWithType() { SurroundTestUtil.doTest(codeInsightFixture.get(), new ShouldFailWithTypeStatementsSurrounder()); }
 
-  public void testTry_catch_finally() { doTest(new TryCatchFinallySurrounder()); }
+  @Test
+  public void testTry_catch1() { SurroundTestUtil.doTest(codeInsightFixture.get(), new TryCatchSurrounder()); }
 
-  public void testTry_finally1() { doTest(new TryFinallySurrounder()); }
+  @Test
+  public void testTry_catch_finally() { SurroundTestUtil.doTest(codeInsightFixture.get(), new TryCatchFinallySurrounder()); }
 
-  public void testTry_finallyFormatting() { doTest(new TryFinallySurrounder()); }
+  @Test
+  public void testTry_finally1() { SurroundTestUtil.doTest(codeInsightFixture.get(), new TryFinallySurrounder()); }
 
-  public void testWhile1() { doTest(new WhileSurrounder()); }
+  @Test
+  public void testTry_finallyFormatting() { SurroundTestUtil.doTest(codeInsightFixture.get(), new TryFinallySurrounder()); }
 
-  public void testWith2() { doTest(new WithStatementsSurrounder()); }
+  @Test
+  public void testWhile1() { SurroundTestUtil.doTest(codeInsightFixture.get(), new WhileSurrounder()); }
 
-  public void testFor1() { doTest(new ForSurrounder()); }
+  @Test
+  public void testWith2() { SurroundTestUtil.doTest(codeInsightFixture.get(), new WithStatementsSurrounder()); }
 
-  public void testIfComments() { doTest(new IfSurrounder()); }
+  @Test
+  public void testFor1() { SurroundTestUtil.doTest(codeInsightFixture.get(), new ForSurrounder()); }
 
+  @Test
+  public void testIfComments() { SurroundTestUtil.doTest(codeInsightFixture.get(), new IfSurrounder()); }
+
+  @Test
   public void testBracesInIf() {
-    doTest(new GrBracesSurrounder(), """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    SurroundTestUtil.doTest(myFixture, new GrBracesSurrounder(), """
       if (abc)
           pr<caret>int 'abc'
       """, """
@@ -48,8 +72,10 @@ public class SurroundStatementsTest extends SurroundTestCase {
              """);
   }
 
+  @Test
   public void testBracesInWhile() {
-    doTest(new GrBracesSurrounder(), """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    SurroundTestUtil.doTest(myFixture, new GrBracesSurrounder(), """
       while (true)
           print 'en<caret>dless'
       """, """
@@ -59,8 +85,10 @@ public class SurroundStatementsTest extends SurroundTestCase {
              """);
   }
 
+  @Test
   public void testBraces() {
-    doTest(new GrBracesSurrounder(), """
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    SurroundTestUtil.doTest(myFixture, new GrBracesSurrounder(), """
       print 2
       pri<caret>nt 3
       print 4

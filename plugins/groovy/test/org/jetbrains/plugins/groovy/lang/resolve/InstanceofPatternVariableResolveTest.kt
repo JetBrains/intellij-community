@@ -2,12 +2,24 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiElement
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrPatternVariable
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
+@TestApplication
+class InstanceofPatternVariableResolveTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1)
+  }
 
-  override fun setUp() {
-    super.setUp()
+  private val resolve by groovyResolveFixture(projectFixture)
+  private val myFixture get() = resolve.fixture
+
+  @BeforeEach
+  fun setUp() {
     myFixture.addClass("""
       class A {}
     """.trimIndent())
@@ -16,8 +28,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """.trimIndent())
   }
 
+  @Test
   fun testIfStatementBody() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -29,8 +42,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """.trimIndent(), GrPatternVariable::class.java)
   }
 
+  @Test
   fun testIfStatementElseBody() {
-    resolveByText<PsiElement>("""
+    resolve.resolveByText<PsiElement>("""
       class X {
         def foo() {
           A a = new B()
@@ -43,8 +57,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """.trimIndent(), null)
   }
 
+  @Test
   fun testWhileStatementBody() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -56,8 +71,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testForStatementBody() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -69,8 +85,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testForStatementUpdate() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -81,8 +98,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testConditionalExpressionBody() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -92,9 +110,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
-
+  @Test
   fun testConditionalExpressionElseBody() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -104,8 +122,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testBinaryExpression() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -115,8 +134,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testSwitchStatement() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -131,8 +151,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testSwitchExpression() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -149,8 +170,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testContextualKeyword() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -161,8 +183,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testResolveAfterAndAnd() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -172,8 +195,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testResolveAfterExpressionAndAnd() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -183,8 +207,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testResolveAfterAndAndWithNegation() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -194,8 +219,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testDoNotResolveAfterOrOr() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -205,8 +231,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testResolveAfterOrOrWithNegation() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -216,8 +243,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testResolveAfterExpressionOrOrWithNegation() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -227,8 +255,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testResolveIgnoresIfNegation() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -240,8 +269,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testResolveIgnoresConditionalNegation() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -251,8 +281,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testResolveIgnoresForUpdateNegation() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -263,8 +294,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testResolveIgnoresForBodyNegation() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -276,9 +308,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
-
+  @Test
   fun testResolveIgnoresWhileBodyNegation() {
-    resolveByText("""
+    resolve.resolveByText("""
       class X {
         def foo() {
           A a = new B()
@@ -290,8 +322,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, GrPatternVariable::class.java)
   }
 
+  @Test
   fun testDoNotResolvePrecedingDefinitionIfStatement() {
-    resolveByText<PsiElement>("""
+    resolve.resolveByText<PsiElement>("""
       class X {
         def foo() {
           A a = new B()
@@ -302,8 +335,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, null)
   }
 
+  @Test
   fun testDoNotResolvePrecedingDefinitionConditionalExpression() {
-    resolveByText<PsiElement>("""
+    resolve.resolveByText<PsiElement>("""
       class X {
         def foo() {
           A a = new B()
@@ -314,8 +348,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """, null)
   }
 
+  @Test
   fun testResolveAfterImplicationExpression() {
-    resolveByText("""
+    resolve.resolveByText("""
       class Main {
           static class A {}
           static class B extends A{}
@@ -328,8 +363,9 @@ class InstanceofPatternVariableResolveTest : GroovyResolveTestCase() {
     """.trimIndent(), GrPatternVariable::class.java)
   }
 
+  @Test
   fun testResolveAfterImplicationExpressionNegation() {
-    resolveByText("""
+    resolve.resolveByText("""
       class Main {
           static class A {}
           static class B extends A{}

@@ -2,26 +2,38 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.resolve.TypeInferenceFixtureKt.typeInferenceFixture;
 
-public class TypeInferenceFromOuterCallsTest extends TypeInferenceTestBase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+@TestApplication
+public class TypeInferenceFromOuterCallsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<TypeInferenceFixture> inference = typeInferenceFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
     Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(true);
   }
 
-  @Override
-  public void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).resetToDefault();
-    super.tearDown();
   }
 
+  @Test
   public void test_outer_call_influence() {
-    doTest("""
+    inference.get().doTest("""
              def foo(a) {
                <caret>a
              }
@@ -30,8 +42,9 @@ public class TypeInferenceFromOuterCallsTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void test_implicit__ClosureParams() {
-    doTest("""
+    inference.get().doTest("""
              def foo(a, c) {
                c(a)
              }
@@ -40,8 +53,9 @@ public class TypeInferenceFromOuterCallsTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void test_implicit__ClosureParams_with_nontrivial_substitutor() {
-    doTest("""
+    inference.get().doTest("""
              class A<T> {
                  T t = null
                  def foo(c) {
@@ -54,8 +68,9 @@ public class TypeInferenceFromOuterCallsTest extends TypeInferenceTestBase {
              }""", JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void test_implicit__ClosureParams_with_generified_method() {
-    doTest("""
+    inference.get().doTest("""
              def foo(a, b) { b(a) }
              
              foo(1) {}
@@ -63,8 +78,9 @@ public class TypeInferenceFromOuterCallsTest extends TypeInferenceTestBase {
              """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void test_implicit__ClosureParams_with_two_parameters() {
-    doTest("""
+    inference.get().doTest("""
              def foo(cl) {
                  cl(1, 'q')
              }
@@ -74,8 +90,9 @@ public class TypeInferenceFromOuterCallsTest extends TypeInferenceTestBase {
              }""", JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void test_DFA_priority_is_higher_than_signature_inference() {
-    doTest("""
+    inference.get().doTest("""
              def foo(a) {
                if (a instanceof Integer) {
                  <caret>a

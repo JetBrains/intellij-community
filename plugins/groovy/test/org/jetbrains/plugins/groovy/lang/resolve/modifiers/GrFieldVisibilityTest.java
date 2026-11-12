@@ -1,76 +1,113 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.modifiers;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.psi.PsiModifier.PACKAGE_LOCAL;
 import static com.intellij.psi.PsiModifier.PRIVATE;
 import static com.intellij.psi.PsiModifier.PROTECTED;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
 
-public class GrFieldVisibilityTest extends GrVisibilityTestBase {
+@TestApplication
+public class GrFieldVisibilityTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @Test
   public void testPropertyField() {
-    PsiClass clazz = addClass("""
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiClass clazz = GrVisibilityTestUtil.addClass(myFixture, """
                                 class A {
                                   def foo
                                 }
                                 """);
-    PsiField field = clazz.getFields()[0];
-    GrVisibilityTestBase.assertVisibility(field, PRIVATE);
+    ReadAction.runBlocking(() -> {
+      PsiField field = clazz.getFields()[0];
+      GrVisibilityTestUtil.assertVisibility(field, PRIVATE);
+    });
   }
 
+  @Test
   public void testPackageScope() {
-    PsiClass clazz = addClass("""
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiClass clazz = GrVisibilityTestUtil.addClass(myFixture, """
                                 class A {
                                   @PackageScope
                                   def foo
                                 }
                                 """);
-    PsiField field = clazz.getFields()[0];
-    GrVisibilityTestBase.assertVisibility(field, PACKAGE_LOCAL);
+    ReadAction.runBlocking(() -> {
+      PsiField field = clazz.getFields()[0];
+      GrVisibilityTestUtil.assertVisibility(field, PACKAGE_LOCAL);
+    });
   }
 
+  @Test
   public void testPackageScopeWithExplicitVisibility() {
-    PsiClass clazz = addClass("""
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiClass clazz = GrVisibilityTestUtil.addClass(myFixture, """
                                 class A {
                                   @PackageScope
                                   protected foo
                                 }
                                 """);
-    PsiField field = clazz.getFields()[0];
-    GrVisibilityTestBase.assertVisibility(field, PROTECTED);
+    ReadAction.runBlocking(() -> {
+      PsiField field = clazz.getFields()[0];
+      GrVisibilityTestUtil.assertVisibility(field, PROTECTED);
+    });
   }
 
+  @Test
   public void testPackageScopeNonEmpty() {
-    PsiClass clazz = addClass("""
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiClass clazz = GrVisibilityTestUtil.addClass(myFixture, """
                                 class A {
                                   @PackageScope([FIELDS])
                                   def foo
                                 }
                                 """);
-    PsiField field = clazz.getFields()[0];
-    GrVisibilityTestBase.assertVisibility(field, PRIVATE);
+    ReadAction.runBlocking(() -> {
+      PsiField field = clazz.getFields()[0];
+      GrVisibilityTestUtil.assertVisibility(field, PRIVATE);
+    });
   }
 
+  @Test
   public void testPackageScopeOnClass() {
-    PsiClass clazz = addClass("""
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiClass clazz = GrVisibilityTestUtil.addClass(myFixture, """
                                 @PackageScope([FIELDS])
                                 class A {
                                   def foo
                                 }
                                 """);
-    PsiField field = clazz.getFields()[0];
-    GrVisibilityTestBase.assertVisibility(field, PACKAGE_LOCAL);
+    ReadAction.runBlocking(() -> {
+      PsiField field = clazz.getFields()[0];
+      GrVisibilityTestUtil.assertVisibility(field, PACKAGE_LOCAL);
+    });
   }
 
+  @Test
   public void testPackageScopeOnClassWithoutFields() {
-    PsiClass clazz = addClass("""
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiClass clazz = GrVisibilityTestUtil.addClass(myFixture, """
                                 @PackageScope
                                 class A {
                                   def foo
                                 }
                                 """);
-    PsiField field = clazz.getFields()[0];
-    GrVisibilityTestBase.assertVisibility(field, PRIVATE);
+    ReadAction.runBlocking(() -> {
+      PsiField field = clazz.getFields()[0];
+      GrVisibilityTestUtil.assertVisibility(field, PRIVATE);
+    });
   }
 }

@@ -1,25 +1,36 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
-import org.jetbrains.plugins.groovy.lang.resolve.TypeInferenceTestBase;
+import org.jetbrains.plugins.groovy.lang.resolve.TypeInferenceFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.resolve.TypeInferenceFixtureKt.typeInferenceFixture;
 
 @SuppressWarnings("SpellCheckingInspection")
-public class GinqTypeInferenceTest extends TypeInferenceTestBase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+@TestApplication
+public class GinqTypeInferenceTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GinqTestUtils.getProjectDescriptor());
+  private final TestFixture<TypeInferenceFixture> inference = typeInferenceFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
     myFixture.enableInspections(GrUnresolvedAccessInspection.class, GroovyAssignabilityCheckInspection.class);
   }
 
+  @Test
   public void testGQL() {
-    doTest("""
+    inference.get().doTest("""
              
              def ee = GQL {
                      from a in [1]
@@ -29,8 +40,9 @@ public class GinqTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.util.List<java.lang.Integer>");
   }
 
+  @Test
   public void testNamedRecord() {
-    doTest("""
+    inference.get().doTest("""
              
              def ee = GQL {
                      from a in [1]
@@ -40,8 +52,9 @@ public class GinqTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.util.List<org.apache.groovy.ginq.provider.collection.runtime.NamedRecord>");
   }
 
+  @Test
   public void testActualBinding() {
-    doTest("""
+    inference.get().doTest("""
              
              def ee = GQL {
                      from aa in [1]
@@ -51,8 +64,9 @@ public class GinqTypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testDataSourceBinding() {
-    doTest("""
+    inference.get().doTest("""
              
              def ee = GQL {
                      from aa in [1]
@@ -62,8 +76,9 @@ public class GinqTypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testJoinSourceBinding() {
-    doTest("""
+    inference.get().doTest("""
              
              def ee = GQL {
                      from aa in [1]
@@ -74,8 +89,9 @@ public class GinqTypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testGetAt1() {
-    doTest("""
+    inference.get().doTest("""
              
              def ee = GQL {
                      from aa in [1]
@@ -86,8 +102,9 @@ public class GinqTypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testGetAt2() {
-    doTest("""
+    inference.get().doTest("""
              
              def ee = GQL {
                      from aa in [1]
@@ -98,8 +115,9 @@ public class GinqTypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testNestedGinq() {
-    doTest("""
+    inference.get().doTest("""
              
              GQ {
                from v in (
@@ -110,8 +128,9 @@ public class GinqTypeInferenceTest extends TypeInferenceTestBase {
              }""", JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testPrimitive() {
-    doTest("""
+    inference.get().doTest("""
              
              def aa = GQL {
                      from x in [1]
@@ -120,8 +139,9 @@ public class GinqTypeInferenceTest extends TypeInferenceTestBase {
              a<caret>a""", "java.util.List<java.lang.Byte>");
   }
 
+  @Test
   public void testOver() {
-    doTest("""
+    inference.get().doTest("""
              
              def aa = GQL {
                      from nnnn in [3]
@@ -130,8 +150,9 @@ public class GinqTypeInferenceTest extends TypeInferenceTestBase {
              a<caret>a""", "java.util.List<java.lang.Long>");
   }
 
+  @Test
   public void testMethodNestedGinq() {
-    doTest("""
+    inference.get().doTest("""
              
              import groovy.ginq.transform.GQ
              
@@ -145,8 +166,9 @@ public class GinqTypeInferenceTest extends TypeInferenceTestBase {
              }""", JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testMethodReturnType1() {
-    doTest("""
+    inference.get().doTest("""
              
              import groovy.ginq.transform.GQ
              
@@ -164,8 +186,9 @@ public class GinqTypeInferenceTest extends TypeInferenceTestBase {
            "org.apache.groovy.ginq.provider.collection.runtime.Queryable<org.apache.groovy.ginq.provider.collection.runtime.NamedRecord>");
   }
 
+  @Test
   public void testMethodReturnType2() {
-    doTest("""
+    inference.get().doTest("""
              
              import groovy.ginq.transform.GQ
              
@@ -182,8 +205,9 @@ public class GinqTypeInferenceTest extends TypeInferenceTestBase {
              z<caret>z""", "java.util.List<org.apache.groovy.ginq.provider.collection.runtime.NamedRecord>");
   }
 
+  @Test
   public void testMethodReturnType3() {
-    doTest("""
+    inference.get().doTest("""
              
              import groovy.ginq.transform.GQ
              
@@ -198,10 +222,5 @@ public class GinqTypeInferenceTest extends TypeInferenceTestBase {
              
              def zz = foo()
              zz[0].r<caret>r""", JAVA_LANG_INTEGER);
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GinqTestUtils.getProjectDescriptor();
   }
 }

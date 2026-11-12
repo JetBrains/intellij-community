@@ -1,36 +1,38 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.inspections;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.control.finalVar.GrFinalVariableAccessInspection;
-import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
+import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
 
 /**
  * @author Max Medvedev
  */
-public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
-  @Override
-  public InspectionProfileEntry[] getCustomInspections() {
-    return new GrFinalVariableAccessInspection[]{new GrFinalVariableAccessInspection()};
-  }
+@TestApplication
+public class GrFinalVariableAccessTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_6_0);
+  private final TestFixture<GrHighlightingFixture> highlighting =
+    grHighlightingFixture(projectFixture, GrHighlightingFixture.getHighlightingTestDataPath(), () -> new GrFinalVariableAccessInspection[]{new GrFinalVariableAccessInspection()});
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_6_0;
-  }
-
+  @Test
   public void testSimpleVar() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          final foo = 5
                          <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 7
                          print foo""");
   }
 
+  @Test
   public void testWriteFromDifferentClassOrClosure() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          final var c = 1
                          new Object() {
                              void f00() {
@@ -42,8 +44,10 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testSimpleVal() {
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    highlighting.get().doTestHighlighting("""
                          val foo = 5
                          <error descr="Cannot assign a value to final variable 'foo'"><caret>foo</error> = 7
                          print foo""");
@@ -54,16 +58,18 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                             print foo""");
   }
 
+  @Test
   public void testSplitInit() {
-    doTestHighlighting("""                      
+    highlighting.get().doTestHighlighting("""                      
                          final foo
                          foo = 7
                          <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 8
                          print foo""");
   }
 
+  @Test
   public void testIf1() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          final foo = 5
                          if (cond) {
                            <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 7
@@ -71,8 +77,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          print foo""");
   }
 
+  @Test
   public void testIf2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          final foo
                          if (cond) {
                            foo = 7
@@ -84,8 +91,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          print foo""");
   }
 
+  @Test
   public void testIf3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          final foo
                          if (cond) {
                            foo = 7
@@ -94,16 +102,18 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          print foo""");
   }
 
+  @Test
   public void testFor() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          for (a in b) {
                            final x = 5  //all correct
                            print x
                          }""");
   }
 
+  @Test
   public void testFor2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          final foo = 5
                          for (a in b) {
                            <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 5
@@ -111,22 +121,25 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testFor3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          for (a in b)
                            final foo = 5  //correct code""");
   }
 
+  @Test
   public void testForParam() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          for (final i : [1, 2]) {
                            <error descr="Cannot assign a value to final variable 'i'">i</error> = 5
                            print i
                          }""");
   }
 
+  @Test
   public void testDuplicatedVar() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          if (cond) {
                            final foo = 5
                            print foo
@@ -142,8 +155,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                            final foo = 3 //correct""");
   }
 
+  @Test
   public void testDuplicatedVar2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          if (cond) {
                            final foo = 5
                            <error descr="Cannot assign a value to final variable 'foo'">foo</error> = 4
@@ -159,8 +173,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                            final foo = 3 //correct""");
   }
 
+  @Test
   public void testDuplicatedVar3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class X {
                            def bar() {
                              if (cond) {
@@ -180,8 +195,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testNoDuplicatedMessage() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class X {
                            void x() {
                              final String a = ''
@@ -198,15 +214,17 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testFinalField0() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            final <error descr="Field 'foo' might not have been initialized">foo</error>
                          }""");
   }
 
+  @Test
   public void testFinalField1() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            final foo //correct
                          
@@ -216,8 +234,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testFinalField2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            final <error descr="Field 'foo' might not have been initialized">foo</error>
                          
@@ -230,8 +249,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testFinalField3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            final foo;
                          
@@ -248,8 +268,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testFinalField4() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            final foo //correct
                          
@@ -263,8 +284,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testFinalField5() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            final <error descr="Field 'foo' might not have been initialized">foo</error> //correct
                          
@@ -278,8 +300,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testFinalField6() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            final <error descr="Field 'foo' might not have been initialized">foo</error> //correct
                          
@@ -293,22 +316,25 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testStaticFinalField0() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            static final foo = 5 //correct
                          }""");
   }
 
+  @Test
   public void testStaticFinalField1() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            static final <error descr="Field 'foo' might not have been initialized">foo</error>
                          }""");
   }
 
+  @Test
   public void testStaticFinalField2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            static final <error descr="Field 'foo' might not have been initialized">foo</error>
                          
@@ -320,8 +346,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testStaticFinalField3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            static final foo //correct
                          
@@ -336,8 +363,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testStaticFinalField4() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            static final foo //correct
                          
@@ -356,8 +384,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testFinalFieldInit0() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            final foo = 0;
                          
@@ -367,8 +396,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testFinalFieldInit1() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            final foo;
                          
@@ -382,8 +412,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testFinalFieldInit2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            final foo;
                          
@@ -397,8 +428,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testFinalFieldInit3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            final foo;
                          
@@ -413,8 +445,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testFinalFieldInit4() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            final foo;
                          
@@ -426,8 +459,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testFinalFieldInit5() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            final foo;
                          
@@ -441,8 +475,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testFinalFieldAccess() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Foo {
                            public final foo = 5
                          }
@@ -450,8 +485,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          <error descr="Cannot assign a value to final field 'foo'">new Foo().foo</error> = 3""");
   }
 
+  @Test
   public void testImmutable() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.Immutable
                          
                          @Immutable
@@ -469,8 +505,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          <error descr="Cannot assign a value to final field 'amount'">a.amount</error> = 1000""");
   }
 
+  @Test
   public void testNonFinalField1() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            int foo
                          
@@ -481,8 +518,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testNonFinalField2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class A {
                            int foo = 5
                          
@@ -493,8 +531,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testFieldAndParameterWithTheSameName() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Aaa {
                              final int foo
                              final int bar
@@ -507,8 +546,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testEnumConstants() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          enum E {
                            abc, cde
                          
@@ -517,8 +557,9 @@ public class GrFinalVariableAccessTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testInc() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Aaa {
                              final int foo = 0
                          

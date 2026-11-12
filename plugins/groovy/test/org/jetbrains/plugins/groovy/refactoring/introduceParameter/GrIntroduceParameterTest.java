@@ -1,17 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduceParameter;
 
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -27,16 +32,27 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceP
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyIntroduceParameterUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.IntroduceParameterInfo;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GrIntroduceParameterTest extends LightGroovyTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "refactoring/introduceParameterGroovy/" + getTestName(true) + "/";
+@TestApplication
+public class GrIntroduceParameterTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    codeInsightFixture.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "refactoring/introduceParameterGroovy/" + codeInsightFixture.get().getTestName(true) + "/");
   }
 
   private void doDelegateTest() {
@@ -56,29 +72,32 @@ public class GrIntroduceParameterTest extends LightGroovyTestCase {
                       boolean declareFinal,
                       @Nullable String conflicts,
                       boolean generateDelegate) {
-    final String beforeGroovy = getTestName(false) + "Before.groovy";
-    final String afterGroovy = getTestName(false) + "After.groovy";
-    final String clazz = getTestName(false) + "MyClass.groovy";
-    final String afterClazz = getTestName(false) + "MyClass_after.groovy";
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      final String beforeGroovy = myFixture.getTestName(false) + "Before.groovy";
+      final String afterGroovy = myFixture.getTestName(false) + "After.groovy";
+      final String clazz = myFixture.getTestName(false) + "MyClass.groovy";
+      final String afterClazz = myFixture.getTestName(false) + "MyClass_after.groovy";
 
-    final boolean beforeExists = exists(beforeGroovy);
-    if (beforeExists) {
-      myFixture.copyFileToProject(beforeGroovy);
-    }
-    myFixture.configureByFile(clazz);
+      final boolean beforeExists = exists(beforeGroovy);
+      if (beforeExists) {
+        myFixture.copyFileToProject(beforeGroovy);
+      }
+      myFixture.configureByFile(clazz);
 
-    execute(replaceFieldsWithGetters, removeUnusedParameters, declareFinal, conflicts, generateDelegate, getProject(),
-            myFixture.getEditor(), myFixture.getFile());
+      execute(replaceFieldsWithGetters, removeUnusedParameters, declareFinal, conflicts, generateDelegate, myFixture.getProject(),
+              myFixture.getEditor(), myFixture.getFile());
 
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-    myFixture.getEditor().getSelectionModel().removeSelection();
-    if (beforeExists) {
-      myFixture.checkResultByFile(beforeGroovy, afterGroovy, true);
-    }
+      PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
+      myFixture.getEditor().getSelectionModel().removeSelection();
+      if (beforeExists) {
+        myFixture.checkResultByFile(beforeGroovy, afterGroovy, true);
+      }
 
-    if (exists(afterClazz)) {
-      myFixture.checkResultByFile(afterClazz);
-    }
+      if (exists(afterClazz)) {
+        myFixture.checkResultByFile(afterClazz);
+      }
+    });
   }
 
   private void doTest(int replaceFieldsWithGetters,
@@ -88,18 +107,22 @@ public class GrIntroduceParameterTest extends LightGroovyTestCase {
                       boolean generateDelegate,
                       String before,
                       String after) {
-    myFixture.configureByText("before.groovy", before);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.configureByText("before.groovy", before);
 
-    execute(replaceFieldsWithGetters, removeUnusedParameters, declareFinal, conflicts, generateDelegate, getProject(),
-            myFixture.getEditor(), myFixture.getFile());
+      execute(replaceFieldsWithGetters, removeUnusedParameters, declareFinal, conflicts, generateDelegate, myFixture.getProject(),
+              myFixture.getEditor(), myFixture.getFile());
 
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-    myFixture.getEditor().getSelectionModel().removeSelection();
-    myFixture.checkResult(after);
+      PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
+      myFixture.getEditor().getSelectionModel().removeSelection();
+      myFixture.checkResult(after);
+    });
   }
 
   private boolean exists(String sourceFilePath) {
-    return new File(getTestDataPath() + "/" + sourceFilePath).exists();
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    return new File(myFixture.getTestDataPath() + "/" + sourceFilePath).exists();
   }
 
   public static void execute(int replaceFieldsWithGetters,
@@ -159,80 +182,99 @@ public class GrIntroduceParameterTest extends LightGroovyTestCase {
                                                  expr, var, type, var != null, var != null, true);
   }
 
+  @Test
   public void testSimpleOverridedMethod() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
+  @Test
   public void testOverridedMethodWithRemoveUnusedParameters() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false);
   }
 
+  @Test
   public void testSimpleUsage() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
+  @Test
   public void testMethodWithoutParams() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
+  @Test
   public void testParameterSubstitution() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
+  @Test
   public void testThisSubstitution() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
+  @Test
   public void testThisSubstitutionInQualifier() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false,
            "field <b><code>Test.i</code></b> is not accessible from method <b><code>XTest.n()</code></b>. Value for introduced parameter in that method call will be incorrect.");
   }
 
+  @Test
   public void testQualifiedThisSubstitution() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null);
   }
 
+  @Test
   public void testFieldAccess() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
+  @Test
   public void testMethodAccess() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
+  @Test
   public void testStaticFieldAccess() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
+  @Test
   public void testFieldWithGetterReplacement() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, false, false);
   }
 
+  @Test
   public void testFieldWithInaccessibleGetterReplacement() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false);
   }
 
+  @Test
   public void testWeirdQualifier() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false);
   }
 
+  @Test
   public void testSuperInExpression() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false,
            "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class");
   }
 
+  @Test
   public void testWeirdQualifierAndParameter() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false);
   }
 
+  @Test
   public void testImplicitSuperCall() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false);
   }
 
+  @Test
   public void testImplicitDefaultConstructor() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false);
   }
 
+  @Test
   public void testInternalSideEffect() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false);
   }
@@ -241,11 +283,13 @@ public class GrIntroduceParameterTest extends LightGroovyTestCase {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, false);
   }*/
 
+  @Test
   public void testSuperWithSideEffect() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false,
            "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class");
   }
 
+  @Test
   public void testConflictingField() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false);
   }
@@ -266,6 +310,7 @@ public class GrIntroduceParameterTest extends LightGroovyTestCase {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, true);
   }*/
 
+  @Test
   public void testRemoveParameterInHierarchy() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false);
   }
@@ -274,36 +319,48 @@ public class GrIntroduceParameterTest extends LightGroovyTestCase {
       doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false);
     }*/
   
+  @Test
   public void testVarargs() {   // IDEADEV-16828
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
+  @Test
   public void testMethodUsageInThisMethodInheritor() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
+  @Test
   public void testIncorrectArgumentList() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, true);
   }
 
+  @Test
   public void testClosure() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false);
   }
 
+  @Test
   public void testDelegate1() { doDelegateTest(); }
 
+  @Test
   public void testDelegate2() { doDelegateTest(); }
 
+  @Test
   public void testDelegaterInSuper() { doDelegateTest(); }
 
+  @Test
   public void testClosureArg() { doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false); }
 
+  @Test
   public void testClosureArgWithEmptyArgList() { doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false); }
 
+  @Test
   public void testScriptMethod() { doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false); }
 
+  @Test
   public void testAppStatement() { doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false); }
 
+  @Test
   public void testStringPart0() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false, """
       def foo() {
@@ -320,6 +377,7 @@ public class GrIntroduceParameterTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testIntroduceToConstructorUsedByAnonymousClass() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false, """
       class X {
@@ -342,6 +400,7 @@ public class GrIntroduceParameterTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testNullType() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false, """
       def foo() {
@@ -360,6 +419,7 @@ public class GrIntroduceParameterTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testIntroduceFromLocalVar() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false, """
       def foo() {
@@ -379,6 +439,7 @@ public class GrIntroduceParameterTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testIntroduceFromInjection() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false, """
       def foo() {
@@ -393,6 +454,7 @@ public class GrIntroduceParameterTest extends LightGroovyTestCase {
              """);
   }
 
+  @Test
   public void testIntroduceFromStringByCaret() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false, """
       def test() {

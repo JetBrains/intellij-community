@@ -1,9 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduceParameter;
 
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.DocumentUtil;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureFromClosureProcessor;
 import org.jetbrains.plugins.groovy.refactoring.extract.closure.ExtractClosureFromMethodProcessor;
@@ -12,17 +20,22 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceP
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterSettings;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.IntroduceParameterInfo;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
 
 /**
  * @author Max Medvedev
  */
-public abstract class ExtractClosureTest extends LightGroovyTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "groovy/refactoring/extractMethod/";
+public final class ExtractClosureTest {
+  private static final String TEST_DATA_PATH = TestUtils.getAbsoluteTestDataPath() + "groovy/refactoring/extractMethod/";
+
+  private ExtractClosureTest() {
   }
 
-  protected void doTest(String before, String after, IntList toRemove, IntList notToUseAsParams, boolean forceReturn) {
+  private static void doTest(LightJavaCodeInsightTestFixture myFixture, String before, String after, IntList toRemove,
+                             IntList notToUseAsParams, boolean forceReturn) {
     myFixture.configureByText("______________a____________________.groovy", before);
 
     GrIntroduceParameterHandler handler = new GrIntroduceParameterHandler() {
@@ -44,27 +57,28 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
         }
       }
     };
-    handler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), null);
-    doPostponedFormatting(myFixture.getProject());
-
-    myFixture.checkResult(after);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      handler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), null);
+      DocumentUtil.writeInRunUndoTransparentAction(() -> {
+        PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+        PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
+      });
+      myFixture.checkResult(after);
+    });
   }
 
-  protected void doTest(String before, String after, IntList toRemove, IntList notToUseAsParams) {
-    doTest(before, after, toRemove, notToUseAsParams, true);
+  private static void doTest(LightJavaCodeInsightTestFixture myFixture, String before, String after) {
+    doTest(myFixture, before, after, IntList.of(), IntList.of(), true);
   }
 
-  protected void doTest(String before, String after, IntList toRemove) {
-    doTest(before, after, toRemove, IntList.of(), true);
-  }
+  @TestApplication
+  public static class MethodTest {
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+    private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture, TEST_DATA_PATH);
 
-  protected void doTest(String before, String after) {
-    doTest(before, after, IntList.of(), IntList.of(), true);
-  }
-
-  public static class MethodTest extends ExtractClosureTest {
+    @Test
     public void testSimple() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                def foo(String s) {
                    s+=2
                    <selection>print s</selection>
@@ -81,8 +95,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """, IntList.of(), IntList.of(), false);
     }
 
+    @Test
     public void testRemoveUnused() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                class X {
                    def foo(String s) {
                        <selection>print s</selection>
@@ -101,8 +116,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """, IntList.of(0), IntList.of(0), false);
     }
 
+    @Test
     public void testRemoveUnusedAndGenerateLocal() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                def foo(String s) {
                    <selection>s+=2
                    print s</selection>
@@ -122,8 +138,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """, IntList.of(0), IntList.of(0), true);
     }
 
+    @Test
     public void testInsertQualifier() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                class X {
                    def foo(String s) {
                        <selection>bar()</selection>
@@ -145,8 +162,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """, IntList.of(0), IntList.of(), false);
     }
 
+    @Test
     public void testLocalVarAsParam() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                def foo(int x, int y) {
                    int a = 5
                    <selection>print 45+y+a</selection>
@@ -163,8 +181,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """, IntList.of(0, 1), IntList.of(0), false);
     }
 
+    @Test
     public void testRPG() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                adventure()
                
                def adventure() {
@@ -193,8 +212,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """);
     }
 
+    @Test
     public void testExpression() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                adventure()
                
                def adventure() {
@@ -225,8 +245,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """);
     }
 
+    @Test
     public void testDontQualify() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                class Some {
                     private static int smth = 1
                     private static void doSmth() {}
@@ -257,8 +278,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """);
     }
 
+    @Test
     public void testAppStatement() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                void foo() {
                    def s = <selection><caret>"zxcvbn".substring 2 charAt(1)</selection>
                }
@@ -271,8 +293,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """);
     }
 
+    @Test
     public void testStringPart0() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                def cl() {
                    print 'a<selection>b</selection>c'
                }
@@ -287,8 +310,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """);
     }
 
+    @Test
     public void testNull() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                def foo() {
                    print <selection>null</selection>
                }
@@ -304,9 +328,14 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
     }
   }
 
-  public static class ClosureTest extends ExtractClosureTest {
+  @TestApplication
+  public static class ClosureTest {
+    private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+    private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture, TEST_DATA_PATH);
+
+    @Test
     public void testSimple() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                def foo = {String s ->
                    s+=2
                    <selection>print s</selection>
@@ -323,8 +352,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """, IntList.of(), IntList.of(), false);
     }
 
+    @Test
     public void testRemoveUnused() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                class X {
                    def foo = {String s ->
                        <selection>print s</selection>
@@ -344,8 +374,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """, IntList.of(0), IntList.of(0), false);
     }
 
+    @Test
     public void testRemoveUnusedAndGenerateLocal() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                def foo = {String s ->
                    <selection>s+=2
                    print s</selection>
@@ -365,8 +396,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """, IntList.of(0), IntList.of(0), true);
     }
 
+    @Test
     public void testInsertQualifier() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                class X {
                    def foo = {String s ->
                        <selection>bar()</selection>
@@ -388,8 +420,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """, IntList.of(0), IntList.of(), false);
     }
 
+    @Test
     public void testLocalVarAsParam() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                def foo = {int x, int y ->
                    int a = 5
                    <selection>print 45+y+a</selection>
@@ -406,8 +439,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """, IntList.of(0, 1), IntList.of(0), false);
     }
 
+    @Test
     public void testRPG() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                def adventure = {
                
                    try {
@@ -436,8 +470,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """);
     }
 
+    @Test
     public void testExpression() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                def adventure = {
                    try {
                        def skill = <selection>killMonsters()+collectLoot()</selection>
@@ -470,8 +505,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """);
     }
 
+    @Test
     public void testDontQualify() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                class Some {
                     private static int smth = 1
                     private static void doSmth() {}
@@ -503,8 +539,9 @@ public abstract class ExtractClosureTest extends LightGroovyTestCase {
                """);
     }
 
+    @Test
     public void testAppStatement() {
-      doTest("""
+      doTest(codeInsightFixture.get(), """
                void foo = {
                    def s = <selection><caret>"zxcvbn".substring 2 charAt(1)</selection>
                }

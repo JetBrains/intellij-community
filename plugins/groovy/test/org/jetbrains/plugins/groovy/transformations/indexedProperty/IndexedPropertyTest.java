@@ -1,21 +1,27 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.indexedProperty;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
+import org.junit.jupiter.api.Test;
 
-public class IndexedPropertyTest extends LightGroovyTestCase {
-  @Override
-  @NotNull
-  public final LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
 
+@TestApplication
+public class IndexedPropertyTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @Test
   public void testAllMethodsResolved() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addFileToProject("A.groovy", """
       import groovy.transform.IndexedProperty
       class A {
@@ -64,7 +70,9 @@ public class IndexedPropertyTest extends LightGroovyTestCase {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testErrorsHighlighting() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("_.groovy", """
       import groovy.transform.IndexedProperty
       class A {
@@ -81,7 +89,9 @@ public class IndexedPropertyTest extends LightGroovyTestCase {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testIndexedPropertyUnused() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("_.groovy", """
       import groovy.transform.IndexedProperty
       class A {
@@ -93,7 +103,9 @@ public class IndexedPropertyTest extends LightGroovyTestCase {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testIndexedPropertyIsUsedViaGeneratedMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("_.groovy", """
       import groovy.transform.IndexedProperty
       class A {
@@ -105,7 +117,9 @@ public class IndexedPropertyTest extends LightGroovyTestCase {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testIndexedPropertyRename() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("_.groovy", """
       import groovy.transform.IndexedProperty
       class A {
@@ -119,19 +133,21 @@ public class IndexedPropertyTest extends LightGroovyTestCase {
       a.getStringList(0)
       a.setStringList(0, "")
       """);
-    myFixture.renameElementAtCaret("newName");
-    myFixture.checkResult("""
-      import groovy.transform.IndexedProperty
-      class A {
-        @IndexedProperty List<String> newName
-      }
-      def a = new A()
-      a.newName
-      a.getNewName()
-      a.newName = []
-      a.setNewName([])
-      a.getNewName(0)
-      a.setNewName(0, "")
-      """);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.renameElementAtCaret("newName");
+      myFixture.checkResult("""
+        import groovy.transform.IndexedProperty
+        class A {
+          @IndexedProperty List<String> newName
+        }
+        def a = new A()
+        a.newName
+        a.getNewName()
+        a.newName = []
+        a.setNewName([])
+        a.getNewName(0)
+        a.setNewName(0, "")
+        """);
+    });
   }
 }

@@ -14,20 +14,30 @@ import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsProcessor;
 import com.intellij.refactoring.encapsulateFields.FieldDescriptor;
 import com.intellij.refactoring.encapsulateFields.FieldDescriptorImpl;
 import com.intellij.refactoring.util.DocCommentPolicy;
-import junit.framework.TestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.codehaus.groovy.runtime.StringGroovyMethods;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Max Medvedev
  */
-public class GrEncapsulateFieldsTest extends LightGroovyTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "groovy/refactoring/encapsulateFields/";
-  }
+@TestApplication
+public class GrEncapsulateFieldsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "groovy/refactoring/encapsulateFields/");
 
+  @Test
   public void testSimple() {
     doJavaTest("""
                  def a = new A()
@@ -44,6 +54,7 @@ public class GrEncapsulateFieldsTest extends LightGroovyTestCase {
                  """, "getFoo", "setFoo", true);
   }
 
+  @Test
   public void testDifferentGetter() {
     doJavaTest("""
                  def a = new A()
@@ -60,6 +71,7 @@ public class GrEncapsulateFieldsTest extends LightGroovyTestCase {
                  """, "getBar", "setFoo", true);
   }
 
+  @Test
   public void testDifferentSetter() {
     doJavaTest("""
                  def a = new A()
@@ -76,6 +88,7 @@ public class GrEncapsulateFieldsTest extends LightGroovyTestCase {
                  """, "getFoo", "setBar", true);
   }
 
+  @Test
   public void testNonAccessors() {
     doJavaTest("""
                  def a = new A()
@@ -92,6 +105,7 @@ public class GrEncapsulateFieldsTest extends LightGroovyTestCase {
                  """, "bar", "baz", true);
   }
 
+  @Test
   public void testInheritor() {
     doJavaTest("""
                  class Inheritor extends A {
@@ -114,6 +128,7 @@ public class GrEncapsulateFieldsTest extends LightGroovyTestCase {
                  """, "bar", "baz", true);
   }
 
+  @Test
   public void testFieldUsageInClassInheritor() {
     doJavaTest("""
                  class Inheritor extends A {
@@ -136,6 +151,7 @@ public class GrEncapsulateFieldsTest extends LightGroovyTestCase {
                  """, "bar", "baz", false);
   }
 
+  @Test
   public void testFieldUsageInClassInheritor2() {
     doJavaTest("""
                  class Inheritor extends A {
@@ -158,6 +174,7 @@ public class GrEncapsulateFieldsTest extends LightGroovyTestCase {
                  """, "getFoo", "setFoo", false);
   }
 
+  @Test
   public void testInnerClass() {
     doJavaTest("""
                  class X extends A {
@@ -187,13 +204,16 @@ public class GrEncapsulateFieldsTest extends LightGroovyTestCase {
                           String getterName,
                           String setterName,
                           boolean toUseAccessorsWhenAccessible) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.addClass("""
       public class A {
         public int foo = 1;
       }""");
     myFixture.configureByText("a.groovy", before);
-    doTest("A", "foo", null, true, true, getterName, setterName, toUseAccessorsWhenAccessible);
-    myFixture.checkResult(after);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      doTest("A", "foo", null, true, true, getterName, setterName, toUseAccessorsWhenAccessible);
+      myFixture.checkResult(after);
+    });
   }
 
   public void doTest(String clazz,
@@ -204,9 +224,9 @@ public class GrEncapsulateFieldsTest extends LightGroovyTestCase {
                      String getterName,
                      String setterName,
                      boolean toUseAccessorsWhenAccessible) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass aClass = myFixture.getJavaFacade().findClass(clazz, GlobalSearchScope.projectScope(myFixture.getProject()));
     PsiField aField = aClass.findFieldByName(field, false);
-
 
     final Project project = myFixture.getProject();
 
@@ -221,16 +241,16 @@ public class GrEncapsulateFieldsTest extends LightGroovyTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       if (conflicts != null) {
-        TestCase.assertEquals(conflicts, e.getMessage());
+        assertEquals(conflicts, e.getMessage());
         return;
       }
       else {
         e.printStackTrace();
-        TestCase.fail(e.getMessage());
+        fail(e.getMessage());
       }
     }
     if (conflicts != null) {
-      TestCase.fail("Conflicts were not detected: " + conflicts);
+      fail("Conflicts were not detected: " + conflicts);
     }
   }
 

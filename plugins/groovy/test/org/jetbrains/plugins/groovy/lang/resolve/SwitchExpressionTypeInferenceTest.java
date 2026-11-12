@@ -1,13 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.junit.jupiter.api.Test;
 
-public class SwitchExpressionTypeInferenceTest extends TypeInferenceTestBase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.resolve.TypeInferenceFixtureKt.typeInferenceFixture;
+
+@TestApplication
+public class SwitchExpressionTypeInferenceTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_4_0);
+  private final TestFixture<TypeInferenceFixture> inference = typeInferenceFixture(projectFixture);
+
+  @Test
   public void testSimple() {
-    doTest("""
+    inference.get().doTest("""
              def xx = switch(10) {
                  case 10 -> 10
              }
@@ -15,8 +25,9 @@ public class SwitchExpressionTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.Integer");
   }
 
+  @Test
   public void testLUB() {
-    doTest("""
+    inference.get().doTest("""
              class A {}
              class B extends A {}
              class C extends A {}
@@ -28,8 +39,9 @@ public class SwitchExpressionTypeInferenceTest extends TypeInferenceTestBase {
              """, "A");
   }
 
+  @Test
   public void testBlock() {
-    doTest("""
+    inference.get().doTest("""
              class A {}
              class B extends A {}
              class C extends A {}
@@ -43,8 +55,9 @@ public class SwitchExpressionTypeInferenceTest extends TypeInferenceTestBase {
              """, "A");
   }
 
+  @Test
   public void testYield() {
-    doTest("""
+    inference.get().doTest("""
              def xx = switch(10) {
                  case 10 -> yield 10
              }
@@ -52,8 +65,9 @@ public class SwitchExpressionTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.Integer");
   }
 
+  @Test
   public void testYieldInBlock() {
-    doTest("""
+    inference.get().doTest("""
              def xx = switch(10) {
                  case 10 -> {
                    yield 10
@@ -63,8 +77,9 @@ public class SwitchExpressionTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.Integer");
   }
 
+  @Test
   public void testConditionalYield() {
-    doTest("""
+    inference.get().doTest("""
              class A {}
              class B extends A {}
              class C extends A {}
@@ -81,8 +96,9 @@ public class SwitchExpressionTypeInferenceTest extends TypeInferenceTestBase {
              """, "A");
   }
 
+  @Test
   public void testFlowThroughSwitch() {
-    doTest("""
+    inference.get().doTest("""
              class A {}
              class B extends A {}
              class C extends A {}
@@ -97,8 +113,9 @@ public class SwitchExpressionTypeInferenceTest extends TypeInferenceTestBase {
              """, "A");
   }
 
+  @Test
   public void testNestedYields() {
-    doTest("""
+    inference.get().doTest("""
              def xx = switch (10)  {
                  case 1..10 -> {
                      def r = switch (40) {
@@ -111,8 +128,9 @@ public class SwitchExpressionTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.Integer");
   }
 
+  @Test
   public void testTypeSwitching() {
-    doTest("""
+    inference.get().doTest("""
              def xx
              
              def _ = switch (xx) {
@@ -121,8 +139,9 @@ public class SwitchExpressionTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.String");
   }
 
+  @Test
   public void testSwitchOnSeveralTypes() {
-    doTest("""
+    inference.get().doTest("""
              class A {}
              class B extends A {}
              class C extends A {}
@@ -135,8 +154,9 @@ public class SwitchExpressionTypeInferenceTest extends TypeInferenceTestBase {
              """, "A");
   }
 
+  @Test
   public void testMatchInOtherBranch() {
-    doTest("""
+    inference.get().doTest("""
              def foo(xx) {
                  def _ = switch (xx) {
                      case String  -> xx.charAt(10)
@@ -146,8 +166,9 @@ public class SwitchExpressionTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.Integer");
   }
 
+  @Test
   public void testMatchOnTypesInSwitchStatement() {
-    doTest("""
+    inference.get().doTest("""
              def foo(xx) {
                  switch (xx) {
                      case String  -> xx.charAt(10)
@@ -157,8 +178,9 @@ public class SwitchExpressionTypeInferenceTest extends TypeInferenceTestBase {
              """, "java.lang.Integer");
   }
 
+  @Test
   public void testMatchingWithColons() {
-    doTest("""
+    inference.get().doTest("""
              class A {}
              class B extends A {}
              class C extends A {}
@@ -171,10 +193,5 @@ public class SwitchExpressionTypeInferenceTest extends TypeInferenceTestBase {
                  }
              }
              """, "A");
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_4_0;
   }
 }

@@ -1,26 +1,37 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
-import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
+import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
 
 @SuppressWarnings("SpellCheckingInspection")
-public class GinqHighlightingTest extends GrHighlightingTestBase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+@TestApplication
+public class GinqHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GinqTestUtils.getProjectDescriptor());
+  private final TestFixture<GrHighlightingFixture> highlighting = grHighlightingFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.enableInspections(GrUnresolvedAccessInspection.class, GroovyAssignabilityCheckInspection.class);
   }
 
   private void testGinqHighlighting(String ginqContents) {
-    doTestHighlighting("GQ {\n " + ginqContents + " \n}");
+    highlighting.get().doTestHighlighting("GQ {\n " + ginqContents + " \n}");
   }
 
   private void testGinqMethodHighlighting(String ginqContents) {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          
                          import groovy.ginq.transform.GQ
                          
@@ -31,8 +42,9 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testKeywordHighlighting() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          
                          <info descr="null">GQ</info> {
                              <info descr="null">from</info> n in [1, 2, 3]
@@ -41,18 +53,22 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                          """, false, true, false);
   }
 
+  @Test
   public void testGinqFromStream() {
     testGinqHighlighting("from n in [1, 2, 3].stream() select n");
   }
 
+  @Test
   public void testGinqFromArray() {
     testGinqHighlighting("from n in new int[] {1, 2, 3} select n");
   }
 
+  @Test
   public void testGinqFromOtherGinq() {
     testGinqHighlighting("from n in (from m in [1, 2, 3] select m) select n");
   }
 
+  @Test
   public void testDistinct() {
     testGinqHighlighting("""
                            
@@ -61,6 +77,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testDistinct2() {
     testGinqHighlighting("""
                            
@@ -69,6 +86,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testUnresolvedBinding() {
     testGinqHighlighting("""
                            
@@ -77,6 +95,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testProjections() {
     testGinqHighlighting("""
                            
@@ -88,8 +107,9 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testTwoGinqExpressions() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          
                          <info descr="null">GQ</info> {
                            <info descr="null">from</info> n in [0]
@@ -99,6 +119,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                          """, false, true, false);
   }
 
+  @Test
   public void testExists() {
     testGinqHighlighting("""
                            
@@ -108,6 +129,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testJoin() {
     testGinqHighlighting("""
                            
@@ -117,6 +139,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testInnerJoin() {
     testGinqHighlighting("""
                            
@@ -132,6 +155,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLeftJoin() {
     testGinqHighlighting("""
                            
@@ -147,6 +171,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testRightJoin() {
     testGinqHighlighting("""
                            
@@ -162,6 +187,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testFullJoin() {
     testGinqHighlighting("""
                            
@@ -177,6 +203,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testCrossJoin() {
     testGinqHighlighting("""
                            
@@ -186,6 +213,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testGroupby() {
     testGinqHighlighting("""
                            
@@ -195,6 +223,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testGroupbyHaving() {
     testGinqHighlighting("""
                            
@@ -205,6 +234,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testGroupbyAs() {
     testGinqHighlighting("""
                            
@@ -215,6 +245,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testCount() {
     testGinqHighlighting("""
                            
@@ -224,6 +255,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testMin() {
     testGinqHighlighting("""
                            
@@ -233,6 +265,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testMax() {
     testGinqHighlighting("""
                            
@@ -242,6 +275,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testSum() {
     testGinqHighlighting("""
                            
@@ -251,6 +285,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testAvg() {
     testGinqHighlighting("""
                            
@@ -260,6 +295,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testMedian() {
     testGinqHighlighting("""
                            
@@ -269,6 +305,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testAgg() {
     testGinqHighlighting("""
                            
@@ -278,6 +315,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testStdev() {
     testGinqHighlighting("""
                            
@@ -286,6 +324,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testStdevp() {
     testGinqHighlighting("""
                            
@@ -294,6 +333,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testVar() {
     testGinqHighlighting("""
                            
@@ -302,6 +342,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testVarp() {
     testGinqHighlighting("""
                            
@@ -310,6 +351,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testOrderby() {
     testGinqHighlighting("""
                            
@@ -319,6 +361,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testOrderbyInAsc() {
     testGinqHighlighting("""
                            
@@ -328,6 +371,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testOrderbyInDesc() {
     testGinqHighlighting("""
                            
@@ -337,6 +381,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testOrderbyDouble() {
     testGinqHighlighting("""
                            
@@ -346,6 +391,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testOrderbyMixed() {
     testGinqHighlighting("""
                            
@@ -355,6 +401,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testOrderbyAscNullsLast() {
     testGinqHighlighting("""
                            
@@ -364,6 +411,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testOrderbyAscNullsFirst() {
     testGinqHighlighting("""
                            
@@ -373,6 +421,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testOrderbyDescNullsLast() {
     testGinqHighlighting("""
                            
@@ -382,6 +431,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testOrderbyDescNullsFirst() {
     testGinqHighlighting("""
                            
@@ -391,6 +441,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLimit() {
     testGinqHighlighting("""
                            
@@ -400,6 +451,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLimitAndOffset() {
     testGinqHighlighting("""
                            
@@ -409,6 +461,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testAliasInParentheses() {
     testGinqHighlighting("""
                            
@@ -417,6 +470,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testRowNumber1() {
     testGinqHighlighting("""
                            
@@ -427,6 +481,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testRowNumber2() {
     testGinqHighlighting("""
                            
@@ -438,6 +493,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testRank() {
     testGinqHighlighting("""
                            
@@ -448,6 +504,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testRank2() {
     testGinqHighlighting("""
                            
@@ -458,6 +515,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testRank3() {
     testGinqHighlighting("""
                            
@@ -466,6 +524,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLead1() {
     testGinqHighlighting("""
                            
@@ -474,6 +533,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLead2() {
     testGinqHighlighting("""
                            
@@ -482,6 +542,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLead3() {
     testGinqHighlighting("""
                            
@@ -490,6 +551,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLead4() {
     testGinqHighlighting("""
                            
@@ -498,6 +560,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLead5() {
     testGinqHighlighting("""
                            
@@ -506,6 +569,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLead6() {
     testGinqHighlighting("""
                            
@@ -514,6 +578,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLead7() {
     testGinqHighlighting("""
                            
@@ -522,6 +587,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLead8() {
     testGinqHighlighting("""
                            
@@ -530,6 +596,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLead9() {
     testGinqHighlighting("""
                            
@@ -538,6 +605,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLead10() {
     testGinqHighlighting("""
                            
@@ -546,6 +614,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testFirstValue1() {
     testGinqHighlighting("""
                            
@@ -554,6 +623,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLastValue1() {
     testGinqHighlighting("""
                            
@@ -562,6 +632,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testFirstValue2() {
     testGinqHighlighting("""
                            
@@ -570,6 +641,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testFirstValue3() {
     testGinqHighlighting("""
                            
@@ -578,6 +650,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLastValue2() {
     testGinqHighlighting("""
                            
@@ -586,6 +659,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLastValue3() {
     testGinqHighlighting("""
                            
@@ -594,6 +668,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testFirstValue4() {
     testGinqHighlighting("""
                            
@@ -602,6 +677,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLastValue4() {
     testGinqHighlighting("""
                            
@@ -610,6 +686,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testFirstValue5() {
     testGinqHighlighting("""
                            
@@ -618,6 +695,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testLastValue5() {
     testGinqHighlighting("""
                            
@@ -626,6 +704,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testValues1() {
     testGinqHighlighting("""
                            
@@ -635,6 +714,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testValues2() {
     testGinqHighlighting("""
                            
@@ -646,6 +726,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testMinMax() {
     testGinqHighlighting("""
                            
@@ -654,6 +735,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testPartitionby() {
     testGinqHighlighting("""
                            
@@ -666,6 +748,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testEmptyOver() {
     testGinqHighlighting("""
                            
@@ -678,6 +761,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testNegativeRange() {
     testGinqHighlighting("""
                            
@@ -687,6 +771,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testRange() {
     testGinqHighlighting("""
                            
@@ -696,6 +781,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testRange2() {
     testGinqHighlighting("""
                            
@@ -705,6 +791,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testDescRange() {
     testGinqHighlighting("""
                            
@@ -714,6 +801,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testDescRange2() {
     testGinqHighlighting("""
                            
@@ -723,6 +811,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testNullRange() {
     testGinqHighlighting("""
                            
@@ -732,6 +821,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testNullRange2() {
     testGinqHighlighting("""
                            
@@ -741,6 +831,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testStdev2() {
     testGinqHighlighting("""
                            
@@ -749,6 +840,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testStdevp2() {
     testGinqHighlighting("""
                            
@@ -757,6 +849,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testVar2() {
     testGinqHighlighting("""
                            
@@ -765,6 +858,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testVarp2() {
     testGinqHighlighting("""
                            
@@ -773,6 +867,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testAgg2() {
     testGinqHighlighting("""
                            
@@ -782,6 +877,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void test_rn() {
     testGinqHighlighting("""
                            
@@ -790,6 +886,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testSwitch() {
     testGinqHighlighting("""
                            
@@ -802,6 +899,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testIncorrectFrom() {
     testGinqHighlighting("""
                            
@@ -810,6 +908,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testIncorrectAlias() {
     testGinqHighlighting("""
                            
@@ -818,6 +917,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testIncompleteDataSource() {
     testGinqHighlighting("""
                            
@@ -825,6 +925,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testIncorrectJoin() {
     testGinqHighlighting("""
                            
@@ -834,6 +935,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testIncorrectJoinAlias() {
     testGinqHighlighting("""
                            
@@ -843,6 +945,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testIncompleteJoinDataSource() {
     testGinqHighlighting("""
                            
@@ -852,6 +955,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testIncorrectWhereBlock() {
     testGinqHighlighting("""
                            
@@ -861,6 +965,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testMisplacedOn() {
     testGinqHighlighting("""
                            
@@ -870,6 +975,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testEmptyLimit() {
     testGinqHighlighting("""
                            
@@ -879,6 +985,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testTooBigLimit() {
     testGinqHighlighting("""
                            
@@ -888,6 +995,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testUnrecognizedQuery() {
     testGinqHighlighting("""
                            
@@ -895,6 +1003,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testMisplacedQueries() {
     testGinqHighlighting("""
                            
@@ -905,6 +1014,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testFromShouldBeFirst() {
     testGinqHighlighting("""
                            
@@ -913,6 +1023,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testSelectShouldBeLast() {
     testGinqHighlighting("""
                            
@@ -921,6 +1032,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testOnWithKw() {
     testGinqHighlighting("""
                            
@@ -930,6 +1042,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testWhereTyped() {
     testGinqHighlighting("""
                            
@@ -939,6 +1052,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testDataSourceTyped() {
     testGinqHighlighting("""
                            
@@ -947,6 +1061,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testDataSourceTyped2() {
     testGinqHighlighting("""
                            
@@ -955,6 +1070,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testJoinWithoutOn() {
     testGinqHighlighting("""
                            
@@ -964,6 +1080,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testCrossjoinWithOn() {
     testGinqHighlighting("""
                            
@@ -973,6 +1090,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                            """);
   }
 
+  @Test
   public void testMethodJoin() {
     testGinqMethodHighlighting("""
                                  
@@ -982,6 +1100,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                                  """);
   }
 
+  @Test
   public void testMethodGroupby() {
     testGinqMethodHighlighting("""
                                  
@@ -991,6 +1110,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                                  """);
   }
 
+  @Test
   public void testMethodOrderby() {
     testGinqMethodHighlighting("""
                                  
@@ -1000,6 +1120,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                                  """);
   }
 
+  @Test
   public void testMethodWindows() {
     testGinqMethodHighlighting("""
                                  
@@ -1008,6 +1129,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                                  """);
   }
 
+  @Test
   public void testMethod_rn() {
     testGinqMethodHighlighting("""
                                  
@@ -1016,6 +1138,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                                  """);
   }
 
+  @Test
   public void testMethodIncompleteJoinDataSource() {
     testGinqMethodHighlighting("""
                                  
@@ -1025,6 +1148,7 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                                  """);
   }
 
+  @Test
   public void testMethodWhereTyped() {
     testGinqMethodHighlighting("""
                                  
@@ -1032,10 +1156,5 @@ public class GinqHighlightingTest extends GrHighlightingTestBase {
                                  where <warning>aa</warning>
                                  select aa as e1
                                  """);
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GinqTestUtils.getProjectDescriptor();
   }
 }

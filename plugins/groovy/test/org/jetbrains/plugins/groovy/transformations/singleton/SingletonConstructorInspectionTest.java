@@ -2,27 +2,33 @@
 package org.jetbrains.plugins.groovy.transformations.singleton;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
-import org.junit.Assert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class SingletonConstructorInspectionTest extends LightGroovyTestCase {
-  @Override
-  @NotNull
-  public final LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class SingletonConstructorInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.enableInspections(SingletonConstructorInspection.class);
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    getFixture().enableInspections(SingletonConstructorInspection.class);
-  }
-
+  @Test
   public void testHighlighting() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("_.groovy", """
         @Singleton
         class A {
@@ -46,7 +52,9 @@ public class SingletonConstructorInspectionTest extends LightGroovyTestCase {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testMakeNonStrictFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("_.groovy", """
         @Singleton
         class A {
@@ -55,7 +63,7 @@ public class SingletonConstructorInspectionTest extends LightGroovyTestCase {
         """);
 
     IntentionAction intention = myFixture.findSingleIntention(GroovyBundle.message("singleton.constructor.makeNonStrict"));
-    Assert.assertNotNull(intention);
+    assertNotNull(intention);
     myFixture.launchAction(intention);
     myFixture.checkResult("""
                     @Singleton(strict = false)
@@ -65,7 +73,9 @@ public class SingletonConstructorInspectionTest extends LightGroovyTestCase {
                     """);
   }
 
+  @Test
   public void testMakeNonStrictFixExisting() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("_.groovy", """
         @Singleton(strict = true, property = "lol")
         class A {
@@ -74,7 +84,7 @@ public class SingletonConstructorInspectionTest extends LightGroovyTestCase {
         """);
 
     IntentionAction intention = myFixture.findSingleIntention(GroovyBundle.message("singleton.constructor.makeNonStrict"));
-    Assert.assertNotNull(intention);
+    assertNotNull(intention);
     myFixture.launchAction(intention);
     myFixture.checkResult("""
                     @Singleton(strict = false, property = "lol")
@@ -84,7 +94,9 @@ public class SingletonConstructorInspectionTest extends LightGroovyTestCase {
                     """);
   }
 
+  @Test
   public void testRemoveConstructorFix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("_.groovy", """
         @Singleton
         class A {
@@ -93,7 +105,7 @@ public class SingletonConstructorInspectionTest extends LightGroovyTestCase {
         """);
 
     IntentionAction intention = myFixture.findSingleIntention(GroovyBundle.message("singleton.constructor.remove"));
-    Assert.assertNotNull(intention);
+    assertNotNull(intention);
     myFixture.launchAction(intention);
     myFixture.checkResult("""
                     @Singleton

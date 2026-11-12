@@ -2,32 +2,30 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.UsefulTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.geb.GebTestsTest;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.junit.Assert;
+import org.junit.jupiter.api.Test;
 
-public class NavigateDelegatedClsMethodsTest extends LightGroovyTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
-  private final String basePath = TestUtils.getAbsoluteTestDataPath() + "resolve/clsMethod";
-  private final LightProjectDescriptor projectDescriptor = GebTestsTest.DESCRIPTOR;
+@TestApplication
+public class NavigateDelegatedClsMethodsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GebTestsTest.DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "resolve/clsMethod");
 
-  @Override
-  public final String getTestDataPath() {
-    return basePath;
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
+  @Test
   public void testNavigationInGroovy() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("A.groovy", """
       import geb.Page;
       
@@ -37,13 +35,17 @@ public class NavigateDelegatedClsMethodsTest extends LightGroovyTestCase {
           }
       }
       """);
-    TargetElementUtil instance = TargetElementUtil.getInstance();
-    PsiElement resolved = instance.findTargetElement(getEditor(), instance.getAllAccepted(), getEditor().getCaretModel().getOffset());
-    UsefulTestCase.assertInstanceOf(resolved, PsiMethod.class);
-    Assert.assertEquals("Page", ((PsiMethod)resolved).getContainingClass().getName());
+    ReadAction.runBlocking(() -> {
+      TargetElementUtil instance = TargetElementUtil.getInstance();
+      PsiElement resolved = instance.findTargetElement(myFixture.getEditor(), instance.getAllAccepted(), myFixture.getEditor().getCaretModel().getOffset());
+      assertInstanceOf(PsiMethod.class, resolved);
+      assertEquals("Page", ((PsiMethod)resolved).getContainingClass().getName());
+    });
   }
 
+  @Test
   public void testNavigationInJava() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("A.java", """
       import geb.Page;
       
@@ -53,10 +55,12 @@ public class NavigateDelegatedClsMethodsTest extends LightGroovyTestCase {
           }
       }
       """);
-    TargetElementUtil instance = TargetElementUtil.getInstance();
-    PsiElement resolved = instance.findTargetElement(getEditor(), instance.getAllAccepted(), getEditor().getCaretModel().getOffset())
-      .getNavigationElement();
-    UsefulTestCase.assertInstanceOf(resolved, PsiMethod.class);
-    Assert.assertEquals("Page", ((PsiMethod)resolved).getContainingClass().getName());
+    ReadAction.runBlocking(() -> {
+      TargetElementUtil instance = TargetElementUtil.getInstance();
+      PsiElement resolved = instance.findTargetElement(myFixture.getEditor(), instance.getAllAccepted(), myFixture.getEditor().getCaretModel().getOffset())
+        .getNavigationElement();
+      assertInstanceOf(PsiMethod.class, resolved);
+      assertEquals("Page", ((PsiMethod)resolved).getContainingClass().getName());
+    });
   }
 }

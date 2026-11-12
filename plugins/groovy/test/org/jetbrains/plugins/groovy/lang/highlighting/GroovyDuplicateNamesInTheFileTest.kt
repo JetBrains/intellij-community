@@ -1,21 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class GroovyDuplicateNamesInTheFileTest : GrHighlightingTestBase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return GroovyProjectDescriptors.GROOVY_5_0
+@TestApplication
+class GroovyDuplicateNamesInTheFileTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_5_0)
   }
 
-  override fun getTestDataPath(): String {
-    return TestUtils.getAbsoluteTestDataPath() + "highlighting/duplicateNamesInTheFile"
-  }
+  private val highlighting by grHighlightingFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "highlighting/duplicateNamesInTheFile")
+  private val myFixture get() = highlighting.fixture
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.addFileToProject("foo/Bar.groovy",
                                """
                                  package foo
@@ -35,56 +38,79 @@ class GroovyDuplicateNamesInTheFileTest : GrHighlightingTestBase() {
                                """.trimIndent())
   }
 
-  fun testFqnImportAndFqnImport() = doTest(false)
+  @Test
+  fun testFqnImportAndFqnImport(): Unit = highlighting.doTest(false)
 
-  fun testFqnImportAndAlias() = doTest(false)
+  @Test
+  fun testFqnImportAndAlias(): Unit = highlighting.doTest(false)
 
-  fun testFqnImportAndOnDemandImport() = doTest(false)
+  @Test
+  fun testFqnImportAndOnDemandImport(): Unit = highlighting.doTest(false)
 
-  fun testFqnImportAndStaticImport() = doTest(false)
+  @Test
+  fun testFqnImportAndStaticImport(): Unit = highlighting.doTest(false)
 
-  fun testFqnImportAndStaticOnDemandImport() = doTest()
+  @Test
+  fun testFqnImportAndStaticOnDemandImport(): Unit = doTest()
 
-  fun testFqnImportAndClassDefinition() = doTest()
+  @Test
+  fun testFqnImportAndClassDefinition(): Unit = doTest()
 
-  fun testAliasAndAlias() = doTest()
+  @Test
+  fun testAliasAndAlias(): Unit = doTest()
 
-  fun testAliasAndOnDemandImport() = doTest()
+  @Test
+  fun testAliasAndOnDemandImport(): Unit = doTest()
 
-  fun testAliasAndStaticImport() = doTest()
+  @Test
+  fun testAliasAndStaticImport(): Unit = doTest()
 
-  fun testAliasAndStaticOnDemandImport() = doTest()
+  @Test
+  fun testAliasAndStaticOnDemandImport(): Unit = doTest()
 
-  fun testAliasAndClassDefinition() = doTest()
+  @Test
+  fun testAliasAndClassDefinition(): Unit = doTest()
 
-  fun testOnDemandImportAndOnDemandImport() = doTest()
+  @Test
+  fun testOnDemandImportAndOnDemandImport(): Unit = doTest()
 
-  fun testOnDemandImportAndStaticImport() = doTest()
+  @Test
+  fun testOnDemandImportAndStaticImport(): Unit = doTest()
 
-  fun testOnDemandImportAndStaticOnDemandImport() = doTest()
+  @Test
+  fun testOnDemandImportAndStaticOnDemandImport(): Unit = doTest()
 
-  fun testOnDemandImportAndClassDefinition() = doTest()
+  @Test
+  fun testOnDemandImportAndClassDefinition(): Unit = doTest()
 
-  fun testStaticImportAndStaticImport() = doTest()
+  @Test
+  fun testStaticImportAndStaticImport(): Unit = doTest()
 
-  fun testStaticImportAndStaticOnDemandImport() = doTest()
+  @Test
+  fun testStaticImportAndStaticOnDemandImport(): Unit = doTest()
 
-  fun testStaticImportAndClassDefinition() = doTest()
+  @Test
+  fun testStaticImportAndClassDefinition(): Unit = doTest()
 
-  fun testStaticOnDemandImportAndStaticOnDemandImport() = doTest()
+  @Test
+  fun testStaticOnDemandImportAndStaticOnDemandImport(): Unit = doTest()
 
-  fun testStaticOnDemandImportAndClassDefinition() = doTest()
+  @Test
+  fun testStaticOnDemandImportAndClassDefinition(): Unit = doTest()
 
-  fun testClassDefinitionAndClassDefinition() = doTest()
+  @Test
+  fun testClassDefinitionAndClassDefinition(): Unit = doTest()
 
-  fun testOnlyFirstOccurenceIsNotHighlighted() = doTest()
+  @Test
+  fun testOnlyFirstOccurenceIsNotHighlighted(): Unit = doTest()
 
-  fun testTypeParameterInDifferentMethodsIsNotHighlighted() = doTest()
+  @Test
+  fun testTypeParameterInDifferentMethodsIsNotHighlighted(): Unit = doTest()
 
-  fun testTypeParameterInClassAndMethodIsNotHighlighted() = doTest()
-
+  @Test
+  fun testTypeParameterInClassAndMethodIsNotHighlighted(): Unit = doTest()
 
   private fun doTest() {
-    doTest(false)
+    highlighting.doTest(false)
   }
 }

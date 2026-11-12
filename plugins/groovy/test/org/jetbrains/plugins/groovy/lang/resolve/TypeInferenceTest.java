@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiIntersectionType;
@@ -8,7 +9,12 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import groovy.transform.CompileStatic;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -16,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.groovy.testFramework.GroovyAssertions.assertType;
 import static com.intellij.psi.CommonClassNames.JAVA_IO_SERIALIZABLE;
@@ -25,242 +32,357 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_ARRAY_LIST;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.allowNestedContext;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.NestedContextKt.allowNestedContextOnce;
+import static org.jetbrains.plugins.groovy.lang.resolve.TypeInferenceFixtureKt.typeInferenceFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @CompileStatic
-public class TypeInferenceTest extends TypeInferenceTestBase {
+@TestApplication
+public class TypeInferenceTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<TypeInferenceFixture> inference = typeInferenceFixture(projectFixture);
 
+  @Test
   public void testTryFinallyFlow() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow/A.groovy").getElement();
-    final PsiType type = ref.getType();
-    assertTrue(type instanceof PsiIntersectionType);
-    final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
-    assertEquals(2, conjuncts.length);
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("tryFinallyFlow/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      final PsiType type = ref.getType();
+      assertTrue(type instanceof PsiIntersectionType);
+      final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
+      assertEquals(2, conjuncts.length);
+    });
   }
 
+  @Test
   public void testTryFinallyFlow1() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow1/A.groovy").getElement();
-    final PsiType type = ref.getType();
-    assertNotNull(type);
-    assertTrue(type.equalsToText("java.lang.Integer"));
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("tryFinallyFlow1/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      final PsiType type = ref.getType();
+      assertNotNull(type);
+      assertTrue(type.equalsToText("java.lang.Integer"));
+    });
   }
 
+  @Test
   public void testTryFinallyFlow2() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("tryFinallyFlow2/A.groovy").getElement();
-    final PsiType type = ref.getType();
-    assertNotNull(type);
-    assertTrue(type.equalsToText("java.lang.Integer"));
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("tryFinallyFlow2/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      final PsiType type = ref.getType();
+      assertNotNull(type);
+      assertTrue(type.equalsToText("java.lang.Integer"));
+    });
   }
 
+  @Test
   public void testThrowVariable() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("throwVariable/A.groovy").getElement();
-    final PsiType type = ref.getType();
-    assertNotNull(type);
-    assertEquals("java.lang.Exception", type.getCanonicalText());
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("throwVariable/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      final PsiType type = ref.getType();
+      assertNotNull(type);
+      assertEquals("java.lang.Exception", type.getCanonicalText());
+    });
   }
 
+  @Test
   public void testGrvy852() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("grvy852/A.groovy").getElement();
-    final PsiType type = ref.getType();
-    assertNotNull(type);
-    assertEquals(JAVA_LANG_OBJECT, type.getCanonicalText());
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("grvy852/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      final PsiType type = ref.getType();
+      assertNotNull(type);
+      assertEquals(JAVA_LANG_OBJECT, type.getCanonicalText());
+    });
   }
 
+  @Test
   public void testGenericMethod() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("genericMethod/A.groovy").getElement();
-    final PsiType type = ref.getType();
-    assertNotNull(type);
-    assertEquals("java.util.List<" + JAVA_LANG_STRING + ">", type.getCanonicalText());
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("genericMethod/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      final PsiType type = ref.getType();
+      assertNotNull(type);
+      assertEquals("java.util.List<" + JAVA_LANG_STRING + ">", type.getCanonicalText());
+    });
   }
 
+  @Test
   public void testCircular() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("circular/A.groovy").getElement();
-    assertNull(ref.getType());
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("circular/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      assertNull(ref.getType());
+    });
   }
 
+  @Test
   public void testCircular1() {
-    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("circular1/A.groovy").getElement();
-    assertNull(ref.getType());
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    RecursionManager.disableMissedCacheAssertions(myFixture.getTestRootDisposable());
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("circular1/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      assertNull(ref.getType());
+    });
   }
 
+  @Test
   public void testCircularMap() {
-    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile(getTestName(true) + "/A.groovy").getElement();
-    assertNotNull(ref.getType().getInternalCanonicalText());
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    RecursionManager.disableMissedCacheAssertions(myFixture.getTestRootDisposable());
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile(myFixture.getTestName(true) + "/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      assertNotNull(ref.getType().getInternalCanonicalText());
+    });
   }
 
+  @Test
   public void testClosure() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure/A.groovy").getElement();
-    assertNotNull(ref.getType());
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("closure/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      assertNotNull(ref.getType());
+    });
   }
 
+  @Test
   public void testClosure1() {
-    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure1/A.groovy").getElement();
-    assertTrue(ref.getType().equalsToText("java.lang.Integer"));
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    RecursionManager.disableMissedCacheAssertions(myFixture.getTestRootDisposable());
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("closure1/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      assertTrue(ref.getType().equalsToText("java.lang.Integer"));
+    });
   }
 
+  @Test
   public void testClosure2() {
-    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure2/A.groovy").getElement();
-    assertTrue(ref.getType().equalsToText("int"));
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    RecursionManager.disableMissedCacheAssertions(myFixture.getTestRootDisposable());
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("closure2/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      assertTrue(ref.getType().equalsToText("int"));
+    });
   }
 
+  @Test
   public void testClosureWithUndefinedValues() {
-    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile(getTestName(true) + "/A.groovy").getElement();
-    assertNotNull(ref.getType());
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    RecursionManager.disableMissedCacheAssertions(myFixture.getTestRootDisposable());
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile(myFixture.getTestName(true) + "/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      assertNotNull(ref.getType());
+    });
   }
 
+  @Test
   public void testBindingFromInsideClosure() {
-    doTest("list = ['a', 'b']; list.each { <caret>it }", JAVA_LANG_STRING);
+    inference.get().doTest("list = ['a', 'b']; list.each { <caret>it }", JAVA_LANG_STRING);
   }
 
+  @Test
   public void testGrvy1209() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("grvy1209/A.groovy").getElement();
-    assertTrue(ref.getType().equalsToText(JAVA_LANG_STRING));
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("grvy1209/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      assertTrue(ref.getType().equalsToText(JAVA_LANG_STRING));
+    });
   }
 
+  @Test
   public void testLeastUpperBoundClosureType() {
-    GrReferenceExpression ref = (GrReferenceExpression)configureByFile("leastUpperBoundClosureType/A.groovy").getElement();
-    assertInstanceOf(ref.getType(), PsiImmediateClassType.class);
+    GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("leastUpperBoundClosureType/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(PsiImmediateClassType.class, ref.getType());
+    });
   }
 
+  @Test
   public void testJavaLangClassType() {
-    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("javaLangClassType/A.groovy").getElement();
-    assertEquals(JAVA_LANG_STRING, ref.getType().getCanonicalText());
+    final GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("javaLangClassType/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      assertEquals(JAVA_LANG_STRING, ref.getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testGenericWildcard() {
-    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("genericWildcard/A.groovy").getElement();
-    assertEquals("X<Base>", ref.getType().getCanonicalText());
+    final GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("genericWildcard/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      assertEquals("X<Base>", ref.getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testArrayLikeAccessWithIntSequence() {
-    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("arrayLikeAccessWithIntSequence/A.groovy").getElement();
-    assertEquals("java.util.List<java.lang.Integer>", ref.getType().getCanonicalText());
+    final GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("arrayLikeAccessWithIntSequence/A.groovy").getElement();
+    ReadAction.runBlocking(() -> {
+      assertEquals("java.util.List<java.lang.Integer>", ref.getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testArrayAccess() {
-    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("arrayAccess/A.groovy");
-    assertEquals(JAVA_LANG_STRING, ref.getType().getCanonicalText());
+    final GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("arrayAccess/A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertEquals(JAVA_LANG_STRING, ref.getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testReturnTypeByTailExpression() {
-    final GrReferenceExpression ref = (GrReferenceExpression)configureByFile("returnTypeByTailExpression/A.groovy");
-    assertEquals(JAVA_LANG_STRING, ref.getType().getCanonicalText());
+    final GrReferenceExpression ref = (GrReferenceExpression)inference.get().configureByFile("returnTypeByTailExpression/A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertEquals(JAVA_LANG_STRING, ref.getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testParameterWithBuiltinType() {
-    GrReferenceExpression refExpr = (GrReferenceExpression)configureByFile("parameterWithBuiltinType/A.groovy");
-    assertEquals("int", refExpr.getType().getCanonicalText());
+    GrReferenceExpression refExpr = (GrReferenceExpression)inference.get().configureByFile("parameterWithBuiltinType/A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertEquals("int", refExpr.getType().getCanonicalText());
+    });
   }
 
+  @Test
   public void testRawTypeInReturnExpression() {
-    assertNotNull(resolve("A.groovy"));
+    assertNotNull(inference.get().resolve("A.groovy"));
   }
 
+  @Test
   public void testMethodCallInvokedOnArrayAccess() {
-    final GrReferenceExpression reference = (GrReferenceExpression)configureByFile("A.groovy");
-    assertNotNull(reference);
-    assertNotNull(reference.getType());
-    assertEquals("java.lang.Integer", reference.getType().getCanonicalText());
+    final GrReferenceExpression reference = (GrReferenceExpression)inference.get().configureByFile("A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertNotNull(reference);
+      assertNotNull(reference.getType());
+      assertEquals("java.lang.Integer", reference.getType().getCanonicalText());
+    });
   }
 
   private void assertTypeEquals(String expected, String fileName) {
-    final PsiReference ref = configureByFile(getTestName(true) + "/" + fileName);
-    assertInstanceOf(ref, GrReferenceExpression.class);
-    final PsiType type = ((GrReferenceExpression)ref).getType();
-    assertNotNull(type);
-    assertEquals(expected, type.getCanonicalText());
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    final PsiReference ref = inference.get().configureByFile(myFixture.getTestName(true) + "/" + fileName);
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(GrReferenceExpression.class, ref);
+      final PsiType type = ((GrReferenceExpression)ref).getType();
+      assertNotNull(type);
+      assertEquals(expected, type.getCanonicalText());
+    });
   }
 
+  @Test
   public void testTypeOfGroupBy() {
     assertTypeEquals("java.util.Map<java.lang.Integer,java.util.List<java.lang.Integer>>", "A.groovy");
   }
 
+  @Test
   public void testConditionalExpressionWithNumericTypes() {
     assertTypeEquals("java.lang.Number", "A.groovy");
   }
 
+  @Test
   public void testImplicitCallMethod() {
-    assertEquals(JAVA_LANG_STRING, ((GrExpression)configureByFile("A.groovy")).getType().getCanonicalText());
+    GrExpression expression = (GrExpression)inference.get().configureByFile("A.groovy");
+    assertEquals(JAVA_LANG_STRING, ReadAction.computeBlocking(() -> expression.getType().getCanonicalText()));
   }
 
+  @Test
   public void testImplicitlyReturnedMethodCall() {
     assertTypeEquals("java.util.Map<BasicRange,java.util.Map<BasicRange,java.lang.Double>>", "A.groovy");
   }
 
+  @Test
   public void testInferWithClosureType() {
     assertTypeEquals("java.util.Date", "A.groovy");
   }
 
+  @Test
   public void testPlusEquals1() {
     assertTypeEquals("Test", "A.groovy");
   }
 
+  @Test
   public void testPlusEquals2() {
     assertTypeEquals(JAVA_LANG_STRING, "A.groovy");
   }
 
+  @Test
   public void testPlusEquals3() {
     assertTypeEquals(JAVA_LANG_STRING, "A.groovy");
   }
 
+  @Test
   public void testPlusEqualsClosure() {
     assertTypeEquals(JAVA_LANG_STRING, "A.groovy");
   }
 
+  @Test
   public void testGetAtClosure() {
     assertTypeEquals(JAVA_LANG_STRING, "A.groovy");
   }
 
+  @Test
   public void testPreferMethodOverloader() {
     assertTypeEquals(JAVA_LANG_STRING, "A.groovy");
   }
 
+  @Test
   public void testSafeInvocationInClassQualifier() {
-    final PsiReference ref = configureByFile(getTestName(true) + "/SafeInvocationInClassQualifier.groovy");
-    assertInstanceOf(ref, GrReferenceExpression.class);
-    assertNull(((GrReferenceExpression)ref).getType());
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    final PsiReference ref = inference.get().configureByFile(myFixture.getTestName(true) + "/SafeInvocationInClassQualifier.groovy");
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(GrReferenceExpression.class, ref);
+      assertNull(((GrReferenceExpression)ref).getType());
+    });
   }
 
+  @Test
   public void testReturnTypeFromMethodClosure() {
     assertTypeEquals(JAVA_LANG_STRING, "A.groovy");
   }
 
+  @Test
   public void testNoSOF() {
-    final PsiReference ref = configureByFile(getTestName(true) + "/A.groovy");
-    assertInstanceOf(ref, GrReferenceExpression.class);
-    //noinspection unused
-    final PsiType type = ((GrReferenceExpression)ref).getType();
-    assertTrue(true); // test just should not fail with SOF exception
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    final PsiReference ref = inference.get().configureByFile(myFixture.getTestName(true) + "/A.groovy");
+    ReadAction.runBlocking(() -> {
+      assertInstanceOf(GrReferenceExpression.class, ref);
+      //noinspection unused
+      final PsiType type = ((GrReferenceExpression)ref).getType();
+      assertTrue(true); // test just should not fail with SOF exception
+    });
   }
 
+  @Test
   public void testTraditionalForVar() {
-    allowNestedContext(2, getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    allowNestedContext(2, myFixture.getTestRootDisposable());
     assertTypeEquals(JAVA_LANG_INTEGER, "A.groovy");
   }
 
+  @Test
   public void testIncMethod() {
     assertTypeEquals(JAVA_LANG_INTEGER, "A.groovy");
   }
 
+  @Test
   public void testDGMFind() {
     assertTypeEquals("java.io.File", "a.groovy");
   }
 
+  @Test
   public void testMultiTypeParameter() {
     assertTypeEquals("X | Y", "a.groovy");
   }
 
+  @Test
   public void testSingleParameterInStringInjection() {
     assertTypeEquals("java.io.StringWriter", "a.groovy");
   }
 
+  @Test
   public void testIndexPropertyPlusAssigned() {
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
     //noinspection GrMethodMayBeStatic
     GroovyFile file = (GroovyFile)myFixture.configureByText("a.groovy", """
       class X {
@@ -275,24 +397,30 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
     
       map['i'] += 2
     """);
-    GrAssignmentExpression assignment = (GrAssignmentExpression)file.getTopStatements()[2];
-    assertType("java.util.Date", assignment.getType());
+    ReadAction.runBlocking(() -> {
+      GrAssignmentExpression assignment = (GrAssignmentExpression)file.getTopStatements()[2];
+      assertType("java.util.Date", assignment.getType());
+    });
   }
 
+  @Test
   public void testAllTypeParamsAreSubstituted() {
     assertTypeEquals("java.util.Map<" + JAVA_LANG_OBJECT + "," + JAVA_LANG_OBJECT + ">", "a.groovy");
   }
 
+  @Test
   public void testWildCardsNormalized() {
     assertTypeEquals(JAVA_LANG_OBJECT, "a.groovy");
   }
 
+  @Test
   public void testIndexPropertyInLHS() {
     assertTypeEquals("java.util.LinkedHashMap<" + JAVA_LANG_OBJECT + ", " + JAVA_LANG_OBJECT + ">", "a.groovy");
   }
 
+  @Test
   public void testRawCollectionsInCasts() {
-    doTest("""
+    inference.get().doTest("""
       String[] a = ["a"];
       def b = a as ArrayList;
       def cc = b[0];
@@ -300,45 +428,52 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testFind() {
-    doTest("""
+    inference.get().doTest("""
       def arr =  ['1', '2', '3'] as String[];
       def found = arr.find({it=='1'});
       print fou<caret>nd
       """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testFindAll() {
-    doTest("""
+    inference.get().doTest("""
       def arr =  ['1', '2', '3'];
       def found = arr.findAll({it==1});
       print fou<caret>nd
       """, "java.util.ArrayList<" + JAVA_LANG_STRING + ">");
   }
 
+  @Test
   public void testFindAllForArray() {
-    doTest("""
+    inference.get().doTest("""
       def arr =  ['1', '2', '3'] as String[];
       def found = arr.findAll({it==1});
       print fou<caret>nd
       """, "java.util.ArrayList<" + JAVA_LANG_STRING + ">");
   }
 
+  @Test
   public void testFindAllForSet() {
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
     myFixture.addClass("""
       package java.util;
       class HashSet<T> implements Set<T> {}
       """);
-    doTest("""
+    inference.get().doTest("""
       def arr =  ['1', '2', '3'] as Set<String>;
       def found = arr.findAll({it==1});
       print fou<caret>nd
       """, "java.util.HashSet<" + JAVA_LANG_STRING + ">");
   }
 
+  @Test
   public void testInferArgumentTypeFromMethod1() {
-    allowNestedContextOnce(getTestRootDisposable());
-    doTest("""
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    allowNestedContextOnce(myFixture.getTestRootDisposable());
+    inference.get().doTest("""
       def bar(String s) {}
       
       def foo(Integer a) {
@@ -350,8 +485,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, "[java.lang.Integer," + JAVA_LANG_STRING + "]");
   }
 
+  @Test
   public void testInferArgumentTypeFromMethod2() {
-    doTest("""
+    inference.get().doTest("""
       def bar(String s) {}
       
       def foo(Integer a) {
@@ -361,8 +497,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, "[java.lang.Integer," + JAVA_LANG_STRING + "]");
   }
 
+  @Test
   public void testInferArgumentTypeFromMethod3() {
-    doTest("""
+    inference.get().doTest("""
       def bar(String s) {}
       
       def foo(Integer a) {
@@ -373,9 +510,11 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, "[java.lang.Integer," + JAVA_LANG_STRING + "]");
   }
 
+  @Test
   public void testInferArgumentTypeFromMethod4() {
-    allowNestedContext(2, getTestRootDisposable());
-    doTest("""
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    allowNestedContext(2, myFixture.getTestRootDisposable());
+    inference.get().doTest("""
       def bar(String s) {}
       
       def foo(Integer a) {
@@ -388,9 +527,11 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, "[java.lang.Integer," + JAVA_LANG_STRING + "]");
   }
 
+  @Test
   public void testInferArgumentTypeFromMethod5NoRecursion() {
-    allowNestedContextOnce(getTestRootDisposable());
-    doTest("""
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    allowNestedContextOnce(myFixture.getTestRootDisposable());
+    inference.get().doTest("""
       void usage(Collection<UnknownClass> x) {
         while (unknownCondition) {
           <caret>foo(x)
@@ -400,53 +541,61 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
     """, "void");
   }
 
+  @Test
   public void testEmptyListOrListWithGenerics() {
-    doTest("""
+    inference.get().doTest("""
       def list = cond ? [1, 2, 3] : [];
       print lis<caret>t
       """, JAVA_UTIL_LIST + "<" + JAVA_LANG_INTEGER + ">");
   }
 
+  @Test
   public void testEmptyListOrListWithGenerics2() {
-    doTest("""
+    inference.get().doTest("""
       def List<Integer> foo(){}
       def list = cond ? foo() : [];
       print lis<caret>t
       """, JAVA_UTIL_LIST + "<" + JAVA_LANG_INTEGER + ">");
   }
 
+  @Test
   public void testEmptyMapOrMapWithGenerics() {
-    doExprTest("""
+    inference.get().doExprTest("""
       cond ? [1:'a', 2:'a', 3:'a'] : [:]
       """, "java.util.LinkedHashMap<java.lang.Integer, " + JAVA_LANG_STRING + ">");
   }
 
+  @Test
   public void testEmptyMapOrMapWithGenerics2() {
-    doTest("""
+    inference.get().doTest("""
       def Map<String, String> foo(){}
       def map = cond ? foo() : [:];
       print ma<caret>p
       """, JAVA_UTIL_MAP + "<" + JAVA_LANG_STRING + "," + JAVA_LANG_STRING + ">");
   }
 
+  @Test
   public void testSpread1() {
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
     myFixture.addClass("""
       class A {
         String getString() {return "a";}
       }
       """);
-    doTest("""
+    inference.get().doTest("""
       [new A()].stri<caret>ng
       """, JAVA_UTIL_ARRAY_LIST + "<" + JAVA_LANG_STRING + ">");
   }
 
+  @Test
   public void testSpread2() {
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
     myFixture.addClass("""
       class A {
         String getString() {return "a";}
       }
       """);
-    doTest("""
+    inference.get().doTest("""
       class Cat {
         static getFoo(String b) { 2 }
       }
@@ -456,24 +605,28 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
     """, JAVA_UTIL_ARRAY_LIST + "<" + JAVA_LANG_INTEGER + ">");
   }
 
+  @Test
   public void testSpread3() {
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
       myFixture.addClass("""
         class A {
           String getString() {return "a";}
         }
         """);
-    doTest("""
+    inference.get().doTest("""
         [[new A()]].stri<caret>ng
       """, JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<" + JAVA_LANG_STRING + ">>");
   }
 
+  @Test
   public void testSpread4() {
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
     myFixture.addClass("""
       class A {
         String getString() {return "a";}
       }
       """);
-    doTest("""
+    inference.get().doTest("""
       class Cat {
         static getFoo(String b) { 2 }
       }
@@ -484,8 +637,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
     """, JAVA_UTIL_ARRAY_LIST + "<" + JAVA_UTIL_ARRAY_LIST + "<" + JAVA_LANG_INTEGER + ">>");
   }
 
+  @Test
   public void testInstanceOfInferring1() {
-    doTest("""
+    inference.get().doTest("""
       def bar(oo) {
         boolean b = oo instanceof String || oo != null;
         o<caret>o
@@ -493,8 +647,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, null);
   }
 
+  @Test
   public void testNegatedInstanceOfInferring1() {
-    doTest("""
+    inference.get().doTest("""
       def bar(oo) {
         boolean b = oo !instanceof String || oo != null;
         o<caret>o
@@ -502,8 +657,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, null);
   }
 
+  @Test
   public void testInstanceOfInferring2() {
-    doTest("""
+    inference.get().doTest("""
       def bar(oo) {
         boolean b = oo instanceof String || o<caret>o != null;
         oo
@@ -511,8 +667,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, null);
   }
 
+  @Test
   public void testNegatedInstanceOfInferring2() {
-    doTest("""
+    inference.get().doTest("""
       def bar(oo) {
         boolean b = oo !instanceof String || o<caret>o != null;
         oo
@@ -520,8 +677,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testInstanceOfInferring3() {
-    doTest("""
+    inference.get().doTest("""
       def bar(oo) {
         boolean b = oo instanceof String && o<caret>o != null;
         oo
@@ -529,8 +687,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testNegatedInstanceOfInferring3() {
-    doTest("""
+    inference.get().doTest("""
       def bar(oo) {
         boolean b = oo !instanceof String && o<caret>o != null;
         oo
@@ -538,8 +697,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, null);
   }
 
+  @Test
   public void testInstanceOfInferring4() {
-    doTest("""
+    inference.get().doTest("""
       def bar(oo) {
         boolean b = oo instanceof String && oo != null;
         o<caret>o
@@ -547,8 +707,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, null);
   }
 
+  @Test
   public void testNegatedInstanceOfInferring4() {
-    doTest("""
+    inference.get().doTest("""
       def bar(oo) {
         boolean b = oo !instanceof String && oo != null;
         o<caret>o
@@ -556,8 +717,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, null);
   }
 
+  @Test
   public void testInstanceOfInferring5() {
-    doTest("""
+    inference.get().doTest("""
       def foo(def oo) {
         if (oo instanceof String && oo instanceof CharSequence) {
           oo;
@@ -570,8 +732,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, null);
   }
 
+  @Test
   public void testNegatedInstanceOfInferring5() {
-    doTest("""
+    inference.get().doTest("""
       def foo(def oo) {
         if (oo !instanceof String || oo !instanceof CharSequence) {
           oo;
@@ -584,8 +747,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testInstanceOfInferring6() {
-    doTest("""
+    inference.get().doTest("""
       def foo(bar) {
         if (!(bar instanceof String) && bar instanceof Runnable) {
           ba<caret>r
@@ -594,8 +758,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, "java.lang.Runnable");
   }
 
+  @Test
   public void testNegatedInstanceOfInferring6() {
-    doTest("""
+    inference.get().doTest("""
       def foo(bar) {
         if (!(bar !instanceof String) || bar !instanceof Runnable) {
       
@@ -606,8 +771,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, "java.lang.Runnable");
   }
 
+  @Test
   public void testInstanceOfOrInstanceOf() {
-    doTest("""
+    inference.get().doTest("""
       class A {}
       class B extends A {}
       class C extends A {}
@@ -619,8 +785,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, "A");
   }
 
+  @Test
   public void testIfNullTyped() {
-    doTest("""
+    inference.get().doTest("""
       def foo(String a) {
           if (a == null) {
               <caret>a
@@ -629,8 +796,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testNullOrInstanceOf() {
-    doTest("""
+    inference.get().doTest("""
       def foo(a) {
           if (a == null || a instanceof String) {
               <caret>a
@@ -639,8 +807,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testNullOrInstanceOf2() {
-    doTest("""
+    inference.get().doTest("""
       def foo(a) {
           if (null == a || a instanceof String) {
               <caret>a
@@ -649,8 +818,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testInstanceOfOrNull() {
-    doTest("""
+    inference.get().doTest("""
       def foo(a) {
           if (a == null || a instanceof String) {
               <caret>a
@@ -659,8 +829,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testInstanceOfOrNull2() {
-    doTest("""
+    inference.get().doTest("""
       def foo(a) {
           if (null == a || a instanceof String) {
               <caret>a
@@ -669,8 +840,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
       """, JAVA_LANG_STRING);
   }
   
+  @Test
   public void testInstanceOfOrNullOnField() {
-    doTest(
+    inference.get().doTest(
       """
         class C {
           Object f
@@ -683,8 +855,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testInstanceOfOrNullOnField2() {
-    doTest(
+    inference.get().doTest(
       """
         class C {
           Object f
@@ -697,8 +870,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testNullOrInstanceOfElse() {
-    doTest(
+    inference.get().doTest(
       """
         def foo(a) {
             if (a != null && a !instanceof String) {
@@ -710,8 +884,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testWhileNull() {
-    doTest(
+    inference.get().doTest(
       """
         def s = null
         while (s == null) {
@@ -721,8 +896,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testWhileNullTyped() {
-    doTest(
+    inference.get().doTest(
       """
         String s = null
         while (s == null) {
@@ -732,8 +908,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testEnumConstant() {
-    doTest(
+    inference.get().doTest(
       """
         import static MyEnum.*
         enum MyEnum {ONE}
@@ -743,8 +920,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, "MyEnum");
   }
 
+  @Test
   public void testInString() {
-    doTest(
+    inference.get().doTest(
       """
         def foo(ii) {
           if (ii in String)
@@ -753,8 +931,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testNegatedInString() {
-    doTest(
+    inference.get().doTest(
       """
         def foo(ii) {
           if (ii !in String) {}
@@ -763,9 +942,11 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testIndexProperty() {
-    allowNestedContext(2, getTestRootDisposable());
-    doTest(
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    allowNestedContext(2, myFixture.getTestRootDisposable());
+    inference.get().doTest(
       """
         private void getCommonAncestor() {
             def c1 = [new File('a')]
@@ -778,8 +959,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, "java.io.File");
   }
 
+  @Test
   public void testWildcardClosureParam() {
-    doTest(
+    inference.get().doTest(
       """
         class Tx {
             def methodOfT() {}
@@ -791,8 +973,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, "Tx");
   }
 
+  @Test
   public void testAssert() {
-    doTest(
+    inference.get().doTest(
       """
         def foo(def var) {
           assert var instanceof String
@@ -801,15 +984,17 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testUnresolvedSpread() {
-    doTest(
+    inference.get().doTest(
       """
         def xxx = abc*.foo
         print xx<caret>x""", "java.util.List");
   }
 
+  @Test
   public void testThisInCategoryClass() {
-    doTest(
+    inference.get().doTest(
       """
         class Cat {}
         
@@ -822,16 +1007,18 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, "Cat");
   }
 
+  @Test
   public void testNormalizeTypeFromMap() {
-    doTest(
+    inference.get().doTest(
       """
         def pp = new HashMap<?, ?>().a
         print p<caret>p
         """, JAVA_LANG_OBJECT);
   }
 
+  @Test
   public void testRange() {
-    doTest(
+    inference.get().doTest(
       """
         def m = new int[3]
         for (ii in 0..<m.length) {
@@ -839,7 +1026,7 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         }
         """, "java.lang.Integer");
 
-    doTest(
+    inference.get().doTest(
       """
         def m = new int[3]
         for (ii in m.size()..< m[0]) {
@@ -848,16 +1035,19 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, "java.lang.Integer");
   }
 
+  @Test
   public void testUnary() {
-    doExprTest("~/abc/", "java.util.regex.Pattern");
+    inference.get().doExprTest("~/abc/", "java.util.regex.Pattern");
   }
 
+  @Test
   public void testUnary2() {
-    doExprTest("-/abc/", null);
+    inference.get().doExprTest("-/abc/", null);
   }
 
+  @Test
   public void testUnary3() {
-    doExprTest("""
+    inference.get().doExprTest("""
                  class A {
                    def bitwiseNegate() {'abc'}
                  }
@@ -865,32 +1055,39 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
                  """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testMultiply1() {
-    doExprTest("2*2", "java.lang.Integer");
+    inference.get().doExprTest("2*2", "java.lang.Integer");
   }
 
+  @Test
   public void testMultiply2() {
-    doExprTest("2f*2f", "java.lang.Double");
+    inference.get().doExprTest("2f*2f", "java.lang.Double");
   }
 
+  @Test
   public void testMultiply3() {
-    doExprTest("2d*2d", "java.lang.Double");
+    inference.get().doExprTest("2d*2d", "java.lang.Double");
   }
 
+  @Test
   public void testMultiply4() {
-    doExprTest("2.4*2", "java.math.BigDecimal");
+    inference.get().doExprTest("2.4*2", "java.math.BigDecimal");
   }
 
+  @Test
   public void testMultiply5() {
-    doExprTest("((byte)2)*((byte)2)", "java.lang.Integer");
+    inference.get().doExprTest("((byte)2)*((byte)2)", "java.lang.Integer");
   }
 
+  @Test
   public void testMultiply6() {
-    doExprTest("\"abc\"*\"cde\"", JAVA_LANG_STRING); //expected number as a right operand
+    inference.get().doExprTest("\"abc\"*\"cde\"", JAVA_LANG_STRING); //expected number as a right operand
   }
 
+  @Test
   public void testMultiply7() {
-    doExprTest("""
+    inference.get().doExprTest("""
                  class A {
                    def multiply(A a) {new B()}
                  }
@@ -899,37 +1096,45 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
                  """, "B");
   }
 
+  @Test
   public void testMultiply8() {
-    doExprTest("""
+    inference.get().doExprTest("""
                  class A { }
                  new A()*new A()
                  """, null);
   }
 
+  @Test
   public void testDiv1() {
-    doExprTest("1/2", "java.math.BigDecimal");
+    inference.get().doExprTest("1/2", "java.math.BigDecimal");
   }
 
+  @Test
   public void testDiv2() {
-    doExprTest("1/2.4", "java.math.BigDecimal");
+    inference.get().doExprTest("1/2.4", "java.math.BigDecimal");
   }
 
+  @Test
   public void testDiv3() {
-    doExprTest("1d/2", "java.lang.Double");
+    inference.get().doExprTest("1d/2", "java.lang.Double");
   }
 
+  @Test
   public void testDiv4() {
-    doExprTest("1f/2", "java.lang.Double");
+    inference.get().doExprTest("1f/2", "java.lang.Double");
   }
 
+  @Test
   public void testDiv5() {
-    doExprTest("1f/2.4", "java.lang.Double");
+    inference.get().doExprTest("1f/2.4", "java.lang.Double");
   }
 
+  @Test
   public void testRecursionWithMaps() {
-    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
-    allowNestedContext(2, getTestRootDisposable());
-    doTest(
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    RecursionManager.disableMissedCacheAssertions(myFixture.getTestRootDisposable());
+    allowNestedContext(2, myFixture.getTestRootDisposable());
+    inference.get().doTest(
       """
         def foo(Map map) {
           while(true)
@@ -938,9 +1143,11 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, "java.util.LinkedHashMap<" + JAVA_LANG_STRING + ", java.util.Map>");
   }
 
+  @Test
   public void testRecursionWithLists() {
-    allowNestedContextOnce(getTestRootDisposable());
-    doTest(
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    allowNestedContextOnce(myFixture.getTestRootDisposable());
+    inference.get().doTest(
       """
         def foo(List list) {
           while(true)
@@ -949,8 +1156,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, "java.util.ArrayList<java.util.List>");
   }
 
+  @Test
   public void testReturnNullWithGeneric() {
-    doTest(
+    inference.get().doTest(
       """
         import groovy.transform.CompileStatic
         
@@ -967,24 +1175,30 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
         """, "java.util.List");
   }
 
+  @Test
   public void testSubstitutorIsNotInferredWhileInferringInitializerType() {
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
     GroovyFile file = (GroovyFile)myFixture.configureByText("_.groovy", """
        class A { Closure foo = { 42 } }
       """);
 
-    GrClosureType.forbidClosureInference(() -> {
-      PsiMethod getter = file.getTypeDefinitions()[0].findMethodsByName("getFoo", false)[0];
-      PsiClassType type = (PsiClassType)PsiUtil.getSmartReturnType(getter);
-      assertEquals(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, type.resolve().getQualifiedName());
+    ReadAction.runBlocking(() -> {
+      GrClosureType.forbidClosureInference(() -> {
+        PsiMethod getter = file.getTypeDefinitions()[0].findMethodsByName("getFoo", false)[0];
+        PsiClassType type = (PsiClassType)PsiUtil.getSmartReturnType(getter);
+        assertEquals(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, type.resolve().getQualifiedName());
+      });
     });
   }
 
+  @Test
   public void testVariableTypeFromNullInitializer() {
-    doTest("def v = null; <caret>v", "null");
+    inference.get().doTest("def v = null; <caret>v", "null");
   }
 
+  @Test
   public void testVariableTypeFromNullInitializerCompileStatic() {
-    doTest("""
+    inference.get().doTest("""
               @groovy.transform.CompileStatic
                  def foo() {
                    def v = null;
@@ -993,104 +1207,117 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_OBJECT);
   }
 
+  @Test
   public void testClassExpressions() {
-    doExprTest("String[]", "java.lang.Class<" + JAVA_LANG_STRING + "[]>");
-    doExprTest("Class[]", "java.lang.Class<java.lang.Class[]>");
-    doExprTest("int[]", "java.lang.Class<int[]>");
-    doExprTest("float[][]", "java.lang.Class<float[][]>");
-    doExprTest("Integer[][]", "java.lang.Class<java.lang.Integer[][]>");
-    doExprTest("boolean[][][]", "java.lang.Class<boolean[][][]>");
+    inference.get().doExprTest("String[]", "java.lang.Class<" + JAVA_LANG_STRING + "[]>");
+    inference.get().doExprTest("Class[]", "java.lang.Class<java.lang.Class[]>");
+    inference.get().doExprTest("int[]", "java.lang.Class<int[]>");
+    inference.get().doExprTest("float[][]", "java.lang.Class<float[][]>");
+    inference.get().doExprTest("Integer[][]", "java.lang.Class<java.lang.Integer[][]>");
+    inference.get().doExprTest("boolean[][][]", "java.lang.Class<boolean[][][]>");
 
-    doExprTest("String.class", "java.lang.Class<" + JAVA_LANG_STRING + ">");
-    doExprTest("byte.class", "java.lang.Class<byte>");
+    inference.get().doExprTest("String.class", "java.lang.Class<" + JAVA_LANG_STRING + ">");
+    inference.get().doExprTest("byte.class", "java.lang.Class<byte>");
 
-    doExprTest("String[].class", "java.lang.Class<" + JAVA_LANG_STRING + "[]>");
-    doExprTest("Class[].class", "java.lang.Class<java.lang.Class[]>");
-    doExprTest("int[].class", "java.lang.Class<int[]>");
-    doExprTest("float[][]", "java.lang.Class<float[][]>");
-    doExprTest("Integer[][].class", "java.lang.Class<java.lang.Integer[][]>");
-    doExprTest("double[][][].class", "java.lang.Class<double[][][]>");
+    inference.get().doExprTest("String[].class", "java.lang.Class<" + JAVA_LANG_STRING + "[]>");
+    inference.get().doExprTest("Class[].class", "java.lang.Class<java.lang.Class[]>");
+    inference.get().doExprTest("int[].class", "java.lang.Class<int[]>");
+    inference.get().doExprTest("float[][]", "java.lang.Class<float[][]>");
+    inference.get().doExprTest("Integer[][].class", "java.lang.Class<java.lang.Integer[][]>");
+    inference.get().doExprTest("double[][][].class", "java.lang.Class<double[][][]>");
   }
 
+  @Test
   public void testClassExpressionsWithArguments() {
-    doExprTest("String[1]", JAVA_LANG_OBJECT);
-    doExprTest("String[1][]", JAVA_LANG_OBJECT);
-    doExprTest("String[1][].class", "java.lang.Class<? extends " + JAVA_LANG_OBJECT + ">");
-    doExprTest("int[][1].class", "java.lang.Class<? extends " + JAVA_LANG_OBJECT + ">");
+    inference.get().doExprTest("String[1]", JAVA_LANG_OBJECT);
+    inference.get().doExprTest("String[1][]", JAVA_LANG_OBJECT);
+    inference.get().doExprTest("String[1][].class", "java.lang.Class<? extends " + JAVA_LANG_OBJECT + ">");
+    inference.get().doExprTest("int[][1].class", "java.lang.Class<? extends " + JAVA_LANG_OBJECT + ">");
   }
 
+  @Test
   public void testClassReference() {
-    doExprTest("[].class", "java.lang.Class<? extends java.util.ArrayList>");
-    doExprTest("1.class", "java.lang.Class<? extends java.lang.Integer>");
-    doExprTest("String.valueOf(1).class", "java.lang.Class<? extends " + JAVA_LANG_STRING + ">");
-    doExprTest("1.getClass()", "java.lang.Class<? extends java.lang.Integer>");
+    inference.get().doExprTest("[].class", "java.lang.Class<? extends java.util.ArrayList>");
+    inference.get().doExprTest("1.class", "java.lang.Class<? extends java.lang.Integer>");
+    inference.get().doExprTest("String.valueOf(1).class", "java.lang.Class<? extends " + JAVA_LANG_STRING + ">");
+    inference.get().doExprTest("1.getClass()", "java.lang.Class<? extends java.lang.Integer>");
 
-    doCSExprTest("[].class", "java.lang.Class<? extends java.util.List>");
-    doCSExprTest("1.class", "java.lang.Class<? extends java.lang.Integer>");
-    doCSExprTest("String.valueOf(1).class", "java.lang.Class<? extends " + JAVA_LANG_STRING + ">");
-    doCSExprTest("1.getClass()", "java.lang.Class<? extends java.lang.Integer>");
+    inference.get().doCSExprTest("[].class", "java.lang.Class<? extends java.util.List>");
+    inference.get().doCSExprTest("1.class", "java.lang.Class<? extends java.lang.Integer>");
+    inference.get().doCSExprTest("String.valueOf(1).class", "java.lang.Class<? extends " + JAVA_LANG_STRING + ">");
+    inference.get().doCSExprTest("1.getClass()", "java.lang.Class<? extends java.lang.Integer>");
   }
 
+  @Test
   public void testUnknownClass() {
-    doExprTest("a.class", null);
-    doCSExprTest("a.class", "java.lang.Class<? extends " + JAVA_LANG_OBJECT + ">");
+    inference.get().doExprTest("a.class", null);
+    inference.get().doCSExprTest("a.class", "java.lang.Class<? extends " + JAVA_LANG_OBJECT + ">");
 
-    doExprTest("a().class", null);
-    doCSExprTest("a().class", "java.lang.Class");
+    inference.get().doExprTest("a().class", null);
+    inference.get().doCSExprTest("a().class", "java.lang.Class");
   }
 
+  @Test
   public void testListLiteralType() {
-    doExprTest("[null]", "java.util.ArrayList");
-    doExprTest("[\"foo\", \"bar\"]", "java.util.ArrayList<" + JAVA_LANG_STRING + ">");
-    doExprTest("[\"${foo}\", \"${bar}\"]", "java.util.ArrayList<groovy.lang.GString>");
-    doExprTest("[1, \"a\"]", "java.util.ArrayList<java.io.Serializable>");
+    inference.get().doExprTest("[null]", "java.util.ArrayList");
+    inference.get().doExprTest("[\"foo\", \"bar\"]", "java.util.ArrayList<" + JAVA_LANG_STRING + ">");
+    inference.get().doExprTest("[\"${foo}\", \"${bar}\"]", "java.util.ArrayList<groovy.lang.GString>");
+    inference.get().doExprTest("[1, \"a\"]", "java.util.ArrayList<java.io.Serializable>");
   }
 
+  @Test
   public void testListLiteralTypeCS() {
-    doCSExprTest("[null]", "java.util.List");
-    doCSExprTest("[\"foo\", \"bar\"]", "java.util.List<" + JAVA_LANG_STRING + ">");
-    doCSExprTest("[\"${foo}\", \"${bar}\"]", "java.util.List<groovy.lang.GString>");
-    doCSExprTest("[1, \"a\"]", "java.util.List<java.io.Serializable>");
+    inference.get().doCSExprTest("[null]", "java.util.List");
+    inference.get().doCSExprTest("[\"foo\", \"bar\"]", "java.util.List<" + JAVA_LANG_STRING + ">");
+    inference.get().doCSExprTest("[\"${foo}\", \"${bar}\"]", "java.util.List<groovy.lang.GString>");
+    inference.get().doCSExprTest("[1, \"a\"]", "java.util.List<java.io.Serializable>");
   }
 
+  @Test
   public void testMapLiteralType() {
-    doExprTest("[a: 'foo']", "java.util.LinkedHashMap<" + JAVA_LANG_STRING + ", " + JAVA_LANG_STRING + ">");
-    doExprTest("[1: 'foo']", "java.util.LinkedHashMap<java.lang.Integer, " + JAVA_LANG_STRING + ">");
-    doExprTest("[1L: 'foo']", "java.util.LinkedHashMap<java.lang.Long, " + JAVA_LANG_STRING + ">");
-    doExprTest("[null: 'foo']", "java.util.LinkedHashMap<" + JAVA_LANG_STRING + ", " + JAVA_LANG_STRING + ">");
-    doExprTest("[(null): 'foo']", "java.util.LinkedHashMap<null, " + JAVA_LANG_STRING + ">");
-    doExprTest("[foo: null]", "java.util.LinkedHashMap<" + JAVA_LANG_STRING + ", null>");
-    doExprTest("[(null): 'foo', bar: null]", "java.util.LinkedHashMap<" + JAVA_LANG_STRING + ", " + JAVA_LANG_STRING + ">");
-    doExprTest("[foo: 'bar', 2: 'goo']", "java.util.LinkedHashMap<java.io.Serializable, " + JAVA_LANG_STRING + ">");
+    inference.get().doExprTest("[a: 'foo']", "java.util.LinkedHashMap<" + JAVA_LANG_STRING + ", " + JAVA_LANG_STRING + ">");
+    inference.get().doExprTest("[1: 'foo']", "java.util.LinkedHashMap<java.lang.Integer, " + JAVA_LANG_STRING + ">");
+    inference.get().doExprTest("[1L: 'foo']", "java.util.LinkedHashMap<java.lang.Long, " + JAVA_LANG_STRING + ">");
+    inference.get().doExprTest("[null: 'foo']", "java.util.LinkedHashMap<" + JAVA_LANG_STRING + ", " + JAVA_LANG_STRING + ">");
+    inference.get().doExprTest("[(null): 'foo']", "java.util.LinkedHashMap<null, " + JAVA_LANG_STRING + ">");
+    inference.get().doExprTest("[foo: null]", "java.util.LinkedHashMap<" + JAVA_LANG_STRING + ", null>");
+    inference.get().doExprTest("[(null): 'foo', bar: null]", "java.util.LinkedHashMap<" + JAVA_LANG_STRING + ", " + JAVA_LANG_STRING + ">");
+    inference.get().doExprTest("[foo: 'bar', 2: 'goo']", "java.util.LinkedHashMap<java.io.Serializable, " + JAVA_LANG_STRING + ">");
   }
 
+  @Test
   public void testRecursiveLiteralTypes() {
-    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
-    doExprTest(" def foo() { [foo()] }\nfoo()", "java.util.ArrayList<" + JAVA_LANG_OBJECT + ">");
-    doExprTest(" def foo() { [new Object(), foo()] }\nfoo()", "java.util.ArrayList<" + JAVA_LANG_OBJECT + ">");
-    doExprTest(" def foo() { [someKey1: foo()] }\nfoo()", "java.util.LinkedHashMap<" + JAVA_LANG_STRING + ", java.util.LinkedHashMap>");
-    doExprTest(" def foo() { [someKey0: new Object(), someKey1: foo()] }\nfoo()", "java.util.LinkedHashMap<" + JAVA_LANG_STRING + ", " + JAVA_LANG_OBJECT + ">");
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    RecursionManager.disableMissedCacheAssertions(myFixture.getTestRootDisposable());
+    inference.get().doExprTest(" def foo() { [foo()] }\nfoo()", "java.util.ArrayList<" + JAVA_LANG_OBJECT + ">");
+    inference.get().doExprTest(" def foo() { [new Object(), foo()] }\nfoo()", "java.util.ArrayList<" + JAVA_LANG_OBJECT + ">");
+    inference.get().doExprTest(" def foo() { [someKey1: foo()] }\nfoo()", "java.util.LinkedHashMap<" + JAVA_LANG_STRING + ", java.util.LinkedHashMap>");
+    inference.get().doExprTest(" def foo() { [someKey0: new Object(), someKey1: foo()] }\nfoo()", "java.util.LinkedHashMap<" + JAVA_LANG_STRING + ", " + JAVA_LANG_OBJECT + ">");
   }
 
+  @Test
   public void testRangeLiteralType() {
-    doExprTest("1..10", "groovy.lang.IntRange");
-    doExprTest("'a'..'z'", "groovy.lang.Range<" + JAVA_LANG_STRING + ">");
-    doExprTest("'b'..1", "groovy.lang.Range<java.io.Serializable>");
+    inference.get().doExprTest("1..10", "groovy.lang.IntRange");
+    inference.get().doExprTest("'a'..'z'", "groovy.lang.Range<" + JAVA_LANG_STRING + ">");
+    inference.get().doExprTest("'b'..1", "groovy.lang.Range<java.io.Serializable>");
   }
 
+  @Test
   public void testListWithSpread() {
-    doExprTest("def l = [1, 2]; [*l]", "java.util.ArrayList<java.lang.Integer>");
-    doExprTest("def l = [1, 2]; [*[*[*l]]]", "java.util.ArrayList<java.lang.Integer>");
+    inference.get().doExprTest("def l = [1, 2]; [*l]", "java.util.ArrayList<java.lang.Integer>");
+    inference.get().doExprTest("def l = [1, 2]; [*[*[*l]]]", "java.util.ArrayList<java.lang.Integer>");
   }
 
+  @Test
   public void testMapSpreadDotAccess() {
-    doExprTest("[foo: 2, bar: 4]*.key", "java.util.ArrayList<" + JAVA_LANG_STRING + ">");
-    doExprTest("[foo: 2, bar: 4]*.value", "java.util.ArrayList<java.lang.Integer>");
-    doExprTest("[foo: 2, bar: 4]*.undefined", "java.util.List");
+    inference.get().doExprTest("[foo: 2, bar: 4]*.key", "java.util.ArrayList<" + JAVA_LANG_STRING + ">");
+    inference.get().doExprTest("[foo: 2, bar: 4]*.value", "java.util.ArrayList<java.lang.Integer>");
+    inference.get().doExprTest("[foo: 2, bar: 4]*.undefined", "java.util.List");
   }
 
+  @Test
   public void testInstanceofDoesNotInterfereWithOuterIf() {
-    doTest("""
+    inference.get().doTest("""
               def bar(CharSequence xx) {
                    if (xx instanceof String) {
                          1 instanceof Object
@@ -1100,8 +1327,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testGenericTupleInferenceWithTypeParam() {
-    doTest("""
+    inference.get().doTest("""
               def <T> T func(T arg){
                      return arg
                  }
@@ -1113,8 +1341,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, "java.util.ArrayList<java.util.ArrayList<" + JAVA_LANG_STRING + ">>");
   }
 
+  @Test
   public void testGenericTupleInferenceWithTypeParam2() {
-    doTest("""
+    inference.get().doTest("""
               def <T> T func(T arg){
                      return arg
                  }
@@ -1126,12 +1355,14 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, "java.util.ArrayList<java.util.ArrayList<java.io.Serializable>>");
   }
 
+  @Test
   public void testEnumValuesType() {
-    doExprTest("enum E {}; E.values()", "E[]");
+    inference.get().doExprTest("enum E {}; E.values()", "E[]");
   }
 
+  @Test
   public void testClosureOwnerType() {
-    doTest("""
+    inference.get().doTest("""
               class W {
                    def c = {
                          <caret>owner
@@ -1140,22 +1371,26 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, "W");
   }
 
+  @Test
   public void testElvisAssignment() {
-    doExprTest("def a; a ?= \"hello\"", JAVA_LANG_STRING);
-    doExprTest("def a = \"\"; a ?= null", JAVA_LANG_STRING);
-    doExprTest("def a = \"s\"; a ?= 1", "[java.io.Serializable,java.lang.Comparable<? extends java.io.Serializable>]");
+    inference.get().doExprTest("def a; a ?= \"hello\"", JAVA_LANG_STRING);
+    inference.get().doExprTest("def a = \"\"; a ?= null", JAVA_LANG_STRING);
+    inference.get().doExprTest("def a = \"s\"; a ?= 1", "[java.io.Serializable,java.lang.Comparable<? extends java.io.Serializable>]");
   }
 
+  @Test
   public void testSpreadAsImmutable() {
-    doExprTest("List<List<String>> a; a*.asImmutable()", "java.util.ArrayList<java.util.List<" + JAVA_LANG_STRING + ">>");
+    inference.get().doExprTest("List<List<String>> a; a*.asImmutable()", "java.util.ArrayList<java.util.List<" + JAVA_LANG_STRING + ">>");
   }
 
+  @Test
   public void testDontStartInferenceForMethodParameterType() {
-    doTest("def bar(String ss) { <caret>ss }", JAVA_LANG_STRING);
+    inference.get().doTest("def bar(String ss) { <caret>ss }", JAVA_LANG_STRING);
   }
 
+  @Test
   public void testClosureParam() {
-    doTest("""
+    inference.get().doTest("""
               interface I { def foo(String s) }
                  def bar(I i) {}
                  bar { var ->
@@ -1164,8 +1399,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testAssignmentInCycleIndependentOnIndex() {
-    doTest("""
+    inference.get().doTest("""
              def foo
              for (def i = 1; i < 10; i++) {
                  foo = 2
@@ -1175,9 +1411,11 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
     );
   }
 
+  @Test
   public void testAssignmentInCycleDependingOnIndex() {
-    allowNestedContextOnce(getTestRootDisposable());
-    doTest("""
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    allowNestedContextOnce(myFixture.getTestRootDisposable());
+    inference.get().doTest("""
              def foo
              for (def i = 1; i < 10; i++) {
                  foo = i
@@ -1187,10 +1425,12 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
     );
   }
 
+  @Test
   public void testJavaFieldPassedAsArgumentToOverloadedMethod() {
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
     myFixture.addClass("public interface I {}");
     myFixture.addClass("public class SuperClass { public I myField; }");
-    doTest("""
+    inference.get().doTest("""
              class A extends SuperClass {
                  static void foo(I s) {}
                  static void foo(String s) {}
@@ -1203,9 +1443,11 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
     );
   }
 
+  @Test
   public void testNoSoeArgumentInstructionInCycle() {
-    allowNestedContext(3, getTestRootDisposable());
-    doTest("""
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    allowNestedContext(3, myFixture.getTestRootDisposable());
+    inference.get().doTest("""
              static <U> void foo(U[] a, U[] b) {}
              
              String prevParent = null
@@ -1219,8 +1461,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
     );
   }
 
+  @Test
   public void testAssignmentToIteratedVariable() {
-    doTest("""
+    inference.get().doTest("""
              interface I {}
              class A implements I {}
              class B implements I {
@@ -1235,8 +1478,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
     );
   }
 
+  @Test
   public void testNoSoeWithWriteToIteratedVariableInCycle() {
-    doTest("""
+    inference.get().doTest("""
              while (u) {
                  for (a in b) {
                      b = a
@@ -1247,9 +1491,11 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
     );
   }
 
+  @Test
   public void testNoSoeCyclicMultiAssignment() {
-    allowNestedContext(4, getTestRootDisposable());
-    doTest("""
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    allowNestedContext(4, myFixture.getTestRootDisposable());
+    inference.get().doTest("""
              def input = ""
              while (condition) {
                  def (name) = parseOption(input)
@@ -1259,8 +1505,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
     );
   }
 
+  @Test
   public void testStringVariableAssignedWithGStringInsideClosureCS() {
-    doTest("""
+    inference.get().doTest("""
              @groovy.transform.CompileStatic
              def test() {
                  String key
@@ -1273,14 +1520,17 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
     );
   }
 
+  @Test
   public void testSpreadListOfClasses() {
-    doExprTest("""
+    inference.get().doExprTest("""
                      [String, Integer]*.'class'
                  """, "java.util.ArrayList<java.lang.Class<? extends java.lang.Class>>");
   }
 
+  @Test
   public void testReassignedLocalCS() {
-    doTest("""
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    inference.get().doTest("""
                  def aa = "1"
                  a<caret>a.toUpperCase()
                  if (false) {
@@ -1290,16 +1540,19 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
                  aa
              """, JAVA_LANG_STRING);
 
-    var file = getFile();
+    var file = myFixture.getFile();
     //noinspection ResultOfMethodCallIgnored
     myFixture.getDocument(file).getTextLength();
-    var ref = (GrReferenceExpression)file.findReferenceAt(myFixture.getDocument(file).getTextLength() - 2);
-    var actual = ref.getType();
-    assertType(JAVA_LANG_OBJECT, actual);
+    ReadAction.runBlocking(() -> {
+      var ref = (GrReferenceExpression)file.findReferenceAt(myFixture.getDocument(file).getTextLength() - 2);
+      var actual = ref.getType();
+      assertType(JAVA_LANG_OBJECT, actual);
+    });
   }
 
+  @Test
   public void testFieldWithCallConstraint() {
-    doTest("""
+    inference.get().doTest("""
                  class T {
                      def foo(Object o) {}
              
@@ -1313,8 +1566,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testReassignField() {
-    doTest("""
+    inference.get().doTest("""
                  class T {
                      def field = ""
              
@@ -1326,8 +1580,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testFieldWithCallConstraintCS() {
-    doTest("""
+    inference.get().doTest("""
                  @groovy.transform.CompileStatic
                  class T {
                      def foo(Object o) {}
@@ -1342,8 +1597,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_OBJECT);
   }
 
+  @Test
   public void testReassignFieldCS() {
-    doTest("""
+    inference.get().doTest("""
                  @groovy.transform.CompileStatic
                  class T {
                      def field = ""
@@ -1356,14 +1612,16 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_OBJECT);
   }
 
+  @Test
   public void testSpreadCallExpressionInChainCall() {
-    doTest("""
+    inference.get().doTest("""
                [""]*.trim().las<caret>t()
              """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testSpreadFieldExpressionInChainCall() {
-    doTest("""
+    inference.get().doTest("""
                  class C {
                    public Integer field;
                  }
@@ -1371,8 +1629,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testDoTypeInferenceForVariablesFromOuterContext() {
-    doTest("""
+    inference.get().doTest("""
                  def foo(p) {
                    p = 1
                    def closure = {
@@ -1382,8 +1641,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testDoTypeInferenceForOuterVariablesWithExplicitType() {
-    doTest("""
+    inference.get().doTest("""
                  def foo() {
                    Integer x = 1
                    def closure = {
@@ -1393,8 +1653,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testDoTypeInferenceForOuterFinalVariables() {
-    doTest("""
+    inference.get().doTest("""
                  def foo() {
                    final def x = "string"
                    def closure = { <caret>x }
@@ -1402,8 +1663,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testDoTypeInferenceForOuterEffectivelyFinalVariables() {
-    doTest("""
+    inference.get().doTest("""
                  def foo() {
                    def x = "string"
                    def closure = { <caret>x }
@@ -1411,8 +1673,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testUseOuterContextForClosuresPassedToDGM() {
-    doTest("""
+    inference.get().doTest("""
                  def foo() {
                      def x = 1
                      'q'.with {
@@ -1422,8 +1685,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testUseOuterContextInNestedClosures() {
-    doTest("""
+    inference.get().doTest("""
                  def foo() {
                      def x = 1
                      'q'.with ({
@@ -1434,8 +1698,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testAllowUseOfOuterContextForNestedDGMClosures() {
-    doTest("""
+    inference.get().doTest("""
                  def foo(x) {
                    x = 1
                    def cl1 = 1.with { 2.with { <caret>x } }
@@ -1443,8 +1708,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testParenthesizedExpression() {
-    doTest("""
+    inference.get().doTest("""
                  def foo(def p) {
                      def x = 1
                      1.with (({ <caret>x }))
@@ -1452,8 +1718,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testAssignmentInsideClosure() {
-    doTest("""
+    inference.get().doTest("""
                  def foo() {
                    def x = 'q'
                    1.with {
@@ -1464,8 +1731,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, "[java.io.Serializable,java.lang.Comparable<? extends java.io.Serializable>]");
   }
 
+  @Test
   public void testAssignmentInsideClosure2() {
-    doTest("""
+    inference.get().doTest("""
              class A{}
              class B extends A{}
              class C extends A{}
@@ -1479,8 +1747,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, "A");
   }
 
+  @Test
   public void testNoChangesForNullTypeInsideClosure() {
-    doTest("""
+    inference.get().doTest("""
                  def foo() {
                    def x
                    [1].each {
@@ -1491,8 +1760,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, null);
   }
 
+  @Test
   public void testOtherStatementsInsideClosure() {
-    doTest("""
+    inference.get().doTest("""
                def method() {
                    def list = []
              
@@ -1504,8 +1774,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, "java.util.ArrayList");
   }
 
+  @Test
   public void testUseDFAResultsFromConditionalBranch() {
-    doTest("""
+    inference.get().doTest("""
                  def foo(def bar) {
                      if (bar instanceof String) {
                          10.with {
@@ -1516,8 +1787,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_STRING);
   }
 
+  @Test
   public void testUseMethodCallsInsideClosureBlock() {
-    doTest("""
+    inference.get().doTest("""
                  def test(def x, y) {
                      y = new A()
                      1.with {
@@ -1532,8 +1804,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testUseMethodCallsInsideClosureBlock2() {
-    doTest("""
+    inference.get().doTest("""
                  def test(def x, y) {
                      y = new A()
                      1.with {
@@ -1550,8 +1823,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testUseMethodCallsInsideClosureBlock3() {
-    doTest("""
+    inference.get().doTest("""
                  static def foo(x) {
                      1.with {
                          cast(x)
@@ -1564,8 +1838,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testDeepNestedInterconnectedVariables() {
-    doTest("""
+    inference.get().doTest("""
                  static def foo(x, y, z) {
                      1.with {
                          y = new A()
@@ -1591,8 +1866,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testInstanceofInfluenceOnNestedClosures() {
-    doTest("""
+    inference.get().doTest("""
                  def test(def x) {
                      1.with {
                          if (x instanceof Integer) {
@@ -1606,7 +1882,7 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   public void _testAssignmentInNestedClosure() {
-    doTest("""
+    inference.get().doTest("""
                  def foo() {
                      def y
                      1.with {
@@ -1619,8 +1895,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testSafeNavigation() {
-    doTest("""
+    inference.get().doTest("""
                  class A {}
                  class B extends A{}
                  class C extends A{}
@@ -1635,8 +1912,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, "A");
   }
 
+  @Test
   public void testAssignmentInsideUnknownClosure() {
-    doTest("""
+    inference.get().doTest("""
                  def foo() {
                    def x = (Number)1
                    def cl = {
@@ -1648,7 +1926,7 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   public void _testCSWithSharedVariables() {
-    doTest("""
+    inference.get().doTest("""
              @groovy.transform.CompileStatic
              def foo() {
                def x = 1
@@ -1660,7 +1938,7 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   public void _testInferLUBForSharedVariables() {
-    doTest("""
+    inference.get().doTest("""
                class A{}
                class B extends A{}
                class C extends A{}
@@ -1678,7 +1956,7 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   public void _testFlowTypingShouldNotWorkForSharedVariables() {
-    doTest("""
+    inference.get().doTest("""
       class A{}
       class B extends A{}
       class C extends A{}
@@ -1696,8 +1974,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   public void _testCyclicDependencyForSharedVariables() {
-    allowNestedContext(2, getTestRootDisposable());
-    doTest("""
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    allowNestedContext(2, myFixture.getTestRootDisposable());
+    inference.get().doTest("""
       class A{}
       class B extends A{}
       class C extends A{}
@@ -1719,8 +1998,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   public void _testNonSharedVariableDependsOnSharedOne() {
-    allowNestedContextOnce(getTestRootDisposable());
-    doTest("""
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    allowNestedContextOnce(myFixture.getTestRootDisposable());
+    inference.get().doTest("""
                class A{}
                class B extends A{}
                class C extends A{}
@@ -1737,7 +2017,7 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   public void _testAssignmentToSharedVariableInsideClosure() {
-    doTest("""
+    inference.get().doTest("""
                class A{}
                class B extends A{}
                class C extends A{}
@@ -1752,7 +2032,7 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   public void _testAssignmentToSharedVariableInsideClosureWithAccessFromClosure() {
-    doTest("""
+    inference.get().doTest("""
                class A{}
                class B extends A{}
                class C extends A{}
@@ -1769,8 +2049,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   public void _testDependencyOnSharedVariableWithAssignmentInsideClosure() {
-    allowNestedContextOnce(getTestRootDisposable());
-    doTest("""
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    allowNestedContextOnce(myFixture.getTestRootDisposable());
+    inference.get().doTest("""
              class A{}
              class B extends A{}
              class C extends A{}
@@ -1785,8 +2066,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
            """, "B");
   }
 
+  @Test
   public void testFlowTypingReachableThroughClosure() {
-    doTest("""
+    inference.get().doTest("""
              @groovy.transform.CompileStatic
              def foo() {
                def x = 1
@@ -1799,8 +2081,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              }""", JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testAssignmentInsideDanglingClosureDoesNotChangeTypeInParallelFlow() {
-    doTest("""
+    inference.get().doTest("""
              class A {}
              class B extends A {}
              class C extends A {}
@@ -1818,8 +2101,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              }""", "C");
   }
 
+  @Test
   public void testAssignmentInsideDanglingClosureDoesNotChangeTypesBeforeDefinition() {
-    doTest("""
+    inference.get().doTest("""
              class A {}
              class B extends A {}
              class C extends A {}
@@ -1834,7 +2118,7 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   public void _testTwoDanglingClosuresFlushTypeTogether() {
-    doTest("""
+    inference.get().doTest("""
              class A {}
              class D extends A{}
              class B extends D {}
@@ -1853,7 +2137,7 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   public void _testTwoAssignmentsInsideSingleDanglingClosure() {
-    doTest("""
+    inference.get().doTest("""
              class A {}
              class D extends A{}
              class B extends D {}
@@ -1870,8 +2154,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              }""", "A");
   }
 
+  @Test
   public void testAssignmentInNestedDanglingClosure2() {
-    doTest("""
+    inference.get().doTest("""
              class A {}
              class B extends A {}
              class C extends A {}
@@ -1887,8 +2172,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              }""", "A");
   }
 
+  @Test
   public void testShadowedField() {
-    doTest("""
+    inference.get().doTest("""
              class A {
              
                  def counter = 200
@@ -1903,9 +2189,11 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              }""", JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testCyclicFlowWithClosure() {
-    allowNestedContext(2, getTestRootDisposable());
-    doTest("""
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    allowNestedContext(2, myFixture.getTestRootDisposable());
+    inference.get().doTest("""
              def x
              for (def i = 0; i < 10; i++) {
                1.with {
@@ -1917,9 +2205,10 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testCycleWithUnknownClosure() {
     //allowNestedContext(2, getTestRootDisposable())
-    doTest("""
+    inference.get().doTest("""
              static  bar(Closure cl) {}
              
              static def foo() {
@@ -1931,8 +2220,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   public void _testNoSOEInOperatorUsageWithSharedVariable() {
-    allowNestedContextOnce(getTestRootDisposable());
-    doTest("""
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    allowNestedContextOnce(myFixture.getTestRootDisposable());
+    inference.get().doTest("""
              @groovy.transform.CompileStatic
              private void checkResult(String expected) {
                def offset = 0
@@ -1944,8 +2234,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_LANG_INTEGER);
   }
 
+  @Test
   public void testCacheConsistencyForClosuresInCycle() {
-    doTest("""
+    inference.get().doTest("""
              private void foo(String expected) {
                def b = [1, 2, 3]
                for (a in b) {
@@ -1958,8 +2249,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, JAVA_IO_SERIALIZABLE);
   }
 
+  @Test
   public void testCacheConsistencyForClosuresInCycle2() {
-    doTest("""
+    inference.get().doTest("""
              interface J {}
              interface R extends J {}
              interface I extends J {}
@@ -1983,8 +2275,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, "J");
   }
 
+  @Test
   public void testInitialTypeInfluencesDFA() {
-    doTest("""
+    inference.get().doTest("""
              interface I {}
              class A implements I {}
              class B implements I {}
@@ -2002,19 +2295,22 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, "[I,groovy.lang.GroovyObject]");
   }
 
+  @Test
   public void testMixinWithUnknownIdentifier() {
-    doTest("""
+    inference.get().doTest("""
              protected void onLoadConfig (Map configSection) {
                  if (configSection.presetMode != null)
                    setPresetMode(p<caret>resetMode)
              }""", null);
   }
 
+  @Test
   public void testSOEWithLargeFlow() {
-    RecursionManager.disableAssertOnRecursionPrevention(getTestRootDisposable());
-    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
-    allowNestedContext(5, getTestRootDisposable());
-    doTest("""
+    LightJavaCodeInsightTestFixture myFixture = inference.get().getFixture();
+    RecursionManager.disableAssertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    RecursionManager.disableMissedCacheAssertions(myFixture.getTestRootDisposable());
+    allowNestedContext(5, myFixture.getTestRootDisposable());
+    inference.get().doTest("""
              static _getTreeData() {
                  def filterData  = []
                  for (EcmQueryMaskStructureNode node: childNodes) {
@@ -2028,8 +2324,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, "java.util.ArrayList");
   }
 
+  @Test
   public void testThrowInClosure() {
-    doTest("""
+    inference.get().doTest("""
              static String rootDir(Path archive) {
                  return createTarGzInputStream(archive).withCloseable {
                      <caret>it.nextTarEntry?.name ?: { throw new IllegalStateException("Unable to read $archive") }()
@@ -2038,8 +2335,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, null);
   }
 
+  @Test
   public void testFlowTypingWithDGM() {
-    doTest("""
+    inference.get().doTest("""
              def <T> Collection<T> aa(Closure<? extends Collection<? extends T>> cl) {
              }
              
@@ -2050,8 +2348,9 @@ public class TypeInferenceTest extends TypeInferenceTestBase {
              """, "java.util.Collection<java.lang.Integer>");
   }
 
+  @Test
   public void testBoxingOnNullableReceiver() {
-    doTest("""
+    inference.get().doTest("""
              def xx = ""?.length()
              x<caret>x
              """, "java.lang.Integer");

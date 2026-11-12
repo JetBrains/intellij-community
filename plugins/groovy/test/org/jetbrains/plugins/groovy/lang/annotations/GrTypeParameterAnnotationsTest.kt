@@ -1,25 +1,35 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.annotations
 
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrClassDefinitionImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrTypeParameterImpl
+import org.jetbrains.plugins.groovy.lightGroovyFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
+@TestApplication
+class GrTypeParameterAnnotationsTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_4_0)
+  }
 
-class GrTypeParameterAnnotationsTest : LightGroovyTestCase() {
+  private val myFixture by lightGroovyFixture(projectFixture)
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = GroovyProjectDescriptors.GROOVY_4_0
-
-  override fun setUp() {
-    super.setUp()
-    fixture.addFileToProject("Anno1.groovy", """
+  @BeforeEach
+  fun setUp() {
+    myFixture.addFileToProject("Anno1.groovy", """
     
     import java.lang.annotation.ElementType
     import java.lang.annotation.Target
@@ -29,8 +39,7 @@ class GrTypeParameterAnnotationsTest : LightGroovyTestCase() {
     }
     """.trimIndent())
 
-
-    fixture.addFileToProject("Anno2.groovy", """
+    myFixture.addFileToProject("Anno2.groovy", """
     
     import java.lang.annotation.ElementType
     import java.lang.annotation.Target
@@ -42,89 +51,99 @@ class GrTypeParameterAnnotationsTest : LightGroovyTestCase() {
     """.trimIndent())
   }
 
+  @Test
   fun testGetAnnotationsPsi() {
-    val file = fixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+    val file = myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
       class A<@Anno1 @Anno2 <caret> T> {}
     """.trimIndent())
 
-    val element = file.findElementAt(fixture.caretOffset)
-    val typeParameter = PsiTreeUtil.getParentOfType(element, GrTypeParameter::class.java)
+    runReadActionBlocking {
+      val element = file.findElementAt(myFixture.caretOffset)
+      val typeParameter = PsiTreeUtil.getParentOfType(element, GrTypeParameter::class.java)
 
-    assertNotNull(typeParameter)
-    val annotations = typeParameter!!.annotations
-    assertEquals(2, annotations.size)
-    assertEquals("Anno1", annotations[0].qualifiedName)
-    assertEquals("Anno2", annotations[1].qualifiedName)
-  }
-
-
-  fun testFindAnnotationPsi() {
-    val file = fixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
-      class A<@Anno1 @Anno2 <caret> T> {}
-    """.trimIndent())
-
-    val element = file.findElementAt(fixture.caretOffset)
-    val typeParameter = PsiTreeUtil.getParentOfType(element, GrTypeParameter::class.java)
-
-    assertNotNull(typeParameter)
-    val firstAnnotation =  typeParameter!!.findAnnotation("Anno1")
-    assertNotNull(firstAnnotation)
-    val secondAnnotation = typeParameter.findAnnotation("Anno2")
-    assertNotNull(secondAnnotation)
-  }
-
-  fun testGetAnnotationsStub() {
-    val file = fixture.addFileToProject("a.groovy", """
-      class A<@Anno1 @Anno2 T> {}
-    """.trimIndent())
-
-    val stub = (file as PsiFileImpl).stub
-    assertNotNull(stub)
-    val childrenStubList = stub!!.childrenStubs
-    assertSize(1, childrenStubList)
-
-    val classDef = assertInstanceOf(childrenStubList.first().psi, GrClassDefinitionImpl::class.java)
-    assertNotNull(classDef.stub)
-    val typeParameterList = classDef.typeParameters
-    assertNotNull(typeParameterList)
-    assertSize(1, typeParameterList)
-
-    val typeParameter = assertInstanceOf(typeParameterList.first(), GrTypeParameterImpl::class.java)
-    assertNotNull(typeParameter.stub)
-
-    val annotations = typeParameter.annotations
-    assertEquals(2, annotations.size)
-
-    annotations.forEachIndexed { idx, anno ->
-      val castedAnnotation = assertInstanceOf(anno, GrAnnotationImpl::class.java)
-      assertNotNull(castedAnnotation.stub)
-      assertEquals("Anno${idx + 1}", castedAnnotation.qualifiedName)
+      assertNotNull(typeParameter)
+      val annotations = typeParameter!!.annotations
+      assertEquals(2, annotations.size)
+      assertEquals("Anno1", annotations[0].qualifiedName)
+      assertEquals("Anno2", annotations[1].qualifiedName)
     }
   }
 
+  @Test
+  fun testFindAnnotationPsi() {
+    val file = myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
+      class A<@Anno1 @Anno2 <caret> T> {}
+    """.trimIndent())
+
+    runReadActionBlocking {
+      val element = file.findElementAt(myFixture.caretOffset)
+      val typeParameter = PsiTreeUtil.getParentOfType(element, GrTypeParameter::class.java)
+
+      assertNotNull(typeParameter)
+      val firstAnnotation =  typeParameter!!.findAnnotation("Anno1")
+      assertNotNull(firstAnnotation)
+      val secondAnnotation = typeParameter.findAnnotation("Anno2")
+      assertNotNull(secondAnnotation)
+    }
+  }
+
+  @Test
+  fun testGetAnnotationsStub() {
+    val file = myFixture.addFileToProject("a.groovy", """
+      class A<@Anno1 @Anno2 T> {}
+    """.trimIndent())
+
+    runReadActionBlocking {
+      val stub = (file as PsiFileImpl).stub
+      assertNotNull(stub)
+      val childrenStubList = stub!!.childrenStubs
+      assertEquals(1, childrenStubList.size)
+
+      val classDef = assertInstanceOf(GrClassDefinitionImpl::class.java, childrenStubList.first().psi)
+      assertNotNull(classDef.stub)
+      val typeParameterList = classDef.typeParameters
+      assertNotNull(typeParameterList)
+      assertEquals(1, typeParameterList.size)
+
+      val typeParameter = assertInstanceOf(GrTypeParameterImpl::class.java, typeParameterList.first())
+      assertNotNull(typeParameter.stub)
+
+      val annotations = typeParameter.annotations
+      assertEquals(2, annotations.size)
+
+      annotations.forEachIndexed { idx, anno ->
+        val castedAnnotation = assertInstanceOf(GrAnnotationImpl::class.java, anno)
+        assertNotNull(castedAnnotation.stub)
+        assertEquals("Anno${idx + 1}", castedAnnotation.qualifiedName)
+      }
+    }
+  }
+
+  @Test
   fun testFindAnnotationStub() {
-    val file = fixture.addFileToProject("a.groovy", """
+    val file = myFixture.addFileToProject("a.groovy", """
       class A<@Anno1 T> {}
     """.trimIndent())
 
-    val stub = (file as PsiFileImpl).stub
-    assertNotNull(stub)
-    val childrenStubList = stub!!.childrenStubs
-    assertSize(1, childrenStubList)
+    runReadActionBlocking {
+      val stub = (file as PsiFileImpl).stub
+      assertNotNull(stub)
+      val childrenStubList = stub!!.childrenStubs
+      assertEquals(1, childrenStubList.size)
 
-    val classDef = assertInstanceOf(childrenStubList.first().psi, GrClassDefinitionImpl::class.java)
-    assertNotNull(classDef.stub)
-    val typeParameterList = classDef.typeParameters
-    assertNotNull(typeParameterList)
-    assertSize(1, typeParameterList)
+      val classDef = assertInstanceOf(GrClassDefinitionImpl::class.java, childrenStubList.first().psi)
+      assertNotNull(classDef.stub)
+      val typeParameterList = classDef.typeParameters
+      assertNotNull(typeParameterList)
+      assertEquals(1, typeParameterList.size)
 
-    val typeParameter = assertInstanceOf(typeParameterList.first(), GrTypeParameterImpl::class.java)
-    assertNotNull(typeParameter.stub)
+      val typeParameter = assertInstanceOf(GrTypeParameterImpl::class.java, typeParameterList.first())
+      assertNotNull(typeParameter.stub)
 
-
-    val candidate = typeParameter.findAnnotation("Anno1")
-    val annotation = assertInstanceOf(candidate, GrAnnotationImpl::class.java)
-    assertNotNull(annotation.stub)
-    assertEquals("Anno1", annotation.qualifiedName)
+      val candidate = typeParameter.findAnnotation("Anno1")
+      val annotation = assertInstanceOf(GrAnnotationImpl::class.java, candidate)
+      assertNotNull(annotation.stub)
+      assertEquals("Anno1", annotation.qualifiedName)
+    }
   }
 }

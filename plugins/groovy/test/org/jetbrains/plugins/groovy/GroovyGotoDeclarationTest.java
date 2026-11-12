@@ -1,35 +1,36 @@
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
-public class GroovyGotoDeclarationTest extends LightGroovyTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.lightGroovyFixture;
+
+@TestApplication
+public class GroovyGotoDeclarationTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightGroovyFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "gotoDeclaration/");
+
+
   private void doTest() {
-    final String name = getTestName();
-    getFixture().configureByFile(name + ".groovy");
-    getFixture().performEditorAction("GotoDeclaration");
-    getFixture().checkResultByFile(name + "_after.groovy");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    final String name = LightGroovyFixtures.groovyTestName(myFixture);
+    myFixture.configureByFile(name + ".groovy");
+    myFixture.performEditorAction("GotoDeclaration");
+    myFixture.checkResultByFile(name + "_after.groovy");
   }
 
+  @Test
   public void testDefaultConstructor() {
     doTest();
   }
 
+  @Test
   public void testQualifierInNew() {
     doTest();
   }
-
-  @Override
-  public final String getTestDataPath() {
-    return basePath;
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return projectDescriptor;
-  }
-
-  private final String basePath = TestUtils.getAbsoluteTestDataPath() + "gotoDeclaration/";
-  private final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_LATEST;
 }

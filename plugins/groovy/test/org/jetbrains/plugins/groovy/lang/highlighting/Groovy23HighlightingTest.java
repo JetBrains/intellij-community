@@ -3,14 +3,17 @@ package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
@@ -19,15 +22,31 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Created by Max Medvedev on 17/02/14
  */
-public class Groovy23HighlightingTest extends GrHighlightingTestBase {
+@TestApplication
+public class Groovy23HighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_3);
+  private final TestFixture<GrHighlightingFixture> highlighting =
+    grHighlightingFixture(projectFixture, GrHighlightingFixture.getHighlightingTestDataPath(), () -> new InspectionProfileEntry[] {
+      new GroovyAssignabilityCheckInspection(),
+      new GrUnresolvedAccessInspection()
+    });
+
+  @Test
   public void testSam1() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
 
                          interface Action<T, X> {
                              void execute(T t, X x)
@@ -43,8 +62,9 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testSam2() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
 
                          interface Action<T> {
                              void execute(T t)
@@ -60,8 +80,9 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testSam3() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                           interface Action<T, X> {
                              void execute(T t, X x)
                          }
@@ -77,8 +98,9 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testDefaultParameterInTraitMethods() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait T {
                            abstract foo(x = 3);
                            def bar(y = 6) {}
@@ -86,8 +108,9 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testConcreteTraitProperty() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait A {
                            def foo
                          }
@@ -95,14 +118,15 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAbstractTraitProperty() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait A {
                            abstract foo
                          }
                          <error descr="Method 'getFoo' is not implemented">class B implements A</error> {}
                          """);
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait A {
                            abstract foo
                          }
@@ -112,7 +136,9 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTraitsHaveOnlyAbstractAndNonFinalMethods() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     GroovyFile file = (GroovyFile)myFixture.addFileToProject("T.groovy", """
       trait T {
         def foo
@@ -121,18 +147,21 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
         abstract doo()
       }
       """);
-    GrTypeDefinition definition = (GrTypeDefinition)file.getClasses()[0];
-    for (PsiMethod method : definition.getMethods()) {
-      if (!method.getName().equals("baz")) {
-        assertTrue(method.hasModifierProperty(PsiModifier.ABSTRACT));
-      }
+    ReadAction.runBlocking(() -> {
+      GrTypeDefinition definition = (GrTypeDefinition)file.getClasses()[0];
+      for (PsiMethod method : definition.getMethods()) {
+        if (!method.getName().equals("baz")) {
+          assertTrue(method.hasModifierProperty(PsiModifier.ABSTRACT));
+        }
 
-      assertFalse(method.hasModifierProperty(PsiModifier.FINAL));
-    }
+        assertFalse(method.hasModifierProperty(PsiModifier.FINAL));
+      }
+    });
   }
 
+  @Test
   public void testTraitWithMethodWithDefaultParameters() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait A {
                            def foo(a, b = null, c = null) {}
                          }
@@ -140,20 +169,26 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testTraitWithAbstractMethodWithDefaultParameters() {
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    highlighting.get().doTestHighlighting("""
                          trait A {
                            abstract foo(a, b = null, c = null)
                          }
                          <error descr="Method 'foo' is not implemented">class B implements A</error> {}
                          """);
-    GrTypeDefinition definition = (GrTypeDefinition)myFixture.findClass("B");
-    Map<MethodSignature, CandidateInfo> map = OverrideImplementExploreUtil.getMapToOverrideImplement(definition, true);
-    assertEquals(1, map.size());// need to implement only foo(a, b, c)
+    ReadAction.runBlocking(() -> {
+      GrTypeDefinition definition = (GrTypeDefinition)myFixture.findClass("B");
+      Map<MethodSignature, CandidateInfo> map = OverrideImplementExploreUtil.getMapToOverrideImplement(definition, true);
+      assertEquals(1, map.size());// need to implement only foo(a, b, c)
+    });
   }
 
+  @Test
   public void testTraitWithMiddleInterface() {
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    highlighting.get().doTestHighlighting("""
                          trait T<E> {
                              E foo() { null }
                          }
@@ -164,12 +199,16 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
 
                          new C().fo<caret>o()
                          """);
-    PsiElement element = getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
-    GrMethodCallExpression call = PsiTreeUtil.getParentOfType(element, GrMethodCallExpression.class);
-    assertTrue(call.getType().equalsToText("java.lang.String"));
+    ReadAction.runBlocking(() -> {
+      PsiElement element = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+      GrMethodCallExpression call = PsiTreeUtil.getParentOfType(element, GrMethodCallExpression.class);
+      assertTrue(call.getType().equalsToText("java.lang.String"));
+    });
   }
 
+  @Test
   public void testTraitOrder() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("_.groovy", """
       trait T1 {
           def foo() { 1 }
@@ -183,15 +222,18 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
       class TT implements I3 {}
       new TT().fo<caret>o()
       """);
-    PsiElement resolved = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset()).resolve();
-    assertTrue(resolved instanceof GrTraitMethod);
-    PsiMethod original = ((GrTraitMethod)resolved).getPrototype();
-    assertTrue(original instanceof GrMethod);
-    assertEquals("T2", original.getContainingClass().getName());
+    ReadAction.runBlocking(() -> {
+      PsiElement resolved = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset()).resolve();
+      assertTrue(resolved instanceof GrTraitMethod);
+      PsiMethod original = ((GrTraitMethod)resolved).getPrototype();
+      assertTrue(original instanceof GrMethod);
+      assertEquals("T2", original.getContainingClass().getName());
+    });
   }
 
+  @Test
   public void testNonStaticInnerClassInTraitNotAllowed() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          interface I {}
 
                          trait T {
@@ -209,8 +251,10 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testStaticTraitMembersNotResolvedInDirectAccess() {
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    highlighting.get().doTestHighlighting("""
                          trait StaticsContainer {
                            public static boolean CALLED = false
                            static void init() { CALLED = true }
@@ -236,8 +280,9 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
     myFixture.testHighlighting();
   }
 
+  @Test
   public void testClassInitializersInTraits() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait T {
                            static {
                            }
@@ -248,7 +293,9 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAbstractPropertyInClass() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("_.groovy", """
           class A {
               abstract f
@@ -257,16 +304,18 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testStaticModifierOnToplevelDefinitionNotTraitIsNotAllowed() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          <error descr="Modifier 'static' not allowed here">static</error> class A {}
                          <error descr="Modifier 'static' not allowed here">static</error> interface I {}
                          static trait T {}
                          """);
   }
 
+  @Test
   public void testDefaultMethodInInterfaces() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          import groovy.transform.CompileStatic
 
                          interface I {
@@ -284,8 +333,9 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testDefaultModifier() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          <error>default</error> interface I {
                          }
 
@@ -303,23 +353,11 @@ public class Groovy23HighlightingTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testFinalMethodInTrait() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          trait ATrain {
                              final String getName() { "Name" }
                          }""");
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_2_3;
-  }
-
-  @Override
-  public final InspectionProfileEntry[] getCustomInspections() {
-    return new InspectionProfileEntry[] {
-      new GroovyAssignabilityCheckInspection(),
-      new GrUnresolvedAccessInspection()
-    };
   }
 }

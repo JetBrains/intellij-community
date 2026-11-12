@@ -1,28 +1,35 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.newify;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
-import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase;
-import org.junit.Assert;
+import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class NewifySupportTest extends GrHighlightingTestBase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_2_5;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingFixtureKt.grHighlightingFixture;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    getFixture().enableInspections(GrUnresolvedAccessInspection.class, GroovyAssignabilityCheckInspection.class);
-    getFixture().addClass("""
+@TestApplication
+public class NewifySupportTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_5);
+  private final TestFixture<GrHighlightingFixture> highlighting = grHighlightingFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    myFixture.enableInspections(GrUnresolvedAccessInspection.class, GroovyAssignabilityCheckInspection.class);
+    myFixture.addClass("""
                             public class A {
                             String name;
                               int age;
@@ -37,42 +44,43 @@ public class NewifySupportTest extends GrHighlightingTestBase {
                             """);
   }
 
+  @Test
   public void testAutoNewify() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @Newify
                          class B {
                            def a = A.new()
                            def i = Integer.new(1)
                          }
                          """);
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @Newify
                          class B {
                            def a = A.new("B")
                          }
                          """);
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @Newify
                          class B {
                            def a = A.new(name :"bar")
                          }
                          """);
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class B {
                            @Newify
                            def a = A.new(name :"bar")
                          }
                          """);
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class B {
                            @Newify
                            def a (){ return A.new(name :"bar")}
                          }
                          """);
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class B {
                            @Newify(value = A, auto = false)
                            def a (){ return A.<warning>new</warning>()}
@@ -80,42 +88,43 @@ public class NewifySupportTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testAutoNewifyImplicitConstructor() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @Newify
                          class B {
                            def a = A2.new()
                          }
                          """);
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @Newify
                          class B {
                            def a = A2.new<warning>("B")</warning>
                          }
                          """);
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @Newify
                          class B {
                            def a = A2.new(name :"bar")
                          }
                          """);
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class B {
                            @Newify(B)
                            def b = B()
                          }
                          """);
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class B {
                            @Newify
                            def a = B.new()
                          }
                          """);
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class B2 {
                            String str
                            @Newify
@@ -123,7 +132,7 @@ public class NewifySupportTest extends GrHighlightingTestBase {
                          }
                          """);
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class B {
                            @Newify(value = A2, auto = false)
                            def a (){ return A2.<warning>new</warning>()}
@@ -131,8 +140,9 @@ public class NewifySupportTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testNewifyByClass() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @Newify([A, Integer])
                          class B {
                            def a = A()
@@ -140,34 +150,34 @@ public class NewifySupportTest extends GrHighlightingTestBase {
                          }
                          """);
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @Newify(A)
                          class B {
                            def a = A("B")
                          }
                          """);
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @Newify(A)
                          class B {
                            def a = A(name :"bar")
                          }
                          """);
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class B {
                            @Newify(A)
                            def a = A(name :"bar")
                          }
                          """);
 
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class B {
                            @Newify(A)
                            def a (){ return A(name :"bar")}
                          }
                          """);
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class B {
                            @Newify
                            def a (){ return <warning descr="Cannot resolve symbol 'A'">A</warning>()}
@@ -175,8 +185,10 @@ public class NewifySupportTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testNewifyMapLookup() {
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    highlighting.get().doTestHighlighting("""
                          @Newify(A)
                          class B {
                            def a = A(<caret>)
@@ -184,33 +196,43 @@ public class NewifySupportTest extends GrHighlightingTestBase {
                          """);
     myFixture.completeBasic();
     List<String> lookupElementStringList = myFixture.getLookupElementStrings();
-    Assert.assertTrue(lookupElementStringList.contains("name"));
-    Assert.assertTrue(lookupElementStringList.contains("age"));
+    assertTrue(lookupElementStringList.contains("name"));
+    assertTrue(lookupElementStringList.contains("age"));
   }
 
+  @Test
   public void testNewifyElementsKind() {
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    highlighting.get().doTestHighlighting("""
                          @Newify(A)
                          class B {
                            def a = <caret>A()
                          }
                          """);
-    PsiMethod method = (PsiMethod)myFixture.getElementAtCaret();
-    Assert.assertTrue(method.isConstructor());
+    ReadAction.runBlocking(() -> {
+      PsiMethod method = (PsiMethod)myFixture.getElementAtCaret();
+      assertTrue(method.isConstructor());
+    });
   }
 
+  @Test
   public void testNewifyElementsKind2() {
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    highlighting.get().doTestHighlighting("""
                          @Newify(A)
                          class B {
                            def a = A.ne<caret>w()
                          }
                          """);
-    PsiMethod method = (PsiMethod)myFixture.getElementAtCaret();
-    Assert.assertTrue(method.isConstructor());
+    ReadAction.runBlocking(() -> {
+      PsiMethod method = (PsiMethod)myFixture.getElementAtCaret();
+      assertTrue(method.isConstructor());
+    });
   }
 
+  @Test
   public void testNewifyAutoLookup() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("a.groovy", """
       @Newify(A)
       class B {
@@ -219,10 +241,12 @@ public class NewifySupportTest extends GrHighlightingTestBase {
       """);
     myFixture.completeBasic();
     List<String> lookupElementStringList = myFixture.getLookupElementStrings();
-    Assert.assertTrue(lookupElementStringList.contains("new"));
+    assertTrue(lookupElementStringList.contains("new"));
   }
 
+  @Test
   public void testNewifyLookupImplicitConstructor() {
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("a.groovy", """
       @Newify
       class B {
@@ -231,11 +255,13 @@ public class NewifySupportTest extends GrHighlightingTestBase {
       """);
     myFixture.completeBasic();
     List<String> lookupElementStringList = myFixture.getLookupElementStrings();
-    Assert.assertTrue(lookupElementStringList.contains("new"));
+    assertTrue(lookupElementStringList.contains("new"));
   }
 
+  @Test
   public void testNewifyAutoMapLookup() {
-    doTestHighlighting("""
+    LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
+    highlighting.get().doTestHighlighting("""
                          @Newify(A)
                          class B {
                            def a = A.new(<caret>)
@@ -243,12 +269,13 @@ public class NewifySupportTest extends GrHighlightingTestBase {
                          """);
     myFixture.completeBasic();
     List<String> lookupElementStringList = myFixture.getLookupElementStrings();
-    Assert.assertTrue(lookupElementStringList.contains("name"));
-    Assert.assertTrue(lookupElementStringList.contains("age"));
+    assertTrue(lookupElementStringList.contains("name"));
+    assertTrue(lookupElementStringList.contains("age"));
   }
 
+  @Test
   public void testNewifySupportsRegexPatterns() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @Newify(pattern = /[A-Z].*/)
                          class B {
                            def a = A()
@@ -256,7 +283,7 @@ public class NewifySupportTest extends GrHighlightingTestBase {
                            def c = Integer(1)
                          }
                          """);
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @Newify(pattern = "A")
                          class B {
                            def a = A("B")
@@ -264,16 +291,18 @@ public class NewifySupportTest extends GrHighlightingTestBase {
                          """);
   }
 
+  @Test
   public void testNewifyShouldNotThrowOnIncorrectRegex() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          @Newify(pattern = "<error>*</error>")
                          class B {
                            def a = <warning descr="Cannot resolve symbol 'A'">A</warning>()
                          }""");
   }
 
+  @Test
   public void testNonStaticClassesAreNotAvailableInStaticContext() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Z {
                              class Inner {
                              }
@@ -285,8 +314,9 @@ public class NewifySupportTest extends GrHighlightingTestBase {
                          }""");
   }
 
+  @Test
   public void testNoErrorForMultipleConstructorsAndNamedArguments() {
-    doTestHighlighting("""
+    highlighting.get().doTestHighlighting("""
                          class Rr {
                              Rr() {}
                              Rr(s) {}
