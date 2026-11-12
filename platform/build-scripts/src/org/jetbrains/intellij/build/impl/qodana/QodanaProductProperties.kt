@@ -54,13 +54,8 @@ class QodanaProductProperties(val productCode: String, val productName: String, 
         ).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
         add("-Dqodana.build.date=$buildDate")
       }
-      add("-Dqodana.eap=${isEap(productCode)}")
+      add("-Dqodana.eap=${IS_EAP}")
     }
     return COMMON_ADDITIONAL_VM_OPTIONS + customVmOptions + appInfoOptions
   }
-}
-
-private fun isEap(productCode: String): Boolean = when (productCode) {
-  "QDRST", "QDRUBY" -> true
-  else -> IS_EAP
 }
