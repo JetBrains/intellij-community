@@ -1,0 +1,110 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.python.community.junit5Tests.framework.junit5Win` start
+create_kotlinc_options(
+    name = "custom_junit5Win",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "junit5Win_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_junit5Win",
+    module_name = "intellij.python.community.junit5Tests.framework.junit5Win",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//libraries/allure/java-commons:libraries-allure-java-commons",
+        "//libraries/system-stubs-jupiter",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "//platform/vcs/plugin",
+        "//python/pluginCore:community-plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+        "//xml/plugin",
+        "//json/plugin",
+        "//plugins/yaml/plugin",
+    ],
+    deps = [
+        # do not sort,
+        "//libraries/junit4",
+        "//libraries/junit6",
+        "//libraries/allure/java-commons:libraries-allure-java-commons",
+        "//libraries/junit6-jupiter",
+        "//libraries/junit6-params",
+        "//libraries/junit5-pioneer",
+        "//libraries/sshd-osgi",
+        "//libraries/hamcrest",
+        "//libraries/mockk/jvm",
+        "//libraries/jna",
+        "@lib//:kotlin-stdlib",
+        "//platform/util-ex",
+        "//libraries/system-stubs-jupiter",
+        "//libraries/testcontainers",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/core-api:core",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/eel-provider",
+        "//platform/execution",
+        "//platform/execution-impl",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/testFramework",
+        "//platform/testFramework/junit5",
+        "//platform/util",
+        "//platform/util/coroutines",
+        "//python/openapi:community",
+        "//plugins/jcef/plugin",
+        "//platform/testRunner/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//python:python-community-impl",
+        "//python/pipenv",
+        "//python/python-sdk/backend",
+        "//python/python-poetry/common",
+        "//python/python-psi-impl:psi-impl",
+        "//platform/testFramework/junit5/projectStructure",
+        "//platform/lang-core",
+        "//platform/util/jdom",
+        "//python/python-pyproject:pyproject",
+        "//platform/core-ui",
+        "//platform/core-impl",
+        "//libraries/kotlin/reflect",
+        "//platform/external-system-api:externalSystem",
+        "//python/testFramework",
+        "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
+        "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.community.junit5Tests.framework.junit5Win` end
+
+### auto-generated section `iml intellij.python.community.junit5Tests.framework.junit5Win` start
+exports_files(
+    [
+        "intellij.python.community.junit5Tests.framework.junit5Win.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.community.junit5Tests.framework.junit5Win` end
+
+### auto-generated section `test intellij.python.community.junit5Tests.framework.junit5Win` start
+jps_test(
+    name = "junit5Win_test",
+    runtime_deps = [":junit5Win_test_lib"],
+)
+### auto-generated section `test intellij.python.community.junit5Tests.framework.junit5Win` end

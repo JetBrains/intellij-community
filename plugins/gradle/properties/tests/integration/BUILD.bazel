@@ -1,0 +1,64 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.gradle.properties.tests.integration` start
+jvm_library(
+    name = "integration_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.properties.tests.integration",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/properties/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/gradle",
+        "//plugins/gradle/properties",
+        "//plugins/gradle",
+        "//plugins/gradle/settings",
+        "//plugins/gradle/testFramework",
+        "//plugins/properties/properties-psi-api:psi",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//platform/lang-api:lang",
+        "//platform/buildView",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
+        "//libraries/junit6-params",
+        "//libraries/assertj-core",
+    ],
+)
+### auto-generated section `build intellij.gradle.properties.tests.integration` end
+
+### auto-generated section `iml intellij.gradle.properties.tests.integration` start
+exports_files(
+    [
+        "intellij.gradle.properties.tests.integration.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.gradle.properties.tests.integration` end
+
+### auto-generated section `test intellij.gradle.properties.tests.integration` start
+jps_test(
+    name = "integration_test",
+    runtime_deps = [":integration_test_lib"],
+)
+### auto-generated section `test intellij.gradle.properties.tests.integration` end

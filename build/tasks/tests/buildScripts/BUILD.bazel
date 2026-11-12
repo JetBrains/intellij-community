@@ -1,0 +1,62 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.idea.community.build.tasks.tests.buildScripts` start
+jvm_library(
+    name = "buildScripts_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//build/tasks"],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:slf4j-api",
+        "@lib//:slf4j-jdk14",
+        "//libraries/bouncy-castle-provider",
+        "//libraries/byte-buddy",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//platform/util/zip",
+        "//libraries/opentelemetry",
+        "//platform/util/rt-java8",
+        "//platform/util-rt",
+        "//platform/util-ex",
+        "//platform/testFramework",
+        "//platform/testFramework/extensions:testExtensions",
+        "//libraries/assertj-core",
+        "//libraries/memoryfilesystem",
+        "//libraries/junit6",
+        "//platform/util/base",
+        "//libraries/hash4j",
+        "@community//build:zip",
+        "//libraries/junit6-params",
+    ],
+)
+### auto-generated section `build intellij.idea.community.build.tasks.tests.buildScripts` end
+
+### auto-generated section `iml intellij.idea.community.build.tasks.tests.buildScripts` start
+exports_files(
+    [
+        "intellij.idea.community.build.tasks.tests.buildScripts.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.idea.community.build.tasks.tests.buildScripts` end
+
+### auto-generated section `test intellij.idea.community.build.tasks.tests.buildScripts` start
+jps_test(
+    name = "buildScripts_test",
+    runtime_deps = [":buildScripts_test_lib"],
+)
+### auto-generated section `test intellij.idea.community.build.tasks.tests.buildScripts` end

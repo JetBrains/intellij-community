@@ -25,9 +25,9 @@ jvm_library(
         [
             "testGen/**/*.kt",
             "testGen/**/*.java",
-            "tests/**/*.kt",
-            "tests/**/*.java",
-            "tests/**/*.form",
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
         ],
         allow_empty = True,
     ),
@@ -92,6 +92,7 @@ jvm_library(
         "//libraries/junit6-params",
         "//platform/bazel-runfiles",
         "//plugins/properties/properties-common:properties",
+        "//java/compiler/testFramework",
         "//java/langInjection",
     ],
 )

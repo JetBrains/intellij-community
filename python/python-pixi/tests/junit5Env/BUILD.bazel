@@ -1,0 +1,92 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.python.pixi.tests.junit5Env` start
+create_kotlinc_options(
+    name = "custom_junit5Env",
+    opt_in = ["com.jetbrains.python.PyInternalExecApi"],
+    warn = "error",
+)
+
+jvm_library(
+    name = "junit5Env_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//python/python-pixi/backend"],
+    kotlinc_opts = ":custom_junit5Env",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//python/python-pixi/plugin",
+        "//python/python-pixi/tests:tests_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/assertj-core",
+        "//libraries/junit6",
+        "//libraries/junit6-params",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/core-api:core",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/core-ui",
+        "//platform/consoleView",
+        "//platform/eel",
+        "//platform/execution",
+        "//platform/execution-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//platform/observable",
+        "//platform/lang-core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/remote-core",
+        "//platform/testFramework",
+        "//platform/testFramework/common",
+        "//platform/testFramework/junit5",
+        "//platform/util",
+        "//platform/util/jdom",
+        "//platform/util:util-ui",
+        "//python/openapi:community",
+        "//python/common",
+        "//python:python-community-impl",
+        "//python/conda",
+        "//python/python-exec-service:community-execService",
+        "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+        "//python/python-pixi/common",
+        "//python/python-pixi/frontend",
+        "//python/python-pixi/test-env:python-pixi-test-env_test_lib",
+        "//python/python-pyproject:pyproject",
+        "//python/python-pytools/common",
+        "//python/python-pytools/backend",
+        "//python/python-pytools/frontend",
+        "//python/python-sdk/backend",
+        "//python/python-sdk/common",
+        "//python/python-test-env/junit5:junit5_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.pixi.tests.junit5Env` end
+
+### auto-generated section `iml intellij.python.pixi.tests.junit5Env` start
+exports_files(
+    [
+        "intellij.python.pixi.tests.junit5Env.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.pixi.tests.junit5Env` end
+
+### auto-generated section `test intellij.python.pixi.tests.junit5Env` start
+jps_test(
+    name = "junit5Env_test",
+    runtime_deps = [":junit5Env_test_lib"],
+)
+### auto-generated section `test intellij.python.pixi.tests.junit5Env` end

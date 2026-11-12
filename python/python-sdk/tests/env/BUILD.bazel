@@ -1,0 +1,82 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.python.sdk.tests.env` start
+create_kotlinc_options(
+    name = "custom_env",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "env_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//python/python-sdk/backend"],
+    kotlinc_opts = ":custom_env",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//python/python-sdk/tests:tests_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/analysis-api:analysis",
+        "//platform/core-impl",
+        "//platform/core-api:core",
+        "//jps/model-serialization",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//python/openapi:community",
+        "//python/python-psi-api:psi",
+        "//platform/projectModel-impl",
+        "//platform/ide-core",
+        "//platform/execution",
+        "//libraries/junit6",
+        "//platform/eel-provider",
+        "//python/common",
+        "//python/python-sdk/common",
+        "//python/python-sdk/frontend",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/util:util-ui",
+        "//platform/platform-impl/rpc",
+        "//platform/statistics",
+        "//platform/testFramework/junit5",
+        "//python/python-test-env/junit5:junit5_test_lib",
+        "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+        "//platform/util/coroutines",
+        "//libraries/kotlinx/coroutines/core",
+        "//python/python-pytools/backend",
+        "//python/python-pytools/common",
+        "//platform/testFramework",
+        "//libraries/assertj-core",
+    ],
+)
+### auto-generated section `build intellij.python.sdk.tests.env` end
+
+### auto-generated section `iml intellij.python.sdk.tests.env` start
+exports_files(
+    [
+        "intellij.python.sdk.tests.env.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.sdk.tests.env` end
+
+### auto-generated section `test intellij.python.sdk.tests.env` start
+jps_test(
+    name = "env_test",
+    runtime_deps = [":env_test_lib"],
+)
+### auto-generated section `test intellij.python.sdk.tests.env` end

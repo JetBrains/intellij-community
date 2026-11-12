@@ -1,0 +1,105 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.yaml.backend.tests.exploratory` start
+jvm_library(
+    name = "exploratory_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//plugins/yaml/backend"],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//plugins/properties/plugin",
+        "//xml/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+        "//json/plugin",
+        "//plugins/yaml/plugin",
+        "//plugins/yaml/backend:backend-tests_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/code-style-api:codeStyle",
+        "//platform/util/concurrency",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-api:ide",
+        "//platform/lang-api:lang",
+        "//platform/lang-impl",
+        "//platform/core-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/structure-view-impl:structureView",
+        "//platform/testFramework",
+        "//platform/testFramework/structureView",
+        "//spellchecker",
+        "//plugins/grazie/src:core",
+        "//platform/platform-impl:ide-impl",
+        "//json/backend",
+        "//json/backend/tests:tests_test_lib",
+        "//platform/indexing-impl",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/ide-core-impl",
+        "//platform/ide-core",
+        "//platform/refactoring",
+        "//platform/core-ui",
+        "//platform/code-style-impl:codeStyle-impl",
+        "//plugins/IntelliLang:langInjection",
+        "//RegExpSupport:regexp",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+        "//plugins/yaml",
+        "//plugins/IntelliLang/backend",
+        "//libraries/jetcheck",
+        "//platform/util:util-ui",
+        "//plugins/yaml/spellchecker",
+        "//aether-dependency-resolver/plugin",
+        "//java/langInjection",
+        "//java/java-backend:backend",
+        "//java/plugin",
+        "//json",
+        "//platform/structuralsearch:structuralSearch",
+        "//platform/structuralsearch/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//platform/todo/plugin",
+        "//platform/vcs/plugin",
+        "//plugins/grazie",
+        "//plugins/properties:properties-backend",
+        "//plugins/properties/properties-common:properties",
+        "//plugins/properties/properties-psi-api:psi",
+        "//plugins/properties/properties-psi-impl:backend-psi",
+        "//plugins/sh/plugin:plugin-main",
+        "//json/networknt.wrapper",
+        "//libraries/junit4",
+        "//plugins/yaml/syntax",
+        "//platform/syntax/syntax-psi:psi",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5/codeInsight",
+        "//libraries/junit6",
+    ],
+)
+### auto-generated section `build intellij.yaml.backend.tests.exploratory` end
+
+### auto-generated section `iml intellij.yaml.backend.tests.exploratory` start
+exports_files(
+    [
+        "intellij.yaml.backend.tests.exploratory.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.yaml.backend.tests.exploratory` end
+
+### auto-generated section `test intellij.yaml.backend.tests.exploratory` start
+jps_test(
+    name = "exploratory_test",
+    runtime_deps = [":exploratory_test_lib"],
+)
+### auto-generated section `test intellij.yaml.backend.tests.exploratory` end

@@ -1,0 +1,85 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.testFramework.tests.smoke` start
+jvm_library(
+    name = "smoke_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.testFramework.tests.smoke",
+    visibility = ["//visibility:public"],
+    exports = ["//platform/platform-impl:ide-impl"],
+    runtime_deps = [
+        # do not sort,
+        "//images",
+        "//RegExpSupport:regexp",
+        "//xml/dom-impl",
+        "//xml/plugin",
+        "//platform/testFramework:testFramework-tests_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//libraries/junit6",
+        "//libraries/junit6-params",
+        "//libraries/assertj-core",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/slf4j",
+        "//libraries/http-client",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jackson3/databind",
+        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
+        "//community-resources:customization",
+        "//libraries/junit4",
+        "//libraries/junit6-launcher",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/backend/workspace",
+        "//platform/code-style-api:codeStyle",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/projectModel-impl",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-util-io:ide-util-io",
+        "//jps/model-serialization",
+        "//platform/lang-api:lang",
+        "//platform/lang-impl",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//platform/projectModel-api:projectModel",
+        "//platform/structure-view-impl:structureView",
+        "//platform/testFramework/junit5",
+        "//platform/todo",
+        "//platform/workspace/jps",
+        "//platform/workspace/storage",
+        "//platform/testFramework/bootstrap:tools-testsBootstrap",
+        "//platform/execution",
+        "//platform/structure-view-impl/frontend",
+        "//platform/testFramework",
+    ],
+)
+### auto-generated section `build intellij.platform.testFramework.tests.smoke` end
+
+### auto-generated section `iml intellij.platform.testFramework.tests.smoke` start
+exports_files(
+    [
+        "intellij.platform.testFramework.tests.smoke.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.testFramework.tests.smoke` end
+
+### auto-generated section `test intellij.platform.testFramework.tests.smoke` start
+jps_test(
+    name = "smoke_test",
+    runtime_deps = [":smoke_test_lib"],
+)
+### auto-generated section `test intellij.platform.testFramework.tests.smoke` end

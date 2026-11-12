@@ -1,0 +1,56 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.python.ruff.tests.junit5Env` start
+jvm_library(
+    name = "junit5Env_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//python/python-ruff:ruff"],
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//python/python-ruff/tests:tests_test_lib"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/junit6",
+        "//libraries/junit6-jupiter",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/common",
+        "//python/python-test-env/junit5:junit5_test_lib",
+        "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+        "//python/python-sdk/backend",
+        "//python/openapi:community",
+        "//python/python-pytools/backend",
+        "//platform/core-api:core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//python/python-lsp-core:lsp-core",
+        "//platform/analysis-api:analysis",
+        "//platform/testFramework/core",
+    ],
+)
+### auto-generated section `build intellij.python.ruff.tests.junit5Env` end
+
+### auto-generated section `iml intellij.python.ruff.tests.junit5Env` start
+exports_files(
+    [
+        "intellij.python.ruff.tests.junit5Env.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.ruff.tests.junit5Env` end
+
+### auto-generated section `test intellij.python.ruff.tests.junit5Env` start
+jps_test(
+    name = "junit5Env_test",
+    runtime_deps = [":junit5Env_test_lib"],
+)
+### auto-generated section `test intellij.python.ruff.tests.junit5Env` end

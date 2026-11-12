@@ -238,6 +238,7 @@ jvm_library(
         "//plugins/IntelliLang:langInjection",
         "//platform/kernel/rpc",
         "//platform/platform-impl/rpc",
+        "//platform/platform-tests/testFramework",
         "//platform/project/shared:project",
     ],
 )

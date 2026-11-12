@@ -1,0 +1,63 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.pycharm.community.build.tests.disabled` start
+create_kotlinc_options(
+    name = "custom_disabled",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "disabled_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//python/build"],
+    kotlinc_opts = ":custom_disabled",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/byte-buddy",
+        "//python/build:pycharm-community-build-tests_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//build",
+        "//platform/build-scripts/testFramework",
+        "@lib//:kotlin-stdlib",
+        "//platform/util",
+        "//platform/build-scripts/downloader",
+        "//build/tasks",
+        "//libraries/junit6",
+        "//libraries/assertj-core",
+        "//platform/core-api:core",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/ide-core",
+        "//python/python-sdk/backend",
+    ],
+)
+### auto-generated section `build intellij.pycharm.community.build.tests.disabled` end
+
+### auto-generated section `iml intellij.pycharm.community.build.tests.disabled` start
+exports_files(
+    [
+        "intellij.pycharm.community.build.tests.disabled.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.pycharm.community.build.tests.disabled` end
+
+### auto-generated section `test intellij.pycharm.community.build.tests.disabled` start
+jps_test(
+    name = "disabled_test",
+    runtime_deps = [":disabled_test_lib"],
+)
+### auto-generated section `test intellij.pycharm.community.build.tests.disabled` end

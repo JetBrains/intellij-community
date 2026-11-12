@@ -1,0 +1,88 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.vcs.gitlab.tests.api` start
+jvm_library(
+    name = "api_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//plugins/gitlab/gitlab-core:vcs-gitlab-backend"],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/lucene.common",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+        "//xml/plugin",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/core-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-api:ide",
+        "//platform/platform-impl:ide-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-impl",
+        "//platform/util:util-ui",
+        "//platform/vcs-api:vcs",
+        "//platform/collaboration-tools",
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
+        "//platform/dvcs-impl:vcs-dvcs-impl",
+        "//libraries/junit4",
+        "//libraries/kotlinx/coroutines/test",
+        "//libraries/assertj-core",
+        "@lib//:app-cash-turbine-jvm",
+        "//platform/testFramework",
+        "//plugins/git4idea/backend",
+        "//plugins/git4idea/shared",
+        "//platform/vcs-impl",
+        "//platform/lang-impl",
+        "//libraries/testcontainers",
+        "//platform/testFramework/junit5",
+        "//platform/util/coroutines",
+        "//libraries/mockk",
+        "//libraries/mockk/jvm",
+        "//platform/ide-core",
+        "//platform/diff-impl",
+        "//platform/util/diff",
+        "//platform/code-style-api:codeStyle",
+        "//platform/collaboration-tools:collaborationTools-tests_test_lib",
+        "//platform/testFramework/junit5/codeInsight",
+        "//libraries/junit6",
+        "//platform/vcs/plugin",
+        "//plugins/gitlab",
+        "//plugins/gitlab/shared",
+        "//plugins/gitlab/gitlab-core:vcs-gitlab-tests_test_lib",
+    ],
+)
+### auto-generated section `build intellij.vcs.gitlab.tests.api` end
+
+### auto-generated section `iml intellij.vcs.gitlab.tests.api` start
+exports_files(
+    [
+        "intellij.vcs.gitlab.tests.api.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.vcs.gitlab.tests.api` end
+
+### auto-generated section `test intellij.vcs.gitlab.tests.api` start
+jps_test(
+    name = "api_test",
+    runtime_deps = [":api_test_lib"],
+)
+### auto-generated section `test intellij.vcs.gitlab.tests.api` end

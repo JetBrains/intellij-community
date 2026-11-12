@@ -1,0 +1,64 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.testng.rt.tests.ideaTestFrameworks` start
+jvm_library(
+    name = "ideaTestFrameworks_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.testng.rt.tests.ideaTestFrameworks",
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/main/intellij.platform.monolith.main:monolith-main"],
+    deps = [
+        # do not sort,
+        "//java/java-tests:tests_test_lib",
+        "//platform/core-api:core",
+        "//platform/execution",
+        "//java/java-syntax:syntax",
+        "//java/java-psi-api:psi",
+        "//platform/execution-impl",
+        "//jps/model-api:model",
+        "//platform/projectModel-api:projectModel",
+        "//platform/testFramework",
+        "//java/testFramework",
+        "//plugins/testng",
+        "//java/execution/impl",
+        "//platform/lang-core",
+        "//platform/smRunner",
+        "//aether-dependency-resolver",
+        "//java/java-runtime:rt",
+        "//platform/core-ui",
+        "//plugins/testng_rt:testng-rt",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/ide-core",
+        "//platform/testRunner",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/lang-api:lang",
+        "//platform/statistics",
+        "//libraries/junit4",
+    ],
+)
+### auto-generated section `build intellij.testng.rt.tests.ideaTestFrameworks` end
+
+### auto-generated section `iml intellij.testng.rt.tests.ideaTestFrameworks` start
+exports_files(
+    [
+        "intellij.testng.rt.tests.ideaTestFrameworks.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.testng.rt.tests.ideaTestFrameworks` end
+
+### auto-generated section `test intellij.testng.rt.tests.ideaTestFrameworks` start
+jps_test(
+    name = "ideaTestFrameworks_test",
+    runtime_deps = [":ideaTestFrameworks_test_lib"],
+)
+### auto-generated section `test intellij.testng.rt.tests.ideaTestFrameworks` end

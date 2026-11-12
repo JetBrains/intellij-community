@@ -1,0 +1,86 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.kotlin.gradle.multiplatform.tests.k2` start
+jvm_library(
+    name = "k2_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.gradle.multiplatform.tests.k2",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//platform/execution.serviceView/plugin",
+    ],
+    deps = [
+        # do not sort,
+        "//libraries/junit4",
+        "//plugins/kotlin/jps/util/runtime",
+        "//plugins/kotlin/base/project-model",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//plugins/kotlin/base/util",
+        "//plugins/kotlin/base/plugin",
+        "//platform/projectModel-api:projectModel",
+        "//plugins/kotlin/base/facet",
+        "//java/testFramework",
+        "//java/java-psi-api:psi",
+        "//plugins/kotlin/base/analysis",
+        "//platform/external-system-impl:externalSystem-tests_test_lib",
+        "//platform/testFramework",
+        "//plugins/kotlin/base/testFramework",
+        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/test-framework:test-framework_test_lib",
+        "//plugins/kotlin/frontend-independent",
+        "//plugins/gradle/java",
+        "//plugins/gradle/testFramework",
+        "//plugins/kotlin/gradle/gradle-tooling/impl",
+        "//plugins/kotlin/gradle/gradle",
+        "//android/android:core",
+        "//android/android-plugin:plugin",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//plugins/kotlin/base/indices",
+        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
+        "@lib//:kotlinc-kotlin-compiler-tests",
+        "//plugins/gradle/java:java-tests_test_lib",
+        "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
+        "//plugins/kotlin/base/project-structure",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//android/android-templates:templates-tests_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util-ex",
+        "//platform/util/jdom",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
+        "//platform/scratch/plugin",
+    ],
+)
+### auto-generated section `build intellij.kotlin.gradle.multiplatform.tests.k2` end
+
+### auto-generated section `iml intellij.kotlin.gradle.multiplatform.tests.k2` start
+exports_files(
+    [
+        "intellij.kotlin.gradle.multiplatform.tests.k2.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.gradle.multiplatform.tests.k2` end
+
+### auto-generated section `test intellij.kotlin.gradle.multiplatform.tests.k2` start
+jps_test(
+    name = "k2_test",
+    runtime_deps = [":k2_test_lib"],
+)
+### auto-generated section `test intellij.kotlin.gradle.multiplatform.tests.k2` end

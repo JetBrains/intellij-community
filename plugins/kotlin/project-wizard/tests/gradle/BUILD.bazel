@@ -1,0 +1,113 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build kotlin.project-wizard.tests.gradle` start
+jvm_library(
+    name = "gradle_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "kotlin.project-wizard.tests.gradle",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//platform/execution.serviceView/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "@lib//:kotlinc-kotlin-compiler-tests",
+        "//libraries/kotlin/reflect",
+        "//libraries/junit4",
+        "//platform/analysis-api:analysis",
+        "//platform/code-style-api:codeStyle",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/core-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/external-system-impl:externalSystem-impl",
+        "//jps/model-api:model",
+        "//platform/lang-core",
+        "//platform/projectModel-api:projectModel",
+        "//plugins/kotlin/base/testFramework",
+        "//plugins/kotlin/base/analysis",
+        "//platform/external-system-impl:externalSystem-tests_test_lib",
+        "//java/testFramework",
+        "//plugins/gradle/testFramework",
+        "//plugins/kotlin/frontend-independent",
+        "//plugins/kotlin/code-insight/api",
+        "//plugins/kotlin/project-wizard/cli",
+        "//plugins/kotlin/project-wizard/core",
+        "//plugins/kotlin/project-wizard/idea",
+        "//plugins/kotlin/gradle/gradle",
+        "//platform/execution",
+        "//plugins/kotlin/gradle/gradle-java",
+        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/test-framework:test-framework_test_lib",
+        "//plugins/gradle:gradle-common",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/gradle/java:java-tests_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework/junit5",
+        "//plugins/kotlin/project-wizard/gradle",
+        "//plugins/gradle/java",
+        "//plugins/kotlin/base/facet",
+        "//plugins/kotlin/base/compiler-configuration",
+        "//plugins/kotlin/jps/util/runtime",
+        "//plugins/kotlin/formatter",
+        "//plugins/maven/testFramework",
+        "//plugins/kotlin/project-wizard/maven",
+        "//plugins/maven/model",
+        "//plugins/maven",
+        "//plugins/maven/src/test:maven-tests_test_lib",
+        "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
+        "//plugins/kotlin/project-configuration",
+        "//plugins/kotlin/base/project-structure",
+        "//libraries/kotlinc/kotlin-scripting-compiler-impl:libraries-kotlinc-kotlin-scripting-compiler-impl",
+        "//plugins/kotlin/base/scripting/scripting",
+        "//platform/backend/observation",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//platform/backend/workspace",
+        "//platform/workspace/storage",
+        "//platform/util/jdom",
+        "//platform/util:util-ui",
+        "//platform/ide-core",
+        "//plugins/kotlin/base/statistics",
+        "//plugins/kotlin/gradle/scripting",
+        "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
+        "//java/java-syntax:syntax",
+        "//java/java-psi-api:psi",
+        "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",
+        "//libraries/junit6",
+        "//libraries/junit6-params",
+        "//platform/scratch/plugin",
+        "//plugins/kotlin/project-wizard/tests:tests_test_lib",
+    ],
+)
+### auto-generated section `build kotlin.project-wizard.tests.gradle` end
+
+### auto-generated section `iml kotlin.project-wizard.tests.gradle` start
+exports_files(
+    [
+        "kotlin.project-wizard.tests.gradle.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml kotlin.project-wizard.tests.gradle` end
+
+### auto-generated section `test kotlin.project-wizard.tests.gradle` start
+jps_test(
+    name = "gradle_test",
+    runtime_deps = [":gradle_test_lib"],
+)
+### auto-generated section `test kotlin.project-wizard.tests.gradle` end

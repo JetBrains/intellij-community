@@ -2602,7 +2602,7 @@ copy_file(
 )
 
 java_library(
-    name = "gradle-tooling_extension-tests-org-jeasy-easy-random-core-4-2-0",
+    name = "gradle-tooling_extension-tests-compatibility-org-jeasy-easy-random-core-4-2-0",
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
@@ -2621,6 +2621,36 @@ jvm_import(
     name = "org_objenesis-objenesis-3_1_http_import",
     jar = "@org_objenesis-objenesis-3_1_http//file",
     source_jar = "@org_objenesis-objenesis-3_1-sources_http//file",
+)
+
+java_library(
+    name = "gradle-tooling_extension-tests-integration-org-jeasy-easy-random-core-4-2-0",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_jeasy-easy-random-core-4_2_0_http_import",
+        ":org_objenesis-objenesis-3_1_http_import",
+    ],
+)
+
+java_library(
+    name = "gradle-tooling_extension-tests-org-jeasy-easy-random-core-4-2-0",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_jeasy-easy-random-core-4_2_0_http_import",
+        ":org_objenesis-objenesis-3_1_http_import",
+    ],
+)
+
+java_library(
+    name = "gradle-tooling_extension-tests-util-org-jeasy-easy-random-core-4-2-0",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":org_jeasy-easy-random-core-4_2_0_http_import",
+        ":org_objenesis-objenesis-3_1_http_import",
+    ],
 )
 
 copy_file(
@@ -18620,6 +18650,13 @@ jvm_import(
 
 jvm_import(
     name = "platform-images-build-tests-pngencoder",
+    jar = "@com_pngencoder-pngencoder-0_14_0_http//file",
+    source_jar = "@com_pngencoder-pngencoder-0_14_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "platform-images-build-tests-smoke-pngencoder",
     jar = "@com_pngencoder-pngencoder-0_14_0_http//file",
     source_jar = "@com_pngencoder-pngencoder-0_14_0-sources_http//file",
     visibility = ["//visibility:public"],

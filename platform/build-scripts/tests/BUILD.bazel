@@ -19,6 +19,7 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//build/tasks/tests/buildScripts:buildScripts_test_lib"],
     deps = [
         # do not sort,
         "//platform/build-scripts/plugin-preparation",

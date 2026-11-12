@@ -1,0 +1,84 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.python.processOutput.frontend.tests.junit5Env` start
+create_kotlinc_options(
+    name = "custom_junit5Env",
+    opt_in = [
+        "kotlin.time.ExperimentalTime",
+        "com.intellij.util.system.LowLevelLocalMachineAccess",
+        "com.jetbrains.python.PyInternalExecApi",
+    ],
+    warn = "error",
+    x_context_parameters = True,
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "junit5Env_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//python/python-process-output/frontend"],
+    kotlinc_opts = ":custom_junit5Env",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+        "//json/plugin",
+        "//plugins/yaml/plugin",
+        "//xml/plugin",
+        "//python/python-process-output/frontend:python-processOutput-frontend-tests_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/platform-api:ide",
+        "//platform/core-api:core",
+        "//python/python-exec-service:community-execService",
+        "//python/openapi:community",
+        "//platform/util:util-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
+        "//platform/projectModel-api:projectModel",
+        "//libraries/mockk",
+        "//libraries/mockk/jvm",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/common",
+        "//python/python-process-output/common",
+        "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+        "//libraries/kotlinx/coroutines/debug",
+        "//libraries/junit6",
+        "//libraries/kotlinx/coroutines/test",
+        "//python/python-test-env/junit5:junit5_test_lib",
+        "//platform/eel",
+        "//platform/eel-nioFs",
+    ],
+)
+### auto-generated section `build intellij.python.processOutput.frontend.tests.junit5Env` end
+
+### auto-generated section `iml intellij.python.processOutput.frontend.tests.junit5Env` start
+exports_files(
+    [
+        "intellij.python.processOutput.frontend.tests.junit5Env.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.processOutput.frontend.tests.junit5Env` end
+
+### auto-generated section `test intellij.python.processOutput.frontend.tests.junit5Env` start
+jps_test(
+    name = "junit5Env_test",
+    runtime_deps = [":junit5Env_test_lib"],
+)
+### auto-generated section `test intellij.python.processOutput.frontend.tests.junit5Env` end

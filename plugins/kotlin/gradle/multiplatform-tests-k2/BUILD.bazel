@@ -23,6 +23,7 @@ jvm_library(
         # do not sort,
         "//plugins/kotlin:kotlin-plugin-community-main",
         "//platform/execution.serviceView/plugin",
+        "//plugins/kotlin/gradle/multiplatform-tests-k2/k2:k2_test_lib",
     ],
     deps = [
         # do not sort,

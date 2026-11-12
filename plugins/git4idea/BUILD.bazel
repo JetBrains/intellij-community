@@ -79,9 +79,9 @@ jvm_library(
     testonly = True,
     srcs = glob(
         [
-            "tests/**/*.kt",
-            "tests/**/*.java",
-            "tests/**/*.form",
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
         ],
         allow_empty = True,
     ),

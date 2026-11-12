@@ -125,6 +125,11 @@ jvm_library(
         "//plugins/kotlin/j2k/shared/tests:tests_test_lib",
         "//plugins/kotlin/jps/graphImplementationTests:graphImplementationTests_test_lib",
         "//plugins/kotlin/jps/builder/tests:tests_test_lib",
+        "//plugins/kotlin/compiler-reference-index/tests.k2/gradle:gradle_test_lib",
+        "//plugins/kotlin/lombok/tests/gradle:gradle_test_lib",
+        "//plugins/kotlin/fir/tests/gradle:gradle_test_lib",
+        "//plugins/kotlin/gradle/gradle-java/tests.shared/functional:functional_test_lib",
+        "//plugins/kotlin/project-wizard/tests/gradle:gradle_test_lib",
         "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
     ],
 )

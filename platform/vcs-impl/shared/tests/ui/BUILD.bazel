@@ -1,0 +1,67 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.vcs.impl.shared.tests.ui` start
+jvm_library(
+    name = "ui_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//platform/vcs-impl/shared"],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/vcs/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/platform-api:ide",
+        "//platform/diff-impl",
+        "//platform/util:util-ui",
+        "//platform/platform-impl:ide-impl",
+        "//platform/core-ui",
+        "//platform/vcs-api/vcs-api-core:vcs-core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/lang-impl",
+        "//platform/vcs-api/shared",
+        "//platform/ide-core-impl",
+        "//platform/ide-core",
+        "//platform/platform-impl/rpc",
+        "//platform/kernel/rpc",
+        "//platform/testFramework",
+        "//platform/testFramework/junit5",
+        "//platform/project/shared:project",
+        "//platform/projectModel-api:projectModel",
+        "//libraries/mockito",
+        "//platform/core-impl",
+        "//libraries/junit4",
+        "//libraries/junit6",
+    ],
+)
+### auto-generated section `build intellij.platform.vcs.impl.shared.tests.ui` end
+
+### auto-generated section `iml intellij.platform.vcs.impl.shared.tests.ui` start
+exports_files(
+    [
+        "intellij.platform.vcs.impl.shared.tests.ui.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.vcs.impl.shared.tests.ui` end
+
+### auto-generated section `test intellij.platform.vcs.impl.shared.tests.ui` start
+jps_test(
+    name = "ui_test",
+    runtime_deps = [":ui_test_lib"],
+)
+### auto-generated section `test intellij.platform.vcs.impl.shared.tests.ui` end

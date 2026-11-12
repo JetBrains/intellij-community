@@ -1,0 +1,94 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.json.tests.js` start
+jvm_library(
+    name = "js_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.json.tests.js",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/grazie",
+        "//platform/vcs/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+        "//xml/plugin",
+        "//json/plugin",
+        "//plugins/yaml/plugin",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//platform/code-style-api:codeStyle",
+        "//platform/core-api:core",
+        "//platform/lang-api:lang",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/indexing-api:indexing",
+        "//jps/model-api:model",
+        "//platform/projectModel-api:projectModel",
+        "//platform/testFramework",
+        "//platform/testFramework/structureView",
+        "//json/backend",
+        "//json/structureView",
+        "//json/backend/regexp",
+        "//json/spellchecker",
+        "//spellchecker",
+        "//libraries/lucene.common",
+        "//plugins/grazie/src:core",
+        "//platform/lang-impl",
+        "//platform/testFramework/extensions:testExtensions",
+        "@lib//:kotlin-stdlib",
+        "//plugins/IntelliLang:langInjection",
+        "//libraries/jsonpath",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/assertj-core",
+        "//RegExpSupport:regexp",
+        "//platform/ide-core-impl",
+        "//platform/ide-core",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+        "//libraries/kotlin/reflect",
+        "//platform/syntax/syntax-psi:psi",
+        "//json/syntax",
+        "//platform/syntax/syntax-util:util",
+        "//platform/core-impl",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5/codeInsight",
+        "//platform/util/jdom",
+        "//platform/util:util-ui",
+        "//platform/structure-view-impl:structureView",
+        "//platform/structure-view-impl/plugin",
+        "//libraries/fastutil",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/statistics",
+        "//json/networknt.wrapper",
+        "//libraries/junit6",
+        "//json/backend/tests:tests_test_lib",
+    ],
+)
+### auto-generated section `build intellij.json.tests.js` end
+
+### auto-generated section `iml intellij.json.tests.js` start
+exports_files(
+    [
+        "intellij.json.tests.js.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.json.tests.js` end
+
+### auto-generated section `test intellij.json.tests.js` start
+jps_test(
+    name = "js_test",
+    runtime_deps = [":js_test_lib"],
+)
+### auto-generated section `test intellij.json.tests.js` end

@@ -1,0 +1,82 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.python.community.execService.tests.junit5` start
+create_kotlinc_options(
+    name = "custom_junit5",
+    opt_in = [
+        "kotlin.time.ExperimentalTime",
+        "com.jetbrains.python.PyInternalExecApi",
+    ],
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "junit5_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//python/python-exec-service:community-execService"],
+    kotlinc_opts = ":custom_junit5",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//json/plugin",
+        "//plugins/yaml/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+        "//python/python-exec-service:community-execService-tests_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//libraries/assertj-core",
+        "@lib//:kotlin-stdlib",
+        "//python/openapi:community",
+        "//platform/eel-provider",
+        "//platform/util",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
+        "//libraries/hamcrest",
+        "//libraries/junit6-params",
+        "//platform/core-api:core",
+        "//platform/eel",
+        "//platform/testFramework/junit5/eel",
+        "//libraries/junit5-pioneer",
+        "//platform/testFramework/common",
+        "//platform/execution",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/serialization/core",
+        "//platform/remote-servers/impl",
+        "//python/python-process-output/common",
+        "//python/pluginCore:community-plugin",
+        "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
+        "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+        "//python/services/system-python",
+    ],
+)
+### auto-generated section `build intellij.python.community.execService.tests.junit5` end
+
+### auto-generated section `iml intellij.python.community.execService.tests.junit5` start
+exports_files(
+    [
+        "intellij.python.community.execService.tests.junit5.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.community.execService.tests.junit5` end
+
+### auto-generated section `test intellij.python.community.execService.tests.junit5` start
+jps_test(
+    name = "junit5_test",
+    runtime_deps = [":junit5_test_lib"],
+)
+### auto-generated section `test intellij.python.community.execService.tests.junit5` end

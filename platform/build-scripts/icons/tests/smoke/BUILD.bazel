@@ -1,0 +1,50 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.images.build.tests.smoke` start
+jvm_library(
+    name = "smoke_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//platform/build-scripts/icons:images-build"],
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/commons/imaging"],
+    deps = [
+        # do not sort,
+        "//jps/model-api:model",
+        "//platform/util",
+        "//platform/util-ex",
+        "//jps/model-serialization",
+        "@lib//:kotlin-stdlib",
+        "//libraries/junit4",
+        "//platform/util/xmlDom",
+        "//libraries/junit6",
+        "//build/tasks:tasks-tests_test_lib",
+        "//platform/build-scripts/icons:images-build-tests_test_lib",
+        "@lib//:platform-images-build-tests-smoke-pngencoder",
+    ],
+)
+### auto-generated section `build intellij.platform.images.build.tests.smoke` end
+
+### auto-generated section `iml intellij.platform.images.build.tests.smoke` start
+exports_files(
+    [
+        "intellij.platform.images.build.tests.smoke.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.images.build.tests.smoke` end
+
+### auto-generated section `test intellij.platform.images.build.tests.smoke` start
+jps_test(
+    name = "smoke_test",
+    runtime_deps = [":smoke_test_lib"],
+)
+### auto-generated section `test intellij.platform.images.build.tests.smoke` end

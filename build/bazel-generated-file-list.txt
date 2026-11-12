@@ -226,6 +226,7 @@ build/cucumber-test-runner
 build/deps
 build/launch
 build/tasks
+build/tasks/tests/buildScripts
 build/tests
 commandInterface
 community-resources
@@ -308,6 +309,7 @@ java/compiler/instrumentation-util
 java/compiler/instrumentation-util-8
 java/compiler/javac2
 java/compiler/openapi
+java/compiler/testFramework
 java/debugger/backend
 java/debugger/frontend
 java/debugger/impl
@@ -329,6 +331,7 @@ java/ide-customization/training
 java/ide-resources
 java/ide-resources/newUiOnboarding
 java/idea-ui
+java/idea-ui/tests/maven
 java/java-analysis-api
 java/java-analysis-impl
 java/java-backend
@@ -398,6 +401,7 @@ json
 json/backend
 json/backend/regexp
 json/backend/tests
+json/backend/tests/js
 json/networknt.wrapper
 json/networknt.wrapper/tests
 json/plugin
@@ -409,6 +413,10 @@ jvm/jvm-analysis-api
 jvm/jvm-analysis-impl
 jvm/jvm-analysis-internal-testFramework
 jvm/jvm-analysis-java-tests
+jvm/jvm-analysis-java-tests/codeInspection
+jvm/jvm-analysis-java-tests/console
+jvm/jvm-analysis-java-tests/logging
+jvm/jvm-analysis-java-tests/refactoring
 jvm/jvm-analysis-kotlin-tests-k2
 jvm/jvm-analysis-kotlin-tests-shared
 jvm/jvm-analysis-quickFix
@@ -744,6 +752,7 @@ platform/build-scripts/dev-launch
 platform/build-scripts/dev-server-legacy
 platform/build-scripts/downloader
 platform/build-scripts/icons
+platform/build-scripts/icons/tests/smoke
 platform/build-scripts/licenses
 platform/build-scripts/plugin-model-tool
 platform/build-scripts/plugin-preparation
@@ -986,8 +995,16 @@ platform/platform-resources-file-types
 platform/platform-tests
 platform/platform-tests/benchmarks
 platform/platform-tests/concurrency
+platform/platform-tests/concurrency-tests
+platform/platform-tests/debugger
 platform/platform-tests/durability
+platform/platform-tests/editorStress
 platform/platform-tests/eel-helper
+platform/platform-tests/eelLocalApi
+platform/platform-tests/lowLevelPerformance
+platform/platform-tests/testFramework
+platform/platform-tests/wsl
+platform/platform-tests/wslPyEnv
 platform/platform-util-io
 platform/platform-util-io-impl
 platform/platform-util-io-native
@@ -1129,6 +1146,7 @@ platform/testFramework/junit5/highlighting
 platform/testFramework/junit5/projectStructure
 platform/testFramework/monorepo
 platform/testFramework/selfContainedProjects
+platform/testFramework/smoke
 platform/testFramework/structureView
 platform/testFramework/teamCity
 platform/testIntegration
@@ -1184,6 +1202,10 @@ platform/vcs-impl/lang/actions
 platform/vcs-impl/lang/todo
 platform/vcs-impl/lang/todo/frontend
 platform/vcs-impl/shared
+platform/vcs-impl/shared/tests/changes
+platform/vcs-impl/shared/tests/log
+platform/vcs-impl/shared/tests/ui
+platform/vcs-impl/tests/util
 platform/vcs-log/api
 platform/vcs-log/graph
 platform/vcs-log/graph-api
@@ -1200,9 +1222,11 @@ platform/welcome-screen-impl
 platform/whatsNew
 platform/workspace/jps
 platform/workspace/jps/tests
+platform/workspace/jps/tests/exploratory
 platform/workspace/storage
 platform/workspace/storage/testEntities
 platform/workspace/storage/tests
+platform/workspace/storage/tests/exploratory
 platform/wsl-impl
 platform/xdebugger-api
 platform/xdebugger-impl
@@ -1218,6 +1242,7 @@ plugins/ByteCodeViewer
 plugins/IntelliLang
 plugins/IntelliLang/backend
 plugins/IntelliLang/tests
+plugins/IntelliLang/tests/compiler
 plugins/ant
 plugins/ant/jps-plugin
 plugins/built-in-help
@@ -1336,6 +1361,7 @@ plugins/git4idea/rt
 plugins/git4idea/shared
 plugins/git4idea/terminal
 plugins/git4idea/testFramework
+plugins/git4idea/tests/disabled
 plugins/github/github-core
 plugins/github/github-git
 plugins/github/github-json
@@ -1345,6 +1371,7 @@ plugins/github/ultimate-promo
 plugins/gitlab
 plugins/gitlab/frontend
 plugins/gitlab/gitlab-core
+plugins/gitlab/gitlab-core/tests/api
 plugins/gitlab/gitlab-git
 plugins/gitlab/gitlab-yaml
 plugins/gitlab/shared
@@ -1382,6 +1409,10 @@ plugins/gradle/java/performance
 plugins/gradle/java/plugin
 plugins/gradle/java/properties
 plugins/gradle/java/tests.benchmark
+plugins/gradle/java/tests/integration
+plugins/gradle/java/tests/integration/eel
+plugins/gradle/java/tests/integration/service
+plugins/gradle/java/tests/quarantine
 plugins/gradle/java/toml
 plugins/gradle/java/toml/tests
 plugins/gradle/jps-plugin
@@ -1390,13 +1421,21 @@ plugins/gradle/native
 plugins/gradle/native/tooling
 plugins/gradle/plugin
 plugins/gradle/properties
+plugins/gradle/properties/tests/integration
 plugins/gradle/settings
 plugins/gradle/testFramework
 plugins/gradle/testFramework/tests
 plugins/gradle/tests.benchmark
 plugins/gradle/tests.benchmark.main
+plugins/gradle/tests/integration
+plugins/gradle/tests/integration/eel
+plugins/gradle/tests/integration/service
+plugins/gradle/tests/quarantine
 plugins/gradle/tooling-extension-api
 plugins/gradle/tooling-extension-impl
+plugins/gradle/tooling-extension-impl/tests/compatibility
+plugins/gradle/tooling-extension-impl/tests/integration
+plugins/gradle/tooling-extension-impl/tests/util
 plugins/gradle/tooling-proxy
 plugins/grazie
 plugins/grazie/java
@@ -1433,6 +1472,7 @@ plugins/groovy/structuralsearch-groovy
 plugins/groovy/testFramework
 plugins/hg4idea
 plugins/htmltools
+plugins/htmltools/tests/refactoring
 plugins/ide-features-trainer
 plugins/ide-features-trainer/onboarding
 plugins/ide-features-trainer/tips
@@ -1469,6 +1509,7 @@ plugins/junit5_rt_tests
 plugins/junit6_rt
 plugins/junit_rt
 plugins/junit_rt_tests
+plugins/junit_rt_tests/integration
 plugins/keymaps/eclipse-keymap
 plugins/keymaps/netbeans5.6-keymap
 plugins/keymaps/qtcreator-keymap
@@ -1562,6 +1603,7 @@ plugins/kotlin/compiler-plugins/scripting
 plugins/kotlin/compiler-reference-index
 plugins/kotlin/compiler-reference-index/maven
 plugins/kotlin/compiler-reference-index/tests.k2
+plugins/kotlin/compiler-reference-index/tests.k2/gradle
 plugins/kotlin/completion/api
 plugins/kotlin/completion/impl-k2
 plugins/kotlin/completion/tests-shared
@@ -1574,6 +1616,7 @@ plugins/kotlin/features-trainer/tests
 plugins/kotlin/fir
 plugins/kotlin/fir/testFramework
 plugins/kotlin/fir/tests
+plugins/kotlin/fir/tests/gradle
 plugins/kotlin/formatter
 plugins/kotlin/formatter/minimal
 plugins/kotlin/frontend-independent
@@ -1586,11 +1629,13 @@ plugins/kotlin/gradle/gradle
 plugins/kotlin/gradle/gradle-java
 plugins/kotlin/gradle/gradle-java/k2
 plugins/kotlin/gradle/gradle-java/tests.shared
+plugins/kotlin/gradle/gradle-java/tests.shared/functional
 plugins/kotlin/gradle/gradle-tooling
 plugins/kotlin/gradle/gradle-tooling/impl
 plugins/kotlin/gradle/gradle-tooling/tests
 plugins/kotlin/gradle/gradle/tests
 plugins/kotlin/gradle/multiplatform-tests-k2
+plugins/kotlin/gradle/multiplatform-tests-k2/k2
 plugins/kotlin/gradle/scripting
 plugins/kotlin/grazie
 plugins/kotlin/grazie/intellij.kotlin.grazie.tests
@@ -1640,6 +1685,7 @@ plugins/kotlin/kotlin.searching/base
 plugins/kotlin/kotlin.searching/kotlin.searching.test.k2
 plugins/kotlin/lombok
 plugins/kotlin/lombok/tests
+plugins/kotlin/lombok/tests/gradle
 plugins/kotlin/maven
 plugins/kotlin/maven/tests
 plugins/kotlin/mcp
@@ -1666,6 +1712,7 @@ plugins/kotlin/project-wizard/gradle
 plugins/kotlin/project-wizard/idea
 plugins/kotlin/project-wizard/maven
 plugins/kotlin/project-wizard/tests
+plugins/kotlin/project-wizard/tests/gradle
 plugins/kotlin/property-tests
 plugins/kotlin/refactorings/kotlin.refactorings.common
 plugins/kotlin/refactorings/kotlin.refactorings.k2
@@ -1753,6 +1800,7 @@ plugins/maven/performanceTesting
 plugins/maven/plugin
 plugins/maven/proofreading
 plugins/maven/src/integrationTest
+plugins/maven/src/integrationTest/docker
 plugins/maven/src/test
 plugins/maven/testFramework
 plugins/mcp-server
@@ -1875,6 +1923,7 @@ plugins/testng
 plugins/testng/langInjection
 plugins/testng_rt
 plugins/testng_rt/tests
+plugins/testng_rt/tests/ideaTestFrameworks
 plugins/textmate
 plugins/textmate/backend
 plugins/textmate/common
@@ -1907,6 +1956,7 @@ plugins/xray/frontend
 plugins/xray/shared
 plugins/yaml
 plugins/yaml/backend
+plugins/yaml/backend/tests/exploratory
 plugins/yaml/plugin
 plugins/yaml/spellchecker
 plugins/yaml/syntax
@@ -1915,6 +1965,7 @@ python/IntelliLang-python
 python/aliasProvider
 python/build
 python/build/build-debug-binaries
+python/build/tests/disabled
 python/common
 python/conda
 python/conda/common
@@ -1939,6 +1990,7 @@ python/intellij.python.community.communityOnly
 python/intellij.python.ml.features
 python/jcef
 python/junit5Tests-framework
+python/junit5Tests-framework/junit5Win
 python/mcp
 python/openapi
 python/pipenv
@@ -1962,8 +2014,11 @@ python/python-core-impl
 python/python-devkit
 python/python-exec-service
 python/python-exec-service/execService.python
+python/python-exec-service/tests/junit5
+python/python-exec-service/tests/win
 python/python-external-index
 python/python-features-trainer
+python/python-features-trainer/tests/junit5Env
 python/python-grazie
 python/python-hatch
 python/python-hatch/common
@@ -1983,16 +2038,21 @@ python/python-pixi/frontend
 python/python-pixi/plugin
 python/python-pixi/test-env
 python/python-pixi/tests
+python/python-pixi/tests/junit5Env
 python/python-poetry/backend
 python/python-poetry/common
 python/python-poetry/frontend
 python/python-process-output/common
 python/python-process-output/frontend
+python/python-process-output/frontend/tests/junit5Env
 python/python-process-output/lambdaTests
 python/python-process-output/lambdaTests/intellij.python.processOutput.lambdaTests.plugin
 python/python-psi-api
 python/python-psi-impl
 python/python-pyproject
+python/python-pyproject/tests/junit5
+python/python-pyproject/tests/junit5Env
+python/python-pyproject/tests/performance
 python/python-pyrefly
 python/python-pyrefly/common
 python/python-pyrefly/frontend
@@ -2013,11 +2073,13 @@ python/python-ruff
 python/python-ruff/common
 python/python-ruff/frontend
 python/python-ruff/tests
+python/python-ruff/tests/junit5Env
 python/python-sdk-configurator/backend
 python/python-sdk/backend
 python/python-sdk/common
 python/python-sdk/frontend
 python/python-sdk/tests
+python/python-sdk/tests/env
 python/python-source-roots
 python/python-spellchecker
 python/python-syntax
@@ -2050,6 +2112,7 @@ python/python-zuban/common
 python/python-zuban/frontend
 python/python-zuban/plugin
 python/services/internal-impl
+python/services/internal-impl/tests/junit5Win
 python/services/shared
 python/services/system-python
 python/terminal
@@ -2058,6 +2121,12 @@ python/terminal/frontend
 python/terminal/shared
 python/testAssertions
 python/testFramework
+python/tests/disabled
+python/tests/env
+python/tests/gant
+python/tests/junit5
+python/tests/junit5/win
+python/tests/junit5Env
 python/tools
 spellchecker
 spellchecker/vcs
@@ -2117,6 +2186,7 @@ uast/uast-common-ide
 uast/uast-java
 uast/uast-java-ide
 uast/uast-tests
+uast/uast-tests/java
 xml/dom-impl
 xml/dom-openapi
 xml/dom-tests
@@ -2131,6 +2201,7 @@ xml/plugin
 xml/relaxng
 xml/testFramework
 xml/tests
+xml/tests/js
 xml/vcs
 xml/xml-analysis-api
 xml/xml-analysis-impl

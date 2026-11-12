@@ -1,0 +1,65 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.platform.workspace.storage.tests.exploratory` start
+create_kotlinc_options(
+    name = "custom_exploratory",
+    opt_in = [
+        "com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi",
+        "com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi",
+    ],
+)
+
+jvm_library(
+    name = "exploratory_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//platform/workspace/storage"],
+    kotlinc_opts = ":custom_exploratory",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//platform/testFramework",
+        "//platform/workspace/storage/testEntities:testEntities_test_lib",
+        "//libraries/guava",
+        "//libraries/kotlin/reflect",
+        "//libraries/fastutil",
+        "@lib//:kotlin-stdlib",
+        "//platform/analysis-api:analysis",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//libraries/kryo5",
+        "//platform/testFramework/junit5",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//libraries/jetcheck",
+        "//libraries/junit4",
+        "//libraries/junit6",
+        "//libraries/junit6-params",
+        "//platform/workspace/storage/tests:tests_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.workspace.storage.tests.exploratory` end
+
+### auto-generated section `iml intellij.platform.workspace.storage.tests.exploratory` start
+exports_files(
+    [
+        "intellij.platform.workspace.storage.tests.exploratory.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.workspace.storage.tests.exploratory` end
+
+### auto-generated section `test intellij.platform.workspace.storage.tests.exploratory` start
+jps_test(
+    name = "exploratory_test",
+    runtime_deps = [":exploratory_test_lib"],
+)
+### auto-generated section `test intellij.platform.workspace.storage.tests.exploratory` end

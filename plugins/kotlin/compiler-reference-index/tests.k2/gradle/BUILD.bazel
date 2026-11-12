@@ -1,0 +1,73 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.kotlin.compilerReferenceIndex.tests.gradle` start
+jvm_library(
+    name = "gradle_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.compilerReferenceIndex.tests.gradle",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//plugins/kotlin/compiler-reference-index",
+        "//plugins/kotlin/compiler-reference-index/maven",
+        "//plugins/maven",
+        "//platform/projectModel-api:projectModel",
+        "//libraries/kotlinx/coroutines/test",
+        "//plugins/maven/testFramework",
+        "@lib//:kotlinc-kotlin-compiler-tests",
+        "//plugins/kotlin/base/testFramework",
+        "//java/java-tests:tests_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/analysis-api:analysis",
+        "//platform/editor-ui-api:editor-ui",
+        "//java/java-psi-api:psi",
+        "//java/testFramework",
+        "//platform/testFramework",
+        "//libraries/junit4",
+        "//libraries/junit6",
+        "//libraries/junit6-params",
+        "//platform/testFramework/junit5",
+        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/code-insight/line-markers",
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/test-framework:test-framework_test_lib",
+        "//plugins/kotlin/fir/tests:tests_test_lib",
+        "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+        "//platform/scratch/plugin",
+        "//plugins/kotlin/compiler-reference-index/tests.k2:kotlin-compilerReferenceIndex-tests_test_lib",
+    ],
+)
+### auto-generated section `build intellij.kotlin.compilerReferenceIndex.tests.gradle` end
+
+### auto-generated section `iml intellij.kotlin.compilerReferenceIndex.tests.gradle` start
+exports_files(
+    [
+        "intellij.kotlin.compilerReferenceIndex.tests.gradle.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.compilerReferenceIndex.tests.gradle` end
+
+### auto-generated section `test intellij.kotlin.compilerReferenceIndex.tests.gradle` start
+jps_test(
+    name = "gradle_test",
+    runtime_deps = [":gradle_test_lib"],
+)
+### auto-generated section `test intellij.kotlin.compilerReferenceIndex.tests.gradle` end

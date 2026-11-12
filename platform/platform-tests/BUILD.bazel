@@ -53,6 +53,7 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//platform/platform-tests/testFramework"],
     runtime_deps = [
         # do not sort,
         "//plugins/minimap/plugin",
@@ -68,6 +69,7 @@ jvm_library(
         "//plugins/yaml/plugin",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
+        "//platform/platform-tests/eelLocalApi:eelLocalApi_test_lib",
     ],
     deps = [
         # do not sort,
@@ -258,6 +260,8 @@ jvm_library(
         "//platform/bazel-runfiles",
         "//platform/eel:eel-tests_test_lib",
         "//platform/platform-tests/concurrency:util-concurrency-tests_test_lib",
+        "//platform/platform-tests/editorStress:editorStress_test_lib",
+        "//platform/platform-tests/testFramework",
         "//platform/scratch/plugin",
         "//libraries/kotlinx/coroutines/test",
     ],

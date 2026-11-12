@@ -1,0 +1,83 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.junit.rt.tests.integration` start
+jvm_library(
+    name = "integration_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.junit.rt.tests.integration",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/testRunner/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//plugins/junit_rt_tests:junit-rt-tests_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "//plugins/junit_rt:junit-rt",
+        "//java/testFramework",
+        "//java/execution/impl",
+        "//plugins/junit",
+        "//java/java-tests:tests_test_lib",
+        "//java/java-syntax:syntax",
+        "//java/java-psi-api:psi",
+        "//aether-dependency-resolver",
+        "//java/compiler/openapi:java-compiler",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/execution-impl",
+        "//jps/model-api:model",
+        "//platform/lang-core",
+        "//platform/lang-api:lang",
+        "//platform/projectModel-api:projectModel",
+        "//platform/smRunner",
+        "//platform/testFramework",
+        "//java/java-runtime:rt",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//libraries/junit6",
+        "//libraries/junit6-launcher",
+        "//libraries/stream",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/ide-core",
+        "//libraries/junit6-jupiter",
+        "//libraries/junit6-vintage",
+        "//platform/testFramework/junit5",
+        "//platform/execution",
+        "//platform/code-style-api:codeStyle",
+        "//platform/testRunner",
+        "//platform/statistics",
+        "//libraries/junit4",
+    ],
+)
+### auto-generated section `build intellij.junit.rt.tests.integration` end
+
+### auto-generated section `iml intellij.junit.rt.tests.integration` start
+exports_files(
+    [
+        "intellij.junit.rt.tests.integration.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.junit.rt.tests.integration` end
+
+### auto-generated section `test intellij.junit.rt.tests.integration` start
+jps_test(
+    name = "integration_test",
+    runtime_deps = [":integration_test_lib"],
+)
+### auto-generated section `test intellij.junit.rt.tests.integration` end
