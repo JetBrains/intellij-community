@@ -55,6 +55,7 @@
 
     <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureReferenceContributor"
                               language="Python"/>
+    <fileBasedIndex implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestEntryPointIndex"/>
     <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedContributor"
                               language="Python"/>
     <psi.referenceContributor implementation="com.jetbrains.python.testing.pyMock.PyMockReferenceContributor"

@@ -1,12 +1,22 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import pytest
-from django.test.client import Client, RequestFactory
+
+if TYPE_CHECKING:
+    import django.test
 
 
 @pytest.fixture()
-def client() -> Client:
+def client() -> django.test.Client:
+    from django.test.client import Client
+
     return Client()
 
 
 @pytest.fixture()
-def rf() -> RequestFactory:
+def rf() -> django.test.RequestFactory:
+    from django.test.client import RequestFactory
+
     return RequestFactory()

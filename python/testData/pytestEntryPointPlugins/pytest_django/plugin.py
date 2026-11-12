@@ -1,7 +1,9 @@
 import pytest
 
-from .fixtures import client  # noqa: F401
-from .fixtures import rf  # noqa: F401
+from .fixtures import (
+    client,  # noqa: F401
+    rf,  # noqa: F401
+)
 
 
 def pytest_load_initial_conftests(early_config, parser, args) -> None:

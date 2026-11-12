@@ -1,87 +1,61 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.pyTestFixtures
 
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.OrderEnumerator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.roots.ProjectRootModificationTracker
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyImportElement
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 import com.jetbrains.python.psi.resolve.fromModule
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
-import org.ini4j.Ini
-import java.io.IOException
-
-/**
- * The entry point group that registers a pytest plugin.
- * pytest loads the module of each entry point of this group from the installed distributions.
- */
-private const val PYTEST_PLUGIN_ENTRY_POINT_GROUP = "pytest11"
-
-private const val ENTRY_POINTS_FILE = "entry_points.txt"
-
-private val DISTRIBUTION_METADATA_SUFFIXES = listOf(".dist-info", ".egg-info")
 
 /**
  * Returns the module files of the pytest plugins that the installed distributions of [module] register.
  *
- * pytest reads the `pytest11` group of the `entry_points.txt` of each distribution, and it loads the module of each entry point.
- * The fixtures of that module, and the fixtures that it imports, are available to each test without an import.
+ * pytest reads the `pytest11` group of the `entry_points.txt` of each distribution, and it registers the object of each
+ * entry point. The fixtures of that module, and the fixtures that it imports, are available to each test without an import.
+ * [PyTestEntryPointIndex] keeps the entry points. The result is cached until a change of the PSI or of the roots.
  */
-internal fun getPytestEntryPointPluginFiles(module: Module): List<PyFile> {
-  val context = fromModule(module)
-  return getPytestEntryPointPluginModules(module).flatMap { moduleName ->
-    resolveQualifiedName(moduleName, context).mapNotNull { element ->
-      (if (element is PsiDirectory) PyUtil.turnDirIntoInit(element) else element) as? PyFile
-    }
-  }.distinct()
-}
-
-/**
- * Returns the qualified names of the modules in the `pytest11` entry points of the distributions in the class roots of [module].
- */
-private fun getPytestEntryPointPluginModules(module: Module): List<QualifiedName> =
+internal fun getPytestEntryPointPluginFiles(module: Module): List<PyFile> =
   CachedValuesManager.getManager(module.project).getCachedValue(module) {
-    val moduleNames = OrderEnumerator.orderEntries(module).withoutModuleSourceEntries().classes().roots
-      .asSequence()
-      .flatMap { root -> root.children.asSequence() }
-      .filter { child -> child.isDirectory && DISTRIBUTION_METADATA_SUFFIXES.any { child.name.endsWith(it) } }
-      .mapNotNull { metadataDirectory -> metadataDirectory.findChild(ENTRY_POINTS_FILE) }
-      .flatMap { entryPointsFile -> readPytestPluginModuleNames(entryPointsFile) }
+    val context = fromModule(module)
+    val pluginFiles = PyTestEntryPointIndex.getPytestPluginObjectReferences(GlobalSearchScope.moduleRuntimeScope(module, false))
+      .flatMap { objectReference ->
+        ProgressManager.checkCanceled()
+        resolvePluginFiles(objectReference, context)
+      }
       .distinct()
-      .toList()
-    CachedValueProvider.Result.create(moduleNames,
-                                      ProjectRootModificationTracker.getInstance(module.project),
-                                      VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS)
+    CachedValueProvider.Result.create(pluginFiles,
+                                      PsiModificationTracker.MODIFICATION_COUNT,
+                                      ProjectRootModificationTracker.getInstance(module.project))
   }
 
 /**
- * Reads the module names of the `pytest11` group from the [entryPointsFile] of a distribution.
+ * Resolves the [objectReference] of an entry point, as `module` or `module:attribute`, to the files of the plugin.
  *
- * The value of an entry point is `module`, `module:attribute` or one of them with extras, as in `module:attribute [extra]`.
+ * pytest registers the attribute when the reference has one. An attribute that names a module, as `plugin` after
+ * `from . import plugin`, gives that module. Any other attribute is an object in the module, so the module is the plugin file.
  */
-private fun readPytestPluginModuleNames(entryPointsFile: VirtualFile): List<QualifiedName> {
-  val ini = Ini().apply {
-    config.isMultiOption = true
-    config.isTree = false
-    config.isEscape = false
-    config.isEmptyOption = true
-  }
-  try {
-    entryPointsFile.inputStream.use { ini.load(it) }
-  }
-  catch (e: IOException) {
-    fileLogger().debug("Cannot read the entry points of ${entryPointsFile.path}", e)
-    return emptyList()
-  }
-  val section = ini[PYTEST_PLUGIN_ENTRY_POINT_GROUP] ?: return emptyList()
-  return section.keys.flatMap { name -> section.getAll(name).orEmpty() }.mapNotNull { value ->
-    value?.substringBefore('[')?.substringBefore(':')?.trim()?.takeIf { it.isNotEmpty() }?.let(QualifiedName::fromDottedString)
+private fun resolvePluginFiles(objectReference: String, context: PyQualifiedNameResolveContext): List<PyFile> {
+  val moduleName = objectReference.substringBefore(':').trim().takeIf { it.isNotEmpty() } ?: return emptyList()
+  val attribute = objectReference.substringAfter(':', "").trim()
+  return resolveQualifiedName(QualifiedName.fromDottedString(moduleName), context).mapNotNull { asPyFile(it) }.map { moduleFile ->
+    if (attribute.isEmpty()) moduleFile else resolveAttributeModule(moduleFile, attribute) ?: moduleFile
   }
 }
+
+private fun resolveAttributeModule(moduleFile: PyFile, attribute: String): PyFile? {
+  val importElement = moduleFile.findExportedName(attribute) as? PyImportElement ?: return null
+  return importElement.multiResolve().firstNotNullOfOrNull { asPyFile(it.element) }
+}
+
+private fun asPyFile(element: PsiElement?): PyFile? = (if (element is PsiDirectory) PyUtil.turnDirIntoInit(element) else element) as? PyFile
