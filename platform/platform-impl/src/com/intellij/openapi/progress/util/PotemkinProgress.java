@@ -54,21 +54,38 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
                           @Nullable Project project,
                           @Nullable JComponent parentComponent,
                           @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
+    this(title, project, parentComponent, cancelText, false);
+  }
+
+  @ApiStatus.Internal
+  public PotemkinProgress(@NotNull @NlsContexts.ModalProgressTitle String title,
+                          @Nullable Project project,
+                          @Nullable JComponent parentComponent,
+                          @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText,
+                          boolean installPingingQueue) {
     super(cancelText != null,false, project, parentComponent, cancelText);
     setTitle(title);
     ThreadingAssertions.assertEventDispatchThread();
     myApp.getService(DialogWrapperPeerFactory.class); // make sure the service is created
-    myEventStealer = startStealingInputEvents(this::dispatchInputEvent, this);
+    myEventStealer = startStealingInputEvents(this::dispatchInputEvent, this, installPingingQueue);
   }
 
-  static @NotNull EventStealer startStealingInputEvents(@NotNull Consumer<? super InputEvent> inputConsumer, @NotNull Disposable parent) {
-    return new EventStealer(parent, inputConsumer);
+  static @NotNull EventStealer startStealingInputEvents(
+    @NotNull Consumer<? super InputEvent> inputConsumer,
+    @NotNull Disposable parent,
+    boolean installPingingQueue) {
+    return new EventStealer(parent, installPingingQueue, inputConsumer);
   }
 
   @Override
   @ApiStatus.Internal
   public @NotNull ProgressDialog getDialog() {
     return Objects.requireNonNull(super.getDialog());
+  }
+
+  @ApiStatus.Internal
+  public EventStealer getEventStealer() {
+    return myEventStealer;
   }
 
   @Override

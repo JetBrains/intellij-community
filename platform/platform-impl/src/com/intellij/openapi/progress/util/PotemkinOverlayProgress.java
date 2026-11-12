@@ -59,15 +59,15 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
 
   @Obsolete
   public PotemkinOverlayProgress(@Nullable Component component) {
-    this(component, true);
+    this(component, true, false);
   }
 
   @Obsolete
-  public PotemkinOverlayProgress(@Nullable Component component, boolean cancellable) {
+  public PotemkinOverlayProgress(@Nullable Component component, boolean cancellable, boolean installPingingQueue) {
     EDT.assertIsEdt();
     myCancellable = cancellable;
     myComponent = component;
-    myEventStealer = PotemkinProgress.startStealingInputEvents(this::dispatchInputEvent, this);
+    myEventStealer = PotemkinProgress.startStealingInputEvents(this::dispatchInputEvent, this, installPingingQueue);
   }
 
   @Override
@@ -156,6 +156,11 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
 
   private void paintProgress() {
     paintOverlayProgress(SwingUtilities.getRootPane(myComponent), myCreatedAt, myCancellable);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull EventStealer getEventStealer() {
+    return myEventStealer;
   }
 
   private static void paintOverlayProgress(@Nullable JRootPane rootPane, long createdAt, boolean cancellable) {

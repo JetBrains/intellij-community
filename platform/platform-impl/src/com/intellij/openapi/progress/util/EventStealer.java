@@ -65,7 +65,7 @@ public class EventStealer {
     }
   }
 
-  private void ping() {
+  public void ping() {
     if (myPingQueue != null) {
       myPingQueue.offer(PING);
     }
@@ -117,13 +117,13 @@ public class EventStealer {
   }
 
   @SuppressWarnings("SameParameterValue")
-  void waitForPing(int timeoutMs) {
+  void waitForPing(int timeoutMicroseconds) {
     if (myPingQueue == null) {
       LOG.error("Ping queue must be installed");
       return;
     }
     try {
-      myPingQueue.poll(timeoutMs, TimeUnit.MILLISECONDS);
+      myPingQueue.poll(timeoutMicroseconds, TimeUnit.MICROSECONDS);
     }
     catch (InterruptedException e) {
       // simply resume

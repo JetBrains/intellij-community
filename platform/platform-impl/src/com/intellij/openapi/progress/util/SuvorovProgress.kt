@@ -243,6 +243,9 @@ object SuvorovProgress {
     repostAllEvents()
     var oldTimestamp = System.currentTimeMillis()
     try {
+      awaitedValue.invokeOnCompletion {
+        stealer.ping()
+      }
       while (!awaitedValue.isCompleted) {
         val newTimestamp = System.currentTimeMillis()
         if (newTimestamp - oldTimestamp >= 10) {
@@ -252,7 +255,7 @@ object SuvorovProgress {
         }
         stealer.dispatchEvents(0)
         processAllExistingEventsInEternalStealer()
-        stealer.waitForPing(10)
+        stealer.waitForPing(10_000)
       }
     }
     finally {
@@ -264,19 +267,27 @@ object SuvorovProgress {
   }
 
   private fun showPotemkinProgress(awaitedValue: Deferred<*>, isBar: Boolean) {
-    @Suppress("HardCodedStringLiteral") val title = this.title.get()
+    val title = this.title.get()
+    val stealer: EventStealer
     val progress = if (title != null || isBar) {
-      PotemkinProgress(title ?: CommonBundle.message("title.long.non.interactive.progress"), null, null, null)
+      val progress = PotemkinProgress(title ?: CommonBundle.message("title.long.non.interactive.progress"), null, null, null, true)
+      stealer = progress.eventStealer
+      progress
     }
     else {
       val window = SwingUtilities.getRootPane(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner)
-      PotemkinOverlayProgress(window, false)
+      val progress = PotemkinOverlayProgress(window, false, true)
+      stealer = progress.eventStealer
+      progress
     }.apply {
       setDelayInMillis(0)
       repostAllEvents()
     }
     progress.start()
     try {
+      awaitedValue.invokeOnCompletion {
+        stealer.ping()
+      }
       do {
         if (progress is PotemkinProgress) {
           progress.dispatchAllInvocationEvents()
@@ -286,7 +297,7 @@ object SuvorovProgress {
         }
         progress.interact()
         processAllExistingEventsInEternalStealer()
-        sleep() // avoid touching the progress too much
+        stealer.waitForPing(100)
       }
       while (!awaitedValue.isCompleted)
     }
@@ -306,10 +317,6 @@ object SuvorovProgress {
 
   private fun processInvocationEventsWithoutDialog(awaitedValue: Deferred<*>, showingDelay: Int) {
     eternalStealer.dispatchAllEventsForTimeout(showingDelay.toLong(), awaitedValue)
-  }
-
-  private fun sleep() {
-    Thread.sleep(0, 100_000)
   }
 
   private fun processAllExistingEventsInEternalStealer() {
