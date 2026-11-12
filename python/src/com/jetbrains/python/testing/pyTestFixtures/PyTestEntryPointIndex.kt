@@ -36,7 +36,7 @@ internal class PyTestEntryPointIndex : FileBasedIndexExtension<String, List<Stri
   override fun getName(): ID<String, List<String>> = NAME
 
   override fun getIndexer(): DataIndexer<String, List<String>, FileContent> = DataIndexer { content ->
-    val objectReferences = readPytestPluginObjectReferences(content.contentAsText)
+    val objectReferences = readPytestPluginObjectReferences(content.contentAsText, content.file.path)
     if (objectReferences.isEmpty()) emptyMap() else mapOf(PYTEST_PLUGIN_ENTRY_POINT_GROUP to objectReferences)
   }
 
@@ -65,11 +65,11 @@ internal class PyTestEntryPointIndex : FileBasedIndexExtension<String, List<Stri
 }
 
 /**
- * Reads the object references of the `pytest11` group from the [text] of an `entry_points.txt` file.
+ * Reads the object references of the `pytest11` group from the [text] of the `entry_points.txt` file at [path].
  *
  * An object reference is `module` or `module:attribute`, with optional extras, as `module:attribute [extra]`.
  */
-private fun readPytestPluginObjectReferences(text: CharSequence): List<String> {
+private fun readPytestPluginObjectReferences(text: CharSequence, path: String): List<String> {
   val ini = Ini().apply {
     config.isMultiOption = true
     config.isTree = false
@@ -80,7 +80,7 @@ private fun readPytestPluginObjectReferences(text: CharSequence): List<String> {
     ini.load(StringReader(text.toString()))
   }
   catch (e: IOException) {
-    fileLogger().debug("Cannot read the entry points", e)
+    fileLogger().debug("Cannot read the entry points of $path", e)
     return emptyList()
   }
   val section = ini[PYTEST_PLUGIN_ENTRY_POINT_GROUP] ?: return emptyList()
