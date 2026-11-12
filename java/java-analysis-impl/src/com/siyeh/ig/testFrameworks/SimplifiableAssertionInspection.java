@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.testFrameworks;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -336,7 +336,9 @@ public final class SimplifiableAssertionInspection extends BaseInspection implem
                                          : factory.createExpressionFromText(noDelta, originalExpression);
         final PsiMethod method = expression instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expression).resolveMethod() : null;
         if (method == null || method.isDeprecated()) {
-          buf.append(",0.0");
+          final boolean isDouble = lhsType != null && TypeConversionUtil.isDoubleType(lhsType.getDeepComponentType()) ||
+                                   rhsType != null && TypeConversionUtil.isDoubleType(rhsType.getDeepComponentType());
+          buf.append(isDouble ? ",0.0" : ",0.0f");
         }
       }
       final String newExpression = compoundMethodCall(methodName, assertHint, buf.toString());
