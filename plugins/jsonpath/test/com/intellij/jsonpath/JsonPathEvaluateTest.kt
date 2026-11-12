@@ -6,21 +6,26 @@ import com.intellij.jsonpath.ui.IncorrectDocument
 import com.intellij.jsonpath.ui.IncorrectExpression
 import com.intellij.jsonpath.ui.JsonPathEvaluator
 import com.intellij.jsonpath.ui.ResultString
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.sharedCodeInsightFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.sharedCodeInsightProjectFixture
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.JsonPath
 import com.jayway.jsonpath.Option
 import com.jayway.jsonpath.spi.json.Jackson3JsonProvider
 import com.jayway.jsonpath.spi.mapper.Jackson3MappingProvider
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.util.EnumSet
 
-@RunWith(JUnit4::class)
-class JsonPathEvaluateTest : LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class JsonPathEvaluateTest {
   companion object {
+    private val projectFixture = sharedCodeInsightProjectFixture()
+
     init {
       Configuration.setDefaults(object : Configuration.Defaults {
         private val jsonProvider = Jackson3JsonProvider()
@@ -34,6 +39,9 @@ class JsonPathEvaluateTest : LightPlatformCodeInsightFixture4TestCase() {
       })
     }
   }
+
+  private val myFixture by sharedCodeInsightFixture(projectFixture)
+
   @Test
   fun evaluateWithBindingFromClasspath() {
     val documentContext = JsonPath.parse("{ \"some\": 12 }")
@@ -43,73 +51,73 @@ class JsonPathEvaluateTest : LightPlatformCodeInsightFixture4TestCase() {
   }
 
   @Test
-  fun evaluateWithOptionsAndDocument() {
+  fun evaluateWithOptionsAndDocument(): Unit = timeoutRunBlocking {
     val document = myFixture.configureByText("data.json", sampleDocument)
     val evaluator = JsonPathEvaluator(document as JsonFile, "$..book[?(@.price > 0.1)]", setOf(Option.AS_PATH_LIST))
-    val result = evaluator.evaluate() as ResultString
+    val result = readAction { evaluator.evaluate() } as ResultString
 
     assertEquals("[\"\$['store']['book'][0]\", \"\$['store']['book'][1]\"]", result.value)
   }
 
   @Test
-  fun primitiveResult() {
+  fun primitiveResult(): Unit = timeoutRunBlocking {
     val document = myFixture.configureByText("data.json", sampleDocument)
     val evaluator = JsonPathEvaluator(document as JsonFile, "$.store.book[0].price", setOf())
-    val result = evaluator.evaluate() as ResultString
+    val result = readAction { evaluator.evaluate() } as ResultString
 
     assertEquals("0.15", result.value)
   }
 
   @Test
-  fun collectionResult() {
+  fun collectionResult(): Unit = timeoutRunBlocking {
     val document = myFixture.configureByText("data.json", sampleDocument)
     val evaluator = JsonPathEvaluator(document as JsonFile, "$.store.book.*.price", setOf())
-    val result = evaluator.evaluate() as ResultString
+    val result = readAction { evaluator.evaluate() } as ResultString
 
     assertEquals("[0.15, 7.99]", result.value)
   }
 
   @Test
-  fun nullResult() {
+  fun nullResult(): Unit = timeoutRunBlocking {
     val document = myFixture.configureByText("data.json", sampleDocument)
     val evaluator = JsonPathEvaluator(document as JsonFile, "$.country", setOf())
-    val result = evaluator.evaluate() as ResultString
+    val result = readAction { evaluator.evaluate() } as ResultString
 
     assertEquals("null", result.value)
   }
 
   @Test
-  fun stringResult() {
+  fun stringResult(): Unit = timeoutRunBlocking {
     val document = myFixture.configureByText("data.json", sampleDocument)
     val evaluator = JsonPathEvaluator(document as JsonFile, "$.store.book[0].category", setOf())
-    val result = evaluator.evaluate() as ResultString
+    val result = readAction { evaluator.evaluate() } as ResultString
 
     assertEquals("\"reference\"", result.value)
   }
 
   @Test
-  fun treeResult() {
+  fun treeResult(): Unit = timeoutRunBlocking {
     val document = myFixture.configureByText("data.json", sampleDocument)
     val evaluator = JsonPathEvaluator(document as JsonFile, "$.store.book[1]", setOf())
-    val result = evaluator.evaluate() as ResultString
+    val result = readAction { evaluator.evaluate() } as ResultString
 
     assertEquals("{\"category\":\"fiction\",\"author\":\"Peter Pan\",\"title\":\"No Future\",\"price\":7.99}", result.value)
   }
 
   @Test
-  fun incorrectExpression() {
+  fun incorrectExpression(): Unit = timeoutRunBlocking {
     val document = myFixture.configureByText("data.json", sampleDocument)
     val evaluator = JsonPathEvaluator(document as JsonFile, "$$", setOf())
-    val result = evaluator.evaluate() as IncorrectExpression
+    val result = readAction { evaluator.evaluate() } as IncorrectExpression
 
     assertEquals("Illegal character at position 1 expected '.' or '['", result.message)
   }
 
   @Test
-  fun incorrectDocument() {
+  fun incorrectDocument(): Unit = timeoutRunBlocking {
     val document = myFixture.configureByText("my.json", "{ invalid }")
     val evaluator = JsonPathEvaluator(document as JsonFile, "$", setOf())
-    val result = evaluator.evaluate() as IncorrectDocument
+    val result = readAction { evaluator.evaluate() } as IncorrectDocument
     assertThat(result.message).contains("Unexpected character ('i' (code 105)): was expecting double-quote to start property name")
   }
 

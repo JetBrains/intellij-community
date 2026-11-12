@@ -3,14 +3,22 @@ package com.intellij.jsonpath
 
 import com.intellij.jsonpath.inspections.JsonPathUnknownFunctionInspection
 import com.intellij.jsonpath.inspections.JsonPathUnknownOperatorInspection
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
-import org.junit.Test
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.sharedCodeInsightFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.sharedCodeInsightProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class JsonPathInspectionTest : LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class JsonPathInspectionTest {
+  companion object {
+    private val projectFixture = sharedCodeInsightProjectFixture()
+  }
 
-  override fun setUp() {
-    super.setUp()
+  private val myFixture by sharedCodeInsightFixture(projectFixture)
 
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(
       JsonPathUnknownFunctionInspection::class.java,
       JsonPathUnknownOperatorInspection::class.java

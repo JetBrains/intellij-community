@@ -7,12 +7,27 @@ import com.intellij.json.psi.JsonProperty
 import com.intellij.json.psi.impl.JsonRecursiveElementVisitor
 import com.intellij.jsonpath.ui.JsonPathEvaluateManager
 import com.intellij.psi.PsiLanguageInjectionHost
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.sharedCodeInsightFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.sharedCodeInsightProjectFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
 import org.intellij.plugins.intelliLang.inject.TemporaryPlacesRegistry
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
 import java.util.function.Supplier
 
-class JsonPathCompletionTest : LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class JsonPathCompletionTest {
+  companion object {
+    private val projectFixture = sharedCodeInsightProjectFixture()
+  }
+
+  private val myFixture by sharedCodeInsightFixture(projectFixture)
+
   @Test
   fun functionsCompletion() {
     myFixture.configureByText(JsonPathFileType.INSTANCE, "$.<caret>")
@@ -60,7 +75,7 @@ class JsonPathCompletionTest : LightPlatformCodeInsightFixture4TestCase() {
   }
 
   @Test
-  fun idsCompletionForInjectedFragments() {
+  fun idsCompletionForInjectedFragments(): Unit = timeoutRunBlocking {
     val root = "\$"
     val jsonFile = myFixture.configureByText(JsonFileType.INSTANCE, """
       {
@@ -75,7 +90,7 @@ class JsonPathCompletionTest : LightPlatformCodeInsightFixture4TestCase() {
   }
 
   @Test
-  fun quotedNamesCompletionForInjectedFragments() {
+  fun quotedNamesCompletionForInjectedFragments(): Unit = timeoutRunBlocking {
     val root = "\$"
     val jsonFile = myFixture.configureByText(JsonFileType.INSTANCE, """
       {
@@ -90,7 +105,7 @@ class JsonPathCompletionTest : LightPlatformCodeInsightFixture4TestCase() {
   }
 
   @Test
-  fun completionForInjectedFragmentsWithEscapedQuotes() {
+  fun completionForInjectedFragmentsWithEscapedQuotes(): Unit = timeoutRunBlocking {
     val root = "\$"
     val jsonFile = myFixture.configureByText(JsonFileType.INSTANCE, """
       {
@@ -105,7 +120,7 @@ class JsonPathCompletionTest : LightPlatformCodeInsightFixture4TestCase() {
   }
 
   @Test
-  fun completionForInjectedFragmentsIgnoreSameHost() {
+  fun completionForInjectedFragmentsIgnoreSameHost(): Unit = timeoutRunBlocking {
     val root = "\$"
     val jsonFile = myFixture.configureByText(JsonFileType.INSTANCE, """
       {
@@ -156,8 +171,8 @@ class JsonPathCompletionTest : LightPlatformCodeInsightFixture4TestCase() {
     )
   }
 
-  private fun injectJsonPathToProperties(jsonFile: JsonFile, names: List<String>) {
-    val languageInjectionSupport = TemporaryPlacesRegistry.getInstance(project).languageInjectionSupport
+  private suspend fun injectJsonPathToProperties(jsonFile: JsonFile, names: List<String>) = withContext(Dispatchers.EDT) {
+    val languageInjectionSupport = TemporaryPlacesRegistry.getInstance(myFixture.project).languageInjectionSupport
     jsonFile.accept(object : JsonRecursiveElementVisitor() {
       override fun visitProperty(o: JsonProperty) {
         super.visitProperty(o)
@@ -174,6 +189,6 @@ class JsonPathCompletionTest : LightPlatformCodeInsightFixture4TestCase() {
     myFixture.completeBasic()
     val lookupStrings = myFixture.lookupElementStrings
     assertNotNull(lookupStrings)
-    assertContainsElements(lookupStrings!!, *expected)
+    assertThat(lookupStrings!!).contains(*expected)
   }
 }
