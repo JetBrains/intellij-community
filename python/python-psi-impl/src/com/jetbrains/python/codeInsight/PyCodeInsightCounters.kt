@@ -44,6 +44,12 @@ object PyCodeInsightCounters {
     DJANGO_ASSIGNMENT_CALL_SCANS("django.assignment.callScans"),
     CSP_PROBLEMS_BUILT("csp.problemsBuilt"),
     CSP_INFERENCE_VARIABLES("csp.inferenceVariables"),
+    PYREFLY_TYPE_REQUESTS("pyrefly.getComputedType.calls"),
+    PYREFLY_SNAPSHOT_REQUESTS("pyrefly.getSnapshot.calls"),
+    /** Nanoseconds spent waiting for Pyrefly's answers: the server's work and the transport both ways. */
+    PYREFLY_REQUEST_NANOS("pyrefly.request.nanos"),
+    /** Nanoseconds spent turning Pyrefly's answers into types of the IDE, nested requests excluded. */
+    PYREFLY_BUILD_TYPE_NANOS("pyrefly.buildType.nanos"),
   }
 
   /** The counter values at one moment. */

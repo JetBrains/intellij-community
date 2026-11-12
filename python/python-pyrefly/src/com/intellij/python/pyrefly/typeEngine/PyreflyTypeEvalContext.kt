@@ -18,6 +18,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.python.pyrefly.lsp.PyreflyLsp4jServer
 import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyClass
@@ -78,7 +80,7 @@ internal class PyreflyTypeEvalContext(val lspClient: LspClient) {
     thisLogger().debug { "Pyrefly TSP: answer for '${element.text.take(60)}' at ${request.position.line}:${request.position.character}: $tspType" }
     if (tspType == null) return null
 
-    return buildPyType(element, tspType)
+    return timedBuild { buildPyType(element, tspType) }
   }
 
   /**
@@ -95,13 +97,50 @@ internal class PyreflyTypeEvalContext(val lspClient: LspClient) {
     return getComputedType(node, fresh)
   }
 
-  private fun fetchSnapshot(): Int? =
-    lspClient.sendRequestSync { (it as PyreflyLsp4jServer).getSnapshot() }?.also { snapshot = it }
+  private fun fetchSnapshot(): Int? {
+    PyCodeInsightCounters.inc(Counter.PYREFLY_SNAPSHOT_REQUESTS)
+    return timedRequest {
+      lspClient.sendRequestSync { (it as PyreflyLsp4jServer).getSnapshot() }
+    }?.also { snapshot = it }
+  }
 
-  private fun getComputedType(node: PyreflyLsp4jServer.TspNode, snapshot: Int): PyreflyLsp4jServer.TspType? =
-    lspClient.sendRequestSync {
-      (it as PyreflyLsp4jServer).getComputedType(PyreflyLsp4jServer.GetComputedTypeParams(arg = node, snapshot = snapshot))
+  private fun getComputedType(node: PyreflyLsp4jServer.TspNode, snapshot: Int): PyreflyLsp4jServer.TspType? {
+    PyCodeInsightCounters.inc(Counter.PYREFLY_TYPE_REQUESTS)
+    return timedRequest {
+      lspClient.sendRequestSync {
+        (it as PyreflyLsp4jServer).getComputedType(PyreflyLsp4jServer.GetComputedTypeParams(arg = node, snapshot = snapshot))
+      }
     }
+  }
+
+  private inline fun <T> timedRequest(action: () -> T): T {
+    if (!PyCodeInsightCounters.isEnabled) return action()
+    val start = System.nanoTime()
+    try {
+      return action()
+    }
+    finally {
+      val elapsed = System.nanoTime() - start
+      PyCodeInsightCounters.add(Counter.PYREFLY_REQUEST_NANOS, elapsed)
+      val inBuild = requestNanosInBuild.get()
+      if (inBuild != null) requestNanosInBuild.set(inBuild + elapsed)
+    }
+  }
+
+  /** Times only the outermost build, minus its requests: a TypeVar bound can ask Pyrefly again. */
+  private inline fun <T> timedBuild(action: () -> T): T {
+    if (!PyCodeInsightCounters.isEnabled || requestNanosInBuild.get() != null) return action()
+    requestNanosInBuild.set(0L)
+    val start = System.nanoTime()
+    try {
+      return action()
+    }
+    finally {
+      val nestedRequestNanos = requestNanosInBuild.get() ?: 0L
+      requestNanosInBuild.remove()
+      PyCodeInsightCounters.add(Counter.PYREFLY_BUILD_TYPE_NANOS, System.nanoTime() - start - nestedRequestNanos)
+    }
+  }
 
   private fun buildPyType(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): Ref<PyType?>? {
     // Pyrefly marks `Literal[...]` types via the LITERAL bit (0x8) of TypeFlags and stores
@@ -442,5 +481,10 @@ internal class PyreflyTypeEvalContext(val lspClient: LspClient) {
       return DocumentRequest(mappedPosition.document.id, mappedPosition.position)
     }
     return DocumentRequest(lspClient.getDocumentIdentifier(file), getLsp4jPosition(document, offset))
+  }
+
+  private companion object {
+    /** Request time inside the current build on this thread; null outside a build. */
+    private val requestNanosInBuild = ThreadLocal<Long?>()
   }
 }
