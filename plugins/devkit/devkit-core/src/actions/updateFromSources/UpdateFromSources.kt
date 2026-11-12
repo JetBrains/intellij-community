@@ -2,8 +2,12 @@
 @file:OptIn(ExperimentalPathApi::class, LowLevelLocalMachineAccess::class)
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.OSProcessUtil
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputType
@@ -31,12 +35,15 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.Restarter
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.nio.file.Files
@@ -45,6 +52,7 @@ import java.util.Collections
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
 import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.inputStream
 import kotlin.io.path.invariantSeparatorsPathString
@@ -54,9 +62,18 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.notExists
 import kotlin.io.path.pathString
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 private val LOG = Logger.getInstance("org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesKt")
+
+private const val DEV_DIST_REGISTRY_KEY = "devkit.update.from.sources.dev.dist"
+
+/**
+ * When `true`, the action installs the dev distribution through `build/dev-dist.cmd update-ide`,
+ * and not the output of the build scripts.
+ */
+internal fun isDevDistUpdateEnabled(): Boolean = RegistryManager.getInstance().`is`(DEV_DIST_REGISTRY_KEY)
 
 @ApiStatus.Internal
 fun updateFromSources(project: Project, beforeRestart: () -> Unit, restartAutomatically: Boolean) {
@@ -77,6 +94,10 @@ fun updateFromSources(project: Project, beforeRestart: () -> Unit, restartAutoma
   }
   if (PathManager.getSystemDir().startsWith(workIdeHome)) {
     return showError(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.config.or.system.directory.under.home", workIdeHome, PathManager.PROPERTY_SYSTEM_PATH))
+  }
+
+  if (isDevDistUpdateEnabled()) {
+    return runDevDistUpdate(project, devIdeaHome, workIdeHome, state.buildDisabledPlugins, restartAutomatically, beforeRestart)
   }
 
   val bundledPluginDirsToSkip: List<String>
@@ -100,13 +121,7 @@ fun updateFromSources(project: Project, beforeRestart: () -> Unit, restartAutoma
     val list = pluginDirectoriesToSkip.toMutableList()
     state.pluginDirectoriesForDisabledPlugins = list
     bundledPluginDirsToSkip = list
-    nonBundledPluginDirsToInclude = PluginManagerCore.plugins
-      .asSequence()
-      .filterNot { it.isBundled || PluginManagerCore.isDisabled(it.pluginId) }
-      .map { it.pluginPath }
-      .filter { it.isDirectory() }
-      .map { it.name }
-      .toList()
+    nonBundledPluginDirsToInclude = enabledNonBundledPluginDirs()
   }
   else {
     bundledPluginDirsToSkip = emptyList()
@@ -119,7 +134,167 @@ fun updateFromSources(project: Project, beforeRestart: () -> Unit, restartAutoma
     devIdeaHome, deployDir, builtDistDir, buildEnabledPluginsOnly, bundledPluginDirsToSkip, nonBundledPluginDirsToInclude,
     state.additionalVmOptionsForBuildScripts
   )
-  runUpdateScript(commandLine, project, workIdeHome, deployDir, builtDistDir, restartAutomatically, beforeRestart)
+  runUpdateScript(
+    commandLine = commandLine,
+    project = project,
+    beforeRun = { indicator ->
+      indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.delete", builtDistDir)
+      builtDistDir.deleteRecursively()
+    },
+    failureLogFile = deployDir.resolve("log/debug.log"),
+    failureLogActionText = DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.debug.log"),
+    stopProcessOnCancel = false,
+  ) {
+    if (!builtDistDir.isDirectory() || builtDistDir.listDirectoryEntries().isEmpty()) {
+      showError(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.empty.dir", builtDistDir))
+      return@runUpdateScript
+    }
+
+    if (workIdeHome != Path.of(PathManager.getHomePath())) {
+      startCopyingFiles(builtDistDir, workIdeHome, project)
+    }
+    else {
+      val command = generateUpdateCommand(builtDistDir, workIdeHome)
+      restartOrNotify(project, restartAutomatically) {
+        restartWithCommand(command, deployDir.resolve("artifacts/${ApplicationInfo.getInstance().build.productCode}-plugins"), beforeRestart)
+      }
+    }
+  }
+}
+
+private fun enabledNonBundledPluginDirs(): List<String> {
+  return PluginManagerCore.plugins
+    .asSequence()
+    .filterNot { it.isBundled || PluginManagerCore.isDisabled(it.pluginId) }
+    .map { it.pluginPath }
+    .filter { it.isDirectory() }
+    .map { it.name }
+    .toList()
+}
+
+/**
+ * Builds and stages the dev distribution, so the build never changes [workIdeHome].
+ * For the running home, the restart applies the staged home. For another work home, a short second process applies it.
+ */
+private fun runDevDistUpdate(
+  project: Project,
+  devIdeaHome: Path,
+  workIdeHome: Path,
+  buildDisabledPlugins: Boolean,
+  restartAutomatically: Boolean,
+  beforeRestart: () -> Unit,
+) {
+  val outDir = devIdeaHome.resolve("out/update-from-sources")
+  val logFile = outDir.resolve("update.log")
+  val resultFile = outDir.resolve("result.json")
+  val commandLine = createDevDistUpdateCommandLine(
+    devIdeaHome = devIdeaHome,
+    workIdeHome = workIdeHome,
+    pluginDirs = if (buildDisabledPlugins) emptyList() else enabledNonBundledPluginDirs(),
+    allPlugins = buildDisabledPlugins,
+    resultFile = resultFile,
+    logFile = logFile,
+  )
+  runUpdateScript(
+    commandLine = commandLine,
+    project = project,
+    beforeRun = {
+      outDir.createDirectories()
+      logFile.deleteIfExists()
+      resultFile.deleteIfExists()
+    },
+    failureLogFile = logFile,
+    failureLogActionText = DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.log"),
+    stopProcessOnCancel = true,
+  ) {
+    val result = try {
+      parseDevDistUpdateResult(resultFile.readText())
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      LOG.warn("Cannot read $resultFile", e)
+      val reason = e.message?.lineSequence()?.firstOrNull() ?: e.javaClass.name
+      showError(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.dev.dist.result", resultFile, reason))
+      return@runUpdateScript
+    }
+
+    if (result.skippedPlugins.isNotEmpty()) {
+      LOG.warn("The dev distribution has no build of these plugins: ${result.skippedPlugins}")
+      Notification(
+        "Update from Sources",
+        DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.title"),
+        DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.skipped.plugins", result.skippedPlugins.joinToString(", ")),
+        NotificationType.WARNING
+      ).notify(project)
+    }
+
+    if (workIdeHome != Path.of(PathManager.getHomePath())) {
+      applyStagedHome(result.apply, workIdeHome, logFile, project)
+    }
+    else {
+      val command = result.apply.toTypedArray()
+      val pluginsDir = result.repository?.let { Path.of(it).parent }
+      restartOrNotify(project, restartAutomatically && result.skippedPlugins.isEmpty()) {
+        restartWithCommand(command, pluginsDir, beforeRestart)
+      }
+    }
+  }
+}
+
+/**
+ * Runs the [apply] command of the result for a work home that does not run.
+ * The task cannot be cancelled, because the command renames the directories and deletes the old home.
+ */
+private fun applyStagedHome(apply: List<String>, workIdeHome: Path, logFile: Path, project: Project) {
+  @Suppress("UsagesOfObsoleteApi")
+  object : Task.Backgroundable(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.title"), false) {
+    override fun run(indicator: ProgressIndicator) {
+      indicator.text = DevKitBundle.message("action.UpdateIdeFromSourcesAction.apply.progress.text")
+      val commandLine = GeneralCommandLine(apply).withRedirectErrorStream(true)
+      LOG.info("Applying the staged home: ${commandLine.commandLineString}")
+      val output = try {
+        CapturingProcessHandler(commandLine).runProcess()
+      }
+      catch (e: ExecutionException) {
+        rethrowControlFlowException(e)
+        LOG.warn("Cannot apply the staged home", e)
+        showError(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.apply.failed.start", e.message ?: e.javaClass.name))
+        return
+      }
+      if (output.exitCode != 0) {
+        val actions = failureActions(
+          project = project,
+          output = output.stdout,
+          logFile = logFile,
+          logActionText = DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.log"),
+        )
+        showError(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.apply.failed.content", output.exitCode), *actions.toTypedArray())
+        return
+      }
+
+      Notification(
+        "Update from Sources",
+        DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.title"),
+        DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.content", workIdeHome),
+        NotificationType.INFORMATION
+      ).notify(project)
+    }
+  }.queue()
+}
+
+private fun failureActions(project: Project, output: @NlsSafe String, logFile: Path, logActionText: @NotificationContent String): List<NotificationAction> {
+  val actions = mutableListOf(
+    NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.output")) {
+      FileEditorManager.getInstance(project).openFile(LightVirtualFile("output.txt", output), true)
+    },
+  )
+  VirtualFileManager.getInstance().refreshAndFindFileByNioPath(logFile)?.let { file ->
+    file.refresh(true, false)
+    actions += NotificationAction.createSimple(logActionText) {
+      FileEditorManager.getInstance(project).openFile(file, true)
+    }
+  }
+  return actions
 }
 
 private fun showError(project: Project, message: @NotificationContent String, vararg actions: NotificationAction) {
@@ -146,22 +321,26 @@ private fun checkIdeHome(workIdeHome: Path): String? {
   return null
 }
 
+/**
+ * Runs [commandLine] in a background task and calls [onSuccess] when the process exits with code 0.
+ * On another exit code, the error notification opens the output and [failureLogFile] when it exists.
+ * With [stopProcessOnCancel], a cancel of the task kills the process tree, because the command starts nested processes.
+ */
 private fun runUpdateScript(
   commandLine: GeneralCommandLine,
   project: Project,
-  workIdeHome: Path,
-  deployDir: Path,
-  builtDistDir: Path,
-  restartAutomatically: Boolean,
-  beforeRestart: () -> Unit,
+  beforeRun: (ProgressIndicator) -> Unit,
+  failureLogFile: Path,
+  failureLogActionText: @NotificationContent String,
+  stopProcessOnCancel: Boolean,
+  onSuccess: () -> Unit,
 ) {
   @Suppress("UsagesOfObsoleteApi")
   object : Task.Backgroundable(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.title"), true) {
     override fun run(indicator: ProgressIndicator) {
       indicator.text = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.text")
 
-      indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.delete", builtDistDir)
-      builtDistDir.deleteRecursively()
+      beforeRun(indicator)
 
       indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.start.script")
       commandLine.withRedirectErrorStream(true)
@@ -182,39 +361,21 @@ private fun runUpdateScript(
           }
 
           if (event.exitCode != 0) {
-            val actions = mutableListOf(
-              NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.output")) {
-                FileEditorManager.getInstance(project).openFile(LightVirtualFile("output.txt", output.joinToString("")), true)
-              },
-            )
-            VirtualFileManager.getInstance().refreshAndFindFileByNioPath(deployDir.resolve("log/debug.log"))?.let { logFile ->
-              logFile.refresh(true, false)
-              actions += NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.debug.log")) {
-                FileEditorManager.getInstance(project).openFile(logFile, true)
-              }
-            }
+            val actions = failureActions(project, output.joinToString(""), failureLogFile, failureLogActionText)
             showError(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.content", event.exitCode), *actions.toTypedArray())
             return
           }
 
-          if (!builtDistDir.isDirectory() || builtDistDir.listDirectoryEntries().isEmpty()) {
-            showError(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.empty.dir", builtDistDir))
-            return
-          }
-
-          if (workIdeHome != Path.of(PathManager.getHomePath())) {
-            startCopyingFiles(builtDistDir, workIdeHome, project)
-          }
-          else {
-            val command = generateUpdateCommand(builtDistDir, workIdeHome)
-            restartOrNotify(project, restartAutomatically) { restartWithCommand(command, deployDir, beforeRestart) }
-          }
+          onSuccess()
         }
       })
 
       scriptHandler.startNotify()
       while (!scriptHandler.isProcessTerminated) {
         scriptHandler.waitFor(300)
+        if (stopProcessOnCancel && indicator.isCanceled) {
+          OSProcessUtil.killProcessTree(scriptHandler.process)
+        }
         indicator.checkCanceled()
       }
     }
@@ -298,12 +459,16 @@ private fun generateUpdateCommand(builtDistDir: Path, workIdeHome: Path): Array<
                  """else rm -rf "${newHome}"; exit 1; fi""")
 }
 
-private fun restartWithCommand(command: Array<String>, deployDirPath: Path, beforeRestart: () -> Unit) {
-  val pluginsDir = deployDirPath.resolve("artifacts/${ApplicationInfo.getInstance().build.productCode}-plugins")
-
-  val nonBundledPluginsPaths by lazy { nonBundledPluginsPaths() }
-  readPluginsDir(pluginsDir).forEach { newPluginNode ->
-    updateNonBundledPlugin(newPluginNode, pluginsDir) { nonBundledPluginsPaths[it] }
+/**
+ * Installs the new builds of the installed non-bundled plugins from the `plugins.xml` in [pluginsDir], and then restarts with [command].
+ * A `null` [pluginsDir] means that no plugin repository exists.
+ */
+private fun restartWithCommand(command: Array<String>, pluginsDir: Path?, beforeRestart: () -> Unit) {
+  if (pluginsDir != null) {
+    val nonBundledPluginsPaths by lazy { nonBundledPluginsPaths() }
+    readPluginsDir(pluginsDir).forEach { newPluginNode ->
+      updateNonBundledPlugin(newPluginNode, pluginsDir) { nonBundledPluginsPaths[it] }
+    }
   }
 
   Restarter.setCopyRestarterFiles()
@@ -387,6 +552,71 @@ private fun createUpdateFromSourcesCommandLine(
   }
   commandLine.addParameter("//build:update_from_sources")
   return commandLine
+}
+
+/**
+ * The command that builds the dev distribution and stages it next to [workIdeHome].
+ * The command writes a [DevDistUpdateResult] to [resultFile], and the `apply` command of the result replaces the home.
+ * [allPlugins] builds every plugin, so [pluginDirs] must be empty with it.
+ */
+internal fun createDevDistUpdateCommandLine(
+  devIdeaHome: Path,
+  workIdeHome: Path,
+  pluginDirs: List<String>,
+  allPlugins: Boolean,
+  resultFile: Path,
+  logFile: Path,
+): GeneralCommandLine {
+  require(!allPlugins || pluginDirs.isEmpty()) { "allPlugins and pluginDirs exclude each other" }
+  val script = devIdeaHome.resolve("build/dev-dist.cmd")
+  require(script.isRegularFile()) {
+    "Dev distribution script not found at ${script.toAbsolutePath()}"
+  }
+
+  val commandLine = GeneralCommandLine()
+  commandLine.withExePath(script.pathString)
+  commandLine.withWorkingDirectory(devIdeaHome)
+  commandLine.addParameter("update-ide")
+  commandLine.addParameter("--home=${toolPath(workIdeHome)}")
+  for (pluginDir in pluginDirs) {
+    commandLine.addParameter("--plugin=$pluginDir")
+  }
+  if (allPlugins) {
+    commandLine.addParameter("--all-plugins")
+  }
+  commandLine.addParameter("--stage-only")
+  commandLine.addParameter("--result=${toolPath(resultFile)}")
+  commandLine.addParameter("--log=${toolPath(logFile)}")
+  return commandLine
+}
+
+/** The tool refuses a relative path and a path with `.` or `..`. */
+private fun toolPath(path: Path): String = path.toAbsolutePath().normalize().pathString
+
+/**
+ * The result file of `dev-dist.cmd update-ide --stage-only`.
+ *
+ * @property apply the command that replaces the home with the staged home
+ * @property repository the absolute path of the `plugins.xml` file of the local plugin repository, or `null` if no plugin is built.
+ *   The zips are relative to the directory of this file, and [restartWithCommand] reads `plugins.xml` from that directory.
+ * @property skippedPlugins the plugin directories that the dev distribution does not build
+ */
+@Serializable
+internal data class DevDistUpdateResult(
+  val version: Int,
+  val apply: List<String>,
+  val repository: String? = null,
+  val skippedPlugins: List<String> = emptyList(),
+  val fingerprint: String? = null,
+)
+
+private val devDistResultJson = Json { ignoreUnknownKeys = true }
+
+internal fun parseDevDistUpdateResult(text: String): DevDistUpdateResult {
+  val result = devDistResultJson.decodeFromString<DevDistUpdateResult>(text)
+  require(result.version == 1) { "Unsupported result version ${result.version}" }
+  require(result.apply.isNotEmpty()) { "The result has no apply command" }
+  return result
 }
 
 private fun bazelExecutable(devIdeaHome: Path): Path {
