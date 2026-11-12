@@ -39,7 +39,7 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
     return status.isTracked()
   }
 
-  override fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>? {
+  override fun createTracker(project: Project, file: VirtualFile, document: Document): LocalLineStatusTracker<*>? {
     val status = GitStageTracker.getInstance(project).status(file) ?: return null
 
     if (!status.isTracked() ||
@@ -48,7 +48,6 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
 
     val filePath = VcsUtil.getFilePath(file)
     if (GitContentRevision.getRepositoryIfSubmodule(project, filePath) != null) return null
-    val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
 
     return GitStageLineStatusTracker(project, file, document)
   }

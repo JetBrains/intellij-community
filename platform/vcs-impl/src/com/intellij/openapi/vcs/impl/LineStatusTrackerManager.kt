@@ -101,7 +101,6 @@ import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.Topic.ProjectLevel
 import com.intellij.util.ui.UIUtil
@@ -235,7 +234,6 @@ class LineStatusTrackerManager(
     return getLineStatusTracker(document)
   }
 
-  @RequiresReadLock /* switchTracker */
   @RequiresEdt
   override fun requestTrackerFor(document: Document, requester: Any) {
     synchronized(LOCK) {
@@ -368,7 +366,6 @@ class LineStatusTrackerManager(
     }
   }
 
-  @RequiresReadLock /* switchTracker */
   @RequiresEdt
   private fun onFileChanged(virtualFile: VirtualFile) {
     val document = FileDocumentManager.getInstance().getCachedDocument(virtualFile) ?: return
@@ -480,7 +477,6 @@ class LineStatusTrackerManager(
     getTrackerProvider(virtualFile, document) is ChangelistsAwareLocalStatusTrackerProvider
 
 
-  @RequiresReadLock /* installTracker */
   @RequiresEdt
   private fun switchTracker(
     virtualFile: VirtualFile, document: Document,
@@ -502,7 +498,6 @@ class LineStatusTrackerManager(
     }
   }
 
-  @RequiresReadLock /* createTracker */
   @RequiresEdt
   private fun installTracker(
     virtualFile: VirtualFile, document: Document,
@@ -514,7 +509,7 @@ class LineStatusTrackerManager(
     if (trackers[document] != null) return null
 
     val tracker = SlowOperations.startSection("vcs.line-status-tracker-provider").use {
-      provider.createTracker(project, virtualFile) ?: return null
+      provider.createTracker(project, virtualFile, document) ?: return null
     }
     tracker.mode = getTrackingMode()
 
@@ -1562,8 +1557,7 @@ private object ChangelistsLocalStatusTrackerProvider : BaseRevisionStatusTracker
 
   override fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean = tracker is ChangelistsLocalLineStatusTracker
 
-  override fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>? {
-    val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
+  override fun createTracker(project: Project, file: VirtualFile, document: Document): LocalLineStatusTracker<*> {
     return ChangelistsLocalLineStatusTracker.createTracker(project, document, file)
   }
 }
@@ -1581,8 +1575,7 @@ private object DefaultLocalStatusTrackerProvider : BaseRevisionStatusTrackerCont
 
   override fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean = tracker is SimpleLocalLineStatusTracker
 
-  override fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>? {
-    val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
+  override fun createTracker(project: Project, file: VirtualFile, document: Document): LocalLineStatusTracker<*> {
     return SimpleLocalLineStatusTracker.createTracker(project, document, file)
   }
 }
@@ -1644,9 +1637,25 @@ interface LocalLineStatusTrackerProvider {
   fun isTrackedFile(project: Project, file: VirtualFile): Boolean
   fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean
 
-  @RequiresReadLock /* impls do FileDocumentManager.getInstance().getDocument(file) */
+  /**
+   * The default implementation calls the deprecated [createTracker] without the document, for the providers that implement only that one.
+   *
+   * @param document the document of the [file], which the new tracker follows
+   */
   @RequiresEdt
-  fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>?
+  fun createTracker(project: Project, file: VirtualFile, document: Document): LocalLineStatusTracker<*>? {
+    @Suppress("DEPRECATION")
+    return createTracker(project, file)
+  }
+
+  /**
+   * The manager calls this function only through the default implementation of [createTracker] with the document.
+   */
+  @Deprecated("Implement createTracker(Project, VirtualFile, Document)")
+  @RequiresEdt
+  fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>? {
+    throw AbstractMethodError("Implement createTracker(Project, VirtualFile, Document) in ${javaClass.name}")
+  }
 
   companion object {
     internal val EP_NAME =

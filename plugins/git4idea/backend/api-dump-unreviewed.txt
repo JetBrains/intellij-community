@@ -2549,7 +2549,7 @@ f:git4idea.index.GitStageLineStatusTrackerProvider
 - com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader
 - sf:Companion:git4idea.index.GitStageLineStatusTrackerProvider$Companion
 - <init>():V
-- createTracker(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.ex.LocalLineStatusTracker
+- createTracker(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):com.intellij.openapi.vcs.ex.LocalLineStatusTracker
 - getContentInfo(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader$ContentInfo
 - handleLoadingError(com.intellij.openapi.vcs.ex.LocalLineStatusTracker):V
 - isMyTracker(com.intellij.openapi.vcs.ex.LocalLineStatusTracker):Z

@@ -4,15 +4,20 @@ package com.intellij.openapi.vcs
 import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertBaseTextContentIs
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertTextContentIs
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.VcsFreezingProcess
+import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
+import com.intellij.openapi.vcs.impl.LocalLineStatusTrackerProvider
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ui.UIUtil
@@ -156,6 +161,33 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
     lstm.releaseTrackerFor(document, requester)
     assertNull(lstm.getLineStatusTracker(document))
+  }
+
+  fun `test tracker provider implements only the deprecated createTracker`() {
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
+    refreshCLM()
+
+    val calledFiles = mutableListOf<VirtualFile>()
+    val provider = object : LocalLineStatusTrackerProvider {
+      override fun isTrackedFile(project: Project, file: VirtualFile): Boolean = true
+      override fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean = false
+
+      @Deprecated("Implement createTracker(Project, VirtualFile, Document)")
+      override fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>? {
+        calledFiles.add(file)
+        return null
+      }
+    }
+    ExtensionPointName<LocalLineStatusTrackerProvider>("com.intellij.openapi.vcs.impl.LocalLineStatusTrackerProvider")
+      .point.registerExtension(provider, testRootDisposable)
+
+    val document = file.document
+    val requester = Any()
+    lstm.requestTrackerFor(document, requester)
+    assertEquals(listOf(file), calledFiles)
+    assertNull(lstm.getLineStatusTracker(document))
+
+    lstm.releaseTrackerFor(document, requester)
   }
 
   fun `test partial tracker lifecycle - with partial changes without editor`() {
