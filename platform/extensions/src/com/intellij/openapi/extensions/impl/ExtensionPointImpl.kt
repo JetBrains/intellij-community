@@ -619,12 +619,12 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   private fun notifyListeners(isRemoved: Boolean,
                               adapters: List<ExtensionComponentAdapter>,
                               listeners: List<ExtensionPointListener<T>>) {
-    fun withEdtTimeQuotaCheck(listener: ExtensionPointListener<*>, adapter:ExtensionComponentAdapter?, body: () -> Unit) {
+    fun withEdtTimeQuotaCheck(listener: ExtensionPointListener<*>, methodName: String, adapter: ExtensionComponentAdapter?, body: () -> Unit) {
       val duration = measureTime { body() }
       if (duration.inWholeMilliseconds > 50 && EDT.isCurrentThreadEdt()) {
         val listenerSource = (listener as? ExtensionPointListenerOrigin)?.getOriginObject() ?: listener
         val pluginId = (listenerSource::class.java.classLoader as? PluginAwareClassLoader)?.pluginId?.toString()
-        val msg = "(EDT) ExtensionPoint listener `${listenerSource::class.java}` notification took too long: $duration" +
+        val msg = "(EDT) ExtensionPoint listener `${listenerSource::class.java}.$methodName` notification took too long: $duration" +
                   (adapter?.let {" for extension '$it'"} ?: "") +
                   (pluginId?.let { " (plugin: $it)" } ?: "")
         if (duration.inWholeMilliseconds > 500) {
@@ -637,7 +637,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     for (listener in listeners) {
       if (listener is ExtensionPointAdapter<*>) {
         try {
-          withEdtTimeQuotaCheck(listener, null) { listener.extensionListChanged() }
+          withEdtTimeQuotaCheck(listener, "extensionListChanged()", null) { listener.extensionListChanged() }
         }
         catch (ce: CancellationException) {
           LOG.warn("Cancellation while notifying `${listener}` ($ce)", ce.cause)
@@ -655,7 +655,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
           try {
             val extension = adapter.createInstance<T>(componentManager)
             if (extension != null) {
-              withEdtTimeQuotaCheck(listener, adapter) {
+              withEdtTimeQuotaCheck(listener, if (isRemoved) "extensionRemoved()" else "extensionAdded()", adapter) {
                 if (isRemoved) {
                   listener.extensionRemoved(extension, adapter.pluginDescriptor)
                 }
