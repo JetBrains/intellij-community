@@ -56,6 +56,8 @@ jvm_library(
         "//platform/core-ui",
         "//platform/util:util-ui",
         "//platform/platform-impl:ide-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
     ],
 )
 ### auto-generated section `build intellij.vcs.gitlab.shared` end

@@ -12,6 +12,8 @@
     <module name="intellij.platform.collaborationTools.shared"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.diff"/>
@@ -42,4 +44,17 @@
     <registryKey defaultValue="false" description="Disable loading emojis for notes in merge requests"
                  key="gitlab.merge.requests.disable.emojis.fetching"/>
   </extensions>
+
+  <actions>
+    <action id="GitLab.Merge.Request.Refresh"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestRefreshAction"
+            use-shortcut-of="Refresh"
+            icon="AllIcons.Actions.Refresh"/>
+    <action id="GitLab.Merge.Request.Open.Link"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestOpenURLAction"
+            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo"/>
+    <action id="GitLab.Merge.Request.Copy.Link"
+            class="org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestCopyURLAction"
+            icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo"/>
+  </actions>
 </idea-plugin>
