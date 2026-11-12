@@ -62,6 +62,9 @@ final class SpecialCharacterFragment implements LineFragment {
     char @Nullable [] text,
     int pos
   ) {
+    if (TextFonts.isPrintableAscii(c)) { // SPECIAL_CHAR_CODES has no printable ASCII char
+      return null;
+    }
     String code = SPECIAL_CHAR_CODES.get(c);
     if (code == null) {
       return null;
