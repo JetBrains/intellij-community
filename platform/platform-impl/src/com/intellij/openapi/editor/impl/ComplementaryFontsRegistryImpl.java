@@ -142,7 +142,7 @@ final class ComplementaryFontsRegistryImpl {
   }
 
   /**
-   * Returns the font of the typographic font family in the style, at the size, without character variants.
+   * Returns the font of the typographic font family in the style, at the size, with the letter spacing and without character variants.
    * It checks no code point and keeps the last fallbacks of the search.
    */
   @NotNull FontInfo getFamilyFontInfo(
@@ -150,12 +150,13 @@ final class ComplementaryFontsRegistryImpl {
     @FontStyle int style,
     float size,
     boolean useLigatures,
+    float letterSpacing,
     @Nullable FontRenderContext context
   ) {
     Font font = FontFamilyService.getFont(family, null, null, validStyle(style));
     synchronized (this) {
       FontFallback fallback = preferredFamilyFonts.computeIfAbsent(font, FontFallback::new);
-      return fallback.getFontInfo(size, useLigatures, 0, Set.of(), context);
+      return fallback.getFontInfo(size, useLigatures, letterSpacing, Set.of(), context);
     }
   }
 

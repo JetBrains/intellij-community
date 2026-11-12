@@ -92,7 +92,7 @@ internal class TextFontsForFontFamiliesTest {
     assertThat(FontFamilyService.isMonospaced(Font.SERIF)).isFalse()
     val monospaced = TextFonts.forFontFamilies(listOf(Font.MONOSPACED), withLigatures, context, null)
     assertThat(monospaced.fontAbleToDisplay("a", 0, 1, Font.PLAIN, context))
-      .isSameAs(ComplementaryFontsRegistry.getFamilyFontInfo(Font.MONOSPACED, Font.PLAIN, 13f, true, context))
+      .isSameAs(ComplementaryFontsRegistry.getFamilyFontInfo(Font.MONOSPACED, Font.PLAIN, 13f, true, 0f, context))
     val proportional = TextFonts.forFontFamilies(listOf(Font.SERIF), withLigatures, context, null)
     assertThat(proportional.fontAbleToDisplay("a", 0, 1, Font.PLAIN, context)).isSameAs(familyFont(Font.SERIF, Font.PLAIN))
   }
@@ -105,11 +105,23 @@ internal class TextFontsForFontFamiliesTest {
   }
 
   @Test
+  fun `the families use the editor letter spacing, also in another render context`() {
+    val spaced = FontPreferencesImpl().apply {
+      register(Font.MONOSPACED, 8)
+      letterSpacing = 0.25f
+    }.snapshot
+    val fonts = TextFonts.forFontFamilies(listOf(Font.SERIF), spaced, context, null)
+    assertThat(fonts.fontAbleToDisplay("a", 0, 1, Font.PLAIN, context).letterSpacingPixels).isEqualTo(2f)
+    val otherContext = FontRenderContext(AffineTransform.getScaleInstance(2.0, 2.0), true, true)
+    assertThat(fonts.fontAbleToDisplay("a", 0, 1, Font.PLAIN, otherContext).letterSpacingPixels).isEqualTo(2f)
+  }
+
+  @Test
   fun `another render context gets the fonts of that context`() {
     val fonts = TextFonts.forFontFamilies(listOf(Font.SERIF), preferences, context, null)
     val otherContext = FontRenderContext(AffineTransform.getScaleInstance(2.0, 2.0), true, true)
     val font = fonts.fontAbleToDisplay("a", 0, 1, Font.PLAIN, otherContext)
-    assertThat(font).isSameAs(ComplementaryFontsRegistry.getFamilyFontInfo(Font.SERIF, Font.PLAIN, 13f, false, otherContext))
+    assertThat(font).isSameAs(ComplementaryFontsRegistry.getFamilyFontInfo(Font.SERIF, Font.PLAIN, 13f, false, 0f, otherContext))
     assertThat(font).isNotSameAs(familyFont(Font.SERIF, Font.PLAIN))
   }
 
@@ -182,7 +194,7 @@ internal class TextFontsForFontFamiliesTest {
   }
 
   private fun familyFont(family: String, style: Int): FontInfo {
-    return ComplementaryFontsRegistry.getFamilyFontInfo(family, style, 13f, false, context)
+    return ComplementaryFontsRegistry.getFamilyFontInfo(family, style, 13f, false, 0f, context)
   }
 
   /**

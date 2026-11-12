@@ -85,7 +85,7 @@ public final class ComplementaryFontsRegistry {
   }
 
   /**
-   * Returns the font of the typographic font family in the style, at the size, without character variants.
+   * Returns the font of the typographic font family in the style, at the size, with the letter spacing and without character variants.
    * The search methods use the same font for the same family, so they share the returned object.
    * The family must be available, see {@link FontFamilyService#isAvailable}.
    * For another name, {@link FontFamilyService} gives its default font.
@@ -96,9 +96,10 @@ public final class ComplementaryFontsRegistry {
     @FontStyle int style,
     float size,
     boolean useLigatures,
+    float letterSpacing,
     @Nullable FontRenderContext context
   ) {
-    return INSTANCE.getFamilyFontInfo(family, style, size, useLigatures, context);
+    return INSTANCE.getFamilyFontInfo(family, style, size, useLigatures, letterSpacing, context);
   }
 
   /**
