@@ -6,8 +6,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LineWrapPositionStrategy;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
+import com.intellij.openapi.editor.impl.view.CharacterGridSpec;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
@@ -49,13 +49,11 @@ public class EditorCharacterGridSizeTest {
     return ((SoftWrapModelImpl)myFixture.getEditor().getSoftWrapModel()).getApplianceManager();
   }
 
-  private void enableGridMode(boolean allowSoftWrapOptimizations) {
-    myFixture.getEditor().getSettings().setCharacterGridWidthMultiplier(1.0f);
-    ((EditorEx)myFixture.getEditor()).reinitSettings();
-    assertNotNull(((EditorImpl)myFixture.getEditor()).getCharacterGrid());
-    var softWrapApplianceManager = softWrapApplianceManager();
-    softWrapApplianceManager.setAllowGridModeOptimizations(allowSoftWrapOptimizations);
-    softWrapApplianceManager.recalculateIfNecessary("allow grid mode optimizations maybe toggled");
+  private void enableGridMode() {
+    var editor = (EditorImpl)myFixture.getEditor();
+    editor.setCharacterGridSpec(new CharacterGridSpec(1.0f, _ -> false));
+    assertNotNull(editor.getCharacterGrid());
+    softWrapApplianceManager().recalculateIfNecessary("the grid mode is on");
   }
 
   private int preferredWidth() {
@@ -69,7 +67,7 @@ public class EditorCharacterGridSizeTest {
       myFixture.initText(LONG_LINE);
       myFixture.getEditor().getSettings().setAdditionalColumnsCount(0);
       myFixture.setEditorVisibleSize(20, 10);
-      enableGridMode(false);
+      enableGridMode();
 
       assertTrue(myFixture.getEditor().getScrollingModel().getVisibleArea().width < CONTENT_WIDTH);
       assertTrue(preferredWidth() >= CONTENT_WIDTH, "preferred=" + preferredWidth());
@@ -83,7 +81,7 @@ public class EditorCharacterGridSizeTest {
       myFixture.initText(LONG_LINE);
       myFixture.getEditor().getSettings().setAdditionalColumnsCount(0);
       myFixture.configureSoftWraps(20);
-      enableGridMode(true);
+      enableGridMode();
 
       assertTrue(preferredWidth() < CONTENT_WIDTH, "preferred=" + preferredWidth());
     });
@@ -91,19 +89,19 @@ public class EditorCharacterGridSizeTest {
 
   // IJPL-251582: The grid mode optimized soft-wrapping must not place soft-wraps inside collapsed fold regions.
   @Test
-  public void testGridEditorWithSoftWrapOptimizationsDoesNotWrapInsideCollapsedFoldRegion() {
+  public void testGridEditorDoesNotWrapInsideCollapsedFoldRegion() {
     myFixture.runTest(() -> {
       myFixture.initText(LONG_LINE.substring(0, 20));
       myFixture.configureSoftWraps(10, false);
       myFixture.addCollapsedFoldRegion(8, 14, "..."); // covers the grid column boundary at offset 11
-      enableGridMode(true);
+      enableGridMode();
 
       myFixture.verifySoftWrapPositions(8);
     });
   }
 
   @Test
-  public void testGridEditorWithSoftWrapOptimizationsRespectsLineStrategy() {
+  public void testGridEditorRespectsLineStrategy() {
     myFixture.runTest(() -> {
       myFixture.initText(LONG_LINE.substring(0, 20));
       myFixture.configureSoftWraps(10, false);
@@ -113,7 +111,7 @@ public class EditorCharacterGridSizeTest {
           return false;
         }
       });
-      enableGridMode(true);
+      enableGridMode();
 
       myFixture.verifySoftWrapPositions();
     });
@@ -154,7 +152,7 @@ public class EditorCharacterGridSizeTest {
       colorsScheme.setFontPreferences(fontPreferences);
       myFixture.configureSoftWraps(10, false);
       softWrapApplianceManager().setLineWrapPositionStrategy(new MarkerLineWrapPositionStrategy());
-      enableGridMode(/* allowSoftWrapOptimizations */ false);
+      enableGridMode();
 
       myFixture.verifySoftWrapPositions(11, 22, 33);
     });

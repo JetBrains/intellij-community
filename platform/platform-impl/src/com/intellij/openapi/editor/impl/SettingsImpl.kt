@@ -13,8 +13,6 @@ import com.intellij.openapi.editor.EditorSettings.LineNumerationType
 import com.intellij.openapi.editor.actions.CaretStopOptions
 import com.intellij.openapi.editor.ex.BidiTextDirection
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
-import com.intellij.openapi.editor.impl.view.CharacterGridSpec
-import com.intellij.openapi.editor.impl.view.DoubleWidthCharacterStrategy
 import com.intellij.openapi.editor.state.ObservableStateListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -29,11 +27,6 @@ import kotlin.reflect.KMutableProperty0
 
 private val LOG: Logger = logger<SettingsImpl>()
 internal const val EDITOR_SHOW_SPECIAL_CHARS: String = "editor.show.special.chars"
-
-/**
- * The grid strategy of an editor that never had one. The terminal replaces it with its own strategy.
- */
-private val SINGLE_WIDTH_CHARACTERS = DoubleWidthCharacterStrategy { false }
 
 /**
  * The [EditorSettings] of one editor, or of no editor.
@@ -335,40 +328,6 @@ class SettingsImpl internal constructor(
 
   override fun setAdditionalColumnsCount(additionalColumnsCount: Int) {
     state.myAdditionalColumnsCount = additionalColumnsCount
-  }
-
-  override fun getCharacterGridWidthMultiplier(): Float? {
-    return getSnapshot().getCharacterGridWidthMultiplier()
-  }
-
-  /**
-   * Writes the column spacing of the grid mode of [editor], and keeps the strategy of the current spec.
-   * Settings without an editor only write the state.
-   */
-  override fun setCharacterGridWidthMultiplier(value: Float?) {
-    if (editor == null) {
-      state.characterGridWidth = value
-      return
-    }
-    val spec = if (value == null) {
-      null
-    } else {
-      CharacterGridSpec(value, editor.characterGridSpec?.doubleWidthCharacterStrategy ?: SINGLE_WIDTH_CHARACTERS)
-    }
-    editor.setCharacterGridSpec(spec)
-  }
-
-  /**
-   * Writes the state of [EditorImpl.setCharacterGridSpec] without an editor refresh. The spec setter runs its own
-   * reset.
-   */
-  fun setCharacterGridWidthMultiplierNoRefresh(value: Float?) {
-    doNotRefreshEditorFlag = true
-    try {
-      state.characterGridWidth = value
-    } finally {
-      doNotRefreshEditorFlag = false
-    }
   }
 
   // The caret.

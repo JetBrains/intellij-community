@@ -38,11 +38,9 @@ interface CharacterGrid {
    * The strategy to differentiate between single and double width characters.
    *
    * The strategy comes from [CharacterGridSpec], so it stays the same for as long as the spec stays the same.
-   *
-   * The setter is only for the transition to [EditorImpl.setCharacterGridSpec]. It writes a new spec with the new
-   * strategy, and the editor then reloads its layouts and its soft wraps.
+   * To change it, give [EditorImpl.setCharacterGridSpec] a new spec.
    */
-  var doubleWidthCharacterStrategy: DoubleWidthCharacterStrategy
+  val doubleWidthCharacterStrategy: DoubleWidthCharacterStrategy
 
   /**
    * The width of the given character in pixels.
@@ -152,11 +150,8 @@ internal class CharacterGridImpl(
       return if (height > 0) (height.toFloat() / lineHeight.toFloat()).toInt() else 0
     }
 
-  override var doubleWidthCharacterStrategy: DoubleWidthCharacterStrategy
+  override val doubleWidthCharacterStrategy: DoubleWidthCharacterStrategy
     get() = spec.doubleWidthCharacterStrategy
-    set(value) {
-      editor.setCharacterGridSpec(spec.copy(doubleWidthCharacterStrategy = value))
-    }
 
   override fun codePointWidth(codePoint: Int): Float {
     return spec.cells(codePoint) * charWidth

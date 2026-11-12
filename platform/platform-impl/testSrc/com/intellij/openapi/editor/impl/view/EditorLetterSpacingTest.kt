@@ -80,8 +80,7 @@ internal class EditorLetterSpacingTest {
 
   @Test
   fun `a grid editor ignores the letter spacing`(): Unit = withEditor("abc", LETTER_SPACING) { editor ->
-    editor.settings.characterGridWidthMultiplier = 1f
-    editor.reinitSettings()
+    editor.setCharacterGridSpec(CharacterGridSpec(1f, DoubleWidthCharacterStrategy { false }))
 
     assertThat(editor.view.hasLetterSpacing()).isFalse()
     assertThat(editor.view.plainSpaceWidth).isEqualTo(CHAR_WIDTH.toFloat())

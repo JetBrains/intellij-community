@@ -89,7 +89,7 @@ internal class EditorFontFamiliesMetricsTest {
   @Test
   fun `a wide resolved font family raises the width estimate and keeps the cells of the character grid`(): Unit = withEditor { editor ->
     val view = editor.view
-    editor.settings.characterGridWidthMultiplier = 1f
+    editor.setCharacterGridSpec(CharacterGridSpec(1f, DoubleWidthCharacterStrategy { false }))
     val cellWidth = editor.characterGrid!!.charWidth
 
     view.resolveFontFamilies(listOf(value))

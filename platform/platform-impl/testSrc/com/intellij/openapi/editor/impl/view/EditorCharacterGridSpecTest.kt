@@ -58,7 +58,7 @@ internal class EditorCharacterGridSpecTest {
   fun `the strategy survives a change of the multiplier`(): Unit = withEditor(CharacterGridSpec(1f, WIDE)) { editor ->
     assertThat(editor.characterGrid!!.codePointWidth(WIDE_CHAR.code)).isEqualTo(2f * CHAR_WIDTH)
 
-    editor.settings.characterGridWidthMultiplier = 1.5f
+    editor.setColumnSpacing(1.5f)
 
     val grid = checkNotNull(editor.characterGrid)
     assertThat(grid.charWidth).isEqualTo(1.5f * CHAR_WIDTH)
@@ -71,7 +71,7 @@ internal class EditorCharacterGridSpecTest {
     withEditor(CharacterGridSpec(1f, SINGLE_WIDTH), gridFirst = false) { editor ->
       val before = capture(editor)
 
-      editor.settings.characterGridWidthMultiplier = 1.5f
+      editor.setColumnSpacing(1.5f)
 
       val after = capture(editor)
       assertThat(after.softWraps).isNotEmpty()
@@ -86,7 +86,7 @@ internal class EditorCharacterGridSpecTest {
     withEditor(CharacterGridSpec(1f, SINGLE_WIDTH), gridFirst = false) { editor ->
       val before = capture(editor)
 
-      editor.characterGrid!!.doubleWidthCharacterStrategy = WIDE
+      editor.setStrategy(WIDE)
 
       val after = capture(editor)
       assertThat(after.points).isNotEqualTo(before.points)
@@ -105,6 +105,20 @@ internal class EditorCharacterGridSpecTest {
     editor.setCharacterGridSpec(CharacterGridSpec(1.5f, WIDE))
 
     assertThat(editor.view.snapshot).isNotSameAs(before)
+  }
+
+  /**
+   * Changes only the column spacing of the spec of the editor.
+   */
+  private fun EditorImpl.setColumnSpacing(columnSpacing: Float) {
+    setCharacterGridSpec(checkNotNull(characterGridSpec).copy(columnSpacing = columnSpacing))
+  }
+
+  /**
+   * Changes only the double-width strategy of the spec of the editor.
+   */
+  private fun EditorImpl.setStrategy(strategy: DoubleWidthCharacterStrategy) {
+    setCharacterGridSpec(checkNotNull(characterGridSpec).copy(doubleWidthCharacterStrategy = strategy))
   }
 
   /**

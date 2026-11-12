@@ -64,7 +64,6 @@ public final class SoftWrapEngine {
   private final int mySoftWrapWidth;
   private final IncrementalCacheUpdateEvent myEvent;
   private final int myRelativeIndent;
-  private final boolean myAllowGridModeOptimizations;
 
   private LineWrapPositionStrategy myLineWrapPositionStrategy;
 
@@ -77,8 +76,7 @@ public final class SoftWrapEngine {
     @NotNull IncrementalCacheUpdateEvent event,
     @Nullable LineWrapPositionStrategy lineWrapStrategy,
     int visibleWidth,
-    int relativeIndent,
-    boolean allowGridModeOptimizations
+    int relativeIndent
   ) {
     myEditor = editor;
     myView = editor.getView();
@@ -93,7 +91,6 @@ public final class SoftWrapEngine {
     myEvent = event;
     myRelativeIndent = relativeIndent;
     myLineWrapPositionStrategy = lineWrapStrategy;
-    myAllowGridModeOptimizations = allowGridModeOptimizations;
   }
 
   public void generate() {

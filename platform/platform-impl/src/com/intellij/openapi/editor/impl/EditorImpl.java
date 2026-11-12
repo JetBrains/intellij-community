@@ -3945,8 +3945,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else if (myCharacterGrid == null) {
       myCharacterGrid = new CharacterGridImpl(this);
     }
-    // The spec owns the value now, and the reset below replaces the editor refresh of the settings.
-    mySettings.setCharacterGridWidthMultiplierNoRefresh(spec == null ? null : spec.getColumnSpacing());
     reinitSettings(true, false, true);
   }
 

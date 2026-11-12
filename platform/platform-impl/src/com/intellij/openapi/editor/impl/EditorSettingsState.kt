@@ -75,7 +75,6 @@ class EditorSettingsState(
   var myAreLineNumbersAfterIcons: Boolean by property(false)
   var myCaretRowShown: Boolean by property(true)
   var myPaintSoftWraps: Boolean by property(true)
-  var characterGridWidth: Float? by property(null)
   var rtlEnabled: Boolean by property(!EditorRegistry.current().isRtlDisabled())
 
   // Settings from the code style.
