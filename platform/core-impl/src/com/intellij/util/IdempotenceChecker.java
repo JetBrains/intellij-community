@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.PluginException;
@@ -15,7 +15,9 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveResult;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
@@ -347,9 +349,24 @@ public final class IdempotenceChecker {
     if (!existing.equals(fresh) &&
         !existing.isEquivalentTo(fresh) && !fresh.isEquivalentTo(existing) &&
         (seemsToBeResolveTarget(existing) || seemsToBeResolveTarget(fresh))) {
-      return reportProblem(existing, fresh);
+      return appendDetail(reportProblem(existing, fresh), psiFileRelation(existing, fresh));
     }
     return null;
+  }
+
+  private static @NonNls @NotNull String psiFileRelation(@NotNull PsiElement existing, @NotNull PsiElement fresh) {
+    boolean existingValid = existing.isValid();
+    boolean freshValid = fresh.isValid();
+    String valid = "valid: " + existingValid + "/" + freshValid;
+    if (!existingValid || !freshValid) {
+      return valid + ", same file: unknown, same virtual file: unknown";
+    }
+    PsiFile existingFile = existing.getContainingFile();
+    PsiFile freshFile = fresh.getContainingFile();
+    VirtualFile existingVirtualFile = existingFile == null ? null : existingFile.getVirtualFile();
+    VirtualFile freshVirtualFile = freshFile == null ? null : freshFile.getVirtualFile();
+    return valid + ", same file: " + (existingFile == freshFile) +
+           ", same virtual file: " + (existingVirtualFile != null && existingVirtualFile.equals(freshVirtualFile));
   }
 
   private static boolean seemsToBeResolveTarget(@NotNull PsiElement psi) {
