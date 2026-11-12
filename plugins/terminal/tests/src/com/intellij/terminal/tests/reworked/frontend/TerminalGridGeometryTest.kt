@@ -2,10 +2,12 @@
 package com.intellij.terminal.tests.reworked.frontend
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.CharacterGrid
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.view.impl.TerminalEditorFactory
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -16,6 +18,7 @@ import kotlinx.coroutines.cancel
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import org.jetbrains.plugins.terminal.block.ui.applyFontSettings
 import org.jetbrains.plugins.terminal.block.ui.calculateGridGeometry
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.impl.dto.CellPixelSizeDto
@@ -77,14 +80,15 @@ internal class TerminalGridGeometryTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `cell width follows the column spacing multiplier`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+  fun `cell width follows the column spacing of the grid spec`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     withJreHiDpiEnabled {
       val editor = createEditor()
       showOnDisplay(editor, scale = 1.0)
       setEditorSize(editor, columns = 80, rows = 24)
       val [singleWidth, singleHeight] = checkNotNull(editor.calculateGridGeometry()).cellSize
 
-      editor.settings.characterGridWidthMultiplier = 1.5f
+      val spec = checkNotNull(editor.characterGridSpec) { "the terminal editor has no grid spec" }
+      editor.setCharacterGridSpec(spec.copy(columnSpacing = 1.5f))
       val [widenedWidth, widenedHeight] = checkNotNull(editor.calculateGridGeometry()).cellSize
 
       assertThat(widenedHeight).isEqualTo(singleHeight)
@@ -92,10 +96,47 @@ internal class TerminalGridGeometryTest : BasePlatformTestCase() {
     }
   }
 
-  private fun createEditor(): EditorImpl {
+  /**
+   * The terminal font dialog changes the column spacing with one [applyFontSettings] call. The editor must then
+   * measure the new cell width and wrap the text on the new columns, with no other call.
+   */
+  @Test
+  fun `a column spacing change through the font settings moves the soft wraps`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.EDT) {
+      withJreHiDpiEnabled {
+        val settings = SettingsWithColumnSpacing()
+        val editor = createEditor(settings)
+        showOnDisplay(editor, scale = 1.0)
+        setEditorSize(editor, columns = 40, rows = 10)
+        setText(editor, "x".repeat(400))
+        val narrowWidth = checkNotNull(editor.calculateGridGeometry()).cellSize.width
+        val narrowWraps = countSoftWraps(editor)
+
+        settings.spacing = 2.0f
+        editor.applyFontSettings(settings)
+
+        val (gridSize, cellSize) = checkNotNull(editor.calculateGridGeometry())
+        assertThat(cellSize.width.toDouble()).isCloseTo(narrowWidth * 2.0, within(2.0))
+        assertThat(gridSize.columns).isEqualTo(20)
+        assertThat(narrowWraps).isGreaterThan(0)
+        assertThat(countSoftWraps(editor)).isGreaterThan(narrowWraps)
+      }
+    }
+
+  private fun createEditor(settings: JBTerminalSystemSettingsProviderBase = JBTerminalSystemSettingsProvider()): EditorImpl {
     val scope = terminalProjectScope(project).childScope("TerminalOutputEditor")
     Disposer.register(testRootDisposable) { scope.cancel() }
-    return TerminalEditorFactory.createOutputEditor(project, JBTerminalSystemSettingsProvider(), scope)
+    return TerminalEditorFactory.createOutputEditor(project, settings, scope)
+  }
+
+  private fun setText(editor: EditorImpl, text: String) {
+    WriteCommandAction.runWriteCommandAction(project) { editor.document.setText(text) }
+  }
+
+  /** Maps the last offset first, so that the editor recalculates the soft wraps that the text marked dirty. */
+  private fun countSoftWraps(editor: EditorImpl): Int {
+    editor.offsetToXY(editor.document.textLength)
+    return editor.softWrapModel.registeredSoftWraps.size
   }
 
   /** Puts the editor into a container on a display that draws [scale] device pixels per user-space pixel. */
@@ -131,6 +172,13 @@ internal class TerminalGridGeometryTest : BasePlatformTestCase() {
       flag.set(original)
     }
   }
+}
+
+/** The terminal settings of a test, with a column spacing that the test changes. */
+private class SettingsWithColumnSpacing : JBTerminalSystemSettingsProviderBase() {
+  var spacing: Float = 1.0f
+
+  override fun getColumnSpacing(): Float = spacing
 }
 
 /** The graphics configuration of a display that draws [scale] device pixels per user-space pixel. */

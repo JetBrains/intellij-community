@@ -140,12 +140,11 @@ public class EditorCharacterGridSizeTest {
     });
   }
 
-  // The grid mode soft-wrapping optimization is not a pure optimization:
-  //  it places wraps at grid column boundaries without consulting LineWrapPositionStrategy.
-  // Grid editors that didn't opt in should keep the strategy-based wrap positions.
+  // A grid editor wraps on the grid columns. It asks the LineWrapPositionStrategy whether a wrap is allowed,
+  //  and it ignores the wrap position of the strategy.
   @ParameterizedTest
   @ValueSource(booleans = {false, true})
-  void testGridEditorWithoutSoftWrapOptimizationsRespectsLineWrapPositionStrategy(boolean useLigatures) {
+  void testGridEditorWrapsOnTheColumnsAndIgnoresTheStrategyPosition(boolean useLigatures) {
     myFixture.runTest(() -> {
       myFixture.initText(("xxx" + WRAP_MARKER).repeat(10));
       var colorsScheme = myFixture.getEditor().getColorsScheme();
@@ -157,7 +156,7 @@ public class EditorCharacterGridSizeTest {
       softWrapApplianceManager().setLineWrapPositionStrategy(new MarkerLineWrapPositionStrategy());
       enableGridMode(/* allowSoftWrapOptimizations */ false);
 
-      myFixture.verifySoftWrapPositions(7, 15, 23, 31);
+      myFixture.verifySoftWrapPositions(11, 22, 33);
     });
   }
 

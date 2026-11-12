@@ -110,7 +110,7 @@ public final class SoftWrapEngine {
                         afterLineEndInlays.isEmpty() &&
                         customWraps.isEmpty() &&
                         !SoftWrapHelper.hasCollapsedOffsetsIn(myEditor.getFoldingModel(), startOffset, maxEndOffset);
-    if (grid != null && myAllowGridModeOptimizations && plainText) {
+    if (grid != null && plainText) {
       generateGridSoftWraps(grid, startOffset, minEndOffset, maxEndOffset);
       return;
     }
