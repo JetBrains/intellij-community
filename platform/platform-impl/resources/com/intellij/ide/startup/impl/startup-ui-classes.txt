@@ -9127,7 +9127,6 @@ com.intellij.platform.eel.provider.EelMachineProviderUtil
 com.intellij.platform.eel.provider.EelMachineProviderUtil$resolveEelMachine$1
 com.intellij.platform.eel.provider.EelProviderProjectUtilKt
 com.intellij.openapi.extensions.impl.ExtensionPointCleanupKt
-com.intellij.platform.unified.workspace.IjLightWorkspaceViewPane
 com.intellij.diagnostic.CoroutineTracerShim
 com.intellij.diagnostic.CoroutineTracerShim$Companion
 com.intellij.openapi.extensions.impl.ExtensionUnregistrationReport
@@ -11964,3 +11963,4 @@ com.intellij.station.core.discovery.DefaultDiscoveryService$doDiscovery$2$handle
 com.intellij.station.core.impl.StationConnectionUtilKt
 com.intellij.station.core.impl.StationSocketConnectionLoop
 com.intellij.station.core.impl.StationSocketConnectionLoop$connectWithRetries$2
+com.intellij.platform.unified.workspace.backend.baseline.IjLightWorkspaceViewPane
