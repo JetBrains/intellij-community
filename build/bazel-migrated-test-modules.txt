@@ -299,6 +299,7 @@ intellij.searchEverywhereLucene.backend.tests
 intellij.searchEverywhereMl.ranking.core.tests
 intellij.searchEverywhereMl.tests
 intellij.searchEverywhereMl.typos.tests
+intellij.settingsRepository.tests
 intellij.settingsSync.tests
 intellij.sh.tests
 intellij.statsCollector.tests

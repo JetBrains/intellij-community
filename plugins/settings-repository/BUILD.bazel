@@ -2,6 +2,14 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "settingsRepository-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":settingsRepository-tests_test_lib"],
+)
+### skip generation section `test intellij.settingsRepository.tests`
+
 ### auto-generated section `dev intellij.settingsRepository` start
 dev_dist_plugin(
     content_modules = [
@@ -155,10 +163,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.settingsRepository.tests` end
-
-### auto-generated section `test intellij.settingsRepository.tests` start
-jps_test(
-    name = "settingsRepository-tests_test",
-    runtime_deps = [":settingsRepository-tests_test_lib"],
-)
-### auto-generated section `test intellij.settingsRepository.tests` end
