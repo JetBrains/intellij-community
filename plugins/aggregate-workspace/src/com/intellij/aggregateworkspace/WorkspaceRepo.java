@@ -2,13 +2,13 @@ package com.intellij.aggregateworkspace;
 
 public final class WorkspaceRepo {
   private final String name;
-  private final String description;
-  private final boolean included;
+  private final String descriptionKey;
+  private final String repositoryUrl;
 
-  public WorkspaceRepo(String name, String description, boolean included) {
+  public WorkspaceRepo(String name, String descriptionKey, String repositoryUrl) {
     this.name = name;
-    this.description = description;
-    this.included = included;
+    this.descriptionKey = descriptionKey;
+    this.repositoryUrl = repositoryUrl;
   }
 
   public String getName() {
@@ -16,10 +16,10 @@ public final class WorkspaceRepo {
   }
 
   public String getDescription() {
-    return description;
+    return WorkspaceBundle.message(descriptionKey);
   }
 
-  public boolean isIncluded() {
-    return included;
+  public String getRepositoryUrl() {
+    return repositoryUrl;
   }
 }

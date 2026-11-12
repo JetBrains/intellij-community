@@ -1,13 +1,10 @@
 <idea-plugin>
   <id>com.intellij.aggregateworkspace</id>
-  <name>Workspace Shell</name>
+  <name>%plugin.name%</name>
   <version>0.1</version>
   <vendor>joeyr64</vendor>
-
-  <description><![CDATA[
-    Unified workspace shell for IntelliJ Community that brings together the notebook, Jupyter,
-    security, and research repositories. GitHub-Codespaces is intentionally excluded.
-  ]]></description>
+  <resource-bundle>messages.WorkspaceBundle</resource-bundle>
+  <description>%plugin.description%</description>
 
   <depends>com.intellij.modules.platform</depends>
 
