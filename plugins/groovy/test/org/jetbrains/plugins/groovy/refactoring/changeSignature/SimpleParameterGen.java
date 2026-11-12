@@ -14,13 +14,12 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class SimpleParameterGen implements ChangeSignatureTestCase.GenParams {
+public class SimpleParameterGen {
   public SimpleParameterGen(List<SimpleInfo> infos, Project project) {
     myInfos = infos;
     myProject = project;
   }
 
-  @Override
   public GrParameterInfo[] genParams(GrMethod method) {
     GrParameter[] params = method.getParameterList().getParameters();
     int size = myInfos.size();

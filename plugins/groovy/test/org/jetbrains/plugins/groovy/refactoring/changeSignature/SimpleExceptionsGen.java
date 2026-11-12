@@ -8,12 +8,11 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class SimpleExceptionsGen implements ChangeSignatureTestCase.GenExceptions {
+public class SimpleExceptionsGen {
   public SimpleExceptionsGen(List<ThrownExceptionInfo> infos) {
     myInfos = infos.toArray(ThrownExceptionInfo[]::new);
   }
 
-  @Override
   public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
     for (ThrownExceptionInfo info : myInfos) {
       info.updateFromMethod(method);

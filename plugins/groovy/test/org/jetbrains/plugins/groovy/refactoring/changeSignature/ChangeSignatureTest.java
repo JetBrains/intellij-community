@@ -4,6 +4,8 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
@@ -11,52 +13,91 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
-import junit.framework.TestCase;
+import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Maxim.Medvedev
  */
-public class ChangeSignatureTest extends ChangeSignatureTestCase {
+@TestApplication
+public class ChangeSignatureTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST, "refactoring/changeSignature/");
+  private final TestFixture<String> testName = testNameFixture(false);
+
+  @Test
   public void testOneNewParameter() {
-    doTest(new SimpleInfo("p", -1, "\"5\"", null, CommonClassNames.JAVA_LANG_STRING));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo("p", -1, "\"5\"", null, CommonClassNames.JAVA_LANG_STRING));
+    });
   }
 
+  @Test
   public void testRemoveParameterMultiline() {
-    doTest(new SimpleInfo(0), new SimpleInfo(2));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo(0), new SimpleInfo(2));
+    });
   }
 
+  @Test
   public void testMoveParametersMultiline() {
-    doTest(new SimpleInfo(1), new SimpleInfo(0), new SimpleInfo(2));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo(1), new SimpleInfo(0), new SimpleInfo(2));
+    });
   }
 
+  @Test
   public void testRemoveParameter() {
-    doTest();
+    runInEdtAndWait(() -> {
+      doTest();
+    });
   }
 
+  @Test
   public void testInsertParameter() {
-    doTest(new SimpleInfo(0), new SimpleInfo("p", -1, "5", "-3", PsiTypes.intType()), new SimpleInfo(1));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo(0), new SimpleInfo("p", -1, "5", "-3", PsiTypes.intType()), new SimpleInfo(1));
+    });
   }
 
+  @Test
   public void testInsertOptionalParameter() {
-    doTest(new SimpleInfo(0), new SimpleInfo(1), new SimpleInfo("p", -1, "5", "-3", PsiTypes.intType()));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo(0), new SimpleInfo(1), new SimpleInfo("p", -1, "5", "-3", PsiTypes.intType()));
+    });
   }
 
+  @Test
   public void testNamedParametersRemove() {
-    doTest(new SimpleInfo(1), new SimpleInfo(2));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo(1), new SimpleInfo(2));
+    });
   }
 
+  @Test
   public void testNamedParametersOrder1() {
-    doTest(new SimpleInfo(0),
-           new SimpleInfo(2));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo(0),
+             new SimpleInfo(2));
+    });
   }
 
   /*public void testNamedParametersOrder2() throws Exception {
@@ -67,205 +108,331 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
                                  });
   }
 
+  @Test
   public void testNamedParametersOrder3() throws Exception {
-    doTest(new SimpleInfo[]{
-      new SimpleInfo(0),
-      new SimpleInfo(2),
-      new SimpleInfo("p", -1, "5", null, com.intellij.psi.PsiTypes.intType(),
-                                 });
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo[]{
+        new SimpleInfo(0),
+        new SimpleInfo(2),
+        new SimpleInfo("p", -1, "5", null, com.intellij.psi.PsiTypes.intType(),
+                                   });
+    });
   }*/
 
+  @Test
   public void testMoveNamedParameters() throws Exception {
-    doTest(new SimpleInfo(1),
-           new SimpleInfo(0));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo(1),
+             new SimpleInfo(0));
+    });
   }
 
+  @Test
   public void testMoveVarArgParameters() {
-    doTest(new SimpleInfo(1), new SimpleInfo(0));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo(1), new SimpleInfo(0));
+    });
   }
 
+  @Test
   public void testChangeVisibilityAndName() {
-    doTest(PsiModifier.PROTECTED, "newName", null, new ArrayList<>(Arrays.asList(new SimpleInfo(0))),
-           new ArrayList<>(), false);
+    runInEdtAndWait(() -> {
+      doTest(PsiModifier.PROTECTED, "newName", null, new ArrayList<>(Arrays.asList(new SimpleInfo(0))),
+             new ArrayList<>(), false);
+    });
   }
 
+  @Test
   public void testImplicitConstructorInConstructor() {
-    doTest(new SimpleInfo("p", -1, "5", null, PsiTypes.intType()));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo("p", -1, "5", null, PsiTypes.intType()));
+    });
   }
 
+  @Test
   public void testImplicitConstructorForClass() {
-    doTest(new SimpleInfo("p", -1, "5", null, PsiTypes.intType()));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo("p", -1, "5", null, PsiTypes.intType()));
+    });
   }
 
+  @Test
   public void testAnonymousClassUsage() {
-    doTest(new SimpleInfo("p", -1, "5", null, PsiTypes.intType()));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo("p", -1, "5", null, PsiTypes.intType()));
+    });
   }
 
+  @Test
   public void testGroovyDocReferences() {
-    doTest(new SimpleInfo(0), new SimpleInfo(2));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo(0), new SimpleInfo(2));
+    });
   }
 
+  @Test
   public void testOverriders() {
-    doTest(PsiModifier.PUBLIC, "bar", null, new ArrayList<>(Arrays.asList(new SimpleInfo(0))),
-           new ArrayList<>(), false);
+    runInEdtAndWait(() -> {
+      doTest(PsiModifier.PUBLIC, "bar", null, new ArrayList<>(Arrays.asList(new SimpleInfo(0))),
+             new ArrayList<>(), false);
+    });
   }
 
+  @Test
   public void testParameterRename() {
-    doTest(new SimpleInfo("newP", 0));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo("newP", 0));
+    });
   }
 
+  @Test
   public void testAddReturnType() {
-    doTest("int", new SimpleInfo(0));
+    runInEdtAndWait(() -> {
+      doTest("int", new SimpleInfo(0));
+    });
   }
 
+  @Test
   public void testChangeReturnType() {
-    doTest("int", new SimpleInfo(0));
+    runInEdtAndWait(() -> {
+      doTest("int", new SimpleInfo(0));
+    });
   }
 
+  @Test
   public void testRemoveReturnType() {
-    doTest("", new SimpleInfo(0));
+    runInEdtAndWait(() -> {
+      doTest("", new SimpleInfo(0));
+    });
   }
 
+  @Test
   public void testChangeParameterType() {
-    doTest("", new SimpleInfo("p", 0, null, null, PsiTypes.intType()));
+    runInEdtAndWait(() -> {
+      doTest("", new SimpleInfo("p", 0, null, null, PsiTypes.intType()));
+    });
   }
 
+  @Test
   public void testGenerateDelegate() {
-    doTest("", true, new SimpleInfo(0), new SimpleInfo("p", -1, "2", "2", PsiTypes.intType()));
+    runInEdtAndWait(() -> {
+      doTest("", true, new SimpleInfo(0), new SimpleInfo("p", -1, "2", "2", PsiTypes.intType()));
+    });
   }
 
+  @Test
   public void testAddException() {
-    doTest(PsiModifier.PUBLIC, null, "",
-           Arrays.asList(new SimpleInfo(0)),
-           Arrays.asList(new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))),
-           false);
+    runInEdtAndWait(() -> {
+      doTest(PsiModifier.PUBLIC, null, "",
+             Arrays.asList(new SimpleInfo(0)),
+             Arrays.asList(new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))),
+             false);
+    });
   }
 
+  @Test
   public void testExceptionCaughtInUsage() {
-    doTest(PsiModifier.PUBLIC, null, "",
-           Arrays.asList(new SimpleInfo(0)),
-           Arrays.asList(new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))),
-           false);
+    runInEdtAndWait(() -> {
+      doTest(PsiModifier.PUBLIC, null, "",
+             Arrays.asList(new SimpleInfo(0)),
+             Arrays.asList(new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))),
+             false);
+    });
   }
 
+  @Test
   public void testExceptionInClosableBlock() {
-    doTest(PsiModifier.PUBLIC, null, "",
-           Arrays.asList(new SimpleInfo(0)),
-           Arrays.asList(new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))),
-           false);
+    runInEdtAndWait(() -> {
+      doTest(PsiModifier.PUBLIC, null, "",
+             Arrays.asList(new SimpleInfo(0)),
+             Arrays.asList(new JavaThrownExceptionInfo(-1, (PsiClassType)createType("java.io.IOException"))),
+             false);
+    });
   }
 
+  @Test
   public void testGenerateDelegateForConstructor() {
-    doTest(PsiModifier.PUBLIC, "Foo", null,
-           new ArrayList<>(Arrays.asList(new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiTypes.intType()))),
-           new ArrayList<>(), true);
+    runInEdtAndWait(() -> {
+      doTest(PsiModifier.PUBLIC, "Foo", null,
+             new ArrayList<>(Arrays.asList(new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiTypes.intType()))),
+             new ArrayList<>(), true);
+    });
   }
 
+  @Test
   public void testGenerateDelegateForAbstract() {
-    doTest(PsiModifier.PUBLIC, "foo", null,
-           new ArrayList<>(Arrays.asList(new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiTypes.intType()))),
-           new ArrayList<>(), true);
+    runInEdtAndWait(() -> {
+      doTest(PsiModifier.PUBLIC, "foo", null,
+             new ArrayList<>(Arrays.asList(new SimpleInfo(0), new SimpleInfo("a", -1, "5", null, PsiTypes.intType()))),
+             new ArrayList<>(), true);
+    });
   }
 
+  @Test
   public void testTypeParameters() {
-    doTest(new SimpleInfo("list", -1, "null", null, "java.util.List<T>"), new SimpleInfo(0));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo("list", -1, "null", null, "java.util.List<T>"), new SimpleInfo(0));
+    });
   }
 
+  @Test
   public void testEnumConstructor() throws Exception {
-    doTest(new SimpleInfo("a", -1, "2", null, PsiTypes.intType()));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo("a", -1, "2", null, PsiTypes.intType()));
+    });
   }
 
+  @Test
   public void testMoveArrayToTheEnd() {
-    doTest(new SimpleInfo(1), new SimpleInfo(0));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo(1), new SimpleInfo(0));
+    });
   }
 
+  @Test
   public void testReplaceVarargWithArray() {
-    doTest(new SimpleInfo("l", 1, null, null, "List<T>[]"), new SimpleInfo(0));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo("l", 1, null, null, "List<T>[]"), new SimpleInfo(0));
+    });
   }
 
+  @Test
   public void testReplaceVarargWithArray2() {
-    doTest(new SimpleInfo("l", 1, null, null, "Map<T, E>[]"), new SimpleInfo(0));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo("l", 1, null, null, "Map<T, E>[]"), new SimpleInfo(0));
+    });
   }
 
+  @Test
   public void testConstructorCall() {
-    doTest(new SimpleInfo(0), new SimpleInfo("a", -1, "1", null, PsiTypes.intType()));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo(0), new SimpleInfo("a", -1, "1", null, PsiTypes.intType()));
+    });
   }
 
+  @Test
   public void testNoArgInCommandCall() {
-    doTest();
+    runInEdtAndWait(() -> {
+      doTest();
+    });
   }
 
+  @Test
   public void testClosureArgs() {
-    doTest(new SimpleInfo(0));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo(0));
+    });
   }
 
+  @Test
   public void testRemoveSingleClosureArgument() {
-    doTest();
+    runInEdtAndWait(() -> {
+      doTest();
+    });
   }
 
+  @Test
   public void testNewExpr() {
-    doTest();
+    runInEdtAndWait(() -> {
+      doTest();
+    });
   }
 
+  @Test
   public void testChangeJavaDoc() {
-    doTest(new SimpleInfo("newName", 0), new SimpleInfo(1));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo("newName", 0), new SimpleInfo(1));
+    });
   }
 
+  @Test
   public void testDefaultInitializerInJava() {
-    doTest(new SimpleInfo("p", -1, "", "1", ""));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo("p", -1, "", "1", ""));
+    });
   }
 
+  @Test
   public void testChangeType() {
-    doTest(PsiModifier.PUBLIC, "foo", "List<String>", new ArrayList<>(), new ArrayList<>(), false);
+    runInEdtAndWait(() -> {
+      doTest(PsiModifier.PUBLIC, "foo", "List<String>", new ArrayList<>(), new ArrayList<>(), false);
+    });
   }
 
+  @Test
   public void testDifferentParamNameInOverriden() {
-    doTest(new SimpleInfo("newName", 0));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo("newName", 0));
+    });
   }
 
+  @Test
   public void testFeelLucky() {
-    doTest(new SimpleInfo("lucky", -1, "defValue", "defInit", "java.lang.String", true));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo("lucky", -1, "defValue", "defInit", "java.lang.String", true));
+    });
   }
 
+  @Test
   public void testParamsWithGenerics() {
-    doTest(new SimpleInfo(0));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo(0));
+    });
   }
 
+  @Test
   public void testGenerateDelegateWithOtherName() {
-    doTest(PsiModifier.PUBLIC, "doSmthElse", null, new ArrayList<>(), new ArrayList<>(), true);
+    runInEdtAndWait(() -> {
+      doTest(PsiModifier.PUBLIC, "doSmthElse", null, new ArrayList<>(), new ArrayList<>(), true);
+    });
   }
 
+  @Test
   public void testFailBecauseOfOptionalParam() {
-    try {
-      doTest(new SimpleInfo("optional", -1, null, "1", "int"));
-    }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      TestCase.assertEquals("Method <b><code>foo(int)</code></b> is already defined in class <b><code>Test</code></b>", e.getMessage());
-      return;
-    }
+    runInEdtAndWait(() -> {
+      try {
+        doTest(new SimpleInfo("optional", -1, null, "1", "int"));
+      }
+      catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+        Assertions.assertEquals("Method <b><code>foo(int)</code></b> is already defined in class <b><code>Test</code></b>", e.getMessage());
+        return;
+      }
 
-    TestCase.fail("conflicts are not detected!");
+      Assertions.fail("conflicts are not detected!");
+    });
   }
 
+  @Test
   public void testRenameToLiteral() {
-    doTest(null, "a bc", null, new ArrayList<>(), new ArrayList<>(), false);
+    runInEdtAndWait(() -> {
+      doTest(null, "a bc", null, new ArrayList<>(), new ArrayList<>(), false);
+    });
   }
 
+  @Test
   public void testRenameToLiteral2() {
-    doTest(null, "a'bc", null, new ArrayList<>(), new ArrayList<>(), false);
+    runInEdtAndWait(() -> {
+      doTest(null, "a'bc", null, new ArrayList<>(), new ArrayList<>(), false);
+    });
   }
 
+  @Test
   public void testLineFeedInCommandArgs() {
-    doTest(new SimpleInfo(1));
+    runInEdtAndWait(() -> {
+      doTest(new SimpleInfo(1));
+    });
   }
 
+  @Test
   public void testTraitMethod() {
-    doTest(null, null, null, new ArrayList<>(Arrays.asList(new SimpleInfo("a", -1))), new ArrayList<>(),
-           false);
+    runInEdtAndWait(() -> {
+      doTest(null, null, null, new ArrayList<>(Arrays.asList(new SimpleInfo("a", -1))), new ArrayList<>(),
+             false);
+    });
   }
 
   private PsiType createType(String typeText) {
-    return JavaPsiFacade.getElementFactory(getProject()).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(getProject()));
+    return JavaPsiFacade.getElementFactory(groovy.get().getProject()).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(groovy.get().getProject()));
   }
 
   private void doTest(String newReturnType, boolean generateDelegate, SimpleInfo... parameterInfos) {
@@ -287,30 +454,60 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
                       @NotNull List<SimpleInfo> parameterInfo,
                       @NotNull List<ThrownExceptionInfo> exceptionInfo,
                       final boolean generateDelegate) {
-    final String javaTestName = getTestName(false) + ".java";
-    final String groovyTestName = getTestName(false) + ".groovy";
+    final String javaTestName = testName.get() + ".java";
+    final String groovyTestName = testName.get() + ".groovy";
 
 
-    final File javaSrc = new File(getTestDataPath() + "/" + javaTestName);
+    final File javaSrc = new File(groovy.get().getTestDataPath() + "/" + javaTestName);
     if (javaSrc.exists()) {
-      myFixture.copyFileToProject(javaTestName);
+      groovy.get().copyFileToProject(javaTestName);
     }
 
 
-    myFixture.configureByFile(groovyTestName);
-    executeRefactoring(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo, getProject()),
+    groovy.get().configureByFile(groovyTestName);
+    executeRefactoring(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo, groovy.get().getProject()),
                        new SimpleExceptionsGen(exceptionInfo), generateDelegate);
     if (javaSrc.exists()) {
-      myFixture.checkResultByFile(javaTestName, getTestName(false) + "_after.java", true);
+      groovy.get().checkResultByFile(javaTestName, testName.get() + "_after.java", true);
     }
 
-    myFixture.checkResultByFile(groovyTestName, getTestName(false) + "_after.groovy", true);
+    groovy.get().checkResultByFile(groovyTestName, testName.get() + "_after.groovy", true);
   }
 
-  @Override
-  public final String getTestDataPath() {
-    return basePath;
+  private void executeRefactoring(@Nullable @PsiModifier.ModifierConstant String newVisibility,
+                                  @Nullable String newName,
+                                  @Nullable String newReturnType,
+                                  @NotNull SimpleParameterGen genParams,
+                                  @NotNull SimpleExceptionsGen genExceptions,
+                                  boolean generateDelegate) {
+    final PsiElement targetElement = new GrChangeSignatureHandler().findTargetMember(groovy.get().getFile(), groovy.get().getEditor());
+    assertTrue(targetElement instanceof GrMethod, "<caret> is not on method name");
+    GrMethod method = (GrMethod)targetElement;
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(groovy.get().getProject()).getElementFactory();
+    PsiType newType;
+    if (newReturnType == null) {
+      if (method.getReturnTypeElement() == null) {
+        newType = null;
+      }
+      else {
+        newType = method.getReturnType();
+      }
+    }
+    else if (newReturnType.length() == 0) {
+      newType = null;
+    }
+    else {
+      newType = factory.createTypeFromText(newReturnType, method);
+    }
+    GrChangeInfoImpl changeInfo =
+      new GrChangeInfoImpl(method,
+                           newVisibility,
+                           newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
+                           newName != null ? newName : method.getName(),
+                           Arrays.asList(genParams.genParams(method)),
+                           genExceptions.genExceptions(method),
+                           generateDelegate);
+    new GrChangeSignatureProcessor(groovy.get().getProject(), changeInfo).run();
   }
 
-  private final String basePath = TestUtils.getAbsoluteTestDataPath() + "refactoring/changeSignature/";
 }
