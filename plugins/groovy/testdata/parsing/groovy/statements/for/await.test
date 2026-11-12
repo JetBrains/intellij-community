@@ -1,0 +1,37 @@
+for await (val x in [1, 2, 3]) {}
+-----
+Groovy script
+  For statement
+    PsiElement(for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(await)('await')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    In clause
+      Parameter
+        Modifiers
+          PsiElement(val)('val')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('x')
+      PsiWhiteSpace(' ')
+      PsiElement(in)('in')
+      PsiWhiteSpace(' ')
+      Generalized list
+        PsiElement([)('[')
+        Literal
+          PsiElement(Integer)('1')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('2')
+        PsiElement(,)(',')
+        PsiWhiteSpace(' ')
+        Literal
+          PsiElement(Integer)('3')
+        PsiElement(])(']')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')

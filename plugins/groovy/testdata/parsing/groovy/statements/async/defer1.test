@@ -1,0 +1,34 @@
+defer file.close()
+
+defer return
+
+defer
+
+-----
+Groovy script
+  GrDeferStatement
+    PsiElement(defer)('defer')
+    PsiWhiteSpace(' ')
+    Method call
+      Reference expression
+        Reference expression
+          PsiElement(identifier)('file')
+        PsiElement(.)('.')
+        PsiElement(identifier)('close')
+      Arguments
+        PsiElement(()('(')
+        PsiElement())(')')
+  PsiElement(new line)('\n\n')
+  GrDeferStatement
+    PsiElement(defer)('defer')
+    PsiErrorElement:<expression> expected, got 'return'
+      <empty list>
+  PsiWhiteSpace(' ')
+  RETURN statement
+    PsiElement(return)('return')
+  PsiElement(new line)('\n\n')
+  GrDeferStatement
+    PsiElement(defer)('defer')
+    PsiElement(new line)('\n')
+    PsiErrorElement:<expression> expected
+      <empty list>

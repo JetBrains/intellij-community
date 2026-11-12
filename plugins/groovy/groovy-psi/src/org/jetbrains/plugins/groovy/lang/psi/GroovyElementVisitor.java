@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrDeferStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrDoWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
@@ -55,6 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueSta
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrYieldStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
@@ -63,6 +65,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditiona
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAsyncExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAwaitExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
@@ -196,6 +200,14 @@ public abstract class GroovyElementVisitor {
     visitStatement(yieldStatement);
   }
 
+  public void visitYieldReturnStatement(@NotNull GrYieldReturnStatement yieldReturnStatement) {
+    visitStatement(yieldReturnStatement);
+  }
+
+  public void visitDeferStatement(@NotNull GrDeferStatement deferStatement) {
+    visitStatement(deferStatement);
+  }
+
   public void visitAssertStatement(@NotNull GrAssertStatement assertStatement) {
     visitStatement(assertStatement);
   }
@@ -262,6 +274,14 @@ public abstract class GroovyElementVisitor {
 
   public void visitInExpression(@NotNull GrInExpression expression) {
     visitBinaryExpression(expression);
+  }
+  
+  public void visitAsyncExpression(@NotNull GrAsyncExpression expression) {
+    visitExpression(expression);
+  }
+  
+  public void visitAwaitExpression(@NotNull GrAwaitExpression expression) {
+    visitExpression(expression);
   }
 
   public void visitUnaryExpression(@NotNull GrUnaryExpression expression) {

@@ -144,6 +144,8 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   "abstract"      { return storeToken(KW_ABSTRACT); }
   "as"            { return storeToken(KW_AS); }
   "assert"        { return storeToken(KW_ASSERT); }
+  "async"         { return storeToken(KW_ASYNC); }
+  "await"         { return storeToken(KW_AWAIT); }
   "break"         { return storeToken(KW_BREAK); }
   "case"          { return storeToken(KW_CASE); }
   "catch"         { return storeToken(KW_CATCH); }
@@ -152,6 +154,7 @@ mTRIPLE_DOUBLE_QUOTED_LITERAL = \"\"\" {mTRIPLE_DOUBLE_QUOTED_CONTENT}* \"\"\"
   "continue"      { return storeToken(KW_CONTINUE); }
   "def"           { return storeToken(KW_DEF); }
   "default"       { return storeToken(KW_DEFAULT); }
+  "defer"         { return storeToken(KW_DEFER); }
   "do"            { return storeToken(KW_DO); }
   "else"          { return storeToken(KW_ELSE); }
   "enum"          { return storeToken(KW_ENUM); }

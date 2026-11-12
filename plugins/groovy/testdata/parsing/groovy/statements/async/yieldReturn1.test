@@ -1,0 +1,12 @@
+yield return 1
+
+-----
+Groovy script
+  GrYieldReturnStatement
+    PsiElement(yield)('yield')
+    PsiWhiteSpace(' ')
+    PsiElement(return)('return')
+    PsiWhiteSpace(' ')
+    Literal
+      PsiElement(Integer)('1')
+  PsiElement(new line)('\n')

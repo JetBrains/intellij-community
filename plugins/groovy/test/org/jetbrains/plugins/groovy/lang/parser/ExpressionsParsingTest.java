@@ -50,6 +50,11 @@ public class ExpressionsParsingTest {
   @Test public void testAss2() { doTest(); }
   @Test public void testAss3() { doTest(); }
 
+  @Test public void testAsync$async1() { doTest(); }
+  @Test public void testAsync$async2() { doTest(); }
+  @Test public void testAsync$async3() { doTest(); }
+  @Test public void testAsync$await1() { doTest(); }
+
   @Test public void testClosures$appended() { doTest(); }
   @Test public void testClosures$closparam1() { doTest(); }
   @Test public void testClosures$closparam2() { doTest(); }

@@ -25,7 +25,7 @@ for(a;b;c)
 Groovy script
   For statement
     PsiElement(for)('for')
-    PsiErrorElement:'(' expected
+    PsiErrorElement:'(' or await expected
       <empty list>
   PsiElement(new line)('\n')
   Parenthesized expression

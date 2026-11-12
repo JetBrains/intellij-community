@@ -109,6 +109,8 @@
     KW_ABSTRACT = 'abstract'
     KW_AS = 'as'
     KW_ASSERT = 'assert'
+    KW_ASYNC = 'async'
+    KW_AWAIT = 'await'
     KW_BREAK = 'break'
     KW_CASE = 'case'
     KW_CATCH = 'catch'
@@ -117,6 +119,7 @@
     KW_CONTINUE = 'continue'
     KW_DEF = 'def'
     KW_DEFAULT = 'default'
+    KW_DEFER = 'defer'
     KW_DO = 'do'
     KW_ELSE = 'else'
     KW_ENUM = 'enum'
@@ -258,7 +261,7 @@ private def_modifier ::= 'def' !'.' { consumeTokenMethod = 'consumeTokenFast' }
 private var_modifier ::= ('var' | 'val' | 'sealed') &(mb_nl (weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple))  { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
 
-private weak_keyword_identifiers ::= 'as' | 'module' | 'permits' | 'record' | 'sealed' | 'trait' | 'var' | 'val' | 'yield' { consumeTokenMethod = 'consumeTokenFast' }
+private weak_keyword_identifiers ::= 'as' | 'async' | 'await' | 'defer' | 'module' | 'permits' | 'record' | 'sealed' | 'trait' | 'var' | 'val' | 'yield' { consumeTokenMethod = 'consumeTokenFast' }
 
 private weak_keyword ::= weak_keyword_identifiers | clear_variants_and_fail
 
@@ -726,6 +729,8 @@ statement ::= if_statement
             | return_statement
             | break_statement
             | yield_statement
+            | yield_return_statement
+            | defer_statement
             | continue_statement
             | assert_statement
             | throw_statement
@@ -774,7 +779,7 @@ do_while_statement ::= [non_empty_annotation_list mb_nl] 'do' mb_nl control_stat
 private type_element_followed_by_identifier ::= type_element mb_nl variable_lookahead
 private mb_type_element ::= type_element_followed_by_identifier?
 
-for_statement ::= [non_empty_annotation_list mb_nl] 'for' after_for { pin = 2 }
+for_statement ::= [non_empty_annotation_list mb_nl] 'for' 'await'? after_for { pin = 2 }
 private after_for ::= for_header mb_nl control_statement_body { pin = 1 }
 private for_header ::= '(' mb_nl <<insideParentheses for_clause>> mb_nl ')' { pin = 1 }
 private for_clause ::= for_in_clause | for_in_clause2 | traditional_for_clause
@@ -820,6 +825,8 @@ return_statement ::= 'return' expression?
 break_statement ::= 'break' [weak_keyword | IDENTIFIER]
 continue_statement ::= 'continue' [weak_keyword | IDENTIFIER]
 yield_statement ::= <<insideSwitchExpression>> 'yield' expression { pin = 2 }
+yield_return_statement ::=  'yield' 'return' mb_nl expression { pin = 3 }
+defer_statement ::= 'defer' mb_nl expression { pin = 1 }
 
 throw_statement ::= 'throw' expression { pin = 1 }
 assert_statement ::= 'assert' expression assert_message? { pin = 1 }
@@ -857,6 +864,8 @@ expression ::= priority15
              | power_expression           //  2
              | prefix_unary_expression    //  3
              | priority1_4
+             | async_expression
+             | await_expression
              | priority1_5
              | qualified_expressions
              | priority1_2
@@ -940,6 +949,7 @@ parenthesized_expression ::= p_parenthesized_expression_inner
 private p_parenthesized_expression_inner ::= '(' mb_nl <<insideParentheses expression_or_application>> mb_nl ')' { pin = 1 }
 
 private priority1_1 ::= new_anonymous_expression | new_expression
+//private priority1_1 ::= <<parseNewExpression type_argument_list non_empty_annotation_list expression>>
 
 new_anonymous_expression ::= 'new' type_argument_list? anonymous_type_definition { elementType = new_expression }
 anonymous_type_definition ::= <<annotated code_reference>> call_argument_list mb_nl_inside_parentheses class_body
@@ -1080,6 +1090,9 @@ index_expression_argument_list ::= !empty_map '[' bracket_argument_list_inner (m
   consumeTokenMethod = 'consumeTokenFast'
 }
 
+async_expression ::= 'async' mb_nl (lazy_closure | lambda_expression | single_parameter_lambda_expression)
+await_expression ::= 'await' mb_nl ('(' await_body ')' | await_body)
+private await_body ::= expression (',' expression)*
 postfix_unary_expression ::= expression ('++' | '--') { elementType = unary_expression }
 power_expression ::= expression '**' mb_nl <<disableNlBeforeClosure>> expression
 prefix_unary_expression ::= ('++' | '--' | '-' | '+') mb_nl <<disableNlBeforeClosure>> expression { elementType = unary_expression }

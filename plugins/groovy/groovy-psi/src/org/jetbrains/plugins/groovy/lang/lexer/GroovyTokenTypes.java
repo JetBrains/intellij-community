@@ -14,6 +14,8 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.IDENTIFIE
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_ABSTRACT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_AS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_ASSERT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_ASYNC;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_AWAIT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_BOOLEAN;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_BREAK;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_BYTE;
@@ -24,6 +26,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CLASS;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_CONTINUE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DEF;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DEFAULT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DEFER;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DO;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_DOUBLE;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.KW_ELSE;
@@ -288,6 +291,8 @@ public interface GroovyTokenTypes {
   IElementType kABSTRACT = KW_ABSTRACT;
   IElementType kAS = KW_AS;
   IElementType kASSERT = KW_ASSERT;
+  IElementType kASYNC = KW_ASYNC;
+  IElementType kAWAIT = KW_AWAIT;
   IElementType kBOOLEAN = KW_BOOLEAN;
   IElementType kBREAK = KW_BREAK;
   IElementType kBYTE = KW_BYTE;
@@ -297,9 +302,8 @@ public interface GroovyTokenTypes {
   IElementType kCLASS = KW_CLASS;
   IElementType kCONTINUE = KW_CONTINUE;
   IElementType kDEF = KW_DEF;
-  IElementType kVAR = KW_VAR;
-  IElementType kVAL = KW_VAL;
   IElementType kDEFAULT = KW_DEFAULT;
+  IElementType kDEFER = KW_DEFER;
   IElementType kDO = KW_DO;
   IElementType kDOUBLE = KW_DOUBLE;
   IElementType kELSE = KW_ELSE;
@@ -346,6 +350,8 @@ public interface GroovyTokenTypes {
   IElementType kTRANSIENT = KW_TRANSIENT;
   IElementType kTRUE = KW_TRUE;
   IElementType kTRY = KW_TRY;
+  IElementType kVAL = KW_VAL;
+  IElementType kVAR = KW_VAR;
   IElementType kVOID = KW_VOID;
   IElementType kVOLATILE = KW_VOLATILE;
   IElementType kWHILE = KW_WHILE;

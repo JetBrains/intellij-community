@@ -77,7 +77,7 @@ Groovy script
           PsiElement(new line)('\n      ')
           For statement
             PsiElement(for)('for')
-            PsiErrorElement:'(' expected, got 'return'
+            PsiErrorElement:'(' or await expected, got 'return'
               <empty list>
           PsiWhiteSpace(' ')
           RETURN statement

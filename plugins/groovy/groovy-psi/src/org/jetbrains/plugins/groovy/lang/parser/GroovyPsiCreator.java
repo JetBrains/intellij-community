@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrBlockStatementImp
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrCatchClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrClassInitializerImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrConstructorInvocationImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrDeferStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrDoWhileStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFinallyClauseImpl;
@@ -51,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.GrBreakState
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.GrContinueStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.GrReturnStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.GrThrowStatementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.GrYieldReturnStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch.GrYieldStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseSectionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
@@ -58,6 +60,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTradition
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrApplicationStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrArrayDeclarationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrAssignmentExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrAsyncExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrAwaitExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrCommandArgumentListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrConditionalExprImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrElvisExprImpl;
@@ -140,8 +144,10 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ARRAY_INI
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ARRAY_TYPE_ELEMENT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ASSERT_STATEMENT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ASSIGNMENT_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ASYNC_EXPRESSION;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.AS_EXPRESSION;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.ATTRIBUTE_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.AWAIT_EXPRESSION;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BAND_EXPRESSION;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BLOCK_STATEMENT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.BOR_EXPRESSION;
@@ -158,6 +164,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CODE_REFE
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CONSTRUCTOR;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CONSTRUCTOR_CALL_EXPRESSION;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CONTINUE_STATEMENT;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DEFER_STATEMENT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DISJUNCTION_TYPE_ELEMENT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DOLLAR_SLASHY_LITERAL;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.DO_WHILE_STATEMENT;
@@ -241,6 +248,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.VARIABLE_
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.WHILE_STATEMENT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.WILDCARD_TYPE_ELEMENT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.XOR_EXPRESSION;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.YIELD_RETURN_STATEMENT;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.YIELD_STATEMENT;
 
 /**
@@ -259,8 +267,8 @@ public final class GroovyPsiCreator {
   public static PsiElement createElement(ASTNode node) {
     IElementType elem = node.getElementType();
 
-    if (elem instanceof GroovyElementType.PsiCreator) {
-      return ((GroovyElementType.PsiCreator)elem).createPsi(node);
+    if (elem instanceof GroovyElementType.PsiCreator creator) {
+      return creator.createPsi(node);
     }
 
     if (elem instanceof IGroovyDocElementType) {
@@ -294,6 +302,7 @@ public final class GroovyPsiCreator {
     if (elem == CATCH_CLAUSE) return new GrCatchClauseImpl(node);
     if (elem == FINALLY_CLAUSE) return new GrFinallyClauseImpl(node);
     if (elem == SYNCHRONIZED_STATEMENT) return new GrSynchronizedStatementImpl(node);
+    if (elem == DEFER_STATEMENT) return new GrDeferStatementImpl(node);
     if (elem == SWITCH_STATEMENT) return new GrSwitchStatementImpl(node);
     if (elem == CASE_SECTION) return new GrCaseSectionImpl(node);
     if (elem == VARIABLE_DECLARATION) return new GrVariableDeclarationImpl(node);
@@ -355,6 +364,7 @@ public final class GroovyPsiCreator {
     //Branch statements
     if (elem == RETURN_STATEMENT) return new GrReturnStatementImpl(node);
     if (elem == YIELD_STATEMENT) return new GrYieldStatementImpl(node);
+    if (elem == YIELD_RETURN_STATEMENT) return new GrYieldReturnStatementImpl(node);
     if (elem == THROW_STATEMENT) return new GrThrowStatementImpl(node);
     if (elem == ASSERT_STATEMENT) return new GrAssertStatementImpl(node);
     if (elem == BREAK_STATEMENT) return new GrBreakStatementImpl(node);
@@ -400,6 +410,8 @@ public final class GroovyPsiCreator {
     if (elem == LAMBDA_EXPRESSION) return new GrLambdaExpressionImpl(node);
     if (elem == EXPRESSION_LAMBDA_BODY) return new GrExpressionLambdaBodyImpl(node);
     if (elem == SWITCH_EXPRESSION) return new GrSwitchExpressionImpl(node);
+    if (elem == ASYNC_EXPRESSION) return new GrAsyncExpressionImpl(node);
+    if (elem == AWAIT_EXPRESSION) return new GrAwaitExpressionImpl(node);
 
     //Paths
     if (elem == REFERENCE_EXPRESSION) return new GrReferenceExpressionImpl(node);

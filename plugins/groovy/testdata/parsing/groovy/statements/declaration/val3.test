@@ -1,0 +1,25 @@
+val async = "succinct"
+println async
+
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(val)('val')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(async)('async')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(double quoted string)('"succinct"')
+  PsiElement(new line)('\n')
+  Call expression
+    Reference expression
+      PsiElement(identifier)('println')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Reference expression
+        PsiElement(async)('async')
+  PsiElement(new line)('\n')

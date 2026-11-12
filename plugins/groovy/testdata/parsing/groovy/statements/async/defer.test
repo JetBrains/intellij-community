@@ -1,0 +1,45 @@
+var portal = openPortal(dungeonId)
+defer 
+  portal.close()
+
+defer
+
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(var)('var')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('portal')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Method call
+        Reference expression
+          PsiElement(identifier)('openPortal')
+        Arguments
+          PsiElement(()('(')
+          Reference expression
+            PsiElement(identifier)('dungeonId')
+          PsiElement())(')')
+  PsiElement(new line)('\n')
+  GrDeferStatement
+    PsiElement(defer)('defer')
+    PsiWhiteSpace(' ')
+    PsiElement(new line)('\n  ')
+    Method call
+      Reference expression
+        Reference expression
+          PsiElement(identifier)('portal')
+        PsiElement(.)('.')
+        PsiElement(identifier)('close')
+      Arguments
+        PsiElement(()('(')
+        PsiElement())(')')
+  PsiElement(new line)('\n\n')
+  GrDeferStatement
+    PsiElement(defer)('defer')
+    PsiElement(new line)('\n')
+    PsiErrorElement:<expression> expected
+      <empty list>

@@ -1,0 +1,123 @@
+def a = async { fetchFromServiceA() }
+def b = async { fetchFromServiceB() }
+def c = async { fetchFromServiceC() }
+
+// Wait for all three
+def (resultA, resultB, resultC) = await(a, b, c)
+
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      GrAsyncExpression
+        PsiElement(async)('async')
+        PsiWhiteSpace(' ')
+        Closable block
+          PsiElement({)('{')
+          PsiWhiteSpace(' ')
+          Parameter list
+            <empty list>
+          Method call
+            Reference expression
+              PsiElement(identifier)('fetchFromServiceA')
+            Arguments
+              PsiElement(()('(')
+              PsiElement())(')')
+          PsiWhiteSpace(' ')
+          PsiElement(})('}')
+  PsiElement(new line)('\n')
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('b')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      GrAsyncExpression
+        PsiElement(async)('async')
+        PsiWhiteSpace(' ')
+        Closable block
+          PsiElement({)('{')
+          PsiWhiteSpace(' ')
+          Parameter list
+            <empty list>
+          Method call
+            Reference expression
+              PsiElement(identifier)('fetchFromServiceB')
+            Arguments
+              PsiElement(()('(')
+              PsiElement())(')')
+          PsiWhiteSpace(' ')
+          PsiElement(})('}')
+  PsiElement(new line)('\n')
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('c')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      GrAsyncExpression
+        PsiElement(async)('async')
+        PsiWhiteSpace(' ')
+        Closable block
+          PsiElement({)('{')
+          PsiWhiteSpace(' ')
+          Parameter list
+            <empty list>
+          Method call
+            Reference expression
+              PsiElement(identifier)('fetchFromServiceC')
+            Arguments
+              PsiElement(()('(')
+              PsiElement())(')')
+          PsiWhiteSpace(' ')
+          PsiElement(})('}')
+  PsiElement(new line)('\n\n')
+  PsiComment(line comment)('// Wait for all three')
+  PsiElement(new line)('\n')
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Variable
+      PsiElement(identifier)('resultA')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('resultB')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('resultC')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    GrAwaitExpressionImpl(AWAIT_EXPRESSION)
+      PsiElement(await)('await')
+      PsiElement(()('(')
+      Reference expression
+        PsiElement(identifier)('a')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Reference expression
+        PsiElement(identifier)('b')
+      PsiElement(,)(',')
+      PsiWhiteSpace(' ')
+      Reference expression
+        PsiElement(identifier)('c')
+      PsiElement())(')')
+  PsiElement(new line)('\n')

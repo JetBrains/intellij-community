@@ -80,17 +80,18 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
     create_token_set_(ARRAY_TYPE_ELEMENT, CLASS_TYPE_ELEMENT, DISJUNCTION_TYPE_ELEMENT, PRIMITIVE_TYPE_ELEMENT,
       TYPE_ELEMENT, WILDCARD_TYPE_ELEMENT),
-    create_token_set_(ADDITIVE_EXPRESSION, APPLICATION_EXPRESSION, ASSIGNMENT_EXPRESSION, AS_EXPRESSION,
-      ATTRIBUTE_EXPRESSION, BAND_EXPRESSION, BOR_EXPRESSION, BUILT_IN_TYPE_EXPRESSION,
-      CAST_EXPRESSION, CLOSURE, CONSTRUCTOR_CALL_EXPRESSION, ELVIS_EXPRESSION,
-      EQUALITY_EXPRESSION, EXPRESSION, GSTRING, IMPL_EXPRESSION,
-      INDEX_EXPRESSION, INSTANCEOF_EXPRESSION, IN_EXPRESSION, LAMBDA_EXPRESSION,
-      LAND_EXPRESSION, LIST_OR_MAP, LITERAL, LOR_EXPRESSION,
-      METHOD_CALL_EXPRESSION, METHOD_REFERENCE_EXPRESSION, MULTIPLICATIVE_EXPRESSION, NEW_EXPRESSION,
-      PARENTHESIZED_EXPRESSION, POWER_EXPRESSION, PROPERTY_EXPRESSION, RANGE_EXPRESSION,
-      REFERENCE_EXPRESSION, REGEX, REGEX_FIND_EXPRESSION, REGEX_MATCH_EXPRESSION,
-      RELATIONAL_EXPRESSION, SHIFT_EXPRESSION, SWITCH_EXPRESSION, TERNARY_EXPRESSION,
-      TUPLE_ASSIGNMENT_EXPRESSION, UNARY_EXPRESSION, XOR_EXPRESSION),
+    create_token_set_(ADDITIVE_EXPRESSION, APPLICATION_EXPRESSION, ASSIGNMENT_EXPRESSION, ASYNC_EXPRESSION,
+      AS_EXPRESSION, ATTRIBUTE_EXPRESSION, AWAIT_EXPRESSION, BAND_EXPRESSION,
+      BOR_EXPRESSION, BUILT_IN_TYPE_EXPRESSION, CAST_EXPRESSION, CLOSURE,
+      CONSTRUCTOR_CALL_EXPRESSION, ELVIS_EXPRESSION, EQUALITY_EXPRESSION, EXPRESSION,
+      GSTRING, IMPL_EXPRESSION, INDEX_EXPRESSION, INSTANCEOF_EXPRESSION,
+      IN_EXPRESSION, LAMBDA_EXPRESSION, LAND_EXPRESSION, LIST_OR_MAP,
+      LITERAL, LOR_EXPRESSION, METHOD_CALL_EXPRESSION, METHOD_REFERENCE_EXPRESSION,
+      MULTIPLICATIVE_EXPRESSION, NEW_EXPRESSION, PARENTHESIZED_EXPRESSION, POWER_EXPRESSION,
+      PROPERTY_EXPRESSION, RANGE_EXPRESSION, REFERENCE_EXPRESSION, REGEX,
+      REGEX_FIND_EXPRESSION, REGEX_MATCH_EXPRESSION, RELATIONAL_EXPRESSION, SHIFT_EXPRESSION,
+      SWITCH_EXPRESSION, TERNARY_EXPRESSION, TUPLE_ASSIGNMENT_EXPRESSION, UNARY_EXPRESSION,
+      XOR_EXPRESSION),
   };
 
   /* ********************************************************** */
@@ -1428,6 +1429,40 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenFast(b, T_AT);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // expression (',' expression)*
+  static boolean await_body(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "await_body")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = expression(b, l + 1, -1);
+    r = r && await_body_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (',' expression)*
+  private static boolean await_body_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "await_body_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!await_body_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "await_body_1", c)) break;
+    }
+    return true;
+  }
+
+  // ',' expression
+  private static boolean await_body_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "await_body_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, T_COMMA);
+    r = r && expression(b, l + 1, -1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -3154,6 +3189,21 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // 'defer' mb_nl expression
+  public static boolean defer_statement(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "defer_statement")) return false;
+    if (!nextTokenIs(b, KW_DEFER)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, DEFER_STATEMENT, null);
+    r = consumeToken(b, KW_DEFER);
+    p = r; // pin = 1
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && expression(b, l + 1, -1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
   // <<definitelyTypeElement type_element declaration_lookahead>>
   static boolean definitely_type_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "definitely_type_element")) return false;
@@ -4280,7 +4330,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // [non_empty_annotation_list mb_nl] 'for' after_for
+  // [non_empty_annotation_list mb_nl] 'for' 'await'? after_for
   public static boolean for_statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "for_statement")) return false;
     if (!nextTokenIsFast(b, T_AT) &&
@@ -4290,7 +4340,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = for_statement_0(b, l + 1);
     r = r && consumeToken(b, KW_FOR);
     p = r; // pin = 2
-    r = r && after_for(b, l + 1);
+    r = r && report_error_(b, for_statement_2(b, l + 1));
+    r = p && after_for(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -4311,6 +4362,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
+  }
+
+  // 'await'?
+  private static boolean for_statement_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_statement_2")) return false;
+    consumeToken(b, KW_AWAIT);
+    return true;
   }
 
   /* ********************************************************** */
@@ -7153,6 +7211,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   //             | return_statement
   //             | break_statement
   //             | yield_statement
+  //             | yield_return_statement
+  //             | defer_statement
   //             | continue_statement
   //             | assert_statement
   //             | throw_statement
@@ -7174,6 +7234,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!r) r = return_statement(b, l + 1);
     if (!r) r = break_statement(b, l + 1);
     if (!r) r = yield_statement(b, l + 1);
+    if (!r) r = yield_return_statement(b, l + 1);
+    if (!r) r = defer_statement(b, l + 1);
     if (!r) r = continue_statement(b, l + 1);
     if (!r) r = assert_statement(b, l + 1);
     if (!r) r = throw_statement(b, l + 1);
@@ -7264,7 +7326,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "string_injection_body")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = expression(b, l + 1, 16);
+    r = expression(b, l + 1, 18);
     if (!r) r = unqualified_reference_expression(b, l + 1);
     if (!r) r = lazy_closure(b, l + 1);
     if (!r) r = string_injection_body_3(b, l + 1);
@@ -8464,11 +8526,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'as' | 'module' | 'permits' | 'record' | 'sealed' | 'trait' | 'var' | 'val' | 'yield'
+  // 'as' | 'async' | 'await' | 'defer' | 'module' | 'permits' | 'record' | 'sealed' | 'trait' | 'var' | 'val' | 'yield'
   static boolean weak_keyword_identifiers(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "weak_keyword_identifiers")) return false;
     boolean r;
     r = consumeTokenFast(b, KW_AS);
+    if (!r) r = consumeTokenFast(b, KW_ASYNC);
+    if (!r) r = consumeTokenFast(b, KW_AWAIT);
+    if (!r) r = consumeTokenFast(b, KW_DEFER);
     if (!r) r = consumeTokenFast(b, KW_MODULE);
     if (!r) r = consumeTokenFast(b, KW_PERMITS);
     if (!r) r = consumeTokenFast(b, KW_RECORD);
@@ -8575,6 +8640,21 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // 'yield' 'return' mb_nl expression
+  public static boolean yield_return_statement(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "yield_return_statement")) return false;
+    if (!nextTokenIs(b, KW_YIELD)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, YIELD_RETURN_STATEMENT, null);
+    r = consumeTokens(b, 0, KW_YIELD, KW_RETURN);
+    r = r && mb_nl(b, l + 1);
+    p = r; // pin = 3
+    r = r && expression(b, l + 1, -1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
   // <<insideSwitchExpression>> 'yield' expression
   public static boolean yield_statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "yield_statement")) return false;
@@ -8607,12 +8687,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   // 13: BINARY(power_expression)
   // 14: PREFIX(prefix_unary_expression)
   // 15: PREFIX(not_expression) ATOM(cast_expression)
-  // 16: POSTFIX(index_expression) POSTFIX(safe_index_expression) POSTFIX(postfix_unary_expression)
-  // 17: POSTFIX(method_reference_expression) POSTFIX(attribute_expression) POSTFIX(qualified_reference_expression) POSTFIX(property_expression)
-  // 18: POSTFIX(method_call_expression) ATOM(lazy_closure) ATOM(lambda_expression) ATOM(single_parameter_lambda_expression)
+  // 16: ATOM(async_expression)
+  // 17: ATOM(await_expression)
+  // 18: POSTFIX(index_expression) POSTFIX(safe_index_expression) POSTFIX(postfix_unary_expression)
+  // 19: POSTFIX(method_reference_expression) POSTFIX(attribute_expression) POSTFIX(qualified_reference_expression) POSTFIX(property_expression)
+  // 20: POSTFIX(method_call_expression) ATOM(lazy_closure) ATOM(lambda_expression) ATOM(single_parameter_lambda_expression)
   //    ATOM(list_or_map)
-  // 19: ATOM(new_anonymous_expression) ATOM(new_expression)
-  // 20: ATOM(unqualified_reference_expression) ATOM(built_in_type_expression) ATOM(literal) ATOM(gstring)
+  // 21: ATOM(new_anonymous_expression) ATOM(new_expression)
+  // 22: ATOM(unqualified_reference_expression) ATOM(built_in_type_expression) ATOM(literal) ATOM(gstring)
   //    ATOM(regex) ATOM(parenthesized_expression)
   public static boolean expression(PsiBuilder b, int l, int g) {
     if (!recursion_guard_(b, l, "expression")) return false;
@@ -8624,6 +8706,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!r) r = prefix_unary_expression(b, l + 1);
     if (!r) r = not_expression(b, l + 1);
     if (!r) r = cast_expression(b, l + 1);
+    if (!r) r = async_expression(b, l + 1);
+    if (!r) r = await_expression(b, l + 1);
     if (!r) r = lazy_closure(b, l + 1);
     if (!r) r = lambda_expression(b, l + 1);
     if (!r) r = single_parameter_lambda_expression(b, l + 1);
@@ -8735,35 +8819,35 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
         r = expression(b, l, 13);
         exit_section_(b, l, m, POWER_EXPRESSION, r, true, null);
       }
-      else if (g < 16 && index_expression_argument_list(b, l + 1)) {
+      else if (g < 18 && index_expression_argument_list(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, INDEX_EXPRESSION, r, true, null);
       }
-      else if (g < 16 && safe_index_expression_0(b, l + 1)) {
+      else if (g < 18 && safe_index_expression_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, INDEX_EXPRESSION, r, true, null);
       }
-      else if (g < 16 && postfix_unary_expression_0(b, l + 1)) {
+      else if (g < 18 && postfix_unary_expression_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, UNARY_EXPRESSION, r, true, null);
       }
-      else if (g < 17 && method_reference_expression_0(b, l + 1)) {
+      else if (g < 19 && method_reference_expression_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, METHOD_REFERENCE_EXPRESSION, r, true, null);
       }
-      else if (g < 17 && attribute_expression_0(b, l + 1)) {
+      else if (g < 19 && attribute_expression_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, ATTRIBUTE_EXPRESSION, r, true, null);
       }
-      else if (g < 17 && qualified_reference_expression_0(b, l + 1)) {
+      else if (g < 19 && qualified_reference_expression_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, REFERENCE_EXPRESSION, r, true, null);
       }
-      else if (g < 17 && property_expression_0(b, l + 1)) {
+      else if (g < 19 && property_expression_0(b, l + 1)) {
         r = true;
         exit_section_(b, l, m, PROPERTY_EXPRESSION, r, true, null);
       }
-      else if (g < 18 && callTail(b, l + 1, GroovyGeneratedParser::call_tail_with_nl_before_closure, GroovyGeneratedParser::call_tail)) {
+      else if (g < 20 && callTail(b, l + 1, GroovyGeneratedParser::call_tail_with_nl_before_closure, GroovyGeneratedParser::call_tail)) {
         r = true;
         exit_section_(b, l, m, METHOD_CALL_EXPRESSION, r, true, null);
       }
@@ -9355,6 +9439,65 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _AND_);
     r = cast_expression_start(b, l + 1);
     exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // 'async' mb_nl (lazy_closure | lambda_expression | single_parameter_lambda_expression)
+  public static boolean async_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "async_expression")) return false;
+    if (!nextTokenIsSmart(b, KW_ASYNC)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, KW_ASYNC);
+    r = r && mb_nl(b, l + 1);
+    r = r && async_expression_2(b, l + 1);
+    exit_section_(b, m, ASYNC_EXPRESSION, r);
+    return r;
+  }
+
+  // lazy_closure | lambda_expression | single_parameter_lambda_expression
+  private static boolean async_expression_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "async_expression_2")) return false;
+    boolean r;
+    r = lazy_closure(b, l + 1);
+    if (!r) r = lambda_expression(b, l + 1);
+    if (!r) r = single_parameter_lambda_expression(b, l + 1);
+    return r;
+  }
+
+  // 'await' mb_nl ('(' await_body ')' | await_body)
+  public static boolean await_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "await_expression")) return false;
+    if (!nextTokenIsSmart(b, KW_AWAIT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, KW_AWAIT);
+    r = r && mb_nl(b, l + 1);
+    r = r && await_expression_2(b, l + 1);
+    exit_section_(b, m, AWAIT_EXPRESSION, r);
+    return r;
+  }
+
+  // '(' await_body ')' | await_body
+  private static boolean await_expression_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "await_expression_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = await_expression_2_0(b, l + 1);
+    if (!r) r = await_body(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '(' await_body ')'
+  private static boolean await_expression_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "await_expression_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_LPAREN);
+    r = r && await_body(b, l + 1);
+    r = r && consumeToken(b, T_RPAREN);
+    exit_section_(b, m, null, r);
     return r;
   }
 

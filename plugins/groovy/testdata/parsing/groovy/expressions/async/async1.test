@@ -1,0 +1,39 @@
+var x = async {
+
+}
+
+var y = async
+
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(var)('var')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('x')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      GrAsyncExpression
+        PsiElement(async)('async')
+        PsiWhiteSpace(' ')
+        Closable block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n\n')
+          Parameter list
+            <empty list>
+          PsiElement(})('}')
+  PsiElement(new line)('\n\n')
+  Variable definitions
+    Modifiers
+      PsiElement(var)('var')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('y')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Reference expression
+        PsiElement(async)('async')
+  PsiElement(new line)('\n')

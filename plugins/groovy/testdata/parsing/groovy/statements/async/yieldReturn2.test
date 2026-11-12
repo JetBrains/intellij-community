@@ -1,0 +1,107 @@
+def generateWaves(String dungeonId) {
+    async {
+        var depth = 1
+        while (depth <= dungeonDepth(dungeonId)) {
+            yield return spawnEnemies(dungeonId, depth)
+            depth++
+        }
+    }
+}
+
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('generateWaves')
+    Parameter list
+      PsiElement(()('(')
+      Parameter
+        Modifiers
+          <empty list>
+        Type element
+          Reference element
+            PsiElement(identifier)('String')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('dungeonId')
+      PsiElement())(')')
+    Throw clause
+      <empty list>
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      GrAsyncExpression
+        PsiElement(async)('async')
+        PsiWhiteSpace(' ')
+        Closable block
+          PsiElement({)('{')
+          PsiWhiteSpace('\n        ')
+          Parameter list
+            <empty list>
+          Variable definitions
+            Modifiers
+              PsiElement(var)('var')
+            PsiWhiteSpace(' ')
+            Variable
+              PsiElement(identifier)('depth')
+              PsiWhiteSpace(' ')
+              PsiElement(=)('=')
+              PsiWhiteSpace(' ')
+              Literal
+                PsiElement(Integer)('1')
+          PsiElement(new line)('\n        ')
+          WHILE statement
+            PsiElement(while)('while')
+            PsiWhiteSpace(' ')
+            PsiElement(()('(')
+            Relational expression
+              Reference expression
+                PsiElement(identifier)('depth')
+              PsiWhiteSpace(' ')
+              PsiElement(<=)('<=')
+              PsiWhiteSpace(' ')
+              Method call
+                Reference expression
+                  PsiElement(identifier)('dungeonDepth')
+                Arguments
+                  PsiElement(()('(')
+                  Reference expression
+                    PsiElement(identifier)('dungeonId')
+                  PsiElement())(')')
+            PsiElement())(')')
+            PsiWhiteSpace(' ')
+            Block statement
+              Open block
+                PsiElement({)('{')
+                PsiWhiteSpace('\n            ')
+                GrYieldReturnStatement
+                  PsiElement(yield)('yield')
+                  PsiWhiteSpace(' ')
+                  PsiElement(return)('return')
+                  PsiWhiteSpace(' ')
+                  Method call
+                    Reference expression
+                      PsiElement(identifier)('spawnEnemies')
+                    Arguments
+                      PsiElement(()('(')
+                      Reference expression
+                        PsiElement(identifier)('dungeonId')
+                      PsiElement(,)(',')
+                      PsiWhiteSpace(' ')
+                      Reference expression
+                        PsiElement(identifier)('depth')
+                      PsiElement())(')')
+                PsiElement(new line)('\n            ')
+                Unary expression
+                  Reference expression
+                    PsiElement(identifier)('depth')
+                  PsiElement(++)('++')
+                PsiElement(new line)('\n        ')
+                PsiElement(})('}')
+          PsiElement(new line)('\n    ')
+          PsiElement(})('}')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
+  PsiElement(new line)('\n')

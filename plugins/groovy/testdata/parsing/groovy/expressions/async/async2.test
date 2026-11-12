@@ -1,0 +1,61 @@
+var x = async () -> 1
+
+var y = async z -> println z // why does groovy allow a single non-primitive parameter here?
+
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(var)('var')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('x')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      GrAsyncExpression
+        PsiElement(async)('async')
+        PsiWhiteSpace(' ')
+        Lambda expression
+          Parameter list
+            PsiElement(()('(')
+            PsiElement())(')')
+          PsiWhiteSpace(' ')
+          PsiElement(->)('->')
+          PsiWhiteSpace(' ')
+          Lambda body
+            Literal
+              PsiElement(Integer)('1')
+  PsiElement(new line)('\n\n')
+  Variable definitions
+    Modifiers
+      PsiElement(var)('var')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('y')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      GrAsyncExpression
+        PsiElement(async)('async')
+        PsiWhiteSpace(' ')
+        Lambda expression
+          Parameter list
+            Parameter
+              Modifiers
+                <empty list>
+              PsiElement(identifier)('z')
+          PsiWhiteSpace(' ')
+          PsiElement(->)('->')
+          PsiWhiteSpace(' ')
+          Lambda body
+            Call expression
+              Reference expression
+                PsiElement(identifier)('println')
+              PsiWhiteSpace(' ')
+              Command arguments
+                Reference expression
+                  PsiElement(identifier)('z')
+  PsiWhiteSpace(' ')
+  PsiComment(line comment)('// why does groovy allow a single non-primitive parameter here?')
+  PsiElement(new line)('\n')

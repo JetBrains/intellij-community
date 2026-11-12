@@ -1,0 +1,24 @@
+var async
+var z = async
+
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(var)('var')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(async)('async')
+  PsiElement(new line)('\n')
+  Variable definitions
+    Modifiers
+      PsiElement(var)('var')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('z')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Reference expression
+        PsiElement(async)('async')
+  PsiElement(new line)('\n')

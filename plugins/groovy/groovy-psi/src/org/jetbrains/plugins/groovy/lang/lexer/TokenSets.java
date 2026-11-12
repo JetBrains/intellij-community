@@ -13,6 +13,8 @@ import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElemen
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kABSTRACT;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kAS;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kASSERT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kASYNC;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kAWAIT;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kBOOLEAN;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kBREAK;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kBYTE;
@@ -23,6 +25,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kCLASS;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kCONTINUE;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kDEF;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kDEFAULT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kDEFER;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kDO;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kDOUBLE;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kELSE;
@@ -225,6 +228,9 @@ public interface TokenSets {
   );
 
   TokenSet CONTEXTUAL_KEYWORDS = TokenSet.create(
+    kASYNC,
+    kAWAIT,
+    kDEFER,
     kMODULE,
     kPERMITS,
     kRECORD,
@@ -237,16 +243,16 @@ public interface TokenSets {
   TokenSet GROOVY_KEYWORDS = TokenSet.create(kAS, kIN, kTRAIT);
 
   TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = 
-    TokenSet.create(mIDENT, kDEF, kAS, kIN, kMODULE, kPERMITS, kRECORD, kSEALED, kTRAIT, kVAL, kVAR, kYIELD);
+    TokenSet.create(mIDENT, kASYNC, kAWAIT, kDEF, kDEFER, kAS, kIN, kMODULE, kPERMITS, kRECORD, kSEALED, kTRAIT, kVAL, kVAR, kYIELD);
 
   TokenSet PROPERTY_NAMES = TokenSet.orSet(GroovyTokenSets.STRING_LITERALS, CONTEXTUAL_KEYWORDS,
                                            TokenSet.create(mIDENT, mREGEX_LITERAL, mDOLLAR_SLASH_REGEX_LITERAL));
 
   TokenSet KEYWORDS = TokenSet.create(
-    kABSTRACT, kAS, kASSERT,
+    kABSTRACT, kAS, kASSERT, kASYNC, kAWAIT,
     kBOOLEAN, kBREAK, kBYTE,
     kCASE, kCATCH, kCHAR, kCLASS, kCONTINUE,
-    kDEF, kDEFAULT, kDO, kDOUBLE,
+    kDEF, kDEFAULT, kDEFER, kDO, kDOUBLE,
     kELSE, kEXTENDS, kENUM,
     kFALSE, kFINAL, kFLOAT, kFOR, kFINALLY,
     kIF, kIMPLEMENTS, kIMPORT, kIN, kINSTANCEOF, kINT, kINTERFACE,

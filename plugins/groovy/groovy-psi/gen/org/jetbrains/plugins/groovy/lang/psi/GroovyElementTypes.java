@@ -62,8 +62,10 @@ public interface GroovyElementTypes {
   GroovyElementType ARRAY_TYPE_ELEMENT = new GroovyElementType("ARRAY_TYPE_ELEMENT");
   GroovyElementType ASSERT_STATEMENT = new GroovyElementType("ASSERT_STATEMENT");
   GroovyElementType ASSIGNMENT_EXPRESSION = new GroovyElementType("ASSIGNMENT_EXPRESSION");
+  GroovyElementType ASYNC_EXPRESSION = new GroovyElementType("ASYNC_EXPRESSION");
   GroovyElementType AS_EXPRESSION = new GroovyElementType("AS_EXPRESSION");
   GroovyElementType ATTRIBUTE_EXPRESSION = new GroovyElementType("ATTRIBUTE_EXPRESSION");
+  GroovyElementType AWAIT_EXPRESSION = new GroovyElementType("AWAIT_EXPRESSION");
   GroovyElementType BAND_EXPRESSION = new GroovyElementType("BAND_EXPRESSION");
   GrBlockLambdaBodyElementType BLOCK_LAMBDA_BODY = new GrBlockLambdaBodyElementType("BLOCK_LAMBDA_BODY");
   GrBlockLambdaBodyElementType BLOCK_LAMBDA_BODY_SWITCH_AWARE = ParserUtils.getSwitchAwareLambdaBlockElementType("BLOCK_LAMBDA_BODY_SWITCH_AWARE");
@@ -85,6 +87,7 @@ public interface GroovyElementTypes {
   GrConstructorBlockElementType CONSTRUCTOR_BLOCK = new GrConstructorBlockElementType("CONSTRUCTOR_BLOCK");
   GroovyElementType CONSTRUCTOR_CALL_EXPRESSION = new GroovyElementType("CONSTRUCTOR_CALL_EXPRESSION");
   GroovyElementType CONTINUE_STATEMENT = new GroovyElementType("CONTINUE_STATEMENT");
+  GroovyElementType DEFER_STATEMENT = new GroovyElementType("DEFER_STATEMENT");
   GroovyElementType DISJUNCTION_TYPE_ELEMENT = new GroovyElementType("DISJUNCTION_TYPE_ELEMENT");
   GroovyElementType DOLLAR_SLASHY_LITERAL = new GroovyElementType("DOLLAR_SLASHY_LITERAL");
   GroovyElementType DO_WHILE_STATEMENT = new GroovyElementType("DO_WHILE_STATEMENT");
@@ -175,6 +178,7 @@ public interface GroovyElementTypes {
   GroovyElementType WHILE_STATEMENT = new GroovyElementType("WHILE_STATEMENT");
   GroovyElementType WILDCARD_TYPE_ELEMENT = new GroovyElementType("WILDCARD_TYPE_ELEMENT");
   GroovyElementType XOR_EXPRESSION = new GroovyElementType("XOR_EXPRESSION");
+  GroovyElementType YIELD_RETURN_STATEMENT = new GroovyElementType("YIELD_RETURN_STATEMENT");
   GroovyElementType YIELD_STATEMENT = new GroovyElementType("YIELD_STATEMENT");
 
   IElementType DOLLAR_SLASHY_BEGIN = new GroovyElementType("$/ regex begin");
@@ -187,6 +191,8 @@ public interface GroovyElementTypes {
   IElementType KW_ABSTRACT = new GroovyElementType("abstract");
   IElementType KW_AS = new GroovyElementType("as");
   IElementType KW_ASSERT = new GroovyElementType("assert");
+  IElementType KW_ASYNC = new GroovyElementType("async");
+  IElementType KW_AWAIT = new GroovyElementType("await");
   IElementType KW_BOOLEAN = new GroovyElementType("boolean");
   IElementType KW_BREAK = new GroovyElementType("break");
   IElementType KW_BYTE = new GroovyElementType("byte");
@@ -198,6 +204,7 @@ public interface GroovyElementTypes {
   IElementType KW_CONTINUE = new GroovyElementType("continue");
   IElementType KW_DEF = new GroovyElementType("def");
   IElementType KW_DEFAULT = new GroovyElementType("default");
+  IElementType KW_DEFER = new GroovyElementType("defer");
   IElementType KW_DO = new GroovyElementType("do");
   IElementType KW_DOUBLE = new GroovyElementType("double");
   IElementType KW_ELSE = new GroovyElementType("else");

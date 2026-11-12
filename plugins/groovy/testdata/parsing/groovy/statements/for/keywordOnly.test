@@ -1,7 +1,16 @@
 for
+
+for await
 -----
 Groovy script
   For statement
     PsiElement(for)('for')
+    PsiErrorElement:'(' or await expected
+      <empty list>
+  PsiElement(new line)('\n\n')
+  For statement
+    PsiElement(for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(await)('await')
     PsiErrorElement:'(' expected
       <empty list>

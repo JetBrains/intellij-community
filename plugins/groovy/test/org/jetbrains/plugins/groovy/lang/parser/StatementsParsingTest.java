@@ -106,8 +106,15 @@ public class StatementsParsingTest {
   @Test public void testDeclaration$var10() { doTest(); }
   @Test public void testDeclaration$val1() { doTest(); }
   @Test public void testDeclaration$val2() { doTest(); }
+  @Test public void testDeclaration$val3() { doTest(); }
   @Test public void testDeclaration$multilineTuple() { doTest(); }
 
+  @Test public void testAsync$defer1() { doTest(); }
+  @Test public void testAsync$yieldReturn1() { doTest(); }
+  @Test public void testAsync$yieldReturn2() { doTest(); }
+  @Test public void testAsync$await() { doTest(); }
+  @Test public void testAsync$defer() { doTest(); }
+  
   @Test public void testFor$for1() { doTest(); }
   @Test public void testFor$for2() { doTest(); }
   @Test public void testFor$for3() { doTest(); }
@@ -130,6 +137,7 @@ public class StatementsParsingTest {
   @Test public void testFor$for21() { doTest(); }
   @Test public void testFor$for22() { doTest(); }
   @Test public void testFor$for23() { doTest(); }
+  @Test public void testFor$await() { doTest(); }
   @Test public void testFor$identifierAfterLParen() { doTest(); }
   @Test public void testFor$keywordOnly() { doTest(); }
   @Test public void testFor$lParen() { doTest(); }

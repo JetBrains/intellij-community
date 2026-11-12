@@ -1,0 +1,56 @@
+await a, b, c
+
+await (a, b, c)
+
+await
+x
+
+await
+(y)
+
+-----
+Groovy script
+  GrAwaitExpressionImpl(AWAIT_EXPRESSION)
+    PsiElement(await)('await')
+    PsiWhiteSpace(' ')
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    Reference expression
+      PsiElement(identifier)('b')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    Reference expression
+      PsiElement(identifier)('c')
+  PsiElement(new line)('\n\n')
+  GrAwaitExpressionImpl(AWAIT_EXPRESSION)
+    PsiElement(await)('await')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    Reference expression
+      PsiElement(identifier)('b')
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    Reference expression
+      PsiElement(identifier)('c')
+    PsiElement())(')')
+  PsiElement(new line)('\n\n')
+  GrAwaitExpressionImpl(AWAIT_EXPRESSION)
+    PsiElement(await)('await')
+    PsiElement(new line)('\n')
+    Reference expression
+      PsiElement(identifier)('x')
+  PsiElement(new line)('\n\n')
+  GrAwaitExpressionImpl(AWAIT_EXPRESSION)
+    PsiElement(await)('await')
+    PsiElement(new line)('\n')
+    PsiElement(()('(')
+    Reference expression
+      PsiElement(identifier)('y')
+    PsiElement())(')')
+  PsiElement(new line)('\n')
