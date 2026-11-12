@@ -1,9 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
-import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.idea.TestFor
-import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.UsefulTestCase.assertContainsElements
 import com.intellij.testFramework.UsefulTestCase.assertDoesntContain
 import com.jetbrains.python.allure.Components
@@ -23,7 +21,7 @@ import org.junit.jupiter.api.Test
  * - `pytest_widgets`, with an `.egg-info` directory. Its entry point is `pytest_widgets:plugin`, so pytest registers the
  *   submodule `plugin` and not the package.
  * - `unregistered_fixtures`, with a fixture and a marker. No distribution registers it as a plugin.
- * - `pytest` and `_pytest`, with the built-in fixtures `tmp_path` and `monkeypatch`.
+ * - `pytest` and `_pytest`, with the built-in fixtures `tmp_path` and `monkeypatch`, and the declared marker `skip`.
  *
  * A test that asserts a `TYPE` from a `.py` file of the class root turns off the check of the parsed class roots. The `TYPE`
  * directive also evaluates the user-initiated context, which reads the annotations of these files from their trees.
@@ -190,19 +188,15 @@ class PyTestEntryPointPluginFixtureTest : PyCodeInsightTestCase() {
   @TestCaseOptions(testFileName = TEST_FILE_NAME, additionalSdkRoots = [SdkRoot(PLUGINS_ROOT, OrderRootTypeEnum.CLASSES)],
                    assertSdkRootsNotParsed = false)
   fun `the completion after pytest mark offers no marker of the plugins during indexing`() {
-    val variants = withCaret("""
+    val variants = completeWithCaret("""
       import pytest
 
       @pytest.mark.django_db
       #            └ CARET
       def test_home():
           pass
-      """) {
-      DumbModeTestUtils.computeInDumbModeSynchronously(myFixture.project) {
-        myFixture.complete(CompletionType.BASIC)
-        myFixture.lookupElementStrings.orEmpty()
-      }
-    }
+      """, inDumbMode = true)
+    assertContainsElements(variants, "skip")
     assertDoesntContain(variants, "django_db", "urls")
   }
 
