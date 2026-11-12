@@ -24,6 +24,23 @@ abstract class FontLayoutService {
     isRtl: Boolean,
   ): GlyphVector
 
+  /**
+   * Returns the glyphs of the chars without the text layout: one glyph for each char, in the order of the chars.
+   * Use it only for left-to-right text in a font without layout attributes, see [Font.hasLayoutAttributes]. The text
+   * must have no surrogate pair, no mark, no format char and no complex script, see [Font.textRequiresLayout].
+   * The default calls [layoutGlyphVector].
+   */
+  @ApiStatus.Internal
+  open fun createGlyphVector(
+    font: Font,
+    fontRenderContext: FontRenderContext,
+    chars: CharArray,
+    start: Int,
+    end: Int,
+  ): GlyphVector {
+    return layoutGlyphVector(font, fontRenderContext, chars, start, end, false)
+  }
+
   abstract fun charWidth(fontMetrics: FontMetrics, c: Char): Int
 
   abstract fun charWidth(fontMetrics: FontMetrics, codePoint: Int): Int
@@ -74,6 +91,17 @@ private object DefaultFontLayoutService : FontLayoutService() {
       /* limit = */ end,
       /* flags = */ if (isRtl) Font.LAYOUT_RIGHT_TO_LEFT else Font.LAYOUT_LEFT_TO_RIGHT,
     )
+  }
+
+  override fun createGlyphVector(
+    font: Font,
+    fontRenderContext: FontRenderContext,
+    chars: CharArray,
+    start: Int,
+    end: Int,
+  ): GlyphVector {
+    val text = if (start == 0 && end == chars.size) chars else chars.copyOfRange(start, end)
+    return font.createGlyphVector(fontRenderContext, text)
   }
 
   override fun charWidth(fontMetrics: FontMetrics, c: Char): Int = fontMetrics.charWidth(c)

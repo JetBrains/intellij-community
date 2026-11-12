@@ -9,8 +9,10 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.Shape;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
+import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
@@ -29,17 +31,25 @@ import java.util.function.Consumer;
  *       width of the font, not the width of their cells.</li>
  * </ul>
  * <p>
- * The cells alone give the layout, so the fragment lays out its glyphs at the first draw and keeps them for the next
- * draw of the same range.
+ * The cells alone give the layout, so the fragment gets its glyphs at the first draw. Text that needs no layout and
+ * whose advances fill its cells exactly is drawn as chars, with no glyph vector. Other text gets the glyphs of the whole
+ * fragment once for each render context. A draw of a part draws these glyphs under a clip. Text that needs no layout
+ * gets its glyphs without the text layout, see {@link FontLayoutService#createGlyphVector}.
  */
 @ApiStatus.Internal
 public final class GridTextFragment extends TextFragment {
+  private static final char FIRST_MARK = '\u0300'; // no char before it is a mark, a format char or a surrogate
+  private static final double CLIP_MARGIN = 1e4; // the reach of a glyph out of the cells, as ComplexTextFragment assumes
   private final char @NotNull [] myText;
   private final @NotNull Font myFont;
+  /** The text needs the text layout: a right-to-left run, a font with ligatures, a surrogate pair or a complex script. */
+  private final boolean myNeedsLayout;
+  /** The text needs no layout, and the advance of each char is the width of its cells, so the chars sit on their cells. */
+  private final boolean myAdvancesFillCells;
   /** The number of cells from the start of the fragment to the end of each char, in logical order. */
   private final int @NotNull [] myCellsAfterChar;
   private final float myCellWidth;
-  private volatile @Nullable CellGlyphs myCellGlyphs; // the glyphs of the last draw
+  private volatile @Nullable CellGlyphs myCellGlyphs; // the glyphs of the whole fragment
 
   /**
    * @param isRtl     the direction of the run; a right-to-left run keeps its cells in logical order, and its first
@@ -64,9 +74,42 @@ public final class GridTextFragment extends TextFragment {
     assert start < end;
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();
+    myNeedsLayout = isRtl || myFont.hasLayoutAttributes() || needsLayout(myText);
     myCellsAfterChar = cellsAfterChar(myText, gridSpec);
     myCellWidth = cellWidth;
+    myAdvancesFillCells = !myNeedsLayout && advancesFillCells(myText, fontInfo, gridSpec, cellWidth);
     setCharPositions();
+  }
+
+  /**
+   * Returns true when the advance of each char is the width of its cells.
+   * The text has no surrogate pair here, so each char is a code point.
+   */
+  private static boolean advancesFillCells(
+    char @NotNull [] text,
+    @NotNull FontInfo fontInfo,
+    @NotNull CharacterGridSpec gridSpec,
+    float cellWidth
+  ) {
+    for (char c : text) {
+      if (Math.abs(fontInfo.charWidth2D(c) - gridSpec.cells(c) * cellWidth) >= 0.001f) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Returns true when the glyphs of the text need the text layout: for a surrogate pair, a mark, a format char, such
+   * as a variation selector or a zero width joiner, or a complex script.
+   */
+  private static boolean needsLayout(char @NotNull [] text) {
+    for (char c : text) {
+      if (c >= FIRST_MARK && (Character.isSurrogate(c) || FontInfo.isMarkOrFormat(c))) {
+        return true;
+      }
+    }
+    return Font.textRequiresLayout(text, 0, text.length);
   }
 
   /**
@@ -119,40 +162,84 @@ public final class GridTextFragment extends TextFragment {
     assert startOffset >= 0;
     assert endOffset <= myCharPositions.length;
     assert startOffset < endOffset;
-    // The glyphs of the range sit at their x of the fragment, so the draw moves them to the x of the range.
-    return g -> g.drawGlyphVector(cellGlyphs(g.getFontRenderContext(), startOffset, endOffset), x - getX(startOffset), y);
+    if (myAdvancesFillCells) {
+      return g -> drawChars(g, x, y, startOffset, endOffset);
+    }
+    return g -> drawGlyphs(g, x, y, startOffset, endOffset);
   }
 
   /**
-   * Returns the glyphs of the chars from {@code startOffset} to {@code endOffset}, each cluster on its cells.
-   * It keeps the glyphs of the last range and render context, because a repaint usually draws the same range again.
+   * Draws the chars of the range at {@code x}. The advances fill the cells, so each char lands on its cell.
    */
-  private @NotNull GlyphVector cellGlyphs(@NotNull FontRenderContext context, int startOffset, int endOffset) {
+  private void drawChars(@NotNull Graphics2D g, float x, float y, int startOffset, int endOffset) {
+    g.setFont(myFont);
+    int xAsInt = (int)x;
+    int yAsInt = (int)y;
+    if (x == xAsInt && y == yAsInt) { // no garbage for the usual integer position
+      g.drawChars(myText, startOffset, endOffset - startOffset, xAsInt, yAsInt);
+    }
+    else {
+      g.drawString(new String(myText, startOffset, endOffset - startOffset), x, y);
+    }
+  }
+
+  /**
+   * Draws the glyphs of the whole fragment, each cluster on its cells. A draw of a part clips the glyphs to the cells of
+   * the part. So the part of a cluster that a range cuts gets the color of its range.
+   */
+  private void drawGlyphs(@NotNull Graphics2D g, float x, float y, int startOffset, int endOffset) {
+    GlyphVector glyphs = wholeGlyphs(g.getFontRenderContext());
+    // The glyphs sit at their x of the fragment, so the draw moves them to the x of the range.
+    float originX = x - getX(startOffset);
+    int numChars = myCharPositions.length;
+    if (startOffset == 0 && endOffset == numChars) {
+      g.drawGlyphVector(glyphs, originX, y);
+      return;
+    }
+    Shape savedClip = g.getClip();
+    double xMin = x - (startOffset == 0 ? CLIP_MARGIN : 0);
+    double xMax = originX + getX(endOffset) + (endOffset == numChars ? CLIP_MARGIN : 0);
+    g.clip(new Rectangle2D.Double(xMin, y - CLIP_MARGIN, xMax - xMin, 2 * CLIP_MARGIN));
+    try {
+      g.drawGlyphVector(glyphs, originX, y);
+    }
+    finally {
+      //noinspection GraphicsSetClipInspection
+      g.setClip(savedClip);
+    }
+  }
+
+  /**
+   * Returns the glyphs of the whole fragment for the render context, each cluster on its cells.
+   * It keeps them for the next draw in the same render context.
+   */
+  private @NotNull GlyphVector wholeGlyphs(@NotNull FontRenderContext context) {
     CellGlyphs cached = myCellGlyphs;
-    if (cached != null && cached.startOffset() == startOffset && cached.endOffset() == endOffset && cached.context().equals(context)) {
+    if (cached != null && cached.context().equals(context)) {
       return cached.glyphs();
     }
     int numChars = myCharPositions.length;
-    int firstChar = isRtl() ? numChars - endOffset : startOffset;
-    int lastChar = isRtl() ? numChars - startOffset : endOffset;
-    GlyphVector glyphs = layoutGlyphVector(myText, firstChar, lastChar, isRtl(), myFont, context);
-    placeClusters(glyphs, firstChar, lastChar);
-    myCellGlyphs = new CellGlyphs(startOffset, endOffset, context, glyphs);
+    GlyphVector glyphs = myNeedsLayout
+                         ? layoutGlyphVector(myText, 0, numChars, isRtl(), myFont, context)
+                         : FontLayoutService.getInstance().createGlyphVector(myFont, context, myText, 0, numChars);
+    placeClusters(glyphs);
+    myCellGlyphs = new CellGlyphs(context, glyphs);
     return glyphs;
   }
 
   /**
    * Moves the glyphs of each cluster together, so that their advance sits in the middle of the cells of the cluster.
    * A cluster is the chars of one glyph char index, so a mark keeps its place next to its base.
-   * The x of a glyph is its x in the fragment, also when {@code glyphs} covers a part of the fragment.
+   * The glyphs are the glyphs of the whole fragment.
    */
-  private void placeClusters(@NotNull GlyphVector glyphs, int firstChar, int lastChar) {
+  private void placeClusters(@NotNull GlyphVector glyphs) {
+    int numChars = myCharPositions.length;
     int numGlyphs = glyphs.getNumGlyphs();
     double[] originalX = new double[numGlyphs + 1];
     for (int i = 0; i <= numGlyphs; i++) {
       originalX[i] = glyphs.getGlyphPosition(i).getX();
     }
-    int[] clusterEndChar = clusterEndChars(glyphs, lastChar - firstChar);
+    int[] clusterEndChar = clusterEndChars(glyphs, numChars);
     int firstGlyph = 0;
     while (firstGlyph < numGlyphs) {
       int charIndex = glyphs.getGlyphCharIndex(firstGlyph);
@@ -160,8 +247,8 @@ public final class GridTextFragment extends TextFragment {
       while (nextGlyph < numGlyphs && glyphs.getGlyphCharIndex(nextGlyph) == charIndex) {
         nextGlyph++;
       }
-      float edgeBefore = cellX(cellsBefore(firstChar + charIndex));
-      float edgeAfter = cellX(cellsBefore(firstChar + clusterEndChar[charIndex]));
+      float edgeBefore = cellX(cellsBefore(charIndex));
+      float edgeAfter = cellX(cellsBefore(clusterEndChar[charIndex]));
       float left = Math.min(edgeBefore, edgeAfter);
       float right = Math.max(edgeBefore, edgeAfter);
       double advance = originalX[nextGlyph] - originalX[firstGlyph];
@@ -171,8 +258,8 @@ public final class GridTextFragment extends TextFragment {
       }
       firstGlyph = nextGlyph;
     }
-    // The advance of the vector ends at the right edge of its range, also in RTL text
-    moveGlyph(glyphs, numGlyphs, Math.max(cellX(cellsBefore(firstChar)), cellX(cellsBefore(lastChar))));
+    // The advance of the vector ends at the right edge of the fragment, also in RTL text
+    moveGlyph(glyphs, numGlyphs, Math.max(cellX(0), cellX(cellsBefore(numChars))));
   }
 
   /**
@@ -196,8 +283,8 @@ public final class GridTextFragment extends TextFragment {
   }
 
   /**
-   * The glyphs of a range of chars for a render context, see {@link #cellGlyphs}.
+   * The glyphs of the whole fragment for a render context, see {@link #wholeGlyphs}.
    */
-  private record CellGlyphs(int startOffset, int endOffset, @NotNull FontRenderContext context, @NotNull GlyphVector glyphs) {
+  private record CellGlyphs(@NotNull FontRenderContext context, @NotNull GlyphVector glyphs) {
   }
 }
