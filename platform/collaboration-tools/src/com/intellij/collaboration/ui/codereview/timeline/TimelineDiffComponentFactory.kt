@@ -112,17 +112,17 @@ object TimelineDiffComponentFactory {
 
   @ApiStatus.Internal
   object AnchorLine : TextDiffType {
-    override fun getName() = "Comment Anchor Line"
+    override fun getName(): String = "Comment Anchor Line"
 
     override fun getColor(editor: Editor?): Color = JBColor.namedColor("Review.Timeline.Thread.Diff.AnchorLine",
                                                                        JBColor(0xFBF1D1, 0x544B2D))
 
-    override fun getIgnoredColor(editor: Editor?) = getColor(editor)
-    override fun getMarkerColor(editor: Editor?) = getColor(editor)
+    override fun getIgnoredColor(editor: Editor?): Color = getColor(editor)
+    override fun getMarkerColor(editor: Editor?): Color = getColor(editor)
   }
 
   @ApiStatus.Internal
-  const val DIFF_CONTEXT_SIZE = 3
+  const val DIFF_CONTEXT_SIZE: Int = 3
 
   private fun truncateHunk(hunk: PatchHunk, anchor: DiffLineLocation, anchorStart: DiffLineLocation?): PatchHunk {
     if (hunk.lines.size <= DIFF_CONTEXT_SIZE + 1) return hunk
