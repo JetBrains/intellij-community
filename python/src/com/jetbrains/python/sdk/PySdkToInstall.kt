@@ -12,6 +12,7 @@ import com.intellij.python.community.impl.installer.BinaryInstallerUsagesCollect
 import com.intellij.python.community.impl.installer.PySdkToInstallManager
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.v2.InstallablePythonSdk
@@ -24,7 +25,10 @@ import org.jetbrains.annotations.CalledInAny
 
 internal val LOGGER: Logger = Logger.getInstance(PySdkToInstall::class.java)
 
-@CalledInAny
+/**
+ * The Python versions that the IDE can install. The first call parses `sdks.json`.
+ */
+@RequiresBackgroundThread
 @Internal
 internal fun getSdksToInstall(): List<PySdkToInstall> {
   return PySdkToInstallManager.getAvailableVersionsToInstall().map {
