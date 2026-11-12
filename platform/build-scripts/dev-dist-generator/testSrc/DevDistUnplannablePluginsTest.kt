@@ -644,7 +644,7 @@ class DevDistUnplannablePluginsTest {
 }
 
 /** A product with the given plugin layouts and no bundled plugin. */
-private class SyntheticProductProperties(layouts: List<PluginLayout> = emptyList()) : ProductProperties() {
+internal class SyntheticProductProperties(layouts: List<PluginLayout> = emptyList()) : ProductProperties() {
   init {
     productLayout.bundledPluginModules = persistentListOf()
     productLayout.pluginLayouts = lazyOf(layouts.toPersistentList())

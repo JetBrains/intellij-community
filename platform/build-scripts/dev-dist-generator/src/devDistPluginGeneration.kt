@@ -896,12 +896,14 @@ internal class DevDistPluginCallRendering(
 /**
  * The rendered plugin executions of one run: the calls of every complex plugin keyed by main module and sorted, and the
  * `DEV_DIST_PLUGIN_COMPONENTS` map of `dev_dist_content_sets.bzl`. [bundledModules] are the main modules of the bundled
- * tier of each product, for the distribution index, see [devDistBundledModules].
+ * tier of each product, for the distribution index, see [devDistBundledModules]. [testPlugins] are the main modules of
+ * the test plugins of each product, for `DEV_DIST_TEST_PLUGINS`, see [devDistTestPluginModules].
  */
 internal class DevDistPluginExecutionRendering(
   @JvmField val calls: Map<String, DevDistPluginCallRendering>,
   @JvmField val components: String,
   @JvmField val bundledModules: Map<String, DevDistBundledModules>,
+  @JvmField val testPlugins: Map<String, List<String>>,
 )
 
 /**
@@ -1022,6 +1024,7 @@ internal fun renderGeneratedDevDistPluginExecutions(
       owner.half.compositionOrder(product)
     },
     bundledModules = components.mapValues { (_, tiers) -> devDistBundledModules(tiers.getValue(DevDistPluginTier.BUNDLED)) },
+    testPlugins = devDistTestPluginModules(owner.pluginRequests, components, communityProducts),
   )
 }
 
@@ -1263,6 +1266,57 @@ internal fun renderPluginComponents(
       append("        },\n")
     }
     append("    },\n")
+  }
+  append("}\n")
+}
+
+/**
+ * The main modules of the test plugins in the tiers that [renderPluginComponents] states, keyed by product and sorted.
+ * A component is a test plugin when a request of [requests] with the same product and main module has a Product DSL test
+ * plugin. A product without a test plugin has no key. The bundled tier of a product of [communityProducts] is left out.
+ */
+internal fun devDistTestPluginModules(
+  requests: List<DevDistPluginRequest>,
+  components: Map<String, Map<DevDistPluginTier, List<GeneratedPluginComponent>>>,
+  communityProducts: Set<String>,
+): Map<String, List<String>> {
+  val testPlugins = HashSet<Pair<String, String>>()
+  for (request in requests) {
+    if (request.testPlugin != null) {
+      testPlugins.add(request.product to request.layout.mainModule)
+    }
+  }
+  val result = TreeMap<String, List<String>>()
+  for ((product, tiers) in components) {
+    val modules = TreeSet<String>()
+    for ((tier, tierComponents) in tiers) {
+      if (product in communityProducts && tier == DevDistPluginTier.BUNDLED) {
+        continue
+      }
+      tierComponents.mapNotNullTo(modules) { component -> component.mainModule.takeIf { (product to it) in testPlugins } }
+    }
+    if (modules.isNotEmpty()) {
+      result.put(product, java.util.List.copyOf(modules))
+    }
+  }
+  return Collections.unmodifiableMap(result)
+}
+
+/**
+ * `DEV_DIST_TEST_PLUGINS` maps a `dev-build.json` product key to the main modules of its test plugins, see
+ * [devDistTestPluginModules], which sorts the keys and the modules. An empty [testPlugins] renders nothing.
+ */
+internal fun renderTestPlugins(testPlugins: Map<String, List<String>>): String = buildString {
+  if (testPlugins.isEmpty()) {
+    return@buildString
+  }
+  append("DEV_DIST_TEST_PLUGINS = {\n")
+  for ((product, modules) in testPlugins) {
+    append("    \"").append(product).append("\": [\n")
+    for (module in modules) {
+      append("        \"").append(module).append("\",\n")
+    }
+    append("    ],\n")
   }
   append("}\n")
 }

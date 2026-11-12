@@ -3818,6 +3818,14 @@ private fun renderContentSets(pluginExecutions: DevDistPluginExecutionRendering,
   append("# fail-open and the file does not have to keep its own generator buildable.\n")
   append("\n")
   append(pluginExecutions.components)
+  val testPlugins = renderTestPlugins(pluginExecutions.testPlugins)
+  if (testPlugins.isNotEmpty()) {
+    append("\n")
+    append("# `DEV_DIST_TEST_PLUGINS`, derived from the Product DSL test plugins: the main module of every test plugin in the\n")
+    append("# tiers of `DEV_DIST_PLUGIN_COMPONENTS`, by product key. The keys and the modules are sorted. A product without\n")
+    append("# a test plugin has no key.\n")
+    append(testPlugins)
+  }
 }
 
 /**
