@@ -1403,7 +1403,6 @@ private val COMMUNITY_AGGREGATOR_JPS_MODULES_ALLOWLIST = setOf(
   "intellij.devkit.kotlin.tests",
   "intellij.devkit.themes.tests",
   "intellij.gradle.tests",
-  "intellij.java.dumb.completion.tests",
   "intellij.kotlin.common.tests",
   "intellij.platform.jewel.markdown.testing",
   "intellij.platform.lang.testEntities",

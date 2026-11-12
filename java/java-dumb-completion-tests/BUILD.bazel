@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "dumb-completion-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":dumb-completion-tests_test_lib"],
+)
+### skip generation section `test intellij.java.dumb.completion.tests`
+
 ### auto-generated section `build intellij.java.dumb.completion.tests` start
 jvm_library(
     name = "dumb-completion-tests_test_lib",
@@ -38,10 +46,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.dumb.completion.tests` end
-
-### auto-generated section `test intellij.java.dumb.completion.tests` start
-jps_test(
-    name = "dumb-completion-tests_test",
-    runtime_deps = [":dumb-completion-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.dumb.completion.tests` end

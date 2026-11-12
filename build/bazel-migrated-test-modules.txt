@@ -96,6 +96,7 @@ intellij.java.debugger.streams.tests
 intellij.java.debugger.tests
 intellij.java.decompiler.engine.tests
 intellij.java.decompiler.tests
+intellij.java.dumb.completion.tests
 intellij.java.execution.tests
 intellij.java.featuresTrainer.tests
 intellij.java.frontback.tests
