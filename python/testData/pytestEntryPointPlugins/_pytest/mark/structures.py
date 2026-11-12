@@ -4,6 +4,8 @@ class MarkDecorator:
 
 
 class MarkGenerator:
+    skip: MarkDecorator
+
     def __getattr__(self, name: str) -> MarkDecorator:
         return MarkDecorator()
 
