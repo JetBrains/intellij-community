@@ -112,20 +112,6 @@ import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-/**
- * The rule that gives a code point two cells of the character grid.
- *
- * The rule is the JediTerm rule. The Ghostty emulator counts other cells for some code points. It joins a variation
- * selector and a zero-width joiner to the cell of the code point before them, and it gives each regional indicator
- * two cells. The exact cell widths of the emulator are a follow-up.
- *
- * Both emulators write one char for each cell of a screen row. A tab and a cursor move over empty cells both give one
- * space for each cell, so the document column of a char is its cell column.
- */
-private val TERMINAL_DOUBLE_WIDTH_STRATEGY = DoubleWidthCharacterStrategy { codePoint ->
-  CharUtils.isDoubleWidthCharacter(codePoint, false)
-}
-
 @ApiStatus.Internal
 object TerminalUiUtils {
   /**
@@ -218,8 +204,6 @@ object TerminalUiUtils {
       isWhitespacesShown = false
       isUseCustomSoftWrapIndent = false
     }
-
-    editor.setCharacterGridSpec(CharacterGridSpec(settings.columnSpacing, TERMINAL_DOUBLE_WIDTH_STRATEGY))
 
     // The editor is not shown yet, so there is no size to validate.
     editor.applyFontSettings(settings, validateImmediately = false)
@@ -506,6 +490,20 @@ object TerminalUiUtils {
 
   const val GREEN_COLOR_INDEX: Int = 2
   const val YELLOW_COLOR_INDEX: Int = 3
+}
+
+/**
+ * The rule that gives a code point two cells of the character grid.
+ *
+ * The rule is the JediTerm rule. The Ghostty emulator counts other cells for some code points. It joins a variation
+ * selector and a zero-width joiner to the cell of the code point before them. It gives each regional indicator two
+ * cells. The exact cell widths of the emulator are a follow-up.
+ *
+ * Both emulators write one char for each cell of a screen row. A tab and a cursor move over empty cells both give one
+ * space for each cell, so the document column of a char is its cell column.
+ */
+private val TERMINAL_DOUBLE_WIDTH_STRATEGY = DoubleWidthCharacterStrategy { codePoint ->
+  CharUtils.isDoubleWidthCharacter(codePoint, false)
 }
 
 fun EditorImpl.applyFontSettings(newSettings: JBTerminalSystemSettingsProviderBase, validateImmediately: Boolean = true) {
