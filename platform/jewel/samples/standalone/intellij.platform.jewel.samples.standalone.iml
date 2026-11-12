@@ -90,7 +90,6 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
     <orderEntry type="module" module-name="intellij.platform.jewel.samples.showcase" />
-    <orderEntry type="module" module-name="intellij.libraries.jna" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.icons" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.jbr" scope="RUNTIME" />
   </component>

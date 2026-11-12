@@ -45,7 +45,6 @@ jvm_library(
         "//platform/jewel/int-ui/int-ui-decorated-window:jewel-intUi-decoratedWindow",
         "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl-tinyfd",
         "@lib//:platform-jewel-samples-standalone-org-nibor-autolink-autolink",
-        "//libraries/jna",
         "//platform/icons",
         "//libraries/jbr",
     ],
