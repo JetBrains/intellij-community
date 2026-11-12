@@ -74,6 +74,8 @@
 
     <projectService serviceInterface="org.jetbrains.plugins.gitlab.GitLabProjectsManager"
                     serviceImplementation="org.jetbrains.plugins.gitlab.GitLabProjectsManagerImpl"/>
+    <projectService serviceInterface="org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinkHandler"
+                    serviceImplementation="org.jetbrains.plugins.gitlab.mergerequest.util.GitLabBackendNoteLinkHandler"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewModelFactory"
                     serviceImplementation="org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewModelFactoryImpl"/>

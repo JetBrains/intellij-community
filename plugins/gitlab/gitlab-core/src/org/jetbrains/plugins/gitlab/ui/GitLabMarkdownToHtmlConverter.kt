@@ -48,6 +48,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.projectApiUri
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinks
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.net.URI
 import java.nio.file.InvalidPathException
@@ -69,8 +70,8 @@ class GitLabMarkdownToHtmlConverter(
     private val MARKDOWN_IMAGE_SETTINGS = MarkdownElementType("MARKDOWN_IMAGE_SETTINGS")
     private val MARKDOWN_MR_ID = MarkdownElementType("MARKDOWN_MR_ID")
     private const val UPLOADS_PATH = "/uploads/"
-    internal const val OPEN_FILE_LINK_PREFIX = "glfilelink:"
-    internal const val OPEN_MR_LINK_PREFIX = "glmergerequest:"
+    internal const val OPEN_FILE_LINK_PREFIX = GitLabNoteLinks.OPEN_FILE_LINK_PREFIX
+    internal const val OPEN_MR_LINK_PREFIX = GitLabNoteLinks.OPEN_MR_LINK_PREFIX
   }
 
   private val projectWebUrlBase: String = "$serverPath/-/project/$projectId"

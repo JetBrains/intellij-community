@@ -46,6 +46,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeReq
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestErrorUtil
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabNoteLinkHandler
 import org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
@@ -100,7 +101,7 @@ object GitLabMergeRequestDetailsComponentFactory {
       val title = CodeReviewDetailsTitleComponentFactory.create(cs, detailsVm, GitLabBundle.message("open.on.gitlab.tooltip"), actionGroup,
                                                                 htmlPaneFactory = {
                                                                   SimpleHtmlPane(addBrowserListener = false).apply {
-                                                                    addGitLabHyperlinkListener(project)
+                                                                    addGitLabHyperlinkListener(GitLabNoteLinkHandler.getInstance(project))
                                                                   }
                                                                 })
       val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
@@ -201,7 +202,7 @@ object GitLabMergeRequestDetailsComponentFactory {
       },
       htmlPaneFactory = {
         SimpleHtmlPane(addBrowserListener = false).apply {
-          addGitLabHyperlinkListener(project)
+          addGitLabHyperlinkListener(GitLabNoteLinkHandler.getInstance(project))
         }
       }
     )
