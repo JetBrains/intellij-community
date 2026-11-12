@@ -209,6 +209,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.concurrency.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scratch.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
   </component>
 </module>
