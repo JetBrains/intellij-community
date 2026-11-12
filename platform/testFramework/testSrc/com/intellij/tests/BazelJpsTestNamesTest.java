@@ -82,6 +82,9 @@ class BazelJpsTestNamesTest {
     FailingTestFactoryScenario.class,
     SimpleDisplayNamesScenario.class,
     BeforeAllFailureScenario.class,
+    BeforeAllFailureWithChildrenScenario.class,
+    AbortedClassScenario.class,
+    SkippedClassScenario.class,
     SkippedMethodScenario.class,
     FailingDynamicTestScenario.class,
     AfterAllFailureScenario.class,
@@ -328,6 +331,69 @@ class BazelJpsTestNamesTest {
 
     @Test
     void second() {
+    }
+  }
+
+  @Disabled(SCENARIO_DISABLED_REASON)
+  static class BeforeAllFailureWithChildrenScenario {
+    @BeforeAll
+    static void setUp() {
+      throw new IllegalStateException("class setup failure");
+    }
+
+    @Test
+    void test() {
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = "a")
+    void parameterized(String value) {
+    }
+
+    @Nested
+    class Inner {
+      @Test
+      void inner() {
+      }
+    }
+  }
+
+  @Disabled(SCENARIO_DISABLED_REASON)
+  static class AbortedClassScenario {
+    @BeforeAll
+    static void setUp() {
+      Assumptions.assumeTrue(false, "class assumption");
+    }
+
+    @Test
+    void test() {
+    }
+
+    @Nested
+    class Inner {
+      @Test
+      void inner() {
+      }
+    }
+  }
+
+  @ExtendWith(AlwaysDisabled.class)
+  @Disabled(SCENARIO_DISABLED_REASON)
+  static class SkippedClassScenario {
+    @Test
+    void test() {
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = "a")
+    void parameterized(String value) {
+    }
+
+    @Nested
+    class Inner {
+      @Test
+      void inner() {
+      }
     }
   }
 

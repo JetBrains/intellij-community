@@ -331,7 +331,7 @@ public class BazelJUnitOutputListener implements TestExecutionListener, Closeabl
       .flatMap(
         testIdentifier -> {
           if (testIdentifier.isContainer()) {
-            return getTestsFromSuite(testIdentifier).stream();
+            return Stream.concat(Stream.of(testIdentifier), getTestsFromSuite(testIdentifier).stream());
           }
           return Stream.of(testIdentifier);
         })
