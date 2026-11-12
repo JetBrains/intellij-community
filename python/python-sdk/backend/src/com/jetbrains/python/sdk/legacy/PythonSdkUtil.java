@@ -107,10 +107,6 @@ public final class PythonSdkUtil {
     return getAllSdks(new ModuleOrProject.ModuleAndProject(module));
   }
 
-  public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks(@NotNull Module module) {
-    return getAllSdks(new ModuleOrProject.ModuleAndProject(module));
-  }
-
   public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks(@NotNull ModuleOrProject moduleOrProject) {
     return SdkFiltersKt.filterAssignablePythonSdks(moduleOrProject, PythonSdkTable.allSdks(moduleOrProject.getProject()));
   }

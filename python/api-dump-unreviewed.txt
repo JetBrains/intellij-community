@@ -82,9 +82,6 @@ a:com.jetbrains.python.PythonModuleTypeBase
 - isMarkInnerSupportedFor(org.jetbrains.jps.model.module.JpsModuleSourceRootType):Z
 f:com.jetbrains.python.actions.PyExecuteInConsole
 - sf:executeCodeInConsole(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.editor.Editor,Z,Z,Z,com.jetbrains.python.run.PythonRunConfiguration):V
-f:com.jetbrains.python.configuration.PyConfigurableInterpreterList
-- getAllPythonSdks():java.util.List
-- s:getInstance(com.intellij.openapi.project.Project):com.jetbrains.python.configuration.PyConfigurableInterpreterList
 com.jetbrains.python.console.PyCodeExecutor
 - a:executeCode(java.lang.String,com.intellij.openapi.editor.Editor):V
 f:com.jetbrains.python.console.PyConsoleOptions

@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.intellij.python.venv.PipPyTool
 import com.intellij.icons.AllIcons
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -26,10 +25,13 @@ import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImp
 import com.intellij.python.hatch.common.icons.PythonHatchCommonIcons
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonSdkTable
+import com.intellij.python.sdk.backend.PythonSdkTable.pythonSdks
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.intellij.python.uv.common.icons.PythonUvCommonIcons
+import com.intellij.python.venv.PipPyTool
 import com.intellij.python.venv.common.icons.PythonVenvCommonIcons
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
@@ -41,7 +43,6 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.parser.icons.PythonParserIcons
 import com.jetbrains.python.sdk.LOGGER
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
@@ -220,7 +221,7 @@ internal suspend fun installBaseSdk(installRequest: InstallablePythonSdk): kotli
   // hop here instead of pushing the EDT contract onto every caller.
   val installed = withContext(Dispatchers.EDT) {
     installRequest.install(null) {
-      PythonSdkUtil.getAllSdks()
+      pythonSdks()
     }
   }
 
@@ -257,7 +258,8 @@ internal suspend fun <P : PathHolder> InterpreterWithPath<P>.setupSdk(
   }
 
   // A plain venv or a system Python: the pip node builds it, as it does for the widget.
-  (homePath as? PathHolder.Eel)?.let { fileSystem.addInterpreterByBinary(moduleOrProject, PipPyTool.getInstance(), it.path) }?.let { return it }
+  (homePath as? PathHolder.Eel)?.let { fileSystem.addInterpreterByBinary(moduleOrProject, PipPyTool.getInstance(), it.path) }
+    ?.let { return it }
   // Do our best to guess the flavor
   return createSdkGuessingTypeByPath(homePath, fileSystem, moduleOrProject, targetPanelExtension)
 }

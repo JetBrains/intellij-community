@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -11,5 +12,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * the module resides on (only for [ModuleOrProject.ModuleAndProject]). Remote interpreters are sorted last, then by name.
  */
 @Internal
+@PyInternalExecApi // You do not need SDK, contact PyCharm exec subteam to discuss it
 fun ModuleOrProject.getAssignablePythonSdks(): List<Sdk> = filterAssignablePythonSdks(PythonSdkUtil.getAllSdks(this))
 
