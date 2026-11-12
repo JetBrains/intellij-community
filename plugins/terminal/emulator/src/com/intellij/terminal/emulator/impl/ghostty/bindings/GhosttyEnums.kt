@@ -20,7 +20,8 @@ internal enum class GhosttyResult(val code: Int) {
   NO_VALUE(-4),
   IO_ERROR(-5),
   LIMIT_EXCEEDED(-6),
-  REJECTED(-7);
+  REJECTED(-7),
+  UNSUPPORTED(-8);
 
   companion object {
     /** Map a raw C result code; any unmodeled code is coerced to [INVALID_VALUE] (i.e. a failure). */
@@ -33,6 +34,7 @@ internal enum class GhosttyResult(val code: Int) {
       -5 -> IO_ERROR
       -6 -> LIMIT_EXCEEDED
       -7 -> REJECTED
+      -8 -> UNSUPPORTED
       else -> INVALID_VALUE
     }
   }
