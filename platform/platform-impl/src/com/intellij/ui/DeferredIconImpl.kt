@@ -284,7 +284,9 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       modificationCount.incrementAndGet()
       checkDelegationDepth()
 
-      evaluatedListener?.invoke(this@DeferredIconImpl, result)
+      // A scaled copy has the listener of its original, and the deferrer keeps the icon of the listener for each caller
+      // with the same parameter. So the listener gets the result without the scale of this copy.
+      evaluatedListener?.invoke(this@DeferredIconImpl, if (scale != 1f && result is ScalableIcon) result.scale(1f) else result)
 
       processRepaints(oldWidth = oldWidth, result = result)
       setDone(result)
