@@ -2,28 +2,39 @@
 package git4idea.branch
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import git4idea.GitLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
 import git4idea.branch.GitBranchesTreeTestContext.Companion.NOT_ORIGIN
 import git4idea.branch.GitBranchesTreeTestContext.Companion.ORIGIN
 import git4idea.branch.GitBranchesTreeTestContext.Companion.branchInfo
+import git4idea.branch.GitBranchesTreeTestContext.Companion.branchesTreeTest
 import git4idea.branch.GitBranchesTreeTestContext.Companion.tagInfo
 import git4idea.repo.GitRepository
 import git4idea.test.MockGitRepository
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class GitBranchesTreeStructureTest : GitBranchesTreeTest() {
+@TestApplication
+class GitBranchesTreeStructureTest {
+  private val projectFixture = projectFixture()
+  private val project: Project get() = projectFixture.get()
+
   private lateinit var repo1: GitRepository
   private lateinit var repo2: GitRepository
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     repo1 = MockGitRepository(project, LightVirtualFile("repo-1"))
     repo2 = MockGitRepository(project, LightVirtualFile("repo-2"))
   }
 
-  fun `test remote and local nodes are missing if have no children`() = branchesTreeTest(groupByDirectories = false) {
+  @Test
+  fun `test remote and local nodes are missing if have no children`() = branchesTreeTest(project, groupByDirectories = false) {
     setState(localBranches = listOf("qqq"), remoteBranches = emptyList(), expanded = true)
     assertTree("""
       |-ROOT
@@ -41,7 +52,8 @@ class GitBranchesTreeStructureTest : GitBranchesTreeTest() {
     """.trimMargin())
   }
 
-  fun `test remote grouped by origin`() = branchesTreeTest {
+  @Test
+  fun `test remote grouped by origin`() = branchesTreeTest(project) {
     setRawState(
       localBranches = listOf(),
       remoteBranches = listOf(
@@ -70,7 +82,8 @@ class GitBranchesTreeStructureTest : GitBranchesTreeTest() {
     """.trimMargin())
   }
 
-  fun `test group by directory tree structure with favorites`() = branchesTreeTest {
+  @Test
+  fun `test group by directory tree structure with favorites`() = branchesTreeTest(project) {
     setRawState(
       localBranches = listOf(
         branchInfo(GitLocalBranch("aaaa")),
@@ -116,7 +129,8 @@ class GitBranchesTreeStructureTest : GitBranchesTreeTest() {
     """.trimMargin())
   }
 
-  fun `test simple group by repos`() = branchesTreeTest(groupByDirectories = false, groupByRepos = true) {
+  @Test
+  fun `test simple group by repos`() = branchesTreeTest(project, groupByDirectories = false, groupByRepos = true) {
     setRawState(
       localBranches = listOf(
         branchInfo(GitLocalBranch("main"), repositories = listOf(repo1))
@@ -151,7 +165,8 @@ class GitBranchesTreeStructureTest : GitBranchesTreeTest() {
     """.trimMargin())
   }
 
-  fun `test multiple repos without grouping`() = branchesTreeTest(groupByDirectories = false) {
+  @Test
+  fun `test multiple repos without grouping`() = branchesTreeTest(project, groupByDirectories = false) {
     setRawState(
       localBranches = listOf(
         branchInfo(GitLocalBranch("main"), repositories = listOf(repo1))

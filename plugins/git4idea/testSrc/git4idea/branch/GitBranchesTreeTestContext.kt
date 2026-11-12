@@ -2,8 +2,9 @@
 package git4idea.branch
 
 import com.intellij.dvcs.branch.GroupingKey
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.ui.FilteringSpeedSearch
 import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
@@ -23,12 +24,9 @@ import git4idea.ui.branch.dashboard.FilteringBranchesTreeBase
 import git4idea.ui.branch.dashboard.NodeDescriptorsModel
 import git4idea.ui.branch.dashboard.RefsCollection
 import git4idea.ui.branch.dashboard.TagInfo
-import junit.framework.TestCase.assertEquals
-
-abstract class GitBranchesTreeTest: LightPlatformTestCase() {
-  internal fun branchesTreeTest(groupByDirectories: Boolean = true, groupByRepos: Boolean = false, test: GitBranchesTreeTestContext.() -> Unit) =
-    with(GitBranchesTreeTestContext(groupByDirectories, groupByRepos, project)) { test() }
-}
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
 
 internal class GitBranchesTreeTestContext(private val groupByDirectories: Boolean, private val groupByRepos: Boolean, private val project: Project) {
   val tree = Tree()
@@ -51,7 +49,7 @@ internal class GitBranchesTreeTestContext(private val groupByDirectories: Boolea
   private val searchTextField = branchesTree.installSearchField()
 
   fun assertTree(expected: String) {
-    assertEquals("Tree state doesn't match expected. Search field - '${searchTextField.text}'", expected.trim(), printTree())
+    assertEquals(expected.trim(), printTree(), "Tree state doesn't match expected. Search field - '${searchTextField.text}'")
   }
 
   fun printTree(): String = TreeTestUtil(tree).setSelection(true).toString().trim()
@@ -131,6 +129,17 @@ internal class GitBranchesTreeTestContext(private val groupByDirectories: Boolea
     val ORIGIN_URLS = listOf("ssh://origin")
     val ORIGIN = GitRemote(GitRemote.ORIGIN, ORIGIN_URLS, ORIGIN_URLS, listOf(), listOf())
     val NOT_ORIGIN = GitRemote("not-origin", ORIGIN_URLS, ORIGIN_URLS, listOf(), listOf())
+
+    fun branchesTreeTest(
+      project: Project,
+      groupByDirectories: Boolean = true,
+      groupByRepos: Boolean = false,
+      test: GitBranchesTreeTestContext.() -> Unit,
+    ): Unit = timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        with(GitBranchesTreeTestContext(groupByDirectories, groupByRepos, project)) { test() }
+      }
+    }
 
     fun branchInfo(branch: GitBranch, isCurrent: Boolean = false, isFavorite: Boolean = false, repositories: List<GitRepository> = emptyList()) =
       BranchInfo(branch, isCurrent, isFavorite, repositories = repositories)

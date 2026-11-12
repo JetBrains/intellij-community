@@ -2,6 +2,7 @@
 package git4idea.branch
 
 import com.intellij.dvcs.repo.Repository
+import com.intellij.openapi.Disposable
 import com.intellij.ide.DataManager
 import com.intellij.ide.impl.HeadlessDataManager
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -17,10 +18,15 @@ import com.intellij.openapi.actionSystem.DataSnapshotProvider
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.Separator
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.TestActionEvent
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.containers.stream
 import com.intellij.util.ui.tree.TreeUtil
@@ -50,6 +56,7 @@ import git4idea.branch.ActionState.Companion.isEnabledAndVisible
 import git4idea.branch.GitBranchesTreeTestContext.Companion.NOT_ORIGIN
 import git4idea.branch.GitBranchesTreeTestContext.Companion.ORIGIN
 import git4idea.branch.GitBranchesTreeTestContext.Companion.branchInfo
+import git4idea.branch.GitBranchesTreeTestContext.Companion.branchesTreeTest
 import git4idea.branch.GitBranchesTreeTestContext.Companion.tagInfo
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitBranchTrackInfo
@@ -67,25 +74,43 @@ import git4idea.ui.branch.dashboard.BranchesTreeSearchField
 import git4idea.ui.branch.dashboard.BranchesTreeSelection
 import git4idea.ui.branch.dashboard.BranchesTreeSelection.Companion.getSelectedRepositories
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.tree.TreePath
 import kotlin.reflect.KClass
 
-class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
+private val LOG = logger<GitBranchesTreeActionsForSelectionTest>()
+
+@TestApplication
+class GitBranchesTreeActionsForSelectionTest {
+  private val projectFixture = projectFixture()
+  private val project: Project get() = projectFixture.get()
+
   private lateinit var repo1: MockGitRepository
   private lateinit var repo2: MockGitRepository
 
   private val branchesUiController = Mockito.mock(BranchesDashboardTreeController::class.java)
 
-  override fun setUp() {
-    super.setUp()
+  @TestDisposable
+  private lateinit var disposable: Disposable
+
+  @BeforeEach
+  fun setUp() {
     repo1 = MockGitRepository(project, LightVirtualFile("repo-1"))
     repo2 = MockGitRepository(project, LightVirtualFile("repo-2"))
   }
 
-  fun `test local branch actions`() = branchesTreeTest {
+  @Test
+  fun `test local branch actions`() = branchesTreeTest(project) {
     singleRepoTreeState()
     select(BranchesTreeNodeMatchers.branchMatcher(local = true, shortName = "another"))
 
@@ -106,26 +131,28 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     ))
   }
 
-  fun `test update action enabled for branch checked out in another worktree`() = branchesTreeTest {
-    Registry.get("git.enable.working.trees.feature").setValue(true, testRootDisposable)
+  @Test
+  @RegistryKey(key = "git.enable.working.trees.feature", value = "true")
+  fun `test update action enabled for branch checked out in another worktree`() = branchesTreeTest(project) {
     singleRepoTreeState()
     select(BranchesTreeNodeMatchers.branchMatcher(local = true, shortName = "another"))
 
-    repo1.workingTrees = repo1.workingTrees + GitWorkingTree(
-      VcsContextFactory.getInstance().createFilePath("/other/worktree/for/another", true),
-      GitLocalBranch("another"),
-      isMain = false,
-      isCurrent = false,
-    )
+    repo1.workingTrees += GitWorkingTree(
+          VcsContextFactory.getInstance().createFilePath("/other/worktree/for/another", true),
+          GitLocalBranch("another"),
+          isMain = false,
+          isCurrent = false,
+        )
 
     val event = simpleEvent()
     GitUpdateSelectedBranchAction().update(event)
 
-    assertTrue("Update action should be enabled for a branch checked out in another worktree", event.presentation.isEnabled)
-    assertTrue("Update action should stay visible", event.presentation.isVisible)
+    assertTrue(event.presentation.isEnabled, "Update action should be enabled for a branch checked out in another worktree")
+    assertTrue(event.presentation.isVisible, "Update action should stay visible")
   }
 
-  fun `test update action disabled without tracking info`() = branchesTreeTest {
+  @Test
+  fun `test update action disabled without tracking info`() = branchesTreeTest(project) {
     singleRepoTreeState()
     select(BranchesTreeNodeMatchers.branchMatcher(local = true, shortName = "another"))
 
@@ -134,15 +161,16 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     val event = simpleEvent()
     GitUpdateSelectedBranchAction().update(event)
 
-    assertFalse("Update action should be disabled without tracking info", event.presentation.isEnabled)
-    assertTrue("Update action should stay visible with an explanatory tooltip", event.presentation.isVisible)
+    assertFalse(event.presentation.isEnabled, "Update action should be disabled without tracking info")
+    assertTrue(event.presentation.isVisible, "Update action should stay visible with an explanatory tooltip")
     assertEquals(
       GitBundle.message("branches.tracking.branch.doesn.t.configured.for.s", getSelectedBranchFullPresentation("another")),
       event.presentation.description
     )
   }
 
-  fun `test select current branch actions`() = branchesTreeTest {
+  @Test
+  fun `test select current branch actions`() = branchesTreeTest(project) {
     singleRepoTreeState()
     select(BranchesTreeNodeMatchers.branchMatcher(local = true, shortName = "main"))
 
@@ -156,7 +184,8 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     ))
   }
 
-  fun `test remote branch actions`() = branchesTreeTest {
+  @Test
+  fun `test remote branch actions`() = branchesTreeTest(project) {
     singleRepoTreeState()
     select(BranchesTreeNodeMatchers.branchMatcher(local = false))
 
@@ -174,7 +203,8 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     ))
   }
 
-  fun `test tag actions`() = branchesTreeTest {
+  @Test
+  fun `test tag actions`() = branchesTreeTest(project) {
     singleRepoTreeState()
     select(BranchesTreeNodeMatchers.typeMatcher<BranchNodeDescriptor.Tag>())
 
@@ -188,7 +218,8 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     ))
   }
 
-  fun `test current tag actions`() = branchesTreeTest {
+  @Test
+  fun `test current tag actions`() = branchesTreeTest(project) {
     singleRepoTreeState()
 
     repo1.currentBranch = null
@@ -210,7 +241,8 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     ))
   }
 
-  fun `test HEAD + branch selection`() = branchesTreeTest {
+  @Test
+  fun `test HEAD + branch selection`() = branchesTreeTest(project) {
     singleRepoTreeState()
 
     select(
@@ -224,7 +256,8 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     ))
   }
 
-  fun `test current local + remote branch`() = branchesTreeTest {
+  @Test
+  fun `test current local + remote branch`() = branchesTreeTest(project) {
     singleRepoTreeState()
 
     select(
@@ -239,7 +272,8 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     ))
   }
 
-  fun `test 3 branches`() = branchesTreeTest {
+  @Test
+  fun `test 3 branches`() = branchesTreeTest(project) {
     singleRepoTreeState()
 
     select(
@@ -253,7 +287,8 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     ))
   }
 
-  fun `test origin node selected`() = branchesTreeTest {
+  @Test
+  fun `test origin node selected`() = branchesTreeTest(project) {
     singleRepoTreeState()
 
     select(
@@ -267,8 +302,9 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     ))
   }
 
-  fun `test search field hides the tree data`() = branchesTreeTest {
-    HeadlessDataManager.fallbackToProductionDataManager(testRootDisposable)
+  @Test
+  fun `test search field hides the tree data`() = branchesTreeTest(project) {
+    HeadlessDataManager.fallbackToProductionDataManager(disposable)
     singleRepoTreeState()
 
     val treeData = UiDataProvider { sink ->
@@ -291,8 +327,8 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
       val searchFieldContext = DataManager.getInstance().getDataContext(searchField.textEditor)
 
       for (key in RecordingDataSink().also { treeData.uiDataSnapshot(it) }.providedKeys) {
-        assertNotNull("${key.name} must be available in the tree", treeContext.getData(key))
-        assertNull("${key.name} must be hidden in the search field", searchFieldContext.getData(key))
+        assertNotNull(treeContext.getData(key), "${key.name} must be available in the tree")
+        assertNull(searchFieldContext.getData(key), "${key.name} must be hidden in the search field")
       }
     }
 
@@ -306,7 +342,8 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     return event.presentation.isEnabledAndVisible
   }
 
-  fun `test nothing to show`() = branchesTreeTest {
+  @Test
+  fun `test nothing to show`() = branchesTreeTest(project) {
     singleRepoTreeState()
 
     select(
@@ -340,7 +377,7 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
       assertEquals(expected.joinToString("\n"), actions!!.joinToString("\n"))
     }
     else {
-      assertTrue("Expected no actions, but got:\n ${actions?.joinToString("\n")}", actions.isNullOrEmpty())
+      assertTrue(actions.isNullOrEmpty(), "Expected no actions, but got:\n ${actions?.joinToString("\n")}")
     }
   }
 
@@ -390,7 +427,7 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     TreeUtil.promiseSelect(tree, matchers.stream().map(BranchesTreeNodeMatchers::createMatcher))
     LOG.info("Current tree state:\n" + printTree())
 
-    assertSize(matchers.size, tree.selectionPaths)
+    assertThat(tree.selectionPaths).hasSize(matchers.size)
   }
 
   private fun GitBranchesTreeTestContext.singleRepoTreeState() {

@@ -1,8 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
-class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
-  fun `test another branch is not selected if current matches search field`() = branchesTreeTest {
+import com.intellij.openapi.project.Project
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import git4idea.branch.GitBranchesTreeTestContext.Companion.branchesTreeTest
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+
+@TestApplication
+class GitBranchesTreeSelectionTest {
+  private val projectFixture = projectFixture()
+  private val project: Project get() = projectFixture.get()
+
+  @Test
+  fun `test another branch is not selected if current matches search field`() = branchesTreeTest(project) {
     setState(localBranches = listOf("main-123", "main"), remoteBranches = listOf("main"))
     selectBranch("main-123")
 
@@ -35,7 +48,8 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     }
   }
 
-  fun `test selection is changed to match search field`() = branchesTreeTest {
+  @Test
+  fun `test selection is changed to match search field`() = branchesTreeTest(project) {
     setState(localBranches = listOf("1", "2", "3", "main"), remoteBranches = listOf("main"))
     selectBranch("1")
 
@@ -51,7 +65,8 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     """.trimMargin())
   }
 
-  fun `test selection is updated on exact match`() = branchesTreeTest {
+  @Test
+  fun `test selection is updated on exact match`() = branchesTreeTest(project) {
     setState(localBranches = listOf("main-123", "main"), remoteBranches = listOf("main"))
     selectBranch("main-123")
 
@@ -82,7 +97,8 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     assertTree(expectedSelectionUpdated)
   }
 
-  fun `test exact match of branch name and group node`() = branchesTreeTest {
+  @Test
+  fun `test exact match of branch name and group node`() = branchesTreeTest(project) {
     setState(localBranches = listOf("main/123", "main"), remoteBranches = listOf())
     selectBranch("main/123")
     filter("main")
@@ -96,7 +112,8 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     """.trimMargin())
   }
 
-  fun `test empty groups are not shown`() = branchesTreeTest {
+  @Test
+  fun `test empty groups are not shown`() = branchesTreeTest(project) {
     setState(localBranches = listOf("group-1/match", "group-2/qq"), remoteBranches = listOf())
     filter("match")
     assertTree("""
@@ -108,7 +125,8 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     """.trimMargin())
   }
 
-  fun `test selection of remote`() = branchesTreeTest {
+  @Test
+  fun `test selection of remote`() = branchesTreeTest(project) {
     setState(localBranches = listOf("main"), remoteBranches = listOf("main", "ish/242", "a/242/b", "242", "242/fix"))
 
     filter("242")
@@ -129,7 +147,8 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     """.trimMargin())
   }
 
-  fun `test selection of remote with no grouping`() = branchesTreeTest(groupByDirectories = false) {
+  @Test
+  fun `test selection of remote with no grouping`() = branchesTreeTest(project, groupByDirectories = false) {
     setState(localBranches = listOf("main"), remoteBranches = listOf("main", "ish/242", "a/242/b", "242", "242/fix"))
 
     filter("242")
@@ -145,7 +164,8 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     """.trimMargin())
   }
 
-  fun `test no selection when no match`() = branchesTreeTest(groupByDirectories = false) {
+  @Test
+  fun `test no selection when no match`() = branchesTreeTest(project, groupByDirectories = false) {
     setState(localBranches = listOf("main"), remoteBranches = listOf("main", "ish/242", "a/242/b", "242", "242/fix"))
 
     filter("not-main")
@@ -161,7 +181,8 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     assertFalse(branchesTree.isEmptyModel())
   }
 
-  fun `test tag can be matched`() = branchesTreeTest(groupByDirectories = false) {
+  @Test
+  fun `test tag can be matched`() = branchesTreeTest(project, groupByDirectories = false) {
     setState(localBranches = listOf("main"), remoteBranches = listOf("main"), tags = listOf("ma"))
 
     filter("ma")
@@ -177,7 +198,8 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     """.trimMargin())
   }
 
-  fun `test user selection is preserved when filter pattern unchanged`() = branchesTreeTest {
+  @Test
+  fun `test user selection is preserved when filter pattern unchanged`() = branchesTreeTest(project) {
     setState(localBranches = listOf("main", "main-123"), remoteBranches = listOf("main"))
 
     filter("main")
