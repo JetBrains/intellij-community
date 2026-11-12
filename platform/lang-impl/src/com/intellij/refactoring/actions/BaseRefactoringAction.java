@@ -87,10 +87,10 @@ public abstract class BaseRefactoringAction extends AnAction {
   protected boolean hasAvailableHandler(@NotNull DataContext dataContext) {
     final RefactoringActionHandler handler = getHandler(dataContext);
     if (handler != null) {
-      if (handler instanceof ContextAwareActionHandler) {
+      if (handler instanceof ContextAwareActionHandler actionHandler) {
         final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
         final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-        if (editor != null && file != null && !((ContextAwareActionHandler)handler).isAvailableForQuickList(editor, file, dataContext)) {
+        if (editor != null && file != null && !actionHandler.isAvailableForQuickList(editor, file, dataContext)) {
           return false;
         }
       }
@@ -224,7 +224,7 @@ public abstract class BaseRefactoringAction extends AnAction {
       }
       final boolean isEnabled = isEnabledOnDataContext(dataContext) || isEnabledOnElements(elements);
       if (!isEnabled) {
-        disableAction(e);
+        hideOrDisableAction(e);
       }
       else {
         updateActionText(e);
@@ -236,7 +236,7 @@ public abstract class BaseRefactoringAction extends AnAction {
       if (element != null) {
         boolean isEnabled = file != null && isAvailableOnElementInEditorAndFile(element, editor, file, dataContext, e.getPlace());
         if (!isEnabled) {
-          disableAction(e);
+          hideOrDisableAction(e);
         }
         else {
           updateActionText(e);
@@ -245,6 +245,15 @@ public abstract class BaseRefactoringAction extends AnAction {
       else {
         hideAction(e);
       }
+    }
+  }
+
+  private static void hideOrDisableAction(@NotNull AnActionEvent e) {
+    if (ActionPlaces.PROJECT_VIEW_POPUP.equals(e.getPlace()) || ActionPlaces.EDITOR_POPUP.equals(e.getPlace())) {
+      hideAction(e);
+    }
+    else {
+      disableAction(e);
     }
   }
 
