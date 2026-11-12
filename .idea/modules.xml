@@ -707,6 +707,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/compiler/instrumentation-util-8/intellij.java.compiler.instrumentationUtil.java8.iml" filepath="$PROJECT_DIR$/java/compiler/instrumentation-util-8/intellij.java.compiler.instrumentationUtil.java8.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/testFramework/intellij.java.compiler.testFramework.iml" filepath="$PROJECT_DIR$/java/compiler/testFramework/intellij.java.compiler.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/intellij.java.compiler.tests.iml" filepath="$PROJECT_DIR$/java/compiler/intellij.java.compiler.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/compiler/tests/exploratory/intellij.java.compiler.tests.exploratory.iml" filepath="$PROJECT_DIR$/java/compiler/tests/exploratory/intellij.java.compiler.tests.exploratory.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/intellij.java.compiler.tests.main.iml" filepath="$PROJECT_DIR$/java/compiler/intellij.java.compiler.tests.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-completion-tests/intellij.java.completion.tests.iml" filepath="$PROJECT_DIR$/java/java-completion-tests/intellij.java.completion.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-copyright/intellij.java.copyright.iml" filepath="$PROJECT_DIR$/java/java-copyright/intellij.java.copyright.iml" />

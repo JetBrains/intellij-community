@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspace.jps.tests.exploratory" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage.tests.exploratory" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.yaml.backend.tests.exploratory" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.compiler.tests.exploratory" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.yaml.backend.tests" scope="RUNTIME" />
   </component>
 </module>
