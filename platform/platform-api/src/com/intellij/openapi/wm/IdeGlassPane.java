@@ -3,7 +3,9 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.Painter;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +28,19 @@ public interface IdeGlassPane {
   void addPainter(@Nullable Component component, @NotNull Painter painter, @NotNull Disposable parent);
 
   void setCursor(@Nullable Cursor cursor, @NotNull Object requestor);
+
+  /**
+   * Sets the {@code cursor} for the whole window of this glass pane, over the cursors of all components under the pane.
+   * Use {@code null} to remove the override of the {@code requestor}.
+   * If more than one requestor sets an override, the latest request wins.
+   * The default implementation does nothing.
+   *
+   * @see IdeGlassPaneUtil#overrideCursorInAllWindows
+   */
+  @ApiStatus.Internal
+  @RequiresEdt
+  default void setCursorOverride(@Nullable Cursor cursor, @NotNull Object requestor) {
+  }
 
   interface TopComponent {
     boolean canBePreprocessed(@NotNull MouseEvent e);

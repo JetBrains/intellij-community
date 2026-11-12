@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.Weighted
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.hasSplash
@@ -75,7 +76,6 @@ import javax.swing.JPopupMenu
 import javax.swing.JRootPane
 import javax.swing.JSeparator
 import javax.swing.JWindow
-import javax.swing.RootPaneContainer
 import javax.swing.SwingUtilities
 import javax.swing.text.html.HTMLEditorKit
 import kotlin.coroutines.CoroutineContext
@@ -199,30 +199,6 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
 
     fun forgetPreProcessedCursor(component: JComponent) {
       component.putClientProperty(PREPROCESSED_CURSOR_KEY, null)
-    }
-
-    /**
-     * Sets the [cursor] override on the glass panes of all showing windows, see [setCursorOverride].
-     *
-     * The function gets the list of windows once, so a window that opens later does not get the override.
-     * It skips a window whose glass pane is not an [IdeGlassPaneImpl].
-     *
-     * @return the object that removes the override from the same glass panes; a second `close()` call does nothing
-     */
-    @RequiresEdt
-    internal fun overrideCursorInAllWindows(cursor: Cursor): AutoCloseable {
-      val glassPanes = Window.getWindows()
-        .filter { it.isShowing }
-        .mapNotNull { (it as? RootPaneContainer)?.rootPane?.glassPane as? IdeGlassPaneImpl }
-      val requestor = Any()
-      for (glassPane in glassPanes) {
-        glassPane.setCursorOverride(cursor, requestor)
-      }
-      return AutoCloseable {
-        for (glassPane in glassPanes) {
-          glassPane.setCursorOverride(null, requestor)
-        }
-      }
     }
   }
 
@@ -508,18 +484,13 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
   }
 
   /**
-   * Sets the [cursor] for the whole window of this glass pane, over the cursors of all components under the pane.
-   * Use `null` to remove the override of the [requestor].
-   *
    * While an override is active, the pane is visible and enabled, so the AWT cursor lookup stops at the pane.
    * The override also sets the cursor of the window of the pane.
    * A cursor lookup that finds no component at the pointer uses the cursor of the window.
-   * If more than one requestor sets an override, the latest request wins.
-   *
-   * @see overrideCursorInAllWindows
    */
+  @ApiStatus.Internal
   @RequiresEdt
-  internal fun setCursorOverride(cursor: Cursor?, requestor: Any) {
+  override fun setCursorOverride(cursor: Cursor?, requestor: Any) {
     cursorOverride.set(cursor, requestor)
   }
 
@@ -710,7 +681,7 @@ private class IdePaneLoadingLayer(
 }
 
 /**
- * The cursor override of a glass pane, see [IdeGlassPaneImpl.setCursorOverride].
+ * The cursor override of a glass pane, see [IdeGlassPane.setCursorOverride].
  *
  * Debug logging shows each change of a request and each cursor change.
  * Trace logging adds the stack trace of the call to each message.

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -14,8 +15,12 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 import javax.swing.JRootPane;
+import javax.swing.RootPaneContainer;
 import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Window;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 public final class IdeGlassPaneUtil {
   private IdeGlassPaneUtil() {
@@ -36,6 +41,37 @@ public final class IdeGlassPaneUtil {
       throw new IllegalArgumentException("Glass pane should be " + IdeGlassPane.class.getName() + " but was " + gp + " in " + root);
     }
     return (IdeGlassPane)gp;
+  }
+
+  /**
+   * Sets the {@code cursor} override on the glass panes of all showing windows, see {@link IdeGlassPane#setCursorOverride}.
+   * <p>
+   * The function gets the list of windows once, so a window that opens later does not get the override.
+   * It skips a window whose glass pane is not an {@link IdeGlassPane}.
+   *
+   * @return the object that removes the override from the same glass panes; a second {@code close()} call does nothing
+   */
+  @ApiStatus.Internal
+  @RequiresEdt
+  public static @NotNull AutoCloseable overrideCursorInAllWindows(@NotNull Cursor cursor) {
+    var glassPanes = new ArrayList<IdeGlassPane>();
+    for (Window window : Window.getWindows()) {
+      if (window.isShowing() &&
+          window instanceof RootPaneContainer container &&
+          container.getRootPane() != null &&
+          container.getRootPane().getGlassPane() instanceof IdeGlassPane glassPane) {
+        glassPanes.add(glassPane);
+      }
+    }
+    var requestor = new Object();
+    for (IdeGlassPane glassPane : glassPanes) {
+      glassPane.setCursorOverride(cursor, requestor);
+    }
+    return () -> {
+      for (IdeGlassPane glassPane : glassPanes) {
+        glassPane.setCursorOverride(null, requestor);
+      }
+    };
   }
 
   public static void installPainter(@NotNull JComponent target, @NotNull Painter painter, @NotNull Disposable parent) {

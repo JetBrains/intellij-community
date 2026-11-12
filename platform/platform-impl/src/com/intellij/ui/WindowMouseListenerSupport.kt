@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPane
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.wayland.getValidBoundsForPopup
 import com.intellij.ui.wayland.isUnconstrainedPopupPositioning
@@ -239,7 +239,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
     // Start the override only on the first drag: a click also starts a session, and the JBR move mode sets its own cursor.
     if (isDragEvent && session.cursorOverride == null) {
       LOG.debug { "$d Overriding the cursor in all windows" }
-      session.cursorOverride = IdeGlassPaneImpl.overrideCursorInAllWindows(Cursor.getPredefinedCursor(cursorType))
+      session.cursorOverride = IdeGlassPaneUtil.overrideCursorInAllWindows(Cursor.getPredefinedCursor(cursorType))
     }
 
     val bounds = Rectangle(session.viewBounds)
