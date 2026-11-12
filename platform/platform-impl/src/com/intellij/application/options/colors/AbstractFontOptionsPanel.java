@@ -151,21 +151,13 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
         updateDescription(true);
       }
     });
-    myLineSpacingField.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() != KeyEvent.VK_UP && e.getKeyCode() != KeyEvent.VK_DOWN) return;
-        boolean up = e.getKeyCode() == KeyEvent.VK_UP;
-        try {
-          float value = Float.parseFloat(myLineSpacingField.getText());
-          value += (up ? 1 : -1) * .1F;
-          value = MathUtil.clamp(value, EditorFontsConstants.getMinEditorLineSpacing(), EditorFontsConstants.getMaxEditorLineSpacing());
-          myLineSpacingField.setText(String.format(Locale.ENGLISH, "%.1f", value));
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-    });
+    addArrowKeySteps(
+      myLineSpacingField,
+      .1F,
+      EditorFontsConstants.getMinEditorLineSpacing(),
+      EditorFontsConstants.getMaxEditorLineSpacing(),
+      "%.1f"
+    );
     myEnableLigaturesCheckbox.addActionListener(e -> {
       FontPreferences preferences = getFontPreferences();
       if (preferences instanceof ModifiableFontPreferences) {
@@ -352,6 +344,28 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     catch (NumberFormatException e) {
       return EditorFontsConstants.getDefaultEditorLineSpacing();
     }
+  }
+
+  /**
+   * Changes the number in the field by the step on the Up and Down keys, and keeps the number in the range.
+   */
+  private static void addArrowKeySteps(@NotNull JTextField field, float step, float min, float max, @NotNull String format) {
+    field.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() != KeyEvent.VK_UP && e.getKeyCode() != KeyEvent.VK_DOWN) {
+          return;
+        }
+        boolean up = e.getKeyCode() == KeyEvent.VK_UP;
+        try {
+          float value = Float.parseFloat(field.getText());
+          value += (up ? 1 : -1) * step;
+          value = MathUtil.clamp(value, min, max);
+          field.setText(String.format(Locale.ENGLISH, format, value));
+        } catch (NumberFormatException ignored) {
+        }
+      }
+    });
   }
 
   /**
