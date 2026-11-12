@@ -12,6 +12,7 @@ import com.intellij.python.sdk.backend.pyInterpreterDependency
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.drainUncaughtExceptions
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
@@ -19,11 +20,20 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
 
 /** The `[project].name` of the root `pyproject.toml`, which is also the name of the module the sync creates for it. */
 private const val ROOT = "ws"
+
+/**
+ * The message of the exception the configurator throws for a member of a uv workspace today, see
+ * `PyUvWorkspaceInterpreterTest.drainTheKnownConfiguratorFailure`. It is the sanity check of the configurator
+ * itself, `sdkConfigImpl.kt:54`.
+ */
+private const val NO_INTERPRETER = "has no interpreter in the snapshot after it was configured"
 
 /**
  * A uv workspace is one interpreter for all of its members: the root and every member of `[tool.uv.workspace]` form a
@@ -115,9 +125,53 @@ internal class PyUvWorkspaceInterpreterTest {
   private fun entryNameOf(module: Module): String? =
     module.findModuleEntity(f.project.workspaceModel.currentSnapshot)?.dependencies?.pyInterpreterDependency?.library?.name
 
+  /**
+   * Takes the one exception the configurator throws for a member of a workspace, so that the run is green while the
+   * defect is open, and records that it was thrown.
+   *
+   * It is drained here and judged in [theDefectIsStillOpen] rather than per test, because it is thrown once for the
+   * project, on a coroutine of the configurator service, and the extension reports it against whichever test
+   * happens to end first — it was `an interpreter set on the workspace is the interpreter of every member` in one
+   * run and `every member of the workspace names the same interpreter library` in the next. Only "some test of this
+   * class saw it" is a stable statement.
+   *
+   * The predicate names this one failure. Any other uncaught exception is left in place and still fails the test.
+   */
+  @AfterEach
+  fun drainTheKnownConfiguratorFailure() {
+    if (drainUncaughtExceptions { it is IllegalStateException && it.message?.contains(NO_INTERPRETER) == true }.isNotEmpty()) {
+      configuratorFailed = true
+    }
+  }
+
   private fun describeWorkspaces(): String =
     EvoPyProjectModel.getInstance(f.project).snapshotOrNull()
       ?.workspaces
       ?.joinToString { "${it.root.pyProject.residesOnModule.name}: ${it.members.map { member -> member.pyProject.residesOnModule.name }}" }
     ?: "no snapshot"
+
+  companion object {
+    @Volatile
+    private var configuratorFailed = false
+
+    /**
+     * The tripwire of [drainTheKnownConfiguratorFailure]: while the defect is open this holds and the class is
+     * green, and the first run in which the configurator stops throwing fails here.
+     *
+     * Then delete this method, [drainTheKnownConfiguratorFailure] and [configuratorFailed]. Nothing else changes:
+     * the three tests already assert what the product must do.
+     */
+    @JvmStatic
+    @AfterAll
+    fun theDefectIsStillOpen() {
+      assertThat(configuratorFailed)
+        .describedAs(
+          "the configurator no longer throws `$NO_INTERPRETER` for a member of a uv workspace " +
+          "(`sdkConfigImpl.kt:54`). That is the fix, not a failure of this class: remove the drain and this check. " +
+          "If instead the exception stopped being reachable because these tests stopped exercising the path, " +
+          "restore the path — a silent drain of an exception that never comes covers nothing"
+        )
+        .isTrue()
+    }
+  }
 }
