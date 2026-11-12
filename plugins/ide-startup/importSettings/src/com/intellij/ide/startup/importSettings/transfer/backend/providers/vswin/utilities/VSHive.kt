@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin
 
 import com.intellij.ide.startup.importSettings.TransferableIdeVersionId
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.Version2
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.VSInstanceStateParser
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.VSIsolationIniParser
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers.VSRegistryParserNew
 import com.intellij.openapi.diagnostic.logger
@@ -20,11 +21,13 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
   }
   val hiveString: String
     get() = "$version${if (instanceId == null) "" else "_$instanceId"}${rootSuffix ?: ""}"
-  val presentationString: String
-    get() = "Visual Studio ${productVersionTextRepresentation()}"
-
   val registry: VSRegistryParserNew? by lazy { VSRegistryParserNew.create(this) }
   val isolation: VSIsolationIniParser? by lazy { VSIsolationIniParser.create(this) }
+  val instanceState: VSInstanceStateParser? by lazy { VSInstanceStateParser.create(this) }
+
+  val productName: VSProductName by lazy {
+    instanceState?.title?.let { VSProductName.InstallerTitle(it) } ?: VSProductName.FromVersion(version)
+  }
 
   val isInstalled: Boolean by lazy { registry?.envPath?.second.let { it != null && it.exists() } }
   val lastUsage: Date by lazy { registry?.settingsFile?.getLastModifiedTime().let { Date(it?.toMillis() ?: 0L) } }
@@ -37,20 +40,7 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
   }
 
   override fun toString(): String {
-    return "Visual Studio ${productVersionTextRepresentation()} ($hiveString)"
-  }
-
-  private fun productVersionTextRepresentation(): String {
-    return when (version.major) {
-      18 -> "2026"
-      17 -> "2022"
-      16 -> "2019"
-      15 -> "2017"
-      14 -> "2015"
-      12 -> "2013"
-      11 -> "2012"
-      else -> "Ver. ${version.major}.${version.minor}"
-    }
+    return "Visual Studio $hiveString"
   }
 
   fun transferableVersion(): TransferableIdeVersionId {
