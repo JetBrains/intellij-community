@@ -275,6 +275,7 @@ public final class JUnit5TeamCityRunner {
       "Discovered 2 'junit-platform.properties' configuration files on the classpath (see below); only the first (*) will be used.",  // https://github.com/junit-team/junit-framework/issues/2794, https://youtrack.jetbrains.com/issue/AT-4058
       "Discovered 3 'junit-platform.properties' configuration files on the classpath (see below); only the first (*) will be used.",
       "Discovered 4 'junit-platform.properties' configuration files on the classpath (see below); only the first (*) will be used.",
+      "Discovered 5 'junit-platform.properties' configuration files on the classpath (see below); only the first (*) will be used.",
       "Failed to invoke TestWatcher [com.intellij.ide.starter.junit5.JUnit5TestWatcher] for method [com.intellij.workspaceModel.integrationTests.tests.aggregator.maven.",  // https://youtrack.jetbrains.com/issue/AT-4052
       "TestExecutionListener [com.intellij.ide.starter.junit5.FreeSpacePrinter] threw exception for method: executionStarted(TestIdentifier [uniqueId = [engine:group-by-mode]/[class:com.jetbrains.rdct.lambdaTestsUi.UiInfrastructureTest]/",  // https://youtrack.jetbrains.com/issue/AT-4051
       "Type implements CloseableResource but not AutoCloseable: org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter"  // https://github.com/testcontainers/testcontainers-java/issues/10525
