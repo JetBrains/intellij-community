@@ -130,11 +130,25 @@ class DockableEditorTabbedContainer internal constructor(
     return if (tabs != null && !tabs.presentation.isHideTabs) ContentResponse.ACCEPT_MOVE else ContentResponse.DENY
   }
 
-  private fun getTabsAt(content: DockableContent<*>, point: RelativePoint): JBTabs? {
-    if (content !is DockableEditor) {
+  /**
+   * Returns the editor window that takes a drop of a tool window tab at [point].
+   *
+   * The window is found by the rule of a dragged editor tab, with one difference: a hidden tab row does not deny the drop.
+   * Only a window for a single editor denies it while its tab row is hidden.
+   */
+  internal fun findDropWindow(point: RelativePoint): EditorWindow? {
+    val tabs = getTabsAt(point)
+    if (tabs == null || tabs.presentation.isHideTabs && splitters.isSingletonEditorInWindow) {
       return null
     }
+    return EditorWindow.DATA_KEY.getData(DataManager.getInstance().getDataContext(tabs.component))
+  }
 
+  private fun getTabsAt(content: DockableContent<*>, point: RelativePoint): JBTabs? {
+    return if (content is DockableEditor) getTabsAt(point) else null
+  }
+
+  private fun getTabsAt(point: RelativePoint): JBTabs? {
     val tabsAt = splitters.getTabsAt(point)
     val nearestTabs = when (UISettings.getInstance().editorTabPlacement) {
       SwingConstants.TOP -> getTabsBelow(point) // the point is slightly above the tabs placed in the header

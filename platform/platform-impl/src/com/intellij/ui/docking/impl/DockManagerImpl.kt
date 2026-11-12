@@ -397,18 +397,19 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     }
   }
 
-  private fun findContainerFor(devicePoint: DevicePoint, content: DockableContent<*>): DockContainer? {
-    val containers = getDragTargetContainers().toMutableList()
-    getFileManagerContainer()?.let(containers::add)
+  /**
+   * Returns the editor containers that take a drop at [devicePoint], in the order in which a dragged editor tab asks them.
+   * The container of the window of [source] goes first, as the container where a drag of an editor tab started does.
+   */
+  internal fun getEditorDropContainers(devicePoint: DevicePoint, source: Component): List<DockableEditorTabbedContainer> {
+    val containers = getOrderedDragTargetContainers(getContainerFor(source) { true })
+      .filterIsInstance<DockableEditorTabbedContainer>()
+    return (containers.filter { it.acceptArea.contains(devicePoint) } +
+            containers.filter { it.acceptAreaFallback.contains(devicePoint) }).distinct()
+  }
 
-    val startDragContainer = currentDragSession?.startDragContainer
-    if (startDragContainer != null) {
-      containers.remove(startDragContainer)
-      containers.add(0, startDragContainer)
-    }
-    // A container that covers another one comes first, whatever the drag started from: the editor container takes
-    // every point inside its own bounds, so a container above the editor area is reached only by its priority.
-    containers.sortByDescending { it.dropPriority }
+  private fun findContainerFor(devicePoint: DevicePoint, content: DockableContent<*>): DockContainer? {
+    val containers = getOrderedDragTargetContainers(currentDragSession?.startDragContainer)
     for (each in containers) {
       val rec = each.acceptArea
       if (rec.contains(devicePoint) && each.getContentResponse(content, devicePoint.toRelativePoint(each.containerComponent)).canAccept()) {
@@ -422,6 +423,20 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       }
     }
     return null
+  }
+
+  private fun getOrderedDragTargetContainers(startDragContainer: DockContainer?): List<DockContainer> {
+    val containers = getDragTargetContainers().toMutableList()
+    getFileManagerContainer()?.let(containers::add)
+
+    if (startDragContainer != null) {
+      containers.remove(startDragContainer)
+      containers.add(0, startDragContainer)
+    }
+    // A container that covers another one comes first, whatever the drag started from: the editor container takes
+    // every point inside its own bounds, so a container above the editor area is reached only by its priority.
+    containers.sortByDescending { it.dropPriority }
+    return containers
   }
 
   private fun getFactory(type: String): DockContainerFactory {

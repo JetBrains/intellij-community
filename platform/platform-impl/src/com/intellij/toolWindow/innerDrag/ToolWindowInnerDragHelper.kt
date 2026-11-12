@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow.innerDrag
 
-import com.intellij.ide.DataManager
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteIntentReadAction
@@ -26,11 +25,14 @@ import com.intellij.toolWindow.ToolWindowDragHelper.Companion.createThumbnailDra
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.WindowRoundedCornersManager
+import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.Content.TEMPORARY_REMOVED_KEY
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
+import com.intellij.ui.docking.DockManager
+import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.drag.DialogDragImageView
 import com.intellij.ui.drag.DragImageView
 import com.intellij.ui.drag.GlassPaneDragImageView
@@ -466,16 +468,19 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   }
 
   private fun findEditorDropTarget(point: RelativePoint): EditorDropTarget? {
-    val rootComponent = UIUtil.getRootPane(point.component)?.contentPane
-    val originalPoint = point.getPoint(rootComponent)
-    val component = SwingUtilities.getDeepestComponentAt(rootComponent, originalPoint.x, originalPoint.y)
-    val dataContext = DataManager.getInstance().getDataContext(component)
-    dataContext.getData(EditorWindow.DATA_KEY)?.let {
-      return EditorDropTarget.Window(it)
+    val project = sourceDecorator?.toolWindow?.project ?: return null
+    val dockManager = DockManager.getInstance(project) as? DockManagerImpl ?: return null
+    val devicePoint = DevicePoint(point)
+    for (container in dockManager.getEditorDropContainers(devicePoint, pane)) {
+      val splitters = container.splitters
+      if (splitters.isEmptyVisible) {
+        return EditorDropTarget.EmptyArea(splitters)
+      }
+      container.findDropWindow(devicePoint.toRelativePoint(splitters))?.let {
+        return EditorDropTarget.Window(it)
+      }
     }
-
-    val splitters = ComponentUtil.getParentOfType(EditorsSplitters::class.java, component) ?: return null
-    return if (splitters.isEmptyVisible) EditorDropTarget.EmptyArea(splitters) else null
+    return null
   }
 
   private fun findEditorDropArea(content: Content): EditorsSplitters? {
@@ -492,11 +497,11 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     val content = myDraggingTab?.content
     val canMoveContentToEditor = editorHintDropArea != null && content != null
 
-    dropHintHighlightComponent.bounds = if (canMoveContentToEditor && dropLocation !is DropLocation.Editor) {
-      editorHintDropArea.getEditorArea(pane.rootPane.glassPane)
+    if (canMoveContentToEditor && dropLocation !is DropLocation.Editor) {
+      highlightComponent(dropHintHighlightComponent, editorHintDropArea, editorHintDropArea.getEditorArea(editorHintDropArea))
     }
     else {
-      Rectangle()
+      dropHintHighlightComponent.bounds = Rectangle()
     }
   }
 
@@ -512,10 +517,9 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       currentDropSide = TabsUtil.getDropSideFor(point.getPoint(decorator), decorator)
       val dropArea = Rectangle(decorator.size)
       TabsUtil.updateBoundsWithDropSide(dropArea, currentDropSide)
-      dropArea.bounds = SwingUtilities.convertRectangle(decorator, dropArea, pane.rootPane.glassPane)
 
       decorator.setDropInfoIndex(-1, 0)
-      dropTargetHighlightComponent.bounds = dropArea
+      highlightComponent(dropTargetHighlightComponent, decorator, dropArea)
     }
     else {
       decorator.setDropInfoIndex(-1, 0)
@@ -526,15 +530,22 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   }
 
   private fun highlightEditorDropArea(target: EditorDropTarget) {
-    val bounds = getGlassPaneBounds(target.component)
-    dropTargetHighlightComponent.bounds = bounds
+    highlightComponent(dropTargetHighlightComponent, target.component, Rectangle(target.component.size))
+    val bounds = dropTargetHighlightComponent.bounds
     dropTargetHighlightComponent.cornerArea = ComponentUtil.getParentOfType(EditorsSplitters::class.java, target.component)?.let {
-      it.getEditorArea(pane.rootPane.glassPane).apply { translate(-bounds.x, -bounds.y) }
+      it.getEditorArea(dropTargetHighlightComponent.parent).apply { translate(-bounds.x, -bounds.y) }
     }
   }
 
-  private fun getGlassPaneBounds(component: JComponent): Rectangle {
-    return SwingUtilities.convertRectangle(component, Rectangle(component.size), pane.rootPane.glassPane)
+  private fun highlightComponent(component: JComponent, area: JComponent, areaBounds: Rectangle) {
+    val glassPane = area.rootPane?.glassPane as? JComponent ?: pane.rootPane.glassPane as JComponent
+    if (component.parent !== glassPane) {
+      removeHighlighting(component)
+      glassPane.add(component)
+      glassPane.revalidate()
+      glassPane.repaint()
+    }
+    component.bounds = SwingUtilities.convertRectangle(area, areaBounds, glassPane)
   }
 
   private fun removeAllHighlighting() {
