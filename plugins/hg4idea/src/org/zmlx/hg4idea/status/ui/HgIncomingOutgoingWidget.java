@@ -18,7 +18,6 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.util.Consumer;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
@@ -50,24 +49,17 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
     myDisabledIcon = IconLoader.getDisabledIcon(myEnabledIcon);
     myCurrentIcon = myDisabledIcon;
 
-    updateLater();
-  }
-
-  @Override
-  protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
-    super.registerCustomListeners(connection);
-
-    connection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, () -> updateLater());
-    connection.subscribe(HgVcs.STATUS_TOPIC, (project, root) -> updateLater());
-    connection.subscribe(HgVcs.REMOTE_TOPIC, (project, root) -> updateLater());
-    connection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, new HgWidgetUpdater() {
+    myConnection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, () -> updateLater());
+    myConnection.subscribe(HgVcs.STATUS_TOPIC, (_, _) -> updateLater());
+    myConnection.subscribe(HgVcs.REMOTE_TOPIC, (_, _) -> updateLater());
+    myConnection.subscribe(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC, new HgWidgetUpdater() {
       @Override
       public void update() {
         updateLater();
       }
     });
 
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         updateLater();
@@ -83,6 +75,8 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
         updateLater();
       }
     });
+
+    updateLater();
   }
 
   @Override

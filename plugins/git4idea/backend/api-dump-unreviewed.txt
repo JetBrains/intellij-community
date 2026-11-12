@@ -4680,8 +4680,8 @@ c:git4idea.ui.branch.GitBranchWidget
 - p:getToolTip(git4idea.repo.GitRepository):java.lang.String
 - p:getWidgetPopup(com.intellij.openapi.project.Project,git4idea.repo.GitRepository):com.intellij.openapi.ui.popup.JBPopup
 - p:guessCurrentRepository(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):git4idea.repo.GitRepository
+- install(com.intellij.openapi.wm.StatusBar):V
 - p:isMultiRoot(com.intellij.openapi.project.Project):Z
-- p:registerCustomListeners(com.intellij.util.messages.MessageBusConnection):V
 - p:rememberRecentRoot(java.lang.String):V
 c:git4idea.ui.branch.GitBranchesAction
 - com.intellij.openapi.project.DumbAwareAction

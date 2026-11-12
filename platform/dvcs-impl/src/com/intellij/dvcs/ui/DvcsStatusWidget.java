@@ -47,6 +47,11 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   protected DvcsStatusWidget(@NotNull Project project, @NotNull @Nls String vcsName) {
     super(project);
     myVcsName = vcsName;
+  }
+
+  @Override
+  public void install(@NotNull StatusBar statusBar) {
+    super.install(statusBar);
 
     myConnection.subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, new VcsRepositoryMappingListener() {
       @Override
@@ -74,6 +79,8 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
         updateLater();
       }
     });
+
+    updateLater();
   }
 
   /**
@@ -96,13 +103,6 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   }
 
   protected abstract void rememberRecentRoot(@NotNull String path);
-
-  @Override
-  public void install(@NotNull StatusBar statusBar) {
-    super.install(statusBar);
-
-    updateLater();
-  }
 
   @Override
   public WidgetPresentation getPresentation() {

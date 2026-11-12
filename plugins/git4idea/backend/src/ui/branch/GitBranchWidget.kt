@@ -14,12 +14,12 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.ExperimentalUI
-import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.git.GitDisplayName
 import com.intellij.vcs.git.branch.calcTooltip
 import com.intellij.vcsUtil.VcsImplUtil
@@ -45,11 +45,11 @@ private const val ID: @NonNls String = "git"
  */
 // used externally
 open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(project, GitDisplayName.NAME) {
-  override fun registerCustomListeners(connection: MessageBusConnection) {
-    super.registerCustomListeners(connection)
+  override fun install(statusBar: StatusBar) {
+    super.install(statusBar)
 
-    connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { updateLater() })
-    connection.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener { updateLater() })
+    myConnection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { updateLater() })
+    myConnection.subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener { updateLater() })
   }
 
   override fun ID(): String = ID
