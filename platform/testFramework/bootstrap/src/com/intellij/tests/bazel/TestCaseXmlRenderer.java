@@ -48,33 +48,9 @@ class TestCaseXmlRenderer {
     DecimalFormat decimalFormat = new DecimalFormat("#.##", DECIMAL_FORMAT_SYMBOLS);
     decimalFormat.setRoundingMode(RoundingMode.HALF_UP);
 
-    TestIdentifier id = test.getId();
-
-    String name;
-    if (test.isDynamic()) {
-      name = id.getDisplayName(); // [ordinal] name=value...
-    } else {
-      // Massage the name
-      name = id.getLegacyReportingName();
-      int index = name.indexOf('(');
-      if (index != -1) {
-        name = name.substring(0, index);
-      }
-    }
-
-    var parent = testPlan.getParent(id);
-    if (parent.isPresent() && "test-template".equals(parent.get().getUniqueIdObject().getLastSegment().getType())) {
-      String parentName = parent.get().getLegacyReportingName();
-      int index = parentName.indexOf('(');
-      if (index != -1) {
-        parentName = parentName.substring(0, index);
-      }
-      name = parentName + "." + name;
-    }
-
     xml.writeStartElement("testcase");
-    xml.writeAttribute("name", escapeIllegalCharacters(name));
-    xml.writeAttribute("classname", getClassName(testPlan, id));
+    xml.writeAttribute("name", escapeIllegalCharacters(TeamCityTestNames.getXmlName(test, testPlan)));
+    xml.writeAttribute("classname", escapeIllegalCharacters(TeamCityTestNames.getXmlClassName(test, testPlan)));
 
     /* @Nullable */ Duration maybeDuration = test.getDuration();
     boolean wasInterrupted = maybeDuration == null;

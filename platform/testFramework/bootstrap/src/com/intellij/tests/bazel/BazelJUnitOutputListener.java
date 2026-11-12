@@ -6,6 +6,7 @@
  */
 package com.intellij.tests.bazel;
 
+import com.intellij.tests.ClassTemplateInvocations;
 import com.intellij.tests.IgnoreException;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
@@ -155,9 +156,12 @@ public class BazelJUnitOutputListener implements TestExecutionListener, Closeabl
       // closest parent that is either a class or nested class when nested classes are involved.
       // Vintage descriptors use "test" segments for both suites and test cases, so if no class
       // parent exists we keep the nearest suite parent instead of reporting each test as a suite.
+      // The tests of all invocations of a class template go to the suite of the template class:
+      // the test case name holds the invocation, see TeamCityTestNames.
       List<UniqueId.Segment> segments = testCase.getId().getUniqueIdObject().getSegments();
       for (int i = segments.size() - 2; i >= 0; i--) {
-        if (SegmentClassTypes.contains(segments.get(i).getType())) {
+        String segmentType = segments.get(i).getType();
+        if (SegmentClassTypes.contains(segmentType)) {
           foundClassSegment = true;
           break;
         }
@@ -166,6 +170,10 @@ public class BazelJUnitOutputListener implements TestExecutionListener, Closeabl
         }
 
         parent = parent.get().getId().getParentIdObject().map(results::get);
+        if (ClassTemplateInvocations.SEGMENT_TYPE.equals(segmentType)) {
+          foundClassSegment = parent.isPresent();
+          break;
+        }
       }
 
       TestData suite = foundClassSegment ? parent.orElse(testCase) : directParent.orElse(testCase);

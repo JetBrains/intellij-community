@@ -6,7 +6,6 @@
  */
 package com.intellij.tests.bazel;
 
-
 import org.junit.platform.launcher.TestPlan;
 
 import javax.xml.stream.XMLStreamException;
@@ -16,25 +15,52 @@ import java.text.DecimalFormatSymbols;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static com.intellij.tests.bazel.SafeXml.escapeIllegalCharacters;
 import static com.intellij.tests.bazel.SafeXml.writeTextElement;
 
 class TestSuiteXmlRenderer {
 
+  private final TestPlan testPlan;
   private final TestCaseXmlRenderer testRenderer;
 
   public TestSuiteXmlRenderer(TestPlan testPlan) {
+    this.testPlan = testPlan;
     testRenderer = new TestCaseXmlRenderer(testPlan);
   }
 
+  /**
+   * Writes a `testsuite` element for each suite name of the tests, see {@link TeamCityTestNames#getSuiteName}.
+   * The tests of one container can need several suites: a failed container is a suite of its own.
+   * Only the first suite holds the output of the container.
+   */
   public void toXml(XMLStreamWriter xml, TestData suite, Collection<TestData> tests)
+    throws XMLStreamException {
+    Map<String, List<TestData>> testsBySuiteName = new LinkedHashMap<>();
+    for (TestData test : tests) {
+      testsBySuiteName.computeIfAbsent(TeamCityTestNames.getSuiteName(test, testPlan), name -> new ArrayList<>()).add(test);
+    }
+    if (testsBySuiteName.isEmpty()) {
+      testsBySuiteName.put(suite.getId().getLegacyReportingName(), List.of());
+    }
+    boolean first = true;
+    for (Map.Entry<String, List<TestData>> entry : testsBySuiteName.entrySet()) {
+      toXml(xml, suite, entry.getKey(), entry.getValue(), first);
+      first = false;
+    }
+  }
+
+  private void toXml(XMLStreamWriter xml, TestData suite, String name, Collection<TestData> tests, boolean first)
     throws XMLStreamException {
     xml.writeStartElement("testsuite");
 
-    xml.writeAttribute("name", escapeIllegalCharacters(suite.getId().getLegacyReportingName()));
+    xml.writeAttribute("name", escapeIllegalCharacters(name));
     xml.writeAttribute("timestamp", DateTimeFormatter.ISO_INSTANT.format(suite.getStarted()));
     xml.writeAttribute("tests", String.valueOf(tests.size()));
 
@@ -83,8 +109,10 @@ class TestSuiteXmlRenderer {
       testRenderer.toXml(xml, testCase);
     }
 
-    writeTextElement(xml, "system-out", suite.getStdOut());
-    writeTextElement(xml, "system-err", suite.getStdErr());
+    if (first) {
+      writeTextElement(xml, "system-out", suite.getStdOut());
+      writeTextElement(xml, "system-err", suite.getStdErr());
+    }
 
     xml.writeEndElement();
   }
