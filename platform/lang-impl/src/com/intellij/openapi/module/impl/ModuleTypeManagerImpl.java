@@ -4,7 +4,6 @@ package com.intellij.openapi.module.impl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeEP;
 import com.intellij.openapi.module.ModuleTypeManager;
@@ -104,6 +103,6 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
 
   @Override
   public @NotNull ModuleType<?> getDefaultModuleType() {
-    return EmptyModuleType.getInstance();
+    return ModuleType.EMPTY;
   }
 }
