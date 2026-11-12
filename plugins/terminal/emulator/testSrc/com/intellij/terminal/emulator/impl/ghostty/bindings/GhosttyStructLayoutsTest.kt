@@ -54,7 +54,7 @@ internal class GhosttyStructLayoutsTest {
 
   @Test
   fun gridRef() {
-    assertLayoutMatches(GhosttyLayouts.GRID_REF, struct("GhosttyGridRef"), "size", "node", "x", "y")
+    assertLayoutMatches(GhosttyLayouts.GRID_REF, struct("GhosttyGridRef"), "node", "x", "y")
   }
 
   @Test

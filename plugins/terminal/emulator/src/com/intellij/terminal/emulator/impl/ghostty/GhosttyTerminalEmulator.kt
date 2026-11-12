@@ -839,7 +839,6 @@ internal class GhosttyTerminalEmulator(
    */
   private fun readRowWrapped(pointTag: GhosttyPointTag, y: Int): Boolean {
     scratchGridRef.fill(0.toByte())
-    scratchGridRef.set(C_LONG, 0L, GRID_REF.byteSize()) // GHOSTTY_INIT_SIZED
     scratchPoint.fill(0.toByte())
     scratchPoint.set(C_INT, POINT_OFF_TAG, pointTag.code)
     scratchPoint.set(C_SHORT, POINT_OFF_X, 0)
@@ -1201,7 +1200,6 @@ internal class GhosttyTerminalEmulator(
     ensureOpen()
     out.reset()
     scratchGridRef.fill(0.toByte())
-    scratchGridRef.set(C_LONG, 0L, GRID_REF.byteSize()) // GHOSTTY_INIT_SIZED
     scratchPoint.fill(0.toByte())
     scratchPoint.set(C_INT, POINT_OFF_TAG, pointTag.code)
     scratchPoint.set(C_SHORT, POINT_OFF_X, x.toShort())

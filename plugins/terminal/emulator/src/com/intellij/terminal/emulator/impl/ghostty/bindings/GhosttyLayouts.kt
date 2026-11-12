@@ -64,9 +64,8 @@ internal object GhosttyLayouts {
     return string
   }
 
-  /** `GhosttyGridRef`: `size_t size; void* node; uint16 x; uint16 y;` (24 bytes, align 8). */
+  /** `GhosttyGridRef`: `void* node; uint16 x; uint16 y;` (frozen layout, 16 bytes, align 8). */
   val GRID_REF: MemoryLayout = MemoryLayout.structLayout(
-    C_LONG.withName("size"),
     C_PTR.withName("node"),
     C_SHORT.withName("x"),
     C_SHORT.withName("y"),
