@@ -2,11 +2,16 @@
 package com.intellij.openapi.editor.undo
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.DocumentReferenceManager
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -18,12 +23,18 @@ import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import kotlinx.coroutines.Dispatchers
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import java.io.IOException
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
+import java.util.function.Predicate
 import java.util.function.Supplier
 import kotlin.test.assertEquals
 
 /**
  * `UndoManagerImpl.clearDocumentReferences` is the cleanup that an owner of a light document calls on dispose,
  * as `EditorTextField` does. After it, the undo history of other documents must keep no reference to the light file.
+ * The undo history keeps the stack of a local file only while the stack holds a group.
+ * A deleted file is not in the VFS tree, so after its deletion only a leak can keep it.
  */
 @TestApplication
 internal class UndoClearDocumentReferencesTest {
@@ -71,6 +82,47 @@ internal class UndoClearDocumentReferencesTest {
     assertEquals(1 to 0, lightStackSizes)
     assertEquals(1, physicalStackSize)
     assertLightFileNotReachable(lightName, physical)
+  }
+
+  @Test
+  fun `a directory deleted outside a command is not kept`() {
+    val deleted = timeoutRunBlocking(context = Dispatchers.EDT) {
+      loadUndoProviders()
+      val directory = createDirectory("deleted-outside-command")
+      delete(directory)
+      directory
+    }
+    assertUndoDoesNotKeep(deleted)
+  }
+
+  @Test
+  fun `a directory with a change that cannot be undone is not kept`() {
+    val deleted = timeoutRunBlocking(context = Dispatchers.EDT) {
+      val directory = createDirectory("non-undoable")
+      val reference = DocumentReferenceManager.getInstance().create(directory)
+      val command = Runnable {
+        undoManager(project.get()).nonundoableActionPerformed(reference, true)
+      }
+      CommandProcessor.getInstance().executeCommand(project.get(), command, "non-undoable", null)
+      undoManager(project.get()).flushCurrentCommandMerger()
+      delete(directory)
+      directory
+    }
+    assertUndoDoesNotKeep(deleted)
+  }
+
+  @Test
+  fun `a check of the undo availability does not keep the file of the editor`() {
+    val deleted = timeoutRunBlocking(context = Dispatchers.EDT) {
+      val file = WriteAction.compute<VirtualFile, IOException> {
+        sourceRoot.get().virtualFile.createChildData(this, "checked.txt")
+      }
+      val document = checkNotNull(FileDocumentManager.getInstance().getDocument(file))
+      undoManager(project.get()).isUndoAvailable(StateRecordingEditor(file, document, 0))
+      delete(file)
+      file
+    }
+    assertUndoDoesNotKeep(deleted)
   }
 
   private fun assertCleanupReleasesLightFile(lightName: String, flushBeforeCleanup: Boolean) {
@@ -140,4 +192,49 @@ internal class UndoClearDocumentReferencesTest {
       file.name == lightName
     }
   }
+
+  /**
+   * Runs an empty command. The first command of a project loads the undo providers, and `FileUndoProvider` is one of them.
+   */
+  private fun loadUndoProviders() {
+    CommandProcessor.getInstance().executeCommand(project.get(), {}, "load undo providers", null)
+  }
+
+  private fun createDirectory(name: String): VirtualFile {
+    return WriteAction.compute<VirtualFile, IOException> {
+      sourceRoot.get().virtualFile.createChildDirectory(this, name)
+    }
+  }
+
+  /**
+   * Deletes [file] outside a command, as a VFS refresh does after an external deletion.
+   */
+  private fun delete(file: VirtualFile) {
+    WriteAction.run<IOException> {
+      file.delete(this)
+    }
+  }
+
+  /**
+   * Checks that the undo manager does not keep [file].
+   * The walk does not enter a static field, the application, a project or a file system, because they keep the file in other caches.
+   * It does not enter a segment of the VFS cache either, because a segment can keep the data of a deleted file for some time.
+   */
+  private fun assertUndoDoesNotKeep(file: VirtualFile) {
+    val roots = Supplier<Map<Any, String>> {
+      mapOf(undoManager(project.get()) to "the undo manager")
+    }
+    val insideUndo = Predicate<Field> { field ->
+      !Modifier.isStatic(field.modifiers) &&
+      !ComponentManager::class.java.isAssignableFrom(field.type) &&
+      !VirtualFileSystem::class.java.isAssignableFrom(field.type) &&
+      field.type.name != VFS_CACHE_SEGMENT
+    }
+    val isFile = Predicate<VirtualFile> { candidate ->
+      candidate === file
+    }
+    LeakHunter.checkLeak(roots, VirtualFile::class.java, insideUndo, isFile)
+  }
 }
+
+private const val VFS_CACHE_SEGMENT = $$"com.intellij.openapi.vfs.newvfs.impl.VfsData$Segment"

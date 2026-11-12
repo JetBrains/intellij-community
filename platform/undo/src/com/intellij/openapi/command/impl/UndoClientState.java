@@ -250,8 +250,8 @@ final class UndoClientState {
     }
     return new LocalUndoRedoSnapshot(
       mergerSnapshot,
-      undoStacksHolder.getStack(reference).snapshot(),
-      redoStacksHolder.getStack(reference).snapshot()
+      undoStacksHolder.snapshot(reference),
+      redoStacksHolder.snapshot(reference)
     );
   }
 
@@ -476,7 +476,7 @@ final class UndoClientState {
     FinishMarkAction finishMark = createdGroup.getFinishMark();
     if (finishMark != null) {
       DocumentReference affectedDoc = finishMark.getAffectedDocuments()[0];
-      Iterator<UndoableGroup> stack = undoStacksHolder.getStack(affectedDoc).descendingIterator();
+      Iterator<UndoableGroup> stack = undoStacksHolder.descendingIterator(affectedDoc);
       while (stack.hasNext()) {
         UndoableGroup group = stack.next();
         if (group.getStartMark() != null) {

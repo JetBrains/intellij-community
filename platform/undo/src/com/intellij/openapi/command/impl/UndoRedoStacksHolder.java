@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,6 +47,10 @@ final class UndoRedoStacksHolder {
     this.isUndo = isUndo;
   }
 
+  /**
+   * Returns the stack of {@code ref} and creates a missing stack.
+   * Call it only to put a group on the stack. To read a stack, call {@link #findStack}.
+   */
   @NotNull
   UndoRedoList<UndoableGroup> getStack(@NotNull DocumentReference ref) {
     VirtualFile file = ref.getFile();
@@ -94,8 +99,8 @@ final class UndoRedoStacksHolder {
       return !globalStack.isEmpty() && globalStack.getLast().isValid();
     }
     for (DocumentReference docRef : refs) {
-      UndoRedoList<UndoableGroup> stack = getStack(docRef);
-      if (!stack.isEmpty() && stack.getLast().isValid()) {
+      UndoRedoList<UndoableGroup> stack = findStack(docRef);
+      if (stack != null && !stack.isEmpty() && stack.getLast().isValid()) {
         return true;
       }
     }
@@ -111,9 +116,9 @@ final class UndoRedoStacksHolder {
     int mostRecentDocTimestamp = 0;
 
     for (DocumentReference docRef : refs) {
-      UndoRedoList<UndoableGroup> stack = getStack(docRef);
-      // the stack for a document can be empty in case of compound editors with several documents
-      if (stack.isEmpty()) {
+      UndoRedoList<UndoableGroup> stack = findStack(docRef);
+      // the stack for a document can be missing or empty in case of compound editors with several documents
+      if (stack == null || stack.isEmpty()) {
         continue;
       }
       UndoableGroup lastAction = stack.getLast();
@@ -134,7 +139,8 @@ final class UndoRedoStacksHolder {
   @NotNull Set<DocumentReference> collectClashingActions(@NotNull UndoableGroup group) {
     Set<DocumentReference> result = new HashSet<>();
     for (DocumentReference docRef : group.getAffectedDocuments()) {
-      UndoableGroup last = getStack(docRef).peekLast();
+      UndoRedoList<UndoableGroup> stack = findStack(docRef);
+      UndoableGroup last = stack == null ? null : stack.peekLast();
       if (last != null && last != group) {
         result.addAll(last.getAffectedDocuments());
       }
@@ -152,7 +158,7 @@ final class UndoRedoStacksHolder {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Adding to " + getStacksDescription() + ": " + group.dumpState());
     }
-    for (UndoRedoList<UndoableGroup> stack : getAffectedStacks(group)) {
+    for (UndoRedoList<UndoableGroup> stack : getStacksToAdd(group)) {
       if (isUndo && !group.isTemporary()) {
         convertTemporaryActionsToPermanent(stack);
       }
@@ -210,8 +216,8 @@ final class UndoRedoStacksHolder {
   }
 
   int getLastCommandTimestamp(@NotNull DocumentReference r) {
-    UndoRedoList<UndoableGroup> stack = getStack(r);
-    if (stack.isEmpty()) {
+    UndoRedoList<UndoableGroup> stack = findStack(r);
+    if (stack == null || stack.isEmpty()) {
       return 0;
     }
     return Math.max(stack.getFirst().getCommandTimestamp(), stack.getLast().getCommandTimestamp());
@@ -232,7 +238,30 @@ final class UndoRedoStacksHolder {
     if (docRef == null) {
       return globalStack.size();
     }
-    return getStack(docRef).size();
+    UndoRedoList<UndoableGroup> stack = findStack(docRef);
+    if (stack == null) {
+      return 0;
+    }
+    return stack.size();
+  }
+
+  @NotNull UndoRedoListSnapshot<UndoableGroup> snapshot(@NotNull DocumentReference ref) {
+    UndoRedoList<UndoableGroup> stack = findStack(ref);
+    if (stack == null) {
+      return new UndoRedoList<UndoableGroup>().snapshot();
+    }
+    return stack.snapshot();
+  }
+
+  /**
+   * Iterates the stack of {@code ref} from the newest group to the oldest one. A missing stack gives no groups.
+   */
+  @NotNull Iterator<UndoableGroup> descendingIterator(@NotNull DocumentReference ref) {
+    UndoRedoList<UndoableGroup> stack = findStack(ref);
+    if (stack == null) {
+      return Collections.emptyIterator();
+    }
+    return stack.descendingIterator();
   }
 
   @NotNull Collection<DocumentReference> getAffectedDocuments(@Nullable Collection<DocumentReference> docRefs) {
@@ -251,7 +280,10 @@ final class UndoRedoStacksHolder {
   }
 
   @NotNull String dump(@Nullable DocumentReference docRef) {
-    UndoRedoList<UndoableGroup> stack = docRef == null ? globalStack : getStack(docRef);
+    UndoRedoList<UndoableGroup> stack = docRef == null ? globalStack : findStack(docRef);
+    if (stack == null) {
+      stack = new UndoRedoList<>();
+    }
     var affected = stack.stream()
       .flatMap(group -> group.getAffectedDocuments().stream())
       .distinct()
@@ -367,17 +399,42 @@ final class UndoRedoStacksHolder {
     }
   }
 
+  /**
+   * Returns the stacks that get {@code group}.
+   * A group that cannot be undone goes only on a stack that is not empty, so it gets no new stack.
+   */
+  private @NotNull List<UndoRedoList<UndoableGroup>> getStacksToAdd(@NotNull UndoableGroup group) {
+    if (!group.isUndoable()) {
+      return getAffectedStacks(group);
+    }
+    Collection<DocumentReference> refs = group.getAffectedDocuments();
+    List<UndoRedoList<UndoableGroup>> result = new ArrayList<>(refs.size() + 1);
+    if (group.isGlobal()) {
+      result.add(globalStack);
+    }
+    for (DocumentReference ref : refs) {
+      result.add(getStack(ref));
+    }
+    return result;
+  }
+
   private @NotNull List<UndoRedoList<UndoableGroup>> getAffectedStacks(@NotNull UndoableGroup group) {
     return getAffectedStacks(group.getAffectedDocuments(), group.isGlobal());
   }
 
+  /**
+   * Returns the global stack if {@code global} is true, and the existing stacks of {@code refs}. It creates no stack.
+   */
   private @NotNull List<UndoRedoList<UndoableGroup>> getAffectedStacks(@NotNull Collection<DocumentReference> refs, boolean global) {
     List<UndoRedoList<UndoableGroup>> result = new ArrayList<>(refs.size() + 1);
     if (global) {
       result.add(globalStack);
     }
     for (DocumentReference ref : refs) {
-      result.add(getStack(ref));
+      UndoRedoList<UndoableGroup> stack = findStack(ref);
+      if (stack != null) {
+        result.add(stack);
+      }
     }
     return result;
   }
