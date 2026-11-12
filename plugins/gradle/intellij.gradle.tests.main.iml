@@ -23,6 +23,16 @@
     <orderEntry type="module" module-name="intellij.gradle.toolingProxy.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.codeInsight.groovy.backend.tests.integration" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.codeInsight.properties.backend.tests.integration" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.java.tests.integration" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.java.tests.integration.eel" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.java.tests.integration.service" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.java.tests.quarantine" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.properties.tests.integration" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.tests.integration" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.tests.integration.eel" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.tests.integration.service" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.tests.quarantine" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests.integration" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.codeInsight.toml.backend.tests.integration" scope="RUNTIME" />
   </component>
 </module>

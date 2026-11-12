@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="intellij.java.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.java.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.lombok.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.uast.tests.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.uast.tests" scope="RUNTIME" />
   </component>
 </module>

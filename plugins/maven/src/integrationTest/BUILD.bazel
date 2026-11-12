@@ -24,6 +24,8 @@ jvm_library(
         "//plugins/properties/plugin",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
+        "//java/idea-ui/tests/maven:maven_test_lib",
+        "//plugins/maven/src/integrationTest/docker:docker_test_lib",
     ],
     deps = [
         # do not sort,

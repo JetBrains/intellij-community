@@ -135,6 +135,7 @@ jvm_library(
         "//jps/jps-builders:build-tests_test_lib",
         "//jps/model-serialization:model-serialization-tests_test_lib",
         "//jps/model-impl:model-tests_test_lib",
+        "//plugins/IntelliLang/tests/compiler:compiler_test_lib",
         "//plugins/IntelliLang/tests:tests_test_lib",
     ],
 )

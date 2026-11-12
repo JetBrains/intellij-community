@@ -283,6 +283,7 @@ jvm_library(
         "//java/java-tests:tests_test_lib",
         "//jvm/jvm-analysis-java-tests:analysis-java-tests_test_lib",
         "//plugins/lombok:lombok-tests_test_lib",
+        "//uast/uast-tests/java:java_test_lib",
         "//uast/uast-tests:tests_test_lib",
     ],
 )
