@@ -2,14 +2,13 @@
 package com.intellij.java.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
 
-public class CreateClassFromNewTest extends LightQuickFixParameterizedTestCase {
+public class CreateClassFromNewTest extends CreateClassQuickFixTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();

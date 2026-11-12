@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeUtil;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.ModNavigatorTailType;
 import com.intellij.codeInsight.completion.proc.VariablesProcessor;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -30,6 +29,7 @@ import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -133,6 +133,7 @@ import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
@@ -426,117 +427,24 @@ public final class CreateFromUsageUtils {
     return argType;
   }
 
-  public static @Nullable PsiClass createClass(PsiJavaCodeReferenceElement referenceElement,
-                                               CreateClassKind classKind,
-                                               String superClassName) {
-    assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "You must not run createClass() from under write action";
-    final String name = referenceElement.getReferenceName();
-
-    String qualifierName;
-    final PsiElement qualifierElement;
-    PsiElement qualifier = referenceElement.getQualifier();
-    if (qualifier instanceof PsiJavaCodeReferenceElement ref) {
-      qualifierName = ref.getQualifiedName();
-      qualifierElement = ref.resolve();
-      if (qualifierElement instanceof PsiClass) {
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(qualifierElement)) return null;
-
-        return WriteAction.compute(() -> createClassInQualifier((PsiClass)qualifierElement, classKind, name, referenceElement, superClassName));
-      }
-    }
-    else {
-      qualifierName = null;
-      qualifierElement = null;
-    }
-
-    final PsiManager manager = referenceElement.getManager();
-    final PsiFile sourceFile = referenceElement.getContainingFile();
-    final Module module = ModuleUtilCore.findModuleForPsiElement(sourceFile);
-    if (qualifierName == null) {
-      PsiPackage aPackage = findTargetPackage(qualifierElement, manager, sourceFile);
-      if (aPackage == null) return null;
-      qualifierName = aPackage.getQualifiedName();
-    }
-    final PsiDirectory targetDirectory;
-    if (!ApplicationManager.getApplication().isUnitTestMode() &&
-        !ScratchUtil.isScratch(referenceElement.getContainingFile().getVirtualFile())) {
-      String title = CommonQuickFixBundle.message("fix.create.title", StringUtil.capitalize(classKind.getDescriptionAccusative()));
-
-      CreateClassDialog dialog = new CreateClassDialog(referenceElement.getProject(), title, name, qualifierName, classKind, false, module) {
-        @Override
-        protected @Nullable PsiDirectory getBaseDir(String packageName) {
-          return sourceFile.getContainingDirectory();
-        }
-
-        @Override
-        protected boolean reportBaseInSourceSelectionInTest() {
-          return true;
-        }
-      };
-      dialog.show();
-      if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
-
-      targetDirectory = dialog.getTargetDirectory();
-      if (targetDirectory == null) return null;
-    }
-    else {
-      if (!FileModificationService.getInstance().prepareFileForWrite(sourceFile)) {
-        return null;
-      }
-      targetDirectory = null;
-    }
-    return createClass(classKind, targetDirectory, name, manager, referenceElement, sourceFile, superClassName);
-  }
-
-  private static @Nullable PsiPackage findTargetPackage(PsiElement qualifierElement, PsiManager manager, PsiFile sourceFile) {
-    PsiPackage aPackage = null;
-    if (qualifierElement instanceof PsiPackage p) {
-      aPackage = p;
-    }
-    else {
-      final PsiDirectory directory = sourceFile.getContainingDirectory();
-      if (directory != null) {
-        aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-      }
-
-      if (aPackage == null) {
-        aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
-      }
-    }
-    if (aPackage == null) return null;
-    return aPackage;
-  }
-
-  private static PsiClass createClassInQualifier(PsiClass psiClass,
-                                                 CreateClassKind classKind,
-                                                 String name,
-                                                 PsiJavaCodeReferenceElement referenceElement,
-                                                 @Nullable String superClassName) {
-    PsiManager manager = psiClass.getManager();
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
-    PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
-                      classKind == CreateClassKind.CLASS ? elementFactory.createClass(name) :
-                      classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
-                      classKind == CreateClassKind.RECORD ? elementFactory.createRecord(name) :
-                      elementFactory.createEnum(name);
-    setupGenericParameters(result, referenceElement);
-    result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
-    if (!StringUtil.isEmpty(superClassName)) {
-      setupSuperClassReference(result, superClassName);
-    }
-    return (PsiClass) psiClass.add(result);
-  }
-
+  /**
+   * @deprecated use {@link #createClassInDirectory(CreateClassKind, PsiDirectory, String, PsiElement, String)}
+   * or {@link #createClassInFile(CreateClassKind, PsiFile, String, PsiElement, String)}.
+   */
+  @Deprecated
   public static PsiClass createClass(CreateClassKind classKind,
                                      PsiDirectory directory,
                                      String name,
-                                     PsiManager manager,
+                                     PsiManager ignoredManager,
                                      @NotNull PsiElement contextElement,
                                      PsiFile sourceFile,
                                      String superClassName) {
     return WriteAction.compute(() -> {
       try {
-        return createClassInDirectory(classKind, directory, name, contextElement, sourceFile, superClassName);
+        if (directory != null) {
+          return createClassInDirectory(classKind, directory, name, contextElement, superClassName);
+        }
+        return createClassInFile(classKind, Objects.requireNonNull(sourceFile), name, contextElement, superClassName);
       }
       catch (IncorrectOperationException e) {
         if (directory != null) {
@@ -551,38 +459,66 @@ public final class CreateFromUsageUtils {
   }
 
   /**
-   * Creates the class, and adds its super class reference and its type parameters. It shows no dialog
-   * and it starts no write action, so a {@link com.intellij.modcommand.ModCommandAction} can call it.
+   * Create a class in the new file in the specified directory and setup it from context element (reference).
+   * This method is ModCommand-friendly: the directory could be a {@linkplain ModPsiUpdater#getWritable(PsiElement) writable copy}
+   * inside a ModCommand. If called on a physical directory, must be called inside a write action.
    *
-   * @param directory     the directory of the new file, or null to add the class into the source file
-   * @param contextElement the element which uses the class
-   * @param sourceFile     the file which uses the class. It is necessary only when the directory is null
-   * @return the new class, or null when the creation fails
+   * @param classKind class kind
+   * @param directory directory where class will be created
+   * @param name class name
+   * @param contextElement context element (reference)
+   * @param superClassName super class name, fully-qualified, can be null
+   * @return newly created class.
    */
-  public static @Nullable PsiClass createClassInDirectory(@NotNull CreateClassKind classKind,
-                                                          @Nullable PsiDirectory directory,
-                                                          @NotNull String name,
-                                                          @NotNull PsiElement contextElement,
-                                                          @Nullable PsiFile sourceFile,
-                                                          @Nullable String superClassName) {
+  public static @NotNull PsiClass createClassInDirectory(@NotNull CreateClassKind classKind,
+                                                         @NotNull PsiDirectory directory,
+                                                         @NotNull String name,
+                                                         @NotNull PsiElement contextElement,
+                                                         @Nullable String superClassName) {
     Project project = contextElement.getProject();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    PsiClass targetClass;
-    if (directory != null) {
-      targetClass = classKind.createInDirectory(directory, name);
-      if (!facade.getResolveHelper().isAccessible(targetClass, contextElement, null)) {
-        PsiUtil.setModifierProperty(targetClass, PsiModifier.PUBLIC, true);
-      }
-    }
-    else { //tests
-      Objects.requireNonNull(sourceFile, "The source file is necessary when the directory is null");
-      PsiClass aClass = classKind.create(facade.getElementFactory(), name);
-      targetClass = (PsiClass)sourceFile.add(aClass);
-      if (ScratchUtil.isScratch(sourceFile.getVirtualFile())) {
-        PsiUtil.setModifierProperty(targetClass, PsiModifier.PACKAGE_LOCAL, true);
-      }
+    PsiClass targetClass = classKind.createInDirectory(directory, name);
+    if (!facade.getResolveHelper().isAccessible(targetClass, contextElement, null)) {
+      PsiUtil.setModifierProperty(targetClass, PsiModifier.PUBLIC, true);
     }
 
+    setupClass(classKind, contextElement, superClassName, targetClass);
+    return targetClass;
+  }
+
+  /**
+   * Create class in an existing source file and setup it from context element (reference).
+   * This method is ModCommand-friendly: the file could be a {@linkplain ModPsiUpdater#getWritable(PsiElement) writable copy}
+   * inside a ModCommand. If called on a physical file, must be called inside a write action.
+   *
+   * @param classKind      class kind
+   * @param file           source file where the class will be created
+   * @param name           class name
+   * @param contextElement context element (reference)
+   * @param superClassName super class name, fully-qualified, can be null
+   * @return newly created class.
+   */
+  public static @NotNull PsiClass createClassInFile(@NotNull CreateClassKind classKind,
+                                                    @NotNull PsiFile file,
+                                                    @NotNull String name,
+                                                    @NotNull PsiElement contextElement,
+                                                    @Nullable String superClassName) {
+    Project project = contextElement.getProject();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    PsiClass aClass = classKind.create(facade.getElementFactory(), name);
+    PsiClass targetClass = (PsiClass)file.add(aClass);
+    if (ScratchUtil.isScratch(file.getVirtualFile())) {
+      PsiUtil.setModifierProperty(targetClass, PsiModifier.PACKAGE_LOCAL, true);
+    }
+
+    setupClass(classKind, contextElement, superClassName, targetClass);
+    return targetClass;
+  }
+
+  private static void setupClass(@NotNull CreateClassKind classKind,
+                                 @NotNull PsiElement contextElement,
+                                 @Nullable String superClassName,
+                                 PsiClass targetClass) {
     if (StringUtil.isNotEmpty(superClassName) &&
         (classKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM)) &&
         (classKind != CreateClassKind.RECORD || !superClassName.equals(CommonClassNames.JAVA_LANG_RECORD))) {
@@ -591,7 +527,26 @@ public final class CreateFromUsageUtils {
     if (contextElement instanceof PsiJavaCodeReferenceElement ref) {
       setupGenericParameters(targetClass, ref);
     }
-    return targetClass;
+  }
+
+  private static PsiClass createClassInQualifier(@NotNull PsiClass psiClass,
+                                                 @NotNull CreateClassKind classKind,
+                                                 @NotNull String name,
+                                                 @NotNull PsiJavaCodeReferenceElement referenceElement,
+                                                 @Nullable String superClassName) {
+    PsiManager manager = psiClass.getManager();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
+    PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
+                      classKind == CreateClassKind.CLASS ? elementFactory.createClass(name) :
+                      classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
+                      classKind == CreateClassKind.RECORD ? elementFactory.createRecord(name) :
+                      elementFactory.createEnum(name);
+    setupGenericParameters(result, referenceElement);
+    result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
+    if (!StringUtil.isEmpty(superClassName)) {
+      setupSuperClassReference(result, superClassName);
+    }
+    return (PsiClass)psiClass.add(result);
   }
 
   /**
@@ -1393,7 +1348,7 @@ public final class CreateFromUsageUtils {
     }
   }
 
-  static void setupGenericParameters(PsiClass targetClass, PsiJavaCodeReferenceElement ref) {
+  static void setupGenericParameters(PsiClass targetClass, @NotNull PsiJavaCodeReferenceElement ref) {
     int numParams = ref.getTypeParameters().length;
     if (numParams == 0) return;
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
@@ -1421,6 +1376,162 @@ public final class CreateFromUsageUtils {
         }
       }
     }
+  }
+
+  /**
+   * Creates the class inside {@link ModCommand}.
+   *
+   * @param updater        the updater of the command
+   * @param classKind      the kind of the new class
+   * @param place          the place for the new class
+   * @param reference      the reference which needs the new class
+   * @param superClassName the qualified name of the super class, or null when the class needs none
+   * @return the new class, or null when the creation fails
+   */
+  static @Nullable PsiClass createClass(@NotNull ModPsiUpdater updater,
+                                        @NotNull CreateClassKind classKind,
+                                        @NotNull NewClassPlace place,
+                                        @NotNull PsiJavaCodeReferenceElement reference,
+                                        @Nullable String superClassName) {
+    String name = reference.getReferenceName();
+    if (name == null) return null;
+    PsiClass qualifierClass = getQualifierClass(reference);
+    if (qualifierClass != null) {
+      return createClassInQualifier(updater.getWritable(qualifierClass), classKind, name, reference, superClassName);
+    }
+    return switch (place) {
+      case NewClassPlace.Directory(PsiDirectory dir) ->
+        createClassInDirectory(classKind, updater.getWritable(dir), name, reference, superClassName);
+      case NewClassPlace.OriginalFile _ ->
+        createClassInFile(classKind, updater.getWritable(reference.getContainingFile()), name, reference, superClassName);
+    };
+  }
+
+  /**
+   * Represents the place where a new class should be created.
+   */
+  sealed interface NewClassPlace {
+    /**
+     * The current file where the unresolved reference is located.
+     */
+    record OriginalFile() implements NewClassPlace {
+    }
+
+    /**
+     * The directory where a new class should be created.
+     */
+    record Directory(@NotNull PsiDirectory directory) implements NewClassPlace {
+    }
+
+    /**
+     * @param reference reference to find a place for
+     * @return default place for the new class referenced by this unresolved reference. Null if the default place cannot be determined.
+     */
+    static @Nullable NewClassPlace defaultPlaceFor(@NotNull PsiJavaCodeReferenceElement reference) {
+      if (addsClassToExistingFile(reference)) return new OriginalFile();
+      if (reference.getQualifier() != null) return null;
+      String name = reference.getReferenceName();
+      if (name == null) return null;
+      PsiDirectory directory = findClassDirectory(reference.getContainingFile(), name);
+      return directory == null ? null : new Directory(directory);
+    }
+
+    /**
+     * Asks the user to choose a place for the new class referenced by this unresolved reference.
+     * @param reference reference to find a place for
+     * @param kind kind of the new class
+     * @return chosen place for the new class, or null if the user canceled the operation
+     */
+    static @Nullable NewClassPlace choosePlaceInteractively(@NotNull PsiJavaCodeReferenceElement reference,
+                                                            @NotNull CreateClassKind kind) {
+      if (addsClassToExistingFile(reference)) {
+        return new OriginalFile();
+      }
+      PsiDirectory directory = chooseClassDirectory(reference, kind);
+      if (directory == null) return null;
+      return new Directory(directory);
+    }
+  }
+
+  /**
+   * @return true when the new class goes into an existing file: into the class of the qualifier, or into the scratch file which
+   * holds the reference
+   */
+  private static boolean addsClassToExistingFile(@NotNull PsiJavaCodeReferenceElement reference) {
+    return getQualifierClass(reference) != null || ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(reference));
+  }
+
+  private static @Nullable PsiClass getQualifierClass(@NotNull PsiJavaCodeReferenceElement reference) {
+    return reference.getQualifier() instanceof PsiJavaCodeReferenceElement qualifier &&
+           qualifier.resolve() instanceof PsiClass psiClass ? psiClass : null;
+  }
+
+  /**
+   * Asks the user for the directory of the new file. The dialog can create the directory of a new package.
+   *
+   * @return the directory, or null when the user cancels the dialog
+   */
+  private static @Nullable PsiDirectory chooseClassDirectory(@NotNull PsiJavaCodeReferenceElement referenceElement,
+                                                             @NotNull CreateClassKind classKind) {
+    assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "You must not choose the directory from under write action";
+    PsiFile sourceFile = referenceElement.getContainingFile();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return sourceFile.getContainingDirectory();
+    }
+    String name = referenceElement.getReferenceName();
+    if (name == null) return null;
+    String qualifierName;
+    PsiElement qualifierElement;
+    if (referenceElement.getQualifier() instanceof PsiJavaCodeReferenceElement ref) {
+      qualifierName = ref.getQualifiedName();
+      qualifierElement = ref.resolve();
+    }
+    else {
+      qualifierName = null;
+      qualifierElement = null;
+    }
+
+    Module module = ModuleUtilCore.findModuleForPsiElement(sourceFile);
+    if (qualifierName == null) {
+      PsiPackage aPackage = findTargetPackage(qualifierElement, referenceElement.getManager(), sourceFile);
+      if (aPackage == null) return null;
+      qualifierName = aPackage.getQualifiedName();
+    }
+    String title = CommonQuickFixBundle.message("fix.create.title", StringUtil.capitalize(classKind.getDescriptionAccusative()));
+
+    CreateClassDialog dialog = new CreateClassDialog(referenceElement.getProject(), title, name, qualifierName, classKind, false, module) {
+      @Override
+      protected @Nullable PsiDirectory getBaseDir(String packageName) {
+        return sourceFile.getContainingDirectory();
+      }
+
+      @Override
+      protected boolean reportBaseInSourceSelectionInTest() {
+        return true;
+      }
+    };
+    dialog.show();
+    if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
+    return dialog.getTargetDirectory();
+  }
+
+  private static @Nullable PsiPackage findTargetPackage(PsiElement qualifierElement, PsiManager manager, PsiFile sourceFile) {
+    PsiPackage aPackage = null;
+    if (qualifierElement instanceof PsiPackage p) {
+      aPackage = p;
+    }
+    else {
+      final PsiDirectory directory = sourceFile.getContainingDirectory();
+      if (directory != null) {
+        aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+      }
+
+      if (aPackage == null) {
+        aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
+      }
+    }
+    if (aPackage == null) return null;
+    return aPackage;
   }
 
   /**

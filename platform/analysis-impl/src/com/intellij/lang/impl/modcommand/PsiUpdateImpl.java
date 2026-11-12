@@ -127,7 +127,7 @@ final class PsiUpdateImpl {
 
     FileTracker(@NotNull PsiFile origFile, @NotNull Map<PsiFile, FileTracker> changedFiles, @Nullable TextRange selectionToDelete) {
       Project project = origFile.getProject();
-      myCopyFile = copyFile(project, origFile);
+      myCopyFile = isAddedFile(origFile) ? origFile : copyFile(project, origFile);
       PsiFileImplUtil.setNonPhysicalFileDeleteHandler(myCopyFile, _ -> myDeleted = true);
       assert !myCopyFile.getViewProvider().supportsSendingPsiEvents() : "Event system for " + myCopyFile.getName();
       myManager = PsiDocumentManager.getInstance(project);
@@ -203,6 +203,10 @@ final class PsiUpdateImpl {
       String newText = myTargetFile.getFileDocument().getText();
       return myOrigText.equals(newText) ? new ModNothing() :
              new ModUpdateFileText(origVirtualFile, myOrigText, newText, myFragments);
+    }
+
+    private static boolean isAddedFile(@NotNull PsiFile file) {
+      return file.getViewProvider().getVirtualFile() instanceof ChangedVirtualDirectory.AddedVirtualFile;
     }
 
     @Override
@@ -939,7 +943,7 @@ final class PsiUpdateImpl {
         return error(AnalysisBundle.message("modcommand.executor.modification.of.guarded.region"));
       }
       return ModCommand.showConflicts(myConflictMap)
-        .andThen(myChangedFiles.values().stream()
+        .andThen(myChangedFiles.values().stream().filter(fileTracker -> !FileTracker.isAddedFile(fileTracker.myOrigFile))
           .map(fileTracker -> fileTracker.getUpdateCommand()).reduce(nop(), ModCommand::andThen))
         .andThen(myChangedDirectories.values().stream()
                    .flatMap(info -> info.createFileCommands(myActionContext.project()))

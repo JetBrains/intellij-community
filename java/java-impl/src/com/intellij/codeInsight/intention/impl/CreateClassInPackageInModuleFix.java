@@ -108,7 +108,7 @@ public final class CreateClassInPackageInModuleFix implements IntentionAction {
                                                   @NotNull PsiElement contextElement) {
     PsiDirectory psiPackageDir = CreateServiceClassFixBase.getOrCreatePackageDirInRoot(myPackageName, rootDir);
     if (psiPackageDir != null) {
-      return CreateFromUsageUtils.createClass(kind, psiPackageDir, name, contextElement.getManager(), contextElement, null, null);
+      return CreateFromUsageUtils.createClassInDirectory(kind, psiPackageDir, name, contextElement, null);
     }
     return null;
   }

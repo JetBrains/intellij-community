@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.template.Template;
@@ -14,16 +12,13 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Segment;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
@@ -88,17 +83,5 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   @Override
   public boolean startInWriteAction() {
     return false;
-  }
-
-  public static void startTemplate(@NotNull Project project, @NotNull PsiClass aClass, @NotNull Template template, @Nls @NotNull String text) {
-    aClass = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(aClass);
-    template.setToReformat(true);
-
-    final Editor editor = CodeInsightUtil.positionCursor(project, Objects.requireNonNull(aClass).getContainingFile(), aClass);
-    if (editor == null) return;
-
-    Segment textRange = aClass.getTextRange();
-    editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
-    startTemplate(editor, template, project, null, text);
   }
 }

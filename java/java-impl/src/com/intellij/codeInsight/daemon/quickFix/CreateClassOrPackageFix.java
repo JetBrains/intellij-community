@@ -135,7 +135,7 @@ public final class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActi
   }
 
   private @Nullable PsiDirectory chooseDirectory(final Project project, final PsiFile file) {
-    PsiDirectory preferredDirectory = myWritableDirectoryList.isEmpty() ? null : myWritableDirectoryList.get(0);
+    PsiDirectory preferredDirectory = myWritableDirectoryList.isEmpty() ? null : myWritableDirectoryList.getFirst();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile virtualFile = file.getVirtualFile();
     assert virtualFile != null;
@@ -159,7 +159,6 @@ public final class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActi
   }
 
   private void doCreate(final PsiDirectory baseDirectory, PsiElement myContext) {
-    final PsiManager manager = baseDirectory.getManager();
     PsiDirectory directory = baseDirectory;
     String lastName;
     for (StringTokenizer st = new StringTokenizer(myRedPart, "."); ;) {
@@ -184,9 +183,14 @@ public final class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActi
         createdClass = CreateClassUtil.createClassFromCustomTemplate(directory, null, lastName, myTemplateName);
       }
       else {
-        createdClass = CreateFromUsageUtils
-            .createClass(myClassKind == ClassKind.INTERFACE ? CreateClassKind.INTERFACE : CreateClassKind.CLASS, directory, lastName,
-                         manager, myContext, null, mySuperClass);
+        CreateClassKind classKind = myClassKind == ClassKind.INTERFACE ? CreateClassKind.INTERFACE : CreateClassKind.CLASS;
+        try {
+          createdClass = CreateFromUsageUtils.createClassInDirectory(classKind, directory, lastName, myContext, mySuperClass);
+        }
+        catch (IncorrectOperationException e) {
+          CreateFromUsageUtils.scheduleFileOrPackageCreationFailedMessageBox(e, lastName, directory, false);
+          return;
+        }
       }
       if (createdClass != null) {
         createdClass.navigate(true);

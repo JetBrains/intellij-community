@@ -1,39 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.NewClassPlace;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcommand.Presentation;
-import com.intellij.modcommand.PsiUpdateModCommandAction;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.Navigatable;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDeconstructionList;
 import com.intellij.psi.PsiDeconstructionPattern;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiRecordHeader;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,23 +27,9 @@ public final class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
-    PsiJavaCodeReferenceElement element = getRefElement();
-    if (element == null) return IntentionPreviewInfo.EMPTY;
-    element = PsiTreeUtil.findSameElementInCopy(element, psiFile);
-    String superClassName = getSuperClassName(element);
-    PsiClass aClass = myKind.create(JavaPsiFacade.getElementFactory(project), element.getReferenceName());
-    if (StringUtil.isNotEmpty(superClassName) &&
-        (myKind != CreateClassKind.ENUM || !superClassName.equals(CommonClassNames.JAVA_LANG_ENUM)) &&
-        (myKind != CreateClassKind.RECORD || !superClassName.equals(CommonClassNames.JAVA_LANG_RECORD))) {
-      CreateFromUsageUtils.setupSuperClassReference(aClass, superClassName);
-    }
-    CreateFromUsageUtils.setupGenericParameters(aClass, element);
-    PsiDeconstructionPattern pattern = getDeconstructionPattern(element);
-    if (pattern != null) {
-      setupRecordFromDeconstructionPattern(aClass, pattern, getText());
-    }
-    CodeStyleManager.getInstance(project).reformat(aClass);
-    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", aClass.getText());
+    ActionContext context = ActionContext.from(editor, psiFile.getOriginalFile());
+    ModCommandAction action = getFallbackModCommandAction();
+    return action == null ? IntentionPreviewInfo.EMPTY : action.generatePreview(context);
   }
 
   @Override
@@ -69,42 +37,15 @@ public final class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
     return CommonQuickFixBundle.message("fix.create.title.x", myKind.getDescriptionAccusative(), varName);
   }
 
-
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiJavaCodeReferenceElement element = getRefElement();
-    if (element == null || !FileModificationService.getInstance().preparePsiElementForWrite(element)) {
-      return;
-    }
+    if (element == null) return;
 
-    String superClassName = getSuperClassName(element);
-    PsiClass aClass = CreateFromUsageUtils.createClass(element, myKind, superClassName);
-    if (aClass == null) {
-      return;
-    }
-
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      PsiJavaCodeReferenceElement refElement = element;
-      try {
-        refElement = (PsiJavaCodeReferenceElement)refElement.bindToElement(aClass);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-
-      IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-
-      PsiDeconstructionPattern pattern = getDeconstructionPattern(element);
-      if (pattern != null) {
-        setupRecordFromDeconstructionPattern(aClass, pattern, getText());
-      }
-      else {
-        Navigatable descriptor = PsiNavigationSupport.getInstance()
-          .createNavigatable(refElement.getProject(), aClass.getContainingFile().getVirtualFile(), aClass.getTextOffset());
-        descriptor.navigate(true);
-      }
-    });
+    NewClassPlace place = NewClassPlace.choosePlaceInteractively(element, myKind);
+    if (place == null) return;
+    ActionContext context = ActionContext.from(editor, psiFile);
+    ModCommandExecutor.executeInteractively(context, getText(), editor, () -> createCommand(context, element, place));
   }
 
   @Override
@@ -112,26 +53,21 @@ public final class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
     return false;
   }
 
-  private static void setupRecordFromDeconstructionPattern(@Nullable PsiClass aClass, final @NotNull PsiDeconstructionPattern pattern,
-                                                           @IntentionName @NotNull String text) {
-    if (aClass == null) return;
-
-    final PsiJavaCodeReferenceElement classReference = pattern.getTypeElement().getInnermostComponentReferenceElement();
-    if (classReference != null && aClass.isPhysical()) {
-      classReference.bindToElement(aClass);
-    }
-
-    PsiDeconstructionList deconstructionList = pattern.getDeconstructionList();
-    final Project project = aClass.getProject();
-    if (deconstructionList.getDeconstructionComponents().length != 0) {
-      TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(aClass);
-      PsiRecordHeader header = aClass.getRecordHeader();
-      CreateRecordFromNewFix.setupRecordComponentsFromPattern(header, templateBuilder, deconstructionList);
-      CreateFromUsageBaseFix.startTemplate(project, aClass, templateBuilder.buildTemplate(), text);
-    }
-    else {
-      CodeInsightUtil.positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));
-    }
+  private @NotNull ModCommand createCommand(@NotNull ActionContext context,
+                                            @NotNull PsiJavaCodeReferenceElement element,
+                                            @NotNull NewClassPlace place) {
+    return ModCommand.psiUpdate(context, updater -> {
+      PsiJavaCodeReferenceElement writableElement = updater.getWritable(element);
+      PsiClass aClass = CreateFromUsageUtils.createClass(updater, myKind, place, element, getSuperClassName(element));
+      if (aClass == null) return;
+      RecordingTemplateBuilder fields = new RecordingTemplateBuilder();
+      PsiDeconstructionPattern pattern = getDeconstructionPattern(element);
+      if (pattern != null) {
+        CreateRecordFromNewFix.setupRecordComponentsFromPattern(aClass.getRecordHeader(), fields, pattern.getDeconstructionList());
+      }
+      writableElement.bindToElement(aClass);
+      fields.startTemplate(updater, aClass, null);
+    });
   }
 
   @Override
@@ -141,10 +77,10 @@ public final class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
   }
 
   /**
-   * Creates the class in the directory of the current file. The fix which the user starts in the editor
-   * asks for the directory, which a {@link ModCommandAction} cannot do.
+   * Creates the class without a dialog. A new file goes into the directory of the current file. The fix which the user starts
+   * in the editor asks for the directory, which a {@link ModCommandAction} cannot do.
    */
-  private final class CreateClassFromUsageModCommandAction extends PsiUpdateModCommandAction<PsiJavaCodeReferenceElement> {
+  private final class CreateClassFromUsageModCommandAction extends PsiBasedModCommandAction<PsiJavaCodeReferenceElement> {
     private CreateClassFromUsageModCommandAction(@NotNull PsiJavaCodeReferenceElement element) {
       super(element);
     }
@@ -156,31 +92,16 @@ public final class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
     @Override
     protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiJavaCodeReferenceElement element) {
-      if (element.getQualifier() != null) return null;
+      if (NewClassPlace.defaultPlaceFor(element) == null) return null;
       String text = getAvailableText(element, context.offset());
-      if (text == null) return null;
-      String name = element.getReferenceName();
-      if (name == null || CreateFromUsageUtils.findClassDirectory(context.file(), name) == null) return null;
-      return Presentation.of(text);
+      return text == null ? null : Presentation.of(text);
     }
 
     @Override
-    protected void invoke(@NotNull ActionContext context,
-                          @NotNull PsiJavaCodeReferenceElement element,
-                          @NotNull ModPsiUpdater updater) {
-      String name = element.getReferenceName();
-      if (name == null) return;
-      PsiDirectory directory = CreateFromUsageUtils.findClassDirectory(context.file(), name);
-      if (directory == null) return;
-      PsiClass aClass = CreateFromUsageUtils.createClassInDirectory(
-        myKind, updater.getWritable(directory), name, element, element.getContainingFile(), getSuperClassName(element));
-      if (aClass == null) return;
-      PsiDeconstructionPattern pattern = getDeconstructionPattern(element);
-      RecordingTemplateBuilder fields = new RecordingTemplateBuilder();
-      if (pattern != null) {
-        CreateRecordFromNewFix.setupRecordComponentsFromPattern(aClass.getRecordHeader(), fields, pattern.getDeconstructionList());
-      }
-      fields.startTemplate(updater, aClass, null);
+    protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiJavaCodeReferenceElement element) {
+      NewClassPlace place = NewClassPlace.defaultPlaceFor(element);
+      if (place == null) return ModCommand.nop();
+      return createCommand(context, element, place);
     }
   }
 }

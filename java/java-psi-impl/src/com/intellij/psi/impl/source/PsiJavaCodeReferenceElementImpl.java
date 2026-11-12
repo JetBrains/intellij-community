@@ -32,6 +32,7 @@ import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiJavaParserFacade;
 import com.intellij.psi.PsiJavaReference;
@@ -85,6 +86,7 @@ import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -668,6 +670,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     Project project = containingFile.getProject();
     boolean preserveQualification = JavaFileCodeStyleFacade.forContext(containingFile).useFQClassNames() && isFullyQualified(containingFile);
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    boolean unindexed = false;
     if (qName == null) {
       qName = aClass.getName();
       assert qName != null : aClass;
@@ -680,7 +683,14 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     else if (facade.findClass(qName, getResolveScope()) == null && !preserveQualification &&
              //`findClass` doesn't return nested in PsiImplicitClass
              PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class) == null) {
-      return this;
+      if (!isUnindexedTopLevelClass(aClass, qName, containingFile)) return this;
+      // The shortening of the reference cannot resolve the class, so add the import here
+      unindexed = true;
+      if (importUnindexedClass(aClass, qName, containingFile)) {
+        qName = aClass.getName();
+        assert qName != null : aClass;
+        if (!isQualified() && qName.equals(getReferenceName())) return this;
+      }
     }
     else if (facade.getResolveHelper().resolveReferencedClass(qName, this) == null &&
              facade.getResolveHelper().resolveReferencedClass(StringUtil.getPackageName(qName), this) != null) {
@@ -732,12 +742,45 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
     getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
 
-    if (!preserveQualification) {
+    if (!preserveQualification && !unindexed) {
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       ref = (PsiJavaCodeReferenceElement)codeStyleManager.shortenClassReferences(ref, JavaCodeStyleManager.INCOMPLETE_CODE);
     }
 
     return ref;
+  }
+
+  /**
+   * A {@link com.intellij.modcommand.ModCommand} can create a class in a copy of a directory. The index does not know such a
+   * class, so {@link JavaPsiFacade#findClass} cannot find it.
+   *
+   * @return true when the class is a top-level class of another file, and the index does not know it
+   */
+  private static boolean isUnindexedTopLevelClass(@NotNull PsiClass aClass, @NotNull String qName, @NotNull PsiFile containingFile) {
+    PsiElement classFile = aClass.getParent();
+    if (!(classFile instanceof PsiJavaFile) || classFile == containingFile || ((PsiJavaFile)classFile).getContainingDirectory() == null) {
+      return false;
+    }
+    Project project = containingFile.getProject();
+    return JavaPsiFacade.getInstance(project).findClass(qName, GlobalSearchScope.allScope(project)) == null;
+  }
+
+  /**
+   * Adds the import of a class which the index does not know, when the file needs it.
+   *
+   * @return true when the short name of the class refers to the class after this call
+   */
+  private boolean importUnindexedClass(@NotNull PsiClass aClass, @NotNull String qName, @NotNull PsiFile containingFile) {
+    String name = aClass.getName();
+    if (name == null || !(containingFile instanceof PsiJavaFile)) return false;
+    PsiJavaFile javaFile = (PsiJavaFile)containingFile;
+    Project project = containingFile.getProject();
+    // A visible class with the same name hides the class
+    if (JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedClass(name, this) != null) return false;
+    String packageName = StringUtil.getPackageName(qName);
+    if (packageName.equals(javaFile.getPackageName())) return true;
+    if (packageName.isEmpty()) return false;
+    return JavaCodeStyleManager.getInstance(project).addImport(javaFile, aClass);
   }
 
   private @NotNull List<PsiAnnotation> getAnnotations() {

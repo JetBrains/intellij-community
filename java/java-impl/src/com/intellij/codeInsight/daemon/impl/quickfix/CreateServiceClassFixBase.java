@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -117,9 +118,7 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
     PsiDirectory packageDir = getOrCreatePackageDirInRoot(packageName, rootDir);
     if (packageDir == null) return null;
 
-    return CreateFromUsageUtils.createClass(classKind,
-                                            packageDir, className, contextElement.getManager(),
-                                            contextElement, null, superClassName);
+    return CreateFromUsageUtils.createClassInDirectory(classKind, packageDir, className, contextElement, superClassName);
   }
 
   protected static PsiDirectory[] getModuleRootDirs(Module module) {

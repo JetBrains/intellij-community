@@ -1,32 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.NewClassPlace;
 import com.intellij.codeInsight.intention.IntentionActionWithModCommandFallback;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.template.TemplateBuilder;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcommand.Presentation;
-import com.intellij.modcommand.PsiUpdateModCommandAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpressionList;
@@ -67,29 +63,21 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix implements Int
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
     PsiNewExpression newExpression = getNewExpression();
-    if (newExpression == null) {
-      return;
-    }
+    if (newExpression == null) return;
+    PsiJavaCodeReferenceElement reference = getReferenceElement(newExpression);
+    if (reference == null) return;
 
-    IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-    PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
-    PsiClass psiClass = CreateFromUsageUtils.createClass(referenceElement, getKind(), null);
-    if (psiClass != null) {
-      WriteAction.run(() -> setupClassFromNewExpression(psiClass, newExpression));
-    }
+    NewClassPlace place = NewClassPlace.choosePlaceInteractively(reference, getKind());
+    if (place == null) return;
+    ActionContext context = ActionContext.from(editor, psiFile);
+    ModCommandExecutor.executeInteractively(context, getText(), editor, () -> createCommand(context, newExpression, place));
   }
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
-    PsiNewExpression element = myNewExpression.getElement();
-    if (element == null) return IntentionPreviewInfo.EMPTY;
-    PsiJavaCodeReferenceElement classReference = getReferenceElement(element);
-    if (classReference == null) return IntentionPreviewInfo.EMPTY;
-    PsiClass aClass = (PsiClass)psiFile.add(getKind().create(JavaPsiFacade.getElementFactory(project), classReference.getReferenceName()));
-    setupClassFromNewExpression(aClass, element);
-    CreateFromUsageUtils.setupGenericParameters(aClass, classReference);
-    CodeStyleManager.getInstance(project).reformat(aClass);
-    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", aClass.getText());
+    ActionContext context = ActionContext.from(editor, psiFile.getOriginalFile());
+    ModCommandAction action = getFallbackModCommandAction();
+    return action == null ? IntentionPreviewInfo.EMPTY : action.generatePreview(context);
   }
 
   @NotNull
@@ -97,30 +85,22 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix implements Int
     return CreateClassKind.CLASS;
   }
 
-  protected void setupClassFromNewExpression(final @NotNull PsiClass aClass, final @NotNull PsiNewExpression newExpression) {
-    final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-    if (classReference != null && aClass.isPhysical()) {
-      classReference.bindToElement(aClass);
-    }
-    setupInheritance(newExpression, aClass);
-
-    PsiExpressionList argList = newExpression.getArgumentList();
-    final Project project = aClass.getProject();
-    if (argList != null && !argList.isEmpty()) {
-      TemplateBuilderImpl templateBuilder = new TemplateBuilderImpl(aClass);
-      PsiElement endAfter = setupConstructor(aClass, newExpression, argList, templateBuilder);
-      if (endAfter != null) {
-        templateBuilder.setEndVariableAfter(endAfter);
-      }
-
-      if (aClass.isPhysical()) {
-        getReferenceElement(newExpression).bindToElement(aClass);
-      }
-      startTemplate(project, aClass, templateBuilder.buildTemplate(), getText());
-    }
-    else {
-      CodeInsightUtil.positionCursor(project, aClass.getContainingFile(), ObjectUtils.notNull(aClass.getNameIdentifier(), aClass));
-    }
+  private @NotNull ModCommand createCommand(@NotNull ActionContext context,
+                                            @NotNull PsiNewExpression newExpression,
+                                            @NotNull NewClassPlace place) {
+    return ModCommand.psiUpdate(context, updater -> {
+      PsiJavaCodeReferenceElement reference = getReferenceElement(newExpression);
+      if (reference == null) return;
+      PsiJavaCodeReferenceElement writableReference = updater.getWritable(reference);
+      PsiClass aClass = CreateFromUsageUtils.createClass(updater, getKind(), place, reference, null);
+      if (aClass == null) return;
+      RecordingTemplateBuilder fields = new RecordingTemplateBuilder();
+      PsiElement endAfter = setupNewClass(aClass, newExpression, fields);
+      SmartPsiElementPointer<PsiElement> endAfterPointer = endAfter == null ? null : SmartPointerManager.createPointer(endAfter);
+      writableReference.bindToElement(aClass);
+      aClass = (PsiClass)CodeStyleManager.getInstance(context.project()).reformat(aClass);
+      fields.startTemplate(updater, aClass, endAfterPointer == null ? null : endAfterPointer.getElement());
+    });
   }
 
   /**
@@ -361,10 +341,10 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix implements Int
   }
 
   /**
-   * Creates the class in the directory of the current file. The fix which the user starts in the editor
-   * asks for the directory, which a {@link ModCommandAction} cannot do.
+   * Creates the class without a dialog. A new file goes into the directory of the current file. The fix which the user starts
+   * in the editor asks for the directory, which a {@link ModCommandAction} cannot do.
    */
-  private final class CreateClassFromNewModCommandAction extends PsiUpdateModCommandAction<PsiNewExpression> {
+  private final class CreateClassFromNewModCommandAction extends PsiBasedModCommandAction<PsiNewExpression> {
     private CreateClassFromNewModCommandAction(@NotNull PsiNewExpression newExpression) {
       super(newExpression);
     }
@@ -376,40 +356,19 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix implements Int
 
     @Override
     protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiNewExpression newExpression) {
-      String name = getNewClassName(newExpression);
-      if (name == null) return null;
+      PsiJavaCodeReferenceElement reference = getReferenceElement(newExpression);
+      if (reference == null || NewClassPlace.defaultPlaceFor(reference) == null) return null;
       String text = getAvailableText(context.project(), context.offset());
-      if (text == null) return null;
-      if (CreateFromUsageUtils.findClassDirectory(context.file(), name) == null) return null;
-      return Presentation.of(text);
+      return text == null ? null : Presentation.of(text);
     }
 
     @Override
-    protected void invoke(@NotNull ActionContext context, @NotNull PsiNewExpression newExpression, @NotNull ModPsiUpdater updater) {
-      String name = getNewClassName(newExpression);
-      if (name == null) return;
-      PsiDirectory directory = CreateFromUsageUtils.findClassDirectory(context.file(), name);
-      if (directory == null) return;
+    protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiNewExpression newExpression) {
       PsiJavaCodeReferenceElement reference = getReferenceElement(newExpression);
-      PsiClass aClass = CreateFromUsageUtils.createClassInDirectory(
-        getKind(), updater.getWritable(directory), name, reference, newExpression.getContainingFile(), null);
-      if (aClass == null) return;
-      RecordingTemplateBuilder fields = new RecordingTemplateBuilder();
-      PsiElement endAfter = setupNewClass(aClass, newExpression, fields);
-      SmartPsiElementPointer<PsiElement> endAfterPointer = endAfter == null ? null : SmartPointerManager.createPointer(endAfter);
-      aClass = (PsiClass)CodeStyleManager.getInstance(context.project()).reformat(aClass);
-      fields.startTemplate(updater, aClass, endAfterPointer == null ? null : endAfterPointer.getElement());
-    }
-
-    /**
-     * @param newExpression the expression which creates an instance of the new class
-     * @return the name of the new class, or null when the reference has a qualifier which decides the
-     * package or the container class
-     */
-    private static @Nullable String getNewClassName(@NotNull PsiNewExpression newExpression) {
-      PsiJavaCodeReferenceElement reference = getReferenceElement(newExpression);
-      if (reference == null || reference.getQualifier() != null) return null;
-      return reference.getReferenceName();
+      if (reference == null) return ModCommand.nop();
+      NewClassPlace place = NewClassPlace.defaultPlaceFor(reference);
+      if (place == null) return ModCommand.nop();
+      return createCommand(context, newExpression, place);
     }
   }
 }

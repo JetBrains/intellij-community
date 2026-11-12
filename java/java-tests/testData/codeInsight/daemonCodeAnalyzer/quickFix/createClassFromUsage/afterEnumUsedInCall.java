@@ -1,11 +1,2 @@
-// "Create enum 'Foo'" "true-preview"
-public class Test {
-  void f(I i) {}
-  {
-    f(Foo.CONST);
-  }
+public enum Foo implements I {
 }
-
-interface I {}
-
-public enum Foo implements I {}
