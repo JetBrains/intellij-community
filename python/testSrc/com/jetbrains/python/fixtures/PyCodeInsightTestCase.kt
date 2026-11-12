@@ -34,6 +34,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
 import com.intellij.testFramework.RunAll
@@ -550,19 +551,23 @@ abstract class PyCodeInsightTestCase {
    * Completes at the `CARET` marker of [fileContent] and returns the lookup strings. See [withCaret].
    *
    * The completion inserts no item, also when only one item matches. An insertion can start a suggested refactoring,
-   * which can fail in a later test.
+   * which can fail in a later test. With [inDumbMode], the completion runs in the dumb mode of an artificial indexing.
    */
   protected fun completeWithCaret(
     @PyTestAssertionText @Language("Python") fileContent: String,
     vararg otherFiles: Pair<String, String>,
+    inDumbMode: Boolean = false,
   ): List<String> {
     val settings = CodeInsightSettings.getInstance()
     val autocomplete = settings.AUTOCOMPLETE_ON_CODE_COMPLETION
     settings.AUTOCOMPLETE_ON_CODE_COMPLETION = false
     try {
       return withCaret(fileContent, *otherFiles) {
-        myFixture.completeBasic()
-        myFixture.lookupElementStrings.orEmpty()
+        val complete = {
+          myFixture.completeBasic()
+          myFixture.lookupElementStrings.orEmpty()
+        }
+        if (inDumbMode) DumbModeTestUtils.computeInDumbModeSynchronously(myFixture.project) { complete() } else complete()
       }
     }
     finally {
