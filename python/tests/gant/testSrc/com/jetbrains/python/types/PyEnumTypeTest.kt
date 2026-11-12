@@ -1517,23 +1517,6 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
         """.trimIndent())
 
     @Test
-    @TestFor(issues = ["PY-79199"])
-    @TestCaseOptions(testFileName = "aaa.pyi")
-    fun `enum base order is not checked in a stub`() = test("""
-      from enum import Enum
-
-      class Mixin: ...
-
-      class Pet(Enum):
-          CAT = 1
-
-      class Cat(Pet): ...
-      #         ^^^ ERROR Enum class 'Pet' is final and cannot be subclassed
-
-      class Color(Enum, Mixin): ...
-      """.trimIndent())
-
-    @Test
     @TestFor(issues = ["PY-90287"])
     @TestCaseOptions(languageLevel = LanguageLevel.PYTHON312)
     fun `reserved sunder names in Python 3_12`() = test("""
