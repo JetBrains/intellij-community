@@ -63,6 +63,15 @@ public class ImmediatePainterTest extends ImmediatePainterTestCase {
   }
 
   @Test
+  public void testLetterSpacingTurnsImmediatePaintingOff() {
+    myFixture.runTest(() -> {
+      init("a");
+      setLetterSpacing(0.2f);
+      assertNotRenderedImmediately(1, 'b');
+    });
+  }
+
+  @Test
   public void testCaretRow() {
     myFixture.runTest(() -> {
       init("a");

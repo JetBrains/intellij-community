@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -147,6 +148,29 @@ public abstract class ImmediatePainterTestCase {
     assertEqual(immediateImage, image);
   }
 
+  /**
+   * Asserts that typing {@code c} at {@code offset} paints nothing at once, so only the normal repaint shows the char.
+   */
+  protected void assertNotRenderedImmediately(int offset, char c) throws IOException {
+    Editor editor = myFixture.getEditor();
+    editor.getCaretModel().getPrimaryCaret().moveToOffset(offset);
+    JComponent editorComponent = editor.getContentComponent();
+    Dimension size = editorComponent.getPreferredSize();
+    editorComponent.setSize(size);
+    KeyboardFocusManager.setCurrentKeyboardFocusManager(new MockFocusManager(editorComponent));
+    BufferedImage image = ImageUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
+    Graphics2D graphics = image.createGraphics();
+    try {
+      editorComponent.paint(graphics);
+      BufferedImage before = copy(image);
+      ((EditorImpl)editor).processKeyTypedImmediately(c, graphics, ((EditorImpl)editor).getDataContext());
+      assertEqual(image, before);
+    }
+    finally {
+      graphics.dispose();
+    }
+  }
+
   protected void assertEqual(BufferedImage actualImage, BufferedImage expectedImage) throws IOException {
     if (expectedImage.getWidth() != actualImage.getWidth()) {
       fail("Unexpected image width", expectedImage, actualImage);
@@ -202,6 +226,14 @@ public abstract class ImmediatePainterTestCase {
   protected RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, TextAttributes attributes) {
     return myFixture.getEditor().getMarkupModel()
       .addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.EXACT_RANGE);
+  }
+
+  protected void setLetterSpacing(float letterSpacing) {
+    EditorColorsScheme scheme = myFixture.getEditor().getColorsScheme();
+    FontPreferencesImpl preferences = new FontPreferencesImpl();
+    scheme.getFontPreferences().copyTo(preferences);
+    preferences.setLetterSpacing(letterSpacing);
+    scheme.setFontPreferences(preferences);
   }
 
   protected void setCaretRowVisible(boolean visible) {

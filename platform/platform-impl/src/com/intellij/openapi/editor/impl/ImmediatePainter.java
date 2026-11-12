@@ -121,6 +121,7 @@ public final class ImmediatePainter {
            !caret.isAtRtlLocation() &&
            !caret.isAtBidiRunBoundary() &&
            noBorderEffectPainted(editor, caret) &&
+           !editor.myView.hasLetterSpacing() &&
            !editor.myView.isOverhungByOtherLines(caret.getVisualPosition().line);
   }
 
