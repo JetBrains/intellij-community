@@ -313,6 +313,7 @@ object TeamCityReporter {
    *                         and logged, so the caller's intended outcome, `owner` metadata, and
    *                         [metadata] are still emitted afterwards. `testFinished` is emitted
    *                         in `finally`, so the test is always closed even if [block] throws.
+   * @return the test name that this function reports to TeamCity. A later build step uses it to attach metadata to that test.
    */
   fun reportTestLifecycle(
     testName: String, outcome: TestOutcome, message: String = "",
@@ -321,12 +322,8 @@ object TeamCityReporter {
     flowId: String = UUID.randomUUID().toString(),
     syntheticTestKind: SyntheticTestKind? = null,
     block: (() -> Unit)? = null,
-  ) {
-    val effectiveName =
-      testName
-        .let { if (generifyTestName) generifyErrorMessage(it) else it }
-        .take(MAX_TEST_NAME_LENGTH)
-        .let { if (syntheticTestKind != null) it.syntheticTestName(syntheticTestKind) else it }
+  ): String {
+    val effectiveName = effectiveTestName(testName, generifyTestName, syntheticTestKind)
 
     reportTestStarted(effectiveName, flowId, nodeId = effectiveName, parentNodeId = "0", captureStandardOutput = block != null)
     try {
@@ -352,7 +349,14 @@ object TeamCityReporter {
     finally {
       reportTestFinished(effectiveName, flowId, nodeId = effectiveName, parentNodeId = "0", duration = null)
     }
+    return effectiveName
   }
+
+  private fun effectiveTestName(testName: String, generifyTestName: Boolean = true, syntheticTestKind: SyntheticTestKind? = null): String =
+    testName
+      .let { if (generifyTestName) generifyErrorMessage(it) else it }
+      .take(MAX_TEST_NAME_LENGTH)
+      .let { if (syntheticTestKind != null) it.syntheticTestName(syntheticTestKind) else it }
 
   /**
    * Reports a test-suite lifecycle (`testSuiteStarted` → [block] → `testSuiteFinished`) to stdout.
