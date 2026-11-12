@@ -1,7 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
-import com.intellij.testFramework.UsefulTestCase
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
+import org.junit.jupiter.api.io.TempDir
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.file.Files
@@ -9,28 +16,16 @@ import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.deleteRecursively
 
-class GitReftableReaderTest : UsefulTestCase() {
+class GitReftableReaderTest {
+  @TempDir
   private lateinit var gitDir: Path
 
-  override fun setUp() {
-    super.setUp()
-    gitDir = Files.createTempDirectory("git-reftable-test")
+  @BeforeEach
+  fun setUp() {
     Files.createDirectories(gitDir.resolve("reftable"))
   }
 
-  @OptIn(ExperimentalPathApi::class)
-  override fun tearDown() {
-    try {
-      gitDir.deleteRecursively()
-    }
-    catch (e: Exception) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
-  }
-
+  @Test
   fun `test symbolic HEAD v1`() {
     val table = ReftableBuilder(version = 1).apply {
       addSymRef("HEAD", "refs/heads/master")
@@ -40,6 +35,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertEquals("refs/heads/master", GitReftableReader.readHeadTarget(gitDir))
   }
 
+  @Test
   fun `test symbolic HEAD v2 sha1`() {
     val table = ReftableBuilder(version = 2, hashId = "sha1").apply {
       addSymRef("HEAD", "refs/heads/main")
@@ -49,6 +45,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertEquals("refs/heads/main", GitReftableReader.readHeadTarget(gitDir))
   }
 
+  @Test
   fun `test symbolic HEAD v2 sha256`() {
     val table = ReftableBuilder(version = 2, hashId = "s256").apply {
       addSymRef("HEAD", "refs/heads/main")
@@ -58,6 +55,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertEquals("refs/heads/main", GitReftableReader.readHeadTarget(gitDir))
   }
 
+  @Test
   fun `test detached HEAD returns null`() {
     val table = ReftableBuilder(version = 1).apply {
       addDirectRef("HEAD", ByteArray(20)) // SHA-1 hash
@@ -67,6 +65,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertNull(GitReftableReader.readHeadTarget(gitDir))
   }
 
+  @Test
   fun `test HEAD deletion returns null`() {
     val table = ReftableBuilder(version = 1).apply {
       addDeletion("HEAD")
@@ -76,6 +75,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertNull(GitReftableReader.readHeadTarget(gitDir))
   }
 
+  @Test
   fun `test HEAD not in table returns null`() {
     val table = ReftableBuilder(version = 1).apply {
       addSymRef("refs/heads/main", "refs/heads/other")
@@ -85,6 +85,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertNull(GitReftableReader.readHeadTarget(gitDir))
   }
 
+  @Test
   fun `test records before HEAD`() {
     // CHERRY_PICK_HEAD sorts before HEAD ('C' < 'H')
     val table = ReftableBuilder(version = 1).apply {
@@ -96,6 +97,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertEquals("refs/heads/feature", GitReftableReader.readHeadTarget(gitDir))
   }
 
+  @Test
   fun `test multi-table HEAD in older`() {
     // Older table has HEAD
     val older = ReftableBuilder(version = 1).apply {
@@ -111,6 +113,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertEquals("refs/heads/master", GitReftableReader.readHeadTarget(gitDir))
   }
 
+  @Test
   fun `test multi-table HEAD overridden`() {
     // Older table has HEAD pointing to master
     val older = ReftableBuilder(version = 1).apply {
@@ -126,6 +129,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertEquals("refs/heads/feature", GitReftableReader.readHeadTarget(gitDir))
   }
 
+  @Test
   fun `test invalid magic throws IOException`() {
     val badFile = ByteArray(100) // all zeros, no REFT magic
     writeTable("0001.ref", badFile)
@@ -133,6 +137,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertThrows(IOException::class.java) { GitReftableReader.readHeadTarget(gitDir) }
   }
 
+  @Test
   fun `test unsupported version throws IOException`() {
     val table = ReftableBuilder(version = 1).apply {
       addSymRef("HEAD", "refs/heads/master")
@@ -144,6 +149,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertThrows(IOException::class.java) { GitReftableReader.readHeadTarget(gitDir) }
   }
 
+  @Test
   fun `test truncated file throws IOException`() {
     // Write only the magic + version (5 bytes, not enough for a full header)
     writeTable("0001.ref", "REFT\u0001".toByteArray(Charsets.US_ASCII))
@@ -151,6 +157,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertThrows(IOException::class.java) { GitReftableReader.readHeadTarget(gitDir) }
   }
 
+  @Test
   fun `test empty tables list returns null`() {
     // Write empty tables.list
     Files.writeString(gitDir.resolve("reftable/tables.list"), "")
@@ -159,6 +166,7 @@ class GitReftableReaderTest : UsefulTestCase() {
   }
 
   @OptIn(ExperimentalPathApi::class)
+  @Test
   fun `test missing reftable directory returns null`() {
     // Delete the reftable directory
     gitDir.resolve("reftable").deleteRecursively()
@@ -166,6 +174,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertNull(GitReftableReader.readHeadTarget(gitDir))
   }
 
+  @Test
   fun `test block type not r returns null`() {
     val table = ReftableBuilder(version = 1).apply {
       addSymRef("HEAD", "refs/heads/master")
@@ -177,6 +186,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertNull(GitReftableReader.readHeadTarget(gitDir))
   }
 
+  @Test
   fun `test varint basic values`() {
     // Single-byte varint: value 5
     val buf1 = byteArrayOf(0x05)
@@ -194,18 +204,21 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertEquals(2, result2.second)
   }
 
+  @Test
   fun `test varint out of bounds throws IOException`() {
     val buf = byteArrayOf(0x05)
     assertThrows(IOException::class.java) { GitReftableReader.readVarInt(buf, 1) }
     assertThrows(IOException::class.java) { GitReftableReader.readVarInt(buf, 10) }
   }
 
+  @Test
   fun `test varint truncated continuation throws IOException`() {
     // Byte with continuation bit set, but no next byte
     val buf = byteArrayOf(0x80.toByte())
     assertThrows(IOException::class.java) { GitReftableReader.readVarInt(buf, 0) }
   }
 
+  @Test
   fun `test HEAD with peeled ref returns null`() {
     // value_type=0x2: two hashes (annotated tag target)
     val table = ReftableBuilder(version = 1).apply {
@@ -216,6 +229,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertNull(GitReftableReader.readHeadTarget(gitDir))
   }
 
+  @Test
   fun `test HEAD with long branch name`() {
     val longBranch = "refs/heads/" + "a".repeat(200)
     val table = ReftableBuilder(version = 1).apply {
@@ -226,6 +240,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertEquals(longBranch, GitReftableReader.readHeadTarget(gitDir))
   }
 
+  @Test
   fun `test prefix compression across records`() {
     // Two refs that share a prefix: "refs/heads/a" and "refs/heads/b"
     // Prefix compression applies across consecutive records
@@ -239,6 +254,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertEquals("refs/heads/master", GitReftableReader.readHeadTarget(gitDir))
   }
 
+  @Test
   fun `test missing table file throws IOException`() {
     // tables.list references a file that doesn't exist
     Files.writeString(gitDir.resolve("reftable/tables.list"), "0001.ref\n")
@@ -247,6 +263,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertThrows(IOException::class.java) { GitReftableReader.readHeadTarget(gitDir) }
   }
 
+  @Test
   fun `test truncated v2 header throws IOException`() {
     // Build a v2 file but truncate it between 24-28 bytes (missing hash_id)
     val table = ReftableBuilder(version = 2, hashId = "sha1").apply {
@@ -258,6 +275,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertThrows(IOException::class.java) { GitReftableReader.readHeadTarget(gitDir) }
   }
 
+  @Test
   fun `test unknown v2 hash_id throws IOException`() {
     val table = ReftableBuilder(version = 2, hashId = "sha1").apply {
       addSymRef("HEAD", "refs/heads/main")
@@ -272,6 +290,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertThrows(IOException::class.java) { GitReftableReader.readHeadTarget(gitDir) }
   }
 
+  @Test
   fun `test truncated block header throws IOException`() {
     // Build a valid header but truncate right after it (no block header bytes)
     val table = ReftableBuilder(version = 1).apply {
@@ -283,6 +302,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertThrows(IOException::class.java) { GitReftableReader.readHeadTarget(gitDir) }
   }
 
+  @Test
   fun `test corrupt prefix compression throws IOException`() {
     val table = ReftableBuilder(version = 1).apply {
       addSymRef("HEAD", "refs/heads/master")
@@ -295,6 +315,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     assertThrows(IOException::class.java) { GitReftableReader.readHeadTarget(gitDir) }
   }
 
+  @Test
   fun `test error message includes file path`() {
     val badFile = ByteArray(100) // all zeros, no REFT magic
     writeTable("0001.ref", badFile)
@@ -305,7 +326,7 @@ class GitReftableReaderTest : UsefulTestCase() {
     }
     catch (e: IOException) {
       val msg = e.message ?: ""
-      assertTrue("Error message should contain file name, got: $msg", msg.contains("0001.ref"))
+      assertTrue(msg.contains("0001.ref"), "Error message should contain file name, got: $msg")
     }
   }
 

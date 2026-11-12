@@ -2,7 +2,6 @@
 package git4idea.repo
 
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
@@ -50,7 +49,7 @@ private suspend fun expectEvent(
   val collected = mutableListOf<GitRepositoriesHolder.UpdateType>()
   return withTimeout(5.seconds) {
     updates.first {
-      logger<UsefulTestCase>().info("Received update: $it")
+      logger<GitRepositoriesHolder>().info("Received update: $it")
       collected.add(it)
       condition(it, collected)
     }

@@ -1,11 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -26,7 +27,7 @@ class GitConfigurationCacheTest {
 
     assertEquals("value", first)
     assertEquals("value", second)
-    assertEquals("computeValue should run only once for a cached key", 1, calls.get())
+    assertEquals(1, calls.get(), "computeValue should run only once for a cached key")
   }
 
   @Test
@@ -40,7 +41,7 @@ class GitConfigurationCacheTest {
 
     assertNull(first)
     assertNull(second)
-    assertEquals("a cached null must not trigger recomputation", 1, calls.get())
+    assertEquals(1, calls.get(), "a cached null must not trigger recomputation")
   }
 
   @Test
@@ -54,7 +55,7 @@ class GitConfigurationCacheTest {
     val actual = cache.computeCachedValue(key) { calls.incrementAndGet(); "value2" }
 
     assertEquals("value2", actual)
-    assertEquals("clearCache should invalidate the cached value", 2, calls.get())
+    assertEquals(2, calls.get(), "clearCache should invalidate the cached value")
   }
 
   /**
@@ -68,7 +69,8 @@ class GitConfigurationCacheTest {
    * clearer thread would still be alive — a deterministic failure that does not depend on the compute
    * lambda self-releasing.
    */
-  @Test(timeout = 60_000)
+  @Test
+  @Timeout(value = 60, unit = TimeUnit.SECONDS, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
   fun `computeValue runs without holding the cache lock`() {
     val cache = TestCache()
     val key = TestKey("a")
@@ -86,13 +88,13 @@ class GitConfigurationCacheTest {
                         }, "git-config-cache-test-worker").apply { isDaemon = true }
     worker.start()
 
-    assertTrue("compute lambda should start", computeStarted.await(20, TimeUnit.SECONDS))
+    assertTrue(computeStarted.await(20, TimeUnit.SECONDS), "compute lambda should start")
 
     val clearer = Thread({ cache.clearCache() }, "git-config-cache-test-clearer").apply { isDaemon = true }
     clearer.start()
     try {
       clearer.join(TimeUnit.SECONDS.toMillis(10))
-      assertFalse("clearCache() must not block behind the running compute lambda", clearer.isAlive)
+      assertFalse(clearer.isAlive, "clearCache() must not block behind the running compute lambda")
     }
     finally {
       releaseWorker.countDown()

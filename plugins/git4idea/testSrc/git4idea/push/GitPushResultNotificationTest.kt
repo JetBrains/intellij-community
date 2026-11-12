@@ -2,9 +2,10 @@
 package git4idea.push
 
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.vcs.update.UpdatedFiles
-import com.intellij.testFramework.HeavyPlatformTestCase.createChildData
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.test.assertNotification
 import git4idea.GitLocalBranch
@@ -25,6 +26,7 @@ import git4idea.test.MockGitRepository
 import git4idea.test.gitPlatformContextFixture
 import git4idea.update.GitUpdateResult
 import org.junit.jupiter.api.Test
+import java.io.IOException
 
 @TestApplication
 internal class GitPushResultNotificationTest {
@@ -233,7 +235,7 @@ internal class GitPushResultNotificationTest {
   }
 
   private fun GitPlatformTestContext.repo(name: String): MockGitRepository =
-    MockGitRepository(project, createChildData(projectRoot, name))
+    MockGitRepository(project, WriteAction.computeAndWait<VirtualFile, IOException> { projectRoot.createChildData(projectRoot, name) })
 
   companion object {
     private val UPDATE_WITH_RESOLVED_CONFLICTS = GitBundle.message("push.notification.description.rejected.and.conflicts")

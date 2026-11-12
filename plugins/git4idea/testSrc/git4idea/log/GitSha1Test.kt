@@ -1,10 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vcs.changes.patch.BlobIndexUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.testFramework.HeavyPlatformTestCase.setFileText
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.test.updateChangeListManager
 import git4idea.test.GitSingleRepoContext
@@ -16,6 +17,7 @@ import git4idea.test.gitSingleRepoContextFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.io.IOException
 import java.nio.file.Paths
 
 private const val A_FILE = "a.txt"
@@ -60,7 +62,7 @@ internal class GitSha1Test {
     val path = Paths.get(projectPath, A_FILE)
     val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)!!
     val expectedBefore = git("hash-object $path")
-    setFileText(virtualFile, "echo content\n with line separator")
+    WriteAction.runAndWait<IOException> { LoadTextUtil.write(null, virtualFile, virtualFile, "echo content\n with line separator", -1) }
 
     VfsUtil.markDirtyAndRefresh(false, false, false, VfsUtil.findFile(path, true))
     checkSha1ForSingleChange(expectedBefore, git("hash-object $path"))
