@@ -71,14 +71,12 @@ internal object GhosttyLayouts {
     C_SHORT.withName("y"),
     MemoryLayout.paddingLayout(4L))
 
-  // `GhosttyTerminalProgressReport` (sized struct, 16 bytes, align 8): `size_t size; int state; int8_t progress`
+  // `GhosttyTerminalProgressReport` (frozen layout, 8 bytes, align 4): `int state; int8_t progress`
   // — the payload borrowed by the GHOSTTY_TERMINAL_OPT_PROGRESS_REPORT callback. Field byte offsets:
-  //   size@0  state@8  progress@12 ; total padded to 16.
-  const val PROGRESS_REPORT_OFF_STATE = 8L
-  const val PROGRESS_REPORT_OFF_PROGRESS = 12L
-
-  /** Smallest `GhosttyTerminalProgressReport.size` that still covers every field the bridge reads. */
-  const val PROGRESS_REPORT_MIN_SIZE = PROGRESS_REPORT_OFF_PROGRESS + 1L
+  //   state@0  progress@4 ; total padded to 8.
+  const val PROGRESS_REPORT_SIZE = 8L
+  const val PROGRESS_REPORT_OFF_STATE = 0L
+  const val PROGRESS_REPORT_OFF_PROGRESS = 4L
 
   /**
    * `GhosttyTerminalModeConfig` (terminal.h, frozen layout, 4 bytes, align 2): `GhosttyMode mode; bool value;`.

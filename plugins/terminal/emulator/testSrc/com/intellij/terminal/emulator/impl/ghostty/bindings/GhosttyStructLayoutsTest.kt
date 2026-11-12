@@ -60,11 +60,9 @@ internal class GhosttyStructLayoutsTest {
   @Test
   fun progressReport() {
     val report = struct("GhosttyTerminalProgressReport")
+    assertThat(GhosttyLayouts.PROGRESS_REPORT_SIZE).isEqualTo(report.byteSize)
     assertThat(GhosttyLayouts.PROGRESS_REPORT_OFF_STATE).isEqualTo(report.offset("state"))
     assertThat(GhosttyLayouts.PROGRESS_REPORT_OFF_PROGRESS).isEqualTo(report.offset("progress"))
-    // `progress` is the last field the bridge reads, so the minimum size is its end
-    assertThat(GhosttyLayouts.PROGRESS_REPORT_MIN_SIZE)
-      .isEqualTo(report.offset("progress") + report.sizeOf("progress"))
   }
 
   @Test

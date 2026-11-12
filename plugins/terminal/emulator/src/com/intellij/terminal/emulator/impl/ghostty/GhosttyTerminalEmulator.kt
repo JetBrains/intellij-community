@@ -52,9 +52,9 @@ import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.POINT
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.POINT_OFF_TAG
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.POINT_OFF_X
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.POINT_OFF_Y
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGRESS_REPORT_MIN_SIZE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGRESS_REPORT_OFF_PROGRESS
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGRESS_REPORT_OFF_STATE
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGRESS_REPORT_SIZE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STRING
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STRING_OFF_LEN
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BG_TAG
@@ -954,12 +954,7 @@ internal class GhosttyTerminalEmulator(
    */
   @Suppress("unused", "UNUSED_PARAMETER")
   private fun onProgressReport(terminal: MemorySegment, userdata: MemorySegment, report: MemorySegment) {
-    // A sized struct: only the fields covered by its own `size` may be read (terminal.h).
-    val size = report.reinterpret(C_LONG.byteSize()).get(C_LONG, 0L)
-    if (size < PROGRESS_REPORT_MIN_SIZE) {
-      return
-    }
-    val struct = report.reinterpret(size)
+    val struct = report.reinterpret(PROGRESS_REPORT_SIZE)
     val state = GhosttyTerminalProgressState.of(struct.get(C_INT, PROGRESS_REPORT_OFF_STATE)) ?: return
     // `progress` is -1 when the program omitted (or malformed) the percentage, otherwise 0..100.
     val percent = struct.get(C_BYTE, PROGRESS_REPORT_OFF_PROGRESS).toInt().takeIf { it in 0..100 }

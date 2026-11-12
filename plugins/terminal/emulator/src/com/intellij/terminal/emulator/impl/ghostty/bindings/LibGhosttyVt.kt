@@ -346,7 +346,7 @@ internal object LibGhosttyVt {
   /**
    * Bind [handle] as a native upcall stub for the PROGRESS_REPORT effect callback
    * `void(terminal, userdata, report)`, scoped to [arena]. The bound method's signature must be
-   * `(MemorySegment, MemorySegment, MemorySegment) -> void`; `report` points at a (borrowed, sized)
+   * `(MemorySegment, MemorySegment, MemorySegment) -> void`; `report` points at a borrowed
    * `GhosttyTerminalProgressReport`.
    */
   fun progressReportUpcallStub(handle: MethodHandle, arena: Arena): MemorySegment =
