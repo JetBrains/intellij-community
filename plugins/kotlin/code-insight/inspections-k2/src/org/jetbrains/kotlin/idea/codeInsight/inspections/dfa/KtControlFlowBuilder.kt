@@ -343,14 +343,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(_: KaSession)
     private fun processStringTemplate(expr: KtStringTemplateExpression) {
-        var first = true
         val entries = expr.entries
         if (entries.isEmpty()) {
             addInstruction(PushValueInstruction(DfTypes.referenceConstant("", stringType)))
             return
         }
         val lastEntry = entries.last()
-        for (entry in entries) {
+        for ((index, entry) in entries.withIndex()) {
             when (entry) {
                 is KtEscapeStringTemplateEntry ->
                     addInstruction(PushValueInstruction(DfTypes.referenceConstant(entry.unescapedValue, stringType)))
@@ -364,11 +363,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 else ->
                     pushUnknown()
             }
-            if (!first) {
+            if (index > 0) {
                 val anchor = if (entry == lastEntry) KotlinExpressionAnchor(expr) else null
-                addInstruction(StringConcatInstruction(anchor, stringType, false, entry.isCharEntry()))
+                val leftChar = index == 1 && entries[0].isCharEntry()
+                addInstruction(StringConcatInstruction(anchor, stringType, leftChar, entry.isCharEntry()))
             }
-            first = false
         }
         if (entries.size == 1 && entries[0] !is KtLiteralStringTemplateEntry) {
             // Implicit toString conversion for "$myVar" string

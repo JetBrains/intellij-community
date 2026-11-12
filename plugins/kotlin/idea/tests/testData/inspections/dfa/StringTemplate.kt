@@ -15,6 +15,14 @@ fun charTemplate(c: Char, n: Char?) {
     if (<warning descr="Condition 's4.length == 2' is always true">s4.length == 2</warning>) {}
     val s5 = "x$n"
     if (s5.length == 2) {}
+    val s6 = "$a b"
+    if (<warning descr="Condition 's6 == \"a b\"' is always true">s6 == "a b"</warning>) {}
+    val s7 = "${a}b"
+    if (<warning descr="Condition 's7 == \"97b\"' is always false">s7 == "97b"</warning>) {}
+    val s8 = "${c}b"
+    if (<warning descr="Condition 's8.length == 2' is always true">s8.length == 2</warning>) {}
+    val s9 = "${a}${a}b"
+    if (<warning descr="Condition 's9 == \"aab\"' is always true">s9 == "aab"</warning>) {}
 }
 fun nonString(x : X) {
     if ("$x" == "hello") {}
