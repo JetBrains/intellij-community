@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
-internal class EdtWriteActionTest {
+class EdtWriteActionTest {
 
   @BeforeEach
   fun `check that edtWriteAction implementation is non-blocking`() {
