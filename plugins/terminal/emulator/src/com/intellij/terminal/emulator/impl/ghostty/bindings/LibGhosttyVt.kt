@@ -211,39 +211,32 @@ internal object LibGhosttyVt {
   }
 
   /** `ghostty_key_event_set_action`: set the [GhosttyKeyAction]. */
-  fun keyEventSetAction(event: MemorySegment, action: Int) {
-    KEY_EVENT_SET_ACTION.invokeExact(event, action)
-  }
+  fun keyEventSetAction(event: MemorySegment, action: Int): GhosttyResult =
+    GhosttyResult.of(KEY_EVENT_SET_ACTION.invokeExact(event, action) as Int)
 
   /** `ghostty_key_event_set_key`: set the physical key code. */
-  fun keyEventSetKey(event: MemorySegment, key: Int) {
-    KEY_EVENT_SET_KEY.invokeExact(event, key)
-  }
+  fun keyEventSetKey(event: MemorySegment, key: Int): GhosttyResult =
+    GhosttyResult.of(KEY_EVENT_SET_KEY.invokeExact(event, key) as Int)
 
   /** `ghostty_key_event_set_mods`: set the [GhosttyMods] bitmask. */
-  fun keyEventSetMods(event: MemorySegment, mods: Short) {
-    KEY_EVENT_SET_MODS.invokeExact(event, mods)
-  }
+  fun keyEventSetMods(event: MemorySegment, mods: Short): GhosttyResult =
+    GhosttyResult.of(KEY_EVENT_SET_MODS.invokeExact(event, mods) as Int)
 
   /** `ghostty_key_event_set_consumed_mods`: set the [GhosttyMods] bitmask the layout used to produce the text. */
-  fun keyEventSetConsumedMods(event: MemorySegment, mods: Short) {
-    KEY_EVENT_SET_CONSUMED_MODS.invokeExact(event, mods)
-  }
+  fun keyEventSetConsumedMods(event: MemorySegment, mods: Short): GhosttyResult =
+    GhosttyResult.of(KEY_EVENT_SET_CONSUMED_MODS.invokeExact(event, mods) as Int)
 
   /** `ghostty_key_event_set_utf8`: set the layout-produced text; the event borrows [utf8] until re-set. */
-  fun keyEventSetUtf8(event: MemorySegment, utf8: MemorySegment, len: Long) {
-    KEY_EVENT_SET_UTF8.invokeExact(event, utf8, len)
-  }
+  fun keyEventSetUtf8(event: MemorySegment, utf8: MemorySegment, len: Long): GhosttyResult =
+    GhosttyResult.of(KEY_EVENT_SET_UTF8.invokeExact(event, utf8, len) as Int)
 
   /** `ghostty_key_event_set_unshifted_codepoint`: set the unmodified code point of the key. */
-  fun keyEventSetUnshiftedCodepoint(event: MemorySegment, codepoint: Int) {
-    KEY_EVENT_SET_UNSHIFTED_CODEPOINT.invokeExact(event, codepoint)
-  }
+  fun keyEventSetUnshiftedCodepoint(event: MemorySegment, codepoint: Int): GhosttyResult =
+    GhosttyResult.of(KEY_EVENT_SET_UNSHIFTED_CODEPOINT.invokeExact(event, codepoint) as Int)
 
   /** `ghostty_key_event_set_composing`: set whether an IME composition is in progress. */
-  fun keyEventSetComposing(event: MemorySegment, composing: Boolean) {
-    KEY_EVENT_SET_COMPOSING.invokeExact(event, composing)
-  }
+  fun keyEventSetComposing(event: MemorySegment, composing: Boolean): GhosttyResult =
+    GhosttyResult.of(KEY_EVENT_SET_COMPOSING.invokeExact(event, composing) as Int)
 
   // ---- mouse encoding (mouse/encoder.h, mouse/event.h): mouse events -> PTY escape sequences ----
 
@@ -281,29 +274,24 @@ internal object LibGhosttyVt {
   }
 
   /** `ghostty_mouse_event_set_action`: set the [GhosttyMouseAction]. */
-  fun mouseEventSetAction(event: MemorySegment, action: Int) {
-    MOUSE_EVENT_SET_ACTION.invokeExact(event, action)
-  }
+  fun mouseEventSetAction(event: MemorySegment, action: Int): GhosttyResult =
+    GhosttyResult.of(MOUSE_EVENT_SET_ACTION.invokeExact(event, action) as Int)
 
   /** `ghostty_mouse_event_set_button`: set the [GhosttyMouseButton]. */
-  fun mouseEventSetButton(event: MemorySegment, button: Int) {
-    MOUSE_EVENT_SET_BUTTON.invokeExact(event, button)
-  }
+  fun mouseEventSetButton(event: MemorySegment, button: Int): GhosttyResult =
+    GhosttyResult.of(MOUSE_EVENT_SET_BUTTON.invokeExact(event, button) as Int)
 
   /** `ghostty_mouse_event_clear_button`: mark the event as carrying no button (pure motion). */
-  fun mouseEventClearButton(event: MemorySegment) {
-    MOUSE_EVENT_CLEAR_BUTTON.invokeExact(event)
-  }
+  fun mouseEventClearButton(event: MemorySegment): GhosttyResult =
+    GhosttyResult.of(MOUSE_EVENT_CLEAR_BUTTON.invokeExact(event) as Int)
 
   /** `ghostty_mouse_event_set_mods`: set the [GhosttyMods] bitmask. */
-  fun mouseEventSetMods(event: MemorySegment, mods: Short) {
-    MOUSE_EVENT_SET_MODS.invokeExact(event, mods)
-  }
+  fun mouseEventSetMods(event: MemorySegment, mods: Short): GhosttyResult =
+    GhosttyResult.of(MOUSE_EVENT_SET_MODS.invokeExact(event, mods) as Int)
 
   /** `ghostty_mouse_event_set_position`: set the surface position ([position] is a `GhosttyMousePosition` by value). */
-  fun mouseEventSetPosition(event: MemorySegment, position: MemorySegment) {
-    MOUSE_EVENT_SET_POSITION.invokeExact(event, position)
-  }
+  fun mouseEventSetPosition(event: MemorySegment, position: MemorySegment): GhosttyResult =
+    GhosttyResult.of(MOUSE_EVENT_SET_POSITION.invokeExact(event, position) as Int)
 
   // ---- color scheme report encoding (color_scheme.h) ----
 
@@ -480,19 +468,19 @@ internal object LibGhosttyVt {
   private val KEY_EVENT_FREE: MethodHandle by lazy { downcall("ghostty_key_event_free",
     FunctionDescriptor.ofVoid(C_PTR)) }
   private val KEY_EVENT_SET_ACTION: MethodHandle by lazy { downcall("ghostty_key_event_set_action",
-    FunctionDescriptor.ofVoid(C_PTR, C_INT)) }
+    FunctionDescriptor.of(C_INT, C_PTR, C_INT)) }
   private val KEY_EVENT_SET_KEY: MethodHandle by lazy { downcall("ghostty_key_event_set_key",
-    FunctionDescriptor.ofVoid(C_PTR, C_INT)) }
+    FunctionDescriptor.of(C_INT, C_PTR, C_INT)) }
   private val KEY_EVENT_SET_MODS: MethodHandle by lazy { downcall("ghostty_key_event_set_mods",
-    FunctionDescriptor.ofVoid(C_PTR, C_SHORT)) }
+    FunctionDescriptor.of(C_INT, C_PTR, C_SHORT)) }
   private val KEY_EVENT_SET_CONSUMED_MODS: MethodHandle by lazy { downcall("ghostty_key_event_set_consumed_mods",
-    FunctionDescriptor.ofVoid(C_PTR, C_SHORT)) }
+    FunctionDescriptor.of(C_INT, C_PTR, C_SHORT)) }
   private val KEY_EVENT_SET_UTF8: MethodHandle by lazy { downcall("ghostty_key_event_set_utf8",
-    FunctionDescriptor.ofVoid(C_PTR, C_PTR, C_LONG)) }
+    FunctionDescriptor.of(C_INT, C_PTR, C_PTR, C_LONG)) }
   private val KEY_EVENT_SET_UNSHIFTED_CODEPOINT: MethodHandle by lazy { downcall("ghostty_key_event_set_unshifted_codepoint",
-    FunctionDescriptor.ofVoid(C_PTR, C_INT)) }
+    FunctionDescriptor.of(C_INT, C_PTR, C_INT)) }
   private val KEY_EVENT_SET_COMPOSING: MethodHandle by lazy { downcall("ghostty_key_event_set_composing",
-    FunctionDescriptor.ofVoid(C_PTR, C_BOOL)) }
+    FunctionDescriptor.of(C_INT, C_PTR, C_BOOL)) }
   private val MOUSE_ENCODER_NEW: MethodHandle by lazy { downcall("ghostty_mouse_encoder_new",
     FunctionDescriptor.of(C_INT, C_PTR, C_PTR)) }
   private val MOUSE_ENCODER_FREE: MethodHandle by lazy { downcall("ghostty_mouse_encoder_free",
@@ -508,15 +496,15 @@ internal object LibGhosttyVt {
   private val MOUSE_EVENT_FREE: MethodHandle by lazy { downcall("ghostty_mouse_event_free",
     FunctionDescriptor.ofVoid(C_PTR)) }
   private val MOUSE_EVENT_SET_ACTION: MethodHandle by lazy { downcall("ghostty_mouse_event_set_action",
-    FunctionDescriptor.ofVoid(C_PTR, C_INT)) }
+    FunctionDescriptor.of(C_INT, C_PTR, C_INT)) }
   private val MOUSE_EVENT_SET_BUTTON: MethodHandle by lazy { downcall("ghostty_mouse_event_set_button",
-    FunctionDescriptor.ofVoid(C_PTR, C_INT)) }
+    FunctionDescriptor.of(C_INT, C_PTR, C_INT)) }
   private val MOUSE_EVENT_CLEAR_BUTTON: MethodHandle by lazy { downcall("ghostty_mouse_event_clear_button",
-    FunctionDescriptor.ofVoid(C_PTR)) }
+    FunctionDescriptor.of(C_INT, C_PTR)) }
   private val MOUSE_EVENT_SET_MODS: MethodHandle by lazy { downcall("ghostty_mouse_event_set_mods",
-    FunctionDescriptor.ofVoid(C_PTR, C_SHORT)) }
+    FunctionDescriptor.of(C_INT, C_PTR, C_SHORT)) }
   private val MOUSE_EVENT_SET_POSITION: MethodHandle by lazy { downcall("ghostty_mouse_event_set_position",
-    FunctionDescriptor.ofVoid(C_PTR, GhosttyLayouts.MOUSE_POSITION)) }
+    FunctionDescriptor.of(C_INT, C_PTR, GhosttyLayouts.MOUSE_POSITION)) }
 
   init {
     GhosttyLog.installIfEnabled()

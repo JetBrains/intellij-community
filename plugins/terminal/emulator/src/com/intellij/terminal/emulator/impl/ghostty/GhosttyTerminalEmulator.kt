@@ -674,14 +674,16 @@ internal class GhosttyTerminalEmulator(
   override fun encodeKeyEvent(event: TerminalKeyEvent): ByteArray {
     ensureOpen()
     try {
-      LibGhosttyVt.keyEventSetAction(keyEvent, event.action.toGhostty().code)
+      LibGhosttyVt.keyEventSetAction(keyEvent, event.action.toGhostty().code).requireSuccess("ghostty_key_event_set_action")
       // TerminalKey mirrors GhosttyKey entry by entry, so the ordinal is the C value.
-      LibGhosttyVt.keyEventSetKey(keyEvent, event.key.ordinal)
-      LibGhosttyVt.keyEventSetMods(keyEvent, modsBits(event.modifiers))
+      LibGhosttyVt.keyEventSetKey(keyEvent, event.key.ordinal).requireSuccess("ghostty_key_event_set_key")
+      LibGhosttyVt.keyEventSetMods(keyEvent, modsBits(event.modifiers)).requireSuccess("ghostty_key_event_set_mods")
       LibGhosttyVt.keyEventSetConsumedMods(keyEvent, modsBits(event.consumedModifiers))
+        .requireSuccess("ghostty_key_event_set_consumed_mods")
       setKeyEventText(event.text)
       LibGhosttyVt.keyEventSetUnshiftedCodepoint(keyEvent, event.unshiftedCodepoint)
-      LibGhosttyVt.keyEventSetComposing(keyEvent, event.composing)
+        .requireSuccess("ghostty_key_event_set_unshifted_codepoint")
+      LibGhosttyVt.keyEventSetComposing(keyEvent, event.composing).requireSuccess("ghostty_key_event_set_composing")
 
       LibGhosttyVt.keyEncoderSetFromTerminal(keyEncoder, terminal).requireSuccess("ghostty_key_encoder_set_from_terminal")
       // No terminal mode carries this option, and set_from_terminal has just reset it.
@@ -717,18 +719,18 @@ internal class GhosttyTerminalEmulator(
       LibGhosttyVt.mouseEncoderSet(mouseEncoder, GhosttyMouseEncoderOption.ANY_BUTTON_PRESSED.code, scratchOut)
         .requireSuccess("ghostty_mouse_encoder_set(ANY_BUTTON_PRESSED)")
 
-      LibGhosttyVt.mouseEventSetAction(mouseEvent, event.action.toGhostty().code)
+      LibGhosttyVt.mouseEventSetAction(mouseEvent, event.action.toGhostty().code).requireSuccess("ghostty_mouse_event_set_action")
       val button = event.button
       if (button != null) {
-        LibGhosttyVt.mouseEventSetButton(mouseEvent, button.toGhostty().code)
+        LibGhosttyVt.mouseEventSetButton(mouseEvent, button.toGhostty().code).requireSuccess("ghostty_mouse_event_set_button")
       }
       else {
-        LibGhosttyVt.mouseEventClearButton(mouseEvent)
+        LibGhosttyVt.mouseEventClearButton(mouseEvent).requireSuccess("ghostty_mouse_event_clear_button")
       }
-      LibGhosttyVt.mouseEventSetMods(mouseEvent, modsBits(event.modifiers))
+      LibGhosttyVt.mouseEventSetMods(mouseEvent, modsBits(event.modifiers)).requireSuccess("ghostty_mouse_event_set_mods")
       scratchMousePosition.set(C_FLOAT, GhosttyLayouts.MOUSE_POSITION_OFF_X, event.column.toFloat())
       scratchMousePosition.set(C_FLOAT, GhosttyLayouts.MOUSE_POSITION_OFF_Y, event.row.toFloat())
-      LibGhosttyVt.mouseEventSetPosition(mouseEvent, scratchMousePosition)
+      LibGhosttyVt.mouseEventSetPosition(mouseEvent, scratchMousePosition).requireSuccess("ghostty_mouse_event_set_position")
 
       return encodeToBytes { buf, size, outLen -> LibGhosttyVt.mouseEncoderEncode(mouseEncoder, mouseEvent, buf, size, outLen) }
     } catch (t: Throwable) {
@@ -761,7 +763,7 @@ internal class GhosttyTerminalEmulator(
       scratchKeyText = scratchArena.allocate(bytes.size.toLong())
     }
     MemorySegment.copy(bytes, 0, scratchKeyText, C_BYTE, 0L, bytes.size)
-    LibGhosttyVt.keyEventSetUtf8(keyEvent, scratchKeyText, bytes.size.toLong())
+    LibGhosttyVt.keyEventSetUtf8(keyEvent, scratchKeyText, bytes.size.toLong()).requireSuccess("ghostty_key_event_set_utf8")
   }
 
   private fun modsBits(modifiers: Set<TerminalInputModifier>): Short {
