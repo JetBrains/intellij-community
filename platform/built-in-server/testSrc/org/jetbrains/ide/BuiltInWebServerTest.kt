@@ -8,20 +8,23 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TrustedProjectsTestUtil
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.TrustedProjectsTestUtil
+import com.intellij.testFramework.refreshVfs
 import com.intellij.testFramework.useProject
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
+import org.jetbrains.builtInWebServer.TOKEN_PARAM_NAME
 import org.junit.BeforeClass
 import org.junit.ClassRule
 import org.junit.Rule
@@ -171,6 +174,110 @@ internal class HeavyBuiltInWebServerTest {
         testUrl(pageUrl, HttpResponseStatus.OK, asSignedRequest = true).body().close()
       }
     }
+  }
+
+  @Test
+  fun `cross-project requests resolve target project regardless of open project order`() {
+    for (openProjectAFirst in listOf(true, false)) {
+      val rootDir = tempDirManager.newPath()
+      val projectADir = rootDir.resolve("project-a").createDirectories()
+      projectADir.resolve("index.html").writeText("index-from-a")
+      projectADir.resolve("script.js").writeText("script-from-a")
+      projectADir.refreshVfs()
+
+      val projectBDir = rootDir.resolve("project-b").createDirectories()
+      projectBDir.resolve("secret.txt").writeText("secret-from-b")
+      projectBDir.resolve("config.json").writeText("root-config")
+      projectBDir.resolve("project-b/config.json").createParentDirectories().writeText("nested-config")
+      projectBDir.refreshVfs()
+
+      withTwoProjects(projectADir, projectBDir, openProjectAFirst) { projectA, projectB ->
+        val host = "http://localhost:${BuiltInServerManager.getInstance().port}"
+        val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
+        val token = service<BuiltInWebServerAuth>().acquireToken()
+
+        val previewRequest = HttpRequest.newBuilder(URI("$host/${projectA.name}/index.html?$TOKEN_PARAM_NAME=$token")).build()
+        val previewResponse = client.send(previewRequest, HttpResponse.BodyHandlers.ofString())
+        assertThat(HttpResponseStatus.valueOf(previewResponse.statusCode())).isEqualTo(HttpResponseStatus.OK)
+        assertThat(previewResponse.body()).isEqualTo("index-from-a")
+        val cookie = previewResponse.headers().firstValue(HttpHeaderNames.SET_COOKIE.toString()).orElseThrow().substringBefore(';')
+
+        val referer = "$host/${projectA.name}/index.html?$TOKEN_PARAM_NAME=$token"
+        assertResponseBody(client, "$host/${projectB.name}/secret.txt", cookie = cookie, referer = referer, expectedBody = "secret-from-b")
+        assertResponseBody(client, "$host/${projectB.name}/config.json", cookie = cookie, referer = referer, expectedBody = "root-config")
+        assertResponseBody(client, "$host/${projectB.name}/secret.txt", cookie = cookie, referer = null, expectedBody = "secret-from-b")
+        assertResponseBody(client, "$host/script.js", cookie = cookie, referer = referer, expectedBody = "script-from-a")
+      }
+    }
+  }
+
+  @Test
+  fun `renamed project resolves by base directory name regardless of open project order`() {
+    for (openProjectAFirst in listOf(true, false)) {
+      val rootDir = tempDirManager.newPath()
+      val projectADir = rootDir.resolve("project-a").createDirectories()
+      projectADir.resolve("index.html").writeText("index-from-a")
+      projectADir.refreshVfs()
+
+      val projectBDir = rootDir.resolve("project-b-dir").createDirectories()
+      projectBDir.resolve(".idea/.name").createParentDirectories().writeText("My Service")
+      projectBDir.resolve("secret.txt").writeText("secret-from-b")
+      projectBDir.resolve("only-in-b.js").writeText("script-from-b")
+      projectBDir.refreshVfs()
+
+      withTwoProjects(projectADir, projectBDir, openProjectAFirst) { projectA, projectB ->
+        assertThat(projectB.name).isEqualTo("My Service")
+        val host = "http://localhost:${BuiltInServerManager.getInstance().port}"
+        val client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()
+        val token = service<BuiltInWebServerAuth>().acquireToken()
+        val refererFromA = "$host/${projectA.name}/index.html"
+        val refererFromBDir = "$host/project-b-dir/index.html"
+
+        assertResponseBody(client, "$host/project-b-dir/secret.txt", token = token, referer = refererFromA, expectedBody = "secret-from-b")
+        assertResponseBody(client, "$host/only-in-b.js", token = token, referer = refererFromBDir, expectedBody = "script-from-b")
+      }
+    }
+  }
+
+  private fun withTwoProjects(
+    projectADir: Path,
+    projectBDir: Path,
+    openProjectAFirst: Boolean,
+    action: (projectA: Project, projectB: Project) -> Unit,
+  ) {
+    val firstDir = if (openProjectAFirst) projectADir else projectBDir
+    val secondDir = if (openProjectAFirst) projectBDir else projectADir
+    PlatformTestUtil.loadAndOpenProject(firstDir, disposableRule.disposable).useProject { first ->
+      createModule(firstDir, first)
+      PlatformTestUtil.loadAndOpenProject(secondDir, disposableRule.disposable).useProject { second ->
+        createModule(secondDir, second)
+        val openProjects = ProjectManager.getInstance().openProjects
+        assertThat(openProjects.indexOf(first)).isLessThan(openProjects.indexOf(second))
+        if (openProjectAFirst) {
+          action(first, second)
+        }
+        else {
+          action(second, first)
+        }
+      }
+    }
+  }
+
+  private fun assertResponseBody(
+    client: HttpClient,
+    url: String,
+    token: String? = null,
+    cookie: String? = null,
+    referer: String?,
+    expectedBody: String,
+  ) {
+    val builder = HttpRequest.newBuilder(URI(url))
+    token?.let { builder.header(TOKEN_HEADER_NAME, it) }
+    cookie?.let { builder.header(HttpHeaderNames.COOKIE.toString(), it) }
+    referer?.let { builder.header(HttpHeaderNames.REFERER.toString(), it) }
+    val response = client.send(builder.build(), HttpResponse.BodyHandlers.ofString())
+    assertThat(HttpResponseStatus.valueOf(response.statusCode())).isEqualTo(HttpResponseStatus.OK)
+    assertThat(response.body()).isEqualTo(expectedBody)
   }
 }
 

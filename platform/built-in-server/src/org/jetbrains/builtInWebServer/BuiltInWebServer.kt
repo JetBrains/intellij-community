@@ -143,12 +143,17 @@ internal class BuiltInWebServer : HttpRequestHandler() {
       }
       else null
 
+    var matchedByName: Project? = null
     var candidateByDirectoryName: Project? = null
-    var isCandidateFromReferer = false
-    val project = ProjectManager.getInstance().openProjects.firstOrNull(fun(project: Project): Boolean {
-      if (project.isDisposed) return false
+    var candidateByRefererName: Project? = null
+    var candidateByRefererDirectoryName: Project? = null
 
-      val name = project.name
+    for (candidate in ProjectManager.getInstance().openProjects) {
+      if (candidate.isDisposed) {
+        continue
+      }
+
+      val name = candidate.name
       if (isCustomHost) {
         // domain name is case-insensitive
         if (projectName.equals(name, ignoreCase = true)) {
@@ -156,35 +161,37 @@ internal class BuiltInWebServer : HttpRequestHandler() {
             // may be passed path is not correct
             projectName = name
           }
-          return true
+          matchedByName = candidate
+          break
         }
       }
-      else {
+      else if (decodedPath.regionMatches(1, name, 0, name.length, !SystemInfo.isFileSystemCaseSensitive)) {
         // WEB-17839 Internal web server reports 404 when serving files from a project with slashes in name
-        if (decodedPath.regionMatches(1, name, 0, name.length, !SystemInfo.isFileSystemCaseSensitive)) {
-          val isEmptyPathCandidate = decodedPath.length == (name.length + 1)
-          if (isEmptyPathCandidate || decodedPath[name.length + 1] == '/') {
-            projectName = name
-            offset = name.length + 1
-            isEmptyPath = isEmptyPathCandidate
-            return true
-          }
+        val isEmptyPathCandidate = decodedPath.length == (name.length + 1)
+        if (isEmptyPathCandidate || decodedPath[name.length + 1] == '/') {
+          projectName = name
+          offset = name.length + 1
+          isEmptyPath = isEmptyPathCandidate
+          matchedByName = candidate
+          break
         }
       }
 
-      if (candidateByDirectoryName == null && compareNameAndProjectBasePath(projectName, project)) {
-        candidateByDirectoryName = project
+      if (candidateByDirectoryName == null && compareNameAndProjectBasePath(projectName, candidate)) {
+        candidateByDirectoryName = candidate
       }
-      if (candidateByDirectoryName == null &&
-          projectNameFromReferer != null &&
-          (projectNameFromReferer == name || compareNameAndProjectBasePath(projectNameFromReferer, project))) {
-        candidateByDirectoryName = project
-        isCandidateFromReferer = true
+      if (projectNameFromReferer != null) {
+        if (candidateByRefererName == null && projectNameFromReferer.equals(name, ignoreCase = !SystemInfo.isFileSystemCaseSensitive)) {
+          candidateByRefererName = candidate
+        }
+        else if (candidateByRefererDirectoryName == null && compareNameAndProjectBasePath(projectNameFromReferer, candidate)) {
+          candidateByRefererDirectoryName = candidate
+        }
       }
-      return false
-    }) ?: candidateByDirectoryName
+    }
 
-    if (isCandidateFromReferer) {
+    val candidateByReferer = candidateByRefererName ?: candidateByRefererDirectoryName
+    val project = matchedByName ?: candidateByDirectoryName ?: candidateByReferer?.also {
       projectName = projectNameFromReferer!!
       offset = 0
       isEmptyPath = false
