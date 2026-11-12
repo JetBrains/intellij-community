@@ -26,8 +26,6 @@ abstract class ChangeSetActivityItem(private val changeSet: ChangeSet) : Activit
   open val fullName: @NlsSafe String? get() = name
   abstract val name: @NlsSafe String?
 
-  fun isSystemLabelOnly(): Boolean = changeSet.isSystemLabelOnly
-
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is ChangeSetActivityItem) return false
