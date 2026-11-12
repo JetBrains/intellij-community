@@ -717,14 +717,15 @@ internal class TerminalEmulatorOutputProjectorTest {
     write(lines.joinToString("\r\n"))
     collectUpdate()
 
-    // At 5 columns the 10-row screen starts inside line 8, so the window begins on a wrap continuation.
-    // The projector must back up to that line's first row and report line 8 whole, not only its tail.
+    // At 5 columns each line takes four rows, and the height growth pulls six rows back from the scrollback.
+    // So the 10-row screen starts inside line 7, and the window begins on a wrap continuation.
+    // The projector must back up to that line's first row and report line 7 whole, not only its tail.
     emulator.resize(TerminalSize(5, 10))
     val event = collectUpdate()
 
     assertThat(projector.isHistoryReplaced).isFalse()
-    assertThat(event.startLineLogicalIndex).isEqualTo(8L)
-    assertThat(event.text.split('\n')).isEqualTo(lines.subList(8, 10))
+    assertThat(event.startLineLogicalIndex).isEqualTo(7L)
+    assertThat(event.text.split('\n')).isEqualTo(lines.subList(7, 10))
   }
 
   @Test

@@ -634,11 +634,10 @@ class ResizeTest {
 
       session.resize(5, 5)
 
-      // ENGINE-SPECIFIC: unlike a row-only grow, this combined resize does not pull.
-      assertThat(session.scrollbackRowCount()).isEqualTo(3)
-      session.assertScrollbackLines("line", "line2", "line3")
-      session.assertScreenLines("line4", "li")
-      session.assertCursorPosition(3, 2)
+      // ENGINE-SPECIFIC: like a row-only grow, this combined resize pulls the scrollback back.
+      session.assertScrollbackLines()
+      session.assertScreenLines("line", "line2", "line3", "line4", "li")
+      session.assertCursorPosition(3, 5)
     }
 
     @Test
@@ -661,13 +660,14 @@ class ResizeTest {
       session.restoreCursor()
       session.useAlternateBuffer(false)
 
-      // ENGINE-SPECIFIC: see mainBufferResizeToSmallerHeightAndBack.
-      session.assertScrollbackLines("main_", "lin1", "main_")
-      session.assertScreenLines("lin2", "main_", "lin3")
+      // ENGINE-SPECIFIC: the resize to 6x6 pulls the scrollback back, see mainBufferResizeToSmallerHeightAndBack.
+      // The resize to 5x4 then pushes the two top rows into the scrollback again.
+      session.assertScrollbackLines("main_", "lin1")
+      session.assertScreenLines("main_", "lin2", "main_", "lin3")
       // ENGINE-SPECIFIC: the saved cursor sat in the blank cell after "main_lin3".
       // The reflow to 8 columns clamps it onto the "n" that ends "main_lin", as in
       // altMainSwitchWidthChangeDuringAltBuffer. The later reflows keep it on that "n".
-      session.assertCursorPosition(3, 3)
+      session.assertCursorPosition(3, 4)
     }
 
     // Pull-sensitive despite no row-count change: widening enough to rejoin the wrapped line frees a
