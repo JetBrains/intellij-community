@@ -31,6 +31,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.configuration.CheckToml
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
+import com.jetbrains.python.sdk.configuration.EnvExists
 import com.jetbrains.python.sdk.configuration.PyProjectTomlConfigurationExtension
 import com.jetbrains.python.sdk.configuration.findEnvOrNull
 import com.jetbrains.python.sdk.configuration.prepareSdkCreator
@@ -46,6 +47,7 @@ import com.jetbrains.python.sdk.poetry.setupPoetry
 import com.jetbrains.python.sdk.poetry.suggestedSdkName
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.withProject
+import com.jetbrains.python.sdk.add.v2.EelOrJustPath
 import com.jetbrains.python.sdk.add.v2.EelOrJustPath.Companion.asEelOrJustPath
 import com.jetbrains.python.sdk.poetry.POETRY_TOML
 import kotlinx.coroutines.Dispatchers
@@ -66,12 +68,12 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
   override suspend fun checkEnvironmentAndPrepareSdkCreator(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo? =
     prepareSdkCreator(
       { checkManageableEnv(pyProject, true) },
-    ) { { createPoetry(pyProject) } }
+    ) { envExists -> { createPoetry(pyProject, envExists) } }
 
   override suspend fun createSdkWithoutPyProjectTomlChecks(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo? =
     prepareSdkCreator(
       { checkManageableEnv(pyProject, false) },
-    ) { { createPoetry(pyProject) } }
+    ) { envExists -> { createPoetry(pyProject, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
 
@@ -97,9 +99,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
       if (pyProjectToml != null && !poetryLockExists) return@reportRawProgress envNotFound
       val basePath = pyProject.baseDir.asEelOrJustPath()
       runPoetry(basePath, "check", "--lock").getOr { return@reportRawProgress envNotFound }
-      val envPath = runPoetry(basePath, "env", "info", "-p")
-        .mapSuccess { it.toNioPathOrNull() }
-        .getOr { return@reportRawProgress envNotFound }
+      val envPath = findPoetryEnvHome(basePath).getOr { return@reportRawProgress envNotFound }
       envPath?.resolvePythonBinary()?.findEnvOrNull(intentionName) ?: envNotFound
     }
     /**
@@ -122,38 +122,35 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
     else EnvCheckerResult.CannotConfigure
   }
 
-  private suspend fun createPoetry(pyProject: PyProject): PyResult<PythonInterpreter> =
+  private suspend fun createPoetry(pyProject: PyProject, envExists: EnvExists): PyResult<PythonInterpreter> =
     withBackgroundProgress(pyProject.project, PyBundle.message("sdk.progress.text.setting.up.poetry.environment")) {
-      LOGGER.debug("Creating poetry environment")
-
       val basePath = pyProject.baseDir
-      val tomlFile = PyProjectToml.findPyProjectTomlFile(pyProject)
-      val versionSpecifiers = tomlFile?.let { pyProjectTomlFile ->
-        readAction { pyProjectTomlFile.virtualFile.findPsiFile(pyProject.project)?.resolvePythonVersionSpecifiers() }
-      } ?: PyVersionSpecifiers.ANY_SUPPORTED
+      val existingEnv =
+        if (envExists) {
+          findPoetryEnvHome(basePath.asEelOrJustPath()).getOr { return@withBackgroundProgress it }
+        }
+        else {
+          null
+        }
 
-      val baseSystemPython = getSystemPython(
-        confirmInstallation = { true },
-        pythonService = SystemPythonService(),
-        versionSpecifiers = versionSpecifiers,
-        eelDescriptor = pyProject.eelDescriptor,
-      ).getOr { return@withBackgroundProgress it }
+      if (envExists && existingEnv == null) {
+        LOGGER.warn(
+          "Can't find existing poetry environment in project, but it was expected.wProbably it was deleted. New environment will be created"
+        )
+      }
 
-      val poetry = setupPoetry(
-        projectPath = basePath,
-        basePythonBinaryPath = baseSystemPython.pythonBinary,
-        installPackages = true,
-        init = tomlFile == null,
-        errorSink = ErrorSink().withProject(pyProject.project)
-      ).getOr { return@withBackgroundProgress it }
-
-      val path = poetry.resolvePythonBinary()
-                 ?: return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", poetry))
-
-      val file = StandardFileSystems.local().refreshAndFindFileByPath(path.pathString)
-                 ?: return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", path))
+      val poetry = existingEnv ?: createPoetryEnv(pyProject).getOr { return@withBackgroundProgress it }
+      val path =
+        poetry.resolvePythonBinary() ?: return@withBackgroundProgress PyResult.localizedError(
+          PySdkBundle.message("cannot.find.executable", "python", poetry)
+        )
+      val file =
+        StandardFileSystems.local().refreshAndFindFileByPath(path.pathString) ?: return@withBackgroundProgress PyResult.localizedError(
+          PySdkBundle.message("cannot.find.executable", "python", path)
+        )
 
       LOGGER.debug("Setting up associated poetry environment: $path, $basePath")
+
       val sdk = createSdk(
         pyProject,
         PathHolder.Eel(file.toNioPath()),
@@ -163,4 +160,37 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
 
       PyResult.success(sdk)
     }
+
+  private suspend fun createPoetryEnv(pyProject: PyProject): PyResult<Path> {
+    LOGGER.debug("Creating poetry environment")
+
+    val basePath = pyProject.baseDir
+    val tomlFile = PyProjectToml.findPyProjectTomlFile(pyProject)
+    val versionSpecifiers = tomlFile?.let { pyProjectTomlFile ->
+      readAction { pyProjectTomlFile.virtualFile.findPsiFile(pyProject.project)?.resolvePythonVersionSpecifiers() }
+    } ?: PyVersionSpecifiers.ANY_SUPPORTED
+
+    val baseSystemPython = getSystemPython(
+      confirmInstallation = { true },
+      pythonService = SystemPythonService(),
+      versionSpecifiers = versionSpecifiers,
+      eelDescriptor = pyProject.eelDescriptor,
+    ).getOr { return it }
+
+    val inProjectEnv = runPoetry(basePath.asEelOrJustPath(), "config", "virtualenvs.in-project")
+      .getOr { return it }
+      .trim() == "true"
+
+    return setupPoetry(
+      projectPath = basePath,
+      basePythonBinaryPath = baseSystemPython.pythonBinary,
+      installPackages = true,
+      init = tomlFile == null,
+      errorSink = ErrorSink().withProject(pyProject.project),
+      inProjectEnv = inProjectEnv,
+    )
+  }
+
+  private suspend fun findPoetryEnvHome(basePath: EelOrJustPath): PyResult<Path?> =
+    runPoetry(basePath, "env", "info", "-p").mapSuccess { it.trim().toNioPathOrNull() }
 }
