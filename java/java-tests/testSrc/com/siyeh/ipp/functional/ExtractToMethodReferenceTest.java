@@ -17,99 +17,114 @@ package com.siyeh.ipp.functional;
 
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
 
-public class ExtractToMethodReferenceTest extends IPPTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
+@TestApplication
+public class ExtractToMethodReferenceTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_11);
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "functional/extractToMethodReference", IntentionPowerPackBundle.message("extract.to.method.reference.intention.name"));
+
+  @Test
   public void testUnusedParameterToConfirmSignature() {
-    doTest();
+    ipp.get().doTest();
   }
 
+  @Test
   public void testOverloadedMethodSameName() {
-    doTest();
+    ipp.get().doTest();
   }
 
+  @Test
   public void testSameSignatureMethodExists() {
-    doTest();
+    ipp.get().doTest();
   }
 
+  @Test
   public void testUnableToCreateStatic() {
-    doTest();
+    ipp.get().doTest();
   }
 
+  @Test
   public void testRequiredTypeParameter() {
-    doTest();
+    ipp.get().doTest();
   }
 
+  @Test
   public void testFieldsUsedInsideLambda() {
-    doTest();
+    ipp.get().doTest();
   }
 
+  @Test
   public void testConvertableToMethodReference() {
-    assertIntentionNotAvailable();
+    ipp.get().assertIntentionNotAvailable();
   }
 
+  @Test
   public void testNonDenotableParameterTypes() {
-    assertIntentionNotAvailable();
+    ipp.get().assertIntentionNotAvailable();
   }
 
+  @Test
   public void testEmptyCodeBlock() {
-    doTest();
+    ipp.get().doTest();
   }
 
+  @Test
   public void testAnonymousClassArgument() {
-    doTest();
+    ipp.get().doTest();
   }
 
+  @Test
   public void testUsedLocalVariables() {
-    assertIntentionNotAvailable();
+    ipp.get().assertIntentionNotAvailable();
   }
   
+  @Test
   public void testAnnotatedLambdaParameter() {
-    doTest();
+    ipp.get().doTest();
   }
   
+  @Test
   public void testAnnotatedLambdaParameterType() {
-    doTest();
+    ipp.get().doTest();
   }
   
+  @Test
   public void testAnnotatedLambdaParameterType2() {
-    doTest();
+    ipp.get().doTest();
   }
   
+  @Test
   public void testAnnotatedLambdaParameterTypeWildcard() {
-    doTest();
+    ipp.get().doTest();
   }
   
+  @Test
   public void testAnnotatedLambdaParameterVar() {
-    doTest();
+    ipp.get().doTest();
   }
 
+  @Test
   public void testLambdaInImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), this::doTest);
+    LightJavaCodeInsightTestFixture myFixture = ipp.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ipp.get()::doTest);
   }
 
+  @Test
   public void testStaticLambdaInImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), this::assertIntentionNotAvailable);
-  }
-
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("extract.to.method.reference.intention.name");
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "functional/extractToMethodReference";
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11;
+    LightJavaCodeInsightTestFixture myFixture = ipp.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), ipp.get()::assertIntentionNotAvailable);
   }
 }
 

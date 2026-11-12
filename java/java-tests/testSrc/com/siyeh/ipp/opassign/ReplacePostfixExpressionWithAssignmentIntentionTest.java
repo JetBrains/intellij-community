@@ -2,15 +2,27 @@
 package com.siyeh.ipp.opassign;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see ReplacePostfixExpressionWithAssignmentIntention
  */
-public class ReplacePostfixExpressionWithAssignmentIntentionTest extends IPPTestCase {
+@TestApplication
+public class ReplacePostfixExpressionWithAssignmentIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "", CommonQuickFixBundle.message("fix.replace.x.with.y", "++", "="));
 
+  @Test
   public void testIntIncrement() {
-    doTest("""
+    ipp.get().doTest("""
              class X {{
                  int i = 10;
                  i/*_*/++;
@@ -23,8 +35,9 @@ public class ReplacePostfixExpressionWithAssignmentIntentionTest extends IPPTest
              }}""");
   }
 
+  @Test
   public void testLongIncrement() {
-    doTest("""
+    ipp.get().doTest("""
              class X {{
                  long i = 10;
                  i/*_*/++;
@@ -37,32 +50,30 @@ public class ReplacePostfixExpressionWithAssignmentIntentionTest extends IPPTest
              }}""");
   }
 
+  @Test
   public void testByteIncrement() {
-    doTestIntentionNotAvailable("""
+    ipp.get().doTestIntentionNotAvailable("""
                                   class X {{
                                       byte i = 10;
                                       i/*_*/++;
                                   }}""");
   }
 
+  @Test
   public void testCharIncrement() {
-    doTestIntentionNotAvailable("""
+    ipp.get().doTestIntentionNotAvailable("""
                                   class X {{
                                       char i = 10;
                                       i/*_*/++;
                                   }}""");
   }
 
+  @Test
   public void testShortIncrement() {
-    doTestIntentionNotAvailable("""
+    ipp.get().doTestIntentionNotAvailable("""
                                   class X {{
                                       short i = 10;
                                       i/*_*/++;
                                   }}""");
-  }
-
-  @Override
-  protected String getIntentionName() {
-    return CommonQuickFixBundle.message("fix.replace.x.with.y", "++", "=");
   }
 }

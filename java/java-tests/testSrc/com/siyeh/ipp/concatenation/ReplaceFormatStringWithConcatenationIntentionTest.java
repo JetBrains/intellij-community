@@ -1,24 +1,36 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.concatenation;
 
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see ReplaceFormatStringWithConcatenationIntention
  * @author Bas Leijdekkers
  */
-public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCase {
+@TestApplication
+public class ReplaceFormatStringWithConcatenationIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp = ippFixture(projectFixture);
 
+  @Test
   public void testNotSupported() {
-    doTestIntentionNotAvailable("class C {" +
+    ipp.get().doTestIntentionNotAvailable("class C {" +
                                 "  String m() {" +
                                 "    return /*_Replace 'String.format()' with concatenation*/String.format(\"%d\", 1);" +
                                 "  }" +
                                 "}");
   }
 
+  @Test
   public void testSimple() {
-    doTest("class C {" +
+    ipp.get().doTest("class C {" +
            "  String m() {" +
            "    return /*_Replace 'String.format()' with concatenation*/String.format(\"%s\", 1);" +
            "  }" +
@@ -31,8 +43,9 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
            "}");
   }
 
+  @Test
   public void testMultiple() {
-    doTest("class C {" +
+    ipp.get().doTest("class C {" +
            "  String m(String expected, String actual) {" +
            "    return String./*_Replace 'String.format()' with concatenation*/format(\"Expected to get a '%s', got a '%s' instead\", expected, actual);" +
            "  }" +
@@ -45,8 +58,9 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
            "}");
   }
 
+  @Test
   public void testMultipleWithNothingInBetween() {
-    doTest("class X {" +
+    ipp.get().doTest("class X {" +
            "  String m(String tempDataFolderPath, String fileName) {" +
            "    //noinspection UnnecessaryCallToStringValueOf\n" +
            "    return String.format(\"%s/f%s%s\", /*_Replace 'String.format()' with concatenation*/tempDataFolderPath, Double.toString(Math.random()), fileName);" +
@@ -61,8 +75,9 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
            "}");
   }
 
+  @Test
   public void testPercentAtTheEnd() {
-    doTestIntentionNotAvailable("class X {" +
+    ipp.get().doTestIntentionNotAvailable("class X {" +
            "  String x() {" +
            "    //noinspection ResultOfMethodCallIgnored\n" +
            "    String.format(/*_Replace 'String.format()' with concatenation*/\"nope%\", 1);" +
@@ -70,8 +85,9 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
            "}");
   }
 
+  @Test
   public void testNewline() {
-    doTest("class Z {" +
+    ipp.get().doTest("class Z {" +
            "  String m(boolean b) {" +
            "    return String.format/*_Replace 'String.format()' with concatenation*/(\"b:\\n %s\", b);" +
            "  }" +
@@ -84,8 +100,9 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
            "}");
   }
 
+  @Test
   public void testSingleCharacterSuffix() {
-    doTest("class Idempotent {" +
+    ipp.get().doTest("class Idempotent {" +
            "  String x() {" +
            "    return String./*_Replace 'String.format()' with concatenation*/format(\"%s.\", \"foo\");" +
            "  }" +
@@ -98,8 +115,9 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
            "}");
   }
 
+  @Test
   public void testPsiStructure() {
-    doTest("/** @noinspection ClassInitializerMayBeStatic*/" +
+    ipp.get().doTest("/** @noinspection ClassInitializerMayBeStatic*/" +
            "class PsiStructure{{" +
            "  String s = \"TEST_DATA_PATH\" + /*_Replace 'String.format()' with concatenation*/String.format(\"templates/MyTemplate.%s.html\", 1);" +
            "}}",
@@ -110,8 +128,9 @@ public class ReplaceFormatStringWithConcatenationIntentionTest extends IPPTestCa
            "}}");
   }
 
+  @Test
   public void testConditional() {
-    doTest("""
+    ipp.get().doTest("""
              class Info {
 
                  public String name;

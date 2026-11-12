@@ -1,32 +1,41 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.exceptions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see DetailExceptionsIntention
  * @author Bas Leijdekkers
  */
-public class DetailExceptionsIntentionTest extends IPPTestCase {
+@TestApplication
+public class DetailExceptionsIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "exceptions/detail", IntentionPowerPackBundle.message("detail.exceptions.intention.name"));
 
-  public void testDisjunction() { assertIntentionNotAvailable(); }
-  public void testSimple() { doTest(); }
-  public void testForeach() { doTest(); }
-  public void testTryWithResources() { doTest(); }
-  public void testPolyadicParentheses() { doTest(); }
-  public void testCaretAtParameter() { doTest(); }
-  public void testCommonSuperType() { doTest(); }
-  public void testCatchBody() { assertIntentionNotAvailable(); }
+  @Test
+  public void testDisjunction() { ipp.get().assertIntentionNotAvailable(); }
+  @Test
+  public void testSimple() { ipp.get().doTest(); }
+  @Test
+  public void testForeach() { ipp.get().doTest(); }
+  @Test
+  public void testTryWithResources() { ipp.get().doTest(); }
+  @Test
+  public void testPolyadicParentheses() { ipp.get().doTest(); }
+  @Test
+  public void testCaretAtParameter() { ipp.get().doTest(); }
+  @Test
+  public void testCommonSuperType() { ipp.get().doTest(); }
+  @Test
+  public void testCatchBody() { ipp.get().assertIntentionNotAvailable(); }
 
-
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("detail.exceptions.intention.name");
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "exceptions/detail";
-  }
 }

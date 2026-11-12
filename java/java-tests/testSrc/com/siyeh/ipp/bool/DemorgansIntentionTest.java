@@ -2,27 +2,39 @@
 package com.siyeh.ipp.bool;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
 
-public class DemorgansIntentionTest extends IPPTestCase {
-  public void testNeedsParentheses() { doTest(); }
-  public void testNeedsMoreParentheses() { doTest(); }
-  public void testNotTooManyParentheses() { doTest(); }
-  public void testErrorElement() { assertIntentionNotAvailable(); }
-  public void testFlattenPolyadic() { doTest(); }
-  public void testUnclosedLiteral() { doTest(); }
-  public void testUnclosedLiteral2() { doTest(); }
-  public void testClosedLiteral() { doTest(); }
-  public void testRegression() { doTest(CommonQuickFixBundle.message("fix.replace.x.with.y", "&&", "||")); }
-  public void testEmptyNegation() { assertIntentionNotAvailable(CommonQuickFixBundle.message("fix.replace.x.with.y", "&&", "||")); }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
-  @Override
-  protected String getIntentionName() {
-    return CommonQuickFixBundle.message("fix.replace.x.with.y", "||", "&&");
-  }
+@TestApplication
+public class DemorgansIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "bool/demorgans", CommonQuickFixBundle.message("fix.replace.x.with.y", "||", "&&"));
 
-  @Override
-  protected String getRelativePath() {
-    return "bool/demorgans";
-  }
+  @Test
+  public void testNeedsParentheses() { ipp.get().doTest(); }
+  @Test
+  public void testNeedsMoreParentheses() { ipp.get().doTest(); }
+  @Test
+  public void testNotTooManyParentheses() { ipp.get().doTest(); }
+  @Test
+  public void testErrorElement() { ipp.get().assertIntentionNotAvailable(); }
+  @Test
+  public void testFlattenPolyadic() { ipp.get().doTest(); }
+  @Test
+  public void testUnclosedLiteral() { ipp.get().doTest(); }
+  @Test
+  public void testUnclosedLiteral2() { ipp.get().doTest(); }
+  @Test
+  public void testClosedLiteral() { ipp.get().doTest(); }
+  @Test
+  public void testRegression() { ipp.get().doTest(CommonQuickFixBundle.message("fix.replace.x.with.y", "&&", "||")); }
+  @Test
+  public void testEmptyNegation() { ipp.get().assertIntentionNotAvailable(CommonQuickFixBundle.message("fix.replace.x.with.y", "&&", "||")); }
 }

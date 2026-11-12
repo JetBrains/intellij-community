@@ -15,23 +15,25 @@
  */
 package com.siyeh.ipp.bool;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class NegateConditionalIntentionTest extends IPPTestCase {
+@TestApplication
+public class NegateConditionalIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "bool/negate_conditional", IntentionPowerPackBundle.message("negate.conditional.intention.name"));
 
-  public void testSimple() { doTest();}
-
-  @Override
-  protected String getRelativePath() {
-    return "bool/negate_conditional";
-  }
-
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("negate.conditional.intention.name");
-  }
+  @Test
+  public void testSimple() { ipp.get().doTest();}
 }

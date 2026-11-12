@@ -2,22 +2,39 @@
 package com.siyeh.ipp.junit;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see FlipAssertLiteralIntention
  * @author Bas Leijdekkers
  */
-public class FlipAssertLiteralIntentionTest extends IPPTestCase {
+@TestApplication
+public class FlipAssertLiteralIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "junit/flip_assert_literal", CommonQuickFixBundle.message("fix.replace.x.with.y", "assertTrue()", "assertFalse()"));
 
-  public void testMessage() { doTest(); }
-  public void testExistingStaticImport() { doTest(); }
-  public void testStaticImportWithoutTestMethod() { doTest(); }
-  public void testJUnit5Test() { doTest(); }
+  @Test
+  public void testMessage() { ipp.get().doTest(); }
+  @Test
+  public void testExistingStaticImport() { ipp.get().doTest(); }
+  @Test
+  public void testStaticImportWithoutTestMethod() { ipp.get().doTest(); }
+  @Test
+  public void testJUnit5Test() { ipp.get().doTest(); }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = ipp.get().getFixture();
     myFixture.addClass("package org.junit;" +
                        "public class Assert {" +
                        "  public static void assertTrue(java.lang.String message, boolean condition) {}" +
@@ -43,15 +60,5 @@ public class FlipAssertLiteralIntentionTest extends IPPTestCase {
                              public static void assertEquals(Object expected, Object actual, String message) {}
                              public static void assertTrue(Object expected, String message) {}
                              public static void fail(String message) {}}""");
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "junit/flip_assert_literal";
-  }
-
-  @Override
-  protected String getIntentionName() {
-    return CommonQuickFixBundle.message("fix.replace.x.with.y", "assertTrue()", "assertFalse()");
   }
 }

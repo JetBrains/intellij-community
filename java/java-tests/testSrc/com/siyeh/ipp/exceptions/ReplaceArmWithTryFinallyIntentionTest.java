@@ -15,15 +15,26 @@
  */
 package com.siyeh.ipp.exceptions;
 
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see ReplaceArmWithTryFinallyIntention
  */
-public class ReplaceArmWithTryFinallyIntentionTest extends IPPTestCase {
+@TestApplication
+public class ReplaceArmWithTryFinallyIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp = ippFixture(projectFixture);
 
+  @Test
   public void testSimple() {
-    doTest(
+    ipp.get().doTest(
       """
         import java.io.*;
         class C {
@@ -48,8 +59,9 @@ public class ReplaceArmWithTryFinallyIntentionTest extends IPPTestCase {
         }""");
   }
 
+  @Test
   public void testMixedResources() {
-    doTest(
+    ipp.get().doTest(
       """
         import java.io.*;
         class C {
@@ -80,8 +92,9 @@ public class ReplaceArmWithTryFinallyIntentionTest extends IPPTestCase {
         }""");
   }
 
+  @Test
   public void testArmWithFinally() {
-    doTest(
+    ipp.get().doTest(
       """
         import java.io.*;
         class C {
@@ -113,8 +126,9 @@ public class ReplaceArmWithTryFinallyIntentionTest extends IPPTestCase {
     );
   }
 
+  @Test
   public void testMultipleResourcesWithCatch() {
-    doTest(
+    ipp.get().doTest(
       """
         import java.io.*;
         class C {

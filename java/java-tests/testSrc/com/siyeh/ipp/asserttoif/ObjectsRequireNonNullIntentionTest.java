@@ -16,41 +16,42 @@
 package com.siyeh.ipp.asserttoif;
 
 import com.intellij.java.codeInspection.DataFlowInspectionTest;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see com.siyeh.ipp.asserttoif.ObjectsRequireNonNullIntention
  * @author Bas Leijdekkers
  */
-public class ObjectsRequireNonNullIntentionTest extends IPPTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
+@TestApplication
+public class ObjectsRequireNonNullIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "asserttoif/objects_require_non_null", IntentionPowerPackBundle.message("objects.require.non.null.intention.name"));
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = ipp.get().getFixture();
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
   }
 
-  public void testOne() { doTest(); }
-  public void testTwo() { doTest(); }
-  public void testThree() { doTest(); }
-  public void testContainer() { doTest(); }
-
-  @Override
-  protected String getRelativePath() {
-    return "asserttoif/objects_require_non_null";
-  }
-
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("objects.require.non.null.intention.name");
-  }
+  @Test
+  public void testOne() { ipp.get().doTest(); }
+  @Test
+  public void testTwo() { ipp.get().doTest(); }
+  @Test
+  public void testThree() { ipp.get().doTest(); }
+  @Test
+  public void testContainer() { ipp.get().doTest(); }
 }

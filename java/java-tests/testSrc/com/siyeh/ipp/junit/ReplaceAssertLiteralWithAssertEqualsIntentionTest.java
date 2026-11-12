@@ -1,21 +1,36 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.junit;
 
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see com.siyeh.ipp.junit.ReplaceAssertLiteralWithAssertEqualsIntention
  * @author Bas Leijdekkers
  */
-public class ReplaceAssertLiteralWithAssertEqualsIntentionTest extends IPPTestCase {
+@TestApplication
+public class ReplaceAssertLiteralWithAssertEqualsIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "junit/replace_assert_literal_with_assert_equals", IntentionPowerPackBundle.message("replace.assert.literal.with.assert.equals.intention.name", "assertTrue", "true"));
 
-  public void testOutsideTestMethod() { doTest(); }
-  public void testJUnit5Test() { doTest(); }
+  @Test
+  public void testOutsideTestMethod() { ipp.get().doTest(); }
+  @Test
+  public void testJUnit5Test() { ipp.get().doTest(); }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = ipp.get().getFixture();
     myFixture.addClass("package org.junit;" +
                        "public class Assert {" +
                        "  static public void assertTrue(boolean actual) {}" +
@@ -37,15 +52,5 @@ public class ReplaceAssertLiteralWithAssertEqualsIntentionTest extends IPPTestCa
                              public static void assertEquals(Object expected, Object actual, String message) {}
                              public static void assertTrue(Object expected, String message) {}
                              public static void fail(String message) {}}""");
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "junit/replace_assert_literal_with_assert_equals";
-  }
-
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("replace.assert.literal.with.assert.equals.intention.name", "assertTrue", "true");
   }
 }

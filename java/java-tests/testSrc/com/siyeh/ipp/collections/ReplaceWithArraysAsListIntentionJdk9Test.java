@@ -15,15 +15,26 @@
  */
 package com.siyeh.ipp.collections;
 
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceWithArraysAsListIntentionJdk9Test extends IPPTestCase {
+@TestApplication
+public class ReplaceWithArraysAsListIntentionJdk9Test {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp = ippFixture(projectFixture);
 
+  @Test
   public void testBrokenCode() {
-    doTest(
+    ipp.get().doTest(
       "import java.util.*;" +
       "class X {" +
       "  List<String> f() {" +
@@ -40,8 +51,9 @@ public class ReplaceWithArraysAsListIntentionJdk9Test extends IPPTestCase {
     );
   }
 
+  @Test
   public void testNullArgument() {
-    doTest(
+    ipp.get().doTest(
       "import java.util.*;" +
       "class X {" +
       "  List<String> f() {" +
@@ -57,8 +69,9 @@ public class ReplaceWithArraysAsListIntentionJdk9Test extends IPPTestCase {
       "}");
   }
 
+  @Test
   public void testNullableArgument() {
-    doTest(
+    ipp.get().doTest(
       "import java.util.*;" +
       "class X {" +
       "  List<String> f(@org.jetbrains.annotations.Nullable String a) {" +
@@ -74,8 +87,9 @@ public class ReplaceWithArraysAsListIntentionJdk9Test extends IPPTestCase {
       "}");
   }
 
+  @Test
   public void testReplaceSingletonList() {
-    doTest(
+    ipp.get().doTest(
       "import java.util.*;" +
       "class X {" +
       "  List<String> f() {" +
@@ -92,8 +106,9 @@ public class ReplaceWithArraysAsListIntentionJdk9Test extends IPPTestCase {
     );
   }
 
+  @Test
   public void testReplaceSingleton() {
-    doTest(
+    ipp.get().doTest(
       "import java.util.*;" +
       "class X {" +
       "  Set<String> f() {" +
@@ -110,8 +125,9 @@ public class ReplaceWithArraysAsListIntentionJdk9Test extends IPPTestCase {
     );
   }
 
+  @Test
   public void testReplaceEmptyMap() {
-    doTest(
+    ipp.get().doTest(
       "import java.util.*;" +
       "class X {" +
       "  Map<String, String> f() {" +

@@ -16,25 +16,32 @@
 package com.siyeh.ipp.opassign;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see PostfixPrefixIntention
  */
-public class PostfixPrefixIntentionTest extends IPPTestCase {
-  public void testSimple() { doTest(); }
-  public void testPrefixExpression() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "i++")); }
-  public void testPrefixExpressionInSwitchExprJava12() { doTest(CommonQuickFixBundle.message("fix.replace.with.x", "i++")); }
-  public void testIncomplete() { assertIntentionNotAvailable(); }
-  public void testUnaryExpression() { assertIntentionNotAvailable(); }
+@TestApplication
+public class PostfixPrefixIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "opassign/postfix_prefix", CommonQuickFixBundle.message("fix.replace.with.x", "++i"));
 
-  @Override
-  protected String getIntentionName() {
-    return CommonQuickFixBundle.message("fix.replace.with.x", "++i");
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "opassign/postfix_prefix";
-  }
+  @Test
+  public void testSimple() { ipp.get().doTest(); }
+  @Test
+  public void testPrefixExpression() { ipp.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "i++")); }
+  @Test
+  public void testPrefixExpressionInSwitchExprJava12() { ipp.get().doTest(CommonQuickFixBundle.message("fix.replace.with.x", "i++")); }
+  @Test
+  public void testIncomplete() { ipp.get().assertIntentionNotAvailable(); }
+  @Test
+  public void testUnaryExpression() { ipp.get().assertIntentionNotAvailable(); }
 }

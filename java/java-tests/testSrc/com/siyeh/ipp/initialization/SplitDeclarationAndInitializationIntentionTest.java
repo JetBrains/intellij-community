@@ -1,42 +1,62 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.initialization;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see com.siyeh.ipp.initialization.SplitDeclarationAndInitializationIntention
  * @author Bas Leijdekkers
  */
-public class SplitDeclarationAndInitializationIntentionTest extends IPPTestCase {
+@TestApplication
+public class SplitDeclarationAndInitializationIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "initialization", IntentionPowerPackBundle.message("split.declaration.and.initialization.intention.name"));
 
-  public void testSimple() { doTest(); }
-  public void testSimpleStatic() { doTest(); }
-  public void testArrayInitializer() { doTest(); }
-  public void testArray() { doTest(); }
-  public void testFieldUsedBeforeInitializer() { doTest(); }
-  public void testFieldUsedBeforeInitializer1() { doTest(); }
-  public void testMultipleFieldsSingleDeclaration() { doTest(); }
-  public void testMultipleFieldsSingleDeclaration2() { doTest(); }
-  public void testMultipleFieldsSingleDeclaration3() { doTest(); }
-  public void testNotInsideCodeBlock() { doTest(); }
-  public void testRecordStaticField() { doTest(); }
-  public void testWithInjection() { doTest(); }
-  public void testExistingInitializerAfterInstance() { doTest(); }
-  public void testExistingInitializerStaticMismatch() { doTest(); }
-  public void testNoInitializer() { assertIntentionNotAvailable(); }
-  public void testInsideCodeBlock() { assertIntentionNotAvailable(); }
-  public void testRecord() { assertIntentionNotAvailable(); }
-  public void testInterface() { assertIntentionNotAvailable(); }
-  public void testImplicitClass() { assertIntentionNotAvailable(); }
-
-  @Override
-  protected String getRelativePath() {
-    return "initialization";
-  }
-
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("split.declaration.and.initialization.intention.name");
-  }
+  @Test
+  public void testSimple() { ipp.get().doTest(); }
+  @Test
+  public void testSimpleStatic() { ipp.get().doTest(); }
+  @Test
+  public void testArrayInitializer() { ipp.get().doTest(); }
+  @Test
+  public void testArray() { ipp.get().doTest(); }
+  @Test
+  public void testFieldUsedBeforeInitializer() { ipp.get().doTest(); }
+  @Test
+  public void testFieldUsedBeforeInitializer1() { ipp.get().doTest(); }
+  @Test
+  public void testMultipleFieldsSingleDeclaration() { ipp.get().doTest(); }
+  @Test
+  public void testMultipleFieldsSingleDeclaration2() { ipp.get().doTest(); }
+  @Test
+  public void testMultipleFieldsSingleDeclaration3() { ipp.get().doTest(); }
+  @Test
+  public void testNotInsideCodeBlock() { ipp.get().doTest(); }
+  @Test
+  public void testRecordStaticField() { ipp.get().doTest(); }
+  @Test
+  public void testWithInjection() { ipp.get().doTest(); }
+  @Test
+  public void testExistingInitializerAfterInstance() { ipp.get().doTest(); }
+  @Test
+  public void testExistingInitializerStaticMismatch() { ipp.get().doTest(); }
+  @Test
+  public void testNoInitializer() { ipp.get().assertIntentionNotAvailable(); }
+  @Test
+  public void testInsideCodeBlock() { ipp.get().assertIntentionNotAvailable(); }
+  @Test
+  public void testRecord() { ipp.get().assertIntentionNotAvailable(); }
+  @Test
+  public void testInterface() { ipp.get().assertIntentionNotAvailable(); }
+  @Test
+  public void testImplicitClass() { ipp.get().assertIntentionNotAvailable(); }
 }

@@ -1,15 +1,26 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.bool;
 
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class FlipComparisonIntentionTest extends IPPTestCase {
+@TestApplication
+public class FlipComparisonIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp = ippFixture(projectFixture);
 
+  @Test
   public void testSimple() {
-    doTest("""
+    ipp.get().doTest("""
              class X {  boolean b = 1//some comment
               >/*_Flip '>' to '<'*///another comment
               2;}""",
@@ -20,8 +31,9 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
                  boolean b = 2 < 1;}""");
   }
 
+  @Test
   public void testAssignment() {
-    doTest("""
+    ipp.get().doTest("""
              class X {
                void foo(int x) {
                  boolean b;
@@ -38,8 +50,9 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
              }""");
   }
 
+  @Test
   public void testGreater() {
-    doTest("class X {{" +
+    ipp.get().doTest("class X {{" +
            "  if(a+b>/*_Flip '>' to '<'*/c);" +
            "}}",
 
@@ -48,8 +61,9 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
            "}}");
   }
 
+  @Test
   public void testBrokenCode() {
-    doTestIntentionNotAvailable("import java.util.*;" +
+    ipp.get().doTestIntentionNotAvailable("import java.util.*;" +
                                 "class X {" +
                                 "  String x(Set<String> set) {" +
                                 "  }" +
@@ -57,16 +71,18 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
                                 "}");
   }
 
+  @Test
   public void testBrokenCode2() {
-    doTestIntentionNotAvailable("""
+    ipp.get().doTestIntentionNotAvailable("""
                                   class Builder {
                                       Builder b = !(new//simple end comment
                                            </*_Flip '>=' to '<='*/>   Builder().method( >= caret) >1).method(2);
                                   }""");
   }
 
+  @Test
   public void testBrokenCode3() {
-    doTest("""
+    ipp.get().doTest("""
              @Anno(
                param//test comment
                /*_Flip '<' to '>'*/<foo>""",
@@ -77,8 +93,9 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
                      foo > param >)""");
   }
 
+  @Test
   public void testBrokenCode4() {
-    doTestIntentionNotAvailable("""
+    ipp.get().doTestIntentionNotAvailable("""
                                   class A{
                                     {
                                       ""<foo>"//simple/*_Flip '>' to '<'*/ end comment
@@ -86,24 +103,27 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
                                   }""");
   }
 
+  @Test
   public void testBrokenCode5() {
-    doTestIntentionNotAvailable("""
+    ipp.get().doTestIntentionNotAvailable("""
                                   class A{
                                     {
                                       /*_Flip '>' to '<'*/a > b > c  }
                                   }""");
   }
 
+  @Test
   public void testBrokenCode6() {
-    doTestIntentionNotAvailable("""
+    ipp.get().doTestIntentionNotAvailable("""
                                   class A{
                                     {
                                       ((LookupElementBuilder)variants[0]).rendeFragment>/*_Flip '>' to '<'*/ fragments = presentation.getTailFragments();  }
                                   }""");
   }
 
+  @Test
   public void testNoop() {
-    doTestIntentionNotAvailable("class X {" +
+    ipp.get().doTestIntentionNotAvailable("class X {" +
                                 "  void x(String x) {" +
                                 "    if (x /*_Flip '=='*/== x) {}" +
                                 "  }" +

@@ -15,15 +15,26 @@
  */
 package com.siyeh.ipp.trivialif;
 
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MergeElseIfIntentionTest extends IPPTestCase {
+@TestApplication
+public class MergeElseIfIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp = ippFixture(projectFixture);
 
+  @Test
   public void testCommentsAreKept() {
-    doTest("""
+    ipp.get().doTest("""
              class X {
                  void test(boolean foo, boolean bar) {
                      if (foo) { //asdf

@@ -2,15 +2,26 @@
 
 package com.intellij.java.codeInsight.intention;
 
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class FlipCommaIntentionTest extends IPPTestCase {
+@TestApplication
+public class FlipCommaIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp = ippFixture(projectFixture);
 
+  @Test
   public void testFlipParameters() {
-    doTest("class C {" +
+    ipp.get().doTest("class C {" +
            "  void foo(int a,/*_Flip ','*/ String b) {}" +
            "}",
            "class C {" +
@@ -18,8 +29,9 @@ public class FlipCommaIntentionTest extends IPPTestCase {
            "}");
   }
 
+  @Test
   public void testMultipleFieldsSingleDeclaration() {
-    doTest("""
+    ipp.get().doTest("""
              class C {
                  int a,/*_Flip ','*/ b;
              }""",
@@ -30,8 +42,9 @@ public class FlipCommaIntentionTest extends IPPTestCase {
              }""");
   }
 
+  @Test
   public void testMultipleFieldsSingleDeclaration2() {
-    doTest("""
+    ipp.get().doTest("""
              class C {
                int a, b,/*_Flip ','*/ c;
              }""",
@@ -42,8 +55,9 @@ public class FlipCommaIntentionTest extends IPPTestCase {
              }""");
   }
 
+  @Test
   public void testMultipleFieldsSingleDeclaration3() {
-     doTest("""
+     ipp.get().doTest("""
               class C {
                 String one = "one",/*_Flip ','*/ two ="two", three;
               }""",
@@ -54,8 +68,9 @@ public class FlipCommaIntentionTest extends IPPTestCase {
               }""");
   }
 
+  @Test
   public void testIncomplete() {
-    doTest("""
+    ipp.get().doTest("""
              class C {
                int a,/*_Flip ','*/ b =;
              }""",
@@ -66,8 +81,9 @@ public class FlipCommaIntentionTest extends IPPTestCase {
              }""");
   }
 
+  @Test
   public void testFlippingBrokenEnumConstantDoesNotCrashWithStubTextMismatch() {
-    doTest("""
+    ipp.get().doTest("""
              enum E {
                A(1)/*_Flip ','*/,
                B(C(2),\s
@@ -84,20 +100,23 @@ public class FlipCommaIntentionTest extends IPPTestCase {
              """);
   }
 
+  @Test
   public void testUnavailableForDangling() {
-    doTestIntentionNotAvailable("class C {\n" +
+    ipp.get().doTestIntentionNotAvailable("class C {\n" +
                                 "    int a[] = new int[]{1,2,/*_Flip ','*/};" +
                                 "}");
   }
 
+  @Test
   public void testLeftAndRightIdentical() {
-    doTestIntentionNotAvailable("class C {" +
+    ipp.get().doTestIntentionNotAvailable("class C {" +
                                 "  int[] ones = {1/*_Flip ','*/,1,1};" +
                                 "}");
   }
 
+  @Test
   public void testRecordComponent() {
-    doTest("record A(String s,/*_Flip ','*/ int i) { }",
+    ipp.get().doTest("record A(String s,/*_Flip ','*/ int i) { }",
            "record A(int i, String s) { }");
   }
 }

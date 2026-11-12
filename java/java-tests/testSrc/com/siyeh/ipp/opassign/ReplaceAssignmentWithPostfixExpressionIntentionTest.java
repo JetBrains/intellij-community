@@ -2,22 +2,26 @@
 package com.siyeh.ipp.opassign;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see ReplaceAssignmentWithPostfixExpressionIntention
  */
-public class ReplaceAssignmentWithPostfixExpressionIntentionTest extends IPPTestCase {
-  public void testSimple() { doTest(); }
-  public void testParentheses() { doTest(); }
+@TestApplication
+public class ReplaceAssignmentWithPostfixExpressionIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "opassign/assignment_to_postfix", CommonQuickFixBundle.message("fix.replace.x.with.y", "=", "++"));
 
-  @Override
-  protected String getIntentionName() {
-    return CommonQuickFixBundle.message("fix.replace.x.with.y", "=", "++");
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "opassign/assignment_to_postfix";
-  }
+  @Test
+  public void testSimple() { ipp.get().doTest(); }
+  @Test
+  public void testParentheses() { ipp.get().doTest(); }
 }

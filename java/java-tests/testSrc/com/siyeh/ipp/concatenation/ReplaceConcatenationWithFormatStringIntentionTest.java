@@ -17,22 +17,28 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ipp.IPPTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceConcatenationWithFormatStringIntentionTest extends IPPTestCase {
+@TestApplication
+public class ReplaceConcatenationWithFormatStringIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_13);
+  private final TestFixture<IPPFixture> ipp = ippFixture(projectFixture);
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_13;
-  }
-
+  @Test
   public void testNarrowingCast() {
-    doTest("class X {" +
+    ipp.get().doTest("class X {" +
            "  String s = (byte)321 +/*_Replace '+' with 'String.format()'*/ \" parsecs\";" +
            "}",
 
@@ -42,9 +48,11 @@ public class ReplaceConcatenationWithFormatStringIntentionTest extends IPPTestCa
            );
   }
 
+  @Test
   public void testNarrowingCastTextBlock() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> {
-      doTest("class X {" +
+    LightJavaCodeInsightTestFixture myFixture = ipp.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_15, () -> {
+      ipp.get().doTest("class X {" +
              "  String s = (byte)321 +/*_Replace '+' with 'formatted()'*/ \" parsecs\";" +
              "}",
 
@@ -55,8 +63,9 @@ public class ReplaceConcatenationWithFormatStringIntentionTest extends IPPTestCa
     });
   }
 
+  @Test
   public void testWideningCast() {
-    doTest("class X {" +
+    ipp.get().doTest("class X {" +
            "  String s = (long)42 /*_Replace '+' with 'String.format()'*/+ \" the answer to life, the universe and everything\";" +
            "}",
 
@@ -65,8 +74,9 @@ public class ReplaceConcatenationWithFormatStringIntentionTest extends IPPTestCa
            "}");
   }
 
+  @Test
   public void testCastToChar() {
-    doTest("class X {" +
+    ipp.get().doTest("class X {" +
            "  static String deepThought(byte b) {" +
            "    return (char)b/*_Replace '+' with 'String.format()'*/ + \" the answer to life, the universe and everything\";" +
            "  }" +

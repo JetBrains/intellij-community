@@ -2,34 +2,40 @@
 package com.siyeh.ipp.types;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class MakeMethodDefaultTest extends IPPTestCase {
- 
-  @Override
-  protected String getIntentionName() {
-    return "Make 'foo()' default";
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-  @Override
-  protected String getRelativePath() {
-    return "types/makeDefault";
-  }
+@TestApplication
+public class MakeMethodDefaultTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp = ippFixture(projectFixture, "types/makeDefault", "Make 'foo()' default");
 
+  @Test
   public void testInInterface() {
-    doTest();
+    ipp.get().doTest();
   }
 
+  @Test
   public void testAlreadyDefault() {
-    assertIntentionNotAvailable();
+    ipp.get().assertIntentionNotAvailable();
   }
 
+  @Test
   public void testAlreadyHasBody() {
-    @NotNull final String intentionName = getIntentionName();
-    final String testName = getTestName(false);
+    LightJavaCodeInsightTestFixture myFixture = ipp.get().getFixture();
+    @NotNull final String intentionName = ipp.get().getIntentionName();
+    final String testName = myFixture.getTestName(false);
     myFixture.configureByFile(testName + ".java");
     final List<IntentionAction> actions = myFixture.filterAvailableIntentions(intentionName);
     for (IntentionAction action : actions) {
@@ -39,7 +45,8 @@ public class MakeMethodDefaultTest extends IPPTestCase {
     }
   }
   
+  @Test
   public void testAnnotationType() {
-    assertIntentionNotAvailable();
+    ipp.get().assertIntentionNotAvailable();
   }
 }

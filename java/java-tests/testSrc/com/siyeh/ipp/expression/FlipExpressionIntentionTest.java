@@ -15,25 +15,31 @@
  */
 package com.siyeh.ipp.expression;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see com.siyeh.ipp.expression.FlipExpressionIntention
  */
-public class FlipExpressionIntentionTest extends IPPTestCase {
-  public void testPrefix() { doTest(); }
-  public void testPolyadic() { doTest(); }
-  public void testNoChange() { assertIntentionNotAvailable(); }
-  public void testNoException() { assertIntentionNotAvailable(); }
+@TestApplication
+public class FlipExpressionIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "expression/flip_expression", IntentionPowerPackBundle.message("flip.smth.intention.name1", "-"));
 
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("flip.smth.intention.name1", "-");
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "expression/flip_expression";
-  }
+  @Test
+  public void testPrefix() { ipp.get().doTest(); }
+  @Test
+  public void testPolyadic() { ipp.get().doTest(); }
+  @Test
+  public void testNoChange() { ipp.get().assertIntentionNotAvailable(); }
+  @Test
+  public void testNoException() { ipp.get().assertIntentionNotAvailable(); }
 }

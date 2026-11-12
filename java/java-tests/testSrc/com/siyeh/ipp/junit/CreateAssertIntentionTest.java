@@ -1,36 +1,46 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.junit;
 
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see CreateAssertIntention
  * @author Bas Leijdekkers
  */
-public class CreateAssertIntentionTest extends IPPTestCase {
+@TestApplication
+public class CreateAssertIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "junit/create_assert", IntentionPowerPackBundle.message("create.assert.intention.name"));
 
-  public void testAnonymousClassJUnit3() { doTest(); }
-  public void testAnonymousClassJUnit4() { doTest(); }
-  public void testStaticImportJUnit4() { doTest(); }
-  public void testAssertFalse() { doTest(); }
-  public void testConflictingMethod() { doTest(); }
-  public void testNonConflictingMethod() { doTest(); }
-  public void testJUnit5Test() { doTest(); }
+  @Test
+  public void testAnonymousClassJUnit3() { ipp.get().doTest(); }
+  @Test
+  public void testAnonymousClassJUnit4() { ipp.get().doTest(); }
+  @Test
+  public void testStaticImportJUnit4() { ipp.get().doTest(); }
+  @Test
+  public void testAssertFalse() { ipp.get().doTest(); }
+  @Test
+  public void testConflictingMethod() { ipp.get().doTest(); }
+  @Test
+  public void testNonConflictingMethod() { ipp.get().doTest(); }
+  @Test
+  public void testJUnit5Test() { ipp.get().doTest(); }
 
-  @Override
-  protected String getRelativePath() {
-    return "junit/create_assert";
-  }
-
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("create.assert.intention.name");
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = ipp.get().getFixture();
     myFixture.addClass("package org.junit;" +
                        "public class Assert {" +
                        "  public static void assertTrue(java.lang.String message, boolean condition) {}" +

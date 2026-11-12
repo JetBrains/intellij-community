@@ -1,20 +1,22 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.comment;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
 
-public class ChangeToCStyleLineCommentIntentionTest extends IPPTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
-  public void testConvertMultiLineTodo() { doTest(); }
+@TestApplication
+public class ChangeToCStyleLineCommentIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "comment/to_c_style", IntentionPowerPackBundle.message("change.to.c.style.comment.intention.name"));
 
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("change.to.c.style.comment.intention.name");
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "comment/to_c_style";
-  }
+  @Test
+  public void testConvertMultiLineTodo() { ipp.get().doTest(); }
 }

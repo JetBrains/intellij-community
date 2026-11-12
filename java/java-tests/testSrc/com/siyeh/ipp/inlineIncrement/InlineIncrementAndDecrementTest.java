@@ -17,49 +17,71 @@ package com.siyeh.ipp.inlineIncrement;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ipp.IPPFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class InlineIncrementAndDecrementTest extends IPPTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
+@TestApplication
+public class InlineIncrementAndDecrementTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp = ippFixture(projectFixture, "inlineIncrement");
+
+  @Test
   public void testPostfixDecrementNext() {doInlineTest("--");}
+  @Test
   public void testPostfixDecrementPrev() {doInlineTest("--");}
 
+  @Test
   public void testPostfixIncrementNext() {doInlineTest("++");}
+  @Test
   public void testPostfixIncrementPrev() {doInlineTest("++");}
 
+  @Test
   public void testPrefixDecrementNext() {doInlineTest("--");}
+  @Test
   public void testPrefixDecrementPrev() {doInlineTest("--");}
 
+  @Test
   public void testPrefixIncrementNext() {doInlineTest("++");}
+  @Test
   public void testPrefixIncrementPrev() {doInlineTest("++");}
 
+  @Test
   public void testPrefixIncrementBoth() {doInlineTest("++");}
+  @Test
   public void testPrefixDecrementBoth() {doInlineTest("--");}
 
+  @Test
   public void testLambdaBlock() {doInlineTest("++");}
+  @Test
   public void testLambdaExpression() {doNegativeTest("++");}
 
+  @Test
   public void testParenthesesNext() {doInlineTest("--");}
+  @Test
   public void testParenthesesPrev() {doInlineTest("++");}
 
   private void doInlineTest(@NotNull String operator) {
-    super.doTest(IntentionPowerPackBundle.message("inline.increment.intention.name", operator));
+    ipp.get().doTest(IntentionPowerPackBundle.message("inline.increment.intention.name", operator));
   }
 
   private void doNegativeTest(@SuppressWarnings("SameParameterValue") @NotNull String operator) {
-    myFixture.configureByFile(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = ipp.get().getFixture();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
     List<IntentionAction> availableIntentions = myFixture.getAvailableIntentions();
     String action = IntentionPowerPackBundle.message("inline.increment.intention.name", operator);
     final IntentionAction intentionAction = CodeInsightTestUtil.findIntentionByText(availableIntentions, action);
     assertNull(intentionAction);
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "inlineIncrement";
   }
 }

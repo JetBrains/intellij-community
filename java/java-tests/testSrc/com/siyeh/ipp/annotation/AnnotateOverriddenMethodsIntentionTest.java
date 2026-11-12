@@ -15,41 +15,49 @@
  */
 package com.siyeh.ipp.annotation;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
 
-public class AnnotateOverriddenMethodsIntentionTest extends IPPTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
+
+@TestApplication
+public class AnnotateOverriddenMethodsIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "annotation/AnnotateOverriddenMethods", IntentionPowerPackBundle.message("annotate.overridden.methods.intention.method.name", "@SomeAnnotation"));
+
+  @Test
   public void testMethod() {
-    doTest();
+    ipp.get().doTest();
   }
   
+  @Test
   public void testMethodTypeUse() {
-    doTest();
+    ipp.get().doTest();
   }
   
+  @Test
   public void testMethodTypeUseQualified() {
-    doTest();
+    ipp.get().doTest();
   }
 
+  @Test
   public void testParameterTypeUse() {
-    doTest(IntentionPowerPackBundle.message("annotate.overridden.methods.intention.parameters.name", "@SomeAnnotation"));
+    ipp.get().doTest(IntentionPowerPackBundle.message("annotate.overridden.methods.intention.parameters.name", "@SomeAnnotation"));
   }
 
+  @Test
   public void testParameter() {
-    doTest(IntentionPowerPackBundle.message("annotate.overridden.methods.intention.parameters.name", "@SomeAnnotation"));
+    ipp.get().doTest(IntentionPowerPackBundle.message("annotate.overridden.methods.intention.parameters.name", "@SomeAnnotation"));
   }
 
+  @Test
   public void testNotAvailable() {
-    assertIntentionNotAvailable();
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "annotation/AnnotateOverriddenMethods";
-  }
-
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("annotate.overridden.methods.intention.method.name", "@SomeAnnotation");
+    ipp.get().assertIntentionNotAvailable();
   }
 }

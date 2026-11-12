@@ -15,28 +15,34 @@
  */
 package com.siyeh.ipp.comment;
 
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MoveCommentToSeparateLineIntentionTest extends IPPTestCase {
+@TestApplication
+public class MoveCommentToSeparateLineIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp = ippFixture(projectFixture, "comment/separate_line", "Move comment to separate line");
 
-  public void testSimple() { doTest(); }
-  public void testBigWhitespace() { doTest(); }
-  public void testStartOfFile2() { doTest(); }
+  @Test
+  public void testSimple() { ipp.get().doTest(); }
+  @Test
+  public void testBigWhitespace() { ipp.get().doTest(); }
+  @Test
+  public void testStartOfFile2() { ipp.get().doTest(); }
 
-  public void testStartOfFile() { assertIntentionNotAvailable();}
-  public void testStartOfFile3() { assertIntentionNotAvailable();}
-  public void testIncomplete() { assertIntentionNotAvailable();}
-
-  @Override
-  protected String getIntentionName() {
-    return "Move comment to separate line";
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "comment/separate_line";
-  }
+  @Test
+  public void testStartOfFile() { ipp.get().assertIntentionNotAvailable();}
+  @Test
+  public void testStartOfFile3() { ipp.get().assertIntentionNotAvailable();}
+  @Test
+  public void testIncomplete() { ipp.get().assertIntentionNotAvailable();}
 }

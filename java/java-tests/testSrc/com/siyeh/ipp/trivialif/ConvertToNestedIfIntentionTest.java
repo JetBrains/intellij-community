@@ -15,29 +15,39 @@
  */
 package com.siyeh.ipp.trivialif;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
 
-public class ConvertToNestedIfIntentionTest extends IPPTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
-  public void testNested() { doTest(); }
-  public void testStaircase() { doTest(); }
-  public void testNoBraces() { doTest(); }
-  public void testStaircaseWithParenthesis() { doTest(); }
-  public void testStaircaseWithOrInside() { doTest(); }
-  public void testOrStaircaseInside() { doTest(); }
-  public void testOneLevelStaircase() { assertIntentionNotAvailable(); }
+@TestApplication
+public class ConvertToNestedIfIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "trivialif/convert_to_nested_if", IntentionPowerPackBundle.message("convert.to.nested.if.intention.name"));
 
-  public void testAndOrMixed() { doTest(); }
-  public void testOrAndMixed() { doTest(); }
+  @Test
+  public void testNested() { ipp.get().doTest(); }
+  @Test
+  public void testStaircase() { ipp.get().doTest(); }
+  @Test
+  public void testNoBraces() { ipp.get().doTest(); }
+  @Test
+  public void testStaircaseWithParenthesis() { ipp.get().doTest(); }
+  @Test
+  public void testStaircaseWithOrInside() { ipp.get().doTest(); }
+  @Test
+  public void testOrStaircaseInside() { ipp.get().doTest(); }
+  @Test
+  public void testOneLevelStaircase() { ipp.get().assertIntentionNotAvailable(); }
 
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("convert.to.nested.if.intention.name");
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "trivialif/convert_to_nested_if";
-  }
+  @Test
+  public void testAndOrMixed() { ipp.get().doTest(); }
+  @Test
+  public void testOrAndMixed() { ipp.get().doTest(); }
 }

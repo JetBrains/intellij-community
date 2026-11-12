@@ -15,15 +15,27 @@
  */
 package com.siyeh.ipp.exceptions;
 
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see MergeNestedTryStatementsIntention
  * @author Bas Leijdekkers
  */
-public class MergeNestedTryStatementsIntentionTest extends IPPTestCase {
+@TestApplication
+public class MergeNestedTryStatementsIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp = ippFixture(projectFixture);
+
+  @Test
   public void testSimple() {
-    doTest(
+    ipp.get().doTest(
       """
         import java.io.*;
         class C {
@@ -47,8 +59,9 @@ public class MergeNestedTryStatementsIntentionTest extends IPPTestCase {
         }""");
   }
 
+  @Test
   public void testWithoutAndWithResources() {
-    doTest(
+    ipp.get().doTest(
       """
         import java.io.*;
         class C {
@@ -76,9 +89,10 @@ public class MergeNestedTryStatementsIntentionTest extends IPPTestCase {
         }""");
   }
 
+  @Test
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "TryWithIdenticalCatches"})
   public void testOldStyle() {
-    doTest(
+    ipp.get().doTest(
       """
         import java.io.*;
         class C {
@@ -110,8 +124,9 @@ public class MergeNestedTryStatementsIntentionTest extends IPPTestCase {
         }""");
   }
 
+  @Test
   public void testMixedResources() {
-    doTest(
+    ipp.get().doTest(
       """
         import java.io.*;
         class C {

@@ -15,29 +15,37 @@
  */
 package com.siyeh.ipp.unicode;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see com.siyeh.ipp.unicode.UnicodeUnescapeIntention
  */
-public class UnicodeUnescapeIntentionTest extends IPPTestCase {
+@TestApplication
+public class UnicodeUnescapeIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "unicode/unescape", IntentionPowerPackBundle.message("unicode.unescape.intention.name"));
 
-  public void testSimple() { doTest(); }
-  public void testSelection() { doTest(); }
-  public void testSurrogatePairs1() { doTest(); }
-  public void testSurrogatePairs2() { doTest(); }
-  public void testNoException() { assertIntentionNotAvailable(); }
-  public void testU() { assertIntentionNotAvailable(); }
-  public void testNoCarriageReturn() { assertIntentionNotAvailable(); }
-
-  @Override
-  protected String getRelativePath() {
-    return "unicode/unescape";
-  }
-
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("unicode.unescape.intention.name");
-  }
+  @Test
+  public void testSimple() { ipp.get().doTest(); }
+  @Test
+  public void testSelection() { ipp.get().doTest(); }
+  @Test
+  public void testSurrogatePairs1() { ipp.get().doTest(); }
+  @Test
+  public void testSurrogatePairs2() { ipp.get().doTest(); }
+  @Test
+  public void testNoException() { ipp.get().assertIntentionNotAvailable(); }
+  @Test
+  public void testU() { ipp.get().assertIntentionNotAvailable(); }
+  @Test
+  public void testNoCarriageReturn() { ipp.get().assertIntentionNotAvailable(); }
 }

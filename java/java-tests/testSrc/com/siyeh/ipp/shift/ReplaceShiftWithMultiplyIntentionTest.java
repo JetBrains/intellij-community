@@ -2,59 +2,85 @@
 package com.siyeh.ipp.shift;
 
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.ui.ChooserInterceptor;
-import java.util.regex.Pattern;
 import com.intellij.ui.UiInterceptors;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
 
-public class ReplaceShiftWithMultiplyIntentionTest extends IPPTestCase {
+import java.util.regex.Pattern;
 
-  public void testLeftShift() { doTest("Replace '<<' with '*'"); }
-  public void testLongShift() { doTest("Replace '<<' with '*'"); }
-  public void testLargeShift() { doTest("Replace '<<' with '*'"); }
-  public void testLeftShiftAssign() { doTest("Replace '<<=' with '*='"); }
-  public void testLongShiftAssign() { doTest("Replace '<<=' with '*='"); }
-  public void testParentheses() { doTest("Replace '<<' with '*'"); }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
-  public void testRightShift() { doTest("Replace '>>' with division"); }
+@TestApplication
+public class ReplaceShiftWithMultiplyIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp = ippFixture(projectFixture, "shift/replace_shift_with_multiply");
+
+  @Test
+  public void testLeftShift() { ipp.get().doTest("Replace '<<' with '*'"); }
+  @Test
+  public void testLongShift() { ipp.get().doTest("Replace '<<' with '*'"); }
+  @Test
+  public void testLargeShift() { ipp.get().doTest("Replace '<<' with '*'"); }
+  @Test
+  public void testLeftShiftAssign() { ipp.get().doTest("Replace '<<=' with '*='"); }
+  @Test
+  public void testLongShiftAssign() { ipp.get().doTest("Replace '<<=' with '*='"); }
+  @Test
+  public void testParentheses() { ipp.get().doTest("Replace '<<' with '*'"); }
+
+  @Test
+  public void testRightShift() { ipp.get().doTest("Replace '>>' with division"); }
+  @Test
   public void testRightShiftNonDefaultChooser() {
     doTestWithChooser("RightShift", ">>", "Replace '>>' with '/' (may change semantics)");
   }
+  @Test
   public void testRightShiftJava7() { doTestJava7("RightShift", "Replace '>>' with '/' (may change semantics)"); }
 
+  @Test
   public void testRightShiftAssign() {
-    doTest("Replace '>>=' with division");
+    ipp.get().doTest("Replace '>>=' with division");
   }
+  @Test
   public void testRightShiftAssignNonDefaultChooser() {
     doTestWithChooser("RightShiftAssign", ">>=", "Replace '>>=' with '/=' (may change semantics)");
   }
+  @Test
   public void testRightShiftAssignJava7() {
     doTestJava7("RightShiftAssign", "Replace '>>=' with '/=' (may change semantics)");
   }
 
-  public void testRightShiftPos() { doTest("Replace '>>' with '/'"); }
-  public void testRightShiftAssignPos() { doTest("Replace '>>=' with '/='"); }
-
-  @Override
-  protected String getRelativePath() {
-    return "shift/replace_shift_with_multiply";
-  }
+  @Test
+  public void testRightShiftPos() { ipp.get().doTest("Replace '>>' with '/'"); }
+  @Test
+  public void testRightShiftAssignPos() { ipp.get().doTest("Replace '>>=' with '/='"); }
 
   private void doTestJava7(String testName, String intentionName) {
+    LightJavaCodeInsightTestFixture myFixture = ipp.get().getFixture();
     IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_7, () -> {
-      CodeInsightTestUtil.doIntentionTest(myFixture, intentionName, testName + ".java", testName + "_semChange_after.java");
+      EdtTestUtil.runInEdtAndWait(() -> CodeInsightTestUtil.doIntentionTest(myFixture, intentionName, testName + ".java", testName + "_semChange_after.java"));
     });
   }
 
   private void doTestWithChooser(String testName, String operator, String selectedOption) {
+    LightJavaCodeInsightTestFixture myFixture = ipp.get().getFixture();
     UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote(selectedOption)));
-    CodeInsightTestUtil.doIntentionTest(
-      myFixture,
-      "Replace '" + operator + "' with division",
-      testName + ".java",
-      testName + "_semChange_after.java"
-    );
+    EdtTestUtil.runInEdtAndWait(() -> {
+      CodeInsightTestUtil.doIntentionTest(
+        myFixture,
+        "Replace '" + operator + "' with division",
+        testName + ".java",
+        testName + "_semChange_after.java"
+      );
+    });
   }
 }

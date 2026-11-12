@@ -15,27 +15,35 @@
  */
 package com.siyeh.ipp.forloop;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @see com.siyeh.ipp.forloop.ReplaceForEachLoopWithIteratorForLoopIntention
  */
-public class ReplaceForEachLoopWithIteratorForLoopIntentionTest extends IPPTestCase {
-  public void testBareCollectionLoop() { doTest(); }
-  public void testGenericTypes() { doTest(); }
-  public void testBoundedTypes() { doTest(); }
-  public void testBoundedTypesVar() { doTest(); }
-  public void testPrecedence() { doTest(); }
-  public void testWildcards() { doTest(); }
+@TestApplication
+public class ReplaceForEachLoopWithIteratorForLoopIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<IPPFixture> ipp =
+    ippFixture(projectFixture, "forloop/iterator", IntentionPowerPackBundle.message("replace.for.each.loop.with.iterator.for.loop.intention.name"));
 
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("replace.for.each.loop.with.iterator.for.loop.intention.name");
-  }
-
-  @Override
-  protected String getRelativePath() {
-    return "forloop/iterator";
-  }
+  @Test
+  public void testBareCollectionLoop() { ipp.get().doTest(); }
+  @Test
+  public void testGenericTypes() { ipp.get().doTest(); }
+  @Test
+  public void testBoundedTypes() { ipp.get().doTest(); }
+  @Test
+  public void testBoundedTypesVar() { ipp.get().doTest(); }
+  @Test
+  public void testPrecedence() { ipp.get().doTest(); }
+  @Test
+  public void testWildcards() { ipp.get().doTest(); }
 }

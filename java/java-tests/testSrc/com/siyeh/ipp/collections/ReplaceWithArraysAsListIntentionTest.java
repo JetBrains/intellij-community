@@ -15,17 +15,27 @@
  */
 package com.siyeh.ipp.collections;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ipp.IPPTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ipp.IPPFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ipp.IPPFixtureKt.ippFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceWithArraysAsListIntentionTest extends IPPTestCase {
+@TestApplication
+public class ReplaceWithArraysAsListIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<IPPFixture> ipp = ippFixture(projectFixture);
 
+  @Test
   public void testBrokenCode() {
-    doTest(
+    ipp.get().doTest(
       "import java.util.*;" +
       "class X {" +
       "  List<String> f() {" +
@@ -42,8 +52,9 @@ public class ReplaceWithArraysAsListIntentionTest extends IPPTestCase {
     );
   }
 
+  @Test
   public void testReplaceSingletonList() {
-    doTest(
+    ipp.get().doTest(
       "import java.util.*;" +
       "class X {" +
       "  List<String> f() {" +
@@ -60,8 +71,9 @@ public class ReplaceWithArraysAsListIntentionTest extends IPPTestCase {
     );
   }
 
+  @Test
   public void testTypeParameters() {
-    doTest(
+    ipp.get().doTest(
       "import java.util.*;" +
       "class X {" +
       "  private List<Object[]> rows;" +
@@ -78,11 +90,5 @@ public class ReplaceWithArraysAsListIntentionTest extends IPPTestCase {
       "  }" +
       "}"
     );
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
   }
 }
