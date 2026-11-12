@@ -302,6 +302,16 @@ def _should_enable_line_events_for_code(frame, code, filename, info, will_be_sto
             for breakpoint in breakpoints_for_file.values():
                 # will match either global or some function
                 if breakpoint.func_name in ('None', curr_func_name):
+                    if breakpoint.func_name == 'None' and curr_func_name != '':
+                        # Module-level breakpoints (func_name='None') should not enable line
+                        # tracing for all functions. Check if breakpoint is within this function's
+                        # line range to avoid unnecessary tracing.
+                        first_line = code.co_firstlineno
+                        # Get last line number from code object (Python 3.11+)
+                        lines = [line for _, _, line in code.co_lines() if line is not None]
+                        last_line = max(lines) if lines else first_line
+                        if not (first_line <= breakpoint.line <= last_line):
+                            continue
                     has_breakpoint_in_frame = True
                     # New breakpoint was processed -> stop tracing monitoring.events.INSTRUCTION
                     remove_breakpoint(breakpoint)
@@ -320,7 +330,10 @@ def _should_enable_line_events_for_code(frame, code, filename, info, will_be_sto
             else:
                 global_cache_frame_skips[frame_cache_key] = 0
 
-        if can_skip and not has_breakpoint_in_frame:
+        # Performance fix: Only enable line tracing if this frame has a breakpoint.
+        # Without this check, all functions in a file would be traced whenever
+        # any breakpoint exists in the file, causing significant slowdown.
+        if not has_breakpoint_in_frame:
             return False
 
     return True
@@ -347,21 +360,14 @@ _getframe = sys._getframe
 # ENDIF
 
 
-def _get_top_level_frame():
-    f_unhandled = _getframe()
-
-    while f_unhandled:
-        filename = f_unhandled.f_code.co_filename
-        name = splitext(basename(filename))[0]
-        if name == 'pydevd':
-            if f_unhandled.f_code.co_name == '_exec':
-                break
-        elif name == 'threading':
-            if f_unhandled.f_code.co_name == '_bootstrap_inner':
-                break
-        f_unhandled = f_unhandled.f_back
-
-    return f_unhandled
+def _is_top_level_frame(frame):
+    """Check if frame is a top-level entry point (O(1) instead of walking stack)."""
+    name = splitext(basename(frame.f_code.co_filename))[0]
+    if name == 'pydevd' and frame.f_code.co_name == '_exec':
+        return True
+    if name == 'threading' and frame.f_code.co_name == '_bootstrap_inner':
+        return True
+    return False
 
 
 def _stop_on_unhandled_exception(exc_info, py_db, thread):
@@ -512,6 +518,21 @@ def py_start_callback(code, instruction_offset):
             return
 
     try:
+        # Performance optimization: Check cache before expensive operations.
+        # Checking the cache first avoids unnecessary disposed checks, thread liveness
+        # checks, path normalization, and file type checks for already-seen frames.
+        info = thread_info.additional_info
+        if info is None:
+            return
+
+        pydev_step_cmd = info.pydev_step_cmd
+        is_stepping = pydev_step_cmd != -1
+
+        if not is_stepping:
+            frame_cache_key = _make_frame_cache_key(code)
+            if frame_cache_key in global_cache_skips:
+                return monitoring.DISABLE
+
         if py_db.pydb_disposed:
             return monitoring.DISABLE
 
@@ -526,18 +547,8 @@ def py_start_callback(code, instruction_offset):
         if py_db.asyncio_analyser is not None:
             py_db.asyncio_analyser.log_event(frame)
 
-        frame_cache_key = _make_frame_cache_key(code)
-
-        info = thread_info.additional_info
-        if info is None:
-            return
-
-        pydev_step_cmd = info.pydev_step_cmd
-        is_stepping = pydev_step_cmd != -1
-
-        if not is_stepping and frame_cache_key in global_cache_skips:
-            # print('skipped: PY_START (cache hit)', frame_cache_key, frame.f_lineno, code.co_name)
-            return
+        if is_stepping:
+            frame_cache_key = _make_frame_cache_key(code)
 
         abs_path_real_path_and_base = _get_abs_path_real_path_and_base_from_frame(frame)
         filename = abs_path_real_path_and_base[1]
@@ -557,7 +568,9 @@ def py_start_callback(code, instruction_offset):
         breakpoints_for_file = (py_db.breakpoints.get(filename)
                                 or py_db.has_plugin_line_breaks)
         if not breakpoints_for_file and not is_stepping:
-            return
+            # Cache frames without breakpoints to avoid repeated checks.
+            global_cache_skips[frame_cache_key] = 1
+            return monitoring.DISABLE
 
         if py_db.plugin and py_db.has_plugin_line_breaks:
             args = (py_db, filename, info, thread_info.thread)
@@ -628,7 +641,7 @@ def py_start_callback(code, instruction_offset):
             _enable_return_tracing(code)
         else:
             global_cache_skips[frame_cache_key] = 1
-            return
+            return monitoring.DISABLE
 
     except SystemExit:
         return monitoring.DISABLE
@@ -854,8 +867,6 @@ def py_line_callback(code, line_number):
 def py_raise_callback(code, instruction_offset, exception):
     # print('PY_RAISE %s %s %s' % (code.co_name, code.co_filename, exception))
 
-    exc_info = (type(exception), exception, exception.__traceback__)
-
     try:
         py_db = GlobalDebuggerHolder.global_dbg
     except AttributeError:
@@ -863,6 +874,15 @@ def py_raise_callback(code, instruction_offset, exception):
 
     if py_db is None:
         return
+
+    has_exception_breakpoints = (py_db.break_on_caught_exceptions
+                                 or py_db.has_plugin_exception_breaks
+                                 or py_db.stop_on_failed_tests)
+    if not has_exception_breakpoints:
+        return
+
+    # Only do expensive work if exception breakpoints are actually enabled
+    exc_info = (type(exception), exception, exception.__traceback__)
 
     try:
         try:
@@ -878,25 +898,21 @@ def py_raise_callback(code, instruction_offset, exception):
             return
 
         frame = _getframe(1)
-        if frame is _get_top_level_frame():
+        if _is_top_level_frame(frame):
             _stop_on_unhandled_exception(exc_info, py_db, thread)
             return
 
-        has_exception_breakpoints = (py_db.break_on_caught_exceptions
-                                     or py_db.has_plugin_exception_breaks
-                                     or py_db.stop_on_failed_tests)
-        if has_exception_breakpoints:
-            args = (
-                py_db,
-                _get_abs_path_real_path_and_base_from_frame(frame)[1],
-                info, thread,
-                global_cache_skips,
-                global_cache_frame_skips
-            )
-            should_stop, frame = should_stop_on_exception(
-                args, frame, 'exception', exc_info)
-            if should_stop:
-                handle_exception(args, frame, 'exception', exc_info)
+        args = (
+            py_db,
+            _get_abs_path_real_path_and_base_from_frame(frame)[1],
+            info, thread,
+            global_cache_skips,
+            global_cache_frame_skips
+        )
+        should_stop, frame = should_stop_on_exception(
+            args, frame, 'exception', exc_info)
+        if should_stop:
+            handle_exception(args, frame, 'exception', exc_info)
     except KeyboardInterrupt:
         _clear_run_state(info)
         raise
