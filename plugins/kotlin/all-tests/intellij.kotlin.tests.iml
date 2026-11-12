@@ -116,6 +116,11 @@
     <orderEntry type="module" module-name="kotlin.j2k.shared.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jps.graphImplementationTests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.builder.jps.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerReferenceIndex.tests.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.lombok.tests.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.fir.tests.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared.tests.functional" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.tests.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.testFramework" scope="RUNTIME" />
   </component>
 </module>

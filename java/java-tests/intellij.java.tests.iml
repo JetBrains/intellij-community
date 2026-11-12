@@ -207,6 +207,7 @@
     <orderEntry type="module" module-name="intellij.platform.langInjection" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.rpc" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.project" scope="TEST" />
   </component>
 </module>

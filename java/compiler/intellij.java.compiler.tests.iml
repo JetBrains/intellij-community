@@ -5,8 +5,8 @@
     <content url="file://$MODULE_DIR$/testGen">
       <sourceFolder url="file://$MODULE_DIR$/testGen" isTestSource="true" generated="true" />
     </content>
-    <content url="file://$MODULE_DIR$/tests">
-      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
+    <content url="file://$MODULE_DIR$/testSrc">
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -64,6 +64,7 @@
     <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" scope="TEST" />
     <orderEntry type="module" module-name="intellij.properties.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.properties" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.compiler.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.langInjection" scope="TEST" />
   </component>
   <component name="copyright">

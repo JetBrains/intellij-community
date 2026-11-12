@@ -369,6 +369,13 @@
     <orderEntry type="module" module-name="intellij.python.community.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.markdown.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.settingsRepository.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.junit.rt.tests.integration" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.uast.tests.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.tests.env" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.tests.junit5" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.tests.junit5.win" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.testng.rt.tests.ideaTestFrameworks" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.tests.wslPyEnv" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl.tests" scope="RUNTIME" />
   </component>
 </module>

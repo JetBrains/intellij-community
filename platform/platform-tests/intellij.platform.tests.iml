@@ -210,6 +210,9 @@
     <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.eel.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.concurrency.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.tests.eelLocalApi" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.tests.editorStress" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.testFramework" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scratch.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.test" scope="TEST" />
   </component>

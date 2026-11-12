@@ -1,0 +1,1 @@
+This file emulates file from classpath and used by BinFileTest
