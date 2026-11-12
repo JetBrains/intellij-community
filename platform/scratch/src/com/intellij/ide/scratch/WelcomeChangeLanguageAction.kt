@@ -3,15 +3,21 @@ package com.intellij.ide.scratch
 
 import com.intellij.ide.actions.WelcomeFilesRootType
 import com.intellij.ide.welcomeScreen.WelcomeUtils
+import com.intellij.idea.ActionsBundle
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.Nls
 
 /** "Change Language" for the files created from the welcome screen; they live under [WelcomeFilesRootType], not under Scratches. */
 internal class WelcomeChangeLanguageAction : ChangeLanguageAction() {
+  override fun getChangeLanguageActionName(languageName: String): @Nls String {
+    return ActionsBundle.message("action.WelcomeFileChangeLanguage.text")
+  }
+
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project != null && !WelcomeUtils.isWelcomeProject(project)) {
