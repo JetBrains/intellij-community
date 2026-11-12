@@ -1,0 +1,22 @@
+<idea-plugin>
+  <id>com.intellij.aggregateworkspace</id>
+  <name>Workspace Shell</name>
+  <version>0.1</version>
+  <vendor>joeyr64</vendor>
+
+  <description><![CDATA[
+    Unified workspace shell for IntelliJ Community that brings together the notebook, Jupyter,
+    security, and research repositories. GitHub-Codespaces is intentionally excluded.
+  ]]></description>
+
+  <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <toolWindow
+      id="WorkspaceShell"
+      anchor="right"
+      factoryClass="com.intellij.aggregateworkspace.WorkspaceShellToolWindowFactory"
+      secondary="true"
+      canCloseContents="true"/>
+  </extensions>
+</idea-plugin>

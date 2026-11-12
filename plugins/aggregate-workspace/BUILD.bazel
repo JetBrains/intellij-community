@@ -1,0 +1,16 @@
+load("@rules_jvm//java:defs.bzl", "java_library")
+
+java_library(
+    name = "aggregate-workspace",
+    srcs = glob(["src/**/*.java"]),
+    resources = glob(["resources/**/*"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//platform/platform-core:core",
+        "//platform/platform-core-ui:core-ui",
+        "//platform/platform-ide-core:ide-core",
+        "//platform/platform-ide-impl:ide-impl",
+        "//platform/platform-util-ui:util-ui",
+        "//platform/platform-project:project",
+    ],
+)
