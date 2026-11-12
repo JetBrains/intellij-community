@@ -35,7 +35,8 @@ class PhysicalAndLogicalStructureViewBuilder(
       if (ApplicationManager.getApplication().isUnitTestMode()
           || !Registry.`is`("logical.structure.enabled", true)
           || (AppMode.isRemoteDevHost() && !Registry.`is`("remoteDev.toolwindow.structure.lux.enabled", false))
-          || application.currentSession.isGuest) {
+          || application.currentSession.isGuest
+          || LogicalStructureElementsProvider.getProviders(psiFile).none()) {
         return physicalBuilder
       }
       return PhysicalAndLogicalStructureViewBuilder(physicalBuilder, psiFile)
