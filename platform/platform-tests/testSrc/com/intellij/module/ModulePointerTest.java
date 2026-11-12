@@ -88,7 +88,7 @@ public class ModulePointerTest extends HeavyPlatformTestCase {
     final ModulePointer pointer = pointerManager.create("xxx");
 
     ModifiableModuleModel modifiableModel = getModuleManager().getModifiableModel();
-    Module module = modifiableModel.newModule(ProjectKt.getStateStore(myProject).getProjectBasePath().resolve("xxx.iml"), EmptyModuleType.getInstance().getId());
+    Module module = modifiableModel.newModule(ProjectKt.getStateStore(myProject).getProjectBasePath().resolve("xxx.iml"), EmptyModuleType.EMPTY_MODULE);
     assertThat(pointerManager.create(module)).isSameAs(pointer);
     assertThat(pointerManager.create("xxx")).isSameAs(pointer);
 
@@ -168,7 +168,7 @@ public class ModulePointerTest extends HeavyPlatformTestCase {
 
   private Module addModule(final String name) {
     final ModifiableModuleModel model = getModuleManager().getModifiableModel();
-    final Module module = model.newModule(ProjectKt.getStateStore(myProject).getProjectBasePath().resolve(name + ".iml"), EmptyModuleType.getInstance().getId());
+    final Module module = model.newModule(ProjectKt.getStateStore(myProject).getProjectBasePath().resolve(name + ".iml"), EmptyModuleType.EMPTY_MODULE);
     commitModel(model);
     return module;
   }

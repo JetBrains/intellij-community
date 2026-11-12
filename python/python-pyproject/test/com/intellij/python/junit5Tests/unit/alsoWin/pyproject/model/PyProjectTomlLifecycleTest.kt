@@ -9,7 +9,6 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.module.UnknownModuleType
@@ -162,7 +161,7 @@ internal class PyProjectTomlLifecycleTest {
    * The Python module type of PyCharm is not on the test classpath, and only the id of the type goes into the module.
    */
   private class PythonDefaultModuleTypeManager : ModuleTypeManagerImpl() {
-    override fun getDefaultModuleType(): ModuleType<*> = UnknownModuleType(PYTHON, EmptyModuleType.getInstance())
+    override fun getDefaultModuleType(): ModuleType<*> = UnknownModuleType(PYTHON, ModuleType.EMPTY)
   }
 
   /**

@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
-import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -377,7 +376,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected @NotNull ModuleType<?> getModuleType() {
-    return EmptyModuleType.getInstance();
+    return ModuleType.EMPTY;
   }
 
   public static void cleanupApplicationCaches(@Nullable Project project) {

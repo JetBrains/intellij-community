@@ -13,10 +13,23 @@ public final class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
   public static final @NonNls String EMPTY_MODULE = "EMPTY_MODULE";
   //private static final EmptyModuleType ourInstance = new EmptyModuleType();
 
+  /**
+   * @deprecated A call of this method initializes this class before {@link ModuleType}.
+   * The static initializer of {@link ModuleType} creates an instance of this class.
+   * So a first call of this method can deadlock with a thread that initializes {@link ModuleType}.
+   * Use {@link ModuleType#EMPTY} to get the instance, and {@link #EMPTY_MODULE} to get the ID.
+   */
+  @Deprecated(forRemoval = true)
   public static EmptyModuleType getInstance() {
     return (EmptyModuleType)ModuleType.EMPTY;
   }
 
+  /**
+   * @deprecated Only {@link ModuleType} creates the instance.
+   * A call of this constructor initializes this class before {@link ModuleType}, and that can deadlock.
+   * Use {@link ModuleType#EMPTY}. The constructor will become private.
+   */
+  @Deprecated(forRemoval = true)
   @SuppressWarnings({"UnusedDeclaration"}) // implicitly instantiated from ModuleType
   public EmptyModuleType() {
     this(EMPTY_MODULE);

@@ -70,7 +70,7 @@ internal fun vcsRootContextFixture(
 private suspend fun createModule(project: Project, name: String): Module {
   val moduleFile = PlatformTestUtil.getOrCreateProjectBaseDir(project).toNioPath().resolve("$name.iml")
   val module = edtWriteAction {
-    ModuleManager.getInstance(project).newModule(moduleFile, EmptyModuleType.getInstance().id)
+    ModuleManager.getInstance(project).newModule(moduleFile, EmptyModuleType.EMPTY_MODULE)
   }
   IndexingTestUtil.suspendUntilIndexesAreReady(project)
   return module

@@ -799,7 +799,7 @@ class ModuleBridgesTest {
     val module = withContext(Dispatchers.EDT) {
       runWriteAction {
         val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
-          val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+          val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.EMPTY_MODULE) as ModuleBridge
           moduleModel.commit()
           module
         }

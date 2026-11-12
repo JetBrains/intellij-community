@@ -34,7 +34,7 @@ class FileContextInChangingModuleTest {
     val projectRoot = VfsUtil.findFile(projectBasePath, false)!!
 
     val module1 = performModuleUpdate { model ->
-      model.newModule(projectBasePath, EmptyModuleType.getInstance().id).also {
+      model.newModule(projectBasePath, EmptyModuleType.EMPTY_MODULE).also {
         PsiTestUtil.addSourceRoot(it, projectRoot)
       }
     }
@@ -52,7 +52,7 @@ class FileContextInChangingModuleTest {
 
     val module2 = performModuleUpdate { model ->
       model.disposeModule(module1)
-      model.newModule(projectBasePath, EmptyModuleType.getInstance().id).also {
+      model.newModule(projectBasePath, EmptyModuleType.EMPTY_MODULE).also {
         PsiTestUtil.addSourceRoot(it, projectRoot)
       }
     }

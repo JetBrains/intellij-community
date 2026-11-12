@@ -326,7 +326,7 @@ internal class CodeInsightContextSwitcherTest {
   private suspend fun createModule(name: String): Module {
     val moduleManager = ModuleManager.getInstanceAsync(project)
     val model = moduleManager.getModifiableModel()
-    val module = model.newModule(project.stateStore.projectBasePath.resolve("$name.iml"), EmptyModuleType.getInstance().id)
+    val module = model.newModule(project.stateStore.projectBasePath.resolve("$name.iml"), EmptyModuleType.EMPTY_MODULE)
     edtWriteAction { model.commit() }
     return module
   }

@@ -79,7 +79,7 @@ class ModuleLibraryBridgeTest {
 
     val module = WriteCommandAction.writeCommandAction(project).compute<ModuleBridge, RuntimeException> {
       val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
-        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.EMPTY_MODULE) as ModuleBridge
         moduleModel.commit()
         module
       }
@@ -113,7 +113,7 @@ class ModuleLibraryBridgeTest {
 
     val module = WriteCommandAction.writeCommandAction(project).compute<ModuleBridge, RuntimeException> {
       val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
-        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.EMPTY_MODULE) as ModuleBridge
         moduleModel.commit()
         module
       }
@@ -160,7 +160,7 @@ class ModuleLibraryBridgeTest {
 
     val rootModel = WriteCommandAction.writeCommandAction(project).compute<ModifiableRootModel, RuntimeException> {
       val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
-        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.EMPTY_MODULE) as ModuleBridge
         moduleModel.commit()
         module
       }
@@ -224,7 +224,7 @@ class ModuleLibraryBridgeTest {
 
     val module = WriteCommandAction.writeCommandAction(project).compute<ModuleBridge, RuntimeException> {
       val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
-        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.EMPTY_MODULE) as ModuleBridge
         moduleModel.commit()
         module
       }
@@ -282,7 +282,7 @@ class ModuleLibraryBridgeTest {
 
     val moduleRootManager = WriteCommandAction.writeCommandAction(project).compute<ModuleRootManager, RuntimeException> {
       val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
-        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.EMPTY_MODULE) as ModuleBridge
         moduleModel.commit()
         module
       }
@@ -313,7 +313,7 @@ class ModuleLibraryBridgeTest {
 
     val moduleFile = File(project.basePath, "$moduleName.iml")
     val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
-      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.EMPTY_MODULE) as ModuleBridge
       moduleModel.commit()
       module
     }
@@ -359,7 +359,7 @@ class ModuleLibraryBridgeTest {
 
     val moduleFile = File(project.basePath, "$moduleName.iml")
     val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
-      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.EMPTY_MODULE) as ModuleBridge
       moduleModel.commit()
       module
     }
@@ -414,7 +414,7 @@ class ModuleLibraryBridgeTest {
 
     val module = WriteCommandAction.writeCommandAction(project).compute<ModuleBridge, RuntimeException> {
       val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
-        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.EMPTY_MODULE) as ModuleBridge
         moduleModel.commit()
         module
       }
@@ -444,7 +444,7 @@ class ModuleLibraryBridgeTest {
 
     val module = WriteCommandAction.writeCommandAction(project).compute<ModuleBridge, RuntimeException> {
       val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
-        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
+        val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.EMPTY_MODULE) as ModuleBridge
         moduleModel.commit()
         module
       }
