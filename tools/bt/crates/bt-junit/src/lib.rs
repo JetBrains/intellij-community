@@ -187,6 +187,9 @@ struct Scanner {
     suites: Vec<Suite>,
     current: Option<Suite>,
     pending: Option<TestCase>,
+    /// The open `<testcase>` has no `classname` attribute, as the case of Bazel's synthesized wrapper suite. A case of
+    /// the runner can have an empty one: `Class Configuration` names no class.
+    pending_without_class_attribute: bool,
     root_open: bool,
     root_closed: bool,
     malformed: Option<String>,
@@ -421,6 +424,7 @@ fn scan(xml: &str) -> (Vec<Suite>, Integrity) {
                 state.finish_case(case);
             } else {
                 state.pending = Some(case);
+                state.pending_without_class_attribute = tag.attribute("classname").is_none();
             }
         } else if tag.closes("testcase") {
             if state.pending.is_none() {
@@ -457,8 +461,8 @@ fn scan(xml: &str) -> (Vec<Suite>, Integrity) {
             }
             let message = tag.attribute("message");
             // Bazel's synthesized wrapper suite reports the runner's own exit code in a failure whose case
-            // carries no class name. It is the only place that number appears.
-            let unnamed_case = state.pending.as_ref().is_none_or(|case| case.class_name.is_empty());
+            // carries no classname attribute. It is the only place that number appears.
+            let unnamed_case = state.pending.is_none() || state.pending_without_class_attribute;
             if let (Some(code), Some(suite), true) = (message.as_deref().and_then(wrapper_exit_code), &mut state.current, unnamed_case) {
                 suite.wrapper_exit_code = Some(code);
             }

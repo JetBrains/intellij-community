@@ -243,6 +243,19 @@ fn the_wrapper_exit_code_is_absent_until_a_wrapper_reports_one() {
     );
 }
 
+// The runner writes an empty classname for a failed container, `Class Configuration`. Its message can hold the words
+// of the wrapper, and the suite stays a suite of the runner.
+#[test]
+fn a_case_with_an_empty_classname_is_no_wrapper() {
+    let report = parse_report(concat!(
+        r#"<testsuites><testsuite name="p.A" tests="1">"#,
+        r#"<testcase name="Class Configuration" classname=""><error message="Process exited with error code 1"/></testcase>"#,
+        r#"</testsuite></testsuites>"#,
+    ));
+    assert_eq!(report.suites[0].wrapper_exit_code, None);
+    assert_eq!(report.suites[0].cases[0].outcome, Outcome::Failed);
+}
+
 #[test]
 fn skipped_and_its_reason_are_read() {
     let report = parse_report(concat!(
