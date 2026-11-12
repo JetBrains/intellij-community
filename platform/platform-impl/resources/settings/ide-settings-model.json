@@ -11617,20 +11617,6 @@
       ]
     },
     {
-      "name": "FeatureSuggesterSettings",
-      "scope": "app",
-      "pluginId": "training",
-      "classFqn": "training.featuresSuggester.settings.FeatureSuggesterSettings",
-      "storage": "FeatureSuggester.xml",
-      "properties": [
-        {
-          "name": "suggesters",
-          "type": "Unsupported",
-          "javaType": "java.util.Map"
-        }
-      ]
-    },
-    {
       "name": "LangManager",
       "scope": "app",
       "pluginId": "training",

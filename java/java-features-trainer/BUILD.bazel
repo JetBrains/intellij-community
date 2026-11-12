@@ -2,15 +2,9 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
-filegroup(
-    name = "testData",
-    srcs = glob(["testData/**"]),
-)
-
 jps_test(
     name = "featuresTrainer-tests_test",
     timeout = "moderate",
-    data = [":testData"],
     tags = ["community-java-tests"],
     runtime_deps = [":featuresTrainer-tests_test_lib"],
 )

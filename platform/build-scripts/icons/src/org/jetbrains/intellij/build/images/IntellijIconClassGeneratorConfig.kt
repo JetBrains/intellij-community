@@ -296,6 +296,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.liquibase.core"
       )
 
+      "intellij.featuresTrainer" -> IntellijIconClassGeneratorModuleConfig(
+        className = "FeaturesTrainerIcons",
+        packageName = "training"
+      )
+
       "intellij.flyway.core" -> IntellijIconClassGeneratorModuleConfig(
         className = "FlywayIcons",
         packageName = "com.intellij.flyway.core"
