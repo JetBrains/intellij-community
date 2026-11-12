@@ -1,19 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.upload
 
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.ui.ImageUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabThrowableUtil
 import org.jetbrains.plugins.gitlab.notification.GitLabNotificationIds.GL_NOTIFICATION_UPLOAD_FILE_ERROR
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
+import org.jetbrains.plugins.gitlab.util.GitLabNotifications
 import java.awt.Image
 import java.nio.file.AccessDeniedException
 import java.nio.file.NoSuchFileException
@@ -57,18 +60,22 @@ internal object GitLabUploadFileUtil {
       throw e
     }
     catch (_: NoSuchFileException) {
-      VcsNotifier.getInstance(project).notifyError(GL_NOTIFICATION_UPLOAD_FILE_ERROR, message("upload.file.action.error.title"),
-                                                   message("upload.file.dialog.file.not.found"))
+      notifyError(project, message("upload.file.dialog.file.not.found"))
     }
     catch (_: AccessDeniedException) {
-      VcsNotifier.getInstance(project).notifyError(GL_NOTIFICATION_UPLOAD_FILE_ERROR, message("upload.file.action.error.title"),
-                                                   message("upload.file.dialog.not.readable"))
+      notifyError(project, message("upload.file.dialog.not.readable"))
     }
     catch (e: Exception) {
-      VcsNotifier.getInstance(project).notifyError(GL_NOTIFICATION_UPLOAD_FILE_ERROR, message("upload.file.action.error.title"),
-                                                   GitLabThrowableUtil.localizedMessageOrClassName(e))
+      notifyError(project, GitLabThrowableUtil.localizedMessageOrClassName(e))
     }
     return null
+  }
+
+  private fun notifyError(project: Project, content: @Nls String) {
+    NotificationGroupManager.getInstance().getNotificationGroup(GitLabNotifications.GROUP_ID)
+      .createNotification(message("upload.file.action.error.title"), content, NotificationType.ERROR)
+      .setDisplayId(GL_NOTIFICATION_UPLOAD_FILE_ERROR)
+      .notify(project)
   }
 
   private suspend fun showDialog(project: Project): Path? {

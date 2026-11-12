@@ -27,6 +27,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="GitLab Notifications" displayType="STICKY_BALLOON"
+                       bundle="messages.GitLabBundle" key="notification.group.gitlab"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gitlab.api.GitLabApiManager"
                         serviceImplementation="org.jetbrains.plugins.gitlab.api.GitLabApiManagerImpl"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gitlab.GitLabServersManager"
