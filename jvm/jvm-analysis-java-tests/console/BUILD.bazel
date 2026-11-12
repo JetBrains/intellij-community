@@ -1,6 +1,20 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "console_test",
+    timeout = "long",
+    data = [
+        "@community//java/java-tests:testData",
+        "@community//jvm/jvm-analysis-java-tests:testData",
+        "@community//jvm/jvm-analysis-kotlin-tests-shared:testData",
+    ],
+    tags = ["community-aggregator"],
+    runtime_deps = [":console_test_lib"],
+)
+
+### skip generation section `test intellij.jvm.analysis.java.tests.console`
+
 ### auto-generated section `build intellij.jvm.analysis.java.tests.console` start
 jvm_library(
     name = "console_test_lib",
@@ -71,10 +85,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.jvm.analysis.java.tests.console` end
-
-### auto-generated section `test intellij.jvm.analysis.java.tests.console` start
-jps_test(
-    name = "console_test",
-    runtime_deps = [":console_test_lib"],
-)
-### auto-generated section `test intellij.jvm.analysis.java.tests.console` end

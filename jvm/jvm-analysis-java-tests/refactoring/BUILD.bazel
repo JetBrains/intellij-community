@@ -1,6 +1,20 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "refactoring_test",
+    timeout = "long",
+    data = [
+        "@community//java/java-tests:testData",
+        "@community//jvm/jvm-analysis-java-tests:testData",
+        "@community//jvm/jvm-analysis-kotlin-tests-shared:testData",
+    ],
+    tags = ["community-aggregator"],
+    runtime_deps = [":refactoring_test_lib"],
+)
+
+### skip generation section `test intellij.jvm.analysis.java.tests.refactoring`
+
 ### auto-generated section `build intellij.jvm.analysis.java.tests.refactoring` start
 jvm_library(
     name = "refactoring_test_lib",
@@ -72,10 +86,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.jvm.analysis.java.tests.refactoring` end
-
-### auto-generated section `test intellij.jvm.analysis.java.tests.refactoring` start
-jps_test(
-    name = "refactoring_test",
-    runtime_deps = [":refactoring_test_lib"],
-)
-### auto-generated section `test intellij.jvm.analysis.java.tests.refactoring` end

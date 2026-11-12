@@ -1,5 +1,25 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
+
+# The tag concurrency-tests adds this target to the CI build of the CONCURRENCY_TESTS group.
+jps_test(
+    name = "tests-concurrency_test",
+    timeout = "eternal",
+    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON],
+    env_inherit = [
+        "LANG",
+        "SHELL",
+    ],
+    jvm_flags = ["-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON],
+    tags = ["concurrency-tests"],
+    runtime_deps = [":tests-concurrency_test_lib"],
+)
+
+### skip generation section `test intellij.platform.tests.concurrency`
 
 ### auto-generated section `build intellij.platform.tests.concurrency` start
 jvm_library(
@@ -235,10 +255,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.tests.concurrency` end
-
-### auto-generated section `test intellij.platform.tests.concurrency` start
-jps_test(
-    name = "tests-concurrency_test",
-    runtime_deps = [":tests-concurrency_test_lib"],
-)
-### auto-generated section `test intellij.platform.tests.concurrency` end

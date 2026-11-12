@@ -283,7 +283,7 @@ Expected: `✓ All files unchanged`. If files change, inspect them — the gener
 
 ```bash
 # Validates packaging: runtime deps available, generated XMLs in sync
-./bazel.cmd test //build:all-products-packaging_test
+./bazel.cmd test //build/tests/smoke:all-products-packaging_test
 
 # Validates package naming: com.<module-name> convention
 ./tests.cmd --module intellij.projectStructureTests \

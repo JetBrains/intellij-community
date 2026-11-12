@@ -169,7 +169,7 @@ Before committing changes:
 
 3. **Verify tests pass**
    ```bash
-   ./bazel.cmd test //build:all-products-packaging_test
+   ./bazel.cmd test //build/tests/smoke:all-products-packaging_test
    ```
 
 4. **Use MCP to analyze transitive dependencies**

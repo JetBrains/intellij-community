@@ -171,10 +171,10 @@ xmllint --xpath '//testcase[failure or error]/@name | //testcase[failure or erro
 When changing `ProductProperties`, `productImplementationModules`, product content descriptors, plugin/module-set packaging, or generated product layout XML, also run:
 
 ```bash
-./community/tools/bt.cmd //build:all-products-packaging_test
+./community/tools/bt.cmd //build/tests/smoke:all-products-packaging_test
 ```
 
-The target pins the one class `AllProductsPackagingTest` and is tagged `manual`, so no `--filter` is needed, and no lane or wildcard pattern runs it. bt prints the digest, and Bazel writes `out/bazel-testlogs/build/all-products-packaging_test/test.xml`. The raw form is `./bazel.cmd test //build:all-products-packaging_test`.
+The target pins the one class `AllProductsPackagingTest` and is tagged `manual`, so no `--filter` is needed, and no lane or wildcard pattern runs it. bt prints the digest, and Bazel writes `out/bazel-testlogs/build/tests/smoke/all-products-packaging_test/test.xml`. The raw form is `./bazel.cmd test //build/tests/smoke:all-products-packaging_test`.
 
 ### Windows PowerShell note
 
