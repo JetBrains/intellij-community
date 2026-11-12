@@ -15,6 +15,7 @@ jps_test(
         "@kotlin_test_deps//:annotations-java5-24.0.0.jar",
         "@kotlin_test_deps//:junit.jar",
         "@kotlin_test_deps//:kotlin-dist-for-ide.jar",
+        "@kotlin_test_deps//:kotlin-dist-for-ide-analyzer.jar",
         "@kotlin_test_deps//:kotlin-reflect.jar",
         "@kotlin_test_deps//:kotlin-script-runtime.jar",
         "@kotlin_test_deps//:kotlin-stdlib.jar",
