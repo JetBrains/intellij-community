@@ -5,6 +5,7 @@ jps_test(
     name = "tests.integration_test",
     data = [
         "@kotlin_test_deps//:kotlin-dist-for-ide.jar",
+        "@kotlin_test_deps//:kotlin-dist-for-ide-analyzer.jar",
     ],
     jvm_flags = [
         "-Didea.gradle.mavenRepositoryUrl=https://repo1.maven.org/maven2",
