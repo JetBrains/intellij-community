@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith;
 
@@ -124,7 +124,7 @@ public abstract class AbstractSurroundWithTest extends KotlinLightCodeInsightFix
         String isApplicableString = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// IS_APPLICABLE: ");
 
         if (isApplicableString != null) {
-            boolean isApplicableExpected = toString().equals("true");
+            boolean isApplicableExpected = isApplicableString.equals("true");
             PsiElement[] elementsToSurround = getElementsToSurround(surrounder);
             assert elementsToSurround != null : "Couldn't find elements to surround";
             assert isApplicableExpected == surrounder.isApplicable(elementsToSurround)

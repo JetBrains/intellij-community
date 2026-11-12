@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement
 
 import com.intellij.lang.surroundWith.PsiUpdateModCommandSurrounder
@@ -10,7 +10,9 @@ import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
 abstract class KotlinStatementsSurrounder : PsiUpdateModCommandSurrounder() {
     @OptIn(KaAllowAnalysisOnEdt::class)
@@ -20,6 +22,9 @@ abstract class KotlinStatementsSurrounder : PsiUpdateModCommandSurrounder() {
         }
         if (elements.size == 1 && elements[0] is KtExpression) {
             val expr = elements[0] as KtExpression
+            if (expr is KtCallExpression && expr.parent is KtQualifiedExpression) {
+                return false
+            }
             if (!isApplicableWhenUsedAsExpression) {
                 allowAnalysisOnEdt {
                     if (analyze(expr) { expr.isUsedAsExpression }) {

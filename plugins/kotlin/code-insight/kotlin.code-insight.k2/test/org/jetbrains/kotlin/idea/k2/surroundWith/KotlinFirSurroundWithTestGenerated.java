@@ -217,6 +217,11 @@ public abstract class KotlinFirSurroundWithTestGenerated extends AbstractKotlinF
                 runTest("../../idea/tests/testData/codeInsight/surroundWith/if/multilineCallAfterCaret.kt");
             }
 
+            @TestMetadata("selectorOfQualifiedCall.kt")
+            public void testSelectorOfQualifiedCall() throws Exception {
+                runTest("../../idea/tests/testData/codeInsight/surroundWith/if/selectorOfQualifiedCall.kt");
+            }
+
             @TestMetadata("severalStatements.kt")
             public void testSeveralStatements() throws Exception {
                 runTest("../../idea/tests/testData/codeInsight/surroundWith/if/severalStatements.kt");
