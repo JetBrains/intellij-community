@@ -8,16 +8,19 @@ import com.intellij.mock.Mock
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProviderBean
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.Navigatable
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
@@ -75,12 +78,38 @@ class BuildFirstErrorNavigationTest {
   @Test
   fun `the first error opens its file without blocking EDT`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
     val file = createFile("Broken.txt")
+    checkOpensWithoutBlockingEdt(file, disposable) {
+      reportError(file, line = 1, column = 0)
+    }
+  }
+
+  @Test
+  fun `the first error with a file descriptor opens its file without blocking EDT`(
+    @TestDisposable disposable: Disposable,
+  ): Unit = timeoutRunBlocking {
+    val file = createFile("Broken.txt")
+    val descriptor = fileDescriptor(file, line = 1, column = 0)
+    checkOpensWithoutBlockingEdt(file, disposable) {
+      reportError(descriptor)
+    }
+  }
+
+  @Test
+  fun `the first error with a file descriptor puts the caret at its position`(): Unit = timeoutRunBlocking {
+    val file = createFile("Broken.txt")
+
+    reportError(fileDescriptor(file, line = 1, column = 3))
+
+    awaitCaret(file, LogicalPosition(1, 3))
+  }
+
+  private suspend fun checkOpensWithoutBlockingEdt(file: VirtualFile, disposable: Disposable, reportError: () -> Unit) {
     val started = CompletableDeferred<Unit>()
     val proceed = CompletableDeferred<Unit>()
     registerGatedEditorProvider(file, started, proceed, disposable)
 
     try {
-      reportError(file, line = 1, column = 0)
+      reportError()
       started.await()
       withContext(Dispatchers.EDT) {
         // a blocking open runs this event inside its wait, so the wait is in the stack then
@@ -102,13 +131,27 @@ class BuildFirstErrorNavigationTest {
 
     reportError(file, line = 1, column = 3)
 
+    awaitCaret(file, LogicalPosition(1, 3))
+  }
+
+  private suspend fun awaitCaret(file: VirtualFile, position: LogicalPosition) {
     waitUntil("The caret must go to the position of the first error") {
       withContext(Dispatchers.EDT) {
         val manager = managerFixture.get()
-        manager.selectedFiles.toList() == listOf(file) &&
-        manager.selectedTextEditor?.caretModel?.logicalPosition == LogicalPosition(1, 3)
+        manager.selectedFiles.toList() == listOf(file) && manager.selectedTextEditor?.caretModel?.logicalPosition == position
       }
     }
+  }
+
+  /** A build issue of a build tool gives such a descriptor as its navigatable. */
+  private suspend fun fileDescriptor(file: VirtualFile, line: Int, column: Int): OpenFileDescriptor {
+    return readAction { OpenFileDescriptor(projectFixture.get(), file, line, column) }
+  }
+
+  private fun reportError(navigatable: Navigatable) {
+    BuildRootProgressImpl(treeConsoleView)
+      .start("build started", BuildProgressDescriptorImpl(buildDescriptor))
+      .message("error", "detailed error", MessageEvent.Kind.ERROR, navigatable)
   }
 
   private fun reportError(file: VirtualFile, line: Int, column: Int) {
