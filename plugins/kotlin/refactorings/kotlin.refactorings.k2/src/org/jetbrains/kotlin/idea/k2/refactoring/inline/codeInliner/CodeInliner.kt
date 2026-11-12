@@ -115,8 +115,6 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolution.KtResolvableCall
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addIfNotNull
-import kotlin.collections.reduceRight
-import kotlin.math.max
 
 class CodeInliner(
     private val usageExpression: KtSimpleNameExpression?,
@@ -436,17 +434,7 @@ class CodeInliner(
             processTypeParameterUsages(originalDeclaration)
         }
 
-        val lexicalScopeElement = call.parentsWithSelf
-            .takeWhile { it !is KtBlockExpression && it !is KtFunction && it !is KtClass && !(it is KtCallableDeclaration && it.parent is KtFile) }
-            .last() as KtElement
-        val names = mutableSetOf<String>()
-        lexicalScopeElement.parent.collectDescendantsOfType<KtProperty>().forEach {
-            names.addIfNotNull(it.name)
-        }
-        call.parentsOfType<KtFunction>().forEach { function ->
-            function.valueParameters.forEach { names.addIfNotNull(it.name) }
-            function.contextParameters.forEach { names.addIfNotNull(it.name) }
-        }
+        val names = collectExistingNames()
 
         val importDeclarations = codeToInline.fqNamesToImport.mapNotNull { importPath ->
             val path = importPath.importPath
@@ -506,6 +494,30 @@ class CodeInliner(
         }
     }
 
+    private fun collectExistingNames(): MutableSet<String> {
+        val names = mutableSetOf<String>()
+        val lexicalScopeElement = call.parentsWithSelf
+            .takeWhile { it !is KtBlockExpression && it !is KtFunction && it !is KtClass && !(it is KtCallableDeclaration && it.parent is KtFile) }
+            .last() as KtElement
+        lexicalScopeElement.parent.collectDescendantsOfType<KtProperty>().forEach {
+            names.addIfNotNull(it.name)
+        }
+        call.parentsOfType<KtNamedDeclaration>().forEach { decl ->
+            when (decl) {
+                is KtFunction -> {
+                    decl.valueParameters.forEach { names.addIfNotNull(it.name) }
+                    decl.contextParameters.forEach { names.addIfNotNull(it.name) }
+                }
+
+                is KtClassOrObject -> {
+                    decl.primaryConstructor?.valueParameters?.filter { it.hasValOrVar() }?.forEach { names.addIfNotNull(it.name) }
+                    decl.declarations.filterIsInstance<KtProperty>().forEach { names.addIfNotNull(it.name) }
+                }
+            }
+        }
+        return names
+    }
+
     private fun receiverLabelName(
         functionLiteral: KtFunctionLiteral?,
         callableName: Name?,
@@ -557,7 +569,7 @@ class CodeInliner(
             true,
             KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
         )
-        val validator = CollectingNameValidator { nameValidator.validate(it) }
+        val validator = CollectingNameValidator(names) { nameValidator.validate(it) }
         for (declaration in declarations) {
             val oldName = declaration.name
             if (oldName != null && !names.add(oldName)) {
