@@ -592,7 +592,6 @@ internal fun Component.findPopupKeyEventTarget(): Component = findPopupKeyEventT
 
 internal fun Component.dispatchPopupKeyEventToTargetListeners(event: AWTKeyEvent) {
     keyListeners.forEach { listener ->
-        if (!isPopupKeyListenerReady(listener)) return@forEach
         when (event.id) {
             AWTKeyEvent.KEY_PRESSED -> listener.keyPressed(event)
             AWTKeyEvent.KEY_RELEASED -> listener.keyReleased(event)
@@ -602,7 +601,7 @@ internal fun Component.dispatchPopupKeyEventToTargetListeners(event: AWTKeyEvent
 }
 
 private fun Component.findPopupKeyEventTargetOrNull(): Component? {
-    if (keyListeners.any { isPopupKeyListenerReady(it) }) return this
+    if (keyListeners.isNotEmpty()) return this
     if (this is Container) {
         components.forEach { child ->
             val target = child.findPopupKeyEventTargetOrNull()
@@ -611,11 +610,6 @@ private fun Component.findPopupKeyEventTargetOrNull(): Component? {
     }
     return null
 }
-
-// ComposeContainer.addNotify() attaches BackNavigationEventInput to its NavigationEventDispatcher when the
-// ComposePanel becomes displayable. Skip scene key listeners until the component is displayable.
-private fun Component.isPopupKeyListenerReady(listener: java.awt.event.KeyListener): Boolean =
-    isDisplayable || !listener.javaClass.name.startsWith("androidx.compose.ui.scene.")
 
 internal fun isDismissRequestKey(type: KeyEventType, key: Key, hasModifier: Boolean = false): Boolean =
     type == KeyEventType.KeyDown && key == Key.Escape && !hasModifier
