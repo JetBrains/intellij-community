@@ -25,6 +25,7 @@ internal object ShowcaseTestTags {
 
     const val SCROLLBARS_ALWAYS_VISIBLE: String = "showcase.scrollbars.alwaysVisible"
     const val SCROLLBARS_REDUCED_CONTENT: String = "showcase.scrollbars.reducedContent"
+    const val SCROLLBARS_RIGHT_TO_LEFT: String = "showcase.scrollbars.rightToLeft"
     const val SCROLLBARS_CLICK_JUMP_TO_SPOT: String = "showcase.scrollbars.clickBehavior.jumpToSpot"
     const val SCROLLBARS_CLICK_NEXT_PAGE: String = "showcase.scrollbars.clickBehavior.nextPage"
 
@@ -35,6 +36,7 @@ internal object ShowcaseTestTags {
     const val SCROLLBARS_CONTAINER_LAZY_ROW: String = "showcase.scrollbars.container.lazyRow"
     const val SCROLLBARS_CONTAINER_GRID_DEFAULT: String = "showcase.scrollbars.container.gridDefault"
     const val SCROLLBARS_CONTAINER_GRID_SPAN_AWARE: String = "showcase.scrollbars.container.gridSpanAware"
+    const val SCROLLBARS_CONTAINER_2D: String = "showcase.scrollbars.container.twoDimensional"
 
     const val SCROLLBARS_MODIFIER_LAZY_COLUMN: String = "showcase.scrollbars.modifier.lazyColumn"
     const val SCROLLBARS_MODIFIER_COLUMN: String = "showcase.scrollbars.modifier.column"

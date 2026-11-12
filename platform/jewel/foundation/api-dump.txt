@@ -673,6 +673,8 @@ f:org.jetbrains.jewel.foundation.modifier.ModifierExtensionsKt
 f:org.jetbrains.jewel.foundation.modifier.PointerModifiersKt
 - sf:onHover(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
 - sf:onMove(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
+f:org.jetbrains.jewel.foundation.scroll.Scroll2DKt
+f:org.jetbrains.jewel.foundation.scroll.Scroll2DStateKt
 e:org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity
 - java.lang.Enum
 - sf:All:org.jetbrains.jewel.foundation.search.MatchingCaseSensitivity

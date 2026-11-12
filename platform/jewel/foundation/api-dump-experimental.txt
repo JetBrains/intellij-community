@@ -17,3 +17,28 @@ f:org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighterKt
 - sf:INSTANCE:org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 - highlight(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
 - highlight-zTGadEY(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
+f:org.jetbrains.jewel.foundation.scroll.Scroll2DKt
+- *sf:scroll2D(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.scroll.Scroll2DState,Z,androidx.compose.foundation.gestures.FlingBehavior):androidx.compose.ui.Modifier
+- *bs:scroll2D$default(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.scroll.Scroll2DState,Z,androidx.compose.foundation.gestures.FlingBehavior,I,java.lang.Object):androidx.compose.ui.Modifier
+*f:org.jetbrains.jewel.foundation.scroll.Scroll2DState
+- androidx.compose.foundation.gestures.Scrollable2DState
+- sf:$stable:I
+- *sf:Companion:org.jetbrains.jewel.foundation.scroll.Scroll2DState$Companion
+- <init>():V
+- b:<init>(J,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:animateScrollTo-f8xVGno(J,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation):java.lang.Object
+- bs:animateScrollTo-f8xVGno$default(org.jetbrains.jewel.foundation.scroll.Scroll2DState,J,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- canScroll-k-4lQ0M(J):Z
+- dispatchRawDelta-MK-Hz9U(J):J
+- f:getHorizontalScrollableState():androidx.compose.foundation.gestures.ScrollableState
+- f:getMaxValue-nOcc-ac():J
+- f:getValue-nOcc-ac():J
+- f:getVerticalScrollableState():androidx.compose.foundation.gestures.ScrollableState
+- f:getViewportSize-YbymL2g():J
+- isScrollInProgress():Z
+- scroll(androidx.compose.foundation.MutatePriority,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- f:scrollTo-ar5cAso(J,kotlin.coroutines.Continuation):java.lang.Object
+*f:org.jetbrains.jewel.foundation.scroll.Scroll2DState$Companion
+- f:getSaver():androidx.compose.runtime.saveable.Saver
+f:org.jetbrains.jewel.foundation.scroll.Scroll2DStateKt
+- *sf:rememberScroll2DState-MLgxB_4(J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.scroll.Scroll2DState

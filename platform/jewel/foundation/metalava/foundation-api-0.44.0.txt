@@ -821,6 +821,43 @@ package org.jetbrains.jewel.foundation.modifier {
 
 }
 
+package org.jetbrains.jewel.foundation.scroll {
+
+  public final class Scroll2DKt {
+    method @SuppressCompatibility @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.ui.Modifier scroll2D(androidx.compose.ui.Modifier, org.jetbrains.jewel.foundation.scroll.Scroll2DState state, optional boolean enabled, optional androidx.compose.foundation.gestures.FlingBehavior? flingBehavior);
+  }
+
+  @SuppressCompatibility @androidx.compose.runtime.Stable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public final class Scroll2DState implements androidx.compose.foundation.gestures.Scrollable2DState {
+    ctor public Scroll2DState();
+    ctor @KotlinOnly public Scroll2DState(optional androidx.compose.ui.unit.IntOffset initial);
+    method public suspend Object? animateScrollTo(long value, optional androidx.compose.animation.core.AnimationSpec<androidx.compose.ui.geometry.Offset> animationSpec, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public boolean canScroll(long offset);
+    method public long dispatchRawDelta(long delta);
+    method public androidx.compose.foundation.gestures.ScrollableState getHorizontalScrollableState();
+    method public androidx.compose.foundation.gestures.ScrollableState getVerticalScrollableState();
+    method public boolean isScrollInProgress();
+    method public suspend Object? scroll(androidx.compose.foundation.MutatePriority scrollPriority, kotlin.jvm.functions.Function2<? super androidx.compose.foundation.gestures.Scroll2DScope,? super kotlin.coroutines.Continuation<? super kotlin.Unit>,? extends java.lang.Object?> block, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    method public suspend Object? scrollTo(long value, kotlin.coroutines.Continuation<? super kotlin.Unit>);
+    property public androidx.compose.foundation.gestures.ScrollableState horizontalScrollableState;
+    property public boolean isScrollInProgress;
+    property public androidx.compose.ui.unit.IntOffset maxValue;
+    property public androidx.compose.ui.unit.IntOffset value;
+    property public androidx.compose.foundation.gestures.ScrollableState verticalScrollableState;
+    property public androidx.compose.ui.unit.IntSize viewportSize;
+    field public static final org.jetbrains.jewel.foundation.scroll.Scroll2DState.Companion Companion;
+  }
+
+  public static final class Scroll2DState.Companion {
+    method public androidx.compose.runtime.saveable.Saver<org.jetbrains.jewel.foundation.scroll.Scroll2DState,? extends java.lang.Object?> getSaver();
+    property public androidx.compose.runtime.saveable.Saver<org.jetbrains.jewel.foundation.scroll.Scroll2DState,? extends java.lang.Object?> Saver;
+  }
+
+  public final class Scroll2DStateKt {
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static org.jetbrains.jewel.foundation.scroll.Scroll2DState rememberScroll2DState(optional long initial);
+  }
+
+}
+
 package org.jetbrains.jewel.foundation.search {
 
   public enum MatchingCaseSensitivity {

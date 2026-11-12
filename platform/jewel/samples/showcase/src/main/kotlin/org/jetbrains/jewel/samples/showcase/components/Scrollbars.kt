@@ -42,6 +42,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.v2.ScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -52,9 +53,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
@@ -72,6 +75,7 @@ import org.jetbrains.jewel.ui.component.HorizontallyScrollableContainer
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.RadioButtonChip
 import org.jetbrains.jewel.ui.component.RadioButtonRow
+import org.jetbrains.jewel.ui.component.Scrollable2DContainer
 import org.jetbrains.jewel.ui.component.SegmentedControl
 import org.jetbrains.jewel.ui.component.SegmentedControlButtonData
 import org.jetbrains.jewel.ui.component.Text
@@ -104,6 +108,7 @@ public fun Scrollbars(
     var clickBehavior by remember { mutableStateOf(baseStyle.trackClickBehavior) }
     var scrollbarConfiguration by remember { mutableStateOf(ScrollbarConfiguration.MANUAL) }
     var implementation by remember { mutableStateOf(ScrollbarImplementation.CONTAINER) }
+    var rightToLeft by remember { mutableStateOf(false) }
 
     val scrollbarStyle by
         rememberScrollbarStyle(
@@ -126,69 +131,80 @@ public fun Scrollbars(
                 clickBehavior,
                 scrollbarConfiguration,
                 implementation,
+                rightToLeft,
                 onAlwaysVisibleChange = { alwaysVisible = it },
                 onReducedContentChange = { reducedContent = it },
                 onClickBehaviorChange = { clickBehavior = it },
                 onConfigurationChange = { scrollbarConfiguration = it },
                 onImplementationChange = { implementation = it },
+                onRightToLeftChange = { rightToLeft = it },
             )
 
-            Row(
-                Modifier.fillMaxWidth().height(250.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                val items by remember { derivedStateOf { if (reducedContent) LIST_ITEMS.take(3) else LIST_ITEMS } }
-
-                when (implementation) {
-                    ScrollbarImplementation.CONTAINER -> {
-                        LazyColumnWithScrollbar(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
-                        ColumnWithScrollbar(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
-                        AlignedContentExample(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
-                    }
-
-                    ScrollbarImplementation.MODIFIER -> {
-                        LazyColumnWithScrollIndicator(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
-                        ColumnWithScrollIndicator(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
-                        AlignedContentIndicatorExample(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
-                    }
-                }
-            }
-
-            val ipsum by remember {
-                derivedStateOf { if (reducedContent) OneLineIpsum.take(64).substringBeforeLast(' ') else OneLineIpsum }
-            }
-            when (implementation) {
-                ScrollbarImplementation.CONTAINER -> {
-                    RowWithScrollbar(ipsum, scrollbarStyle, Modifier.fillMaxWidth())
-                    LazyRowWithScrollbar(ipsum, scrollbarStyle, Modifier.fillMaxWidth())
-                }
-                ScrollbarImplementation.MODIFIER -> {
-                    RowWithScrollIndicator(ipsum, scrollbarStyle, Modifier.fillMaxWidth())
-                    LazyRowWithScrollIndicator(ipsum, scrollbarStyle, Modifier.fillMaxWidth())
-                }
-            }
-
-            // Grids stay on the container: the span-aware demo needs a ScrollbarAdapter, which the
-            // modifier cannot take.
-            if (implementation == ScrollbarImplementation.CONTAINER) {
+            val examplesDirection = if (rightToLeft) LayoutDirection.Rtl else LocalLayoutDirection.current
+            CompositionLocalProvider(LocalLayoutDirection provides examplesDirection) {
                 Row(
                     Modifier.fillMaxWidth().height(250.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    SpannedGridWithScrollbar(
-                        title = "LazyVerticalGrid (default adapter)",
-                        spanAware = false,
-                        style = scrollbarStyle,
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                    )
-                    SpannedGridWithScrollbar(
-                        title = "LazyVerticalGrid (span-aware adapter)",
-                        spanAware = true,
-                        style = scrollbarStyle,
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
-                    )
+                    val items by remember { derivedStateOf { if (reducedContent) LIST_ITEMS.take(3) else LIST_ITEMS } }
+
+                    when (implementation) {
+                        ScrollbarImplementation.CONTAINER -> {
+                            LazyColumnWithScrollbar(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
+                            ColumnWithScrollbar(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
+                            AlignedContentExample(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
+                        }
+
+                        ScrollbarImplementation.MODIFIER -> {
+                            LazyColumnWithScrollIndicator(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
+                            ColumnWithScrollIndicator(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
+                            AlignedContentIndicatorExample(items, scrollbarStyle, Modifier.weight(1f).fillMaxHeight())
+                        }
+                    }
+                }
+
+                val ipsum by remember {
+                    derivedStateOf {
+                        if (reducedContent) OneLineIpsum.take(64).substringBeforeLast(' ') else OneLineIpsum
+                    }
+                }
+                when (implementation) {
+                    ScrollbarImplementation.CONTAINER -> {
+                        RowWithScrollbar(ipsum, scrollbarStyle, Modifier.fillMaxWidth())
+                        LazyRowWithScrollbar(ipsum, scrollbarStyle, Modifier.fillMaxWidth())
+                    }
+                    ScrollbarImplementation.MODIFIER -> {
+                        RowWithScrollIndicator(ipsum, scrollbarStyle, Modifier.fillMaxWidth())
+                        LazyRowWithScrollIndicator(ipsum, scrollbarStyle, Modifier.fillMaxWidth())
+                    }
+                }
+
+                if (implementation == ScrollbarImplementation.CONTAINER) {
+                    TwoDimensionalContentWithScrollbars(reducedContent, scrollbarStyle, Modifier.fillMaxWidth())
+                }
+
+                // Grids stay on the container: the span-aware demo needs a ScrollbarAdapter, which the
+                // modifier cannot take.
+                if (implementation == ScrollbarImplementation.CONTAINER) {
+                    Row(
+                        Modifier.fillMaxWidth().height(250.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        SpannedGridWithScrollbar(
+                            title = "LazyVerticalGrid (default adapter)",
+                            spanAware = false,
+                            style = scrollbarStyle,
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                        )
+                        SpannedGridWithScrollbar(
+                            title = "LazyVerticalGrid (span-aware adapter)",
+                            spanAware = true,
+                            style = scrollbarStyle,
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                        )
+                    }
                 }
             }
         }
@@ -233,11 +249,13 @@ private fun SettingsRow(
     clickBehavior: TrackClickBehavior,
     scrollbarConfiguration: ScrollbarConfiguration,
     implementation: ScrollbarImplementation,
+    rightToLeft: Boolean,
     onAlwaysVisibleChange: (Boolean) -> Unit,
     onReducedContentChange: (Boolean) -> Unit,
     onClickBehaviorChange: (TrackClickBehavior) -> Unit,
     onConfigurationChange: (ScrollbarConfiguration) -> Unit,
     onImplementationChange: (ScrollbarImplementation) -> Unit,
+    onRightToLeftChange: (Boolean) -> Unit,
 ) {
     Column {
         Text("Configuration", style = JewelTheme.typography.h2TextStyle)
@@ -259,6 +277,15 @@ private fun SettingsRow(
                     }
                 }
             SegmentedControl(buttons = implementationButtons)
+
+            Spacer(Modifier.width(8.dp))
+
+            CheckboxRow(
+                checked = rightToLeft,
+                onCheckedChange = onRightToLeftChange,
+                text = "Right-to-left",
+                modifier = Modifier.testTag(ShowcaseTestTags.SCROLLBARS_RIGHT_TO_LEFT),
+            )
         }
 
         Spacer(Modifier.height(16.dp))
@@ -690,6 +717,65 @@ private fun LazyRowWithScrollIndicator(content: String, scrollbarStyle: Scrollba
     }
 }
 
+@Composable
+private fun TwoDimensionalContentWithScrollbars(
+    reducedContent: Boolean,
+    scrollbarStyle: ScrollbarStyle,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier) {
+        Text("2D content", fontSize = 18.sp)
+        Spacer(Modifier.height(8.dp))
+
+        Scrollable2DContainer(
+            modifier =
+                Modifier.fillMaxWidth()
+                    .height(200.dp)
+                    .testTag(ShowcaseTestTags.SCROLLBARS_CONTAINER_2D)
+                    .background(JewelTheme.textAreaStyle.colors.background)
+                    .border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal),
+            style = scrollbarStyle,
+        ) {
+            CellGrid(
+                rows = if (reducedContent) 3 else TWO_DIMENSIONAL_ROWS,
+                columns = if (reducedContent) 3 else TWO_DIMENSIONAL_COLUMNS,
+                modifier =
+                    Modifier.padding(4.dp)
+                        .padding(
+                            end = scrollbarContentSafePadding(scrollbarStyle),
+                            bottom = scrollbarContentSafePadding(scrollbarStyle),
+                        ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun CellGrid(rows: Int, columns: Int, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(4.dp)
+    val borderColor = getBorderColor()
+    val backgroundColor = getBackgroundColor()
+
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        repeat(rows) { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                repeat(columns) { column ->
+                    Box(
+                        modifier =
+                            Modifier.width(72.dp)
+                                .height(GRID_CELL_HEIGHT)
+                                .background(backgroundColor, shape)
+                                .border(1.dp, borderColor, shape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text("${row + 1}:${column + 1}")
+                    }
+                }
+            }
+        }
+    }
+}
+
 /**
  * The default scrollbar adapter assumes every item occupies exactly one slot, so it underestimates the number of lines
  * in the grid, and the thumb overshoots the track while scrolling. Passing a custom [ScrollbarAdapter] that knows the
@@ -885,6 +971,8 @@ private val OneLineIpsum = LOREM_IPSUM.replace('\n', ' ')
 private const val GRID_COLUMNS = 4
 private const val GRID_HEADER_INTERVAL = 10
 private const val GRID_ITEM_COUNT = 100
+private const val TWO_DIMENSIONAL_ROWS = 30
+private const val TWO_DIMENSIONAL_COLUMNS = 30
 private val GRID_CELL_HEIGHT = 24.dp
 
 private val LIST_ITEMS =
