@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.api
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.request.findProject
 import org.jetbrains.plugins.gitlab.api.request.getProject
 import org.jetbrains.plugins.gitlab.api.request.getProjectNamespace
@@ -17,7 +18,8 @@ private val LOG = logger<GitLabProjectDetails>()
  * Loads the details of the GitLab project at [projectPath]. The path in the result is the one that the server reports,
  * so it differs from [projectPath] when the project was renamed.
  */
-internal suspend fun GitLabApi.loadProjectDetails(
+@ApiStatus.Internal
+suspend fun GitLabApi.loadProjectDetails(
   serverMetadata: GitLabServerMetadata?,
   projectPath: GitLabProjectPath,
 ): GitLabProjectDetails {

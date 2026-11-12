@@ -10,13 +10,15 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import org.jetbrains.annotations.ApiStatus
 import tools.jackson.core.type.TypeReference
 import tools.jackson.databind.DeserializationFeature
 import tools.jackson.databind.SerializationFeature
 import tools.jackson.module.kotlin.jacksonMapperBuilder
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
-internal class GitLabEmojiService(cs: CoroutineScope) {
+class GitLabEmojiService(cs: CoroutineScope) {
   private val mapper = jacksonMapperBuilder()
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)

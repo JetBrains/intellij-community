@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.upload
 import com.intellij.collaboration.api.httpclient.HttpClientUtil
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUploadRestDTO
@@ -13,8 +14,9 @@ import java.net.http.HttpRequest.BodyPublishers
 import java.util.UUID
 
 
+@ApiStatus.Internal
 @SinceGitLab("15.10")
-internal suspend fun GitLabApi.Rest.markdownUploadFile(
+suspend fun GitLabApi.Rest.markdownUploadFile(
     projectId: String,
     filename: String,
     mimeType: String,

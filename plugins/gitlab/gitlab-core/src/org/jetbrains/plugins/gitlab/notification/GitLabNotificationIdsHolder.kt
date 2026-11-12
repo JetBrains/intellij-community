@@ -2,10 +2,12 @@
 package org.jetbrains.plugins.gitlab.notification
 
 import com.intellij.notification.impl.NotificationIdsHolder
+import org.jetbrains.annotations.ApiStatus
 
 
-internal object GitLabNotificationIds {
-  const val GL_NOTIFICATION_UPLOAD_FILE_ERROR = "gitlab.upload.file.action.error"
+@ApiStatus.Internal
+object GitLabNotificationIds {
+  const val GL_NOTIFICATION_UPLOAD_FILE_ERROR: String = "gitlab.upload.file.action.error"
 }
 
 class GitLabNotificationIdsHolder : NotificationIdsHolder {
