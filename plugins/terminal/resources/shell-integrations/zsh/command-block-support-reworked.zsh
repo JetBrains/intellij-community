@@ -33,7 +33,8 @@ __jetbrains_intellij_encode() {
 
 __jetbrains_intellij_command_preexec() {
   builtin local entered_command="$1"
-  builtin printf '\e]1341;command_started;command=%s\a' "$(__jetbrains_intellij_encode "$entered_command")"
+  # OSC 133;C: the end of the input and the start of the command output.
+  builtin printf '\e]133;C\a\e]1341;command_started;command=%s\a' "$(__jetbrains_intellij_encode "$entered_command")"
 
   __jetbrains_intellij_command_running="1"
   # Restore the original prompt, our integration will be injected back after command execution in `__jetbrains_intellij_update_prompt`.
@@ -59,7 +60,9 @@ __jetbrains_intellij_command_precmd() {
   fi
 
   builtin local current_directory="$PWD"
-  builtin printf '\e]1341;command_finished;exit_code=%s;current_directory=%s\a' \
+  # OSC 133;D: the end of the command, with its exit code.
+  builtin printf '\e]133;D;%s\a\e]1341;command_finished;exit_code=%s;current_directory=%s\a' \
+    "$LAST_EXIT_CODE" \
     "$LAST_EXIT_CODE" \
     "$(__jetbrains_intellij_encode "$current_directory")"
 
@@ -76,11 +79,15 @@ __jetbrains_intellij_update_prompt() {
 }
 
 __jetbrains_intellij_prompt_started() {
-  builtin printf '\e]1341;prompt_started\a'
+  # OSC 133;A: a fresh line and the start of the prompt.
+  # It goes first, because its fresh line can move the cursor, and prompt_started must see the final position.
+  # redraw=1: zsh redraws the whole prompt after a resize, so the terminal keeps the prompt rows in place and clears them.
+  builtin printf '\e]133;A;redraw=1\a\e]1341;prompt_started\a'
 }
 
 __jetbrains_intellij_prompt_finished() {
-  builtin printf '\e]1341;prompt_finished\a'
+  # OSC 133;B: the end of the prompt and the start of the user input.
+  builtin printf '\e]1341;prompt_finished\a\e]133;B\a'
 }
 
 __jetbrains_intellij_get_aliases() {

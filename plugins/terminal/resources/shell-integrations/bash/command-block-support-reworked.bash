@@ -32,7 +32,8 @@ __jetbrains_intellij_command_preexec() {
   __jetbrains_intellij_should_update_prompt="1"
 
   builtin local entered_command="${BASH_COMMAND:-}"
-  builtin printf '\e]1341;command_started;command=%s\a' "$(__jetbrains_intellij_encode "$entered_command")"
+  # OSC 133;C: the end of the input and the start of the command output.
+  builtin printf '\e]133;C\a\e]1341;command_started;command=%s\a' "$(__jetbrains_intellij_encode "$entered_command")"
 
   # Restore the original prompt, our integration will be injected back after command execution in `__jetbrains_intellij_update_prompt`.
   PS1="$__jetbrains_intellij_original_ps1"
@@ -52,7 +53,9 @@ __jetbrains_intellij_command_precmd() {
     __jetbrains_intellij_get_aliases
   elif [[ -n "$__jetbrains_intellij_command_running" ]]; then
     builtin local current_directory="$PWD"
-    builtin printf '\e]1341;command_finished;exit_code=%s;current_directory=%s\a' \
+    # OSC 133;D: the end of the command, with its exit code.
+    builtin printf '\e]133;D;%s\a\e]1341;command_finished;exit_code=%s;current_directory=%s\a' \
+      "$LAST_EXIT_CODE" \
       "$LAST_EXIT_CODE" \
       "$(__jetbrains_intellij_encode "$current_directory")"
   fi
@@ -60,6 +63,13 @@ __jetbrains_intellij_command_precmd() {
   if [ -n "$__jetbrains_intellij_should_update_prompt" ]; then
     __jetbrains_intellij_update_prompt
   fi
+
+  # OSC 133;A: a fresh line and the start of the prompt.
+  # It is printed here and not in PS1, because readline reprints PS1 in place (Ctrl+L, a vi mode switch).
+  # A fresh line there would move the cursor without readline knowing it.
+  # redraw=1: bash redraws the prompt after a resize, so the terminal keeps the prompt rows in place and clears them.
+  # Keep it before the reset below: in Bash 3.2, the DEBUG trap installed by the first call also runs for the rest of this call.
+  builtin printf '\e]133;A;redraw=1\a'
 
   __jetbrains_intellij_should_update_prompt=""
   __jetbrains_intellij_command_running=""
@@ -69,17 +79,24 @@ __jetbrains_intellij_update_prompt() {
   if [[ "$__jetbrains_intellij_custom_ps1" == "" || "$__jetbrains_intellij_custom_ps1" != "$PS1" ]]; then
     # Save the original prompt
     __jetbrains_intellij_original_ps1="$PS1"
-    __jetbrains_intellij_custom_ps1="\[$(__jetbrains_intellij_prompt_started)\]$PS1\[$(__jetbrains_intellij_prompt_finished)\]"
+    # OSC 133;P;k=i after each line break: bash redraws only the last line of a multi-line prompt,
+    # so the terminal must keep and clear only the rows of that line.
+    builtin local line_start=$'\\[\e]133;P;k=i\a\\]' line_feed=$'\n'
+    builtin local ps1="${PS1//\\n/\\n$line_start}"
+    ps1="${ps1//$line_feed/$line_feed$line_start}"
+    __jetbrains_intellij_custom_ps1="\[$(__jetbrains_intellij_prompt_started)\]$ps1\[$(__jetbrains_intellij_prompt_finished)\]"
     PS1="$__jetbrains_intellij_custom_ps1"
   fi
 }
 
 __jetbrains_intellij_prompt_started() {
-  builtin printf '\e]1341;prompt_started\a'
+  # OSC 133;P;k=i: the start of the primary prompt, without the fresh line of OSC 133;A.
+  builtin printf '\e]133;P;k=i\a\e]1341;prompt_started\a'
 }
 
 __jetbrains_intellij_prompt_finished() {
-  builtin printf '\e]1341;prompt_finished\a'
+  # OSC 133;B: the end of the prompt and the start of the user input.
+  builtin printf '\e]1341;prompt_finished\a\e]133;B\a'
 }
 
 __jetbrains_intellij_install_debug_trap() {
