@@ -106,6 +106,7 @@ public final class JobLauncherImpl extends JobLauncher {
     for (ApplierCompleter<T> completer : globalCompleters) {
       completer.fork();
     }
+    boolean allTasksFinished = false;
     try {
       runWhileForking.run();
 
@@ -136,6 +137,7 @@ public final class JobLauncherImpl extends JobLauncher {
       if (thrown.get() != null) {
         throw thrown.get();
       }
+      allTasksFinished = true;
     }
     catch (ApplierCompleter.ComputationAbortedException e) {
       // one of the processors returned false
@@ -162,6 +164,12 @@ public final class JobLauncherImpl extends JobLauncher {
     }
     catch (Throwable e) {
       throw new RuntimeException(e);
+    }
+    finally {
+      if (!allTasksFinished) {
+        // tasks can still be in flight, and after this method returns the caller has no means to stop them
+        wrapper.cancel();
+      }
     }
     return ApplierCompleter.completeTaskWhichFailToAcquireReadAction(failedSubTasks);
   }
