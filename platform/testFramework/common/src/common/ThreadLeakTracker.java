@@ -81,6 +81,10 @@ public final class ThreadLeakTracker {
 
   static {
     @SuppressWarnings("deprecation") List<String> offenders = List.of(
+      // The app service AirIdeConnectionManager of Air holds one connection until the application ends, and the first test
+      // that reaches it starts the pump thread of that connection. The name is AIR_IDE_APP_PUMP_THREAD_NAME of
+      // AirIdeConnectionImpl.kt. The pump of each other air-ide connection has another name, so its leak still counts.
+      "air-ide connection of the application",
       "ApplicationImpl pooled thread ", // com.intellij.util.concurrency.AppScheduledExecutorService.POOLED_THREAD_PREFIX
       "AWT-EventQueue-",
       "AWT-Shutdown",
