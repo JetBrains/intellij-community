@@ -347,85 +347,15 @@ class CodeInliner(
 
             ktFile.addImport(fqName, allUnder, alias)
         }
-
-        var receiver =
-            usageExpression?.let { it.getReceiverExpression() ?: (it.parent as? KtCallableReferenceExpression)?.receiverExpression }
-        if (receiver is KtSuperExpression) {
-            val targetLabel = receiver.getTargetLabel()
-
-            val label = if (targetLabel is KtLabelReferenceExpression) {
-                targetLabel.getReferencedName()
-            } else {
-                val owner = receiver.getStrictParentOfType<KtClassOrObject>()
-                if (owner is KtObjectDeclaration && owner.isCompanion() && owner.name == null) {
-                    SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT.asString()
-                } else {
-                    owner?.name
-                }
-            }
-            receiver = psiFactory.createExpression(label?.let { "this@" + it.quoteIfNeeded() } ?: "this")
-        }
-        receiver?.putCopyableUserData(USER_CODE_KEY, Unit)
         val labelsToAdd = mutableListOf<Pair<KtLambdaExpression, String>>()
-        val labelsToReplace = mutableMapOf<String, String>()
+        val receiver = setupReceiver(labelsToAdd)
 
-        var isReceiverNullable =
-            receiver?.let {
-                analyze(it) {
-                    isNullableType(it.expressionType)
-                }
+        val isReceiverNullable = if (receiver != null) {
+            analyze(receiver) {
+                isNullableType(receiver.expressionType)
             }
-
-        if (receiver == null) {
-            analyze(call) {
-                val singleCall =
-                    (call as? KtResolvableCall)?.tryResolveCall()?.single?.simple
-                val receiverValue = singleCall?.extensionReceiver ?: singleCall?.dispatchReceiver
-                if (receiverValue is KaImplicitReceiverValue) {
-                    val symbol = receiverValue.symbol
-                    val thisText = when {
-                        symbol is KaClassSymbol && symbol.classKind.isObject && symbol.name != null -> symbol.name!!.asString()
-                        symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol -> "this@" + symbol.name!!.asString()
-                        symbol is KaReceiverParameterSymbol -> {
-                            val name = receiverLabelName(
-                                symbol.psi as? KtFunctionLiteral,
-                                symbol.owningCallableSymbol.callableId?.callableName,
-                                labelsToAdd,
-                                labelsToReplace
-                            )
-
-                            name?.let { "this@$it" } ?: "this"
-                        }
-
-                        else -> "this"
-                    }
-                    receiver = psiFactory.createExpression(thisText)
-                    val type = receiverValue.type
-                    isReceiverNullable = isNullableType(type)
-                }
-            }
-        }
-
-        receiver?.putCopyableUserData(RECEIVER_VALUE_KEY, Unit)
-
-        receiver?.let { r ->
-            for (instanceExpression in codeToInline.collectDescendantsOfType<KtInstanceExpressionWithLabel> {
-                it is KtThisExpression
-            }) {
-                if (instanceExpression.getCopyableUserData(CodeToInline.DELETE_RECEIVER_USAGE_KEY) != null) {
-                    val parent = instanceExpression.parent
-                    if (parent is KtDotQualifiedExpression) {
-                        val selectorExpression = parent.selectorExpression
-                        if (selectorExpression != null) {
-                            codeToInline.replaceExpression(parent, selectorExpression)
-                        }
-                    } else if (!parent.isPhysical) {
-                        codeToInline.replaceExpression(instanceExpression, instanceExpression.instanceReference)
-                    }
-                } else if (instanceExpression.getCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY) == null) {
-                    codeToInline.replaceExpression(instanceExpression, r)
-                }
-            }
+        } else {
+            null
         }
 
         val introduceValueForParameters = valueParameterInliner.processValueParameterUsages(callableForParameters)
@@ -492,6 +422,80 @@ class CodeInliner(
             }
             InlinePostProcessor.postProcessInsertedCode(pointers, commentSaver)
         }
+    }
+
+    private fun setupReceiver(
+        labelsToAdd: MutableList<Pair<KtLambdaExpression, String>>
+    ): KtExpression? {
+        var receiver =
+            usageExpression?.let { it.getReceiverExpression() ?: (it.parent as? KtCallableReferenceExpression)?.receiverExpression }
+        if (receiver is KtSuperExpression) {
+            val targetLabel = receiver.getTargetLabel()
+
+            val label = if (targetLabel is KtLabelReferenceExpression) {
+                targetLabel.getReferencedName()
+            } else {
+                val owner = receiver.getStrictParentOfType<KtClassOrObject>()
+                if (owner is KtObjectDeclaration && owner.isCompanion() && owner.name == null) {
+                    SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT.asString()
+                } else {
+                    owner?.name
+                }
+            }
+            receiver = psiFactory.createExpression(label?.let { "this@" + it.quoteIfNeeded() } ?: "this")
+        }
+        receiver?.putCopyableUserData(USER_CODE_KEY, Unit)
+
+        val labelsToReplace = mutableMapOf<String, String>()
+
+        if (receiver == null) {
+            analyze(call) {
+                val singleCall = (call as? KtResolvableCall)?.tryResolveCall()?.single?.simple
+                val receiverValue = singleCall?.extensionReceiver ?: singleCall?.dispatchReceiver
+                if (receiverValue is KaImplicitReceiverValue) {
+                    val symbol = receiverValue.symbol
+                    val thisText = when {
+                        symbol is KaClassSymbol && symbol.classKind.isObject && symbol.name != null -> symbol.name!!.asString()
+                        symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol -> "this@" + symbol.name!!.asString()
+                        symbol is KaReceiverParameterSymbol -> {
+                            val name = receiverLabelName(
+                                symbol.psi as? KtFunctionLiteral,
+                                symbol.owningCallableSymbol.callableId?.callableName,
+                                labelsToAdd,
+                                labelsToReplace
+                            )
+
+                            name?.let { "this@$it" } ?: "this"
+                        }
+
+                        else -> "this"
+                    }
+                    receiver = psiFactory.createExpression(thisText)
+                }
+            }
+        }
+
+        if (receiver != null) {
+            receiver.putCopyableUserData(RECEIVER_VALUE_KEY, Unit)
+            for (instanceExpression in codeToInline.collectDescendantsOfType<KtInstanceExpressionWithLabel> {
+                it is KtThisExpression
+            }) {
+                if (instanceExpression.getCopyableUserData(CodeToInline.DELETE_RECEIVER_USAGE_KEY) != null) {
+                    val parent = instanceExpression.parent
+                    if (parent is KtDotQualifiedExpression) {
+                        val selectorExpression = parent.selectorExpression
+                        if (selectorExpression != null) {
+                            codeToInline.replaceExpression(parent, selectorExpression)
+                        }
+                    } else if (!parent.isPhysical) {
+                        codeToInline.replaceExpression(instanceExpression, instanceExpression.instanceReference)
+                    }
+                } else if (instanceExpression.getCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY) == null) {
+                    codeToInline.replaceExpression(instanceExpression, receiver)
+                }
+            }
+        }
+        return receiver
     }
 
     private fun collectExistingNames(): MutableSet<String> {
