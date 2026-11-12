@@ -1,13 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commit.signing
 
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.net.NetUtils
 import git4idea.gpg.CryptoUtils
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import kotlin.random.Random
 
-class PinentryDataEncryptTest : UsefulTestCase() {
+class PinentryDataEncryptTest {
 
+  @Test
   fun `test encrypt and decrypt`() {
     val password = PinentryTestUtil.generatePassword(Random.nextInt(4, 200))
     val keyPair = CryptoUtils.generateKeyPair()
@@ -18,6 +20,7 @@ class PinentryDataEncryptTest : UsefulTestCase() {
     assertEquals(password, decryptedPassword)
   }
 
+  @Test
   fun `test public key serialization`() {
     val publicKey = CryptoUtils.generateKeyPair().public
     val address = PinentryService.Address(NetUtils.getLocalHostString(), NetUtils.findAvailableSocketPort())

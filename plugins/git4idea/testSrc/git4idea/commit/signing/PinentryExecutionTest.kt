@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.project.stateStore
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
 import com.intellij.util.io.createDirectories
 import git4idea.commit.signing.GpgAgentPathsLocator.Companion.GPG_HOME_DIR
@@ -22,11 +23,18 @@ import git4idea.commit.signing.GpgAgentPathsLocator.Companion.PINENTRY_LAUNCHER_
 import git4idea.config.GitExecutable
 import git4idea.config.GitExecutableManager
 import git4idea.repo.GitProjectConfigurationCache
-import git4idea.test.GitSingleRepoTest
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import kotlinx.coroutines.runBlocking
-import org.hamcrest.CoreMatchers
-import org.hamcrest.MatcherAssert.assertThat
-import org.junit.Assume.assumeTrue
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.BufferedWriter
 import java.io.OutputStreamWriter
 import java.net.BindException
@@ -37,19 +45,24 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.random.Random
 
-class PinentryExecutionTest : GitSingleRepoTest() {
+@TestApplication
+class PinentryExecutionTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
+  private val project: Project get() = context.project
 
-  override fun setUp() {
+  @BeforeEach
+  fun setUp() {
     IoTestUtil.assumeUnix()
 
-    super.setUp()
-    git("config commit.gpgSign true")
-    git("config user.signingkey 0A46826A!")
+    context.git("config commit.gpgSign true")
+    context.git("config user.signingkey 0A46826A!")
     GitProjectConfigurationCache.getInstance(project).clearCache()
     val enabled = GpgAgentConfigurator.isEnabled(project, GitExecutableManager.getInstance().getExecutable(project))
-    assumeTrue("GpgAgentConfigurator should be enabled", enabled)
+    assumeTrue(enabled, "GpgAgentConfigurator should be enabled")
   }
 
+  @Test
   fun `test pinentry communication without gpg agent configuration`() {
     val pathLocator = createPathLocator()
     val paths = pathLocator.resolvePaths()!!
@@ -58,6 +71,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     requestPasswordAndAssert(paths)
   }
 
+  @Test
   fun `test pinentry communication with existing gpg agent configuration`() {
     val pathLocator = createPathLocator()
     val paths = pathLocator.resolvePaths()!!
@@ -70,6 +84,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     requestPasswordAndAssert(paths)
   }
 
+  @Test
   fun `test existing gpg agent configuration but without pinentry program specified`() {
     val pathLocator = createPathLocator()
     val paths = pathLocator.resolvePaths()!!
@@ -82,9 +97,10 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     configureGpgAgent(paths)
     val generatedConfig = paths.gpgAgentConf.readLines()
 
-    assertContainsOrdered(generatedConfig, listOf(allowLoopbackPinentryConfig, defaultCacheTtlConfig, maxCacheTtlConfig, pinentryConfig))
+    assertThat(generatedConfig).containsSubsequence(listOf(allowLoopbackPinentryConfig, defaultCacheTtlConfig, maxCacheTtlConfig, pinentryConfig))
   }
 
+  @Test
   fun `test pinentry launcher structure`() {
     val pathLocator = createPathLocator()
     val paths = pathLocator.resolvePaths()!!
@@ -104,6 +120,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     assertScriptContentStructure(scriptContent)
   }
 
+  @Test
   fun `test config read after pinentry update`() {
     val paths = createPathLocator().resolvePaths()!!
     val pinentryFallback = "/usr/bin/pinentry-old"
@@ -114,12 +131,14 @@ class PinentryExecutionTest : GitSingleRepoTest() {
     assertPinentryFallback(paths, pinentryFallback)
   }
 
+  @Test
   fun `test pinentry shouldn't be configured twice`() {
     assertTrue(GpgAgentConfigurator.getInstance(project).canBeConfigured())
     configureGpgAgent(createPathLocator().resolvePaths()!!)
     assertFalse(GpgAgentConfigurator.getInstance(project).canBeConfigured())
   }
 
+  @Test
   fun `test pinentry fallbak preserved after update`() {
     val pathLocator = createPathLocator()
     val paths = pathLocator.resolvePaths()!!
@@ -138,7 +157,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
 
   private fun assertPinentryFallback(paths: GpgAgentPaths, pinetryFallback: String) {
     val scriptContent = paths.gpgPinentryAppLauncher.readText()
-    assertThat(scriptContent, CoreMatchers.containsString("""exec ${CommandLineUtil.posixQuote(pinetryFallback)} "$@""""))
+    assertThat(scriptContent).contains("""exec ${CommandLineUtil.posixQuote(pinetryFallback)} "$@"""")
   }
 
   private fun configureGpgAgent(gpgAgentPaths: GpgAgentPaths, pinetryFallback: String = "pinentry") {
@@ -172,7 +191,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
 
       val passwordPrefix = "D "
       val receivedPassword = output.find { it.startsWith(passwordPrefix) }?.substringAfter(passwordPrefix)
-      assertEquals("Received $output", keyPassword, receivedPassword)
+      assertEquals(keyPassword, receivedPassword, "Received $output")
     }
   }
 
