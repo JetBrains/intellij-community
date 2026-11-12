@@ -7,7 +7,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.awt.Font
-import java.awt.font.TextAttribute
 import java.util.function.IntToDoubleFunction
 
 private const val COMBINING_ACUTE = 0x301
@@ -48,12 +47,11 @@ internal class FontFallbackTest {
   }
 
   @Test
-  fun `other letter spacing gives a new font info with the tracking`() {
+  fun `other letter spacing gives a new font info with the same font`() {
     val plain = fallback.getFontInfo(13f, false, 0f, setOf(), null)
     val spaced = fallback.getFontInfo(13f, false, 0.1f, setOf(), null)
-    assertThat(spaced).isNotSameAs(plain)
-    assertThat(spaced.font.attributes[TextAttribute.TRACKING]).isEqualTo(0.1f)
-    assertThat(plain.font.attributes[TextAttribute.TRACKING]).isNotEqualTo(0.1f)
+    assertThat(spaced).isNotSameAs(plain).isNotEqualTo(plain)
+    assertThat(spaced.font).isEqualTo(plain.font)
     assertThat(fallback.getFontInfo(13f, false, 0f, setOf(), null)).isSameAs(plain)
   }
 
@@ -66,6 +64,8 @@ internal class FontFallbackTest {
       assertThat(spaced.charWidth2D('a'.code)).isEqualTo(9f)
       assertThat(spaced.charWidth('a'.code)).isEqualTo(9)
       assertThat(spaced.charWidth2D(COMBINING_ACUTE)).isEqualTo(0f)
+      assertThat(spaced.takesLetterSpacing('a'.code)).isTrue()
+      assertThat(spaced.takesLetterSpacing(COMBINING_ACUTE)).isFalse()
     } finally {
       FontLayoutService.setInstance(null)
     }

@@ -2,23 +2,30 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.impl.FontInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.font.GlyphVector;
+import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
 /**
  * Fragment of text for which complex layout is not required. Rendering is the same as if each character would be rendered on its own.
  */
-final class SimpleTextFragment extends TextFragment {
+@ApiStatus.Internal
+public final class SimpleTextFragment extends TextFragment {
   private final char @NotNull [] myText;
   private final @NotNull Font myFont;
   private final float @Nullable [] myCharAlignment;
+  private final float myLetterSpacing;
 
-  SimpleTextFragment(
+  @VisibleForTesting
+  public SimpleTextFragment(
     char @NotNull [] lineChars,
     int start,
     int end,
@@ -28,6 +35,7 @@ final class SimpleTextFragment extends TextFragment {
     super(end - start, false, view);
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();
+    myLetterSpacing = fontInfo.getLetterSpacingPixels();
     float x = 0;
     char[] text = myText;
     float[] charAlignment = null;
@@ -99,14 +107,29 @@ final class SimpleTextFragment extends TextFragment {
       int yAsInt = (int)y;
       if (myCharAlignment != null) {
         drawAligned(g, myText, startColumn, endColumn - startColumn, x, y);
-      }
-      else if (x == xAsInt && y == yAsInt) { // avoid creating garbage if possible
+      } else if (myLetterSpacing != 0) {
+        drawSpaced(g, startColumn, endColumn, x, y);
+      } else if (x == xAsInt && y == yAsInt) { // avoid creating garbage if possible
         g.drawChars(myText, startColumn, endColumn - startColumn, xAsInt, yAsInt);
-      }
-      else {
+      } else {
         g.drawString(new String(myText, startColumn, endColumn - startColumn), x, y);
       }
     };
+  }
+
+  /**
+   * Draws the chars at their positions, which include the letter spacing.
+   * The text needs no layout, so the glyph vector has one glyph for each char.
+   */
+  private void drawSpaced(@NotNull Graphics2D g, int start, int end, float x, float y) {
+    GlyphVector glyphs = myFont.createGlyphVector(g.getFontRenderContext(), Arrays.copyOfRange(myText, start, end));
+    float startX = getX(start);
+    Point2D.Float position = new Point2D.Float();
+    for (int i = 1; i < end - start; i++) {
+      position.setLocation(getX(start + i) - startX, 0);
+      glyphs.setGlyphPosition(i, position);
+    }
+    g.drawGlyphVector(glyphs, x, y);
   }
 
   private void drawAligned(Graphics2D g, char[] text, int start, int length, float startX, float y) {

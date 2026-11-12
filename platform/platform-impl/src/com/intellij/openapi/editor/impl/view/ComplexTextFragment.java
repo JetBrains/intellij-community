@@ -59,7 +59,7 @@ public final class ComplexTextFragment extends TextFragment {
         end,
         isRtl
       ),
-      fontInfo.getLetterSpacingPixels(),
+      fontInfo,
       view
     );
     assert start >= 0              : assertMessage(lineChars, start, end, isRtl, fontInfo);
@@ -73,7 +73,7 @@ public final class ComplexTextFragment extends TextFragment {
     int end,
     boolean isRtl,
     @NotNull GlyphVector glyphVector,
-    float letterSpacing,
+    @NotNull FontInfo fontInfo,
     @Nullable EditorView view
   ) {
     // RTL-ness is derived from the glyph vector, not from the isRtl parameter: FLAG_RUN_RTL reflects
@@ -117,6 +117,7 @@ public final class ComplexTextFragment extends TextFragment {
         myGlyphVector.setGlyphPosition(i, prevPos);
       }
     }
+    float[] spacingAfter = alignments == null ? addLetterSpacing(lineChars, start, end, fontInfo) : null;
     int numChars = end - start;
     int numGlyphs = myGlyphVector.getNumGlyphs();
     float totalWidth = (float)myGlyphVector.getGlyphPosition(numGlyphs).getX();
@@ -135,7 +136,7 @@ public final class ComplexTextFragment extends TextFragment {
     // other characters either don't have an associated glyph, or they are associated with empty glyphs.
     // (in RTL case real glyph will be associated with first logical character, i.e. last visual character)
     //
-    // The letter spacing of the font follows each glyph with an advance, and the logical bounds of a glyph do not include it.
+    // The letter spacing follows a glyph, and the logical bounds of the glyph do not include it, see addLetterSpacing.
     // So in LTR text a boundary is at the end of the spacing. In RTL text the start of the next glyph is already there.
     for (int i = 0; i < numGlyphs; i++) {
       int visualGlyphIndex = isRtl ? numGlyphs - 1 - i : i;
@@ -148,7 +149,8 @@ public final class ComplexTextFragment extends TextFragment {
               setCharPosition(j, prevX + (lastX - prevX) * (j - lastCharIndex + 1) / (charIndex - lastCharIndex), isRtl, numChars);
             }
           }
-          float newX = isRtl ? Math.min(lastX, (float)bounds.getMinX()) : Math.max(lastX, (float)bounds.getMaxX() + letterSpacing);
+          float spacing = spacingAfter == null ? 0 : spacingAfter[visualGlyphIndex];
+          float newX = isRtl ? Math.min(lastX, (float)bounds.getMinX()) : Math.max(lastX, (float)bounds.getMaxX() + spacing);
           if (alignments != null) {
             newX = isRtl ? newX - alignments[visualGlyphIndex] : newX + alignments[visualGlyphIndex];
           }
@@ -181,6 +183,75 @@ public final class ComplexTextFragment extends TextFragment {
         }
       }
     }
+  }
+
+  /**
+   * Moves the glyphs apart by the letter spacing of the font, see {@link FontInfo#getLetterSpacingPixels()}.
+   * A cluster is the chars from the char index of a glyph to the next char index of a glyph.
+   * It gets the letter spacing once for each of its code points that takes it, after its last glyph in visual order.
+   * A glyph without an advance, such as a combining mark, keeps its place next to the glyph before it.
+   *
+   * @return the letter spacing after each glyph, or {@code null} when the font has no letter spacing
+   */
+  private float @Nullable [] addLetterSpacing(char @NotNull [] lineChars, int start, int end, @NotNull FontInfo fontInfo) {
+    float letterSpacing = fontInfo.getLetterSpacingPixels();
+    if (letterSpacing == 0) {
+      return null;
+    }
+    int numChars = end - start;
+    int numGlyphs = myGlyphVector.getNumGlyphs();
+    boolean[] clusterStarts = new boolean[numChars];
+    for (int i = 0; i < numGlyphs; i++) {
+      clusterStarts[myGlyphVector.getGlyphCharIndex(i)] = true;
+    }
+    int[] spacedCodePoints = new int[numChars];
+    int cluster = 0;
+    for (int offset = 0; offset < numChars; ) {
+      if (clusterStarts[offset]) {
+        cluster = offset;
+      }
+      int codePoint = Character.codePointAt(lineChars, start + offset, end);
+      if (fontInfo.takesLetterSpacing(codePoint)) {
+        spacedCodePoints[cluster]++;
+      }
+      offset += Character.charCount(codePoint);
+    }
+    double[] originalX = new double[numGlyphs + 1];
+    for (int i = 0; i <= numGlyphs; i++) {
+      originalX[i] = myGlyphVector.getGlyphPosition(i).getX();
+    }
+    float[] spacingAfter = new float[numGlyphs];
+    double shift = 0;
+    float pending = 0;
+    int lastAdvancing = -1;
+    for (int i = 0; i < numGlyphs; i++) {
+      if (originalX[i + 1] - originalX[i] > 0.001) {
+        shift += pending;
+        if (lastAdvancing >= 0) {
+          spacingAfter[lastAdvancing] = pending;
+        }
+        pending = 0;
+        lastAdvancing = i;
+      }
+      moveGlyph(i, originalX[i] + shift);
+      int charIndex = myGlyphVector.getGlyphCharIndex(i);
+      if (i == numGlyphs - 1 || myGlyphVector.getGlyphCharIndex(i + 1) != charIndex) {
+        pending += letterSpacing * spacedCodePoints[charIndex];
+        // A cluster gets its letter spacing once, also when its glyphs are not next to each other
+        spacedCodePoints[charIndex] = 0;
+      }
+    }
+    if (lastAdvancing >= 0) {
+      spacingAfter[lastAdvancing] = pending;
+    }
+    moveGlyph(numGlyphs, originalX[numGlyphs] + shift + pending);
+    return spacingAfter;
+  }
+
+  private void moveGlyph(int glyphIndex, double x) {
+    Point2D position = myGlyphVector.getGlyphPosition(glyphIndex);
+    position.setLocation(x, position.getY());
+    myGlyphVector.setGlyphPosition(glyphIndex, position);
   }
 
   @Override

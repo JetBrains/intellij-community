@@ -8,6 +8,7 @@ import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.awt.Font;
@@ -17,6 +18,7 @@ import java.awt.Shape;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.Objects;
 import java.util.Set;
@@ -87,21 +89,63 @@ public class ComplexTextFragmentTest {
   }
 
   @Test
-  public void testLetterSpacingPutsTheBoundaryAtTheEndOfTheSpacing() {
+  public void testLetterSpacingFollowsEachGlyph() {
     assertCaretPositionsForGlyphVector(
       2,
-      glyph(0, 10).glyph(12, 22).glyph(24, 34), // the font adds 2 after each glyph
-      12, 24, 34
+      glyph(0, 10).glyph(10, 20).glyph(20, 30),
+      12, 24, 36
     );
   }
 
   @Test
-  public void testLetterSpacingKeepsTheRtlBoundaries() {
+  public void testLetterSpacingFollowsEachGlyphInRtlText() {
     assertCaretPositionsForGlyphVector(
       2,
-      rtl().glyph(0, 10).glyph(12, 22).glyph(24, 34), // the font adds 2 after each glyph
-      12, 24, 34
+      rtl().glyph(0, 10).glyph(10, 20).glyph(20, 30),
+      12, 24, 36
     );
+  }
+
+  @Test
+  public void testHbLigatureGetsLetterSpacingForEachChar() {
+    assertCaretPositionsForGlyphVector(
+      2,
+      glyph(0, 12).noGlyph().noGlyph(), // one glyph for three chars keeps the columns of three chars
+      6, 12, 18
+    );
+  }
+
+  @Test
+  public void testIcuLigatureGetsLetterSpacingForEachChar() {
+    assertCaretPositionsForGlyphVector(
+      2,
+      glyph(0, 12).glyph(12, 12).glyph(12, 12),
+      6, 12, 18
+    );
+  }
+
+  @Test
+  public void testCombiningMarkTakesNoLetterSpacingAndStaysAtItsBase() {
+    MyGlyphVector gv = glyph(0, 10).glyph(10, 10).glyph(10, 20); // 'a', a combining acute accent, 'b'
+    FontLayoutService.setInstance(new MockFontLayoutService(c -> c == 0x301 ? 0 : TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT) {
+      @Override
+      public @NotNull GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext, char @NotNull [] chars,
+                                                    int start, int end, boolean isRtl) {
+        return gv;
+      }
+    });
+    try {
+      char[] text = {'a', '\u0301', 'b'};
+      ComplexTextFragment fragment = new ComplexTextFragment(text, 0, text.length, false, createFontInfo(2), null);
+      assertEquals(24, fragment.visualColumnToX(0, 3), 0);
+      assertEquals(0, gv.getGlyphPosition(0).getX(), 0);
+      assertEquals(10, gv.getGlyphPosition(1).getX(), 0);
+      assertEquals(12, gv.getGlyphPosition(2).getX(), 0);
+      assertEquals(24, gv.getGlyphPosition(3).getX(), 0);
+    }
+    finally {
+      FontLayoutService.setInstance(null);
+    }
   }
 
   @Test
@@ -248,6 +292,7 @@ public class ComplexTextFragmentTest {
     private final boolean myRtl;
     private final Integer[] myGlyphPositions;
     private final Integer[] myGlyphWidths;
+    private @Nullable Point2D @Nullable [] myMovedPositions; // the positions from setGlyphPosition, by glyph index
 
     private MyGlyphVector(boolean rtl, Integer[] glyphPositions, Integer[] glyphWidths) {
       assertEquals(glyphWidths.length, glyphPositions.length);
@@ -274,7 +319,18 @@ public class ComplexTextFragmentTest {
     }
 
     @Override
+    public void setGlyphPosition(int glyphIndex, Point2D newPos) {
+      if (myMovedPositions == null) {
+        myMovedPositions = new Point2D[getNumGlyphs() + 1];
+      }
+      myMovedPositions[glyphIndex] = new Point2D.Double(newPos.getX(), newPos.getY());
+    }
+
+    @Override
     public Point2D getGlyphPosition(int glyphIndex) {
+      if (myMovedPositions != null && myMovedPositions[glyphIndex] != null) {
+        return new Point2D.Double(myMovedPositions[glyphIndex].getX(), myMovedPositions[glyphIndex].getY());
+      }
       boolean afterLast = glyphIndex == getNumGlyphs();
       int index = getGlyphIndexInArray(glyphIndex - (afterLast ? 1 : 0));
       return new Point(myGlyphPositions[index] + (afterLast ? myGlyphWidths[index] : 0), 0);
@@ -283,7 +339,8 @@ public class ComplexTextFragmentTest {
     @Override
     public Shape getGlyphLogicalBounds(int glyphIndex) {
       int index = getGlyphIndexInArray(glyphIndex);
-      return new Rectangle(myGlyphPositions[index], -TEST_DESCENT, myGlyphWidths[index], TEST_LINE_HEIGHT);
+      double x = getGlyphPosition(glyphIndex).getX();
+      return new Rectangle2D.Double(x, -TEST_DESCENT, myGlyphWidths[index], TEST_LINE_HEIGHT);
     }
 
     @Override

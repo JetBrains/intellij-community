@@ -74,7 +74,7 @@ public final class FontInfo {
 
   /**
    * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
-   * The letter spacing becomes the tracking of the font, and the widths of this instance include it.
+   * The widths of this instance include the letter spacing. The font has none, so the text layout adds it to the glyph positions.
    */
   public FontInfo(
     @NotNull Font font,
@@ -85,12 +85,7 @@ public final class FontInfo {
     @Nullable FontRenderContext fontRenderContext
   ) {
     mySize = size;
-    myFont = EditorFontFeatures.withFeatures(
-      font.deriveFont(size),
-      useLigatures,
-      letterSpacing,
-      variants
-    );
+    myFont = EditorFontFeatures.withFeatures(font.deriveFont(size), useLigatures, variants);
     myLetterSpacingPixels = letterSpacing * size;
     myContext = fontRenderContext;
   }
@@ -124,7 +119,7 @@ public final class FontInfo {
 
   /**
    * Returns the integer advance of the code point plus the letter spacing, rounded to an integer.
-   * A code point without an advance gets no letter spacing, as in {@link #charWidth2D}.
+   * Only a code point that takes the letter spacing gets it, see {@link #takesLetterSpacing}.
    */
   public int charWidth(int codePoint) {
     FontMetrics metrics = fontMetrics();
@@ -137,11 +132,10 @@ public final class FontInfo {
 
   /**
    * Returns the advance of the code point plus the letter spacing.
-   * A code point without an advance, such as a combining mark, gets no letter spacing.
+   * Only a code point that takes the letter spacing gets it, see {@link #takesLetterSpacing}.
    */
   public float charWidth2D(int codePoint) {
-    FontMetrics metrics = fontMetrics();
-    float width = FontLayoutService.getInstance().charWidth2D(metrics, codePoint);
+    float width = advance(codePoint);
     if (width <= 0) {
       return width;
     }
@@ -149,12 +143,26 @@ public final class FontInfo {
   }
 
   /**
+   * Returns true when the text layout adds the letter spacing after the code point.
+   * A code point without an advance, such as a combining mark, takes no letter spacing.
+   */
+  @ApiStatus.Internal
+  public boolean takesLetterSpacing(int codePoint) {
+    return advance(codePoint) > 0;
+  }
+
+  /**
    * Returns the letter spacing in pixels at the size of this font.
-   * The font adds it after each glyph with an advance.
+   * The font itself has no letter spacing. The text layout adds it, see {@link #takesLetterSpacing}.
    */
   @ApiStatus.Internal
   public float getLetterSpacingPixels() {
     return myLetterSpacingPixels;
+  }
+
+  private float advance(int codePoint) {
+    FontMetrics metrics = fontMetrics();
+    return FontLayoutService.getInstance().charWidth2D(metrics, codePoint);
   }
 
   public synchronized @NotNull FontMetrics fontMetrics() {
@@ -182,12 +190,12 @@ public final class FontInfo {
     if (this == o) {
       return true;
     }
-    return o instanceof FontInfo other && myFont.equals(other.myFont);
+    return o instanceof FontInfo other && myFont.equals(other.myFont) && myLetterSpacingPixels == other.myLetterSpacingPixels;
   }
 
   @Override
   public int hashCode() {
-    return myFont.hashCode();
+    return 31 * myFont.hashCode() + Float.hashCode(myLetterSpacingPixels);
   }
 
   @Override
