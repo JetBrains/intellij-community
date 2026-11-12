@@ -2489,6 +2489,16 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("testData/inline/namedFunction/explicitContextArgumentSmartCastInBody.kt");
             }
 
+            @TestMetadata("explicitContextArgumentThisInWith.kt")
+            public void testExplicitContextArgumentThisInWith() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentThisInWith.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentUnqualifiedInWith.kt")
+            public void testExplicitContextArgumentUnqualifiedInWith() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentUnqualifiedInWith.kt");
+            }
+
             @TestMetadata("explicitContextArgumentUnused.kt")
             public void testExplicitContextArgumentUnused() throws Exception {
                 runTest("testData/inline/namedFunction/explicitContextArgumentUnused.kt");

@@ -24,13 +24,16 @@ import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
+import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -38,13 +41,36 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 context(session: KaSession)
-internal fun createReplacementForContextArgument(receiverValue: KaReceiverValue): String? {
+internal fun createReplacementForContextArgument(receiverValue: KaReceiverValue, qualifyThis: Boolean = false): String? {
     val withUnwrappedSmartCasts = receiverValue.unwrapSmartCasts()
     if (withUnwrappedSmartCasts is KaExplicitReceiverValue) {
-       return withUnwrappedSmartCasts.expression.text
+        if (qualifyThis) {
+            val expression = withUnwrappedSmartCasts.expression
+            if (expression is KtThisExpression && expression.labelQualifier == null) {
+                val target = expression.instanceReference.mainReference.resolve()
+                val label = when (target) {
+                    is KtClassOrObject -> target.name
+                    is KtTypeReference -> target.getParentOfType<KtCallableDeclaration>(true)?.name
+                    else -> null
+                }
+                if (label != null) {
+                    return "this@${label.quoteIfNeeded()}"
+                }
+            }
+            if (expression is KtCallExpression || expression is KtSimpleNameExpression) {
+                val label = expression.getImplicitReceiverInfo()?.receiverLabel
+                if (label != null) {
+                    return "this@${label.asString().quoteIfNeeded()}.${expression.text}"
+                }
+            }
+        }
+        return withUnwrappedSmartCasts.expression.text
     }
     return when (val symbol = (withUnwrappedSmartCasts as? KaImplicitReceiverValue)?.symbol) {
         is KaReceiverParameterSymbol -> symbol.containingSymbol?.name?.asString()?.let { "this@$it" } ?: "this"
