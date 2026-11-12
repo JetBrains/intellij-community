@@ -86,7 +86,6 @@ abstract class ToolWindowManager {
     return registerToolWindow(RegisterToolWindowTask(id = id, anchor = anchor, canCloseContent = canCloseContent, canWorkInDumbMode = false))
   }
 
-  @ApiStatus.OverrideOnly
   abstract fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow
 
   /**
