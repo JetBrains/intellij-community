@@ -14,7 +14,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.PatchLine
-import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
@@ -25,8 +24,6 @@ import com.intellij.openapi.editor.impl.LineNumberConverterAdapter
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch
-import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
@@ -84,21 +81,16 @@ object TimelineDiffComponentFactory {
                             patchHunk: PatchHunk,
                             anchorLineRange: LineRange?): JComponent {
     if (patchHunk.lines.any { it.type != PatchLine.Type.CONTEXT }) {
-      val appliedSplitHunks = GenericPatchApplier.SplitHunk.read(patchHunk).map {
-        AppliedTextPatch.AppliedSplitPatchHunk(it, -1, -1, AppliedTextPatch.HunkStatus.NOT_APPLIED)
-      }
-
-      val state = PatchChangeBuilder().buildFromApplied(appliedSplitHunks)
-
-      val patchContent = state.patchContent.removeSuffix("\n")
+      val layout = PatchHunkLayout.of(patchHunk)
+      val patchContent = layout.text.removeSuffix("\n")
 
       return createDiffEditorIn(cs, project, editorFactory, patchContent).apply {
-        gutter.setLineNumberConverter(LineNumberConverterAdapter(state.lineConvertor1.createConvertor()),
-                                      LineNumberConverterAdapter(state.lineConvertor2.createConvertor()))
+        gutter.setLineNumberConverter(LineNumberConverterAdapter(layout.lineConvertorBefore),
+                                      LineNumberConverterAdapter(layout.lineConvertorAfter))
 
 
-        state.hunks.forEach { hunk ->
-          DiffDrawUtil.createUnifiedChunkHighlighters(this, hunk.patchDeletionRange, hunk.patchInsertionRange, null)
+        layout.blocks.forEach { (val deletion, val insertion) ->
+          DiffDrawUtil.createUnifiedChunkHighlighters(this, deletion, insertion, null)
         }
         anchorLineRange?.let { highlightAnchor(it) }
       }.component
