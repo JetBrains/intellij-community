@@ -18,6 +18,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.WriteActionListener
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.service
@@ -135,6 +137,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
@@ -2412,6 +2415,67 @@ class FileEditorManagerTest {
     manager.closeFile(file, window)
     waitUntil("editor of a cancelled open must be released even for a non-async provider") {
       !EditorFactory.getInstance().allEditors.contains(editor)
+    }
+  }
+
+  @Test
+  fun testBlockingOpenUnderReadActionCompletesWhileBackgroundWriteActionIsPending(): Unit = timeoutRunBlocking {
+    val virtualFile = getSourceFile("1.txt")
+    val creationStarted = CompletableDeferred<Unit>()
+    val proceedWithCreation = CompletableDeferred<Unit>()
+    val writeActionPending = CompletableDeferred<Unit>()
+
+    registerProvider(object : MockFileEditorProvider(policy = FileEditorPolicy.HIDE_DEFAULT_EDITOR), AsyncFileEditorProvider {
+      override fun accept(project: Project, file: VirtualFile): Boolean = file == virtualFile
+
+      override suspend fun createFileEditor(
+        project: Project,
+        file: VirtualFile,
+        document: Document?,
+        editorCoroutineScope: CoroutineScope,
+      ): FileEditor {
+        creationStarted.complete(Unit)
+        proceedWithCreation.await()
+        return withContext(Dispatchers.EDT) { createEditor(project, file) }
+      }
+    })
+
+    val openJob = launch(Dispatchers.EDT) {
+      // `runReadActionBlocking` starts no read action under the write-intent lock, and the test needs a real one
+      @Suppress("ForbiddenInSuspectContextMethod", "SSBasedInspection")
+      ApplicationManager.getApplication().runReadAction {
+        manager.openFile(virtualFile, false)
+      }
+    }
+    creationStarted.await()
+
+    val threadingSupport = ApplicationManager.getApplication().threadingSupport
+    val listener = object : WriteActionListener {
+      override fun beforeWriteActionStart(action: Class<*>) {
+        // bg write is pending
+        if (!EdtUtil.isCurrentThreadEdt()) {
+          writeActionPending.complete(Unit)
+        }
+      }
+    }
+
+    try {
+      threadingSupport.addWriteActionListener(listener)
+
+      val writeActionJob = launch(Dispatchers.Default) {
+        backgroundWriteAction { }
+      }
+      writeActionPending.await()
+      proceedWithCreation.complete(Unit)
+
+      // keep shorter than test timeout
+      val opened = withTimeoutOrNull(5.seconds) { openJob.join() } != null
+
+      writeActionJob.cancelAndJoin()
+      assertThat(opened).describedAs("the blocking open must complete while a background write action is pending").isTrue()
+    }
+    finally {
+      threadingSupport.removeWriteActionListener(listener)
     }
   }
 
