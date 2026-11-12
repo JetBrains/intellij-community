@@ -63,6 +63,10 @@ Register the grid under the host's disposable, and keep the hook reference until
 
 ## Tests
 
-Grid tests live in `dbe/database/connectivity/tests/src/grid` and `.../run/ui/table`.
+Grid tests live in two modules. The dev run rules select the module.
+- `intellij.database.connectivity.tests` contains the tests that depend on the classpath or on extension points, or that hack them. These tests are the dev run candidates.
+- `intellij.database.grid.tests` contains the other grid tests.
+
+Both modules keep the tests in `src/grid` and `src/run/ui/table`.
 CI runs them only from `DatabaseTestSuite.GridTestSuite`, so register each new class there.
-Run them with `./tests.cmd --module intellij.database.connectivity.tests --test '<class>'`.
+Run them with `./tests.cmd --module intellij.database.connectivity.tests --test '<class>'` or `./tests.cmd --module intellij.database.grid.tests --test '<class>'`.
