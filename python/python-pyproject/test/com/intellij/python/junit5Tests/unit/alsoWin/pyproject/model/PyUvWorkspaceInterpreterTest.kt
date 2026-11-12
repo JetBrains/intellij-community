@@ -24,6 +24,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -31,7 +32,7 @@ import kotlin.time.Duration.Companion.seconds
 private const val ROOT = "ws"
 
 /**
- * The message of the exception the configurator throws for a member of a uv workspace today, see
+ * The message of the exception the auto-configurator throws for the root module of the workspace in some runs, see
  * `PyUvWorkspaceInterpreterTest.drainTheKnownConfiguratorFailure`. It is the sanity check of the configurator
  * itself, `sdkConfigImpl.kt:54`.
  */
@@ -42,9 +43,9 @@ private const val NO_INTERPRETER = "has no interpreter in the snapshot after it 
  * single [EvoWorkspace], and an interpreter set on it reaches every member — each one holds the same interpreter and
  * the same interpreter library entry, the one the root owns.
  *
- * A member that keeps its own interpreter, or none, is the defect this covers: the packages tool window and the
- * widget then show one thing for a file of the root and another for a file of a member, and the member resolves no
- * dependency the workspace installed.
+ * A member that keeps its own interpreter, or none, is what this guards against: the packages tool window and the
+ * widget would then show one thing for a file of the root and another for a file of a member, and the member would
+ * resolve no dependency the workspace installed. The product holds all three cases today, on Linux and on Windows.
  */
 @RegistryKeyAppLevel(key = "python.interpreter.library.entries", value = "true")
 @TestApplication
@@ -128,31 +129,30 @@ internal class PyUvWorkspaceInterpreterTest {
     module.findModuleEntity(f.project.workspaceModel.currentSnapshot)?.dependencies?.pyInterpreterDependency?.library?.name
 
   /**
-   * Takes the one exception the configurator throws for a member of a workspace, so that the run is green while the
-   * defect is open, and records that it was thrown.
+   * Takes the one exception the auto-configurator throws for this project, so that a run in which it fires is still
+   * a verdict on the three cases above and not on a defect they do not cover.
    *
-   * It is drained here and judged in [theDefectIsStillOpen] rather than per test, because it is thrown once for the
-   * project, on a coroutine of the configurator service, and the extension reports it against whichever test
-   * happens to end first — it was `an interpreter set on the workspace is the interpreter of every member` in one
-   * run and `every member of the workspace names the same interpreter library` in the next. Only "some test of this
-   * class saw it" is a stable statement.
+   * It fires on a coroutine of `python.sdkConfigurator.backend`, for the root module of the workspace, and it fires
+   * rarely: it was thrown in 1 of 7 CI runs of this class (build 1128368029) and in none of the five repeats of
+   * build 1128411011. So nothing here states that it comes, and no tripwire waits for it to stop coming — a claim
+   * about an event of that frequency is a claim this class cannot hold. The coverage is the three cases; this only
+   * keeps them from going red for a reason of their own.
+   *
+   * The defect is in `autoConfigureSdk`, `sdkConfigImpl.kt:44-57`: it waits with `EvoPyProjectModel.awaitInterpreterOf`
+   * and then reads the snapshot again with `PyProject.getInterpreter`, so what it asserts is not what it waited for.
+   * The wait also returns the same way when it times out, and is satisfied at once when the interpreter it expects is
+   * `null`.
    *
    * The predicate names this one failure. Any other uncaught exception is left in place and still fails the test.
    *
-   * The wait is what makes this work: the configurator throws on a coroutine of its own, so the exception reaches the
-   * handler after the body of the test is over, and a drain that only looks once takes nothing and leaves the
-   * exception to the extension, see build 1128368029.
+   * The poll is what makes the drain work at all: the exception reaches the handler after the body of the test is
+   * over, so a drain that only looks once takes nothing and leaves it to the extension, see build 1128368029. It is
+   * short, because a run in which the exception does not come pays for it. An exception later than this is taken by
+   * the drain of the next test, which runs before the extension of that test, or by [drainALateConfiguratorFailure].
    */
   @AfterEach
-  fun drainTheKnownConfiguratorFailure(): Unit = timeoutRunBlocking(60.seconds) {
-    val drained = withTimeoutOrNull(40.seconds) {
-      while (true) {
-        if (drainUncaughtExceptions { it is IllegalStateException && it.message?.contains(NO_INTERPRETER) == true }.isNotEmpty()) break
-        delay(200.milliseconds)
-      }
-      true
-    }
-    if (drained == true) configuratorFailed = true
+  fun drainTheKnownConfiguratorFailure(): Unit = timeoutRunBlocking(30.seconds) {
+    drainConfiguratorFailure(5.seconds)
   }
 
   private fun describeWorkspaces(): String =
@@ -162,27 +162,21 @@ internal class PyUvWorkspaceInterpreterTest {
     ?: "no snapshot"
 
   companion object {
-    @Volatile
-    private var configuratorFailed = false
-
-    /**
-     * The tripwire of [drainTheKnownConfiguratorFailure]: while the defect is open this holds and the class is
-     * green, and the first run in which the configurator stops throwing fails here.
-     *
-     * Then delete this method, [drainTheKnownConfiguratorFailure] and [configuratorFailed]. Nothing else changes:
-     * the three tests already assert what the product must do.
-     */
+    /** The same drain for an exception thrown after the last test, which no [drainTheKnownConfiguratorFailure] follows. */
     @JvmStatic
     @AfterAll
-    fun theDefectIsStillOpen() {
-      assertThat(configuratorFailed)
-        .describedAs(
-          "the configurator no longer throws `$NO_INTERPRETER` for a member of a uv workspace " +
-          "(`sdkConfigImpl.kt:54`). That is the fix, not a failure of this class: remove the drain and this check. " +
-          "If instead the exception stopped being reachable because these tests stopped exercising the path, " +
-          "restore the path — a silent drain of an exception that never comes covers nothing"
-        )
-        .isTrue()
+    fun drainALateConfiguratorFailure(): Unit = timeoutRunBlocking(30.seconds) {
+      drainConfiguratorFailure(10.seconds)
+    }
+  }
+}
+
+/** Waits up to [wait] for the exception of the auto-configurator, see `drainTheKnownConfiguratorFailure`, and takes it. */
+private suspend fun drainConfiguratorFailure(wait: Duration) {
+  withTimeoutOrNull(wait) {
+    while (true) {
+      if (drainUncaughtExceptions { it is IllegalStateException && it.message?.contains(NO_INTERPRETER) == true }.isNotEmpty()) break
+      delay(200.milliseconds)
     }
   }
 }
