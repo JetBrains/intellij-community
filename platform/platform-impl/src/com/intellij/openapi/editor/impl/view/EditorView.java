@@ -951,7 +951,11 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return layout == null ? -1 : layout.getFontFamiliesMetric(descent);
   }
 
-  private @NotNull EditorViewSnapshot getSnapshotWithMetrics() {
+  /**
+   * Returns the current snapshot with its metrics, and measures them when the snapshot has none.
+   * It leaves the font resolver and the prefix layout alone, so a text layout can call it.
+   */
+  @NotNull EditorViewSnapshot getSnapshotWithMetrics() {
     while (true) {
       EditorViewSnapshot snapshot = mySnapshot;
       EditorViewMetrics metrics = snapshot.metrics();

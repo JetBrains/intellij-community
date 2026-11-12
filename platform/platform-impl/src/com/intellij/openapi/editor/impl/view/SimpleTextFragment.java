@@ -36,7 +36,7 @@ public final class SimpleTextFragment extends TextFragment {
     @NotNull FontInfo fontInfo,
     @Nullable EditorView view
   ) {
-    super(end - start, false, view);
+    super(end - start, false, view, null); // SimpleTextFragment only handles BMP characters, so each code point takes one char
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();
     myLetterSpacing = fontInfo.getLetterSpacingPixels();
@@ -85,46 +85,6 @@ public final class SimpleTextFragment extends TextFragment {
     }
     myCharAlignment = charAlignment;
     myCharSpacing = charSpacing;
-  }
-
-  @Override
-  protected int offsetToLogicalColumn(int offset) {
-    return offset;
-  }
-
-  @Override
-  public int getLogicalColumnCount(int startColumn) {
-    return myCharPositions.length;
-  }
-
-  @Override
-  public int getVisualColumnCount(float startX) {
-    return myCharPositions.length;
-  }
-
-  @Override
-  public int visualColumnToOffset(float startX, int column) {
-    return column;
-  }
-
-  @Override
-  public float visualColumnToX(float startX, int column) {
-    return startX + getX(column);
-  }
-
-  @Override
-  public @NotNull VisualColumn xToVisualColumn(float startX, float x) {
-    float relX = x - startX;
-    float prevPos = 0;
-    for (int i = 0; i < myCharPositions.length; i++) {
-      float newPos = myCharPositions[i];
-      if (relX < (newPos + prevPos) / 2) {
-        return new VisualColumn(i, relX > prevPos);
-      }
-      prevPos = newPos;
-    }
-    boolean leansRight = relX > myCharPositions[myCharPositions.length - 1];
-    return new VisualColumn(myCharPositions.length, leansRight);
   }
 
   @Override

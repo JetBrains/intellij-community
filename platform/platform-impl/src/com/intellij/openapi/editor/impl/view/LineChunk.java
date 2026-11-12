@@ -324,6 +324,13 @@ class LineChunk {
     FontInfo fontInfo,
     EditorView view
   ) {
+    EditorViewSnapshot viewSnapshot = view.getSnapshotWithMetrics();
+    CharacterGridSpec gridSpec = viewSnapshot.gridSpec();
+    if (gridSpec != null) {
+      // The grid owns the geometry of the text, so one fragment covers each run, also a run of plain ASCII
+      fragments.add(new GridTextFragment(lineChars, start, end, isRtl, fontInfo, view, gridSpec, viewSnapshot.gridCellWidth()));
+      return;
+    }
     boolean needsLayout = isRtl || fontInfo.getFont().hasLayoutAttributes();
     boolean nonLatinText = false;
     if (!needsLayout) {
