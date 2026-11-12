@@ -279,6 +279,7 @@ intellij.properties.propertyBased.tests
 intellij.properties.tests
 intellij.python.community.execService.tests
 intellij.python.community.services.shared.tests
+intellij.python.community.tests
 intellij.python.devkit.tests
 intellij.python.mcp.tests
 intellij.python.processOutput.frontend.tests
