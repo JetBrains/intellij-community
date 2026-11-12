@@ -170,7 +170,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final Map<String, String> unresolvedHashBangs = new HashMap<>(); // hashbang string -> file type
   private final RemovedMappingTracker removedMappingTracker = new RemovedMappingTracker();
   private final ConflictingFileTypeMappingTracker conflictingMappingTracker = new ConflictingFileTypeMappingTracker(removedMappingTracker);
+  /// rw-guarded by [myPendingInitializationLock]
   private final Map<String, FileTypeBean> pendingFileTypes = new LinkedHashMap<>();
+  /// rw-guarded by [myPendingInitializationLock]
   private final FileTypeAssocTable<FileTypeBean> pendingAssociations = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
   private final ReadWriteLock myPendingInitializationLock = new ReentrantReadWriteLock();
 
@@ -280,18 +282,67 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public void extensionAdded(@NotNull FileTypeBean fileTypeBean, @NotNull PluginDescriptor pluginDescriptor) {
     fireBeforeFileTypesChanged();
     initializeMatchers(pluginDescriptor, fileTypeBean);
-    FileTypeBean pendingFileTypeBean = withReadLock(() -> pendingFileTypes.get(fileTypeBean.name));
-    if (pendingFileTypeBean != null) {
-      // a new matcher is being added to the already existing but not yet instantiated file type
-      instantiateFileTypeBean(pendingFileTypeBean);
+    FileType fileType;
+    myPendingInitializationLock.writeLock().lock();
+    try {
+      StandardFileType type = standardFileTypes.get(fileTypeBean.name);
+      if (type != null) {
+        fileType = mergeOrInstantiateFileTypeBean(fileTypeBean);
+      }
+      else {
+        FileTypeBean pendingBean = pendingFileTypes.get(fileTypeBean.name);
+        if (pendingBean != null) {
+          pendingBean.addMatchers(fileTypeBean.getMatchers());
+          for (FileNameMatcher matcher : fileTypeBean.getMatchers()) {
+            pendingAssociations.addAssociation(matcher, pendingBean);
+          }
+        }
+        else if (fileTypeBean.implementationClass != null) {
+          registerPendingFileType(fileTypeBean);
+        }
+        else {
+          LOG.error(new PluginException("Trying to add extensions to non-registered file type " + fileTypeBean.name,
+                                        pluginDescriptor.getPluginId()));
+        }
+        fileType = null;
+      }
     }
-    FileType fileType = mergeOrInstantiateFileTypeBean(fileTypeBean);
-    fireFileTypesChanged(fileType, null);
+    finally {
+      myPendingInitializationLock.writeLock().unlock();
+    }
+    fireFileTypesChanged(new FileTypeEvent(this, fileType, null, fileTypeBean.name));
   }
 
   @Override
   @ApiStatus.Internal
   public void extensionRemoved(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
+    if (withReadLock(() -> pendingFileTypes.containsKey(extension.name))) {
+      fireBeforeFileTypesChanged();
+      FileTypeBean pendingBean;
+      myPendingInitializationLock.writeLock().lock();
+      try {
+        pendingBean = pendingFileTypes.get(extension.name);
+        if (pendingBean != null) {
+          if (extension.implementationClass != null) {
+            pendingFileTypes.remove(extension.name);
+            pendingAssociations.removeAllAssociations(pendingBean);
+          }
+          else {
+            pendingBean.removeMatchers(extension.getMatchers());
+            for (FileNameMatcher matcher : extension.getMatchers()) {
+              pendingAssociations.removeAssociation(matcher, pendingBean);
+            }
+          }
+        }
+      }
+      finally {
+        myPendingInitializationLock.writeLock().unlock();
+      }
+      if (pendingBean != null) {
+        fireFileTypesChanged(null, null);
+        return;
+      }
+    }
     if (extension.implementationClass != null) {
       FileType fileType = findFileTypeByName(extension.name);
       if (fileType != null) {
@@ -496,10 +547,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         continue;
       }
 
-      pendingFileTypes.put(bean.name, bean);
-      for (FileNameMatcher matcher : bean.getMatchers()) {
-        pendingAssociations.addAssociation(matcher, bean);
-      }
+      registerPendingFileType(bean);
     }
 
     // Register additional extensions for file types
@@ -514,6 +562,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       for (FileNameMatcher matcher : bean.getMatchers()) {
         pendingAssociations.addAssociation(matcher, oldBean);
       }
+    }
+  }
+
+  private void registerPendingFileType(@NotNull FileTypeBean bean) {
+    pendingFileTypes.put(bean.name, bean);
+    for (FileNameMatcher matcher : bean.getMatchers()) {
+      pendingAssociations.addAssociation(matcher, bean);
     }
   }
 
@@ -545,7 +600,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void instantiatePendingFileTypes() {
-    Collection<FileTypeBean> fileTypes = withReadLock(() -> new ArrayList<>(pendingFileTypes.values()));
+    Collection<FileTypeBean> fileTypes =
+      withReadLock(() -> pendingFileTypes.isEmpty() ? Collections.emptyList() : new ArrayList<>(pendingFileTypes.values()));
     for (FileTypeBean fileTypeBean : fileTypes) {
       mergeOrInstantiateFileTypeBean(fileTypeBean);
     }
@@ -796,7 +852,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public @NotNull FileType getFileTypeByFileName(@NotNull CharSequence fileName) {
     FileTypeBean pendingFileType = withReadLock(() -> pendingAssociations.findAssociatedFileType(fileName));
     if (pendingFileType != null) {
-      return getFileTypeOrUnknown(instantiateFileTypeBean(pendingFileType));
+      instantiateFileTypeBean(pendingFileType);
     }
     FileTypeWithDescriptor ftd = withReadLock(() -> patternsTable.findAssociatedFileType(fileName));
     return getFileTypeOrUnknown(ftd);
@@ -845,6 +901,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     //MAYBE RC: shouldn't we first check file.isValid() and return false eagerly?
     FileType temporarilyFixedFileType = getTemporarilyFixedFileType(virtualFile);
     if (temporarilyFixedFileType != null) return temporarilyFixedFileType.equals(requestedFileType);
+
+    instantiatePendingFileTypes();
 
     FileTypeOverrider[] overriders = fileTypeOverriderCache;
     if (overriders == null) {
@@ -969,6 +1027,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     FileType temporarilyFixedFileType = getTemporarilyFixedFileType(file);
     if (temporarilyFixedFileType != null) return temporarilyFixedFileType;
 
+    instantiatePendingFileTypes();
+
     if (file instanceof VirtualFileWithAssignedFileType) {
       FileType fileType = ((VirtualFileWithAssignedFileType)file).getAssignedFileType();
       if (fileType != null) {
@@ -1051,8 +1111,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public @NotNull FileTypeWithDescriptor getFileTypeWithDescriptorByExtension(@NotNull String extension) {
     FileTypeBean pendingFileType = withReadLock(() -> pendingAssociations.findByExtension(extension));
     if (pendingFileType != null) {
-      FileTypeWithDescriptor type = instantiateFileTypeBean(pendingFileType);
-      return type == null ? coreDescriptorFor(UnknownFileType.INSTANCE) : type;
+      instantiateFileTypeBean(pendingFileType);
     }
     FileTypeWithDescriptor descriptor = withReadLock(() -> patternsTable.findByExtension(extension));
     return descriptor == null ? coreDescriptorFor(UnknownFileType.INSTANCE) : descriptor;
@@ -1066,7 +1125,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     Disposer.register(disposable, () -> doUnregisterFileType(type, pluginDescriptor));
   }
 
-  private void doRegisterFileType(FileType type, List<? extends FileNameMatcher> defaultAssociations) {
+  private void doRegisterFileType(@NotNull FileType type, @NotNull List<? extends FileNameMatcher> defaultAssociations) {
     PluginAdvertiserExtensionsStateService pluginAdvertiserExtensionsStateService =
       PluginAdvertiserExtensionsStateService.Companion.getInstance();
 
@@ -1201,7 +1260,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   public void fireBeforeFileTypesChanged() {
-    FileTypeEvent event = new FileTypeEvent(this, null, null);
+    FileTypeEvent event = new FileTypeEvent(this, null, null, null);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).beforeFileTypesChanged(event);
   }
 
@@ -1224,9 +1283,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void fireFileTypesChanged(@Nullable FileType addedFileType, @Nullable FileType removedFileType) {
+    fireFileTypesChanged(new FileTypeEvent(this, addedFileType, removedFileType, null));
+  }
+
+  private void fireFileTypesChanged(@NotNull FileTypeEvent event) {
     detectionService.clearCaches();
     CachedFileType.clearCache();
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this, addedFileType, removedFileType));
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).fileTypesChanged(event);
   }
 
   @Override

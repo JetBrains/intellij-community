@@ -31,6 +31,7 @@ import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
+import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry.FileTypeDetector;
@@ -43,6 +44,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.UserBinaryFileType;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
+import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.fileTypes.impl.ConflictingFileTypeMappingTracker.ResolveConflictResult;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl.FileTypeWithDescriptor;
@@ -750,6 +752,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   private static void reInitFileTypeManagerComponent(@NotNull FileTypeManagerImpl fileTypeManager, @Nullable Element element) {
+    fileTypeManager.getRegisteredFileTypes();
     fileTypeManager.INSTANTIATED.clear();
     fileTypeManager.getRemovedMappingTracker().clear();
     fileTypeManager.clearStandardFileTypesBeforeTest();
@@ -1150,6 +1153,190 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertNull(myFileTypeManager.findFileTypeByName(MyTestFileType.NAME));
   }
 
+  public void testFileTypeIsInstantiatedOnFirstLookup() {
+    FileTypeBean bean = new FileTypeBean();
+    bean.name = MyTestFileType.NAME;
+    bean.implementationClass = MyTestFileType.class.getName();
+    bean.extensions = MyTestFileType.EXTENSION;
+    Disposable disposable = registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor());
+    try {
+      assertFalse(myFileTypeManager.INSTANTIATED.contains(bean.name));
+      assertInstanceOf(myFileTypeManager.getFileTypeByExtension(MyTestFileType.EXTENSION), MyTestFileType.class);
+      assertTrue(myFileTypeManager.INSTANTIATED.contains(bean.name));
+      assertSame(myFileTypeManager.findFileTypeByName(bean.name),
+                 myFileTypeManager.getFileTypeByFileName("test." + MyTestFileType.EXTENSION));
+    }
+    finally {
+      WriteAction.run(() -> Disposer.dispose(disposable));
+    }
+  }
+
+  @SuppressWarnings("deprecation")
+  public void testLegacyFileTypesAreUpdatedForPendingExtensions() {
+    LanguageFileType xml = StdFileTypes.XML;
+    LanguageFileType java = StdFileTypes.JAVA;
+    FileTypeBean xmlBean = Objects.requireNonNull(ContainerUtil.find(FileTypeManagerImpl.EP_NAME.getExtensionList(),
+                                                                  bean -> "XML".equals(bean.name) && bean.implementationClass != null));
+    myFileTypeManager.clearStandardFileTypesBeforeTest();
+    StdFileTypes.StdFileTypesUpdater updater = new StdFileTypes.StdFileTypesUpdater();
+    Disposable disposable = Disposer.newDisposable();
+    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(FileTypeManager.TOPIC, updater);
+    try {
+      StdFileTypes.JAVA = xml;
+      StdFileTypes.XML = PlainTextFileType.INSTANCE;
+      WriteAction.run(() -> myFileTypeManager.extensionAdded(xmlBean, xmlBean.getPluginDescriptor()));
+      assertSame(xml, StdFileTypes.XML);
+      assertSame(xml, StdFileTypes.JAVA);
+      assertNotEmpty(myFileTypeManager.getStandardMatchers(xml));
+
+      FileTypeBean bean = new FileTypeBean();
+      bean.name = MyTestFileType.NAME;
+      bean.implementationClass = "missing.FileType";
+      bean.setPluginDescriptor(FileTypeManagerImpl.coreIdeaPluginDescriptor());
+      WriteAction.run(() -> {
+        myFileTypeManager.extensionAdded(bean, bean.getPluginDescriptor());
+        myFileTypeManager.extensionRemoved(bean, bean.getPluginDescriptor());
+      });
+      assertFalse(myFileTypeManager.INSTANTIATED.contains(bean.name));
+      assertSame(xml, StdFileTypes.JAVA);
+      assertSame(xml, StdFileTypes.XML);
+
+      WriteAction.run(() -> myFileTypeManager.fireFileTypesChanged());
+      assertSame(xml, StdFileTypes.JAVA);
+      assertSame(xml, StdFileTypes.XML);
+
+      updater.fileTypesChanged(new FileTypeEvent(myFileTypeManager, null, xml, null));
+      assertSame(PlainTextFileType.INSTANCE, StdFileTypes.XML);
+      assertSame(xml, StdFileTypes.JAVA);
+
+      updater.fileTypesChanged(new FileTypeEvent(myFileTypeManager, xml, null, null));
+      assertSame(xml, StdFileTypes.XML);
+      assertSame(xml, StdFileTypes.JAVA);
+    }
+    finally {
+      Disposer.dispose(disposable);
+      StdFileTypes.JAVA = java;
+      StdFileTypes.XML = xml;
+    }
+  }
+
+  public void testPendingFileTypeCanBeUnregisteredWithoutInstantiation() {
+    FileTypeBean bean = new FileTypeBean();
+    bean.name = MyTestFileType.NAME;
+    bean.implementationClass = "missing.FileType";
+    bean.extensions = MyTestFileType.EXTENSION;
+    Disposable disposable = registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor());
+    WriteAction.run(() -> Disposer.dispose(disposable));
+    assertFalse(myFileTypeManager.INSTANTIATED.contains(bean.name));
+    assertSame(UnknownFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension(MyTestFileType.EXTENSION));
+    assertNull(myFileTypeManager.findFileTypeByName(bean.name));
+  }
+
+  public void testAdditionalMatchersKeepFileTypePending() {
+    FileTypeBean bean = new FileTypeBean();
+    bean.name = MyTestFileType.NAME;
+    bean.implementationClass = MyTestFileType.class.getName();
+    bean.extensions = MyTestFileType.EXTENSION;
+    Disposable disposable = registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor());
+    try {
+      FileTypeBean additional = new FileTypeBean();
+      additional.name = bean.name;
+      additional.fileNames = ".additionalFileTypeTest";
+      Disposable additionalDisposable = registerFileType(additional, FileTypeManagerImpl.coreIdeaPluginDescriptor());
+      try {
+        assertFalse(myFileTypeManager.INSTANTIATED.contains(bean.name));
+        FileType fileType = myFileTypeManager.getFileTypeByFileName(additional.fileNames);
+        assertInstanceOf(fileType, MyTestFileType.class);
+        assertSame(fileType, myFileTypeManager.getFileTypeByExtension(MyTestFileType.EXTENSION));
+      }
+      finally {
+        WriteAction.run(() -> Disposer.dispose(additionalDisposable));
+      }
+      assertSame(UnknownFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName(additional.fileNames));
+    }
+    finally {
+      WriteAction.run(() -> Disposer.dispose(disposable));
+    }
+  }
+
+  public void testPendingMatchersCanBeUnregisteredWithoutInstantiation() {
+    FileTypeBean bean = new FileTypeBean();
+    bean.name = MyTestFileType.NAME;
+    bean.implementationClass = MyTestFileType.class.getName();
+    bean.extensions = MyTestFileType.EXTENSION;
+    Disposable disposable = registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor());
+    try {
+      FileTypeBean additional = new FileTypeBean();
+      additional.name = bean.name;
+      additional.fileNames = ".additionalFileTypeTest";
+      Disposable additionalDisposable = registerFileType(additional, FileTypeManagerImpl.coreIdeaPluginDescriptor());
+      WriteAction.run(() -> Disposer.dispose(additionalDisposable));
+      assertFalse(myFileTypeManager.INSTANTIATED.contains(bean.name));
+      assertSame(UnknownFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName(additional.fileNames));
+      assertInstanceOf(myFileTypeManager.getFileTypeByExtension(MyTestFileType.EXTENSION), MyTestFileType.class);
+      assertSame(UnknownFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName(additional.fileNames));
+    }
+    finally {
+      WriteAction.run(() -> Disposer.dispose(disposable));
+    }
+  }
+
+  public void testPendingFileTypeRespectsRemovedMappings() {
+    FileTypeBean bean = new FileTypeBean();
+    bean.name = MyTestFileType.NAME;
+    bean.implementationClass = MyTestFileType.class.getName();
+    bean.extensions = MyTestFileType.EXTENSION;
+    myFileTypeManager.getRemovedMappingTracker().add(new ExtensionFileNameMatcher(MyTestFileType.EXTENSION), bean.name, true);
+    Disposable disposable = registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor());
+    try {
+      assertSame(UnknownFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension(MyTestFileType.EXTENSION));
+      assertSame(UnknownFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName("test." + MyTestFileType.EXTENSION));
+      assertInstanceOf(myFileTypeManager.findFileTypeByName(bean.name), MyTestFileType.class);
+    }
+    finally {
+      WriteAction.run(() -> Disposer.dispose(disposable));
+    }
+  }
+
+  public void testPendingHashBangFileTypeIsDetected() throws IOException {
+    VirtualFile file = createTempVirtualFile("pending-hash-bang", null, "#!/usr/bin/pending-file-type\ntext", StandardCharsets.UTF_8);
+    FileTypeBean bean = new FileTypeBean();
+    bean.name = MyTestFileType.NAME;
+    bean.implementationClass = MyTestFileType.class.getName();
+    bean.hashBangs = "pending-file-type";
+    Disposable disposable = registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor());
+    try {
+      assertFalse(myFileTypeManager.INSTANTIATED.contains(bean.name));
+      assertFalse(myFileTypeManager.isFileOfType(file, PlainTextFileType.INSTANCE));
+      assertInstanceOf(myFileTypeManager.getFileTypeByFile(file), MyTestFileType.class);
+    }
+    finally {
+      WriteAction.run(() -> Disposer.dispose(disposable));
+    }
+  }
+
+  public void testPendingSpecialFileTypeIsDetected() throws IOException {
+    VirtualFile file = createTempVirtualFile("pending-special-file", null, "text", StandardCharsets.UTF_8);
+    FileTypeBean bean = new FileTypeBean();
+    bean.name = MyTestFileType.NAME;
+    bean.implementationClass = MySpecialFileType.class.getName();
+    Disposable disposable = registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor());
+    try {
+      assertFalse(myFileTypeManager.INSTANTIATED.contains(bean.name));
+      assertInstanceOf(myFileTypeManager.getFileTypeByFile(file), MySpecialFileType.class);
+    }
+    finally {
+      WriteAction.run(() -> Disposer.dispose(disposable));
+    }
+  }
+
+  private static final class MySpecialFileType extends MyTestFileType implements FileTypeIdentifiableByVirtualFile {
+    @Override
+    public boolean isMyFileType(@NotNull VirtualFile file) {
+      return file.getName().equals("pending-special-file");
+    }
+  }
+
   private static @NotNull Disposable registerFileType(@NotNull FileTypeBean bean, @NotNull PluginDescriptor pluginDescriptor) {
     bean.setPluginDescriptor(pluginDescriptor);
     Disposable disposable = Disposer.newDisposable();
@@ -1226,11 +1413,12 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       bean.name = MyFileTypeWithStaticField.NAME;
       bean.implementationClass = MyFileTypeWithStaticField.class.getName();
       bean.fieldName = "INSTANCE518";
+      Disposable disposable = registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor());
       try {
-        assertThrows(PluginException.class, () -> registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor()));
+        assertThrows(PluginException.class, () -> myFileTypeManager.findFileTypeByName(bean.name));
       }
       finally {
-        FileTypeManagerImpl.EP_NAME.getPoint().unregisterExtension(bean);
+        WriteAction.run(() -> Disposer.dispose(disposable));
       }
       assertNull(myFileTypeManager.findFileTypeByName(MyFileTypeWithStaticField.NAME));
     });
@@ -1242,11 +1430,12 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       FileTypeBean bean = new FileTypeBean();
       bean.name = "incorrect BLAH";
       bean.implementationClass = MyFileTypeWithStaticField.class.getName();
+      Disposable disposable = registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor());
       try {
-        assertThrows(PluginException.class, () -> registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor()));
+        assertThrows(PluginException.class, () -> myFileTypeManager.findFileTypeByName(bean.name));
       }
       finally {
-        FileTypeManagerImpl.EP_NAME.getPoint().unregisterExtension(bean);
+        WriteAction.run(() -> Disposer.dispose(disposable));
       }
       assertNull(myFileTypeManager.findFileTypeByName(MyFileTypeWithStaticField.NAME));
     });

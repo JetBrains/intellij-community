@@ -12,22 +12,32 @@ import java.util.EventObject;
 public final class FileTypeEvent extends EventObject {
   private final FileType myAddedFileType;
   private final FileType myRemovedFileType;
+  private final String myAddedFileTypeName;
 
   @ApiStatus.Internal
   public FileTypeEvent(@NotNull Object source,
                        @Nullable FileType addedFileType,
-                       @Nullable FileType removedFileType) {
+                       @Nullable FileType removedFileType,
+                       @Nullable String addedFileTypeName) {
     super(source);
     myAddedFileType = addedFileType;
     myRemovedFileType = removedFileType;
+    myAddedFileTypeName = addedFileTypeName;
   }
 
   /**
-   * If this event was triggered by a file type being added, returns the file type that has been added. Not available in
-   * beforeFileTypeChanged listeners.
+   * Returns the added file type, or {@code null} if it is still pending or no file type was added.
+   * Events sent before a change return {@code null}.
    */
   public @Nullable FileType getAddedFileType() {
     return myAddedFileType;
+  }
+
+  /**
+   * Returns the name of the added file type, including a pending type, or {@code null} if no file type was added.
+   */
+  @Nullable String getAddedFileTypeName() {
+    return myAddedFileType != null ? myAddedFileType.getName() : myAddedFileTypeName;
   }
 
   /**
@@ -43,6 +53,9 @@ public final class FileTypeEvent extends EventObject {
     var result = new SmartList<String>();
     if (myAddedFileType != null) {
       result.add("added file type = " + myAddedFileType);
+    }
+    else if (myAddedFileTypeName != null) {
+      result.add("added file type = " + myAddedFileTypeName);
     }
     if (myRemovedFileType != null) {
       result.add("removed file type = " + myRemovedFileType);

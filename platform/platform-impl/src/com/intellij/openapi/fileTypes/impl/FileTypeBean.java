@@ -149,6 +149,11 @@ public final class FileTypeBean implements PluginAware {
   }
 
   @ApiStatus.Internal
+  void removeMatchers(@NotNull List<? extends FileNameMatcher> matchers) {
+    myMatchers.removeAll(matchers);
+  }
+
+  @ApiStatus.Internal
   @NotNull List<FileNameMatcher> getMatchers() {
     return new ArrayList<>(myMatchers);
   }

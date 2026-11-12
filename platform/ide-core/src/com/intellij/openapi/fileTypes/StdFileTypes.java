@@ -71,26 +71,24 @@ public final class StdFileTypes extends FileTypes {
   public static class StdFileTypesUpdater implements FileTypeListener {
     @Override
     public void fileTypesChanged(@NotNull FileTypeEvent event) {
-      FileType addedFileType = event.getAddedFileType();
-      if (addedFileType != null) {
-        String name = addedFileType.getName();
+      String name = event.getAddedFileTypeName();
+      if (name != null) {
         switch (name) {
-          case "JAVA" -> JAVA = (LanguageFileType)addedFileType;
-          case "CLASS" -> CLASS = addedFileType;
-          case "JSP" -> JSP = (LanguageFileType)addedFileType;
-          case "XML" -> XML = (LanguageFileType)addedFileType;
-          case "DTD" -> DTD = (LanguageFileType)addedFileType;
-          case "HTML" -> HTML = (LanguageFileType)addedFileType;
-          case "XHTML" -> XHTML = (LanguageFileType)addedFileType;
-          case "JavaScript" -> JS = (LanguageFileType)addedFileType;
-          case "Properties" -> PROPERTIES = (LanguageFileType)addedFileType;
+          case "JAVA" -> JAVA = (LanguageFileType)getAddedFileType(event, name);
+          case "CLASS" -> CLASS = getAddedFileType(event, name);
+          case "JSP" -> JSP = (LanguageFileType)getAddedFileType(event, name);
+          case "XML" -> XML = (LanguageFileType)getAddedFileType(event, name);
+          case "DTD" -> DTD = (LanguageFileType)getAddedFileType(event, name);
+          case "HTML" -> HTML = (LanguageFileType)getAddedFileType(event, name);
+          case "XHTML" -> XHTML = (LanguageFileType)getAddedFileType(event, name);
+          case "JavaScript" -> JS = (LanguageFileType)getAddedFileType(event, name);
+          case "Properties" -> PROPERTIES = (LanguageFileType)getAddedFileType(event, name);
         }
       }
 
       FileType removedFileType = event.getRemovedFileType();
       if (removedFileType != null) {
-        String name = removedFileType.getName();
-        switch (name) {
+        switch (removedFileType.getName()) {
           case "JAVA" -> JAVA = PLAIN_TEXT;
           case "CLASS" -> CLASS = PLAIN_TEXT;
           case "JSP" -> JSP = PLAIN_TEXT;
@@ -102,6 +100,11 @@ public final class StdFileTypes extends FileTypes {
           case "Properties" -> PROPERTIES = PLAIN_TEXT;
         }
       }
+    }
+
+    private static @NotNull FileType getAddedFileType(@NotNull FileTypeEvent event, @NotNull String name) {
+      FileType fileType = event.getAddedFileType();
+      return fileType != null ? fileType : ((FileTypeManager)event.getSource()).getStdFileType(name);
     }
   }
 }
