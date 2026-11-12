@@ -304,6 +304,7 @@ intellij.settingsSync.tests
 intellij.sh.tests
 intellij.statsCollector.tests
 intellij.tasks.tests
+intellij.terminal.completion.tests
 intellij.terminal.emulator.tests
 intellij.terminal.tests
 intellij.testng.rt.tests
