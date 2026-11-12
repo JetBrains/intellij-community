@@ -2,155 +2,169 @@
 package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.RegistryKey;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
-public class GroovyCompletion30Test extends GroovyCompletionTestBase {
-  @Override
-  protected void setUp() throws Exception {
-    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(true);
-    super.setUp();
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+
+@TestApplication
+@RegistryKey(key = MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE, value = "true")
+public class GroovyCompletion30Test {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_3_0);
+  private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
+
+  @AfterEach
+  public void tearDown() {
+    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true;
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
-      CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true;
-      Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).resetToDefault();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
+  @Test
   public void testInferArgumentTypeFromClosure() {
-    doBasicTest("""
-                  def foo(a, closure) {
-                    closure(a)
-                  }
+    runInEdtAndWait(() -> {
+      completion.get().doBasicTest("""
+                    def foo(a, closure) {
+                      closure(a)
+                    }
                   
-                  foo(1) { it.byt<caret> }
-                  """, """
-                  def foo(a, closure) {
-                    closure(a)
-                  }
+                    foo(1) { it.byt<caret> }
+                    """, """
+                    def foo(a, closure) {
+                      closure(a)
+                    }
                   
-                  foo(1) { it.byteValue()<caret> }
-                  """);
+                    foo(1) { it.byteValue()<caret> }
+                    """);
+    });
   }
 
+  @Test
   public void testInferArgumentTypeFromLambda() {
-    doBasicTest("""
-                  def foo(a, closure) {
-                    closure(a)
-                  }
+    runInEdtAndWait(() -> {
+      completion.get().doBasicTest("""
+                    def foo(a, closure) {
+                      closure(a)
+                    }
                   
-                  foo(1, (it) -> it.byt<caret> )
-                  """, """
-                  def foo(a, closure) {
-                    closure(a)
-                  }
+                    foo(1, (it) -> it.byt<caret> )
+                    """, """
+                    def foo(a, closure) {
+                      closure(a)
+                    }
                   
-                  foo(1, (it) -> it.byteValue()<caret> )
-                  """);
+                    foo(1, (it) -> it.byteValue()<caret> )
+                    """);
+    });
   }
 
+  @Test
   public void testInferArgumentTypeFromClosureInsideClass() {
-    doBasicTest("""
+    runInEdtAndWait(() -> {
+      completion.get().doBasicTest("""
                   
-                  class K {
-                    def foo(a, closure) {
-                      closure(a)
-                    }
+                    class K {
+                      def foo(a, closure) {
+                        closure(a)
+                      }
                   
-                    def bar() {
-                      foo(1) { it.byt<caret> }
+                      def bar() {
+                        foo(1) { it.byt<caret> }
+                      }
                     }
-                  }
-                  """, """
+                    """, """
                   
-                  class K {
-                    def foo(a, closure) {
-                      closure(a)
-                    }
+                    class K {
+                      def foo(a, closure) {
+                        closure(a)
+                      }
                   
-                    def bar() {
-                      foo(1) { it.byteValue()<caret> }
+                      def bar() {
+                        foo(1) { it.byteValue()<caret> }
+                      }
                     }
-                  }
-                  """);
+                    """);
+    });
   }
 
+  @Test
   public void testInferArgumentTypeForClosure() {
-    doBasicTest("""
+    runInEdtAndWait(() -> {
+      completion.get().doBasicTest("""
                   
-                  def foo(a, b) { b(a) }
+                    def foo(a, b) { b(a) }
                   
-                  foo(1) { a -> a.byteValue() }
-                  foo('q') { it.len<caret>}
-                  """, """
+                    foo(1) { a -> a.byteValue() }
+                    foo('q') { it.len<caret>}
+                    """, """
                   
-                  def foo(a, b) { b(a) }
+                    def foo(a, b) { b(a) }
                   
-                  foo(1) { a -> a.byteValue() }
-                  foo('q') { it.length()<caret>}
-                  """);
+                    foo(1) { a -> a.byteValue() }
+                    foo('q') { it.length()<caret>}
+                    """);
+    });
   }
 
+  @Test
   public void testInferArgumentTypeFromMethod() {
-    doBasicTest("""
-                  def foo(a) {
-                    a.byt<caret>
-                  }
+    runInEdtAndWait(() -> {
+      completion.get().doBasicTest("""
+                    def foo(a) {
+                      a.byt<caret>
+                    }
                   
-                  foo 1
-                  """, """
-                  def foo(a) {
-                    a.byteValue()<caret>
-                  }
+                    foo 1
+                    """, """
+                    def foo(a) {
+                      a.byteValue()<caret>
+                    }
                   
-                  foo 1
-                  """);
+                    foo 1
+                    """);
+    });
   }
 
+  @Test
   public void testCompletionAfterComplexStatement() {
-    doBasicTest("""
+    runInEdtAndWait(() -> {
+      completion.get().doBasicTest("""
                   
-                  def x(List<Integer> l){}
+                    def x(List<Integer> l){}
                   
-                  void m(l) {
-                      x([l])
-                      l.by<caret>
-                  }""", """
+                    void m(l) {
+                        x([l])
+                        l.by<caret>
+                    }""", """
                   
-                  def x(List<Integer> l){}
+                    def x(List<Integer> l){}
                   
-                  void m(l) {
-                      x([l])
-                      l.byteValue()<caret>
-                  }""");
+                    void m(l) {
+                        x([l])
+                        l.byteValue()<caret>
+                    }""");
+    });
   }
 
+  @Test
   public void testCompleteQuotedMethodName() {
-    doBasicTest("""
-                  def 'good job'() {}
-                  goo<caret>
-                  """,
-                """
-                  def 'good job'() {}
-                  'good job'()
-                  """);
+    runInEdtAndWait(() -> {
+      completion.get().doBasicTest("""
+                    def 'good job'() {}
+                    goo<caret>
+                    """,
+                  """
+                    def 'good job'() {}
+                    'good job'()
+                    """);
+    });
   }
 
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_3_0;
-  }
 }

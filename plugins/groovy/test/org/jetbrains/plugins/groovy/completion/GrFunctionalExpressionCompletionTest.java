@@ -1,33 +1,68 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.completion;
 
-public abstract class GrFunctionalExpressionCompletionTest extends GroovyCompletionTestBase {
-  public void testInjectMethodForCollection() { doBasicTest(); }
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-  public void testEachMethodForMapWithKeyValue() { doBasicTest(); }
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
+import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 
-  public void testEachMethodForList() { doBasicTest(); }
+public abstract class GrFunctionalExpressionCompletionTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy;
+  private final TestFixture<GroovyCompletionTestFixture> completion;
+  private final TestFixture<String> testName = testNameFixture(false);
 
-  public void testClosureDefaultParameterInEachMethod() { doBasicTest(); }
+  protected GrFunctionalExpressionCompletionTest(@NotNull LightProjectDescriptor descriptor, @NotNull String testDataPath) {
+    groovy = groovyFixture(descriptor, testDataPath);
+    completion = groovyCompletionFixture(groovy);
+  }
 
+  @Test
+  public void testInjectMethodForCollection() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
+
+  @Test
+  public void testEachMethodForMapWithKeyValue() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
+
+  @Test
+  public void testEachMethodForList() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
+
+  @Test
+  public void testClosureDefaultParameterInEachMethod() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
+
+  @Test
   public void testEachMethodForEnumRanges() {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.completeBasic();
-    myFixture.type("\n");
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    runInEdtAndWait(() -> {
+      groovy.get().configureByFile(testName.get() + ".groovy");
+      groovy.get().completeBasic();
+      groovy.get().type("\n");
+      groovy.get().checkResultByFile(testName.get() + "_after.groovy");
+    });
   }
 
-  public void testEachMethodForMapWithEntry() { doBasicTest(); }
+  @Test
+  public void testEachMethodForMapWithEntry() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
 
-  public void testEachMethodForRanges() { doBasicTest(); }
+  @Test
+  public void testEachMethodForRanges() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
 
-  public void testInjectMethodForArray() { doBasicTest(); }
+  @Test
+  public void testInjectMethodForArray() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
 
+  @Test
   public void testCompletionInEachClosure() {
-    doHasVariantsTest("intValue", "intdiv");
+    runInEdtAndWait(() -> {
+      completion.get().doHasVariantsTest("intValue", "intdiv");
+    });
   }
 
-  public void testWithMethod() { doBasicTest(); }
+  @Test
+  public void testWithMethod() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
 
-  public void testInjectMethodForMap() { doBasicTest(); }
+  @Test
+  public void testInjectMethodForMap() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
 }

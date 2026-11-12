@@ -1,344 +1,415 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.completion.builder;
 
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.completion.CompletionResult;
+import org.jetbrains.plugins.groovy.completion.GroovyCompletionTestFixture;
+import org.junit.jupiter.api.Test;
 
-public class GrDefaultBuilderStrategyTest extends GrBuilderTransformationCompletionTestBase {
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+
+@TestApplication
+public class GrDefaultBuilderStrategyTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
+
+  @Test
   public void test_no_builder_method() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.<caret>
-                       """, "builder");
+                         Pojo.<caret>
+                         """, "builder");
+    });
   }
 
+  @Test
   public void test_custom_builder_method() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder(builderMethodName = 'customBuilderMethod')
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderMethodName = 'customBuilderMethod')
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.<caret>
-                       """, "customBuilderMethod");
+                         Pojo.<caret>
+                         """, "customBuilderMethod");
+    });
   }
 
   /**
    * The class even won't be compiled.
    * Separate inspection highlights such code and offers to remove the parameter.
    */
+  @Test
   public void test_null_builder_method() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder(builderMethodName = null)
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderMethodName = null)
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.b<caret>
-                       """, "builder");
+                         Pojo.b<caret>
+                         """, "builder");
+    });
   }
 
   /**
    * Class will be compiled but there will be runtime error.
    */
+  @Test
   public void test_empty_builder_method() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder(builderMethodName = '')
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderMethodName = '')
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.<caret>
-                       """, "builder");
+                         Pojo.<caret>
+                         """, "builder");
+    });
   }
 
   /**
    * I do not know what to say here!
    */
+  @Test
   public void test_spaces_builder_method() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder(builderMethodName = '   ')
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderMethodName = '   ')
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.<caret>
-                       """, "   ");
+                         Pojo.<caret>
+                         """, "   ");
+    });
   }
 
+  @Test
   public void test_no_prefix() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.builder().<caret>
-                       """, "build", "name", "dynamic", "counter");
+                         Pojo.builder().<caret>
+                         """, "build", "name", "dynamic", "counter");
+    });
   }
 
+  @Test
   public void test_empty_prefix() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder(prefix = '')
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(prefix = '')
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.builder().<caret>
-                       """, "build", "name", "dynamic", "counter");
+                         Pojo.builder().<caret>
+                         """, "build", "name", "dynamic", "counter");
+    });
   }
 
+  @Test
   public void test_custom_prefix() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder(prefix = 'customPrefix')
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(prefix = 'customPrefix')
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.builder().<caret>
-                       """, "build", "customPrefixName", "customPrefixDynamic", "customPrefixCounter");
+                         Pojo.builder().<caret>
+                         """, "build", "customPrefixName", "customPrefixDynamic", "customPrefixCounter");
+    });
   }
 
+  @Test
   public void test_spaces_prefix() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder(prefix = '   ')
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(prefix = '   ')
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.builder().<caret>
-                       """, "build", "   Name", "   Dynamic", "   Counter");
+                         Pojo.builder().<caret>
+                         """, "build", "   Name", "   Dynamic", "   Counter");
+    });
   }
 
+  @Test
   public void test_null_prefix() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder(prefix = null)
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(prefix = null)
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.builder().<caret>
-                       """, "build", "name", "dynamic", "counter");
+                         Pojo.builder().<caret>
+                         """, "build", "name", "dynamic", "counter");
+    });
   }
 
+  @Test
   public void test_custom_build_method() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder(buildMethodName = 'customBuild')
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(buildMethodName = 'customBuild')
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.builder().<caret>
-                       """, "customBuild", "name", "dynamic", "counter");
+                         Pojo.builder().<caret>
+                         """, "customBuild", "name", "dynamic", "counter");
+    });
   }
 
+  @Test
   public void test_null_build_method() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder(buildMethodName = null)
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(buildMethodName = null)
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.builder().<caret>
-                       """, "build", "name", "dynamic", "counter");
+                         Pojo.builder().<caret>
+                         """, "build", "name", "dynamic", "counter");
+    });
   }
 
+  @Test
   public void test_empty_build_method() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder(buildMethodName = '')
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(buildMethodName = '')
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.builder().<caret>
-                       """, "build", "name", "dynamic", "counter");
+                         Pojo.builder().<caret>
+                         """, "build", "name", "dynamic", "counter");
+    });
   }
 
+  @Test
   public void test_spaces_build_method() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder(buildMethodName = '    ')
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(buildMethodName = '    ')
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.builder().<caret>
-                       """, "    ", "name", "dynamic", "counter");
+                         Pojo.builder().<caret>
+                         """, "    ", "name", "dynamic", "counter");
+    });
   }
 
+  @Test
   public void test_next_setter() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.builder().counter(1).<caret>
-                       """, "build", "name", "dynamic", "counter");
+                         Pojo.builder().counter(1).<caret>
+                         """, "build", "name", "dynamic", "counter");
+    });
   }
 
+  @Test
   public void test_one_more_setter_further() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
                        
-                       @Builder
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       Pojo.builder().counter(1).name("Janet").<caret>
-                       """, "build", "name", "dynamic", "counter");
+                         Pojo.builder().counter(1).name("Janet").<caret>
+                         """, "build", "name", "dynamic", "counter");
+    });
   }
 
+  @Test
   public void test_include_super_properties() {
-    doCompletionTest("""
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
                        
-                       import groovy.transform.builder.Builder
-                       class Animal {
-                           String color
-                           int legs
-                       }
+                         import groovy.transform.builder.Builder
+                         class Animal {
+                             String color
+                             int legs
+                         }
                        
-                       @Builder(includeSuperProperties = true)
-                       class Pet extends Animal{
-                           String name
-                       }
+                         @Builder(includeSuperProperties = true)
+                         class Pet extends Animal{
+                             String name
+                         }
                        
-                       new Pet().builder().color("Grey").<caret>
-                       """, "legs", "name");
+                         new Pet().builder().color("Grey").<caret>
+                         """, "legs", "name");
+    });
   }
 
+  @Test
   public void test_include_super_properties_2() {
-    doCompletionTest("""
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
                        
-                       import groovy.transform.builder.Builder
-                       class Animal {
-                           String color
-                           int legs
-                       }
+                         import groovy.transform.builder.Builder
+                         class Animal {
+                             String color
+                             int legs
+                         }
                        
-                       @Builder(includeSuperProperties = true)
-                       class Pet extends Animal{
-                           String name
-                       }
+                         @Builder(includeSuperProperties = true)
+                         class Pet extends Animal{
+                             String name
+                         }
                        
-                       new Pet().builder().name("Janet").<caret>
-                       """, "color", "legs");
+                         new Pet().builder().name("Janet").<caret>
+                         """, "color", "legs");
+    });
   }
 
+  @Test
   public void test_not_include_super_properties() {
-    String code = """
+    runInEdtAndWait(() -> {
+      String code = """
       
-      import groovy.transform.builder.Builder
-      class Animal {
-          String color
-          int legs
-      }
+        import groovy.transform.builder.Builder
+        class Animal {
+            String color
+            int legs
+        }
       
-      @Builder
-      class Pet extends Animal{
-          String name
-      }
+        @Builder
+        class Pet extends Animal{
+            String name
+        }
       
-      new Pet().builder().<caret>
-      """;
-    doCompletionTest(code, CompletionResult.contain, "name");
-    doCompletionTest(code, CompletionResult.notContain, "color", "legs");
+        new Pet().builder().<caret>
+        """;
+      completion.get().doCompletionTest(code, CompletionResult.contain, "name");
+      completion.get().doCompletionTest(code, CompletionResult.notContain, "color", "legs");
+    });
   }
 }

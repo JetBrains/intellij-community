@@ -1,202 +1,246 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.completion.builder;
 
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.completion.CompletionResult;
+import org.jetbrains.plugins.groovy.completion.GroovyCompletionTestFixture;
+import org.junit.jupiter.api.Test;
 
-public class GrSimpleBuilderStrategyTest extends GrBuilderTransformationCompletionTestBase {
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+
+@TestApplication
+public class GrSimpleBuilderStrategyTest {
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(GroovyProjectDescriptors.GROOVY_LATEST);
+  private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
+
+  @Test
   public void test_no_prefix() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
-                       import groovy.transform.builder.SimpleStrategy
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
+                         import groovy.transform.builder.SimpleStrategy
                        
-                       @Builder(builderStrategy = SimpleStrategy)
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderStrategy = SimpleStrategy)
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       new Pojo().<caret>
-                       """, "setName", "setDynamic", "setCounter", "method");
+                         new Pojo().<caret>
+                         """, "setName", "setDynamic", "setCounter", "method");
 
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
-                       import groovy.transform.builder.SimpleStrategy
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
+                         import groovy.transform.builder.SimpleStrategy
                        
-                       @Builder(builderStrategy = SimpleStrategy)
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderStrategy = SimpleStrategy)
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       new Pojo().<caret>
-                       """, CompletionResult.notContain, "build");
+                         new Pojo().<caret>
+                         """, CompletionResult.notContain, "build");
+    });
   }
 
+  @Test
   public void test_empty_prefix() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
-                       import groovy.transform.builder.SimpleStrategy
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
+                         import groovy.transform.builder.SimpleStrategy
                        
-                       @Builder(builderStrategy = SimpleStrategy, prefix = '')
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderStrategy = SimpleStrategy, prefix = '')
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       new Pojo().<caret>
-                       """, "name", "dynamic", "counter", "method");
+                         new Pojo().<caret>
+                         """, "name", "dynamic", "counter", "method");
+    });
   }
 
+  @Test
   public void test_custom_prefix() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
-                       import groovy.transform.builder.SimpleStrategy
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
+                         import groovy.transform.builder.SimpleStrategy
                        
-                       @Builder(builderStrategy = SimpleStrategy, prefix = 'custom')
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderStrategy = SimpleStrategy, prefix = 'custom')
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       new Pojo().<caret>
-                       """, "customName", "customDynamic", "customCounter", "method");
+                         new Pojo().<caret>
+                         """, "customName", "customDynamic", "customCounter", "method");
+    });
   }
 
+  @Test
   public void test_null_prefix() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
-                       import groovy.transform.builder.SimpleStrategy
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
+                         import groovy.transform.builder.SimpleStrategy
                        
-                       @Builder(builderStrategy = SimpleStrategy, prefix = null)
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderStrategy = SimpleStrategy, prefix = null)
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       new Pojo().<caret>
-                       """, "setName", "setDynamic", "setCounter", "method");
+                         new Pojo().<caret>
+                         """, "setName", "setDynamic", "setCounter", "method");
+    });
   }
 
+  @Test
   public void test_spaces_prefix() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
-                       import groovy.transform.builder.SimpleStrategy
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
+                         import groovy.transform.builder.SimpleStrategy
                        
-                       @Builder(builderStrategy = SimpleStrategy, prefix = '   ')
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderStrategy = SimpleStrategy, prefix = '   ')
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       new Pojo().<caret>
-                       """, "   Name", "   Dynamic", "   Counter", "method");
+                         new Pojo().<caret>
+                         """, "   Name", "   Dynamic", "   Counter", "method");
+    });
   }
 
+  @Test
   public void test_next_setter() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
-                       import groovy.transform.builder.SimpleStrategy
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
+                         import groovy.transform.builder.SimpleStrategy
                        
-                       @Builder(builderStrategy = SimpleStrategy)
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderStrategy = SimpleStrategy)
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       new Pojo().setName("Janet").<caret>
-                       """, "setName", "setDynamic", "setCounter", "method");
+                         new Pojo().setName("Janet").<caret>
+                         """, "setName", "setDynamic", "setCounter", "method");
+    });
   }
 
+  @Test
   public void test_one_more_setter_further() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
-                       import groovy.transform.builder.SimpleStrategy
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
+                         import groovy.transform.builder.SimpleStrategy
                        
-                       @Builder(builderStrategy = SimpleStrategy)
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderStrategy = SimpleStrategy)
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       new Pojo().setName("Janet").setCounter(35).<caret>
-                       """, "setName", "setDynamic", "setCounter", "method");
+                         new Pojo().setName("Janet").setCounter(35).<caret>
+                         """, "setName", "setDynamic", "setCounter", "method");
+    });
   }
 
+  @Test
   public void test_next_setter_with_prefix() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
-                       import groovy.transform.builder.SimpleStrategy
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
+                         import groovy.transform.builder.SimpleStrategy
                        
-                       @Builder(builderStrategy = SimpleStrategy, prefix = 'lol')
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderStrategy = SimpleStrategy, prefix = 'lol')
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       new Pojo().lolName("Janet").<caret>
-                       """, "lolName", "lolDynamic", "lolCounter", "method");
+                         new Pojo().lolName("Janet").<caret>
+                         """, "lolName", "lolDynamic", "lolCounter", "method");
+    });
   }
 
+  @Test
   public void test_one_more_setter_further_with_prefix() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
-                       import groovy.transform.builder.SimpleStrategy
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
+                         import groovy.transform.builder.SimpleStrategy
                        
-                       @Builder(builderStrategy = SimpleStrategy, prefix = 'lol')
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderStrategy = SimpleStrategy, prefix = 'lol')
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       new Pojo().lolName("Janet").lolCounter(35).<caret>
-                       """, "lolName", "lolDynamic", "lolCounter", "method");
+                         new Pojo().lolName("Janet").lolCounter(35).<caret>
+                         """, "lolName", "lolDynamic", "lolCounter", "method");
+    });
   }
 
+  @Test
   public void test_return_type_with_include_super() {
-    doCompletionTest("""
-                       import groovy.transform.builder.Builder
-                       import groovy.transform.builder.SimpleStrategy
+    runInEdtAndWait(() -> {
+      completion.get().doCompletionTest("""
+                         import groovy.transform.builder.Builder
+                         import groovy.transform.builder.SimpleStrategy
                        
-                       @Builder(builderStrategy = SimpleStrategy, includeSuperProperties = true)
-                       class Pojo {
-                           String name
-                           def dynamic
-                           int counter
+                         @Builder(builderStrategy = SimpleStrategy, includeSuperProperties = true)
+                         class Pojo {
+                             String name
+                             def dynamic
+                             int counter
                        
-                           def method() {}
-                       }
+                             def method() {}
+                         }
                        
-                       new Pojo().setName().<caret>
-                       """, CompletionResult.notContain, "setDynamic", "setCounter");
+                         new Pojo().setName().<caret>
+                         """, CompletionResult.notContain, "setDynamic", "setCounter");
+    });
   }
 }
