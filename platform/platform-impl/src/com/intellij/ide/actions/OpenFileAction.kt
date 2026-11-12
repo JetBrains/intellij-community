@@ -4,6 +4,7 @@ package com.intellij.ide.actions
 import com.intellij.icons.AllIcons
 import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.TrustedFiles
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.ide.impl.MultipleFileOpener
 import com.intellij.ide.impl.OpenProjectTask
@@ -13,7 +14,6 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
-import com.intellij.ide.TrustedFiles
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -46,8 +46,11 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.navigateToFile
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.projectImport.ProjectOpenProcessor.Companion.getImportProvider
 import com.intellij.util.SlowOperations
@@ -80,13 +83,24 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
       }
     }
 
+    /**
+     * Opens [file] in [project] and suspends until the editor opens. The EDT stays free in the meantime.
+     *
+     * The call goes through [NavigationService], so a newer navigation in [project] can replace it.
+     */
     suspend fun openFileAsync(file: VirtualFile, project: Project) {
       if (!prepareFileTypeForOpening(project, file)) {
         return
       }
 
-      withContext(Dispatchers.EDT) {
-        openFile(file, project)
+      if (LightEdit.owns(project)) {
+        withContext(Dispatchers.EDT) {
+          openFile(file, project)
+        }
+      }
+      else {
+        NonProjectFileWritingAccessProvider.allowWriting(listOf(file))
+        navigateToFile(project, file, line = -1, column = -1, options = NavigationOptions.requestFocus())
       }
     }
 
@@ -247,10 +261,7 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
         LightEditFeatureUsagesUtil.logFileOpen(project, virtualFile, LightEditFeatureUsagesUtil.OpenPlace.LightEditOpenAction)
       }
       else {
-        val navigatable = PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
-        withContext(Dispatchers.EDT) {
-          navigatable.navigate(true)
-        }
+        navigateToFile(project, virtualFile, line = -1, column = -1, options = NavigationOptions.requestFocus())
       }
     }
   }

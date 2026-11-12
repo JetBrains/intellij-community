@@ -516,6 +516,17 @@ fun openFileFromCommandLine(project: Project, file: Path, line: Int, column: Int
  * @return `false` if the navigation did nothing, eg, because a newer navigation superseded it
  */
 internal suspend fun navigateToFileFromCommandLine(project: Project, file: VirtualFile, line: Int, column: Int): Boolean {
+  // a command line open is a programmatic navigation, so it records no back history
+  return navigateToFile(project, file, line, column, NavigationOptions.requestFocus().recordAsBackHistory(false))
+}
+
+/**
+ * Opens [file] through [NavigationService] and suspends until the editor opens. The EDT stays free in the meantime.
+ *
+ * @param line a 1-based line, or a value below 1 to keep the caret of the file
+ * @return `false` if the navigation did nothing, eg, because a newer navigation superseded it
+ */
+internal suspend fun navigateToFile(project: Project, file: VirtualFile, line: Int, column: Int, options: NavigationOptions): Boolean {
   val navigatable = withContext(Dispatchers.EDT) {
     if (line > 0) {
       OpenFileDescriptor(project, file, line - 1, column.coerceAtLeast(0))
@@ -525,7 +536,6 @@ internal suspend fun navigateToFileFromCommandLine(project: Project, file: Virtu
     }
   }
   val service = NavigationService.getInstance(project)
-  val options = NavigationOptions.requestFocus().recordAsBackHistory(false)
   if (navigatable.javaClass == OpenFileDescriptor::class.java) {
     val descriptor = navigatable as OpenFileDescriptor
     try {
