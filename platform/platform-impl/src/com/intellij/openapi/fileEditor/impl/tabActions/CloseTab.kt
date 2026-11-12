@@ -147,7 +147,7 @@ class CloseTab(
   }
 
   fun getIcon(isHovered: Boolean): Icon {
-    if (isAlwaysModified()) {
+    if (!isHovered && isAlwaysModified()) {
       return AllIcons.General.Modified
     }
     val pinned = isPinned()
