@@ -21,11 +21,11 @@ fun EntityStorage.checkConsistency() {
   }
 }
 
-internal fun createEmptyBuilder(): MutableEntityStorageImpl {
+fun createEmptyBuilder(): MutableEntityStorageImpl {
   return MutableEntityStorageImpl(ImmutableEntityStorageImpl.EMPTY)
 }
 
-internal fun createBuilderFrom(storage: EntityStorage): MutableEntityStorageImpl {
+fun createBuilderFrom(storage: EntityStorage): MutableEntityStorageImpl {
   val immutable = when (storage) {
     is ImmutableEntityStorage -> storage
     is MutableEntityStorage -> storage.toSnapshot()

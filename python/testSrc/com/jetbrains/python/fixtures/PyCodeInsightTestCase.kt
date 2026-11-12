@@ -354,7 +354,7 @@ abstract class PyCodeInsightTestCase {
     }
 
     /** Sets the keys of [enable] to true and the keys of [disable] to false until [parentDisposable] is disposed. */
-    internal fun setRegistryKeys(enable: Array<String>, disable: Array<String>, parentDisposable: Disposable) {
+    fun setRegistryKeys(enable: Array<String>, disable: Array<String>, parentDisposable: Disposable) {
       for (key in enable) {
         Registry.get(key).setValue(true, parentDisposable)
       }

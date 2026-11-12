@@ -191,7 +191,7 @@ internal fun <T : WorkspaceEntity> T.from(storage: EntityStorage): T {
 /**
  * This function was created to simplify IJPL-583 refactoring. It should not be used in code anymore
  */
-internal fun <T: WorkspaceEntity.Builder<M>, M: WorkspaceEntity> M.builderFrom(from: MutableEntityStorage): T {
+fun <T: WorkspaceEntity.Builder<M>, M: WorkspaceEntity> M.builderFrom(from: MutableEntityStorage): T {
   val pointer = this.createPointer<M>()
   val entityFromBuilder = pointer.resolve(from)!!
   var thief: T? = null

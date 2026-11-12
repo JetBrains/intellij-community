@@ -63,7 +63,7 @@ class TyLspToolEnvTest {
     private val toolInstalled = AtomicBoolean(false)
     private val tempPathFixture = tempPathFixture()
     private val projectFixture = projectFixture(openAfterCreation = true)
-    internal val project by projectFixture
+    val project by projectFixture
     private val pyProjectFixture = projectFixture.pyProjectFixture(tempPathFixture)
     internal val pyProject by pyProjectFixture
     internal val venv by pyEnvironmentFixture().pyVenvFixture(

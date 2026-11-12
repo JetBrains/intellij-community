@@ -24,7 +24,7 @@ import java.nio.file.Path
  * The rule exports a different env to get the file content, then writes [envName] into the file and removes the `prefix`.
  * Thus `conda env create -f` never sees an existing directory, even if the delete of the exported env did not remove it.
  */
-internal class CondaYamlFileRule(
+class CondaYamlFileRule(
   private val condaRule: LocalCondaRule,
   private val languageLevel: LanguageLevel = LanguageLevel.PYTHON39,
 ) : ExternalResource() {

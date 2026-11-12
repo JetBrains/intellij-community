@@ -74,7 +74,7 @@ private val LSP_EVENT_WAIT_LIMIT = 5.seconds
  * A restart after a package install is normal, so the function continues to wait for the new client.
  * It fails only when the client of [providerClass] shuts down unexpectedly.
  */
-internal suspend fun awaitLspErrorDiagnostics(
+suspend fun awaitLspErrorDiagnostics(
   project: Project,
   file: VirtualFile,
   providerClass: Class<out LspIntegrationProvider>,
@@ -123,7 +123,7 @@ private suspend fun readLspErrorDiagnostics(
  * Each check calls [findClient] again. A server can restart while the test waits, and the client from before the
  * restart publishes nothing more. A client of [providerClass] that shuts down unexpectedly fails the wait at once.
  */
-internal suspend fun awaitLspDiagnostics(
+suspend fun awaitLspDiagnostics(
   project: Project,
   file: VirtualFile,
   providerClass: Class<out LspIntegrationProvider>,
@@ -148,11 +148,11 @@ internal suspend fun awaitLspDiagnostics(
 }
 
 /** The modules of the Python projects that the server behind [this] answers for. */
-internal val LspClient.pyServedModules: List<Module>
+val LspClient.pyServedModules: List<Module>
   get() = pyServedProjects.map { it.residesOnModule }
 
 /** The running client of [providerClass] that [condition] accepts, or `null`. */
-internal fun runningLspClient(
+fun runningLspClient(
   project: Project,
   providerClass: Class<out LspIntegrationProvider>,
   condition: (LspClient) -> Boolean = { true },
@@ -165,7 +165,7 @@ internal fun runningLspClient(
  *
  * A later restart can replace the client, so a caller that waits again later looks the client up again.
  */
-internal suspend fun awaitLspClientOf(
+suspend fun awaitLspClientOf(
   project: Project,
   providerClass: Class<out LspIntegrationProvider>,
   module: Module,
@@ -184,12 +184,12 @@ internal suspend fun awaitLspClientOf(
 }
 
 /** Whether [client] is the only client of [providerClass] in its project, and serves exactly [modules]. */
-internal fun isOnlyLspServerOf(client: LspClient, providerClass: Class<out LspIntegrationProvider>, modules: Set<Module>): Boolean =
+fun isOnlyLspServerOf(client: LspClient, providerClass: Class<out LspIntegrationProvider>, modules: Set<Module>): Boolean =
   client.pyServedModules.toSet() == modules &&
   LspClientManager.getInstance(client.descriptor.project).getClients(providerClass).size == 1
 
 /** Writes [text] into the file `main.py` of [directory], and checks that the file belongs to [module]. */
-internal suspend fun writeModuleFile(project: Project, directory: Path, module: Module, text: String): VirtualFile {
+suspend fun writeModuleFile(project: Project, directory: Path, module: Module, text: String): VirtualFile {
   val path = directory.resolve("main.py")
   withContext(Dispatchers.IO) { path.writeText(text) }
   val file = checkNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)) { "$path is not in the VFS" }
@@ -210,7 +210,7 @@ private suspend fun LspClient?.diagnosticsOf(file: VirtualFile): List<Diagnostic
  *  - ty:           ``Object of type `Literal["not an int"]` is not assignable to `int` ``
  *  - basedpyright: `Type "Literal['not an int']" is not assignable to declared type "int"`
  */
-internal fun assertReportsIntAssignmentError(errors: List<Diagnostic>, tool: String) {
+fun assertReportsIntAssignmentError(errors: List<Diagnostic>, tool: String) {
   assertTrue(errors.any { error ->
     val message = error.messageIfStringOrEmpty
     message.contains("assignable", ignoreCase = true) && message.contains("int")
@@ -230,7 +230,7 @@ internal fun assertReportsIntAssignmentError(errors: List<Diagnostic>, tool: Str
  * install or after a new interpreter is normal, so this function then waits for the new server. A client of
  * [providerClass] that shuts down unexpectedly fails the wait at once.
  */
-internal suspend fun awaitFileOpenedByLspTool(
+suspend fun awaitFileOpenedByLspTool(
   project: Project,
   file: VirtualFile,
   providerClass: Class<out LspIntegrationProvider>,
@@ -256,7 +256,7 @@ internal suspend fun awaitFileOpenedByLspTool(
  * yet mean that the server formats. A reformat before the registration falls back to the IDE formatter.
  * The Ruff executable and the LSP server both format through an [AsyncDocumentFormattingService].
  */
-internal suspend fun awaitFormatterOtherThanIde(project: Project, file: VirtualFile): Unit =
+suspend fun awaitFormatterOtherThanIde(project: Project, file: VirtualFile): Unit =
   withTimeout(LSP_EVENT_WAIT_LIMIT) {
     while (!readAction {
         val psiFile = PsiManager.getInstance(project).findFile(file) ?: return@readAction false
@@ -287,7 +287,7 @@ internal suspend fun stopLspClientsAndWait(project: Project, providerClass: Clas
  * applied via [configure], which the caller owns because the configuration services share no common
  * writable surface.
  */
-internal suspend fun PyProject.enableLspToolAndInstall(
+suspend fun PyProject.enableLspToolAndInstall(
   project: Project,
   pyTool: PyTool,
   toolInstalled: AtomicBoolean,
@@ -304,7 +304,7 @@ internal suspend fun PyProject.enableLspToolAndInstall(
  * Stop the LSP server(s) of [providerClass] and close all editors, so each test starts from a clean
  * editor state and no external tool process survives into the thread-leak check. Use from `@AfterEach`.
  */
-internal suspend fun tearDownLspTool(project: Project, providerClass: Class<out LspIntegrationProvider>) {
+suspend fun tearDownLspTool(project: Project, providerClass: Class<out LspIntegrationProvider>) {
   stopLspClientsAndWait(project, providerClass)
   edtWriteAction {
     FileEditorManagerEx.getInstanceEx(project).closeAllFiles()

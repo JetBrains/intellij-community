@@ -31,7 +31,7 @@ import org.toml.lang.psi.TomlFile
 import java.nio.file.Path
 
 @TestOnly
-internal class TestPythonPackageManager(project: Project, interpreter: PythonInterpreter) :
+class TestPythonPackageManager(project: Project, interpreter: PythonInterpreter) :
   PythonPackageManager(project, interpreter) {
   private var packageNames: List<String> = emptyList()
   private var packageDetails: PythonPackageDetails? = null

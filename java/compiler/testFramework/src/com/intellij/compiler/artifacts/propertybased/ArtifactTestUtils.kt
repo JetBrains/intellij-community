@@ -16,26 +16,26 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
 import org.junit.Assert
 
-internal fun artifact(project: Project, name: String): Artifact {
+fun artifact(project: Project, name: String): Artifact {
   val bridgeArtifact = runReadAction { ArtifactManager.getInstance(project).findArtifact(name) }
   Assert.assertNotNull(bridgeArtifact)
   return bridgeArtifact!!
 }
 
-internal fun artifactEntity(project: Project, name: String): ArtifactEntity {
+fun artifactEntity(project: Project, name: String): ArtifactEntity {
   val artifactEntities = WorkspaceModel.getInstance(project).currentSnapshot.entities(ArtifactEntity::class.java)
   val artifactEntity = artifactEntities.find { it.name == name }
   Assert.assertNotNull(artifactEntity)
   return artifactEntity!!
 }
 
-internal fun assertTreesEquals(project: Project, left: PackagingElement<*>, right: PackagingElementEntity) {
+fun assertTreesEquals(project: Project, left: PackagingElement<*>, right: PackagingElementEntity) {
   val rightElement = right.toElement(project, VersionedEntityStorageOnBuilder(MutableEntityStorage.create()))
 
   assertElementsEquals(left, rightElement)
 }
 
-internal fun assertElementsEquals(left: PackagingElement<*>, right: PackagingElement<*>) {
+fun assertElementsEquals(left: PackagingElement<*>, right: PackagingElement<*>) {
   if (left !is ArtifactRootElementImpl || right !is ArtifactRootElementImpl) {
     if (!left.isEqualTo(right)) {
       Assert.fail("Elements are not equals. $left <-> $right")

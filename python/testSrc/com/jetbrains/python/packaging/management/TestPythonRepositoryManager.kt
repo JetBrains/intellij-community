@@ -16,7 +16,7 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
-internal class TestPythonRepositoryManager(
+class TestPythonRepositoryManager(
   override val project: Project,
 ) : PythonRepositoryManager {
 

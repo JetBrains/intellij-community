@@ -27,7 +27,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import java.io.File
 
-internal const val ONBOARDING_TIPS_SEARCH_STR = "with your caret at the highlighted text"
+const val ONBOARDING_TIPS_SEARCH_STR = "with your caret at the highlighted text"
 
 @TestApplication
 abstract class MavenKotlinNewProjectWizardTestCase {

@@ -15,7 +15,7 @@ import org.mockito.Mockito
 import java.util.concurrent.ConcurrentHashMap
 
 @TestOnly
-internal class TestPythonPackageManagerService(
+class TestPythonPackageManagerService(
   val installedPackages: List<PythonPackage> = emptyList(),
   val availablePackageNames: List<String> = emptyList(),
 ) : PythonPackageManagerService {

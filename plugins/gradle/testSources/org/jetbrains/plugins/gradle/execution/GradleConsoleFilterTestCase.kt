@@ -16,11 +16,11 @@ abstract class GradleConsoleFilterTestCase {
 
   abstract fun getFilter(project: Project): Filter
 
-  internal fun String.shouldNotMatch() {
+  fun String.shouldNotMatch() {
     assertNull(applyFilter(this))
   }
 
-  internal fun assertMatch(linePrefix: String, path: String, lineSuffix: String) {
+  fun assertMatch(linePrefix: String, path: String, lineSuffix: String) {
     val line = linePrefix + path + lineSuffix
     val result = applyFilter(line) ?: throw AssertionError("Filter result should not be null")
     assertEquals(1, result.resultItems.size)

@@ -204,7 +204,7 @@ internal fun assertDirectoryMatches(actualDir: File, expectedDir: File, filesToI
   UsefulTestCase.assertEmpty(expectedFiles.keys - actualFiles.keys)
 }
 
-internal fun createProjectSerializers(
+fun createProjectSerializers(
   projectDir: File,
   virtualFileManager: VirtualFileUrlManager,
   externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null

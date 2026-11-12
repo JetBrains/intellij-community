@@ -25,14 +25,14 @@ import kotlinx.coroutines.withContext
 import org.junit.Assert
 
 
-internal suspend fun getPythonVersion(sdk: Sdk, request: TargetEnvironmentRequest): String? {
+suspend fun getPythonVersion(sdk: Sdk, request: TargetEnvironmentRequest): String? {
   val commandLineBuilder = TargetedCommandLineBuilder(request)
   sdk.configureBuilderToRunPythonOnTarget(commandLineBuilder)
   val flavor = sdk.pySdkAdditionalData.flavor
   return getPythonVersion(commandLineBuilder, flavor, request)
 }
 
-internal suspend fun getPythonVersion(commandLineBuilder: TargetedCommandLineBuilder,
+suspend fun getPythonVersion(commandLineBuilder: TargetedCommandLineBuilder,
                                       flavor: PythonSdkFlavor<*>,
                                       request: TargetEnvironmentRequest): String? {
   commandLineBuilder.addParameter(PYTHON_VERSION_ARG)

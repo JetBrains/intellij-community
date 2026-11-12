@@ -174,9 +174,9 @@ class ZubanLspToolEnvTest {
     internal val projectPath by tempPathFixture
     private val venvPathFixture = tempPathFixture(prefix = "zuban_venv")
     private val projectFixture = projectFixture(openAfterCreation = true)
-    internal val project by projectFixture
+    val project by projectFixture
     private val moduleFixture = projectFixture.pyModuleFixture(tempPathFixture, addPathToSourceRoot = true)
-    internal val module by moduleFixture
+    val module by moduleFixture
     private val pyProjectFixture = moduleFixture.pyProjectFixture()
     internal val pyProject by pyProjectFixture
     internal val venv by pyEnvironmentFixture().pyVenvFixture(where = venvPathFixture, pyProjectFixture = pyProjectFixture)

@@ -13,7 +13,7 @@ import java.util.function.Function
 
  * @author Ilya.Kazakevich
  */
-internal abstract class PyUnitTestLikeProcessWithConsoleTestTask<T :
+abstract class PyUnitTestLikeProcessWithConsoleTestTask<T :
 PyScriptTestProcessRunner<*>> @JvmOverloads constructor(relativePathToTestData: String,
                                                         val myScriptName: String,
                                                         protected val processRunnerCreator: Function<TestRunnerConfig, T>,

@@ -81,7 +81,8 @@ internal data class EntityPointerImpl<E : WorkspaceEntity>(internal val id: Enti
 // companion object in EntityStorageSnapshotImpl is initialized too late
 private val entityStorageSnapshotImplInstancesCounter: AtomicLong = AtomicLong()
 
-internal open class ImmutableEntityStorageImpl(
+@ApiStatus.Internal
+public open class ImmutableEntityStorageImpl internal constructor(
   override val entitiesByType: ImmutableEntitiesBarrel,
   override val refs: RefsTable,
   override val indexes: ImmutableStorageIndexes,
@@ -124,7 +125,7 @@ internal open class ImmutableEntityStorageImpl(
     return inserted as T
   }
 
-  companion object {
+  internal companion object {
     private val NULL_ENTITY = ObjectUtils.sentinel("null entity", WorkspaceEntity::class.java)
     val EMPTY = ImmutableEntityStorageImpl(ImmutableEntitiesBarrel.EMPTY, RefsTable(), ImmutableStorageIndexes.EMPTY)
 
@@ -145,7 +146,8 @@ internal open class ImmutableEntityStorageImpl(
   }
 }
 
-internal class MutableEntityStorageImpl(
+@ApiStatus.Internal
+public class MutableEntityStorageImpl internal constructor(
   private val originalSnapshot: ImmutableEntityStorageImpl,
 ) : MutableEntityStorageInstrumentation, AbstractEntityStorage() {
 
@@ -269,7 +271,7 @@ internal class MutableEntityStorageImpl(
   }
 
   // This should be removed or not extracted into the interface
-  fun <T : WorkspaceEntity, E : WorkspaceEntityData<T>, D : ModifiableWorkspaceEntityBase<T, E>> putEntity(entity: D) = putEntityTimeMs.addMeasuredTime {
+  internal fun <T : WorkspaceEntity, E : WorkspaceEntityData<T>, D : ModifiableWorkspaceEntityBase<T, E>> putEntity(entity: D) = putEntityTimeMs.addMeasuredTime {
     try {
       startWriting()
 
@@ -418,7 +420,7 @@ internal class MutableEntityStorageImpl(
   /**
    *  TODO Special cases: when source filter returns true for all entity sources.
    */
-  override fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: EntityStorage) = replaceBySourceTimeMs.addMeasuredTime {
+  override fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: EntityStorage): Unit = replaceBySourceTimeMs.addMeasuredTime {
     try {
       startWriting()
       replaceWith as AbstractEntityStorage
@@ -761,7 +763,7 @@ internal class MutableEntityStorageImpl(
 
   override fun hasChanges(): Boolean = changeLog.changeLog.isNotEmpty()
 
-  override fun applyChangesFrom(builder: MutableEntityStorage) = applyChangesFromTimeMs.addMeasuredTime {
+  override fun applyChangesFrom(builder: MutableEntityStorage): Unit = applyChangesFromTimeMs.addMeasuredTime {
     try {
       startWriting()
       builder as MutableEntityStorageImpl
@@ -791,7 +793,7 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex = getMutableVFUrlIndexTimeMs.addMeasuredTime {
+  internal fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex = getMutableVFUrlIndexTimeMs.addMeasuredTime {
     try {
       startWriting()
       val virtualFileIndex = indexes.virtualFileIndex
@@ -941,7 +943,7 @@ internal class MutableEntityStorageImpl(
     indexes.softLinks.clearTrackedValues()
   }
 
-  companion object {
+  internal companion object {
 
     private val LOG = logger<MutableEntityStorageImpl>()
 

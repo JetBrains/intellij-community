@@ -20,7 +20,7 @@ object GradleVersionCatalogFixtures {
    * For the logic, that relies on `settings.gradle` file parsing to determine version catalogs available to a subproject,
    * this case is not supported. It should be supported by the logic relying on the Gradle sync data.
    */
-  internal val DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE =
+  val DYNAMICALLY_INCLUDED_SUBPROJECTS_FIXTURE =
     GradleTestFixtureBuilder.create("GradleVersionCatalogs-dynamically-included-subprojects") { gradleVersion ->
       withSettingsFile(gradleVersion) {
         addCode("""
