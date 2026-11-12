@@ -373,7 +373,7 @@ class MarkdownPreviewFileEditor(
 
     override fun settingsChanged(settings: MarkdownSettings) {
       coroutineScope.launch(Dispatchers.EDT) {
-        if (htmlPanelWrapper.isShowing) {
+        if (htmlPanelWrapper.isVisible) {
           if (panel == null) {
             attachHtmlPanel()
           }
