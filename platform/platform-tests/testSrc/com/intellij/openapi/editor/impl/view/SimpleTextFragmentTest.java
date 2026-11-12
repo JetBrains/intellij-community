@@ -22,6 +22,8 @@ import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_CHAR_WIDT
 import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_DESCENT;
 import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_LINE_HEIGHT;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 
 public class SimpleTextFragmentTest {
   private final BufferedImage image = new BufferedImage(200, 20, BufferedImage.TYPE_INT_RGB);
@@ -60,6 +62,24 @@ public class SimpleTextFragmentTest {
       }
     });
     assertEquals(List.of(1.0, 13.0, 25.0), positions); // each glyph in the middle of its cell
+  }
+
+  @Test
+  public void testRepaintOfTheSameRangeReusesTheGlyphs() {
+    SimpleTextFragment fragment = new SimpleTextFragment("abcd".toCharArray(), 0, 4, createFontInfo(2), null);
+    List<GlyphVector> drawn = new ArrayList<>();
+    Graphics2DDelegate capturing = new Graphics2DDelegate(graphics) {
+      @Override
+      public void drawGlyphVector(GlyphVector glyphVector, float x, float y) {
+        drawn.add(glyphVector);
+      }
+    };
+    fragment.draw(0, 15, 0, 4).accept(capturing);
+    fragment.draw(0, 15, 0, 4).accept(capturing);
+    fragment.draw(0, 15, 1, 4).accept(capturing);
+    assertSame(drawn.get(0), drawn.get(1));
+    assertNotSame(drawn.get(1), drawn.get(2));
+    assertEquals(3, drawn.get(2).getNumGlyphs());
   }
 
   @Test

@@ -968,6 +968,22 @@ public class EditorColorsSchemeImplTest {
   }
 
   @Test
+  public void testOwnFontWithUnreadableLetterSpacingGetsZeroWhenTheAppFontHasLetterSpacing() throws Exception {
+    ModifiableFontPreferences appPrefs = (ModifiableFontPreferences)AppEditorFontOptions.getInstance().getFontPreferences();
+    float appLetterSpacing = appPrefs.getLetterSpacing();
+    try {
+      appPrefs.setLetterSpacing(0.05f);
+      EditorColorsScheme scheme = loadScheme(letterSpacingScheme("""
+        <option name="LETTER_SPACING" value="abc" />
+        """));
+      assertEquals(0f, scheme.getFontPreferences().getLetterSpacing());
+    }
+    finally {
+      appPrefs.setLetterSpacing(appLetterSpacing);
+    }
+  }
+
+  @Test
   public void testOwnConsoleFontWithoutLetterSpacingGetsTheLetterSpacingOfTheEditorFont() throws Exception {
     EditorColorsScheme scheme = loadScheme(letterSpacingScheme("""
       <option name="LETTER_SPACING" value="0.05" />

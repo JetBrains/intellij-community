@@ -9,6 +9,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Point2D;
 import java.util.Arrays;
@@ -23,7 +24,8 @@ public final class SimpleTextFragment extends TextFragment {
   private final @NotNull Font myFont;
   private final float @Nullable [] myCharAlignment;
   private final float myLetterSpacing;
-  private final boolean @Nullable [] myTakesLetterSpacing; // null when the font has no letter spacing
+  private final float @Nullable [] myCharSpacing; // the letter spacing of each char, or null when each char has myLetterSpacing
+  private volatile @Nullable SpacedGlyphs mySpacedGlyphs; // the glyphs of the last drawSpaced
 
   @VisibleForTesting
   public SimpleTextFragment(
@@ -37,16 +39,27 @@ public final class SimpleTextFragment extends TextFragment {
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();
     myLetterSpacing = fontInfo.getLetterSpacingPixels();
-    myTakesLetterSpacing = myLetterSpacing == 0 ? null : new boolean[end - start];
+    float[] charSpacing = null;
     float x = 0;
     char[] text = myText;
     float[] charAlignment = null;
     boolean gridCellAlignmentEnabled = text.length == 0 || isGridCellAlignmentEnabled();
     for (int i = 0; i < text.length; i++) {
       int codePoint = text[i]; // SimpleTextFragment only handles BMP characters, so no need for codePointAt here
-      float charWidth = fontInfo.charWidth2D(codePoint);
-      if (myTakesLetterSpacing != null) {
-        myTakesLetterSpacing[i] = fontInfo.takesLetterSpacing(codePoint);
+      float charWidth;
+      if (myLetterSpacing == 0) {
+        charWidth = fontInfo.charWidth2D(codePoint);
+      } else {
+        float advance = fontInfo.charAdvance2D(codePoint);
+        float spacing = fontInfo.letterSpacingAfter(codePoint, advance);
+        charWidth = advance + spacing;
+        if (spacing != myLetterSpacing && charSpacing == null) {
+          charSpacing = new float[text.length];
+          Arrays.fill(charSpacing, 0, i, myLetterSpacing);
+        }
+        if (charSpacing != null) {
+          charSpacing[i] = spacing;
+        }
       }
       if (gridCellAlignmentEnabled) {
         float newWidth = adjustedWidth(codePoint);
@@ -62,6 +75,7 @@ public final class SimpleTextFragment extends TextFragment {
       myCharPositions[i] = x;
     }
     myCharAlignment = charAlignment;
+    myCharSpacing = charSpacing;
   }
 
   @Override
@@ -112,8 +126,8 @@ public final class SimpleTextFragment extends TextFragment {
       int yAsInt = (int)y;
       if (myCharAlignment != null) {
         drawAligned(g, myText, startColumn, endColumn - startColumn, x, y);
-      } else if (myTakesLetterSpacing != null) {
-        drawSpaced(g, myTakesLetterSpacing, startColumn, endColumn, x, y);
+      } else if (myLetterSpacing != 0) {
+        drawSpaced(g, startColumn, endColumn, x, y);
       } else if (x == xAsInt && y == yAsInt) { // avoid creating garbage if possible
         g.drawChars(myText, startColumn, endColumn - startColumn, xAsInt, yAsInt);
       } else {
@@ -124,18 +138,41 @@ public final class SimpleTextFragment extends TextFragment {
 
   /**
    * Draws each char in the middle of its cell, which is its advance and its letter spacing.
+   * It keeps the glyphs of the last range and render context, because a repaint usually draws the same range again.
+   */
+  private void drawSpaced(@NotNull Graphics2D g, int start, int end, float x, float y) {
+    FontRenderContext context = g.getFontRenderContext();
+    SpacedGlyphs cached = mySpacedGlyphs;
+    GlyphVector glyphs;
+    if (cached != null && cached.start() == start && cached.end() == end && cached.context().equals(context)) {
+      glyphs = cached.glyphs();
+    } else {
+      glyphs = createSpacedGlyphs(context, start, end);
+      mySpacedGlyphs = new SpacedGlyphs(start, end, context, glyphs);
+    }
+    g.drawGlyphVector(glyphs, x, y);
+  }
+
+  /**
+   * Creates the glyphs of the chars from {@code start} to {@code end}, each in the middle of its cell.
    * The text needs no layout, so the glyph vector has one glyph for each char.
    */
-  private void drawSpaced(@NotNull Graphics2D g, boolean @NotNull [] takesLetterSpacing, int start, int end, float x, float y) {
-    GlyphVector glyphs = myFont.createGlyphVector(g.getFontRenderContext(), Arrays.copyOfRange(myText, start, end));
+  private @NotNull GlyphVector createSpacedGlyphs(@NotNull FontRenderContext context, int start, int end) {
+    GlyphVector glyphs = myFont.createGlyphVector(context, Arrays.copyOfRange(myText, start, end));
     float startX = getX(start);
     Point2D.Float position = new Point2D.Float();
     for (int i = 0; i < end - start; i++) {
-      float offsetInCell = takesLetterSpacing[start + i] ? myLetterSpacing / 2 : 0;
-      position.setLocation(getX(start + i) - startX + offsetInCell, 0);
+      float spacing = myCharSpacing == null ? myLetterSpacing : myCharSpacing[start + i];
+      position.setLocation(getX(start + i) - startX + spacing / 2, 0);
       glyphs.setGlyphPosition(i, position);
     }
-    g.drawGlyphVector(glyphs, x, y);
+    return glyphs;
+  }
+
+  /**
+   * The glyphs of a range of chars for a render context, see {@link #drawSpaced}.
+   */
+  private record SpacedGlyphs(int start, int end, @NotNull FontRenderContext context, @NotNull GlyphVector glyphs) {
   }
 
   private void drawAligned(Graphics2D g, char[] text, int start, int length, float startX, float y) {

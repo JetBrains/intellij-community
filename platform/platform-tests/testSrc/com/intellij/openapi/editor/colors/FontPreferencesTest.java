@@ -157,6 +157,13 @@ public class FontPreferencesTest {
   }
 
   @Test
+  public void testSetLetterSpacingTurnsMinusZeroIntoZero() {
+    myPreferences.setLetterSpacing(0.05f);
+    myPreferences.setLetterSpacing(-0f);
+    assertEquals(0, Float.floatToRawIntBits(myPreferences.getLetterSpacing()));
+  }
+
+  @Test
   public void testCopyToCopiesLetterSpacing() {
     myPreferences.setLetterSpacing(0.05f);
     FontPreferencesImpl copy = new FontPreferencesImpl();

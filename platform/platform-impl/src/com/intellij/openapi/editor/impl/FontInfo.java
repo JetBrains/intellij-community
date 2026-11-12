@@ -89,7 +89,11 @@ public final class FontInfo {
   @ApiStatus.Internal
   public static float letterSpacingPixels(float letterSpacing, float size, @Nullable FontRenderContext context) {
     float pixels = letterSpacing * size;
-    if (pixels == 0 || context != null && context.usesFractionalMetrics()) {
+    if (pixels == 0) {
+      // also turns -0 into 0
+      return 0;
+    }
+    if (context != null && context.usesFractionalMetrics()) {
       return pixels;
     }
     double scale = context == null ? 1 : Math.abs(context.getTransform().getScaleX());
@@ -178,38 +182,61 @@ public final class FontInfo {
   }
 
   /**
-   * Returns the integer advance of the code point plus the letter spacing, rounded to an integer.
-   * Only a code point that takes the letter spacing gets it, see {@link #takesLetterSpacing}.
+   * Returns the integer advance of the code point plus its letter spacing, rounded to an integer.
+   * See {@link #letterSpacingAfter}.
    */
   public int charWidth(int codePoint) {
     FontMetrics metrics = fontMetrics();
     int width = FontLayoutService.getInstance().charWidth(metrics, codePoint);
-    if (width <= 0 || myLetterSpacingPixels == 0 || !isInScriptWithLetterSpacing(codePoint)) {
+    if (width <= 0) {
       return width;
     }
-    return Math.max(0, Math.round(width + myLetterSpacingPixels));
+    return Math.round(width + letterSpacingAfter(codePoint, width));
   }
 
   /**
-   * Returns the advance of the code point plus the letter spacing.
-   * Only a code point that takes the letter spacing gets it, see {@link #takesLetterSpacing}.
+   * Returns the advance of the code point plus its letter spacing, see {@link #letterSpacingAfter}.
    */
   public float charWidth2D(int codePoint) {
-    float width = advance(codePoint);
-    if (width <= 0 || myLetterSpacingPixels == 0 || !isInScriptWithLetterSpacing(codePoint)) {
-      return width;
+    float advance = charAdvance2D(codePoint);
+    if (advance <= 0) {
+      return advance;
     }
-    return Math.max(0, width + myLetterSpacingPixels);
+    return advance + letterSpacingAfter(codePoint, advance);
+  }
+
+  /**
+   * Returns the advance of the code point in this font, without the letter spacing.
+   */
+  @ApiStatus.Internal
+  public float charAdvance2D(int codePoint) {
+    FontMetrics metrics = fontMetrics();
+    return FontLayoutService.getInstance().charWidth2D(metrics, codePoint);
+  }
+
+  /**
+   * Returns the letter spacing after the code point with this advance, or 0 when the code point takes none.
+   * A negative letter spacing is no larger than the advance, so the width of a code point is never below 0.
+   * See {@link #takesLetterSpacing}.
+   */
+  @ApiStatus.Internal
+  public float letterSpacingAfter(int codePoint, float advance) {
+    if (advance <= 0 || myLetterSpacingPixels == 0 || !takesLetterSpacingByUnicode(codePoint)) {
+      return 0;
+    }
+    return Math.max(myLetterSpacingPixels, -advance);
   }
 
   /**
    * Returns true when the text layout adds the letter spacing after the code point.
-   * A code point without an advance, such as a combining mark, takes no letter spacing.
+   * A code point without an advance takes no letter spacing.
+   * A mark, such as a combining accent, and a format char, such as the zero width joiner, take none either.
+   * They belong to the char before them, whatever advance the font gives them.
    * A letter of a script whose letters join, such as Arabic or Devanagari, takes none too.
    */
   @ApiStatus.Internal
   public boolean takesLetterSpacing(int codePoint) {
-    return advance(codePoint) > 0 && isInScriptWithLetterSpacing(codePoint);
+    return charAdvance2D(codePoint) > 0 && takesLetterSpacingByUnicode(codePoint);
   }
 
   /**
@@ -221,16 +248,34 @@ public final class FontInfo {
     return myLetterSpacingPixels;
   }
 
-  private static boolean isInScriptWithLetterSpacing(int codePoint) {
-    if (codePoint < FIRST_CODE_POINT_WITHOUT_LETTER_SPACING || !Character.isValidCodePoint(codePoint)) {
+  /**
+   * Returns true for a mark, such as a combining accent or a vowel sign, and for a format char, such as the zero width joiner.
+   * The text layout keeps them with the char before them.
+   */
+  @ApiStatus.Internal
+  public static boolean isMarkOrFormat(int codePoint) {
+    int type = Character.getType(codePoint);
+    return type == Character.NON_SPACING_MARK ||
+           type == Character.ENCLOSING_MARK ||
+           type == Character.COMBINING_SPACING_MARK ||
+           type == Character.FORMAT;
+  }
+
+  /**
+   * Returns false for a mark, a format char, and a letter of {@link #SCRIPTS_WITHOUT_LETTER_SPACING}, see {@link #takesLetterSpacing}.
+   */
+  @ApiStatus.Internal
+  public static boolean takesLetterSpacingByUnicode(int codePoint) {
+    if (!Character.isValidCodePoint(codePoint)) {
+      return true;
+    }
+    if (isMarkOrFormat(codePoint)) {
+      return false;
+    }
+    if (codePoint < FIRST_CODE_POINT_WITHOUT_LETTER_SPACING) {
       return true;
     }
     return codePoint != ARABIC_TATWEEL && !SCRIPTS_WITHOUT_LETTER_SPACING.contains(Character.UnicodeScript.of(codePoint));
-  }
-
-  private float advance(int codePoint) {
-    FontMetrics metrics = fontMetrics();
-    return FontLayoutService.getInstance().charWidth2D(metrics, codePoint);
   }
 
   public synchronized @NotNull FontMetrics fontMetrics() {

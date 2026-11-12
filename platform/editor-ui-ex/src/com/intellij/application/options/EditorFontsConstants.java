@@ -51,13 +51,15 @@ public final class EditorFontsConstants {
   /**
    * Returns the letter spacing in the range of the editor, or the default letter spacing for a value that is not a number.
    * A persisted state can hold any value, for example after a manual edit of the settings file.
+   * The result is never -0, so it saves as 0.
    */
   @ApiStatus.Experimental
   public static float checkAndFixEditorLetterSpacing(float letterSpacing) {
     if (Float.isNaN(letterSpacing)) {
       return getDefaultEditorLetterSpacing();
     }
-    return round(getMinEditorLetterSpacing(), getMaxEditorLetterSpacing(), letterSpacing);
+    // adding 0 turns -0 into 0
+    return round(getMinEditorLetterSpacing(), getMaxEditorLetterSpacing(), letterSpacing) + 0f;
   }
 
   private static int round(int min, int max, int val) {

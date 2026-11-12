@@ -118,8 +118,50 @@ public class ComplexTextFragmentTest {
   public void testLigatureOverSpacerCellsSitsInTheMiddleOfAllItsCells() {
     // a spacer glyph without ink, and a ligature glyph whose ink reaches over the spacer cell, as in JetBrains Mono
     MyGlyphVector gv = glyph(0, 10).ink(0, 0).glyph(10, 20).ink(-9, 9);
-    assertCaretPositionsForGlyphVector(2, gv, 12, 24);
+    assertCaretPositionsForGlyphVector(createFontInfo(2, true), new char[2], gv, 12, 24);
     assertGlyphPositions(gv, 1, 12, 24);
+  }
+
+  @Test
+  public void testLigatureCenteringNeedsLigatures() {
+    MyGlyphVector gv = glyph(0, 10).ink(0, 0).glyph(10, 20).ink(-9, 9);
+    assertCaretPositionsForGlyphVector(2, gv, 12, 24);
+    assertGlyphPositions(gv, 1, 13, 24);
+  }
+
+  @Test
+  public void testNegativeLetterSpacingKeepsEachCellAtLeastZeroWide() {
+    MyGlyphVector gv = glyph(0, 3).glyph(3, 6); // narrow glyphs, a spacing larger than their advance
+    assertCaretPositionsForGlyphVector(-6, gv, 0, 0);
+    assertGlyphPositions(gv, -1.5, -1.5, 0);
+  }
+
+  @Test
+  public void testMarkWithLogicalWidthMovesWithItsBase() {
+    // 'q', a dot above, 'x': as in Menlo, the mark has a logical width but no advance
+    assertCaretPositionsForGlyphVector(
+      2,
+      new char[]{'q', '\u0307', 'x'},
+      glyph(0, 12).glyph(12, 24).glyph(12, 24),
+      14, 14, 28
+    );
+  }
+
+  @Test
+  public void testRtlMarkWithLogicalWidthHasTheCaretOfItsBase() {
+    // shin, qamats, lamed: as in Courier New, the mark has a logical width but no advance
+    MyGlyphVector gv = rtl().glyph(0, 12).glyph(12, 24).glyph(12, 24);
+    assertCaretPositionsForGlyphVector(2, new char[]{'ש', 'ָ', 'ל'}, gv, 14, 14, 28);
+    assertGlyphPositions(gv, 1, 15, 15, 28);
+  }
+
+  @Test
+  public void testRtlMarkBeforeItsBaseMovesWithItsBase() {
+    // shin, qamats, lamed: as in Arial Hebrew, the mark comes before its base in visual order
+    MyGlyphVector gv = rtl().glyph(0, 9).glyph(11, 11).glyph(10, 24);
+    // the mark has no logical width, so the caret loop splits the cell of its base between them
+    assertCaretPositionsForGlyphVector(2, new char[]{'ש', 'ָ', 'ל'}, gv, 12, 20, 28);
+    assertGlyphPositions(gv, 1, 14, 13, 28);
   }
 
   @Test
@@ -226,6 +268,10 @@ public class ComplexTextFragmentTest {
   }
 
   private static void assertCaretPositionsForGlyphVector(float letterSpacing, char[] text, MyGlyphVector gv, int... expectedPositions) {
+    assertCaretPositionsForGlyphVector(createFontInfo(letterSpacing), text, gv, expectedPositions);
+  }
+
+  private static void assertCaretPositionsForGlyphVector(FontInfo fontInfo, char[] text, MyGlyphVector gv, int... expectedPositions) {
     assertEquals(gv.getNumChars(), text.length);
     FontLayoutService.setInstance(new MockFontLayoutService(TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT) {
       @NotNull
@@ -237,7 +283,6 @@ public class ComplexTextFragmentTest {
     });
     try {
       int length = text.length;
-      FontInfo fontInfo = createFontInfo(letterSpacing);
       ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
                                                              fontInfo, null);
       int[] charPositions = new int[length];
@@ -259,9 +304,16 @@ public class ComplexTextFragmentTest {
    * Creates a font of size 1, so the letter spacing is also the spacing in pixels.
    */
   private static @NotNull FontInfo createFontInfo(float letterSpacing) {
+    return createFontInfo(letterSpacing, false);
+  }
+
+  /**
+   * Creates a font of size 1, so the letter spacing is also the spacing in pixels.
+   */
+  private static @NotNull FontInfo createFontInfo(float letterSpacing, boolean useLigatures) {
     Font font = new Font(Font.MONOSPACED, Font.PLAIN, 1);
     FontRenderContext context = new FontRenderContext(null, false, false);
-    return new FontInfo(font, 1, false, letterSpacing, Set.of(), context);
+    return new FontInfo(font, 1, useLigatures, letterSpacing, Set.of(), context);
   }
 
   private static void assertEndVisualColumnForGlyphVector(MyGlyphVector gv, float x, boolean expectedLeansRight) {

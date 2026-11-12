@@ -14,6 +14,7 @@ import java.awt.Graphics2D;
 import java.awt.Shape;
 import java.awt.font.GlyphMetrics;
 import java.awt.font.GlyphVector;
+import java.awt.font.TextAttribute;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
@@ -188,13 +189,13 @@ public final class ComplexTextFragment extends TextFragment {
 
   /**
    * Moves the glyphs apart by the letter spacing of the font, see {@link FontInfo#getLetterSpacingPixels()}.
-   * A cluster is the chars from the char index of a glyph to the next char index of a glyph.
-   * It gets the letter spacing once for each of its code points that takes it.
-   * The cell of a glyph with an advance is its advance and the letter spacing of the clusters up to the next such glyph.
-   * The glyph and the glyphs without an advance after it, such as combining marks, sit in the middle of that cell.
-   * In LTR text, a glyph whose ink reaches over the cells before it, such as a ligature over spacer glyphs, sits in the middle of these cells.
+   * A base is a glyph with a logical width whose char is not a mark or a format char, see {@link FontInfo#isMarkOrFormat}.
+   * Each other glyph moves together with its base: the base of the nearest char before it in logical order.
+   * The cell of a base is its advance and the letter spacing of the code points of its glyphs, but never narrower than 0.
+   * The base sits in the middle of its cell.
+   * In LTR text with ligatures, a ligature glyph whose ink covers the cells before it sits in the middle of all these cells.
    *
-   * @return the cells of the glyphs with an advance, or {@code null} when the font has no letter spacing
+   * @return the cell of each glyph, or {@code null} when the font has no letter spacing or the text has no base
    */
   private @Nullable GlyphCells addLetterSpacing(
     char @NotNull [] lineChars,
@@ -209,9 +210,26 @@ public final class ComplexTextFragment extends TextFragment {
     }
     int numChars = end - start;
     int numGlyphs = myGlyphVector.getNumGlyphs();
+    double[] originalX = new double[numGlyphs + 1];
+    for (int i = 0; i <= numGlyphs; i++) {
+      originalX[i] = myGlyphVector.getGlyphPosition(i).getX();
+    }
     boolean[] clusterStarts = new boolean[numChars];
+    boolean[] isBase = new boolean[numGlyphs];
+    int[] baseAtChar = new int[numChars];
+    Arrays.fill(baseAtChar, -1);
     for (int i = 0; i < numGlyphs; i++) {
-      clusterStarts[myGlyphVector.getGlyphCharIndex(i)] = true;
+      int charIndex = myGlyphVector.getGlyphCharIndex(i);
+      clusterStarts[charIndex] = true;
+      int codePoint = Character.codePointAt(lineChars, start + charIndex, end);
+      isBase[i] = !FontInfo.isMarkOrFormat(codePoint) && myGlyphVector.getGlyphLogicalBounds(i).getBounds2D().getWidth() > 0;
+      if (isBase[i] && baseAtChar[charIndex] < 0) {
+        baseAtChar[charIndex] = i;
+      }
+    }
+    int[] baseOfChar = basesOfChars(baseAtChar);
+    if (baseOfChar == null) {
+      return null;
     }
     int[] spacedCodePoints = new int[numChars];
     int cluster = 0;
@@ -225,78 +243,108 @@ public final class ComplexTextFragment extends TextFragment {
       }
       offset += Character.charCount(codePoint);
     }
-    double[] originalX = new double[numGlyphs + 1];
-    for (int i = 0; i <= numGlyphs; i++) {
-      originalX[i] = myGlyphVector.getGlyphPosition(i).getX();
-    }
-    // The cell of each glyph starts at its x in this layout, and its letter spacing follows the glyphs of the cell
-    double[] cellX = new double[numGlyphs + 1];
-    float[] cellSpacing = new float[numGlyphs];
-    double shift = 0;
-    float pending = 0;
-    int lastAdvancing = -1;
+    float[] spacing = new float[numGlyphs];
     for (int i = 0; i < numGlyphs; i++) {
-      if (originalX[i + 1] - originalX[i] > 0.001) {
-        shift += pending;
-        if (lastAdvancing >= 0) {
-          cellSpacing[lastAdvancing] = pending;
-        }
-        pending = 0;
-        lastAdvancing = i;
-      }
-      cellX[i] = originalX[i] + shift;
       int charIndex = myGlyphVector.getGlyphCharIndex(i);
-      if (i == numGlyphs - 1 || myGlyphVector.getGlyphCharIndex(i + 1) != charIndex) {
-        pending += letterSpacing * spacedCodePoints[charIndex];
-        // A cluster gets its letter spacing once, also when its glyphs are not next to each other
-        spacedCodePoints[charIndex] = 0;
-      }
+      int base = isBase[i] ? i : baseOfChar[charIndex];
+      spacing[base] += letterSpacing * spacedCodePoints[charIndex];
+      // A cluster gets its letter spacing once, also when it has several glyphs
+      spacedCodePoints[charIndex] = 0;
     }
-    if (lastAdvancing >= 0) {
-      cellSpacing[lastAdvancing] = pending;
-    }
-    cellX[numGlyphs] = originalX[numGlyphs] + shift + pending;
+    boolean ligatures = !isRtl && fontInfo.getFont().getAttributes().get(TextAttribute.LIGATURES) == TextAttribute.LIGATURES_ON;
     float[] left = new float[numGlyphs];
     float[] right = new float[numGlyphs];
-    double offsetInCell = 0;
+    double[] newX = new double[numGlyphs];
+    float[] cellSpacings = new float[numGlyphs]; // the letter spacing of each cell, in visual order
+    int cells = 0;
+    double shift = 0;
     for (int i = 0; i < numGlyphs; i++) {
-      double advance = originalX[i + 1] - originalX[i];
-      if (advance > 0.001) {
-        offsetInCell = cellSpacing[i] / 2;
-        if (!isRtl) {
-          offsetInCell -= coveredCells(i, advance) * letterSpacing / 2;
-        }
-        left[i] = (float)cellX[i];
-        right[i] = (float)(cellX[i] + advance + cellSpacing[i]);
+      if (!isBase[i]) {
+        continue;
       }
-      moveGlyph(i, cellX[i] + offsetInCell);
+      int next = i + 1;
+      while (next < numGlyphs && !isBase[next]) {
+        next++;
+      }
+      double advance = originalX[next] - originalX[i];
+      float cellSpacing = (float)Math.max(spacing[i], -advance);
+      double cellLeft = originalX[i] + shift;
+      left[i] = (float)cellLeft;
+      right[i] = (float)(cellLeft + advance + cellSpacing);
+      double offsetInCell = cellSpacing / 2;
+      if (ligatures && !Character.isLetterOrDigit(lineChars[start + myGlyphVector.getGlyphCharIndex(i)])) {
+        int covered = coveredCells(i, advance, cells);
+        for (int c = 1; c <= covered; c++) {
+          offsetInCell -= cellSpacings[cells - c] / 2;
+        }
+      }
+      newX[i] = cellLeft + offsetInCell;
+      cellSpacings[cells++] = cellSpacing;
+      shift += cellSpacing;
     }
-    moveGlyph(numGlyphs, cellX[numGlyphs]);
+    for (int i = 0; i < numGlyphs; i++) {
+      if (!isBase[i]) {
+        int base = baseOfChar[myGlyphVector.getGlyphCharIndex(i)];
+        newX[i] = originalX[i] + newX[base] - originalX[base];
+        left[i] = left[base];
+        right[i] = right[base];
+      }
+      moveGlyph(i, newX[i]);
+    }
+    moveGlyph(numGlyphs, originalX[numGlyphs] + shift);
     return new GlyphCells(left, right);
   }
 
   /**
-   * Returns the number of cells before the glyph that its ink reaches over, such as the spacer cells of a ligature.
+   * Returns the base of each char: the base of the nearest char before it, or the first base for the chars before all bases.
+   * Returns {@code null} when there is no base.
+   *
+   * @param baseAtChar the base whose char index is the char, or -1
    */
-  private int coveredCells(int glyphIndex, double advance) {
-    GlyphMetrics metrics = myGlyphVector.getGlyphMetrics(glyphIndex);
-    if (metrics.getBounds2D().isEmpty()) {
-      return 0;
+  private static int @Nullable [] basesOfChars(int @NotNull [] baseAtChar) {
+    int base = -1;
+    for (int b : baseAtChar) {
+      if (b >= 0) {
+        base = b;
+        break;
+      }
     }
-    long cells = Math.round(-metrics.getLSB() / advance);
-    return Math.clamp(cells, 0, glyphIndex);
+    if (base < 0) {
+      return null;
+    }
+    int[] result = new int[baseAtChar.length];
+    for (int k = 0; k < baseAtChar.length; k++) {
+      if (baseAtChar[k] >= 0) {
+        base = baseAtChar[k];
+      }
+      result[k] = base;
+    }
+    return result;
   }
 
   /**
-   * The cell edges of the glyphs with an advance, see {@link #addLetterSpacing}. The other entries are not used.
+   * Returns the number of cells before the glyph that its ink covers, such as the spacer cells of a ligature.
+   *
+   * @param previousCells the number of cells before the glyph in this fragment
+   */
+  private int coveredCells(int glyphIndex, double advance, int previousCells) {
+    GlyphMetrics metrics = myGlyphVector.getGlyphMetrics(glyphIndex);
+    if (advance <= 0 || metrics.getBounds2D().isEmpty()) {
+      return 0;
+    }
+    long cells = Math.round(-metrics.getLSB() / advance);
+    return Math.clamp(cells, 0, previousCells);
+  }
+
+  /**
+   * The cell edges of each glyph, see {@link #addLetterSpacing}. A glyph that is not a base has the cell of its base.
    */
   private record GlyphCells(float @NotNull [] left, float @NotNull [] right) {
   }
 
   private void moveGlyph(int glyphIndex, double x) {
-    Point2D position = myGlyphVector.getGlyphPosition(glyphIndex);
-    position.setLocation(x, position.getY());
-    myGlyphVector.setGlyphPosition(glyphIndex, position);
+    double y = myGlyphVector.getGlyphPosition(glyphIndex).getY();
+    myGlyphVector.setGlyphPosition(glyphIndex, new Point2D.Double(x, y));
   }
 
   @Override

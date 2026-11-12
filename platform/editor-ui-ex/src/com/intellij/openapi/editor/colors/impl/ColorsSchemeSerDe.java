@@ -290,7 +290,11 @@ final class ColorsSchemeSerDe {
         case META_INFO_ELEMENT -> readMetaInfo(childNode, metaInfo);
       }
     }
-    fillMissingLetterSpacing(fonts, hasOption(node, LETTER_SPACING), hasOption(node, CONSOLE_LETTER_SPACING));
+    fillMissingLetterSpacing(
+      fonts,
+      hasFloatOption(node, LETTER_SPACING, valueReader),
+      hasFloatOption(node, CONSOLE_LETTER_SPACING, valueReader)
+    );
     fillEmptyConsoleFont(fonts);
     ColorsSchemeSnapshot readFonts = fonts.snapshot();
     Color deprecatedBackgroundColor = backgroundColor.get();
@@ -327,9 +331,16 @@ final class ColorsSchemeSerDe {
     }
   }
 
-  private static boolean hasOption(@NotNull Element node, @NotNull String name) {
+  /**
+   * Returns true when the scheme has the option with a value that reads as a number, as {@link #readSettings} reads it.
+   */
+  private static boolean hasFloatOption(
+    @NotNull Element node,
+    @NotNull String name,
+    @NotNull TextAttributesReader valueReader
+  ) {
     for (Element option : node.getChildren(OPTION_ELEMENT)) {
-      if (name.equals(option.getAttributeValue(NAME_ATTR))) {
+      if (name.equals(option.getAttributeValue(NAME_ATTR)) && valueReader.read(Float.class, option) != null) {
         return true;
       }
     }

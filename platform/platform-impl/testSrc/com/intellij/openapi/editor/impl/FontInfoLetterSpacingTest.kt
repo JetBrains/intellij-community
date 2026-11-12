@@ -24,6 +24,12 @@ internal class FontInfoLetterSpacingTest {
   }
 
   @Test
+  fun `a letter spacing of -0 gives 0`() {
+    val pixels = FontInfo.letterSpacingPixels(-0f, 13f, FontRenderContext(null, true, true))
+    assertThat(java.lang.Float.floatToRawIntBits(pixels)).isZero()
+  }
+
+  @Test
   fun `on a scaled context the letter spacing rounds to whole device pixels, not to user space pixels`() {
     val retina = FontRenderContext(AffineTransform.getScaleInstance(2.0, 2.0), true, false)
     assertThat(FontInfo.letterSpacingPixels(0.05f, 13f, retina)).isEqualTo(0.5f)

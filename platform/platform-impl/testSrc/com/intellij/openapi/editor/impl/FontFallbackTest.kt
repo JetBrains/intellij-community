@@ -17,6 +17,8 @@ private const val DEVANAGARI_NA = 0x928
 private const val SYRIAC_ALAPH = 0x710
 private const val MONGOLIAN_A = 0x1820
 private const val HEBREW_SHIN = 0x5E9
+private const val HEBREW_QAMATS = 0x5B8
+private const val ZERO_WIDTH_JOINER = 0x200D
 private const val CJK_SUN = 0x65E5
 
 @TestApplication
@@ -92,6 +94,35 @@ internal class FontFallbackTest {
         assertThat(spaced.takesLetterSpacing(letter)).isTrue()
         assertThat(spaced.charWidth2D(letter)).isEqualTo(9f)
       }
+    } finally {
+      FontLayoutService.setInstance(null)
+    }
+  }
+
+  @Test
+  fun `marks and format chars take no letter spacing whatever advance the font gives them`() {
+    FontLayoutService.setInstance(MockFontLayoutService(IntToDoubleFunction { 7.0 }, 15, 3))
+    try {
+      val spaced = fallback.getFontInfo(8f, false, 0.25f, setOf(), null)
+      for (codePoint in listOf(COMBINING_ACUTE, HEBREW_QAMATS, ZERO_WIDTH_JOINER)) {
+        assertThat(spaced.takesLetterSpacing(codePoint)).isFalse()
+        assertThat(spaced.charWidth2D(codePoint)).isEqualTo(7f)
+      }
+    } finally {
+      FontLayoutService.setInstance(null)
+    }
+  }
+
+  @Test
+  fun `a negative letter spacing never makes a width below 0`() {
+    FontLayoutService.setInstance(MockFontLayoutService(IntToDoubleFunction { if (it == 'i'.code) 3.0 else 7.0 }, 15, 3))
+    try {
+      val spaced = fallback.getFontInfo(8f, false, -0.5f, setOf(), null)
+      assertThat(spaced.letterSpacingPixels).isEqualTo(-4f)
+      assertThat(spaced.charWidth2D('a'.code)).isEqualTo(3f)
+      assertThat(spaced.charWidth2D('i'.code)).isEqualTo(0f)
+      assertThat(spaced.charWidth('i'.code)).isEqualTo(0)
+      assertThat(spaced.letterSpacingAfter('i'.code, 3f)).isEqualTo(-3f)
     } finally {
       FontLayoutService.setInstance(null)
     }
