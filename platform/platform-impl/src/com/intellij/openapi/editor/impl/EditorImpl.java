@@ -1679,17 +1679,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void setFontSize(int fontSize) {
-    EditorThreading.run(() -> setFontSizeImpl(fontSize, null, false));
+    setFontSizeImpl(fontSize, null, false);
   }
 
   @Override
   public void setFontSize(float fontSize) {
-    EditorThreading.run(() -> setFontSizeImpl(fontSize, null, false));
+    setFontSizeImpl(fontSize, null, false);
   }
 
   @ApiStatus.Internal
   public void setFontSize(float fontSize, @Nullable Point zoomCenter, boolean validateImmediately) {
-    EditorThreading.run(() -> setFontSizeImpl(fontSize, zoomCenter, validateImmediately));
+    setFontSizeImpl(fontSize, zoomCenter, validateImmediately);
   }
 
   /**
@@ -2830,7 +2830,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int getLineHeight() {
-    return EditorThreading.compute(() -> myView.getLineHeight());
+    return myView.getLineHeight();
   }
 
   public int getDescent() {
