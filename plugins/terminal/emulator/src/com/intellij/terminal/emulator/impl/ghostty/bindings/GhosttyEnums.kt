@@ -354,7 +354,7 @@ internal enum class GhosttyMouseButton(val code: Int) {
   FIVE(5),
 }
 
-/** `GhosttyKeyEncoderOption` (key/encoder.h) — key for `ghostty_key_encoder_setopt`. */
+/** `GhosttyKeyEncoderOption` (key/encoder.h) — key for `ghostty_key_encoder_set`. */
 @Suppress("unused") // the complete option set is the API, referenced or not
 internal enum class GhosttyKeyEncoderOption(val code: Int) {
   /** Not a real option: `ghostty_key_encoder_set` rejects it. */
@@ -377,7 +377,7 @@ internal enum class GhosttyOptionAsAlt(val code: Int) {
   RIGHT(3),
 }
 
-/** `GhosttyMouseEncoderOption` (mouse/encoder.h) — key for `ghostty_mouse_encoder_setopt`. */
+/** `GhosttyMouseEncoderOption` (mouse/encoder.h) — key for `ghostty_mouse_encoder_set`. */
 internal enum class GhosttyMouseEncoderOption(val code: Int) {
   EVENT(1),
   FORMAT(2),

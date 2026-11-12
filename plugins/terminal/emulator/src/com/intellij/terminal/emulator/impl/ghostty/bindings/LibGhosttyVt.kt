@@ -186,15 +186,13 @@ internal object LibGhosttyVt {
     KEY_ENCODER_FREE.invokeExact(encoder)
   }
 
-  /** `ghostty_key_encoder_setopt_from_terminal`: load the encoder options from [terminal]'s current modes. */
-  fun keyEncoderSetoptFromTerminal(encoder: MemorySegment, terminal: MemorySegment) {
-    KEY_ENCODER_SETOPT_FROM_TERMINAL.invokeExact(encoder, terminal)
-  }
+  /** `ghostty_key_encoder_set_from_terminal`: load the encoder options from [terminal]'s current modes. */
+  fun keyEncoderSetFromTerminal(encoder: MemorySegment, terminal: MemorySegment): GhosttyResult =
+    GhosttyResult.of(KEY_ENCODER_SET_FROM_TERMINAL.invokeExact(encoder, terminal) as Int)
 
-  /** `ghostty_key_encoder_setopt`: set one [GhosttyKeyEncoderOption]; [value] holds the option's C value. */
-  fun keyEncoderSetopt(encoder: MemorySegment, option: Int, value: MemorySegment) {
-    KEY_ENCODER_SETOPT.invokeExact(encoder, option, value)
-  }
+  /** `ghostty_key_encoder_set`: set one [GhosttyKeyEncoderOption]; [value] holds the option's C value. */
+  fun keyEncoderSet(encoder: MemorySegment, option: Int, value: MemorySegment): GhosttyResult =
+    GhosttyResult.of(KEY_ENCODER_SET.invokeExact(encoder, option, value) as Int)
 
   /**
    * `ghostty_key_encoder_encode`: encode [event] into [outBuf] (capacity [outBufSize]); [outLen] receives
@@ -258,15 +256,13 @@ internal object LibGhosttyVt {
     MOUSE_ENCODER_FREE.invokeExact(encoder)
   }
 
-  /** `ghostty_mouse_encoder_setopt`: set a [GhosttyMouseEncoderOption] from the value at [value]. */
-  fun mouseEncoderSetopt(encoder: MemorySegment, option: Int, value: MemorySegment) {
-    MOUSE_ENCODER_SETOPT.invokeExact(encoder, option, value)
-  }
+  /** `ghostty_mouse_encoder_set`: set a [GhosttyMouseEncoderOption] from the value at [value]. */
+  fun mouseEncoderSet(encoder: MemorySegment, option: Int, value: MemorySegment): GhosttyResult =
+    GhosttyResult.of(MOUSE_ENCODER_SET.invokeExact(encoder, option, value) as Int)
 
-  /** `ghostty_mouse_encoder_setopt_from_terminal`: load tracking mode and format from [terminal]. */
-  fun mouseEncoderSetoptFromTerminal(encoder: MemorySegment, terminal: MemorySegment) {
-    MOUSE_ENCODER_SETOPT_FROM_TERMINAL.invokeExact(encoder, terminal)
-  }
+  /** `ghostty_mouse_encoder_set_from_terminal`: load tracking mode and format from [terminal]. */
+  fun mouseEncoderSetFromTerminal(encoder: MemorySegment, terminal: MemorySegment): GhosttyResult =
+    GhosttyResult.of(MOUSE_ENCODER_SET_FROM_TERMINAL.invokeExact(encoder, terminal) as Int)
 
   /**
    * `ghostty_mouse_encoder_encode`: encode [event] into [outBuf] (capacity [outBufSize]); [outLen] receives
@@ -473,10 +469,10 @@ internal object LibGhosttyVt {
     FunctionDescriptor.of(C_INT, C_PTR, C_PTR)) }
   private val KEY_ENCODER_FREE: MethodHandle by lazy { downcall("ghostty_key_encoder_free",
     FunctionDescriptor.ofVoid(C_PTR)) }
-  private val KEY_ENCODER_SETOPT_FROM_TERMINAL: MethodHandle by lazy { downcall("ghostty_key_encoder_setopt_from_terminal",
-    FunctionDescriptor.ofVoid(C_PTR, C_PTR)) }
-  private val KEY_ENCODER_SETOPT: MethodHandle by lazy { downcall("ghostty_key_encoder_setopt",
-    FunctionDescriptor.ofVoid(C_PTR, C_INT, C_PTR)) }
+  private val KEY_ENCODER_SET_FROM_TERMINAL: MethodHandle by lazy { downcall("ghostty_key_encoder_set_from_terminal",
+    FunctionDescriptor.of(C_INT, C_PTR, C_PTR)) }
+  private val KEY_ENCODER_SET: MethodHandle by lazy { downcall("ghostty_key_encoder_set",
+    FunctionDescriptor.of(C_INT, C_PTR, C_INT, C_PTR)) }
   private val KEY_ENCODER_ENCODE: MethodHandle by lazy { downcall("ghostty_key_encoder_encode",
     FunctionDescriptor.of(C_INT, C_PTR, C_PTR, C_PTR, C_LONG, C_PTR)) }
   private val KEY_EVENT_NEW: MethodHandle by lazy { downcall("ghostty_key_event_new",
@@ -501,10 +497,10 @@ internal object LibGhosttyVt {
     FunctionDescriptor.of(C_INT, C_PTR, C_PTR)) }
   private val MOUSE_ENCODER_FREE: MethodHandle by lazy { downcall("ghostty_mouse_encoder_free",
     FunctionDescriptor.ofVoid(C_PTR)) }
-  private val MOUSE_ENCODER_SETOPT: MethodHandle by lazy { downcall("ghostty_mouse_encoder_setopt",
-    FunctionDescriptor.ofVoid(C_PTR, C_INT, C_PTR)) }
-  private val MOUSE_ENCODER_SETOPT_FROM_TERMINAL: MethodHandle by lazy { downcall("ghostty_mouse_encoder_setopt_from_terminal",
-    FunctionDescriptor.ofVoid(C_PTR, C_PTR)) }
+  private val MOUSE_ENCODER_SET: MethodHandle by lazy { downcall("ghostty_mouse_encoder_set",
+    FunctionDescriptor.of(C_INT, C_PTR, C_INT, C_PTR)) }
+  private val MOUSE_ENCODER_SET_FROM_TERMINAL: MethodHandle by lazy { downcall("ghostty_mouse_encoder_set_from_terminal",
+    FunctionDescriptor.of(C_INT, C_PTR, C_PTR)) }
   private val MOUSE_ENCODER_ENCODE: MethodHandle by lazy { downcall("ghostty_mouse_encoder_encode",
     FunctionDescriptor.of(C_INT, C_PTR, C_PTR, C_PTR, C_LONG, C_PTR)) }
   private val MOUSE_EVENT_NEW: MethodHandle by lazy { downcall("ghostty_mouse_event_new",

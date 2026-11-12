@@ -242,7 +242,7 @@ internal class GhosttyTerminalEmulator(
   private val scratchMousePosition: MemorySegment = scratchArena.allocate(GhosttyLayouts.MOUSE_POSITION)
   private val scratchMouseSize: MemorySegment = scratchArena.allocate(GhosttyLayouts.MOUSE_ENCODER_SIZE_BYTES)
 
-  /** See [setOptionAsAlt]; applied on every encode, because `setopt_from_terminal` resets it. */
+  /** See [setOptionAsAlt]; applied on every encode, because `set_from_terminal` resets it. */
   private var optionAsAlt = false
 
   init {
@@ -376,7 +376,8 @@ internal class GhosttyTerminalEmulator(
       // the encoder would silently drop repeated motion in the same cell.
       try {
         scratchOut.set(C_BYTE, 0L, 0)
-        LibGhosttyVt.mouseEncoderSetopt(mouseEncoderHandle, GhosttyMouseEncoderOption.TRACK_LAST_CELL.code, scratchOut)
+        LibGhosttyVt.mouseEncoderSet(mouseEncoderHandle, GhosttyMouseEncoderOption.TRACK_LAST_CELL.code, scratchOut)
+          .requireSuccess("ghostty_mouse_encoder_set(TRACK_LAST_CELL)")
       } catch (t: Throwable) {
         throw RuntimeException("configuring the mouse encoder failed", t)
       }
@@ -425,6 +426,13 @@ internal class GhosttyTerminalEmulator(
       throw IllegalStateException("$what returned $result")
     }
     return out.get(C_PTR, 0L)
+  }
+
+  /** Fails like the other native calls when a setter of the key or mouse encoding API rejects its value. */
+  private fun GhosttyResult.requireSuccess(call: String) {
+    if (this != GhosttyResult.SUCCESS) {
+      throw IllegalStateException("$call returned $this")
+    }
   }
 
   // ---- geometry / state ----
@@ -675,10 +683,11 @@ internal class GhosttyTerminalEmulator(
       LibGhosttyVt.keyEventSetUnshiftedCodepoint(keyEvent, event.unshiftedCodepoint)
       LibGhosttyVt.keyEventSetComposing(keyEvent, event.composing)
 
-      LibGhosttyVt.keyEncoderSetoptFromTerminal(keyEncoder, terminal)
-      // No terminal mode carries this option, and setopt_from_terminal has just reset it.
+      LibGhosttyVt.keyEncoderSetFromTerminal(keyEncoder, terminal).requireSuccess("ghostty_key_encoder_set_from_terminal")
+      // No terminal mode carries this option, and set_from_terminal has just reset it.
       scratchOut.set(C_INT, 0L, (if (optionAsAlt) GhosttyOptionAsAlt.TRUE else GhosttyOptionAsAlt.FALSE).code)
-      LibGhosttyVt.keyEncoderSetopt(keyEncoder, GhosttyKeyEncoderOption.MACOS_OPTION_AS_ALT.code, scratchOut)
+      LibGhosttyVt.keyEncoderSet(keyEncoder, GhosttyKeyEncoderOption.MACOS_OPTION_AS_ALT.code, scratchOut)
+        .requireSuccess("ghostty_key_encoder_set(MACOS_OPTION_AS_ALT)")
       return encodeToBytes { buf, size, outLen -> LibGhosttyVt.keyEncoderEncode(keyEncoder, keyEvent, buf, size, outLen) }
     } catch (t: Throwable) {
       throw RuntimeException("ghostty key encoding failed", t)
@@ -688,7 +697,7 @@ internal class GhosttyTerminalEmulator(
   override fun encodeMouseEvent(event: TerminalMouseEvent): ByteArray {
     ensureOpen()
     try {
-      LibGhosttyVt.mouseEncoderSetoptFromTerminal(mouseEncoder, terminal)
+      LibGhosttyVt.mouseEncoderSetFromTerminal(mouseEncoder, terminal).requireSuccess("ghostty_mouse_encoder_set_from_terminal")
       // The encoder converts surface pixels to cells; 1x1-pixel cells make the cell coordinates of
       // [event] pass through unchanged. SGR-pixels reports then carry cell-granularity values, which
       // is the best this cell-based API can do.
@@ -699,12 +708,14 @@ internal class GhosttyTerminalEmulator(
       scratchMouseSize.set(C_INT, GhosttyLayouts.MOUSE_ENCODER_SIZE_OFF_SCREEN_HEIGHT, rows)
       scratchMouseSize.set(C_INT, GhosttyLayouts.MOUSE_ENCODER_SIZE_OFF_CELL_WIDTH, 1)
       scratchMouseSize.set(C_INT, GhosttyLayouts.MOUSE_ENCODER_SIZE_OFF_CELL_HEIGHT, 1)
-      LibGhosttyVt.mouseEncoderSetopt(mouseEncoder, GhosttyMouseEncoderOption.SIZE.code, scratchMouseSize)
+      LibGhosttyVt.mouseEncoderSet(mouseEncoder, GhosttyMouseEncoderOption.SIZE.code, scratchMouseSize)
+        .requireSuccess("ghostty_mouse_encoder_set(SIZE)")
 
       // Button-event tracking (mode 1002) reports motion only while a button is held.
       val anyButtonPressed = event.button != null && event.action != TerminalMouseAction.RELEASE
       scratchOut.set(C_BYTE, 0L, if (anyButtonPressed) 1 else 0)
-      LibGhosttyVt.mouseEncoderSetopt(mouseEncoder, GhosttyMouseEncoderOption.ANY_BUTTON_PRESSED.code, scratchOut)
+      LibGhosttyVt.mouseEncoderSet(mouseEncoder, GhosttyMouseEncoderOption.ANY_BUTTON_PRESSED.code, scratchOut)
+        .requireSuccess("ghostty_mouse_encoder_set(ANY_BUTTON_PRESSED)")
 
       LibGhosttyVt.mouseEventSetAction(mouseEvent, event.action.toGhostty().code)
       val button = event.button
