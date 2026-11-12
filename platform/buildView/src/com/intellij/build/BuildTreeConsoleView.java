@@ -46,8 +46,6 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -60,6 +58,8 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileUtil;
+import com.intellij.platform.ide.navigation.NavigateUtil;
+import com.intellij.platform.ide.navigation.NavigationOptions;
 import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -687,8 +687,7 @@ public final class BuildTreeConsoleView
     if (myNavigateToTheFirstErrorLocation) {
       var navigatable = node.getNavigatable();
       if (navigatable != null) {
-        ApplicationManager.getApplication()
-          .invokeLater(() -> navigatable.navigate(true), ModalityState.defaultModalityState(), myProject.getDisposed());
+        NavigateUtil.requestNavigate(myProject, navigatable, NavigationOptions.requestFocus());
       }
     }
   }

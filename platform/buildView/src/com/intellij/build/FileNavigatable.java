@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.navigation.NavigationRequest;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
@@ -23,12 +24,17 @@ public final class FileNavigatable implements Navigatable {
   public FileNavigatable(@NotNull Project project, @NotNull FilePosition filePosition) {
     myProject = project;
     myFilePosition = filePosition;
-    myValue = new NullableLazyValue<>() {
-      @Override
-      protected @Nullable OpenFileDescriptor compute() {
-        return createDescriptor();
-      }
-    };
+    // the navigation service reads the value on a background thread, and the build tree reads it on the EDT
+    myValue = NullableLazyValue.atomicLazyNullable(this::createDescriptor);
+  }
+
+  @Override
+  public @Nullable NavigationRequest navigationRequest() {
+    OpenFileDescriptor descriptor = getFileDescriptor();
+    if (descriptor == null) {
+      return null;
+    }
+    return NavigationRequest.sourceNavigationRequest(myProject, descriptor.getFile(), descriptor.getOffset());
   }
 
   @Override

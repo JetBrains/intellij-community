@@ -111,6 +111,7 @@ jvm_library(
         "//libraries/junit6",
         "//libraries/junit6-params",
         "//libraries/assertj-core",
+        "//platform/analysis-api:analysis",
     ],
 )
 ### auto-generated section `build intellij.platform.buildView.tests` end

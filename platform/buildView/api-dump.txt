@@ -86,6 +86,7 @@ c:com.intellij.build.ExecutionNode
 - setTitle(java.lang.String):V
 f:com.intellij.build.FileNavigatable
 - com.intellij.pom.Navigatable
+- navigationRequest():com.intellij.platform.backend.navigation.NavigationRequest
 f:com.intellij.build.FilePosition
 - <init>(java.nio.file.Path,I,I):V
 - <init>(java.nio.file.Path,I,I,I,I):V
