@@ -138,6 +138,10 @@ jvm_library(
         "//platform/util:util-ui",
         "//libraries/junit4",
         "//java/testFramework",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5/codeInsight",
+        "//libraries/junit6",
+        "//libraries/assertj-core",
     ],
 )
 ### auto-generated section `build intellij.html.tools.tests` end
