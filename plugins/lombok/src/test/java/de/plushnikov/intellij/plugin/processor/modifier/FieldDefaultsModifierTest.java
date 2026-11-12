@@ -1,128 +1,176 @@
 package de.plushnikov.intellij.plugin.processor.modifier;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Alexej Kubarev
  */
-public class FieldDefaultsModifierTest extends AbstractLombokLightCodeInsightTestCase {
+@TestApplication
+public class FieldDefaultsModifierTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lombokCodeInsightFixture(projectFixture, "/augment/modifier");
 
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/augment/modifier";
-  }
+
 
   //<editor-fold desc="Handling of makeFinal and @NonFinal">
 
+  @Test
   public void testFieldDefaultsStaticFinal() {
 
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
-    assertFalse("@FieldDefaults(makeFinal = true) should not make static field final", modifierList.hasModifierProperty(PsiModifier.FINAL));
-    assertTrue("@FieldDefaults(makeFinal = true) should keep static field package local", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
+    ReadAction.runBlocking(() -> {
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.FINAL), "@FieldDefaults(makeFinal = true) should not make static field final");
+      assertTrue(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL), "@FieldDefaults(makeFinal = true) should keep static field package local");
+    });
   }
 
+  @Test
   public void testFieldDefaultsFinal() {
 
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
-    assertTrue("@FieldDefaults(makeFinal = true) should make all @NonFinal fields final", modifierList.hasModifierProperty(PsiModifier.FINAL));
-    assertTrue("@FieldDefaults(makeFinal = true) should keep fields package local", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
+    ReadAction.runBlocking(() -> {
+      assertTrue(modifierList.hasModifierProperty(PsiModifier.FINAL), "@FieldDefaults(makeFinal = true) should make all @NonFinal fields final");
+      assertTrue(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL), "@FieldDefaults(makeFinal = true) should keep fields package local");
+    });
   }
 
+  @Test
   public void testFieldDefaultsFinalFalse() {
 
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
-    assertFalse("@FieldDefaults(makeFinal = false) should make all @NonFinal fields final", modifierList.hasModifierProperty(PsiModifier.FINAL));
-    assertTrue("@FieldDefaults(makeFinal = false) should keep fields package local", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
+    ReadAction.runBlocking(() -> {
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.FINAL), "@FieldDefaults(makeFinal = false) should make all @NonFinal fields final");
+      assertTrue(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL), "@FieldDefaults(makeFinal = false) should keep fields package local");
+    });
   }
 
+  @Test
   public void testFieldDefaultsWithNonFinal() {
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
-    assertFalse("@FieldDefaults(makeFinal = true) should not make @NonFinal fields final", modifierList.hasModifierProperty(PsiModifier.FINAL));
+    ReadAction.runBlocking(() -> {
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.FINAL), "@FieldDefaults(makeFinal = true) should not make @NonFinal fields final");
+    });
   }
 
+  @Test
   public void testFieldDefaultsWithUtilityClass() {
 
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
-    assertFalse("@FieldDefaults(makeFinal = true) should not make @UtilityClass fields final", modifierList.hasModifierProperty(PsiModifier.FINAL));
+    ReadAction.runBlocking(() -> {
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.FINAL), "@FieldDefaults(makeFinal = true) should not make @UtilityClass fields final");
+    });
   }
 
   //</editor-fold>
 
   //<editor-fold desc="Handling of visibility modifiers">
 
+  @Test
   public void testFieldDefaultsStaticPrivate() {
 
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
-    assertFalse("@FieldDefaults should not make static field private", modifierList.hasModifierProperty(PsiModifier.PRIVATE));
-    assertTrue("@FieldDefaults should keep static field package local", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
+    ReadAction.runBlocking(() -> {
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PRIVATE), "@FieldDefaults should not make static field private");
+      assertTrue(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL), "@FieldDefaults should keep static field package local");
+    });
   }
 
-
+  @Test
   public void testFieldDefaultsNone() {
 
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
-    assertFalse("@FieldDefaults should not make fields public", modifierList.hasModifierProperty(PsiModifier.PUBLIC));
-    assertFalse("@FieldDefaults should not make fields protected", modifierList.hasModifierProperty(PsiModifier.PROTECTED));
-    assertFalse("@FieldDefaults should not make fields private", modifierList.hasModifierProperty(PsiModifier.PRIVATE));
-    assertTrue("@FieldDefaults should keep fields as package-private", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
+    ReadAction.runBlocking(() -> {
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PUBLIC), "@FieldDefaults should not make fields public");
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PROTECTED), "@FieldDefaults should not make fields protected");
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PRIVATE), "@FieldDefaults should not make fields private");
+      assertTrue(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL), "@FieldDefaults should keep fields as package-private");
+    });
   }
 
+  @Test
   public void testFieldDefaultsPublic() {
 
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
-    assertTrue("@FieldDefaults(level = AccessLevel.PUBLIC) should make non-@PackagePrivate fields public", modifierList.hasModifierProperty(PsiModifier.PUBLIC));
-    assertFalse("@FieldDefaults(level = AccessLevel.PUBLIC) should not make fields package-private", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
-    assertFalse("@FieldDefaults(level = AccessLevel.PUBLIC) should not make fields protected", modifierList.hasModifierProperty(PsiModifier.PROTECTED));
-    assertFalse("@FieldDefaults(level = AccessLevel.PUBLIC) should not make fields private", modifierList.hasModifierProperty(PsiModifier.PRIVATE));
+    ReadAction.runBlocking(() -> {
+      assertTrue(modifierList.hasModifierProperty(PsiModifier.PUBLIC), "@FieldDefaults(level = AccessLevel.PUBLIC) should make non-@PackagePrivate fields public");
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL), "@FieldDefaults(level = AccessLevel.PUBLIC) should not make fields package-private");
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PROTECTED), "@FieldDefaults(level = AccessLevel.PUBLIC) should not make fields protected");
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PRIVATE), "@FieldDefaults(level = AccessLevel.PUBLIC) should not make fields private");
+    });
   }
 
+  @Test
   public void testFieldDefaultsProtected() {
 
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
-    assertFalse("@FieldDefaults(level = AccessLevel.PROTECTED) should not make fields public", modifierList.hasModifierProperty(PsiModifier.PUBLIC));
-    assertFalse("@FieldDefaults(level = AccessLevel.PROTECTED) should not make fields package-private", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
-    assertTrue("@FieldDefaults(level = AccessLevel.PROTECTED) should non-@PackagePrivate make fields protected", modifierList.hasModifierProperty(PsiModifier.PROTECTED));
-    assertFalse("@FieldDefaults(level = AccessLevel.PROTECTED) should not make fields private", modifierList.hasModifierProperty(PsiModifier.PRIVATE));
+    ReadAction.runBlocking(() -> {
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PUBLIC), "@FieldDefaults(level = AccessLevel.PROTECTED) should not make fields public");
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL), "@FieldDefaults(level = AccessLevel.PROTECTED) should not make fields package-private");
+      assertTrue(modifierList.hasModifierProperty(PsiModifier.PROTECTED), "@FieldDefaults(level = AccessLevel.PROTECTED) should non-@PackagePrivate make fields protected");
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PRIVATE), "@FieldDefaults(level = AccessLevel.PROTECTED) should not make fields private");
+    });
   }
 
+  @Test
   public void testFieldDefaultsPrivate() {
 
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
-    assertFalse("@FieldDefaults(level = AccessLevel.PRIVATE) should not make fields public", modifierList.hasModifierProperty(PsiModifier.PUBLIC));
-    assertFalse("@FieldDefaults(level = AccessLevel.PRIVATE) should not make fields protected", modifierList.hasModifierProperty(PsiModifier.PROTECTED));
-    assertFalse("@FieldDefaults(level = AccessLevel.PRIVATE) should not make fields package-private", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
-    assertTrue("@FieldDefaults(level = AccessLevel.PRIVATE) should make non-@PackagePrivate fields private", modifierList.hasModifierProperty(PsiModifier.PRIVATE));
+    ReadAction.runBlocking(() -> {
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PUBLIC), "@FieldDefaults(level = AccessLevel.PRIVATE) should not make fields public");
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PROTECTED), "@FieldDefaults(level = AccessLevel.PRIVATE) should not make fields protected");
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL), "@FieldDefaults(level = AccessLevel.PRIVATE) should not make fields package-private");
+      assertTrue(modifierList.hasModifierProperty(PsiModifier.PRIVATE), "@FieldDefaults(level = AccessLevel.PRIVATE) should make non-@PackagePrivate fields private");
+    });
   }
 
+  @Test
   public void testFieldDefaultsPublicWithPackagePrivate() {
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
-    assertFalse("@FieldDefaults(level = AccessLevel.PUBLIC) should not make @PackagePrivate fields public", modifierList.hasModifierProperty(PsiModifier.PUBLIC));
-    assertTrue("@FieldDefaults should keep @PackagePrivate fields package-private", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
+    ReadAction.runBlocking(() -> {
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PUBLIC), "@FieldDefaults(level = AccessLevel.PUBLIC) should not make @PackagePrivate fields public");
+      assertTrue(modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL), "@FieldDefaults should keep @PackagePrivate fields package-private");
+    });
   }
 
+  @Test
   public void testFieldDefaultsWithExplicitModifier() {
 
     PsiModifierList modifierList = getFieldModifierListAtCaret();
 
-    assertFalse("@FieldDefaults should not touch fields with explicit modifier", modifierList.hasModifierProperty(PsiModifier.PUBLIC));
-    assertTrue("@FieldDefaults should keep explicit modifier intact", modifierList.hasModifierProperty(PsiModifier.PROTECTED));
+    ReadAction.runBlocking(() -> {
+      assertFalse(modifierList.hasModifierProperty(PsiModifier.PUBLIC), "@FieldDefaults should not touch fields with explicit modifier");
+      assertTrue(modifierList.hasModifierProperty(PsiModifier.PROTECTED), "@FieldDefaults should keep explicit modifier intact");
+    });
   }
 
   //</editor-fold>
@@ -131,15 +179,18 @@ public class FieldDefaultsModifierTest extends AbstractLombokLightCodeInsightTes
 
   @NotNull
   private PsiModifierList getFieldModifierListAtCaret() {
-    PsiFile file = loadToPsiFile(getTestName(false) + ".java");
-    PsiField field = PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getCaretOffset()), PsiField.class);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiFile file = LombokTestUtil.loadToPsiFile(myFixture, myFixture.getTestName(false) + ".java");
+    return ReadAction.computeBlocking(() -> {
+      PsiField field = PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getCaretOffset()), PsiField.class);
 
-    assertNotNull(field);
+      assertNotNull(field);
 
-    PsiModifierList modifierList = field.getModifierList();
-    assertNotNull(modifierList);
+      PsiModifierList modifierList = field.getModifierList();
+      assertNotNull(modifierList);
 
-    return modifierList;
+      return modifierList;
+    });
   }
 
   //</editor-fold>

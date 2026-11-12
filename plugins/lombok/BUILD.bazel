@@ -144,6 +144,7 @@ jvm_library(
         "//platform/analysis-impl",
         "//java/openapi:java",
         "//platform/platform-impl:ide-impl",
+        "//platform/ide-core",
         "//java/java-analysis-impl:analysis-impl",
         "//java/java-impl:impl",
         "//java/java-psi-api:psi",

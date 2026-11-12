@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin
 
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaProject
 import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
@@ -13,6 +14,7 @@ import de.plushnikov.intellij.plugin.action.LombokActionFixture
 import de.plushnikov.intellij.plugin.intention.LombokIntentionFixture
 import org.jetbrains.annotations.TestOnly
 import java.util.function.BooleanSupplier
+import java.util.function.Function
 import java.util.function.Supplier
 
 /**
@@ -26,8 +28,22 @@ import java.util.function.Supplier
 fun lombokCodeInsightFixture(
   projectFixture: TestFixture<LightJavaProject>,
   basePath: String = "",
+): TestFixture<LightJavaCodeInsightTestFixture> = lombokCodeInsightFixture(projectFixture, null, basePath)
+
+/**
+ * Creates the code insight fixture of a Lombok test as the other overload does, for a class that picks the descriptor for each test.
+ *
+ * [descriptor] gets the name of the test method without the `test` prefix, and returns the descriptor of the test.
+ * See [lightJavaCodeInsightFixture] for the cost of a descriptor that is not the descriptor of [projectFixture].
+ */
+@TestOnly
+@JvmOverloads
+fun lombokCodeInsightFixture(
+  projectFixture: TestFixture<LightJavaProject>,
+  descriptor: Function<String, LightProjectDescriptor>?,
+  basePath: String = "",
 ): TestFixture<LightJavaCodeInsightTestFixture> = testFixture("lombokCodeInsightFixture") {
-  val fixture = lightJavaCodeInsightFixture(projectFixture).init()
+  val fixture = lightJavaCodeInsightFixture(projectFixture, descriptor, basePath = "").init()
   fixture.testDataPath = LombokTestUtil.getTestDataPath() + basePath
   initialized(fixture) {}
 }

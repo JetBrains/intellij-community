@@ -6,12 +6,23 @@ import com.intellij.ide.structureView.impl.java.PropertiesGrouper;
 import com.intellij.ide.structureView.impl.java.SuperTypesGrouper;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.StructureViewComponentTestUtil;
-import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JTree;
 
-public class LombokStructureViewExtensionTest extends AbstractLombokLightCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokCodeInsightFixture;
+
+@TestApplication
+public class LombokStructureViewExtensionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lombokCodeInsightFixture(projectFixture);
 
   @Language("JAVA")
   private static final String LOMBOKED_TEST_CLASS = """
@@ -28,7 +39,7 @@ public class LombokStructureViewExtensionTest extends AbstractLombokLightCodeIns
      private int myX;
     }""";
 
-
+  @Test
   public void testLombokPropertiesGrouping() {
     doPropertiesTest(LOMBOKED_TEST_CLASS,
                      """
@@ -65,6 +76,7 @@ public class LombokStructureViewExtensionTest extends AbstractLombokLightCodeIns
                       String expected,
                       boolean showInterfaces,
                       boolean showProperties) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", classText);
     StructureViewComponentTestUtil.testStructureView(myFixture, svc -> {
       svc.setActionActive(SuperTypesGrouper.ID, showInterfaces);

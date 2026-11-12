@@ -1,10 +1,21 @@
 package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Test;
 
-public class StaticMethodImportLombokInspectionTest extends AbstractLombokLightCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokCodeInsightFixture;
+
+@TestApplication
+public class StaticMethodImportLombokInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lombokCodeInsightFixture(projectFixture);
 
   @Language("JAVA") static final String usingClassText = """
       package otherpackage;
@@ -71,7 +82,9 @@ public class StaticMethodImportLombokInspectionTest extends AbstractLombokLightC
     }
     """;
 
+  @Test
   public void testStaticImportOfLombokGeneratedMethods() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(StaticMethodImportLombokInspection.class);
 
     myFixture.addFileToProject("somepackage/Place.java", placeClassText);

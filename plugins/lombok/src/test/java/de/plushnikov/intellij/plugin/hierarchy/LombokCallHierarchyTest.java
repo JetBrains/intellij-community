@@ -4,19 +4,29 @@ import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewTestFixture;
-import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Tests for CallHierarchy with Lombok annotations.
@@ -24,15 +34,16 @@ import java.util.stream.Collectors;
  * The test normalizes class names in the hierarchy dumps so that only the caller methods matter.
  * Only caller methods are compared, excluding internal class hierarchy elements.
  */
-public class LombokCallHierarchyTest extends AbstractLombokLightCodeInsightTestCase {
+@TestApplication
+public class LombokCallHierarchyTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lombokCodeInsightFixture(projectFixture, "/hierarchy");
 
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/hierarchy";
-  }
+
 
   // ==================== @Getter Comparison Test ====================
 
+  @Test
   public void testGetterHierarchyComparison() {
     doCompareFieldHierarchies(
       "GetterLombok", "GetterLombokCaller", "name",
@@ -42,6 +53,7 @@ public class LombokCallHierarchyTest extends AbstractLombokLightCodeInsightTestC
 
   // ==================== @Setter Comparison Test ====================
 
+  @Test
   public void testSetterHierarchyComparison() {
     doCompareFieldHierarchies(
       "SetterLombok", "SetterLombokCaller", "value",
@@ -51,6 +63,7 @@ public class LombokCallHierarchyTest extends AbstractLombokLightCodeInsightTestC
 
   // ==================== @Data Comparison Test ====================
 
+  @Test
   public void testDataHierarchyComparison() {
     doCompareFieldHierarchies(
       "DataLombok", "DataLombokCaller", "id",
@@ -60,6 +73,7 @@ public class LombokCallHierarchyTest extends AbstractLombokLightCodeInsightTestC
 
   // ==================== @Value Comparison Test ====================
 
+  @Test
   public void testValueHierarchyComparison() {
     doCompareFieldHierarchies(
       "ValueLombok", "ValueLombokCaller", "code",
@@ -69,6 +83,7 @@ public class LombokCallHierarchyTest extends AbstractLombokLightCodeInsightTestC
 
   // ==================== @ToString Comparison Test ====================
 
+  @Test
   public void testToStringHierarchyComparison() {
     doCompareFieldHierarchies(
       "ToStringLombok", "ToStringLombokCaller", "description",
@@ -78,6 +93,7 @@ public class LombokCallHierarchyTest extends AbstractLombokLightCodeInsightTestC
 
   // ==================== @Builder Comparison Test ====================
 
+  @Test
   public void testBuilderHierarchyComparison() {
     doCompareFieldHierarchies(
       "BuilderLombok", "BuilderLombokCaller", "title",
@@ -94,6 +110,7 @@ public class LombokCallHierarchyTest extends AbstractLombokLightCodeInsightTestC
   private void doCompareFieldHierarchies(
     String lombokClassName, String lombokCallerClassName, String fieldName,
     String plainJavaClassName, String plainJavaCallerClassName) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
 
     // Load all files together
     myFixture.configureByFiles(
@@ -104,23 +121,25 @@ public class LombokCallHierarchyTest extends AbstractLombokLightCodeInsightTestC
     );
 
     // Get Lombok hierarchy (field-based)
-    @NotNull CallerMethodsTreeStructure lombokHierarchy = getFieldCallerHierarchy(lombokClassName, fieldName);
+    ReadAction.runBlocking(() -> {
+      @NotNull CallerMethodsTreeStructure lombokHierarchy = getFieldCallerHierarchy(lombokClassName, fieldName);
 
-    // Get Plain Java hierarchy (field-based)
-    @NotNull CallerMethodsTreeStructure plainJavaHierarchy = getFieldCallerHierarchy(plainJavaClassName, fieldName);
+      // Get Plain Java hierarchy (field-based)
+      @NotNull CallerMethodsTreeStructure plainJavaHierarchy = getFieldCallerHierarchy(plainJavaClassName, fieldName);
 
-    final Comparator<NodeDescriptor<?>> nodeDescriptorComparator = JavaHierarchyUtil.getComparator(getProject());
-    String plainDumped = HierarchyViewTestFixture.dump(plainJavaHierarchy, null, nodeDescriptorComparator, 0);
+      final Comparator<NodeDescriptor<?>> nodeDescriptorComparator = JavaHierarchyUtil.getComparator(myFixture.getProject());
+      String plainDumped = HierarchyViewTestFixture.dump(plainJavaHierarchy, null, nodeDescriptorComparator, 0);
 
-    String plainDumpedNormalized = plainDumped.replaceAll(plainJavaClassName, lombokClassName);
-    plainDumpedNormalized = plainDumpedNormalized.replaceAll(plainJavaCallerClassName, lombokCallerClassName);
+      String plainDumpedNormalized = plainDumped.replaceAll(plainJavaClassName, lombokClassName);
+      plainDumpedNormalized = plainDumpedNormalized.replaceAll(plainJavaCallerClassName, lombokCallerClassName);
 
-    final String equalsMethodCall = "equals(Object) (" + lombokClassName + ")";
-    if(StringUtil.getOccurrenceCount(plainDumpedNormalized, equalsMethodCall) > 1) {
-      plainDumpedNormalized = removeFirstLineWithSubstring(plainDumpedNormalized, equalsMethodCall);
-    }
+      final String equalsMethodCall = "equals(Object) (" + lombokClassName + ")";
+      if(StringUtil.getOccurrenceCount(plainDumpedNormalized, equalsMethodCall) > 1) {
+        plainDumpedNormalized = removeFirstLineWithSubstring(plainDumpedNormalized, equalsMethodCall);
+      }
 
-    HierarchyViewTestFixture.doHierarchyTest(lombokHierarchy, plainDumpedNormalized);
+      HierarchyViewTestFixture.doHierarchyTest(lombokHierarchy, plainDumpedNormalized);
+    });
   }
 
   public static String removeFirstLineWithSubstring(String text, String substring) {
@@ -137,16 +156,16 @@ public class LombokCallHierarchyTest extends AbstractLombokLightCodeInsightTestC
       .collect(Collectors.joining(System.lineSeparator()));
   }
 
-
   @NotNull
   private CallerMethodsTreeStructure getFieldCallerHierarchy(String className, String fieldName) {
-    PsiClass psiClass = JavaPsiFacade.getInstance(getProject())
-      .findClass(className, ProjectScope.getProjectScope(getProject()));
-    assertNotNull("Class '" + className + "' not found", psiClass);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    PsiClass psiClass = JavaPsiFacade.getInstance(myFixture.getProject())
+      .findClass(className, ProjectScope.getProjectScope(myFixture.getProject()));
+    assertNotNull(psiClass, "Class '" + className + "' not found");
 
     PsiField field = psiClass.findFieldByName(fieldName, false);
-    assertNotNull("Field '" + fieldName + "' not found in " + className, field);
+    assertNotNull(field, "Field '" + fieldName + "' not found in " + className);
 
-    return new CallerMethodsTreeStructure(getProject(), field, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+    return new CallerMethodsTreeStructure(myFixture.getProject(), field, HierarchyBrowserBaseEx.SCOPE_PROJECT);
   }
 }

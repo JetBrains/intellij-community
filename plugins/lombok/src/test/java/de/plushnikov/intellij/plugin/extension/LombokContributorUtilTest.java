@@ -1,15 +1,31 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package de.plushnikov.intellij.plugin.extension;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiJavaFile;
-import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class LombokContributorUtilTest extends AbstractLombokLightCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
+@TestApplication
+public class LombokContributorUtilTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lombokCodeInsightFixture(projectFixture);
+
+  @Test
   public void testDirectFieldGetterAnnotations() {
     PsiClass psiClass = configureClass("DirectGetters", """
       class DirectGetters {
@@ -31,6 +47,7 @@ public class LombokContributorUtilTest extends AbstractLombokLightCodeInsightTes
     assertGetterNotGenerated(psiClass, "invalidLazyValue");
   }
 
+  @Test
   public void testClassGetterAnnotations() {
     PsiJavaFile psiFile = configureFile("ClassGetters.java", """
       @lombok.Getter
@@ -62,6 +79,7 @@ public class LombokContributorUtilTest extends AbstractLombokLightCodeInsightTes
     assertGetterNotGenerated(findClass(psiFile, "SuppressedClassGetter"), "value");
   }
 
+  @Test
   public void testDataAndValueGetterAnnotations() {
     PsiJavaFile psiFile = configureFile("DataAndValueGetters.java", """
       @lombok.Data
@@ -92,6 +110,7 @@ public class LombokContributorUtilTest extends AbstractLombokLightCodeInsightTes
     assertGetterGenerated(findClass(psiFile, "ValueGetters"), "value");
   }
 
+  @Test
   public void testAccessorPrefixRejection() {
     PsiClass psiClass = configureClass("PrefixedGetters", """
       @lombok.Getter
@@ -106,6 +125,7 @@ public class LombokContributorUtilTest extends AbstractLombokLightCodeInsightTes
     assertGetterGenerated(psiClass, "mValue");
   }
 
+  @Test
   public void testDirectFieldSetterAnnotations() {
     PsiClass psiClass = configureClass("DirectSetters", """
       class DirectSetters {
@@ -129,6 +149,7 @@ public class LombokContributorUtilTest extends AbstractLombokLightCodeInsightTes
     assertSetterNotGenerated(psiClass, "existing");
   }
 
+  @Test
   public void testClassSetterAnnotations() {
     PsiJavaFile psiFile = configureFile("ClassSetters.java", """
       @lombok.Setter
@@ -161,6 +182,7 @@ public class LombokContributorUtilTest extends AbstractLombokLightCodeInsightTes
     assertSetterNotGenerated(findClass(psiFile, "SuppressedClassSetter"), "value");
   }
 
+  @Test
   public void testDataAndValueSetterAnnotations() {
     PsiJavaFile psiFile = configureFile("DataAndValueSetters.java", """
       @lombok.Data
@@ -193,6 +215,7 @@ public class LombokContributorUtilTest extends AbstractLombokLightCodeInsightTes
     assertSetterNotGenerated(findClass(psiFile, "ValueSetters"), "value");
   }
 
+  @Test
   public void testSetterAccessorPrefixRejection() {
     PsiClass psiClass = configureClass("PrefixedSetters", """
       @lombok.Setter
@@ -212,17 +235,20 @@ public class LombokContributorUtilTest extends AbstractLombokLightCodeInsightTes
   }
 
   private PsiJavaFile configureFile(@NotNull String fileName, @NotNull @Language("JAVA") String text) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     return (PsiJavaFile)myFixture.configureByText(fileName, text);
   }
 
   private static PsiClass findClass(@NotNull PsiJavaFile psiFile, @NotNull String className) {
-    for (PsiClass psiClass : psiFile.getClasses()) {
-      if (className.equals(psiClass.getName())) {
-        return psiClass;
+    return ReadAction.computeBlocking(() -> {
+      for (PsiClass psiClass : psiFile.getClasses()) {
+        if (className.equals(psiClass.getName())) {
+          return psiClass;
+        }
       }
-    }
-    fail("Class not found: " + className);
-    return null;
+      fail("Class not found: " + className);
+      return null;
+    });
   }
 
   private static void assertGetterGenerated(@NotNull PsiClass psiClass, @NotNull String fieldName) {
@@ -234,9 +260,11 @@ public class LombokContributorUtilTest extends AbstractLombokLightCodeInsightTes
   }
 
   private static void assertGetterGenerated(@NotNull PsiClass psiClass, @NotNull String fieldName, boolean expected) {
-    PsiField field = psiClass.findFieldByName(fieldName, false);
-    assertNotNull(fieldName, field);
-    assertEquals(fieldName, expected, LombokContributorUtil.isGetterContributedFor(field));
+    ReadAction.runBlocking(() -> {
+      PsiField field = psiClass.findFieldByName(fieldName, false);
+      assertNotNull(field, fieldName);
+      assertEquals(expected, LombokContributorUtil.isGetterContributedFor(field), fieldName);
+    });
   }
 
   private static void assertSetterGenerated(@NotNull PsiClass psiClass, @NotNull String fieldName) {
@@ -248,8 +276,10 @@ public class LombokContributorUtilTest extends AbstractLombokLightCodeInsightTes
   }
 
   private static void assertSetterGenerated(@NotNull PsiClass psiClass, @NotNull String fieldName, boolean expected) {
-    PsiField field = psiClass.findFieldByName(fieldName, false);
-    assertNotNull(fieldName, field);
-    assertEquals(fieldName, expected, LombokContributorUtil.isSetterContributedFor(field));
+    ReadAction.runBlocking(() -> {
+      PsiField field = psiClass.findFieldByName(fieldName, false);
+      assertNotNull(field, fieldName);
+      assertEquals(expected, LombokContributorUtil.isSetterContributedFor(field), fieldName);
+    });
   }
 }

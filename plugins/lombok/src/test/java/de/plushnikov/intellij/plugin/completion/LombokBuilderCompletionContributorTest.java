@@ -3,8 +3,18 @@ package de.plushnikov.intellij.plugin.completion;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
-import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for LombokBuilderCompletionContributor — verifies that a single special
@@ -12,14 +22,19 @@ import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
  * inserts the full builder call chain with placeholders, matching the existing
  * intention tests' expected "after" files.
  */
-public class LombokBuilderCompletionContributorTest extends AbstractLombokLightCodeInsightTestCase {
+@TestApplication
+public class LombokBuilderCompletionContributorTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lombokCodeInsightFixture(projectFixture);
 
   private static final String LOOKUP_TEXT = "Complete 'Builder.build()'"; // LombokBundle.complete.all.builder.methods.lombok.completion
 
   private String expectedChain; // set per-test
 
   // Basic @Builder on class
+  @Test
   public void testBasicBuilder() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String src = """
       import lombok.Builder;
 
@@ -40,7 +55,9 @@ public class LombokBuilderCompletionContributorTest extends AbstractLombokLightC
   }
 
   // @SuperBuilder on class (should include parent field too)
+  @Test
   public void testSuperBuilderSimple() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String src = """
       import lombok.experimental.SuperBuilder;
 
@@ -66,7 +83,9 @@ public class LombokBuilderCompletionContributorTest extends AbstractLombokLightC
   }
 
   // @Builder with @NonNull field
+  @Test
   public void testBuilderWithNotNull() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String src = """
       import lombok.Builder;
       import lombok.NonNull;
@@ -89,7 +108,9 @@ public class LombokBuilderCompletionContributorTest extends AbstractLombokLightC
   }
 
   // @Builder with @Accessors(prefix = "m")
+  @Test
   public void testBuilderWithAccessorsPrefix() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String src = """
       import lombok.Builder;
       import lombok.experimental.Accessors;
@@ -112,7 +133,9 @@ public class LombokBuilderCompletionContributorTest extends AbstractLombokLightC
   }
 
   // Custom builder/build method names
+  @Test
   public void testBuilderWithCustomNames() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String src = """
       import lombok.Builder;
 
@@ -133,7 +156,9 @@ public class LombokBuilderCompletionContributorTest extends AbstractLombokLightC
   }
 
   // @Builder on constructor
+  @Test
   public void testBuilderOnConstructor() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String src = """
       import lombok.Builder;
 
@@ -160,7 +185,9 @@ public class LombokBuilderCompletionContributorTest extends AbstractLombokLightC
   }
 
   // @Builder on static factory method
+  @Test
   public void testBuilderOnStaticMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String src = """
       import lombok.Builder;
 
@@ -191,7 +218,9 @@ public class LombokBuilderCompletionContributorTest extends AbstractLombokLightC
   }
 
   // Predefined builder class present
+  @Test
   public void testBuilderWithPredefinedBuilder() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String src = """
       import lombok.Builder;
 
@@ -221,12 +250,13 @@ public class LombokBuilderCompletionContributorTest extends AbstractLombokLightC
   }
 
   private void doCompletionAndApply() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     // Invoke completion
     myFixture.complete(CompletionType.BASIC);
 
     // Ensure our special lookup appears (by presentable text, not lookup string)
     LookupElement[] elements = myFixture.getLookupElements();
-    assertNotNull("No completion suggestions were produced", elements);
+    assertNotNull(elements, "No completion suggestions were produced");
 
     LookupElement toChoose = ContainerUtil.find(elements, le -> {
       LookupElementPresentation p = new LookupElementPresentation();
@@ -234,7 +264,7 @@ public class LombokBuilderCompletionContributorTest extends AbstractLombokLightC
       return LOOKUP_TEXT.equals(p.getItemText());
     });
 
-    assertNotNull("Expected lookup item not found by presentable text: " + LOOKUP_TEXT, toChoose);
+    assertNotNull(toChoose, "Expected lookup item not found by presentable text: " + LOOKUP_TEXT);
 
     // Select the specific lookup item and apply it
     myFixture.getLookup().setCurrentItem(toChoose);
@@ -251,7 +281,7 @@ public class LombokBuilderCompletionContributorTest extends AbstractLombokLightC
 
     // Assert that the resulting code contains the expected builder chain
     String actual = myFixture.getEditor().getDocument().getText();
-    assertTrue("Result does not contain expected builder chain: " + expectedChain + "\nActual: " + actual,
-      actual.contains(expectedChain));
+    assertTrue(actual.contains(expectedChain),
+      "Result does not contain expected builder chain: " + expectedChain + "\nActual: " + actual);
   }
 }

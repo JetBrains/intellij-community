@@ -12,36 +12,50 @@ import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsProcessor;
 import com.intellij.refactoring.encapsulateFields.FieldDescriptor;
 import com.intellij.refactoring.encapsulateFields.FieldDescriptorImpl;
 import com.intellij.refactoring.util.DocCommentPolicy;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
-import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class LombokEncapsulateFieldsTest extends AbstractLombokLightCodeInsightTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokCodeInsightFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/refactoring";
-  }
+@TestApplication
+public class LombokEncapsulateFieldsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lombokCodeInsightFixture(projectFixture, "/refactoring");
 
+  @Test
   public void testEncapsulateLombokFields() {
     doTest("EncapsulateLombokFields", "distanceFunction", "maxDistanceFunction", "qualityFunction", "uwbScoreFilter");
   }
 
+  @Test
   public void testDataIssueEvent() {
     doTest("DataIssueEvent", "dataIssueLevel", "whereIsItComingFrom", "exceptionNullable");
   }
 
   private void doTest(final String className, final String... fieldNames) {
-    myFixture.configureByFile(getTestName(false) + ".java");
-    PsiClass aClass = myFixture.findClass(className);
-    assertNotNull("Tested class not found", aClass);
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PsiClass aClass = myFixture.findClass(className);
+      assertNotNull(aClass, "Tested class not found");
 
-    doTest(aClass, ContainerUtil.map(fieldNames, name -> aClass.findFieldByName(name, false)));
+      doTest(aClass, ContainerUtil.map(fieldNames, name -> aClass.findFieldByName(name, false)));
 
-    myFixture.checkResultByFile(getTestName(false) + "_after.java", true);
+      myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.java", true);
+    });
   }
 
   private static void doTest(final PsiClass aClass, final Collection<PsiField> fields) {

@@ -3,11 +3,22 @@ package com.intellij.java.lomboktest;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokCodeInsightFixture;
 
-public class AdditionalLombokClassCanBeRecordInspectionTest extends AbstractLombokLightCodeInsightTestCase {
+@TestApplication
+public class AdditionalLombokClassCanBeRecordInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lombokCodeInsightFixture(projectFixture);
+
   private static final String VALUE_CLASS_SAMPLE = """
     @lombok.Value
     class Person<caret> {
@@ -29,7 +40,9 @@ public class AdditionalLombokClassCanBeRecordInspectionTest extends AbstractLomb
     }
     """;
 
+  @Test
   public void testClassCanBeRecord_renamingAccessors() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new ClassCanBeRecordInspection(ConversionStrategy.DO_NOT_SUGGEST, true));
     myFixture.configureByText("Test.java", VALUE_CLASS_SAMPLE);
 
@@ -55,7 +68,9 @@ public class AdditionalLombokClassCanBeRecordInspectionTest extends AbstractLomb
     myFixture.checkHighlighting(true, false, false); // Ensure again that code is well-formed
   }
 
+  @Test
   public void testClassCanBeRecord_notRenamingAccessors() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.enableInspections(new ClassCanBeRecordInspection(ConversionStrategy.DO_NOT_SUGGEST, false));
     myFixture.configureByText("Test.java", VALUE_CLASS_SAMPLE);
 

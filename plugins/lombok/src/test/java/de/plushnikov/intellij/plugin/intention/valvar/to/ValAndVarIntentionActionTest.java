@@ -1,29 +1,30 @@
 package de.plushnikov.intellij.plugin.intention.valvar.to;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.LightProjectDescriptor;
-import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import de.plushnikov.intellij.plugin.LombokTestUtil;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokFixturesKt.lombokCodeInsightFixture;
 import static de.plushnikov.intellij.plugin.intention.LombokIntentionFixture.TEST_DATA_INTENTION_DIRECTORY;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ValAndVarIntentionActionTest extends AbstractLombokLightCodeInsightTestCase {
+@TestApplication
+public class ValAndVarIntentionActionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture =
+    lombokCodeInsightFixture(projectFixture, EXPLICIT_TO_VAL_VAR_DIRECTORY);
 
   public static final String EXPLICIT_TO_VAL_VAR_DIRECTORY = TEST_DATA_INTENTION_DIRECTORY + "/valvar/replaceExplicitType";
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR;
-  }
-
-  @Override
-  protected String getBasePath() {
-    return EXPLICIT_TO_VAL_VAR_DIRECTORY;
-  }
-
+  @Test
   public void testValAndVar() {
-    loadToPsiFile(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    LombokTestUtil.loadToPsiFile(myFixture, myFixture.getTestName(false) + ".java");
     IntentionAction replaceExplicitTypeWithValIntentionAction = new ReplaceExplicitTypeWithValIntentionAction().asIntention();
     IntentionAction replaceExplicitTypeWithVarIntentionAction = new ReplaceExplicitTypeWithVarIntentionAction().asIntention();
     boolean foundVal = false;
@@ -39,6 +40,6 @@ public class ValAndVarIntentionActionTest extends AbstractLombokLightCodeInsight
         break;
       }
     }
-    assertTrue("Both intention actions should be available", foundVal && foundVar);
+    assertTrue(foundVal && foundVar, "Both intention actions should be available");
   }
 }
