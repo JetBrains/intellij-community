@@ -879,7 +879,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(ResultOfInstruction(anchor))
     }
 
-    context(_: KaSession)
     private fun KtExpressionWithLabel.targetLoop(): KtLoopExpression? {
         val label = getTargetLabel() as? KtLabelReferenceExpression
         return if (label == null) {
@@ -1390,7 +1389,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return { pushUnknown() }
     }
 
-    context(_: KaSession)
     private fun rangeFunction(
         expr: KtForExpression,
         parameterVar: DfaVariableValue,
@@ -1415,7 +1413,6 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         setOffset(finalOffset)
     }
 
-    context(_: KaSession)
     private inline fun inlinedBlock(element: KtElement, fn: () -> Unit) {
         // Transfer value is pushed to avoid emptying stack beyond this point
         trapTracker.pushTrap(InsideInlinedBlockTrap(element))
