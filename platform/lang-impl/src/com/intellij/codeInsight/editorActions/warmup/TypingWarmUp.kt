@@ -10,6 +10,7 @@ import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 import com.intellij.codeInsight.template.CustomLiveTemplate
 import com.intellij.codeInsight.template.TemplateSubstitutor
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.impl.TemplateSettings
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.application.ApplicationManager
@@ -143,6 +144,7 @@ private suspend fun warmUpActionExtensions() {
     warmUp("custom live templates") { CustomLiveTemplate.EP_NAME.extensionList }
     warmUp("template substitutors") { TemplateSubstitutor.EP_NAME.extensionList }
     warmUp("template context types") { TemplateManagerImpl.getAllContextTypes() }
+    warmUp("live template settings") { serviceAsync<TemplateSettings>() }
   }
 }
 
