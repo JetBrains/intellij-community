@@ -15,22 +15,33 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
+
 /**
  * @author Andreas Arledal
  */
-public class ReplaceTernaryWithIfElseTest extends GrIntentionTestCase {
-  public ReplaceTernaryWithIfElseTest() {
-    super(GroovyIntentionsBundle.message("replace.ternary.with.if.else.intention.name"));
-  }
+@TestApplication
+public class ReplaceTernaryWithIfElseTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, GroovyIntentionsBundle.message("replace.ternary.with.if.else.intention.name"), null);
 
+  @Test
   public void testDoNotTriggerOnIncompleteTernary() {
-    doAntiTest("""
+    grIntention.get().doAntiTest("""
                  return aaa ? <caret>bbb
                  """);
   }
 
+  @Test
   public void testSimpleCondition() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  return aaa <caret>? bbb : ccc
                  """, """
                  if (aaa)<caret> {
@@ -41,8 +52,9 @@ public class ReplaceTernaryWithIfElseTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testCaretAfterQuestionMark() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  return aaa ?<caret> bbb : ccc
                  """, """
                  if (aaa)<caret> {
@@ -53,8 +65,9 @@ public class ReplaceTernaryWithIfElseTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testCaretInfrontOfConditional() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  return <caret>aaa ? bbb : ccc
                  """, """
                  if (aaa)<caret> {
@@ -65,8 +78,9 @@ public class ReplaceTernaryWithIfElseTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testCaretInfrontOfElse() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  return aaa ? bbb <caret>: ccc
                  """, """
                  if (aaa)<caret> {
@@ -77,8 +91,9 @@ public class ReplaceTernaryWithIfElseTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testCaretAfterElse() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  return aaa ? bbb :<caret> ccc
                  """, """
                  if (aaa)<caret> {
@@ -89,8 +104,9 @@ public class ReplaceTernaryWithIfElseTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testCaretBeforeElseReturn() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  return aaa ? bbb : <caret>ccc
                  """, """
                  if (aaa)<caret> {
@@ -101,8 +117,9 @@ public class ReplaceTernaryWithIfElseTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testCaretBeforeReturnStatement() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  <caret>return aaa ? bbb : ccc
                  """, """
                  if (aaa)<caret> {

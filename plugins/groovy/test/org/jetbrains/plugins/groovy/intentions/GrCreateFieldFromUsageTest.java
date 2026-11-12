@@ -15,18 +15,27 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
 /**
  * @author Max Medvedev
  */
-public class GrCreateFieldFromUsageTest extends GrIntentionTestCase {
-  public GrCreateFieldFromUsageTest() {
-    super("Create field", GrUnresolvedAccessInspection.class);
-  }
+@TestApplication
+public class GrCreateFieldFromUsageTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, "Create field", null, GrUnresolvedAccessInspection.class);
 
+  @Test
   public void testSimpleRef() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  class A {
                      def foo() {
                          print obje<caret>ct
@@ -43,8 +52,9 @@ public class GrCreateFieldFromUsageTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testThisRef() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  class A {
                      def foo() {
                          print this.obje<caret>ct
@@ -61,8 +71,9 @@ public class GrCreateFieldFromUsageTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testInStaticMethod() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  class A {
                      static def foo() {
                          print obje<caret>ct
@@ -79,8 +90,9 @@ public class GrCreateFieldFromUsageTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testInStaticMethodwithThis() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  class A {
                      static def foo() {
                          print this.obje<caret>ct
@@ -97,8 +109,9 @@ public class GrCreateFieldFromUsageTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testQualifiedRef() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  class A {
                  }
                  print new A().obje<caret>ct
@@ -110,8 +123,9 @@ public class GrCreateFieldFromUsageTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testQualifiedStaticRef() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  class A {
                  }
                  print A.obje<caret>ct
@@ -123,8 +137,9 @@ public class GrCreateFieldFromUsageTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testClassRef() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  class A {
                  }
                  print A.class.obj<caret>ect

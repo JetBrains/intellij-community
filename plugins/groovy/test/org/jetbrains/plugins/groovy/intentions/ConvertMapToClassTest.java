@@ -6,38 +6,54 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.intentions.conversions.ConvertMapToClassIntention;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Maxim.Medvedev
  */
-public class ConvertMapToClassTest extends GrIntentionTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "intentions/convertMapToClass/";
-  }
+@TestApplication
+public class ConvertMapToClassTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, null, TestUtils.getAbsoluteTestDataPath() + "intentions/convertMapToClass/");
 
+  @Test
   public void testSimple() {
     doTest();
   }
 
+  @Test
   public void testVariableTypeReplace() {
     doTest();
   }
 
+  @Test
   public void testBadCase() {
     doTest(false);
   }
 
+  @Test
   public void testChangeReturnType() {
     doTest();
   }
 
+  @Test
   public void testChangeMethodParameter() {
     doTest();
   }
@@ -50,28 +66,30 @@ public class ConvertMapToClassTest extends GrIntentionTestCase {
     doTest(true);
   }
 
-  @Override
-  protected void doTest(boolean exists) {
-    myFixture.configureByFile(getTestName(true) + "/Test.groovy");
+  private void doTest(boolean exists) {
+    LightJavaCodeInsightTestFixture myFixture = grIntention.get().getFixture();
+    myFixture.configureByFile(myFixture.getTestName(true) + "/Test.groovy");
     String hint = GroovyIntentionsBundle.message("convert.map.to.class.intention.name");
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);
     if (!exists) {
-      assertEmpty(list);
+      assertThat(list).isNullOrEmpty();
       return;
     }
-    assertOneElement(list);
-    final PsiElement element = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
-    final GrListOrMap map = PsiTreeUtil.getParentOfType(element, GrListOrMap.class);
-    assertNotNull(map);
-    final GrTypeDefinition foo = ConvertMapToClassIntention.createClass(getProject(), map.getNamedArguments(), "", "Foo");
-    myFixture.addFileToProject(getTestName(true) + "/Foo.groovy", foo.getContainingFile().getText());
-    final PsiClass psiClass = myFixture.findClass("Foo");
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> ConvertMapToClassIntention
-      .replaceMapWithClass(getProject(), map, psiClass, ConvertMapToClassIntention.checkForReturnFromMethod(map),
-                           ConvertMapToClassIntention.checkForVariableDeclaration(map),
-                           ConvertMapToClassIntention.checkForMethodParameter(map)));
+    assertThat(list).hasSize(1);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      final PsiElement element = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
+      final GrListOrMap map = PsiTreeUtil.getParentOfType(element, GrListOrMap.class);
+      assertNotNull(map);
+      final GrTypeDefinition foo = ConvertMapToClassIntention.createClass(myFixture.getProject(), map.getNamedArguments(), "", "Foo");
+      myFixture.addFileToProject(myFixture.getTestName(true) + "/Foo.groovy", foo.getContainingFile().getText());
+      final PsiClass psiClass = myFixture.findClass("Foo");
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> ConvertMapToClassIntention
+        .replaceMapWithClass(myFixture.getProject(), map, psiClass, ConvertMapToClassIntention.checkForReturnFromMethod(map),
+                             ConvertMapToClassIntention.checkForVariableDeclaration(map),
+                             ConvertMapToClassIntention.checkForMethodParameter(map)));
 
-    myFixture.checkResultByFile(getTestName(true) + "/Foo.groovy", getTestName(true) + "/Expected.groovy", true);
-    myFixture.checkResultByFile(getTestName(true) + "/Test_after.groovy", true);
+      myFixture.checkResultByFile(myFixture.getTestName(true) + "/Foo.groovy", myFixture.getTestName(true) + "/Expected.groovy", true);
+      myFixture.checkResultByFile(myFixture.getTestName(true) + "/Test_after.groovy", true);
+    });
   }
 }

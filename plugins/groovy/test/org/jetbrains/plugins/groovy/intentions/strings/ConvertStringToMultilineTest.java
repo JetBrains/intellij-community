@@ -2,50 +2,67 @@
 package org.jetbrains.plugins.groovy.intentions.strings;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import junit.framework.TestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+import org.jetbrains.plugins.groovy.intentions.GrIntentionFixture;
 import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertStringToMultilineIntention;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Max Medvedev
  */
-public class ConvertStringToMultilineTest extends GrIntentionTestCase {
-  public ConvertStringToMultilineTest() {
-    super(ConvertStringToMultilineIntention.getHint());
-  }
+@TestApplication
+public class ConvertStringToMultilineTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, ConvertStringToMultilineIntention.getHint(), TestUtils.getAbsoluteTestDataPath() + "intentions/convertToMultiline/");
 
+  @Test
   public void testPlainString() {
-    doTextTest("print 'ab<caret>c'", "print '''abc'''");
+    grIntention.get().doTextTest("print 'ab<caret>c'", "print '''abc'''");
   }
 
+  @Test
   public void testGString() {
-    doTextTest("print \"ab<caret>c\"", "print \"\"\"abc\"\"\"");
+    grIntention.get().doTextTest("print \"ab<caret>c\"", "print \"\"\"abc\"\"\"");
   }
 
+  @Test
   public void testPlainString2() {
-    doTextTest("print 'a\\nb<caret>c'", "print '''a\nbc'''");
+    grIntention.get().doTextTest("print 'a\\nb<caret>c'", "print '''a\nbc'''");
   }
 
+  @Test
   public void testGString2() {
-    doTextTest("print \"a\\nb<caret>c\"", "print \"\"\"a\nbc\"\"\"");
+    grIntention.get().doTextTest("print \"a\\nb<caret>c\"", "print \"\"\"a\nbc\"\"\"");
   }
 
+  @Test
   public void testGString3() {
-    doTextTest("print \"a\\nb${a<caret>}c\"", "print \"\"\"a\nb${a}c\"\"\"");
+    grIntention.get().doTextTest("print \"a\\nb${a<caret>}c\"", "print \"\"\"a\nb${a}c\"\"\"");
   }
 
+  @Test
   public void testGString4() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  print "ab<caret>c\\$ $x"
                  """, """
                  print ""\"abc\\$ $x""\"
                  """);
   }
 
+  @Test
   public void testEscapeEndingQuote() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  void test() {
                      "<caret>1\\""
                  }""",
@@ -55,12 +72,14 @@ public class ConvertStringToMultilineTest extends GrIntentionTestCase {
                  }""");
   }
 
+  @Test
   public void testAlreadyMultiline() {
-    doAntiTest("print \"\"\"a<caret>bc\"\"\"");
+    grIntention.get().doAntiTest("print \"\"\"a<caret>bc\"\"\"");
   }
 
+  @Test
   public void testNonConstantConcatenation() {
-    doAntiTest("""
+    grIntention.get().doAntiTest("""
                  def bug() {
                      String s = 'x'
                      <caret>s + "12"; // move caret before "s"
@@ -69,16 +88,20 @@ public class ConvertStringToMultilineTest extends GrIntentionTestCase {
   }
 
   public void doSelectionTest(String before, String after) {
+    LightJavaCodeInsightTestFixture myFixture = grIntention.get().getFixture();
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before);
 
-    TestCase.assertTrue(myFixture.getEditor().getSelectionModel().hasSelection());
-    final IntentionAction intention = new ConvertStringToMultilineIntention();
-    TestCase.assertTrue(intention.isAvailable(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile()));
-    intention.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      assertTrue(myFixture.getEditor().getSelectionModel().hasSelection());
+      final IntentionAction intention = new ConvertStringToMultilineIntention();
+      assertTrue(intention.isAvailable(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile()));
+      intention.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
 
-    myFixture.checkResult(after);
+      myFixture.checkResult(after);
+    });
   }
 
+  @Test
   public void testSimpleConcatenation() {
     doSelectionTest("""
                       print <selection>'foo\\n' +
@@ -89,6 +112,7 @@ public class ConvertStringToMultilineTest extends GrIntentionTestCase {
                       """);
   }
 
+  @Test
   public void testGStringConcatenation() {
     doSelectionTest("""
                       print <selection>"foo${x}\\n" +
@@ -97,10 +121,5 @@ public class ConvertStringToMultilineTest extends GrIntentionTestCase {
                       print <selection>""\"foo${x}
                       bar""\"</selection>
                       """);
-  }
-
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "intentions/convertToMultiline/";
   }
 }

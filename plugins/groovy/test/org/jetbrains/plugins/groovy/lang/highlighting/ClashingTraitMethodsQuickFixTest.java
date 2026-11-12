@@ -1,23 +1,33 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingTraitMethodsInspection;
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+import org.jetbrains.plugins.groovy.intentions.GrIntentionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
 /**
  * Created by Max Medvedev on 09/06/14
  */
-public class ClashingTraitMethodsQuickFixTest extends GrIntentionTestCase {
-  public ClashingTraitMethodsQuickFixTest() {
-    super(GroovyBundle.message("declare.explicit.implementations.of.trait"), ClashingTraitMethodsInspection.class);
-  }
+@TestApplication
+public class ClashingTraitMethodsQuickFixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, GroovyBundle.message("declare.explicit.implementations.of.trait"), null, ClashingTraitMethodsInspection.class);
+
 
   /**
    * Somewhat incorrect, the overriding method return type should be `def` instead of `Object`
    */
+  @Test
   public void testQuickFix() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  trait T1 {
                      def foo(){}
                  }

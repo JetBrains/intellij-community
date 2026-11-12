@@ -15,30 +15,41 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
 /**
  * @author Maxim.Medvedev
  */
-public class ConvertJavaStyleArrayCreationTest extends GrIntentionTestCase{
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "intentions/convertJavaStyleArrayCreation/";
-  }
+@TestApplication
+public class ConvertJavaStyleArrayCreationTest{
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, null, TestUtils.getAbsoluteTestDataPath() + "intentions/convertJavaStyleArrayCreation/");
 
+  @Test
   public void testConversion() {
-    doTest(GroovyIntentionsBundle.message("convert.java.style.array.intention.name"), true);
+    grIntention.get().doTest(GroovyIntentionsBundle.message("convert.java.style.array.intention.name"), true);
   }
 
+  @Test
   public void testConversionWithDoubleNestedArrayInitializer() {
-    doTest(GroovyIntentionsBundle.message("convert.java.style.array.intention.name"), true);
+    grIntention.get().doTest(GroovyIntentionsBundle.message("convert.java.style.array.intention.name"), true);
   }
 
+  @Test
   public void testWhitespacesAndNewLinesAreIgnored() {
-    doTest(GroovyIntentionsBundle.message("convert.java.style.array.intention.name"), true);
+    grIntention.get().doTest(GroovyIntentionsBundle.message("convert.java.style.array.intention.name"), true);
   }
 
+  @Test
   public void testTrailingComma() {
-    doTest(GroovyIntentionsBundle.message("convert.java.style.array.intention.name"), true);
+    grIntention.get().doTest(GroovyIntentionsBundle.message("convert.java.style.array.intention.name"), true);
   }
 }

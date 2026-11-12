@@ -15,26 +15,32 @@
  */
 package org.jetbrains.plugins.groovy.intentions.strings;
 
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.intentions.GrIntentionFixture;
 import org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertMultilineStringToSingleLineIntention;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
 /**
  * @author Max Medvedev
  */
-public class ConvertMultilineStringToSingleLineTest extends GrIntentionTestCase {
-  public ConvertMultilineStringToSingleLineTest() {
-    super(ConvertMultilineStringToSingleLineIntention.getHint());
-  }
+@TestApplication
+public class ConvertMultilineStringToSingleLineTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, ConvertMultilineStringToSingleLineIntention.getHint(), TestUtils.getAbsoluteTestDataPath() + "intentions/convertMultilineToSingleline/");
 
-  public void testSimple() { doTest(true); }
+  @Test
+  public void testSimple() { grIntention.get().doTest(true); }
 
-  public void testSlashN() { doTest(true); }
+  @Test
+  public void testSlashN() { grIntention.get().doTest(true); }
 
-  public void testQuote() { doTest(true); }
-
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "intentions/convertMultilineToSingleline/";
-  }
+  @Test
+  public void testQuote() { grIntention.get().doTest(true); }
 }

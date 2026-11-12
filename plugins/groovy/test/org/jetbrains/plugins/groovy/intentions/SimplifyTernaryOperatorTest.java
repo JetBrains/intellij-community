@@ -15,47 +15,66 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
+
 /**
  * @author Niels Harremoes
  * @author Oscar Toernroth
  */
-public class SimplifyTernaryOperatorTest extends GrIntentionTestCase {
+@TestApplication
+public class SimplifyTernaryOperatorTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention = grIntentionFixture(projectFixture, null, null);
+
   private static final String INTENTION_NAME = GroovyIntentionsBundle.message("simplify.ternary.operator.intention.name");
 
   private void doTest(String before, String after) {
 
-    doTextTest(before, INTENTION_NAME, after);
+    grIntention.get().doTextTest(before, INTENTION_NAME, after);
   }
 
+  @Test
   public void testDoNotTriggerOnNormalConditional() {
-    doAntiTest("aaa ?<caret> bbb : ccc", INTENTION_NAME);
-    doAntiTest("aaa ?<caret> false : ccc", INTENTION_NAME);
-    doAntiTest("aaa ?<caret> bbb : true", INTENTION_NAME);
+    grIntention.get().doAntiTest("aaa ?<caret> bbb : ccc", INTENTION_NAME);
+    grIntention.get().doAntiTest("aaa ?<caret> false : ccc", INTENTION_NAME);
+    grIntention.get().doAntiTest("aaa ?<caret> bbb : true", INTENTION_NAME);
   }
 
+  @Test
   public void test_don_t_trigger_for_non_boolean_conditions() {
-    doAntiTest("""
+    grIntention.get().doAntiTest("""
                  def a = 0
                  def b = 2
                  println a <caret>? true : b""", INTENTION_NAME);
   }
 
+  @Test
   public void testSimplifyWhenThenIsTrue() {
     doTest("aaa ?<caret> true: bbb", "aaa ||<caret> bbb");
   }
 
+  @Test
   public void testSimplifyWhenThenIsTrueComplexArguments() {
     doTest("aaa ?<caret> true : bbb ? ccc : ddd", "aaa || (bbb ? ccc : ddd)");
   }
 
+  @Test
   public void testSimplifyWhenElseIsFalseComplexArguments() {
     doTest("aaa || bbb ? ccc || ddd : false", "(aaa || bbb) && (ccc || ddd)");
   }
 
+  @Test
   public void testSimplifyWhenElseIsFalse() {
     doTest("aaa ?<caret> bbb : false", "aaa &&<caret> bbb");
   }
 
+  @Test
   public void testResultIsWrappedInParenthesesWhenNeeded() {
     doTest("a ?<caret> b ? true : d : false", "a &&<caret> (b ? true : d)");
   }

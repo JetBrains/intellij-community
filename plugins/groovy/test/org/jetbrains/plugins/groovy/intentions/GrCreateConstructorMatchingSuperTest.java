@@ -1,15 +1,26 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
+
 /**
  * @author Max Medvedev
  */
-public class GrCreateConstructorMatchingSuperTest extends GrIntentionTestCase {
-  public GrCreateConstructorMatchingSuperTest() {
-    super("Create constructor matching super");
-  }
+@TestApplication
+public class GrCreateConstructorMatchingSuperTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention = grIntentionFixture(projectFixture, "Create constructor matching super", null);
 
+  @Test
   public void testSuperWithJavaDoc() {
+    LightJavaCodeInsightTestFixture myFixture = grIntention.get().getFixture();
     myFixture.addClass("""
                          public class Base {
                              /**
@@ -20,7 +31,7 @@ public class GrCreateConstructorMatchingSuperTest extends GrIntentionTestCase {
                          }
                          """);
 
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  class <caret>Inheritor extends Base {
                  }
                  """,
@@ -36,14 +47,16 @@ public class GrCreateConstructorMatchingSuperTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testInvalidOriginalParameterName() {
+    LightJavaCodeInsightTestFixture myFixture = grIntention.get().getFixture();
     myFixture.addClass("""
                          class Base {
                            Base(String in, String s) {
                            }
                          }""");
 
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  class <caret>Inh extends Base {
                  }
                  """,

@@ -15,12 +15,25 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
+
 /**
  * @author Max Medvedev
  */
-public class DemorgansLawTest extends GrIntentionTestCase {
+@TestApplication
+public class DemorgansLawTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention = grIntentionFixture(projectFixture, null, null);
+
+  @Test
   public void testInstanceof() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  if (!(locationElement != null &<caret>& locationElement.getContainingFile() instanceof GherkinFile)) {
                      return null
                  }

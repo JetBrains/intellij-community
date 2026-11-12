@@ -16,55 +16,72 @@
 
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
 /**
  * @author Maxim.Medvedev
  */
-public class ConvertMethodToClosureTest extends GrIntentionTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "intentions/convertMethodToClosure/";
-  }
+@TestApplication
+public class ConvertMethodToClosureTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, null, TestUtils.getAbsoluteTestDataPath() + "intentions/convertMethodToClosure/");
 
+  @Test
   public void testMethodToClosure() {
     doMethodToClosureTest();
   }
 
+  @Test
   public void testStaticMethodToClosure()  {
     doMethodToClosureTest();
   }
 
+  @Test
   public void testClosureToMethod()  {
     doClosureToMethodTest();
   }
 
+  @Test
   public void testClosureWithImplicitParameterToMethod()  {
     doClosureToMethodTest();
   }
 
+  @Test
   public void testClosureWithoutModifiersToMethod() {
     doClosureToMethodTest();
   }
 
+  @Test
   public void testClosureToMethodWithFieldUsages() {
     doClosureToMethodTest();
   }
 
+  @Test
   public void testMethodToClosureWithMemberPointer() {
     doMethodToClosureTest();
   }
 
+  @Test
   public void testMethodFromReference() {
     doMethodToClosureTest();
   }
 
+  @Test
   public void testConstructorToClosure() { doMethodToClosureTest(false); }
 
+  @Test
   public void testInvalidMethodName() {doMethodToClosureTest(false);}
 
   private void doClosureToMethodTest() {
-    doTest(GroovyIntentionsBundle.message("convert.closure.to.method.intention.name"), true);
+    grIntention.get().doTest(GroovyIntentionsBundle.message("convert.closure.to.method.intention.name"), true);
   }
 
   private void doMethodToClosureTest() {
@@ -72,6 +89,6 @@ public class ConvertMethodToClosureTest extends GrIntentionTestCase {
   }
 
   private void doMethodToClosureTest(boolean available) {
-    doTest(GroovyIntentionsBundle.message("convert.method.to.closure.intention.name"), available);
+    grIntention.get().doTest(GroovyIntentionsBundle.message("convert.method.to.closure.intention.name"), available);
   }
 }

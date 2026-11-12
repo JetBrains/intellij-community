@@ -15,13 +15,26 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
+
 /**
  * @author Brice Dutheil
  * @author Hamlet D'Arcy
  */
-public class SplitIfTest extends GrIntentionTestCase {
+@TestApplication
+public class SplitIfTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention = grIntentionFixture(projectFixture, null, null);
+
+  @Test
   public void test_that_two_binary_operand_are_split_into_2_if_statements() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  if(a <caret>&& b) {
                    c();
                  }
@@ -34,8 +47,9 @@ public class SplitIfTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void test_that_two_binary_operand_are_not_split_when_if_statements_has_else_branch() {
-    doAntiTest("""
+    grIntention.get().doAntiTest("""
                  if(a <caret>&& b) {
                    c();
                  } else {

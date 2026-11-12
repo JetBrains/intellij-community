@@ -15,16 +15,26 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
+
 /**
  * @author Max Medvedev
  */
-public class FlipIfTest extends GrIntentionTestCase {
-  public FlipIfTest() {
-    super(GroovyIntentionsBundle.message("flip.if.intention.name"));
-  }
+@TestApplication
+public class FlipIfTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, GroovyIntentionsBundle.message("flip.if.intention.name"), null);
 
+  @Test
   public void test0() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  i<caret>f (abc) {
                    print 1
                  }
@@ -41,8 +51,9 @@ public class FlipIfTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void test1() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  if (abc) {
                    print 1
                  }

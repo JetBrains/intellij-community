@@ -15,14 +15,26 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
 /**
  * @author Max Medvedev
  */
-public class ArgumentCastTest extends GrIntentionTestCase {
+@TestApplication
+public class ArgumentCastTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention = grIntentionFixture(projectFixture, null, null);
+
+  @Test
   public void test0() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def foo(char c) {}
                  foo(<caret>'a')
                  """, "Cast 1st parameter to char", """
@@ -31,8 +43,9 @@ public class ArgumentCastTest extends GrIntentionTestCase {
                  """, GroovyAssignabilityCheckInspection.class);
   }
 
+  @Test
   public void test1() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def foo(char c, int x) {}
                  foo(<caret>'a', 2)
                  """, "Cast 1st parameter to char", """
@@ -41,16 +54,18 @@ public class ArgumentCastTest extends GrIntentionTestCase {
                  """, GroovyAssignabilityCheckInspection.class);
   }
 
+  @Test
   public void test2() {
-    doAntiTest("""
+    grIntention.get().doAntiTest("""
                  def foo(char c, int x) {}
                  
                  foo(<caret>'a', 2, 3)
                  """, "Cast 1st parameter to char", GroovyAssignabilityCheckInspection.class);
   }
 
+  @Test
   public void test3() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def foo(char c, int x) {}
                  
                  foo(<caret>'a', 'a')
@@ -61,8 +76,9 @@ public class ArgumentCastTest extends GrIntentionTestCase {
                  """, GroovyAssignabilityCheckInspection.class);
   }
 
+  @Test
   public void test3_2() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def foo(char c, int x) {}
                  
                  foo(<caret>'a', 'a')
@@ -73,8 +89,9 @@ public class ArgumentCastTest extends GrIntentionTestCase {
                  """, GroovyAssignabilityCheckInspection.class);
   }
 
+  @Test
   public void testMapArgIsIncorrect() {
-    doAntiTest("""
+    grIntention.get().doAntiTest("""
                  void foo(Map<int, int> m, String o) {}
              
              
@@ -83,7 +100,7 @@ public class ArgumentCastTest extends GrIntentionTestCase {
   }
 
   public void ignoredestNamedArguments() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  
                  def foo(a, int b, c) {}
                  foo(<caret>'a', b: 1, 1)

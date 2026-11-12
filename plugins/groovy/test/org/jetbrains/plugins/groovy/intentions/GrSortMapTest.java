@@ -15,22 +15,26 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
 /**
  * Created by Max Medvedev on 11/01/14
  */
-public class GrSortMapTest extends GrIntentionTestCase {
-  public GrSortMapTest() {
-    super("Sort alphabetically");
-  }
+@TestApplication
+public class GrSortMapTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, "Sort alphabetically", TestUtils.getAbsoluteTestDataPath() + "intentions/sortMap/");
 
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "intentions/sortMap/";
-  }
-
+  @Test
   public void testBasicMapSort() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 }

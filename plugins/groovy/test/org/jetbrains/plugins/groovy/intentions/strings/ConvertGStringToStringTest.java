@@ -15,37 +15,48 @@
  */
 package org.jetbrains.plugins.groovy.intentions.strings;
 
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.intentions.GrIntentionFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 import static org.jetbrains.plugins.groovy.intentions.conversions.strings.ConvertGStringToStringIntention.INTENTION_NAME;
 
 /**
  * @author Maxim.Medvedev
  */
-public class ConvertGStringToStringTest extends GrIntentionTestCase {
+@TestApplication
+public class ConvertGStringToStringTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, null, TestUtils.getAbsoluteTestDataPath() + "intentions/convertGStringToString/");
+
+  @Test
   public void testSimpleCase() {
-    doTest(INTENTION_NAME, true);
+    grIntention.get().doTest(INTENTION_NAME, true);
   }
 
+  @Test
   public void testComplicatedCase() {
-    doTest(INTENTION_NAME, true);
+    grIntention.get().doTest(INTENTION_NAME, true);
   }
 
+  @Test
   public void testEscaping() {
-    doTest(INTENTION_NAME, true);
+    grIntention.get().doTest(INTENTION_NAME, true);
   }
 
+  @Test
   public void testSlashBeforeNewLine() {
-    doTest(INTENTION_NAME, true);
+    grIntention.get().doTest(INTENTION_NAME, true);
   }
 
+  @Test
   public void testGStringWithComplicatedInjection() {
-    doTest(INTENTION_NAME, false);
-  }
-
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "intentions/convertGStringToString/";
+    grIntention.get().doTest(INTENTION_NAME, false);
   }
 }

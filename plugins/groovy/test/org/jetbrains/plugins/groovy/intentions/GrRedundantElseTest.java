@@ -1,18 +1,26 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.intentions.control.GrRedundantElseIntention;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
 /**
  * @author Max Medvedev
  */
-public class GrRedundantElseTest extends GrIntentionTestCase {
-  public GrRedundantElseTest() {
-    super(GrRedundantElseIntention.HINT);
-  }
+@TestApplication
+public class GrRedundantElseTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention = grIntentionFixture(projectFixture, GrRedundantElseIntention.HINT, null);
 
+  @Test
   public void testBlock() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def foo() {
                      if (cond) {
                          print 2
@@ -35,8 +43,9 @@ public class GrRedundantElseTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testSingleStatement() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def foo() {
                      if (cond) {
                          print 2
@@ -55,8 +64,9 @@ public class GrRedundantElseTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testInsideIf() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def foo() {
                      if (abc)
                          if (cond) {
@@ -78,8 +88,9 @@ public class GrRedundantElseTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testInsideFor() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def foo() {
                      for (i in 1..2) {
                          if (cond) {
@@ -104,8 +115,9 @@ public class GrRedundantElseTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testInsideFor2() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def foo() {
                      for (i in 1..2) {
                          if (cond) {
@@ -140,8 +152,9 @@ public class GrRedundantElseTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testInsideFor3() {
-    doAntiTest("""
+    grIntention.get().doAntiTest("""
                  def foo() {
                      for (i in 1..2) {
                          if (cond) {
@@ -155,8 +168,9 @@ public class GrRedundantElseTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testInsideFor4() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def foo() {
                      for (i in 1..2) {
                          if (cond) {
@@ -193,8 +207,9 @@ public class GrRedundantElseTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void test_IDEA_281835() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def foo() {
                      if (true) {
                          return x

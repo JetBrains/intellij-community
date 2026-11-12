@@ -15,21 +15,33 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
+
 /**
  * @author Max Medvedev
  */
-public class GrAliasImportTest extends GrIntentionTestCase {
-  public GrAliasImportTest() {
-    super(GroovyIntentionsBundle.message("gr.alias.import.intention.name"));
-  }
+@TestApplication
+public class GrAliasImportTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, GroovyIntentionsBundle.message("gr.alias.import.intention.name"), null);
 
+  @Test
   public void testSimple() {
+    LightJavaCodeInsightTestFixture myFixture = grIntention.get().getFixture();
     myFixture.addFileToProject("Foo.groovy", """
       class Foo {
         static void foo(){}
       }
       """);
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  import static Foo.foo
                  
                  fo<caret>o()
@@ -40,14 +52,16 @@ public class GrAliasImportTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testOverriden() {
+    LightJavaCodeInsightTestFixture myFixture = grIntention.get().getFixture();
     myFixture.addFileToProject("Foo.groovy", """
       class Foo {
         static void foo(){}
         static void foo(int x){}
       }
       """);
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  import static Foo.foo
                  
                  fo<caret>o()
@@ -60,13 +74,15 @@ public class GrAliasImportTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testOnDemand() {
+    LightJavaCodeInsightTestFixture myFixture = grIntention.get().getFixture();
     myFixture.addFileToProject("Foo.groovy", """
       class Foo {
         static void foo(){}
       }
       """);
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  import static Foo.*
                  
                  fo<caret>o()
@@ -78,13 +94,15 @@ public class GrAliasImportTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testSimpleOnImportStatement() {
+    LightJavaCodeInsightTestFixture myFixture = grIntention.get().getFixture();
     myFixture.addFileToProject("Foo.groovy", """
       class Foo {
         static void foo(){}
       }
       """);
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  import static Foo.f<caret>oo
                  
                  foo()
@@ -95,14 +113,16 @@ public class GrAliasImportTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testProperty() {
+    LightJavaCodeInsightTestFixture myFixture = grIntention.get().getFixture();
     myFixture.addFileToProject("Foo.groovy", """
       class Foo {
         static def foo = 2
       }
       """);
 
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  import static Foo.fo<caret>o
                  
                  print foo
@@ -117,23 +137,28 @@ public class GrAliasImportTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void test_on_non_static_import() {
-    doAntiTest("impor<caret>t java.lang.String");
+    grIntention.get().doAntiTest("impor<caret>t java.lang.String");
   }
 
+  @Test
   public void test_on_star_import() {
-    doAntiTest("impor<caret>t static java.lang.String.*");
+    grIntention.get().doAntiTest("impor<caret>t static java.lang.String.*");
   }
 
+  @Test
   public void test_on_aliased_import() {
-    doAntiTest("impor<caret>t static java.lang.String.valueOf as alreadyAliased");
+    grIntention.get().doAntiTest("impor<caret>t static java.lang.String.valueOf as alreadyAliased");
   }
 
+  @Test
   public void test_on_import_without_reference() {
-    doAntiTest("impor<caret>t static ");
+    grIntention.get().doAntiTest("impor<caret>t static ");
   }
 
+  @Test
   public void test_on_unresolved_import() {
-    doAntiTest("impor<caret>t static foo.bar.Baz");
+    grIntention.get().doAntiTest("impor<caret>t static foo.bar.Baz");
   }
 }

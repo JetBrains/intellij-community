@@ -15,26 +15,34 @@
  */
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.intentions.GrIntentionFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
-public class ConvertSimpleGetterToPropertyIntentionTest extends GrIntentionTestCase {
-  public ConvertSimpleGetterToPropertyIntentionTest() {
-    super("Convert to property");
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
-  public void testTyped() { doTest(true); }
+@TestApplication
+public class ConvertSimpleGetterToPropertyIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, "Convert to property", TestUtils.getAbsoluteTestDataPath() + "intentions/convert/getterToProperty/");
 
-  public void testUntyped() { doTest(true); }
+  @Test
+  public void testTyped() { grIntention.get().doTest(true); }
 
-  public void testVoid() { doTest(false); }
+  @Test
+  public void testUntyped() { grIntention.get().doTest(true); }
 
-  public void testPrivate() { doTest(true); }
+  @Test
+  public void testVoid() { grIntention.get().doTest(false); }
 
-  public void testStatic() { doTest(true); }
+  @Test
+  public void testPrivate() { grIntention.get().doTest(true); }
 
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "intentions/convert/getterToProperty/";
-  }
+  @Test
+  public void testStatic() { grIntention.get().doTest(true); }
 }

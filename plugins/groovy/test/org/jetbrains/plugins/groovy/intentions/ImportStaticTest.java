@@ -15,31 +15,43 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
 /**
  * @author Maxim.Medvedev
  */
-public class ImportStaticTest extends GrIntentionTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "intentions/staticImport/";
-  }
+@TestApplication
+public class ImportStaticTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, null, TestUtils.getAbsoluteTestDataPath() + "intentions/staticImport/");
 
   private void doSingleTest() {
-    doTest("Add static import", true);
+    grIntention.get().doTest("Add static import", true);
   }
 
   private void doOnDemandTest() {
-    doTest("Add import on demand", true);
+    grIntention.get().doTest("Add import on demand", true);
   }
 
-
+  @Test
   public void testSingleImport1() {doSingleTest();}
+  @Test
   public void testSingleImport2() {doSingleTest();}
+  @Test
   public void testSingleImport3() {doSingleTest();}
 
+  @Test
   public void testOnDemand1() {doOnDemandTest();}
+  @Test
   public void testOnDemand2() {doOnDemandTest();}
+  @Test
   public void testOnDemand3() {doOnDemandTest();}
 }

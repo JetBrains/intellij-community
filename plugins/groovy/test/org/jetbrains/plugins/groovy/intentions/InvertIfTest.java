@@ -15,16 +15,26 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
+
 /**
  * @author Niels Harremoes
  */
-public class InvertIfTest extends GrIntentionTestCase {
-  public InvertIfTest() {
-    super(GroovyIntentionsBundle.message("invert.if.intention.name"));
-  }
+@TestApplication
+public class InvertIfTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, GroovyIntentionsBundle.message("invert.if.intention.name"), null);
 
+  @Test
   public void testDoNotTriggerOnIncompleteIf() {
-    doAntiTest("""
+    grIntention.get().doAntiTest("""
                  i<caret>f () {
                    succes
                  } else {
@@ -33,8 +43,9 @@ public class InvertIfTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testSimpleCondition() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  i<caret>f (a) {
                      succes
                  } else {
@@ -49,9 +60,10 @@ public class InvertIfTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testCallCondition() {
 
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  i<caret>f (func()) {
                      succes
                  } else {
@@ -66,8 +78,9 @@ public class InvertIfTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testComplexCondition() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  i<caret>f (a && b) {
                      succes
                  } else {
@@ -82,8 +95,9 @@ public class InvertIfTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testNegatedComplexCondition() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  i<caret>f (!(a && b)) {
                      succes
                  } else {
@@ -98,8 +112,9 @@ public class InvertIfTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testNegatedSimpleCondition() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  i<caret>f (!a) {
                      succes
                  } else {
@@ -114,8 +129,9 @@ public class InvertIfTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testNoElseBlock() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  i<caret>f (a) {
                      succes
                  }
@@ -129,8 +145,9 @@ public class InvertIfTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testEmptyThenBlockIsRemoved() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  i<caret>f (a) {
                  } else {
                      no_succes
@@ -142,8 +159,9 @@ public class InvertIfTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testContinue() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  for (i in []) {
                      i<caret>f (2) {
                          print 2

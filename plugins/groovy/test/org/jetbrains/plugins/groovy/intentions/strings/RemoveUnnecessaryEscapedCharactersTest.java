@@ -15,32 +15,43 @@
  */
 package org.jetbrains.plugins.groovy.intentions.strings;
 
-import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.intentions.GrIntentionFixture;
 import org.jetbrains.plugins.groovy.intentions.conversions.strings.RemoveUnnecessaryEscapeCharactersIntention;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
 /**
  * @author Max Medvedev
  */
-public class RemoveUnnecessaryEscapedCharactersTest extends GrIntentionTestCase {
-  public RemoveUnnecessaryEscapedCharactersTest() {
-    super(RemoveUnnecessaryEscapeCharactersIntention.HINT);
-  }
+@TestApplication
+public class RemoveUnnecessaryEscapedCharactersTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, RemoveUnnecessaryEscapeCharactersIntention.HINT, null);
 
+  @Test
   public void testSimple() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  print 'a<caret>b\\"c'
                  """, """
                  print 'a<caret>b"c'
                  """);
   }
 
+  @Test
   public void testAntiSimple() {
-    doAntiTest("""
+    grIntention.get().doAntiTest("""
                   print 'a<caret>b\\'c'""");
   }
 
+  @Test
   public void testGString() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  html ""\"
                  <p>D\\na<caret>ta: ${new Date().format("dd-MM-yyyy hh:mm")}<br/>
                  Totem: $kiosk.name

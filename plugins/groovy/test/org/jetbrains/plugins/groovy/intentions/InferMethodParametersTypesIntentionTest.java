@@ -2,571 +2,691 @@
 package org.jetbrains.plugins.groovy.intentions;
 
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class InferMethodParametersTypesIntentionTest extends GrIntentionTestCase {
-  public InferMethodParametersTypesIntentionTest() {
-    super("Add explicit types to parameters");
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
+@TestApplication
+public class InferMethodParametersTypesIntentionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK);
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, "Add explicit types to parameters", TestUtils.getAbsoluteTestDataPath() + "refactoring/inferMethodParametersTypes");
 
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK;
-  }
-
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "refactoring/inferMethodParametersTypes";
-  }
-
-  @Override
-  public void setUp() throws Exception {
+  @BeforeEach
+  void setUp() {
     Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).setValue(true);
-    super.setUp();
   }
 
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).resetToDefault();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    Registry.get(MethodParameterAugmenter.GROOVY_COLLECT_METHOD_CALLS_FOR_INFERENCE).resetToDefault();
   }
 
+  @Test
   public void testStringInference() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testSeveralArguments() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testNoInferenceInMethodBody() {
-    doTest(false);
+    grIntention.get().doTest(false);
   }
 
+  @Test
   public void testNoInferenceWithoutNontypedArguments() {
-    doTest(false);
+    grIntention.get().doTest(false);
   }
 
+  @Test
   public void testNoResolveForTypeParameters() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testLeaveUnusedTypeParameter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testCustomInheritance() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testResolvedMethodCallInside() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDependencyOnTypeParameter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testOperatorInference() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testSearchEverywhere() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testUpperBoundByTypeParameter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testInferWildcardsDependencies() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testRelatedWildcards() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDeepEqualityOfWildcards() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDeepDependencyOfWildcards() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDeepDependencyOfWildcards2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDeepDependencyOfWildcards3() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testAppearedWildcard() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testAppearedWildcard2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testConstructor() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testConstructor2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testConstructor3() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testConstructor4() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testRedundantTypeParameter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testTwoTypeParameters() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testTwoSupertypes() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testTwoSupertypes2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testTwoSupertypes3() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testTwoSupertypes4() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testTwoSupertypes5() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testThreeSupertypes() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testThreeSupertypes2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testCustomSetter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testCustomSetter2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testMultipleInterfaces() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testMultipleInterfaces2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testRaw() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDefaultValues() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDefaultValues2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDiamond() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testParametrizedInterface() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testParametrizedInterface2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testParametrizedInterface3() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testIntersectionInArgument() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testParametrizedMethod() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testBasicClosure() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testImplicitClosureParameter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testInterfaceInClosureSignature() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testClosureParameterDependsOnMethodParameter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testClosureParameterDependsOnMethodParameter2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testTwoClosuresAsArgument() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDeepClosureDependency() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDeepClosureDependency2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDeepClosureDependency3() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDeepClosureDependency4() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testClosureSignatureFromInnerCalls() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testArrayOfPrimitiveTypes() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testParametrizedArray() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testCallWithArrayParameter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDifferentCallPlaces() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testAuxiliaryStatements() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testExplicitCallForClosureParameter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testSentClosure() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testVariance() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testVariance2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testVariance3() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testMutualDependency() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testMutualDependency2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testOverriddenMethod() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testOverriddenMethodInClass() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testOverriddenMethodWithoutOverrideAnnotation() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testOverriddenMethodWithOtherOverloads() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testOverriddenMethodWithErasure() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testOverriddenMethodWithoutType() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testAssignment() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testAssignment2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testAssignment3() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testVarargAcceptance() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testVarargInference() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testGenericConstructor() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testClosureParamsInfluence() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testClosureParamsInfluence2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testClosurePassedToDgm() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testPreserveAnnotations() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testInferClassParameter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testInferClassParameter2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testInferClassParameter3() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testInferClassParameter4() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testInferClassParameter5() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testInferClassParameter6() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testInferClassParameter7() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testInferClassParameter8() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testParameterDependencyInsideClosure() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testSuperCallInConstructor() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testParameterizedMethod2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testClosureAndSamInterface() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testSuperWildcard() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testCapturedWildcard() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testCapturedWildcard2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDelegatingClosure() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDelegateViaRehydrate() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDelegateToParameter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDelegatesToNamedTarget() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDelegatesToWithStrategy() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDelegateInferenceFromInnerMethod() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDelegationFromDgm() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDelegationFromType() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testReturnTypeInfluence() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testDgm() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testIndirectBoundConstraint() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testIntersectionAsParameter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testSuperWildcardAsParameter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testWideSearch() {
+    LightJavaCodeInsightTestFixture myFixture = grIntention.get().getFixture();
     myFixture.addFileToProject("other.groovy", """
       AA.foo(1)
       """);
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  class AA { static def fo<caret>o(a) {} }
                  """, """
                  class AA { static void fo<caret>o(Integer a) {} }
                  """);
   }
 
+  @Test
   public void testElvisOperator() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testIndexPropertyWithSpecialSyntax() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testWeirdClassName() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testInferCommonClassType() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testUnresolvedCode() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testUnresolvedCode2() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testCallWithInnerTypeParameter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testUnresolvedCode3() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testPassClosureInClosure() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testRequiredBoxingForPrimitiveType() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testOffsetSensitiveMethodCreating() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testAvoidInfiniteLoopForPlusAssignment() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testOverriddenVarargParameter() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testForInLoop() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testForInLoopWithMap() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 
+  @Test
   public void testRecursiveCalls() {
-    doTest(true);
+    grIntention.get().doTest(true);
   }
 }

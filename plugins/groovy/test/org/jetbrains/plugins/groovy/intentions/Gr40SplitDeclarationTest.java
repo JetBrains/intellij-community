@@ -15,16 +15,26 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
 /**
  * @author Max Medvedev
  */
-public class Gr40SplitDeclarationTest extends GrIntentionTestCase {
+@TestApplication
+public class Gr40SplitDeclarationTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_4_0);
+  private final TestFixture<GrIntentionFixture> grIntention = grIntentionFixture(projectFixture, null, null);
+
+  @Test
   public void testSingleVar() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def abc = 5
                  """, GroovyIntentionsBundle.message("split.into.declaration.and.assignment"), """
                  def abc
@@ -32,8 +42,9 @@ public class Gr40SplitDeclarationTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testMultiVar() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def abc = 5, cde = 7
                  """, GroovyIntentionsBundle.message("split.into.separate.declaration"), """
                  def abc = 5
@@ -41,8 +52,9 @@ public class Gr40SplitDeclarationTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testTupleAssignment() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def (abc, cde) = foo()
                  """, GroovyIntentionsBundle.message("split.into.declaration.and.assignment"), """
                  def (abc, cde)
@@ -50,8 +62,9 @@ public class Gr40SplitDeclarationTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testSimpleTupleAssignment() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def (abc, cde) = [1, 2]
                  """, GroovyIntentionsBundle.message("split.into.separate.declaration"), """
                  def abc = 1
@@ -59,8 +72,9 @@ public class Gr40SplitDeclarationTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testSimpleTupleAssignmentWithExplicitTypes() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def (int abc, int cde) = [1, 2]
                  """, GroovyIntentionsBundle.message("split.into.separate.declaration"), """
                  int abc = 1
@@ -68,17 +82,13 @@ public class Gr40SplitDeclarationTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testUnnamedVariable() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def (<caret>_, a) = [1, 2]
                  """, GroovyIntentionsBundle.message("split.into.separate.declaration"), """
                  def _ = 1
                  def a = 2
                  """);
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_4_0;
   }
 }

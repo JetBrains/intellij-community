@@ -15,22 +15,31 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
 /**
  * @author Maxim.Medvedev
  */
-public class CreateParameterForFieldTest extends GrIntentionTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "intentions/createParameterForField/";
-  }
+@TestApplication
+public class CreateParameterForFieldTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, null, TestUtils.getAbsoluteTestDataPath() + "intentions/createParameterForField/");
 
+  @Test
   public void testFromConstructor() { doTest(); }
 
+  @Test
   public void testFromField() { doTest(); }
 
   protected void doTest() {
-    doTest("Add constructor parameter for field", true);
+    grIntention.get().doTest("Add constructor parameter for field", true);
   }
 }

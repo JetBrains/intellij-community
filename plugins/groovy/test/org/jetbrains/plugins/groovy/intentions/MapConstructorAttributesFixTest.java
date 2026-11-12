@@ -1,18 +1,25 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions;
 
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection;
+import org.junit.jupiter.api.Test;
 
-public class MapConstructorAttributesFixTest extends GrIntentionTestCase {
-  public MapConstructorAttributesFixTest() {
-    super("Add required", GroovyConstructorNamedArgumentsInspection.class);
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
+@TestApplication
+public class MapConstructorAttributesFixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_5_REAL_JDK);
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, "Add required", null, GroovyConstructorNamedArgumentsInspection.class);
+
+  @Test
   public void test_field_completion() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  @groovy.transform.MapConstructor
                  class Rr {
                      private String actionType
@@ -33,8 +40,9 @@ public class MapConstructorAttributesFixTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void test_two_attributes() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  @groovy.transform.MapConstructor
                  class Rr {
                      private static String actionType
@@ -55,8 +63,9 @@ public class MapConstructorAttributesFixTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void test_no_fix() {
-    doAntiTest("""
+    grIntention.get().doAntiTest("""
                  @groovy.transform.MapConstructor(includes = "a")
                  class Rr {
                      private static String actionType
@@ -68,8 +77,9 @@ public class MapConstructorAttributesFixTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void test_no_fix_2() {
-    doAntiTest("""
+    grIntention.get().doAntiTest("""
                  class Nn {
                    void setFoo(String s) {}
                  }
@@ -84,8 +94,9 @@ public class MapConstructorAttributesFixTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void test_two_labels() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  @groovy.transform.MapConstructor
                  class Rr {
                      private String $actionType
@@ -106,8 +117,9 @@ public class MapConstructorAttributesFixTest extends GrIntentionTestCase {
                  }""");
   }
 
+  @Test
   public void test_raw_construction() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  @groovy.transform.MapConstructor
                  class Rr {
                      private String actionType
@@ -126,10 +138,5 @@ public class MapConstructorAttributesFixTest extends GrIntentionTestCase {
                      def x = [actio<caret>nType: "kik"] as Rr
                      println x.actionType
                  }""");
-  }
-
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_2_5_REAL_JDK;
   }
 }

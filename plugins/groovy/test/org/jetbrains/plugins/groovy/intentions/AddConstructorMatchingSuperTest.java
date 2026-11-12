@@ -3,23 +3,33 @@ package org.jetbrains.plugins.groovy.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
 
 /**
  * @author Max Medvedev
  */
-public class AddConstructorMatchingSuperTest extends GrIntentionTestCase {
+@TestApplication
+public class AddConstructorMatchingSuperTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention =
+    grIntentionFixture(projectFixture, HINT, TestUtils.getAbsoluteTestDataPath() + "intentions/constructorMatchingSuper/");
+
   private static final String HINT = "Create constructor matching super";
 
-  public AddConstructorMatchingSuperTest() {
-    super(HINT);
-  }
-
+  @Test
   public void testGroovyToGroovy() {
-    doTextTest(
+    grIntention.get().doTextTest(
       """
         @interface Anno {}
         class Base {
@@ -43,14 +53,16 @@ public class AddConstructorMatchingSuperTest extends GrIntentionTestCase {
         """);
   }
 
+  @Test
   public void testJavaToGroovy() {
+    LightJavaCodeInsightTestFixture myFixture = grIntention.get().getFixture();
     myFixture.addClass("""
                          @interface Anno {}
                          class Base {
                              Base(int p, @Anno int x) throws Exception {}
                          }
                          """);
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  class Derived exten<caret>ds Base {
                  }
                  """,
@@ -63,7 +75,9 @@ public class AddConstructorMatchingSuperTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testGroovyToJava() {
+    LightJavaCodeInsightTestFixture myFixture = grIntention.get().getFixture();
     myFixture.addClass("""
                          class Base {
                              Base(int p, @Override int x) throws Exception {}
@@ -74,8 +88,8 @@ public class AddConstructorMatchingSuperTest extends GrIntentionTestCase {
       }
       """);
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(HINT);
-    myFixture.launchAction(UsefulTestCase.assertOneElement(list));
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    myFixture.launchAction(assertThat(list).singleElement().actual());
+    PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
     myFixture.checkResult(
       """
         class Derived extends Base {
@@ -84,10 +98,5 @@ public class AddConstructorMatchingSuperTest extends GrIntentionTestCase {
             }
         }
         """);
-  }
-
-  @Override
-  public final String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "intentions/constructorMatchingSuper/";
   }
 }

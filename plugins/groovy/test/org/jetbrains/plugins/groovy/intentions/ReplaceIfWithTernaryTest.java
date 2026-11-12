@@ -15,16 +15,25 @@
  */
 package org.jetbrains.plugins.groovy.intentions;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.plugins.groovy.intentions.GrIntentionFixtureKt.grIntentionFixture;
+
 /**
  * @author Max Medvedev
  */
-public class ReplaceIfWithTernaryTest extends GrIntentionTestCase {
-  public ReplaceIfWithTernaryTest() {
-    super("Replace with ?:");
-  }
+@TestApplication
+public class ReplaceIfWithTernaryTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<GrIntentionFixture> grIntention = grIntentionFixture(projectFixture, "Replace with ?:", null);
 
-  public void testReturn() throws Exception {
-    doTextTest("""
+  @Test
+  public void testReturn() {
+    grIntention.get().doTextTest("""
                  def foo() {
                      i<caret>f (cond()) {
                          return 'a'
@@ -38,8 +47,9 @@ public class ReplaceIfWithTernaryTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testAssign() {
-    doTextTest("""
+    grIntention.get().doTextTest("""
                  def a
                  
                  i<caret>f (cond()) {
@@ -55,8 +65,9 @@ public class ReplaceIfWithTernaryTest extends GrIntentionTestCase {
                  """);
   }
 
+  @Test
   public void testAntiAssign() {
-    doAntiTest("""
+    grIntention.get().doAntiTest("""
                  def a
                  def b
                  
