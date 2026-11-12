@@ -30,6 +30,9 @@
     <orderEntry type="module" module-name="intellij.libraries.snakeyaml" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scopes" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.searchEverywhere.frontend" />
 </module>

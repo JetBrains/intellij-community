@@ -141,7 +141,8 @@ internal class ExtendedInfoImpl(val contributors: List<SearchEverywhereContribut
   }
 }
 
-internal fun createTextExtendedInfo(): ExtendedInfo {
+@ApiStatus.Internal
+fun createTextExtendedInfo(): ExtendedInfo {
   val psiElement: (Any) -> PsiElement? = { (it as? SearchEverywhereItem)?.usage?.element }
   val virtualFile: (Any) -> VirtualFile? = { (it as? SearchEverywhereItem)?.usage?.file }
   val project: (Any) -> Project? = { (it as? SearchEverywhereItem)?.usage?.usageInfo?.project }

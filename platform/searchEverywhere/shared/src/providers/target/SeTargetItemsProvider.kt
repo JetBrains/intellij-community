@@ -494,74 +494,7 @@ class SeTargetItemsProvider<T> private constructor(
   private suspend fun scopeOf(scopeId: String): ScopeDescriptor? =
     if (supportsScopes) scopes.getValue().byId[scopeId] else null
 
-  private suspend fun createScopes(): SeTargetScopes {
-    val descriptors = readAction {
-      collectScopesWithSeparators(scopesProvider.createDescriptors(project, psiContext))
-    }
-    if (descriptors.isEmpty()) return SeTargetScopes(null, SeScopeByIdMap(emptyMap(), null, null))
-
-    val descriptorByScopeId = mutableMapOf<String, ScopeDescriptor>()
-    val scopeIdByDescriptor = IdentityHashMap<ScopeDescriptor, String>()
-
-    val scopeDataList = descriptors.mapNotNull { descriptor ->
-      val name = descriptor.displayName ?: return@mapNotNull null
-      val scopeId = SeScopeById.generateScopeId(name)
-
-      SearchScopeData.from(descriptor, scopeId)?.also {
-        descriptorByScopeId[scopeId] = descriptor
-        scopeIdByDescriptor[descriptor] = scopeId
-      }
-    }
-
-    val everywhereScope = scopesProvider.findEverywhereScope(project, descriptors)
-    val projectScope = scopesProvider.findProjectScope(project, descriptors, everywhereScope)
-    val everywhereScopeId = everywhereScope?.let { scopeIdByDescriptor[it] }
-    val projectScopeId = projectScope?.let { scopeIdByDescriptor[it] }
-
-    // The scope chooser can auto toggle to the everywhere scope only when both ids resolve and differ.
-    // See SeScopeChooserActionProvider.canToggleEverywhere. A null id disables the auto toggle silently.
-    if (projectScopeId == null || everywhereScopeId == null) {
-      SeLog.warn("$label: the auto toggle is off, because a scope id is missing. " +
-                 "project='${projectScope?.displayName}' -> $projectScopeId, " +
-                 "everywhere='${everywhereScope?.displayName}' -> $everywhereScopeId. " +
-                 "Known scopes: ${scopeDataList.joinToString { it.name }}")
-    }
-    else {
-      SeLog.log(SeLog.SCOPE) {
-        "$label: scopes=${scopeDataList.size}, project='${projectScope.displayName}', " +
-        "everywhere='${everywhereScope.displayName}'"
-      }
-    }
-
-    return SeTargetScopes(
-      info = SearchScopesInfo(scopeDataList, projectScopeId, projectScopeId, everywhereScopeId),
-      byId = SeScopeByIdMap(descriptorByScopeId, everywhereScopeId = everywhereScopeId, projectScopeId = projectScopeId),
-    )
-  }
-
-  /**
-   * Keeps the scopes that the scope chooser can show, in the shape that
-   * `ScopeChooserAction.collectScopesAndSeparators` produces.
-   */
-  private fun collectScopesWithSeparators(descriptors: List<ScopeDescriptor>): List<ScopeDescriptor> {
-    val items = mutableListOf<ScopeDescriptor>()
-    var pendingSeparator: ScopeSeparator? = null
-
-    for (descriptor in descriptors) {
-      if (descriptor is ScopeSeparator) {
-        if (items.isNotEmpty()) pendingSeparator = descriptor
-        continue
-      }
-      if (descriptor.scopeEquals(null) || descriptor.scope !is GlobalSearchScope) continue
-
-      pendingSeparator?.let {
-        items.add(it)
-        pendingSeparator = null
-      }
-      items.add(descriptor)
-    }
-    return items
-  }
+  private suspend fun createScopes(): SeTargetScopes = createTargetScopes(project, psiContext, scopesProvider, label)
 
   //endregion
 
@@ -935,6 +868,85 @@ private class MyViewModel(
  */
 @ApiStatus.Internal
 class SeTargetScopes(val info: SearchScopesInfo?, val byId: SeScopeById)
+
+/**
+ * Builds the scope list that the scope chooser shows, from the scopes of [scopesProvider].
+ *
+ * The selected scope of the result is the project scope. [label] names the provider in the log.
+ */
+internal suspend fun createTargetScopes(
+  project: Project,
+  psiContext: SmartPsiElementPointer<PsiElement?>?,
+  scopesProvider: SeTargetScopesProvider,
+  label: String,
+): SeTargetScopes {
+  val descriptors = readAction {
+    collectScopesWithSeparators(scopesProvider.createDescriptors(project, psiContext))
+  }
+  if (descriptors.isEmpty()) return SeTargetScopes(null, SeScopeByIdMap(emptyMap(), null, null))
+
+  val descriptorByScopeId = mutableMapOf<String, ScopeDescriptor>()
+  val scopeIdByDescriptor = IdentityHashMap<ScopeDescriptor, String>()
+
+  val scopeDataList = descriptors.mapNotNull { descriptor ->
+    val name = descriptor.displayName ?: return@mapNotNull null
+    val scopeId = SeScopeById.generateScopeId(name)
+
+    SearchScopeData.from(descriptor, scopeId)?.also {
+      descriptorByScopeId[scopeId] = descriptor
+      scopeIdByDescriptor[descriptor] = scopeId
+    }
+  }
+
+  val everywhereScope = scopesProvider.findEverywhereScope(project, descriptors)
+  val projectScope = scopesProvider.findProjectScope(project, descriptors, everywhereScope)
+  val everywhereScopeId = everywhereScope?.let { scopeIdByDescriptor[it] }
+  val projectScopeId = projectScope?.let { scopeIdByDescriptor[it] }
+
+  // The scope chooser can auto toggle to the everywhere scope only when both ids resolve and differ.
+  // See SeScopeChooserActionProvider.canToggleEverywhere. A null id disables the auto toggle silently.
+  if (projectScopeId == null || everywhereScopeId == null) {
+    SeLog.warn("$label: the auto toggle is off, because a scope id is missing. " +
+               "project='${projectScope?.displayName}' -> $projectScopeId, " +
+               "everywhere='${everywhereScope?.displayName}' -> $everywhereScopeId. " +
+               "Known scopes: ${scopeDataList.joinToString { it.name }}")
+  }
+  else {
+    SeLog.log(SeLog.SCOPE) {
+      "$label: scopes=${scopeDataList.size}, project='${projectScope.displayName}', " +
+      "everywhere='${everywhereScope.displayName}'"
+    }
+  }
+
+  return SeTargetScopes(
+    info = SearchScopesInfo(scopeDataList, projectScopeId, projectScopeId, everywhereScopeId),
+    byId = SeScopeByIdMap(descriptorByScopeId, everywhereScopeId = everywhereScopeId, projectScopeId = projectScopeId),
+  )
+}
+
+/**
+ * Keeps the scopes that the scope chooser can show, in the shape that
+ * `ScopeChooserAction.collectScopesAndSeparators` produces.
+ */
+private fun collectScopesWithSeparators(descriptors: List<ScopeDescriptor>): List<ScopeDescriptor> {
+  val items = mutableListOf<ScopeDescriptor>()
+  var pendingSeparator: ScopeSeparator? = null
+
+  for (descriptor in descriptors) {
+    if (descriptor is ScopeSeparator) {
+      if (items.isNotEmpty()) pendingSeparator = descriptor
+      continue
+    }
+    if (descriptor.scopeEquals(null) || descriptor.scope !is GlobalSearchScope) continue
+
+    pendingSeparator?.let {
+      items.add(it)
+      pendingSeparator = null
+    }
+    items.add(descriptor)
+  }
+  return items
+}
 
 @ApiStatus.Internal
 interface SeScopeById {

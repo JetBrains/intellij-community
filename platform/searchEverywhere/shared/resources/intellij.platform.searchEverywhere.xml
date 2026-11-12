@@ -73,7 +73,7 @@
     <searchEverywhere.itemsProviderFactory
       implementation="com.intellij.platform.searchEverywhere.providers.nonIndexableFiles.SeNonIndexableFilesProviderFactory"/>
 
-    <!-- Text search wraps TextSearchContributor, which runs locally in monolith, light and RD backend.
+    <!-- Text search runs locally in monolith, light and RD backend.
          Same as for the provider above, this declaration also brings it to ThinClient,
          where it is de-prioritized in favor of the BE one -->
     <searchEverywhere.itemsProviderFactory

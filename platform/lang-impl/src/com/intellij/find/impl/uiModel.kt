@@ -69,7 +69,8 @@ class UsagePresentation(
   val fileString: @Nls String,
 )
 
-internal fun usagePresentation(
+@ApiStatus.Internal
+fun usagePresentation(
   project: Project,
   scope: GlobalSearchScope,
   usage: UsageInfo2UsageAdapter,
