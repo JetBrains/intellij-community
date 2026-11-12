@@ -12,8 +12,15 @@ import java.io.File
 import java.util.function.Function
 
 fun UsefulTestCase.doTest(testPath: String, test: () -> String) {
+  doTest(testPath, PlatformTestUtil.getTestName(name, true), test)
+}
+
+/**
+ * Compares the result of [test] with the `<testName>.gold.txt` file in [testPath].
+ * Creates an empty gold file when it does not exist.
+ */
+fun doTest(testPath: String, testName: String, test: () -> String) {
   val result = test().replace("\r\n", "\n").trim()
-  val testName = PlatformTestUtil.getTestName(name, true)
   val expectedFile = File(testPath, "$testName.gold.txt")
   if (!expectedFile.exists()) {
     expectedFile.createNewFile()

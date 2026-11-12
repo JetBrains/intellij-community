@@ -11,390 +11,486 @@ import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.framework.framework
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.polySymbolsTestsDataPath
-import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printMatches
 import com.intellij.polySymbols.webTypes.json.parseWebTypesPath
+import com.intellij.testFramework.junit5.fixture.TestFixtures
+import org.junit.jupiter.api.Test
 
-class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
+@TestFixtures
+class PolySymbolsNameQueryTest {
 
-  override val testPath: String = "$polySymbolsTestsDataPath/query/name"
+  private val mock by polySymbolsMockQueryExecutorFixture("$polySymbolsTestsDataPath/query/name")
 
+  @Test
   fun testBasicElement() {
     doTest("html/elements/foo", null, "basic")
   }
 
+  @Test
   fun testBasicAttribute() {
     doTest("html/elements/foo/attributes/foo", null, "basic")
   }
 
+  @Test
   fun testMultiElementAttribute() {
     doTest("html/elements/bar/attributes/foo", null, "basic")
   }
 
+  @Test
   fun testBasicElementSpecificAttribute() {
     doTest("html/elements/foo/attributes/bar", null, "basic")
   }
 
+  @Test
   fun testBasicPatternAttribute() {
     doTest("html/attributes/v-foo", null, true, "basic-pattern")
   }
 
+  @Test
   fun testVueDirectiveWithArguments() {
     doTest("html/elements/foo/attributes/v-on:bar.stop.foo.once", "vue", true, "vue")
   }
 
+  @Test
   fun testVueDirectiveWithArguments2() {
     doTest("html/elements/foo/attributes/v-on:click.stop", "vue", true, "vue", "events")
   }
 
+  @Test
   fun testVueDirectiveWithArguments3() {
     doTest("html/elements/foo/attributes/v-on.stop", "vue", true, "vue", "events")
   }
 
+  @Test
   fun testVueDirectiveWithArguments4() {
     doTest("html/elements/foo/attributes/v-on:click", "vue", true, "vue", "events")
   }
 
+  @Test
   fun testVueDirectiveWithArguments5() {
     doTest("html/elements/foo/attributes/v-for.bar", "vue", true, "vue", "events")
   }
 
+  @Test
   fun testVueDirectiveWithArguments6() {
     doTest("html/elements/foo/attributes/v-for:bar", "vue", true, "vue", "events")
   }
 
+  @Test
   fun testVueDirectiveWith2Events() {
     doTest("html/elements/foo/attributes/v-on:2foo", "vue", true, "vue", "events")
   }
 
+  @Test
   fun testVueDirectiveShorthand1() {
     doTest("html/elements/foo/attributes/@2foo.stop.bar", "vue", true, "vue", "events")
   }
 
+  @Test
   fun testVueDirectiveShorthand2() {
     doTest("html/elements/foo/attributes/@click", "vue", true, "vue", "events")
   }
 
+  @Test
   fun testVueDirectiveShorthand3() {
     doTest("html/elements/foo/attributes/@.stop", "vue", true, "vue", "events")
   }
 
+  @Test
   fun testVueDirectiveWithExtensions() {
     doTest("html/elements/foo/attributes/@click.enter.left.ctrl.exact.stop", "vue", true, "vue", "events")
   }
 
+  @Test
   fun testVueDirectiveWithExtensions2() {
     doTest("html/elements/foo/attributes/v-on:keypress.enter.left.ctrl.exact.stop", "vue", true, "vue", "events")
   }
 
+  @Test
   fun testVueDirectiveWithExtensions3() {
     doTest("html/elements/foo/attributes/@drag.enter.left.ctrl.exact.stop", "vue", true, "vue", "events")
   }
 
+  @Test
   fun testVueElementWithExtends2() {
     doTest("html/elements/TransitionGroup/attributes/appearActiveClass", "vue", "vue")
   }
 
+  @Test
   fun testVueElementEvents1() {
     doTest("html/elements/TransitionGroup/attributes/v-on:appear.stop", "vue", true, "vue")
   }
 
+  @Test
   fun testVueElementEvents2() {
     doTest("html/elements/TransitionGroup/attributes/v-on:appear.stop.stop.prevent", "vue", true, "vue")
   }
 
+  @Test
   fun testVueElementBind1() {
     doTest("html/elements/TransitionGroup/attributes/v-bind:tag", "vue", true, "vue")
   }
 
+  @Test
   fun testOldVueElement1() {
     doTest("html/elements/TransitionGroupOld/attributes/v-on:appear.stop", "vue", true, "vue", "vue-old")
   }
 
+  @Test
   fun testOldVueElement2() {
     doTest("html/elements/TransitionGroupOld/attributes/moveClass", "vue", true, "vue", "vue-old")
   }
 
+  @Test
   fun testOldVueDirectiveWithArguments() {
     doTest("html/elements/foo/attributes/v-on_old:bar.stop.foo.once", "vue", true, "vue", "vue-old", "events")
   }
 
+  @Test
   fun testOldVueDirectiveWithArguments2() {
     doTest("html/elements/foo/attributes/v-on_old:click.stop", "vue", true, "vue", "vue-old", "events")
   }
 
+  @Test
   fun testCssProperties3() {
     doTest("html/elements/tag-with-css/css/properties/global-prop", null, true, "css")
   }
 
+  @Test
   fun testCssClasses2() {
     doTest("html/elements/tag-with-css/css/classes/class-from-tag", null, true, "css")
   }
 
+  @Test
   fun testComplexCssClasses1() {
     doTest("html/elements/tag-with-css/attributes/cls-attr-class", null, true, "css")
   }
 
+  @Test
   fun testComplexCssClasses2() {
     doTest("html/elements/tag-with-css/attributes/cls-class-from-tag", null, true, "css")
   }
 
+  @Test
   fun testComplexCssClasses3() {
     doTest("html/elements/tag-with-css/attributes/cls-global-class", null, true, "css")
   }
 
+  @Test
   fun testComplexCssClasses4() {
     doTest("html/elements/tag-with-css/attributes/cls-foo", null, true, "css")
   }
 
+  @Test
   fun testNgStyleAttrs1() {
     doTest("html/elements/tag-with-css/attributes/[prop1]", null, true, "ng-sample", "css")
   }
 
+  @Test
   fun testNgStyleAttrs2() {
     doTest("html/elements/tag-with-css/attributes/data-[prop1]", null, true, "ng-sample", "css")
   }
 
+  @Test
   fun testNgStyleAttrs3() {
     doTest("html/elements/tag-with-css/attributes/data-bind-prop1", null, true, "ng-sample", "css")
   }
 
+  @Test
   fun testNgStyleAttrs4() {
     doTest("html/elements/tag-with-css/attributes/data-bind-class.class-from-tag", null, true, "ng-sample", "css")
   }
 
+  @Test
   fun testNgStyleAttrs5() {
     doTest("html/elements/tag-with-css/attributes/bind-class.attr-class", null, true, "ng-sample", "css")
   }
 
+  @Test
   fun testNgStyleAttrs6() {
     doTest("html/elements/tag-with-css/attributes/bind-attr.attr1", null, true, "ng-sample", "css")
   }
 
+  @Test
   fun testNgStyleAttrs7() {
     doTest("html/elements/tag-with-css/attributes/[attr1]", null, true, "ng-sample", "css")
   }
 
+  @Test
   fun testNgStyleAttrs8() {
     doTest("html/elements/tag-with-css/attributes/(event1)", null, true, "ng-sample")
   }
 
+  @Test
   fun testNgEventBinding1() {
     doTest("html/attributes/(event1)", null, true, "ng-event-binding")
   }
 
+  @Test
   fun testNgEventBinding2() {
     doTest("html/attributes/(my-event)", null, true, "ng-event-binding")
   }
 
+  @Test
   fun testNgEventBinding3() {
     doTest("html/attributes/(bad-event)", null, true, "ng-event-binding")
   }
 
+  @Test
   fun testNgEventBinding4() {
     doTest("html/attributes/(foo)", null, true, "ng-event-binding")
   }
 
+  @Test
   fun testNgEventBinding5() {
     doTest("html/attributes/(fooin)", null, true, "ng-event-binding")
   }
 
+  @Test
   fun testNgEventBindingExt1() {
     doTest("html/attributes/(keydown.shift.enter)", null, true, "ng-event-binding")
   }
 
+  @Test
   fun testNgEventBindingExt2() {
     doTest("html/attributes/(keydown.enter)", null, true, "ng-event-binding")
   }
 
+  @Test
   fun testNgEventBindingExt3() {
     doTest("html/attributes/(keydown.alt.shift.enter)", null, true, "ng-event-binding")
   }
 
+  @Test
   fun testNgEventBindingExt4() {
     doTest("html/attributes/(keydown.alt.alt.enter)", null, true, "ng-event-binding")
   }
 
+  @Test
   fun testNgEventBindingExt5() {
     doTest("html/attributes/(keydown.alt)", null, true, "ng-event-binding")
   }
 
+  @Test
   fun testNgEventBindingExt6() {
     doTest("html/attributes/(keydown.alt.foo)", null, true, "ng-event-binding")
   }
 
+  @Test
   fun testNgEventBindingExt7() {
     doTest("html/attributes/(keydown.foo)", null, true, "ng-event-binding")
   }
 
+  @Test
   fun testNgEventBindingExt8() {
     doTest("html/attributes/(keydown.f1)", null, true, "ng-event-binding")
   }
 
+  @Test
   fun testNgEventBindingExt9() {
     doTest("html/attributes/(keyup.alt.shift.0)", null, true, "ng-event-binding")
   }
 
+  @Test
   fun testNgCustomEventBinding1() {
     doTest("html/attributes/(click.prevent)", null, true, "ng-event-binding", "events", "ng-custom-user-events")
   }
 
+  @Test
   fun testNgCustomEventBinding2() {
     doTest("html/attributes/(click.prevented)", null, true, "ng-event-binding", "events", "ng-custom-user-events")
   }
 
+  @Test
   fun testNgCustomEventBinding3() {
     doTest("html/attributes/(click.prevent.stop.prevent)", null, true, "ng-event-binding", "events", "ng-custom-user-events")
   }
 
+  @Test
   fun testNgCustomEventBinding4() {
     doTest("html/attributes/(clicked.prevent)", null, true, "ng-event-binding", "events", "ng-custom-user-events")
   }
 
+  @Test
   fun testNamingRules1() {
     doTest("html/elements/hello-11Wo-rld", "vue", true, "naming-rules")
   }
 
+  @Test
   fun testNamingRules2() {
     doTest("html/elements/Hello-12Wo-rld", "vue", true, "naming-rules")
   }
 
+  @Test
   fun testNamingRules3() {
     doTest("html/elements/Hello-13-woRld", "vue", true, "naming-rules")
   }
 
+  @Test
   fun testNamingRules4() {
     doTest("js/custom-properties/prop-one", "vue", true, "naming-rules")
   }
 
+  @Test
   fun testNamingRules5() {
     doTest("js/custom-properties/propOne", "vue", true, "naming-rules")
   }
 
+  @Test
   fun testNamingRules6() {
     doTest("js/custom-properties/prop-two-three", "vue", true, "naming-rules")
   }
 
+  @Test
   fun testNestedNamingRules1() {
     doTest("html/elements/hello-11Wo-rld", "vue", true, "nested-naming-rules")
   }
 
+  @Test
   fun testNestedNamingRules2() {
     doTest("html/elements/hello-13Wo-rld", "vue", true, "nested-naming-rules")
   }
 
+  @Test
   fun testLegacyVuetifyComponentProps2() {
     doTest("html/elements/VAutocomplete/attributes/allowOverflow", "vue", false, "vuetify-legacy", "vue")
   }
 
+  @Test
   fun testFilter1() {
     doTest("html/attributes/v-the-a", null, false, "filter")
   }
 
+  @Test
   fun testFilter2() {
     doTest("html/attributes/v-oh-c", null, false, "filter")
   }
 
+  @Test
   fun testLegacyDocVueComponent() {
     doTest("html/elements/Foo", "vue", "vue", "doc-legacy")
   }
 
+  @Test
   fun testLegacyDocVueComponentAttribute() {
     doTest("html/elements/Foo/attributes/v-bind:my-input", "vue", true, "vue", "doc-legacy")
   }
 
+  @Test
   fun testLegacyDocVueComponentEvent() {
     doTest("html/elements/Foo/attributes/@event1", "vue", true, "vue", "doc-legacy")
   }
 
+  @Test
   fun testLegacyDocVueComponentPatternSlot() {
     doTest("html/elements/Foo/slots/abaa", "vue", "vue", "doc-legacy")
   }
 
+  @Test
   fun testLegacyDocVueComponentSlot() {
     doTest("html/elements/Foo/slots/foo", "vue", "vue", "doc-legacy")
   }
 
+  @Test
   fun testLegacyDocVueDirective1() {
     doTest("html/attributes/v-cool:foo.foo.ba456", "vue", true, "vue", "doc-legacy")
   }
 
+  @Test
   fun testLegacyDocVueDirective2() {
     doTest("html/attributes/v-cool.foo.ba456", "vue", true, "vue", "doc-legacy")
   }
 
+  @Test
   fun testLegacyDocVueDirective3() {
     doTest("html/attributes/v-cool:foo", "vue", true, "vue", "doc-legacy")
   }
 
+  @Test
   fun testLegacyDocVueDirective4() {
     doTest("html/attributes/v-cool", "vue", true, "vue", "doc-legacy")
   }
 
+  @Test
   fun testLegacyDocVueDirective5() {
     doTest("html/attributes/v-cool.bc455", "vue", true, "vue", "doc-legacy")
   }
 
+  @Test
   fun testOptionalPatternNoRepeat1() {
     doTest("html/elements/icon-vuetify", null, "optional-pattern-no-repeat")
   }
 
+  @Test
   fun testOptionalPatternNoRepeat2() {
     doTest("html/elements/icon-vue-big", null, "optional-pattern-no-repeat")
   }
 
+  @Test
   fun testOptionalPatternNoRepeat3() {
     doTest("html/elements/icon-vuetfy-small", null, "optional-pattern-no-repeat")
   }
 
+  @Test
   fun testMixedFrameworkFiles() {
     doTest("html/elements/demo-test/attributes/foo-baz", "@polymer/polymer", "mixed-component", "mixed-framework")
   }
 
+  @Test
   fun testReferenceNameConversion() {
     doTest("html/elements/demo-test/attributes/foo-baz", "@polymer/polymer", "mixed-component", "reference-with-name-conversion")
   }
 
+  @Test
   fun testReferenceComplexNameConversion() {
     doTest("html/elements/demo-test/attributes/foo-FOO-BAR", null, includeVirtual = true, "mixed-component",
            "reference-with-complex-name-conversion")
   }
 
+  @Test
   fun testReferenceComplexNameConversion2() {
     doTest("html/elements/demo-test/attributes/foo-foo-bar", null, includeVirtual = true, "mixed-component",
            "reference-with-complex-name-conversion")
   }
 
+  @Test
   fun testMultipleReferences1() {
     doTest("html/attributes/test-the-a", null, "multiple-references")
   }
 
+  @Test
   fun testMultipleReferences2() {
     doTest("html/attributes/test-the-b", null, "multiple-references")
   }
 
+  @Test
   fun testBasicCustomElementsManifest1() {
     doTest("html/elements/my-EleMeNt", customElementsManifests = listOf("basic"))
   }
 
+  @Test
   fun testBasicCustomElementsManifest2() {
     doTest("html/elements/my-EleMeNt/attributes/disabled", customElementsManifests = listOf("basic"))
   }
 
+  @Test
   fun testCssClassListSingleClass() {
     doTest("css/class-list/foo", null, "css-class-list")
   }
 
+  @Test
   fun testCssClassListMultipleClasses1() {
     doTest("css/class-list/foo bar", null, "css-class-list")
   }
 
+  @Test
   fun testCssClassListMultipleClasses2() {
     doTest("css/class-list/foo-bar bar foo foo", null, "css-class-list")
   }
 
+  @Test
   fun testNestedPattern1() {
-    polySymbolQueryExecutorFactory.addScope(
+    mock.polySymbolQueryExecutorFactory.addScope(
       object : PolySymbolScope {
         override fun getMatchingSymbols(
           qualifiedName: PolySymbolQualifiedName,
@@ -419,7 +515,7 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
         }
 
         override fun createPointer(): Pointer<out PolySymbolScope> = Pointer.hardPointer(this)
-      }, null, testRootDisposable)
+      }, null, mock.disposable)
     doTest("html/elements/bar-bar", "vue", true, "nested-pattern")
   }
 
@@ -438,9 +534,9 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
     webTypes: List<String> = emptyList(),
     customElementsManifests: List<String> = emptyList(),
   ) {
-    doTest(testPath) {
-      registerFiles(framework, webTypes, customElementsManifests)
-      val matches = polySymbolQueryExecutorFactory.create(null)
+    mock.doTest {
+      mock.registerFiles(framework, webTypes, customElementsManifests)
+      val matches = mock.polySymbolQueryExecutorFactory.create(null)
         .nameMatchQuery(parseWebTypesPath(path, null)) {
           if (!includeVirtual) exclude(PolySymbolModifier.VIRTUAL)
           exclude(PolySymbolModifier.ABSTRACT)

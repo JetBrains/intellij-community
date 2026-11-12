@@ -4,19 +4,28 @@ package com.intellij.polySymbols.query
 import com.intellij.polySymbols.PolySymbolKind
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.polySymbolsTestsDataPath
+import com.intellij.testFramework.junit5.fixture.TestFixtures
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class BasicPolySymbolScopeTest : PolySymbolsMockQueryExecutorTestBase() {
+@TestFixtures
+class BasicPolySymbolScopeTest {
 
-  override val testPath: String = "$polySymbolsTestsDataPath/query/list"
+  private val mock by polySymbolsMockQueryExecutorFixture("$polySymbolsTestsDataPath/query/list")
 
+  @Test
   fun testExcludedModifierBelowThreshold() {
     doTestExcludedModifierIsRespected(symbolCount = 4)
   }
 
+  @Test
   fun testExcludedModifierAtThreshold() {
     doTestExcludedModifierIsRespected(symbolCount = 5)
   }
 
+  @Test
   fun testExcludedModifierAboveThreshold() {
     doTestExcludedModifierIsRespected(symbolCount = 6)
   }
@@ -38,7 +47,7 @@ class BasicPolySymbolScopeTest : PolySymbolsMockQueryExecutorTestBase() {
         }
       }
     }
-    val queryExecutor = polySymbolQueryExecutorFactory.create(null)
+    val queryExecutor = mock.polySymbolQueryExecutorFactory.create(null)
     val stack = PolySymbolQueryStack()
 
     val listed = scope.getSymbols(
@@ -48,10 +57,10 @@ class BasicPolySymbolScopeTest : PolySymbolsMockQueryExecutorTestBase() {
       },
       stack,
     ).map { it.name }
-    assertEquals("getSymbols() with $symbolCount symbols must drop the excluded-modifier symbol",
-                 symbolCount - 1, listed.size)
-    assertFalse("getSymbols() with $symbolCount symbols must not return the ABSTRACT symbol",
-                listed.contains("abstractSymbol"))
+    assertEquals(symbolCount - 1, listed.size,
+                 "getSymbols() with $symbolCount symbols must drop the excluded-modifier symbol")
+    assertFalse(listed.contains("abstractSymbol"),
+                "getSymbols() with $symbolCount symbols must not return the ABSTRACT symbol")
 
     val matched = scope.getMatchingSymbols(
       TEST_KIND.withName("abstractSymbol"),
@@ -60,8 +69,8 @@ class BasicPolySymbolScopeTest : PolySymbolsMockQueryExecutorTestBase() {
       },
       stack,
     )
-    assertTrue("getMatchingSymbols() with $symbolCount symbols must not match the ABSTRACT symbol",
-               matched.isEmpty())
+    assertTrue(matched.isEmpty(),
+               "getMatchingSymbols() with $symbolCount symbols must not match the ABSTRACT symbol")
 
     val completions = scope.getCodeCompletions(
       TEST_KIND.withName(""),
@@ -70,8 +79,8 @@ class BasicPolySymbolScopeTest : PolySymbolsMockQueryExecutorTestBase() {
       },
       stack,
     ).map { it.name }
-    assertFalse("getCodeCompletions() with $symbolCount symbols must not offer the ABSTRACT symbol",
-                completions.contains("abstractSymbol"))
+    assertFalse(completions.contains("abstractSymbol"),
+                "getCodeCompletions() with $symbolCount symbols must not offer the ABSTRACT symbol")
   }
 
   companion object {
