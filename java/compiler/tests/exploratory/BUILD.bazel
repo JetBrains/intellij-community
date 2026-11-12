@@ -1,0 +1,99 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.java.compiler.tests.exploratory` start
+jvm_library(
+    name = "exploratory_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testGen/**/*.kt",
+            "testGen/**/*.java",
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.compiler.tests.exploratory",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//spellchecker",
+        "//xml/plugin",
+        "//aether-dependency-resolver/plugin",
+        "//platform/structuralsearch/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//platform/testRunner/plugin",
+        "//platform/todo/plugin",
+        "//plugins/properties/plugin",
+    ],
+    deps = [
+        # do not sort,
+        "//java/compiler/impl",
+        "//java/compiler/openapi:java-compiler",
+        "//java/testFramework",
+        "//java/openapi:java",
+        "//libraries/junit4",
+        "//java/compiler/instrumentation-util",
+        "//java/idea-ui:ui",
+        "//java/java-syntax:syntax",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//jps/model-api:model",
+        "//platform/lang-core",
+        "//platform/lang-api:lang",
+        "//platform/buildView",
+        "//platform/testFramework/buildView",
+        "//platform/projectModel-api:projectModel",
+        "//platform/workspace/storage",
+        "//platform/testFramework",
+        "//jps/model-impl",
+        "//platform/testFramework/extensions:testExtensions",
+        "//libraries/assertj-core",
+        "@community//build:build-javac-rt",
+        "//platform/core-ui",
+        "//platform/core-impl",
+        "//platform/workspace/jps",
+        "//platform/util/jdom",
+        "//platform/util:util-ui",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/backend/workspace",
+        "//libraries/jetcheck",
+        "//java/testFramework/backend",
+        "//libraries/fastutil",
+        "//platform/util/concurrency",
+        "//jps/jps-builders:build",
+        "//platform/ide-core",
+        "//platform/progress/shared:ide-progress",
+        "//platform/eel-provider",
+        "//platform/execution",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5/eel",
+        "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6-params",
+        "//platform/bazel-runfiles",
+        "//plugins/properties/properties-common:properties",
+        "//java/compiler/testFramework",
+        "//java/langInjection",
+    ],
+)
+### auto-generated section `build intellij.java.compiler.tests.exploratory` end
+
+### auto-generated section `iml intellij.java.compiler.tests.exploratory` start
+exports_files(
+    [
+        "intellij.java.compiler.tests.exploratory.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.compiler.tests.exploratory` end
+
+### auto-generated section `test intellij.java.compiler.tests.exploratory` start
+jps_test(
+    name = "exploratory_test",
+    runtime_deps = [":exploratory_test_lib"],
+)
+### auto-generated section `test intellij.java.compiler.tests.exploratory` end

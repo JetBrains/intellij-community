@@ -310,6 +310,7 @@ java/compiler/instrumentation-util-8
 java/compiler/javac2
 java/compiler/openapi
 java/compiler/testFramework
+java/compiler/tests/exploratory
 java/debugger/backend
 java/debugger/frontend
 java/debugger/impl

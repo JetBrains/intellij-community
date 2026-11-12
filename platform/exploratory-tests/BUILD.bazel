@@ -24,6 +24,7 @@ jvm_library(
         "//platform/workspace/jps/tests/exploratory:exploratory_test_lib",
         "//platform/workspace/storage/tests/exploratory:exploratory_test_lib",
         "//plugins/yaml/backend/tests/exploratory:exploratory_test_lib",
+        "//java/compiler/tests/exploratory:exploratory_test_lib",
         "//plugins/yaml/backend:backend-tests_test_lib",
     ],
 )

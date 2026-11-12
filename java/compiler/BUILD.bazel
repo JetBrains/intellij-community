@@ -43,6 +43,7 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//platform/todo/plugin",
         "//plugins/properties/plugin",
+        "//java/compiler/tests/exploratory:exploratory_test_lib",
     ],
     deps = [
         # do not sort,
