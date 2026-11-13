@@ -37,20 +37,20 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     // Increase the group's versions locally
     // and not increase the versions in all StatisticsEventLoggerProvider
     // in case of any changes in the groups
-    eventLoggerProvider.version + 8,
+    eventLoggerProvider.version + 9,
     eventLoggerProvider.recorderId
   )
   override fun getGroup(): EventLogGroup = GROUP
 
   private val metadataLoadedEvent = GROUP.registerEvent("metadata.loaded", EventFields.Version)
   private val metadataUpdatedEvent = GROUP.registerEvent("metadata.updated", EventFields.Version)
-  private val metadataLoadFailedEvent = GROUP.registerEvent(
+  private val metadataLoadFailedEvent = GROUP.registerVarargEvent(
     "metadata.load.failed",
-    stageMetadataLoadFailedField, errorMetadataLoadFailedField, codeMetadataLoadFailedField
+    stageMetadataLoadFailedField, errorMetadataLoadFailedField, codeMetadataLoadFailedField, retryCountField
   )
-  private val metadataUpdateFailedEvent = GROUP.registerEvent(
+  private val metadataUpdateFailedEvent = GROUP.registerVarargEvent(
     "metadata.update.failed",
-    stageMetadataUpdateFailedField, errorMetadataUpdateFailedField, codeMetadataUpdateFailedField
+    stageMetadataUpdateFailedField, errorMetadataUpdateFailedField, codeMetadataUpdateFailedField, retryCountField
   )
   private val logsSendEvent = GROUP.registerVarargEvent(
     "logs.send",
@@ -87,23 +87,29 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
                                                                                pendingFilesCountField, pendingTotalBytesField, oldestPendingFileWaitMsField
   )
 
-  private val dictionaryListLoadFailed = GROUP.registerEvent(
+  private val dictionaryListLoadFailed = GROUP.registerVarargEvent(
     "dictionary.list.load.failed",
-    stageMetadataLoadFailedField, errorMetadataLoadFailedField, codeMetadataLoadFailedField
+    stageMetadataLoadFailedField, errorMetadataLoadFailedField, codeMetadataLoadFailedField, retryCountField
   )
-  private val dictionaryListUpdateFailed = GROUP.registerEvent(
+  private val dictionaryListUpdateFailed = GROUP.registerVarargEvent(
     "dictionary.list.update.failed",
-    stageMetadataUpdateFailedField, errorMetadataUpdateFailedField, codeMetadataUpdateFailedField
+    stageMetadataUpdateFailedField, errorMetadataUpdateFailedField, codeMetadataUpdateFailedField, retryCountField
   )
-  private val dictionaryLoadedEvent = GROUP.registerEvent("dictionary.loaded", EventFields.Long("dictionary_last_modified"))
-  private val dictionaryLoadFailedEvent = GROUP.registerEvent(
+  private val dictionaryLoadedEvent: EventId3<Long, String?, Int> = GROUP.registerEvent(
+    "dictionary.loaded",
+    EventFields.Long("dictionary_last_modified"), dictionaryNameField, retryCountField
+  )
+  private val dictionaryLoadFailedEvent = GROUP.registerVarargEvent(
     "dictionary.load.failed",
-    stageMetadataLoadFailedField, errorMetadataLoadFailedField, codeMetadataLoadFailedField
+    stageMetadataLoadFailedField, errorMetadataLoadFailedField, codeMetadataLoadFailedField, retryCountField, dictionaryNameField
   )
-  private val dictionaryUpdatedEvent = GROUP.registerEvent("dictionary.updated", EventFields.Long("dictionary_last_modified"))
-  private val dictionaryUpdateFailedEvent = GROUP.registerEvent(
+  private val dictionaryUpdatedEvent: EventId3<Long, String?, Int> = GROUP.registerEvent(
+    "dictionary.updated",
+    EventFields.Long("dictionary_last_modified"), dictionaryNameField, retryCountField
+  )
+  private val dictionaryUpdateFailedEvent = GROUP.registerVarargEvent(
     "dictionary.update.failed",
-    stageMetadataUpdateFailedField, errorMetadataUpdateFailedField, codeMetadataUpdateFailedField
+    stageMetadataUpdateFailedField, errorMetadataUpdateFailedField, codeMetadataUpdateFailedField, retryCountField, dictionaryNameField
   )
 
   private val fileDeletedEvent = GROUP.registerVarargEvent(
@@ -113,12 +119,12 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
 
   fun logMetadataLoaded(version: String?) = metadataLoadedEvent.log(version)
   fun logMetadataUpdated(version: String?) = metadataUpdatedEvent.log(version)
-  fun logMetadataLoadFailed(error: EventLogMetadataUpdateError) {
-    metadataLoadFailedEvent.log(error.updateStage, error.errorType, error.errorCode)
+  fun logMetadataLoadFailed(error: EventLogMetadataUpdateError, retryCount: Int) {
+    metadataLoadFailedEvent.log(loadFailedData(error, retryCount))
   }
 
-  fun logMetadataUpdateFailed(error: EventLogMetadataUpdateError) {
-    metadataUpdateFailedEvent.log(error.updateStage, error.errorType, error.errorCode)
+  fun logMetadataUpdateFailed(error: EventLogMetadataUpdateError, retryCount: Int) {
+    metadataUpdateFailedEvent.log(updateFailedData(error, retryCount))
   }
 
   fun logFilesSend(total: Int, succeed: Int, failed: Int, external: Boolean, successfullySentFiles: List<String>, errors: List<Int>) {
@@ -194,19 +200,49 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
     )
   }
 
-  fun logDictionaryListLoadFailed(error: EventLogMetadataUpdateError) {
-    dictionaryListLoadFailed.log(error.updateStage, error.errorType, error.errorCode)
+  fun logDictionaryListLoadFailed(error: EventLogMetadataUpdateError, retryCount: Int) {
+    dictionaryListLoadFailed.log(loadFailedData(error, retryCount))
   }
-  fun logDictionaryListUpdateFailed(error: EventLogMetadataUpdateError) {
-    dictionaryListUpdateFailed.log(error.updateStage, error.errorType, error.errorCode)
+  fun logDictionaryListUpdateFailed(error: EventLogMetadataUpdateError, retryCount: Int) {
+    dictionaryListUpdateFailed.log(updateFailedData(error, retryCount))
   }
-  fun logDictionaryLoaded(lastModified: Long) = dictionaryLoadedEvent.log(lastModified)
-  fun logDictionaryLoadFailed(error: EventLogMetadataUpdateError) {
-    dictionaryLoadFailedEvent.log(error.updateStage, error.errorType, error.errorCode)
+  fun logDictionaryLoaded(lastModified: Long, dictionaryName: String, retryCount: Int) {
+    dictionaryLoadedEvent.log(lastModified, dictionaryName, retryCount)
   }
-  fun logDictionaryUpdated(lastModified: Long) = dictionaryUpdatedEvent.log(lastModified)
-  fun logDictionaryUpdateFailed(error: EventLogMetadataUpdateError) {
-    dictionaryUpdateFailedEvent.log(error.updateStage, error.errorType, error.errorCode)
+  fun logDictionaryLoadFailed(error: EventLogMetadataUpdateError, retryCount: Int, dictionaryName: String?) {
+    dictionaryLoadFailedEvent.log(loadFailedData(error, retryCount, dictionaryName))
+  }
+  fun logDictionaryUpdated(lastModified: Long, dictionaryName: String, retryCount: Int) {
+    dictionaryUpdatedEvent.log(lastModified, dictionaryName, retryCount)
+  }
+  fun logDictionaryUpdateFailed(error: EventLogMetadataUpdateError, retryCount: Int, dictionaryName: String?) {
+    dictionaryUpdateFailedEvent.log(updateFailedData(error, retryCount, dictionaryName))
+  }
+
+  private fun loadFailedData(error: EventLogMetadataUpdateError, retryCount: Int, dictionaryName: String? = null): List<EventPair<*>> {
+    val eventPairs = mutableListOf<EventPair<*>>(
+      stageMetadataLoadFailedField.with(error.updateStage),
+      errorMetadataLoadFailedField.with(error.errorType),
+      codeMetadataLoadFailedField.with(error.errorCode),
+      retryCountField.with(retryCount),
+    )
+    if (dictionaryName != null) {
+      eventPairs.add(dictionaryNameField.with(dictionaryName))
+    }
+    return eventPairs
+  }
+
+  private fun updateFailedData(error: EventLogMetadataUpdateError, retryCount: Int, dictionaryName: String? = null): List<EventPair<*>> {
+    val eventPairs = mutableListOf<EventPair<*>>(
+      stageMetadataUpdateFailedField.with(error.updateStage),
+      errorMetadataUpdateFailedField.with(error.errorType),
+      codeMetadataUpdateFailedField.with(error.errorCode),
+      retryCountField.with(retryCount),
+    )
+    if (dictionaryName != null) {
+      eventPairs.add(dictionaryNameField.with(dictionaryName))
+    }
+    return eventPairs
   }
 
   companion object {
@@ -246,6 +282,11 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
                                                                     EventLogMetadataParseException.EventLogMetadataParseErrorType.entries.plus(EventLogMetadataLoadException.EventLogMetadataLoadErrorType.entries).map { x -> x.name }.toList(),
                                                                     ERROR_METADATA_UPDATE_FAILED_DESCRIPTION)
     private val codeMetadataUpdateFailedField = EventFields.Int("code", CODE_METADATA_UPDATE_FAILED_DESCRIPTION)
+    private val retryCountField = EventFields.Int("retry_count", "Number of retries that the updater made so far in the current failure streak, " +
+                                                                 "or -1 if unknown. It resets to 0 after a successful update cycle. " +
+                                                                 "For dictionaries, it is counted per update cycle, not per dictionary.")
+    private val dictionaryNameField = EventFields.StringValidatedByEnum("dictionary_name", "dictionary_name",
+                                                                         "Name of the dictionary file, for example python_packages.ndjson")
     private val totalLogsSendField = EventFields.Int("total", TOTAL_LOGS_SEND_DESCRIPTION)
     private val sendLogsSendField = EventFields.Int("send", SEND_LOGS_SEND_DESCRIPTION)
     private val failedLogsSendField = EventFields.Int("failed", FAILED_LOGS_SEND_DESCRIPTION)

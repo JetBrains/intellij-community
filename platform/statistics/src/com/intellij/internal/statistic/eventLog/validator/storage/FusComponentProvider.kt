@@ -449,31 +449,31 @@ object FusComponentProvider {
       systemCollector.logMetadataLoaded(it)
     }
     messageHandler(METADATA_LOAD_FAILED_TOPIC) {
-      systemCollector.logMetadataLoadFailed(loadErrorToEventLogMetadataUpdateError(it))
+      systemCollector.logMetadataLoadFailed(loadErrorToEventLogMetadataUpdateError(it), it.retryCount)
     }
     messageHandler(METADATA_UPDATED_TOPIC) {
       systemCollector.logMetadataUpdated(it)
     }
     messageHandler(METADATA_UPDATE_FAILED_TOPIC) {
-      systemCollector.logMetadataUpdateFailed(loadErrorToEventLogMetadataUpdateError(it))
+      systemCollector.logMetadataUpdateFailed(loadErrorToEventLogMetadataUpdateError(it), it.retryCount)
     }
     messageHandler(DICTIONARY_LIST_LOAD_FAILED_TOPIC) {
-      systemCollector.logDictionaryListLoadFailed(loadErrorToEventLogMetadataUpdateError(it))
+      systemCollector.logDictionaryListLoadFailed(loadErrorToEventLogMetadataUpdateError(it), it.retryCount)
     }
     messageHandler(DICTIONARY_LIST_UPDATE_FAILED_TOPIC) {
-      systemCollector.logDictionaryListUpdateFailed(loadErrorToEventLogMetadataUpdateError(it))
+      systemCollector.logDictionaryListUpdateFailed(loadErrorToEventLogMetadataUpdateError(it), it.retryCount)
     }
     messageHandler(DICTIONARY_LOADED_TOPIC) {
-      systemCollector.logDictionaryLoaded(it.timestamp)
+      systemCollector.logDictionaryLoaded(it.timestamp, it.name, it.retryCount)
     }
     messageHandler(DICTIONARY_LOAD_FAILED_TOPIC) {
-      systemCollector.logDictionaryLoadFailed(loadErrorToEventLogMetadataUpdateError(it))
+      systemCollector.logDictionaryLoadFailed(loadErrorToEventLogMetadataUpdateError(it), it.retryCount, it.dictionaryName)
     }
     messageHandler(DICTIONARY_UPDATED_TOPIC) {
-      systemCollector.logDictionaryUpdated(it.timestamp)
+      systemCollector.logDictionaryUpdated(it.timestamp, it.name, it.retryCount)
     }
     messageHandler(DICTIONARY_UPDATE_FAILED_TOPIC) {
-      systemCollector.logDictionaryUpdateFailed(loadErrorToEventLogMetadataUpdateError(it))
+      systemCollector.logDictionaryUpdateFailed(loadErrorToEventLogMetadataUpdateError(it), it.retryCount, it.dictionaryName)
     }
     messageHandler(LOGS_FILE_DELETED) {
       systemCollector.logFileDeleted(it.cause.toIntelliJFileDeleteCause(), it.ageMs, it.queuedMs, it.fileSizeBytes, it.buildType.toIntelliJBuildType())
