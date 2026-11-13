@@ -382,10 +382,10 @@ The file is the JPS index. It carries no dev-distribution fact.
     }
   },
   "pluginDistributionTargets": {
-    //one entry per plugin enrolled in `ij_plugin`: the target and its project-relative output directory, and nothing else
+    //one entry per plugin enrolled in `ij_plugin`: the target and the project-relative path of its `<target name>_dist` directory, and nothing else
     "intellij.plugin": {
       "target": "@community//plugin:plugin_plugin",
-      "distributionDirectory": "out/bazel-out/jvm-fastbuild/bin/plugin/plugin_plugin"
+      "distributionDirectory": "out/bazel-out/jvm-fastbuild/bin/plugin/plugin_plugin_dist"
     }
   }
 }

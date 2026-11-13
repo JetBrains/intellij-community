@@ -191,7 +191,7 @@ class DevDistHalfTest {
     )
     val x = BazelTargetsInfo.PluginDistributionTargetDescription(
       target = "@community//plugins/x:x_plugin",
-      distributionDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/plugins/x/x",
+      distributionDirectory = "out/bazel-out/jvm-fastbuild/bin/external/community+/plugins/x/x_plugin_dist",
     )
     val targets = BazelTargetsInfo.TargetsFile(
       modules = mapOf(

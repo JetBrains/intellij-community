@@ -189,6 +189,10 @@ class BazelTargetsInfo {
   @Serializable
   data class PluginDistributionTargetDescription(
     @JvmField val target: String,
+    /**
+     * The project-relative path of the `<target name>_dist` directory, which holds the plugin directory and `packed-modules.yaml`.
+     * The plugin directory is the only directory in it.
+     */
     @JvmField val distributionDirectory: String,
   )
 

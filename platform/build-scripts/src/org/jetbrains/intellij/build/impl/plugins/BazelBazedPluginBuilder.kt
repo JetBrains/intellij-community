@@ -29,6 +29,8 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
 internal data class PluginsSplitByBuildingMethod(
@@ -39,7 +41,8 @@ internal data class PluginsSplitByBuildingMethod(
 internal data class PluginBuiltByBazelDescriptor(
   val mainModule: String,
   val bazelTarget: String,
-  val pluginDistributionDirectory: Path,
+  /** The `<target name>_dist` directory of [bazelTarget]. It holds the plugin directory and `packed-modules.yaml`. */
+  val distributionDirectory: Path,
 )
 
 internal fun partitionPluginsByBuildingMethod(pluginLayouts: Collection<PluginLayout>, buildContext: BuildContext): PluginsSplitByBuildingMethod {
@@ -101,12 +104,16 @@ internal fun buildPluginsByBazel(
 
   val buildResults = spanBuilder("copy plugins built by Bazel").use {
     plugins.mapConcurrent { plugin ->
-      if (!plugin.pluginDistributionDirectory.exists()) {
-        buildContext.messages.logErrorAndThrow("Cannot copy the plugin distribution for '${plugin.mainModule}' because '${plugin.pluginDistributionDirectory}' does not exist")
+      if (!plugin.distributionDirectory.exists()) {
+        buildContext.messages.logErrorAndThrow("Cannot copy the plugin distribution for '${plugin.mainModule}' because '${plugin.distributionDirectory}' does not exist")
       }
-      val pluginTargetDir = targetDir.resolve(plugin.pluginDistributionDirectory.name)
-      copyDir(plugin.pluginDistributionDirectory, pluginTargetDir)
-      val packedModulesPath = plugin.pluginDistributionDirectory.parent.resolve("packed-modules.yaml")
+      val pluginDirectories = plugin.distributionDirectory.listDirectoryEntries().filter { it.isDirectory() }
+      val pluginDirectory = pluginDirectories.singleOrNull()
+                            ?: error("Cannot copy the plugin distribution for '${plugin.mainModule}' because '${plugin.distributionDirectory}' " +
+                                     "must contain one directory, but it contains ${pluginDirectories.map { it.name }}")
+      val pluginTargetDir = targetDir.resolve(pluginDirectory.name)
+      copyDir(pluginDirectory, pluginTargetDir)
+      val packedModulesPath = plugin.distributionDirectory.resolve("packed-modules.yaml")
       if (!packedModulesPath.exists()) {
         buildContext.messages.logErrorAndThrow("Cannot build '${plugin.mainModule}' because '${packedModulesPath}' does not exist")
       }
