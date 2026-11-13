@@ -6,9 +6,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.execution.JUnitBundle;
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -44,22 +42,8 @@ public final class ParameterizedParametersStaticCollectionInspection extends Bas
       final String signature = "@" + PARAMETERS_FQN + " public static java.lang.Iterable<java.lang.Object[]> parameters()";
       CreateMethodQuickFix fix = CreateMethodQuickFix.createFix(aClass, signature, "");
       if (fix == null) return null;
-      return new ModCommandQuickFix() {
-        @Override
-        public @NotNull String getName() {
-          return getFamilyName();
-        }
-
-        @Override
-        public @NotNull String getFamilyName() {
-          return JUnitBundle.message("fix.data.provider.create.method.fix.name");
-        }
-
-        @Override
-        public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-          return fix.perform(ActionContext.from(descriptor));
-        }
-      };
+      String message = JUnitBundle.message("fix.data.provider.create.method.fix.name");
+      return LocalQuickFix.from(fix.withPresentation(_ -> Presentation.of(message)));
     }
     return new LocalQuickFix() {
 

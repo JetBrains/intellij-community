@@ -8,7 +8,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.ModTemplateBuilder;
 import com.intellij.modcommand.Presentation;
-import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,16 +36,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class CreateMethodQuickFix extends PsiUpdateModCommandAction<PsiClass> {
+public final class CreateMethodQuickFix extends PsiBasedModCommandAction<PsiClass> {
   private final String mySignature;
   private final String myBody;
-  private final SmartPsiElementPointer<PsiClass> myTargetClass;
 
   private CreateMethodQuickFix(final PsiClass targetClass, final @NonNls String signature, final @NonNls String body) {
     super(targetClass);
     mySignature = signature;
     myBody = body;
-    myTargetClass = SmartPointerManager.createPointer(targetClass);
   }
 
   @Override
@@ -65,7 +63,15 @@ public final class CreateMethodQuickFix extends PsiUpdateModCommandAction<PsiCla
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiClass targetClass, @NotNull ModPsiUpdater updater) {
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiClass targetClass) {
+    SmartPsiElementPointer<PsiClass> originalClass = SmartPointerManager.createPointer(targetClass);
+    return ModCommand.psiUpdate(targetClass, (writableClass, updater) -> invoke(context, writableClass, originalClass, updater));
+  }
+
+  private void invoke(@NotNull ActionContext context,
+                      @NotNull PsiClass targetClass,
+                      @NotNull SmartPsiElementPointer<PsiClass> originalClass,
+                      @NotNull ModPsiUpdater updater) {
     Project project = context.project();
     PsiMethod prototype = createMethod(targetClass);
     List<Pair<PsiExpression, PsiType>> arguments =
@@ -104,12 +110,14 @@ public final class CreateMethodQuickFix extends PsiUpdateModCommandAction<PsiCla
     if (bodyFromTemplate) {
       String methodName = liveMethod.getName();
       int parametersCount = arguments.size();
-      builder.onTemplateFinished(_ -> correctBody(methodName, parametersCount));
+      builder.onTemplateFinished(_ -> correctBody(originalClass, methodName, parametersCount));
     }
   }
 
-  private @NotNull ModCommand correctBody(@NotNull String methodName, int parametersCount) {
-    PsiClass targetClass = myTargetClass.getElement();
+  private static @NotNull ModCommand correctBody(@NotNull SmartPsiElementPointer<PsiClass> originalClass,
+                                                 @NotNull String methodName,
+                                                 int parametersCount) {
+    PsiClass targetClass = originalClass.getElement();
     if (targetClass == null) return ModCommand.nop();
     List<PsiMethod> methods = ContainerUtil.filter(
       targetClass.findMethodsByName(methodName, false),

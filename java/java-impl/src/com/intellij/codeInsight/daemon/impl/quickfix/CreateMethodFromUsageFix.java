@@ -1,40 +1,21 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
-import com.intellij.codeInsight.template.TemplateEditingAdapter;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JVMElementFactories;
 import com.intellij.psi.JVMElementFactory;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiTypeParameter;
@@ -43,18 +24,10 @@ import com.intellij.psi.PsiTypes;
 import com.intellij.psi.PsiWildcardType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
-import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.shouldCreateStaticMember;
-import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate;
-
 public final class CreateMethodFromUsageFix {
-  private static final Logger LOG = Logger.getInstance(CreateMethodFromUsageFix.class);
-
   public static boolean isMethodSignatureExists(PsiMethodCallExpression call, PsiClass target) {
     String name = call.getMethodExpression().getReferenceName();
     final JavaResolveResult resolveResult = call.getMethodExpression().advancedResolve(false);
@@ -119,78 +92,6 @@ public final class CreateMethodFromUsageFix {
     return method;
   }
 
-  public static void doCreate(PsiClass targetClass, PsiMethod method, List<? extends Pair<PsiExpression, PsiType>> arguments, PsiSubstitutor substitutor,
-                              ExpectedTypeInfo[] expectedTypes, @Nullable PsiElement context) {
-    doCreate(targetClass, method, shouldBeAbstractImpl(null, targetClass), arguments, substitutor, expectedTypes, context);
-  }
-
-  public static void doCreate(PsiClass targetClass,
-                              PsiMethod method,
-                              boolean shouldBeAbstract,
-                              List<? extends Pair<PsiExpression, PsiType>> arguments,
-                              PsiSubstitutor substitutor,
-                              ExpectedTypeInfo[] expectedTypes,
-                              final @Nullable PsiElement context) {
-
-    method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
-
-    if (method == null) {
-      return;
-    }
-    final Project project = targetClass.getProject();
-    final PsiFile targetFile = targetClass.getContainingFile();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(targetFile);
-    if (document == null) return;
-
-    TemplateBuilderImpl builder = new TemplateBuilderImpl(method);
-
-    CreateFromUsageUtils.setupMethodParameters(method, builder, context, substitutor, arguments);
-    final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
-    if (returnTypeElement != null) {
-      new GuessTypeParameters(project, JavaPsiFacade.getElementFactory(project), builder, substitutor)
-        .setupTypeElement(returnTypeElement, expectedTypes, context, targetClass);
-    }
-    PsiCodeBlock body = method.getBody();
-    builder.setEndVariableAfter(shouldBeAbstract || body == null ? method : body.getLBrace());
-    method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
-    if (method == null) return;
-
-    RangeMarker rangeMarker = document.createRangeMarker(method.getTextRange());
-    final Editor newEditor = CodeInsightUtil.positionCursor(project, targetFile, method);
-    if (newEditor == null) return;
-    Template template = builder.buildTemplate();
-    newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
-    newEditor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
-    rangeMarker.dispose();
-
-    if (!shouldBeAbstract) {
-      startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
-        @Override
-        public void templateFinished(@NotNull Template template, boolean brokenOff) {
-          if (brokenOff) return;
-          WriteCommandAction.runWriteCommandAction(project, () -> {
-            PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
-            final int offset = newEditor.getCaretModel().getOffset();
-            PsiMethod method1 = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset - 1, PsiMethod.class, false);
-            if (method1 != null) {
-              try {
-                CreateFromUsageUtils.setupMethodBody(method1);
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-              }
-
-              CreateFromUsageUtils.setupEditor(method1, newEditor);
-            }
-          });
-        }
-      });
-    }
-    else {
-      startTemplate(newEditor, template, project);
-    }
-  }
-
   public static boolean checkTypeParam(final PsiMethod method, final PsiTypeParameter typeParameter) {
     final String typeParameterName = typeParameter.getName();
 
@@ -198,8 +99,8 @@ public final class CreateMethodFromUsageFix {
       @Override
       public Boolean visitClassType(@NotNull PsiClassType classType) {
         final PsiClass psiClass = classType.resolve();
-        if (psiClass instanceof PsiTypeParameter &&
-            PsiTreeUtil.isAncestor(((PsiTypeParameter)psiClass).getOwner(), method, true)) {
+        if (psiClass instanceof PsiTypeParameter parameter &&
+            PsiTreeUtil.isAncestor(parameter.getOwner(), method, true)) {
           return false;
         }
         if (Comparing.strEqual(typeParameterName, classType.getCanonicalText())) {
@@ -244,9 +145,5 @@ public final class CreateMethodFromUsageFix {
       }
     }
     return false;
-  }
-
-  private static boolean shouldBeAbstractImpl(PsiReferenceExpression expression, PsiClass targetClass) {
-    return targetClass.isInterface() && (expression == null || !shouldCreateStaticMember(expression, targetClass));
   }
 }
