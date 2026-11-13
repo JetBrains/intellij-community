@@ -864,6 +864,47 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
     assertReturningFalseWaitsForOtherProcessors(true);
   }
 
+  public void testInterruptingLauncherCancelsRunningProcessors() throws Exception {
+    int parallelism = myPool.getParallelism();
+    CountDownLatch processorsStarted = new CountDownLatch(parallelism);
+    CountDownLatch releaseProcessors = new CountDownLatch(1);
+    CountDownLatch processorsFinished = new CountDownLatch(parallelism);
+    AtomicReference<ProgressIndicator> processorIndicator = new AtomicReference<>();
+    ProgressIndicator indicator = new EmptyProgressIndicator();
+    Future<?> future = AppExecutorUtil.getAppExecutorService().submit(() -> {
+      try {
+        assertThrows(RuntimeException.class, InterruptedException.class.getName(), () -> ProgressManager.getInstance().runProcess(() ->
+          myJobLauncher.processConcurrentlyAsync(Collections.nCopies(parallelism, 0), _ -> {
+            try {
+              processorIndicator.set(ProgressManager.getInstance().getProgressIndicator());
+              processorsStarted.countDown();
+              awaitOrFail(releaseProcessors);
+              ProgressManager.checkCanceled();
+              return true;
+            }
+            finally {
+              processorsFinished.countDown();
+            }
+          }, () -> {
+            awaitOrFail(processorsStarted);
+            Thread.currentThread().interrupt();
+          }), indicator));
+      }
+      finally {
+        assertFalse("The wait did not clear the interrupt flag", Thread.interrupted());
+      }
+    });
+    try {
+      future.get(30, TimeUnit.SECONDS);
+      assertFalse("The launcher canceled the caller's indicator", indicator.isCanceled());
+      assertTrue("The launcher did not cancel its processors", processorIndicator.get().isCanceled());
+    }
+    finally {
+      releaseProcessors.countDown();
+      assertTrue("The processors did not finish", processorsFinished.await(10, TimeUnit.SECONDS));
+    }
+  }
+
   private void assertReturningFalseWaitsForOtherProcessors(boolean nested) throws Exception {
     JobLauncherImpl launcher = myJobLauncher;
     CountDownLatch otherStarted = new CountDownLatch(1);
