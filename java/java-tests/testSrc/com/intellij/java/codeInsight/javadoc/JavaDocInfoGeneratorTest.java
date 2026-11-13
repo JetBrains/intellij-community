@@ -53,6 +53,7 @@ import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Flow;
@@ -141,6 +142,33 @@ abstract class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testInferredAnnotationsOnArrayMethod() { doTestMethod(); }
   public void testInferredAnnotationsOnArray2d() { doTestMethod(); }
   public void testTypeAnnoMultiDimArray() { doTestMethod(); }
+
+  public void testAnnotationsFromScope() {
+    createTestProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "indirectNullability");
+    PsiClass SpecifiedClass = myJavaFacade.findClass("GetSpecified");
+
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getFields()[0], "0_field");
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getFields()[1], "1_field");
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getFields()[2], "2_field");
+
+    // Constructors
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getMethods()[0], "0_method");
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getMethods()[1], "1_method");
+
+    // methods
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getMethods()[2], "2_method");
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getMethods()[3], "3_method");
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getMethods()[4], "4_method");
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getMethods()[5], "5_method");
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getMethods()[6], "6_method");
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getMethods()[7], "7_method");
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getMethods()[8], "8_method");
+
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getInnerClasses()[0], "0_record");
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getInnerClasses()[1], "1_record");
+    verifyJavadocFor("indirectNullability", SpecifiedClass.getInnerClasses()[2], "2_record");
+  }
+
   public void testApiNotes() { doTestMethod(); }
   public void testLiteral() { doTestField(); }
   public void testEscapingInLiteral() { doTestField(); }
@@ -516,24 +544,34 @@ abstract class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     assertFileTextEquals(docInfo);
   }
 
-  private void verifyJavadocFor(String rootPath, String className) {
-    PsiClass psiClass = myJavaFacade.findClass(className);
-    assertNotNull(psiClass);
-        JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.getBuilder(getProject())
-          .setPsiElement(psiClass)
-          .setPrinter(getPrinter())
-          .create();
-        String doc = JavaDocExternalFilter.filterInternalDocInfo(generator.generateDocInfo(null));
+  private void verifyJavadocFor(String rootPath, @NotNull PsiElement element, String fileName) {
+    assertNotNull(element);
+    JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.getBuilder(getProject())
+      .setPsiElement(element)
+      .setPrinter(getPrinter())
+      .create();
+    String doc = JavaDocExternalFilter.filterInternalDocInfo(generator.generateDocInfo(null));
     assertNotNull(doc);
-    PsiDirectory dir = (PsiDirectory)psiClass.getParent().getParent();
-    PsiFile file = dir.findFile(psiClass.getName() + getExpectedFileExtension());
-    assertNotNull(file);
+    PsiDirectory dir = element.getContainingFile().getContainingDirectory();
+    PsiFile file = dir.findFile(fileName + getExpectedFileExtension());
+    assertNotNull("The file does not exists: " + fileName + getExpectedFileExtension(), file);
     String expectedText = StringUtil.convertLineSeparators(file.getText().trim());
     String actualText = replaceEnvironmentDependentContent(StringUtil.convertLineSeparators(doc));
+
     if (!StringUtil.equals(expectedText, actualText)) {
       throw new FileComparisonFailedError(null, expectedText, actualText,
-       getTestDataPath() + TEST_DATA_FOLDER +  rootPath + "/" + className.replace(".", "/") + getExpectedFileExtension());
+                                          getTestDataPath() +
+                                          TEST_DATA_FOLDER +
+                                          rootPath +
+                                          "/" +
+                                          fileName.replace(".", "/") +
+                                          getExpectedFileExtension());
     }
+  }
+
+  private void verifyJavadocFor(String rootPath, String className) {
+    PsiClass psiClass = myJavaFacade.findClass(className);
+    verifyJavadocFor(rootPath, psiClass, ArrayUtil.getLastElement(className.split("\\.")));
   }
 
   private void doTestPackageInfo() {
