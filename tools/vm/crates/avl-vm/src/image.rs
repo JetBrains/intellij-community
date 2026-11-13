@@ -1,5 +1,8 @@
 //! `image validate|build`: the golden-image pipeline's shell scripts, for the one pool that has an image.
 
+mod ssh_relay;
+
+use std::io;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -7,9 +10,11 @@ use crate::terminal::Output;
 use crate::worker::hypervisor::unsupported;
 use crate::worker::worker::Manager;
 use avl_base::RefusalExt;
-use avl_base::{Backend, Exit, GuestOs, Outcome, Refusal};
-use avl_host_sys::{Ctx, Runner, SpawnOptions};
+use avl_base::config::pins;
+use avl_base::{Backend, Exit, GuestOs, OrRefuse, Outcome, Refusal};
+use avl_host_sys::{Ctx, GuestStream, Runner, SpawnOptions};
 use serde::Serialize;
+use ssh_relay::{GUEST_SSH_PORT, SshRelay};
 
 /// The timeout of a delegate in JSON mode. `build-golden.sh` is a long Packer run that installs macOS from its
 /// restore image, so the bound is far above any build and stops only a delegate that never ends.
@@ -60,6 +65,10 @@ struct DelegateData {
 ///
 /// The scripts and the Packer Tart plugin call `tart` from `PATH`, so the controller passes the Tart gate first and
 /// puts the directory of the Tart it resolved first on the scripts' `PATH`.
+///
+/// A build names its candidate VM here and serves Packer's SSH to it over the exec channel for as long as the
+/// delegate runs, see [`ssh_relay`]: `build-golden.sh` reads both from `AIR_IMAGE_CANDIDATE_VM` and
+/// `AIR_IMAGE_SSH_PROXY_PORT`.
 pub(crate) async fn command_image(ctx: &Ctx, manager: &Manager, action: ImageAction, output: Output) -> Result<Outcome, Refusal> {
     let settings = manager.settings();
     if settings.backend == Backend::Parallels {
@@ -95,7 +104,41 @@ pub(crate) async fn command_image(ctx: &Ctx, manager: &Manager, action: ImageAct
     let tart_dir: Option<String> = None;
     let path = [tart_dir, inherited].into_iter().flatten().collect::<Vec<_>>().join(":");
     let script = settings.image_root.join("scripts").join(action.script());
-    run_delegate(ctx, &runner.with_overrides(&[("PATH", &path)]), &script, output).await
+    if action == ImageAction::Validate {
+        return run_delegate(ctx, &runner.with_overrides(&[("PATH", &path)]), &script, output).await;
+    }
+    let candidate = candidate_vm_name();
+    let nc = ["/usr/bin/nc", "127.0.0.1", &GUEST_SSH_PORT.to_string()].map(str::to_owned);
+    let line = manager.machine().guest_argv(ctx, &candidate, &nc, true).await?;
+    let (relay_ctx, relay_runner) = (ctx.clone(), runner.clone());
+    let relay = SshRelay::start(move || {
+        let child = relay_runner.spawn_piped(&relay_ctx, &line);
+        async move { child.map(GuestStream::from).map_err(|refusal| io::Error::other(refusal.message)) }
+    })
+    .await
+    .or_refuse("ssh_relay_failed", Exit::UNAVAILABLE, || {
+        "cannot serve Packer's SSH on a loopback port".to_owned()
+    })?;
+    let port = relay.port().to_string();
+    let overrides = [
+        ("PATH", path.as_str()),
+        ("AIR_IMAGE_CANDIDATE_VM", candidate.as_str()),
+        ("AIR_IMAGE_SSH_PROXY_PORT", port.as_str()),
+    ];
+    let outcome = run_delegate(ctx, &runner.with_overrides(&overrides), &script, output).await;
+    drop(relay);
+    outcome
+}
+
+/// The name of an unapproved candidate of the golden that `versions.env` names, the name `build-golden.sh` promotes
+/// it to. The time and the pid keep two builds apart.
+fn candidate_vm_name() -> String {
+    format!(
+        "{}-candidate-{}-{}",
+        pins::tart_golden_vm(),
+        jiff::Timestamp::now().strftime("%Y%m%dT%H%M%SZ"),
+        std::process::id(),
+    )
 }
 
 /// Runs one of the image pipeline's shell scripts.

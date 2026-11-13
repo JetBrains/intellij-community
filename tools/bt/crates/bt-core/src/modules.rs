@@ -1,9 +1,10 @@
-//! The `--module` selector: a JPS module name, resolved to the `jps_test` target of its directory.
+//! The `--module` selector: a JPS module name, resolved to the test target of its directory
+//! ([`crate::scan::TEST_RULE_KINDS`]).
 //!
 //! Three files of the checkout answer it:
 //!
 //! - `.idea/modules.xml` at the checkout root gives the directory of the module's `.iml`.
-//! - The `BUILD.bazel` of that directory gives the `jps_test` target that runs the tests of the module
+//! - The `BUILD.bazel` of that directory gives the test target that runs the tests of the module
 //!   ([`module_jps_test_name`]).
 //! - The migrated list gives the modules whose tests run under Bazel. It is the list that `tests.cmd` reads, and
 //!   [`MigratedList`] reads it with the rules of `BazelMigratedTestModules.kt`.

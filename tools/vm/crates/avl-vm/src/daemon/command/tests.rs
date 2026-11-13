@@ -4,7 +4,7 @@ use avl_host_sys::Signal;
 use avl_host_testkit::agent::{agent_envelope, agent_reply, argv_value, run_state};
 use avl_host_testkit::git::FAKE_HEAD;
 use avl_host_testkit::{answer_text, handler, refusal};
-use avl_wire::progress::{Checkout, Kind, TraceRef, VerdictTraces};
+use avl_wire::progress::{Checkout, Failure, Kind, TraceRef, VerdictTraces};
 use avl_wire::report::{Failure as ReportFailure, FailureKind, TraceArchive, TraceBundle, Tree};
 use clap::Parser;
 use pretty_assertions::assert_eq;
@@ -883,6 +883,14 @@ fn report_failure(class_name: Option<&str>, test_name: &str, message: &str) -> R
     }
 }
 
+/// The bundle id of the trace of each failure, in the order of the failures.
+fn trace_ids(failures: &[Failure]) -> Vec<Option<&str>> {
+    failures
+        .iter()
+        .map(|failure| failure.trace.as_ref().map(|trace| trace.bundle_id.as_str()))
+        .collect()
+}
+
 // A failure carries the trace of its scenario. The bundle names the class by the simple name and the report by the
 // FQN, and the test name equals the scenario of the bundle.
 #[test]
@@ -898,14 +906,10 @@ fn a_failure_carries_the_trace_of_its_scenario() {
         ],
         &bundles,
     );
-    let traces: Vec<Option<&str>> = failures
-        .iter()
-        .map(|failure| failure.trace.as_ref().map(|trace| trace.bundle_id.as_str()))
-        .collect();
     assert_eq!(failures[0].message.as_deref(), Some("boom"));
     assert_eq!(failures[0].class, "com.example.AirTest");
     assert_eq!(
-        traces,
+        trace_ids(&failures),
         [Some("b"), None, None, None],
         "only the name of the scenario itself finds its trace, not a name that holds it or starts with it"
     );
@@ -920,11 +924,7 @@ fn a_failure_gets_its_own_trace_when_its_name_holds_another_scenario() {
     let nested = "nested subagents have the same v1 and v2 projection";
     let bundles = [bundle("short", short, "passed", false), bundle("nested", nested, "failed", false)];
     let failures = failures_of(&[report_failure(class, nested, ""), report_failure(class, short, "")], &bundles);
-    let traces: Vec<Option<&str>> = failures
-        .iter()
-        .map(|failure| failure.trace.as_ref().map(|trace| trace.bundle_id.as_str()))
-        .collect();
-    assert_eq!(traces, [Some("nested"), Some("short")]);
+    assert_eq!(trace_ids(&failures), [Some("nested"), Some("short")]);
 }
 
 // The verdict says whether the tree the build read was clean.

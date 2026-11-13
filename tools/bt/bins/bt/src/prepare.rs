@@ -6,10 +6,10 @@
 //! 2. The main repository on the host: created and given the master history when it is missing, and moved to the
 //!    local master when its master is clean and an ancestor. Its `core.fsmonitor` is on, also in a repository that
 //!    an older prepare created with it off.
-//! 3. PATH: `~/.local/bin`, where `bd-host setup` puts `bd-host`, on the PATH of `~/.zshenv`. The agent finds itself
-//!    there from the login shell. The host needs no `bd`, because the agent links the lease pool of Branch Deck.
+//! 3. PATH: `~/.local/bin`, where `brd-host setup` puts `brd-host`, on the PATH of `~/.zshenv`. The agent finds itself
+//!    there from the login shell. The host needs no `brd`, because the agent links the lease pool of Branch Deck.
 //! 4. Tools: git, Xcode, rustup, docker, tmux. Reported only, never installed.
-//! 5. The agent: `bd-host setup <alias>` of Branch Deck. Over ssh, it copies the local `bd-host` to the host when the
+//! 5. The agent: `brd-host setup <alias>` of Branch Deck. Over ssh, it copies the local `brd-host` to the host when the
 //!    host has another build, adds this client to the allow list of the agent, starts the LaunchAgent, and writes the
 //!    host file, so a run needs no ssh. Then the agent must answer a hello. With `--dry-run`, the step only asks the
 //!    agent for its hello.
@@ -180,7 +180,7 @@ fn prepare_repository(runtime: &dyn Runtime, host: &Host<'_>, prepare: &Prepare,
     }
 }
 
-/// Turns on `core.fsmonitor` in an existing repository on the host. The give-back of a host slot (`bd lease host`)
+/// Turns on `core.fsmonitor` in an existing repository on the host. The give-back of a host slot (`brd lease host`)
 /// runs one `status` after each run. Without fsmonitor that status reads every file of the slot: 18-19 s and about
 /// 240 s of system CPU on the Studio for 1.4M files, against 2.5 s with it. The setting goes into the repository, not
 /// onto one command, because a git without fsmonitor that writes the index drops the fsmonitor token of the index.
@@ -373,7 +373,7 @@ fn push_sync_and_move(
     true
 }
 
-/// `~/.local/bin` on the PATH of the login shell of the host. `bd-host setup` puts `bd-host` there, and the agent
+/// `~/.local/bin` on the PATH of the login shell of the host. `brd-host setup` puts `brd-host` there, and the agent
 /// reads the login environment through it.
 fn prepare_path(runtime: &dyn Runtime, alias: &str, prepare: &Prepare, report: &mut Report) {
     let path = remote_call(
@@ -664,7 +664,7 @@ fn copy_markers(runtime: &dyn Runtime, alias: &str, markers: &[String]) -> Strin
     }
 }
 
-/// The agent step: a hello for `--dry-run`, else `bd-host setup <alias>` and a hello.
+/// The agent step: a hello for `--dry-run`, else `brd-host setup <alias>` and a hello.
 fn prepare_agent(runtime: &dyn Runtime, host: &Host<'_>, prepare: &Prepare, link: &dyn HostLink, report: &mut Report) {
     const STEP: &str = "agent";
     if !prepare.change {
@@ -688,7 +688,7 @@ fn prepare_agent(runtime: &dyn Runtime, host: &Host<'_>, prepare: &Prepare, link
         }
     };
     let setup = if said.is_empty() {
-        format!("bd-host setup {} ran", host.alias)
+        format!("brd-host setup {} ran", host.alias)
     } else {
         said.lines().map(str::trim).collect::<Vec<_>>().join("; ")
     };
@@ -702,15 +702,15 @@ fn prepare_agent(runtime: &dyn Runtime, host: &Host<'_>, prepare: &Prepare, link
     }
 }
 
-/// The agent of a hello as the report names it, with the upgrade hint when it runs another build than `bd-host` here.
+/// The agent of a hello as the report names it, with the upgrade hint when it runs another build than `brd-host` here.
 fn agent_text(alias: &str, hello: &HostHello) -> String {
     let agent = &hello.agent;
     let mut text = format!(
-        "bd-host {} answers on {} ({} {})",
+        "brd-host {} answers on {} ({} {})",
         agent.version, hello.address, agent.os, agent.arch
     );
     if !hello.same_build {
-        let _ = write!(text, ", another build than here; `bd-host upgrade {alias}` replaces it");
+        let _ = write!(text, ", another build than here; `brd-host upgrade {alias}` replaces it");
     }
     text
 }

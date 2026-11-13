@@ -175,6 +175,45 @@ async fn a_relay_that_never_answers_is_no_reply() {
     assert_eq!(held.lock().unwrap().len(), 1, "one relay opened");
 }
 
+// A relay that drops the connection fails a `GET` only after the connection was opened again, since a `GET` changes
+// nothing in the daemon. Any other method opens one connection, because a second run could repeat what the first did.
+#[tokio::test]
+async fn a_dropped_connection_runs_a_get_again_and_no_other_method() {
+    let fixture = Fixture::new().await;
+    let opened = Arc::new(Mutex::new(0_u32));
+    let counter = Arc::clone(&opened);
+    fixture.ports.listen(7, move |server_end| {
+        *counter.lock().unwrap() += 1;
+        drop(server_end);
+    });
+    let mut dropping = fixture.daemon.host_state("run-1", "launch-1");
+    dropping.port = 7;
+
+    let status = fixture
+        .host
+        .daemon()
+        .exchange(&Ctx::background(), &dropping, &wire::STATUS, None)
+        .await;
+    assert!(matches!(status, Err(Transport::Broken(_) | Transport::Connect(_))), "{status:?}");
+    assert_eq!(
+        *opened.lock().unwrap(),
+        u32::from(IDEMPOTENT_EXCHANGE_ATTEMPTS),
+        "a GET opens the connection again"
+    );
+
+    *opened.lock().unwrap() = 0;
+    let shutdown = fixture
+        .host
+        .daemon()
+        .exchange(&Ctx::background(), &dropping, &wire::SHUTDOWN, None)
+        .await;
+    assert!(
+        matches!(shutdown, Err(Transport::Broken(_) | Transport::Connect(_))),
+        "{shutdown:?}"
+    );
+    assert_eq!(*opened.lock().unwrap(), 1, "a POST opens one connection");
+}
+
 // An interrupted operation stops waiting on the daemon.
 #[tokio::test]
 async fn an_interrupted_request_refuses() {

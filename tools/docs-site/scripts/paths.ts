@@ -4,6 +4,7 @@ import { existsSync, readdirSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import type { SiteConfig } from './siteConfig.ts'
+import { OPENSPEC_SPEC_FILE, specIdOfRepoPath } from './sourcePaths.ts'
 
 /** The repository root: the kernel sits at `community/tools/docs-site`. */
 export const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..')
@@ -53,22 +54,92 @@ export function walkFiles(dir: string, skips: (entry: string) => boolean, visit:
 /** The directories under a spec root that hold no authored spec, in addition to `docs.skipDirs`. */
 const SPEC_SKIP_DIRS: readonly string[] = ['node_modules', 'generated', 'test-results']
 
+/** One spec file of a site. */
+export interface SpecFile {
+  /** The absolute path. */
+  file: string
+  /** The absolute path of the folder that the id is relative to: a suffix root, or `<root>/specs` of an OpenSpec root. */
+  specRoot: string
+  /** The spec id (`specIdOfRepoPath`). */
+  id: string
+  /** True for a spec of an OpenSpec root, whose `targets` and `[@test]` paths are from the repository root. */
+  rootPaths: boolean
+}
+
 /**
- * The spec files of the site: the absolute path of each file and the root that holds it, sorted by path. A spec file
- * belongs to the first root of `specs.roots` that holds it.
+ * The spec files of the site, sorted by path: the specs of each OpenSpec root, then the files of the suffix roots. A
+ * suffix spec file belongs to the first root of `specs.roots` that holds it. Throws when two files have one id, so a
+ * spec that moves to an OpenSpec root cannot keep its old file.
  */
-export function specFiles(config: Pick<SiteConfig, 'docs' | 'specs'>, root: string = repoRoot): { file: string, specRoot: string }[] {
+export function specFiles(config: Pick<SiteConfig, 'docs' | 'specs'>, root: string = repoRoot): SpecFile[] {
   const skipDirs = new Set([...SPEC_SKIP_DIRS, ...config.docs.skipDirs])
-  const owner = new Map<string, string>()
-  for (const specRoot of config.specs.roots) {
-    const dir = join(root, specRoot)
-    walkFiles(dir, entry => skipDirs.has(entry) || entry.startsWith('.'), (file) => {
-      if (file.endsWith(config.specs.suffix) && !owner.has(file)) {
-        owner.set(file, dir)
+  const skips = (entry: string): boolean => skipDirs.has(entry) || entry.startsWith('.')
+  const owner = new Map<string, SpecFile>()
+  for (const openspecRoot of config.specs.openspec?.roots ?? []) {
+    const dir = join(root, openspecRoot, 'specs')
+    walkFiles(dir, skips, (file) => {
+      const id = specIdOfRepoPath(config.specs, posixRelative(root, file))
+      if (id !== null && !owner.has(file)) {
+        owner.set(file, { file, specRoot: dir, id, rootPaths: true })
       }
     })
   }
-  return [...owner].map(([file, specRoot]) => ({ file, specRoot })).sort((a, b) => a.file < b.file ? -1 : a.file > b.file ? 1 : 0)
+  for (const specRoot of config.specs.roots) {
+    const dir = join(root, specRoot)
+    walkFiles(dir, skips, (file) => {
+      if (file.endsWith(config.specs.suffix) && !owner.has(file)) {
+        owner.set(file, { file, specRoot: dir, id: posixRelative(dir, file).slice(0, -config.specs.suffix.length), rootPaths: false })
+      }
+    })
+  }
+  const files = [...owner.values()].sort((a, b) => a.file < b.file ? -1 : a.file > b.file ? 1 : 0)
+  const byId = new Map<string, string>()
+  const duplicates: string[] = []
+  for (const { file, id } of files) {
+    const first = byId.get(id)
+    if (first === undefined) {
+      byId.set(id, file)
+    }
+    else {
+      duplicates.push(`'${id}': ${posixRelative(root, first)} and ${posixRelative(root, file)}`)
+    }
+  }
+  if (duplicates.length > 0) {
+    throw new Error(`specs: ${duplicates.length} spec id(s) name two files; delete the old file of a moved spec\n${duplicates.join('\n')}`)
+  }
+  return files
+}
+
+/**
+ * The delta spec files of the active changes of the OpenSpec roots: `<root>/changes/<change>/specs/**\/spec.md`, sorted.
+ * `capabilityDir` is the folder of the main spec that the archive writes the delta into, so a relative link of a delta
+ * resolves from there. The archive `changes/archive/` is history, and no check reads it.
+ */
+export function openspecDeltaFiles(config: Pick<SiteConfig, 'specs'>, root: string = repoRoot): { file: string, capabilityDir: string }[] {
+  const deltas: { file: string, capabilityDir: string }[] = []
+  for (const openspecRoot of config.specs.openspec?.roots ?? []) {
+    const changes = join(root, openspecRoot, 'changes')
+    if (!existsSync(changes)) {
+      continue
+    }
+    for (const change of readdirSync(changes).sort()) {
+      const specsDir = join(changes, change, 'specs')
+      if (change === 'archive' || change.startsWith('.') || !existsSync(specsDir) || !statSync(specsDir).isDirectory()) {
+        continue
+      }
+      walkFiles(specsDir, entry => entry.startsWith('.'), (file) => {
+        if (file.endsWith(`${sep}${OPENSPEC_SPEC_FILE}`)) {
+          deltas.push({ file, capabilityDir: join(root, openspecRoot, 'specs', relative(specsDir, dirname(file))) })
+        }
+      })
+    }
+  }
+  return deltas.sort((a, b) => a.file < b.file ? -1 : a.file > b.file ? 1 : 0)
+}
+
+/** The archive folder of each OpenSpec root, as an absolute path. */
+export function openspecArchiveDirs(config: Pick<SiteConfig, 'specs'>, root: string = repoRoot): string[] {
+  return (config.specs.openspec?.roots ?? []).map(openspecRoot => join(root, openspecRoot, 'changes', 'archive'))
 }
 
 /** Loads the default export of a `site.config.ts` module. A relative path resolves against the working directory. */

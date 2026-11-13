@@ -405,22 +405,8 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
         .filter(|target| target.plan_digests.len() > 1)
         .map(|target| target.label.clone())
         .collect();
-    let timings: Vec<TargetTiming> = targets
-        .iter_mut()
-        .filter(|target| target.timed && target.plan_digests.len() <= 1 && !target.class_seconds.is_empty())
-        .map(|target| TargetTiming {
-            label: target.label.clone(),
-            class_seconds: std::mem::take(&mut target.class_seconds),
-        })
-        .collect();
-    let lower_bounds: Vec<TargetTiming> = targets
-        .iter_mut()
-        .filter(|target| !target.timeouts.is_empty() && target.plan_digests.len() <= 1 && !target.class_seconds.is_empty())
-        .map(|target| TargetTiming {
-            label: target.label.clone(),
-            class_seconds: std::mem::take(&mut target.class_seconds),
-        })
-        .collect();
+    let timings = take_class_timings(&mut targets, |target| target.timed);
+    let lower_bounds = take_class_timings(&mut targets, |target| !target.timeouts.is_empty());
     let mut timeouts = Vec::new();
     for target in &mut targets {
         let shards = u32::try_from(target.shards.len()).unwrap_or(u32::MAX);
@@ -478,6 +464,19 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
         mixed_shard_plans,
         timeouts,
     }
+}
+
+/// The class timings of each target that `selects` keeps and that ran one plan. The timings move out of the target, so a
+/// later call does not take them again.
+fn take_class_timings(targets: &mut [Aggregate], selects: impl Fn(&Aggregate) -> bool) -> Vec<TargetTiming> {
+    targets
+        .iter_mut()
+        .filter(|target| selects(target) && target.plan_digests.len() <= 1 && !target.class_seconds.is_empty())
+        .map(|target| TargetTiming {
+            label: target.label.clone(),
+            class_seconds: std::mem::take(&mut target.class_seconds),
+        })
+        .collect()
 }
 
 /// Whether the runner marked the case as failed because it had not ended when the runner was stopped.
