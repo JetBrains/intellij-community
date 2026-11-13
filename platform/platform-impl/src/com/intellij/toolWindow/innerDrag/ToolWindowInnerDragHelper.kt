@@ -6,9 +6,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.DockableEditor
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.impl.isSingletonEditorInWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupCornerType
 import com.intellij.openapi.util.registry.Registry
@@ -104,6 +109,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
         val component = curLocation.target.component
         component.contains(point.getPoint(component))
       }
+      DropLocation.NewWindow -> true
       else -> false
     }
   }
@@ -214,6 +220,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
         true
       }
       is DropLocation.Editor -> dropIntoEditor(content, sourceDecorator, curLocation.target)
+      DropLocation.NewWindow -> dropIntoNewWindow(content, sourceDecorator, event.locationOnScreen)
     }
 
     if (shouldUnsplitSourceIfEmpty) {
@@ -288,6 +295,48 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     val editorWindow = target.resolveWindow() ?: return false
     val transfer = ToolWindowToEditorTransfer.findApplicableTransfer(content, sourceDecorator, target.project) ?: return false
     return transfer.move(editorWindow)
+  }
+
+  /**
+   * Moves the dragged [content] into a new editor window at [screenPoint], as a drop of an editor tab outside any window does.
+   *
+   * @return the same as [dropIntoEditor]
+   */
+  private fun dropIntoNewWindow(content: Content, sourceDecorator: InternalDecoratorImpl, screenPoint: Point): Boolean {
+    val project = sourceDecorator.toolWindow.project
+    val editorManager = FileEditorManagerEx.getInstanceEx(project) as? FileEditorManagerImpl ?: return false
+    val transfer = ToolWindowToEditorTransfer.findApplicableTransfer(content, sourceDecorator, project) ?: return false
+
+    // The content can be opened only in an existing editor window, so it goes to the main one first.
+    val editorWindow = EditorDropTarget.EmptyArea(editorManager.mainSplitters).resolveWindow() ?: return false
+    val filesBefore = editorWindow.fileList.toSet()
+    val shouldUnsplitSourceIfEmpty = transfer.move(editorWindow)
+
+    val composite = editorWindow.selectedComposite
+    if (composite == null || composite.file in filesBefore) {
+      return shouldUnsplitSourceIfEmpty
+    }
+
+    val file = composite.file
+    val editors = composite.allEditors
+    val dockableEditor = DockableEditor(
+      img = null,
+      file = file,
+      presentation = Presentation(file.presentableName),
+      preferredSize = editorWindow.size,
+      isPinned = false,
+      isSingletonEditorInWindow = isSingletonEditorInWindow(editors),
+      isNorthPanelAvailable = DockManagerImpl.isNorthPanelAvailable(editors),
+    )
+    file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
+    try {
+      editorManager.closeFile(window = editorWindow, composite = composite, runChecks = false)
+      (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(dockableEditor, RelativePoint(screenPoint))
+    }
+    finally {
+      file.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, null)
+    }
+    return shouldUnsplitSourceIfEmpty
   }
 
   private fun unsplitSourceIfEmpty(sourceDecorator: InternalDecoratorImpl, content: Content) {
@@ -442,6 +491,8 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     }
 
     val content = myDraggingTab?.content
+    val sourceProject = sourceDecorator?.toolWindow?.project
+    val canDropIntoEditor = content != null && sourceProject != null && canDropIntoEditor(sourceDecorator, content, sourceProject)
     curDropLocation = when {
       decorator != null && decorator == sourceDecorator && canReorderTabs(decorator) -> {
         // Drop into the same tool window decorator - always allowed if you can reorder tabs.
@@ -451,10 +502,18 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
         // Drop into another decorator of the tool window - allowed only if the tool window allows tab splits.
         DropLocation.ToolWindow(decorator)
       }
-      editorTarget != null && content != null &&
-      canDropIntoEditor(sourceDecorator, content, editorTarget.project) -> {
+      decorator != null -> {
+        // The pointer is above the source tool window, and the branches above do not take the drop.
+        // The drag has no target here, so a release cancels it.
+        null
+      }
+      editorTarget != null && canDropIntoEditor -> {
         // Drop into the editor - allowed only if the tool window provides necessary support.
         DropLocation.Editor(editorTarget)
+      }
+      editorTarget == null && canDropIntoEditor -> {
+        // No editor takes the drop - opens a new editor window, as a drop of an editor tab does.
+        DropLocation.NewWindow
       }
       else -> null
     }
@@ -613,6 +672,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
   private sealed interface DropLocation {
     data class ToolWindow(val decorator: InternalDecoratorImpl) : DropLocation
     data class Editor(val target: EditorDropTarget) : DropLocation
+    data object NewWindow : DropLocation
   }
 
   private class MyDialog(owner: JComponent, val helper: ToolWindowInnerDragHelper, tabImage: BufferedImage)
