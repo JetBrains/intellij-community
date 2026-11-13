@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypeCommentOwner
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyTypeUtil
@@ -128,9 +129,12 @@ class PyDataFlow(private val controlFlow: PyControlFlow, context: FlowContext) :
    * [instruction] can never be taken, e.g. the `then` branch of `if a:` where `a` is always falsy
    * (its `__bool__` returns a false literal).
    * The type does not count when the condition reads a variable that another scope can assign, see [readsVariableOfOtherScope].
+   *
+   * A `TYPE_CHECKING` condition is never contradicted, whatever its type.
    */
   private fun isContradictedByConditionType(instruction: ConditionalInstruction, context: TypeEvalContext): Boolean {
     val condition = instruction.condition as? PyExpression ?: return false
+    if (PyEvaluator.isTypeCheckingExpression(PyPsiUtils.flattenParens(condition))) return false
     val truthiness = PyTypeUtil.getTypeTruthiness(context.getType(condition), condition, context)
     if (truthiness == ThreeState.UNSURE) return false
     if (readsVariableOfOtherScope(condition, context)) return false
