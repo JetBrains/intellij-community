@@ -114,7 +114,8 @@ public final class IterationState {
   private final boolean myUseOnlyFontOrForegroundAffectingHighlighters;
   private final boolean myStickyLinesPainting;
   private final boolean myEditorRightAligned;
-  private final boolean myAutoRoundedHighlighters;
+  private final boolean myRoundedHighlighting;
+  private final boolean myHuggingHighlighting;
   private final boolean myReverseIteration;
   private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<>();
   private final List<TextAttributes> myCachedAttributesList = new ArrayList<>(5);
@@ -158,7 +159,8 @@ public final class IterationState {
     myUseOnlyFontOrForegroundAffectingHighlighters = useOnlyFontOrForegroundAffectingHighlighters;
     myStickyLinesPainting = editor instanceof EditorImpl impl && impl.isStickyLinePainting();
     myEditorRightAligned = editor instanceof EditorImpl impl && impl.isRightAligned();
-    myAutoRoundedHighlighters = editor instanceof EditorImpl impl && impl.isRoundedHighlighting();
+    myRoundedHighlighting = editor instanceof EditorImpl impl && impl.isRoundedHighlighting();
+    myHuggingHighlighting = editor instanceof EditorImpl impl && impl.isHuggingHighlighting();
     myReverseIteration = iterateBackwards;
     myHighlighterIterator = useOnlyFullLineHighlighters ? null : getHighlighter(editor).createIterator(start);
     myCaretData = ObjectUtils.notNull(caretData, CaretData.getNullCaret());
@@ -323,6 +325,9 @@ public final class IterationState {
     return myMergedAttributes;
   }
 
+  /**
+   * Gives the layers that fill the editor after the line end. A hugging layer is absent, because it stops at the text.
+   */
   @ApiStatus.Internal
   public @NotNull List<BackgroundLayer> getPastLineEndBackgroundLayers() {
     List<BackgroundLayer> layers;
@@ -335,7 +340,7 @@ public final class IterationState {
     else {
       layers = myBackgroundLayers;
     }
-    return getStraightLayers(layers);
+    return getFillingLayers(layers);
   }
 
   @ApiStatus.Internal
@@ -343,13 +348,30 @@ public final class IterationState {
     return isInSelection(hasSoftWrap());
   }
 
+  /**
+   * Gives the layers that fill the editor before the line start.
+   * In a right-aligned editor, this area is the empty left side of the line, also at a soft wrap. A hugging layer is
+   * absent there. In a left-aligned editor, this area is the indent after a soft wrap. A hugging layer stays there,
+   * because the hugging selection covers that indent.
+   */
   @ApiStatus.Internal
   public @NotNull List<BackgroundLayer> getBeforeLineStartBackgroundLayers() {
-    return getStraightLayers(getBreakBackgroundLayers(false));
+    List<BackgroundLayer> layers = getBreakBackgroundLayers(false);
+    return myEditorRightAligned ? getFillingLayers(layers) : layers;
   }
 
-  private static @NotNull List<BackgroundLayer> getStraightLayers(@NotNull List<BackgroundLayer> layers) {
-    return ContainerUtil.filter(layers, layer -> !layer.isRounded());
+  /**
+   * Gives the layers without the hugging ones, in the same order.
+   * A hugging layer stops at the text, so it never fills the editor.
+   * When no layer hugs, the result is the given list, and it is valid as long as the given list.
+   */
+  static @NotNull List<BackgroundLayer> getFillingLayers(@NotNull List<BackgroundLayer> layers) {
+    for (int i = 0; i < layers.size(); i++) {
+      if (layers.get(i).getHugs()) {
+        return ContainerUtil.filter(layers, layer -> !layer.getHugs());
+      }
+    }
+    return layers;
   }
 
   private @NotNull HighlighterSweep createSweep(MarkupModelEx markupModel) {
@@ -566,11 +588,18 @@ public final class IterationState {
     myBackgroundLayers = setAttributes(myMergedAttributes, false, false);
   }
 
-  private void addAttributes(@NotNull TextAttributes attributes, int layer, boolean rounded, boolean forcesBackground, int span) {
+  private void addAttributes(
+    @NotNull TextAttributes attributes,
+    int layer,
+    boolean rounded,
+    boolean hugs,
+    boolean forcesBackground,
+    int span
+  ) {
     myCachedAttributesList.add(attributes);
     Color color = attributes.getBackgroundColor();
     if (color != null) {
-      myCachedBackgroundLayers.add(new BackgroundLayer(color, layer, rounded, forcesBackground, span));
+      myCachedBackgroundLayers.add(new BackgroundLayer(color, layer, rounded, hugs, forcesBackground, span));
     }
   }
 
@@ -619,44 +648,46 @@ public final class IterationState {
       }
       if (highlighter.getLayer() < HighlighterLayer.SELECTION) {
         if (selection != null) {
-          addAttributes(selection, HighlighterLayer.SELECTION, myAutoRoundedHighlighters, false, Integer.MAX_VALUE);
+          addAttributes(selection, HighlighterLayer.SELECTION, myRoundedHighlighting, myHuggingHighlighting, false, Integer.MAX_VALUE);
           selection = null;
         }
       }
 
       if (fold != null && highlighter.getLayer() < HighlighterLayer.GUARDED_BLOCKS) {
-        addAttributes(fold, HighlighterLayer.GUARDED_BLOCKS, myAutoRoundedHighlighters, false, Integer.MAX_VALUE);
+        addAttributes(fold, HighlighterLayer.GUARDED_BLOCKS, myRoundedHighlighting, false, false, Integer.MAX_VALUE);
         fold = null;
       }
 
       if (guard != null && highlighter.getLayer() < HighlighterLayer.GUARDED_BLOCKS) {
-        addAttributes(guard, HighlighterLayer.GUARDED_BLOCKS, false, true, Integer.MAX_VALUE);
+        addAttributes(guard, HighlighterLayer.GUARDED_BLOCKS, myRoundedHighlighting, false, true, Integer.MAX_VALUE);
         guard = null;
       }
 
       if (caret != null && highlighter.getLayer() < HighlighterLayer.CARET_ROW) {
-        addAttributes(caret, HighlighterLayer.CARET_ROW, false, false, Integer.MAX_VALUE);
+        addAttributes(caret, HighlighterLayer.CARET_ROW, false, false, false, Integer.MAX_VALUE);
         caret = null;
       }
 
       if (syntax != null && highlighter.getLayer() < HighlighterLayer.SYNTAX) {
-        addAttributes(syntax, HighlighterLayer.SYNTAX, false, false, Integer.MAX_VALUE);
+        addAttributes(syntax, HighlighterLayer.SYNTAX, false, false, false, Integer.MAX_VALUE);
         syntax = null;
       }
 
       TextAttributes textAttributes = highlighter.getTextAttributes(myColorsScheme);
       if (textAttributes != null && textAttributes != TextAttributes.ERASE_MARKER) {
-        boolean rounded = BackgroundLayer.isRounded(highlighter.getTargetArea(), myAutoRoundedHighlighters);
+        boolean rounded = BackgroundLayer.isRounded(highlighter.getTargetArea(), myRoundedHighlighting);
         int span = highlighter.getAffectedAreaEndOffset() - highlighter.getAffectedAreaStartOffset();
-        addAttributes(textAttributes, highlighter.getLayer(), rounded, false, span);
+        addAttributes(textAttributes, highlighter.getLayer(), rounded, false, false, span);
       }
     }
 
-    if (selection != null) addAttributes(selection, HighlighterLayer.SELECTION, myAutoRoundedHighlighters, false, Integer.MAX_VALUE);
-    if (fold != null) addAttributes(fold, HighlighterLayer.GUARDED_BLOCKS, myAutoRoundedHighlighters, false, Integer.MAX_VALUE);
-    if (guard != null) addAttributes(guard, HighlighterLayer.GUARDED_BLOCKS, false, true, Integer.MAX_VALUE);
-    if (caret != null) addAttributes(caret, HighlighterLayer.CARET_ROW, false, false, Integer.MAX_VALUE);
-    if (syntax != null) addAttributes(syntax, HighlighterLayer.SYNTAX, false, false, Integer.MAX_VALUE);
+    if (selection != null) {
+      addAttributes(selection, HighlighterLayer.SELECTION, myRoundedHighlighting, myHuggingHighlighting, false, Integer.MAX_VALUE);
+    }
+    if (fold != null) addAttributes(fold, HighlighterLayer.GUARDED_BLOCKS, myRoundedHighlighting, false, false, Integer.MAX_VALUE);
+    if (guard != null) addAttributes(guard, HighlighterLayer.GUARDED_BLOCKS, myRoundedHighlighting, false, true, Integer.MAX_VALUE);
+    if (caret != null) addAttributes(caret, HighlighterLayer.CARET_ROW, false, false, false, Integer.MAX_VALUE);
+    if (syntax != null) addAttributes(syntax, HighlighterLayer.SYNTAX, false, false, false, Integer.MAX_VALUE);
 
     Color fore = null;
     Color back = isInGuardedBlock ? myReadOnlyColor : null;

@@ -182,7 +182,15 @@ internal class HighlighterVisualModel(private val editor: EditorImpl) {
 
   fun paintSelectionBlock(block: Rectangle2D) {
     val color = selectionBg ?: return
-    paintBackgroundBlock(block, BackgroundLayer(color, HighlighterLayer.SELECTION, editor.isRoundedHighlighting, false, Int.MAX_VALUE))
+    val layer = BackgroundLayer(
+      color,
+      HighlighterLayer.SELECTION,
+      editor.isRoundedHighlighting,
+      editor.isHuggingHighlighting,
+      false,
+      Int.MAX_VALUE,
+    )
+    paintBackgroundBlock(block, layer)
   }
 
   fun paintLayeredBlock(block: Rectangle2D, layers: List<BackgroundLayer>) {

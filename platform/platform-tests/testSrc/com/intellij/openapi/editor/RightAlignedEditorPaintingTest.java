@@ -18,6 +18,7 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -32,6 +33,13 @@ import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 @TestDataPath("$PROJECT_ROOT/community/platform/platform-tests/testData/editor/painting/right")
@@ -221,6 +229,36 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
   }
 
   @Test
+  public void testHuggingSelectionAcrossSoftWrap() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(true);
+      try {
+        initText("abcdefgh ij");
+        configureSoftWraps(8);
+        myFixture.getEditor().getSelectionModel().setSelection(6, 10);
+        assertOnlySmallBlockBeforeSoftWrappedLine();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testHuggingSelectionAcrossSoftWrapInsideWord() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(true);
+      try {
+        initText("abcdefghijk\n<caret>l");
+        configureSoftWraps(8);
+        myFixture.getEditor().getSelectionModel().setSelection(6, 10);
+        assertOnlySmallBlockBeforeSoftWrappedLine();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
   public void testCaretAfterEmptyLine() {
     myFixture.runTest(() -> {
       initText("\nsecond line<caret>");
@@ -234,6 +272,30 @@ public class RightAlignedEditorPaintingTest extends EditorPaintingTestCase {
       initText("<caret>\n    second line");
       checkResult();
     });
+  }
+
+  /**
+   * Asserts that the hugging selection on visual line 1 covers only the small block before the text.
+   * Visual line 1 starts at the one soft wrap of the first line, inside the selection.
+   * The empty left side of visual line 1 keeps the editor background.
+   */
+  private void assertOnlySmallBlockBeforeSoftWrappedLine() throws IOException {
+    Editor editor = myFixture.getEditor();
+    List<? extends SoftWrap> softWraps = editor.getSoftWrapModel().getSoftWrapsForLine(0);
+    assertEquals(1, softWraps.size(), "the first line has no single soft wrap");
+    int wrapOffset = softWraps.getFirst().getStart();
+    SelectionModel selectionModel = editor.getSelectionModel();
+    assertTrue(selectionModel.getSelectionStart() < wrapOffset && wrapOffset < selectionModel.getSelectionEnd(),
+               "the selection does not cross the soft wrap at " + wrapOffset);
+    BufferedImage image = paintEditor(false, null, null);
+    Color selection = selectionModel.getTextAttributes().getBackgroundColor();
+    int[] yRange = editor.visualLineToYRange(1);
+    int middleY = (yRange[0] + yRange[1]) / 2;
+    int textX = editor.visualPositionToXY(editor.offsetToVisualPosition(wrapOffset, false, false)).x;
+    int leftX = editor.getContentComponent().getInsets().left;
+    assertTrue(textX - leftX > 2 * EditorUtil.getPlainSpaceWidth(editor), "the left side of visual line 1 is too narrow");
+    assertNotEquals(selection.getRGB(), image.getRGB(leftX, middleY), "the selection fills the left side of visual line 1");
+    assertEquals(selection.getRGB(), image.getRGB(textX - 1, middleY), "the small block before the text is absent");
   }
 
   @NotNull

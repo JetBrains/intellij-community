@@ -58,11 +58,15 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
 
   private record SelectionState(@Nullable Boolean rounded, boolean islands, boolean oldSelection) {}
 
+  private static SelectionState setNewSelectionEnabled(boolean enabled) {
+    return setSelectionLook(enabled, enabled);
+  }
+
   /**
    * Sets the rounding option, and makes the selection hug or fill.
    * The selection hugs under Islands while the registry key {@link #OLD_SELECTION_KEY} is off.
    */
-  private static SelectionState setNewSelectionEnabled(boolean enabled) {
+  private static SelectionState setSelectionLook(boolean rounded, boolean hugging) {
     var settings = EditorSettingsExternalizable.getInstance();
     var oldSelection = Registry.get(OLD_SELECTION_KEY);
     var state = new SelectionState(
@@ -70,9 +74,9 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
       IslandsState.Companion.isEnabled(),
       oldSelection.asBoolean()
     );
-    IslandsState.Companion.setEnabled(enabled, false);
-    oldSelection.setValue(!enabled);
-    settings.setRoundedHighlightingOption(enabled);
+    IslandsState.Companion.setEnabled(hugging, false);
+    oldSelection.setValue(!hugging);
+    settings.setRoundedHighlightingOption(rounded);
     return state;
   }
 
@@ -467,6 +471,103 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     });
   }
 
+  private void runTestSelectionOverLineBreak() throws Exception {
+    myFixture.initText("<selection>ab\ncd<caret></selection>ef\nghijklmnop");
+    checkResult();
+  }
+
+  @Test
+  public void testSelectionRoundedHugging() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        runTestSelectionOverLineBreak();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testSelectionRoundedFilling() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, false);
+      try {
+        runTestSelectionOverLineBreak();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testSelectionStraightHugging() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(false, true);
+      try {
+        runTestSelectionOverLineBreak();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testSelectionStraightFilling() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(false, false);
+      try {
+        runTestSelectionOverLineBreak();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testMultiLineHighlighterRounded() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("ab\ncdef\nghijklmnop");
+        addRangeHighlighter(1, 5, HighlighterLayer.WARNING, null, Color.red);
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testRoundedHighlighterAcrossBlockInlay() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("abcd\nefgh\n<caret>ijklmnopqrst");
+        myFixture.addBlockInlay(myFixture.getEditor().getDocument().getLineStartOffset(1), true);
+        addRangeHighlighter(2, 7, HighlighterLayer.WARNING, null, Color.red);
+        assertOneShapeAcrossBand(Color.red);
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testRoundedFillingSelectionAcrossBlockInlay() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, false);
+      try {
+        myFixture.initText("ab<selection>cd\nef<caret></selection>gh\nijklmnopqrst");
+        myFixture.addBlockInlay(myFixture.getEditor().getDocument().getLineStartOffset(1), true);
+        Color selection = myFixture.getEditor().getSelectionModel().getTextAttributes().getBackgroundColor();
+        assertOneShapeAcrossBand(selection);
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
   @Test
   public void testIndentGuideOverBlockInlayWithSoftWraps_Async() {
     EdtTestUtil.runInEdtAndWait(() -> {
@@ -702,6 +803,21 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
       }
     }
     return false;
+  }
+
+  /**
+   * Asserts that the background of {@code color} gives one shape across the block inlay band above visual line 1.
+   * The line above keeps a straight right edge at the band, and visual line 1 keeps a straight left edge at the band.
+   */
+  private void assertOneShapeAcrossBand(Color color) throws IOException {
+    BufferedImage image = paintEditor(false, null, null);
+    Editor editor = myFixture.getEditor();
+    int bandTop = editor.visualLineToYRange(0)[1];
+    int bandBottom = editor.visualLineToY(1);
+    int leftX = editor.visualPositionToXY(new VisualPosition(1, 0)).x;
+    assertTrue(bandBottom > bandTop, "the block inlay band is absent");
+    assertEquals(color.getRGB(), image.getRGB(image.getWidth() - 1, bandTop - 1), "the line above rounds at the band");
+    assertEquals(color.getRGB(), image.getRGB(leftX, bandBottom), "the line below rounds at the band");
   }
 
   private void assertFoldBackground(BufferedImage image, int offset, Color color) {
