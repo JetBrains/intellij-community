@@ -6,7 +6,7 @@ package com.intellij.platform.settings.v2.impl
 // @spec ../../../../../../../../spec/settings-migrations.spec.md
 
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.platform.settings.v2.SettingsContextKind
+import com.intellij.platform.settings.v2.SettingsContextFilters
 import com.intellij.platform.settings.v2.SettingsKey
 import com.intellij.platform.settings.v2.SettingsMigration
 import kotlinx.serialization.Serializable
@@ -57,7 +57,7 @@ val APP_MIGRATION_LEDGER: SettingsKey<SettingsMigrationLedger> = SettingsKey(
   name = "settings.appMigrations",
   default = SettingsMigrationLedger(),
   serializer = kotlinxSerializer(),
-  contextFilter = { it.kind == SettingsContextKind.APPLICATION },
+  contextFilter = SettingsContextFilters.APP_ONLY,
 )
 
 /**
@@ -69,5 +69,5 @@ val PROJECT_MIGRATION_LEDGER: SettingsKey<SettingsMigrationLedger> = SettingsKey
   name = "settings.projectMigrations",
   default = SettingsMigrationLedger(),
   serializer = kotlinxSerializer(),
-  contextFilter = { it.kind == SettingsContextKind.PROJECT },
+  contextFilter = SettingsContextFilters.PROJECT_ONLY,
 )
