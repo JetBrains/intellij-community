@@ -61,12 +61,12 @@ internal class UnhandledExceptionReportingTest {
   fun `a report of a wrapped error carries the real cause`() {
     val cause = TestCause("boom")
 
-    val decoupled = checkNotNull(clusterOf(UnhandledException(cause, true)).decouple()) {
+    [val message, val throwable] = checkNotNull(clusterOf(UnhandledException(cause, true)).decouple()) {
       "`decouple` must not fail on a wrapped throwable"
     }
 
-    assertThat(decoupled.first).isEqualTo("message")
-    assertThat(IdeaLoggingEvent(decoupled.first, decoupled.second).throwableText)
+    assertThat(message).isEqualTo("message")
+    assertThat(IdeaLoggingEvent(message, throwable).throwableText)
       .describedAs("The report must show the real cause")
       .startsWith(TestCause::class.java.name)
   }
@@ -82,10 +82,10 @@ internal class UnhandledExceptionReportingTest {
     val shortenedStack = IdeaLogRecordFormatter.formatThrowable(cause).trim().lines().dropLast(1).joinToString("\n")
     cluster.detailsText = "A comment a user typed\n$shortenedStack"
 
-    val decoupled = checkNotNull(cluster.decouple()) { "`decouple` must recover an edited text" }
+    [val message, val throwable] = checkNotNull(cluster.decouple()) { "`decouple` must recover an edited text" }
 
-    assertThat(decoupled.first).isEqualTo("A comment a user typed")
-    assertThat(decoupled.second).isInstanceOf(RecoveredThrowable::class.java)
+    assertThat(message).isEqualTo("A comment a user typed")
+    assertThat(throwable).isInstanceOf(RecoveredThrowable::class.java)
   }
 
   /**
