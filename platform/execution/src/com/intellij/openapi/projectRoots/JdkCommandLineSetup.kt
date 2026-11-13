@@ -640,18 +640,18 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
     }
 
-    if (!parametersList.hasProperty("sun.stdout.encoding") &&
+    val javaVersion = JavaVersion.tryParse(javaParameters.jdk?.versionString) ?: return
+    if (javaVersion.isAtLeast(18) &&
+        !parametersList.hasProperty("sun.stdout.encoding") &&
         !parametersList.hasProperty("sun.stderr.encoding")) {
-      try {
-        val versionString = javaParameters.jdk?.versionString
-        if (versionString != null && JavaVersion.parse(versionString).isAtLeast(18)) {
-          val charset = javaParameters.charset ?: EncodingManager.getInstance().defaultCharset
-          commandLine.addParameter("-Dsun.stdout.encoding=" + charset.name())
-          commandLine.addParameter("-Dsun.stderr.encoding=" + charset.name())
-        }
-      }
-      catch (_: IllegalArgumentException) {
-      }
+      val charset = javaParameters.charset ?: EncodingManager.getInstance().defaultCharset
+      commandLine.addParameter("-Dsun.stdout.encoding=" + charset.name())
+      commandLine.addParameter("-Dsun.stderr.encoding=" + charset.name())
+    }
+
+    // since Java 25, `stdin.encoding` must match the charset that the console uses to write the process input
+    if (javaVersion.isAtLeast(25) && !parametersList.hasProperty("stdin.encoding")) {
+      commandLine.addParameter("-Dstdin.encoding=" + commandLine.charset.name())
     }
   }
 
