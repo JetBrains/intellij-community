@@ -10,6 +10,7 @@ import org.jetbrains.jps.model.module.JpsSdkDependency
 import org.jetbrains.jps.service.JpsServiceManager
 import org.jetbrains.kotlin.build.JvmSourceRoot
 import org.jetbrains.kotlin.buildtools.api.KotlinToolchains
+import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
 import org.jetbrains.kotlin.jps.build.KotlinBuilder
 import org.jetbrains.kotlin.jps.build.KotlinCompileContext
 import org.jetbrains.kotlin.jps.build.KotlinDirtySourceFilesHolder
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.jps.model.kotlinCompilerArguments
 import org.jetbrains.kotlin.jps.model.kotlinCompilerSettings
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 
 /** A Kotlin/JVM target. The only kind of target the builder compiles. */
 class KotlinJvmModuleBuildTarget(kotlinContext: KotlinCompileContext, jpsModuleBuildTarget: ModuleBuildTarget) :
@@ -58,6 +60,7 @@ class KotlinJvmModuleBuildTarget(kotlinContext: KotlinCompileContext, jpsModuleB
       javaSourceRoots = findJavaSourceRoots(context),
       friendDirectories = friendOutputDirs,
       modularJdkRoot = findModularJdkRoot(),
+      compilerRefIndexDirectory = compilerRefIndexDirectory(context),
       commonArguments = module.kotlinCompilerArguments,
       jvmArguments = module.k2JvmCompilerArguments,
       compilerSettings = module.kotlinCompilerSettings,
@@ -87,6 +90,12 @@ class KotlinJvmModuleBuildTarget(kotlinContext: KotlinCompileContext, jpsModuleB
     }
     return result
   }
+
+  /**
+   * The `cri` directory under the data root of the target, where the compilation writes the compiler reference index.
+   */
+  private fun compilerRefIndexDirectory(context: CompileContext): Path =
+    context.projectDescriptor.dataManager.dataPaths.getTargetDataRootDir(jpsModuleBuildTarget).resolve(CriToolchain.DATA_PATH)
 
   private fun findClassPathRoots(): List<File> = allDependencies.classes().roots.filter { file ->
     val path = file.toPath()

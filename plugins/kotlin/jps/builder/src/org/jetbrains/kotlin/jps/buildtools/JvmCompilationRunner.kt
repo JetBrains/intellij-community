@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.buildtools.api.ExecutionPolicy
 import org.jetbrains.kotlin.buildtools.api.KotlinToolchains
 import org.jetbrains.kotlin.buildtools.api.OperationCancelledException
 import org.jetbrains.kotlin.buildtools.api.arguments.JvmCompilerArguments
+import org.jetbrains.kotlin.buildtools.api.compilerRefIndexConfiguration
 import org.jetbrains.kotlin.buildtools.api.getToolchain
 import org.jetbrains.kotlin.buildtools.api.jps.jvm.JvmJpsManagedIncrementalCompilationConfiguration
 import org.jetbrains.kotlin.buildtools.api.jps.jvm.operations.jpsManagedIcConfigurationBuilder
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.config.additionalArgumentsAsList
 import org.jetbrains.kotlin.jps.KotlinJpsBuilderBundle
 import org.jetbrains.kotlin.jps.build.KotlinBuilder
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -42,6 +44,7 @@ class JvmCompilationRequest(
   val javaSourceRoots: List<JvmSourceRoot>,
   val friendDirectories: List<File>,
   val modularJdkRoot: File?,
+  val compilerRefIndexDirectory: Path,
   val commonArguments: CommonCompilerArguments,
   val jvmArguments: K2JVMCompilerArguments,
   val compilerSettings: CompilerSettings,
@@ -153,8 +156,37 @@ class JvmCompilationRunner(
     builder[JvmCompilationOperation.INCREMENTAL_COMPILATION] = icBuilder.build()
 
     builder[BaseCompilationOperation.COMPILER_MESSAGE_RENDERER] = sink
+    attachCompilerRefIndex(builder, request)
 
     return builder.build()
+  }
+
+  /**
+   * Attaches the compiler reference index configuration, or skips the index when the loaded implementation does not
+   * support it.
+   *
+   * A pre-2.5.20 implementation rejects the configuration with [IllegalStateException] from the API wrapper. A
+   * 2.5.20-dev implementation from before the option existed lacks the builder method, which surfaces as
+   * [LinkageError]. The first rejection logs one warning, and the loader remembers it, so later compilations skip
+   * the index without another warning.
+   */
+  private fun attachCompilerRefIndex(builder: JvmCompilationOperation.Builder, request: JvmCompilationRequest) {
+    if (KotlinBuildToolsLoader.isCompilerRefIndexUnsupported()) return
+
+    try {
+      builder[BaseCompilationOperation.COMPILER_REF_INDEX] = builder.compilerRefIndexConfiguration(request.compilerRefIndexDirectory)
+    }
+    catch (e: IllegalStateException) {
+      skipCompilerRefIndex(e)
+    }
+    catch (e: LinkageError) {
+      skipCompilerRefIndex(e)
+    }
+  }
+
+  private fun skipCompilerRefIndex(rejection: Throwable) {
+    if (!KotlinBuildToolsLoader.claimCompilerRefIndexUnsupported()) return
+    KotlinBuilder.LOG.warn(KotlinJpsBuilderBundle.message("warning.no.compiler.ref.index.0", rejection.message ?: rejection.toString()))
   }
 
   private fun applyCompilerArguments(builder: JvmCompilationOperation.Builder, request: JvmCompilationRequest) {

@@ -17,7 +17,7 @@ kotlincKotlinJpsPluginTestsVersion = "2.4.21"
 # The versions do not follow the Kotlin compiler of the IDE, and BazelKotlinDependencyFacade.update changes none of
 # them: update them by hand, together with the sha256 values of the entries below. The `-bootstrap` and `-stable`
 # entries take their URLs from these constants.
-kotlinBuildToolsImplBootstrapVersion = "2.5.20-dev-2285"
+kotlinBuildToolsImplBootstrapVersion = "2.5.20-dev-5671"
 kotlinBuildToolsImplStableVersion = "2.5.20-dev-1532"
 
 download_file(
@@ -488,49 +488,49 @@ download_file(
 download_file(
     name = "kotlin-jps-plugin-testdata-for-ide-bootstrap.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-jps-plugin-testdata-for-ide/{1}/kotlin-jps-plugin-testdata-for-ide-{1}.jar".format(kotlincRepositoryUrl, kotlinBuildToolsImplBootstrapVersion),
-    sha256 = "adf81c5a5973f700a215f82fb525b83a736b0768a69826fa3dcb7eb66e8cd547",
+    sha256 = "b24c371023c37d9f33bdb9af6f766563973308e9d31c04f5e115532eaf336d56",
 )
 
 download_file(
     name = "kotlin-build-tools-api-bootstrap.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-build-tools-api/{1}/kotlin-build-tools-api-{1}.jar".format(kotlincRepositoryUrl, kotlinBuildToolsImplBootstrapVersion),
-    sha256 = "8a95a66c1a64233acd9f52fb23fbb70a359e4484b96833bdd9a4eecdae84cf44",
+    sha256 = "f7ddacd16b07411fab643611f3fc838cc56e1feb5b0c08fa5c9cfbb62805be50",
 )
 
 download_file(
     name = "kotlin-build-tools-cri-impl-bootstrap.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-build-tools-cri-impl/{1}/kotlin-build-tools-cri-impl-{1}.jar".format(kotlincRepositoryUrl, kotlinBuildToolsImplBootstrapVersion),
-    sha256 = "10970b706b8a7a8f12585bf5d4c3cf867192373f77396b6aa3f67939cea0169e",
+    sha256 = "cb8afd26d24c1e9319ada4457075d841d5aa8a2327daf67d6ddeae49e77c0456",
 )
 
 download_file(
     name = "kotlin-build-tools-impl-bootstrap.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-build-tools-impl/{1}/kotlin-build-tools-impl-{1}.jar".format(kotlincRepositoryUrl, kotlinBuildToolsImplBootstrapVersion),
-    sha256 = "2b9fdf49f23110130a2ccf9e4765cfe50367e50c55d9c94975d2751ac5d98b19",
+    sha256 = "32cb246f5dcc5e4b8c9831e44b3ede0015e28bbf7291cccdd59207f88daf9175",
 )
 
 download_file(
     name = "kotlin-compiler-embeddable-bootstrap.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-compiler-embeddable/{1}/kotlin-compiler-embeddable-{1}.jar".format(kotlincRepositoryUrl, kotlinBuildToolsImplBootstrapVersion),
-    sha256 = "ef76f360609a892c3768135257ea9473767a6d45fd41e584f6ff2677f2d877b6",
+    sha256 = "e5a8605706d6fbd8d202d57dd75d6a3ac72f5e3c489c690433be04e918a9d89f",
 )
 
 download_file(
     name = "kotlin-compiler-runner-bootstrap.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-compiler-runner/{1}/kotlin-compiler-runner-{1}.jar".format(kotlincRepositoryUrl, kotlinBuildToolsImplBootstrapVersion),
-    sha256 = "ba4610dd23b017bcf94f15dedc33e86d58011e0b087a6a9a24f6e4119d234552",
+    sha256 = "13654a05f9d94a7b5d411984800fe14a310ea7492978b26eaf26a4d47378e2f4",
 )
 
 download_file(
     name = "kotlin-daemon-client-bootstrap.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-daemon-client/{1}/kotlin-daemon-client-{1}.jar".format(kotlincRepositoryUrl, kotlinBuildToolsImplBootstrapVersion),
-    sha256 = "20f8117ead2586ede482163de02e73d312f397f804873d3815c1fb81c415b41b",
+    sha256 = "00af4cd5fd2f254ad5e11a16d1d3aa2581dd71be96fdb4eca0fdd029a34495fd",
 )
 
 download_file(
     name = "kotlin-daemon-embeddable-bootstrap.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-daemon-embeddable/{1}/kotlin-daemon-embeddable-{1}.jar".format(kotlincRepositoryUrl, kotlinBuildToolsImplBootstrapVersion),
-    sha256 = "850e71f1f1642cbfc4b7b8b90a0a068cbdb1a97958b777fe10aeab112ac2a8d4",
+    sha256 = "417f2fdecb39450efb92a76151bc65e3f0495decbfaf3efc97e2bb9dc3457403",
 )
 
 download_file(
@@ -542,7 +542,7 @@ download_file(
 download_file(
     name = "kotlin-stdlib-bootstrap.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-stdlib/{1}/kotlin-stdlib-{1}.jar".format(kotlincRepositoryUrl, kotlinBuildToolsImplBootstrapVersion),
-    sha256 = "9a8b64d1d31e1e3f1e2348145ecb7cadc72c42d0dc2df24a33c581680227e65b",
+    sha256 = "32f4e68216a442b68bfc62117295745b54c08b8841dc737757f3a8796f2d7898",
 )
 
 download_file(
@@ -554,13 +554,13 @@ download_file(
 download_file(
     name = "typescript-export-standalone-embeddable-bootstrap.jar",
     url = "{0}/org/jetbrains/kotlin/typescript-export-standalone-embeddable/{1}/typescript-export-standalone-embeddable-{1}.jar".format(kotlincRepositoryUrl, kotlinBuildToolsImplBootstrapVersion),
-    sha256 = "3217fcbbda977a0a9e632c7a8a6e2fd26b34e25a016cb45ce6e5e8130e567cb5",
+    sha256 = "1eea2692e9b6d1560d07cad4f66ddb8e33fd3e4503179dff97f7877d2c4189e2",
 )
 
 download_file(
     name = "kotlin-test-bootstrap.jar",
     url = "{0}/org/jetbrains/kotlin/kotlin-test/{1}/kotlin-test-{1}.jar".format(kotlincRepositoryUrl, kotlinBuildToolsImplBootstrapVersion),
-    sha256 = "f34f31f17ef986632dd112317a9bf34aa8188d19a177db8ce141a6540a03c0aa",
+    sha256 = "f7f743cbbbb22c3952f506333ae890df3ccd37b5a53f3dec07a6f1862ce89bc7",
 )
 
 download_file(

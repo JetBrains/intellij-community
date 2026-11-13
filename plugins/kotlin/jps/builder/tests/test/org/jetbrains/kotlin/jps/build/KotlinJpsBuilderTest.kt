@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
 
-/** Builds a Kotlin module in process. */
-class KotlinJpsBuilderTest : AbstractKotlinJpsBuilderTest() {
+/** Builds a Kotlin module with the bundled builder through the Build Tools API. */
+class KotlinJpsBuilderTest : KotlinBtaJpsBuildTestBase() {
   @Test
   fun testCompilesOnlyTheChangedFile() {
     createFile("src/a.kt", "package p\n\nfun a(): Int = 1\n")

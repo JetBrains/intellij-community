@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.buildtools.api.KotlinToolchains
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import java.io.File
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Loads the Build Tools API implementation of the project's Kotlin version.
@@ -28,7 +29,8 @@ object KotlinBuildToolsLoader {
 
   private val LOG = Logger.getInstance(KotlinBuildToolsLoader::class.java)
 
-  private var cached: Pair<List<Path>, KotlinToolchains>? = null
+  @Volatile
+  private var loaded: LoadedImplementation? = null
 
   private val IMPLEMENTATION_JAR = Regex("kotlin-build-tools-impl-(\\d.*)\\.jar")
 
@@ -54,6 +56,19 @@ object KotlinBuildToolsLoader {
     classpath.firstNotNullOfOrNull { IMPLEMENTATION_JAR.matchEntire(it.fileName.toString())?.groupValues?.get(1) }
 
   /**
+   * Whether the loaded implementation rejected the compiler reference index configuration. The runner skips the index
+   * for the rest of the loaded implementation's lifetime.
+   */
+  fun isCompilerRefIndexUnsupported(): Boolean = loaded?.compilerRefIndexUnsupported?.get() == true
+
+  /**
+   * Records the rejection of the compiler reference index configuration.
+   *
+   * @return `true` for the first caller: only it reports the warning.
+   */
+  fun claimCompilerRefIndexUnsupported(): Boolean = loaded?.compilerRefIndexUnsupported?.compareAndSet(false, true) == true
+
+  /**
    * Loads the implementation, or returns the loaded one when the directory did not change.
    *
    * The loaded [KotlinToolchains] lives as long as the build process. `BuildSession.close()` does not release the class
@@ -66,14 +81,23 @@ object KotlinBuildToolsLoader {
       LOG.info("No Build Tools API implementation: '$IMPL_HOME_PROPERTY' is not set, or its directory holds no jars")
       return null
     }
-    cached?.let { if (it.first == classpath) return it.second }
+    loaded?.let { if (it.classpath == classpath) return it.toolchains }
 
     val toolchains = KotlinToolchains.loadImplementation(classpath)
     LOG.info(
       "Loaded the Build Tools API implementation ${toolchains.getCompilerVersion()} from ${classpath.size} jars" +
       " (API ${KotlinToolchains.getVersion()}, builder compiled against Kotlin ${KotlinCompilerVersion.VERSION})"
     )
-    cached = classpath to toolchains
+    loaded = LoadedImplementation(classpath, toolchains)
     return toolchains
+  }
+
+  /** The loaded implementation and what it rejected. Loading another implementation replaces this as a whole. */
+  private class LoadedImplementation(val classpath: List<Path>, val toolchains: KotlinToolchains) {
+    /**
+     * Whether the implementation rejected the compiler reference index configuration. The first rejection claims the
+     * one warning.
+     */
+    val compilerRefIndexUnsupported = AtomicBoolean(false)
   }
 }

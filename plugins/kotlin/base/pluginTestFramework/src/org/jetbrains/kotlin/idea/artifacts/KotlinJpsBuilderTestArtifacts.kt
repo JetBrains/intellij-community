@@ -35,10 +35,10 @@ import kotlin.io.path.writeText
  */
 object KotlinJpsBuilderTestArtifacts {
     /** The version of `kotlin-jps-plugin-testdata-for-ide`, which holds `jps/jps-plugin/testData` of the Kotlin repository. */
-    const val TEST_DATA_VERSION: String = "2.5.20-dev-2285"
+    const val TEST_DATA_VERSION: String = "2.5.20-dev-5671"
 
     /** The version of the Build Tools API implementation that the tests compile with by default: the bootstrap bucket. */
-    const val BUILD_TOOLS_IMPL_BOOTSTRAP_VERSION: String = "2.5.20-dev-2285"
+    const val BUILD_TOOLS_IMPL_BOOTSTRAP_VERSION: String = "2.5.20-dev-5671"
 
     /** An earlier version of the Build Tools API implementation. The stable tests check that the builder still works with it. */
     const val BUILD_TOOLS_IMPL_STABLE_VERSION: String = "2.5.20-dev-1532"
