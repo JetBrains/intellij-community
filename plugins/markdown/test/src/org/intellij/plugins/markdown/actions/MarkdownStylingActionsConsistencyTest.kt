@@ -2,17 +2,34 @@
 package org.intellij.plugins.markdown.actions
 
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.EditorTestUtil
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.executeAction
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
 
 @Suppress("unused")
 class MarkdownStylingActionsConsistencyTest {
+  @TestApplication
   abstract class BaseTest(
     private val actionId: String,
     private val wrapPrefix: String,
     private val wrapSuffix: String = wrapPrefix
-  ): LightPlatformCodeInsightTestCase() {
-    fun `test single word`() {
+  ) {
+    companion object {
+      private val projectFixture = projectFixture(openAfterCreation = true)
+    }
+
+    private val myFixture by codeInsightModuleFixture(projectFixture)
+
+    @Test
+    fun `test single word`(): Unit = timeoutRunBlocking {
       // language=Markdown
       val content = """
       Some <selection>arbitrary</selection> text
@@ -23,34 +40,41 @@ class MarkdownStylingActionsConsistencyTest {
       Some $wrapPrefix<selection>arbitrary</selection>$wrapSuffix text
       Some other line
       """.trimIndent()
-      configureFromFileText("some.md", content)
-      executeAction(actionId)
-      checkResultByText(applied)
-      executeAction(actionId)
-      checkResultByText(content)
+      myFixture.configureByText("some.md", content)
+      withContext(Dispatchers.EDT) {
+        myFixture.executeAction(actionId)
+        myFixture.checkResult(applied)
+        myFixture.executeAction(actionId)
+        myFixture.checkResult(content)
+      }
     }
 
-    fun `test nested formatting`() {
+    @Test
+    fun `test nested formatting`(): Unit = timeoutRunBlocking {
       val nestedPrefix = if (wrapPrefix == "**") "_" else "**"
       val content = "$wrapPrefix$nestedPrefix<selection>arbitrary</selection>$nestedPrefix$wrapSuffix"
       val applied = "$nestedPrefix<selection>arbitrary</selection>$nestedPrefix"
-      configureFromFileText("some.md", content)
-      executeAction(actionId)
-      checkResultByText(applied)
+      myFixture.configureByText("some.md", content)
+      withContext(Dispatchers.EDT) {
+        myFixture.executeAction(actionId)
+        myFixture.checkResult(applied)
+      }
     }
 
-    fun `test disabled inside code span`() {
+    @Test
+    fun `test disabled inside code span`(): Unit = timeoutRunBlocking {
       // language=Markdown
       val content = """
       Some `arbi<caret>trary` text
       """.trimIndent()
-      configureFromFileText("some.md", content)
+      myFixture.configureByText("some.md", content)
       val action = ActionManager.getInstance().getAction(actionId)
-      assertFalse(EditorTestUtil.checkActionIsEnabled(editor, action))
-      checkResultByText(content)
+      assertFalse(withContext(Dispatchers.EDT) { EditorTestUtil.checkActionIsEnabled(myFixture.editor, action) })
+      myFixture.checkResult(content)
     }
 
-    fun `test disabled inside fenced code block`() {
+    @Test
+    fun `test disabled inside fenced code block`(): Unit = timeoutRunBlocking {
       // language=Markdown
       val content = """
       Some text
@@ -59,67 +83,73 @@ class MarkdownStylingActionsConsistencyTest {
       some_cal<caret>l()
       ```
       """.trimIndent()
-      configureFromFileText("some.md", content)
+      myFixture.configureByText("some.md", content)
       val action = ActionManager.getInstance().getAction(actionId)
-      assertFalse(EditorTestUtil.checkActionIsEnabled(editor, action))
-      checkResultByText(content)
+      assertFalse(withContext(Dispatchers.EDT) { EditorTestUtil.checkActionIsEnabled(myFixture.editor, action) })
+      myFixture.checkResult(content)
     }
 
-    fun `test disabled inside inline link text`() {
+    @Test
+    fun `test disabled inside inline link text`(): Unit = timeoutRunBlocking {
       val content = """
       Click [<selection>JetBrains</selection>](https://jetbrains.com) here
       """.trimIndent()
-      configureFromFileText("some.md", content)
+      myFixture.configureByText("some.md", content)
       val action = ActionManager.getInstance().getAction(actionId)
-      assertFalse(EditorTestUtil.checkActionIsEnabled(editor, action))
-      checkResultByText(content)
+      assertFalse(withContext(Dispatchers.EDT) { EditorTestUtil.checkActionIsEnabled(myFixture.editor, action) })
+      myFixture.checkResult(content)
     }
 
-    fun `test disabled inside inline link destination`() {
+    @Test
+    fun `test disabled inside inline link destination`(): Unit = timeoutRunBlocking {
       // language=Markdown
       val content = """
       Click [text](https://exa<caret>mple.com) here
       """.trimIndent()
-      configureFromFileText("some.md", content)
+      myFixture.configureByText("some.md", content)
       val action = ActionManager.getInstance().getAction(actionId)
-      assertFalse(EditorTestUtil.checkActionIsEnabled(editor, action))
-      checkResultByText(content)
+      assertFalse(withContext(Dispatchers.EDT) { EditorTestUtil.checkActionIsEnabled(myFixture.editor, action) })
+      myFixture.checkResult(content)
     }
 
-    fun `test disabled inside autolink`() {
+    @Test
+    fun `test disabled inside autolink`(): Unit = timeoutRunBlocking {
       // language=Markdown
       val content = """
       Visit <https://exa<caret>mple.com>
       """.trimIndent()
-      configureFromFileText("some.md", content)
+      myFixture.configureByText("some.md", content)
       val action = ActionManager.getInstance().getAction(actionId)
-      assertFalse(EditorTestUtil.checkActionIsEnabled(editor, action))
-      checkResultByText(content)
+      assertFalse(withContext(Dispatchers.EDT) { EditorTestUtil.checkActionIsEnabled(myFixture.editor, action) })
+      myFixture.checkResult(content)
     }
 
-    fun `test disabled inside test link`() {
+    @Test
+    fun `test disabled inside test link`(): Unit = timeoutRunBlocking {
       // language=Markdown
       val content = """
       [@test] ../path/he<caret>re.py
       """.trimIndent()
-      configureFromFileText("some.md", content)
+      myFixture.configureByText("some.md", content)
       val action = ActionManager.getInstance().getAction(actionId)
-      assertFalse(EditorTestUtil.checkActionIsEnabled(editor, action))
-      checkResultByText(content)
+      assertFalse(withContext(Dispatchers.EDT) { EditorTestUtil.checkActionIsEnabled(myFixture.editor, action) })
+      myFixture.checkResult(content)
     }
 
-    fun `test disabled inside @ path`() {
+    @Test
+    fun `test disabled inside @ path`(): Unit = timeoutRunBlocking {
       // language=Markdown
       val content = """
       @path/he<caret>re.py
       """.trimIndent()
-      configureFromFileText("some.md", content)
+      myFixture.configureByText("some.md", content)
       val action = ActionManager.getInstance().getAction(actionId)
-      assertFalse(EditorTestUtil.checkActionIsEnabled(editor, action))
-      checkResultByText(content)
+      assertFalse(withContext(Dispatchers.EDT) { EditorTestUtil.checkActionIsEnabled(myFixture.editor, action) })
+      myFixture.checkResult(content)
     }
 
-    fun `test whole line`() {
+    @Test
+    fun `test whole line`(): Unit = timeoutRunBlocking {
       // language=Markdown
       val content = """
       <selection>Some arbitrary text</selection>
@@ -130,14 +160,17 @@ class MarkdownStylingActionsConsistencyTest {
       $wrapPrefix<selection>Some arbitrary text</selection>$wrapSuffix
       Some other line
       """.trimIndent()
-      configureFromFileText("some.md", content)
-      executeAction(actionId)
-      checkResultByText(applied)
-      executeAction(actionId)
-      checkResultByText(content)
+      myFixture.configureByText("some.md", content)
+      withContext(Dispatchers.EDT) {
+        myFixture.executeAction(actionId)
+        myFixture.checkResult(applied)
+        myFixture.executeAction(actionId)
+        myFixture.checkResult(content)
+      }
     }
 
-    fun `test whole line selected by action`() {
+    @Test
+    fun `test whole line selected by action`(): Unit = timeoutRunBlocking {
       // language=Markdown
       val content = """
       Some arbitrary<caret> text
@@ -152,12 +185,14 @@ class MarkdownStylingActionsConsistencyTest {
       <selection>Some arbitrary text
       <caret></selection>Some other line
       """.trimIndent()
-      configureFromFileText("some.md", content)
-      executeAction("EditorSelectLine")
-      executeAction(actionId)
-      checkResultByText(applied)
-      executeAction(actionId)
-      checkResultByText(removed)
+      myFixture.configureByText("some.md", content)
+      withContext(Dispatchers.EDT) {
+        myFixture.executeAction("EditorSelectLine")
+        myFixture.executeAction(actionId)
+        myFixture.checkResult(applied)
+        myFixture.executeAction(actionId)
+        myFixture.checkResult(removed)
+      }
     }
   }
 
