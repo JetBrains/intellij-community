@@ -59,7 +59,7 @@
     <runLineMarkerContributor
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor"/>
-    <java.class.action.suppressor implementation="org.jetbrains.kotlin.idea.core.KotlinJavaClassActionSuppressor"/>
+    <java.createClassActionAvailabilityOverride implementation="org.jetbrains.kotlin.idea.core.KotlinJavaClassActionSuppressor"/>
     <lang.inspectionSuppressor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.suppress.KotlinInspectionSuppressor"/>
     <multipleRunLocationsProvider implementation="org.jetbrains.kotlin.idea.run.multiplatform.KotlinMultiplatformRunLocationsProvider"/>
   </extensions>

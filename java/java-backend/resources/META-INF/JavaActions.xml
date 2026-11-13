@@ -382,7 +382,7 @@
   </actions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.java.class.action.suppressor"
-                    interface="com.intellij.ide.actions.JavaClassActionSuppressor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.createClassActionAvailabilityOverride"
+                    interface="com.intellij.ide.actions.CreateJavaClassActionAvailabilityOverride" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

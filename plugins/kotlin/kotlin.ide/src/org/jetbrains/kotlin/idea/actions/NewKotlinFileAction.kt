@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
@@ -32,6 +31,7 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
@@ -56,12 +56,16 @@ import javax.swing.Icon
 
 internal class NewKotlinFileAction : AbstractNewKotlinFileAction(), DumbAware {
     override fun isAvailable(dataContext: DataContext): Boolean {
-        if (!super.isAvailable(dataContext)) return false
-
         val ideView = LangDataKeys.IDE_VIEW.getData(dataContext) ?: return false
         val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return false
-        val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
+        val directories = ideView.directories.ifEmpty { return false }
 
+        val override = NewKotlinFileActionAvailabilityOverride.getAvailabilityOverride(directories)
+        if (override != ThreeState.UNSURE) return override.toBoolean()
+
+        if (!super.isAvailable(dataContext)) return false
+
+        val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
         return ideView.directories.any {
             val virtualFile = it.virtualFile
             RootKindFilter.projectSources.matches(project, virtualFile) ||
