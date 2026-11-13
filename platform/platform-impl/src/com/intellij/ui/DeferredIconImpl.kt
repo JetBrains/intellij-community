@@ -271,22 +271,23 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     val coroutineScope = serviceOrNull<IconCalculatingService>()?.coroutineScope ?: GlobalScope
     return coroutineScope.launch {
       val oldWidth = scaledDelegateIcon.iconWidth
-      val result = IconDeferrerImpl.evaluateDeferred {
+      val evaluated = IconDeferrerImpl.evaluateDeferred {
         if (isNeedReadAction) {
-          readAction { evaluate() }
+          readAction { evaluateUnscaled() }
         }
         else {
-          evaluateAsync()
+          evaluateUnscaledAsync()
         }
       }
+      val result = if (evaluated == null) scaledDelegateIcon else adjustResultWithScale(evaluated)
 
       scaledDelegateIcon = result
       modificationCount.incrementAndGet()
       checkDelegationDepth()
 
       // A scaled copy has the listener of its original, and the deferrer keeps the icon of the listener for each caller
-      // with the same parameter. So the listener gets the result without the scale of this copy.
-      evaluatedListener?.invoke(this@DeferredIconImpl, if (scale != 1f && result is ScalableIcon) result.scale(1f) else result)
+      // with the same parameter. So the listener gets the result of the evaluator, before the scale of this copy.
+      evaluatedListener?.invoke(this@DeferredIconImpl, evaluated ?: result)
 
       processRepaints(oldWidth = oldWidth, result = result)
       setDone(result)
@@ -376,9 +377,15 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
   /** After [setDone] released [param], gives [scaledDelegateIcon], the icon that this icon paints. */
   override fun evaluate(): Icon {
+    val evaluated = evaluateUnscaled() ?: return scaledDelegateIcon
+    return adjustResultWithScale(evaluated)
+  }
+
+  /** The result of the evaluator, before the scale of this icon. Null after [setDone] released [param]. */
+  private fun evaluateUnscaled(): Icon? {
     val param = param
     if (param == null && hasParam) {
-      return scaledDelegateIcon
+      return null
     }
     return runEvaluator {
       val evaluator = evaluator
@@ -395,9 +402,15 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   @ApiStatus.Internal
   @VisibleForTesting
   suspend fun evaluateAsync(): Icon {
+    val evaluated = evaluateUnscaledAsync() ?: return scaledDelegateIcon
+    return adjustResultWithScale(evaluated)
+  }
+
+  /** The suspending form of [evaluateUnscaled]. */
+  private suspend fun evaluateUnscaledAsync(): Icon? {
     val param = param
     if (param == null && hasParam) {
-      return scaledDelegateIcon
+      return null
     }
     return runEvaluator {
       asyncEvaluator?.invoke(evaluationParamOf(param)) ?: evaluator?.invoke(evaluationParamOf(param)) ?: EMPTY_ICON
@@ -420,7 +433,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       @Suppress("TestOnlyProblems")
       checkDoesntReferenceThis(result)
     }
-    return adjustResultWithScale(result)
+    return result
   }
 
   private fun adjustResultWithScale(result: Icon) = if (scale != 1f && result is ScalableIcon) result.scale(scale) else result
