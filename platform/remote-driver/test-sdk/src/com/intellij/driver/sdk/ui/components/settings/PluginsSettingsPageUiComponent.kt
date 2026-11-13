@@ -12,6 +12,7 @@ import com.intellij.driver.sdk.ui.accessibleName
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.JBTabbedPaneUiComponent
 import com.intellij.driver.sdk.ui.components.common.WelcomeScreenUI
@@ -47,6 +48,7 @@ import java.nio.file.Path
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JDialog
+import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel
@@ -56,13 +58,14 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 fun IdeaFrameUI.pluginsSettingsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
-  onPluginsPage(action = action)
+  driver.ui.onPluginsPage(action = action)
 
+// opens the Plugins page with the settings tree
 fun SettingsDialogUiComponent.pluginsSettingsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
-  onPluginsPage().apply(action)
+  driver.ui.onPluginsPage().apply(action)
 
 fun WelcomeScreenUI.pluginsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
-  onPluginsPage().apply(action)
+  driver.ui.onPluginsPage().apply(action)
 
 fun Driver.openPluginsSettings() {
   step("Open the Plugin Manager by invoking the action") {
@@ -70,22 +73,71 @@ fun Driver.openPluginsSettings() {
   }
 }
 
-private fun Finder.onPluginsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
-  x("${xQuery { byAccessibleName("Search plugins") }}/ancestor::div[" +
-    ".//div[@accessiblename='Installed' and @javaclass='javax.swing.JLabel'] or " +
-    ".//div[@accessiblename='Plugins' and @class='OnePixelSplitter']][1]",
-    PluginsSettingsPageUiComponent::class.java).apply {
-  }.apply(action)
+fun Driver.openPluginsDialogAction() {
+  step("Open the Plugins dialog") {
+    invokeAction("ShowPlugins", now = false)
+  }
+}
+
+// opens the non-modal Plugins dialog from any context (IdeaFrame or WelcomeScreen).
+// use this when you don't need the settings tree visible on the left.
+fun Driver.openPluginsDialog(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent {
+  openPluginsDialogAction()
+  return ui.onPluginsPage {
+    waitFound(10.seconds)
+    action()
+  }
+}
+
+// Convenience extension so tests inside ideFrame { } can call openPluginsDialog { } directly. will be removed after test stabilisation
+fun IdeaFrameUI.openPluginsDialog(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
+  driver.openPluginsDialog(action)
+
+// Convenience extension so tests inside welcomeScreen { } can call openPluginsDialog { } directly. will be removed after test stabilisation
+fun WelcomeScreenUI.openPluginsDialog(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
+  driver.openPluginsDialog(action)
+
+// opens the Plugins page from the Welcome Screen.will be removed after test stabilisation
+// Uses [driver.ui] to search globally because the Plugins dialog is a separate window, not a child of the Welcome Screen.
+fun WelcomeScreenUI.pluginsPageWS(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
+  driver.ui.onPluginsPage().apply(action)
+
+fun Finder.onPluginsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent {
+  val dialogPage = xQuery {
+    componentWithChild(
+      and(
+        or(byType(JDialog::class.java), byType(JFrame::class.java), byType(JPanel::class.java)),
+        or(byAccessibleName("Plugins"), byAccessibleName("Settings")),
+      ),
+      byAccessibleName("Search plugins"),
+    )
+  }
+  val welcomeScreenPage = "//div[@class='FlatWelcomeFrame']//div[@accessiblename='Search plugins']" +
+                          "/ancestor::div[.//div[@accessiblename='Plugins' and @class='OnePixelSplitter']][1]"
+  return x("$dialogPage | $welcomeScreenPage", PluginsSettingsPageUiComponent::class.java).apply(action)
+}
+
+//TODO remove ^^ onPluginsPage bc welcomeScreenPage isn't relevant. Uncomment this part of code instead
+//fun Finder.onPluginsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
+//  x(PluginsSettingsPageUiComponent::class.java) {
+//    componentWithChild(
+//      and(
+//        or(byType(JDialog::class.java), byType(JFrame::class.java), byType(JPanel::class.java)),
+//        or(byAccessibleName("Plugins"), byAccessibleName("Settings")),
+//      ),
+//      byAccessibleName("Search plugins"),
+//    )
+//  }.apply(action)
 
 
-abstract class LoadablePluginsUiComponent(data: ComponentData) : UiComponent(data) {
+abstract class LoadablePluginsUiComponent(data: ComponentData) : SettingsDialogUiComponent(data) {
   val progressIcons: UIComponentsList<UiComponent> = xx { byType("com.intellij.util.ui.AsyncProcessIcon") }
   private val sectionLoadingLabels: UIComponentsList<UiComponent> = xx {
     and(byType(JLabel::class.java), contains(byAccessibleName("Loading ")))
   }
 
   fun waitLoaded(timeout: Duration = 40.seconds) {
-    waitFor("Expected NO progress indicators", timeout) {
+    waitFor("Expected NO progress indicators on Plugins page", timeout) {
       progressIcons.list().isEmpty() && sectionLoadingLabels.list().isEmpty()
     }
   }
@@ -108,6 +160,14 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
   val searchOptionsButton: UiComponent = x("Search filters") { byAccessibleName("Search Options") }
   val updateAllButton: UiComponent = x("Update All link") { byAccessibleName("Update all") }
   val pluginsList: UIComponentsList<ListPluginComponent> get() = xx("//*[@javaclass='com.intellij.ide.plugins.newui.ListPluginComponent']", ListPluginComponent::class.java)
+
+  /**
+   * Waits until the loading indicators disappear when the page is found.
+   * The [timeout] limits only the search for the page. The wait for the indicators uses its own default timeout.
+   */
+  override fun waitReady(timeout: Duration) {
+    waitLoaded()
+  }
 
   //todo change to open gear method in rd tests
   fun openSettingsPopup() {
@@ -159,17 +219,13 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     step("Click on Gear icon and open settings popup") {
       gearButton.click()
     }
-    return driver.ui.gearSettingsPopup()
+    return driver.ui.gearSettingsPopup().waitFound()
   }
 
   fun getUpdatesCountIndicator(): CountIcon? {
     if (isUnifiedPage) return null
     val icon = installedTab.getIcon() ?: return null
     return driver.cast(icon, CountIcon::class)
-  }
-
-  fun getPluginsUpdateCount(): Int {
-    return getUpdatesCountIndicator()?.getText()?.toIntOrNull() ?: 0
   }
 
   @Suppress("OPT_IN_USAGE")
@@ -187,6 +243,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
         searchPluginTextField.text = pluginName
       }
     }
+    waitLoaded()
     return this
   }
 
@@ -196,6 +253,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
       searchPluginTextField.click()
       searchPluginTextField.text = searchText
     }
+    waitLoaded()
     return this
   }
 
@@ -214,6 +272,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
         click(Point(bounds.width - 20, bounds.height / 2))
       }
     }
+    waitLoaded()
     return this
   }
 
@@ -239,6 +298,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     step("Select '${filter.title}' in the Plugins filter popup") {
       openFilteringPopup().clickFilter(filter).close()
     }
+    waitLoaded()
     return this
   }
 
@@ -247,6 +307,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     step("Change Marketplace sorting from '${currentSort.title}' to '${newSort.title}'") {
       openSortingPopup(currentSort).changeSort(newSort)
     }
+    waitLoaded()
     return this
   }
 
@@ -259,6 +320,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
         close()
       }
     }
+    waitLoaded()
     return this
   }
 
@@ -274,6 +336,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
         close()
       }
     }
+    waitLoaded()
     return this
   }
 
@@ -281,6 +344,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     waitFor("Plugins search query should become '$query'", timeout) {
       searchPluginTextField.text == query
     }
+    waitLoaded()
   }
 
   fun waitForPluginInList(pluginName: String, timeout: Duration = 10.seconds): ListPluginComponent {
@@ -373,7 +437,20 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
   }
 
   /**
+   * Waits until the section header has no "Loading <section title>" label. Other sections can still load.
+   */
+  fun waitSectionLoaded(section: PluginsSections, timeout: Duration = 40.seconds) {
+    val loadingLabel = x("Loading label of the '${section.title}' section") {
+      and(byType(JLabel::class.java), byAccessibleName("Loading ${section.title}"))
+    }
+    waitFor("Expected NO loading label in the '${section.title}' section", timeout) {
+      !loadingLabel.present()
+    }
+  }
+
+  /**
    * Returns the row of the plugin in the certain section.
+   * The function waits until the section is loaded.
    * @param timeout the time to wait for the row.
    * Pass a value to wait now, and to wait longer. Use it after a slow action, such as an installation.
    */
@@ -382,7 +459,10 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
     pluginName: String,
     timeout: Duration? = null,
     action: ListPluginComponent.() -> Unit = {},
-  ): ListPluginComponent = pluginRowInSection(section.title, pluginName, timeout, action)
+  ): ListPluginComponent {
+    waitSectionLoaded(section)
+    return pluginRowInSection(section.title, pluginName, timeout, action)
+  }
 
   //use pluginRowInSection directly bc every custom section has url in the title
   fun getPluginFromCustomRepositorySection(
@@ -438,20 +518,19 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
   fun isPluginPresentInList(pluginName: String): Boolean =
     getPluginFromList(pluginName).present()
 
-  fun isPluginPresentInInstalled(pluginName: String): Boolean {
-    waitLoaded()
-    return getInstalledPluginFromSection(pluginName).present()
-  }
+  fun isPluginPresentInInstalled(pluginName: String): Boolean =
+    getInstalledPluginFromSection(pluginName).present()
 
   fun pluginDetailsPage(action: PluginDetailsPage.() -> Unit = {}): PluginDetailsPage =
     x(PluginDetailsPage::class.java, "Plugins description page") { byType("com.intellij.ide.plugins.newui.PluginDetailsPageComponent") }.apply(action)
 
   //TODO Dirty kostyl because our plugin manager can show this btn in one of these places or in both
   // and we cant predict it until full refactoring
-  fun checkAnyRestartBtnForPlugin(pluginName: String) {
+  fun checkAnyRestartBtnForPlugin(plugin: ListPluginComponent) {
+    plugin.click()
     step("Wait for restart button to appear either in list or in details") {
       waitFor(errorMessage = { "Restart button isn't present neither in plugins list nor in plugin description" }, timeout = 2.minutes) {
-        getPluginFromList(pluginName).restartIdeButton.present() ||
+        plugin.restartIdeButton.present() ||
         pluginDetailsPage().restartButtonDesc.present()
       }
     }
@@ -461,8 +540,10 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
   // The details page can also show the state on the option button.
   fun checkAnyInstalledBtnForPlugin(pluginName: String, timeout: Duration = 2.minutes) {
     step("Wait for installed button to appear either in list or in details") {
+      val plugin = getPluginFromList(pluginName)
+      plugin.click()
       waitFor(errorMessage = { "Installed button isn't present neither in plugins list nor in plugin description" }, timeout = timeout) {
-        getPluginFromList(pluginName).installedButton.present() ||
+        plugin.installedButton.present() ||
         pluginDetailsPage().installedButton.present() ||
         pluginDetailsPage().optionButton.let { it.present() && it.hasSubtext("Installed") }
       }
@@ -531,6 +612,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
       return this
     }
 
+    //TODO remove in the next iteration
     fun checkRestartBtnInPluginsList(timeout: Duration = 20.seconds): ListPluginComponent {
       step("Wait for the Restart IDE btn appearance in the plugins list") {
         restartIdeButton.waitFound(timeout)
@@ -586,175 +668,182 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
       }
       return driver.ui.x(PluginDetailsPage::class.java) { byType("com.intellij.ide.plugins.newui.PluginDetailsPageComponent") }
     }
+  }
 
-    class EnabledControlUiComponent(data: ComponentData) : UiComponent(data) {
-      private val abstractButton get() = driver.cast(component, AbstractButtonRef::class)
+  class EnabledControlUiComponent(data: ComponentData) : UiComponent(data) {
+    private val abstractButton get() = driver.cast(component, AbstractButtonRef::class)
 
-      fun isSelected(): Boolean = abstractButton.isSelected()
+    fun isSelected(): Boolean = abstractButton.isSelected()
 
-      fun check() {
-        if (!isSelected()) click()
-      }
+    fun check() {
+      if (!isSelected()) click()
+    }
 
-      fun uncheck() {
-        if (isSelected()) click()
-      }
+    fun uncheck() {
+      if (isSelected()) click()
+    }
 
-      fun waitSelected(selected: Boolean, timeout: Duration = 5.seconds) {
-        waitFor("Plugin state control should be ${if (selected) "selected" else "not selected"}", timeout) {
-          isSelected() == selected
-        }
+    fun waitSelected(selected: Boolean, timeout: Duration = 5.seconds) {
+      waitFor("Plugin state control should be ${if (selected) "selected" else "not selected"}", timeout) {
+        isSelected() == selected
       }
     }
   }
 
   class UnifiedPluginsSectionUiComponent(data: ComponentData) : UiComponent(data)
+}
 
-  @Remote("com.intellij.ide.plugins.newui.ListPluginComponent")
-  interface ListPluginComponentRef {
-    fun getPluginModel(): PluginUiModel
+@Remote("com.intellij.ide.plugins.newui.ListPluginComponent")
+interface ListPluginComponentRef {
+  fun getPluginModel(): PluginUiModel
+}
+
+@Remote("javax.swing.AbstractButton")
+interface AbstractButtonRef {
+  fun isSelected(): Boolean
+}
+
+@Remote("com.intellij.ide.plugins.newui.PluginUiModel")
+interface PluginUiModel {
+  val pluginId: PluginId
+  fun getDescriptor(): PluginDescriptor
+}
+
+@Remote("com.intellij.ui.components.JBTextField")
+interface JBTextFieldRef {
+  fun getEmptyText(): StatusTextRef
+}
+
+@Remote("com.intellij.util.ui.StatusText")
+interface StatusTextRef {
+  fun getText(): String
+}
+
+class PluginDetailsPage(data: ComponentData) : LoadablePluginsUiComponent(data) {
+  val optionButton: OptionButtonUiComponent =
+    x(OptionButtonUiComponent::class.java) { byType("com.intellij.ide.plugins.newui.buttons.OptionButton") }
+  val installButton: UiComponent = x("Install button") { and(byType(JButton::class.java), byAccessibleName("Install")) }
+  val installOptionButton: UiComponent =
+    x("Install btn in plugin description") { byType("com.intellij.ide.plugins.newui.buttons.InstallOptionButton") }
+  val uninstalledOptionButton: UiComponent = x("Uninstalled btn in plugin description") {
+    and(byType("com.intellij.ide.plugins.newui.buttons.InstallOptionButton"),
+        byAccessibleName("Uninstalled"))
+  }
+  val restartButtonDesc: UiComponent = x("Restart btn in plugin description") { byType("com.intellij.ide.plugins.newui.RestartButton") }
+  val uninstallButton: UiComponent =
+    x("Uninstall btn in plugin description") { and(byType(JButton::class.java), byAccessibleName("Uninstall")) }
+  val installedButton: UiComponent =
+    x("Installed btn in plugin description") { and(byType(JButton::class.java), byAccessibleName("Installed")) }
+  val disableButton: UiComponent =
+    x("Disable btn in plugin description") { and(or(byClass("JButton"), byClass("MainButton")), byAccessibleName("Disable")) }
+  val enableButton: UiComponent =
+    x("Enable btn in plugin description") { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Enable")) }
+  val updateButton: UiComponent =
+    x("Update btn in plugin description") { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Update")) }
+  val arrowButton: UiComponent =
+    x("Uninstall dropdown") { byType($$"com.intellij.ui.components.BasicOptionButtonUI$ArrowButton") }
+  val restartIdeButton: UiComponent = x("Restart button") { byAccessibleName("Restart IDE") }
+
+  val tabbedPane: JBTabbedPaneUiComponent
+    get() = this@PluginDetailsPage.tabbedPane()
+  val detailsTabs: PluginDetailsTabs = PluginDetailsTabs(this)
+  val overviewTab: UiComponent = detailsTabs.tab("Overview")
+  val whatsNewTab: UiComponent = detailsTabs.tab("What's New")
+  val reviewsTab: UiComponent = detailsTabs.tab("Reviews")
+  val additionalInfoTab: UiComponent = detailsTabs.tab("Additional Info")
+  val updateSourceValue: UiComponent =
+    x("${xQuery { and(byType(JLabel::class.java), byText("Updates from:")) }}/following-sibling::div[1]")
+  val updateSourceBanners: UIComponentsList<UpdateSourceBannerUiComponent> =
+    xx(UpdateSourceBannerUiComponent::class.java) { byType("com.intellij.ide.plugins.newui.UpdateSourceBanner") }
+  val versionPanel: UiComponent = x { byType("com.intellij.ide.plugins.newui.VersionPanel") }
+  val pluginHomepage: UiComponent = x("Plugin homepage link") { byAccessibleName("Plugin homepage") }
+
+  fun hasUnknownUpdateSourceWarningBanner(): Boolean = updateSourceBanners.list().any { it.isWarning() }
+  fun hasUpdateSourceSetBanner(): Boolean = updateSourceBanners.list().any { it.isSuccess() }
+
+  fun additionalText(text: String): UiComponent = x { and(byType(JLabel::class.java), byText(text)) }
+
+  fun chooseUpdateSourceFromWarningBanner(updateSource: String): PluginDetailsPage {
+    step("Choose '$updateSource' update source from warning banner") {
+      updateSourceBanners.list().first { it.isWarning() }.chooseUpdateSourceAction.click()
+      driver.ui.popup().list().clickItem(updateSource)
+    }
+    return this
   }
 
-  @Remote("javax.swing.AbstractButton")
-  interface AbstractButtonRef {
-    fun isSelected(): Boolean
+  fun chooseUpdateSourceFromDescription(updateSource: String): PluginDetailsPage {
+    step("Choose '$updateSource' update source from `Update from` description") {
+      check(detailsTabs.selectedTabName == additionalInfoTab.accessibleName) {
+        "Tab \'${additionalInfoTab.accessibleName}\' is not selected; selected tab\'${detailsTabs.selectedTabName}\'"
+      }
+      updateSourceValue.click()
+      driver.ui.popup().list().clickItem(updateSource)
+    }
+    return this
   }
 
-  @Remote("com.intellij.ide.plugins.newui.PluginUiModel")
-  interface PluginUiModel {
-    val pluginId: PluginId
-    fun getDescriptor(): PluginDescriptor
+  class PluginDetailsTabs(private val detailsPage: PluginDetailsPage) {
+    private val intellijTabs: UIComponentsList<UiComponent> =
+      detailsPage.xx { byType("com.intellij.ui.tabs.impl.JBTabsImpl") }
+    private val swingTabs: JBTabbedPaneUiComponent by lazy { detailsPage.tabbedPane() }
+
+    val selectedTabName: String?
+      get() = intellijTabs.list().singleOrNull()?.accessibleName ?: swingTabs.selectedTabName
+
+    fun tab(name: String): UiComponent {
+      return intellijTabs.list().singleOrNull()?.x {
+        and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName(name))
+      } ?: swingTabs.tab(name)
+    }
   }
 
-  @Remote("com.intellij.ui.components.JBTextField")
-  interface JBTextFieldRef {
-    fun getEmptyText(): StatusTextRef
+  fun installPlugin(): PluginDetailsPage {
+    step("Click on 'Install' button in the plugin description") {
+      installOptionButton.click()
+    }
+    waitLoaded(100.seconds)
+    return this
   }
 
-  @Remote("com.intellij.util.ui.StatusText")
-  interface StatusTextRef {
-    fun getText(): String
+  fun updatePlugin(): PluginDetailsPage {
+    step("Click on 'Update' button in the plugin description") {
+      updateButton.click()
+    }
+    waitLoaded(40.seconds)
+    return this
   }
 
-  class PluginDetailsPage(data: ComponentData) : LoadablePluginsUiComponent(data) {
-    val optionButton: OptionButtonUiComponent = x(OptionButtonUiComponent::class.java) { byType("com.intellij.ide.plugins.newui.buttons.OptionButton") }
-    val installButton: UiComponent = x("Install button") { and(byType(JButton::class.java), byAccessibleName("Install")) }
-    val installOptionButton: UiComponent = x("Install btn in plugin description") { byType("com.intellij.ide.plugins.newui.buttons.InstallOptionButton") }
-    val uninstalledOptionButton: UiComponent = x("Uninstalled btn in plugin description") {
-      and(byType("com.intellij.ide.plugins.newui.buttons.InstallOptionButton"),
-          byAccessibleName("Uninstalled"))
+
+  fun uninstallPlugin(): PluginDetailsPage {
+    step("Click on dropdown and uninstall plugin") {
+      arrowButton.click()
+      driver.ui.popup().waitFound().accessibleList().clickItem("Uninstall")
     }
-    val restartButtonDesc: UiComponent = x("Restart btn in plugin description") { byType("com.intellij.ide.plugins.newui.RestartButton") }
-    val uninstallButton: UiComponent = x("Uninstall btn in plugin description") { and(byType(JButton::class.java), byAccessibleName("Uninstall")) }
-    val installedButton: UiComponent = x("Installed btn in plugin description") { and(byType(JButton::class.java), byAccessibleName("Installed")) }
-    val disableButton: UiComponent = x("Disable btn in plugin description") { and(or(byClass("JButton"), byClass("MainButton")), byAccessibleName("Disable")) }
-    val enableButton: UiComponent = x("Enable btn in plugin description") { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Enable")) }
-    val updateButton: UiComponent = x("Update btn in plugin description") { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Update")) }
-    val arrowButton: UiComponent =
-      x("Uninstall dropdown") { byType($$"com.intellij.ui.components.BasicOptionButtonUI$ArrowButton") }
-    val restartIdeButton: UiComponent = x("Restart button") { byAccessibleName("Restart IDE") }
+    return this
+  }
 
-    val tabbedPane: JBTabbedPaneUiComponent
-      get() = this@PluginDetailsPage.tabbedPane()
-    val detailsTabs: PluginDetailsTabs = PluginDetailsTabs(this)
-    val overviewTab: UiComponent = detailsTabs.tab("Overview")
-    val whatsNewTab: UiComponent = detailsTabs.tab("What's New")
-    val reviewsTab: UiComponent = detailsTabs.tab("Reviews")
-    val additionalInfoTab: UiComponent = detailsTabs.tab("Additional Info")
-    val updateSourceValue: UiComponent =
-      x("${xQuery { and(byType(JLabel::class.java), byText("Updates from:")) }}/following-sibling::div[1]")
-    val updateSourceBanners: UIComponentsList<UpdateSourceBannerUiComponent> =
-      xx(UpdateSourceBannerUiComponent::class.java) { byType("com.intellij.ide.plugins.newui.UpdateSourceBanner") }
-    val versionPanel: UiComponent = x { byType("com.intellij.ide.plugins.newui.VersionPanel") }
-    val pluginHomepage: UiComponent = x("Plugin homepage link") { byAccessibleName("Plugin homepage") }
+  class OptionButtonUiComponent(data: ComponentData) : UiComponent(data) {
+    val disableButton: UiComponent = x { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Disable")) }
+    val enableButton: UiComponent = x { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Enable")) }
+  }
 
-    fun hasUnknownUpdateSourceWarningBanner(): Boolean = updateSourceBanners.list().any { it.isWarning() }
-    fun hasUpdateSourceSetBanner(): Boolean = updateSourceBanners.list().any { it.isSuccess() }
+  class UpdateSourceBannerUiComponent(data: ComponentData) : UiComponent(data) {
+    private val banner get() = driver.cast(component, UpdateSourceBannerRef::class)
 
-    fun additionalText(text: String): UiComponent = x { and(byType(JLabel::class.java), byText(text)) }
+    val chooseUpdateSourceAction: UiComponent = x(xQuery { byVisibleText("Choose where to get updates") })
 
-    fun chooseUpdateSourceFromWarningBanner(updateSource: String): PluginDetailsPage {
-      step("Choose '$updateSource' update source from warning banner") {
-        updateSourceBanners.list().first { it.isWarning() }.chooseUpdateSourceAction.click()
-        driver.ui.popup().list().clickItem(updateSource)
-      }
-      return this
-    }
+    fun isWarning(): Boolean = banner.getStatus().name() == "Warning"
+    fun isSuccess(): Boolean = banner.getStatus().name() == "Success"
+  }
 
-    fun chooseUpdateSourceFromDescription(updateSource: String): PluginDetailsPage {
-      step("Choose '$updateSource' update source from `Update from` description") {
-        check(detailsTabs.selectedTabName == additionalInfoTab.accessibleName) {
-          "Tab \'${additionalInfoTab.accessibleName}\' is not selected; selected tab\'${detailsTabs.selectedTabName}\'"
-        }
-        updateSourceValue.click()
-        driver.ui.popup().list().clickItem(updateSource)
-      }
-      return this
-    }
+  @Remote("com.intellij.ide.plugins.newui.UpdateSourceBanner")
+  interface UpdateSourceBannerRef {
+    fun getStatus(): EditorNotificationPanelStatusRef
+  }
 
-    class PluginDetailsTabs(private val detailsPage: PluginDetailsPage) {
-      private val intellijTabs: UIComponentsList<UiComponent> =
-        detailsPage.xx { byType("com.intellij.ui.tabs.impl.JBTabsImpl") }
-      private val swingTabs: JBTabbedPaneUiComponent by lazy { detailsPage.tabbedPane() }
-
-      val selectedTabName: String?
-        get() = intellijTabs.list().singleOrNull()?.accessibleName ?: swingTabs.selectedTabName
-
-      fun tab(name: String): UiComponent {
-        return intellijTabs.list().singleOrNull()?.x {
-          and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName(name))
-        } ?: swingTabs.tab(name)
-      }
-    }
-
-    fun installPlugin(): PluginDetailsPage {
-      step("Click on 'Install' button in the plugin description") {
-        installOptionButton.click()
-      }
-      waitLoaded(20.seconds)
-      return this
-    }
-
-    fun updatePlugin(): PluginDetailsPage {
-      step("Click on 'Update' button in the plugin description") {
-        updateButton.click()
-      }
-      waitLoaded(20.seconds)
-      return this
-    }
-
-
-    fun uninstallPlugin(): PluginDetailsPage {
-      step("Click on dropdown and uninstall plugin") {
-        arrowButton.click()
-        driver.ui.popup().accessibleList().clickItem("Uninstall")
-      }
-      return this
-    }
-
-    class OptionButtonUiComponent(data: ComponentData) : UiComponent(data) {
-      val disableButton: UiComponent = x { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Disable")) }
-      val enableButton: UiComponent = x { and(or(byType(JButton::class.java), byClass("MainButton")), byAccessibleName("Enable")) }
-    }
-
-    class UpdateSourceBannerUiComponent(data: ComponentData) : UiComponent(data) {
-      private val banner get() = driver.cast(component, UpdateSourceBannerRef::class)
-
-      val chooseUpdateSourceAction: UiComponent = x(xQuery { byVisibleText("Choose where to get updates") })
-
-      fun isWarning(): Boolean = banner.getStatus().name() == "Warning"
-      fun isSuccess(): Boolean = banner.getStatus().name() == "Success"
-    }
-
-    @Remote("com.intellij.ide.plugins.newui.UpdateSourceBanner")
-    interface UpdateSourceBannerRef {
-      fun getStatus(): EditorNotificationPanelStatusRef
-    }
-
-    @Remote($$"com.intellij.ui.EditorNotificationPanel$Status")
-    interface EditorNotificationPanelStatusRef {
-      fun name(): String
-    }
+  @Remote($$"com.intellij.ui.EditorNotificationPanel$Status")
+  interface EditorNotificationPanelStatusRef {
+    fun name(): String
   }
 }
 
