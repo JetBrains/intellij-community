@@ -70,6 +70,18 @@ class MinimapActivationTest : BasePlatformTestCase() {
     assertTrue(MinimapService.getInstance().isMinimapInstalled(editor))
   }
 
+  fun testEditorFactoryInstallsMinimapAsynchronously() {
+    val editor = openMainEditor("a.txt", "alpha\nbeta\ngamma\n")
+    val service = MinimapService.getInstance()
+    assertFalse("The editor callback must defer minimap initialization.", service.isMinimapInstalled(editor))
+
+    PlatformTestUtil.waitWithEventsDispatching(
+      "The editor callback did not install the minimap.",
+      { service.isMinimapInstalled(editor) },
+      5,
+    )
+  }
+
   fun testBuildsInitialSnapshot() {
     val editor = openAndUpdate("a.txt", (0 until 100).joinToString("\n") { "line $it" })
     val minimap = (editor.component as JPanel).components.filterIsInstance<MinimapPanel>().single()
