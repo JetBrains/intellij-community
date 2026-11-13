@@ -393,6 +393,7 @@ a:com.intellij.diff.impl.DiffRequestProcessor
 - addListener(com.intellij.diff.impl.DiffEditorViewerListener,com.intellij.openapi.Disposable):V
 - addListener(com.intellij.diff.impl.DiffRequestProcessorListener,com.intellij.openapi.Disposable):V
 - p:applyRequest(com.intellij.diff.requests.DiffRequest,Z,com.intellij.diff.util.DiffUserDataKeysEx$ScrollToPolicy):V
+- p:applyRequest(com.intellij.diff.requests.DiffRequest,Z,com.intellij.diff.util.DiffUserDataKeysEx$ScrollToPolicy,Z):V
 - p:buildActionPopup(java.util.List):V
 - p:buildToolbar(java.util.List,java.util.List):V
 - p:collectPopupActions(java.util.List):V

@@ -444,13 +444,22 @@ public abstract class DiffRequestProcessor
   // Abstract
   //
 
+  /**
+   * @deprecated request application in always sync now, so {@link #applyRequest(DiffRequest, boolean, ScrollToPolicy)} should be used instead
+   */
+  @Deprecated(forRemoval = true)
   @RequiresEdt
-  protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
+  protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy, boolean sync) {
     ThreadingAssertions.assertEventDispatchThread();
     navigator.reset();
     if (!force && request == myActiveRequest) return;
     request.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, scrollToChangePolicy);
     doApplyRequest(request);
+  }
+
+  @RequiresEdt
+  protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
+    applyRequest(request, force, scrollToChangePolicy, true);
   }
 
   @RequiresEdt
