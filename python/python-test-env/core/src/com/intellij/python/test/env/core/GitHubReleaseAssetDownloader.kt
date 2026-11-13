@@ -15,7 +15,6 @@ private const val CACHE_REDIRECTOR_GITHUB_URL = "https://cache-redirector.jetbra
 private const val GITHUB_API_URL = "https://api.github.com"
 private const val RELEASE_METADATA_FILE_NAME = "github-release.json"
 private val CHECKSUM_SEPARATOR = Regex("\\s+")
-private val SHA256_PATTERN = Regex("[0-9a-f]{64}", RegexOption.IGNORE_CASE)
 private val JSON_MAPPER = jacksonObjectMapper()
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -41,34 +40,33 @@ class GitHubReleaseAssetDownloader(
     checksumResolver.download(this@GitHubReleaseAssetDownloader, tag, assetName)
   }
 
-  internal suspend fun downloadWithSha256(tag: String, assetName: String, expectedSha256: String): Path {
+  internal suspend fun downloadWithSha256(tag: String, assetName: String, expectedSha256: Sha256): Path {
     val assetUrl = getAssetUrl(tag, assetName)
     return validatedCacheDownload(assetUrl, assetName) { hasSha256(it, expectedSha256) }
   }
 
-  internal suspend fun findSha256(tag: String, checksumAssetName: String, assetName: String): String? =
+  internal suspend fun findSha256(tag: String, checksumAssetName: String, assetName: String): Sha256? =
     findSha256(Files.readAllLines(downloadCached(tag, checksumAssetName)), assetName)
 
-  internal suspend fun findGitHubApiSha256(tag: String, assetName: String): String? {
+  internal suspend fun findGitHubApiSha256(tag: String, assetName: String): Sha256? {
     val metadataUrl = "$GITHUB_API_URL/repos/$repository/releases/tags/$tag"
     val metadataFile = cacheDownload(metadataUrl, RELEASE_METADATA_FILE_NAME)
     val metadata = Files.newInputStream(metadataFile).use { JSON_MAPPER.readValue(it, GitHubReleaseMetadata::class.java) }
     return metadata.assets.firstOrNull { it.name == assetName }?.digest
-      ?.removePrefix("sha256:")
-      ?.takeIf(SHA256_PATTERN::matches)
+      ?.let { Sha256.parse(it) }
   }
 
   internal suspend fun downloadCached(tag: String, assetName: String): Path =
     cacheDownload(getAssetUrl(tag, assetName), assetName)
 
-  private fun findSha256(checksumLines: List<String>, assetName: String): String? = checksumLines
+  private fun findSha256(checksumLines: List<String>, assetName: String): Sha256? = checksumLines
     .map { it.trim().split(CHECKSUM_SEPARATOR, limit = 2) }
     .firstOrNull { it.size == 2 && it[1].removePrefix("*") == assetName }
     ?.first()
-    ?.takeIf(SHA256_PATTERN::matches)
+    ?.let { Sha256.parse(it) }
 
-  private fun hasSha256(path: Path, expectedSha256: String): Boolean =
-    sha256Hex(path).equals(expectedSha256, ignoreCase = true)
+  private fun hasSha256(path: Path, expectedSha256: Sha256): Boolean =
+    Sha256.parse(sha256Hex(path)) == expectedSha256
 
   private fun getAssetUrl(tag: String, assetName: String): String =
     "$CACHE_REDIRECTOR_GITHUB_URL/$repository/releases/download/$tag/$assetName"

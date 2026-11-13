@@ -83,16 +83,19 @@ internal class GitHubReleaseAssetDownloaderTest {
     )
     val manifest = Files.writeString(tempDir.resolve("sha256.sum"), "${"0".repeat(64)} *tool")
     var assetDownloads = 0
+    val requestedUrls = mutableListOf<String>()
     val verifiedDownloader = GitHubReleaseAssetDownloader(
       repository = "owner/tool",
       checksumResolver = GitHubReleaseChecksumResolver.GnuManifest("sha256.sum"),
-      cacheDownload = { _, assetName ->
+      cacheDownload = { url, assetName ->
+        requestedUrls.add(url)
         when (assetName) {
           "sha256.sum" -> manifest
           else -> error("Unexpected asset: $assetName")
         }
       },
-      validatedCacheDownload = { _, assetName, isValid ->
+      validatedCacheDownload = { url, assetName, isValid ->
+        requestedUrls.add(url)
         if (assetName != "tool") error("Unexpected asset: $assetName")
         val first = invalidAssets[assetDownloads++]
         if (isValid(first)) first
@@ -107,5 +110,9 @@ internal class GitHubReleaseAssetDownloaderTest {
       .isInstanceOf(IllegalStateException::class.java)
       .hasMessageContaining("did not pass validation")
     assertThat(assetDownloads).isEqualTo(2)
+    assertThat(requestedUrls).containsExactly(
+      "https://cache-redirector.jetbrains.com/github.com/owner/tool/releases/download/v1.0.0/sha256.sum",
+      "https://cache-redirector.jetbrains.com/github.com/owner/tool/releases/download/v1.0.0/tool",
+    )
   }
 }

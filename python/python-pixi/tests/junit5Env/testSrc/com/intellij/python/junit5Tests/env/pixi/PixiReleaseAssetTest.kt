@@ -7,6 +7,7 @@ import com.intellij.python.pixi.backend.PixiPyTool
 import com.intellij.python.pixi.common.PixiReleaseArchitecture
 import com.intellij.python.pixi.common.PixiReleaseOperatingSystem
 import com.intellij.python.pixi.common.getPixiReleaseAssetName
+import com.intellij.python.pixi.test.env.getPixiReleaseArchiveName
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.sdk.SdksKeeper
@@ -29,6 +30,21 @@ internal class PixiReleaseAssetTest {
 
     assertThat(cases.map { (os, _) -> getPixiReleaseAssetName(os, PixiReleaseArchitecture.ARM_64) })
       .containsExactlyElementsOf(cases.map { (_, expected) -> expected })
+  }
+
+  @Test
+  fun `release archive name follows the target platform`() {
+    val cases = listOf(
+      Triple(PixiReleaseOperatingSystem.MACOS, PixiReleaseArchitecture.ARM_64, "pixi-aarch64-apple-darwin.tar.gz"),
+      Triple(PixiReleaseOperatingSystem.MACOS, PixiReleaseArchitecture.X86_64, "pixi-x86_64-apple-darwin.tar.gz"),
+      Triple(PixiReleaseOperatingSystem.LINUX, PixiReleaseArchitecture.ARM_64, "pixi-aarch64-unknown-linux-musl.tar.gz"),
+      Triple(PixiReleaseOperatingSystem.LINUX, PixiReleaseArchitecture.X86_64, "pixi-x86_64-unknown-linux-musl.tar.gz"),
+      Triple(PixiReleaseOperatingSystem.WINDOWS, PixiReleaseArchitecture.ARM_64, "pixi-aarch64-pc-windows-msvc.zip"),
+      Triple(PixiReleaseOperatingSystem.WINDOWS, PixiReleaseArchitecture.X86_64, "pixi-x86_64-pc-windows-msvc.zip"),
+    )
+
+    assertThat(cases.map { (os, architecture, _) -> getPixiReleaseArchiveName(os, architecture) })
+      .containsExactlyElementsOf(cases.map { (_, _, expected) -> expected })
   }
 
   @Test
