@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 import sys
 
-from _pydevd_bundle.custom.pydevd_utils import should_evaluate_shape, has_attribute_safe
+from _pydevd_bundle.custom.pydevd_utils import should_evaluate_shape, has_attribute_safe, should_load_value_on_demand
 from _pydevd_bundle.pydevd_constants import get_frame, RETURN_VALUES_DICT, ForkSafeLock, GENERATED_LEN_ATTR_NAME, silence_warnings_decorator
 from _pydevd_bundle.pydevd_xml import get_variable_details, get_type
 from _pydev_bundle.pydev_override import overrides
@@ -35,7 +35,9 @@ class _AbstractVariable(object):
     def get_variable_reference(self):
         return id(self.value)
 
-    def get_var_data(self, fmt: Optional[dict] = None, context: Optional[str] = None, **safe_repr_custom_attrs):
+    def get_var_data(
+        self, fmt: Optional[dict] = None, context: Optional[str] = None, allow_on_demand: bool = False, **safe_repr_custom_attrs
+    ):
         """
         :param dict fmt:
             Format expected by the DAP (keys: 'hex': bool, 'rawString': bool)
@@ -46,6 +48,11 @@ class _AbstractVariable(object):
                 "repl",
                 "hover",
                 "clipboard"
+
+        :param allow_on_demand:
+            With the On Demand policy, leave the value out and mark the variable with the `onDemand` attribute. The IDE
+            then loads the value with an evaluate request of `evaluateName` when the user asks for it. A variable
+            without `evaluateName` keeps its value, because the IDE could not load it.
         """
         timer = Timer()
         safe_repr = SafeRepr()
@@ -55,9 +62,17 @@ class _AbstractVariable(object):
         for key, val in safe_repr_custom_attrs.items():
             setattr(safe_repr, key, val)
 
-        type_name, _type_qualifier, _is_exception_on_eval, resolver, value = get_variable_details(
-            self.value, to_string=safe_repr, context=context
+        on_demand = (
+            allow_on_demand
+            and self.evaluate_name is not None
+            and type(self.value) is not DAPGrouper
+            and should_load_value_on_demand(self.value)
         )
+        type_name, _type_qualifier, _is_exception_on_eval, resolver, value = get_variable_details(
+            self.value, evaluate_full_value=not on_demand, to_string=safe_repr, context=context
+        )
+        if on_demand:
+            value = ""
 
         is_raw_string = type_name in ("str", "bytes", "bytearray")
 
@@ -76,6 +91,9 @@ class _AbstractVariable(object):
 
         if is_raw_string:
             attributes.append("rawString")
+
+        if on_demand:
+            attributes.append("onDemand")
 
         try:
             if should_evaluate_shape():

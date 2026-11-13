@@ -819,7 +819,7 @@ def internal_get_variable_json(py_db, request):
                 on_timeout_message=timeout_message,
             ):
                 for child_var in variable.get_children_variables(fmt=fmt, scope=scope):
-                    variables.append(child_var.get_var_data(fmt=fmt))
+                    variables.append(child_var.get_var_data(fmt=fmt, allow_on_demand=True))
     except:
         try:
             exc, exc_type, tb = sys.exc_info()
