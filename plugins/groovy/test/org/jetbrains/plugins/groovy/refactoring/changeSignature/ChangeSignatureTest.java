@@ -16,12 +16,12 @@ import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.io.File;
@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestApplication
 public class ChangeSignatureTest {
   private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, LightJavaCodeInsightFixtureTestCase.JAVA_LATEST, "refactoring/changeSignature/");
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.JAVA_LATEST, "refactoring/changeSignature/");
   private final TestFixture<String> testName = testNameFixture(false);
 
   @Test

@@ -125,8 +125,8 @@ jvm_library(
         "//plugins/groovy-scripting",
         "//plugins/groovy-live-templates",
         "//platform/statistics",
-        "//libraries/junit4",
         "//libraries/junit6",
+        "//platform/testFramework/junit5",
     ],
 )
 ### auto-generated section `build intellij.groovy.propertyBased.tests` end

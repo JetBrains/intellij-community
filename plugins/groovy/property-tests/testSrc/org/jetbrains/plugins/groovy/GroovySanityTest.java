@@ -4,9 +4,14 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.testFramework.propertyBased.CheckHighlighterConsistency;
 import com.intellij.testFramework.propertyBased.MadTestingAction;
 import com.intellij.testFramework.propertyBased.MadTestingUtil;
@@ -14,21 +19,24 @@ import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.PropertyChecker;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.DfaCacheConsistencyKt;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
-import org.jetbrains.plugins.groovy.util.EdtRule;
-import org.jetbrains.plugins.groovy.util.FixtureRule;
 import org.jetbrains.plugins.groovy.util.Slow;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
 
 import java.io.FileFilter;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import org.junit.jupiter.api.Test;
+
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.configureByExactName;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 
 @Slow
+@TestApplication
 public class GroovySanityTest {
-  public CodeInsightTestFixture getFixture() { return myFixtureRule.getFixture(); }
+  private static final TestFixture<Project> project = groovyProjectFixture();
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_3_0);
+
+  public CodeInsightTestFixture getFixture() { return groovy.get(); }
 
   private Supplier<MadTestingAction> actionsOnGroovyFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
     return MadTestingUtil.actionsOnFileContents(getFixture(), PathManager.getHomePath(), groovyFileFilter, fileActions);
@@ -36,12 +44,13 @@ public class GroovySanityTest {
 
   @Test
   public void incremental_highlighter_update() {
-    PropertyChecker.checkScenarios(actionsOnGroovyFiles(CheckHighlighterConsistency.randomEditsWithHighlighterChecks));
+    EdtTestUtil.runInEdtAndWait(
+      () -> PropertyChecker.checkScenarios(actionsOnGroovyFiles(CheckHighlighterConsistency.randomEditsWithHighlighterChecks)));
   }
 
   @Test
   public void inc() {
-    PsiFile file = getFixture().configureByText("_.groovy", """
+    PsiFile file = configureByExactName(groovy.get(), "_.groovy", """
     
           /**1*/
           /**2*/
@@ -59,12 +68,11 @@ public class GroovySanityTest {
   public void psi_accessors() {
     RecursionManager.disableMissedCacheAssertions(getFixture().getTestRootDisposable());
     DfaCacheConsistencyKt.allowCacheInconsistency(getFixture().getTestRootDisposable());
-    PropertyChecker.checkScenarios(actionsOnGroovyFiles(MadTestingUtil.randomEditsWithPsiAccessorChecks(method -> {
-      return method.getName().equals("getOrCreateInitializingClass") && method.getDeclaringClass().equals(GrEnumConstantImpl.class);
-    })));
+    EdtTestUtil.runInEdtAndWait(
+      () -> PropertyChecker.checkScenarios(actionsOnGroovyFiles(MadTestingUtil.randomEditsWithPsiAccessorChecks(method -> {
+        return method.getName().equals("getOrCreateInitializingClass") && method.getDeclaringClass().equals(GrEnumConstantImpl.class);
+      }))));
   }
 
   private static final FileFilter groovyFileFilter = pathname -> pathname.getName().endsWith(".groovy");
-  private final FixtureRule myFixtureRule = new FixtureRule(GroovyProjectDescriptors.GROOVY_3_0, "");
-  @Rule public final TestRule myRules = RuleChain.outerRule(myFixtureRule).around(new EdtRule());
 }

@@ -14,15 +14,6 @@ jps_test(
         ":testdata",
         "@community//plugins/groovy/groovy-psi:dev_dist_resources",
     ],
-    env = {
-        "JB_TEST_JUNIT5_FILTERS": ";".join([
-            "exclude-classname=org\\.jetbrains\\.plugins\\.groovy\\.AllGroovyTestSuite",
-            "exclude-classname=org\\.jetbrains\\.plugins\\.groovy\\.FastGroovyTestSuite",
-            "exclude-classname=org\\.jetbrains\\.plugins\\.groovy\\.GroovyGinqTestSuite",
-            "exclude-classname=org\\.jetbrains\\.plugins\\.groovy\\.GroovyParserTestSuite",
-            "exclude-classname=org\\.jetbrains\\.plugins\\.groovy\\.SlowGroovyTestSuite",
-        ]),
-    },
     tags = ["groovy-tests"],
     runtime_deps = [":groovy-tests_test_lib"],
 )

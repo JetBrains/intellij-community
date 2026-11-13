@@ -2,13 +2,15 @@
 package org.jetbrains.plugins.groovy.refactoring.implExtQuickFix;
 
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.ChangeExtendsImplementsQuickFix;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -88,7 +90,10 @@ public class ImplementsExtendsQuickFixTest {
         WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
             ChangeExtendsImplementsQuickFix fix = new ChangeExtendsImplementsQuickFix(typeDefinition);
             fix.asIntention().invoke(myFixture.getProject(), null, psiFile);
-            UsefulTestCase.doPostponedFormatting(myFixture.getProject());
+            DocumentUtil.writeInRunUndoTransparentAction(() -> {
+              PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+              PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
+            });
           });
 
         final GrTypeDefinition[] newTypeDefinitions = ((GroovyFileBase)psiFile).getTypeDefinitions();

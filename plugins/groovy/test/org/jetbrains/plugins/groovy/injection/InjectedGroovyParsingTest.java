@@ -7,13 +7,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.JBIterable;
+import java.io.File;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +26,7 @@ import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixtu
 public class InjectedGroovyParsingTest {
   private static final TestFixture<Project> project = groovyProjectFixture();
   private final TestFixture<JavaCodeInsightTestFixture> groovy =
-    groovyFixture(project, LightJavaCodeInsightFixtureTestCase.JAVA_LATEST, "injected/");
+    groovyFixture(project, GroovyProjectDescriptors.JAVA_LATEST, "injected/");
   private final TestFixture<String> testName = testNameFixture(false);
 
   @BeforeEach
@@ -38,7 +39,8 @@ public class InjectedGroovyParsingTest {
     JavaCodeInsightTestFixture fixture = groovy.get();
     EdtTestUtil.runInEdtAndWait(() -> {
       fixture.configureByFile(testName.get() + ".groovy");
-      ParsingTestCase.doCheckResult(fixture.getTestDataPath(), testName.get() + ".txt", toParseTreeText(fixture.getFile()));
+      PlatformTestUtil.assertSameLinesWithFile(fixture.getTestDataPath() + File.separatorChar + testName.get() + ".txt",
+                                               toParseTreeText(fixture.getFile()));
     });
   }
 

@@ -12,9 +12,9 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 @TestApplication
 public class InjectedGroovyEditingTest {
   private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, LightJavaCodeInsightFixtureTestCase.JAVA_LATEST);
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.JAVA_LATEST);
 
   @BeforeEach
   public void setUp() {

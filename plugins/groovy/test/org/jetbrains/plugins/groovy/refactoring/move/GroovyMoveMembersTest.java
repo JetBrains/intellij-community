@@ -3,21 +3,23 @@ package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveMembers.MoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.DocumentUtil;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -169,7 +171,10 @@ public class GroovyMoveMembersTest {
     final MockMoveMembersOptions options = new MockMoveMembersOptions(targetClass.getQualifiedName(), memberSet);
     options.setMemberVisibility(null);
     new MoveMembersProcessor(myFixture.getProject(), null, options).run();
-    UsefulTestCase.doPostponedFormatting(myFixture.getProject());
+    DocumentUtil.writeInRunUndoTransparentAction(() -> {
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+      PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
+    });
   }
 
   private static class MockMoveMembersOptions implements MoveMembersOptions {

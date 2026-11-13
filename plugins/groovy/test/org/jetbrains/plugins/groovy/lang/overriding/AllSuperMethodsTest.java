@@ -3,9 +3,9 @@ package org.jetbrains.plugins.groovy.lang.overriding;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
@@ -16,7 +16,7 @@ import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixtu
 @TestApplication
 public class AllSuperMethodsTest {
   private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, LightJavaCodeInsightFixtureTestCase.JAVA_LATEST, "overriding/allSuperMethods");
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.JAVA_LATEST, "overriding/allSuperMethods");
   private final TestFixture<OverridingTestFixture> overriding = overridingFixture(groovy);
 
   @Test

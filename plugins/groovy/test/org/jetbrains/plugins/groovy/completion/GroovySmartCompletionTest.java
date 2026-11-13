@@ -6,11 +6,11 @@ import com.intellij.codeInsight.completion.StaticallyImportable;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 
 import java.util.List;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestApplication
 public class GroovySmartCompletionTest {
   private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, LightJavaCodeInsightFixtureTestCase.JAVA_LATEST, "groovy/completion/smart");
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.JAVA_LATEST, "groovy/completion/smart");
   private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
   private final TestFixture<String> testName = testNameFixture(false);
 

@@ -10,7 +10,7 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 public interface GroovyProjectDescriptors {
 
   /**
-   * The setup of {@code LightJavaCodeInsightFixtureTestCase.JAVA_LATEST} with no Groovy library:
+   * The setup of {@code GroovyProjectDescriptors.JAVA_LATEST} with no Groovy library:
    * the mock JDK 1.7, the highest language level, and the JetBrains annotations with the type use.
    */
   DefaultLightProjectDescriptor JAVA_LATEST = new DefaultLightProjectDescriptor().withJetBrainsAnnotationsWithTypeUse();

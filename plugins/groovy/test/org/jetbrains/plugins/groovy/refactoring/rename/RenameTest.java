@@ -848,12 +848,14 @@ public class RenameTest implements BaseTest {
   }
 
   private void doTestRenameScriptFileToTextFile(String newName) {
-    JavaCodeInsightTestFixture fixture = getFixture();
-    VirtualFile file = fixture.configureByText("Abc.groovy", "print new Abc()\n").getVirtualFile();
-    fixture.renameElement(fixture.getFile(), newName);
-    Assert.assertEquals(newName, file.getName());
-    Assert.assertEquals(PlainTextLanguage.INSTANCE, PsiManager.getInstance(fixture.getProject()).findFile(file).getLanguage());
-    Assert.assertEquals("print new Abc()\n", FileDocumentManager.getInstance().getDocument(file).getText());
+    runInEdtAndWait(() -> {
+      JavaCodeInsightTestFixture fixture = getFixture();
+      VirtualFile file = fixture.configureByText("Abc.groovy", "print new Abc()\n").getVirtualFile();
+      fixture.renameElement(fixture.getFile(), newName);
+      Assertions.assertEquals(newName, file.getName());
+      Assertions.assertEquals(PlainTextLanguage.INSTANCE, PsiManager.getInstance(fixture.getProject()).findFile(file).getLanguage());
+      Assertions.assertEquals("print new Abc()\n", FileDocumentManager.getInstance().getDocument(file).getText());
+    });
   }
 
   @Test

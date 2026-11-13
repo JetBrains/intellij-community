@@ -4,9 +4,9 @@ package org.jetbrains.plugins.groovy.completion;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +21,7 @@ import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixtu
 @TestApplication
 public class GrDocCompletionTest {
   private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, LightJavaCodeInsightFixtureTestCase.JAVA_LATEST, "groovy/completion/gdoc");
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.JAVA_LATEST, "groovy/completion/gdoc");
   private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
 
   @Test

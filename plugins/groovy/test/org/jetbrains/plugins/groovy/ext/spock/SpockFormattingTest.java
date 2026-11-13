@@ -19,7 +19,7 @@ import static org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterFixture
 
 @TestApplication
 public class SpockFormattingTest {
-  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(SpockTestBase.SPOCK_PROJECT);
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(SpockTestUtil.SPOCK_PROJECT);
   private final TestFixture<GroovyFormatterFixture> formatter =
     groovyFormatterFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "groovy/formatter/");
 

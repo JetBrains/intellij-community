@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,6 +48,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.junit.jupiter.api.Assertions;
 
 /**
  * Utility class, that contains various methods for testing
@@ -118,7 +118,7 @@ public abstract class TestUtils {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    Assert.assertNotNull(content);
+    Assertions.assertNotNull(content);
 
     List<String> input = new ArrayList<>();
 
@@ -138,8 +138,8 @@ public abstract class TestUtils {
     }
     input.add(content);
 
-    Assert.assertTrue("No data found in source file", input.size() > 0);
-    Assert.assertTrue("Test output points to null", input.size() > 1);
+    Assertions.assertTrue(input.size() > 0, "No data found in source file");
+    Assertions.assertTrue(input.size() > 1, "Test output points to null");
 
     return input;
   }
@@ -152,7 +152,7 @@ public abstract class TestUtils {
   public static void checkCompletionContains(JavaCodeInsightTestFixture fixture, String ... expectedVariants) {
     LookupElement[] lookupElements = fixture.completeBasic();
 
-    Assert.assertNotNull(lookupElements);
+    Assertions.assertNotNull(lookupElements);
 
     Set<String> missedVariants = ContainerUtil.newHashSet(expectedVariants);
 
@@ -177,7 +177,7 @@ public abstract class TestUtils {
     }
 
     if (missedVariants.size() > 0) {
-      Assert.fail("Some completion variants are missed " + missedVariants);
+      Assertions.fail("Some completion variants are missed " + missedVariants);
     }
   }
 
@@ -200,10 +200,10 @@ public abstract class TestUtils {
     }
 
     if (type == null) {
-      Assert.fail("No field or method called '" + lookupString + "' found in completion lookup elements");
+      Assertions.fail("No field or method called '" + lookupString + "' found in completion lookup elements");
     }
 
-    Assert.assertEquals(expectedTypeCanonicalText, type.getCanonicalText());
+    Assertions.assertEquals(expectedTypeCanonicalText, type.getCanonicalText());
   }
 
   public static void checkResolve(PsiFile file, final String ... expectedUnresolved) {
@@ -237,11 +237,11 @@ public abstract class TestUtils {
 
               if (consumer.getResult().isEmpty()) {
                 PsiElement nameElement = psiReference.getReferenceNameElement();
-                Assert.assertNotNull(nameElement);
+                Assertions.assertNotNull(nameElement);
 
                 String name = nameElement.getText();
 
-                Assert.assertEquals(name, psiReference.getReferenceName());
+                Assertions.assertEquals(name, psiReference.getReferenceName());
 
                 int last = lastUnresolvedRef.get();
                 sb.append(text, last, nameElement.getTextOffset());
@@ -264,7 +264,7 @@ public abstract class TestUtils {
 
       sb.append("\n\n");
 
-      Assert.assertEquals(sb.toString(), Arrays.asList(expectedUnresolved), actualUnresolved);
+      Assertions.assertEquals(Arrays.asList(expectedUnresolved), actualUnresolved, sb.toString());
     });
   }
 

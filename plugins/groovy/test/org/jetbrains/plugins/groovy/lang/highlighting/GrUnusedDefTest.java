@@ -8,7 +8,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
-import junit.framework.TestCase;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection;
