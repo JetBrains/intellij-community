@@ -3,163 +3,31 @@ package com.intellij.openapi.editor.impl.view
 
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.util.ui.GraphicsUtil
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet
+import java.awt.Color
 import java.awt.Graphics2D
-import java.awt.RenderingHints
-import java.awt.geom.Path2D
 import java.awt.geom.Rectangle2D
 import java.util.TreeMap
-import java.util.TreeSet
-import kotlin.math.abs
-import kotlin.math.min
-import kotlin.math.max
 
-private const val EPSILON: Double = 1e-2
+/** A rectangle that ends nearer than this to the right side of the clip ends at the fill edge of the paint. */
+private const val FILL_EDGE_TOLERANCE: Double = 1e-2
 
-private sealed class CornerType(open val radius: Double) {
-  object Straight : CornerType(0.0)
-  class Rounded(override val radius: Double) : CornerType(radius)
-  class InvertedRounded(override val radius: Double) : CornerType(radius)
-}
-
-private data class AxisBounds(val start: Double, val end: Double, val span: Int = 0) : Comparable<AxisBounds> {
-  override fun compareTo(other: AxisBounds): Int {
-    return compareValuesBy(this, other, { it.start }, { it.end })
-  }
-}
-
-internal abstract class IntervalSet<T : Comparable<T>> {
-  val items: TreeSet<T> = TreeSet()
-
-  abstract fun add(item: T)
-
-  protected abstract fun getStart(item: T): Double
-  protected abstract fun getEnd(item: T): Double
-
-  fun withAllIntersecting(
-    start: Double,
-    end: Double,
-    probe: T,
-    action: (MutableIterator<T>, T) -> Unit,
-  ) {
-    val first = items.floor(probe) ?: items.ceiling(probe) ?: return
-
-    val it = items.tailSet(first, true).iterator()
-    while (it.hasNext()) {
-      val current = it.next()
-      if (getEnd(current) <= start) continue
-      if (getStart(current) >= end) break
-
-      action(it, current)
-    }
-  }
-}
-
-private class HighlightLine(val boundsY: AxisBounds) : IntervalSet<AxisBounds>(), Comparable<HighlightLine> {
-  override fun getStart(item: AxisBounds): Double = item.start
-  override fun getEnd(item: AxisBounds): Double = item.end
-
-  override fun add(item: AxisBounds) {
-    var [start, end, span] = item
-
-    val existing = items.floor(item) ?: items.ceiling(item)
-    if (existing == null) {
-      items.add(item)
-      return
-    }
-
-    val it = items.tailSet(existing).iterator()
-    while (it.hasNext()) {
-      val current = it.next()
-      if (current.end < start - EPSILON) continue
-      if (current.start > end + EPSILON) break
-
-      start = min(start, current.start)
-      end = max(end, current.end)
-      span = max(span, current.span)
-      it.remove()
-    }
-    items.add(AxisBounds(start, end, span))
-  }
-
-  override fun compareTo(other: HighlightLine): Int {
-    return compareValuesBy(this, other) { it.boundsY }
-  }
-
-  fun withAllIntersectingBlocks(
-    xStart: Double,
-    xEnd: Double,
-    blockAction: (MutableIterator<AxisBounds>, AxisBounds) -> Unit,
-  ) {
-    withAllIntersecting(xStart, xEnd, AxisBounds(xStart, xStart), blockAction)
-  }
-
-  fun containsX(x: Double, strict: Boolean): Boolean {
-    val probe = AxisBounds(x, x)
-    return listOfNotNull(items.floor(probe), items.ceiling(probe)).any { (start, end) ->
-      if (strict) {
-        x > start + EPSILON && x < end - EPSILON
-      } else {
-        x >= start - EPSILON && x <= end + EPSILON
-      }
-    }
-  }
-
-  fun nearestStartDistance(x: Double, precision: Double): Double? = nearestEdgeDistance(x, precision) { it.start }
-  fun nearestEndDistance(x: Double, precision: Double): Double? = nearestEdgeDistance(x, precision) { it.end }
-
-  private fun nearestEdgeDistance(x: Double, precision: Double, edge: (AxisBounds) -> Double): Double? {
-    val probe = AxisBounds(x, x)
-    return sequenceOf(items.lower(probe), items.floor(probe), items.ceiling(probe), items.higher(probe))
-      .filterNotNull()
-      .map { edge(it) - x }
-      .filter { abs(it) < precision }
-      .minByOrNull { abs(it) }
-  }
-}
-
-private class LineSet : IntervalSet<HighlightLine>() {
-  override fun getStart(item: HighlightLine): Double = item.boundsY.start
-  override fun getEnd(item: HighlightLine): Double = item.boundsY.end
-
-  override fun add(item: HighlightLine) {
-    val existing = items.ceiling(item)
-    if (existing != null && existing.boundsY == item.boundsY) {
-      item.items.forEach { existing.add(it) }
-    }
-    else {
-      items.add(item)
-    }
-  }
-
-  fun lineAbove(line: HighlightLine): HighlightLine? {
-    val candidate = items.lower(line) ?: return null
-    return candidate.takeIf { abs(it.boundsY.end - line.boundsY.start) < EPSILON }
-  }
-
-  fun lineBelow(line: HighlightLine): HighlightLine? {
-    val candidate = items.higher(line) ?: return null
-    return candidate.takeIf { abs(it.boundsY.start - line.boundsY.end) < EPSILON }
-  }
-}
-
-private class PaintedBlock(
-  val layer: BackgroundLayer,
-  val lines: LineSet,
-  val line: HighlightLine,
-  val bounds: AxisBounds,
-) : Comparable<PaintedBlock> {
-  override fun compareTo(other: PaintedBlock): Int {
-    val order = compareValuesBy(this, other, { it.layer.forcesBackground }, { it.layer.layer }, { -it.bounds.span })
-    if (order != 0) return order
-    return BackgroundLayer.STYLE_ORDER.compare(layer, other.layer)
-  }
-}
+/**
+ * Two rectangles that share a strip thinner than this do not overlap.
+ */
+private const val MIN_OVERLAP: Double = 1e-2
 
 /**
  * The highlighter backgrounds of one paint.
  *
- * The painter adds one block per background style and rectangle. [paint] fills the blocks from the bottom up.
- * A block outside [clip] gives the corners of its neighbors, and it paints nothing.
+ * The painter adds one rectangle per background style. [paint] fills the styles from the bottom up.
+ * One style gives one shape, also across visual lines. A rounded style fills one outline with antialiasing,
+ * and a straight style fills its rectangles at the device pixels.
+ * A box of a background after the end of a line is a shape of its own. [paintAfterLineEndBoxes] fills the boxes.
+ * A background of a line extension is a straight rectangle of its own. [paint] fills it among the styles.
+ * A rectangle outside [clip] gives the corners of its neighbors, and it paints nothing.
  * The model lives for one paint. It keeps no state for the next paint.
  */
 internal class HighlighterVisualModel(
@@ -169,7 +37,20 @@ internal class HighlighterVisualModel(
   private val huggingHighlighting: Boolean,
 ) {
   private val selectionBg get() = editor.editorModel.selectionModel.textAttributes.backgroundColor
-  private val linesByLayer = TreeMap<BackgroundLayer, LineSet>(BackgroundLayer.STYLE_ORDER)
+  private val rows = BackgroundRows()
+  private val styleIds = TreeMap<BackgroundLayer, Int>(BackgroundLayer.STYLE_ORDER)
+  private val styles = ArrayList<BackgroundLayer>()
+  private val chain = IntArrayList()
+  private val edges = LongOpenHashSet()
+  private val boxRows = BackgroundRows()
+  private val boxStyles = ArrayList<BackgroundLayer>()
+  private val extensionRows = BackgroundRows()
+  private val extensionColors = ArrayList<Color>()
+
+  /**
+   * Gives for each background of [addLineExtensionBackground] the number of rows that the painter added before it.
+   */
+  private val rowCountsBeforeExtensions = IntArrayList()
 
   fun paintSelectionBlock(block: Rectangle2D) {
     val color = selectionBg ?: return
@@ -184,7 +65,12 @@ internal class HighlighterVisualModel(
     paintBackgroundBlock(block, layer)
   }
 
+  /**
+   * Adds one block with several [layers]. The list starts at the top layer.
+   * The block records which of its styles lies directly above which, and [paint] keeps this order.
+   */
   fun paintLayeredBlock(block: Rectangle2D, layers: List<BackgroundLayer>) {
+    chain.clear()
     var lowest: BackgroundLayer? = null
     for (layer in layers) {
       if (layer.forcesBackground) {
@@ -192,188 +78,303 @@ internal class HighlighterVisualModel(
         continue
       }
       if (lowest != null && layer > lowest) continue
-      paintBackgroundBlock(block, layer)
+      val styleId = styleIdOf(layer)
+      addRow(rows, block, styleId)
+      addToChain(styleId)
       lowest = layer
     }
   }
 
   fun paintBackgroundBlock(block: Rectangle2D, layer: BackgroundLayer) {
-    val yStart = block.y - yShift
-    val singleton = HighlightLine(AxisBounds(yStart, yStart + block.height))
-    singleton.add(AxisBounds(block.x, block.x + block.width, layer.span))
-
-    linesByLayer.getOrPut(layer) { LineSet() }.add(singleton)
+    addRow(rows, block, styleIdOf(layer))
   }
 
-  fun paint(graphics: Graphics2D, lineHeight: Int) {
-    val (yStart, yEnd) = Pair(clip.y, clip.y + clip.height)
-    val (xStart, xEnd) = Pair(clip.x, clip.x + clip.width)
+  /**
+   * Adds the box of a background after the end of a line.
+   * The box joins no other box and no style of [paint].
+   */
+  fun addAfterLineEndBox(block: Rectangle2D, layer: BackgroundLayer) {
+    addRow(boxRows, block, boxStyles.size)
+    boxStyles.add(layer)
+  }
 
-    val oldAA = graphics.getRenderingHint(RenderingHints.KEY_ANTIALIASING)
-    graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    graphics.translate(0.0, yShift.toDouble())
-    try {
-      val clipProbe = HighlightLine(AxisBounds(yStart, yStart))
-      val blocks = ArrayList<PaintedBlock>()
-      for ([layer, lines] in linesByLayer) {
-        lines.withAllIntersecting(yStart, yEnd, clipProbe) { _, line ->
-          line.withAllIntersectingBlocks(xStart, xEnd) { _, block ->
-            blocks.add(PaintedBlock(layer, lines, line, block))
-          }
+  /**
+   * Adds the background of a line extension.
+   * It covers each block that the painter added before it, where they overlap.
+   * Each block that the painter adds after it covers it, where they overlap.
+   */
+  fun addLineExtensionBackground(block: Rectangle2D, color: Color) {
+    addRow(extensionRows, block, extensionColors.size)
+    extensionColors.add(color)
+    rowCountsBeforeExtensions.add(rows.size)
+  }
+
+  /**
+   * A style fills after each style that a block of [paintLayeredBlock] puts below it.
+   * The backgrounds of [addLineExtensionBackground] fill among the styles.
+   * A background of a line extension fills after each style of an earlier block that overlaps it.
+   * It fills before each style of a later block that overlaps it.
+   * Of the ready ones, the first one fills next: the styles in the [BackgroundLayer] order, then the line extensions.
+   * When the blocks put two of them in both orders, the first unpainted one of this order fills next.
+   * Then the styles that force the background fill, in the [BackgroundLayer] order. They take no part in the order above.
+   * A background of a line extension that no later block overlaps fills last.
+   */
+  fun paint(graphics: Graphics2D, lineHeight: Int) {
+    if (styles.isEmpty() && extensionColors.isEmpty()) {
+      return
+    }
+    val styleCount = styles.size
+    fillShapes(graphics, lineHeight) { radius ->
+      for (id in paintOrder()) {
+        if (id < styleCount) {
+          fillStyle(graphics, rows, id, styles[id], radius)
+        } else {
+          fillRow(graphics, extensionRows, id - styleCount, extensionColors[id - styleCount])
         }
       }
-      blocks.sort()
-      for (painted in blocks) {
-        graphics.color = painted.layer.color
-        paintBlock(graphics, painted.layer, painted.lines, painted.line, painted.bounds, lineHeight)
+    }
+  }
+
+  /**
+   * Fills the boxes of [addAfterLineEndBox] in the order of the calls.
+   * Each box is a shape of its own. A rounded box gets the corners of [paint].
+   */
+  fun paintAfterLineEndBoxes(graphics: Graphics2D, lineHeight: Int) {
+    if (boxStyles.isEmpty()) {
+      return
+    }
+    fillShapes(graphics, lineHeight) { radius ->
+      for (boxId in boxStyles.indices) {
+        fillStyle(graphics, boxRows, boxId, boxStyles[boxId], radius)
       }
+    }
+  }
+
+  /**
+   * Runs [fill] with antialiasing in the coordinates of the rows.
+   * It gives [fill] the corner radius of [paint].
+   */
+  private inline fun fillShapes(graphics: Graphics2D, lineHeight: Int, fill: (radius: Double) -> Unit) {
+    val radius = lineHeight / 6.0
+    val config = GraphicsUtil.setupAAPainting(graphics)
+    graphics.translate(0.0, yShift.toDouble())
+    try {
+      fill(radius)
     }
     finally {
       graphics.translate(0.0, -yShift.toDouble())
-      if (oldAA != null) graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAA)
-      else graphics.renderingHints.remove(RenderingHints.KEY_ANTIALIASING)
+      config.restore()
     }
   }
 
-  private fun paintBlock(
-    graphics: Graphics2D,
-    layer: BackgroundLayer,
-    lines: LineSet,
-    line: HighlightLine,
-    block: AxisBounds,
-    lineHeight: Int,
-  ) {
-    val (top, bottom) = line.boundsY
-    val (left, right) = block
-    if (!layer.isRounded) {
-      EditorPainter.fillRectExact(graphics, Rectangle2D.Double(left, top, right - left, bottom - top), layer.color)
+  private fun addRow(target: BackgroundRows, block: Rectangle2D, styleId: Int) {
+    val top = block.y - yShift
+    val end = block.x + block.width
+    val flags = if (end >= clip.x + clip.width - FILL_EDGE_TOLERANCE) BackgroundRows.FILL_EDGE else 0
+    target.add(
+      styleId,
+      top,
+      top + block.height,
+      block.x,
+      end,
+      flags,
+    )
+  }
+
+  /**
+   * Puts [styleId] directly below the last style of the chain of the current block.
+   * A style that the chain holds already lies higher in the block, so it keeps that place.
+   */
+  private fun addToChain(styleId: Int) {
+    if (chain.contains(styleId)) {
       return
     }
-    val radius = lineHeight / 6.0
-    val precision = 2 * radius
-
-    val above = lines.lineAbove(line)
-    val below = lines.lineBelow(line)
-
-    val topLeftType = cornerType(
-      above?.nearestStartDistance(left, precision),
-      above?.containsX(left, strict = true) ?: false,
-      isLeftCorner = true, radius,
-    )
-    val topRightType = cornerType(
-      above?.nearestEndDistance(right, precision),
-      above?.containsX(right, strict = true) ?: false,
-      isLeftCorner = false, radius,
-    )
-    val bottomRightType = cornerType(
-      below?.nearestEndDistance(right, precision),
-      below?.containsX(right, strict = true) ?: false,
-      isLeftCorner = false, radius,
-    )
-    val bottomLeftType = cornerType(
-      below?.nearestStartDistance(left, precision),
-      below?.containsX(left, strict = true) ?: false,
-      isLeftCorner = true, radius,
-    )
-
-    paintRoundedBlock(graphics, left, top, right, bottom, radius, topLeftType, topRightType, bottomRightType, bottomLeftType)
-  }
-
-  private fun cornerType(
-    signedDistance: Double?,
-    hasSelectionAdjacent: Boolean,
-    isLeftCorner: Boolean,
-    radius: Double,
-  ): CornerType {
-    return when {
-      signedDistance != null && abs(signedDistance) < EPSILON -> CornerType.Straight
-      signedDistance != null -> {
-        val cornerRadius = abs(signedDistance) / 2
-        val thisLineExtendsFurther = if (isLeftCorner) signedDistance > 0 else signedDistance < 0
-        if (thisLineExtendsFurther) CornerType.Rounded(cornerRadius) else CornerType.InvertedRounded(cornerRadius)
-      }
-      hasSelectionAdjacent -> CornerType.InvertedRounded(radius)
-      else -> CornerType.Rounded(radius)
+    if (chain.isNotEmpty()) {
+      edges.add(edgeOf(chain.getInt(chain.size - 1), styleId))
     }
+    chain.add(styleId)
   }
 
-  private fun paintRoundedBlock(
+  /**
+   * Gives the ids of all styles and of all backgrounds of the line extensions in the order of [paint], from the bottom up.
+   * An id below the number of styles is a style. A larger id is a background of a line extension, after the styles.
+   */
+  private fun paintOrder(): IntArray {
+    val styleCount = styles.size
+    val extensionCount = extensionColors.size
+    val order = styles.indices.sortedBy { styles[it] }.toIntArray()
+    if (edges.isEmpty() && extensionCount == 0) {
+      return order
+    }
+    var layeredCount = styleCount
+    while (layeredCount > 0 && styles[order[layeredCount - 1]].forcesBackground) {
+      layeredCount--
+    }
+    val covered = addExtensionEdges()
+    val candidates = order.copyOf(layeredCount + covered.count { it })
+    var index = layeredCount
+    for (extensionId in 0 until extensionCount) {
+      if (covered[extensionId]) {
+        candidates[index++] = styleCount + extensionId
+      }
+    }
+    val result = sortByEdges(candidates, styleCount + extensionCount).copyOf(styleCount + extensionCount)
+    order.copyInto(result, candidates.size, layeredCount, styleCount)
+    index = candidates.size + styleCount - layeredCount
+    for (extensionId in 0 until extensionCount) {
+      if (!covered[extensionId]) {
+        result[index++] = styleCount + extensionId
+      }
+    }
+    return result
+  }
+
+  /**
+   * Adds to [edges] the order of each background of a line extension.
+   * The background lies above each style of an earlier row that overlaps it, and below each style of a later row that
+   * overlaps it.
+   * Gives for each background whether a later row overlaps it.
+   * A row of a style that forces the background gives no edge, and it covers no background.
+   */
+  private fun addExtensionEdges(): BooleanArray {
+    val styleCount = styles.size
+    val covered = BooleanArray(extensionColors.size)
+    for (extensionId in covered.indices) {
+      val id = styleCount + extensionId
+      val rowCountBefore = rowCountsBeforeExtensions.getInt(extensionId)
+      for (index in 0 until rows.size) {
+        val styleId = rows.styleId(index)
+        if (styles[styleId].forcesBackground || !overlapsExtension(index, extensionId)) {
+          continue
+        }
+        if (index < rowCountBefore) {
+          edges.add(edgeOf(id, styleId))
+        } else {
+          edges.add(edgeOf(styleId, id))
+          covered[extensionId] = true
+        }
+      }
+    }
+    return covered
+  }
+
+  /**
+   * Says that the row [index] overlaps the background [extensionId] of a line extension by more than [MIN_OVERLAP] in
+   * each direction.
+   */
+  private fun overlapsExtension(index: Int, extensionId: Int): Boolean {
+    return rows.top(index) + MIN_OVERLAP < extensionRows.bottom(extensionId) &&
+           extensionRows.top(extensionId) + MIN_OVERLAP < rows.bottom(index) &&
+           rows.start(index) + MIN_OVERLAP < extensionRows.end(extensionId) &&
+           extensionRows.start(extensionId) + MIN_OVERLAP < rows.end(index)
+  }
+
+  /**
+   * Orders [candidates] so that each id comes after each id that [edges] put below it.
+   * Among the ids that are ready, the first one of [candidates] comes next.
+   * Each id is smaller than [idCount].
+   */
+  private fun sortByEdges(candidates: IntArray, idCount: Int): IntArray {
+    val pairs = edges.toLongArray()
+    val belowCounts = IntArray(idCount)
+    for (edge in pairs) {
+      belowCounts[aboveOf(edge)]++
+    }
+    val painted = BooleanArray(idCount)
+    val result = IntArray(candidates.size)
+    for (step in candidates.indices) {
+      val next = nextStyle(candidates, candidates.size, painted, belowCounts)
+      result[step] = next
+      painted[next] = true
+      for (edge in pairs) {
+        if (belowOf(edge) == next) {
+          belowCounts[aboveOf(edge)]--
+        }
+      }
+    }
+    return result
+  }
+
+  /**
+   * Gives the first id of the first [count] ids of [order] that is not painted and has no unpainted id below it.
+   * When every unpainted id has an unpainted id below it, the edges form a cycle.
+   * Then the first unpainted id comes next.
+   */
+  private fun nextStyle(
+    order: IntArray,
+    count: Int,
+    painted: BooleanArray,
+    belowCounts: IntArray,
+  ): Int {
+    var first = -1
+    for (index in 0 until count) {
+      val styleId = order[index]
+      if (painted[styleId]) {
+        continue
+      }
+      if (belowCounts[styleId] == 0) {
+        return styleId
+      }
+      if (first == -1) {
+        first = styleId
+      }
+    }
+    return first
+  }
+
+  private fun fillStyle(
     graphics: Graphics2D,
-    left: Double, top: Double, right: Double, bottom: Double,
+    source: BackgroundRows,
+    styleId: Int,
+    style: BackgroundLayer,
     radius: Double,
-    topLeftType: CornerType, topRightType: CornerType, bottomRightType: CornerType, bottomLeftType: CornerType,
   ) {
-    val path = Path2D.Double()
-
-    path.moveTo(left, top + radius)
-    when (topLeftType) {
-      is CornerType.Straight -> {
-        path.lineTo(left, top)
-        path.lineTo(left + topLeftType.radius, top)
-      }
-      is CornerType.InvertedRounded -> {
-        path.quadTo(left, top, left - topLeftType.radius, top)
-        path.lineTo(left + topLeftType.radius, top)
-      }
-      is CornerType.Rounded -> {
-        path.quadTo(left, top, left + topLeftType.radius, top)
-      }
+    graphics.color = style.color
+    if (style.isRounded) {
+      graphics.fill(BackgroundOutline.build(source, styleId, radius))
+      return
     }
-
-    path.lineTo(right - topRightType.radius, top)
-    when (topRightType) {
-      is CornerType.Straight -> {
-        path.lineTo(right, top)
-        path.lineTo(right, top + radius)
+    for (index in 0 until source.size) {
+      if (source.styleId(index) != styleId) {
+        continue
       }
-      is CornerType.InvertedRounded -> {
-        path.lineTo(right, top)
-        path.lineTo(right, top + radius)
-        path.quadTo(right, top, right + topRightType.radius, top)
-        path.lineTo(right, top)
-        path.lineTo(right, top + radius)
-      }
-      is CornerType.Rounded -> {
-        path.quadTo(right, top, right, top + radius)
-      }
+      fillRow(graphics, source, index, style.color)
     }
+  }
 
-    path.lineTo(right, bottom - radius)
-    when (bottomRightType) {
-      is CornerType.Straight -> {
-        path.lineTo(right, bottom)
-        path.lineTo(right - bottomRightType.radius, bottom)
+  /**
+   * Fills the rectangle of the row [index] of [source] at the device pixels.
+   */
+  private fun fillRow(graphics: Graphics2D, source: BackgroundRows, index: Int, color: Color) {
+    val x = source.start(index)
+    val y = source.top(index)
+    val rectangle = Rectangle2D.Double(x, y, source.end(index) - x, source.bottom(index) - y)
+    EditorPainter.fillRectExact(graphics, rectangle, color)
+  }
+
+  /**
+   * Gives the id of the style of [layer].
+   * The style keeps the largest span of its layers.
+   * The span orders the styles that no block of [paintLayeredBlock] orders.
+   */
+  private fun styleIdOf(layer: BackgroundLayer): Int {
+    val known = styleIds[layer]
+    if (known != null) {
+      val style = styles[known]
+      if (layer.span > style.span) {
+        styles[known] = style.copy(span = layer.span)
       }
-      is CornerType.InvertedRounded -> {
-        path.quadTo(right, bottom, right + bottomRightType.radius, bottom)
-        path.lineTo(right - bottomRightType.radius, bottom)
-      }
-      is CornerType.Rounded -> {
-        path.quadTo(right, bottom, right - bottomRightType.radius, bottom)
-      }
+      return known
     }
-
-    path.lineTo(left + bottomLeftType.radius, bottom)
-    when (bottomLeftType) {
-      is CornerType.Straight -> {
-        path.lineTo(left, bottom)
-        path.lineTo(left, bottom - radius)
-      }
-      is CornerType.InvertedRounded -> {
-        path.lineTo(left, bottom)
-        path.lineTo(left, bottom - radius)
-        path.quadTo(left, bottom, left - bottomLeftType.radius, bottom)
-        path.lineTo(left, bottom)
-        path.lineTo(left, bottom - radius)
-      }
-      is CornerType.Rounded -> {
-        path.quadTo(left, bottom, left, bottom - radius)
-      }
-    }
-
-    path.lineTo(left, top + topLeftType.radius)
-    path.closePath()
-
-    graphics.fill(path)
+    val id = styles.size
+    styleIds[layer] = id
+    styles.add(layer)
+    return id
   }
 }
+
+private fun edgeOf(above: Int, below: Int): Long = (above.toLong() shl 32) or below.toLong()
+
+private fun aboveOf(edge: Long): Int = (edge ushr 32).toInt()
+
+private fun belowOf(edge: Long): Int = edge.toInt()

@@ -8262,8 +8262,6 @@ com.intellij.openapi.editor.impl.view.XCorrector$LeftAligned
 com.intellij.openapi.editor.impl.ClipDetector
 com.intellij.openapi.editor.impl.view.CaretDataInView
 com.intellij.openapi.editor.impl.view.SelectionInlayQueries
-com.intellij.openapi.editor.impl.view.HighlightLine
-com.intellij.openapi.editor.impl.view.AxisBounds
 com.intellij.openapi.editor.impl.view.LineWhitespacePaintingStrategy
 com.intellij.openapi.editor.impl.view.EditorPainter$Session$1
 com.intellij.openapi.actionSystem.impl.FloatingToolbar

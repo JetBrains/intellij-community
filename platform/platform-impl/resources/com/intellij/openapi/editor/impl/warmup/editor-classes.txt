@@ -346,11 +346,9 @@ com.intellij.openapi.editor.impl.view.FontLayoutService$Companion
 com.intellij.openapi.editor.impl.view.GuardedBlocksIndex
 com.intellij.openapi.editor.impl.view.GuardedBlocksIndex$Builder
 com.intellij.openapi.editor.impl.view.GuardedBlocksIndex$DocumentBuilder
-com.intellij.openapi.editor.impl.view.IntervalSet
 com.intellij.openapi.editor.impl.view.IterationState$HighlighterSweep
 com.intellij.openapi.editor.impl.view.LineBidiRun
 com.intellij.openapi.editor.impl.view.LineChunk
-com.intellij.openapi.editor.impl.view.LineSet
 com.intellij.openapi.editor.impl.view.LineVisualFragment
 com.intellij.openapi.editor.impl.view.LogicalColumns
 com.intellij.openapi.editor.impl.view.LogicalLines

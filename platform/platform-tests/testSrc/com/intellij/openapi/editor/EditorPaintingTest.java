@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingKeys;
@@ -569,6 +570,21 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   @Test
+  public void testPartialRepaintOfRoundedHighlighterAfterLineEnd() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("ab\ncde\nfg\nhijklmnop");
+        ((RangeHighlighterEx)addRangeHighlighter(2, 2, HighlighterLayer.WARNING, null, Color.red)).setAfterEndOfLine(true);
+        addRangeHighlighter(5, 6, HighlighterLayer.WARNING, null, Color.red);
+        checkPartialRepaint(1);
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
   public void testPartialRepaintOfRoundedVirtualSelection() {
     myFixture.runTest(() -> {
       var state = setSelectionLook(true, false);
@@ -586,6 +602,108 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
           assertEquals(6, caret.getSelectionEndPosition().column, "the selection does not end past the line end");
         }
         checkPartialRepaint(1);
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testRoundedPillOfOneCharacter() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("abcd\n<caret>efghijklmn");
+        addRangeHighlighter(0, 1, HighlighterLayer.WARNING, null, Color.red);
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testRoundedPillNextToSelection() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("ab<selection>cd<caret></selection>ef\nghijklmnop");
+        addRangeHighlighter(0, 2, HighlighterLayer.WARNING, null, Color.red);
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testOverlappingRoundedHighlighters() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("abcdefghij\n<caret>klm");
+        addRangeHighlighter(0, 6, HighlighterLayer.WARNING, null, Color.red);
+        addRangeHighlighter(3, 9, HighlighterLayer.ERROR, null, Color.green);
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testAdjacentRoundedHighlightersGiveOneShape() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("abcdef\nghijkl\n<caret>mnopqrst");
+        addRangeHighlighter(0, 4, HighlighterLayer.WARNING, null, Color.red);
+        addRangeHighlighter(9, 13, HighlighterLayer.WARNING, null, Color.red);
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testRoundedHighlighterAcrossSoftWrap() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("abcdefgh");
+        configureSoftWraps(4);
+        addRangeHighlighter(2, 6, HighlighterLayer.WARNING, null, Color.red);
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testRoundedHighlighterOnCaretLine() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("abcd<caret>efghij");
+        addRangeHighlighter(2, 6, HighlighterLayer.WARNING, null, Color.red);
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testRoundedHighlighterWithHole() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("abcdef\nghijkl\nmnopqr\n<caret>s");
+        addRangeHighlighter(0, 9, HighlighterLayer.WARNING, null, Color.red);
+        addRangeHighlighter(11, 20, HighlighterLayer.WARNING, null, Color.red);
+        checkResult();
       } finally {
         restoreSelectionState(state);
       }
@@ -828,6 +946,71 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   @Test
+  public void testVirtualSelectionOverLineExtensionBackground() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(false, false);
+      try {
+        runTestVirtualSelectionOverLineExtensionBackground();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testVirtualSelectionOverLineExtensionBackgroundRounded() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, false);
+      try {
+        runTestVirtualSelectionOverLineExtensionBackground();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  /**
+   * Asserts that the selection past the end of line 0 covers the background of a line extension.
+   * An inline inlay at the line end keeps the selection end past the line end.
+   */
+  private void runTestVirtualSelectionOverLineExtensionBackground() throws IOException {
+    myFixture.initText("ab\ncdefghijklmnopqrst");
+    EditorEx editor = (EditorEx)myFixture.getEditor();
+    editor.getSettings().setVirtualSpace(true);
+    myFixture.addInlay(2);
+    TextAttributes extensionAttributes = new TextAttributes(null, Color.green, null, null, Font.PLAIN);
+    editor.registerLineExtensionPainter(
+      line -> line == 0 ? Collections.singleton(new LineExtensionInfo("      ", extensionAttributes)) : Collections.emptyList()
+    );
+    editor.getCaretModel().setCaretsAndSelections(List.of(
+      new CaretState(new LogicalPosition(0, 5), new LogicalPosition(0, 1), new LogicalPosition(0, 5))
+    ));
+    VisualPosition selectionEnd = editor.getSelectionModel().getSelectionEndPosition();
+    assertNotNull(selectionEnd);
+    assertEquals(6, selectionEnd.column, "the selection does not end past the line end");
+    paintEditor(false, null, null); // first paint triggers size update due to line extensions
+    BufferedImage image = paintEditor(false, null, null);
+    int spaceWidth = EditorUtil.getPlainSpaceWidth(editor);
+    int endX = editor.visualPositionToXY(selectionEnd).x;
+    int y = editor.visualLineToY(0) + editor.getLineHeight() / 2;
+    int selectionRgb = editor.getSelectionModel().getTextAttributes().getBackgroundColor().getRGB();
+    assertEquals(Color.green.getRGB(), image.getRGB(endX + spaceWidth / 2, y), "the line extension is absent after the selection");
+    assertEquals(selectionRgb, image.getRGB(endX - spaceWidth / 2, y), "the line extension covers the selection past the line end");
+  }
+
+  @Test
+  public void testHuggingBlockOverLineExtensionBackground() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        runTestHuggingBlockOverLineExtensionBackground();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
   public void testHuggingBlockOverLineExtensionBackgroundStraight() {
     myFixture.runTest(() -> {
       var state = setSelectionLook(false, true);
@@ -858,6 +1041,109 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
     int selectionRgb = editor.getSelectionModel().getTextAttributes().getBackgroundColor().getRGB();
     assertEquals(Color.green.getRGB(), image.getRGB(lineEndX + 4 * spaceWidth, y), "the line extension is absent after the block");
     assertEquals(selectionRgb, image.getRGB(lineEndX + spaceWidth / 2, y), "the line extension covers the hugging block");
+  }
+
+  @Test
+  public void testAfterLineEndBackgroundOverSelection() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(false, false);
+      try {
+        runTestAfterLineEndBackgroundOverSelection();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testAfterLineEndBackgroundOverSelectionRounded() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, false);
+      try {
+        runTestAfterLineEndBackgroundOverSelection();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  /**
+   * Asserts that a background after the end of a line covers the selection on line 0.
+   * On line 1, it covers the background of a line extension.
+   */
+  private void runTestAfterLineEndBackgroundOverSelection() throws IOException {
+    myFixture.initText("ab\ncd\nefghijklmnop");
+    EditorEx editor = (EditorEx)myFixture.getEditor();
+    TextAttributes extensionAttributes = new TextAttributes(null, Color.green, null, null, Font.PLAIN);
+    editor.registerLineExtensionPainter(
+      line -> line == 1 ? Collections.singleton(new LineExtensionInfo("    ", extensionAttributes)) : Collections.emptyList()
+    );
+    ((RangeHighlighterEx)addRangeHighlighter(2, 2, HighlighterLayer.WARNING, null, Color.red)).setAfterEndOfLine(true);
+    ((RangeHighlighterEx)addRangeHighlighter(5, 5, HighlighterLayer.WARNING, null, Color.red)).setAfterEndOfLine(true);
+    editor.getSelectionModel().setSelection(0, 3);
+    paintEditor(false, null, null); // first paint triggers size update due to line extensions
+    BufferedImage image = paintEditor(false, null, null);
+    int spaceWidth = EditorUtil.getPlainSpaceWidth(editor);
+    int boxX = editor.offsetToXY(2).x + spaceWidth / 2;
+    int middle = editor.getLineHeight() / 2;
+    int selectionY = editor.visualLineToY(0) + middle;
+    int extensionY = editor.visualLineToY(1) + middle;
+    int selectionRgb = editor.getSelectionModel().getTextAttributes().getBackgroundColor().getRGB();
+    assertEquals(selectionRgb, image.getRGB(boxX + 2 * spaceWidth, selectionY), "the selection does not fill line 0 after its end");
+    assertEquals(Color.green.getRGB(), image.getRGB(boxX + 2 * spaceWidth, extensionY), "the line extension is absent on line 1");
+    assertEquals(Color.red.getRGB(), image.getRGB(boxX, selectionY), "the selection covers the background after the end of line 0");
+    assertEquals(Color.red.getRGB(), image.getRGB(boxX, extensionY), "the line extension covers the background after the end of line 1");
+  }
+
+  @Test
+  public void testAfterLineEndEffectOverBackground() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(false, false);
+      try {
+        runTestAfterLineEndEffectOverBackground();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testAfterLineEndEffectOverBackgroundRounded() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, false);
+      try {
+        runTestAfterLineEndEffectOverBackground();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  /**
+   * Asserts that the effect of a highlighter after the end of line 1 paints over the background of the same highlighter.
+   */
+  private void runTestAfterLineEndEffectOverBackground() throws IOException {
+    myFixture.initText("ab\ncd\nef");
+    EditorEx editor = (EditorEx)myFixture.getEditor();
+    TextAttributes attributes = new TextAttributes(null, Color.red, Color.blue, EffectType.STRIKEOUT, Font.PLAIN);
+    ((RangeHighlighterEx)addRangeHighlighter(5, 5, HighlighterLayer.WARNING, attributes)).setAfterEndOfLine(true);
+    BufferedImage image = paintEditor(false, null, null);
+    int boxX = editor.offsetToXY(5).x;
+    int boxY = editor.visualLineToY(1);
+    int redCount = 0;
+    int blueCount = 0;
+    for (int x = boxX; x < boxX + EditorUtil.getPlainSpaceWidth(editor) - 1; x++) {
+      for (int y = boxY; y < boxY + editor.getLineHeight(); y++) {
+        int rgb = image.getRGB(x, y);
+        if (rgb == Color.red.getRGB()) {
+          redCount++;
+        } else if (rgb == Color.blue.getRGB()) {
+          blueCount++;
+        }
+      }
+    }
+    assertTrue(redCount > 0, "the background after the end of line 1 is absent");
+    assertTrue(blueCount > 0, "the effect after the end of line 1 is absent or under the background");
   }
 
   @Test
