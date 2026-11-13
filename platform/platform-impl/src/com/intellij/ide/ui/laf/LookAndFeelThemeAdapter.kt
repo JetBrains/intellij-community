@@ -300,6 +300,9 @@ fun createBaseLaF(linuxSystemFont: FontUIResource?): LookAndFeel {
       return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as BasicLookAndFeel
     }
   }
+  else if (OS.CURRENT == OS.Windows && isWindowsSystemFontWithoutFallbackLaf && !GraphicsEnvironment.isHeadless()) {
+    return IdeaLaf(customFontDefaults = null, systemFont = readWindowsSystemFont())
+  }
   else if (OS.CURRENT != OS.Linux || GraphicsEnvironment.isHeadless()) {
     return IdeaLaf(customFontDefaults = null)
   }
