@@ -12,7 +12,6 @@ import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.junit.jupiter.api.Test
 import java.awt.Color
 import java.nio.file.Path
@@ -26,10 +25,6 @@ internal class ComposeColorLineMarkerProviderDescriptorTest : ComposeCodeInsight
 
   override val testDataProjectRoot: Path
     get() = super.testDataProjectRoot.resolve(COLOR_LINE_MARKER_PROJECT_NAME)
-
-  override fun FileTestFixture.Builder.configureProject() {
-    withAndroidSdk()
-  }
 
   @Test
   fun testColorLong() = doTest(
