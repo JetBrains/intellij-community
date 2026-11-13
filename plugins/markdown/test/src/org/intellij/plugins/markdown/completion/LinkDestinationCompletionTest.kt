@@ -2,11 +2,10 @@
 package org.intellij.plugins.markdown.completion
 
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
-import com.intellij.testFramework.UsefulTestCase.assertContainsElements
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.application
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -39,7 +38,7 @@ class LinkDestinationCompletionTest {
     myFixture.addFileToProject("my final.md", "")
     myFixture.configureByText("some.md", "[x](<my fi<caret>")
     val variants = myFixture.completeBasic().orEmpty()
-    assertContainsElements(variants.map { it.lookupString }, "my%20file.md", "my%20final.md")
+    assertThat(variants.map { it.lookupString }).contains("my%20file.md", "my%20final.md")
     application.invokeAndWait {
       myFixture.lookup.currentItem = variants.first { it.lookupString == "my%20file.md" }
       myFixture.type('\n')
@@ -53,7 +52,7 @@ class LinkDestinationCompletionTest {
     myFixture.addFileToProject("my final.md", "")
     myFixture.configureByText("some.md", "[x](my fi<caret>")
     val variants = myFixture.completeBasic().orEmpty().map { it.lookupString }
-    assertContainsElements(variants, "my%20file.md", "my%20final.md")
+    assertThat(variants).contains("my%20file.md", "my%20final.md")
   }
 
   @Test
@@ -62,7 +61,7 @@ class LinkDestinationCompletionTest {
     myFixture.addFileToProject("my final.md", "")
     myFixture.configureByText("some.md", "[x](my%20fi<caret>")
     val variants = myFixture.completeBasic().orEmpty().map { it.lookupString }
-    assertContainsElements(variants, "my%20file.md", "my%20final.md")
+    assertThat(variants).contains("my%20file.md", "my%20final.md")
   }
 
   @Test
@@ -70,7 +69,7 @@ class LinkDestinationCompletionTest {
     myFixture.addFileToProject("foo.txt", "")
     myFixture.configureByText("some.md", "foo](bar fo<caret>")
     val variants = myFixture.completeBasic()
-    assertEmpty(variants.orEmpty())
+    assertThat(variants.orEmpty()).isEmpty()
     myFixture.checkResult("foo](bar fo<caret>")
   }
 }

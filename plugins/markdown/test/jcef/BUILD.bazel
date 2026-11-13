@@ -112,7 +112,6 @@ jvm_library(
         "//platform/diff-api:diff",
         "//platform/diff-impl",
         "//plugins/textmate/plugin",
-        "//libraries/junit4",
         "//libraries/junit6",
         "//libraries/junit6-params",
         "//plugins/grazie/src/test:grazie-tests_test_lib",
