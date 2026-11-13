@@ -2676,6 +2676,65 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
               print(1)
       #       ^^^^^^^^ WARNING This code is unreachable
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93958"])
+    fun `false literal TYPE_CHECKING keeps the if body and the code after it reachable`() = test("""
+      from typing import Literal
+
+      TYPE_CHECKING: Literal[False] = False
+      if TYPE_CHECKING:
+          print(1)
+      print(2)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93958"])
+    fun `false literal TYPE_CHECKING of a module keeps the code after the if reachable`() = test("""
+      import mod
+
+      if mod.TYPE_CHECKING:
+          pass
+      if __name__ == "__main__":
+          print(1)
+      """.trimIndent(), "mod.py" to """
+      TYPE_CHECKING = False
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93958"])
+    fun `false literal TYPE_CHECKING in parentheses keeps the code after the if reachable`() = test("""
+      from typing import Literal
+
+      TYPE_CHECKING: Literal[False] = False
+      if (TYPE_CHECKING):
+          print(1)
+      print(2)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93958"])
+    fun `false literal TYPE_CHECKING keeps a compound condition body reachable`() = test("""
+      from typing import Literal
+
+      TYPE_CHECKING: Literal[False] = False
+
+      def f(flag: bool):
+          if TYPE_CHECKING and flag:
+              print(1)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93958"], classes = [PyTypeCheckerInspection::class])
+    @TestInspections(enableInspections = [PyTypeCheckerInspection::class])
+    fun `false literal TYPE_CHECKING keeps the type check after a negated if`() = test("""
+      from typing import Literal
+
+      TYPE_CHECKING: Literal[False] = False
+      if not TYPE_CHECKING:
+          pass
+      x: int = "s" # WARNING Expected type 'int', got 'Literal["s"]' instead
+      """.trimIndent())
   }
 
   @Nested
