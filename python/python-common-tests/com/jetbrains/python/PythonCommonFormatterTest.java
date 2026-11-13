@@ -1124,6 +1124,14 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
     doTest();
   }
 
+  @TestFor(issues = "PY-94100")
+  public void testWrapLongFromImportBeforeImportKeyword() {
+    PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = true;
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 88);
+    getCommonCodeStyleSettings().WRAP_LONG_LINES = true;
+    doTest();
+  }
+
   // TODO enable after PY-61453 fixed
   //public void testFStringFragmentWrappingSplitInsideNestedExpressionWithParentheses() {
   //  PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = true;

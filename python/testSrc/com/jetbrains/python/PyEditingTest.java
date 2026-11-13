@@ -5,6 +5,7 @@ import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -1103,6 +1104,30 @@ public class PyEditingTest extends PyTestCase {
         """, true);
   }
 
+  @TestFor(issues = "PY-94100")
+  public void testBackslashBeforeImportKeywordInFromImport() {
+    doTestEnter(
+      """
+        from collections <caret>import Hashable, Iterable
+        """,
+      """
+        from collections \\
+            import Hashable, Iterable
+        """, true);
+  }
+
+  @TestFor(issues = "PY-94100")
+  public void testParenthesiseImportStatementBeforeFirstName() {
+    doTestEnter(
+      """
+        from collections import <caret>Hashable, Iterable
+        """,
+      """
+        from collections import (
+            Hashable, Iterable)
+        """, true);
+  }
+
   public void testParenthesiseCallChain() {
     doTestEnter(
       """
@@ -1218,6 +1243,56 @@ public class PyEditingTest extends PyTestCase {
         with (open('foo.txt') as foo,\s
               open('bar.txt') as bar):
             pass
+        """, true);
+  }
+
+  @TestFor(issues = "PY-94100")
+  public void testBackslashBeforeWithItems() {
+    doTestEnter(
+      """
+        with<caret> open('foo.txt') as foo, open('bar.txt') as bar:
+            pass
+        """,
+      """
+        with\\
+                open('foo.txt') as foo, open('bar.txt') as bar:
+            pass
+        """, true);
+  }
+
+  @TestFor(issues = "PY-94100")
+  public void testParenthesiseBinaryExpressionInWithStatementBody() {
+    doTestEnter(
+      """
+        with f() as g: x = a + <caret>b
+        """,
+      """
+        with f() as g: x = (a +\s
+                            b)
+        """, true);
+  }
+
+  @TestFor(issues = "PY-94100")
+  public void testBackslashBeforeImportKeywordInStarImport() {
+    doTestEnter(
+      """
+        from collections <caret>import *
+        """,
+      """
+        from collections \\
+            import *
+        """, true);
+  }
+
+  @TestFor(issues = "PY-94100")
+  public void testBackslashBeforeStarInStarImport() {
+    doTestEnter(
+      """
+        from collections import <caret>*
+        """,
+      """
+        from collections import \\
+            *
         """, true);
   }
 

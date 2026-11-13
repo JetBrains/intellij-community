@@ -347,6 +347,25 @@ class PyDefaultProfileFormatterTest {
     }
   }
 
+  /**
+   * The default profile has a right margin of 88 and wraps long lines. The long-line wrap must not split
+   * the `import` keyword.
+   */
+  @Test
+  @TestFor(issues = ["PY-94100"])
+  fun `default profile wraps a long from import between tokens`() {
+    assertReformatted(
+      """
+      from src.find_the_city_with_the_smallest_number_of_neighbors_at_a_threshold_distance import Solution
+      """.trimIndent(),
+      """
+      from src.find_the_city_with_the_smallest_number_of_neighbors_at_a_threshold_distance \
+          import \
+          Solution
+      """.trimIndent(),
+    ) { PyDefaultStyleGuide.apply(it) }
+  }
+
   private fun withNewDefaultsActive(action: () -> Unit) {
     CodeStyleSettings.getDefaults()  // Create the shared defaults before the flags change the baseline.
     val disposable = Disposer.newDisposable()
@@ -367,13 +386,13 @@ class PyDefaultProfileFormatterTest {
   private fun assertReformatted(
     @Language("Python") before: String,
     @Language("Python") expected: String,
-    configure: (PyCodeStyleSettings) -> Unit,
+    configure: (CodeStyleSettings) -> Unit,
   ) {
     val fixture = codeInsightFixture
     fixture.configureByText("a.py", before)
 
     val tempSettings = CodeStyle.createTestSettings()
-    configure(tempSettings.getCustomSettings(PyCodeStyleSettings::class.java))
+    configure(tempSettings)
 
     CodeStyle.doWithTemporarySettings(fixture.project, tempSettings, Runnable {
       WriteCommandAction.runWriteCommandAction(fixture.project, Runnable {

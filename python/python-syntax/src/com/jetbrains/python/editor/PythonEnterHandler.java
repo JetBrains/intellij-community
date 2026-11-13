@@ -149,7 +149,7 @@ public final class PythonEnterHandler implements EnterHandlerDelegate {
             insertionOffset++;
           }
           if (parenthesiseOnEnter) {
-            parenthesise(stringElement, doc);
+            parenthesise(stringElement.getTextRange(), doc);
             caretOffset.set(caretOffset.get() + 1);
             insertionOffset++;
           }
@@ -175,9 +175,9 @@ public final class PythonEnterHandler implements EnterHandlerDelegate {
       if (atCaret != null) {
         // Set of statements which can be parenthesised is a subset of statements which can be split by backslash
         if (PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER) {
-          PsiElement elementToWrap = findElementToParenthesise(atCaret);
-          if (elementToWrap != null) {
-            parenthesise(elementToWrap, doc);
+          TextRange rangeToParenthesise = findRangeToParenthesise(atCaret, offset);
+          if (rangeToParenthesise != null) {
+            parenthesise(rangeToParenthesise, doc);
             caretOffset.set(caretOffset.get() + 1);
             return Result.Continue;
           }
@@ -189,35 +189,36 @@ public final class PythonEnterHandler implements EnterHandlerDelegate {
     return Result.Continue;
   }
 
-  private static @Nullable PsiElement findElementToParenthesise(@NotNull PsiElement nodeAtCaret) {
+  /**
+   * Returns the range of the outermost wrappable element that contains the offset.
+   * The parentheses make the line break legal only when the break is between them.
+   * For example, a break before "import" in a "from" import needs a backslash.
+   */
+  private static @Nullable TextRange findRangeToParenthesise(@NotNull PsiElement nodeAtCaret, int offset) {
+    TextRange result = null;
     PsiElement wrappable = nodeAtCaret;
-
-    while (true) {
-      PsiElement next = PsiTreeUtil.getParentOfType(wrappable, PyEditorHandlerConfig.CLASSES_TO_PARENTHESISE_ON_ENTER);
-      if (next == null) {
-        break;
+    while ((wrappable = PsiTreeUtil.getParentOfType(wrappable, PyEditorHandlerConfig.CLASSES_TO_PARENTHESISE_ON_ENTER)) != null) {
+      TextRange range = getRangeToParenthesise(wrappable);
+      if (range != null && range.containsOffset(offset)) {
+        result = range;
       }
-      wrappable = next;
     }
-
-    return wrappable != nodeAtCaret ? wrappable : null;
+    return result;
   }
 
-  private static void parenthesise(@NotNull PsiElement wrappable, @NotNull Document doc) {
-    TextRange rangeToParenthesise;
+  private static @Nullable TextRange getRangeToParenthesise(@NotNull PsiElement wrappable) {
     if (wrappable instanceof PyAstFromImportStatement fromImportStatement) {
-      rangeToParenthesise = getRangeForPsiElementArray(fromImportStatement.getImportElements());
+      return getRangeForPsiElementArray(fromImportStatement.getImportElements());
     }
-    else if (wrappable instanceof PyAstWithStatement withStatement) {
-      rangeToParenthesise = getRangeForPsiElementArray(withStatement.getWithItems());
+    if (wrappable instanceof PyAstWithStatement withStatement) {
+      return getRangeForPsiElementArray(withStatement.getWithItems());
     }
-    else {
-      rangeToParenthesise = wrappable.getTextRange();
-    }
-    if (rangeToParenthesise != null) {
-      doc.insertString(rangeToParenthesise.getEndOffset(), ")");
-      doc.insertString(rangeToParenthesise.getStartOffset(), "(");
-    }
+    return wrappable.getTextRange();
+  }
+
+  private static void parenthesise(@NotNull TextRange rangeToParenthesise, @NotNull Document doc) {
+    doc.insertString(rangeToParenthesise.getEndOffset(), ")");
+    doc.insertString(rangeToParenthesise.getStartOffset(), "(");
   }
 
   private static @Nullable TextRange getRangeForPsiElementArray(PsiElement[] items) {
