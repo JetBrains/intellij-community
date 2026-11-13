@@ -1,0 +1,11 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.asm.tools"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlin.metadata"/>
+    <module name="intellij.libraries.kotlinx.bcv"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>
