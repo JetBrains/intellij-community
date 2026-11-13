@@ -22,8 +22,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class FileNavigatorImpl : FileNavigator {
-  override fun canNavigateToSource(descriptor: OpenFileDescriptor): Boolean {
+open class FileNavigatorImpl : FileNavigator {
+  open override fun canNavigateToSource(descriptor: OpenFileDescriptor): Boolean {
     val file = descriptor.file
     if (file.isValid) {
       return FileEditorManager.getInstance(descriptor.project).canOpenFile(file) || file.fileType is INativeFileType
@@ -37,7 +37,7 @@ class FileNavigatorImpl : FileNavigator {
     navigate(descriptor, requestFocus, requestedEditor = contextEditor)
   }
 
-  override fun navigate(descriptor: OpenFileDescriptor, requestFocus: Boolean, requestedEditor: Editor?) {
+  open override fun navigate(descriptor: OpenFileDescriptor, requestFocus: Boolean, requestedEditor: Editor?) {
     check(canNavigate(descriptor)) { "target not valid" }
     if (!descriptor.file.isDirectory && navigateInEditorOrNativeApp(descriptor, requestFocus, requestedEditor)) {
       return
@@ -61,7 +61,7 @@ class FileNavigatorImpl : FileNavigator {
     }
   }
 
-  override fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
+  open override fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
     return navigateInEditor(descriptor, requestFocus, contextEditor)
   }
 
