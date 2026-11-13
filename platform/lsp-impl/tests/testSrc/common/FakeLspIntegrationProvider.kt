@@ -39,6 +39,7 @@ internal fun TestFixture<Project>.fakeLspIntegrationFixture(
   isSupportedFile: ((VirtualFile) -> Boolean)? = null,
   offerServerLogInNotifications: Boolean = false,
   useSocket: Boolean = false,
+  beforeServerStart: (() -> Unit)? = null,
 ): TestFixture<FakeLspIntegration> = testFixture { _ ->
   val projectFixture = this@fakeLspIntegrationFixture
   val project = projectFixture.init()
@@ -54,7 +55,7 @@ internal fun TestFixture<Project>.fakeLspIntegrationFixture(
 
   project.putUserData(FAKE_LSP_CONFIG_KEY, FakeLspConfig(lspCustomization, configureClientCapabilities, configureServerCapabilities,
                                                           createLsp4jClient, isSupportedFile, offerServerLogInNotifications,
-                                                          useSocket))
+                                                          useSocket, beforeServerStart))
 
   initialized(FakeLspIntegration(project)) {
     project.putUserData(FAKE_LSP_CONFIG_KEY, null)
@@ -126,6 +127,8 @@ internal class FakeLspConfig(
   val isSupportedFile: ((VirtualFile) -> Boolean)? = null,
   val offerServerLogInNotifications: Boolean = false,
   val useSocket: Boolean = false,
+  /** Runs on the thread that starts the server process, before the process starts. A test can block it to hold the client in [LspServerState.Initializing]. */
+  val beforeServerStart: (() -> Unit)? = null,
 )
 
 private val FAKE_LSP_CONFIG_KEY = Key.create<FakeLspConfig>("FAKE_LSP_CONFIG_KEY")
@@ -163,6 +166,7 @@ internal open class FakeLspClientDescriptor(
     /** command is usable for debugging **/
     return object : GeneralCommandLine("fake --lsp") {
       override fun startProcess(): Process {
+        config.beforeServerStart?.invoke()
         val fakeServer = createServer()
         server = fakeServer
         return fakeServer

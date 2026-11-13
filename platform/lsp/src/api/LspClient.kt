@@ -35,6 +35,8 @@ interface LspClient {
    * Sends a [notification](https://microsoft.github.io/language-server-protocol/specification/#notificationMessage)
    * from the IDE to the LSP server.
    *
+   * The client does not send the notification when the server is not in the [LspServerState.Running] state.
+   *
    * Example:
    *
    *    lspClient.sendNotification { it.workspaceService.didChangeConfiguration(DidChangeConfigurationParams(...)) }

@@ -20,9 +20,16 @@ import java.util.concurrent.TimeoutException
 abstract class LspRequestExecutorBase(private val lspClient: LspClientImpl) {
   private val executorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("LSP Executor: " + lspClient.descriptor, 1)
 
-  internal fun sendNotification(lsp4jSender: (Lsp4jServer) -> Unit) = synchronized(executorService) {
-    if (!executorService.isShutdown) {
-      executorService.execute { lsp4jSender(lspClient.lsp4jServer) }
+  internal fun sendNotification(lsp4jSender: (Lsp4jServer) -> Unit) {
+    if (lspClient.state != LspServerState.Running) {
+      lspClient.logDebug("Server is not running, skipping notification ${lsp4jSender.javaClass.name}")
+      return
+    }
+
+    synchronized(executorService) {
+      if (!executorService.isShutdown) {
+        executorService.execute { lsp4jSender(lspClient.lsp4jServer) }
+      }
     }
   }
 

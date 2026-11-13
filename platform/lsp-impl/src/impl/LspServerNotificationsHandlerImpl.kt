@@ -318,8 +318,8 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
 
             coroutineContext.job.invokeOnCompletion { throwable ->
               // A cancellation while the server is running means the user cancelled the indicator, so tell the server.
-              // A cancellation after the server stopped comes from cancelAllProgress(); there is no server to notify anymore.
-              if (throwable is CancellationException && value.cancellable == true && lspClient.state == LspServerState.Running) {
+              // A cancellation after the server stopped comes from cancelAllProgress(). The client skips the notification then.
+              if (throwable is CancellationException && value.cancellable == true) {
                 lspClient.sendNotification { it.cancelProgress(WorkDoneProgressCancelParams(token)) }
               }
               progressJobs.remove(tokenId)
