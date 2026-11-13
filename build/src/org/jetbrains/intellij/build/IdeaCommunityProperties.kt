@@ -211,8 +211,6 @@ fun intellijCommunityBaseFragment(platformPrefix: String? = null): ProductModule
 
   include(CommunityProductFragments.javaIdeBaseFragment())
 
-  module("intellij.platform.coverage")
-  module("intellij.platform.coverage.agent")
   module("intellij.xml.xmlbeans")
   module("intellij.libraries.log4j.to.slf4j")
   module("intellij.libraries.xmlbeans")

@@ -1284,6 +1284,7 @@ plugins/copyright/vcs
 plugins/coverage
 plugins/coverage-common
 plugins/coverage-common/intellij.platform.coverage.agent
+plugins/coverage-common/plugin
 plugins/coverage/coverage_rt
 plugins/coverage/junit
 plugins/coverage/testng
