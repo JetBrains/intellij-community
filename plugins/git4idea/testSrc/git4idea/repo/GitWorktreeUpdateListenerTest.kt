@@ -1,22 +1,36 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.replaceService
-import com.intellij.util.application
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitWorkingTree
 import git4idea.ignore.findOrCreateDir
 import git4idea.test.MockGitRepository
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.util.concurrent.atomic.AtomicReference
 
-internal class GitWorktreeUpdateListenerTest : LightPlatformTestCase() {
+@TestApplication
+internal class GitWorktreeUpdateListenerTest {
+  private val projectFixture = projectFixture()
+  private val project get() = projectFixture.get()
+
+  @TestDisposable
+  private lateinit var disposable: Disposable
+
+  @Test
   fun `test repositoryUpdated triggers update for matching worktree`() {
     val root = createDir("root")
     val mockRepository = MockGitRepository(project, root)
@@ -42,6 +56,7 @@ internal class GitWorktreeUpdateListenerTest : LightPlatformTestCase() {
     }
   }
 
+  @Test
   fun `test repositoryUpdated does not trigger for same project`() {
     val root = createDir("root")
     val mockRepository = MockGitRepository(project, root)
@@ -60,10 +75,11 @@ internal class GitWorktreeUpdateListenerTest : LightPlatformTestCase() {
 
       listener.repositoryUpdated(project, root)
 
-      assertNull("Repository should NOT have been updated for same project", updatedRepository.get())
+      assertNull(updatedRepository.get(), "Repository should NOT have been updated for same project")
     }
   }
 
+  @Test
   fun `test repositoryUpdated does not trigger for single worktree`() {
     val root = createDir("root")
     val mockRepository = MockGitRepository(project, root)
@@ -81,6 +97,7 @@ internal class GitWorktreeUpdateListenerTest : LightPlatformTestCase() {
     }
   }
 
+  @Test
   fun `test repositoryUpdated does not trigger for non-matching root`() {
     val root = createDir("root")
     val mockRepository = MockGitRepository(project, root)
@@ -106,6 +123,7 @@ internal class GitWorktreeUpdateListenerTest : LightPlatformTestCase() {
     }
   }
 
+  @Test
   fun `test repositoryUpdated triggers for matching worktree when first repository has single worktree`() {
     val rootA = createDir("rootA")
     val repoA = MockGitRepository(project, rootA)
@@ -130,17 +148,17 @@ internal class GitWorktreeUpdateListenerTest : LightPlatformTestCase() {
       val differentProject = mock<Project>()
       listener.repositoryUpdated(differentProject, secondWorktreeRootB)
 
-      assertContainsElements(updatedRepositories, repoB)
-      assertDoesntContain(updatedRepositories, repoA)
+      assertThat(updatedRepositories).contains(repoB)
+      assertThat(updatedRepositories).doesNotContain(repoA)
     }
   }
 
-  private fun createDir(name: String): VirtualFile = application.runWriteAction(Computable { project.baseDir.findOrCreateDir(name) })
+  private fun createDir(name: String): VirtualFile = WriteAction.computeAndWait<VirtualFile, Throwable> { project.baseDir.findOrCreateDir(name) }
 
   private fun mockGitRepositoryManager(vararg repositories: GitRepository, action: () -> Unit) {
     val mockRepositoryManager = mock<GitRepositoryManager>()
     `when`(mockRepositoryManager.repositories).thenReturn(repositories.toList())
-    project.replaceService(GitRepositoryManager::class.java, mockRepositoryManager, testRootDisposable)
+    project.replaceService(GitRepositoryManager::class.java, mockRepositoryManager, disposable)
     action()
     Mockito.reset(mockRepositoryManager)
   }
