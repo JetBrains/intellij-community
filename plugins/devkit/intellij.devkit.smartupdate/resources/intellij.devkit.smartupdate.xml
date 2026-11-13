@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="com.intellij.smartUpdate"/>
     <module name="intellij.devkit.core"/>
+    <module name="intellij.devkit.ide"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.core"/>
