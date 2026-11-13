@@ -136,10 +136,23 @@ private fun KaType.toDfTypeNotNullable(): DfType {
             }
         }
 
-        is KaTypeParameterType -> symbol.upperBounds.map { type -> type.toDfType() }.fold(DfType.TOP, DfType::meet)
-        is KaIntersectionType -> conjuncts.map { type -> type.toDfType() }.fold(DfType.TOP, DfType::meet)
+        is KaTypeParameterType -> symbol.upperBounds.meetAsDfType()
+        is KaIntersectionType -> conjuncts.meetAsDfType()
         else -> DfType.TOP
     }
+}
+
+/**
+ * Meets the DfTypes of all components of an intersection type (or of all upper bounds of a type parameter).
+ * Primitive and reference DfTypes use different representations, so meeting them yields BOTTOM, which would make
+ * a nullable intersection like `Int? & T?` look like it may only hold `null`. When primitive components are present,
+ * only their meet is kept and the other components are discarded. This is a conservative approximation:
+ * it may lose precision for incompatible bounds but never excludes values the intersection admits.
+ */
+context(_: KaSession)
+private fun List<KaType>.meetAsDfType(): DfType {
+    val dfTypes = map { type -> type.toDfType() }
+    return dfTypes.filterIsInstance<DfPrimitiveType>().ifEmpty { dfTypes }.fold(DfType.TOP, DfType::meet)
 }
 
 context(_: KaSession)
