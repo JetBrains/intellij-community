@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.resolve;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -24,44 +25,58 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.LightResolveTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.LightResolveFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class ResolveVariable15Test extends LightResolveTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_5;
-  }
+import static com.intellij.testFramework.LightResolveFixtureKt.lightResolveFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class ResolveVariable15Test {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_1_5);
+  private final TestFixture<LightResolveFixture> resolveFixture = lightResolveFixture(projectFixture);
+
+  @Test
   public void testDuplicateStaticImport() throws Exception {
     resolveTarget();
   }
 
+  @Test
   public void testRhombExtending() throws Exception {
     resolveTarget();
   }
 
   private PsiElement resolveTarget() throws Exception {
     PsiReference ref = configure();
-    final JavaResolveResult result = ((PsiJavaReference)ref).advancedResolve(true);
-    PsiElement target = result.getElement();
-    assertNotNull(target);
-    assertTrue(result.isValidResult());
-    return target;
+    return ReadAction.computeBlocking(() -> {
+      final JavaResolveResult result = ((PsiJavaReference)ref).advancedResolve(true);
+      PsiElement target = result.getElement();
+      assertNotNull(target);
+      assertTrue(result.isValidResult());
+      return target;
+    });
   }
 
+  @Test
   public void testNavigateToEnumFunction() throws Exception {
     PsiElement element = resolveTarget();
-    assertTrue(element instanceof PsiMethod);
-    PsiClass aClass = ((PsiMethod)element).getContainingClass();
-    assertTrue(aClass instanceof PsiEnumConstantInitializer);
-    SearchScope scope = element.getUseScope();
-    assertFalse(scope instanceof LocalSearchScope);
+    ReadAction.runBlocking(() -> {
+      assertTrue(element instanceof PsiMethod);
+      PsiClass aClass = ((PsiMethod)element).getContainingClass();
+      assertTrue(aClass instanceof PsiEnumConstantInitializer);
+      SearchScope scope = element.getUseScope();
+      assertFalse(scope instanceof LocalSearchScope);
+    });
   }
 
   private PsiReference configure() throws Exception {
-    return findReferenceAtCaret("var15/" + getTestName(false) + ".java");
+    return resolveFixture.get().findReferenceAtCaret("var15/" + resolveFixture.get().getTestName(false) + ".java");
   }
 }

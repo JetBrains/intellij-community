@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.resolve;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiCallExpression;
 import com.intellij.psi.PsiElement;
@@ -22,68 +23,84 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.LightResolveTestCase;
+import com.intellij.testFramework.LightResolveFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.LightResolveFixtureKt.lightResolveFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class ResolveVarargsMethodTest extends LightResolveTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_1_5;
-  }
+@TestApplication
+public class ResolveVarargsMethodTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_1_5);
+  private final TestFixture<LightResolveFixture> resolveFixture = lightResolveFixture(projectFixture);
 
+  @Test
   public void testPrimitiveObject() throws Exception {
     doTest(1);
   }
 
+  @Test
   public void testPrimitiveString() throws Exception {
     doTest(2);
   }
 
+  @Test
   public void testObjectObject() throws Exception {
     doTest(2);
   }
 
   //bug in javac; @see jdk7
+  @Test
   public void testObjectObjectObject() throws Exception {
     doTest(2);
   }
 
+  @Test
   public void testStringObject() throws Exception {
     doTest(1);
   }
 
+  @Test
   public void testStringObjectString() throws Exception {
     doTest(1);
   }
 
+  @Test
   public void testStringStringString() throws Exception {
     doTest(2);
   }
 
   private void doTest(int resolved) throws Exception {
     final PsiReference ref = configureByFile();
-    assertThat(ref, instanceOf(PsiReferenceExpression.class));
-    final PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
-    PsiCallExpression call = (PsiCallExpression) refExpr.getParent();
-    JavaResolveResult resolveResult = call.resolveMethodGenerics();
-    PsiElement element = resolveResult.getElement();
-    if (resolved == 1) {
-      assertNotNull(element);
-    } else {
-      assertNull(element);
-    }
-    final JavaResolveResult[] candidates = refExpr.multiResolve(false);
-    assertEquals(resolved, candidates.length);
+    ReadAction.runBlocking(() -> {
+      assertThat(ref, instanceOf(PsiReferenceExpression.class));
+      final PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
+      PsiCallExpression call = (PsiCallExpression) refExpr.getParent();
+      JavaResolveResult resolveResult = call.resolveMethodGenerics();
+      PsiElement element = resolveResult.getElement();
+      if (resolved == 1) {
+        assertNotNull(element);
+      } else {
+        assertNull(element);
+      }
+      final JavaResolveResult[] candidates = refExpr.multiResolve(false);
+      assertEquals(resolved, candidates.length);
+    });
   }
 
   private PsiReference configureByFile() throws Exception {
-    return findReferenceAtCaret("method/varargs/" + getTestName(false) + ".java");
+    return resolveFixture.get().findReferenceAtCaret("method/varargs/" + resolveFixture.get().getTestName(false) + ".java");
   }
   private static PsiMethod checkResolvesUnique(final PsiReference ref) {
     assertThat(ref, instanceOf(PsiReferenceExpression.class));

@@ -16,66 +16,78 @@
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.LightResolveTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.LightResolveFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class TypeInference18Test extends LightResolveTestCase {
+import static com.intellij.testFramework.LightResolveFixtureKt.lightResolveFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@TestApplication
+public class TypeInference18Test {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightResolveFixture> resolveFixture = lightResolveFixture(projectFixture, JavaTestUtil.getJavaTestDataPath());
+
+  @Test
   public void testIDEA122406() throws Exception {
     doTest();
   }
 
+  @Test
   public void testSecondConflictResolution() throws Exception {
     doTestMethodCall();
   }
 
+  @Test
   public void testSecondConflictResolution1() throws Exception {
     doTestMethodCall();
   }
 
+  @Test
   public void testSecondConflictResolution2() throws Exception {
     doTestMethodCall();
   }
 
+  @Test
   public void testLambdaChainConflictResolution() throws Exception {
     doTestMethodCall();
   }
 
+  @Test
   public void testCachedSubstitutionDuringOverloadResolution() throws Exception {
-    PsiReference ref = findReferenceAtCaret("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + getTestName(false) + ".java");
-    assertNotNull(ref);
-    PsiMethodReferenceExpression methodCallExpression = PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethodReferenceExpression.class, false);
-    assertNotNull(methodCallExpression);
-    assertNotNull(methodCallExpression.resolve());
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    PsiReference ref = resolveFixture.get().findReferenceAtCaret("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + resolveFixture.get().getTestName(false) + ".java");
+    ReadAction.runBlocking(() -> {
+      assertNotNull(ref);
+      PsiMethodReferenceExpression methodCallExpression = PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethodReferenceExpression.class, false);
+      assertNotNull(methodCallExpression);
+      assertNotNull(methodCallExpression.resolve());
+    });
   }
 
   private void doTestMethodCall() throws Exception {
-    PsiReference ref = findReferenceAtCaret("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + getTestName(false) + ".java");
-    assertNotNull(ref);
-    PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethodCallExpression.class);
-    assertNotNull(methodCallExpression);
-    assertNotNull(methodCallExpression.resolveMethod());
+    PsiReference ref = resolveFixture.get().findReferenceAtCaret("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + resolveFixture.get().getTestName(false) + ".java");
+    ReadAction.runBlocking(() -> {
+      assertNotNull(ref);
+      PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethodCallExpression.class);
+      assertNotNull(methodCallExpression);
+      assertNotNull(methodCallExpression.resolveMethod());
+    });
   }
 
   private void doTest() throws Exception {
-    PsiReference ref = findReferenceAtCaret("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + getTestName(false) + ".java");
-    assertNotNull(ref);
-    assertNotNull(ref.resolve());
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+    PsiReference ref = resolveFixture.get().findReferenceAtCaret("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + resolveFixture.get().getTestName(false) + ".java");
+    ReadAction.runBlocking(() -> {
+      assertNotNull(ref);
+      assertNotNull(ref.resolve());
+    });
   }
 }

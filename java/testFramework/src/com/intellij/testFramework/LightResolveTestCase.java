@@ -7,6 +7,10 @@ import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use {@link LightResolveFixtureKt#lightResolveFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class LightResolveTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected PsiReference findReferenceAtCaret(@NotNull String filePath) {
     PsiFile file = myFixture.configureByFile(filePath);
