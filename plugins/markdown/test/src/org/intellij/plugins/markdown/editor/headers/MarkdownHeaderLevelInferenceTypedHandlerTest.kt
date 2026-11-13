@@ -1,17 +1,24 @@
 package org.intellij.plugins.markdown.editor.headers
 
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.RegistryKeyRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.typeInEditor
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
-class MarkdownHeaderLevelInferenceTypedHandlerTest: LightPlatformCodeInsightTestCase() {
-  @Rule
-  @JvmField
-  val rule = RegistryKeyRule("markdown.experimental.header.level.inference.enable", true)
+@TestApplication
+@RegistryKey(key = "markdown.experimental.header.level.inference.enable", value = "true")
+class MarkdownHeaderLevelInferenceTypedHandlerTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
 
   @Test
   fun `test simple single main header`() {
@@ -155,9 +162,11 @@ class MarkdownHeaderLevelInferenceTypedHandlerTest: LightPlatformCodeInsightTest
     doTest(content, expected)
   }
 
-  private fun doTest(content: String, expected: String) {
-    configureFromFileText("some.md", content)
-    type('#')
-    checkResultByText(expected)
+  private fun doTest(content: String, expected: String): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('#')
+      myFixture.checkResult(expected)
+    }
   }
 }

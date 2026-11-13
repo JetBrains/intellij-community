@@ -1,13 +1,28 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables
 
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.assertj.core.api.Assertions.assertThat
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
 
+@TestApplication
 @Suppress("MarkdownIncorrectTableFormatting")
-class MarkdownTableSeparatorRowAlignmentDetectionTest: LightPlatformCodeInsightTestCase() {
+class MarkdownTableSeparatorRowAlignmentDetectionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @Test
   fun `test all none`() {
     // language=Markdown
     doTest(
@@ -23,6 +38,7 @@ class MarkdownTableSeparatorRowAlignmentDetectionTest: LightPlatformCodeInsightT
     )
   }
 
+  @Test
   fun `test first left`() {
     // language=Markdown
     doTest(
@@ -38,6 +54,7 @@ class MarkdownTableSeparatorRowAlignmentDetectionTest: LightPlatformCodeInsightT
     )
   }
 
+  @Test
   fun `test first left second right`() {
     // language=Markdown
     doTest(
@@ -53,6 +70,7 @@ class MarkdownTableSeparatorRowAlignmentDetectionTest: LightPlatformCodeInsightT
     )
   }
 
+  @Test
   fun `test first center second left`() {
     // language=Markdown
     doTest(
@@ -68,6 +86,7 @@ class MarkdownTableSeparatorRowAlignmentDetectionTest: LightPlatformCodeInsightT
     )
   }
 
+  @Test
   fun `test all with spaces`() {
     // language=Markdown
     doTest(
@@ -85,6 +104,7 @@ class MarkdownTableSeparatorRowAlignmentDetectionTest: LightPlatformCodeInsightT
     )
   }
 
+  @Test
   fun `test many columns`() {
     // language=Markdown
     doTest(
@@ -104,13 +124,15 @@ class MarkdownTableSeparatorRowAlignmentDetectionTest: LightPlatformCodeInsightT
     )
   }
 
-  private fun doTest(content: String, expectedAlignments: List<MarkdownTableSeparatorRow.CellAlignment>) {
-    configureFromFileText("some.md", content)
-    val table = file.firstChild as? MarkdownTable
-    assertNotNull(table)
-    requireNotNull(table)
-    val separator = requireNotNull(table.separatorRow)
-    val alignments = separator.cellsRanges.indices.map { separator.getCellAlignment(it) }
-    assertOrderedEquals(alignments, expectedAlignments)
+  private fun doTest(content: String, expectedAlignments: List<MarkdownTableSeparatorRow.CellAlignment>): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    readAction {
+      val table = myFixture.file.firstChild as? MarkdownTable
+      assertNotNull(table)
+      requireNotNull(table)
+      val separator = requireNotNull(table.separatorRow)
+      val alignments = separator.cellsRanges.indices.map { separator.getCellAlignment(it) }
+      assertThat(alignments).containsExactlyElementsOf(expectedAlignments)
+    }
   }
 }

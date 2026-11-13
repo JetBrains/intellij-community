@@ -1,16 +1,29 @@
 package org.intellij.plugins.markdown.psi
 
 import com.intellij.lang.Language
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.typeInEditor
 import org.jetbrains.yaml.YAMLLanguage
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import org.toml.lang.TomlLanguage
 
-@RunWith(JUnit4::class)
-class FrontMatterInjectionTest: LightPlatformCodeInsightTestCase() {
+@TestApplication
+class FrontMatterInjectionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `test yaml gets injected`() {
     val content = """
@@ -58,8 +71,8 @@ class FrontMatterInjectionTest: LightPlatformCodeInsightTestCase() {
    * Enter keeps the default behaviour and does not move the closing brace.
    */
   @Test
-  fun `test enter between braces in toml front matter`() {
-    configureFromFileText(
+  fun `test enter between braces in toml front matter`(): Unit = timeoutRunBlocking {
+    myFixture.configureByText(
       "some.md",
       """
         +++
@@ -68,22 +81,26 @@ class FrontMatterInjectionTest: LightPlatformCodeInsightTestCase() {
       """.trimIndent()
     )
 
-    type('\n')
-    checkResultByText(
-      """
-        +++
-        key = {
-        <caret>}
-        +++
-      """.trimIndent()
-    )
+    withContext(Dispatchers.EDT) {
+      myFixture.typeInEditor('\n')
+      myFixture.checkResult(
+        """
+          +++
+          key = {
+          <caret>}
+          +++
+        """.trimIndent()
+      )
+    }
   }
 
-  private fun doTest(content: String, expectedLanguage: Language) {
-    configureFromFileText("some.md", content)
-    val offset = editor.caretModel.offset
-    val element = PsiUtilCore.getElementAtOffset(file, offset)
-    val language = element.language
-    assertEquals(expectedLanguage, language)
+  private fun doTest(content: String, expectedLanguage: Language): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    readAction {
+      val offset = myFixture.editor.caretModel.offset
+      val element = PsiUtilCore.getElementAtOffset(myFixture.file, offset)
+      val language = element.language
+      assertEquals(expectedLanguage, language)
+    }
   }
 }

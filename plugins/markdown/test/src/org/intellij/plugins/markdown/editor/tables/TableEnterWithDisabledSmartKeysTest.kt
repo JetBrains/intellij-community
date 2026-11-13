@@ -1,17 +1,27 @@
 package org.intellij.plugins.markdown.editor.tables
 
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.intellij.plugins.markdown.editor.MarkdownCodeInsightSettingsRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.executeAction
+import org.intellij.plugins.markdown.editor.markdownCodeInsightSettingsFixture
+import org.intellij.plugins.markdown.editor.typeInEditor
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
+@TestApplication
 @Suppress("MarkdownIncorrectTableFormatting", "MarkdownNoTableBorders")
-class TableEnterWithDisabledSmartKeysTest: LightPlatformCodeInsightTestCase() {
-  @get:Rule
-  val rule = MarkdownCodeInsightSettingsRule {
+class TableEnterWithDisabledSmartKeysTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  private val settings = markdownCodeInsightSettingsFixture {
     it.insertHtmlLineBreakInsideTables = false
     it.insertNewTableRowOnShiftEnter = false
   }
@@ -52,12 +62,14 @@ class TableEnterWithDisabledSmartKeysTest: LightPlatformCodeInsightTestCase() {
     doTest(before, after, shift = true)
   }
 
-  private fun doTest(content: String, expected: String, shift: Boolean = false) {
-    configureFromFileText("some.md", content)
-    when {
-      shift -> executeAction("EditorStartNewLine")
-      else -> type("\n")
+  private fun doTest(content: String, expected: String, shift: Boolean = false): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    withContext(Dispatchers.EDT) {
+      when {
+        shift -> myFixture.executeAction("EditorStartNewLine")
+        else -> myFixture.typeInEditor("\n")
+      }
+      myFixture.checkResult(expected)
     }
-    checkResultByText(expected)
   }
 }

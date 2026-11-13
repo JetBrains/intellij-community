@@ -2,58 +2,72 @@
 package org.intellij.plugins.markdown.editor.lists
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.intellij.plugins.markdown.editor.MarkdownCodeInsightSettingsRule
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.intellij.plugins.markdown.editor.executeAction
+import org.intellij.plugins.markdown.editor.markdownCodeInsightSettingsFixture
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
-@RunWith(JUnit4::class)
-class MarkdownListItemUnindentHandlerTest: LightPlatformCodeInsightTestCase() {
-  // Test data in this class was written for marker-width indentation
-  override fun setUp() {
-    super.setUp()
-    CodeStyle.getSettings(project).getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).USE_FIXED_INDENTS_FOR_SUBLISTS = false
+@TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/markdown/test/data/editor/lists/unindent")
+class MarkdownListItemUnindentHandlerTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
   }
 
-  @Rule
-  @JvmField
-  val rule = MarkdownCodeInsightSettingsRule { it.renumberListsOnType = true }
+  private val myFixture by codeInsightModuleFixture(projectFixture)
 
-  override fun getTestDataPath(): String = MarkdownTestingUtil.TEST_DATA_PATH + "/editor/lists/unindent/"
+  private val settings = markdownCodeInsightSettingsFixture { it.renumberListsOnType = true }
 
-  @Test
-  fun testSubItemWithChildren() = doTest()
+  private lateinit var testName: String
 
-  @Test
-  fun testSubItemWithChildrenInBlockQuote() = doTest()
-
-  @Test
-  fun testChecklistSubItemWithSubItems() = doTest()
+  // Test data in this class was written for marker-width indentation
+  @BeforeEach
+  fun setUp(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, true)
+    CodeStyle.getSettings(myFixture.project).getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).USE_FIXED_INDENTS_FOR_SUBLISTS = false
+  }
 
   @Test
-  fun testChecklistSubItemWithSubItemsLargerIndent() = doTest()
+  fun testSubItemWithChildren(): Unit = doTest()
 
   @Test
-  fun testUnindentMovesOnlySelectedItems() = doTest()
+  fun testSubItemWithChildrenInBlockQuote(): Unit = doTest()
 
   @Test
-  fun testUnselectedItemKeepsNestingOnUnindent() = doTest()
+  fun testChecklistSubItemWithSubItems(): Unit = doTest()
 
   @Test
-  fun testSubItemsOfUnselectedItemStayAligned() = doTest()
+  fun testChecklistSubItemWithSubItemsLargerIndent(): Unit = doTest()
+
+  @Test
+  fun testUnindentMovesOnlySelectedItems(): Unit = doTest()
+
+  @Test
+  fun testUnselectedItemKeepsNestingOnUnindent(): Unit = doTest()
+
+  @Test
+  fun testSubItemsOfUnselectedItemStayAligned(): Unit = doTest()
 
   // a whole-line selection made with the mouse ends at the start of the next line
   @Test
-  fun testItemAfterSelectionEndNotMoved() = doTest()
+  fun testItemAfterSelectionEndNotMoved(): Unit = doTest()
 
-  private fun doTest() {
-    val testName = getTestName(true)
-    configureByFile("$testName.md")
-    unindent()
-    checkResultByFile("$testName-after.md")
+  private fun doTest(): Unit = timeoutRunBlocking {
+    myFixture.configureByFile("$testName.md")
+    withContext(Dispatchers.EDT) {
+      myFixture.executeAction("EditorUnindentSelection")
+      myFixture.checkResultByFile("$testName-after.md")
+    }
   }
 }

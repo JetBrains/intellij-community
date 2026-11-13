@@ -1,131 +1,179 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.actions;
 
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import org.intellij.plugins.markdown.MarkdownTestingUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.intellij.plugins.markdown.editor.MarkdownEditorTestUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
-public class MarkdownToggleStrikeThroughTest extends LightPlatformCodeInsightTestCase {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
+@TestApplication
+@TestDataPath("$PROJECT_ROOT/community/plugins/markdown/test/data/actions/toggleStrikethrough")
+public class MarkdownToggleStrikeThroughTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+
+  private String testName;
+
+  @BeforeEach
+  void setUp(TestInfo testInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.getTestMethod().orElseThrow().getName(), true);
+  }
+
+  @Test
   public void testSimple() {
     doTest();
   }
 
+  @Test
   public void testSimpleNoSelection() {
     doTest();
   }
 
+  @Test
   public void testSimpleSelection() {
     doTest();
   }
 
+  @Test
   public void testSimpleSelectionInWord() {
     doTest();
   }
 
+  @Test
   public void testSimpleSelectionInList() {
     doTest();
   }
 
+  @Test
   public void testSimpleSelectionInQuote() {
     doTest();
   }
 
+  @Test
   public void testTableRowSelection() {
-    configureFromFileText("some.md", """
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("some.md", """
       | Feature | Markdown | MDX |
       |---------|----------|-----|
       | <caret>Headings | yes | yes |
       | React | no | yes |
       """.trim());
-    executeAction("Markdown.Table.SelectRow");
-    executeAction(MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
-    checkResultByText("""
-      | Feature | Markdown | MDX |
-      |---------|----------|-----|
-      | ~~Headings~~ | ~~yes~~ | ~~yes~~ |
-      | React | no | yes |
-      """.trim());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      MarkdownEditorTestUtil.executeAction(myFixture, "Markdown.Table.SelectRow");
+      MarkdownEditorTestUtil.executeAction(myFixture, MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
+      myFixture.checkResult("""
+        | Feature | Markdown | MDX |
+        |---------|----------|-----|
+        | ~~Headings~~ | ~~yes~~ | ~~yes~~ |
+        | React | no | yes |
+        """.trim());
+    });
   }
 
+  @Test
   public void testTableColumnSelection() {
-    configureFromFileText("some.md", """
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("some.md", """
       | Feature | Markdown | MDX |
       |---------|----------|-----|
       | <caret>Headings | yes | yes |
       | React | no | yes |
       """.trim());
-    executeAction("Markdown.Table.SelectCurrentColumn.SelectContentCells");
-    executeAction(MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
-    checkResultByText("""
-      | ~~Feature~~ | Markdown | MDX |
-      |---------|----------|-----|
-      | ~~Headings~~ | yes | yes |
-      | ~~React~~ | no | yes |
-      """.trim());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      MarkdownEditorTestUtil.executeAction(myFixture, "Markdown.Table.SelectCurrentColumn.SelectContentCells");
+      MarkdownEditorTestUtil.executeAction(myFixture, MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
+      myFixture.checkResult("""
+        | ~~Feature~~ | Markdown | MDX |
+        |---------|----------|-----|
+        | ~~Headings~~ | yes | yes |
+        | ~~React~~ | no | yes |
+        """.trim());
+    });
   }
 
+  @Test
   public void testTableRowSelectionCanToggleOff() {
-    configureFromFileText("some.md", """
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("some.md", """
       | Feature | Markdown | MDX |
       |---------|----------|-----|
       | <caret>Headings | yes | yes |
       | React | no | yes |
       """.trim());
-    executeAction("Markdown.Table.SelectRow");
-    executeAction(MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
-    executeAction(MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
-    checkResultByText("""
-      | Feature | Markdown | MDX |
-      |---------|----------|-----|
-      | Headings | yes | yes |
-      | React | no | yes |
-      """.trim());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      MarkdownEditorTestUtil.executeAction(myFixture, "Markdown.Table.SelectRow");
+      MarkdownEditorTestUtil.executeAction(myFixture, MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
+      MarkdownEditorTestUtil.executeAction(myFixture, MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
+      myFixture.checkResult("""
+        | Feature | Markdown | MDX |
+        |---------|----------|-----|
+        | Headings | yes | yes |
+        | React | no | yes |
+        """.trim());
+    });
   }
 
+  @Test
   public void testTableRowSelectionKeepsExistingFormatting() {
-    configureFromFileText("some.md", """
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("some.md", """
       | Feature | Markdown | MDX |
       |---------|----------|-----|
       | <caret>Headings | ~~yes~~ | no |
       | React | no | yes |
       """.trim());
-    executeAction("Markdown.Table.SelectRow");
-    executeAction(MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
-    checkResultByText("""
-      | Feature | Markdown | MDX |
-      |---------|----------|-----|
-      | ~~Headings~~ | ~~yes~~ | ~~no~~ |
-      | React | no | yes |
-      """.trim());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      MarkdownEditorTestUtil.executeAction(myFixture, "Markdown.Table.SelectRow");
+      MarkdownEditorTestUtil.executeAction(myFixture, MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
+      myFixture.checkResult("""
+        | Feature | Markdown | MDX |
+        |---------|----------|-----|
+        | ~~Headings~~ | ~~yes~~ | ~~no~~ |
+        | React | no | yes |
+        """.trim());
+    });
   }
 
+  @Test
   public void testTableRowSelectionSkipsEmptyCells() {
-    configureFromFileText("some.md", """
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByText("some.md", """
       | Feature | Markdown | MDX |
       |---------|----------|-----|
       | <caret>Headings |   | no |
       | React | no | yes |
       """.trim());
-    executeAction("Markdown.Table.SelectRow");
-    executeAction(MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
-    checkResultByText("""
-      | Feature | Markdown | MDX |
-      |---------|----------|-----|
-      | ~~Headings~~ |   | ~~no~~ |
-      | React | no | yes |
-      """.trim());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      MarkdownEditorTestUtil.executeAction(myFixture, "Markdown.Table.SelectRow");
+      MarkdownEditorTestUtil.executeAction(myFixture, MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
+      myFixture.checkResult("""
+        | Feature | Markdown | MDX |
+        |---------|----------|-----|
+        | ~~Headings~~ |   | ~~no~~ |
+        | React | no | yes |
+        """.trim());
+    });
   }
 
   private void doTest() {
-    configureByFile(getTestName(true) + "_before.md");
-    executeAction(MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
-    checkResultByFile(getTestName(true) + "_after.md");
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return MarkdownTestingUtil.TEST_DATA_PATH + "/actions/toggleStrikethrough/";
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.configureByFile(testName + "_before.md");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      MarkdownEditorTestUtil.executeAction(myFixture, MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
+      myFixture.checkResultByFile(testName + "_after.md");
+    });
   }
 }

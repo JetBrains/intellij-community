@@ -1,79 +1,104 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.intellij.plugins.markdown.MarkdownTestingUtil
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.formatter.MarkdownFormatterTest.Companion.performReformatting
 import org.intellij.plugins.markdown.formatter.MarkdownFormatterTest.Companion.runWithTemporaryStyleSettings
-import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownFileType
+import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
-@RunWith(JUnit4::class)
+@TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/markdown/test/data/editor/tables/format")
 @TestFor(issues = ["IDEA-298828"])
-class MarkdownTablePostFormatProcessorTest: LightPlatformCodeInsightTestCase() {
-  @Test
-  fun `single table`() = doTest()
+class MarkdownTablePostFormatProcessorTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  private lateinit var testName: String
+
+  @BeforeEach
+  fun setUp(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, true).trimStart().replace(' ', '_')
+  }
 
   @Test
-  fun `multiple tables`() = doTest()
+  fun `single table`(): Unit = doTest()
 
   @Test
-  fun `table without end newline`() = doTest()
+  fun `multiple tables`(): Unit = doTest()
 
   @Test
-  fun `chinese table test`() = doTest()
+  fun `table without end newline`(): Unit = doTest()
 
   @Test
-  fun `emoji table`() = doTest()
+  fun `chinese table test`(): Unit = doTest()
 
   @Test
-  fun `table with colored boxes`() = doTest()
+  fun `emoji table`(): Unit = doTest()
 
   @Test
-  fun `emoji sequence table`() = doTest()
+  fun `table with colored boxes`(): Unit = doTest()
 
   @Test
-  fun `table inside list item`() = doTest()
+  fun `emoji sequence table`(): Unit = doTest()
 
   @Test
-  fun `table with tabs`() = doTest()
+  fun `table inside list item`(): Unit = doTest()
 
   @Test
-  fun `table with tab inside cell text`() = doTest(tabSize = 4)
+  fun `table with tabs`(): Unit = doTest()
 
   @Test
-  fun `tabs in code spans preserve alignment`() {
-    for (tabSize in listOf(2, 4, 8)) {
-      runWithTemporaryStyleSettings(project) { settings ->
-        settings.getIndentOptions(MarkdownFileType.INSTANCE).TAB_SIZE = tabSize
-        val leftContent = " `a\tb`" + " ".repeat(if (tabSize == 2) 7 else 5)
-        val rightContent = if (tabSize == 8) "    `a\tb`     " else "        `a\tb` "
-        for ((separator, content) in listOf(
-          ":-------------" to leftContent,
-          "-------------:" to rightContent,
-          ":------------:" to "    `a\tb`     ",
-        )) {
-          doStyleTest(
-            TableStyle.ALIGNED,
-            "| abcdefghijkl | x |\n|$separator|---|\n| `a\tb` | y |",
-            "| abcdefghijkl | x |\n|$separator|---|\n|$content| y |",
-          )
-          val table = checkNotNull(TableUtils.findTable(file, 0))
-          assertTrue(TableModificationUtils.run { table.isCorrectlyFormatted(TableStyle.ALIGNED) })
+  fun `table with tab inside cell text`(): Unit = doTest(tabSize = 4)
+
+  @Test
+  fun `tabs in code spans preserve alignment`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      for (tabSize in listOf(2, 4, 8)) {
+        runWithTemporaryStyleSettings(myFixture.project) { settings ->
+          settings.getIndentOptions(MarkdownFileType.INSTANCE).TAB_SIZE = tabSize
+          val leftContent = " `a\tb`" + " ".repeat(if (tabSize == 2) 7 else 5)
+          val rightContent = if (tabSize == 8) "    `a\tb`     " else "        `a\tb` "
+          for ((separator, content) in listOf(
+            ":-------------" to leftContent,
+            "-------------:" to rightContent,
+            ":------------:" to "    `a\tb`     ",
+          )) {
+            checkStyle(
+              TableStyle.ALIGNED,
+              "| abcdefghijkl | x |\n|$separator|---|\n| `a\tb` | y |",
+              "| abcdefghijkl | x |\n|$separator|---|\n|$content| y |",
+            )
+            val table = checkNotNull(TableUtils.findTable(myFixture.file, 0))
+            assertTrue(TableModificationUtils.run { table.isCorrectlyFormatted(TableStyle.ALIGNED) })
+          }
         }
       }
     }
   }
 
   @Test
-  fun `compact table`() = doStyleTest(
+  fun `compact table`(): Unit = doStyleTest(
     TableStyle.COMPACT,
     """
     |Character|Meaning|
@@ -90,7 +115,7 @@ class MarkdownTablePostFormatProcessorTest: LightPlatformCodeInsightTestCase() {
   )
 
   @Test
-  fun `tight table`() = doStyleTest(
+  fun `tight table`(): Unit = doStyleTest(
     TableStyle.TIGHT,
     """
     | Character | Meaning |
@@ -107,11 +132,11 @@ class MarkdownTablePostFormatProcessorTest: LightPlatformCodeInsightTestCase() {
   )
 
   @Test
-  fun `table style is applied when reformatting a file`() {
-    runWithTemporaryStyleSettings(project) { settings ->
+  fun `table style is applied when reformatting a file`(): Unit = timeoutRunBlocking {
+    runWithTemporaryStyleSettings(myFixture.project) { settings ->
       settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).FORMAT_TABLES = true
-      withTableStyle(project, TableStyle.COMPACT) {
-        configureFromFileText(
+      withTableStyle(myFixture.project, TableStyle.COMPACT) {
+        myFixture.configureByText(
           "some.md",
           """
           |Character|Meaning|
@@ -119,10 +144,10 @@ class MarkdownTablePostFormatProcessorTest: LightPlatformCodeInsightTestCase() {
           |Y|Yes|
           """.trimIndent()
         )
-        WriteCommandAction.runWriteCommandAction(project) {
-          CodeStyleManager.getInstance(project).reformat(file)
+        WriteCommandAction.runWriteCommandAction(myFixture.project) {
+          CodeStyleManager.getInstance(myFixture.project).reformat(myFixture.file)
         }
-        checkResultByText(
+        myFixture.checkResult(
           """
           | Character | Meaning |
           | --- | --- |
@@ -134,7 +159,7 @@ class MarkdownTablePostFormatProcessorTest: LightPlatformCodeInsightTestCase() {
   }
 
   @Test
-  fun `reformat table after wrapped block quote does not throw`() {
+  fun `reformat table after wrapped block quote does not throw`(): Unit = timeoutRunBlocking {
     // language=Markdown
     val text = """
       > This is a long sentence that contains formatted text at a place that will be _reformatted_ and when it is reformatted, it will be reformatted in a way that
@@ -145,57 +170,59 @@ class MarkdownTablePostFormatProcessorTest: LightPlatformCodeInsightTestCase() {
       | 1 | 2 | 3 | 4 |
       | 5 | 6 | 7 | 8 |
     """.trimIndent()
-    runWithTemporaryStyleSettings(project) { settings ->
-      settings.getCommonSettings(MarkdownLanguage.INSTANCE).RIGHT_MARGIN = 80
-      settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).apply {
-        FORMAT_TABLES = true
-        INSERT_QUOTE_ARROWS_ON_WRAP = true
-      }
-      configureFromFileText("some.md", text)
-      performReformatting(project, file)
-    }
-  }
-
-  private fun doTest(tabSize: Int? = null) {
-    val before = getTestName(true) + ".before.md"
-    val after = getTestName(true) + ".after.md"
-    runWithTemporaryStyleSettings(project) { settings ->
-      settings.apply {
-        if (tabSize != null) {
-          getIndentOptions(MarkdownFileType.INSTANCE).TAB_SIZE = tabSize
-        }
-        getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).apply {
+    withContext(Dispatchers.EDT) {
+      runWithTemporaryStyleSettings(myFixture.project) { settings ->
+        settings.getCommonSettings(MarkdownLanguage.INSTANCE).RIGHT_MARGIN = 80
+        settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).apply {
           FORMAT_TABLES = true
+          INSERT_QUOTE_ARROWS_ON_WRAP = true
         }
+        myFixture.configureByText("some.md", text)
+        performReformatting(myFixture.project, myFixture.file)
       }
-      configureByFile(before)
-      performReformatting(project, file)
-      checkResultByFile(after)
-      //check idempotence of formatter
-      performReformatting(project, file)
-      checkResultByFile(after)
     }
   }
 
-  private fun doStyleTest(style: TableStyle, before: String, after: String) {
-    runWithTemporaryStyleSettings(project) { settings ->
+  private fun doTest(tabSize: Int? = null): Unit = timeoutRunBlocking {
+    val before = "$testName.before.md"
+    val after = "$testName.after.md"
+    withContext(Dispatchers.EDT) {
+      runWithTemporaryStyleSettings(myFixture.project) { settings ->
+        settings.apply {
+          if (tabSize != null) {
+            getIndentOptions(MarkdownFileType.INSTANCE).TAB_SIZE = tabSize
+          }
+          getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).apply {
+            FORMAT_TABLES = true
+          }
+        }
+        myFixture.configureByFile(before)
+        performReformatting(myFixture.project, myFixture.file)
+        myFixture.checkResultByFile(after)
+        //check idempotence of formatter
+        performReformatting(myFixture.project, myFixture.file)
+        myFixture.checkResultByFile(after)
+      }
+    }
+  }
+
+  private fun doStyleTest(style: TableStyle, before: String, after: String): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      checkStyle(style, before, after)
+    }
+  }
+
+  @RequiresEdt
+  private fun checkStyle(style: TableStyle, before: String, after: String) {
+    runWithTemporaryStyleSettings(myFixture.project) { settings ->
       settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).FORMAT_TABLES = true
-      withTableStyle(project, style) {
-        configureFromFileText("some.md", before)
-        performReformatting(project, file)
-        checkResultByText(after)
-        performReformatting(project, file)
-        checkResultByText(after)
+      withTableStyle(myFixture.project, style) {
+        myFixture.configureByText("some.md", before)
+        performReformatting(myFixture.project, myFixture.file)
+        myFixture.checkResult(after)
+        performReformatting(myFixture.project, myFixture.file)
+        myFixture.checkResult(after)
       }
     }
-  }
-
-  override fun getTestDataPath(): String {
-    return MarkdownTestingUtil.TEST_DATA_PATH + "/editor/tables/format/"
-  }
-
-  override fun getTestName(lowercaseFirstLetter: Boolean): String {
-    val name = super.getTestName(lowercaseFirstLetter)
-    return name.trimStart().replace(' ', '_')
   }
 }

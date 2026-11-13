@@ -1,16 +1,23 @@
 package org.intellij.plugins.markdown.psi
 
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import junit.framework.TestCase
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
-class MarkdownHeaderNonWhitespaceRangeTest: LightPlatformCodeInsightTestCase() {
+@TestApplication
+class MarkdownHeaderNonWhitespaceRangeTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
   private val firstElement
-    get() = file.firstChild!!
+    get() = myFixture.file.firstChild!!
 
   @Test
   fun `test range sanity in atx header`() {
@@ -31,12 +38,14 @@ class MarkdownHeaderNonWhitespaceRangeTest: LightPlatformCodeInsightTestCase() {
     doTest(content, "Some header")
   }
 
-  private fun doTest(content: String, expectedSubstring: String) {
-    configureFromFileText("some.md", content)
-    val header = firstElement as MarkdownHeader
-    val contentElement = header.contentElement!!
-    val range = contentElement.nonWhitespaceRange
-    val substring = range.substring(contentElement.text)
-    TestCase.assertEquals(expectedSubstring, substring)
+  private fun doTest(content: String, expectedSubstring: String): Unit = timeoutRunBlocking {
+    myFixture.configureByText("some.md", content)
+    readAction {
+      val header = firstElement as MarkdownHeader
+      val contentElement = header.contentElement!!
+      val range = contentElement.nonWhitespaceRange
+      val substring = range.substring(contentElement.text)
+      assertEquals(expectedSubstring, substring)
+    }
   }
 }
