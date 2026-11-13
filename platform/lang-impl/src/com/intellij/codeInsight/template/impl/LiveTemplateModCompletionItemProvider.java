@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.List;
@@ -22,8 +23,17 @@ import java.util.Map;
 /**
  * A simplified mirror of {@link LiveTemplateCompletionContributor} to provide live templates as {@link ModCompletionItem}s. 
  */
+@ApiStatus.Internal
 @NotNullByDefault
-final class LiveTemplateModCompletionItemProvider implements ModCompletionItemProvider {
+public final class LiveTemplateModCompletionItemProvider implements ModCompletionItemProvider {
+  /**
+   * Creates the item that inserts {@code template} as a {@link LiveTemplateModCompletionItemProvider} item does:
+   * the template starts with its fields instead of finishing at once, e.g. for a live template found by the legacy contributor.
+   */
+  public static ModCompletionItem createItem(TemplateImpl template) {
+    return new LiveTemplateModCompletionItem(template);
+  }
+
   @Override
   public void provideItems(CompletionContext context, ModCompletionResult sink) {
     if (!LiveTemplateCompletionContributor.shouldShowAllTemplates()) return;
