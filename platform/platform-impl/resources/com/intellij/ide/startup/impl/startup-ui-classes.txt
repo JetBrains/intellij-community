@@ -9106,7 +9106,7 @@ com.intellij.platform.workspace.jps.entities.SourceRootEntity
 com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 com.intellij.platform.workspace.storage.impl.cache.EntityStorageChange
 com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
-com.intellij.platform.unified.workspace.IjLightWorkspaceProjectEntity
+com.intellij.platform.unified.workspace.shared.IjLightWorkspaceProjectEntity
 com.intellij.platform.diagnostic.telemetry.helpers.Nanoseconds
 com.intellij.platform.diagnostic.telemetry.helpers.Nanoseconds$Companion
 com.intellij.platform.workspace.storage.impl.ClassToIntConverterImpl
