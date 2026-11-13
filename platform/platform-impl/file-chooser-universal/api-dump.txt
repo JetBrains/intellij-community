@@ -1,2 +1,17 @@
 f:com.intellij.openapi.fileChooser.universal.FileBrowser
 - sf:INSTANCE:com.intellij.openapi.fileChooser.universal.FileBrowser
+f:com.intellij.openapi.fileChooser.universal.UniversalFileChooser
+- sf:INSTANCE:com.intellij.openapi.fileChooser.universal.UniversalFileChooser
+- sf:canUseIn(com.intellij.openapi.project.Project):Z
+- sf:create(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.openapi.fileChooser.FileChooserDescriptor):com.intellij.openapi.fileChooser.universal.UniversalFileChooser$Dialog
+f:com.intellij.openapi.fileChooser.universal.UniversalFileChooser$Dialog
+- com.intellij.openapi.ui.DialogWrapper
+- com.intellij.openapi.fileChooser.FileChooserDialog
+- com.intellij.openapi.fileChooser.PathChooserDialog
+- <init>(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.openapi.fileChooser.FileChooserDescriptor,java.util.Collection,Z,kotlin.jvm.functions.Function1):V
+- b:<init>(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.openapi.fileChooser.FileChooserDescriptor,java.util.Collection,Z,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- choose(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile[]):com.intellij.openapi.vfs.VirtualFile[]
+- choose(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Consumer):V
+- getPreferredFocusedComponent():javax.swing.JComponent
+- f:getProject():com.intellij.openapi.project.Project
+- f:getSelectedFiles():java.util.List

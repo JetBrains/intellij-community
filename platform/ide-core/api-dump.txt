@@ -688,6 +688,7 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - <init>(com.intellij.openapi.fileChooser.FileChooserDescriptor):V
 - getDescription():java.lang.String
 - getIcon(com.intellij.openapi.vfs.VirtualFile):javax.swing.Icon
+- getPathRoots():java.util.List
 - getRoots():java.util.List
 - getTitle():java.lang.String
 - getUserData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
@@ -716,6 +717,8 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withHideIgnored(Z):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withLocalFileSystem():com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withLocalFileSystem(Z):com.intellij.openapi.fileChooser.FileChooserDescriptor
+- withPathRoots(java.util.List):com.intellij.openapi.fileChooser.FileChooserDescriptor
+- withPathRoots(java.nio.file.Path[]):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withRoots(java.util.List):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withRoots(com.intellij.openapi.vfs.VirtualFile[]):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withShowFileSystemRoots(Z):com.intellij.openapi.fileChooser.FileChooserDescriptor

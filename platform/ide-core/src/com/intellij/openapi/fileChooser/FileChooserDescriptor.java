@@ -184,22 +184,47 @@ public class FileChooserDescriptor {
     return this;
   }
 
+  /**
+   * @deprecated The method is used in the deprecated FileChooser. For the new {@code UniversalFileChooser}
+   * use {@link #getPathRoots()} (Path...)}
+   */
+  @Deprecated
   public List<VirtualFile> getRoots() {
     return Collections.unmodifiableList(myRoots);
   }
 
+  /**
+   * @deprecated The method is used in the deprecated FileChooser. For the new {@code UniversalFileChooser}
+   * use {@link #withPathRoots(Path...)}
+   */
+  @Deprecated
   public void setRoots(VirtualFile @NotNull ... roots) {
     withRoots(roots);
   }
 
+  /**
+   * @deprecated The method is used in the deprecated FileChooser. For the new {@code UniversalFileChooser}
+   * use {@link #withPathRoots(Path...)}
+   */
+  @Deprecated
   public void setRoots(@NotNull List<? extends VirtualFile> roots) {
     withRoots(roots);
   }
 
+  /**
+   * @deprecated The method is used in the deprecated FileChooser. For the new {@code UniversalFileChooser}
+   * use {@link #withPathRoots(Path...)}
+   */
+  @Deprecated
   public FileChooserDescriptor withRoots(final VirtualFile... roots) {
     return withRoots(Arrays.asList(roots));
   }
 
+  /**
+   * @deprecated The method is used in the deprecated FileChooser. For the new {@code UniversalFileChooser}
+   * use {@link #withPathRoots(List)}
+   */
+  @Deprecated
   public FileChooserDescriptor withRoots(@NotNull List<? extends VirtualFile> roots) {
     if (roots.contains(null)) throw new IllegalArgumentException("'null' in roots: " + roots);
     myRoots.clear();
@@ -210,7 +235,6 @@ public class FileChooserDescriptor {
   /**
    * Returns the roots that {@link #withPathRoots} set.
    */
-  @ApiStatus.Experimental
   public @NotNull List<@NotNull Path> getPathRoots() {
     return Collections.unmodifiableList(myPathRoots);
   }
@@ -218,7 +242,6 @@ public class FileChooserDescriptor {
   /**
    * @see #withPathRoots(List)
    */
-  @ApiStatus.Experimental
   public FileChooserDescriptor withPathRoots(Path @NotNull ... roots) {
     return withPathRoots(Arrays.asList(roots));
   }
@@ -231,7 +254,6 @@ public class FileChooserDescriptor {
    * The IDE file chooser combines these roots with {@link #getRoots()}.
    * The native choosers ignore them.
    */
-  @ApiStatus.Experimental
   public FileChooserDescriptor withPathRoots(@NotNull List<? extends Path> roots) {
     if (roots.contains(null)) throw new IllegalArgumentException("'null' in roots: " + roots);
     myPathRoots.clear();
@@ -276,7 +298,11 @@ public class FileChooserDescriptor {
    * <p/>
    * In native choosers, has no effect on visibility (use {@link #withExtensionFilter} for that), only on a final eligibility check.
    * So for simple file type- or extension-based filtering it is better to use {@link #withExtensionFilter}.
+   *
+   * @deprecated The method is used in the deprecated FileChooser. For the new {@code UniversalFileChooser}
+   * use {@link #withPathFilter(Condition)} (Path...)}
    */
+  @Deprecated
   public FileChooserDescriptor withFileFilter(@Nullable Condition<? super VirtualFile> filter) {
     myFileFilter = filter;
     return this;

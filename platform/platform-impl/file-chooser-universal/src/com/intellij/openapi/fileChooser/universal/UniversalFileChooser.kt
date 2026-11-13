@@ -149,7 +149,6 @@ private const val leftPanel: Boolean = false
 private const val defaultWidth: Int = 700
 private const val defaultHeight: Int = 500
 
-@ApiStatus.Internal
 object UniversalFileChooser {
   @JvmStatic
   fun canUseIn(project: Project?): Boolean {
@@ -321,7 +320,7 @@ object UniversalFileChooser {
     }
   }
 
-  class Panel @JvmOverloads constructor(
+  internal class Panel @JvmOverloads constructor(
     disposable: Disposable,
     private val descriptor: FileChooserDescriptor,
     private val project: Project,
@@ -333,7 +332,7 @@ object UniversalFileChooser {
     preselectPath: (suspend () -> Path?)? = null
   ) : JPanel(), FileBrowserPanel {
 
-    companion object {
+    private companion object {
       private val FILE_VIEW_KEY: Key<FileView?> = Key.create<FileView>("universalFileChooser.fileView")
       private const val LOCATIONS_PROPORTION_KEY = "universalFileChooser.locationsProportion"
       private const val LOCATIONS_DEFAULT_PROPORTION = 0.2f
@@ -696,7 +695,7 @@ object UniversalFileChooser {
      * path typed in the text field when it diverges from the tree selection and only then runs
      * [proceed] (see [FileView.confirmSelection]).
      */
-    fun confirmOk(proceed: () -> Unit) {
+    internal fun confirmOk(proceed: () -> Unit) {
       val activeView = getActiveFileView()
       if (activeView == null) {
         proceed()
@@ -725,7 +724,7 @@ object UniversalFileChooser {
       return null
     }
 
-    fun navigateToFile(file: Path, preselectPathText: Boolean = false) {
+    internal fun navigateToFile(file: Path, preselectPathText: Boolean = false) {
       val index = fileViews.indexOfFirst { it.contributor.ownsPath(file) }
       if (index < 0) return
 
@@ -952,19 +951,19 @@ object UniversalFileChooser {
        */
       private val foreignPathNavigator: (String) -> Path? = { null },
     ) {
-      val topComponent: JComponent
-      val fileTree: NioFileSystemTree
-      val roots: MutableList<String> = mutableListOf()
+      internal val topComponent: JComponent
+      internal val fileTree: NioFileSystemTree
+      internal val roots: MutableList<String> = mutableListOf()
       private val environmentRestricted: Boolean = restrictRootsToProjectEnvironment
       private val extensionFilter: List<String>? = descriptor.extensionFilter?.second
       private val pathFilter: Predicate<in Path>? = descriptor.pathFilter
       private val chooseFiles: Boolean = descriptor.isChooseFiles || descriptor.isChooseJarContents
       private val chooseFolders: Boolean = descriptor.isChooseFolders
 
-      var fileToSelect: Path? = null
+      internal var fileToSelect: Path? = null
 
       /** Completed when the first [loadRoots] pass ends. After a load error, [roots] stays empty. */
-      val rootsLoaded: CompletableDeferred<Unit> = CompletableDeferred()
+      internal val rootsLoaded: CompletableDeferred<Unit> = CompletableDeferred()
 
       internal val pathTextField: NioPathTextField = NioPathTextField(
         scope,
@@ -1003,7 +1002,7 @@ object UniversalFileChooser {
        */
       private var updatingPathFieldFromTree: Boolean = false
 
-      companion object {
+      private companion object {
         private const val LOADING_CARD = "loading"
         private const val TREE_CARD = "tree"
       }
@@ -1028,16 +1027,16 @@ object UniversalFileChooser {
       private val presentationCache: MutableMap<String, UniversalFileChooserContributor.Presentation> = ConcurrentHashMap()
 
       @Volatile
-      var cacheUpdateJob: Job? = null
+      private var cacheUpdateJob: Job? = null
 
       @Volatile
-      var isMountActionInProgress: Boolean = false
+      private var isMountActionInProgress: Boolean = false
 
       /**
        * Cached Desktop directory path for the contributor.
        */
       @Volatile
-      var desktopPath: Path? = null
+      internal var desktopPath: Path? = null
         private set
 
       init {
@@ -1285,7 +1284,7 @@ object UniversalFileChooser {
           .toString()
       }
 
-      fun startCacheUpdates() {
+      private fun startCacheUpdates() {
         cacheUpdateJob?.cancel()
         val changed = mutableSetOf<String>()
         cacheUpdateJob = scope.launch {
@@ -1339,7 +1338,7 @@ object UniversalFileChooser {
        * EDT: the tree selection is read there, and the file checks then run with pure NIO on
        * [Dispatchers.IO], so the EDT does not block.
        */
-      suspend fun computeOkEnabled(): Boolean {
+      internal suspend fun computeOkEnabled(): Boolean {
         // The path typed in the text field failed validation on the last OK attempt: keep OK
         // disabled until the user edits the field (see IJPL-253095 and setPathTextFieldError).
         if (pathTextFieldInvalid) return false
@@ -1366,14 +1365,14 @@ object UniversalFileChooser {
         return extensions.any { Strings.endsWithIgnoreCase(name, ".$it") }
       }
 
-      fun canDeleteSelectedFile(): Boolean {
+      internal fun canDeleteSelectedFile(): Boolean {
         val selected = fileTree.getSelectedFile() ?: return false
         if (roots.contains(selected.invariantSeparatorsPathString)) return false
         if (!Files.isWritable(selected)) return false
         return true
       }
 
-      fun deleteSelectedFile() {
+      internal fun deleteSelectedFile() {
         val selected = fileTree.getSelectedFile() ?: return
         val confirmMessage = if (Files.isDirectory(selected) && !runCatching { Files.list(selected).use { it.findAny().isPresent } }.getOrElse { false }) {
           IdeBundle.message("universal.file.chooser.action.delete.confirm.directory", selected.name)
@@ -1463,7 +1462,7 @@ object UniversalFileChooser {
         fileTree.getTree().requestFocusInWindow()
       }
 
-      fun focusPathField() {
+      internal fun focusPathField() {
         if (!pathTextField.isShowing) return
         pathTextField.requestFocusInWindow()
         pathTextField.selectAll()
@@ -1472,7 +1471,7 @@ object UniversalFileChooser {
       /**
        * Confirms the current selection when the user clicks OK.
        */
-      fun confirmSelection(proceed: () -> Unit) {
+      internal fun confirmSelection(proceed: () -> Unit) {
         val text = getPathFieldText()
         val selectedPresentable = fileTree.getSelectedFile()?.let { contributor.getPresentablePath(it) }
         if (text.isEmpty() || text == selectedPresentable) {

@@ -39,10 +39,66 @@ c:com.intellij.notification.Notification
 f:com.intellij.notification.Notifications$Bus
 - *s:notifyAndHide(com.intellij.notification.Notification,com.intellij.openapi.project.Project):V
 c:com.intellij.openapi.fileChooser.FileChooserDescriptor
-- *:getPathRoots():java.util.List
 - *:withPathFilter(com.intellij.openapi.util.Condition):com.intellij.openapi.fileChooser.FileChooserDescriptor
-- *:withPathRoots(java.util.List):com.intellij.openapi.fileChooser.FileChooserDescriptor
-- *:withPathRoots(java.nio.file.Path[]):com.intellij.openapi.fileChooser.FileChooserDescriptor
+*:com.intellij.openapi.fileChooser.universal.FileWatcherAdapter
+- a:stop(kotlin.coroutines.Continuation):java.lang.Object
+- a:subscribe(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
+- a:unsubscribe(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor
+- *sf:Companion:com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getCustomLoadingText():java.lang.String
+- getDesktopPath():java.nio.file.Path
+- getFileName(java.nio.file.Path):java.lang.String
+- *:getFileWatcherAdapter():com.intellij.openapi.fileChooser.universal.FileWatcherAdapter
+- getFilteredRoots(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
+- getMountStatus(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
+- getNoEntriesText():java.lang.String
+- getPresentablePath(java.nio.file.Path):java.lang.String
+- getPresentation(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
+- a:getRoots(kotlin.coroutines.Continuation):java.lang.Object
+- a:getTabTitle():java.lang.String
+- mount(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
+- mountVirtualRoot(com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Root,kotlin.coroutines.Continuation):java.lang.Object
+- a:ownsPath(java.nio.file.Path):Z
+- parsePresentablePath(java.lang.String):java.nio.file.Path
+*f:com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Companion
+- f:asDefaultRoot(java.nio.file.Path):com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Root
+- f:getFilteredSystemRoots(kotlin.jvm.functions.Function1):java.util.List
+*e:com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$MountStatus
+- java.lang.Enum
+- sf:Mounted:com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$MountStatus
+- sf:Permanent:com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$MountStatus
+- sf:Unmounted:com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$MountStatus
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$MountStatus
+- s:values():com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$MountStatus[]
+*f:com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Presentation
+- <init>(java.lang.String,javax.swing.Icon,java.lang.String):V
+- b:<init>(java.lang.String,javax.swing.Icon,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():javax.swing.Icon
+- f:component3():java.lang.String
+- f:copy(java.lang.String,javax.swing.Icon,java.lang.String):com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Presentation
+- bs:copy$default(com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Presentation,java.lang.String,javax.swing.Icon,java.lang.String,I,java.lang.Object):com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Presentation
+- equals(java.lang.Object):Z
+- f:getComment():java.lang.String
+- f:getIcon():javax.swing.Icon
+- f:getPresentableName():java.lang.String
+- hashCode():I
+*f:com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Root
+- <init>(java.lang.String,com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Presentation,java.nio.file.Path):V
+- b:<init>(java.lang.String,com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Presentation,java.nio.file.Path,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Presentation
+- f:component3():java.nio.file.Path
+- f:copy(java.lang.String,com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Presentation,java.nio.file.Path):com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Root
+- bs:copy$default(com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Root,java.lang.String,com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Presentation,java.nio.file.Path,I,java.lang.Object):com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Root
+- equals(java.lang.Object):Z
+- f:getId():java.lang.String
+- f:getPath():java.nio.file.Path
+- f:getPresentation():com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor$Presentation
+- hashCode():I
 a:com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 - *:withProject(com.intellij.openapi.project.Project):com.intellij.openapi.fileEditor.UniqueVFileProjectPathBuilder
 *:com.intellij.openapi.fileEditor.UniqueVFileProjectPathBuilder

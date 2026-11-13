@@ -3034,6 +3034,16 @@ a:com.intellij.openapi.fileChooser.ex.TextFieldAction
 f:com.intellij.openapi.fileChooser.impl.FileChooserUtil
 - sf:RECENT_FILES:java.lang.String
 - s:getLastOpenedFile(com.intellij.openapi.project.Project):com.intellij.openapi.vfs.VirtualFile
+com.intellij.openapi.fileChooser.impl.UniversalFileChooserFactory
+- sf:Companion:com.intellij.openapi.fileChooser.impl.UniversalFileChooserFactory$Companion
+- a:canUseIn(com.intellij.openapi.project.Project):Z
+- a:createFileChooser(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.openapi.fileChooser.FileChooserDescriptor):com.intellij.openapi.fileChooser.FileChooserDialog
+- a:createFileChooser(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.openapi.fileChooser.FileChooserDescriptor,java.util.Collection):com.intellij.openapi.fileChooser.FileChooserDialog
+- a:createFileSaver(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.openapi.fileChooser.FileSaverDescriptor):com.intellij.openapi.fileChooser.FileSaverDialog
+- a:createPathChooser(com.intellij.openapi.project.Project,java.awt.Component,com.intellij.openapi.fileChooser.FileChooserDescriptor):com.intellij.openapi.fileChooser.PathChooserDialog
+- s:getInstanceOrNull():com.intellij.openapi.fileChooser.impl.UniversalFileChooserFactory
+f:com.intellij.openapi.fileChooser.impl.UniversalFileChooserFactory$Companion
+- f:getInstanceOrNull():com.intellij.openapi.fileChooser.impl.UniversalFileChooserFactory
 c:com.intellij.openapi.fileChooser.tree.FileNode
 - getComment():java.lang.String
 - getFile():com.intellij.openapi.vfs.VirtualFile

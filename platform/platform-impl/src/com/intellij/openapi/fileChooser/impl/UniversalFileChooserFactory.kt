@@ -17,7 +17,6 @@ import java.awt.Component
  * The module `intellij.platform.ide.fileChooser.universal` registers the implementation as an application service.
  * Without the module, [getInstanceOrNull] returns `null`.
  */
-@ApiStatus.Internal
 interface UniversalFileChooserFactory {
   companion object {
     @JvmStatic

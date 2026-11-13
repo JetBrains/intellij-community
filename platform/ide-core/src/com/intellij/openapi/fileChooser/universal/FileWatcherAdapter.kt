@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface FileWatcherAdapter {
   suspend fun subscribe(path: Path): Flow<FileChangeType>?
 
