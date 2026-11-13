@@ -29,6 +29,7 @@ private val REMOTE_PROJECT_IDENTITY_PATH_KEY: Key<String> = Key.create("com.inte
   "com.intellij.air.shared.core.AirAgentEnvironmentTest",
   "com.intellij.air.shared.core.AirProjectPathsTest",
   "com.intellij.ide.lightProducts.LightProjectOpeningKt",
+  "com.intellij.platform.unified.workspace.members.IjLightMemberProjects",
   "com.jetbrains.thinclient.connection.ThinClientRdProjectViewSession",
 )
 fun Project.setRemoteProjectBaseNioPath(rawHostPath: String) {
