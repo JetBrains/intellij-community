@@ -4,6 +4,8 @@ package org.jetbrains.intellij.build.impl
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CustomAssetShimSource
 import org.jetbrains.intellij.build.FileSource
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.UnpackedZipSource
 import org.jetbrains.intellij.build.dependencies.extractFileToCacheLocation
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
@@ -41,6 +43,27 @@ internal fun buildPlatformSpecificPluginResources(
     )
   }
   return distEntries
+}
+
+/**
+ * Runs the platform resource generators of a published platform variant of [plugin] in [pluginDir].
+ *
+ * The non-bundled build lays out such a variant once for its one OS and architecture, so it runs the generators of that
+ * distribution only. A published plugin that targets several platforms still gets no platform-specific resources.
+ */
+internal fun buildPublishedPlatformVariantResources(plugin: PluginLayout, os: OsFamily, arch: JvmArchitecture, pluginDir: Path, context: BuildContext) {
+  val dist = SUPPORTED_DISTRIBUTIONS.firstOrNull { it.os == os && it.arch == arch } ?: return
+  handlePlatformResourceGenerator(dist, plugin.platformResourceGeneratorsFor(dist, classicDev = context.options.isDevDistribution), listOf(dist to pluginDir), context)
+}
+
+/**
+ * Runs the platform resource generators of a bundled platform variant of [plugin] in [pluginDir], for [dist] only.
+ *
+ * The OS-specific bundled build lays out such a variant once for each distribution, as the non-bundled build does for
+ * [buildPublishedPlatformVariantResources]. A bundled build runs every generator, so the classic dev selection is off.
+ */
+internal fun buildBundledPlatformVariantResources(plugin: PluginLayout, dist: SupportedDistribution, pluginDir: Path, context: BuildContext) {
+  handlePlatformResourceGenerator(dist, plugin.platformResourceGeneratorsFor(dist, classicDev = false), listOf(dist to pluginDir), context)
 }
 
 private fun handlePlatformResourceGenerator(
