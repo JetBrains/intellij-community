@@ -23,7 +23,7 @@ See also the "Tests" section in `../AGENTS.md`. The fake server and its fixture 
 
 - Declare one `fakeLspIntegrationFixture` per test class: in the outer class or in each `@Nested` class, never both.
 - An `expectRequest` that is never answered keeps the test running until it times out. When a test checks that no request was sent, `cancel()` the returned `Deferred` at the end.
-- To check that no message was sent, send a marker message after the action and wait for the server to get it. Messages arrive in order, so an earlier message would have come first (see `LspCommandsTest`). Avoid fixed delays: a fixed delay can't fail when the message is only slow, so it hides bugs.
+- To check that no message was sent, send a marker message after the action and wait for the server to get it. Messages arrive in order, so an earlier message would have come first. Avoid fixed delays: a fixed delay can't fail when the message is only slow, so it hides bugs.
 - Answer with `null` using `nullResponse()`, hold a request with `UnansweredRequest`, and throw `ResponseErrorException` to answer with an error.
 
 ## Other rules
