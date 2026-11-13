@@ -98,6 +98,11 @@ pub struct State {
     /// Every read attempted, in order, so a test can pin how much I/O a code path does.
     pub reads: Vec<String>,
     pub spawned: Vec<Vec<String>>,
+    /// The absolute paths whose [`Runtime::write_text_file`] fails.
+    pub write_failures: BTreeSet<String>,
+    /// Each spawn as `spawn <command line>` and each [`Runtime::checkout_tree`] as `tree`, in order, so a test can pin
+    /// which comes first.
+    pub order: Vec<String>,
     pub removed: Vec<String>,
     pub stdout: Vec<String>,
     pub stderr: Vec<String>,
@@ -110,7 +115,8 @@ pub struct State {
     /// The idle limit of each [`Runtime::spawn_watched`], in order.
     pub idle_limits: Vec<std::time::Duration>,
     /// Answers by command: a spawn whose argv, joined by spaces, holds the text of a rule answers the result of the
-    /// first such rule, before the queue of [`State::spawn_results`] is asked.
+    /// first such rule, before the queue of [`State::spawn_results`] is asked. A `bazel query` needs a rule: without
+    /// one the spawn panics, so a test cannot read a query that it did not script as a tree without targets.
     pub spawn_rules: Vec<(String, SpawnResult)>,
     /// The answer of [`Runtime::confirm`]: `None` stands for a stdin that is not a terminal.
     pub confirm_answer: Option<bool>,
@@ -238,9 +244,11 @@ impl FakeRuntime {
             .push(command.iter().map(|part| part.to_string_lossy().into_owned()).collect());
         state.clock += 5000;
         let joined = crate::os_runtime::command_line(command);
+        state.order.push(format!("spawn {joined}"));
         if let Some((_, result)) = state.spawn_rules.iter().find(|(text, _)| joined.contains(text.as_str())) {
             return result.clone();
         }
+        assert!(!joined.contains(" query "), "a bazel query without a spawn rule: {joined}");
         match state.spawn_results.pop_front() {
             Some(result) => result,
             None => state.spawn_result.clone(),
@@ -277,7 +285,12 @@ impl Runtime for FakeRuntime {
     }
 
     fn write_text_file(&self, path: &Path, text: &str) -> io::Result<()> {
-        self.state().files.insert(key(path), text.to_owned());
+        let path = key(path);
+        let mut state = self.state();
+        if state.write_failures.contains(&path) {
+            return Err(io::Error::new(io::ErrorKind::PermissionDenied, format!("EACCES: {path}")));
+        }
+        state.files.insert(path, text.to_owned());
         Ok(())
     }
 
@@ -352,7 +365,9 @@ impl Runtime for FakeRuntime {
     }
 
     fn checkout_tree(&self) -> io::Result<Option<CheckoutTree>> {
-        Ok(self.state().checkout_trees.pop_front())
+        let mut state = self.state();
+        state.order.push("tree".to_owned());
+        Ok(state.checkout_trees.pop_front())
     }
 
     fn commit_tree(&self, commit: &str) -> io::Result<String> {

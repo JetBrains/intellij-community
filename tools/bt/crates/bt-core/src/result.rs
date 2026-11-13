@@ -176,6 +176,13 @@ pub fn classify_run(input: ClassifyInput<'_>) -> (RunStatus, u8) {
     (RunStatus::Pass, exit::GREEN)
 }
 
+/// Whether an exit code of bazel is a verdict, after which a run goes on to its next bazel command. The verdicts are 0,
+/// 1 for a failed build, 3 for a failed test or a partial answer of a query, and 4 for no test target. Each other code
+/// ends the run, such as 8 for an interrupt, 33 for no memory, 127 for a wrapper that did not start, and a signal.
+pub const fn is_verdict(code: i32) -> bool {
+    matches!(code, 0 | 1 | 3 | 4)
+}
+
 /// Whether any target's runner exited 42, "the test filter matched no test class". [`classify_run`] turns it into
 /// NO_TESTS and the digest names it as the cause; both must agree.
 pub fn filter_matched_no_class(targets: &[TargetResult]) -> bool {

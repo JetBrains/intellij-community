@@ -50,6 +50,14 @@ shard, and forces one shard. `--dry-run` shows these groups as `heavy`, `argv` a
 `out/bt/profile-heavy.json.gz`, `out/bt/profile.json.gz` and `out/bt/profile-single.json.gz`. An explicit `--shards` and
 a BEP file of the caller give one invocation.
 
+A plan entry is a hint, because the plan keeps the targets of each branch that ran in the checkout. Bazel fails each
+invocation that names a target that the tree does not have, also as a negative pattern. So `bazel query` finds the
+test targets of the patterns in the current tree before the first invocation. The heavy and single groups name only
+those targets. A stderr line names the targets of the plan that the query does not find. A plan that names no heavy
+or single-shard target of the patterns needs no query. A query file that bt cannot write leaves each target in the
+second group. A query that ends without a verdict, such as after an interrupt, stops the run as INFRA. `--dry-run`
+runs no query, so it shows the groups of the plan unchecked, and a `note` line says so.
+
 A shard that hits the Bazel timeout of its target is a shard timeout. The digest names the shard and the test where it
 stopped, and that test is not a failure. The `--json` payload lists the shard in `shardTimeouts`. When the times of
 such a target in the run want more than two shards, bt raises its record in the plan, so the next run makes it a

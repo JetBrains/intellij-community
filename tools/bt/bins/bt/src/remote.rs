@@ -21,12 +21,11 @@ use std::path::{Path, PathBuf};
 
 use bt_core::WithDetails;
 use bt_core::evidence::RUNS_DIR;
-use bt_core::result::RunStatus;
 use bt_core::runtime::{Runtime, repo_file};
 use bt_core::{Refusal, exit};
 
 use crate::check::{Check, CheckCommand, record_host_run};
-use crate::execute::{JsonPayload, Outcome};
+use crate::execute::{JsonPayload, Outcome, infra_payload};
 
 pub(crate) mod brd_host;
 
@@ -183,7 +182,7 @@ pub(crate) fn run_on_host(
             let refused = host_refusal(host.alias, &refusal);
             return Ok(Outcome {
                 exit_code: refused.exit,
-                json: Some(interrupted_payload(&refused.message)),
+                json: Some(infra_payload(&refused.message)),
                 text: refused.message,
             });
         }
@@ -199,25 +198,6 @@ pub(crate) fn run_on_host(
         record_host_run(runtime, &ran.commit, &check);
     }
     Ok(answered)
-}
-
-/// The `--json` payload of a run that a second Ctrl+C stopped: an infrastructure outcome that says nothing about the
-/// tests, with the reason in `errors`. A caller that reads stdout still gets one payload.
-fn interrupted_payload(message: &str) -> JsonPayload {
-    JsonPayload {
-        status: RunStatus::Infra,
-        exit_code: exit::INFRA,
-        duration_ms: 0,
-        cached_targets: 0,
-        ran_targets: 0,
-        targets: Vec::new(),
-        failures: Vec::new(),
-        flaky: Vec::new(),
-        shard_timeouts: Vec::new(),
-        errors: vec![message.to_owned()],
-        class_time_budget_violations: Vec::new(),
-        degraded: false,
-    }
 }
 
 /// The command line of the host: the local one less the flags of this module. Everything after `--` is bazel's.

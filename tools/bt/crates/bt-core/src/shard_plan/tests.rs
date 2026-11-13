@@ -78,6 +78,83 @@ fn the_single_targets_are_the_covered_targets_that_want_one_shard() {
     assert_eq!(single(&["//p/a:unknown_test"]), Vec::<String>::new());
 }
 
+/// A plan entry is a hint: the groups name only the covered targets that the current tree has.
+#[test]
+fn the_groups_are_the_covered_targets_that_the_tree_has() {
+    let mut plan = ShardPlan::default();
+    plan.record(&timing("//p/a:heavy_test", &[("A", 400.0)]));
+    plan.record(&timing("//p/gone:heavy_test", &[("A", 400.0)]));
+    plan.record(&timing("//p/a:single_test", &[("A", 5.0)]));
+    plan.record(&timing("@@community+//tools/bt:single_test", &[("A", 5.0)]));
+    plan.record(&timing("@@community+//tools/bt:gone_test", &[("A", 5.0)]));
+    plan.record(&timing("//q:heavy_test", &[("A", 400.0)]));
+    let patterns = vec!["//p/...".to_owned(), "@community//tools/bt/...".to_owned()];
+    let tree = TreeTargets::parse(
+        [
+            "//p/a:heavy_test",
+            "//p/a:single_test",
+            "//p/a:medium_test",
+            "@community//tools/bt:single_test",
+            "//q:heavy_test",
+            "",
+        ]
+        .map(str::to_owned),
+    );
+
+    let answer = |tree: &TreeTargets| plan.groups(&patterns, || Ok::<_, ()>(Some(tree.clone())));
+    assert_eq!(
+        answer(&tree),
+        Ok(Groups {
+            heavy: vec!["//p/a:heavy_test".to_owned()],
+            single: vec!["//p/a:single_test".to_owned(), "@@community+//tools/bt:single_test".to_owned()],
+            gone: vec!["//p/gone:heavy_test".to_owned(), "@@community+//tools/bt:gone_test".to_owned()],
+        })
+    );
+    // a tree without the targets of the plan gives no group, and each covered target is gone
+    let none = answer(&TreeTargets::default()).expect("an answer");
+    assert!(none.heavy.is_empty() && none.single.is_empty(), "{none:?}");
+    assert_eq!(none.gone.len(), 5, "{none:?}");
+    // a query without an answer gives no group, and no target is gone
+    assert_eq!(plan.groups(&patterns, || Ok::<_, ()>(None)), Ok(Groups::default()));
+    // an error of the query is the answer
+    assert_eq!(plan.groups(&patterns, || Err("interrupted")), Err("interrupted"));
+}
+
+/// The query is the cost of a group, so patterns that cover no heavy or single-shard target of the plan run none.
+#[test]
+fn the_groups_ask_for_the_tree_only_when_the_plan_names_a_covered_target() {
+    let mut plan = ShardPlan::default();
+    plan.record(&timing("//p/a:medium_test", &[("A", 120.0)]));
+    plan.record(&timing("//q:heavy_test", &[("A", 400.0)]));
+    let groups = plan.groups(&["//p/...".to_owned()], || -> Result<Option<TreeTargets>, ()> {
+        panic!("the plan names no covered heavy or single-shard target")
+    });
+    assert_eq!(groups, Ok(Groups::default()));
+}
+
+#[test]
+fn the_tree_query_names_the_test_targets_of_the_patterns_in_their_order() {
+    let query = |patterns: &[&str]| TreeTargets::query(&patterns.iter().map(|pattern| (*pattern).to_owned()).collect::<Vec<_>>());
+    assert_eq!(
+        query(&["//p/...", "@@community+//tools/bt/...", "-//p/b/...", "//p/b/c:t"]),
+        r#"tests(set() + "//p/..." + "@@community+//tools/bt/..." - "//p/b/..." + "//p/b/c:t")"#
+    );
+    // a negative pattern first removes from nothing, as in `bazel test`
+    assert_eq!(query(&["-//p/..."]), r#"tests(set() - "//p/...")"#);
+    assert_eq!(query(&[]), "tests(set())");
+}
+
+#[test]
+fn the_tree_has_a_target_under_either_name_of_its_repository() {
+    let tree = TreeTargets::parse(["@community//tools/bt:t".to_owned(), "//p:t".to_owned(), "no label".to_owned()]);
+    assert!(tree.has("@@community+//tools/bt:t"));
+    assert!(tree.has("@community//tools/bt:t"));
+    assert!(tree.has("//p:t"));
+    assert!(!tree.has("//p:other"));
+    assert!(!tree.has("//tools/bt:t"));
+    assert!(!tree.has("no label"));
+}
+
 #[test]
 fn the_rendered_plan_has_the_lines_the_runner_reads() {
     let mut plan = ShardPlan::default();
