@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.platform.recentFiles.frontend.Switcher.SwitcherPanel
 import com.intellij.platform.recentFiles.frontend.model.FrontendRecentFilesModel
 import com.intellij.platform.recentFiles.shared.FileSwitcherApi
@@ -63,7 +64,10 @@ private suspend fun createAndShow(
 ): SwitcherPanel {
   val parameters = SwitcherLaunchEventParameters(eventCollector?.initialEvent)
   val remoteApi = FileSwitcherApi.getInstance()
-  val frontendModel = FrontendRecentFilesModel.getInstanceAsync(project)
+  val frontendModels = LinkedHashMap<Project, FrontendRecentFilesModel>()
+  for (frameProject in projectsOfFrame(project)) {
+    frontendModels[frameProject] = FrontendRecentFilesModel.getInstanceAsync(frameProject)
+  }
 
   // IJPL-242053
   return withContext(Dispatchers.UiWithModelAccess) {
@@ -72,7 +76,16 @@ private suspend fun createAndShow(
                   launchParameters = parameters,
                   alreadyReleasedKeys = eventCollector?.getKeyReleaseEventsSoFar(),
                   onlyEditedFiles = onlyEditedFiles,
-                  frontendModel = frontendModel,
+                  frontendModels = frontendModels,
                   remoteApi = remoteApi)
   }
+}
+
+/**
+ * The projects whose editors the frame of [project] shows: [project] first, then the owner of the frame and its other frame
+ * guests, see [IdeFrameGuests]. A project with a frame of its own is the only project of its frame.
+ */
+private fun projectsOfFrame(project: Project): List<Project> {
+  val frameOwner = IdeFrameGuests.frameOwnerOf(project)
+  return (listOf(project, frameOwner) + IdeFrameGuests.frameGuestsOf(frameOwner)).distinct().filter { !it.isDisposed }
 }

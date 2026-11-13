@@ -13,6 +13,8 @@ import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.toolWindow.ToolWindowEventSource
 
@@ -46,6 +48,8 @@ internal fun openEditorForFile(
 ) {
   IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
     {
+      // a frame shows the editors of its active project, so a file of a frame guest needs its project in front
+      (WindowManager.getInstance() as? WindowManagerEx)?.setActiveProject(project)
       val manager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
       val plan = values.mapNotNull { value ->
         val file = value.virtualFile?.takeIf { it.isValid } ?: return@mapNotNull null

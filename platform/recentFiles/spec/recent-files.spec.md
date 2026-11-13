@@ -232,6 +232,10 @@ title `Recent Files`. The user interface keeps one popup per project and closes 
 - The popup must show the status text of the selected file in a strip at the bottom.
   The strip stays empty when the user selects more than one file.
 - The full popup must allow a selection of several files. The quick popup must allow one file.
+- The popup must list the recent files of every project of the frame that shows its project.
+  A frame guest is a project without a frame of its own, see `WindowManagerEx.getFrameGuests`.
+- The files of the project of the popup come first, then the files of the other projects of the frame.
+- A file that two projects of the frame hold must appear one time, in the row of the first project.
 - The left arrow key and the right arrow key must move the focus between the two columns.
 - The empty file list must show `No recent files`. The empty tool window list must show `No tool windows`.
 
@@ -292,6 +296,8 @@ stays open. This difference sets the behavior of the other keys:
 - The popup must open every file of a right split selection in one new split.
 - The popup must not replace a preview tab with the file that it opens.
 - The popup must do nothing for a row whose file is no longer valid.
+- The popup must open a file in the project whose list holds the row, and make that project the active project of the frame.
+- The delete key must close the editors of the file in that project, and hide the file in the list of that project.
 - The popup must activate a tool window when the user selects a row of the left column.
 
 ## Data & Backend

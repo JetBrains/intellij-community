@@ -134,7 +134,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
     launchParameters: SwitcherLaunchEventParameters,
     alreadyReleasedKeys: List<KeyEvent>?,
     onlyEditedFiles: Boolean?,
-    private val frontendModel: FrontendRecentFilesModel,
+    private val frontendModels: Map<Project, FrontendRecentFilesModel>,
     private val remoteApi: FileSwitcherApi,
   ) : BorderLayoutPanel(), UiDataProvider, QuickSearchComponent, Disposable {
     val popup: JBPopup?
@@ -170,6 +170,9 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
 
     private val unpinnedFilesKind: RecentFileKind
       get() = if (EditorWindow.tabLimit > 1) RecentFileKind.RECENTLY_OPENED_UNPINNED else RecentFileKind.RECENTLY_OPENED
+
+    /** The project whose model gave each file row, see [recentFiles]. */
+    private val projectOfFile = HashMap<SwitcherVirtualFile, Project>()
 
     override fun uiDataSnapshot(sink: DataSink) {
       sink[CommonDataKeys.PROJECT] = project
@@ -315,9 +318,9 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
 
       // setup files
       val initialData = when {
-        !pinned -> frontendModel.getRecentFiles(unpinnedFilesKind)
-        onlyEdited -> frontendModel.getRecentFiles(RecentFileKind.RECENTLY_EDITED)
-        else -> frontendModel.getRecentFiles(RecentFileKind.RECENTLY_OPENED)
+        !pinned -> recentFiles(unpinnedFilesKind)
+        onlyEdited -> recentFiles(RecentFileKind.RECENTLY_EDITED)
+        else -> recentFiles(RecentFileKind.RECENTLY_OPENED)
       }
       listModel = CollectionListModel(initialData)
       val maybeSearchableModel = speedSearch?.wrap(listModel) ?: listModel
@@ -370,7 +373,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
 
       files = JBListWithOpenInRightSplit.createListWithOpenInRightSplitter(maybeSearchableModel) {
         it.virtualFile?.let { file ->
-          OpenInRightSplitAction.canOpenInRightSplit(project, file)
+          OpenInRightSplitAction.canOpenInRightSplit(projectOf(it), file)
         } ?: false
       }
       files.visibleRowCount = files.itemsCount
@@ -540,7 +543,7 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
         when (item) {
           is SwitcherVirtualFile -> {
             listModel.remove(item)
-            if (closeEditorForFile(item, project)) {
+            if (closeEditorForFile(item, projectOf(item))) {
               filesToHide.add(item)
             }
           }
@@ -556,10 +559,28 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
         cbShowOnlyEditedFiles.isSelected -> RecentFileKind.RECENTLY_EDITED
         else -> RecentFileKind.RECENTLY_OPENED
       }
-      if (filesToHide.isNotEmpty()) {
-        frontendModel.applyFrontendChanges(currentlyShownFileType, filesToHide.mapNotNull { it.virtualFile }, FileChangeKind.REMOVED)
+      for ((target, targetFiles) in filesToHide.groupBy(::projectOf)) {
+        frontendModels.getValue(target).applyFrontendChanges(currentlyShownFileType, targetFiles.mapNotNull { it.virtualFile }, FileChangeKind.REMOVED)
       }
     }
+
+    /**
+     * The recent files of [kind] of every project of the frame, see [frontendModels]: the files of [project] first, then the
+     * files of the other projects of the frame. A file that two projects hold gets the row of the first one.
+     */
+    private fun recentFiles(kind: RecentFileKind): List<SwitcherVirtualFile> {
+      projectOfFile.clear()
+      val result = ArrayList<SwitcherVirtualFile>()
+      for ((frameProject, model) in frontendModels) {
+        for (file in model.getRecentFiles(kind)) {
+          if (projectOfFile.putIfAbsent(file, frameProject) == null) result.add(file)
+        }
+      }
+      return result
+    }
+
+    /** The project that holds the file of [item]: the project whose model gave the row, else [project]. */
+    private fun projectOf(item: SwitcherVirtualFile): Project = projectOfFile[item] ?: project
 
     private fun scheduleBackendRecentFilesUpdate(request: RecentFilesBackendRequest) {
       modelUpdateScope.launch {
@@ -622,10 +643,10 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
       val onlyEdited = ItemEvent.SELECTED == event.stateChange
 
       if (onlyEdited) {
-        listModel.replaceAll(frontendModel.getRecentFiles(RecentFileKind.RECENTLY_EDITED))
+        listModel.replaceAll(recentFiles(RecentFileKind.RECENTLY_EDITED))
       }
       else {
-        listModel.replaceAll(frontendModel.getRecentFiles(RecentFileKind.RECENTLY_OPENED))
+        listModel.replaceAll(recentFiles(RecentFileKind.RECENTLY_OPENED))
       }
       toolWindows.revalidate()
       toolWindows.repaint()
@@ -647,7 +668,9 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
         tryToOpenFileSearch(e, searchQuery)
       }
       else if (files.isNotEmpty()) {
-        openEditorForFile(files, mode, project)
+        for ((target, targetFiles) in files.groupBy(::projectOf)) {
+          openEditorForFile(targetFiles, mode, target)
+        }
       }
       else if (toolWindow != null) {
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown({ openToolWindow(toolWindow, isSpeedSearchPopupActive, project) },
