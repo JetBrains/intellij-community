@@ -469,3 +469,26 @@ open class MacDistributionCustomizer {
     return UUID.nameUUIDFromBytes("${context.fullBuildNumber}-${context.options.buildDateInSeconds}".toByteArray())
   }
 }
+
+/**
+ * Returns `true` when the macOS bundle of [appInfo] is an EAP bundle.
+ * An EAP bundle gets the `-EAP` suffix in its bundle identifier and in its bundle name.
+ * An RC build and a Beta build get the release bundle identifier.
+ */
+@ApiStatus.Internal
+fun isMacEapBundle(appInfo: ApplicationInfoProperties): Boolean {
+  val minor = appInfo.minorVersion
+  return appInfo.isEAP && !minor.contains("RC") && !minor.contains("Beta")
+}
+
+/**
+ * Returns the `CFBundleIdentifier` value that the build writes to `Info.plist` for [bundleIdentifier] and [appInfo].
+ *
+ * @see isMacEapBundle
+ */
+@ApiStatus.Internal
+fun getMacBundleIdentifier(bundleIdentifier: String, appInfo: ApplicationInfoProperties): String {
+  return bundleIdentifier + getMacBundleSuffix(appInfo)
+}
+
+internal fun getMacBundleSuffix(appInfo: ApplicationInfoProperties): String = if (isMacEapBundle(appInfo)) "-EAP" else ""
