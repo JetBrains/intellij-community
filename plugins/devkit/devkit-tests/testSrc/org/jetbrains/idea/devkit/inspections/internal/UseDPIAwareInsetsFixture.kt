@@ -43,11 +43,9 @@ class UseDPIAwareInsetsFixture internal constructor(
   }
 
   companion object {
-    @Suppress("SSBasedInspection")
     @JvmField
     val SIMPLIFY_FIX_NAME: String = DevKitBundle.message("inspections.use.dpi.aware.insets.simplify.fix.name")
 
-    @Suppress("SSBasedInspection")
     @JvmField
     val CONVERT_TO_JB_UI_INSETS_EMPTY_FIX_NAME: String = DevKitBundle.message("inspections.use.dpi.aware.insets.convert.fix.name")
   }

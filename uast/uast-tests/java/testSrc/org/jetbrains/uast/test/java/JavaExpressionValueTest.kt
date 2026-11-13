@@ -33,9 +33,9 @@ class JavaExpressionValueTest {
     private val projectFixture = lightJavaProjectFixture()
   }
 
-  private val uast by javaUastFixture(projectFixture) { testName, file -> check(testName, file) }
+  private val uast by javaUastFixture(projectFixture) { _, file -> check(file) }
 
-  private fun check(testName: String, file: UFile) {
+  private fun check(file: UFile) {
     var valuesFound = 0
     file.accept(object : UastVisitor {
       override fun visitElement(node: UElement): Boolean {

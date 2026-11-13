@@ -342,7 +342,7 @@ public class DataFlowInspection21Test {
 
   @Test
   public void testPassthroughGenericParameter() {
-    dataFlow.get().doTestWith((dfi, cvi) -> dfi.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
+    dataFlow.get().doTestWith((dfi, _) -> dfi.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
   }
 
   @Test
@@ -416,7 +416,7 @@ public class DataFlowInspection21Test {
 
   @Test
   public void testOptionalInference() {
-    dataFlow.get().doTestWith((dfi, cvi) -> dfi.SUGGEST_NULLABLE_ANNOTATIONS = false);
+    dataFlow.get().doTestWith((dfi, _) -> dfi.SUGGEST_NULLABLE_ANNOTATIONS = false);
   }
   
   @Test

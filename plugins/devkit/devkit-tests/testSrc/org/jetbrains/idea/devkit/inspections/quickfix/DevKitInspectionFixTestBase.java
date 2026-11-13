@@ -26,7 +26,7 @@ public abstract class DevKitInspectionFixTestBase extends JavaCodeInsightFixture
     doTest(myFixture, fixName, getFileExtension(), getTestName(false));
   }
 
-  static void doTest(JavaCodeInsightTestFixture fixture, String fixName, String fileExtension, String testName) {
+  public static void doTest(JavaCodeInsightTestFixture fixture, String fixName, String fileExtension, String testName) {
     String fileNameBefore = testName + '.' + fileExtension;
     String fileNameAfter = testName + "_after." + fileExtension;
     fixture.testHighlighting(fileNameBefore);

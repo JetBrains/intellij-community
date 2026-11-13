@@ -2,6 +2,7 @@
 package com.intellij.platform.uast.testFramework.env
 
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaProject
 import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
@@ -38,7 +39,7 @@ class UastFixture internal constructor(
    */
   fun doTest(testName: String, checkCallback: (String, UFile) -> Unit) {
     val uFile = configureUFile(testName)
-    ReadAction.runBlocking<RuntimeException> {
+    runReadActionBlocking {
       checkCallback(testName, uFile)
     }
   }

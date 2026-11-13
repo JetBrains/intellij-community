@@ -43,11 +43,9 @@ class UseDPIAwareEmptyBorderFixture internal constructor(
   }
 
   companion object {
-    @Suppress("SSBasedInspection")
     @JvmField
     val SIMPLIFY_FIX_NAME: String = DevKitBundle.message("inspections.use.dpi.aware.empty.border.simplify.fix.name")
 
-    @Suppress("SSBasedInspection")
     @JvmField
     val CONVERT_TO_JB_UI_BORDERS_EMPTY_FIX_NAME: String = DevKitBundle.message("inspections.use.dpi.aware.empty.border.convert.fix.name")
   }

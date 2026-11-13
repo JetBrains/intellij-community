@@ -27,7 +27,7 @@ class GroovyUastApiTest {
 
   @Test
   fun testUastAnchors() {
-    uast.doTest("SimpleClass.groovy") { name, file ->
+    uast.doTest("SimpleClass.groovy") { _, file ->
       val uClass = file.classes.single { it.qualifiedName == "SimpleClass" }
       assertEquals("SimpleClass", uClass.uastAnchor?.psi?.text)
       val uMethod = uClass.methods.single { it.name == "bar" }
@@ -39,7 +39,7 @@ class GroovyUastApiTest {
 
   @Test
   fun testAnnotationAnchor() {
-    uast.doTest("SimpleClass.groovy") { name, file ->
+    uast.doTest("SimpleClass.groovy") { _, file ->
       val uAnnotation = file.findElementByText<UAnnotation>("@java.lang.Deprecated")
       assertEquals("Deprecated", (uAnnotation as UAnnotationEx).uastAnchor?.psi?.text)
     }
@@ -47,7 +47,7 @@ class GroovyUastApiTest {
 
   @Test
   fun testStringLiteral() {
-    uast.doTest("Annotations.groovy") { name, file ->
+    uast.doTest("Annotations.groovy") { _, file ->
       file.findElementByTextFromPsi<ULiteralExpression>("\"abc\"").let { literal ->
         assertTrue(literal.isStringLiteral())
         assertEquals("abc", literal.value)

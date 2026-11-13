@@ -75,7 +75,7 @@ class JavaUastPerformanceTest {
       var hash = 0
       override fun run() {
         ReadAction.runBlocking<RuntimeException> {
-          for (i in 0..99) {
+          repeat(100) {
             myFixture.file.accept(object : PsiRecursiveElementWalkingVisitor() {
               override fun visitElement(element: PsiElement) {
                 hash += Objects.hashCode(element.toUElement())

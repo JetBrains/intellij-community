@@ -24,6 +24,7 @@ import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -340,7 +341,9 @@ public class DataFlowInspectionTest {
     });
   }
 
-  public void _testSymmetricUncheckedCast() { dataFlow.get().doTest(); } // https://youtrack.jetbrains.com/issue/IDEABKL-6871
+  @Test
+  @Disabled("IDEABKL-6871")
+  public void testSymmetricUncheckedCast() { dataFlow.get().doTest(); }
   @Test
   public void testNullCheckDoesntAffectUncheckedCast() { dataFlow.get().doTest(); }
   @Test

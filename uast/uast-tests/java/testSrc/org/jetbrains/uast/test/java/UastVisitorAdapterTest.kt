@@ -18,9 +18,9 @@ class UastVisitorAdapterTest {
     private val projectFixture = lightJavaProjectFixture()
   }
 
-  private val uast by javaUastFixture(projectFixture) { testName, file -> check(testName, file) }
+  private val uast by javaUastFixture(projectFixture) { _, file -> check(file) }
 
-  private fun check(testName: String, file: UFile) {
+  private fun check(file: UFile) {
     val psiFile = file.sourcePsi
     val toList = SyntaxTraverser.psiTraverser(psiFile).toList()
 
