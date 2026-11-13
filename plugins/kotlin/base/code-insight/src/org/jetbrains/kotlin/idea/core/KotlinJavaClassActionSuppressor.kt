@@ -1,31 +1,30 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core
 
-import com.intellij.ide.actions.JavaClassActionSuppressor
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.ide.actions.CreateJavaClassActionAvailabilityOverride
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiDirectory
+import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 
-internal class KotlinJavaClassActionSuppressor: JavaClassActionSuppressor {
-    override fun isSuppressed(dataContext: DataContext): Boolean {
-        val ideView = LangDataKeys.IDE_VIEW.getData(dataContext) ?: return false
-        val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return false
-        val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
+internal class KotlinJavaClassActionSuppressor : CreateJavaClassActionAvailabilityOverride {
+    override fun isActionAvailable(directories: Array<out PsiDirectory>): ThreeState {
+        if (AdvancedSettings.getBoolean("java.suggest.creating.java.sources.in.irrelevant.source.roots")) return ThreeState.UNSURE
 
-        return ideView.directories.any { directory: PsiDirectory ->
+        for (directory in directories) {
             val virtualFile = directory.virtualFile
-            val module = projectFileIndex.getModuleForFile(virtualFile) ?: return@any false
-            if (projectFileIndex.isUnderSourceRootOfType(virtualFile, KOTLIN_SOURCE_ROOT_TYPES)) return true
-            val sourceRootPath = projectFileIndex.getSourceRootForFile(virtualFile)?.toNioPath()?.toString() ?: return@any false
+            val projectFileIndex = ProjectRootManager.getInstance(directory.project).fileIndex
+            val module = projectFileIndex.getModuleForFile(virtualFile) ?: continue
+            if (projectFileIndex.isUnderSourceRootOfType(virtualFile, KOTLIN_SOURCE_ROOT_TYPES)) return ThreeState.NO
+            val sourceRootPath = projectFileIndex.getSourceRootForFile(virtualFile)?.toNioPath()?.toString() ?: continue
 
             val kotlinFacet = KotlinFacet.get(module)
-            val kotlinSourceFolders = kotlinFacet?.configuration?.settings?.pureKotlinSourceFolders ?: return@any false
+            val kotlinSourceFolders = kotlinFacet?.configuration?.settings?.pureKotlinSourceFolders ?: continue
             val kotlinSourceRootOfType = kotlinSourceFolders.any { sourceRootPath.startsWith(it, ignoreCase = true) }
-            kotlinSourceRootOfType
+            if (kotlinSourceRootOfType) return ThreeState.NO
         }
+        return ThreeState.UNSURE
     }
 }

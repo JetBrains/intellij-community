@@ -26,6 +26,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -83,7 +84,7 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
     if (directories.length == 0) {
       return false;
     }
-    if (CreateClassAction.isJavaFileActionSuppressed(dataContext)) {
+    if (CreateClassAction.getAvailabilityOverride(dataContext) == ThreeState.NO) {
       return false;
     }
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();

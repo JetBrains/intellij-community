@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.CreateFromTemplateHandler;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -13,7 +14,7 @@ import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
@@ -33,13 +34,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.Icon;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -62,17 +62,18 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
 
   @Override
   protected boolean isAvailable(@NotNull DataContext dataContext) {
-    if (!super.isAvailable(dataContext)) return false;
-
-    return !isJavaFileActionSuppressed(dataContext);
+    ThreeState override = getAvailabilityOverride(dataContext);
+    if (override != ThreeState.UNSURE) return override.toBoolean();
+    return super.isAvailable(dataContext);
   }
 
-  public static boolean isJavaFileActionSuppressed(@NotNull DataContext dataContext) {
-    if (AdvancedSettings.getBoolean("java.suggest.creating.java.sources.in.irrelevant.source.roots")) return false;
+  public static ThreeState getAvailabilityOverride(@NotNull DataContext dataContext) {
+    final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
+    if (view == null) return ThreeState.UNSURE;
+    PsiDirectory[] directories = view.getDirectories();
+    if (directories.length == 0) return ThreeState.UNSURE;
 
-    List<JavaClassActionSuppressor> suppressors = JavaClassActionSuppressor.EP_NAME.getExtensionList();
-    return ContainerUtil.exists(suppressors,
-                                 suppressor -> suppressor.isSuppressed(dataContext));
+    return CreateJavaClassActionAvailabilityOverride.getAvailabilityOverride(directories);
   }
 
   @Override

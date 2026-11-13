@@ -58,6 +58,11 @@
     <navbar id="kotlinNavBar" implementation="org.jetbrains.kotlin.idea.navigationToolbar.KotlinNavBarModelExtension"/>
     <gotoByName.defaultProvider.ignoreLanguage language="kotlin"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.newKotlinFileActionAvailabilityOverride"
+                    interface="org.jetbrains.kotlin.idea.actions.NewKotlinFileActionAvailabilityOverride"
+                    dynamic="true"/>
+  </extensionPoints>
   <actions>
     <action id="Kotlin.NewFile" class="org.jetbrains.kotlin.idea.actions.NewKotlinFileAction"
             icon="icons.KotlinBaseResourcesIcons.Kotlin_file">
