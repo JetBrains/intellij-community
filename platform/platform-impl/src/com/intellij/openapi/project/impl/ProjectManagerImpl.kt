@@ -807,6 +807,15 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return null
     }
 
+    for (interceptor in ProjectOpenInterceptor.EP_NAME.lazySequence()) {
+      val answer = interceptor.intercept(projectIdentityFile, options) ?: continue
+      LOG.info("Project $projectIdentityFile was taken by $interceptor, which answered with ${answer.project?.name}")
+      withContext(NonCancellable) {
+        cancelProjectOpening(options.project)
+      }
+      return answer.project
+    }
+
     val projectToAttach = options.projectToAttach
     if (projectToAttach != null && attachWithoutConfirmation(projectToAttach, options, projectIdentityFile)) {
       LOG.info("Project $projectIdentityFile was given to an attach processor of ${projectToAttach.name} (locationHash=${projectToAttach.locationHash}).")

@@ -13,6 +13,8 @@ import com.intellij.openapi.project.TestOpenMode.ModeFolderAsFolder
 import com.intellij.openapi.project.TestOpenMode.ModeFolderAsProject
 import com.intellij.openapi.project.TestProjectSource.SourceCLI
 import com.intellij.openapi.project.TestProjectSource.SourceOpenFileAction
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.ProjectOpenInterceptor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ModuleAttachProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor
@@ -479,6 +481,49 @@ internal class OpenProjectTest {
       assertThat(project).isSameAs(openedProject)
     }
     Unit
+  }
+
+  @Test
+  @Timeout(30)
+  fun `a project open interceptor that answers null lets the platform open the project`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val projectDir = tempDir.newPath("project")
+    projectDir.createDirectories()
+    val seen = ArrayList<Path>()
+    val silent = object : ProjectOpenInterceptor {
+      override suspend fun intercept(projectIdentityFile: Path, options: OpenProjectTask): ProjectOpenInterceptor.Answer? {
+        seen.add(projectIdentityFile)
+        return null
+      }
+    }
+    ExtensionTestUtil.maskExtensions(ProjectOpenInterceptor.EP_NAME, listOf(silent), disposable)
+
+    val project = ProjectManagerEx.getInstanceEx().openProjectAsync(projectDir, OpenProjectTask { runConfigurators = true })
+    assertThat(project).isNotNull()
+    project!!.useProject { openedProject ->
+      assertThatProjectContainsModules(openedProject, listOf(projectDir))
+      assertThat(seen).containsExactly(projectDir)
+    }
+  }
+
+  @Test
+  @Timeout(30)
+  fun `a project open interceptor that answers ends the open and the platform closes the project of the options`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val projectDir = tempDir.newPath("project")
+    projectDir.createDirectories()
+    val projectManager = ProjectManagerEx.getInstanceEx()
+    val created = projectManager.newProjectAsync(projectDir, OpenProjectTask { isNewProject = true })
+    val taker = object : ProjectOpenInterceptor {
+      override suspend fun intercept(projectIdentityFile: Path, options: OpenProjectTask): ProjectOpenInterceptor.Answer {
+        assertThat(options.project).isSameAs(created)
+        return ProjectOpenInterceptor.Answer(project = null)
+      }
+    }
+    ExtensionTestUtil.maskExtensions(ProjectOpenInterceptor.EP_NAME, listOf(taker), disposable)
+
+    val opened = projectManager.openProjectAsync(projectDir, OpenProjectTask { project = created; projectRootDir = projectDir })
+    assertThat(opened).isNull()
+    assertThat(created.isDisposed).isTrue()
+    assertThat(projectManager.openProjects).doesNotContain(created)
   }
 
   private fun setupMultibuildProject(): Path {
