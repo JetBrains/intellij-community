@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixtureKt.groovyCompletionFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.addCompileStatic;
+import static org.jetbrains.plugins.groovy.LightGroovyFixtures.addCompileStatic;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -252,7 +252,7 @@ public class GroovySmartCompletionTest {
 
   @Test
   public void testFieldWithInstanceof() {
-    runInEdtAndWait(() -> addCompileStatic(completion.get().getFixture()));
+    addCompileStatic(completion.get().getFixture());
     completion.get().doSmartTest("""
                   @CompileStatic
                   class A {
@@ -281,7 +281,7 @@ public class GroovySmartCompletionTest {
   @Test
   public void testFieldWithAssignment() {
     LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
-    runInEdtAndWait(() -> addCompileStatic(myFixture));
+    addCompileStatic(myFixture);
     myFixture.configureByText("a.groovy", """
       import groovy.transform.CompileStatic
       @CompileStatic
