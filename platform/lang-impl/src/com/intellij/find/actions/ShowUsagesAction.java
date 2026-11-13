@@ -679,6 +679,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     table.getAccessibleContext().setAccessibleName(UsageViewBundle.message("show.usages.table.accessible.name"));
 
     AbstractPopup popup = createUsagePopup(usageView, showUsagesPopupData, itemChosenCallback, tableResizer);
+    cancelOnProjectDispose(project, popup);
     popup.addResizeListener(() -> manuallyResized.set(true), popup);
     Ref<Long> popupShownTimeRef = new Ref<>();
     popup.addListener(new JBPopupListener() {
@@ -1356,6 +1357,19 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     return actionToolbar;
   }
 
+  /**
+   * Cancels {@code popup} when {@code project} is disposed.
+   * In a headless environment, {@link AbstractPopup#show} does not tie the popup to the project.
+   */
+  private static void cancelOnProjectDispose(@NotNull Project project, @NotNull AbstractPopup popup) {
+    Disposable projectDisposeListener = Disposer.newDisposable("ShowUsagesAction.cancelOnProjectDispose");
+    Disposer.register(projectDisposeListener, () -> cancel(popup));
+    if (!Disposer.tryRegister(project, projectDisposeListener) ||
+        !Disposer.tryRegister(popup, () -> Disposer.dispose(projectDisposeListener))) {
+      Disposer.dispose(projectDisposeListener);
+    }
+  }
+
   static void cancel(@Nullable AbstractPopup popup) {
     cancel(popup, null, null);
   }
@@ -1643,14 +1657,19 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                         @NotNull ShowUsagesActionHandler actionHandler) {
     Project project = parameters.project;
     Editor editor = parameters.editor;
+    if (project.isDisposed()) {
+      cancel(popupToCancel);
+      return;
+    }
 
     Runnable runnable = () -> {
-      if (!actionHandler.isValid()) {
+      if (project.isDisposed() || !actionHandler.isValid()) {
         cancel(popupToCancel);
         return;
       }
 
       ReadAction.nonBlocking(() -> getSecondInvocationHint(actionHandler))
+        .expireWith(project)
         .finishOnUiThread(ModalityState.nonModal(), (@NlsContexts.HintText String restartHint) -> {
           HtmlBuilder builder = new HtmlBuilder().append(hint);
           if (restartHint != null) {
