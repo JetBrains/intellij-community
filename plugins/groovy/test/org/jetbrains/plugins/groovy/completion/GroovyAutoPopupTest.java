@@ -21,8 +21,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestApplication
 public class GroovyAutoPopupTest {
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
-  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project);
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = lightJavaCodeInsightFixture(project);
   private CompletionAutoPopupTester myTester;
 
   @BeforeEach

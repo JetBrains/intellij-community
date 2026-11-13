@@ -17,6 +17,7 @@ import com.intellij.slicer.SliceRootNode
 import com.intellij.slicer.SliceTreeStructure
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
 import com.intellij.testFramework.fixtures.lightJavaProjectFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
@@ -24,15 +25,21 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.slicer.GroovySliceProvider
-import org.jetbrains.plugins.groovy.util.groovyFixture
+import org.jetbrains.plugins.groovy.util.TestUtils
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @TestApplication
 class GroovySliceTreeGroupingTest {
   // The module has no JDK, as the JUnit 3 base DaemonAnalyzerTestCase of the old test had it.
-  private val myFixture by groovyFixture(groovyProject, "slicer/tree/")
+  private val myFixture by lightJavaCodeInsightFixture(groovyProject)
+
+  @BeforeEach
+  fun setUpTestDataPath() {
+    myFixture.testDataPath = TestUtils.getAbsoluteTestDataPath() + "slicer/tree/"
+  }
 
   private suspend fun loadTreeStructure(getTestFiles: (baseName: String) -> List<String> = { listOf("$it.groovy") }): SliceTreeStructure =
     withContext(Dispatchers.EDT) {

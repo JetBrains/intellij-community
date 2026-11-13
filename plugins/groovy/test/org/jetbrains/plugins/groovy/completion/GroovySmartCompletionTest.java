@@ -11,28 +11,28 @@ import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 
 import java.util.List;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
+import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixtureKt.groovyCompletionFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.addCompileStatic;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 public class GroovySmartCompletionTest {
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture();
-  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project, "groovy/completion/smart");
-  private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
+  private final TestFixture<GroovyCompletionFixture> completion = groovyCompletionFixture(project, TestUtils.getAbsoluteTestDataPath() + "groovy/completion/smart");
 
   @Test
   public void testSmartCompletionAfterNewInDeclaration() {
-    groovy.get().configureByFile(groovy.get().getTestName(false) + ".groovy");
-    groovy.get().complete(CompletionType.SMART);
-    runInEdtAndWait(() -> assertEquals(List.of("Bar", "Foo"), groovy.get().getLookupElementStrings()));
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
+    myFixture.complete(CompletionType.SMART);
+    runInEdtAndWait(() -> assertEquals(List.of("Bar", "Foo"), myFixture.getLookupElementStrings()));
   }
 
   @Test
@@ -87,7 +87,7 @@ public class GroovySmartCompletionTest {
 
   @Test
   public void testInheritConstructorsAnnotation() {
-    groovy.get().addFileToProject("groovy/transform/InheritConstructors.java", """
+    completion.get().getFixture().addFileToProject("groovy/transform/InheritConstructors.java", """
       package groovy.transform;
       
       import java.lang.annotation.ElementType;
@@ -142,14 +142,16 @@ public class GroovySmartCompletionTest {
 
   @Test
   public void testGlobalStaticMembers() {
-    groovy.get().configureByFile(groovy.get().getTestName(false) + ".groovy");
-    groovy.get().complete(CompletionType.SMART, 2);
-    runInEdtAndWait(() -> assertEquals(List.of("SUBSTRING", "createExpected", "createSubGeneric", "SUB_RAW"), groovy.get().getLookupElementStrings()));
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
+    myFixture.complete(CompletionType.SMART, 2);
+    runInEdtAndWait(() -> assertEquals(List.of("SUBSTRING", "createExpected", "createSubGeneric", "SUB_RAW"), myFixture.getLookupElementStrings()));
   }
 
   @Test
   public void testGlobalStaticMembersForString() {
-    groovy.get().configureByText("a.groovy", """
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    myFixture.configureByText("a.groovy", """
       'class Foo {
         public static String string(){}
         public static Comparator<String> comparator(){}
@@ -159,15 +161,16 @@ public class GroovySmartCompletionTest {
       String s = <caret>
       """);
 
-    groovy.get().complete(CompletionType.SMART, 2);
-    runInEdtAndWait(() -> assertEquals(List.of("foo", "string"), groovy.get().getLookupElementStrings()));
+    myFixture.complete(CompletionType.SMART, 2);
+    runInEdtAndWait(() -> assertEquals(List.of("foo", "string"), myFixture.getLookupElementStrings()));
   }
 
   @Test
   public void testGlobalListCreators() {
-    groovy.get().configureByFile(groovy.get().getTestName(false) + ".groovy");
-    groovy.get().complete(CompletionType.SMART, 2);
-    runInEdtAndWait(() -> assertEquals(List.of("createGenericList", "createStringList"), groovy.get().getLookupElementStrings()));
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
+    myFixture.complete(CompletionType.SMART, 2);
+    runInEdtAndWait(() -> assertEquals(List.of("createGenericList", "createStringList"), myFixture.getLookupElementStrings()));
   }
 
   @Test
@@ -177,22 +180,23 @@ public class GroovySmartCompletionTest {
 
   @Test
   public void testMembersImportStatically() {
-    groovy.get().addClass("""
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    myFixture.addClass("""
                          class Expected {
                            public static final Expected fooField;
                            public static Expected fooMethod() {}
                          }
                          """);
-    groovy.get().configureByText("a.groovy", "Expected exp = fo<caret>");
-    LookupElement[] items = groovy.get().complete(CompletionType.SMART);
+    myFixture.configureByText("a.groovy", "Expected exp = fo<caret>");
+    LookupElement[] items = myFixture.complete(CompletionType.SMART);
     runInEdtAndWait(() -> {
-      assertEquals(List.of("fooField", "fooMethod"), groovy.get().getLookupElementStrings());
+      assertEquals(List.of("fooField", "fooMethod"), myFixture.getLookupElementStrings());
       assertTrue(items[0].as(StaticallyImportable.CLASS_CONDITION_KEY).canBeImported());
       assertTrue(items[1].as(StaticallyImportable.CLASS_CONDITION_KEY).canBeImported());
       items[0].as(StaticallyImportable.CLASS_CONDITION_KEY).setShouldBeImported(true);
     });
-    groovy.get().type("\n");
-    groovy.get().checkResult("""
+    myFixture.type("\n");
+    myFixture.checkResult("""
                             import static Expected.fooField
                             
                             Expected exp = fooField""");
@@ -200,11 +204,12 @@ public class GroovySmartCompletionTest {
 
   @Test
   public void testThrow() {
-    groovy.get().configureByText("_a.groovy", """
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    myFixture.configureByText("_a.groovy", """
       throw new RunEx<caret>
       """);
-    groovy.get().complete(CompletionType.SMART);
-    groovy.get().checkResult("""
+    myFixture.complete(CompletionType.SMART);
+    myFixture.checkResult("""
                             throw new RuntimeException()
                             """);
   }
@@ -247,7 +252,7 @@ public class GroovySmartCompletionTest {
 
   @Test
   public void testFieldWithInstanceof() {
-    runInEdtAndWait(() -> addCompileStatic(groovy.get()));
+    runInEdtAndWait(() -> addCompileStatic(completion.get().getFixture()));
     completion.get().doSmartTest("""
                   @CompileStatic
                   class A {
@@ -275,8 +280,9 @@ public class GroovySmartCompletionTest {
 
   @Test
   public void testFieldWithAssignment() {
-    runInEdtAndWait(() -> addCompileStatic(groovy.get()));
-    groovy.get().configureByText("a.groovy", """
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    runInEdtAndWait(() -> addCompileStatic(myFixture));
+    myFixture.configureByText("a.groovy", """
       import groovy.transform.CompileStatic
       @CompileStatic
       class A {
@@ -290,13 +296,13 @@ public class GroovySmartCompletionTest {
       }
       """);
 
-    groovy.get().complete(CompletionType.SMART);
-    runInEdtAndWait(() -> Assertions.assertEquals(List.of(), groovy.get().getLookupElementStrings()));
+    myFixture.complete(CompletionType.SMART);
+    runInEdtAndWait(() -> Assertions.assertEquals(List.of(), myFixture.getLookupElementStrings()));
   }
 
   @Test
   public void testQualifiedNameAfterNew() {
-    groovy.get().addClass("""
+    completion.get().getFixture().addClass("""
                          package foo;
                          public class User<T> {}
                          """);

@@ -17,17 +17,21 @@ package org.jetbrains.plugins.groovy.lang.slicer
 
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 
-class GroovySliceBackwardTest : GroovySliceTestCase(groovyProject, true) {
-  @Test
-  fun testSimple() = doTest()
+@TestApplication
+class GroovySliceBackwardTest {
+  private val slice by groovySliceFixture(groovyProject, true)
 
   @Test
-  fun testGroovyJavaGroovy() = doTest { listOf("$it.groovy", "$it.java") }
+  fun testSimple() = slice.doTest()
 
   @Test
-  fun testJavaGroovyJava() = doTest { listOf("$it.java", "$it.groovy") }
+  fun testGroovyJavaGroovy() = slice.doTest { listOf("$it.groovy", "$it.java") }
+
+  @Test
+  fun testJavaGroovyJava() = slice.doTest { listOf("$it.java", "$it.groovy") }
 
   companion object {
     private val groovyProject = lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR)

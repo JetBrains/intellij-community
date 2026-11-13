@@ -3,29 +3,27 @@ package org.jetbrains.plugins.groovy.ext.ginq;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
-import org.jetbrains.plugins.groovy.completion.GroovyCompletionTestFixture;
+import org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixtureKt.groovyCompletionFixture;
 
 @TestApplication
 public class GinqCompletionTest {
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GinqTestUtils.getProjectDescriptor());
-  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project);
-  private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
+  private final TestFixture<GroovyCompletionFixture> completion = groovyCompletionFixture(project, TestUtils.getAbsoluteTestDataPath());
 
   @BeforeEach
   public void setUp() {
-    groovy.get().enableInspections(new GrUnresolvedAccessInspection(), new GroovyAssignabilityCheckInspection());
+    completion.get().getFixture().enableInspections(new GrUnresolvedAccessInspection(), new GroovyAssignabilityCheckInspection());
   }
 
   private void completeGinq(String before, String after) {

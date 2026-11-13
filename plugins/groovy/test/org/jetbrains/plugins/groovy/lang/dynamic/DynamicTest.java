@@ -21,19 +21,26 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 
 @TestApplication
 public class DynamicTest implements BaseTest {
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_5);
-  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project, "dynamic");
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = lightJavaCodeInsightFixture(project);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    groovy.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "dynamic");
+  }
 
   @Override
   public @NotNull JavaCodeInsightTestFixture getFixture() {

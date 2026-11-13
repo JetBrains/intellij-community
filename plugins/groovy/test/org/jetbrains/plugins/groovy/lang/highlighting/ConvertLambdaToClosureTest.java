@@ -14,13 +14,13 @@ import org.jetbrains.plugins.groovy.util.ActionTest;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 
 @TestApplication
 public class ConvertLambdaToClosureTest implements ActionTest {
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_5);
-  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project);
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = lightJavaCodeInsightFixture(project);
 
   @Override
   public @NotNull JavaCodeInsightTestFixture getFixture() {

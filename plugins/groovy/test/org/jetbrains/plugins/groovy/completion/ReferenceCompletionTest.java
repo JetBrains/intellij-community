@@ -32,13 +32,14 @@ import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Comparator;
 import java.util.List;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestApplication
@@ -47,7 +48,12 @@ public class ReferenceCompletionTest {
   private static final LightProjectDescriptor DESCRIPTOR =
     new DefaultLightProjectDescriptor(() -> IdeaTestUtil.createMockJdk("java 1.7", TestUtils.getMockJdkHome()));
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(DESCRIPTOR);
-  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project, "groovy/oldCompletion/reference");
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = lightJavaCodeInsightFixture(project);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    groovy.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "groovy/oldCompletion/reference");
+  }
 
   @Test public void testEscapedReference() { doTest(); }
   @Test public void testGrvy1021() { doTest(); }

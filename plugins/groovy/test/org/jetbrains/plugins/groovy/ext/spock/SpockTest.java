@@ -11,6 +11,8 @@ import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection;
 import org.jetbrains.plugins.groovy.util.HighlightingTest;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -18,14 +20,19 @@ import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 public class SpockTest implements TypingTest, HighlightingTest {
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(SpockTestUtil.SPOCK_PROJECT);
-  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project);
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = lightJavaCodeInsightFixture(project);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    groovy.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath());
+  }
 
   @Override
   public @NotNull JavaCodeInsightTestFixture getFixture() {

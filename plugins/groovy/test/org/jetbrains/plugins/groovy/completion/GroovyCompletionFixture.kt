@@ -1,6 +1,4 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:JvmName("GroovyCompletionFixture")
-
 package org.jetbrains.plugins.groovy.completion
 
 import com.intellij.codeInsight.completion.CompletionType
@@ -9,7 +7,9 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture
+import com.intellij.testFramework.fixtures.LightJavaProject
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import kotlinx.coroutines.Dispatchers
@@ -28,10 +28,12 @@ import org.junit.jupiter.api.Assertions.assertTrue
  * The helpers work on the EDT and off it.
  */
 @TestOnly
-class GroovyCompletionTestFixture internal constructor(
-  val fixture: JavaCodeInsightTestFixture,
-  private val testName: String,
+class GroovyCompletionFixture internal constructor(
+  val fixture: LightJavaCodeInsightTestFixture,
 ) {
+  private val testName: String
+    get() = fixture.getTestName(false)
+
   fun doSmartTest() {
     doCompletionTest(CompletionType.SMART)
   }
@@ -185,11 +187,17 @@ class GroovyCompletionTestFixture internal constructor(
 }
 
 /**
- * Creates a [GroovyCompletionTestFixture] on [groovy] for each test.
+ * Creates a [GroovyCompletionFixture] in the project of [projectFixture] for each test.
  * The test data files have the name of the test method without the prefix `test`.
+ * [testDataPath] is the absolute test data path. By default, it is the community root.
  */
 @TestOnly
-fun groovyCompletionFixture(groovy: TestFixture<JavaCodeInsightTestFixture>): TestFixture<GroovyCompletionTestFixture> =
-  testFixture("groovyCompletionFixture") { context ->
-    initialized(GroovyCompletionTestFixture(groovy.init(), context.testName)) {}
+@JvmOverloads
+fun groovyCompletionFixture(projectFixture: TestFixture<LightJavaProject>, testDataPath: String? = null): TestFixture<GroovyCompletionFixture> =
+  testFixture("groovyCompletionFixture") {
+    val fixture = lightJavaCodeInsightFixture(projectFixture).init()
+    if (testDataPath != null) {
+      fixture.testDataPath = testDataPath
+    }
+    initialized(GroovyCompletionFixture(fixture)) {}
   }

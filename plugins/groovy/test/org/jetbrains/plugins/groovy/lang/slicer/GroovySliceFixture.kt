@@ -25,33 +25,44 @@ import com.intellij.slicer.SliceAnalysisParams
 import com.intellij.slicer.SliceHandler
 import com.intellij.slicer.SliceTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaProject
-import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.groovy.util.groovyFixture
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.groovy.util.TestUtils
 import org.junit.jupiter.api.Assertions.assertTrue
 
 /**
- * Checks the slice tree of the expression at the caret against the markers of the test files.
- * The module has no JDK, as the JUnit 3 base `DaemonAnalyzerTestCase` of the old test had it.
+ * The fixture of the Groovy slicer tests. Create it with [groovySliceFixture].
+ * It checks the slice tree of the expression at the caret against the markers of the test files.
+ * It replaces the JUnit 3 base `GroovySliceTestCase`.
  */
-@TestApplication
-abstract class GroovySliceTestCase(projectFixture: TestFixture<LightJavaProject>, private val isDataFlowToThis: Boolean) {
-  private val myFixture by groovyFixture(projectFixture,
-                                         "slicer/${if (isDataFlowToThis) "backward" else "forward"}/")
-
-  protected fun doTest(getTestFiles: (baseName: String) -> List<String> = { listOf("$it.groovy") }) {
+@TestOnly
+class GroovySliceFixture internal constructor(
+  /**
+   * The code insight fixture of the test.
+   */
+  val fixture: LightJavaCodeInsightTestFixture,
+  private val isDataFlowToThis: Boolean,
+) {
+  /**
+   * Configures the test files that [getTestFiles] gives for the test name, and checks the slice tree of the expression at the caret.
+   * The slicer and the highlighting run on the EDT, from the configuration to the last check.
+   */
+  fun doTest(getTestFiles: (baseName: String) -> List<String> = { listOf("$it.groovy") }) {
     timeoutRunBlocking {
       withContext(Dispatchers.EDT) {
-        val project = myFixture.project
+        val project = fixture.project
         val psiManager = PsiManager.getInstance(project)
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
 
-        val testFiles = getTestFiles(myFixture.getTestName(false))
-        myFixture.configureByFiles(*testFiles.toTypedArray())
-        val rootDir = myFixture.tempDirFixture.getFile("")!!
+        val testFiles = getTestFiles(fixture.getTestName(false))
+        fixture.configureByFiles(*testFiles.toTypedArray())
+        val rootDir = fixture.tempDirFixture.getFile("")!!
 
         val documents = testFiles.reversed().map {
           val virtualFile = rootDir.findFileByRelativePath(it)!!
@@ -63,10 +74,10 @@ abstract class GroovySliceTestCase(projectFixture: TestFixture<LightJavaProject>
 
         psiDocumentManager.commitAllDocuments()
 
-        val element = SliceHandler.create(isDataFlowToThis).getExpressionAtCaret(myFixture.editor, myFixture.file)!!
+        val element = SliceHandler.create(isDataFlowToThis).getExpressionAtCaret(fixture.editor, fixture.file)!!
         val tree = SliceTestUtil.buildTree(element, sliceUsageName2Offset)
 
-        val errors = myFixture.doHighlighting(HighlightSeverity.ERROR)
+        val errors = fixture.doHighlighting(HighlightSeverity.ERROR)
         assertTrue(errors.isEmpty(), errors.toString())
 
         val params = SliceAnalysisParams().apply {
@@ -79,3 +90,16 @@ abstract class GroovySliceTestCase(projectFixture: TestFixture<LightJavaProject>
     }
   }
 }
+
+/**
+ * Creates the [GroovySliceFixture] of one test in the project of [projectFixture].
+ * [isDataFlowToThis] selects the backward slice, and the test data of `slicer/backward/` or `slicer/forward/`.
+ * The module of [projectFixture] has no JDK, as the JUnit 3 base `DaemonAnalyzerTestCase` of the old test had it.
+ */
+@TestOnly
+fun groovySliceFixture(projectFixture: TestFixture<LightJavaProject>, isDataFlowToThis: Boolean): TestFixture<GroovySliceFixture> =
+  testFixture("groovySliceFixture") {
+    val fixture = lightJavaCodeInsightFixture(projectFixture).init()
+    fixture.testDataPath = TestUtils.getAbsoluteTestDataPath() + "slicer/${if (isDataFlowToThis) "backward" else "forward"}/"
+    initialized(GroovySliceFixture(fixture, isDataFlowToThis)) {}
+  }

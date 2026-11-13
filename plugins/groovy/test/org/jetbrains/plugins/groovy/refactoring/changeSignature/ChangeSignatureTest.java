@@ -29,12 +29,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -43,7 +45,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestApplication
 public class ChangeSignatureTest {
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture();
-  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project, "refactoring/changeSignature/");
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = lightJavaCodeInsightFixture(project);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    groovy.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "refactoring/changeSignature/");
+  }
 
   @Test
   public void testOneNewParameter() {

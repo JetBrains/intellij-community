@@ -14,12 +14,13 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -27,7 +28,12 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 @TestApplication
 public class InjectedGroovyEditingTest {
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture();
-  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project);
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = lightJavaCodeInsightFixture(project);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    groovy.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath());
+  }
 
   @BeforeEach
   public void setUp() {

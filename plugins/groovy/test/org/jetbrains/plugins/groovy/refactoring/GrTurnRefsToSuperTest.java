@@ -33,20 +33,27 @@ import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @TestApplication
 public class GrTurnRefsToSuperTest {
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(new DefaultLightProjectDescriptor());
   private final TestFixture<LightJavaCodeInsightTestFixture> groovy =
-    groovyFixture(project, "refactoring/turnRefsToSuper/");
+    lightJavaCodeInsightFixture(project);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    groovy.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "refactoring/turnRefsToSuper/");
+  }
 
   @Test
   public void testNoReturnType() {

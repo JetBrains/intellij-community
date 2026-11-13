@@ -6,19 +6,17 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixtureKt.groovyCompletionFixture;
 
 public abstract class GrFunctionalExpressionCompletionTest {
-  private final TestFixture<LightJavaCodeInsightTestFixture> groovy;
-  private final TestFixture<GroovyCompletionTestFixture> completion;
+  private final TestFixture<GroovyCompletionFixture> completion;
 
   protected GrFunctionalExpressionCompletionTest(@NotNull TestFixture<LightJavaProject> project, @NotNull String testDataPath) {
-    groovy = groovyFixture(project, testDataPath);
-    completion = groovyCompletionFixture(groovy);
+    completion = groovyCompletionFixture(project, TestUtils.getAbsoluteTestDataPath() + testDataPath);
   }
 
   @Test
@@ -43,10 +41,11 @@ public abstract class GrFunctionalExpressionCompletionTest {
 
   @Test
   public void testEachMethodForEnumRanges() {
-    groovy.get().configureByFile(groovy.get().getTestName(false) + ".groovy");
-    groovy.get().completeBasic();
-    groovy.get().type("\n");
-    groovy.get().checkResultByFile(groovy.get().getTestName(false) + "_after.groovy");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".groovy");
+    myFixture.completeBasic();
+    myFixture.type("\n");
+    myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.groovy");
   }
 
   @Test

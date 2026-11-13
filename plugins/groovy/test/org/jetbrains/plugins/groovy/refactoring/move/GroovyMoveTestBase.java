@@ -20,8 +20,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.BeforeEach;
 
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
@@ -31,9 +33,16 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @TestApplication
 public abstract class GroovyMoveTestBase {
   protected final TestFixture<LightJavaCodeInsightTestFixture> groovy;
+  private final String testDataPath;
 
   protected GroovyMoveTestBase(@NotNull TestFixture<LightJavaProject> project, @NotNull String testDataPath) {
-    groovy = groovyFixture(project, testDataPath);
+    groovy = lightJavaCodeInsightFixture(project);
+    this.testDataPath = testDataPath;
+  }
+
+  @BeforeEach
+  protected void setUpTestDataPath() {
+    groovy.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + testDataPath);
   }
 
   protected void doTest(String newPackageName, String... names) {

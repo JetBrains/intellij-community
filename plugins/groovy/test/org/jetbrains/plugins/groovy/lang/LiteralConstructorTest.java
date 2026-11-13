@@ -34,14 +34,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 @TestApplication
 public class LiteralConstructorTest implements HighlightingTest, ResolveTest {
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_5_REAL_JDK);
-  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project);
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = lightJavaCodeInsightFixture(project);
 
   @Override
   public @NotNull JavaCodeInsightTestFixture getFixture() {
@@ -50,6 +50,7 @@ public class LiteralConstructorTest implements HighlightingTest, ResolveTest {
 
   @BeforeEach
   public void setUp() {
+    groovy.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath());
     runInEdtAndWait(() -> RecursionManager.assertOnRecursionPrevention(getFixture().getTestRootDisposable()));
     getFixture().addFileToProject("classes.groovy", """
       enum En { ONE, TWO, }

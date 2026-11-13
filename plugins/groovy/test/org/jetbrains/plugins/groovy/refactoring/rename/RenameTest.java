@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.refactoring.rename.inplace.GrVariableInplaceRenameHandler;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -48,13 +49,18 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 
 @TestApplication
 public class RenameTest implements BaseTest {
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_5);
-  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project, "groovy/refactoring/rename/");
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = lightJavaCodeInsightFixture(project);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    groovy.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "groovy/refactoring/rename/");
+  }
 
   @Override
   public @NotNull JavaCodeInsightTestFixture getFixture() {

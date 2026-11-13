@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.completion
 import com.intellij.testFramework.fixtures.lightJavaProjectFixture
 import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.util.groovyFixture
+import org.jetbrains.plugins.groovy.util.TestUtils
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -13,8 +13,7 @@ class GroovyForeachCompletionTest {
     private val project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_5_0)
   }
 
-  private val groovy = groovyFixture(project, "groovy/completion/foreach")
-  private val completion by groovyCompletionFixture(groovy)
+  private val completion by groovyCompletionFixture(project, TestUtils.getAbsoluteTestDataPath() + "groovy/completion/foreach")
 
   @Test
   fun testValueVariableType() { completion.doHasVariantsTest("int", "final") }

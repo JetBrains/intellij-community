@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.completion
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.testFramework.fixtures.lightJavaProjectFixture
 import com.intellij.testFramework.junit5.TestApplication
-import org.jetbrains.plugins.groovy.util.groovyFixture
+import org.jetbrains.plugins.groovy.util.TestUtils
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -13,8 +13,7 @@ class GroovyInstanceofCompletionTest {
     private val project = lightJavaProjectFixture()
   }
 
-  private val groovy = groovyFixture(project, "groovy/completion/instanceof")
-  private val completion by groovyCompletionFixture(groovy)
+  private val completion by groovyCompletionFixture(project, TestUtils.getAbsoluteTestDataPath() + "groovy/completion/instanceof")
 
   @Test
   fun testInsideLogicalBinaryExpression() { completion.doCompletionTest(CompletionType.BASIC) }

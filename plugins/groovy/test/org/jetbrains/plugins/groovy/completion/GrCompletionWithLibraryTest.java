@@ -11,13 +11,13 @@ import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import java.util.List;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixtureKt.groovyCompletionFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -26,8 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @TestApplication
 public class GrCompletionWithLibraryTest {
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_1_7);
-  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project, "groovy/completion/");
-  private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
+  private final TestFixture<GroovyCompletionFixture> completion = groovyCompletionFixture(project, TestUtils.getAbsoluteTestDataPath() + "groovy/completion/");
 
   @Test
   public void testCategoryMethod() {
@@ -96,13 +95,14 @@ public class GrCompletionWithLibraryTest {
 
   @Test
   public void testEllipsisTypeCompletion() {
-    groovy.get().configureByText("a.groovy", """
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    myFixture.configureByText("a.groovy", """
       
       def foo(def... args) {
         args.si<caret>
       }""");
-    groovy.get().completeBasic();
-    groovy.get().checkResult("""
+    myFixture.completeBasic();
+    myFixture.checkResult("""
                             
                             def foo(def... args) {
                               args.size()
@@ -111,13 +111,14 @@ public class GrCompletionWithLibraryTest {
 
   @Test
   public void testBoxForinParams() {
-    groovy.get().configureByText("A.groovy", """
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    myFixture.configureByText("A.groovy", """
       
       for (def ch: "abc".toCharArray()) {
         print ch.toUpperCa<caret>
       }""");
-    groovy.get().completeBasic();
-    groovy.get().checkResult("""
+    myFixture.completeBasic();
+    myFixture.checkResult("""
                             
                             for (def ch: "abc".toCharArray()) {
                               print ch.toUpperCase()
@@ -136,7 +137,8 @@ public class GrCompletionWithLibraryTest {
 
   @Test
   public void testDeclaredMembersGoFirst() {
-    groovy.get().configureByText("a.groovy", """
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    myFixture.configureByText("a.groovy", """
       
             class Foo {
               def superProp
@@ -158,7 +160,7 @@ public class GrCompletionWithLibraryTest {
             new FooImpl().<caret>
           \
       """);
-    groovy.get().completeBasic();
+    myFixture.completeBasic();
     runInEdtAndWait(() -> {
       assertEquals(List.of("""
         fromThis
@@ -243,7 +245,7 @@ public class GrCompletionWithLibraryTest {
         use
         use
         use
-        getClass""".split("\n")), groovy.get().getLookupElementStrings());
+        getClass""".split("\n")), myFixture.getLookupElementStrings());
     });
   }
 
@@ -254,19 +256,20 @@ public class GrCompletionWithLibraryTest {
 
   @Test
   public void testGStringConcatenationCompletion() {
-    groovy.get().testCompletionVariants(groovy.get().getTestName(false) + ".groovy", "substring", "substring", "subSequence");
+    completion.get().getFixture().testCompletionVariants(completion.get().getFixture().getTestName(false) + ".groovy", "substring", "substring", "subSequence");
   }
 
   @Test
   public void testCompleteClassClashingWithGroovyUtilTuple() {
-    groovy.get().addClass("package p; public class Tuple {}");
+    LightJavaCodeInsightTestFixture myFixture = completion.get().getFixture();
+    myFixture.addClass("package p; public class Tuple {}");
 
-    groovy.get().configureByText("a.groovy", "print new Tupl<caret>");
+    myFixture.configureByText("a.groovy", "print new Tupl<caret>");
     runInEdtAndWait(() -> {
       LookupElement tuple = null;
       LookupElement groovyUtilTuple = null;
       StringBuilder msg = new StringBuilder();
-      for (LookupElement element : groovy.get().completeBasic()) {
+      for (LookupElement element : myFixture.completeBasic()) {
         if (element.getPsiElement() instanceof PsiClass el) {
           switch (el.getQualifiedName()) {
             case "p.Tuple":
@@ -285,7 +288,7 @@ public class GrCompletionWithLibraryTest {
       completion.get().getLookup().finishLookup('\n', tuple);
     });
 
-    groovy.get().checkResult("""
+    myFixture.checkResult("""
                             import p.Tuple
                             
                             print new Tuple()""");

@@ -3,33 +3,8 @@
 
 package org.jetbrains.plugins.groovy.util
 
-import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture
-import com.intellij.testFramework.fixtures.LightJavaProject
-import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
-import com.intellij.testFramework.fixtures.lightJavaProjectFixture
-import com.intellij.testFramework.junit5.fixture.TestFixture
-import com.intellij.testFramework.junit5.fixture.testFixture
 import org.jetbrains.annotations.TestOnly
-
-/**
- * Creates the fixture of one test in the project of [projectFixture], as [lightJavaCodeInsightFixture] does.
- * The descriptor of [lightJavaProjectFixture] sets up the module.
- * It replaces the JUnit 3 and JUnit 4 light Groovy bases, such as `LightGroovyTestCase` and `GroovyLatestTest`.
- *
- * The test data path is [testDataPath] under [TestUtils.getAbsoluteTestDataPath].
- */
-@TestOnly
-@JvmOverloads
-fun groovyFixture(projectFixture: TestFixture<LightJavaProject>, testDataPath: String = ""): TestFixture<LightJavaCodeInsightTestFixture> =
-  testFixture("groovyFixture") {
-    val fixture = lightJavaCodeInsightFixture(projectFixture).init()
-    // LightGroovyTestCase loads the extensions before the test, so that the highlighting does not load them.
-    EntryPointsManagerBase.DEAD_CODE_EP_NAME.extensionList
-    fixture.testDataPath = TestUtils.getAbsoluteTestDataPath() + testDataPath
-    initialized(fixture) {}
-  }
 
 /**
  * Adds a stub of the annotation `groovy.transform.CompileStatic` to the project of [fixture].

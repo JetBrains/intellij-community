@@ -15,17 +15,23 @@ import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.JBIterable;
 import java.io.File;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 
 @TestApplication
 public class InjectedGroovyParsingTest {
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture();
   private final TestFixture<LightJavaCodeInsightTestFixture> groovy =
-    groovyFixture(project, "injected/");
+    lightJavaCodeInsightFixture(project);
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    groovy.get().setTestDataPath(TestUtils.getAbsoluteTestDataPath() + "injected/");
+  }
 
   @BeforeEach
   public void setUp() {
