@@ -223,10 +223,10 @@ class ActionsCollectorImpl : ActionsCollector() {
         }
         customDataProvider(this)
         addActionClass(this, action, info)
-      }
 
-      if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsedByAction(getActionId(action))
+        if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
+          FeatureUsageTracker.getInstance().triggerFeatureUsedByAction(getActionId(action))
+        }
       }
     }
 
