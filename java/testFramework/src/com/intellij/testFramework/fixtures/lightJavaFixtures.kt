@@ -272,6 +272,7 @@ fun lightJavaProjectFixture(
  *
  * The test creates its files in [LightJavaProject.sourceRoot] with their exact names.
  * After the test, the fixture does what a JUnit 3 light test does:
+ * - it disposes [CodeInsightTestFixture.getProjectDisposable] after the test root disposable;
  * - it deletes the files of the test and cleans the project with [TestApplicationManager.cleanUpProjectForNextTest];
  * - it checks the code style settings, the editors, and the injectors;
  * - it sets the project language level back to [LanguageLevel.JDK_1_6];
@@ -310,16 +311,25 @@ fun lightJavaCodeInsightFixture(
   InjectedLanguageManagerImpl.pushInjectors(project)
 
   val ideaProjectFixture = object : IdeaProjectTestFixture {
+    private val testRootDisposable = Disposer.newDisposable("lightJavaCodeInsightFixture project fixture")
+
     override fun getProject(): Project = project
 
     override fun getModule(): Module = lightProject.module
+
+    override fun getTestRootDisposable(): Disposable = testRootDisposable
 
     override fun setUp() {
       TestApplicationManager.getInstance().setDataProvider(TestDataProvider(project))
     }
 
     override fun tearDown() {
-      TestApplicationManager.getInstance().setDataProvider(null)
+      try {
+        Disposer.dispose(testRootDisposable)
+      }
+      finally {
+        TestApplicationManager.getInstance().setDataProvider(null)
+      }
     }
   }
   val codeInsightFixture = LightJavaCodeInsightTestFixtureImpl(ideaProjectFixture, ExactNameTempDirTestFixture(lightProject.sourceRootPath),

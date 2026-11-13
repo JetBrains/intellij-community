@@ -4,7 +4,6 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.reference.RefElement;
@@ -19,6 +18,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -53,8 +53,8 @@ public class BatchModeInspectionTest {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiClass aClass = myFixture.addClass("class Foo {public void bar(int i){}}");
     Project project = myFixture.getProject();
-    GlobalInspectionContext context = InspectionManager.getInstance(project).createNewGlobalContext();
-    ((GlobalInspectionContextBase)context).initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+    GlobalInspectionContextBase context = createGlobalContext(project);
+    context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     ReadAction.runBlocking(() -> {
       RefManagerImpl refManager = new RefManagerImpl(project, new AnalysisScope(aClass.getContainingFile()), context);
       refManager.findAllDeclarations();
@@ -78,8 +78,8 @@ public class BatchModeInspectionTest {
     PsiClass aClass = myFixture.addClass("class Foo {}");
     myFixture.addFileToProject("Bar.groovy", "class Bar { void m() { new Foo(); }}");
     Project project = myFixture.getProject();
-    GlobalInspectionContext context = InspectionManager.getInstance(project).createNewGlobalContext();
-    ((GlobalInspectionContextBase)context).initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+    GlobalInspectionContextBase context = createGlobalContext(project);
+    context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     ReadAction.runBlocking(() -> {
       RefManagerImpl refManager = new RefManagerImpl(project, new AnalysisScope(project), context);
       refManager.findAllDeclarations();
@@ -102,8 +102,8 @@ public class BatchModeInspectionTest {
 
     PsiClass aClass = myFixture.addClass("class Foo {}");
     Project project = myFixture.getProject();
-    GlobalInspectionContext context = InspectionManager.getInstance(project).createNewGlobalContext();
-    ((GlobalInspectionContextBase)context).initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+    GlobalInspectionContextBase context = createGlobalContext(project);
+    context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     RefManagerImpl refManager = ReadAction.computeBlocking(() -> new RefManagerImpl(project, new AnalysisScope(aClass.getContainingFile()), context));
 
     //Key point: inject something that throws PCE inside RefManagerImpl task processing
@@ -131,5 +131,15 @@ public class BatchModeInspectionTest {
       indicator.cancel();
       fail("A rejected reference-graph task must release the worker wait");
     }
+  }
+
+  /**
+   * Creates a global context with the inspection profile of the fixture.
+   * The inspection manager keeps the profile name of its first call, and the fixture deletes that profile after each test.
+   */
+  private static GlobalInspectionContextBase createGlobalContext(Project project) {
+    GlobalInspectionContextBase context = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext();
+    context.setExternalProfile(InspectionProjectProfileManager.getInstance(project).getCurrentProfile());
+    return context;
   }
 }
