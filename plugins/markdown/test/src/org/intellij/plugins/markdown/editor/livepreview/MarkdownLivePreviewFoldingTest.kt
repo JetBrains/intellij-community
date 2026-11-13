@@ -386,6 +386,31 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(expected, backgroundAt(offset))
   }
 
+  fun testStickyLineOfRevealedHeadingPaintsTheHeading() {
+    val content = "# title\n\ntail"
+    configure("$content<caret>")
+    val renderer = headingFolds().single().renderer
+    moveCaretTo(0)
+    assertEmpty(headingFolds())
+
+    val editor = myFixture.editor as EditorImpl
+    EditorTestUtil.setEditorVisibleSize(editor, 80, 12)
+    val highlighter = editor.markupModel.allHighlighters.single { it.customRenderer != null }
+    assertSame(renderer, highlighter.customRenderer)
+    assertTrue(
+      "Only a sticky line paints the heading",
+      paintStickyLine(editor, highlighter, sticky = false).all { it == Color.RED.rgb }
+    )
+
+    val pixels = paintStickyLine(editor, highlighter, sticky = true)
+    assertTrue(
+      "The sticky line must paint the heading text",
+      pixels.count { it != Color.RED.rgb && it != editor.backgroundColor.rgb } > 50
+    )
+    moveCaretTo(content.length)
+    assertFalse(highlighter.isValid)
+  }
+
   fun testHeadingAtDocumentEnd() {
     configure("<caret>before\n## last")
     assertEquals(1, headingFolds().size)
@@ -2076,6 +2101,23 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
       graphics.dispose()
     }
     return bitmap
+  }
+
+  private fun paintStickyLine(editor: EditorImpl, highlighter: RangeHighlighter, sticky: Boolean): IntArray {
+    val bitmap = BufferedImage(editor.scrollingModel.visibleArea.width, editor.lineHeight, BufferedImage.TYPE_INT_RGB)
+    val graphics = bitmap.createGraphics()
+    editor.isStickyLinePainting = sticky
+    try {
+      graphics.color = Color.RED
+      graphics.fillRect(0, 0, bitmap.width, bitmap.height)
+      graphics.translate(0, -editor.visualLineToY(0))
+      highlighter.customRenderer!!.paint(editor, highlighter, graphics)
+    }
+    finally {
+      editor.isStickyLinePainting = false
+      graphics.dispose()
+    }
+    return bitmap.getRGB(0, 0, bitmap.width, bitmap.height, null, 0, bitmap.width)
   }
 
   /** Clicks the folded heading at the x that [x] gives, and returns the caret offset after the click. */

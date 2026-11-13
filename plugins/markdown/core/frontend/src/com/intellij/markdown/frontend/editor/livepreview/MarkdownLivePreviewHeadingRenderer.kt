@@ -3,6 +3,7 @@ package com.intellij.markdown.frontend.editor.livepreview
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -13,10 +14,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.CustomFoldRegionRenderer
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayProperties
+import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -25,6 +28,11 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorCssFontResolver
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.markup.CustomHighlighterOrder
+import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
@@ -45,8 +53,10 @@ import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Font
+import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
@@ -70,11 +80,12 @@ private const val SOURCE_RANGE_ATTRIBUTE = "md-src-pos"
 /**
  * Paints each heading line as HTML in a custom fold. The HTML heading element supplies its font size, scaled as in the JCEF preview.
  * While a heading shows its source, a block inlay below it takes the height difference to prevent UI jumps.
+ * On a sticky line, a revealed heading paints as a folded one.
  * A plain click on a painted heading moves the caret to the source character under the mouse.
  * The Go-to Declaration mouse shortcut, such as Ctrl+Click, also runs Go to Declaration there.
  */
 internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) : MarkdownLivePreviewElementRenderer {
-  private val spacers = ArrayList<Inlay<HeadingSpacer>>()
+  private var revealedHeadings = emptyList<RevealedHeading>()
 
   init {
     editor.addEditorMouseListener(object : EditorMouseListener {
@@ -88,7 +99,7 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
   override fun documentChanged() = Unit
 
   override fun reconcile(presentation: MarkdownLivePreviewPresentation?) {
-    val wanted = HashMap<Int, Int>()
+    val wanted = HashSet<RevealedHeadingKey>()
     for (element in presentation?.elements.orEmpty()) {
       val fold = element.folds.singleOrNull() as? HeadingFold ?: continue
       val range = fold.range
@@ -97,14 +108,15 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
         if ((region.renderer as? HeadingPainter)?.needsLayout() == true) region.update()
         continue
       }
+      val painter = fold.painter()
       val sourceLines = editor.offsetToVisualLine(range.endOffset, true) - editor.offsetToVisualLine(range.startOffset, false) + 1
-      val height = fold.painter().height() - sourceLines * editor.lineHeight
-      if (height > 0) wanted[range.endOffset] = height
+      wanted += RevealedHeadingKey(range, painter, maxOf(0, painter.height() - sourceLines * editor.lineHeight))
     }
-    val obsolete = ArrayList<Inlay<HeadingSpacer>>()
-    for (spacer in spacers) {
-      val keep = spacer.isValid && wanted[spacer.offset] == spacer.renderer.height
-      if (keep) wanted.remove(spacer.offset) else obsolete += spacer
+    val kept = ArrayList<RevealedHeading>()
+    val obsolete = ArrayList<RevealedHeading>()
+    for (heading in revealedHeadings) {
+      val key = heading.key()
+      if (key != null && wanted.remove(key)) kept += heading else obsolete += heading
     }
     val changeCount = obsolete.size + wanted.size
     if (changeCount == 0) return
@@ -113,16 +125,14 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
     val properties = InlayProperties().relatesToPrecedingText(true).priority(Int.MAX_VALUE)
     editor.inlayModel.execute(changeCount > 100) {
       obsolete.forEach(Disposer::dispose)
-      spacers.removeAll(obsolete.toSet())
-      for ((offset, height) in wanted) {
-        editor.inlayModel.addBlockElement(offset, properties, HeadingSpacer(height))?.let(spacers::add)
-      }
+      wanted.mapTo(kept) { RevealedHeading(it, properties) }
+      revealedHeadings = kept
     }
   }
 
   override fun dispose() {
-    spacers.forEach(Disposer::dispose)
-    spacers.clear()
+    revealedHeadings.forEach(Disposer::dispose)
+    revealedHeadings = emptyList()
   }
 
   private fun moveCaretToClickedSource(event: EditorMouseEvent) {
@@ -219,7 +229,34 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
       return getQuotePrefixWidth(editor, start, markerEnd)
     }
   }
+
+  private inner class RevealedHeading(wanted: RevealedHeadingKey, properties: InlayProperties) : Disposable {
+    private val painter = wanted.painter
+    private val highlighter = editor.markupModel.addRangeHighlighter(
+      wanted.range.startOffset, wanted.range.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.EXACT_RANGE,
+    )
+    private val spacer = if (wanted.spacerHeight > 0) {
+      editor.inlayModel.addBlockElement(wanted.range.endOffset, properties, HeadingSpacer(wanted.spacerHeight))
+    } else null
+
+    init {
+      highlighter.customRenderer = painter
+    }
+
+    fun key(): RevealedHeadingKey? {
+      if (!highlighter.isValid) return null
+      if (spacer != null && (!spacer.isValid || spacer.offset != highlighter.endOffset)) return null
+      return RevealedHeadingKey(highlighter.textRange, painter, spacer?.renderer?.height ?: 0)
+    }
+
+    override fun dispose() {
+      highlighter.dispose()
+      if (spacer != null) Disposer.dispose(spacer)
+    }
+  }
 }
+
+private data class RevealedHeadingKey(val range: TextRange, val painter: HeadingPainter, val spacerHeight: Int)
 
 /** Everything a heading pane depends on. Equal looks paint the same pixels, so the reconciler keeps their regions. */
 private data class HeadingLook(
@@ -235,7 +272,7 @@ private data class HeadingLook(
  * Paints one heading with its own [JBHtmlPane]. The layout is cached for the current wrap width.
  * The constructor lays out the pane at [width]. It needs no EDT, so a background thread can create the painter.
  */
-private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook, width: Int?) : CustomFoldRegionRenderer {
+private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook, width: Int?) : CustomFoldRegionRenderer, CustomHighlighterRenderer {
   private val pane = createPane()
   private var layoutWidth: Int? = null
 
@@ -249,7 +286,23 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
 
   override fun calcHeightInPixels(region: CustomFoldRegion): Int = height()
 
-  override fun paint(region: CustomFoldRegion, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) {
+  override fun paint(region: CustomFoldRegion, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) =
+    paintPane(g, targetRegion)
+
+  override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
+    if (editor !is EditorImpl || !editor.isStickyLinePainting || !highlighter.isValid) return
+    val line = editor.visualPositionToXY(
+      VisualPosition(editor.offsetToVisualLine(highlighter.startOffset, false), 0)
+    )
+    val visibleArea = editor.scrollingModel.visibleArea
+    g.color = editor.backgroundColor
+    g.fillRect(line.x + look.indent, line.y, visibleArea.x + visibleArea.width - line.x - look.indent, editor.lineHeight)
+    paintPane(g as Graphics2D, Rectangle(line.x, line.y, visibleArea.width, editor.lineHeight))
+  }
+
+  override fun getOrder(): CustomHighlighterOrder = CustomHighlighterOrder.AFTER_TEXT
+
+  private fun paintPane(g: Graphics2D, targetRegion: Rectangle2D) {
     val graphics = g.create() as Graphics2D
     try {
       graphics.translate(targetRegion.x + look.indent, targetRegion.y + paneY(targetRegion.height.toInt()))
