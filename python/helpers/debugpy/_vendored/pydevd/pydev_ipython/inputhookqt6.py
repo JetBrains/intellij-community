@@ -21,7 +21,8 @@ import signal
 
 from _pydev_bundle._pydev_saved_modules import threading
 
-from pydev_ipython.qt_for_kernel import QtCore, QtGui
+from pydev_ipython.qt_for_kernel import QtCore, QtGui, QT_API
+from pydev_ipython.qt_loaders import QT_API_PYSIDE6
 from pydev_ipython.inputhook import allow_CTRL_C, ignore_CTRL_C, stdin_ready
 
 
@@ -85,7 +86,10 @@ def create_inputhook_qt6(mgr, app=None):
     if app is None:
         app = QtCore.QCoreApplication.instance()
         if app is None:
-            from PyQt6 import QtWidgets
+            if QT_API == QT_API_PYSIDE6:
+                from PySide6 import QtWidgets
+            else:
+                from PyQt6 import QtWidgets
 
             app = QtWidgets.QApplication([" "])
 

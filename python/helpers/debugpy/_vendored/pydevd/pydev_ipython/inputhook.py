@@ -177,11 +177,12 @@ class InputHookManager(object):
         self.clear_inputhook()
 
     def enable_qt(self, app=None):
-        from pydev_ipython.qt_for_kernel import QT_API, QT_API_PYQT5, QT_API_PYQT6
+        from pydev_ipython.qt_for_kernel import QT_API
+        from pydev_ipython.qt_loaders import QT_API_PYQT5, QT_API_PYQT6, QT_API_PYSIDE2, QT_API_PYSIDE6
 
-        if QT_API == QT_API_PYQT6:
+        if QT_API in (QT_API_PYQT6, QT_API_PYSIDE6):
             self.enable_qt6(app)
-        elif QT_API == QT_API_PYQT5:
+        elif QT_API in (QT_API_PYQT5, QT_API_PYSIDE2):
             self.enable_qt5(app)
         else:
             self.enable_qt4(app)

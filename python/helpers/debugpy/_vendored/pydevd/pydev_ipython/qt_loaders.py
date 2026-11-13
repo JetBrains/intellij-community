@@ -61,7 +61,7 @@ def commit_api(api):
     """Commit to a particular API, and trigger ImportErrors on subsequent
     dangerous imports"""
 
-    if api == QT_API_PYSIDE:
+    if api in (QT_API_PYSIDE, QT_API_PYSIDE2, QT_API_PYSIDE6):
         ID.forbid("PyQt4")
         ID.forbid("PyQt5")
         ID.forbid("PyQt6")
