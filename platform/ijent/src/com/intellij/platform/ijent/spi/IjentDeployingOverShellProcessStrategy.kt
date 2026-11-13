@@ -30,8 +30,10 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -664,16 +666,20 @@ private suspend fun <T : Any> ShellSession.execCommand(block: suspend ShellSessi
  * Returns the conclusive failure of the deployment for [error], or `null` if [error] needs no wrapper.
  *
  * A failure of the environment ends the deployment for good, so it becomes [IjentDeploymentFailed].
+ * A [TimeoutCancellationException] in an active coroutine comes from an internal timeout, not from a cancelled caller.
  * A [EelUnavailableException.Conclusive] error is already a root cause.
  * A bug keeps its own type, so it reaches the error reporter.
  */
-private fun deploymentFailureOf(error: Throwable, message: String): IjentDeploymentFailed? =
+private suspend fun deploymentFailureOf(error: Throwable, message: String): IjentDeploymentFailed? =
   when (error) {
     is EelUnavailableException -> when (error) {
       is CommunicationFailure -> IjentDeploymentFailed(message, error)
       is EelUnavailableException.Conclusive -> null
     }
     is IOException -> IjentDeploymentFailed(message, error)
+    is TimeoutCancellationException -> {
+      if (currentCoroutineContext().isActive) IjentDeploymentFailed(message, error) else null
+    }
     else -> null
   }
 

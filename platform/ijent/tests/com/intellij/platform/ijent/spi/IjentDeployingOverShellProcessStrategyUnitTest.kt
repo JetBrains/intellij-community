@@ -47,6 +47,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
@@ -58,6 +59,7 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -73,6 +75,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.writeBytes
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @Timeout(30)
@@ -259,6 +263,73 @@ class IjentDeployingOverShellProcessStrategyUnitTest {
       }
     }
     finally {
+      parentScope.cancel()
+    }
+  }
+
+  /** IJPL-260120 */
+  @Test
+  fun `shell initialization timeout fails deployment and closes the owned shell process`(): Unit = timeoutRunBlocking(10.seconds) {
+    val loggedErrors = mutableListOf<Throwable>()
+    val parentFailure = CompletableDeferred<Throwable>()
+    val parentScope = childScope(
+      "ParentOfIjentScope",
+      Dispatchers.Default + CoroutineExceptionHandler { _, error -> parentFailure.complete(error) },
+      supervisor = true,
+    )
+    val strategy = TestShellStrategy(
+      parentScope,
+      blockShellInitialization = true,
+      shellInitializationTimeout = 50.milliseconds,
+    )
+
+    try {
+      executeAndCollectLoggedErrors(loggedErrors) {
+        val error = shouldThrow<IjentDeploymentFailed> {
+          strategy.createIjentSession(failingProvider("Connection must not be attempted when shell initialization times out"))
+        }
+        error.cause.shouldBeInstanceOf<IjentDeploymentFailed>()
+          .cause.shouldBeInstanceOf<TimeoutCancellationException>()
+
+        strategy.shellProcess.destroyed.await()
+        strategy.shellProcess.isAlive shouldBe false
+        parentScope.coroutineContext.job.children.toList().joinAll()
+        parentFailure.isCompleted shouldBe false
+      }
+    }
+    finally {
+      parentScope.cancel()
+    }
+
+    loggedErrors.shouldBeEmpty()
+  }
+
+  @Test
+  fun `caller timeout during shell command closes the owned shell process`(): Unit = timeoutRunBlocking(10.seconds) {
+    val parentScope = childScope("ParentOfIjentScope", Dispatchers.Default, supervisor = true)
+    val pathMappingStarted = CompletableDeferred<Unit>()
+    val strategy = TestShellStrategy(
+      parentScope,
+      pathMapper = {
+        pathMappingStarted.complete(Unit)
+        awaitCancellation()
+      },
+    )
+
+    try {
+      strategy.detectPlatform()
+      shouldThrow<TimeoutCancellationException> {
+        withTimeout(100.milliseconds) {
+          strategy.upload(Path.of("test-ijent"))
+        }
+      }
+
+      pathMappingStarted.isCompleted shouldBe true
+      strategy.shellProcess.destroyed.isCompleted shouldBe true
+      strategy.shellProcess.isAlive shouldBe false
+    }
+    finally {
+      strategy.closeStrategy()
       parentScope.cancel()
     }
   }
@@ -641,6 +712,8 @@ private fun failingProvider(message: String): IjentSessionProvider = object : Ij
 private class TestShellStrategy(
   parentScope: CoroutineScope,
   private val blockPlatformProbe: Boolean = false,
+  private val blockShellInitialization: Boolean = false,
+  private val shellInitializationTimeout: Duration? = null,
   private val usePowerShell: Boolean = false,
   private val binaryProvider: suspend (EelPlatform, TestShellProcessFacade) -> Path = { _, _ -> Path.of("test-ijent") },
   private val pathMapper: suspend (Path) -> String? = { null },
@@ -661,10 +734,20 @@ private class TestShellStrategy(
   override suspend fun getShellDialect(process: IjentSessionProcessMediator.ProcessFacade): ShellDialect =
     if (usePowerShell) ShellDialect.POWERSHELL else ShellDialect.POSIX
 
+  override suspend fun <T> withShellInitializationInterruption(block: suspend () -> T): T =
+    if (shellInitializationTimeout != null) withTimeout(shellInitializationTimeout) { block() }
+    else super.withShellInitializationInterruption(block)
+
   override suspend fun mapPath(path: Path): String? = pathMapper(path)
 
   override suspend fun createShellProcessFacade(ijentProcessScope: IjentScope): IjentSessionProcessMediator.ProcessFacade =
-    TestShellProcessFacade(ijentProcessScope, blockPlatformProbe, destroyFailure, shellWriteFailure).also {
+    TestShellProcessFacade(
+      ijentProcessScope,
+      blockPlatformProbe = blockPlatformProbe,
+      blockShellInitialization = blockShellInitialization,
+      destroyFailure = destroyFailure,
+      shellWriteFailure = shellWriteFailure,
+    ).also {
       shellProcess = it
       shellCreated.complete(Unit)
     }
@@ -714,6 +797,8 @@ private class TestShellStrategy(
     close()
   }
 
+  suspend fun detectPlatform(): EelPlatform = getTargetPlatform()
+
   suspend fun upload(binary: Path): String {
     getTargetPlatform()
     return copyFile(binary)
@@ -757,6 +842,7 @@ private class TestShellCommandStrategy(
 private class TestShellProcessFacade(
   val ijentProcessScope: IjentScope,
   private val blockPlatformProbe: Boolean = false,
+  private val blockShellInitialization: Boolean = false,
   private val destroyFailure: Exception? = null,
   shellWriteFailure: IOException? = null,
   bootstrapOutput: String? = null,
@@ -857,7 +943,10 @@ private class TestShellProcessFacade(
       Regex("^echo ([a-z0-9]{32})(?:;|$)").find(command)
       ?: Regex("^Write-Output '([a-z0-9]{32})';").find(command)
     }?.groupValues?.get(1)
-    if (processBoundary != null) stdoutPipe.sink.sendWholeText("$processBoundary$lineEnding")
+    if (processBoundary != null) {
+      if (blockShellInitialization) return
+      stdoutPipe.sink.sendWholeText("$processBoundary$lineEnding")
+    }
     else if ($$"$ijentOutput.Dispose()" in command) {
       val boundary = Regex("Write-Output '([a-z0-9]{32})'").find(command)?.groupValues?.get(1)
       if (boundary != null) stdoutPipe.sink.sendWholeText("$boundary$lineEnding")
