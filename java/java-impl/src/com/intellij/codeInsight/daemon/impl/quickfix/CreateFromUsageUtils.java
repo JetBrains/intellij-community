@@ -429,7 +429,7 @@ public final class CreateFromUsageUtils {
 
   /**
    * @deprecated use {@link #createClassInDirectory(CreateClassKind, PsiDirectory, String, PsiElement, String)}
-   * or {@link #createClassInFile(CreateClassKind, PsiFile, String, PsiElement, String)}.
+   * or {@link #createClassInParent(CreateClassKind, PsiFile, String, PsiElement, String)}.
    */
   @Deprecated
   public static PsiClass createClass(CreateClassKind classKind,
@@ -444,7 +444,7 @@ public final class CreateFromUsageUtils {
         if (directory != null) {
           return createClassInDirectory(classKind, directory, name, contextElement, superClassName);
         }
-        return createClassInFile(classKind, Objects.requireNonNull(sourceFile), name, contextElement, superClassName);
+        return createClassInParent(classKind, Objects.requireNonNull(sourceFile), name, contextElement, superClassName);
       }
       catch (IncorrectOperationException e) {
         if (directory != null) {
@@ -487,27 +487,27 @@ public final class CreateFromUsageUtils {
   }
 
   /**
-   * Create class in an existing source file and setup it from context element (reference).
+   * Create class in an existing source file, add it to the parent element and setup it from context element (reference).
    * This method is ModCommand-friendly: the file could be a {@linkplain ModPsiUpdater#getWritable(PsiElement) writable copy}
    * inside a ModCommand. If called on a physical file, must be called inside a write action.
    *
    * @param classKind      class kind
-   * @param file           source file where the class will be created
+   * @param parent         parent element (could be {@link PsiFile} or another {@link PsiClass})
    * @param name           class name
    * @param contextElement context element (reference)
    * @param superClassName super class name, fully-qualified, can be null
    * @return newly created class.
    */
-  public static @NotNull PsiClass createClassInFile(@NotNull CreateClassKind classKind,
-                                                    @NotNull PsiFile file,
-                                                    @NotNull String name,
-                                                    @NotNull PsiElement contextElement,
-                                                    @Nullable String superClassName) {
+  public static @NotNull PsiClass createClassInParent(@NotNull CreateClassKind classKind,
+                                                      @NotNull PsiElement parent,
+                                                      @NotNull String name,
+                                                      @NotNull PsiElement contextElement,
+                                                      @Nullable String superClassName) {
     Project project = contextElement.getProject();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     PsiClass aClass = classKind.create(facade.getElementFactory(), name);
-    PsiClass targetClass = (PsiClass)file.add(aClass);
-    if (ScratchUtil.isScratch(file.getVirtualFile())) {
+    PsiClass targetClass = (PsiClass)parent.add(aClass);
+    if (ScratchUtil.isScratch(parent.getContainingFile().getVirtualFile())) {
       PsiUtil.setModifierProperty(targetClass, PsiModifier.PACKAGE_LOCAL, true);
     }
 
@@ -527,22 +527,6 @@ public final class CreateFromUsageUtils {
     if (contextElement instanceof PsiJavaCodeReferenceElement ref) {
       setupGenericParameters(targetClass, ref);
     }
-  }
-
-  private static PsiClass createClassInQualifier(@NotNull PsiClass psiClass,
-                                                 @NotNull CreateClassKind classKind,
-                                                 @NotNull String name,
-                                                 @NotNull PsiJavaCodeReferenceElement referenceElement,
-                                                 @Nullable String superClassName) {
-    PsiManager manager = psiClass.getManager();
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
-    PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
-                      classKind == CreateClassKind.CLASS ? elementFactory.createClass(name) :
-                      classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
-                      classKind == CreateClassKind.RECORD ? elementFactory.createRecord(name) :
-                      elementFactory.createEnum(name);
-    setupClass(classKind, referenceElement, superClassName, result);
-    return (PsiClass)psiClass.add(result);
   }
 
   /**
@@ -1393,13 +1377,13 @@ public final class CreateFromUsageUtils {
     if (name == null) return null;
     PsiClass qualifierClass = getQualifierClass(reference);
     if (qualifierClass != null) {
-      return createClassInQualifier(updater.getWritable(qualifierClass), classKind, name, reference, superClassName);
+      return createClassInParent(classKind, updater.getWritable(qualifierClass), name, reference, superClassName);
     }
     return switch (place) {
       case NewClassPlace.Directory(PsiDirectory dir) ->
         createClassInDirectory(classKind, updater.getWritable(dir), name, reference, superClassName);
       case NewClassPlace.OriginalFile _ ->
-        createClassInFile(classKind, updater.getWritable(reference.getContainingFile()), name, reference, superClassName);
+        createClassInParent(classKind, updater.getWritable(reference.getContainingFile()), name, reference, superClassName);
     };
   }
 
