@@ -155,6 +155,10 @@ internal class LspNotebookDocumentProtocolTest {
         save = true
       }
     },
+    // The server offers every feature, and each test checks one of them. Highlighting requests the others.
+    allowUnmatched = {
+      DOCUMENT_SYNC + setOf(DOCUMENT_LINK, SEMANTIC_TOKENS_FULL, DIAGNOSTIC, DOCUMENT_COLOR, INLAY_HINT, FOLDING_RANGE, CODE_ACTION, CODE_LENS)
+    },
   )
 
   @Nested

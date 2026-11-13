@@ -225,6 +225,10 @@ internal class LspWorkspaceSymbolTest {
       serverSession.expectRequest(serverSession.WORKSPACE_SYMBOL, { it.query == "NonExistent" }) {
         Either.forLeft(emptyList())
       }
+      // With no results, the popup asks again with the lowercase query
+      serverSession.expectRequest(serverSession.WORKSPACE_SYMBOL, { it.query == "nonexistent" }) {
+        Either.forLeft(emptyList())
+      }
 
       val model = GotoSymbolModel2(project, codeInsightFixture.testRootDisposable)
       val popup = withContext(Dispatchers.EDT) {

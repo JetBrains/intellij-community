@@ -27,10 +27,8 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.Registration
 import org.eclipse.lsp4j.RegistrationParams
 import org.eclipse.lsp4j.SemanticTokens
@@ -230,22 +228,22 @@ internal class LspHighlightingApplierTest {
   )
 
   /**
-   * Opens a file with one "keyword" token over (0,5), answers the first pull, and waits until the
+   * Opens a file with one "keyword" token over (0,5), answers the pull that follows didOpen, and waits until the
    * applier brings the token to the markup.
    */
   private suspend fun CoroutineScope.openFileWithKeywordToken(fakeLspIntegration: FakeLspIntegration): TokenSession {
     // No daemon runs in this test: instantiate the pass registrar, so it assigns LspHighlightingApplier.GROUP_ID.
     TextEditorHighlightingPassRegistrar.getInstance(project)
-    val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-    val document = codeInsightFixture.editor.document
-    val serverSession = fakeLspIntegration.serverSession(virtualFile)
-    val uri = serverSession.fileUri(virtualFile)
-    val client = fakeLspIntegration.client
-
-    serverSession.expectRequest(serverSession.SEMANTIC_TOKENS_FULL, { it.textDocument.uri == uri }) {
+    val serverSession = fakeLspIntegration.unstartedServerSession()
+    val virtualFile = codeInsightFixture.addFileToProject("test.txt", "hello world").virtualFile
+    val firstPull = serverSession.expectRequest(serverSession.SEMANTIC_TOKENS_FULL,
+                                                { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
       SemanticTokens(listOf(0, 0, 5, 0, 0))
     }
-    withContext(Dispatchers.IO) { readAction { client.highlightingCacheRegistry.semanticTokensCache.getHighlightings(virtualFile) } }
+    codeInsightFixture.configureFromExistingVirtualFile(virtualFile)
+    val document = codeInsightFixture.editor.document
+    firstPull.await()
+    val uri = serverSession.fileUri(virtualFile)
     waitUntilAssertSucceeds(message = "the initial semantic token must reach the markup") {
       assertEquals(listOf(TextRange(0, 5)), semanticTokenRanges(document))
     }

@@ -22,6 +22,9 @@ See also the "Tests" section in `../AGENTS.md`. The fake server and its fixture 
 ## The fake server
 
 - Declare one `fakeLspIntegrationFixture` per test class: in the outer class or in each `@Nested` class, never both.
+- Keep the tests of one user-visible feature in one file, even when the feature uses more than one LSP method, for example `textDocument/completion` and `completionItem/resolve`. When some tests need other server capabilities, declare the fixture in each `@Nested` class, not in a new test file.
+- A message that no expectation matches fails the test, except the document sync messages. Expect it, or configure the server capabilities so the client doesn't send it. Pass its method to `allowUnmatched` only when neither works, with a comment saying why.
+- The client sends some requests right after `didOpen`, for example the diagnostic pull and the semantic tokens. Expect them on `unstartedServerSession()` before the file opens: create the file with `addFileToProject`, set up the expectations, then open it.
 - An `expectRequest` that is never answered keeps the test running until it times out. When a test checks that no request was sent, `cancel()` the returned `Deferred` at the end.
 - To check that no message was sent, send a marker message after the action and wait for the server to get it. Messages arrive in order, so an earlier message would have come first. Avoid fixed delays: a fixed delay can't fail when the message is only slow, so it hides bugs.
 - Answer with `null` using `nullResponse()`, hold a request with `UnansweredRequest`, and throw `ResponseErrorException` to answer with an error.

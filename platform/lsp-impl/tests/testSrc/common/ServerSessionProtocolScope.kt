@@ -149,6 +149,11 @@ internal abstract class ServerSessionProtocolScope {
   val NOTEBOOK_DID_CLOSE = lspNotification<DidCloseNotebookDocumentParams>("notebookDocument/didClose")
   // endregion
 
+  val DOCUMENT_SYNC: Set<LspMethod> = setOf(
+    DID_OPEN, DID_CHANGE, DID_CLOSE, DID_SAVE, WILL_SAVE, WILL_SAVE_WAIT_UNTIL,
+    NOTEBOOK_DID_OPEN, NOTEBOOK_DID_CHANGE, NOTEBOOK_DID_SAVE, NOTEBOOK_DID_CLOSE,
+  )
+
   // region Diagnostics
   val PUBLISH_DIAGNOSTICS = lspNotification<PublishDiagnosticsParams>("textDocument/publishDiagnostics") { c, p -> c.publishDiagnostics(p) }
   val DIAGNOSTIC = lspRequest<DocumentDiagnosticParams, DocumentDiagnosticReport>("textDocument/diagnostic")
@@ -297,8 +302,13 @@ internal abstract class ServerSessionProtocolScope {
   // endregion
 }
 
-internal sealed class LspRequest<Params : Any, Response>(val method: String, val paramsClass: Class<Params>, val responseClass: Class<*>)
-internal sealed class LspNotification<Params : Any>(val method: String, val paramsClass: Class<Params>)
+internal sealed interface LspMethod {
+  val method: String
+}
+
+internal sealed class LspRequest<Params : Any, Response>(override val method: String, val paramsClass: Class<Params>, val responseClass: Class<*>) :
+  LspMethod
+internal sealed class LspNotification<Params : Any>(override val method: String, val paramsClass: Class<Params>) : LspMethod
 
 internal class ServerToClientLspRequest<Params : Any, Response>(
   method: String,

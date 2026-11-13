@@ -72,12 +72,13 @@ internal class LspCompletionTest {
   /**
    * Each nested class that uses the server declares its own fixture.
    * [DynamicRegistration] needs a server without the static completion capability.
+   * Only [CompletionItemResolve] offers the resolve, so the lookup of the other tests doesn't resolve the items in the background.
    */
-  private fun completionIntegrationFixture() =
+  private fun completionIntegrationFixture(resolveProvider: Boolean = false) =
     projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         completionProvider = CompletionOptions().apply {
-          resolveProvider = true
+          this.resolveProvider = resolveProvider
           triggerCharacters = listOf("|")
         }
       },
@@ -254,7 +255,7 @@ internal class LspCompletionTest {
 
   @Nested
   inner class CompletionItemResolve {
-    private val fakeLspIntegration by completionIntegrationFixture()
+    private val fakeLspIntegration by completionIntegrationFixture(resolveProvider = true)
 
     @Test
     fun `completion item resolve fetches additional details`(): Unit = timeoutRunBlocking {
@@ -323,6 +324,31 @@ internal class LspCompletionTest {
       assertEquals("resolveMe", presentation.itemText)
       assertEquals("(param: Int)", presentation.tailText)
       assertEquals("String", presentation.typeText)
+    }
+
+    @Test
+    fun `merged data is sent in completionItem resolve request`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+
+      serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
+        Either.forRight(CompletionList(false, listOf(
+          CompletionItem("myItem").apply { data = mapOf("id" to 42) },
+        )).apply {
+          itemDefaults = CompletionItemDefaults().apply { data = mapOf("session" to "s1", "id" to 0) }
+          applyKind = CompletionApplyKind().apply { data = ApplyKind.Merge }
+        })
+      }
+
+      serverSession.expectRequest(serverSession.COMPLETION_ITEM_RESOLVE, { it.data?.toString() == """{"session":"s1","id":42}""" }) {
+        CompletionItem("myItem").apply { detail = "Resolved detail" }
+      }
+
+      val element = codeInsightFixture.completeBasic()!!.single()
+      serverSession.awaitExpected()
+      val presentation = awaitResolveAndRender(element)
+
+      assertEquals("Resolved detail", presentation.typeText)
     }
   }
 
@@ -776,31 +802,6 @@ internal class LspCompletionTest {
       assertEquals("""{"a":1,"b":{"x":1}}""", items["withoutOwnValues"]!!.data?.toString())
       assertEquals("""{"a":1,"b":{"y":2},"c":3}""", items["withOwnValues"]!!.data?.toString())
       assertEquals("\"string-data\"", items["withNonObjectValues"]!!.data?.toString())
-    }
-
-    @Test
-    fun `merged data is sent in completionItem resolve request`(): Unit = timeoutRunBlocking {
-      val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = fakeLspIntegration.serverSession(virtualFile)
-
-      serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
-        Either.forRight(CompletionList(false, listOf(
-          CompletionItem("myItem").apply { data = mapOf("id" to 42) },
-        )).apply {
-          itemDefaults = CompletionItemDefaults().apply { data = mapOf("session" to "s1", "id" to 0) }
-          applyKind = CompletionApplyKind().apply { data = ApplyKind.Merge }
-        })
-      }
-
-      serverSession.expectRequest(serverSession.COMPLETION_ITEM_RESOLVE, { it.data?.toString() == """{"session":"s1","id":42}""" }) {
-        CompletionItem("myItem").apply { detail = "Resolved detail" }
-      }
-
-      val element = codeInsightFixture.completeBasic()!!.single()
-      serverSession.awaitExpected()
-      val presentation = awaitResolveAndRender(element)
-
-      assertEquals("Resolved detail", presentation.typeText)
     }
 
     private suspend fun CoroutineScope.completeAndGetItems(

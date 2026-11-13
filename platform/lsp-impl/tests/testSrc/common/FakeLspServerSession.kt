@@ -98,12 +98,17 @@ internal data class ExpectedRequest(
   val deferred: CompletableDeferred<Unit>,
 )
 
+/**
+ * A session adds its expectations to [expectations] right away.
+ * Everything else needs the started server, so it calls [startedDescriptor], which throws until the server has started.
+ */
 internal class FakeLspServerSessionImpl(
-  private val descriptor: FakeLspClientDescriptor,
+  private val expectations: ExpectationHolder,
   private val testJob: Job,
+  private val startedDescriptor: () -> FakeLspClientDescriptor,
 ) : FakeLspServerSession() {
-  private val server = descriptor.server
-  private val expectations = server.expectations
+  private val descriptor: FakeLspClientDescriptor get() = startedDescriptor()
+  private val server: FakeLspServer get() = descriptor.server
   private val pendingExpectations = mutableListOf<Deferred<Unit>>()
 
   override fun fileUri(file: VirtualFile): String = descriptor.getFileUri(file)

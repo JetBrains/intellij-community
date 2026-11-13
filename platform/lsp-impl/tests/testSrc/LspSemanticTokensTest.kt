@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensCustomizer
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensDisabled
@@ -71,22 +72,48 @@ internal class LspSemanticTokensTest {
     legend = LEGEND
   }
 
-  private class OpenedFile(val document: Document, val serverSession: FakeLspServerSession, val uri: String)
-
-  private suspend fun openFile(integration: FakeLspIntegration, fileName: String, text: String): OpenedFile {
-    val virtualFile = codeInsightFixture.configureByText(fileName, text).virtualFile
-    val serverSession = integration.serverSession(virtualFile)
-    return OpenedFile(codeInsightFixture.editor.document, serverSession, serverSession.fileUri(virtualFile))
+  /** [firstRequest] completes when the `semanticTokens/full` request that follows didOpen arrives. */
+  private class OpenedFile(
+    val virtualFile: VirtualFile,
+    val document: Document,
+    val serverSession: FakeLspServerSession,
+    val firstRequest: Deferred<Unit>,
+  ) {
+    val uri: String get() = serverSession.fileUri(virtualFile)
   }
 
-  private suspend fun openSpaceTokenizedFile(integration: FakeLspIntegration, text: String): OpenedFile {
+  /**
+   * Creates [fileName], expects the `semanticTokens/full` request that the client sends right after didOpen,
+   * then opens the file and waits until the server got didOpen.
+   */
+  private suspend fun openFile(integration: FakeLspIntegration, fileName: String, text: String, firstTokens: List<Int>): OpenedFile {
+    val serverSession = integration.unstartedServerSession()
+    val virtualFile = codeInsightFixture.addFileToProject(fileName, text).virtualFile
+    val firstRequest = serverSession.expectRequest(serverSession.SEMANTIC_TOKENS_FULL,
+                                                   { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
+      SemanticTokens(firstTokens)
+    }
+    val opened = serverSession.expectNotification(serverSession.DID_OPEN) { it.textDocument.uri == serverSession.fileUri(virtualFile) }
+    codeInsightFixture.configureFromExistingVirtualFile(virtualFile)
+    opened.await()
+    return OpenedFile(virtualFile, codeInsightFixture.editor.document, serverSession, firstRequest)
+  }
+
+  /**
+   * Like [openFile], with a file of [SpaceTokenizingFileType].
+   * The file exists only once configureByText creates it, so the predicate matches its extension.
+   */
+  private suspend fun openSpaceTokenizedFile(integration: FakeLspIntegration, text: String, firstTokens: List<Int>): OpenedFile {
+    val serverSession = integration.unstartedServerSession()
+    val extension = ".${SpaceTokenizingFileType.defaultExtension}"
+    val firstRequest = serverSession.expectRequest(serverSession.SEMANTIC_TOKENS_FULL, { it.textDocument.uri.endsWith(extension) }) {
+      SemanticTokens(firstTokens)
+    }
+    val opened = serverSession.expectNotification(serverSession.DID_OPEN) { it.textDocument.uri.endsWith(extension) }
     val virtualFile = codeInsightFixture.configureByText(SpaceTokenizingFileType, text).virtualFile
-    val serverSession = integration.serverSession(virtualFile)
-    return OpenedFile(codeInsightFixture.editor.document, serverSession, serverSession.fileUri(virtualFile))
+    opened.await()
+    return OpenedFile(virtualFile, codeInsightFixture.editor.document, serverSession, firstRequest)
   }
-
-  private fun OpenedFile.expectTokens(data: List<Int>): Deferred<Unit> =
-    serverSession.expectRequest(serverSession.SEMANTIC_TOKENS_FULL, { it.textDocument.uri == uri }) { SemanticTokens(data) }
 
   /**
    * Runs the highlighting passes until the editor shows the semantic tokens in [expected]: the file text with
@@ -121,8 +148,7 @@ internal class LspSemanticTokensTest {
 
     @Test
     fun `tokens are decoded with the legend, and modifiers select the attributes key`() = timeoutRunBlocking {
-      val file = openFile(fakeLspIntegration, "decode.txt", "fun foo\n  bar baz")
-      file.expectTokens(listOf(
+      val file = openFile(fakeLspIntegration, "decode.txt", "fun foo\n  bar baz", listOf(
         0, 0, 3, KEYWORD, 0,
         0, 4, 3, VARIABLE, 0,
         1, 2, 3, PROPERTY, STATIC_MODIFIER,
@@ -142,8 +168,7 @@ internal class LspSemanticTokensTest {
 
     @Test
     fun `a token type outside the legend is skipped, and the next token is still placed by its delta`() = timeoutRunBlocking {
-      val file = openFile(fakeLspIntegration, "unknownType.txt", "aaa bbb ccc")
-      file.expectTokens(listOf(
+      val file = openFile(fakeLspIntegration, "unknownType.txt", "aaa bbb ccc", listOf(
         0, 0, 3, KEYWORD, 0,
         0, 4, 3, 99, 0,
         0, 4, 3, KEYWORD, 0,
@@ -158,8 +183,7 @@ internal class LspSemanticTokensTest {
 
     @Test
     fun `a token running past the end of the document is skipped, and the earlier tokens stay`() = timeoutRunBlocking {
-      val file = openFile(fakeLspIntegration, "pastEnd.txt", "aaa bbb")
-      file.expectTokens(listOf(
+      val file = openFile(fakeLspIntegration, "pastEnd.txt", "aaa bbb", listOf(
         0, 0, 3, KEYWORD, 0,
         0, 4, 10, KEYWORD, 0,
       ))
@@ -171,11 +195,12 @@ internal class LspSemanticTokensTest {
 
     @Test
     fun `empty data after an edit clears the highlighters`() = timeoutRunBlocking {
-      val file = openFile(fakeLspIntegration, "clear.txt", "aaa bbb")
-      file.expectTokens(listOf(0, 0, 3, KEYWORD, 0))
+      val file = openFile(fakeLspIntegration, "clear.txt", "aaa bbb", listOf(0, 0, 3, KEYWORD, 0))
       checkTokenHighlighting("""<text_attr textAttributesKey="$KEYWORD_KEY">aaa</text_attr> bbb""")
       file.serverSession.awaitExpected()
-      file.expectTokens(emptyList())
+      file.serverSession.expectRequest(file.serverSession.SEMANTIC_TOKENS_FULL, { it.textDocument.uri == file.uri }) {
+        SemanticTokens(emptyList())
+      }
 
       writeCommandAction(project, "") {
         file.document.insertString(file.document.textLength, " ccc")
@@ -188,8 +213,7 @@ internal class LspSemanticTokensTest {
     @Test
     @Disabled("C6: workspace/semanticTokens/refresh clears the cache, so the tokens vanish until the new answer arrives")
     fun `refresh asks the server again and keeps the old tokens until the answer arrives`() = timeoutRunBlocking {
-      val file = openFile(fakeLspIntegration, "refresh.txt", "aaa bbb")
-      file.expectTokens(listOf(0, 0, 3, KEYWORD, 0))
+      val file = openFile(fakeLspIntegration, "refresh.txt", "aaa bbb", listOf(0, 0, 3, KEYWORD, 0))
       checkTokenHighlighting("""<text_attr textAttributesKey="$KEYWORD_KEY">aaa</text_attr> bbb""")
       file.serverSession.awaitExpected()
       val answerRefresh = CompletableDeferred<Unit>()
@@ -213,8 +237,8 @@ internal class LspSemanticTokensTest {
 
     @Test
     fun `no request for a file of a language with PSI`() = timeoutRunBlocking {
-      val file = openSpaceTokenizedFile(fakeLspIntegration, "aaa bbb")
-      val request = file.expectTokens(listOf(0, 0, 3, KEYWORD, 0))
+      val file = openSpaceTokenizedFile(fakeLspIntegration, "aaa bbb", listOf(0, 0, 3, KEYWORD, 0))
+      val request = file.firstRequest
 
       try {
         assertHighlightingSendsNoRequest(request)
@@ -254,8 +278,7 @@ internal class LspSemanticTokensTest {
 
     @Test
     fun `the customizer decides the attributes key, and a null key gives no highlighter`() = timeoutRunBlocking {
-      val file = openFile(fakeLspIntegration, "custom.txt", "aaa bbb")
-      file.expectTokens(listOf(
+      val file = openFile(fakeLspIntegration, "custom.txt", "aaa bbb", listOf(
         0, 0, 3, KEYWORD, 0,
         0, 4, 3, VARIABLE, 0,
       ))
@@ -267,8 +290,7 @@ internal class LspSemanticTokensTest {
 
     @Test
     fun `shouldAskServerForSemanticTokens override asks the server for a file of a language with PSI`() = timeoutRunBlocking {
-      val file = openSpaceTokenizedFile(fakeLspIntegration, "aaa bbb")
-      file.expectTokens(listOf(0, 4, 3, KEYWORD, 0))
+      val file = openSpaceTokenizedFile(fakeLspIntegration, "aaa bbb", listOf(0, 4, 3, KEYWORD, 0))
 
       checkTokenHighlighting("""aaa <text_attr textAttributesKey="$constantKey">bbb</text_attr>""")
 
@@ -300,8 +322,8 @@ internal class LspSemanticTokensTest {
 
     @Test
     fun `no client capability and no request when the customizer disables the feature`() = timeoutRunBlocking {
-      val file = openFile(fakeLspIntegration, "disabled.txt", "aaa bbb")
-      val request = file.expectTokens(listOf(0, 0, 3, KEYWORD, 0))
+      val file = openFile(fakeLspIntegration, "disabled.txt", "aaa bbb", listOf(0, 0, 3, KEYWORD, 0))
+      val request = file.firstRequest
 
       try {
         assertNull(fakeLspIntegration.client.descriptor.clientCapabilities.textDocument.semanticTokens)
@@ -326,8 +348,8 @@ internal class LspSemanticTokensTest {
 
     @Test
     fun `no request when the server supports only range requests`() = timeoutRunBlocking {
-      val file = openFile(fakeLspIntegration, "rangeOnly.txt", "aaa bbb")
-      val request = file.expectTokens(listOf(0, 0, 3, KEYWORD, 0))
+      val file = openFile(fakeLspIntegration, "rangeOnly.txt", "aaa bbb", listOf(0, 0, 3, KEYWORD, 0))
+      val request = file.firstRequest
 
       try {
         assertHighlightingSendsNoRequest(request)

@@ -53,6 +53,9 @@ class LspCodeLensTest {
       configureServerCapabilities = {
         codeLensProvider = CodeLensOptions()
       },
+      // editorFixture opens the empty file during fixture setup, before the test body can set up expectations, and code vision
+      // sometimes asks for the lenses of the empty document then. The tests expect only the request sent after the text is set.
+      allowUnmatched = { DOCUMENT_SYNC + CODE_LENS },
     )
 
     @Test
@@ -132,7 +135,11 @@ class LspCodeLensTest {
 
   @Nested
   inner class DynamicRegistration {
-    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
+      // editorFixture opens the empty file during fixture setup, and after the registration code vision sometimes asks for the lenses
+      // of the empty document, before the test sets the text. The tests expect only the request sent after the text is set.
+      allowUnmatched = { DOCUMENT_SYNC + CODE_LENS },
+    )
 
     @Test
     fun `code lens resolve uses the resolve provider of the dynamic registration`() = timeoutRunBlocking {

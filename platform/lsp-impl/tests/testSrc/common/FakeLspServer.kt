@@ -20,6 +20,8 @@ import org.eclipse.lsp4j.jsonrpc.Endpoint
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.eclipse.lsp4j.jsonrpc.messages.Either
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseError
+import org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode
 import org.eclipse.lsp4j.jsonrpc.services.ServiceEndpoints
 import org.eclipse.lsp4j.launch.LSPLauncher
 import org.eclipse.lsp4j.services.LanguageClient
@@ -71,17 +73,30 @@ internal class ExpectationHolder {
     }
   }
 
-  fun matchNotification(method: String, parameter: Any?) {
+  fun matchNotification(method: String, parameter: Any?): Boolean {
     synchronized(lock) {
-      val match = notifications.find { it.method == method && it.predicate(parameter) } ?: return
+      val match = notifications.find { it.method == method && it.predicate(parameter) } ?: return false
       notifications.remove(match)
       match.deferred.complete(Unit)
+      return true
     }
   }
 }
 
-/** A fake LSP server process. It talks LSP over its stdin and stdout. */
-internal open class FakeLspServer(configureServerCapabilities: (ServerCapabilities.() -> Unit)?) : Process(), SelfKiller {
+/**
+ * A fake LSP server process. It talks LSP over its stdin and stdout.
+ *
+ * It answers the lifecycle messages itself. Any other message needs a matching expectation of a [FakeLspServerSession],
+ * unless its method is in [allowedUnmatchedMethods]. The server answers an unmatched request with `MethodNotFound`
+ * and passes the description of each unmatched message to [onUnmatched].
+ */
+internal open class FakeLspServer(
+  configureServerCapabilities: (ServerCapabilities.() -> Unit)?,
+  /** The sessions add their expectations here. A session made before the server started brings its own holder. */
+  val expectations: ExpectationHolder,
+  private val allowedUnmatchedMethods: Set<String>,
+  private val onUnmatched: (String) -> Unit,
+) : Process(), SelfKiller {
   private val serverName = "FakeLspServer"
 
   private val serverCapabilities = ServerCapabilities().apply {
@@ -123,7 +138,6 @@ internal open class FakeLspServer(configureServerCapabilities: (ServerCapabiliti
   var initialized: Boolean = false
     private set
 
-  val expectations = ExpectationHolder()
 
   val remoteLanguageClient: LanguageClient get() = serverLauncher.remoteProxy
 
@@ -203,7 +217,11 @@ internal open class FakeLspServer(configureServerCapabilities: (ServerCapabiliti
           null
         }
         else -> {
-          LOG.warn("Unmatched LSP request: $method")
+          if (method !in allowedUnmatchedMethods) {
+            reportUnmatched("request", method, parameter)
+            return CompletableFuture.failedFuture<Any?>(
+              ResponseErrorException(ResponseError(ResponseErrorCode.MethodNotFound, "Unmatched LSP request: $method", null)))
+          }
           null
         }
       }
@@ -211,7 +229,10 @@ internal open class FakeLspServer(configureServerCapabilities: (ServerCapabiliti
     }
 
     override fun notify(method: String, parameter: Any?) {
-      expectations.matchNotification(method, parameter)
+      val matched = expectations.matchNotification(method, parameter)
+      if (!matched && method !in LIFECYCLE_NOTIFICATIONS && method !in allowedUnmatchedMethods) {
+        reportUnmatched("notification", method, parameter)
+      }
 
       when (method) {
         "initialized" -> {
@@ -225,8 +246,19 @@ internal open class FakeLspServer(configureServerCapabilities: (ServerCapabiliti
         }
       }
     }
+
+    private fun reportUnmatched(kind: String, method: String, parameter: Any?) {
+      val description = "Unmatched LSP $kind $method: ${parameter.toString().replace(WHITESPACE, " ").take(500)}"
+      // Not LOG.error: in tests it throws, and on the message thread that stops the server from reading
+      LOG.warn(description)
+      onUnmatched(description)
+    }
   }
 }
+
+private val LIFECYCLE_NOTIFICATIONS = setOf("initialized", "exit")
+
+private val WHITESPACE = Regex("\\s+")
 
 /**
  * A fake LSP server process that talks LSP over the first connection to [serverSocket].
@@ -234,8 +266,11 @@ internal open class FakeLspServer(configureServerCapabilities: (ServerCapabiliti
  */
 internal class FakeSocketLspServer(
   configureServerCapabilities: (ServerCapabilities.() -> Unit)?,
+  expectations: ExpectationHolder,
+  allowedUnmatchedMethods: Set<String>,
+  onUnmatched: (String) -> Unit,
   private val serverSocket: ServerSocket,
-) : FakeLspServer(configureServerCapabilities) {
+) : FakeLspServer(configureServerCapabilities, expectations, allowedUnmatchedMethods, onUnmatched) {
   private val standardOutput = FakeProcessOutput()
 
   @Volatile

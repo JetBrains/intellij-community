@@ -380,6 +380,8 @@ internal class LspCallHierarchyTest {
       configureServerCapabilities = {
         callHierarchyProvider = Either.forLeft(true)
       },
+      // The tree asks for the calls of each node it shows, in the background, to know whether the node can expand
+      allowUnmatched = { DOCUMENT_SYNC + CALL_HIERARCHY_INCOMING_CALLS + CALL_HIERARCHY_OUTGOING_CALLS },
     )
 
   private fun range(startLine: Int, startChar: Int, endLine: Int, endChar: Int): Range =

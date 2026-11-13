@@ -11,6 +11,8 @@ import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
+import com.intellij.platform.lsp.common.LspMethod
+import com.intellij.platform.lsp.common.ServerSessionProtocolScope
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -72,6 +74,9 @@ internal class LspInlineTest {
     }
   }
 
+  /** The IDE asks for the code actions at the caret in the background, whatever the test checks. */
+  private val allowAutomaticCodeActions: ServerSessionProtocolScope.() -> Set<LspMethod> = { DOCUMENT_SYNC + CODE_ACTION }
+
   @Nested
   inner class WithExtractCapability {
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
@@ -81,6 +86,7 @@ internal class LspInlineTest {
           codeActionKinds = listOf(CodeActionKind.RefactorInline, CodeActionKind.RefactorExtract)
         })
       },
+      allowUnmatched = allowAutomaticCodeActions,
     )
 
     // the inline action runs outside any command, so applying the returned edit must start its own
@@ -175,6 +181,7 @@ internal class LspInlineTest {
           codeActionKinds = listOf(CodeActionKind.RefactorInline)
         })
       },
+      allowUnmatched = allowAutomaticCodeActions,
     )
 
     // the inline action resolves its handler from InlineActionHandler, so an inline-only server needs no Extract provider
@@ -226,6 +233,7 @@ internal class LspInlineTest {
           codeActionKinds = listOf("refactor.extract.variable")
         })
       },
+      allowUnmatched = allowAutomaticCodeActions,
     )
 
     // each Extract action gates on its own kind, so one supported subtype must not enable the others
@@ -277,6 +285,7 @@ internal class LspInlineTest {
           codeActionKinds = listOf("refactor.extract.constant")
         })
       },
+      allowUnmatched = allowAutomaticCodeActions,
     )
 
     // a server can serve its only scoped-value extraction under `refactor.extract.constant`, so the fallback kind must answer
@@ -359,6 +368,7 @@ internal class LspInlineTest {
           codeActionKinds = listOf("refactor.extract.variable", "refactor.extract.constant")
         })
       },
+      allowUnmatched = allowAutomaticCodeActions,
     )
 
     // the actions come from the first kind that yields any, so the fallback kind must not mix its actions in
@@ -447,6 +457,7 @@ internal class LspInlineTest {
           codeActionKinds = listOf(CodeActionKind.RefactorInline)
         })
       },
+      allowUnmatched = allowAutomaticCodeActions,
     )
 
     // the refactoring shortcuts respect the plugin's code action filter like the intention popup does
@@ -494,6 +505,7 @@ internal class LspInlineTest {
           codeActionKinds = listOf(CodeActionKind.QuickFix)
         })
       },
+      allowUnmatched = allowAutomaticCodeActions,
     )
 
     // a server can add code action kinds with a dynamic registration; the static list must not veto them
@@ -537,6 +549,7 @@ internal class LspInlineTest {
           codeActionKinds = listOf("refactor.extract.variable2")
         })
       },
+      allowUnmatched = allowAutomaticCodeActions,
     )
 
     // `refactor.extract.variable2` is outside the `refactor.extract.variable` subtree, so it must not enable Introduce Variable
