@@ -26,7 +26,7 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 use avl_junit::cases::simple_class_name;
-use avl_junit::performance::{Plan, rfc_1123};
+use avl_junit::performance::{Plan, build_txt, rfc_1123};
 use avl_junit::teamcity;
 use avl_trace::protocol::VideoRetention;
 use avl_wire::daemon::{
@@ -418,7 +418,7 @@ fn run_lane(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Re
     }
     let performance_plan = performance::plan_or_note(
         &runfile(&descriptor.ide.lane_documents),
-        &runfile(&descriptor.dev_dist.home),
+        &build_txt(&runfile(&descriptor.dev_dist.home), &descriptor.jbr.platform),
         &args.lane,
         &mut notes,
     );

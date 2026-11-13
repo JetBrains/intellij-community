@@ -174,6 +174,15 @@ fn a_plan_that_cannot_be_made_says_why() {
 }
 
 #[test]
+fn a_macos_app_holds_the_build_file_in_its_resources_and_every_other_distribution_at_its_root() {
+    let dist = Path::new("/out/idea.dist");
+    assert_eq!(build_txt(dist, "darwin_aarch64"), dist.join("Contents/Resources/build.txt"));
+    assert_eq!(build_txt(dist, "darwin_x64"), dist.join("Contents/Resources/build.txt"));
+    assert_eq!(build_txt(dist, "linux_aarch64"), dist.join("build.txt"));
+    assert_eq!(build_txt(dist, "linux_x64"), dist.join("build.txt"));
+}
+
+#[test]
 fn the_ide_build_of_a_build_file_drops_the_product_code_and_names_a_read_failure_and_an_empty_file() {
     let path = Path::new("/dist/build.txt");
     assert_eq!(ide_build(path, Ok("IU-271.1234\n".to_owned())), Ok("271.1234".to_owned()));

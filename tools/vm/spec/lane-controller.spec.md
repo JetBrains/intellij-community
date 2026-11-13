@@ -921,9 +921,11 @@ The daemon's half and the IDE's half of supervision are in
   that reported metrics. `lane-run` writes the same file after its run. The lane document names the series of each
   such scenario. A series holds the test class, the scenario, the dashboard project and method, and an artifact path.
   The controller writes the file to `<iterationId>.performance/<artifactPath>` beside the report of the iteration. Its
-  build is the `build.txt` of the IDE distribution without the product code. A TeamCity build step publishes the file
-  once under its artifact path.
+  build is the `build.txt` of the IDE distribution without the product code. A macOS app holds the file in
+  `Contents/Resources`, and every other distribution at its root, as production does. A TeamCity build step publishes the
+  file once under its artifact path.
   [@test] ../crates/avl-junit/src/performance/tests.rs (`the_recorded_stream_renders_its_golden`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`a_macos_app_holds_the_build_file_in_its_resources_and_every_other_distribution_at_its_root`)
   [@test] ../crates/avl-junit/src/performance/tests.rs (`the_build_drops_the_product_code_and_keeps_every_other_form`)
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_file_is_published_once_into_its_directory`)
   [@test] ../crates/avl-junit/src/performance/tests.rs (`a_lane_that_names_series_plans_them_with_the_build_and_another_lane_plans_nothing`)

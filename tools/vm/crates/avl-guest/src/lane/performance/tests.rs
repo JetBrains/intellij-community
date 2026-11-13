@@ -157,11 +157,10 @@ fn a_plan_that_cannot_be_made_is_a_note() {
         "method": "m", "artifactPath": ARTIFACT_PATH}]);
     write_file(&documents.join(LANE_DOCUMENT_DIRECTORY).join("ui-perf.json"), &lane(series));
     write_file(&documents.join(LANE_DOCUMENT_DIRECTORY).join("ui.json"), &lane(json!([])));
-    let dist = root.path().join("dist");
+    let build_txt = root.path().join("dist").join("build.txt");
     let mut notes = Vec::new();
-    assert_eq!(plan_or_note(&documents, &dist, "ui-perf", &mut notes), None);
-    assert_eq!(plan_or_note(&documents, &dist, "ui", &mut notes), None);
-    let build_txt = dist.join("build.txt");
+    assert_eq!(plan_or_note(&documents, &build_txt, "ui-perf", &mut notes), None);
+    assert_eq!(plan_or_note(&documents, &build_txt, "ui", &mut notes), None);
     assert_eq!(notes.len(), 1, "{notes:?}");
     assert!(
         notes[0].starts_with(&format!(
@@ -171,7 +170,7 @@ fn a_plan_that_cannot_be_made_is_a_note() {
         "{notes:?}"
     );
     write_file(&build_txt, "IU-271.1234\n");
-    let made = plan_or_note(&documents, &dist, "ui-perf", &mut notes).expect("a plan");
+    let made = plan_or_note(&documents, &build_txt, "ui-perf", &mut notes).expect("a plan");
     assert_eq!(made.ide_build, "271.1234");
 }
 

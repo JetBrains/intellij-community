@@ -4,20 +4,36 @@ load(":dev_dist_build_date.bzl", "DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS")
 load(":dev_dist_content.bzl", "DevDistPlatformPayloadInfo")
 load(":dev_dist_tool_info.bzl", "dev_dist_tool_inputs")
 
-def product_info_destination(os, language_server):
-    """The path of `product-info.json` in a distribution, for an OS token of `platform_parts`.
+def _resources_directory(os, language_server):
+    """The directory of `product-info.json` and `build.txt` in the home, with a trailing `/`, or `""` for the home.
 
-    The production writers own the rule. `MacDistributionBuilder.writeProductInfoFile` writes
-    `Resources/product-info.json`, and the root for a language server. `LinuxDistributionBuilder.writeProductJsonFile`
-    and `WindowsDistributionBuilder.writeProductJsonFile` write the root. The tool renders `vmOptionsFilePath` and
-    `launcherPath` relative to the directory of this path, as production does. The path is relative to the home, see
-    `home_prefix`.
+    The production writers own the rule. `MacDistributionBuilder.productInfoPathPrefix` is `Resources/`, and `""` for a
+    language server. `LinuxDistributionBuilder` and `WindowsDistributionBuilder` write both files at the root.
     """
     if os not in ("darwin", "linux", "windows"):
         fail("'%s' is not an OS token of platform_parts" % os)
     if os == "darwin" and not language_server:
-        return "Resources/product-info.json"
-    return "product-info.json"
+        return "Resources/"
+    return ""
+
+def product_info_destination(os, language_server):
+    """The path of `product-info.json` in a distribution, for an OS token of `platform_parts`.
+
+    `MacDistributionBuilder.writeProductInfoFile` writes `Resources/product-info.json`, and the root for a language
+    server. `LinuxDistributionBuilder.writeProductJsonFile` and `WindowsDistributionBuilder.writeProductJsonFile` write
+    the root. The tool renders `vmOptionsFilePath` and `launcherPath` relative to the directory of this path, as
+    production does. The path is relative to the home, see `home_prefix`.
+    """
+    return _resources_directory(os, language_server) + "product-info.json"
+
+def build_txt_destination(os, language_server):
+    """The path of `build.txt` in a distribution, for an OS token of `platform_parts`.
+
+    `MacDistributionBuilder` writes `build.txt` beside `product-info.json`, so a macOS app has `Resources/build.txt`.
+    `LinuxDistributionBuilder` and `WindowsDistributionBuilder` write it at the root. The path is relative to the home,
+    see `home_prefix`.
+    """
+    return _resources_directory(os, language_server) + "build.txt"
 
 def home_prefix(os, language_server):
     """The directory of a distribution that holds the home of the IDE, for an OS token of `platform_parts`.

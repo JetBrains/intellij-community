@@ -37,6 +37,16 @@ pub const PLAN_EVENT: &str = "performancePlan";
 /// The file of an IDE distribution that names its build, such as `IU-271.1234`.
 pub const BUILD_TXT: &str = "build.txt";
 
+/// The [`BUILD_TXT`] of the IDE distribution `dist` of the guest `platform`, such as `linux_aarch64`. Production puts
+/// it in `Contents/Resources/build.txt` of a macOS app, and at the root of every other distribution.
+pub fn build_txt(dist: &Path, platform: &str) -> PathBuf {
+    if platform.starts_with("darwin_") {
+        dist.join("Contents").join("Resources").join(BUILD_TXT)
+    } else {
+        dist.join(BUILD_TXT)
+    }
+}
+
 /// What the files of one iteration need beside its run stream: the build of the IDE, without the product code, and
 /// the series that the lane document names.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

@@ -11,7 +11,7 @@ tables name the community products and the community tables in `community`, see 
 
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "dev_dist_platform_jar")
 load("//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_platform_payload")
-load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "MAC_APP_FILES", "dev_dist_product_files", "home_prefix", "mac_app_icon_roles", "product_info_destination")
+load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "MAC_APP_FILES", "build_txt_destination", "dev_dist_product_files", "home_prefix", "mac_app_icon_roles", "product_info_destination")
 load("//platform/build-scripts/bazel-rules:dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_layout_parts", "dev_dist_runtime_module_repository")
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "intellij_dev_fragments_dist", "intellij_dev_packed_jars_component")
 load(":download_rules.bzl", "EXECUTABLE_LIST_NAME")
@@ -312,17 +312,19 @@ def _runtime_executable_lists(platform):
 _PLATFORM_RESOURCES_FRAGMENT = "platform_resources"
 
 def _launch_destinations(plan, os):
-    """The destinations of the launch files, as `struct(vm_options, product_info, frontend_vm_options)`.
+    """The destinations of the launch files, as `struct(vm_options, product_info, build_txt, frontend_vm_options)`.
 
     `os` is an OS token of `platform_parts`. The `platform_resources` component places the files there. The native
     launcher of a row reads the main vmoptions file and `product-info.json` there. A vmoptions file is `bin/<name>`,
-    with the name of the plan. `product_info_destination` states the path of `product-info.json`.
-    `frontend_vm_options` is `None` for a product without an embedded frontend.
+    with the name of the plan. `product_info_destination` and `build_txt_destination` state the paths of
+    `product-info.json` and `build.txt`. `frontend_vm_options` is `None` for a product without an embedded frontend.
     """
     frontend_vmoptions = getattr(plan.launch, "frontend_vmoptions", None)
+    language_server = plan.launch.launcher.language_server
     return struct(
         vm_options = "bin/" + plan.launch.vmoptions[os],
-        product_info = product_info_destination(os, plan.launch.launcher.language_server),
+        product_info = product_info_destination(os, language_server),
+        build_txt = build_txt_destination(os, language_server),
         frontend_vm_options = "bin/" + frontend_vmoptions[os] if frontend_vmoptions else None,
     )
 
@@ -573,9 +575,10 @@ def _platform_set(tables, product, name, target_platform, visibility):
         # model the plan generator writes for the product, so the component reads no project model and starts no JVM.
         # The action reads the application info sources and `build.txt` for the version, the names and the build number.
         # The rendered files have fixed names, and the component maps each one to its path in the distribution.
-        # `_launch_destinations` states the paths of the vmoptions files and of `product-info.json`. The component also
-        # declares the main class of the launch model. A classic-loader launch takes its boot class path from the core
-        # classpath of the platform payload. A modular-loader launch states `platform-loader.jar` in the model.
+        # `_launch_destinations` states the paths of the vmoptions files, `product-info.json` and `build.txt`. The
+        # component also declares the main class of the launch model. A classic-loader launch takes its boot class path
+        # from the core classpath of the platform payload. A modular-loader launch states `platform-loader.jar` in the
+        # model.
         files = name + "_product_files"
         frontend_vmoptions = getattr(plan.launch, "frontend_vmoptions", None)
 
@@ -612,7 +615,7 @@ def _platform_set(tables, product, name, target_platform, visibility):
         def placed(platform):
             destinations = _launch_destinations(plan, platform_parts(platform).os)
             result = {
-                "build.txt": ":%s/build.txt" % files,
+                destinations.build_txt: ":%s/build.txt" % files,
                 "bin/idea.properties": ":%s/idea.properties" % files,
                 destinations.vm_options: ":%s/vmoptions" % files,
                 destinations.product_info: ":%s/product-info.json" % files,
