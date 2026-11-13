@@ -33,7 +33,9 @@ import com.intellij.workspaceModel.ide.legacyBridge.findLibraryBridge
 import com.intellij.workspaceModel.ide.legacyBridge.findModule
 import org.jetbrains.annotations.ApiStatus
 
-internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
+/** The platform provider. It gives a file the contexts of the entities of its nearest root. */
+@ApiStatus.Internal
+class ProjectModelEntityContextProvider : CodeInsightContextProvider {
 
   override fun isOwnerOf(context: CodeInsightContext): Boolean =
     context is ModuleContext || context is LibraryContext || context is SdkContext
