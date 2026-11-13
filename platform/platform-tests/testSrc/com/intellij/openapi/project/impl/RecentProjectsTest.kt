@@ -16,6 +16,7 @@ import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.StateStorageOperation
@@ -149,6 +150,64 @@ class RecentProjectsTest {
   fun solutionLikeProjectIconForDarkTheme() {
     JBColor.setDark(true)
     doSolutionLikeProjectIcon()
+  }
+
+  @Test
+  fun projectIconChangesWithTheme() = timeoutRunBlocking {
+    val projectPath = createProjectWithIcons()
+
+    for (dark in listOf(false, true, false)) {
+      JBColor.setDark(dark)
+      assertSingleColorIcon(loadProjectIcon(projectPath), if (dark) Color.RED else Color.BLUE)
+    }
+  }
+
+  @Test
+  fun projectIconFallsBackToLightVariant() = timeoutRunBlocking {
+    val projectPath = createProjectWithIcons()
+    Files.delete(projectPath.resolve(".idea/icon_dark.svg"))
+
+    for (dark in listOf(false, true, false)) {
+      JBColor.setDark(dark)
+      assertSingleColorIcon(loadProjectIcon(projectPath), Color.BLUE)
+    }
+  }
+
+  @Test
+  fun projectIconUsesThemeFromRequest() = timeoutRunBlocking {
+    val projectPath = createProjectWithIcons()
+    JBColor.setDark(false)
+    val lightIcon = RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, isProjectValid = true)
+
+    JBColor.setDark(true)
+    assertSingleColorIcon(loadProjectIcon(projectPath), Color.RED)
+    assertSingleColorIcon(evaluateProjectIcon(lightIcon), Color.BLUE)
+    assertSingleColorIcon(loadProjectIcon(projectPath), Color.RED)
+  }
+
+  private fun createProjectWithIcons(): Path {
+    val dotIdea = Files.createDirectories(tempDir.newPath("project").resolve(".idea"))
+    for ((name, color) in mapOf("icon.svg" to "0000ff", "icon_dark.svg" to "ff0000")) {
+      Files.writeString(dotIdea.resolve(name), """
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+          <rect width="16" height="16" fill="#$color"/>
+        </svg>
+      """.trimIndent())
+    }
+    // Equal timestamps ensure that cache validation must check the theme.
+    Files.setLastModifiedTime(dotIdea.resolve("icon_dark.svg"), Files.getLastModifiedTime(dotIdea.resolve("icon.svg")))
+    return dotIdea.parent
+  }
+
+  private suspend fun loadProjectIcon(projectPath: Path): Icon {
+    return evaluateProjectIcon(RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, isProjectValid = true))
+  }
+
+  private suspend fun evaluateProjectIcon(icon: Icon): Icon {
+    if (icon is DeferredIconImpl<*>) {
+      withContext(Dispatchers.UI) { icon.scheduleEvaluation(null, 0, 0) }?.join()
+    }
+    return icon
   }
 
   private fun doSolutionLikeProjectIcon() = timeoutRunBlocking {
