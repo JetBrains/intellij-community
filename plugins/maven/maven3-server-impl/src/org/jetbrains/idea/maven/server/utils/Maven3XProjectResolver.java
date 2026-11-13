@@ -493,7 +493,7 @@ public class Maven3XProjectResolver {
     List<ProjectBuildingResult> buildingResults = new ArrayList<>();
 
     ProjectBuildingRequest projectBuildingRequest = request.getProjectBuildingRequest();
-    projectBuildingRequest.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
+    projectBuildingRequest.setValidationLevel(getValidationLevel());
     projectBuildingRequest.setResolveDependencies(false);
 
     try {
@@ -517,6 +517,15 @@ public class Maven3XProjectResolver {
       }
     }
     return buildingResults;
+  }
+
+  private static int getValidationLevel() {
+    // Maven 3.10 and later versions build a model with a lower level as the model of a dependency.
+    // For such a model, Maven ignores the user properties, the environment variables, and the profiles with file activation.
+    String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
+    return VersionComparatorUtil.compare(mavenVersion, "3.10") >= 0
+           ? ModelBuildingRequest.VALIDATION_LEVEL_MAVEN_2_0
+           : ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL;
   }
 
   protected void buildMultiplyPoms(@NotNull ProjectBuilder builder,
