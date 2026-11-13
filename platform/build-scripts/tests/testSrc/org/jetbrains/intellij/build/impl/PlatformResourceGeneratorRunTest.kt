@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -80,6 +81,34 @@ class PlatformResourceGeneratorRunTest {
     buildPlatformSpecificPluginResources(layout, listOf(otherDistribution to tempDir.resolve("plugin")), createContext(tempDir), isDevMode = false)
 
     assertThat(invocations).isEmpty()
+  }
+
+  @Test
+  fun `a published platform variant runs every generator of its own distribution`(@TempDir tempDir: Path) {
+    val invocations = ArrayList<String>()
+    val layout = createPlatformLayout(invocations)
+    val context = createContext(tempDir)
+    `when`(context.options).thenReturn(BuildOptions())
+
+    buildPublishedPlatformVariantResources(layout, OsFamily.LINUX, JvmArchitecture.aarch64, tempDir.resolve("other"), context)
+    assertThat(invocations).isEmpty()
+
+    buildPublishedPlatformVariantResources(layout, distribution.os, distribution.arch, tempDir.resolve("plugin"), context)
+    assertThat(invocations).containsExactly("omitted", "declared", "omitted-run", "declared-skip")
+  }
+
+  @Test
+  fun `a bundled platform variant runs every generator of its own distribution`(@TempDir tempDir: Path) {
+    val invocations = ArrayList<String>()
+    val layout = createPlatformLayout(invocations)
+    val context = createContext(tempDir)
+    val otherDistribution = SupportedDistribution(OsFamily.LINUX, JvmArchitecture.aarch64, LinuxLibcImpl.GLIBC)
+
+    buildBundledPlatformVariantResources(layout, otherDistribution, tempDir.resolve("other"), context)
+    assertThat(invocations).isEmpty()
+
+    buildBundledPlatformVariantResources(layout, distribution, tempDir.resolve("plugin"), context)
+    assertThat(invocations).containsExactly("omitted", "declared", "omitted-run", "declared-skip")
   }
 
   @Test

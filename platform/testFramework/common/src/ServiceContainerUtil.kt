@@ -39,6 +39,13 @@ fun ComponentManager.unregisterService(serviceInterface: Class<*>) {
  */
 @TestOnly
 fun <T : Any> ComponentManager.registerOrReplaceServiceInstance(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
+  val container = (this as ComponentManagerEx).getMutableComponentContainer()
+  if (container is TestMutableComponentManager) {
+    container.replaceServiceInstance(serviceInterface, instance, parentDisposable)
+    return
+  }
+
+  // Another container, such as one of the mock containers, keeps the previous path.
   val previous = this.getService(serviceInterface)
   if (previous != null) {
     replaceService(serviceInterface, instance, parentDisposable)
