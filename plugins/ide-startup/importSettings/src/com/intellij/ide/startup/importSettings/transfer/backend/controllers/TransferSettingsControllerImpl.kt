@@ -9,7 +9,6 @@ import com.intellij.ide.startup.importSettings.providers.TransferSettingsPerform
 import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.DefaultImportPerformer
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.ImportPerformer
-import com.intellij.ide.startup.importSettings.transfer.backend.providers.PartialImportPerformer
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -64,5 +63,5 @@ class TransferSettingsControllerImpl : TransferSettingsController {
     timesSwitchedBetweenInstances++
   }
 
-  override fun getImportPerformer(): ImportPerformer = DefaultImportPerformer(PartialImportPerformer.EP_NAME.extensionList)
+  override fun getImportPerformer(): ImportPerformer = DefaultImportPerformer()
 }
