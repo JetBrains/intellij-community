@@ -80,8 +80,9 @@ cd -- "$root"
 
 # Bazel's own output goes to stderr, so a caller that writes JSON on stdout keeps a clean stdout. `set +e` around
 # the build is what keeps the real exit code: inside `if ! cmd`, `$?` is already the status of the `!`.
+# `</dev/null` keeps Bazel off the terminal stdin, which the binary below may need, as `<nul` does in the CMD half.
 set +e
-./bazel.cmd build "$label" >&2
+./bazel.cmd build "$label" >&2 </dev/null
 status=$?
 set -e
 if [ "$status" -ne 0 ]; then
