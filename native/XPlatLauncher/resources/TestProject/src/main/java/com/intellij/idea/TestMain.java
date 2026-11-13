@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import one.profiler.AsyncProfiler;
 
 import java.io.*;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.management.ManagementFactory;
@@ -15,7 +17,7 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 public class TestMain {
-  public static void main(String[] args) throws Throwable {
+  static void main(String... args) throws Throwable {
     if (args.length > 0 && "serverMode".equals(args[0])) {
       System.out.println("Started in server mode");
       System.out.println("managed.marker=" + System.getProperty("managed.marker"));
@@ -58,7 +60,7 @@ public class TestMain {
   }
 
   private static void printEnvironmentVariable(String[] args) {
-    String varName = args[args.length - 1];
+    var varName = args[args.length - 1];
     System.out.println(varName + "=" + System.getenv(varName));
   }
 
@@ -132,12 +134,10 @@ public class TestMain {
     throw new UnsupportedOperationException("aw, snap");
   }
 
-  @SuppressWarnings({"removal", "RedundantSuppression"})
-  private static void segmentationViolation() throws NoSuchFieldException, IllegalAccessException {
-    var f = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
-    f.setAccessible(true);
-    var unsafe = (sun.misc.Unsafe) f.get(null);
-    unsafe.putAddress(0, 0);
+  private static void segmentationViolation() {
+    MemorySegment.NULL
+      .reinterpret(ValueLayout.ADDRESS.byteSize())
+      .set(ValueLayout.ADDRESS, 0, MemorySegment.NULL);
   }
 
   private static void mainClassName() {
@@ -191,7 +191,8 @@ public class TestMain {
         .findVirtual(FileDescriptor.class, "setHandle", MethodType.methodType(void.class, long.class))
         .invoke(fdObj, fdNum);
       return fdObj;
-    } else {
+    }
+    else {
       return (FileDescriptor)MethodHandles.privateLookupIn(FileDescriptor.class, MethodHandles.lookup())
         .findConstructor(FileDescriptor.class, MethodType.methodType(void.class, int.class))
         .invoke(fdNum.intValue());

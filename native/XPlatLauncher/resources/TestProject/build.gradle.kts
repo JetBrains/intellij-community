@@ -4,7 +4,7 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
 plugins {
-    id("java")
+  id("java")
 }
 
 group = "com.intellij.idea"
@@ -22,31 +22,32 @@ dependencies {
 }
 
 tasks.compileJava {
-  options.compilerArgs = listOf("-source", "17", "-target", "17", "--add-modules=jdk.jcmd", "--add-exports=jdk.jcmd/sun.tools.jps=ALL-UNNAMED")
+  dependsOn("downloadJbr")
+  sourceCompatibility = "25"
+  targetCompatibility = "25"
+  val (os, _) = getOsAndArch()
+  options.isFork = true
+  options.forkOptions.javaHome = layout.buildDirectory.dir(if (os == "osx") ("jbr/Contents/Home") else "jbr").get().asFile
+  options.compilerArgs = listOf("--add-modules=jdk.jcmd", "--add-exports=jdk.jcmd/sun.tools.jps=ALL-UNNAMED")
 }
 
 tasks.register<Jar>("fatJar") {
   description = "Building the test app"
-  dependsOn.addAll(listOf("compileJava", "processResources")) // We need this for Gradle optimization to work
-
   archiveFileName.set("app.jar")
-  archiveClassifier.set("standalone") // Naming the .jar file
-
+  archiveClassifier.set("standalone")
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-  val contents =
-    configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) } +
-    sourceSets.main.get().output
-  from(contents)
+  from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+  from(sourceSets.main.get().output)
 }
 
 val jbrSdkVersion: String by project
 val jbrSdkBuildNumber: String by project
 
-tasks.register<Task>(@Suppress("SpellCheckingInspection") "downloadJbr") {
+tasks.register<Task>("downloadJbr") {
   description = "Downloading Java runtime"
 
   val (os, arch) = getOsAndArch()
-  val buildDir = project.layout.buildDirectory.asFile.get().toPath()
+  val buildDir = layout.buildDirectory.asFile.get().toPath()
   val output = buildDir.resolve("jbr")
 
   onlyIf {
@@ -81,11 +82,12 @@ tasks.register<Task>(@Suppress("SpellCheckingInspection") "downloadJbr") {
 
 fun getOsAndArch(): Pair<String, String> {
   val osName = System.getProperty("os.name", "").lowercase()
-  @Suppress("SpellCheckingInspection")
-  val os = if (osName.startsWith("windows")) "windows"
-    else if (osName.startsWith("mac")) "osx"
-    else if (osName.startsWith("linux")) "linux"
-    else throw UnsupportedOperationException("Unsupported OS: '${osName}'")
+  val os = when {
+    osName.startsWith("windows") -> "windows"
+    osName.startsWith("mac") -> "osx"
+    osName.startsWith("linux") -> "linux"
+    else -> throw UnsupportedOperationException("Unsupported OS: '${osName}'")
+  }
 
   @Suppress("SpellCheckingInspection")
   val arch = when (val archName = System.getProperty("os.arch", "").lowercase()) {
