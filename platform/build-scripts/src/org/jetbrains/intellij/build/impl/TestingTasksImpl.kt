@@ -1409,7 +1409,6 @@ private val COMMUNITY_AGGREGATOR_JPS_MODULES_ALLOWLIST = setOf(
   "intellij.platform.jewel.markdown.testing",
   "intellij.platform.lang.testEntities",
   "intellij.platform.remoteServers.targetsIntegrationTests",
-  "intellij.platform.tests.debugger",
   "intellij.platform.workspace.storage.testEntities",
   "intellij.python.markdown.tests",
   "intellij.python.test.env.common",
