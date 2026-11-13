@@ -37,7 +37,8 @@ data class SkillVersion(val major: Int, val minor: Int, val patch: Int) : Compar
 /**
  * Contents of a skill's `metadata.json`.
  */
-internal data class BundledSkillMetadata(val version: SkillVersion, val hash: String)
+@ApiStatus.Internal
+data class BundledSkillMetadata(val version: SkillVersion, val hash: String)
 
 /**
  * Reads a skill's `metadata.json`.
@@ -45,7 +46,8 @@ internal data class BundledSkillMetadata(val version: SkillVersion, val hash: St
  * Every rejection is reported as an [IllegalArgumentException] whose message names the offending field and reads as the
  * continuation of a sentence starting with the file path, so the validation test can print it after that path as is.
  */
-internal object BundledSkillMetadataFormat {
+@ApiStatus.Internal
+object BundledSkillMetadataFormat {
   private const val VERSION_FIELD = "version"
   private const val HASH_FIELD = "hash"
 

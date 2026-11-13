@@ -10,5 +10,8 @@
     <extensionPoint qualifiedName="com.intellij.mcpServer.bundledSkillsProvider"
                     interface="com.intellij.mcpserver.skills.BundledSkillsProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.mcpServer.skillRegistryProvider"
+                    interface="com.intellij.mcpserver.skills.SkillRegistryProvider"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

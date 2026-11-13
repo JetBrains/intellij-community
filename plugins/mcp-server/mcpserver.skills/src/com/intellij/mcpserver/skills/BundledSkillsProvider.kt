@@ -29,6 +29,7 @@ import java.nio.file.Path
  * A skill reaches a working directory only when [isProviderAvailable] and [isSkillAvailable] both return `true`.
  */
 @ApiStatus.Experimental
+@ApiStatus.OverrideOnly
 interface BundledSkillsProvider {
   /** Declares the complete catalog of this provider. Synchronous, no I/O, no workspace state. */
   fun registeredSkills(): List<BundledSkill>
