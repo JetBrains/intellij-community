@@ -10,6 +10,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownShortReferenceLink
+import org.intellij.plugins.markdown.lang.psi.util.LinkDefinitions
 import org.intellij.plugins.markdown.model.psi.MarkdownPsiSymbolReference
 import org.jetbrains.annotations.ApiStatus
 

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElementVisitor
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDefinition
+import org.intellij.plugins.markdown.lang.psi.util.LinkDefinitions
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

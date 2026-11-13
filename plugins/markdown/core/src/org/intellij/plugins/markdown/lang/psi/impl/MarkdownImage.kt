@@ -21,7 +21,7 @@ class MarkdownImage(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiEleme
     get() = findChildByType(MarkdownElementTypes.INLINE_LINK)
 
   override val linkText: MarkdownLinkText?
-    get() = link?.children()?.filterIsInstance<MarkdownLinkText>()?.firstOrNull()
+    get() = exclamationMark?.nextSibling?.children()?.filterIsInstance<MarkdownLinkText>()?.firstOrNull()
 
   override val linkDestination: MarkdownLinkDestination?
     get() = link?.children()?.filterIsInstance<MarkdownLinkDestination>()?.firstOrNull()

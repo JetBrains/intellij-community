@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestActionEvent;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
@@ -39,6 +40,20 @@ public class MarkdownToggleBoldTest extends LightPlatformCodeInsightTestCase {
       action,
       context
     )));
+  }
+
+  public void testCaretInsideLinkLabelDoesNotToggleBold() {
+    configureFromFileText("some.md", """
+      ![alt][file:ima<caret>ge.png] [text][file:ima<caret>ge.png]
+
+      [file:image.png]: image.png
+      """.trim());
+    EditorTestUtil.executeAction(getEditor(), MarkdownStylingActionIds.TOGGLE_BOLD, false);
+    checkResultByText("""
+      ![alt][file:ima<caret>ge.png] [text][file:ima<caret>ge.png]
+
+      [file:image.png]: image.png
+      """.trim());
   }
 
   public void testTableRowSelectionCanToggleBoldAfterItalic() {

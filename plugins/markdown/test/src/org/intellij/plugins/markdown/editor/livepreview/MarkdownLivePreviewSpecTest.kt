@@ -121,8 +121,13 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(listOf("![one](one.png)", "![two](two.png)"), imageRanges(content))
   }
 
-  fun testUnsupportedImageDestinationsAreNotConcealed() {
-    assertEmpty(elements("![alt][image]\n\n[image]: image.png"))
+  fun testReferenceImagesUseTheDestinationOfTheirDefinition() {
+    val content = "![full][image] ![image]\n\n![missing][none]\n\n[image]: <image.png>"
+    val images = images(content)
+
+    assertEquals(listOf("image.png", "image.png"), images.map { it.destination })
+    assertEquals(listOf("full", MarkdownBundle.message("markdown.live.preview.image.placeholder")), images.map { it.placeholderText })
+    assertEquals(listOf("![full][image]", "![image]"), imageRanges(content))
   }
 
   fun testRemoteAndDataImagesAreSpecsWithoutSource() {

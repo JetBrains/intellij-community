@@ -29,6 +29,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
+import org.intellij.plugins.markdown.lang.psi.util.LinkDefinitions
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewPathResolver
 import org.intellij.plugins.markdown.util.isFootnoteContinuationBlock
 import org.jetbrains.annotations.ApiStatus
@@ -294,7 +295,8 @@ private fun PsiElement.isTopLevelOrQuoted(): Boolean =
 private fun PsiElement.toImageSpec(editor: Editor): MarkdownLivePreviewSpec.Image? {
   if (!editor.isProjectTrusted()) return null
   val image = this as? MarkdownImage ?: return null
-  val linkDestination = image.linkDestination ?: return null
+  val link = image.exclamationMark?.nextSibling ?: return null
+  val linkDestination = image.linkDestination ?: LinkDefinitions.findFor(link)?.linkDestination ?: return null
   val destination = linkDestination.text.markdownDestination()
   val isBrowserOwned = MarkdownPreviewPathResolver.isBrowserOwned(destination)
   if (!destination.isLocalDestination() && !isBrowserOwned) return null

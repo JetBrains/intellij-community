@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.lang.psi.MarkdownRecursiveElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel
+import org.intellij.plugins.markdown.lang.psi.util.LinkDefinitions
 import org.intellij.plugins.markdown.model.psi.MarkdownPsiSymbolReferenceBase
 
 internal class LinkLabelSymbolReference(

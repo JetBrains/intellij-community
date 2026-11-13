@@ -10,11 +10,13 @@ import com.intellij.psi.util.parentOfTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLink
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkText
+import org.intellij.plugins.markdown.lang.psi.util.LinkDefinitions
 
 internal class MarkdownLinkTextGotoDeclarationHandler : GotoDeclarationHandler {
   override fun getGotoDeclarationTargets(sourceElement: PsiElement?, offset: Int, editor: Editor): Array<PsiElement>? {
     val linkText = sourceElement?.parentOfTypes(MarkdownLinkText::class, MarkdownLinkDestination::class) as? MarkdownLinkText ?: return null
-    val destination = (linkText.parent as? MarkdownLink)?.linkDestination ?: return null
+    val link = linkText.parent
+    val destination = (link as? MarkdownLink)?.linkDestination ?: LinkDefinitions.findFor(link)?.linkDestination ?: return null
     val valueRange = ElementManipulators.getValueTextRange(destination)
     if (valueRange.isEmpty) return null
     val reference = destination.findReferenceAt(valueRange.endOffset - 1) ?: return null

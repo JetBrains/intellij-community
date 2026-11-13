@@ -323,6 +323,7 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
       MarkdownElementTypes.CODE_FENCE,
       MarkdownElementTypes.CODE_SPAN,
       MarkdownElementTypes.LINK_TEXT,
+      MarkdownElementTypes.LINK_LABEL,
       MarkdownElementTypes.LINK_DESTINATION,
       MarkdownElementTypes.TEST_LINK,
       MarkdownElementTypes.AT_PATH,

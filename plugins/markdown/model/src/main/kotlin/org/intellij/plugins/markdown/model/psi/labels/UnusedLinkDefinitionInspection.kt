@@ -15,6 +15,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDefinition
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel
+import org.intellij.plugins.markdown.lang.psi.util.LinkDefinitions
 import org.intellij.plugins.markdown.model.psi.MarkdownPsiSymbolReference
 import org.jetbrains.annotations.ApiStatus
 

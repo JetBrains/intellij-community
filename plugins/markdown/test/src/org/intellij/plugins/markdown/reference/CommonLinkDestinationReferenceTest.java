@@ -124,6 +124,12 @@ public class CommonLinkDestinationReferenceTest extends BasePlatformTestCase {
     assertSameTarget(fileText.indexOf("Read Docs") + 1, fileText.indexOf("foo.txt"));
   }
 
+  public void testReferenceLinkText() {
+    PsiFile file = myFixture.configureByText("some.md", "[Read Docs][file:docs]\n\n[file:docs]: app/foo.txt");
+    String fileText = file.getText();
+    assertSameTarget(fileText.indexOf("Read Docs") + 1, fileText.indexOf("foo.txt"));
+  }
+
   public void testSamePageAnchorLinkLabel() {
     PsiFile file = myFixture.configureByText("some.md", "[Jump to Intro](#introduction)\n\n# Introduction");
     String fileText = file.getText();
