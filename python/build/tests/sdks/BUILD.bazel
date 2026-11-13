@@ -2,15 +2,15 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
-### auto-generated section `build intellij.pycharm.community.build.tests.disabled` start
+### auto-generated section `build intellij.pycharm.community.build.tests.sdks` start
 create_kotlinc_options(
-    name = "custom_disabled",
+    name = "custom_sdks",
     warn = "error",
     x_warning_level = ["DEPRECATION:warning"],
 )
 
 jvm_library(
-    name = "disabled_test_lib",
+    name = "sdks_test_lib",
     testonly = True,
     srcs = glob(
         [
@@ -21,7 +21,7 @@ jvm_library(
         allow_empty = True,
     ),
     associates = ["//python/build"],
-    kotlinc_opts = ":custom_disabled",
+    kotlinc_opts = ":custom_sdks",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -44,20 +44,20 @@ jvm_library(
         "//python/python-sdk/backend",
     ],
 )
-### auto-generated section `build intellij.pycharm.community.build.tests.disabled` end
+### auto-generated section `build intellij.pycharm.community.build.tests.sdks` end
 
-### auto-generated section `iml intellij.pycharm.community.build.tests.disabled` start
+### auto-generated section `iml intellij.pycharm.community.build.tests.sdks` start
 exports_files(
     [
-        "intellij.pycharm.community.build.tests.disabled.iml",
+        "intellij.pycharm.community.build.tests.sdks.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.pycharm.community.build.tests.disabled` end
+### auto-generated section `iml intellij.pycharm.community.build.tests.sdks` end
 
-### auto-generated section `test intellij.pycharm.community.build.tests.disabled` start
+### auto-generated section `test intellij.pycharm.community.build.tests.sdks` start
 jps_test(
-    name = "disabled_test",
-    runtime_deps = [":disabled_test_lib"],
+    name = "sdks_test",
+    runtime_deps = [":sdks_test_lib"],
 )
-### auto-generated section `test intellij.pycharm.community.build.tests.disabled` end
+### auto-generated section `test intellij.pycharm.community.build.tests.sdks` end

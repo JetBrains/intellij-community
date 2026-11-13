@@ -37,7 +37,6 @@ intellij.configurationScript.tests
 intellij.copyright.tests
 intellij.debugger.jvm.advanced.java.tests
 intellij.debugger.jvm.advanced.kotlin.tests
-intellij.debugger.jvm.advanced.kotlin.tests.disabled
 intellij.debugger.jvm.advanced.kotlin.tests.java
 intellij.debugger.jvm.advanced.mcpServer.tests
 intellij.debugger.logpoints.frontend.tests

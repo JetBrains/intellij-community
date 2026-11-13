@@ -1969,7 +1969,7 @@ python/IntelliLang-python
 python/aliasProvider
 python/build
 python/build/build-debug-binaries
-python/build/tests/disabled
+python/build/tests/sdks
 python/common
 python/conda
 python/conda/common
