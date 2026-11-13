@@ -211,6 +211,9 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       newSuite.setMetainfo(metainfo);
     }
 
+    if (suiteStartedEvent.getSuiteResultPolicy() != null) {
+      newSuite.setSuiteResultPolicy(suiteStartedEvent.getSuiteResultPolicy());
+    }
     initCurrentChildren(newSuite, true);
     mySuitesStack.pushSuite(newSuite);
 
