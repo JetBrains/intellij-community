@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -77,6 +78,43 @@ jvm_library(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.xml.plugin` end
+
+### auto-generated section `plugin intellij.xml.plugin` start
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//xml/dom-openapi:dom",
+        "//xml/dom-impl",
+        "//xml/xml-structure-view-api:structureView",
+        "//xml/xml-structure-view-impl:structureView-impl",
+        "//xml/xml-psi-api:psi",
+        "//xml/xml-psi-impl:psi-impl",
+        "//xml/xml-psi-impl/regexp",
+        "//xml/xml-analysis-api:analysis",
+        "//xml/emmet",
+        "//xml/emmet/shared",
+        "//xml/emmet/backend",
+        "//xml/emmet/frontend",
+        "//xml/xml-ui-common:ui-common",
+        "//xml/xml-parser:parser",
+        "//xml/xml-syntax:syntax",
+        "//xml/relaxng:relaxng_plugin_module",
+        "//libraries/isorelax:isorelax_plugin_module",
+        "//libraries/jing:jing_plugin_module",
+        "//libraries/xerces:xerces_plugin_module",
+        "//libraries/xml-resolver:xml-resolver_plugin_module",
+        "//xml/impl",
+        "//xml/xml-analysis-impl:analysis-impl",
+        "//xml/langInjection",
+        "//xml/vcs",
+        "//spellchecker/xml",
+        "//spellchecker/xml/backend",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.xml.plugin` end
 
 ### auto-generated section `iml intellij.xml.plugin` start
 exports_files(

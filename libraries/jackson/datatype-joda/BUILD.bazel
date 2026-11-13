@@ -1,13 +1,14 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.jackson.datatype.joda` start
-jvm_library(
+ij_plugin_module(
     name = "libraries-jackson-datatype-joda",
     srcs = glob(
         [],
         allow_empty = True,
     ),
     module_name = "intellij.libraries.jackson.datatype.joda",
+    packed_deps = ["@lib//:libraries-jackson-datatype-joda-jackson-datatype-joda"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],

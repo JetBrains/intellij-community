@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -34,6 +35,31 @@ jvm_library(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.json.plugin` end
+
+### auto-generated section `plugin intellij.json.plugin` start
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//json",
+        "//json/backend",
+        "//json/networknt.wrapper",
+        "//json/backend/regexp",
+        "//json/spellchecker",
+        "//json/structureView",
+        "//json/syntax",
+        "//libraries/json-schema-validator:json-schema-validator_plugin_module",
+        "//libraries/joni:joni_plugin_module",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            "@@//remote-dev/cwm-guest/plugins/json-frontend:json-frontend-split",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.json.plugin` end
 
 ### auto-generated section `iml intellij.json.plugin` start
 exports_files(

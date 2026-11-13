@@ -1,13 +1,14 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 
 ### auto-generated section `build intellij.libraries.mcp.kotlin.sdk` start
-jvm_library(
+ij_plugin_module(
     name = "mcp-kotlin-sdk",
     srcs = glob(
         [],
         allow_empty = True,
     ),
     module_name = "intellij.libraries.mcp.kotlin.sdk",
+    packed_deps = ["@lib//:libraries-mcp-kotlin-sdk-io-modelcontextprotocol-kotlin-sdk"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],

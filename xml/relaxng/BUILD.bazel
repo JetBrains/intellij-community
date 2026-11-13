@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -22,7 +23,7 @@ content_module_jar(
 ### auto-generated section `dev intellij.relaxng` end
 
 ### auto-generated section `build intellij.relaxng` start
-jvm_library(
+ij_plugin_module(
     name = "relaxng",
     srcs = glob(
         [
@@ -33,6 +34,11 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.relaxng",
+    packed_deps = [
+        # do not sort,
+        "//xml/relaxng/lib:relaxng-rngom-20051226-patched",
+        "//xml/relaxng/lib:relaxng-trang-core",
+    ],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],

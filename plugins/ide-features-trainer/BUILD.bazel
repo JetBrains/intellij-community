@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -120,6 +121,24 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.featuresTrainer` end
+
+### auto-generated section `plugin intellij.featuresTrainer` start
+ij_plugin(
+    name = "featuresTrainer_plugin",
+    descriptor_module = ":featuresTrainer",
+    content_modules = [
+        # do not sort,
+        "//plugins/git-features-trainer:vcs-git-featuresTrainer",
+        "//plugins/ide-features-trainer/onboarding",
+        "//plugins/kotlin/onboarding-promoter",
+        "//plugins/ide-features-trainer/tips",
+        "//libraries/assertj-core:assertj-core_plugin_module",
+        "//libraries/assertj-swing:assertj-swing_plugin_module",
+        "//libraries/git-learning-project:git-learning-project_plugin_module",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.featuresTrainer` end
 
 ### auto-generated section `iml intellij.featuresTrainer` start
 exports_files(
