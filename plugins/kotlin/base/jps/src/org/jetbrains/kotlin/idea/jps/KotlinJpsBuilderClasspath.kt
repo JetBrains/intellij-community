@@ -29,7 +29,9 @@ internal object KotlinJpsBuilderClasspath {
 
     /** One class per jar that this module does not depend on. The class loader of [BUILDER_MODULE] sees them all. */
     private val jarMarkerNames: List<String> = listOf(
-        "org.jetbrains.kotlin.jps.build.KotlinBuilderService", // intellij.kotlin.builder.jps
+        // Not `KotlinBuilderService`: the legacy plugin-classpath artifact carries the same class, and a class loader
+        // that sees both must locate the builder, not the legacy plugin
+        "org.jetbrains.kotlin.jps.buildtools.JvmCompilationRunner", // intellij.kotlin.builder.jps
         "org.jetbrains.kotlin.buildtools.api.jps.jvm.JvmJpsManagedIncrementalCompilationConfiguration", // kotlin-build-tools-api-jps
     )
 
