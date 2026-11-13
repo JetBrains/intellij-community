@@ -1531,7 +1531,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       class Custom(metaclass=Meta): ...
       
       class A(Base, Mixin):
-      #       ^^^^ ERROR FIXME Enum class 'Base' must be the last base class 
+      #       ^^^^ ERROR FIXME Enum class 'Base' must be the last base class
           a = 1
 
       class B(Custom, Mixin):
