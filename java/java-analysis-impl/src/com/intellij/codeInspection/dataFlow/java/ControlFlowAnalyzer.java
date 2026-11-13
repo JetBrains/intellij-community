@@ -1390,7 +1390,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
               if (JavaPsiSwitchUtil.mayCauseMatchExceptionDuringDeconstruction(deconstructionPattern, recordComponent, patternComponent, Set.of())) {
                 addNullCheck(deconstructionMatchException.problem(labelAnchor, patternComponent));
               }
-              PsiType componentType = JavaVarTypeUtil.getUpwardProjection(substitutor.substitute(recordComponent.getType()));
+              PsiType componentType = JavaVarTypeUtil.getUpwardProjection(substitutor.substitute(recordComponent.getType()), true);
               processPattern(sourcePattern, patternComponent, componentType, null, endPatternOffset);
             }
           }
