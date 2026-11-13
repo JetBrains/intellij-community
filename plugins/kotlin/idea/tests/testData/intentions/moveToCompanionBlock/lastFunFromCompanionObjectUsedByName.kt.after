@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Foo {
+    companion object {
+    }
+
+    companion {
+        fun foo() {
+        }
+    }
+}
+
+val companion: Foo.Companion = Foo.Companion

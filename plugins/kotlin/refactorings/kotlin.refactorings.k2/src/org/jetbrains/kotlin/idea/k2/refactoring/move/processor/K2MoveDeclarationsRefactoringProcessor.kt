@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -163,20 +164,23 @@ open class K2MoveDeclarationsRefactoringProcessor(
         return body?.children?.all { it is PsiWhiteSpace } == true
     }
 
-    /**
-     * Deletes the [element] from its file but also deletes the containing declaration or file
-     * if it can be deleted and is
-     */
-    private fun deleteMovedElement(element: KtNamedDeclaration, companionObjectsToKeep: Set<KtObjectDeclaration>) {
-        val containingClass = element.containingClassOrObject
-        element.deleteSingle()
-        val shouldDeleteContainingCompanionObject =
-            containingClass is KtObjectDeclaration && containingClass.isCompanion()
-                && containingClass !in companionObjectsToKeep
-                && containingClass.getSuperTypeList() == null
-                && containingClass.isEffectivelyEmpty()
-        if (shouldDeleteContainingCompanionObject) containingClass.deleteSingle()
+    private fun collectContainingDeclarations(descriptor: K2MoveDescriptor.Declarations): List<SmartPsiElementPointer<KtClassOrObject>> =
+        descriptor.source.elements
+            .mapNotNullTo(mutableSetOf()) { it.containingClassOrObject }
+            .map { it.createSmartPointer() }
+
+    private fun deleteUnusedCompanionObjects(containingDeclarations: List<SmartPsiElementPointer<KtClassOrObject>>) {
+        containingDeclarations.mapNotNull { it.element }
+            .filterIsInstance<KtObjectDeclaration>().filter { it.isCompanion() }
+            .forEach { companionObject ->
+                if (companionObject.isEffectivelyEmpty() && !hasUsages(companionObject)) {
+                companionObject.deleteSingle()
+            }
+        }
     }
+
+    private fun hasUsages(companionObject: KtObjectDeclaration): Boolean =
+        ReferencesSearch.search(companionObject, companionObject.useScope).findFirst() != null
 
     private val conflicts: MultiMap<PsiElement, String> = MultiMap<PsiElement, String>()
 
@@ -209,7 +213,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
         val movedElements: List<SmartPsiElementPointer<KtNamedDeclaration>> = allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
-                    val companionObjectsToKeep = preprocessUsages(
+                    preprocessUsages(
                         moveDescriptor.project, moveDescriptor.source, moveDescriptor.target, usages.toList()
                     )
 
@@ -225,12 +229,15 @@ open class K2MoveDeclarationsRefactoringProcessor(
                     val elementsToMove = declarationsToMove.withContext()
                     val sourceFiles = elementsToMove.map { it.containingFile as KtFile }.distinct()
                     val oldToNewMap = moveDescriptor.target.addElementsToTarget(elementsToMove, operationDescriptor.dirStructureMatchesPkg)
-                    moveDescriptor.source.elements.forEach { deleteMovedElement(it, companionObjectsToKeep) }
+                    val containingDeclarations = collectContainingDeclarations(moveDescriptor)
+                    moveDescriptor.source.elements.forEach { it.deleteSingle() }
                     // Delete files if they are effectively empty after moving declarations out of them
                     sourceFiles.filter { it.isEffectivelyEmpty() }.forEach { it.delete() }
 
                     @Suppress("UNCHECKED_CAST")
                     retargetUsagesAfterMove(usages.toList(), oldToNewMap as Map<PsiElement, PsiElement>)
+                    // Reference search for finding and deleting unused companions should be done only after retargeting usages
+                    deleteUnusedCompanionObjects(containingDeclarations)
                     oldToNewMap.forEach { original, new ->
                         postprocessDeclaration(moveDescriptor.target, original, new)
 
@@ -360,9 +367,8 @@ open class K2MoveDeclarationsRefactoringProcessor(
         moveSource: K2MoveSourceDescriptor<*>,
         moveTarget: K2MoveTargetDescriptor,
         usages: List<UsageInfo>
-    ): Set<KtObjectDeclaration> {
+    ) {
         val psiFactory = KtPsiFactory(project)
-        val companionObjectsToKeep = mutableSetOf<KtObjectDeclaration>()
         for (declarationToMove in moveSource.elements) {
             if (declarationToMove !is KtNamedDeclaration) continue
             val companionObject = (declarationToMove.containingClassOrObject as? KtObjectDeclaration)
@@ -370,7 +376,6 @@ open class K2MoveDeclarationsRefactoringProcessor(
             if (companionObject != null) {
                 val companionUsages = usages.filterIsInstance<OuterInstanceReferenceUsageInfo>()
                     .filter { it.upToDateMember == declarationToMove }
-                if (companionUsages.isNotEmpty()) companionObjectsToKeep.add(companionObject)
                 val companionName = companionObject.fqName?.shortName()?.asString() ?: "Companion"
                 for (usage in companionUsages) {
                     when (usage) {
@@ -423,7 +428,6 @@ open class K2MoveDeclarationsRefactoringProcessor(
                 }
             }
         }
-        return companionObjectsToKeep
     }
 
     private fun quoteNameIfNeeded(name: String): String {

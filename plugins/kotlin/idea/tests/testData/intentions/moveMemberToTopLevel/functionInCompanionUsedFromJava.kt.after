@@ -1,0 +1,8 @@
+// WITH_STDLIB
+
+class A {
+    companion object {
+    }
+}
+
+fun foo() = 1

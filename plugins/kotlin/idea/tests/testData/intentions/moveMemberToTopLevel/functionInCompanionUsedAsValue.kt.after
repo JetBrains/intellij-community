@@ -1,0 +1,10 @@
+// WITH_STDLIB
+
+val companion: Any = A
+
+class A {
+    companion object {
+    }
+}
+
+fun foo() = 1

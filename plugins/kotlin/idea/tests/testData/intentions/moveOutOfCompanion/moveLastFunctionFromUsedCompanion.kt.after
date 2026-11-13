@@ -1,0 +1,14 @@
+class A {
+    companion object {
+    }
+
+    fun companion(): Any = Companion
+
+    fun bar() {
+        foo()
+    }
+
+    fun foo() {
+
+    }
+}

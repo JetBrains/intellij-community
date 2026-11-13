@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+
+val companion: B6.Companion = B6.Companion
+
+class B6 {
+    companion object {
+    }
+}
+
+companion fun B6.value() = 6
