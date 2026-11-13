@@ -85,7 +85,7 @@ A locality is defined by where its value travels.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFileLocalityTest.kt
 - When `EDIT_TEAM_LAYER` is `true` at the write context, a shareable write must try team first, then local.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsTeamEditingModeTest.kt
-- `EDIT_TEAM_LAYER` must be environmental, and only the application and project contexts may hold it.
+- `EDIT_TEAM_LAYER` must be environmental, and only a project context or a wider context may hold it.
   See [ADR 0076](../adr/0076-settings-have-three-localities-a-write-goes-to-local-by-default-and-team-editing-is-a-per-machine-mode.md).
 - A map key has no locality of its own. A slot operation ignores it.
   See [ADR 0077](../adr/0077-a-map-key-has-no-locality.md).

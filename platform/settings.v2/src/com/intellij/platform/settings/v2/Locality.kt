@@ -99,12 +99,12 @@ enum class KeyLocality(
  * Holds the per-machine **team-editing mode** (ADR 0076). While it is `true`, a plain write of a
  * [KeyLocality.SHAREABLE] key tries the `team` layer first, not the `local` one. So a user turns the mode on once,
  * then edits the shared team settings directly. The key is itself [KeyLocality.ENVIRONMENTAL], so the mode is bound
- * to the machine and is never committed or shared. Only the application and the project contexts accept it.
+ * to the machine and is never committed or shared. Only a project context or a wider one accepts it.
  */
 @Experimental
 val EDIT_TEAM_LAYER: SettingsKey<Boolean> = SettingsKey(
   name = "settings.editTeamLayer",
   default = false,
   locality = KeyLocality.ENVIRONMENTAL,
-  contextFilter = { it.kind == SettingsContextKind.APPLICATION || it.kind == SettingsContextKind.PROJECT },
+  contextFilter = SettingsContextFilters.PROJECT_OR_WIDER,
 )
