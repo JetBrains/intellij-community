@@ -15,10 +15,20 @@
  */
 package org.jetbrains.plugins.groovy.lang.slicer
 
-class GroovySliceForwardTest : GroovySliceTestCase(false) {
+import org.jetbrains.plugins.groovy.util.groovyProjectFixture
+import org.junit.jupiter.api.Test
+
+class GroovySliceForwardTest : GroovySliceTestCase(groovyProject, false) {
+  @Test
   fun testSimple() = doTest()
 
+  @Test
   fun testGroovyJavaGroovy() = doTest { listOf("$it.groovy", "$it.java") }
 
+  @Test
   fun testJavaGroovyJava() = doTest { listOf("$it.java", "$it.groovy") }
+
+  companion object {
+    private val groovyProject = groovyProjectFixture()
+  }
 }

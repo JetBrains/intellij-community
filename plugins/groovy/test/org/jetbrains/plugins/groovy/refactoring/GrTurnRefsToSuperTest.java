@@ -15,43 +15,73 @@
  */
 package org.jetbrains.plugins.groovy.refactoring;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.MultiFileTestCase;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
-public class GrTurnRefsToSuperTest extends MultiFileTestCase {
+import java.io.IOException;
+import java.io.UncheckedIOException;
+
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class GrTurnRefsToSuperTest {
+  private static final TestFixture<Project> project = groovyProjectFixture();
+  private final TestFixture<JavaCodeInsightTestFixture> groovy =
+    groovyFixture(project, new DefaultLightProjectDescriptor(), "refactoring/turnRefsToSuper/");
+  private final TestFixture<String> lowerTestName = testNameFixture(true);
+
+  @Test
   public void testNoReturnType() {
     doTest("ClassB", "ClassB1", false);
   }
 
+  /** Copies `before`, runs the refactoring, and compares the result with `after`, as the JUnit 3 base `MultiFileTestCase` does. */
   private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) {
-    doTest((rootDir, rootAfter) -> this.performAction(className, superClassName, replaceInstanceOf), true);
-  }
-
-  @NotNull
-  @Override
-  public String getTestRoot() {
-    return "/refactoring/turnRefsToSuper/";
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath();
+    String path = groovy.get().getTestDataPath() + lowerTestName.get();
+    VirtualFile rootDir = groovy.get().copyDirectoryToProject(lowerTestName.get() + "/before", "");
+    VirtualFile rootAfter = StandardFileSystems.local().findFileByPath(path + "/after");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      performAction(className, superClassName, replaceInstanceOf);
+      Project project = groovy.get().getProject();
+      WriteCommandAction.runWriteCommandAction(project, () -> PostprocessReformattingAspect.getInstance(project).doPostponedFormatting());
+      FileDocumentManager.getInstance().saveAllDocuments();
+      try {
+        PlatformTestUtil.assertDirectoriesEqual(rootAfter, rootDir);
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    });
   }
 
   private void performAction(final String className, final String superClassName, boolean replaceInstanceOf) {
-    final PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(myProject));
-    assertNotNull("Class " + className + " not found", aClass);
-    PsiClass superClass = myJavaFacade.findClass(superClassName, GlobalSearchScope.allScope(myProject));
-    assertNotNull("Class " + superClassName + " not found", superClass);
+    Project project = groovy.get().getProject();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    final PsiClass aClass = facade.findClass(className, GlobalSearchScope.allScope(project));
+    assertNotNull(aClass, "Class " + className + " not found");
+    PsiClass superClass = facade.findClass(superClassName, GlobalSearchScope.allScope(project));
+    assertNotNull(superClass, "Class " + superClassName + " not found");
 
-    new TurnRefsToSuperProcessor(myProject, aClass, superClass, replaceInstanceOf).run();
+    new TurnRefsToSuperProcessor(project, aClass, superClass, replaceInstanceOf).run();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 }

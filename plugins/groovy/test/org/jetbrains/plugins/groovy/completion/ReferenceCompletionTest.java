@@ -15,45 +15,95 @@
 
 package org.jetbrains.plugins.groovy.completion;
 
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.junit.jupiter.api.Test;
 
-public class ReferenceCompletionTest extends CompletionTestBase {
+import java.util.Comparator;
+import java.util.List;
 
-  public void testEscapedReference() { doTest(); }
-  public void testGrvy1021() { doTest(); }
-  public void testGrvy1021a() { doTest(); }
-  public void testGrvy1021b() { doTest(); }
-  public void testGrvy1156() { doTest(); }
-  public void testGrvy117() { doTest(); }
-  public void testGrvy1272() { doTest(); }
-  public void testGRVY1316() { doTest(); }
-  public void testGrvy194() { doTest(); }
-  public void testGrvy194_1() { doTest(); }
-  public void testGRVY223() { doTest(); }
-  public void testGrvy487() { doTest(); }
-  public void testGrvy491() { doTest(); }
-  public void testGrvy76() { doTest(); }
-  public void testGrvy959() { doTest(); }
-  public void testOnDemand() { doTest(); }
-  public void testStaticMethod() { doTest(); }
-  public void testThrowVariable() { doTest(); }
-  public void testTupleCompl1() { doTest(); }
-  public void testTupleLongListAssign() { doTest(); }
-  public void testTupleObjCompl() { doTest(); }
-  public void testTupleShortListAss() { doTest(); }
-  public void testTupleTypedCompl() { doTest(); }
-  public void testType() { doTest(); }
-  public void testUntyped() { doTest(); }
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "groovy/oldCompletion/reference";
+@TestApplication
+public class ReferenceCompletionTest {
+  /** The module has the mock JDK of the Groovy test data, as the heavy JUnit 3 test had it. */
+  private static final LightProjectDescriptor DESCRIPTOR =
+    new DefaultLightProjectDescriptor(() -> IdeaTestUtil.createMockJdk("java 1.7", TestUtils.getMockJdkHome()));
+  private static final TestFixture<Project> project = groovyProjectFixture();
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, DESCRIPTOR, "groovy/oldCompletion/reference");
+  private final TestFixture<String> lowerTestName = testNameFixture(true);
+
+  @Test public void testEscapedReference() { doTest(); }
+  @Test public void testGrvy1021() { doTest(); }
+  @Test public void testGrvy1021a() { doTest(); }
+  @Test public void testGrvy1021b() { doTest(); }
+  @Test public void testGrvy1156() { doTest(); }
+  @Test public void testGrvy117() { doTest(); }
+  @Test public void testGrvy1272() { doTest(); }
+  @Test public void testGRVY1316() { doTest(); }
+  @Test public void testGrvy194() { doTest(); }
+  @Test public void testGrvy194_1() { doTest(); }
+  @Test public void testGRVY223() { doTest(); }
+  @Test public void testGrvy487() { doTest(); }
+  @Test public void testGrvy491() { doTest(); }
+  @Test public void testGrvy76() { doTest(); }
+  @Test public void testGrvy959() { doTest(); }
+  @Test public void testOnDemand() { doTest(); }
+  @Test public void testStaticMethod() { doTest(); }
+  @Test public void testThrowVariable() { doTest(); }
+  @Test public void testTupleCompl1() { doTest(); }
+  @Test public void testTupleLongListAssign() { doTest(); }
+  @Test public void testTupleObjCompl() { doTest(); }
+  @Test public void testTupleShortListAss() { doTest(); }
+  @Test public void testTupleTypedCompl() { doTest(); }
+  @Test public void testType() { doTest(); }
+  @Test public void testUntyped() { doTest(); }
+
+  /** Completes at the caret of the file of `<test name>.test` and compares the lookup strings with the second part of the file. */
+  private void doTest() {
+    JavaCodeInsightTestFixture fixture = groovy.get();
+    CamelHumpMatcher.forceStartMatching(fixture.getTestRootDisposable());
+    final List<String> stringList = TestUtils.readInput(fixture.getTestDataPath() + "/" + lowerTestName.get() + ".test");
+    final String fileName = lowerTestName.get() + ".groovy";
+    fixture.addFileToProject(fileName, stringList.get(0));
+    fixture.configureByFile(fileName);
+
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
+    StringBuilder result = new StringBuilder();
+    try {
+      EdtTestUtil.runInEdtAndWait(() -> {
+        fixture.completeBasic();
+
+        final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(fixture.getEditor());
+        if (lookup != null) {
+          List<LookupElement> items = ContainerUtil.sorted(lookup.getItems(), Comparator.comparing(LookupElement::getLookupString));
+          for (LookupElement item : items) {
+            result.append("\n").append(item.getLookupString());
+          }
+          LookupManager.hideActiveLookup(fixture.getProject());
+        }
+      });
+    }
+    finally {
+      CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true;
+    }
+    assertEquals(StringUtil.trimEnd(stringList.get(1), "\n"), result.toString().trim());
   }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    moduleBuilder.addJdk(TestUtils.getMockJdkHome());
-  }
-
 }
