@@ -254,6 +254,12 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                 error("MIN_JAVA_VERSION so far is supported for RUNTIME/WITH_STDLIB only")
             }
             return when {
+                InTextDirectivesUtils.isDirectiveDefined(fileText, "NO_DIRECTORY_PACKAGES") ->
+                    KotlinWithoutDirectoryPackagesProjectDescriptor
+
+                InTextDirectivesUtils.isDirectiveDefined(fileText, "SINGLE_FILE_SOURCE_ROOT") ->
+                    KotlinSingleFileSourceRootProjectDescriptor
+
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_SOURCES") ->
                     ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
