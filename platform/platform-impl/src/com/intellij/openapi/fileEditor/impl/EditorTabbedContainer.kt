@@ -728,7 +728,7 @@ open class EditorTabs(
 
   @Internal
   override fun minHeaderHeight(): Int {
-    val baseHeight = ToolWindowHeader.getUnscaledHeight()
+    val baseHeight = editorTabRowHeight()
     val additionalHeight = if (isHorizontalTabs) additionalHeaderHeight() else 0
     if (additionalHeight <= 0) {
       return baseHeight
@@ -777,10 +777,7 @@ open class EditorTabs(
   override val entryPointActionGroup: DefaultActionGroup
     get() = _entryPointActionGroup
 
-  fun getTabLabelInsets(): JBInsets {
-    val insets = if (isHorizontalTabs) JBUI.CurrentTheme.EditorTabs.tabInsets() else JBUI.CurrentTheme.EditorTabs.verticalTabInsets()
-    return insets as? JBInsets ?: error("JBInsets expected, but was: $insets")
-  }
+  fun getTabLabelInsets(): JBInsets = editorTabLabelInsets(this)
 
   override fun createTabLabel(info: TabInfo): TabLabel = EditorTabLabel(info = info, tabs = this)
 
@@ -885,6 +882,17 @@ fun createEditorTabListOptions(): TabListOptions = TabListOptions(
   hideTabs = UISettings.getInstance().editorTabPlacement == UISettings.TABS_NONE,
 )
 
+/** The minimum height of an editor tab row, unscaled. */
+@Internal
+fun editorTabRowHeight(): Int = ToolWindowHeader.getUnscaledHeight()
+
+/** The label insets of the editor tabs of the theme, for the row direction of [tabs]. */
+@Internal
+fun editorTabLabelInsets(tabs: JBTabsImpl): JBInsets {
+  val insets = if (tabs.isHorizontalTabs) JBUI.CurrentTheme.EditorTabs.tabInsets() else JBUI.CurrentTheme.EditorTabs.verticalTabInsets()
+  return insets as? JBInsets ?: error("JBInsets expected, but was: $insets")
+}
+
 @Internal
 class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, info) {
   init {
@@ -932,7 +940,7 @@ class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, info) {
 
   private fun getPreferredHeight(): Int {
     @Suppress("UseDPIAwareInsets")
-    val insets = (tabs as? EditorTabs)?.getTabLabelInsets()?.unscaled ?: Insets(0, 0, 0, 0)
+    val insets = editorTabLabelInsets(tabs).unscaled
     val height = JBUI.scale(UNSCALED_PREF_HEIGHT - insets.top - insets.bottom)
     val layoutInsets = tabs.layoutInsets
     val extra = (tabs as? EditorTabs)?.additionalTabLabelHeight(info) ?: 0
