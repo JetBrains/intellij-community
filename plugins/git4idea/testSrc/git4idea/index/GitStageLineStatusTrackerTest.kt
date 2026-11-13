@@ -2,6 +2,7 @@
 package git4idea.index
 
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -11,11 +12,24 @@ import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
 import com.intellij.openapi.vcs.TrackerModificationsTest
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.Range
-import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightVirtualFile
-import junit.framework.TestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class GitStageLineStatusTrackerTest : LightPlatformTestCase() {
+@TestApplication
+class GitStageLineStatusTrackerTest {
+  companion object {
+    private val projectFixture = projectFixture()
+  }
+
+  private val project get() = projectFixture.get()
+
+  @Test
   fun testRangeTypes() {
     test("A_X_C_X_E_F_G") {
       assertInvalid()
@@ -33,6 +47,7 @@ class GitStageLineStatusTrackerTest : LightPlatformTestCase() {
     }
   }
 
+  @Test
   fun testStageOperations() {
     test("A_B_C") {
       "B".replace("12_13")
@@ -99,6 +114,7 @@ class GitStageLineStatusTrackerTest : LightPlatformTestCase() {
     }
   }
 
+  @Test
   fun testAddDeleteConflicts() {
     test("A_C") {
       setBaseContents("A_C", "A_C")
@@ -165,6 +181,7 @@ class GitStageLineStatusTrackerTest : LightPlatformTestCase() {
     }
   }
 
+  @Test
   fun testConflictIntersections() {
     test("A_B_C_D_E") {
       setBaseContents("A_B_C_D_E", "A_B_C_D_E")
@@ -188,19 +205,21 @@ class GitStageLineStatusTrackerTest : LightPlatformTestCase() {
   }
 
 
-  private fun test(text: String, task: StagedTest.() -> Unit) {
-    val file = LightVirtualFile("LSTTestFile", PlainTextFileType.INSTANCE, parseInput(text))
-    val document = FileDocumentManager.getInstance().getDocument(file)!!
-    val tracker = GitStageLineStatusTracker(project, file, document)
+  private fun test(text: String, task: StagedTest.() -> Unit): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val file = LightVirtualFile("LSTTestFile", PlainTextFileType.INSTANCE, parseInput(text))
+      val document = FileDocumentManager.getInstance().getDocument(file)!!
+      val tracker = GitStageLineStatusTracker(project, file, document)
 
-    try {
-      val testHelper = StagedTest(tracker)
-      testHelper.verify()
-      task(testHelper)
-      testHelper.verify()
-    }
-    finally {
-      tracker.release()
+      try {
+        val testHelper = StagedTest(tracker)
+        testHelper.verify()
+        task(testHelper)
+        testHelper.verify()
+      }
+      finally {
+        tracker.release()
+      }
     }
   }
 
@@ -226,29 +245,29 @@ class GitStageLineStatusTrackerTest : LightPlatformTestCase() {
 
 
     fun assertInvalid() {
-      TestCase.assertEquals(false, tracker.isValid())
+      assertEquals(false, tracker.isValid())
     }
 
     fun assertRangesCount(n: Int) {
-      TestCase.assertEquals(n, tracker.getRanges()!!.size)
+      assertEquals(n, tracker.getRanges()!!.size)
     }
 
     fun Range.assertStaged() {
       this as StagedRange
-      TestCase.assertEquals(true, hasStaged)
-      TestCase.assertEquals(false, hasUnstaged)
+      assertEquals(true, hasStaged)
+      assertEquals(false, hasUnstaged)
     }
 
     fun Range.assertUnstaged() {
       this as StagedRange
-      TestCase.assertEquals(false, hasStaged)
-      TestCase.assertEquals(true, hasUnstaged)
+      assertEquals(false, hasStaged)
+      assertEquals(true, hasUnstaged)
     }
 
     fun Range.assertConflict() {
       this as StagedRange
-      TestCase.assertEquals(true, hasStaged)
-      TestCase.assertEquals(true, hasUnstaged)
+      assertEquals(true, hasStaged)
+      assertEquals(true, hasUnstaged)
     }
 
     fun Range.assertContent(head: String?, staged: String?, local: String?) {
@@ -257,9 +276,9 @@ class GitStageLineStatusTrackerTest : LightPlatformTestCase() {
       val stagedContent = if (stagedLine1 != stagedLine2) DiffUtil.getLinesContent(stagedDocument, stagedLine1, stagedLine2) else null
       val localContent = if (line1 != line2) DiffUtil.getLinesContent(document, line1, line2) else null
 
-      TestCase.assertEquals(if (head != null) parseInput(head) else null, headContent?.toString())
-      TestCase.assertEquals(if (staged != null) parseInput(staged) else null, stagedContent?.toString())
-      TestCase.assertEquals(if (local != null) parseInput(local) else null, localContent?.toString())
+      assertEquals(if (head != null) parseInput(head) else null, headContent?.toString())
+      assertEquals(if (staged != null) parseInput(staged) else null, stagedContent?.toString())
+      assertEquals(if (local != null) parseInput(local) else null, localContent?.toString())
     }
 
 
@@ -280,6 +299,6 @@ class GitStageLineStatusTrackerTest : LightPlatformTestCase() {
 
   private fun LineStatusTracker<*>.assertStagedTextContentIs(expected: String) {
     this as GitStageLineStatusTracker
-    TestCase.assertEquals(parseInput(expected), stagedDocument.text)
+    assertEquals(parseInput(expected), stagedDocument.text)
   }
 }

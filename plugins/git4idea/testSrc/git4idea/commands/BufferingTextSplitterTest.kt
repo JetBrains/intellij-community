@@ -1,44 +1,53 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands
 
-import com.intellij.testFramework.UsefulTestCase
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class BufferingTextSplitterTest : UsefulTestCase() {
+class BufferingTextSplitterTest {
+  @Test
   fun `test line split with LF`() {
     check(listOf("line1\nline2\n"),
           listOf("line1", "line2"))
   }
 
+  @Test
   fun `test line split with CR`() {
     check(listOf("line1\rline2\r"),
           listOf("line1!", "line2!"))
   }
 
+  @Test
   fun `test line split with CRLF`() {
     check(listOf("line1\r\nline2\r\n"),
           listOf("line1", "line2"))
   }
 
+  @Test
   fun `test line split with a mix`() {
     check(listOf("lineLF\nlineCR\rlineCRLF\r\nlineLFCR\n\r"),
           listOf("lineLF", "lineCR!", "lineCRLF", "lineLFCR", "!"))
   }
 
+  @Test
   fun `test flush`() {
     check(listOf("lineLF\nbad line"),
           listOf("lineLF", "bad line"))
   }
 
+  @Test
   fun `test lines glued`() {
     check(listOf("start", "end\n"),
           listOf("startend"))
   }
 
+  @Test
   fun `test lines not glued`() {
     check(listOf("lineCR\r", "lineLF\n", "lineCRLF\r\n", "lineLFCR\n\r"),
           listOf("lineCR!", "lineLF", "lineCRLF", "lineLFCR", "!"))
   }
 
+  @Test
   fun `test lines split separate CR LF`() {
     check(listOf("lineCR\r", "\nlineLF"),
           listOf("lineCR", "lineLF"))
@@ -62,6 +71,7 @@ class BufferingTextSplitterTest : UsefulTestCase() {
           listOf("lineLF", "lineLF"))
   }
 
+  @Test
   fun `test empty lines`() {
     check(listOf("\r\r\r"),
           listOf("!", "!", "!"))
@@ -81,6 +91,6 @@ class BufferingTextSplitterTest : UsefulTestCase() {
     val outputSplitter = BufferingTextSplitter { line, isCr -> result.add(line + if (isCr) "!" else "") }
     text.forEach { outputSplitter.process(it.toCharArray(), it.length) }
     outputSplitter.flush()
-    assertOrderedEquals(result, expectedLines)
+    assertEquals(expectedLines, result)
   }
 }

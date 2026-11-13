@@ -9,8 +9,8 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import git4idea.repo.GitRepository
-import junit.framework.TestCase.fail
 import kotlinx.coroutines.CoroutineScope
+import org.junit.jupiter.api.fail
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 

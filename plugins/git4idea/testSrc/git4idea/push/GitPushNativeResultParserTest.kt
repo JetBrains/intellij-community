@@ -21,8 +21,8 @@ import git4idea.push.GitPushNativeResult.Type.REJECTED
 import git4idea.push.GitPushNativeResult.Type.SUCCESS
 import git4idea.push.GitPushNativeResult.Type.UP_TO_DATE
 import git4idea.push.GitPushNativeResultParser.parse
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 class GitPushNativeResultParserTest {
 
