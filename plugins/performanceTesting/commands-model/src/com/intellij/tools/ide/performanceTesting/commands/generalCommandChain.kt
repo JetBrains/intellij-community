@@ -686,8 +686,13 @@ fun <T : CommandChain> T.showFileStructureDialog(isSplitFileStructure: Boolean):
   }
 }
 
-fun <T : CommandChain> T.importMavenProject(): T = apply {
-  addCommand("${CMD_PREFIX}importMavenProject")
+/**
+ * Imports the Maven project.
+ *
+ * @param incremental `true` to sync an already imported project incrementally, instead of a full sync.
+ */
+fun <T : CommandChain> T.importMavenProject(incremental: Boolean = false): T = apply {
+  addCommand("${CMD_PREFIX}importMavenProject ${if (incremental) "incremental" else "full"}")
 }
 
 fun <T : CommandChain> T.updateMavenFolders(isErrorExpected: Boolean = false): T = apply {

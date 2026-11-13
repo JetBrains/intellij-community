@@ -23,7 +23,12 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 
+/**
+ * Imports the Maven project. The argument of the command is [INCREMENTAL] to sync an already imported project incrementally.
+ */
 class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text, line) {
+  private val incremental: Boolean get() = extractCommandArgument(PREFIX).trim() == INCREMENTAL
+
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     val project = context.getProject()
     return run {
@@ -52,6 +57,9 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
                 val files = mavenManager.collectAllAvailablePomFiles()
                 mavenManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null, null, true)
               }
+              else if (incremental) {
+                mavenManager.updateAllMavenProjects(MavenSyncSpec.incremental("ImportMavenProjectCommand"))
+              }
               else {
                 mavenManager.updateAllMavenProjects(MavenSyncSpec.full("ImportMavenProjectCommand"))
               }
@@ -72,5 +80,6 @@ class ImportMavenProjectCommand(text: String, line: Int) : AbstractCommand(text,
 
   companion object {
     const val PREFIX = "%importMavenProject"
+    const val INCREMENTAL = "incremental"
   }
 }
