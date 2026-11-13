@@ -17,7 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.fxml.AbstractJavaFXTestCase;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxFixture;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
   @Override
   protected void setUpModule() {
     super.setUpModule();
-    AbstractJavaFXTestCase.addJavaFxJarAsLibrary(getModule());
+    JavaFxFixture.addJavaFxJarAsLibrary(getModule());
     if (isArtifactNeeded()) {
       ArtifactManager.getInstance(getProject()).addArtifact("fake-javafx", JavaFxApplicationArtifactType.getInstance(), null);
     }

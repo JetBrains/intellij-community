@@ -11,7 +11,7 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.fxml.AbstractJavaFXTestCase;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxFixture;
 
 @HeavyPlatformTestCase.WrapInCommand
 public class GenerateGetterSetterTest extends DaemonAnalyzerTestCase {
@@ -26,7 +26,7 @@ public class GenerateGetterSetterTest extends DaemonAnalyzerTestCase {
   @Override
   protected void setUpModule() {
     super.setUpModule();
-    AbstractJavaFXTestCase.addJavaFxJarAsLibrary(getModule());
+    JavaFxFixture.addJavaFxJarAsLibrary(getModule());
   }
 
   protected void doTest() throws Exception {

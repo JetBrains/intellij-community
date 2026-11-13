@@ -8,43 +8,60 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.fxml.AbstractJavaFXTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxFixture;
+import org.junit.jupiter.api.Test;
 
-public class RefactoringFieldTest extends AbstractJavaFXTestCase {
+import static org.jetbrains.plugins.javaFX.fxml.JavaFxFixtureKt.javaFxFixture;
+import static org.jetbrains.plugins.javaFX.fxml.JavaFxFixtureKt.javaFxProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@TestApplication
+public class RefactoringFieldTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFxProjectFixture();
+  private final TestFixture<JavaFxFixture> javaFx =
+    javaFxFixture(projectFixture, PluginPathManager.getPluginHomePath("javaFX") + "/testData/fieldRefactoring/");
+
+  @Test
   public void testPropertyRename() {
-    myFixture.configureByFile(getTestName(false) + ".java");
-    performRename("newName");
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    LightJavaCodeInsightTestFixture myFixture = javaFx.get().getFixture();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      performRename("newName");
+      myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.java");
+    });
   }
 
+  @Test
   public void testPropertyDelete() {
-    myFixture.configureByFile(getTestName(false) + ".java");
-    performDelete();
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    LightJavaCodeInsightTestFixture myFixture = javaFx.get().getFixture();
+    myFixture.configureByFile(myFixture.getTestName(false) + ".java");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      performDelete();
+      myFixture.checkResultByFile(myFixture.getTestName(false) + "_after.java");
+    });
   }
 
   protected void performRename(String newName) {
+    LightJavaCodeInsightTestFixture myFixture = javaFx.get().getFixture();
     PsiElement element = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil
                                                                                       .ELEMENT_NAME_ACCEPTED |
                                                                                     TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
 
-    RenameRefactoring refactoring = RefactoringFactory.getInstance(getProject()).createRename(element, newName, false, false);
+    RenameRefactoring refactoring = RefactoringFactory.getInstance(myFixture.getProject()).createRename(element, newName, false, false);
     refactoring.respectAllAutomaticRenames();
     refactoring.run();
   }
 
    private void performDelete() {
+    LightJavaCodeInsightTestFixture myFixture = javaFx.get().getFixture();
     final PsiElement psiElement = TargetElementUtil
       .findTargetElement(myFixture.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
-    assertNotNull("No element found in text:\n" + myFixture.getFile().getText(), psiElement);
-    SafeDeleteHandler.invoke(getProject(), new PsiElement[]{psiElement}, true);
-  }
-  
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("javaFX") + "/testData/fieldRefactoring/";
+    assertNotNull(psiElement, "No element found in text:\n" + myFixture.getFile().getText());
+    SafeDeleteHandler.invoke(myFixture.getProject(), new PsiElement[]{psiElement}, true);
   }
 }

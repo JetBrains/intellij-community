@@ -16,7 +16,7 @@ public class JavaFXCollapseSubtagToAttributeTest extends DaemonAnalyzerTestCase 
   @Override
   protected void setUpModule() {
     super.setUpModule();
-    AbstractJavaFXTestCase.addJavaFxJarAsLibrary(getModule());
+    JavaFxFixture.addJavaFxJarAsLibrary(getModule());
   }
 
   public void testAdditionalSubtags() throws Exception {

@@ -19,7 +19,7 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return AbstractJavaFXTestCase.JAVA_FX_DESCRIPTOR;
+    return JavaFxFixture.JAVA_FX_DESCRIPTOR;
   }
 
   public void testAvailablePositions() {

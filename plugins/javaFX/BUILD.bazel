@@ -186,6 +186,8 @@ jvm_library(
         "//xml/xml-analysis-api:analysis",
         "//java/compiler/openapi:java-compiler",
         "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
     ],
 )
 ### auto-generated section `build intellij.javaFX.tests` end

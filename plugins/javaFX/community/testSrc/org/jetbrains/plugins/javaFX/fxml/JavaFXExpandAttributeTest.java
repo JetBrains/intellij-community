@@ -16,7 +16,7 @@ public class JavaFXExpandAttributeTest extends DaemonAnalyzerTestCase {
   @Override
   protected void setUpModule() {
     super.setUpModule();
-    AbstractJavaFXTestCase.addJavaFxJarAsLibrary(getModule());
+    JavaFxFixture.addJavaFxJarAsLibrary(getModule());
   }
 
   public void testDefaultAttr() throws Exception {

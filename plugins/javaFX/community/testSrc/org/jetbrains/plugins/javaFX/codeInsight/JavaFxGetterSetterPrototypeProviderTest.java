@@ -5,13 +5,27 @@ import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.GenerateSetterHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.fxml.AbstractJavaFXTestCase;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxFixture;
+import org.junit.jupiter.api.Test;
 
-public class JavaFxGetterSetterPrototypeProviderTest extends AbstractJavaFXTestCase {
+import static org.jetbrains.plugins.javaFX.fxml.JavaFxFixtureKt.javaFxFixture;
+import static org.jetbrains.plugins.javaFX.fxml.JavaFxFixtureKt.javaFxProjectFixture;
 
+@TestApplication
+public class JavaFxGetterSetterPrototypeProviderTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFxProjectFixture();
+  private final TestFixture<JavaFxFixture> javaFx = javaFxFixture(projectFixture);
+
+  @Test
   public void testFinalWritablePropertyGetsSetter() {
+    LightJavaCodeInsightTestFixture myFixture = javaFx.get().getFixture();
     myFixture.configureByText("Foo.java", """
       import javafx.beans.property.SimpleStringProperty;
       class Foo {
@@ -19,20 +33,23 @@ public class JavaFxGetterSetterPrototypeProviderTest extends AbstractJavaFXTestC
           <caret>
       }
       """);
-    generateSetter();
-    myFixture.checkResult("""
-      import javafx.beans.property.SimpleStringProperty;
-      class Foo {
-          private final SimpleStringProperty name = new SimpleStringProperty();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      generateSetter();
+      myFixture.checkResult("""
+        import javafx.beans.property.SimpleStringProperty;
+        class Foo {
+            private final SimpleStringProperty name = new SimpleStringProperty();
 
-          public void setName(String name) {
-              this.name.set(name);
-          }
-      }
-      """);
+            public void setName(String name) {
+                this.name.set(name);
+            }
+        }
+        """);
+    });
   }
 
   private void generateSetter() {
+    LightJavaCodeInsightTestFixture myFixture = javaFx.get().getFixture();
     new GenerateSetterHandler() {
       @Override
       protected ClassMember[] chooseMembers(ClassMember[] members,
@@ -42,7 +59,7 @@ public class JavaFxGetterSetterPrototypeProviderTest extends AbstractJavaFXTestC
                                             @Nullable Editor editor) {
         return members;
       }
-    }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
+    }.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 }

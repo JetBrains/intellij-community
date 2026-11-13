@@ -2,54 +2,62 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.openapi.application.PluginPathManager;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxDefaultTagInspection;
+import org.junit.jupiter.api.Test;
 
-public class JavaFXDefaultTagInspectionTest extends AbstractJavaFXQuickFixTest {
+import java.util.List;
 
-  @Override
-  protected void enableInspections() {
-    myFixture.enableInspections(new JavaFxDefaultTagInspection());
-  }
+import static org.jetbrains.plugins.javaFX.fxml.JavaFxFixtureKt.javaFxFixture;
+import static org.jetbrains.plugins.javaFX.fxml.JavaFxFixtureKt.javaFxProjectFixture;
 
+@TestApplication
+public class JavaFXDefaultTagInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFxProjectFixture();
+  private final TestFixture<JavaFxFixture> javaFx =
+    javaFxFixture(projectFixture, PluginPathManager.getPluginHomePath("javaFX") + "/testData/inspections/defaultTag/",
+                  () -> List.of(new JavaFxDefaultTagInspection()), tagName -> getHint(tagName));
 
+  @Test
   public void testChildren() {
-    doLaunchQuickfixTest("children");
+    javaFx.get().doLaunchQuickfixTest("children");
   }
 
+  @Test
   public void testEmptyChildren() {
-    doLaunchQuickfixTest("children");
+    javaFx.get().doLaunchQuickfixTest("children");
   }
 
+  @Test
   public void testFxCollectionsHighlighting() {
     doHighlightingTest();
   }
 
+  @Test
   public void testEmptyListHighlighting() {
     doHighlightingTest();
   }
 
+  @Test
   public void testEmptyCollapsedListHighlighting() {
     doHighlightingTest();
   }
 
+  @Test
   public void testStylesheets() {
-    checkQuickFixNotAvailable("stylesheets");
+    javaFx.get().checkQuickFixNotAvailable("stylesheets");
   }
 
   private void doHighlightingTest() {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    LightJavaCodeInsightTestFixture myFixture = javaFx.get().getFixture();
+    myFixture.configureByFiles(myFixture.getTestName(true) + ".fxml");
     myFixture.checkHighlighting();
   }
 
-  @Override
-  protected String getHint(String tagName) {
+  private static String getHint(String tagName) {
     return "Unwrap '" + tagName + "'";
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("javaFX") + "/testData/inspections/defaultTag/";
   }
 }

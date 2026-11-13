@@ -2,35 +2,43 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.openapi.application.PluginPathManager;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxColorRgbInspection;
+import org.junit.jupiter.api.Test;
 
-public class JavaFxColorRgbInspectionTest extends AbstractJavaFXTestCase {
-  @Override
-  protected void enableInspections() {
-    myFixture.enableInspections(new JavaFxColorRgbInspection());
-  }
+import java.util.List;
 
+import static org.jetbrains.plugins.javaFX.fxml.JavaFxFixtureKt.javaFxFixture;
+import static org.jetbrains.plugins.javaFX.fxml.JavaFxFixtureKt.javaFxProjectFixture;
+
+@TestApplication
+public class JavaFxColorRgbInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFxProjectFixture();
+  private final TestFixture<JavaFxFixture> javaFx =
+    javaFxFixture(projectFixture, PluginPathManager.getPluginHomePath("javaFX") + "/testData/inspections/colorRgb/",
+                  () -> List.of(new JavaFxColorRgbInspection()));
+
+  @Test
   public void testAttributeHighlighting() {
     doTestHighlighting();
   }
 
+  @Test
   public void testTagHighlighting() {
     doTestHighlighting();
   }
 
+  @Test
   public void testFxReference() {
     doTestHighlighting();
   }
 
   private void doTestHighlighting() {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    LightJavaCodeInsightTestFixture myFixture = javaFx.get().getFixture();
+    myFixture.configureByFiles(myFixture.getTestName(true) + ".fxml");
     myFixture.checkHighlighting();
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("javaFX") + "/testData/inspections/colorRgb/";
   }
 }

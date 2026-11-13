@@ -2,28 +2,46 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.openapi.application.PluginPathManager;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.javaFX.resources.JavaFxResourcePropertyValueInspection;
+import org.junit.jupiter.api.Test;
 
-public class JavaFxResourcePropertyValueInspectionTest extends AbstractJavaFXTestCase {
+import java.util.List;
 
+import static org.jetbrains.plugins.javaFX.fxml.JavaFxFixtureKt.javaFxFixture;
+import static org.jetbrains.plugins.javaFX.fxml.JavaFxFixtureKt.javaFxProjectFixture;
+
+@TestApplication
+public class JavaFxResourcePropertyValueInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaFxProjectFixture();
+  private final TestFixture<JavaFxFixture> javaFx =
+    javaFxFixture(projectFixture, PluginPathManager.getPluginHomePath("javaFX") + "/testData/inspections/resourcePropertyValue/",
+                  () -> List.of(new JavaFxResourcePropertyValueInspection()));
+
+  @Test
   public void testResourceKeyInEnumAttribute() {
-    myFixture.addFileToProject("messages.properties", """
+    javaFx.get().getFixture().addFileToProject("messages.properties", """
       correct.alignment=BASELINE_RIGHT
       incorrect.alignment=INCORRECT_VALUE
       """);
     doTest();
   }
 
+  @Test
   public void testResourcePropertySingleFile() {
-    myFixture.addFileToProject("messages.properties", """
+    javaFx.get().getFixture().addFileToProject("messages.properties", """
       message.width=120
       message.height=not a number
       """);
     doTest();
   }
 
+  @Test
   public void testResourcePropertyMuptipleFiles() {
+    LightJavaCodeInsightTestFixture myFixture = javaFx.get().getFixture();
     myFixture.addFileToProject("messages_de.properties", """
       message.width=120
       message.height=keine Zahl
@@ -41,17 +59,7 @@ public class JavaFxResourcePropertyValueInspectionTest extends AbstractJavaFXTes
   }
 
   private void doTest() {
-    myFixture.testHighlighting(true, false, false, getTestName(true) + ".fxml");
-  }
-
-  @Override
-  protected void enableInspections() {
-    myFixture.enableInspections(new JavaFxResourcePropertyValueInspection());
-  }
-
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("javaFX") + "/testData/inspections/resourcePropertyValue/";
+    LightJavaCodeInsightTestFixture myFixture = javaFx.get().getFixture();
+    myFixture.testHighlighting(true, false, false, myFixture.getTestName(true) + ".fxml");
   }
 }
