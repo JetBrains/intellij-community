@@ -15,23 +15,29 @@
  */
 package org.jetbrains.plugins.groovy.ide;
 
-import junit.framework.TestCase;
 import org.jetbrains.plugins.groovy.GroovySourceRootDetector;
+import org.junit.jupiter.api.Test;
 
-public class GroovySourceRootDetectorTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class GroovySourceRootDetectorTest {
+  @Test
   public void testEmpty() {
     doTest("", "");
   }
 
+  @Test
   public void testComment() {
     doTest("//comment", "");
     doTest("  /* comment */", "");
   }
 
+  @Test
   public void testStatement() {
     doTest("def a = 0;", "");
   }
 
+  @Test
   public void testSimplePackage() {
     doTest("package simple", "simple");
     doTest("package simple;", "simple");
@@ -40,6 +46,7 @@ public class GroovySourceRootDetectorTest extends TestCase {
                          package simple;""", "simple");
   }
 
+  @Test
   public void testComplexPackage() {
     doTest("package com.simple", "com.simple");
     doTest("package com.simple;", "com.simple");
@@ -54,7 +61,7 @@ public class GroovySourceRootDetectorTest extends TestCase {
                          package com.simple;""", "com.simple");
   }
 
-  public void doTest(String text, String expectedPackageName) {
-    TestCase.assertEquals(expectedPackageName, GroovySourceRootDetector.getPackageName(text));
+  private static void doTest(String text, String expectedPackageName) {
+    assertEquals(expectedPackageName, GroovySourceRootDetector.getPackageName(text));
   }
 }

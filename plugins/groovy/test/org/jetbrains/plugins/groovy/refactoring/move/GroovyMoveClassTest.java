@@ -3,6 +3,7 @@
 package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -13,59 +14,77 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
 import com.intellij.refactoring.move.moveClassesOrPackages.SingleSourceRootMoveDestination;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 
 public class GroovyMoveClassTest extends GroovyMoveTestBase {
-  @Override
-  protected String getTestDataPath() {
-    return TestUtils.getAbsoluteTestDataPath() + "refactoring/move/moveClass/";
+  private static final TestFixture<Project> project = groovyProjectFixture();
+
+  public GroovyMoveClassTest() {
+    super(project, "refactoring/move/moveClass/");
   }
 
+  @Test
   public void testMoveMultiple1() {
     doTest("pack2", "pack1.Class1", "pack1.Class2");
   }
 
+  @Test
   public void testSecondaryClass() {
     doTest("pack1", "pack1.Class2");
   }
 
+  @Test
   public void testStringsAndComments() {
     doTest("pack2", "pack1.Class1");
   }
 
+  @Test
   public void testStringsAndComments2() {
     doTest("pack2", "pack1.AClass");
   }
 
+  @Test
   public void testLocalClass() {
     doTest("pack2", "pack1.A");
   }
 
+  @Test
   public void testClassAndSecondary() {
     doTest("pack2", "pack1.Class1", "pack1.Class2");
   }
 
+  @Test
   public void testIdeadev27996() {
     doTest("pack2", "pack1.X");
   }
 
+  @Test
   public void testScript() {
     doTest("pack2", "pack1.Xx");
   }
 
+  @Test
   public void testTwoClasses() {
     doTest("p2", "p1.C1", "p1.C2");
   }
 
+  @Test
   public void testStaticImport() {
     doTest("p2", "p1.C1");
   }
 
+  @Test
   public void testAliasImported() {
     doTest("p2", "p1.C1");
   }
 
+  @Test
   public void testWithoutReference() {
     doTest("p2", "p1.X");
   }
@@ -75,21 +94,21 @@ public class GroovyMoveClassTest extends GroovyMoveTestBase {
     final PsiClass[] classes = new PsiClass[classNames.length];
     for (int i = 0; i < classes.length; i++) {
       String className = classNames[i];
-      classes[i] = JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject()));
-      assertNotNull("Class " + className + " not found", classes[i]);
+      classes[i] = JavaPsiFacade.getInstance(groovy.get().getProject()).findClass(className, GlobalSearchScope.allScope(groovy.get().getProject()));
+      assertNotNull(classes[i], "Class " + className + " not found");
     }
 
-    PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(newPackageName);
-    assertNotNull("Package " + newPackageName + " not found", aPackage);
+    PsiPackage aPackage = JavaPsiFacade.getInstance(groovy.get().getProject()).findPackage(newPackageName);
+    assertNotNull(aPackage, "Package " + newPackageName + " not found");
     final PsiDirectory[] dirs = aPackage.getDirectories();
 
     assertEquals(1, dirs.length);
     final PsiDirectory dir = dirs[0];
     final SingleSourceRootMoveDestination moveDestination =
       new SingleSourceRootMoveDestination(PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(dir)), dir);
-    new MoveClassesOrPackagesProcessor(getProject(), classes, moveDestination, true, true, null).run();
+    new MoveClassesOrPackagesProcessor(groovy.get().getProject(), classes, moveDestination, true, true, null).run();
 
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiDocumentManager.getInstance(groovy.get().getProject()).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 }
