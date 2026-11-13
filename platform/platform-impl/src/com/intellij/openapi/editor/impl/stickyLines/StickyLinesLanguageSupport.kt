@@ -11,15 +11,11 @@ import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 
 @Service(Service.Level.PROJECT)
 internal class StickyLinesLanguageSupport(project: Project) : Disposable {
-
-  private val supportedLanguages: MutableSet<Language> = mutableSetOf()
-  private val rwLock = ReentrantReadWriteLock()
+  @Volatile
+  private var cachedSupportedLanguages: Set<Language>? = null
 
   init {
     updateLanguages()
@@ -30,30 +26,32 @@ internal class StickyLinesLanguageSupport(project: Project) : Disposable {
 
   fun supportedLang(lang: Language): Language {
     // example: ECMAScript6 -> JavaScript
-    rwLock.read {
-      var supported: Language? = lang
-      while (supported != null) {
-        if (supported in supportedLanguages) {
-          return supported
-        }
-        supported = supported.baseLanguage
-      }
-      return lang
-    }
-  }
-
-  private fun updateLanguages() {
-    rwLock.write {
-      supportedLanguages.clear()
+    var supportedLanguages = cachedSupportedLanguages
+    if (supportedLanguages == null) {
+      supportedLanguages = HashSet()
       for (provider in BreadcrumbsProvider.EP_NAME.extensionList) {
         supportedLanguages.addAll(provider.languages)
       }
+      this.cachedSupportedLanguages = java.util.Set.of(*supportedLanguages.toTypedArray())
     }
+
+    var supported: Language? = lang
+    while (supported != null) {
+      if (supported in supportedLanguages) {
+        return supported
+      }
+      supported = supported.baseLanguage
+    }
+    return lang
+  }
+
+  private fun updateLanguages() {
+    cachedSupportedLanguages = null
   }
 
   private fun subscribeProviderChanges() {
     BreadcrumbsProvider.EP_NAME.addChangeListener(
-      Runnable { updateLanguages() },
+      { updateLanguages() },
       this,
     )
   }
