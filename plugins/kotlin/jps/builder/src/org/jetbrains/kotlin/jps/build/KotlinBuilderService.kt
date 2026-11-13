@@ -6,5 +6,5 @@ import org.jetbrains.jps.incremental.ModuleLevelBuilder
 
 /** Registers the Kotlin builders in the build process. */
 class KotlinBuilderService : BuilderService() {
-  override fun createModuleLevelBuilders(): List<ModuleLevelBuilder> = listOf(KotlinBuilder())
+  override fun createModuleLevelBuilders(): List<ModuleLevelBuilder> = listOf(KotlinBuilder(), KotlinCompilerReferenceIndexBuilder())
 }

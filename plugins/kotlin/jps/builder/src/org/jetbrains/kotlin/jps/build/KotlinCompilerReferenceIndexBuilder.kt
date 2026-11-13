@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.config.SettingConstants
  * Tells the IDE which modules a build compiled completely, so that the Kotlin compiler reference index can trust their output.
  *
  * Based on [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder].
- * TODO: Currently, disabled: KTIJ-40515
  */
 class KotlinCompilerReferenceIndexBuilder : ModuleLevelBuilder(BuilderCategory.CLASS_POST_PROCESSOR) {
   private val compiledTargets = ContainerUtil.newConcurrentSet<ModuleBuildTarget>()

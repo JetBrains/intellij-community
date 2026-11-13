@@ -3,10 +3,13 @@ package org.jetbrains.kotlin.jps.build
 
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.jps.incremental.ModuleBuildTarget
+import org.jetbrains.jps.incremental.messages.BuildMessage
+import org.jetbrains.jps.incremental.messages.CustomBuilderMessage
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.cri.CriToolchain
 import org.jetbrains.kotlin.buildtools.api.getToolchain
+import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_COMPILER_REFERENCE_INDEX_BUILDER_ID
 import org.jetbrains.kotlin.jps.buildtools.KotlinBuildToolsLoader
 import org.jetbrains.kotlin.name.FqName
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -72,6 +75,19 @@ class BuildToolsApiCompilerReferenceIndexTest : KotlinBtaJpsBuildTestBase() {
     for (module in modules) {
       assertFalse(criDirectory(module).exists()) { "Unexpected compiler reference index for ${module.name}" }
     }
+  }
+
+  @Test
+  fun testAFullyCompiledModuleReportsItselfProcessed() {
+    val modules = createProject()
+    val result = buildAllModules()
+    result.assertSuccessful()
+
+    val processedMessages = result.getMessages(BuildMessage.Kind.INFO)
+      .filterIsInstance<CustomBuilderMessage>()
+      .filter { it.builderId == KOTLIN_COMPILER_REFERENCE_INDEX_BUILDER_ID }
+    assertEquals(modules.map { it.name }.sorted(), processedMessages.map { it.messageText }.sorted())
+    assertEquals(listOf("processed module"), processedMessages.map { it.messageType }.distinct())
   }
 
   @Test
