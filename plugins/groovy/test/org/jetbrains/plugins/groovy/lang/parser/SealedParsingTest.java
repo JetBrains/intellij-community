@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -16,33 +16,18 @@ public class SealedParsingTest {
   private final TestFixture<GroovyParsingFixture> parsing =
     groovyParsingFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "parsing/groovy/" + "types/sealed");
 
-  @Test
-  public void testBasicNonsealed() { parsing.get().doTest(); }
+  private void doTest() {
+    parsing.get().doTest();
+  }
 
-  @Test
-  public void testBasicSealed() { parsing.get().doTest(); }
-
-  @Test
-  public void testEnum() { parsing.get().doTest(); }
-
-  @Test
-  public void testExplicitSubclasses() { parsing.get().doTest(); }
-
-  @Test
-  public void testInterface() { parsing.get().doTest(); }
-
-  @Test
-  public void testPermitsAfterExtends() { parsing.get().doTest(); }
-
-  @Test
-  public void testPermitsAfterImplements() { parsing.get().doTest(); }
-
-  @Test
-  public void testPermitsBeforeExtends() { parsing.get().doTest(); }
-
-  @Test
-  public void testPermitsBeforeImplements() { parsing.get().doTest(); }
-
-  @Test
-  public void testTrait() { parsing.get().doTest(); }
+  @Test public void testBasicNonsealed() { doTest(); }
+  @Test public void testBasicSealed() { doTest(); }
+  @Test public void testEnum() { doTest(); }
+  @Test public void testExplicitSubclasses() { doTest(); }
+  @Test public void testInterface() { doTest(); }
+  @Test public void testPermitsAfterExtends() { doTest(); }
+  @Test public void testPermitsAfterImplements() { doTest(); }
+  @Test public void testPermitsBeforeExtends() { doTest(); }
+  @Test public void testPermitsBeforeImplements() { doTest(); }
+  @Test public void testTrait() { doTest(); }
 }

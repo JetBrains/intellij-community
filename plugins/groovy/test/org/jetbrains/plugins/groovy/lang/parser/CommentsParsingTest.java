@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -16,24 +16,15 @@ public class CommentsParsingTest {
   private final TestFixture<GroovyParsingFixture> parsing =
     groovyParsingFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "parsing/groovy/" + "comments");
 
-  @Test
-  public void testBrown() { parsing.get().doTest(); }
+  private void doTest() {
+    parsing.get().doTest();
+  }
 
-  @Test
-  public void testError1205() { parsing.get().doTest(); }
-
-  @Test
-  public void testMax() { parsing.get().doTest(); }
-
-  @Test
-  public void testNls1() { parsing.get().doTest(); }
-
-  @Test
-  public void testNls2() { parsing.get().doTest(); }
-
-  @Test
-  public void testRocher3() { parsing.get().doTest(); }
-
-  @Test
-  public void testAfterIdentifier() { parsing.get().doTest(); }
+  @Test public void testBrown() { doTest(); }
+  @Test public void testError1205() { doTest(); }
+  @Test public void testMax() { doTest(); }
+  @Test public void testNls1() { doTest(); }
+  @Test public void testNls2() { doTest(); }
+  @Test public void testRocher3() { doTest(); }
+  @Test public void testAfterIdentifier() { doTest(); }
 }

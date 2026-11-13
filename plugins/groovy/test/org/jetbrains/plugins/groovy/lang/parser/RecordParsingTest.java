@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -16,27 +16,15 @@ public class RecordParsingTest {
   private final TestFixture<GroovyParsingFixture> parsing =
     groovyParsingFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "parsing/groovy/" + "types/record");
 
-  @Test
-  public void testRecord1() { parsing.get().doTest(); }
-
-  @Test
-  public void testRecord2() { parsing.get().doTest(); }
-
-  @Test
-  public void testRecord3() { parsing.get().doTest(); }
-
-  @Test
-  public void testRecord4() { parsing.get().doTest(); }
-
-  @Test
-  public void testRecord5() { parsing.get().doTest(); }
-
-  @Test
-  public void testRecord6() { parsing.get().doTest(); }
-
-  @Test
-  public void testRecord7() { parsing.get().doTest(); }
-
-  @Test
-  public void testRecord8() { parsing.get().doTest(); }
+  private void doTest() {
+    parsing.get().doTest();
+  }
+  @Test public void testRecord1() { doTest(); }
+  @Test public void testRecord2() { doTest(); }
+  @Test public void testRecord3() { doTest(); }
+  @Test public void testRecord4() { doTest(); }
+  @Test public void testRecord5() { doTest(); }
+  @Test public void testRecord6() { doTest(); }
+  @Test public void testRecord7() { doTest(); }
+  @Test public void testRecord8() { doTest(); }
 }
