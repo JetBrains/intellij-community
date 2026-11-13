@@ -59,6 +59,7 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -138,44 +139,38 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
     if (!hasSelection) {
       selectLogicalLineContents(editor);
     }
-    int[] startOffsets = editor.getCaretModel().getAllCarets().stream()
-      .mapToInt(Caret::getSelectionStart)
-      .toArray();
-    int[] endOffsets = editor.getCaretModel().getAllCarets().stream()
-      .mapToInt(Caret::getSelectionEnd)
-      .toArray();
-    return computeSurrounders(file, startOffsets, endOffsets, hasSelection);
+    List<TextRange> ranges = ContainerUtil.map(editor.getCaretModel().getAllCarets(), Caret::getSelectionRange);
+    return computeSurrounders(file, ranges, hasSelection);
   }
 
   /**
-   * The surrounders for the ranges given by {@code startOffsets} and {@code endOffsets}, one range per caret, with the
-   * elements each of them surrounds. The applicability of a surrounder is not checked.
+   * The surrounders for the {@code ranges}, one range per caret, with the elements each of them surrounds. The
+   * applicability of a surrounder is not checked.
    *
    * @param hasSelection whether the ranges were selected by the user, rather than taken from the caret line
    */
   @ApiStatus.Internal
   public static @NotNull Map<Surrounder, PsiElement[]> computeSurrounders(@NotNull PsiFile file,
-                                                                          int @NotNull [] startOffsets,
-                                                                          int @NotNull [] endOffsets,
+                                                                          @NotNull List<TextRange> ranges,
                                                                           boolean hasSelection) {
     final Language baseLanguage = file.getViewProvider().getBaseLanguage();
 
+    List<TextRange> adjustedRanges = new ArrayList<>(ranges.size());
     Language previousLanguage = null;
-    for (int i = 0; i < startOffsets.length; ++i) {
-      PsiElement element1 = file.findElementAt(startOffsets[i]);
-      PsiElement element2 = file.findElementAt(endOffsets[i] - 1);
+    for (TextRange range : ranges) {
+      PsiElement element1 = file.findElementAt(range.getStartOffset());
+      PsiElement element2 = file.findElementAt(range.getEndOffset() - 1);
 
       if (element1 == null || element2 == null) return Map.of();
 
-      TextRange textRange = new TextRange(startOffsets[i], endOffsets[i]);
+      TextRange textRange = range;
       for (SurroundWithRangeAdjuster adjuster : SurroundWithRangeAdjuster.EP_NAME.getExtensionList()) {
         textRange = adjuster.adjustSurroundWithRange(file, textRange, hasSelection);
         if (textRange == null) return Map.of();
       }
-      startOffsets[i] = textRange.getStartOffset();
-      endOffsets[i] = textRange.getEndOffset();
+      adjustedRanges.add(textRange);
 
-      element1 = file.findElementAt(startOffsets[0]);
+      element1 = file.findElementAt(adjustedRanges.getFirst().getStartOffset());
       assert element1 != null;
 
       final Language currentLanguage = element1.getParent().getLanguage();
@@ -205,7 +200,7 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
 
     Map<Surrounder, PsiElement[]> surrounders = new LinkedHashMap<>();
     for (SurroundDescriptor descriptor : surroundDescriptors) {
-      final PsiElement[] elements = getElementsToSurround(descriptor, file, startOffsets, endOffsets);
+      final PsiElement[] elements = getElementsToSurround(descriptor, file, adjustedRanges);
       if (elements.length > 0) {
         for (PsiElement element : elements) {
           assert element != null : "descriptor " + descriptor + " returned null element";
@@ -219,10 +214,10 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
     return surrounders;
   }
 
-  private static PsiElement[] getElementsToSurround(SurroundDescriptor descriptor, PsiFile file, int[] startOffsets, int[] endOffsets) {
+  private static PsiElement[] getElementsToSurround(SurroundDescriptor descriptor, PsiFile file, List<TextRange> ranges) {
     final List<PsiElement> elementList = new ArrayList<>();
-    for (int i = 0; i < startOffsets.length; ++i) {
-      elementList.addAll(List.of(descriptor.getElementsToSurround(file, startOffsets[i], endOffsets[i])));
+    for (TextRange range : ranges) {
+      elementList.addAll(List.of(descriptor.getElementsToSurround(file, range.getStartOffset(), range.getEndOffset())));
     }
     return elementList.toArray(PsiElement[]::new);
   }
