@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PropertyUtil
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolution.symbols
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -25,7 +24,6 @@ import org.jetbrains.kotlin.idea.base.psi.EditCommaSeparatedListHelper
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
-import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtVisitor
@@ -50,22 +48,20 @@ internal class RedundantDestructuringUnderscoreInspection : AbstractKotlinInspec
         val isShortFormAvailable =
             declaration.languageVersionSettings.supportsFeature(LanguageFeature.EnableNameBasedDestructuringShortForm)
 
-        for (entry in declaration.entries) {
-            if (!entry.isSingleUnderscore) continue
-            if (entry.ownValOrVarKeyword == null && !isShortFormAvailable) continue
-            if (!isSafeToRemove(entry)) continue
-
+        val removableEntries = declaration.entries.filter { entry ->
+            entry.isSingleUnderscore && (entry.ownValOrVarKeyword != null || isShortFormAvailable) && isSafeToRemove(entry)
+        }
+        val allowBatch = removableEntries.size < declaration.entries.size
+        for (entry in removableEntries) {
             holder.registerProblem(
                 entry,
                 KotlinBundle.message("inspection.redundant.destructuring.underscore"),
                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                RemoveRedundantDestructuringUnderscoreFix()
+                RemoveRedundantDestructuringUnderscoreFix(allowBatch)
             )
         }
     }
 
-
-    @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
     private fun isSafeToRemove(entry: KtDestructuringDeclarationEntry): Boolean {
         entry.initializer ?: return true
         return analyze(entry) {
@@ -88,10 +84,12 @@ internal class RedundantDestructuringUnderscoreInspection : AbstractKotlinInspec
     }
 }
 
-private class RemoveRedundantDestructuringUnderscoreFix : PsiUpdateModCommandQuickFix() {
+private class RemoveRedundantDestructuringUnderscoreFix(private val allowBatch: Boolean) : PsiUpdateModCommandQuickFix() {
 
     override fun getFamilyName(): @IntentionName String =
         KotlinBundle.message("remove.redundant.destructuring.underscore")
+
+    override fun availableInBatchMode(): Boolean = allowBatch
 
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         val entry = element as? KtDestructuringDeclarationEntry ?: return

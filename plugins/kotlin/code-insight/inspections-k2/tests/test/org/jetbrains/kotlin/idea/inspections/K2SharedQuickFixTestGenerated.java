@@ -55,6 +55,34 @@ public abstract class K2SharedQuickFixTestGenerated extends AbstractK2SharedQuic
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/redundantDestructuringUnderscore")
+        public static class RedundantDestructuringUnderscore extends AbstractK2SharedQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("allUnderscoresFixAll.kt")
+            public void testAllUnderscoresFixAll() throws Exception {
+                runTest("testData/quickfix/redundantDestructuringUnderscore/allUnderscoresFixAll.kt");
+            }
+
+            @TestMetadata("allUnderscoresSingleFix.kt")
+            public void testAllUnderscoresSingleFix() throws Exception {
+                runTest("testData/quickfix/redundantDestructuringUnderscore/allUnderscoresSingleFix.kt");
+            }
+
+            @TestMetadata("mixedDeclarationsFixAll.kt")
+            public void testMixedDeclarationsFixAll() throws Exception {
+                runTest("testData/quickfix/redundantDestructuringUnderscore/mixedDeclarationsFixAll.kt");
+            }
+
+            @TestMetadata("mixedSafetyFixAll.kt")
+            public void testMixedSafetyFixAll() throws Exception {
+                runTest("testData/quickfix/redundantDestructuringUnderscore/mixedSafetyFixAll.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/redundantSemicolon")
         public static class RedundantSemicolon extends AbstractK2SharedQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {

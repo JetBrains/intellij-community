@@ -1,0 +1,10 @@
+// "Remove redundant underscore entry" "true"
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.declarations.RedundantDestructuringUnderscoreInspection
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.declarations.RemoveRedundantDestructuringUnderscoreFix
+
+class Plain(val a: String, val b: Int)
+
+fun test() {
+    (val _ = a, val <caret>_ = b) = Plain("", 1)
+}
