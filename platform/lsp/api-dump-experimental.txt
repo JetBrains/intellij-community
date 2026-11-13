@@ -1,4 +1,5 @@
 a:com.intellij.platform.lsp.api.LspClientDescriptor
+- *:getMaxUnexpectedTerminationRestarts():I
 - *:getOfferServerLogInNotifications():Z
 *:com.intellij.platform.lsp.api.LspIntegrationSettingsProvider
 - *sf:Companion:com.intellij.platform.lsp.api.LspIntegrationSettingsProvider$Companion

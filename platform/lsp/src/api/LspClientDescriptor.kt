@@ -432,6 +432,30 @@ abstract class LspClientDescriptor protected constructor(
   open val lspCustomization: LspCustomization = LspCustomization()
 
   /**
+   * The maximum number of automatic restarts of the server in the time window.
+   * The IDE starts a new client with this descriptor when the process of a running server ends or its connection closes.
+   * The IDE does this only when it did not request the stop. The exit code of the process does not matter.
+   * The IDE does not restart a client that never reached the Running state.
+   * The default `0` turns off the automatic restart for this descriptor.
+   *
+   * The registry key `lsp.server.auto.restart.max.count` sets a maximum for all descriptors. The lower value applies.
+   * The value `0` of that key turns off the automatic restart for all descriptors.
+   * The keys `lsp.server.auto.restart.window.seconds` and `lsp.server.auto.restart.delay.ms` set the time window and the first delay.
+   * The delay doubles for each later restart in the window.
+   * When the server stops again after the last restart that the window allows, the client stays in the [LspServerState.ShutdownUnexpectedly] state.
+   *
+   * The new client sends `initialize` again, and it opens the files again as at the first start.
+   * The IDE calls [startServerProcess] again, so find the current server executable on each call.
+   * The IDE calls [LspServerListener.serverStopped] for the stopped client before [LspServerListener.serverInitialized] for the new client.
+   * An explicit stop of the client cancels a pending restart, for example [LspClientManager.stopClients].
+   *
+   * Keep the default when the plugin restarts the server itself.
+   * Do not start a client with another server id for the same server, because then the server runs twice.
+   */
+  @get:ApiStatus.Experimental
+  open val maxUnexpectedTerminationRestarts: Int = 0
+
+  /**
    * Override this function to handle
    * [workspace/configuration](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#workspace_configuration)
    * requests from the server. Implementations should check `item.section` and respond only to the requests that they understand.

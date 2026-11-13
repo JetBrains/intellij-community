@@ -39,6 +39,7 @@ internal fun TestFixture<Project>.fakeLspIntegrationFixture(
   isSupportedFile: ((VirtualFile) -> Boolean)? = null,
   offerServerLogInNotifications: Boolean = false,
   useSocket: Boolean = false,
+  maxUnexpectedTerminationRestarts: Int = 0,
 ): TestFixture<FakeLspIntegration> = testFixture { _ ->
   val projectFixture = this@fakeLspIntegrationFixture
   val project = projectFixture.init()
@@ -54,7 +55,7 @@ internal fun TestFixture<Project>.fakeLspIntegrationFixture(
 
   project.putUserData(FAKE_LSP_CONFIG_KEY, FakeLspConfig(lspCustomization, configureClientCapabilities, configureServerCapabilities,
                                                           createLsp4jClient, isSupportedFile, offerServerLogInNotifications,
-                                                          useSocket))
+                                                          useSocket, maxUnexpectedTerminationRestarts = maxUnexpectedTerminationRestarts))
 
   initialized(FakeLspIntegration(project)) {
     project.putUserData(FAKE_LSP_CONFIG_KEY, null)
@@ -126,6 +127,7 @@ internal class FakeLspConfig(
   val isSupportedFile: ((VirtualFile) -> Boolean)? = null,
   val offerServerLogInNotifications: Boolean = false,
   val useSocket: Boolean = false,
+  val maxUnexpectedTerminationRestarts: Int = 0,
 )
 
 private val FAKE_LSP_CONFIG_KEY = Key.create<FakeLspConfig>("FAKE_LSP_CONFIG_KEY")
@@ -148,6 +150,8 @@ internal open class FakeLspClientDescriptor(
   override val lspCustomization: LspCustomization = config.lspCustomization
 
   override val offerServerLogInNotifications: Boolean = config.offerServerLogInNotifications
+
+  override val maxUnexpectedTerminationRestarts: Int = config.maxUnexpectedTerminationRestarts
 
   override fun isSupportedFile(file: VirtualFile) = config.isSupportedFile?.invoke(file) ?: true
 
