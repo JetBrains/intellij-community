@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.project
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.project.stateStore
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.isActive
@@ -40,6 +39,9 @@ class ProjectSize internal constructor(
  *
  * The walk reads no file content. It sums the length that the virtual file system already holds, so the cost is one
  * pass over the content roots and no disk read per file.
+ *
+ * The walk takes no custom filter, so the platform takes no read action per file. The processor applies the two skip
+ * rules. Both rules are cheap: a directory check and a path check. The processor runs without the read lock.
  */
 @ApiStatus.Internal
 suspend fun computeProjectSize(project: Project): ProjectSize {
@@ -53,12 +55,12 @@ suspend fun computeProjectSize(project: Project): ProjectSize {
   fileIndex.iterateContent(
     ContentIterator { file ->
       if (!context.isActive) return@ContentIterator false
+      // Skip the project configuration files. They are not part of the repository the agent works on.
+      if (file.isDirectory || stateStore.isProjectFile(file)) return@ContentIterator true
       filesCount++
       sizeBytes += file.length
       filesCount < FILES_COUNT_LIMIT
-    },
-    // Skip the project configuration files. They are not part of the repository the agent works on.
-    VirtualFileFilter { file -> !file.isDirectory && !stateStore.isProjectFile(file) },
+    }
   )
 
   return ProjectSize(
