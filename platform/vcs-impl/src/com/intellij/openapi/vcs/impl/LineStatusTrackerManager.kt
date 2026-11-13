@@ -390,14 +390,16 @@ class LineStatusTrackerManager(
       return
     }
 
-    ChangeListManagerImpl.getInstanceImpl(project).registerChangeTracker(filePath, tracker)
-    data.clmFilePath = filePath
+    val isRegistered = ChangeListManagerImpl.getInstanceImpl(project).registerChangeTracker(filePath, tracker)
+    data.clmFilePath = if (isRegistered) filePath else null
+    data.isRefusedByClm = !isRegistered
   }
 
   private fun unregisterTrackerInCLM(data: TrackerData, wasUnbound: Boolean = false) {
     val tracker = data.tracker
     val virtualFile = tracker.virtualFile
     if (tracker !is ChangelistsLocalLineStatusTracker) return
+    if (data.isRefusedByClm) return
 
     LOG.assertTrue(virtualFile.isInLocalFileSystem, virtualFile)
     val filePath = data.clmFilePath
@@ -419,6 +421,10 @@ class LineStatusTrackerManager(
     val tracker = data.tracker
     val virtualFile = tracker.virtualFile
     if (tracker !is ChangelistsLocalLineStatusTracker) return
+    if (data.isRefusedByClm) {
+      registerTrackerInCLM(data)
+      return
+    }
 
     LOG.assertTrue(virtualFile.isInLocalFileSystem, virtualFile)
     val oldFilePath = data.clmFilePath
@@ -431,8 +437,8 @@ class LineStatusTrackerManager(
 
     if (oldFilePath != newFilePath) {
       ChangeListManagerImpl.getInstanceImpl(project).unregisterChangeTracker(oldFilePath, tracker)
-      ChangeListManagerImpl.getInstanceImpl(project).registerChangeTracker(newFilePath, tracker)
-      data.clmFilePath = newFilePath
+      data.clmFilePath = null
+      registerTrackerInCLM(data)
     }
   }
 
@@ -1078,10 +1084,16 @@ class LineStatusTrackerManager(
   }
 
 
+  /**
+   * @property isRefusedByClm true when the CLM refused the tracker, because another tracker holds its path.
+   * The CLM then does not know the tracker, so the release of the tracker does not unregister it.
+   * A move of the file tries the registration again at the new path.
+   */
   private class TrackerData(
     val tracker: LocalLineStatusTracker<*>,
     var contentInfo: ContentInfo? = null,
     var clmFilePath: FilePath? = null,
+    var isRefusedByClm: Boolean = false,
   )
 
   private class RefreshRequest(val document: Document, val virtualFile: VirtualFile, val loader: LineStatusTrackerContentLoader) {

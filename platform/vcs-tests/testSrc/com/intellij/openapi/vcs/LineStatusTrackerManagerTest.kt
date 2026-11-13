@@ -3,11 +3,14 @@ package com.intellij.openapi.vcs
 
 import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertBaseTextContentIs
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.assertTextContentIs
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.testFramework.LoggedErrorProcessor
 
 class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   private val FILE_1 = "file1.txt"
@@ -75,6 +78,39 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
     lstm.releaseTrackerFor(file.document, requester2)
     file.assertNullTracker()
+  }
+
+  fun `test partial tracker lifecycle - tracker of a second document of the file`() {
+    val file = addLocalFile(name = FILE_1, content = "a_b_c_d_e", baseContent = "a_b1_c_d1_e")
+    refreshCLM()
+
+    val requester1 = Any()
+    val requester2 = Any()
+
+    val document1 = file.document
+    lstm.requestTrackerFor(document1, requester1)
+    assertNotNull(file.tracker)
+
+    // the file gets a second document, and the tracker of the first one stays registered in the CLM
+    (FileDocumentManager.getInstance() as FileDocumentManagerBase).clearDocumentCache()
+    val document2 = file.document
+    assertNotSame(document1, document2)
+
+    val errors = mutableListOf<String>()
+    val errorCollector = object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
+        errors.add(message.substringBefore(':'))
+        return Action.NONE
+      }
+    }
+    LoggedErrorProcessor.executeWith(errorCollector).use {
+      lstm.requestTrackerFor(document2, requester2)
+      lstm.releaseTrackerFor(document2, requester2)
+    }
+    assertEquals(listOf("Attempt to register duplicate trackers"), errors)
+
+    lstm.releaseTrackerFor(document1, requester1)
+    assertNull(lstm.getLineStatusTracker(document1))
   }
 
   fun `test partial tracker lifecycle - with partial changes without editor`() {

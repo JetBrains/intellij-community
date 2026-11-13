@@ -324,8 +324,11 @@ class ChangeListManagerImpl(
     }
   }
 
-  fun registerChangeTracker(filePath: FilePath, tracker: PartialChangeTracker) {
-    executeUnderDataLock {
+  /**
+   * @return false when another tracker is registered for [filePath]. The other tracker then stays registered.
+   */
+  fun registerChangeTracker(filePath: FilePath, tracker: PartialChangeTracker): Boolean {
+    return executeUnderDataLock {
       worker.registerChangeTracker(filePath, tracker)
     }
   }

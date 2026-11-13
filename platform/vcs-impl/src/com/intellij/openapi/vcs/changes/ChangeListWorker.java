@@ -662,11 +662,14 @@ public abstract sealed class ChangeListWorker {
       return null;
     }
 
-    public void registerChangeTracker(@NotNull FilePath filePath, @NotNull PartialChangeTracker tracker) {
+    /**
+     * @return false when another tracker is registered for {@code filePath}. The worker then keeps the other tracker.
+     */
+    public boolean registerChangeTracker(@NotNull FilePath filePath, @NotNull PartialChangeTracker tracker) {
       if (myPartialChangeTrackers.containsKey(filePath)) {
         LOG.error(String.format("Attempt to register duplicate trackers: %s; old: %s; new: %s",
                                 filePath, myPartialChangeTrackers.get(filePath), tracker));
-        return;
+        return false;
       }
 
       myPartialChangeTrackers.put(filePath, tracker);
@@ -685,6 +688,7 @@ public abstract sealed class ChangeListWorker {
       if (LOG.isDebugEnabled()) {
         LOG.debug(String.format("[registerChangeTracker] path: %s, old list: %s", filePath, oldList != null ? oldList.id : "null"));
       }
+      return true;
     }
 
     private @Nullable ListData getDataByIdVerify(@NotNull String id) {
