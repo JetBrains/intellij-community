@@ -235,6 +235,7 @@ fun sharedCodeInsightProjectFixture(moduleTypeId: String = ""): TestFixture<Proj
 fun sharedCodeInsightFixture(projectFixture: TestFixture<Project>): TestFixture<CodeInsightTestFixture> =
   codeInsightFixture(projectFixture, sharedModuleRootFixture(projectFixture))
 
+@TestOnly
 private fun sharedModuleRootFixture(projectFixture: TestFixture<Project>): TestFixture<Path> = testFixture("sharedModuleRootFixture") {
   val project = projectFixture.init()
   val root = checkNotNull(project.getUserData(SHARED_MODULE_ROOT)) { "Create the project with sharedCodeInsightProjectFixture()" }
