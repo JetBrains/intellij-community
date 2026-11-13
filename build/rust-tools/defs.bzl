@@ -486,7 +486,7 @@ def rust_tool_sources(*dep_data):
     packages = {package: None for data in dep_data for package in data}
     return [Label("//{}:{}_sources".format(package, package.rsplit("/", 1)[-1])) for package in sorted(packages)]
 
-def rust_tool_binary(name, deps, lints, edition, test_deps = [], testdata_env = None):
+def rust_tool_binary(name, deps, lints, edition, test_deps = [], testdata_env = None, rustc_flags = None):
     """Declares one binary of a Rust tool workspace that Bazel builds without a crate hub, its unit test, and its clippy.
 
     Bazel does not read `Cargo.toml` of such a workspace, so `deps` repeats `[dependencies]` of the crate, and
@@ -501,11 +501,12 @@ def rust_tool_binary(name, deps, lints, edition, test_deps = [], testdata_env = 
       edition: the Rust edition of the crate.
       test_deps: the dependencies of the unit test only.
       testdata_env: the environment variable that gives the test the path of `testdata/`.
+      rustc_flags: the `rustc_flags` of the binary, such as a `select` of linker arguments for one OS.
     """
     _rust_tool_targets(
         name = name,
         is_binary = True,
-        crate_attrs = {"edition": edition},
+        crate_attrs = {"edition": edition} | ({"rustc_flags": rustc_flags} if rustc_flags != None else {}),
         lints = lints,
         deps = deps,
         test_deps = test_deps,

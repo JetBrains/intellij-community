@@ -112,7 +112,7 @@ Each workspace keeps a thin binding with its own signature:
 |---|---|---|
 | `dev_dist_rust_crate(name, test_data, closure)` | `rust_tool_crate` | the `@ddt` hub, `:lints`, `bins_prefix = "build/dev-dist-tools/bins/"`, `testdata_env = "DDT_TESTDATA_DIR"` |
 | `bt_rust_crate(name, compile_data)` | `rust_tool_crate` | the `@bt` hub with its `DEP_DATA`, `:lints`, `bins_prefix = "tools/bt/bins/"`, `distpath` as `cross_module_crates`, `test_sharding = True` |
-| `dev_dist_rust_binary(name, deps, test_deps)` | `rust_tool_binary` | the community `:lints`, `edition = "2024"`, `testdata_env = "DDT_TESTDATA_DIR"` |
+| `dev_dist_rust_binary(name, deps, test_deps)` | `rust_tool_binary` | the community `:lints`, `edition = "2024"`, `testdata_env = "DDT_TESTDATA_DIR"`, and on Windows the manifest linker arguments as `rustc_flags` |
 | `avl_crate(portable, closure, compile_data, test_data, test_env, test_size, test_tags, visibility)` | `rust_tool_crate` | the `@avl` hub with its `DEP_DATA`, `:lints`, the BT crates, `distpath` and `fscopy` as `cross_module_crates`, `rust_test_junit` as the test rule with `-test`, `AVL_PACKAGE` and `AVL_REPO` as `rustc_env`, `NOT_ON_WINDOWS` for a crate that is not portable, and the closure for x86_64 Linux |
 
 ## The checks
