@@ -152,8 +152,8 @@ pub struct ClassifyInput<'a> {
 /// nothing exits 3, and reading that as a test failure is a red run nobody can reproduce.
 pub fn classify_run(input: ClassifyInput<'_>) -> (RunStatus, u8) {
     let sum = totals_of(input.targets);
-    // 8 is bazel's own "command failed", 33 is "out of memory", 127 is "wrapper not found".
-    if matches!(input.bazel_exit, 8 | 33 | 127) || (input.degraded && input.targets.is_empty()) {
+    // A code that is no verdict ends the run, as it ends the run of the next invocation: see [`is_verdict`].
+    if !is_verdict(input.bazel_exit) || (input.degraded && input.targets.is_empty()) {
         return (RunStatus::Infra, exit::INFRA);
     }
     if input.bep.aborted.iter().any(|reason| reason == "ANALYSIS_FAILURE")
@@ -403,6 +403,12 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
             if let Ok(text) = runtime.read_text_file(path) {
                 build_errors.extend(parse_compile_errors(&text));
             }
+        }
+    }
+    // A pattern or a target that bazel could not load or analyse has no compile error and no test result.
+    for error in &bep.abort_causes {
+        if !build_errors.contains(error) {
+            build_errors.push(error.clone());
         }
     }
 

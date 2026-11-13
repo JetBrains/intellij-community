@@ -375,6 +375,9 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
             if result.build_errors.len() > 6 {
                 out.push(format!("+ {} more errors", result.build_errors.len() - 6));
             }
+            if result.build_errors.is_empty() {
+                out.push("cause  bt recognised no build error; the tail of the bazel output is above".to_owned());
+            }
         }
         RunStatus::NoTests => {
             let skipped = if sum.skipped > 0 {
@@ -471,8 +474,8 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
     out.join("\n")
 }
 
-/// The last lines of captured output, which is all that is ever shown of it, and only when the run was classified
-/// as infrastructure, where bazel's own words are the only evidence there is.
+/// The last `max_lines` lines of the captured output of bazel. Without `--verbose`, bt shows no more of the output
+/// than such a tail.
 pub(crate) fn tail_lines(text: &str, max_lines: usize) -> String {
     let lines: Vec<&str> = text.split('\n').collect();
     if lines.len() <= max_lines {

@@ -153,7 +153,7 @@ pub(crate) fn render_build(result: &RunResult, patterns: &[String], ignored: &[I
                 out.push(format!("+ {} more targets", failed.len() - SHOWN));
             }
             if result.build_errors.is_empty() {
-                out.push("cause   no compile error was recognised; the tail of the bazel output is above".to_owned());
+                out.push("cause   bt recognised no build error; the tail of the bazel output is above".to_owned());
             }
         }
         RunStatus::NoTests => {

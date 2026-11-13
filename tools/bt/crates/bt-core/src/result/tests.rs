@@ -4,7 +4,8 @@ use serde_json::json;
 use super::*;
 use crate::bep::parse_bep;
 use crate::fake::{
-    AttemptSpec, BUCKETING_XML, FakeRuntime, attempt, bep_lines, case, failing, suite, suite_xml, test_result_event, wrapper_xml,
+    AttemptSpec, BUCKETING_XML, FakeRuntime, attempt, bep_lines, case, failing, loading_failure_events, suite, suite_xml,
+    test_result_event, wrapper_xml,
 };
 
 #[test]
@@ -166,10 +167,18 @@ fn classify_run_maps_every_outcome_to_its_status_and_exit() {
     for (what, got, want) in cases {
         assert_eq!(got, want, "{what}");
     }
+    // An exit code that is no verdict is INFRA, also with a test result or a build error.
+    for code in [2, 7, 8, 33, 36, 37, 127, -1, 130] {
+        assert_eq!(
+            classified(code, &empty_bep(), &[plain_target()], &["a.kt:1:1: error: nope".to_owned()], false),
+            (RunStatus::Infra, exit::INFRA),
+            "{code}"
+        );
+    }
 }
 
-/// 8 is bazel's own command failure, 33 out of memory, 127 a wrapper that is not there. None of them says anything
-/// about the tests.
+/// 8 is an interrupt of bazel, 33 out of memory, 127 a wrapper that is not there. None of them says anything about the
+/// tests.
 #[test]
 fn bazels_own_failure_exits_are_infrastructure() {
     for bazel_exit in [8, 33, 127] {
@@ -517,6 +526,27 @@ fn the_action_stderr_file_is_the_fallback() {
     assert_eq!(
         result.build_errors,
         ["plugins/air/x/testSrc/FooTest.kt:41:15: error: unresolved reference: nope"]
+    );
+}
+
+/// A label that bazel cannot load fails the run before its first test, with no compile error and no test result. The
+/// words of bazel in the BEP are then the build error.
+#[test]
+fn a_loading_failure_is_a_build_error_after_the_compile_errors() {
+    let fake = FakeRuntime::new([]);
+    let no_such_package = "no such package 'p/gone': BUILD file not found in any of the following directories.\n - p/gone";
+    let bep = bep_of(&fake, &loading_failure_events("//p/gone:t", no_such_package));
+    let result = collect_results(&fake, &bep, 5000, 1, "");
+    assert_eq!((result.status, result.exit_code), (RunStatus::BuildFailed, exit::BUILD_FAILED));
+    assert_eq!(result.build_errors, [no_such_package]);
+
+    let output = "plugins/air/x/testSrc/FooTest.kt:41:15: error: unresolved reference: nope\n";
+    assert_eq!(
+        collect_results(&fake, &bep, 5000, 1, output).build_errors,
+        [
+            "plugins/air/x/testSrc/FooTest.kt:41:15: error: unresolved reference: nope",
+            no_such_package
+        ]
     );
 }
 

@@ -94,8 +94,11 @@ status or the exit code.
 ## Builds
 
 `bt build <pattern>...` runs `bazel build -k` over target patterns that start with `//` or `@`, with the UI of bazel
-silenced. The digest is `BUILD OK`, or `BUILD FAILED` with the compile errors and the targets that did not build.
-`bins/bt/src/build.rs` holds it. The exit code is 0, 5 for a build failure, or 6 for any other exit of bazel.
+silenced. The digest is `BUILD OK`, or `BUILD FAILED` with the build errors and the targets that did not build. A
+build error is a compile error, or the description of a loading or analysis failure in the BEP, such as `no such
+package`. A `BUILD FAILED` test run names the same build errors, and it shows the tail of the bazel output on the
+stderr when it has none. `bins/bt/src/build.rs` holds `bt build`. The exit code is 0, 5 for a build failure, or 6 for
+any other exit of bazel.
 
 Bazel exits 0 for a pattern under an ignored directory: it only warns, and it builds nothing for that pattern. So a
 green build is `BUILD OK` only when the BEP names a completed target and bazel dropped no pattern. Otherwise the digest

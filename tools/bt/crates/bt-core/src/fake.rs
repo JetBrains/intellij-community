@@ -930,6 +930,18 @@ pub fn bep_lines(events: &[serde_json::Value]) -> String {
     events.iter().map(serde_json::Value::to_string).collect::<Vec<_>>().join("\n")
 }
 
+/// The BEP of a build that failed to load the pattern, as bazel 9 writes it: the `aborted` event of the pattern with
+/// the description of the cause, and the end of the build with exit code 1.
+pub fn loading_failure_events(pattern: &str, description: &str) -> [serde_json::Value; 2] {
+    [
+        serde_json::json!({
+            "id": {"pattern": {"pattern": [pattern]}},
+            "aborted": {"reason": "LOADING_FAILURE", "description": description},
+        }),
+        serde_json::json!({"id": {"buildFinished": {}}, "finished": {"exitCode": {"name": "BUILD_FAILURE", "code": 1}}}),
+    ]
+}
+
 /// One attempt; zero and empty fields take the defaults a real passing attempt would have.
 #[derive(Clone, Debug, Default)]
 pub struct AttemptSpec {

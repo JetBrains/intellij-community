@@ -49,7 +49,7 @@ bt prints a short summary of the run, the digest. The rules:
 - **`--lane <name>` alone runs the lane.** Beside a selector, `--lane` works only with a flow or a suite selector. These two are Air selectors.
 - **A cached result is not a new run.** For one target, the PASS line marks it `cached`. For several targets, the `cost` line of the digest counts the cached targets. Use `--no-cache` to run a passed test again.
 - **The digest names the log of a failed run on its `log` line.** The logs of the last run are in `out/bazel-testlogs/<package>/<target>/`. A community target of the ultimate root is under `external/community+/`, and a sharded run adds `shard_<n>_of_<m>/`. The directory has `test.log`, `test.xml`, and `test.outputs/logs/idea.log` when the test writes one. The next run of the target writes over them. For a failed shard, bt keeps a copy in `out/bt-runs/<run>/`, and the digest names it on its `kept` line.
-- **A compile error gives `BUILD FAILED`** with the first six errors of the compiler. The digest leaves out the warnings. An error in a `BUILD.bazel` file gives `BUILD FAILED` with no error. Then run again with `--verbose`.
+- **A compile error gives `BUILD FAILED`** with the first six errors of the compiler. The digest leaves out the warnings. A label or a pattern that Bazel cannot load gives `BUILD FAILED` with the error of Bazel, such as `no such package`. An error in a `BUILD.bazel` file can give `BUILD FAILED` with no error. bt then writes the last lines of the Bazel output to the stderr, and these can miss the error. Then run again with `--verbose`.
 
 ### bt options
 

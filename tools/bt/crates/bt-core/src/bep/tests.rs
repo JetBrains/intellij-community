@@ -159,6 +159,57 @@ fn an_analysis_abort_is_recorded() {
     assert_eq!(summary.aborted, ["ANALYSIS_FAILURE"]);
 }
 
+/// The description that bazel 9 gives the label of a package that the tree does not have.
+const NO_SUCH_PACKAGE: &str = "no such package 'p/gone': BUILD file not found in any of the following directories. Add a BUILD file to a directory to mark it as a package.\n - p/gone";
+
+/// The description of a loading or an analysis failure names the cause of a run that failed before its first test.
+#[test]
+fn the_description_of_a_loading_or_an_analysis_failure_is_kept_once() {
+    let summary = posix_bep(&[
+        json!({
+            "id": {"pattern": {"pattern": ["//p/gone:t"]}},
+            "aborted": {"reason": "LOADING_FAILURE", "description": NO_SUCH_PACKAGE},
+        }),
+        json!({
+            "id": {"pattern": {"pattern": ["-//p/gone:t"]}},
+            "aborted": {"reason": "LOADING_FAILURE", "description": NO_SUCH_PACKAGE},
+        }),
+        json!({
+            "id": {"targetCompleted": {"label": "//p:broken"}},
+            "aborted": {"reason": "ANALYSIS_FAILURE", "description": "Analysis of target '//p:broken' failed"},
+        }),
+        json!({
+            "id": {"targetCompleted": {"label": "//p:clippy"}},
+            "aborted": {"reason": "SKIPPED", "description": "Target //p:clippy build was skipped."},
+        }),
+        json!({
+            "id": {"targetCompleted": {"label": "//p:t"}},
+            "aborted": {"reason": "NO_BUILD"},
+        }),
+        json!({
+            "id": {"pattern": {"pattern": ["//q:t"]}},
+            "aborted": {"reason": "LOADING_FAILURE", "description": " "},
+        }),
+    ]);
+    assert_eq!(
+        summary.aborted,
+        [
+            "LOADING_FAILURE",
+            "LOADING_FAILURE",
+            "ANALYSIS_FAILURE",
+            "SKIPPED",
+            "NO_BUILD",
+            "LOADING_FAILURE"
+        ]
+    );
+    assert_eq!(summary.abort_causes, [NO_SUCH_PACKAGE, "Analysis of target '//p:broken' failed"]);
+
+    // each invocation of a planned run reports the failure of a pattern that they share
+    let mut first = summary.clone();
+    first.merge(summary);
+    assert_eq!(first.abort_causes, [NO_SUCH_PACKAGE, "Analysis of target '//p:broken' failed"]);
+}
+
 /// A truncated final line is expected when bazel is killed mid-write, and it says nothing about the events that
 /// were written whole. Failing on it would report infrastructure for a run that had results.
 #[test]

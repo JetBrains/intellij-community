@@ -4,7 +4,7 @@ use serde_json::json;
 use super::*;
 use bt_core::fake::{
     AttemptSpec, FakeRuntime, LANES_FILE, REPO_ROOT, area_files, attempt, bep_lines, build_bazel_text, case, failing, flow_catalog_tree,
-    lanes, module_build_bazel_text, refusal, suite, suite_xml, test_result_event,
+    lanes, loading_failure_events, module_build_bazel_text, refusal, suite, suite_xml, test_result_event,
 };
 use bt_core::runtime::SpawnResult;
 
@@ -152,6 +152,67 @@ fn a_failed_excluded_build_stops_the_lane_and_reports_build_failed() {
         fake.state().stderr.join("\n").contains("ui_test does not compile"),
         "bazel's own words are the only evidence of a failed build"
     );
+}
+
+/// A run that bazel failed before its first test names the cause in the words of bazel, in the digest and in the
+/// payload, not only "0 tests ran".
+#[test]
+fn a_run_that_failed_to_load_a_label_names_the_bazel_error() {
+    let fake = fake_air_tree();
+    let no_such_package =
+        "no such package 'plugins/air/gone': BUILD file not found in any of the following directories.\n - plugins/air/gone";
+    fake.put_absolute(
+        BEP_PATH,
+        &bep_lines(&loading_failure_events("//plugins/air/gone:gone_test", no_such_package)),
+    );
+    let answer = |exit_code| SpawnResult {
+        exit_code,
+        output: "ERROR: Build did NOT complete successfully".to_owned(),
+    };
+    fake.state().spawn_results = [answer(0), answer(1)].into();
+    let outcome = run(&["--lane", "fast", "--json"], &fake);
+
+    assert_eq!(outcome.exit_code, exit::BUILD_FAILED, "{}", outcome.text);
+    assert_mentions(&outcome.text, &["BUILD FAILED  0 tests ran", no_such_package]);
+    assert_eq!(outcome.json.map(|payload| payload.errors), Some(vec![no_such_package.to_owned()]));
+    assert!(
+        !fake.state().stderr.join("\n").contains("Build did NOT complete"),
+        "a named error needs no tail of bazel"
+    );
+}
+
+/// A lane run whose excluded build passes and whose `bazel test` fails with `output` and no BEP error.
+fn failed_build_tree(output: &str) -> FakeRuntime {
+    let fake = fake_air_tree();
+    fake.put_absolute(
+        BEP_PATH,
+        &bep_lines(&[json!({"id": {"buildFinished": {}}, "finished": {"exitCode": {"name": "BUILD_FAILURE", "code": 1}}})]),
+    );
+    let answer = |exit_code, output: &str| SpawnResult {
+        exit_code,
+        output: output.to_owned(),
+    };
+    fake.state().spawn_results = [answer(0, ""), answer(1, output)].into();
+    fake
+}
+
+/// A failed build with no error that bt recognises shows the tail of bazel, as an INFRA run does.
+#[test]
+fn a_failed_build_without_a_known_error_shows_the_tail_of_bazel() {
+    let fake = failed_build_tree("ERROR: a genrule failed\nERROR: Build did NOT complete successfully");
+    let outcome = run(&["--lane", "fast"], &fake);
+
+    assert_eq!(outcome.exit_code, exit::BUILD_FAILED, "{}", outcome.text);
+    assert_mentions(
+        &outcome.text,
+        &["cause  bt recognised no build error; the tail of the bazel output is above"],
+    );
+    assert_mentions(&fake.state().stderr.join("\n"), &["ERROR: a genrule failed"]);
+
+    // `--verbose` shows the whole output of bazel once, and no tail after it
+    let fake = failed_build_tree("ERROR: a genrule failed");
+    run(&["--lane", "fast", "--verbose"], &fake);
+    assert_eq!(fake.state().stderr.join("\n").matches("ERROR: a genrule failed").count(), 1);
 }
 
 /// The OS runtime creates the BEP file to reserve its name, so the early answers must remove it too, not only a run.
@@ -597,6 +658,23 @@ fn a_query_without_a_verdict_starts_no_other_bazel_command() {
         assert_eq!(payload.status, RunStatus::Infra);
         assert_eq!(payload.errors, [message]);
         assert_eq!(fake.spawned().len(), 1, "{code}: {:#?}", fake.spawned());
+    }
+}
+
+/// A test invocation whose exit code is no verdict is INFRA, with the tail of bazel on the stderr, as the query is.
+#[test]
+fn a_test_invocation_without_a_verdict_is_infra_with_the_tail_of_bazel() {
+    for code in NO_VERDICT_CODES {
+        let fake = fake_air_tree();
+        fake.put_absolute(BEP_PATH, &bep_lines(&[json!({"id": {"started": {}}, "started": {}})]));
+        let answer = |exit_code, output: &str| SpawnResult {
+            exit_code,
+            output: output.to_owned(),
+        };
+        fake.state().spawn_results = [answer(0, ""), answer(code, "ERROR: the server crashed")].into();
+        let outcome = run(&["--lane", "fast"], &fake);
+        assert_eq!(outcome.exit_code, exit::INFRA, "{code}: {}", outcome.text);
+        assert_mentions(&fake.state().stderr.join("\n"), &["ERROR: the server crashed"]);
     }
 }
 

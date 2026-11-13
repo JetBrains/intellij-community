@@ -83,7 +83,8 @@ pub(crate) struct JsonPayload {
     /// The shards that Bazel stopped at their timeout. Their interrupted tests are not in `failures`.
     #[serde(default)]
     pub(crate) shard_timeouts: Vec<ShardTimeout>,
-    /// Errors produced while collecting the run.
+    /// The build errors of the run, or the reason of an infrastructure outcome without a result. A build error is a
+    /// compile error, or the description of a loading or analysis failure in the BEP.
     #[serde(default)]
     pub(crate) errors: Vec<String>,
     /// Full-lane classes over their configured time budget and outside its baseline.
@@ -144,9 +145,9 @@ pub(crate) fn infra_payload(message: &str) -> JsonPayload {
     }
 }
 
-/// How much of bazel's captured output bt shows when it reads no structural result: an INFRA outcome, and a query
-/// without an answer. Enough to carry a stack trace or a startup refusal, and far short of the progress log the digest
-/// exists to suppress.
+/// How much of bazel's captured output bt shows when it reads no structural result: an INFRA outcome, a BUILD FAILED
+/// run without a build error, and a query without an answer. Enough to carry a stack trace or a startup refusal, and
+/// far short of the progress log the digest exists to suppress.
 pub(crate) const DIGEST_TAIL_LINES: usize = 40;
 
 /// The command a rerun hint names.
@@ -498,11 +499,11 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         result.exit_code = exit::TEST_FAILED;
     }
 
+    // The words of bazel are the only evidence when bt reads nothing structural from the run: an INFRA run, and a
+    // failed build without a build error. `--verbose` shows all of them already.
     if args.verbose {
         runtime.write_error(&spawned.output);
-    }
-    if result.status == RunStatus::Infra {
-        // The only status where bazel's own words are the sole evidence: nothing structural was produced.
+    } else if result.status == RunStatus::Infra || (result.status == RunStatus::BuildFailed && result.build_errors.is_empty()) {
         runtime.write_error(&tail_lines(&spawned.output, DIGEST_TAIL_LINES));
     }
     if result.exit_code == exit::GREEN {

@@ -106,7 +106,7 @@ Usage:
   bt build <pattern>... [options] [-- <raw bazel args>...]
 
 Builds the target patterns with -k and the UI of bazel silenced, and answers one digest: BUILD OK,
-or BUILD FAILED with the compile errors. A green build in a linked work tree, such as a lease,
+or BUILD FAILED with the build errors. A green build in a linked work tree, such as a lease,
 records the tree that it saw, for `brd lease pick`: one line in bd-checks.jsonl of the git
 directory. A build during which the files changed records nothing. A raw ./bazel.cmd build
 records nothing either.
