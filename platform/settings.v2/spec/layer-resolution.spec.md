@@ -3,6 +3,7 @@ name: Layer Resolution
 description: Requirements for how a key resolves its value over the layers of a context chain.
 style: plain-1
 targets:
+  - ../src/com/intellij/platform/settings/v2/SettingsContextFilters.kt
   - ../src/com/intellij/platform/settings/v2/LayerProvider.kt
   - ../src/com/intellij/platform/settings/v2/LayerData.kt
   - ../src/com/intellij/platform/settings/v2/SettingsVault.kt
@@ -71,6 +72,9 @@ from the narrowest context, and the first layer that holds the key wins. With no
   See [ADR 0039](../adr/0039-a-key-declares-the-context-kinds-it-is-defined-at.md) and
   [ADR 0128](../adr/0128-a-key-filters-contexts-with-a-predicate.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyFilterTest.kt
+- `SettingsContextFilters` must offer named context filters. `APP_ONLY` accepts only the application context.
+  `PROJECT_ONLY` accepts only a project context. `PROJECT_OR_WIDER` accepts a project context and each
+  wider context.
 - A layer filter must hide the providers it rejects, even when they outrank an accepted one.
   See [ADR 0019](../adr/0019-a-key-and-a-layer-each-filter-the-other.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyFilterTest.kt

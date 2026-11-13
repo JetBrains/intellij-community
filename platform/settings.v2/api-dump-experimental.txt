@@ -145,6 +145,11 @@
 - f:file(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.platform.settings.v2.SettingsContext
 - f:file(com.intellij.psi.PsiFile):com.intellij.platform.settings.v2.SettingsContext
 - f:project(com.intellij.openapi.project.Project):com.intellij.platform.settings.v2.SettingsContext
+*f:com.intellij.platform.settings.v2.SettingsContextFilters
+- sf:INSTANCE:com.intellij.platform.settings.v2.SettingsContextFilters
+- f:getAPP_ONLY():kotlin.jvm.functions.Function1
+- f:getPROJECT_ONLY():kotlin.jvm.functions.Function1
+- f:getPROJECT_OR_WIDER():kotlin.jvm.functions.Function1
 *e:com.intellij.platform.settings.v2.SettingsContextKind
 - java.lang.Enum
 - sf:APPLICATION:com.intellij.platform.settings.v2.SettingsContextKind

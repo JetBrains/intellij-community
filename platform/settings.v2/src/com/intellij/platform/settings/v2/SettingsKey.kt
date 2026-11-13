@@ -87,7 +87,8 @@ open class SettingsKey<T>(
    * holds no value. On a write, the walk up the chain passes over it, so the write goes on to the next accepted
    * context. The default accepts every context. It constrains the granularity of a key, such as an application-only
    * setting that a project or a file cannot override. Prefer a test of [SettingsContext.kind], which is the same for
-   * an overlay and its base.
+   * an overlay and its base. [SettingsContextFilters] holds such filters: [SettingsContextFilters.APP_ONLY],
+   * [SettingsContextFilters.PROJECT_ONLY] and [SettingsContextFilters.PROJECT_OR_WIDER].
    */
   val contextFilter: (SettingsContext) -> Boolean = { true },
   /**
