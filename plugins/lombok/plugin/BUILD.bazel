@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -41,6 +42,22 @@ jvm_library(
     runtime_deps = ["//platform/platform-impl:ide-impl"],
 )
 ### auto-generated section `build intellij.lombok.plugin` end
+
+### auto-generated section `plugin intellij.lombok.plugin` start
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//plugins/lombok",
+        "//plugins/lombok/generated",
+        "//plugins/lombok/compiler",
+        "//plugins/lombok/shared",
+        "//plugins/lombok/backend",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.lombok.plugin` end
 
 ### auto-generated section `iml intellij.lombok.plugin` start
 exports_files(
