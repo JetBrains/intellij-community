@@ -25,6 +25,7 @@ import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
@@ -51,12 +52,17 @@ interface ImportPerformer {
 
 private val logger = logger<DefaultImportPerformer>()
 
-class DefaultImportPerformer : ImportPerformer {
+class DefaultImportPerformer: ImportPerformer {
+  companion object {
+    @TestOnly
+    fun withCustomPartialPerformers(partials: Collection<PartialImportPerformer>): DefaultImportPerformer = DefaultImportPerformer(partials)
+  }
 
   private val partials: Collection<PartialImportPerformer>
 
-  constructor(partials: Collection<PartialImportPerformer>) {
-    require(partials.isNotEmpty()) { "No partial import performers provided" }
+  constructor() : this(PartialImportPerformer.EP_NAME.extensionList)
+
+  private constructor(partials: Collection<PartialImportPerformer>) {
     this.partials = partials
   }
 

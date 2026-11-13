@@ -101,12 +101,21 @@ jvm_library(
     ),
     associates = ["//plugins/ide-startup/importSettings"],
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/testFramework",
         "//platform/testFramework/junit5",
         "//libraries/junit6",
+        "//libraries/junit6-params",
+        "//platform/core-api:core",
+        "//platform/extensions",
+        "//platform/util/jdom",
     ],
 )
 ### auto-generated section `build intellij.ide.startup.importSettings.tests` end

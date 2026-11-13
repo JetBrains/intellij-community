@@ -26,6 +26,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.StartupUiUtil
+import org.jetbrains.annotations.ApiStatus
 import kotlin.io.path.Path
 
 /**
@@ -34,6 +35,7 @@ import kotlin.io.path.Path
 
 private val logger = logger<PartialImportPerformer>()
 
+@ApiStatus.Internal
 interface PartialImportPerformer {
   fun willPerform(settings: Settings): Boolean
   fun collectAllRequiredPlugins(settings: Settings): Set<PluginId>
@@ -47,7 +49,7 @@ interface PartialImportPerformer {
   }
 }
 
-class LookAndFeelImportPerformer : PartialImportPerformer {
+internal class LookAndFeelImportPerformer : PartialImportPerformer {
   override fun willPerform(settings: Settings): Boolean = settings.preferences[SettingsPreferencesKind.Laf] && settings.laf != null
 
   override fun collectAllRequiredPlugins(settings: Settings): Set<PluginId> {
@@ -103,7 +105,7 @@ class LookAndFeelImportPerformer : PartialImportPerformer {
   }
 }
 
-class SyntaxSchemeImportPerformer : PartialImportPerformer {
+internal class SyntaxSchemeImportPerformer : PartialImportPerformer {
   override fun willPerform(settings: Settings): Boolean = settings.preferences[SettingsPreferencesKind.SyntaxScheme] && settings.syntaxScheme != null
 
   override fun collectAllRequiredPlugins(settings: Settings): Set<PluginId> {
@@ -141,7 +143,7 @@ class SyntaxSchemeImportPerformer : PartialImportPerformer {
 
 }
 
-class KeymapSchemeImportPerformer : PartialImportPerformer {
+internal class KeymapSchemeImportPerformer : PartialImportPerformer {
   override fun willPerform(settings: Settings): Boolean = settings.preferences[SettingsPreferencesKind.Keymap] && settings.keymap != null
   override fun collectAllRequiredPlugins(settings: Settings): Set<PluginId> {
     (settings.keymap as? PluginKeymap)?.let {
@@ -227,7 +229,7 @@ class KeymapSchemeImportPerformer : PartialImportPerformer {
   }
 }
 
-class RecentProjectsImportPerformer : PartialImportPerformer {
+internal class RecentProjectsImportPerformer : PartialImportPerformer {
   override fun willPerform(settings: Settings): Boolean = settings.preferences[SettingsPreferencesKind.RecentProjects] && settings.recentProjects.isNotEmpty()
 
   override fun collectAllRequiredPlugins(settings: Settings): Set<PluginId> = emptySet()
