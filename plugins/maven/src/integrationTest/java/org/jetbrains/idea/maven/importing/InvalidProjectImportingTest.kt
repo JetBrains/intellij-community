@@ -287,7 +287,10 @@ class InvalidProjectImportingTest(mavenVersion: String, modelVersion: String) {
         "Invalid Collect Request: null -> [] < [central-mirror (https://cache-redirector.jetbrains.com/repo1.maven.org/maven2, default, releases)]",
       )
     else
-      arrayOf("'artifactId' with value '\${undefined}' does not match a valid id pattern.")
+      arrayOf(
+        "'artifactId' contains an expression but should be a constant.",
+        "'artifactId' with value '\${undefined}' does not match a valid id pattern."
+      )
 
     assertProblems(root, *expectedProblems)
   }
