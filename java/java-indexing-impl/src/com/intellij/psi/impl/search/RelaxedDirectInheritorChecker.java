@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -102,6 +103,7 @@ public final class RelaxedDirectInheritorChecker {
       String ambiguity = null;
       boolean hasBaseClass = false;
       for (int i = 0; i < classes.length; i++) {
+        ProgressManager.checkCanceled();
         PsiClass base = classes[i];
         PsiFile file = files[i];
         if (PsiSearchScopeUtil.isInScope(scope, file) && isAccessibleLight(inheritorCandidate, inheritorCandidateContainingFile, base)) {
