@@ -112,7 +112,7 @@ pub trait Runtime: Sync {
     fn exists(&self, path: &Path) -> bool;
 
     /// The content of the checkout now, or `None` when the checkout root is not a linked work tree of git. Only a
-    /// linked work tree, such as a lease of Branch Deck, is landed by `bd lease pick`, so only it needs the tree.
+    /// linked work tree, such as a lease of Branch Deck, is landed by `brd lease pick`, so only it needs the tree.
     ///
     /// It changes neither the index nor the work tree of the checkout. It writes the blobs and the trees of the local
     /// changes into the object database, so a later reader can compare two trees.

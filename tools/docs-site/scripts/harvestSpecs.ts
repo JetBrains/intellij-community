@@ -6,7 +6,7 @@
 // outer root harvests only the files that the inner root does not hold.
 
 import { existsSync, readFileSync } from 'node:fs'
-import { dirname, join, relative, sep } from 'node:path'
+import { dirname, join } from 'node:path'
 import { addCodeSpanPaths } from './codeSpans.ts'
 import { collectDocPictures, parseFrontmatter } from './harvestDocs.ts'
 import { contentDir, posixRelative, repoRoot, specFiles } from './paths.ts'
@@ -18,7 +18,10 @@ export type SpecHarvestConfig = Pick<SiteConfig, 'contentRoot' | 'docs' | 'specs
 
 /** The fields of a spec that every site harvests. */
 export interface HarvestedSpecFields {
-  /** The path relative to its spec root, without the spec suffix, for example `actions/new-thread`. */
+  /**
+   * The spec id: the path below its suffix root without the suffix (`actions/new-thread`), or the capability of an
+   * OpenSpec root (`cache`).
+   */
   id: string
   /** The path relative to `contentRoot`. */
   path: string
@@ -32,8 +35,13 @@ export interface HarvestedSpecFields {
   date: string | null
   /** The `style:` frontmatter value, for example `plain-1`, or null. */
   style: string | null
-  /** The `targets:` frontmatter list, as written: each entry is relative to the folder of the spec. */
+  /**
+   * The `targets:` frontmatter list, as written: each entry is relative to the folder of the spec, or to the
+   * repository root when `rootPaths` is true.
+   */
   targets: string[]
+  /** True for a spec of an OpenSpec root: its `targets` and `[@test]` paths are from the repository root. */
+  rootPaths: boolean
   /** The `[@test]` targets of the body, relative to the repository root, unique and sorted. */
   testFiles: string[]
   /** The `##` headings of the body, in document order. */
@@ -61,11 +69,10 @@ export function harvestSpecs(config: SpecHarvestConfig, root: string = repoRoot)
   const bodies = new Map<string, string>()
   const pictures = new Set<string>()
   const codeSpanPaths = new Map<string, Map<string, string | null>>()
-  for (const { file, specRoot } of specFiles(config, root)) {
+  for (const { file, id, rootPaths } of specFiles(config, root)) {
     const source = readFileSync(file, 'utf8')
     const { meta, body } = parseFrontmatter(source)
     const path = posixRelative(content, file)
-    const id = relative(specRoot, file).split(sep).join('/').slice(0, -config.specs.suffix.length)
     const specDir = dirname(path) === '.' ? '' : dirname(path)
     const testFiles = specTestFiles(config.contentRoot, specDir, body, (repoPath, target) => {
       if (existsSync(join(root, repoPath))) {
@@ -73,7 +80,7 @@ export function harvestSpecs(config: SpecHarvestConfig, root: string = repoRoot)
       }
       console.warn(`harvest: ${path}: [@test] target not found: ${target}`)
       return false
-    })
+    }, rootPaths)
     specs.push({
       id,
       path,
@@ -84,6 +91,7 @@ export function harvestSpecs(config: SpecHarvestConfig, root: string = repoRoot)
       date: /^Date:\s*(.+)$/m.exec(body)?.[1]?.trim() ?? null,
       style: typeof meta.style === 'string' ? meta.style : null,
       targets: Array.isArray(meta.targets) ? meta.targets : [],
+      rootPaths,
       testFiles,
       headings: [...body.matchAll(/^##\s+(.+)$/gm)].map(match => match[1].trim()),
     })

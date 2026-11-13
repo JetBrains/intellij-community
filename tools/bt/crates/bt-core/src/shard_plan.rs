@@ -2,11 +2,14 @@
 //! test class.
 //!
 //! `bazel test` has one shard count for a whole invocation, and a lane holds targets of 5 s and of 500 s. So a planned
-//! run has two groups of targets, and each group has its own `bazel test` invocation with a constant forced count:
+//! run has up to three groups of targets, and each group has its own `bazel test` invocation with a constant forced count:
 //!
 //! - A heavy target is a target whose recorded seconds want more than [`PLANNED_SHARDS`] shards. The first invocation
 //!   names the heavy targets of the run ([`ShardPlan::heavy_targets`]) and forces [`HEAVY_SHARDS`].
-//! - The second invocation runs the patterns of the run less the heavy targets, and forces [`PLANNED_SHARDS`].
+//! - The second invocation runs the patterns of the run less the heavy and single-shard targets, and forces
+//!   [`PLANNED_SHARDS`]. A target without a record stays here.
+//! - A target whose recorded seconds want one shard is a single-shard target. The third invocation names these targets
+//!   ([`ShardPlan::single_targets`]) and forces [`SINGLE_SHARDS`].
 //!
 //! Each invocation passes the plan file to each test in [`SHARD_PLAN_ENV`]. The JUnit runner (`ShardFilter` of
 //! `community/platform/testFramework/bootstrap`) reads the line of its own target. A shard at or above the planned
@@ -14,9 +17,9 @@
 //! recorded seconds, each class whole. Only one shard then pays the setup of a class, and a small target starts one
 //! test JVM instead of two.
 //!
-//! A forced count is part of the key of every test action. Both counts are constants, so the key of a target changes
-//! only when the target moves to the other group. A target that a pattern covers in a way that bt cannot see stays in
-//! the second invocation, and the runner gives it at most [`PLANNED_SHARDS`] shards there.
+//! A forced count is part of the key of every test action. All three counts are constants, so a target's key changes
+//! only when it moves to another group. A target that a pattern covers in a way that bt cannot see stays in the second
+//! invocation, and the runner gives it at most [`PLANNED_SHARDS`] shards there.
 //!
 //! After the run, [`ShardPlan::record`] takes the class times of each target whose shards all ran and passed. A target
 //! that failed keeps its old lines, so a rerun of its failed shard splits the classes as its cached shards did. The
@@ -50,13 +53,19 @@ pub const PROFILE_FILE: &str = "out/bt/profile.json.gz";
 /// The Bazel profile of the invocation of the heavy targets of a planned run, relative to the checkout root.
 pub const HEAVY_PROFILE_FILE: &str = "out/bt/profile-heavy.json.gz";
 
-/// The shard count that a planned run forces on every target that is not heavy.
+/// The Bazel profile of the invocation of the single-shard targets of a planned run, relative to the checkout root.
+pub const SINGLE_PROFILE_FILE: &str = "out/bt/profile-single.json.gz";
+
+/// The shard count that a planned run forces on targets that are not heavy or single-shard.
 ///
-/// Two, not four: Bazel starts every forced shard, and a shard that the plan leaves idle is still a JVM start. Measured
-/// on a `--lane fast` run at load 70-100 (177 JVM targets), an idle shard took 1.0 s of CPU and 6.4 s of a test slot,
-/// and a real shard of a tiny target 5.3 s of CPU. With the recorded plan, `forced=4` starts 493 idle shards, which eat
-/// about two thirds of the JVM saving. `forced=2` starts 150.
+/// Two, not four: a target without a record needs a safe count, and Bazel starts every forced shard. A shard that the
+/// plan leaves idle is still a JVM start. Targets recorded to need one shard use [`SINGLE_SHARDS`] instead.
 pub const PLANNED_SHARDS: u32 = 2;
+
+/// The shard count that a planned run forces on targets recorded to need one shard.
+///
+/// Moving a target from the two-shard group changes its test action key once and reruns that target.
+pub const SINGLE_SHARDS: u32 = 1;
 
 /// The shard count that a planned run forces on its heavy targets, and so the most shards the plan gives one target.
 ///
@@ -146,6 +155,15 @@ impl ShardPlan {
             .collect()
     }
 
+    /// The single-shard targets of the plan that the target patterns of a run cover, in the order of their labels.
+    pub fn single_targets(&self, patterns: &[String]) -> Vec<String> {
+        self.targets
+            .keys()
+            .filter(|label| self.shards_of(label) == SINGLE_SHARDS && covered(patterns, label))
+            .cloned()
+            .collect()
+    }
+
     /// The text of the plan file, in the format that `ShardFilter.SHARD_PLAN_ENV` describes.
     pub fn render(&self) -> String {
         let mut text = String::from("# The shard plan of bt. bt rewrites this file after each multi-target run.\n");
@@ -157,6 +175,15 @@ impl ShardPlan {
             }
         }
         text
+    }
+
+    /// Each recorded class time, by target label and class name.
+    pub fn class_times(&self) -> impl Iterator<Item = (&str, &str, f64)> {
+        self.targets.iter().flat_map(|(label, classes)| {
+            classes
+                .iter()
+                .map(move |(class, seconds)| (label.as_str(), class.as_str(), *seconds))
+        })
     }
 }
 

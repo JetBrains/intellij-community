@@ -227,6 +227,8 @@ pub(crate) struct RenderOptions {
     /// The repo-relative run directory that holds the logs of the failed attempts, which the next run of the
     /// target cannot overwrite.
     pub(crate) kept_run: Option<String>,
+    /// Full-lane classes over their time limit and outside the baseline.
+    pub(crate) class_time_budget_violations: Vec<String>,
 }
 
 impl Default for RenderOptions {
@@ -237,6 +239,7 @@ impl Default for RenderOptions {
             method_filtered: false,
             no_tests_hint: None,
             kept_run: None,
+            class_time_budget_violations: Vec::new(),
         }
     }
 }
@@ -413,6 +416,10 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
                 ));
             }
         }
+    }
+
+    if !options.class_time_budget_violations.is_empty() {
+        out.push(format!("class-time budget  {}", options.class_time_budget_violations.join("; ")));
     }
 
     while out.last().is_some_and(String::is_empty) {

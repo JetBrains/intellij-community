@@ -559,7 +559,7 @@ struct HypervisorChannel {
 impl Channel for HypervisorChannel {
     async fn exec(&self, ctx: &Ctx, argv: &[String], options: &SpawnOptions) -> Result<Captured, Refusal> {
         let line = self.machine.guest_argv(ctx, &self.worker, argv, options.stdin.is_some()).await?;
-        Ok(self.runner.capture(ctx, &line, options).await?)
+        Ok(self.runner.capture(ctx, &line, &self.machine.guest_options(options)).await?)
     }
 
     /// Runs `<installed agent> relay <port>` in the guest, with stdin carried, and answers its stdin and stdout.

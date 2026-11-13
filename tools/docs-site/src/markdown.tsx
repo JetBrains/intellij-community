@@ -9,7 +9,7 @@ import { marked } from 'marked'
 import { Fragment, lazy, Suspense, type MouseEvent, type ReactNode, useEffect, useMemo } from 'react'
 import { parseDiagramFence } from '../scripts/diagram.ts'
 import { isExternalPicture, picturePath } from '../scripts/docAssets.ts'
-import { contentPathOf, repoPathOf, resolveRepoPath, SOURCE_PATH_PATTERN } from '../scripts/sourcePaths.ts'
+import { contentPathOf, repoPathOf, requirementGroup, resolveRepoPath, SOURCE_PATH_PATTERN, specIdOfRepoPath } from '../scripts/sourcePaths.ts'
 import { docAssetUrl } from './docAssets'
 import { decisionRoute, docRoute, explainerRoute, guideRoute, isDecisionPath, normalizeMarkdownAppHref } from './router'
 import { codeSpanTarget } from './codeSpanLink.ts'
@@ -27,16 +27,7 @@ export function slugify(text: string): string {
 /** The spec id of a content-relative path under a spec root of the site config, or null. */
 function specIdOfPath(path: string): string | null {
   const { contentRoot, specs } = site().config
-  if (!path.endsWith(specs.suffix)) {
-    return null
-  }
-  for (const root of specs.roots) {
-    const prefix = contentPathOf(contentRoot, root)
-    if (prefix !== null && path.startsWith(`${prefix}/`)) {
-      return path.slice(prefix.length + 1, -specs.suffix.length)
-    }
-  }
-  return null
+  return specIdOfRepoPath(specs, repoPathOf(contentRoot, path))
 }
 
 /** Site route for a content-relative path, or null when the target is not bundled. */
@@ -108,6 +99,13 @@ function findAnchorElement(anchor: string): Element | null {
   for (const candidate of document.querySelectorAll('[id]')) {
     if (candidate.id.toLowerCase().replace(/-/g, '') === wanted) {
       return candidate
+    }
+  }
+  // the anchor of a group of OpenSpec requirements names the first requirement of the group
+  for (const heading of document.querySelectorAll('h3[id]')) {
+    const group = requirementGroup(heading.textContent ?? '')
+    if (group !== null && slugify(group).replace(/-/g, '') === wanted) {
+      return heading
     }
   }
   return null

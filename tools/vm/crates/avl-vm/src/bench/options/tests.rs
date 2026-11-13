@@ -81,7 +81,7 @@ fn the_profile_samples_the_cpu_or_the_wall_clock() {
     }
 }
 
-/// `classes --span` takes the thread, the run and the timeline. `--at`, `--entries` and `--plugin` refuse it, and the
+/// `classes --span` takes the thread, the run and the timeline. `--at`, `--entries`, `--kinds` and `--plugin` refuse it, and the
 /// options of the window need it.
 #[test]
 fn the_span_window_of_classes_takes_its_options() {
@@ -115,6 +115,7 @@ fn the_span_window_of_classes_takes_its_options() {
     for argv in [
         &["classes", "latest", "--span", "x", "--at", "quit"][..],
         &["classes", "latest", "--span", "x", "--entries", "3"],
+        &["classes", "latest", "--span", "x", "--kinds"],
         &["classes", "latest", "--span", "x", "--plugin", "com.intellij.air"],
         &["classes", "latest", "--thread", "all"],
         &["classes", "latest", "--timeline", "20"],

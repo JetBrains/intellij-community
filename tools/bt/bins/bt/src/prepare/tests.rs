@@ -74,11 +74,11 @@ fn answer_first(fake: &FakeRuntime, text: &str, result: SpawnResult) {
     fake.state().spawn_rules.insert(0, (text.to_owned(), result));
 }
 
-/// A link to an agent that answers, and that `bd-host setup` installs.
+/// A link to an agent that answers, and that `brd-host setup` installs.
 fn ready_link() -> FakeLink {
     let link = FakeLink::default();
     link.answer_hello(Ok(hello()));
-    link.answer_setup(Ok("copied bd-host to studio\nlaunchd restarted\n".to_owned()));
+    link.answer_setup(Ok("copied brd-host to studio\nlaunchd restarted\n".to_owned()));
     link
 }
 
@@ -118,7 +118,7 @@ fn a_ready_host_reports_ok_for_each_step_and_changes_nothing() {
             "ok      tool: rustup is there",
             "absent  tool: docker is not there; only some lanes need it",
             "absent  tool: tmux is not there; only some lanes need it",
-            "ok      agent: bd-host 0.37.0 answers on 192.168.1.24:7742 (macos aarch64)",
+            "ok      agent: brd-host 0.37.0 answers on 192.168.1.24:7742 (macos aarch64)",
             "ok      netrc: ~/.netrc on studio has an entry for cache.example.test: true",
             "ok      Maven: ~/.m2/settings.xml on studio has all 1 Space servers",
             "ok      token markers: studio has the expiry marker of the token of intellij-dependencies",
@@ -386,16 +386,16 @@ fn a_missing_local_entry_is_reported_by_name() {
     assert_eq!(fake.state().inputs, ["fake-token-secret"], "no file was written");
 }
 
-/// The agent step runs `bd-host setup` with the repository and the name of this client, then asks for a hello. bt
-/// copies no binary itself: the host needs no `bd`, and `bd-host setup` copies `bd-host`.
+/// The agent step runs `brd-host setup` with the repository and the name of this client, then asks for a hello. bt
+/// copies no binary itself: the host needs no `brd`, and `brd-host setup` copies `brd-host`.
 #[test]
-fn the_agent_is_installed_through_bd_host_setup() {
+fn the_agent_is_installed_through_brd_host_setup() {
     let fake = ready();
     let link = ready_link();
     let outcome = prepare_with(&[], &fake, &link);
     assert!(
         outcome.text.contains(
-            "done    agent: copied bd-host to studio; launchd restarted; bd-host 0.37.0 answers on 192.168.1.24:7742 (macos aarch64)"
+            "done    agent: copied brd-host to studio; launchd restarted; brd-host 0.37.0 answers on 192.168.1.24:7742 (macos aarch64)"
         ),
         "{}",
         outcome.text
@@ -411,7 +411,7 @@ fn the_agent_is_installed_through_bd_host_setup() {
     assert!(
         !spawned
             .iter()
-            .any(|command| command.contains(".local/bin/bd") || command.contains("bazel")),
+            .any(|command| command.contains(".local/bin/brd") || command.contains("bazel")),
         "{spawned:#?}"
     );
 
@@ -426,13 +426,13 @@ fn a_failed_setup_or_a_silent_agent_is_missing() {
     let link = ready_link();
     link.answer_setup(Err(host_refused(
         code::NOT_INSTALLED,
-        "no bd-host on the PATH and none at ~/.local/bin/bd-host; run `bd install` of Branch Deck",
+        "no brd-host on the PATH and none at ~/.local/bin/brd-host; run `brd install` of Branch Deck",
     )));
     let outcome = prepare_with(&[], &ready(), &link);
     assert!(
         outcome
             .text
-            .contains("missing agent: no bd-host on the PATH and none at ~/.local/bin/bd-host; run `bd install`"),
+            .contains("missing agent: no brd-host on the PATH and none at ~/.local/bin/brd-host; run `brd install`"),
         "{}",
         outcome.text
     );
@@ -444,7 +444,7 @@ fn a_failed_setup_or_a_silent_agent_is_missing() {
     let outcome = prepare_with(&[], &ready(), &link);
     assert!(
         outcome.text.contains(
-            "missing agent: copied bd-host to studio; launchd restarted, but the agent does not answer: no address of studio answers"
+            "missing agent: copied brd-host to studio; launchd restarted, but the agent does not answer: no address of studio answers"
         ),
         "{}",
         outcome.text
@@ -462,7 +462,7 @@ fn an_agent_of_another_build_names_the_upgrade() {
     let outcome = prepare_with(&["--dry-run"], &ready(), &link);
     assert!(
         outcome.text.contains(
-            "ok      agent: bd-host 0.37.0 answers on 192.168.1.24:7742 (macos aarch64), another build than here; `bd-host upgrade studio` replaces it"
+            "ok      agent: brd-host 0.37.0 answers on 192.168.1.24:7742 (macos aarch64), another build than here; `brd-host upgrade studio` replaces it"
         ),
         "{}",
         outcome.text

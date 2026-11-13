@@ -31,23 +31,94 @@ export function contentPathOf(contentRoot: string, repoPath: string): string | n
 }
 
 /**
- * The `[@test] <relative-path>` lines of a spec body, resolved against the content-relative folder of the spec: the
- * repo-root-relative paths, unique and sorted. `accept` filters a target, for example the harvest drops a missing file.
+ * A `[@test]` line of a spec: the indent, the path, and the optional names of the tests in parentheses, each in
+ * backticks, for example `[@test] a/ATest.kt (`a test`, `another test`)`.
+ */
+export const TEST_LINK_LINE = /^([ \t]*)\[@test][ \t]+(\S+)(?:[ \t]+\(((?:`[^`]+`(?:,[ \t]*)?)+)\))?[ \t]*$/gm
+
+/** The test names of the parenthesized part of a `[@test]` line, in order. */
+export function testLinkNames(names: string | undefined): string[] {
+  return names === undefined ? [] : [...names.matchAll(/`([^`]+)`/g)].map(match => match[1])
+}
+
+/**
+ * The repo-root-relative form of a `targets` entry or a `[@test]` path of a spec. With `rootPaths`, as in an OpenSpec
+ * root, the path is from the repository root already. Otherwise it is relative to the content-relative folder of the
+ * spec.
+ */
+export function resolveSpecPath(contentRoot: string, specDir: string, rootPaths: boolean, path: string): string {
+  return rootPaths ? resolveRepoPath('', '', path) : resolveRepoPath(contentRoot, specDir, path)
+}
+
+/**
+ * The `[@test]` lines of a spec body, as repo-root-relative paths, unique and sorted. A path resolves against the
+ * content-relative folder of the spec, or from the repository root with `rootPaths`. `accept` filters a target, for
+ * example the harvest drops a missing file.
  */
 export function specTestFiles(
   contentRoot: string,
   specDir: string,
   body: string,
   accept: (repoPath: string, target: string) => boolean = () => true,
+  rootPaths: boolean = false,
 ): string[] {
   const files = new Set<string>()
-  for (const match of body.matchAll(/^[ \t]*\[@test][ \t]+(\S+)[ \t]*$/gm)) {
-    const repoPath = resolveRepoPath(contentRoot, specDir, match[1])
-    if (accept(repoPath, match[1])) {
+  for (const match of body.matchAll(TEST_LINK_LINE)) {
+    const repoPath = resolveSpecPath(contentRoot, specDir, rootPaths, match[2])
+    if (accept(repoPath, match[2])) {
       files.add(repoPath)
     }
   }
   return [...files].sort()
+}
+
+/** The file name of a spec under an OpenSpec root: `<root>/specs/<capability>/spec.md`. */
+export const OPENSPEC_SPEC_FILE = 'spec.md'
+
+/** The part of `SiteConfig.specs` that a spec id needs. */
+export interface SpecRootsConfig {
+  roots: string[]
+  suffix: string
+  openspec?: { roots: string[] }
+}
+
+/**
+ * The spec id of a repo-root-relative path, or null when no spec root holds it. Under an OpenSpec root the id is the
+ * capability, the folder path under `specs/`, for example `cache` or `sessions/local-launch-socket`. Under a suffix
+ * root the id is the path below the first root that holds the file, without the suffix.
+ */
+export function specIdOfRepoPath(specs: SpecRootsConfig, repoPath: string): string | null {
+  for (const root of specs.openspec?.roots ?? []) {
+    const prefix = `${root}/specs/`
+    if (repoPath.startsWith(prefix) && repoPath.length > prefix.length + OPENSPEC_SPEC_FILE.length && repoPath.endsWith(`/${OPENSPEC_SPEC_FILE}`)) {
+      return repoPath.slice(prefix.length, -OPENSPEC_SPEC_FILE.length - 1)
+    }
+  }
+  if (!repoPath.endsWith(specs.suffix)) {
+    return null
+  }
+  for (const root of specs.roots) {
+    const prefix = root === '' ? '' : `${root}/`
+    if (repoPath.startsWith(prefix)) {
+      return repoPath.slice(prefix.length, -specs.suffix.length)
+    }
+  }
+  return null
+}
+
+/** True when the repo-root-relative path is a spec of an OpenSpec root, whose paths are from the repository root. */
+export function isOpenSpecPath(specs: SpecRootsConfig, repoPath: string): boolean {
+  return (specs.openspec?.roots ?? []).some(root => repoPath.startsWith(`${root}/specs/`) && repoPath.endsWith(`/${OPENSPEC_SPEC_FILE}`))
+}
+
+/**
+ * The group of an OpenSpec requirement heading `Requirement: <Group>: <behaviour>`: the text between the prefix and
+ * the first `: `, or null for another heading or a requirement without a group. A link to `#<group slug>` names the
+ * first requirement of the group, so the group keeps the anchor of the old group heading.
+ */
+export function requirementGroup(heading: string): string | null {
+  const match = /^Requirement:\s+(.+?):\s/.exec(heading.trim())
+  return match === null ? null : match[1].trim()
 }
 
 /** The repo-root-relative form of a content-relative path. A content root of `''` or `.` is the repository root. */

@@ -36,7 +36,7 @@ pub(crate) struct FakeLink {
     pub(crate) setup: Answer<String>,
 }
 
-/// A refusal of `bd-host` for a script, before the start of a run.
+/// A refusal of `brd-host` for a script, before the start of a run.
 pub(crate) fn host_refused(code: &str, message: &str) -> HostRefusal {
     HostRefusal::new(code, NOT_RUN, message)
 }
