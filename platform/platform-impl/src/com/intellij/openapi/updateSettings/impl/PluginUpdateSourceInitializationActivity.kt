@@ -138,18 +138,24 @@ object PluginUpdateSourceInitializer {
   private fun doInitializePlugins(): Result {
     val dataMap = mutableMapOf<PluginId, MutableList<PluginUpdateSource>>()
 
-    val repositoryUrls = mutableSetOf<String>()
-    for (host in RepositoryHelper.getCustomPluginRepositoryHosts()) {
-      if (!repositoryUrls.add(host)) continue
+    val customPluginRepositoryHosts = RepositoryHelper.getCustomPluginRepositoryHosts()
+    thisLogger().info("Repositories: $customPluginRepositoryHosts")
+    val deduplicatedRepos = customPluginRepositoryHosts.toSet()
+    for (host in deduplicatedRepos) {
       val updateSourceId = PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(host)
 
-      if (host.isEmpty()) continue
+      if (host.isEmpty()) {
+        thisLogger().info("No plugins in $host")
+        continue
+      }
       val pluginResult = runCatching { RepositoryHelper.loadPluginModels(host, null, null) }
       val pluginModels = pluginResult.getOrHandleException {
         thisLogger().warn("Failed to get the plugin list from repository $host. Plugin update sources will be initialized next time.", it)
       } ?: return Result.Failure(
         IdeBundle.message("notification.content.plugin.update.sources.initialization.repository.error", host)
       )
+
+      thisLogger().info("Plugins in $host:\n${pluginModels.joinToString(",") { it.pluginId.idString }}")
 
       for (model in pluginModels) {
         val pluginUpdateSourceIds = dataMap.getOrPut(model.pluginId) { mutableListOf() }
