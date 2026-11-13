@@ -1,20 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.build.SyncViewManager
-import com.intellij.build.events.BuildEvent
-import com.intellij.build.events.OutputBuildEvent
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEmpty
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions
-import org.jetbrains.idea.maven.utils.MavenLog
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedClass
@@ -29,52 +23,9 @@ class MavenCustomArtifactTypeImportingTest(mavenVersion: String, modelVersion: S
     skipPluginResolution = false,
   )
 
-/*  private val httpServerFixture = MavenHttpRepositoryServerFixture()
-  private lateinit var myUrl: String
-
-  public override fun setUp() {
-    super.setUp()
-    httpServerFixture.setUp()
-    myUrl = httpServerFixture.url()
-
-    updateSettingsXml("""
-      <mirrors>
-        <mirror>
-          <id>disable-central</id>
-          <mirrorOf>central</mirrorOf>
-          <url>file:///non-existent-repo</url>
-        </mirror>
-      </mirrors>
-    """.trimIndent())
-  }
-
-  public override fun tearDown() {
-    try {
-      httpServerFixture.tearDown()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
-  }*/
-
-  @BeforeEach
-  fun setUp() {
-    val myTestSyncViewManager = object : SyncViewManager(maven.project) {
-      override fun onEvent(buildId: Any, event: BuildEvent) {
-        if (event is OutputBuildEvent) MavenLog.LOG.warn(event.message)
-      }
-    }
-    maven.project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, maven.disposable)
-  }
-
   @Test
   fun `should import dependency with custom plugin type`() = runBlocking {
     maven.projectsManager.generalSettings.outputLevel = MavenExecutionOptions.LoggingLevel.DEBUG
-
-    //httpServerFixture.startProxyRepositoryForUrl("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
 
     maven.importProjectAsync("""
       <groupId>test</groupId>
@@ -108,21 +59,6 @@ class MavenCustomArtifactTypeImportingTest(mavenVersion: String, modelVersion: S
         </plugins>
     </build>
 """)
-    /*
-    <repositories>
-      <repository>
-        <id>my-http-repository</id>
-        <name>my-http-repository</name>
-        <url>${myUrl}</url>
-      </repository>
-    </repositories>
-    <pluginRepositories>
-      <pluginRepository>
-        <id>artifacts</id>
-        <url>$myUrl</url>
-      </pluginRepository>
-    </pluginRepositories>
-     */
     maven.assertModules("project")
     val project = maven.projectsManager.findProject(maven.projectPom)
     assertNotNull(project)
