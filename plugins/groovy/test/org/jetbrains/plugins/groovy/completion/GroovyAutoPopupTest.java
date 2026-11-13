@@ -2,65 +2,98 @@
 package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase;
+import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.UsefulTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.TestModeFlags;
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class GroovyAutoPopupTest extends JavaCompletionAutoPopupTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.configureByExactName;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
+import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class GroovyAutoPopupTest {
+  private static final TestFixture<Project> project = groovyProjectFixture();
+  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_2_1);
+  private CompletionAutoPopupTester myTester;
+
+  @BeforeEach
+  public void setUp() {
+    myTester = new CompletionAutoPopupTester(groovy.get());
+    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, true, groovy.get().getTestRootDisposable());
     CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(true);
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(false);
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
+  @AfterEach
+  public void tearDown() {
+    // The base resets the stamp after each test, so that an invokeLater of the auto-popup handler cancels itself.
+    Editor editor = groovy.get().getEditor();
+    if (editor != null) {
+      ((DocumentEx)editor.getDocument()).setModificationStamp(0);
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+    CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(false);
+    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
   }
 
+  private void type(String s) {
+    myTester.typeWithPauses(s);
+  }
+
+  private LookupImpl getLookup() {
+    return (LookupImpl)groovy.get().getLookup();
+  }
+
+  @Test
   public void testGenerallyFocusLookup() {
-    myFixture.configureByText("a.groovy", """
+    configureByExactName(groovy.get(), "a.groovy", """
       
               String foo(String xxxxxx) {
                 return xx<caret>
               }
           \
       """);
-    EdtTestUtil.runInEdtAndWait(() -> myFixture.doHighlighting());
+    EdtTestUtil.runInEdtAndWait(() -> groovy.get().doHighlighting());
     type("x");
     assertTrue(getLookup().isFocused());
   }
 
+  @Test
   public void testTopLevelFocus() {
-    myFixture.configureByText("a.groovy", "<caret>");
+    configureByExactName(groovy.get(), "a.groovy", "<caret>");
     type("p");
     assertTrue(getLookup().isFocused());
   }
 
+  @Test
   public void testNoLookupFocusOnUnresolvedQualifier() {
-    myFixture.configureByText("a.groovy", """
+    configureByExactName(groovy.get(), "a.groovy", """
       xxx.<caret>""");
     type("h");//hashCode
     assertNull(getLookup());
   }
 
+  @Test
   public void testNoLookupFocusOnUntypedQualifier() {
-    myFixture.configureByText("a.groovy", """
+    configureByExactName(groovy.get(), "a.groovy", """
       
             def foo(xxx) {
               xxx.<caret>
@@ -70,209 +103,227 @@ public class GroovyAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     assertNull(getLookup());
   }
 
+  @Test
   public void testImpossibleClosureParameter() {
-    myFixture.configureByText("a.groovy", "String a; { a.<caret> }");
+    configureByExactName(groovy.get(), "a.groovy", "String a; { a.<caret> }");
     type("h");
     assertTrue(getLookup().isFocused());
   }
 
+  @Test
   public void testFieldTypeLowercase() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
-    myFixture.configureByText("a.groovy", "class Foo { <caret> }");
+    configureByExactName(groovy.get(), "a.groovy", "class Foo { <caret> }");
     type("aioobe");
-    assertEquals(myFixture.getLookupElementStrings(), List.of(ArrayIndexOutOfBoundsException.class.getSimpleName()));
+    assertEquals(groovy.get().getLookupElementStrings(), List.of(ArrayIndexOutOfBoundsException.class.getSimpleName()));
   }
 
+  @Test
   public void testNoWordCompletionAutoPopup() {
-    myFixture.configureByText("a.groovy", "def foo = \"f<caret>\"");
+    configureByExactName(groovy.get(), "a.groovy", "def foo = \"f<caret>\"");
     type("o");
     assertNull(getLookup());
   }
 
+  @Test
   public void testClassesAndPackagesInUnqualifiedImports() {
-    myFixture.addClass("package Xxxxx; public class Xxxxxxxxx {}");
-    myFixture.configureByText("a.groovy", "package foo; import <caret>");
+    groovy.get().addClass("package Xxxxx; public class Xxxxxxxxx {}");
+    configureByExactName(groovy.get(), "a.groovy", "package foo; import <caret>");
     type("Xxx");
-    assertEquals(myFixture.getLookupElementStrings(), List.of("Xxxxxxxxx", "Xxxxx"));
+    assertEquals(groovy.get().getLookupElementStrings(), List.of("Xxxxxxxxx", "Xxxxx"));
   }
 
+  @Test
   public void testPopupAfterDotAfterPackage() {
-    myFixture.configureByText("a.groovy", "<caret>");
+    configureByExactName(groovy.get(), "a.groovy", "<caret>");
     type("import jav");
     assertNotNull(getLookup());
     type(".");
     assertNotNull(getLookup());
   }
 
+  @Test
   public void testTypingFirstVarargDot() {
-    myFixture.addClass("class Foo { static class Bar {} }");
-    myFixture.configureByText("a.groovy", "void foo(Foo<caret>[] a) { }");
+    groovy.get().addClass("class Foo { static class Bar {} }");
+    configureByExactName(groovy.get(), "a.groovy", "void foo(Foo<caret>[] a) { }");
     type(".");
     assertNotNull(getLookup());
     type(".");
-    myFixture.checkResult("void foo(Foo..<caret>[] a) { }");
+    groovy.get().checkResult("void foo(Foo..<caret>[] a) { }");
   }
 
+  @Test
   public void testTypingFirstVarargDot2() {
-    myFixture.addClass("class Foo { static class Bar {} }");
-    myFixture.configureByText("a.groovy", "void foo(Foo<caret>) { }");
+    groovy.get().addClass("class Foo { static class Bar {} }");
+    configureByExactName(groovy.get(), "a.groovy", "void foo(Foo<caret>) { }");
     type(".");
     assertNotNull(getLookup());
     type(".");
-    myFixture.checkResult("void foo(Foo..<caret>) { }");
+    groovy.get().checkResult("void foo(Foo..<caret>) { }");
   }
 
+  @Test
   public void testDotDot() {
-    myFixture.configureByText("a.groovy", "2<caret>");
+    configureByExactName(groovy.get(), "a.groovy", "2<caret>");
     type(".");
     assertNotNull(getLookup());
     assertTrue(getLookup().isFocused());
     type(".");
     assertNull(getLookup());
 
-    myFixture.checkResult("2..<caret>");
+    groovy.get().checkResult("2..<caret>");
   }
 
+  @Test
   public void testInsideClosure() {
-    myFixture.configureByText("a.groovy", "def cl = { foo(); <caret> }");
+    configureByExactName(groovy.get(), "a.groovy", "def cl = { foo(); <caret> }");
     type("h");
     assertNotNull(getLookup());
     assertTrue(getLookup().isFocused());
   }
 
+  @Test
   public void testNonImportedClass() {
-    myFixture.addClass("package foo; public class Abcdefg {}");
-    myFixture.configureByText("a.groovy", "<caret>");
+    groovy.get().addClass("package foo; public class Abcdefg {}");
+    configureByExactName(groovy.get(), "a.groovy", "<caret>");
     type("Abcde ");
-    myFixture.checkResult("import foo.Abcdefg\n\nAbcdefg <caret>");
+    groovy.get().checkResult("import foo.Abcdefg\n\nAbcdefg <caret>");
   }
 
+  @Test
   public void test_two_non_imported_classes_when_space_does_not_select_first_autopopup_item() {
     CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(false);
 
-    myFixture.addClass("package foo; public class Abcdefg {}");
-    myFixture.addClass("package bar; public class Abcdefg {}");
-    myFixture.configureByText("a.groovy", "class Foo extends <caret>");
+    groovy.get().addClass("package foo; public class Abcdefg {}");
+    groovy.get().addClass("package bar; public class Abcdefg {}");
+    configureByExactName(groovy.get(), "a.groovy", "class Foo extends <caret>");
     type("Abcde");
     assertEquals(2, getLookup().getItems().size());
-    EdtTestUtil.runInEdtAndWait(() -> myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN));
+    EdtTestUtil.runInEdtAndWait(() -> groovy.get().performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN));
     type(" ");
-    myFixture.checkResult("""
+    groovy.get().checkResult("""
                             import foo.Abcdefg
                             
                             class Foo extends Abcdefg <caret>""");
   }
 
+  @Test
   public void testTwoNonImportedClasses() {
-    myFixture.addClass("package foo; public class Abcdefg {}");
-    myFixture.addClass("package bar; public class Abcdefg {}");
-    myFixture.configureByText("a.groovy", "<caret>");
+    groovy.get().addClass("package foo; public class Abcdefg {}");
+    groovy.get().addClass("package bar; public class Abcdefg {}");
+    configureByExactName(groovy.get(), "a.groovy", "<caret>");
     type("Abcde ");
-    myFixture.checkResult("""
+    groovy.get().checkResult("""
                             import bar.Abcdefg
                             
                             Abcdefg <caret>""");
   }
 
+  @Test
   public void testPrivate() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
-    myFixture.configureByText("a.groovy", "class Foo { <caret> }");
+    configureByExactName(groovy.get(), "a.groovy", "class Foo { <caret> }");
     type("pri");
-    assertEquals("private", myFixture.getLookupElementStrings().get(0));
+    assertEquals("private", groovy.get().getLookupElementStrings().get(0));
   }
 
+  @Test
   public void testFieldTypeNonImported() {
-    myFixture.addClass("package foo; public class PrimaBalerina {}");
-    myFixture.configureByText("a.groovy", "class Foo { <caret> }");
+    groovy.get().addClass("package foo; public class PrimaBalerina {}");
+    configureByExactName(groovy.get(), "a.groovy", "class Foo { <caret> }");
     type("PrimaB");
-    assertEquals(myFixture.getLookupElementStrings(), List.of("PrimaBalerina"));
+    assertEquals(groovy.get().getLookupElementStrings(), List.of("PrimaBalerina"));
   }
 
+  @Test
   public void testEnteringLabel() {
-    myFixture.configureByText("a.groovy", "<caret>");
+    configureByExactName(groovy.get(), "a.groovy", "<caret>");
     type("FIS:");
-    assertEquals("FIS:", myFixture.getEditor().getDocument().getText());
+    assertEquals("FIS:", groovy.get().getEditor().getDocument().getText());
   }
 
+  @Test
   public void testEnteringNamedArg() {
-    myFixture.configureByText("a.groovy", "foo(<caret>)");
+    configureByExactName(groovy.get(), "a.groovy", "foo(<caret>)");
     type("has:");
-    myFixture.checkResult("foo(has:<caret>)");
+    groovy.get().checkResult("foo(has:<caret>)");
   }
 
+  @Test
   public void testEnteringMapKey() {
-    myFixture.configureByText("a.groovy", "[<caret>]");
+    configureByExactName(groovy.get(), "a.groovy", "[<caret>]");
     type("has:");
-    myFixture.checkResult("[has:<caret>]");
+    groovy.get().checkResult("[has:<caret>]");
   }
 
+  @Test
   public void testPreferRightCasedVariant() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
-    myFixture.configureByText("a.groovy", "<caret>");
+    configureByExactName(groovy.get(), "a.groovy", "<caret>");
     type("boo");
-    myFixture.assertPreferredCompletionItems(0, "boolean");
+    groovy.get().assertPreferredCompletionItems(0, "boolean");
     type("\b\b\bBoo");
-    myFixture.assertPreferredCompletionItems(0, "Boolean");
+    groovy.get().assertPreferredCompletionItems(0, "Boolean");
   }
 
+  @Test
   public void testPackageQualifier() {
     CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(false);
 
-    myFixture.addClass("package com.too; public class Util {}");
-    myFixture.configureByText("a.groovy", "void foo(Object command) { <caret> }");
+    groovy.get().addClass("package com.too; public class Util {}");
+    configureByExactName(groovy.get(), "a.groovy", "void foo(Object command) { <caret> }");
     type("com.t");
-    assertTrue(myFixture.getLookupElementStrings().containsAll(List.of("too", "command.toString")));
+    assertTrue(groovy.get().getLookupElementStrings().containsAll(List.of("too", "command.toString")));
   }
 
+  @Test
   public void testVarargParenthesis() {
-    myFixture.configureByText("a.groovy", """
+    configureByExactName(groovy.get(), "a.groovy", """
       
       void foo(File... files) { }
       foo(new <caret>)
       """);
     type("File");
-    myFixture.assertPreferredCompletionItems(0, "File", "File");
+    groovy.get().assertPreferredCompletionItems(0, "File", "File");
     type("(");
-    assertTrue(myFixture.getEditor().getDocument().getText().contains("new File()"));
+    assertTrue(groovy.get().getEditor().getDocument().getText().contains("new File()"));
   }
 
+  @Test
   public void testNoAutopopupAfterDef() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
-    myFixture.configureByText("a.groovy", "def <caret>");
+    configureByExactName(groovy.get(), "a.groovy", "def <caret>");
     type("a");
     assertNull(getLookup());
   }
 
+  @Test
   public void test_expand_class_list_when_typing_more_or_moving_caret() {
-    myFixture.addClass("package foo; public class KimeFamilyRange {}");
-    myFixture.addClass("package foo; public class FamiliesRangesMetaData {}");
-    myFixture.addClass("public class KSomethingInCurrentPackage {}");
-    myFixture.configureByText("a.groovy", "<caret>");
+    groovy.get().addClass("package foo; public class KimeFamilyRange {}");
+    groovy.get().addClass("package foo; public class FamiliesRangesMetaData {}");
+    groovy.get().addClass("public class KSomethingInCurrentPackage {}");
+    configureByExactName(groovy.get(), "a.groovy", "<caret>");
 
     type("F");
-    assertFalse(myFixture.getLookupElementStrings().contains("KimeFamilyRange"));
+    assertFalse(groovy.get().getLookupElementStrings().contains("KimeFamilyRange"));
 
     type("aRa");
-    myFixture.assertPreferredCompletionItems(0, "FamiliesRangesMetaData", "KimeFamilyRange");
+    groovy.get().assertPreferredCompletionItems(0, "FamiliesRangesMetaData", "KimeFamilyRange");
 
     for (int i = 0; i < 4; i++) {
-      UsefulTestCase.edt(() -> myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT));
+      EdtTestUtil.runInEdtAndWait(() -> groovy.get().performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT));
       myTester.joinCompletion();
     }
-    assertFalse(myFixture.getLookupElementStrings().contains("KimeFamilyRange"));
+    assertFalse(groovy.get().getLookupElementStrings().contains("KimeFamilyRange"));
 
     type("K");
 
     for (int i = 0; i < 4; i++) {
-      UsefulTestCase.edt(() -> myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT));
+      EdtTestUtil.runInEdtAndWait(() -> groovy.get().performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT));
       myTester.joinCompletion();
     }
 
-    myFixture.assertPreferredCompletionItems(0, "KimeFamilyRange");
+    groovy.get().assertPreferredCompletionItems(0, "KimeFamilyRange");
   }
 
-  @Override
-  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return GroovyProjectDescriptors.GROOVY_2_1;
-  }
 }
