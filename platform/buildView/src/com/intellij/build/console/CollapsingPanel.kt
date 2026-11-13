@@ -21,6 +21,19 @@ internal class CollapsingPanel(
   private val preferredHeight: Int get() = fontHeight * preferredLines
   private val preferredHeightThreshold: Int get() = fontHeight * preferredLinesThreshold
 
+  init {
+    isOpaque = false
+    add(content, BorderLayout.CENTER)
+    if (isCollapseNeeded()) {
+      collapseStateProperty.set(CollapseState.COLLAPSED)
+    }
+
+    collapseStateProperty.afterChange {
+      revalidate()
+      repaint()
+    }
+  }
+
   override fun getPreferredSize(): Dimension {
     val preferred = super.getPreferredSize()
     return when (collapseStateProperty.get()) {
@@ -32,7 +45,7 @@ internal class CollapsingPanel(
   override fun doLayout() {
     collapseStateProperty.updateAndGet { state ->
       when {
-        content.preferredSize.height <= preferredHeightThreshold -> CollapseState.NOT_NEEDED
+        !isCollapseNeeded() -> CollapseState.NOT_NEEDED
         state == CollapseState.NOT_NEEDED -> CollapseState.COLLAPSED
         else -> state
       }
@@ -40,13 +53,5 @@ internal class CollapsingPanel(
     super.doLayout()
   }
 
-  init {
-    isOpaque = false
-    add(content, BorderLayout.CENTER)
-
-    collapseStateProperty.afterChange {
-      revalidate()
-      repaint()
-    }
-  }
+  private fun isCollapseNeeded(): Boolean = content.preferredSize.height > preferredHeightThreshold
 }
