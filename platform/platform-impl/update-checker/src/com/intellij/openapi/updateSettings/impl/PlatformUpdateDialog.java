@@ -261,7 +261,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
     return IdeBundle.message("updates.remind.later.button");
   }
 
-  static boolean isPatchWriteProtected(@NotNull PlatformUpdates.Loaded platformUpdate) {
+  public static boolean isPatchWriteProtected(@NotNull PlatformUpdates.Loaded platformUpdate) {
     return platformUpdate.getPatches() != null && OS.CURRENT != OS.Windows && !Files.isWritable(PathManager.getHomeDir());
   }
 
@@ -279,7 +279,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
     startPatchTask(myProject, myPlatformUpdate, myTestPatch, selectedPluginsToUpdate);
   }
 
-  static void startPatchTask(
+  public static void startPatchTask(
     @Nullable Project project,
     @NotNull PlatformUpdates.Loaded platformUpdate,
     @Nullable Path testPatch,
