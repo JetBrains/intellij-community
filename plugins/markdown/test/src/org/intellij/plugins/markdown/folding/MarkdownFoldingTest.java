@@ -1,62 +1,103 @@
 package org.intellij.plugins.markdown.folding;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.LanguageFileViewProviders;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import org.intellij.plugins.markdown.MarkdownTestingUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.TestDisposable;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.jdom.Element;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import java.util.Arrays;
 
-public class MarkdownFoldingTest extends BasePlatformTestCase {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+@TestDataPath("$PROJECT_ROOT/community/plugins/markdown/test/data/folding")
+public class MarkdownFoldingTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+
+  private String testName;
+
+  @BeforeEach
+  void setUp(TestInfo testInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.getTestMethod().orElseThrow().getName(), true);
+  }
+
+  @Test
   public void testOrderedList() {
     doTest();
   }
 
+  @Test
   public void testUnorderedList() {
     doTest();
   }
 
+  @Test
   public void testComplexOrderedList() {
     doTest();
   }
 
+  @Test
   public void testComplexUnorderedList() {
     doTest();
   }
 
+  @Test
   public void testSingleLineOrderedList() {
     doTest();
   }
 
+  @Test
   public void testSingleLineUnorderedList() {
     doTest();
   }
 
+  @Test
   public void testUnorderedSublist() {
     doTest();
   }
 
+  @Test
   public void testTable() {
     doTest();
   }
 
+  @Test
   public void testCodeFence() {
     doTest();
   }
 
+  @Test
   public void testHtmlCommentFoldingStateIsRestored() {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     String text = """
       <!--
       multiline
@@ -65,49 +106,52 @@ public class MarkdownFoldingTest extends BasePlatformTestCase {
       """;
     myFixture.configureByText("test.md", text);
     Editor editor = myFixture.getEditor();
-    EditorTestUtil.buildInitialFoldingsInBackground(editor);
-
     int commentStart = text.indexOf("<!--") + "<!--".length();
-    FoldRegion commentRegion = Arrays.stream(editor.getFoldingModel().getAllFoldRegions())
-      .filter(region -> region.getStartOffset() == commentStart)
-      .findFirst()
-      .orElseThrow();
+    CodeFoldingManager manager = CodeFoldingManager.getInstance(myFixture.getProject());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      EditorTestUtil.buildInitialFoldingsInBackground(editor);
+      FoldRegion commentRegion = Arrays.stream(editor.getFoldingModel().getAllFoldRegions())
+        .filter(region -> region.getStartOffset() == commentStart)
+        .findFirst()
+        .orElseThrow();
 
-    CodeFoldingManager manager = CodeFoldingManager.getInstance(getProject());
-    CodeFoldingState pendingState = EdtTestUtil.runInEdtAndGet(() -> {
       editor.getFoldingModel().runBatchFoldingOperation(() -> commentRegion.setExpanded(false));
       CodeFoldingState state = manager.saveFoldingState(editor);
       Element serializedState = new Element("folding");
       manager.writeFoldingState(state, serializedState);
-      return manager.readFoldingState(serializedState, editor.getDocument());
-    });
+      CodeFoldingState pendingState = manager.readFoldingState(serializedState, editor.getDocument());
 
-    EdtTestUtil.runInEdtAndWait(() -> {
       editor.getFoldingModel().runBatchFoldingOperation(() -> commentRegion.setExpanded(true));
       manager.restoreFoldingState(editor, pendingState);
       NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    });
 
-    assertFalse(commentRegion.isExpanded());
+      assertFalse(commentRegion.isExpanded());
+    });
   }
 
+  @Test
   public void testBlockQuote() {
     doTest();
   }
 
+  @Test
   public void testSingleHeader() {
     doTest();
   }
 
+  @Test
   public void testLongHeader() {
     doTest();
   }
 
+  @Test
   public void testMultipleHeaders() {
     doTest();
   }
 
+  @Test
   public void testHeaderPlaceholderUsesHeaderTextOnly() {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     String text = """
       ## Lorem ipsum dolor sed emit
       Lorem
@@ -117,11 +161,13 @@ public class MarkdownFoldingTest extends BasePlatformTestCase {
     myFixture.configureByText("test.md", text);
 
     String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
-    assertTrue(foldingDescription, foldingDescription.contains("text='h2: ## Lorem ipsum dolor sed emit'"));
-    assertTrue(foldingDescription, foldingDescription.contains("text='h2: ## Lorem ipsum dolor sed emit est'"));
+    assertTrue(foldingDescription.contains("text='h2: ## Lorem ipsum dolor sed emit'"), foldingDescription);
+    assertTrue(foldingDescription.contains("text='h2: ## Lorem ipsum dolor sed emit est'"), foldingDescription);
   }
 
+  @Test
   public void testSetextHeaderPlaceholderUsesContentLine() {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("test.md", """
       Setext title
       ============
@@ -130,64 +176,79 @@ public class MarkdownFoldingTest extends BasePlatformTestCase {
       """);
 
     String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
-    assertTrue(foldingDescription, foldingDescription.contains("text='Setext title'"));
+    assertTrue(foldingDescription.contains("text='Setext title'"), foldingDescription);
   }
 
+  @Test
   public void testLongHeaderPlaceholderIsTruncatedAt120Characters() {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     String longHeader = "## " + "x".repeat(130);
     myFixture.configureByText("test.md", longHeader + "\nBody");
 
     String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
     String expectedPlaceholder = "text='h2: ## " + "x".repeat(109) + "..." + "x".repeat(5) + "'";
-    assertTrue(foldingDescription, foldingDescription.contains(expectedPlaceholder));
+    assertTrue(foldingDescription.contains(expectedPlaceholder), foldingDescription);
   }
 
+  @Test
   public void testListMultiLineItem() {
     doTest();
   }
 
+  @Test
   public void testSingleLineParagraph() {
     doTest();
   }
 
+  @Test
   public void testSimpleHeadersStructure() {
     doTest();
   }
 
+  @Test
   public void testHeadersTree() {
     doTest();
   }
 
+  @Test
   public void testIrregularHeadersStructure() {
     doTest();
   }
 
+  @Test
   public void testMultiLineParagraph() {
     doTest();
   }
 
+  @Test
   public void testMultiLineQuoteParagraph() {
     doTest();
   }
 
+  @Test
   public void testMultiParagraphListItem() {
     doTest();
   }
 
+  @Test
   public void testTwoMultiLineParagraphs() {
     doTest();
   }
 
+  @Test
   public void testTwoMultiLineQuoteParagraphs() {
     doTest();
   }
 
+  @Test
   public void testLinkDestinations() {
     doTest();
   }
 
   /** IJPL-162519: visual table alignment supports folded link destinations. */
+  @Test
   public void testLinkDestinationsInsideTableAreFolded() {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("table.md", """
       [Regular link](https://jetbrains.com/path)
 
@@ -198,85 +259,96 @@ public class MarkdownFoldingTest extends BasePlatformTestCase {
       """);
 
     String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
-    assertTrue(foldingDescription, foldingDescription.contains("[Regular link](<fold text='...'>https://jetbrains.com/path</fold>)"));
-    assertTrue(foldingDescription, foldingDescription.contains("[http://localhost](<fold text='...'>http://localhost/variable-length-link</fold>)"));
-    assertTrue(foldingDescription, foldingDescription.contains("[http://localhost](<fold text='...'>http://localhost/variable</fold>)"));
+    assertTrue(foldingDescription.contains("[Regular link](<fold text='...'>https://jetbrains.com/path</fold>)"), foldingDescription);
+    assertTrue(foldingDescription.contains("[http://localhost](<fold text='...'>http://localhost/variable-length-link</fold>)"), foldingDescription);
+    assertTrue(foldingDescription.contains("[http://localhost](<fold text='...'>http://localhost/variable</fold>)"), foldingDescription);
   }
 
+  @Test
   public void testTableOfContents() {
     doTest();
   }
 
+  @Test
   public void testFrontMatter() {
     doTest();
   }
 
-  public void testFrontMatterIsNotFoldedWhenAPolicyForbidsIt() {
-    MarkdownFrontMatterFoldingPolicy.EP_NAME.getPoint().registerExtension(_ -> false, getTestRootDisposable());
+  @Test
+  public void testFrontMatterIsNotFoldedWhenAPolicyForbidsIt(@TestDisposable Disposable disposable) {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
+    MarkdownFrontMatterFoldingPolicy.EP_NAME.getPoint().registerExtension(_ -> false, disposable);
     myFixture.configureByText("notes.md", "---\nSome front matter\n---\n\nText");
 
     String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
-    assertFalse(foldingDescription, foldingDescription.contains("<fold"));
+    assertFalse(foldingDescription.contains("<fold"), foldingDescription);
   }
 
-  public void testFrontMatterIsNotFoldedWhenOneOfSeveralPoliciesForbidsIt() {
+  @Test
+  public void testFrontMatterIsNotFoldedWhenOneOfSeveralPoliciesForbidsIt(@TestDisposable Disposable disposable) {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     var point = MarkdownFrontMatterFoldingPolicy.EP_NAME.getPoint();
-    point.registerExtension(_ -> true, getTestRootDisposable());
-    point.registerExtension(_ -> false, getTestRootDisposable());
-    point.registerExtension(_ -> true, getTestRootDisposable());
+    point.registerExtension(_ -> true, disposable);
+    point.registerExtension(_ -> false, disposable);
+    point.registerExtension(_ -> true, disposable);
     myFixture.configureByText("notes.md", "---\nSome front matter\n---\n\nText");
 
     String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
-    assertFalse(foldingDescription, foldingDescription.contains("<fold"));
+    assertFalse(foldingDescription.contains("<fold"), foldingDescription);
   }
 
-  public void testFrontMatterIsFoldedWhenEveryPolicyAllowsIt() {
+  @Test
+  public void testFrontMatterIsFoldedWhenEveryPolicyAllowsIt(@TestDisposable Disposable disposable) {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     var point = MarkdownFrontMatterFoldingPolicy.EP_NAME.getPoint();
-    point.registerExtension(_ -> true, getTestRootDisposable());
-    point.registerExtension(_ -> true, getTestRootDisposable());
+    point.registerExtension(_ -> true, disposable);
+    point.registerExtension(_ -> true, disposable);
     myFixture.configureByText("notes.md", "---\nSome front matter\n---\n\nText");
 
     String foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
-    assertTrue(foldingDescription, foldingDescription.contains("<fold"));
+    assertTrue(foldingDescription.contains("<fold"), foldingDescription);
   }
 
+  @Test
   public void testDetails() {
     doTest();
   }
 
-  public void testDetailsWithoutHtmlRoot() {
+  @Test
+  public void testDetailsWithoutHtmlRoot(@TestDisposable Disposable disposable) {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     LanguageFileViewProviders.INSTANCE.addExplicitExtension(
-      MarkdownLanguage.INSTANCE, new MarkdownFileViewProviderFactory(), getTestRootDisposable());
+      MarkdownLanguage.INSTANCE, new MarkdownFileViewProviderFactory(), disposable);
     var block = "<details>\n<summary>The summary</summary>\n\n## Heading\n\nHeading content.\n\n</details>";
     myFixture.configureByText("details.md", block + "\n\nText\n");
     assertEquals(1, myFixture.getFile().getViewProvider().getLanguages().size());
 
     var foldingDescription = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
-    assertFalse(foldingDescription, foldingDescription.contains("▶"));
-    assertTrue(foldingDescription, foldingDescription.contains("<fold text='h2: ## Heading'>"));
+    assertFalse(foldingDescription.contains("▶"), foldingDescription);
+    assertTrue(foldingDescription.contains("<fold text='h2: ## Heading'>"), foldingDescription);
   }
 
+  @Test
   public void testDetailsFoldAppearsWhenClosingTagIsTyped() {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     var open = "<details>\n<summary>The summary</summary>\n\nContent.\n\n";
     myFixture.configureByText("details.md", open + "\nText\n");
     var before = ((CodeInsightTestFixtureImpl)myFixture).getFoldingDescription(false, false);
-    assertFalse(before, before.contains("▶"));
+    assertFalse(before.contains("▶"), before);
 
-    var editor = myFixture.getEditor();
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> editor.getDocument().insertString(open.length(), "</details>\n"));
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    EdtTestUtil.runInEdtAndWait(() -> CodeFoldingManager.getInstance(getProject()).updateFoldRegions(editor));
-
-    var after = CodeInsightTestFixtureImpl.getFoldingData(editor, false, false);
-    assertTrue(after, after.contains("<fold text='▶ The summary'><details"));
+    Project project = myFixture.getProject();
+    var after = EdtTestUtil.runInEdtAndGet(() -> {
+      var editor = myFixture.getEditor();
+      WriteCommandAction.runWriteCommandAction(project, () -> editor.getDocument().insertString(open.length(), "</details>\n"));
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+      CodeFoldingManager.getInstance(project).updateFoldRegions(editor);
+      return CodeInsightTestFixtureImpl.getFoldingData(editor, false, false);
+    });
+    assertTrue(after.contains("<fold text='▶ The summary'><details"), after);
   }
 
   private void doTest() {
-    myFixture.testFolding(getTestDataPath() + "/" + getTestName(true) + ".md");
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return MarkdownTestingUtil.TEST_DATA_PATH + "/folding";
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
+    myFixture.testFolding(myFixture.getTestDataPath() + "/" + testName + ".md");
   }
 }

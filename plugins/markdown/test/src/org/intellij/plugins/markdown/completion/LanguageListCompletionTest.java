@@ -8,16 +8,18 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.PlainTextParserDefinition;
 import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTestUtil;
 import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.TestDisposable;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ThrowableRunnable;
-import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,54 +38,60 @@ import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixtur
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class LanguageListCompletionTest extends BasePlatformTestCase {
+@TestApplication
+@TestDataPath("$PROJECT_ROOT/community/plugins/markdown/test/data/completion/languageList")
+public class LanguageListCompletionTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
 
-  @NotNull
-  @Override
-  protected String getTestDataPath() {
-    return MarkdownTestingUtil.TEST_DATA_PATH + "/completion/languageList/";
-  }
+  private String testName;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp(TestInfo testInfo, @TestDisposable Disposable disposable) {
+    testName = PlatformTestUtil.getTestName(testInfo.getTestMethod().orElseThrow().getName(), true);
     // Because injector handles the code in the fence and gets parser definition for that lang
     LanguageParserDefinitions.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new PlainTextParserDefinition(),
-                                                            getTestRootDisposable());
+                                                            disposable);
   }
 
   private void doTest(@NotNull String toType) {
-    myFixture.testCompletionTyping(getTestName(true) + ".md", toType, getTestName(true) + "_after.md");
+    codeInsightFixture.get().testCompletionTyping(testName + ".md", toType, testName + "_after.md");
   }
 
   private void configure() {
-    myFixture.configureByFile(getTestName(true) + ".md");
+    codeInsightFixture.get().configureByFile(testName + ".md");
   }
 
   private void checkResult() {
-    myFixture.checkResultByFile(getTestName(true) + "_after.md");
+    codeInsightFixture.get().checkResultByFile(testName + "_after.md");
   }
 
   private void checkEmptyCompletion() {
-    myFixture.testCompletionVariants(getTestName(true) + ".md");
+    codeInsightFixture.get().testCompletionVariants(testName + ".md");
   }
 
+  @Test
   public void testExistingFence() {
     doTest("jso\n");
   }
 
+  @Test
   public void testExistingFenceTab() {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure();
     myFixture.completeBasic();
-    assertContainsElements(myFixture.getLookupElementStrings(), "json");
+    assertThat(myFixture.getLookupElementStrings()).contains("json");
     myFixture.type("so\t");
     checkResult();
   }
 
+  @Test
   public void testExistingNotFence() {
     checkEmptyCompletion();
   }
 
+  @Test
   public void testInSixQuotes() {
     doTest("jso\n");
   }
@@ -91,23 +100,29 @@ public class LanguageListCompletionTest extends BasePlatformTestCase {
    * Same collapsed-fence shape as {@link #testInSixQuotes()}, but the fence is nested in a list item: the
    * inserted body and closing lines must carry the item's content indent instead of falling back to column 0.
    */
+  @Test
   public void testInSixQuotesIndentedInListItem() {
     doTest("jso\n");
   }
 
+  @Test
   public void testInSixQuotesNotMiddle() {
     checkEmptyCompletion();
   }
 
+  @Test
   public void testInSixQuotesTab() {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     configure();
     myFixture.completeBasic();
-    assertContainsElements(myFixture.getLookupElementStrings(), "json");
+    assertThat(myFixture.getLookupElementStrings()).contains("json");
     myFixture.type("so\t");
     checkResult();
   }
 
+  @Test
   public void testCustomCompletionProvider() {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     CodeFenceLanguageProvider.EP_NAME.getPoint().registerExtension(new CodeFenceLanguageProvider() {
         @Nullable
         @Override
@@ -127,7 +142,7 @@ public class LanguageListCompletionTest extends BasePlatformTestCase {
       }, myFixture.getTestRootDisposable());
     configure();
     myFixture.completeBasic();
-    assertContainsElements(myFixture.getLookupElementStrings(), "json", "{json is a great lang}");
+    assertThat(myFixture.getLookupElementStrings()).contains("json", "{json is a great lang}");
     myFixture.type("g\t");
     checkResult();
   }

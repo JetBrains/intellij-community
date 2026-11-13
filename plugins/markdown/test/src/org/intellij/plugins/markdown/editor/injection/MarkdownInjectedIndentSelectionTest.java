@@ -2,17 +2,35 @@
 package org.intellij.plugins.markdown.editor.injection;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.testFramework.fixtures.InjectionTestFixture;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.json.JsonLanguage;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.InjectionTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
+import org.junit.jupiter.api.Test;
 
-public class MarkdownInjectedIndentSelectionTest extends BasePlatformTestCase {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class MarkdownInjectedIndentSelectionTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+
+  @Test
   public void testEnterInsideNestedFenceKeepsMarkdownIndent() {
-    CodeStyle.doWithTemporarySettings(getProject(), CodeStyle.getSettings(getProject()), settings -> {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
+    CodeStyle.doWithTemporarySettings(myFixture.getProject(), CodeStyle.getSettings(myFixture.getProject()), settings -> {
       var indentOptions = settings.getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions();
       indentOptions.USE_TAB_CHARACTER = true;
       indentOptions.TAB_SIZE = 2;
@@ -30,7 +48,7 @@ public class MarkdownInjectedIndentSelectionTest extends BasePlatformTestCase {
           }
           ```""");
 
-      new InjectionTestFixture(myFixture).assertInjectedLangAtCaret("JSON");
+      ReadAction.run(() -> new InjectionTestFixture(myFixture).assertInjectedLangAtCaret("JSON"));
       myFixture.type("\n");
       myFixture.checkResult("""
         - Example:
@@ -46,8 +64,10 @@ public class MarkdownInjectedIndentSelectionTest extends BasePlatformTestCase {
     });
   }
 
+  @Test
   public void testEnterUsesInjectedLanguageIndentOptions() {
-    CodeStyle.doWithTemporarySettings(getProject(), CodeStyle.getSettings(getProject()), settings -> {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
+    CodeStyle.doWithTemporarySettings(myFixture.getProject(), CodeStyle.getSettings(myFixture.getProject()), settings -> {
       var indentOptions = settings.getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions();
       indentOptions.USE_TAB_CHARACTER = true;
       indentOptions.TAB_SIZE = 2;
@@ -68,7 +88,7 @@ public class MarkdownInjectedIndentSelectionTest extends BasePlatformTestCase {
         }
         ```""");
 
-      new InjectionTestFixture(myFixture).assertInjectedLangAtCaret("JSON");
+      ReadAction.run(() -> new InjectionTestFixture(myFixture).assertInjectedLangAtCaret("JSON"));
       myFixture.type("\n");
       myFixture.checkResult("""
         # Test section
@@ -87,7 +107,9 @@ public class MarkdownInjectedIndentSelectionTest extends BasePlatformTestCase {
     });
   }
 
+  @Test
   public void testIndentAndUnindentSelectionInsideInjectedFence() {
+    CodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(MarkdownFileType.INSTANCE, """
       ```json
       {
@@ -97,9 +119,9 @@ public class MarkdownInjectedIndentSelectionTest extends BasePlatformTestCase {
       }
       ```""");
 
-    new InjectionTestFixture(myFixture).assertInjectedLangAtCaret("JSON");
+    ReadAction.run(() -> new InjectionTestFixture(myFixture).assertInjectedLangAtCaret("JSON"));
 
-    CodeStyleSettings settings = CodeStyle.getSettings(getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
     assertEquals(4, settings.getCommonSettings(MarkdownLanguage.INSTANCE).getIndentOptions().INDENT_SIZE);
     assertEquals(2, settings.getCommonSettings(JsonLanguage.INSTANCE).getIndentOptions().INDENT_SIZE);
 

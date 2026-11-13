@@ -19,6 +19,8 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -35,17 +37,23 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.EditorTestFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.replaceService
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunnerContext
@@ -56,9 +64,15 @@ import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.PreviewClickConfirmation
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -67,50 +81,55 @@ import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TestTimeSource
 
-@RunWith(JUnit4::class)
-class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
+@TestApplication
+class MarkdownCommandRunnerLineMarkersTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @TestDisposable
+  lateinit var disposable: Disposable
 
   private val markdownRunnerEp = ExtensionPointName.create<MarkdownRunner>("org.intellij.markdown.markdownRunner")
   private val capturingRunner = CapturingRunner()
   private lateinit var runnerDisposable: Disposable
   private lateinit var registeredRunners: List<MarkdownRunner>
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     registeredRunners = markdownRunnerEp.extensionList
     runnerDisposable = Disposer.newDisposable()
-    Disposer.register(testRootDisposable, runnerDisposable)
+    Disposer.register(disposable, runnerDisposable)
     ExtensionTestUtil.maskExtensions(markdownRunnerEp, listOf(capturingRunner), runnerDisposable)
     val testMdFile = myFixture.addFileToProject("foo/test.md", "```bash\npwd\n```")
-    myFixture.openFileInEditor(testMdFile.virtualFile)
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        myFixture.openFileInEditor(testMdFile.virtualFile)
+      }
+    }
   }
 
-  override fun tearDown() {
-    try {
-      MarkdownSettings.getInstance().useFileDirectoryForCommands = null
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    MarkdownSettings.getInstance().useFileDirectoryForCommands = null
   }
 
   @Test
   fun `block run marker is shown for shell code fence`() {
     myFixture.doHighlighting()
-    val markers = getDisplayedLineMarkers(myFixture.editor.document, project)
+    val markers = timeoutRunBlocking { readAction { getDisplayedLineMarkers(myFixture.editor.document, myFixture.project) } }
     assertNotNull(markers.firstOrNull { it.icon == AllIcons.RunConfigurations.TestState.Run_run })
   }
 
   @Test
-  fun `line run marker includes continued lines`() {
+  fun `line run marker includes continued lines`(): Unit = timeoutRunBlocking {
     ExtensionTestUtil.maskExtensions(RunAnythingProvider.EP_NAME, listOf(object : RunAnythingProviderBase<String>() {
       override fun findMatchingValue(dataContext: DataContext, pattern: String): String? = pattern.takeIf { it.startsWith("npm start ") }
       override fun getCommand(value: String): String = value
       override fun execute(dataContext: DataContext, value: String) = Unit
-    }), testRootDisposable)
+    }), disposable)
     val file = myFixture.addFileToProject("foo/README.md", """
       ```
       npm start -- \
@@ -119,50 +138,56 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
       npm stop
       ```
     """.trimIndent())
-    myFixture.openFileInEditor(file.virtualFile)
-
-    myFixture.doHighlighting()
-
-    val marker = getDisplayedLineMarkers(myFixture.editor.document, project).single { it.icon == AllIcons.RunConfigurations.TestState.Run }
-    assertEquals(1, myFixture.editor.document.getLineNumber(marker.startOffset))
-    assertEquals("Run 'npm start -- --port=9090 --host=example.com'", marker.lineMarkerTooltip)
-  }
-
-  @Test
-  fun `run context shortcut executes a shell code fence`() {
-    MarkdownSettings.getInstance().useFileDirectoryForCommands = true
-    val editor = myFixture.editor
-    editor.caretModel.moveToOffset(editor.document.text.indexOf("pwd"))
-    val shortcut = KeymapUtil.getPrimaryShortcut("RunClass") as KeyboardShortcut
-    val stroke = shortcut.firstKeyStroke
-    val inputEvent = KeyEvent(
-      editor.contentComponent, KeyEvent.KEY_PRESSED, 0, stroke.modifiers, stroke.keyCode, KeyEvent.CHAR_UNDEFINED,
-    )
-
-    assertTrue(EditorTestFixture.performEditorShortcut(editor, project, shortcut, inputEvent, "run shortcut"))
-    awaitFrontendRunner()
-    assertEquals("pwd", capturingRunner.capturedCommand?.trim())
-  }
-
-  @Test
-  fun `terminal fence markers do not require a backend runner`() {
-    Disposer.dispose(runnerDisposable)
-    ExtensionTestUtil.maskExtensions(markdownRunnerEp, emptyList(), testRootDisposable)
-
-    for (alias in listOf("shell", "bash", "sh", "zsh", "console", "powershell", "posh", "pwsh", "PowerShell")) {
-      val file = myFixture.addFileToProject("foo/$alias.md", "```$alias\npwd\n```")
+    withContext(Dispatchers.EDT) {
       myFixture.openFileInEditor(file.virtualFile)
+
       myFixture.doHighlighting()
-      val markers = getDisplayedLineMarkers(myFixture.editor.document, project)
-      val marker = markers.firstOrNull { it.icon == AllIcons.RunConfigurations.TestState.Run_run }
-      assertNotNull("The $alias fence must have a block marker", marker)
-      val action = (marker!!.createGutterRenderer() as GutterIconRenderer).clickAction!!
-      assertEquals("Run in Terminal", action.templatePresentation.text)
+
+      val marker = getDisplayedLineMarkers(myFixture.editor.document, myFixture.project).single { it.icon == AllIcons.RunConfigurations.TestState.Run }
+      assertEquals(1, myFixture.editor.document.getLineNumber(marker.startOffset))
+      assertEquals("Run 'npm start -- --port=9090 --host=example.com'", marker.lineMarkerTooltip)
     }
   }
 
   @Test
-  fun `preview preserves distinct Bash and Zsh fence languages`() {
+  fun `run context shortcut executes a shell code fence`(): Unit = timeoutRunBlocking {
+    MarkdownSettings.getInstance().useFileDirectoryForCommands = true
+    withContext(Dispatchers.EDT) {
+      val editor = myFixture.editor
+      editor.caretModel.moveToOffset(editor.document.text.indexOf("pwd"))
+      val shortcut = KeymapUtil.getPrimaryShortcut("RunClass") as KeyboardShortcut
+      val stroke = shortcut.firstKeyStroke
+      val inputEvent = KeyEvent(
+        editor.contentComponent, KeyEvent.KEY_PRESSED, 0, stroke.modifiers, stroke.keyCode, KeyEvent.CHAR_UNDEFINED,
+      )
+
+      assertTrue(EditorTestFixture.performEditorShortcut(editor, myFixture.project, shortcut, inputEvent, "run shortcut"))
+      awaitFrontendRunner()
+      assertEquals("pwd", capturingRunner.capturedCommand?.trim())
+    }
+  }
+
+  @Test
+  fun `terminal fence markers do not require a backend runner`(): Unit = timeoutRunBlocking {
+    Disposer.dispose(runnerDisposable)
+    ExtensionTestUtil.maskExtensions(markdownRunnerEp, emptyList(), disposable)
+
+    withContext(Dispatchers.EDT) {
+      for (alias in listOf("shell", "bash", "sh", "zsh", "console", "powershell", "posh", "pwsh", "PowerShell")) {
+        val file = myFixture.addFileToProject("foo/$alias.md", "```$alias\npwd\n```")
+        myFixture.openFileInEditor(file.virtualFile)
+        myFixture.doHighlighting()
+        val markers = getDisplayedLineMarkers(myFixture.editor.document, myFixture.project)
+        val marker = markers.firstOrNull { it.icon == AllIcons.RunConfigurations.TestState.Run_run }
+        assertNotNull(marker, "The $alias fence must have a block marker")
+        val action = (marker!!.createGutterRenderer() as GutterIconRenderer).clickAction!!
+        assertEquals("Run in Terminal", action.templatePresentation.text)
+      }
+    }
+  }
+
+  @Test
+  fun `preview preserves distinct Bash and Zsh fence languages`(): Unit = timeoutRunBlocking {
     MarkdownSettings.getInstance().useFileDirectoryForCommands = true
     val pipe = TestBrowserPipe()
     val extension = createPreviewExtension(pipe)
@@ -171,29 +196,33 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     val zshHtml = extension.processCodeBlock(command, "zsh")
     assertFalse(bashHtml == zshHtml)
 
-    for (shell in listOf("bash", "zsh")) {
-      capturingRunner.capturedCommand = null
-      clickPreviewBlock(pipe, if (shell == "bash") bashHtml else zshHtml)
-      awaitFrontendRunner()
+    withContext(Dispatchers.EDT) {
+      for (shell in listOf("bash", "zsh")) {
+        capturingRunner.capturedCommand = null
+        clickPreviewBlock(pipe, if (shell == "bash") bashHtml else zshHtml)
+        awaitFrontendRunner()
 
-      assertEquals(command, capturingRunner.capturedCommand)
-      assertEquals(shell, capturingRunner.capturedContext?.fenceLanguage)
+        assertEquals(command, capturingRunner.capturedCommand)
+        assertEquals(shell, capturingRunner.capturedContext?.fenceLanguage)
+      }
     }
   }
 
   @Test
-  fun `block marker runs only the prompt lines of a console block`() {
+  fun `block marker runs only the prompt lines of a console block`(): Unit = timeoutRunBlocking {
     MarkdownSettings.getInstance().useFileDirectoryForCommands = true
     val file = myFixture.addFileToProject("foo/console.md", "```console\n$ echo one\none\n# whoami\nroot\n```")
-    myFixture.openFileInEditor(file.virtualFile)
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(file.virtualFile)
 
-    fireBlockMarkerAction()
+      fireBlockMarkerAction()
 
-    assertEquals(" echo one\n whoami", capturingRunner.capturedCommand)
+      assertEquals(" echo one\n whoami", capturingRunner.capturedCommand)
+    }
   }
 
   @Test
-  fun `preview runs only the prompt lines of a console block`() {
+  fun `preview runs only the prompt lines of a console block`(): Unit = timeoutRunBlocking {
     replacePreviewCommandRunnability("")
     MarkdownSettings.getInstance().useFileDirectoryForCommands = true
     val pipe = TestBrowserPipe()
@@ -202,34 +231,38 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     val consoleHtml = extension.processCodeBlock(content, "console")
     val shellHtml = extension.processCodeBlock(content, "shell")
 
-    clickPreviewBlock(pipe, consoleHtml)
-    PlatformTestUtil.waitWithEventsDispatching("The console command did not execute", { capturingRunner.capturedCommand != null }, 10)
+    withContext(Dispatchers.EDT) {
+      clickPreviewBlock(pipe, consoleHtml)
+      PlatformTestUtil.waitWithEventsDispatching("The console command did not execute", { capturingRunner.capturedCommand != null }, 10)
 
-    assertEquals(" echo one", capturingRunner.capturedCommand)
-    capturingRunner.capturedCommand = null
+      assertEquals(" echo one", capturingRunner.capturedCommand)
+      capturingRunner.capturedCommand = null
 
-    clickPreviewBlock(pipe, shellHtml)
-    PlatformTestUtil.waitWithEventsDispatching("The shell command did not execute", { capturingRunner.capturedCommand != null }, 10)
+      clickPreviewBlock(pipe, shellHtml)
+      PlatformTestUtil.waitWithEventsDispatching("The shell command did not execute", { capturingRunner.capturedCommand != null }, 10)
 
-    assertEquals(" echo one\none", capturingRunner.capturedCommand)
+      assertEquals(" echo one\none", capturingRunner.capturedCommand)
+    }
   }
 
   @Test
-  fun `PowerShell block reaches the frontend intact without the language plugin`() {
+  fun `PowerShell block reaches the frontend intact without the language plugin`(): Unit = timeoutRunBlocking {
     assertNull(Language.findLanguageByID("PowerShell"))
     capturingRunner.acceptsLanguage = registeredRunners.single { it.javaClass.simpleName == "ShMarkdownRunner" }::isApplicable
     MarkdownSettings.getInstance().useFileDirectoryForCommands = true
     val command = "\$text = @'\n# text\n\n'@\n\$env:EXAMPLE = \$text"
     val file = myFixture.addFileToProject("foo/powershell.md", "```powershell title=demo\n$command\n```")
-    myFixture.openFileInEditor(file.virtualFile)
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(file.virtualFile)
 
-    fireBlockMarkerAction()
+      fireBlockMarkerAction()
 
-    assertEquals(command, capturingRunner.capturedCommand?.trim())
+      assertEquals(command, capturingRunner.capturedCommand?.trim())
+    }
   }
 
   @Test
-  fun `preview preserves PowerShell commands and strips shell comments`() {
+  fun `preview preserves PowerShell commands and strips shell comments`(): Unit = timeoutRunBlocking {
     capturingRunner.acceptsLanguage = registeredRunners.single { it.javaClass.simpleName == "ShMarkdownRunner" }::isApplicable
     MarkdownSettings.getInstance().useFileDirectoryForCommands = true
     val pipe = TestBrowserPipe()
@@ -239,16 +272,18 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     val powerShellHtml = extension.processCodeBlock(command, "powershell")
     assertFalse(shellHtml == powerShellHtml)
 
-    clickPreviewBlock(pipe, powerShellHtml)
-    PlatformTestUtil.waitWithEventsDispatching("The PowerShell runner did not execute", { capturingRunner.capturedCommand != null }, 10)
+    withContext(Dispatchers.EDT) {
+      clickPreviewBlock(pipe, powerShellHtml)
+      PlatformTestUtil.waitWithEventsDispatching("The PowerShell runner did not execute", { capturingRunner.capturedCommand != null }, 10)
 
-    assertEquals(command, capturingRunner.capturedCommand)
-    capturingRunner.capturedCommand = null
+      assertEquals(command, capturingRunner.capturedCommand)
+      capturingRunner.capturedCommand = null
 
-    clickPreviewBlock(pipe, shellHtml)
-    PlatformTestUtil.waitWithEventsDispatching("The shell command did not execute", { capturingRunner.capturedCommand != null }, 10)
+      clickPreviewBlock(pipe, shellHtml)
+      PlatformTestUtil.waitWithEventsDispatching("The shell command did not execute", { capturingRunner.capturedCommand != null }, 10)
 
-    assertEquals("\$value = 'hello'", capturingRunner.capturedCommand)
+      assertEquals("\$value = 'hello'", capturingRunner.capturedCommand)
+    }
   }
 
   @Test
@@ -277,9 +312,9 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     val html = renderPreview(file)
 
     val lineIcon = html.indexOf("class='run-icon-line code-block'")
-    assertTrue("The command has no colored token, but it must still get a run-line icon: $html", lineIcon >= 0)
-    assertTrue("The run-line icon must come before the text of its line: $html", lineIcon < html.indexOf(command))
-    assertTrue("The run-line icon must come after the previous line: $html", lineIcon > html.indexOf("echo first"))
+    assertTrue(lineIcon >= 0, "The command has no colored token, but it must still get a run-line icon: $html")
+    assertTrue(lineIcon < html.indexOf(command), "The run-line icon must come before the text of its line: $html")
+    assertTrue(lineIcon > html.indexOf("echo first"), "The run-line icon must come after the previous line: $html")
   }
 
   @Test
@@ -293,10 +328,10 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
 
     val blockIcon = html.indexOf("class='run-icon code-block'")
     val lineIcon = html.indexOf("class='run-icon-line code-block'")
-    assertTrue("The fence must have a block icon: $html", blockIcon >= 0)
-    assertTrue("The first line must have a run-line icon: $html", lineIcon >= 0)
-    assertTrue("The block icon comes first, for the outer column: $html", blockIcon < lineIcon)
-    assertTrue("The run-line icon must come before the text of its line: $html", lineIcon < html.indexOf(command, lineIcon))
+    assertTrue(blockIcon >= 0, "The fence must have a block icon: $html")
+    assertTrue(lineIcon >= 0, "The first line must have a run-line icon: $html")
+    assertTrue(blockIcon < lineIcon, "The block icon comes first, for the outer column: $html")
+    assertTrue(lineIcon < html.indexOf(command, lineIcon), "The run-line icon must come before the text of its line: $html")
   }
 
   @Test
@@ -311,13 +346,13 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
 
     val html = renderPreview(file)
 
-    assertFalse("No block runner handles a text fence: $html", html.contains("class='run-icon code-block'"))
+    assertFalse(html.contains("class='run-icon code-block'"), "No block runner handles a text fence: $html")
     clickPreviewLine(pipe, html)
     assertEquals(command, runnability.executedCommand?.trim())
   }
 
   @Test
-  fun `preview block icon runs after the preview extensions reload`() {
+  fun `preview block icon runs after the preview extensions reload`(): Unit = timeoutRunBlocking {
     MarkdownSettings.getInstance().useFileDirectoryForCommands = true
     val command = "echo reload-${System.nanoTime()}"
     replacePreviewCommandRunnability(command)
@@ -326,53 +361,66 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     val extension = createRegisteredPreviewExtension(panel)
     val html = renderPreview(file)
 
-    Disposer.dispose(extension)
-    createRegisteredPreviewExtension(panel)
+    withContext(Dispatchers.EDT) {
+      Disposer.dispose(extension)
+      createRegisteredPreviewExtension(panel)
 
-    clickPreviewBlock(panel.browserPipe as TestBrowserPipe, html)
-    PlatformTestUtil.waitWithEventsDispatching("The block runner did not execute", { capturingRunner.capturedCommand != null }, 10)
-    assertEquals(command, capturingRunner.capturedCommand?.trim())
-  }
-
-  @Test
-  fun `unsupported fences have no block marker without a runner`() {
-    Disposer.dispose(runnerDisposable)
-    ExtensionTestUtil.maskExtensions(markdownRunnerEp, emptyList(), testRootDisposable)
-
-    for (language in listOf("markdown", "unknown-test-language")) {
-      val file = myFixture.addFileToProject("foo/$language.md", "```$language\ntext\n```")
-      myFixture.openFileInEditor(file.virtualFile)
-      myFixture.doHighlighting()
-      val markers = getDisplayedLineMarkers(myFixture.editor.document, project)
-      assertNull(markers.firstOrNull { it.icon == AllIcons.RunConfigurations.TestState.Run_run })
+      clickPreviewBlock(panel.browserPipe as TestBrowserPipe, html)
+      PlatformTestUtil.waitWithEventsDispatching("The block runner did not execute", { capturingRunner.capturedCommand != null }, 10)
+      assertEquals(command, capturingRunner.capturedCommand?.trim())
     }
   }
 
   @Test
-  fun `block run marker invokes runner with base directory as working directory`() {
+  fun `unsupported fences have no block marker without a runner`(): Unit = timeoutRunBlocking {
+    Disposer.dispose(runnerDisposable)
+    ExtensionTestUtil.maskExtensions(markdownRunnerEp, emptyList(), disposable)
+
+    withContext(Dispatchers.EDT) {
+      for (language in listOf("markdown", "unknown-test-language")) {
+        val file = myFixture.addFileToProject("foo/$language.md", "```$language\ntext\n```")
+        myFixture.openFileInEditor(file.virtualFile)
+        myFixture.doHighlighting()
+        val markers = getDisplayedLineMarkers(myFixture.editor.document, myFixture.project)
+        assertNull(markers.firstOrNull { it.icon == AllIcons.RunConfigurations.TestState.Run_run })
+      }
+    }
+  }
+
+  @Test
+  fun `block run marker invokes runner with base directory as working directory`(): Unit = timeoutRunBlocking {
     MarkdownSettings.getInstance().useFileDirectoryForCommands = false
-    fireBlockMarkerAction()
-    val expected = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(myFixture.file.virtualFile)?.canonicalPath
-    assertEquals(expected, capturingRunner.capturedDir)
+    withContext(Dispatchers.EDT) {
+      fireBlockMarkerAction()
+      val expected = BaseProjectDirectories.getInstance(myFixture.project).getBaseDirectoryFor(myFixture.file.virtualFile)?.canonicalPath
+      assertEquals(expected, capturingRunner.capturedDir)
+    }
   }
 
   @Test
-  fun `block run marker invokes runner with file directory as working directory when setting is enabled`() {
+  fun `block run marker invokes runner with file directory as working directory when setting is enabled`(): Unit = timeoutRunBlocking {
     MarkdownSettings.getInstance().useFileDirectoryForCommands = true
-    fireBlockMarkerAction()
-    assertEquals(myFixture.file.virtualFile.parent.canonicalPath, capturingRunner.capturedDir)
+    withContext(Dispatchers.EDT) {
+      fireBlockMarkerAction()
+      assertEquals(myFixture.file.virtualFile.parent.canonicalPath, capturingRunner.capturedDir)
+    }
   }
 
   @Test
-  fun `frontend uses the backend project directory for a file without a parent`() {
-    checkDirectoryForParentlessFile(useFileDirectory = false)
+  fun `frontend uses the backend project directory for a file without a parent`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      checkDirectoryForParentlessFile(useFileDirectory = false)
+    }
   }
 
   @Test
-  fun `frontend uses the backend file directory for a file without a parent`() {
-    checkDirectoryForParentlessFile(useFileDirectory = true)
+  fun `frontend uses the backend file directory for a file without a parent`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      checkDirectoryForParentlessFile(useFileDirectory = true)
+    }
   }
 
+  @RequiresEdt
   private fun checkDirectoryForParentlessFile(useFileDirectory: Boolean) {
     MarkdownSettings.getInstance().useFileDirectoryForCommands = useFileDirectory
     val backendFile = myFixture.file.virtualFile
@@ -382,7 +430,7 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     assertNull(frontendFile.parent)
     val editorFactory = EditorFactory.getInstance()
     val document = requireNotNull(FileDocumentManager.getInstance().getDocument(frontendFile))
-    val editor = editorFactory.createEditor(document, project)
+    val editor = editorFactory.createEditor(document, myFixture.project)
     val request = createFrontendRequest().copy(editorId = editor.editorId())
     try {
       ApplicationManager.getApplication().getService(MarkdownFrontendRunnerRequestService::class.java).request(request)
@@ -398,142 +446,160 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `block run marker passes the Markdown source file to the runner`() {
+  fun `block run marker passes the Markdown source file to the runner`(): Unit = timeoutRunBlocking {
     MarkdownSettings.getInstance().useFileDirectoryForCommands = true
 
-    fireBlockMarkerAction()
+    withContext(Dispatchers.EDT) {
+      fireBlockMarkerAction()
 
-    assertEquals(myFixture.file.virtualFile.url, capturingRunner.capturedContext?.sourceFileUrl)
-    assertEquals("bash", capturingRunner.capturedContext?.fenceLanguage)
+      assertEquals(myFixture.file.virtualFile.url, capturingRunner.capturedContext?.sourceFileUrl)
+      assertEquals("bash", capturingRunner.capturedContext?.fenceLanguage)
+    }
   }
 
   @Test
-  fun `frontend continues after a runner failure`() {
+  fun `frontend continues after a runner failure`(): Unit = timeoutRunBlocking {
     MarkdownSettings.getInstance().useFileDirectoryForCommands = true
     capturingRunner.failNext = true
-    fireBlockMarkerAction()
-    capturingRunner.capturedCommand = null
+    withContext(Dispatchers.EDT) {
+      fireBlockMarkerAction()
+      capturingRunner.capturedCommand = null
 
-    fireBlockMarkerAction()
+      fireBlockMarkerAction()
 
-    assertEquals("pwd", capturingRunner.capturedCommand?.trim())
+      assertEquals("pwd", capturingRunner.capturedCommand?.trim())
+    }
   }
 
   @Test
-  fun `gutter popup action requests the target chooser`() {
+  fun `gutter popup action requests the target chooser`(): Unit = timeoutRunBlocking {
     MarkdownSettings.getInstance().useFileDirectoryForCommands = true
 
-    fireBlockMarkerAction(place = ActionPlaces.EDITOR_GUTTER_POPUP)
+    withContext(Dispatchers.EDT) {
+      fireBlockMarkerAction(place = ActionPlaces.EDITOR_GUTTER_POPUP)
 
-    assertTrue(capturingRunner.capturedContext?.showTargetChooser == true)
+      assertTrue(capturingRunner.capturedContext?.showTargetChooser == true)
+    }
   }
 
   @Test
-  fun `frontend runs an existing target without choosing a working directory`() {
+  fun `frontend runs an existing target without choosing a working directory`(): Unit = timeoutRunBlocking {
     capturingRunner.reuseTarget = true
 
-    fireBlockMarkerAction(place = ActionPlaces.EDITOR_GUTTER_POPUP)
+    withContext(Dispatchers.EDT) {
+      fireBlockMarkerAction(place = ActionPlaces.EDITOR_GUTTER_POPUP)
 
-    assertNull(capturingRunner.capturedDir)
-    assertNull(MarkdownSettings.getInstance().useFileDirectoryForCommands)
-    assertTrue(capturingRunner.capturedContext?.showTargetChooser == true)
+      assertNull(capturingRunner.capturedDir)
+      assertNull(MarkdownSettings.getInstance().useFileDirectoryForCommands)
+      assertTrue(capturingRunner.capturedContext?.showTargetChooser == true)
+    }
   }
 
   @Test
-  fun `keyboard gutter action anchors the chooser after scrolling`() {
+  fun `keyboard gutter action anchors the chooser after scrolling`(): Unit = timeoutRunBlocking {
     MarkdownSettings.getInstance().useFileDirectoryForCommands = true
     val prefix = "\n".repeat(100)
     val file = myFixture.addFileToProject("foo/scrolled.md", prefix + "```shell\npwd\n```")
-    myFixture.openFileInEditor(file.virtualFile)
-    val editor = myFixture.editor as EditorEx
-    EditorTestUtil.setEditorVisibleSize(editor, 80, 10)
-    editor.scrollingModel.disableAnimation()
-    editor.scrollingModel.scrollVertically(95 * editor.lineHeight)
-    assertTrue(editor.scrollingModel.verticalScrollOffset > 0)
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(file.virtualFile)
+      val editor = myFixture.editor as EditorEx
+      EditorTestUtil.setEditorVisibleSize(editor, 80, 10)
+      editor.scrollingModel.disableAnimation()
+      editor.scrollingModel.scrollVertically(95 * editor.lineHeight)
+      assertTrue(editor.scrollingModel.verticalScrollOffset > 0)
 
-    fireBlockMarkerAction(place = ActionPlaces.EDITOR_GUTTER_POPUP, inputEvent = null)
+      fireBlockMarkerAction(place = ActionPlaces.EDITOR_GUTTER_POPUP, inputEvent = null)
 
-    val context = requireNotNull(capturingRunner.capturedContext)
-    val expectedPoint = SwingUtilities.convertPoint(
-      editor.contentComponent, editor.logicalPositionToXY(LogicalPosition(100, 3)), editor.component,
-    )
-    val actualPoint = SwingUtilities.convertPoint(context.component, Point(context.x, context.y), editor.component)
-    assertEquals(expectedPoint, actualPoint)
-  }
-
-  @Test
-  fun `gutter popup action anchors the chooser at the mouse click`() {
-    MarkdownSettings.getInstance().useFileDirectoryForCommands = true
-    val editor = myFixture.editor
-    val clickPoint = Point(240, 80)
-    val screenPoint = Point(clickPoint).also { SwingUtilities.convertPointToScreen(it, editor.component) }
-    val inputEvent = MouseEvent(
-      editor.component, MouseEvent.MOUSE_RELEASED, 0, 0, clickPoint.x, clickPoint.y,
-      screenPoint.x, screenPoint.y, 1, false, MouseEvent.BUTTON1,
-    )
-
-    fireBlockMarkerAction(place = ActionPlaces.EDITOR_GUTTER_POPUP, inputEvent = inputEvent)
-
-    val context = requireNotNull(capturingRunner.capturedContext)
-    val actualPoint = SwingUtilities.convertPoint(context.component, Point(context.x, context.y), editor.component)
-    assertEquals(clickPoint, actualPoint)
-  }
-
-  @Test
-  fun `frontend runner uses the action editor`() {
-    MarkdownSettings.getInstance().useFileDirectoryForCommands = true
-    val editorFactory = EditorFactory.getInstance()
-    val actionEditor = editorFactory.createEditor(myFixture.editor.document, project)
-    try {
-      fireBlockMarkerAction(editor = actionEditor)
-
-      assertEquals("pwd", capturingRunner.capturedCommand?.trim())
-      assertSame(actionEditor.contentComponent, capturingRunner.capturedContext?.component)
-    }
-    finally {
-      editorFactory.releaseEditor(actionEditor)
+      val context = requireNotNull(capturingRunner.capturedContext)
+      val expectedPoint = SwingUtilities.convertPoint(
+        editor.contentComponent, editor.logicalPositionToXY(LogicalPosition(100, 3)), editor.component,
+      )
+      val actualPoint = SwingUtilities.convertPoint(context.component, Point(context.x, context.y), editor.component)
+      assertEquals(expectedPoint, actualPoint)
     }
   }
 
   @Test
-  fun `gutter popup action tells the user that it opens the terminal chooser`() {
-    myFixture.doHighlighting()
-    val markers = getDisplayedLineMarkers(myFixture.editor.document, project)
-    val blockMarker = markers.first { it.icon == AllIcons.RunConfigurations.TestState.Run_run }
-    val action = (blockMarker.createGutterRenderer() as GutterIconRenderer).clickAction!!
-    val dataContext = SimpleDataContext.builder().add(CommonDataKeys.PROJECT, project).build()
-    val inputEvent = MouseEvent(myFixture.editor.component, MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, 1, false)
-    val event = AnActionEvent.createEvent(
-      dataContext,
-      action.templatePresentation.clone(),
-      ActionPlaces.EDITOR_GUTTER_POPUP,
-      ActionUiKind.NONE,
-      inputEvent,
-    )
+  fun `gutter popup action anchors the chooser at the mouse click`(): Unit = timeoutRunBlocking {
+    MarkdownSettings.getInstance().useFileDirectoryForCommands = true
+    withContext(Dispatchers.EDT) {
+      val editor = myFixture.editor
+      val clickPoint = Point(240, 80)
+      val screenPoint = Point(clickPoint).also { SwingUtilities.convertPointToScreen(it, editor.component) }
+      val inputEvent = MouseEvent(
+        editor.component, MouseEvent.MOUSE_RELEASED, 0, 0, clickPoint.x, clickPoint.y,
+        screenPoint.x, screenPoint.y, 1, false, MouseEvent.BUTTON1,
+      )
 
-    action.update(event)
+      fireBlockMarkerAction(place = ActionPlaces.EDITOR_GUTTER_POPUP, inputEvent = inputEvent)
 
-    assertEquals("Choose Terminal...", event.presentation.text)
+      val context = requireNotNull(capturingRunner.capturedContext)
+      val actualPoint = SwingUtilities.convertPoint(context.component, Point(context.x, context.y), editor.component)
+      assertEquals(clickPoint, actualPoint)
+    }
   }
 
   @Test
-  fun `block run marker strips trailing hash comment from command`() {
+  fun `frontend runner uses the action editor`(): Unit = timeoutRunBlocking {
+    MarkdownSettings.getInstance().useFileDirectoryForCommands = true
+    withContext(Dispatchers.EDT) {
+      val editorFactory = EditorFactory.getInstance()
+      val actionEditor = editorFactory.createEditor(myFixture.editor.document, myFixture.project)
+      try {
+        fireBlockMarkerAction(editor = actionEditor)
+
+        assertEquals("pwd", capturingRunner.capturedCommand?.trim())
+        assertSame(actionEditor.contentComponent, capturingRunner.capturedContext?.component)
+      }
+      finally {
+        editorFactory.releaseEditor(actionEditor)
+      }
+    }
+  }
+
+  @Test
+  fun `gutter popup action tells the user that it opens the terminal chooser`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      myFixture.doHighlighting()
+      val markers = getDisplayedLineMarkers(myFixture.editor.document, myFixture.project)
+      val blockMarker = markers.first { it.icon == AllIcons.RunConfigurations.TestState.Run_run }
+      val action = (blockMarker.createGutterRenderer() as GutterIconRenderer).clickAction!!
+      val dataContext = SimpleDataContext.builder().add(CommonDataKeys.PROJECT, myFixture.project).build()
+      val inputEvent = MouseEvent(myFixture.editor.component, MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, 1, false)
+      val event = AnActionEvent.createEvent(
+        dataContext,
+        action.templatePresentation.clone(),
+        ActionPlaces.EDITOR_GUTTER_POPUP,
+        ActionUiKind.NONE,
+        inputEvent,
+      )
+
+      action.update(event)
+
+      assertEquals("Choose Terminal...", event.presentation.text)
+    }
+  }
+
+  @Test
+  fun `block run marker strips trailing hash comment from command`(): Unit = timeoutRunBlocking {
     MarkdownSettings.getInstance().useFileDirectoryForCommands = true
     val testMdFile = myFixture.addFileToProject(
       "foo/withComment.md",
       "```bash\nnpm run dev       # start Vite dev server (HMR, localhost:5173)\n```"
     )
-    myFixture.openFileInEditor(testMdFile.virtualFile)
-    fireBlockMarkerAction()
-    val command = capturingRunner.capturedCommand
-    assertNotNull("Runner was not invoked", command)
-    assertEquals("npm run dev", command!!.trim())
+    withContext(Dispatchers.EDT) {
+      myFixture.openFileInEditor(testMdFile.virtualFile)
+      fireBlockMarkerAction()
+      val command = capturingRunner.capturedCommand
+      assertNotNull(command, "Runner was not invoked")
+      assertEquals("npm run dev", command!!.trim())
+    }
   }
 
   @Test
   fun `only the latest click remains queued before frontend startup`() {
     val queue = MarkdownFrontendRunnerRequestService()
-    Disposer.register(testRootDisposable, queue)
+    Disposer.register(disposable, queue)
     val request = createFrontendRequest()
     repeat(100) { queue.request(request.copy(command = "echo $it")) }
 
@@ -546,7 +612,7 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
   fun `a recent click remains available before frontend startup`() {
     val timeSource = TestTimeSource()
     val queue = MarkdownFrontendRunnerRequestService.createForTest(timeSource)
-    Disposer.register(testRootDisposable, queue)
+    Disposer.register(disposable, queue)
     val request = createFrontendRequest()
     queue.request(request)
     timeSource += 4.seconds
@@ -557,10 +623,10 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `a click expires after five seconds without a frontend collector`() = timeoutRunBlocking {
+  fun `a click expires after five seconds without a frontend collector`(): Unit = timeoutRunBlocking {
     val timeSource = TestTimeSource()
     val queue = MarkdownFrontendRunnerRequestService.createForTest(timeSource)
-    Disposer.register(testRootDisposable, queue)
+    Disposer.register(disposable, queue)
     val request = createFrontendRequest()
     queue.request(request)
     timeSource += 5.seconds
@@ -583,43 +649,45 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
 
   private fun createFrontendRequest(): MarkdownFrontendRunnerRequest {
     return MarkdownFrontendRunnerRequest(
-      projectId = project.projectId(),
+      projectId = myFixture.project.projectId(),
       languageId = myFixture.file.language.id,
       command = "pwd",
       sourceFileUrl = myFixture.file.virtualFile.url,
       showTargetChooser = true,
       offset = 3,
-      workingDirectoryPaths = requireNotNull(getMarkdownCommandWorkingDirectoryPaths(project, myFixture.file.virtualFile)),
+      workingDirectoryPaths = requireNotNull(getMarkdownCommandWorkingDirectoryPaths(myFixture.project, myFixture.file.virtualFile)),
       editorId = myFixture.editor.editorId(),
     )
   }
 
   private fun createPreviewExtension(pipe: BrowserPipe? = null): CommandRunnerExtension {
     val panel = createPreviewPanel(myFixture.file.virtualFile, pipe)
-    return CommandRunnerExtension(panel, CommandRunnerExtension.Provider()).also { Disposer.register(testRootDisposable, it) }
+    return CommandRunnerExtension(panel, CommandRunnerExtension.Provider()).also { Disposer.register(disposable, it) }
   }
 
   private fun createRegisteredPreviewExtension(panel: MarkdownHtmlPanel): CommandRunnerExtension {
     val provider = requireNotNull(MarkdownExtensionsUtil.findBrowserExtensionProvider<CommandRunnerExtension.Provider>())
     val extension = provider.createBrowserExtension(panel) as CommandRunnerExtension
-    Disposer.register(testRootDisposable, extension)
+    Disposer.register(disposable, extension)
     return extension
   }
 
   private fun renderPreview(file: VirtualFile): String {
-    val document = requireNotNull(FileDocumentManager.getInstance().getDocument(file))
-    return runReadAction { HtmlSourceTextPreprocessor().preprocessText(project, document, file) }
+    return runReadAction {
+      val document = requireNotNull(FileDocumentManager.getInstance().getDocument(file))
+      HtmlSourceTextPreprocessor().preprocessText(myFixture.project, document, file)
+    }
   }
 
   private fun replacePreviewCommandRunnability(runnableCommand: String): RecordingPreviewCommandRunnability {
     val runnability = RecordingPreviewCommandRunnability(runnableCommand)
-    ApplicationManager.getApplication().replaceService(PreviewCommandRunnability::class.java, runnability, testRootDisposable)
+    ApplicationManager.getApplication().replaceService(PreviewCommandRunnability::class.java, runnability, disposable)
     return runnability
   }
 
   private fun createPreviewPanel(virtualFile: VirtualFile, pipe: BrowserPipe?): MarkdownHtmlPanel {
     val component = myFixture.editor.component
-    val project = project
+    val project = myFixture.project
     val panel = object : MarkdownHtmlPanel {
       override fun getComponent(): JComponent = component
       override fun getProject(): Project = project
@@ -631,7 +699,7 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
       override fun removeScrollListener(listener: MarkdownHtmlPanel.ScrollListener) = Unit
       override fun dispose() = Unit
     }
-    Disposer.register(testRootDisposable, panel)
+    Disposer.register(disposable, panel)
     return panel
   }
 
@@ -661,25 +729,27 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     override suspend fun resolvePending(): Boolean = false
   }
 
+  @RequiresEdt
   private fun fireBlockMarkerAction(
     place: String = ActionPlaces.EDITOR_GUTTER,
     editor: Editor = myFixture.editor,
     inputEvent: MouseEvent? = MouseEvent(editor.component, MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, 1, false),
   ) {
     myFixture.doHighlighting()
-    val markers = getDisplayedLineMarkers(myFixture.editor.document, project)
+    val markers = getDisplayedLineMarkers(myFixture.editor.document, myFixture.project)
     val blockMarker = markers.first { it.icon == AllIcons.RunConfigurations.TestState.Run_run }
     val action = (blockMarker.createGutterRenderer() as GutterIconRenderer).clickAction!!
     val dataContext = SimpleDataContext.builder()
-      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.PROJECT, myFixture.project)
       .add(CommonDataKeys.EDITOR, editor)
       .build()
     val event = AnActionEvent.createEvent(dataContext, action.templatePresentation.clone(), place, ActionUiKind.NONE, inputEvent)
     action.actionPerformed(event)
-    assertNull("The backend action must delegate execution to the frontend", capturingRunner.capturedCommand)
+    assertNull(capturingRunner.capturedCommand, "The backend action must delegate execution to the frontend")
     awaitFrontendRunner()
   }
 
+  @RequiresEdt
   private fun awaitFrontendRunner() {
     service<MarkdownFrontendRunnerFlowService>()
     PlatformTestUtil.waitWithEventsDispatching("The frontend runner did not execute", { capturingRunner.capturedCommand != null }, 10)

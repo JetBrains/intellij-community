@@ -2,14 +2,36 @@
 package org.intellij.plugins.markdown.highlighting
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.DumbModeTestUtils
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.awt.Font
 
-class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
+@TestApplication
+class MarkdownHighlightingAnnotatorTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @TestDisposable
+  lateinit var disposable: Disposable
+
+  @Test
   fun testHeadersKeepLevelHighlighting() {
     val text = """
       # Strong **Header**
@@ -26,6 +48,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, "Setext Header", MarkdownHighlighterColors.HEADER_LEVEL_1)
   }
 
+  @Test
   fun testContainerMarkersKeepMarkerHighlighting() {
     val text = """
       # Heading Level 1
@@ -48,6 +71,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, ">", MarkdownHighlighterColors.BLOCK_QUOTE_MARKER)
   }
 
+  @Test
   fun testInlineFormattingAndLinksKeepInheritedHighlighting() {
     val text = "A **bold** and *italic* [link](target.md)"
     myFixture.configureByText("test.md", text)
@@ -59,6 +83,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, "target.md", MarkdownHighlighterColors.LINK_DESTINATION)
   }
 
+  @Test
   fun testHighlightCoversTextAndMarkers() {
     val text = "A ==marked **bold**== text"
     myFixture.configureByText("test.md", text)
@@ -72,13 +97,15 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, "text", MarkdownHighlighterColors.HIGHLIGHT, HighlightingState.NOT_HIGHLIGHTED)
   }
 
+  @Test
   fun testSingleAndTripleEqualsAreNotHighlighted() {
     myFixture.configureByText("test.md", "A =one= and ===three===")
     val highlights = myFixture.doHighlighting()
 
-    assertEmpty(highlights.filter { it.forcedTextAttributesKey == MarkdownHighlighterColors.HIGHLIGHT })
+    assertThat(highlights.filter { it.forcedTextAttributesKey == MarkdownHighlighterColors.HIGHLIGHT }).isEmpty()
   }
 
+  @Test
   fun testInlineFootnotesUseDedicatedHighlighting() {
     val text = "Before ^[Inline footnote text] after"
     myFixture.configureByText("test.md", text)
@@ -94,6 +121,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     )
   }
 
+  @Test
   fun testInlineFootnotesWorkInHeadersAndTables() {
     val text = """
       # Header ^[Header note]
@@ -112,6 +140,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, "Table note", MarkdownHighlighterColors.INLINE_FOOTNOTE)
   }
 
+  @Test
   fun testCitationsUseDedicatedHighlighting() {
     val citations = listOf(
       "[@doe99]" to listOf("@doe99"),
@@ -125,7 +154,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     var searchStart = 0
     for ([citation, citationKeys] in citations) {
       val citationStart = text.indexOf(citation, searchStart)
-      assertTrue("Citation '$citation' was not found", citationStart >= 0)
+      assertTrue(citationStart >= 0, "Citation '$citation' was not found")
       for (citationKey in citationKeys) {
         val keyOffset = citationStart + citation.indexOf(citationKey)
         assertElementHighlightedWithKey(
@@ -146,6 +175,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     }
   }
 
+  @Test
   fun testCitationsKeepContainerHighlighting() {
     val text = "**bold [@doe99]**\n# Header [@smith04]"
     myFixture.configureByText("test.md", text)
@@ -157,6 +187,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, "@smith04", MarkdownHighlighterColors.HEADER_LEVEL_1)
   }
 
+  @Test
   fun testEscapedCaretDoesNotStartInlineFootnote() {
     val text = "\\^[not inline]"
     myFixture.configureByText("test.md", text)
@@ -177,6 +208,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     )
   }
 
+  @Test
   fun testOrdinaryShortReferenceLinksAreNotCitations() {
     val text = "[id]\n[mail user@example.com]"
     myFixture.configureByText("test.md", text)
@@ -197,6 +229,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     )
   }
 
+  @Test
   fun testIndentedFenceUsesFenceHighlighting() {
     val text = """
       World
@@ -218,6 +251,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     )
   }
 
+  @Test
   fun testEmptyIndentedFenceUsesFenceHighlighting() {
     val text = """
           ```java
@@ -230,6 +264,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, "java", MarkdownHighlighterColors.CODE_FENCE_LANGUAGE)
   }
 
+  @Test
   fun testCodeSpansKeepCodeSpanHighlightingInsideHeaders() {
     myFixture.configureByText("test.md", "`Standalone`\n#### Header `Code`")
     val highlights = myFixture.doHighlighting()
@@ -239,6 +274,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, "Code", MarkdownHighlighterColors.HEADER_LEVEL_4)
   }
 
+  @Test
   fun testCodeSpansKeepCodeSpanHighlightingInsideInlineHtml() {
     myFixture.configureByText("test.md", "`test <a> hello`")
     val highlights = myFixture.doHighlighting()
@@ -246,6 +282,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, "<a>", MarkdownHighlighterColors.CODE_SPAN)
   }
 
+  @Test
   fun testCodeSpansKeepCodeSpanHighlightingForProjectClassesInHeader() {
     myFixture.addFileToProject("Z.java", "class Z {}")
     myFixture.addFileToProject("X.java", "class X {}")
@@ -258,6 +295,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, "X", MarkdownHighlighterColors.CODE_SPAN)
   }
 
+  @Test
   fun testCodeSpansKeepCodeSpanHighlightingInDifferentContexts() {
     val cases = listOf(
       "# Header `Code`" to MarkdownHighlighterColors.HEADER_LEVEL_1,
@@ -290,6 +328,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     }
   }
 
+  @Test
   fun testCodeSpansKeepBoldAndItalicHighlighting() {
     val text = "_**Some `code`**_"
     myFixture.configureByText("test.md", text)
@@ -299,6 +338,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHasFontType(highlights, "code", Font.BOLD or Font.ITALIC)
   }
 
+  @Test
   fun testCodeSpansKeepHeadingAndEmphasisHighlighting() {
     val text = "Setext ~~**`Header`**~~\n==="
     myFixture.configureByText("test.md", text)
@@ -307,6 +347,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHasFontType(highlights, "Header", Font.BOLD or Font.ITALIC)
   }
 
+  @Test
   fun testCodeSpansKeepStrikethroughHighlighting() {
     val text = "~~_**Some `code`**_~~"
     myFixture.configureByText("test.md", text)
@@ -317,6 +358,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementDoesNotHaveEffectType(highlights, "`", EffectType.STRIKEOUT)
   }
 
+  @Test
   fun testDefinitionListTermsOverrideCodeSpanHighlighting() {
     myFixture.configureByText("test.md", """
       ## Command-line options
@@ -337,7 +379,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
       :  Print the version number
     """.trimIndent())
     val highlights = myFixture.doHighlighting()
-    val fileText = myFixture.file.text
+    val fileText = fileText()
 
     for (term in listOf("help", "license", "upgrade", "verify", "version")) {
       val startOffset = fileText.indexOf("`$term`") + 1
@@ -345,6 +387,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     }
   }
 
+  @Test
   fun testImagesKeepImageHighlightingInDifferentContexts() {
     val text = """
       # Markdown WYSIWYG Demo
@@ -379,6 +422,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     }
   }
 
+  @Test
   fun testNestedContainersCreateUniquePerRangeTextAnnotations() {
     myFixture.configureByText("test.md", """
       # Header with **bold**
@@ -396,12 +440,13 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
       .groupBy { HighlightKey(it.startOffset, it.endOffset, it.forcedTextAttributesKey) }
       .filterValues { it.size > 1 }
 
-    assertTrue("Duplicate forced text attribute annotations: ${duplicates.keys.joinToString()}", duplicates.isEmpty())
+    assertTrue(duplicates.isEmpty(), "Duplicate forced text attribute annotations: ${duplicates.keys.joinToString()}")
   }
 
+  @Test
   fun testHeadingsEmphasisAndCodeSpansAreHighlightedInDumbMode() {
-    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, testRootDisposable)
-    DumbModeTestUtils.runInDumbModeSynchronously(project) {
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, disposable)
+    DumbModeTestUtils.runInDumbModeSynchronously(myFixture.project) {
       val text = "# Header\n\n**bold** `code`\n"
       myFixture.configureByText("test.md", text)
       val highlights = myFixture.doHighlighting()
@@ -417,9 +462,9 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     element: String,
     attributesKey: TextAttributesKey,
     highlightingState: HighlightingState = HighlightingState.HIGHLIGHTED,
-    startOffset: Int = myFixture.file.text.indexOf(element),
+    startOffset: Int = fileText().indexOf(element),
   ) {
-    assertTrue("Fragment '$element' was not found", startOffset >= 0)
+    assertTrue(startOffset >= 0, "Fragment '$element' was not found")
     val endOffset = startOffset + element.length
     val rangePredicate = { highlight: HighlightInfo ->
       highlight.startOffset <= startOffset && highlight.endOffset >= endOffset
@@ -430,12 +475,12 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
 
     when (highlightingState) {
       HighlightingState.HIGHLIGHTED -> assertTrue(
-        "Expected '$element' to be highlighted with $attributesKey",
-        highlights.any(highlightedPredicate)
+        highlights.any(highlightedPredicate),
+        "Expected '$element' to be highlighted with $attributesKey"
       )
       HighlightingState.NOT_HIGHLIGHTED -> assertFalse(
-        "Expected '$element' to be highlighted with $attributesKey",
-        highlights.any { it.hasTextAttributesKey(attributesKey) && rangePredicate(it) }
+        highlights.any { it.hasTextAttributesKey(attributesKey) && rangePredicate(it) },
+        "Expected '$element' to be highlighted with $attributesKey"
       )
     }
   }
@@ -444,15 +489,15 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     highlights: List<HighlightInfo>,
     element: String,
     fontType: Int,
-    startOffset: Int = myFixture.file.text.indexOf(element),
+    startOffset: Int = fileText().indexOf(element),
   ) {
-    assertTrue("Fragment '$element' was not found", startOffset >= 0)
+    assertTrue(startOffset >= 0, "Fragment '$element' was not found")
     val endOffset = startOffset + element.length
     assertTrue(
-      "Expected '$element' to use font type $fontType",
       highlights.any {
         it.forcedTextAttributes?.fontType == fontType && it.startOffset <= startOffset && it.endOffset >= endOffset
       },
+      "Expected '$element' to use font type $fontType",
     )
   }
 
@@ -460,15 +505,15 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     highlights: List<HighlightInfo>,
     element: String,
     effectType: EffectType,
-    startOffset: Int = myFixture.file.text.indexOf(element),
+    startOffset: Int = fileText().indexOf(element),
   ) {
-    assertTrue("Fragment '$element' was not found", startOffset >= 0)
+    assertTrue(startOffset >= 0, "Fragment '$element' was not found")
     val endOffset = startOffset + element.length
     assertTrue(
-      "Expected '$element' to use effect type $effectType",
       highlights.any {
         it.forcedTextAttributes?.effectType == effectType && it.startOffset <= startOffset && it.endOffset >= endOffset
       },
+      "Expected '$element' to use effect type $effectType",
     )
   }
 
@@ -476,17 +521,19 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     highlights: List<HighlightInfo>,
     element: String,
     effectType: EffectType,
-    startOffset: Int = myFixture.file.text.indexOf(element),
+    startOffset: Int = fileText().indexOf(element),
   ) {
-    assertTrue("Fragment '$element' was not found", startOffset >= 0)
+    assertTrue(startOffset >= 0, "Fragment '$element' was not found")
     val endOffset = startOffset + element.length
     assertFalse(
-      "Expected '$element' not to use effect type $effectType",
       highlights.any {
         it.forcedTextAttributes?.effectType == effectType && it.startOffset <= startOffset && it.endOffset >= endOffset
       },
+      "Expected '$element' not to use effect type $effectType",
     )
   }
+
+  private fun fileText(): String = timeoutRunBlocking { readAction { myFixture.file.text } }
 
   private enum class HighlightingState {
     HIGHLIGHTED,

@@ -4,25 +4,37 @@ package org.intellij.plugins.markdown.model
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.colors.CodeInsightColors
-import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.DumbModeTestUtils
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.model.psi.labels.DuplicateLinkDefinitionInspection
 import org.intellij.plugins.markdown.model.psi.labels.UnusedLinkDefinitionInspection
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
-class LinkDefinitionInspectionTest: BasePlatformTestCase() {
+@TestApplication
+class LinkDefinitionInspectionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @TestDisposable
+  lateinit var disposable: Disposable
+
   @Test
+  @RegistryKey(key = "ide.dumb.aware.inspections", value = "true")
   fun `definitions are checked during indexing`() {
-    RegistryManager.getInstance().get("ide.dumb.aware.inspections").setValue(true, testRootDisposable)
     myFixture.enableInspections(UnusedLinkDefinitionInspection::class.java, DuplicateLinkDefinitionInspection::class.java)
     myFixture.configureByText("definitions.md", """
       [text][used]
@@ -33,8 +45,8 @@ class LinkDefinitionInspectionTest: BasePlatformTestCase() {
       [<warning descr="Unused link definition">unused</warning>]: https://example.net
       [image]: https://example.com/image.png
     """.trimIndent())
-    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, testRootDisposable)
-    DumbModeTestUtils.runInDumbModeSynchronously(project) {
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, disposable)
+    DumbModeTestUtils.runInDumbModeSynchronously(myFixture.project) {
       myFixture.checkHighlighting()
     }
   }
@@ -62,11 +74,11 @@ class LinkDefinitionInspectionTest: BasePlatformTestCase() {
   @Test
   fun `inspection severities can be configured separately`() {
     myFixture.enableInspections(UnusedLinkDefinitionInspection::class.java, DuplicateLinkDefinitionInspection::class.java)
-    val profile = InspectionProfileManager.getInstance(project).currentProfile
+    val profile = InspectionProfileManager.getInstance(myFixture.project).currentProfile
     val unusedKey = requireNotNull(HighlightDisplayKey.find("MarkdownUnusedLinkDefinition"))
     val duplicateKey = requireNotNull(HighlightDisplayKey.find("MarkdownDuplicateLinkDefinition"))
-    profile.setErrorLevel(unusedKey, HighlightDisplayLevel.WEAK_WARNING, project)
-    profile.setErrorLevel(duplicateKey, HighlightDisplayLevel.ERROR, project)
+    profile.setErrorLevel(unusedKey, HighlightDisplayLevel.WEAK_WARNING, myFixture.project)
+    profile.setErrorLevel(duplicateKey, HighlightDisplayLevel.ERROR, myFixture.project)
     myFixture.configureByText("definitions.md", """
       [<weak_warning descr="Unused link definition">label</weak_warning>]: https://example.com
       [<error descr="Duplicate link definition">label</error>]: https://example.org
@@ -348,15 +360,15 @@ class LinkDefinitionInspectionTest: BasePlatformTestCase() {
 
     val document = myFixture.editor.document
     val reference = "[label]\n\n"
-    WriteCommandAction.runWriteCommandAction(project) {
+    WriteCommandAction.runWriteCommandAction(myFixture.project) {
       document.insertString(0, reference)
-      PsiDocumentManager.getInstance(project).commitDocument(document)
+      PsiDocumentManager.getInstance(myFixture.project).commitDocument(document)
     }
     assertEquals(emptyList<String>(), myFixture.doHighlighting(HighlightSeverity.WARNING).map { it.description })
 
-    WriteCommandAction.runWriteCommandAction(project) {
+    WriteCommandAction.runWriteCommandAction(myFixture.project) {
       document.deleteString(0, reference.length)
-      PsiDocumentManager.getInstance(project).commitDocument(document)
+      PsiDocumentManager.getInstance(myFixture.project).commitDocument(document)
     }
     assertEquals(listOf("Unused link definition"), myFixture.doHighlighting(HighlightSeverity.WARNING).map { it.description })
   }

@@ -22,6 +22,9 @@ import com.intellij.markdown.figmaAdvertiser.dismissFigmaSuggestion
 import com.intellij.markdown.figmaAdvertiser.isFigmaSuggestionDismissed
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -29,22 +32,26 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestion
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.productMode.ProductMode
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.platform.testFramework.loadPluginWithText
 import com.intellij.platform.testFramework.plugins.dependsIntellijModulesLang
 import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -58,6 +65,14 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
@@ -65,38 +80,43 @@ import java.util.concurrent.ConcurrentLinkedQueue
  *
  * `FigmaAdvertiserUsagesCollector` reports one shape, so a `suggestion.shown` claimed by one case
  * would silence every case after it. [setUp] gives each case its own [ShownSuggestions], and
- * [tearDown] clears the dismissal the project carries, for the same reason: a
- * `BasePlatformTestCase` shares one project across the class.
+ * [tearDown] clears the dismissal the project carries, for the same reason:
+ * the tests of the class share one project.
  */
-class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
+@TestApplication
+// Asked for rather than inherited: a branch that ships the advertisement off would otherwise
+// turn these into failures that name the assertion and not the cause.
+@RegistryKey(key = FigmaAdvertiserRegistry.KEY_ADVERTISER_ENABLED, value = "true")
+class MarkdownFigmaAdvertiserBannerTest {
+  private val myFixture by codeInsightModuleFixture(projectFixture)
 
-  override fun setUp() {
-    super.setUp()
-    // Asked for rather than inherited: a branch that ships the advertisement off would otherwise
-    // turn these into failures that name the assertion and not the cause.
-    Registry.get(FigmaAdvertiserRegistry.KEY_ADVERTISER_ENABLED).setValue(true, testRootDisposable)
-    project.replaceService(ShownSuggestions::class.java, ShownSuggestions(), testRootDisposable)
+  @TestDisposable
+  lateinit var disposable: Disposable
+
+  @TempDir
+  lateinit var tempDir: Path
+
+  @BeforeEach
+  fun setUp() {
+    myFixture.project.replaceService(ShownSuggestions::class.java, ShownSuggestions(), disposable)
   }
 
-  override fun tearDown() {
-    try {
-      PropertiesComponent.getInstance(project).unsetValue(FIGMA_SUGGESTION_DISMISSED_KEY)
-      PropertiesComponent.getInstance().unsetValue(FIGMA_SUGGESTION_DISMISSED_KEY)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    PropertiesComponent.getInstance(myFixture.project).unsetValue(FIGMA_SUGGESTION_DISMISSED_KEY)
+    PropertiesComponent.getInstance().unsetValue(FIGMA_SUGGESTION_DISMISSED_KEY)
   }
 
-  fun `test a Markdown file that links to Figma is offered the banner`() {
-    val panel = bannerOver(designNote())
+  @Test
+  fun `test a Markdown file that links to Figma is offered the banner`(): Unit = timeoutRunBlocking {
+    val note = designNote()
+    withContext(Dispatchers.EDT) {
+      val panel = bannerOver(note)
 
-    panel.text shouldBe MarkdownFigmaAdvertiserBundle.message("markdown.figma.suggestion.text")
-    panel.findLabelByName(INSTALL_LABEL).shouldNotBeNull()
-    panel.findLabelByName(DISMISS_LABEL).shouldNotBeNull()
+      panel.text shouldBe MarkdownFigmaAdvertiserBundle.message("markdown.figma.suggestion.text")
+      panel.findLabelByName(INSTALL_LABEL).shouldNotBeNull()
+      panel.findLabelByName(DISMISS_LABEL).shouldNotBeNull()
+    }
   }
 
   /**
@@ -105,49 +125,61 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * (`PluginAdvertiserEditorNotificationProvider.kt:71`), so the descriptor's registration is what
    * is pinned. The plugin id is the value only this advertisement produces.
    */
-  fun `test the extension point reaches the provider over a Markdown file`() {
+  @Test
+  fun `test the extension point reaches the provider over a Markdown file`(): Unit = timeoutRunBlocking {
     val note = designNote()
 
-    val suggestion = PLUGIN_SUGGESTION_EP.extensionList
-      .firstNotNullOfOrNull { it.getSuggestion(project, note.virtualFile) }
+    val suggestion = readAction {
+      PLUGIN_SUGGESTION_EP.extensionList
+        .firstNotNullOfOrNull { it.getSuggestion(myFixture.project, note.virtualFile) }
+    }
 
     suggestion.shouldNotBeNull()
     suggestion.pluginIds shouldBe listOf(FIGMA_CONNECT_PLUGIN_ID)
-    panelOf(suggestion).text shouldBe MarkdownFigmaAdvertiserBundle.message("markdown.figma.suggestion.text")
+    withContext(Dispatchers.EDT) {
+      panelOf(suggestion).text shouldBe MarkdownFigmaAdvertiserBundle.message("markdown.figma.suggestion.text")
+    }
   }
 
   /** The record says which trigger the user answered, which is what this group exists for. */
-  fun `test the shown event names the Markdown trigger and the editor surface`() {
+  @Test
+  fun `test the shown event names the Markdown trigger and the editor surface`(): Unit = timeoutRunBlocking {
     val note = designNote()
 
-    val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
-      panelOf(suggestionOver(note).shouldNotBeNull())
-    }
+    withContext(Dispatchers.EDT) {
+      val events = FUCollectorTestCase.collectLogEvents(disposable) {
+        panelOf(suggestionOver(note).shouldNotBeNull())
+      }
 
-    val shown = events.single {
-      it.group.id == FigmaAdvertiserUsagesCollector.GROUP_ID && it.event.id == "suggestion.shown"
+      val shown = events.single {
+        it.group.id == FigmaAdvertiserUsagesCollector.GROUP_ID && it.event.id == "suggestion.shown"
+      }
+      shown.event.data["trigger"] shouldBe "MARKDOWN_FIGMA_LINK"
+      shown.event.data["surface"] shouldBe "EDITOR"
     }
-    shown.event.data["trigger"] shouldBe "MARKDOWN_FIGMA_LINK"
-    shown.event.data["surface"] shouldBe "EDITOR"
   }
 
   /**
    * `PluginSuggestion.apply` runs per file editor and again on every
    * `EditorNotifications.updateAllNotifications()`, so an unguarded record would count repaints.
    */
-  fun `test the shown event fires once for a project however often the banner is painted`() {
+  @Test
+  fun `test the shown event fires once for a project however often the banner is painted`(): Unit = timeoutRunBlocking {
     val note = designNote()
 
-    val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
-      repeat(3) { panelOf(suggestionOver(note).shouldNotBeNull()) }
-    }
+    withContext(Dispatchers.EDT) {
+      val events = FUCollectorTestCase.collectLogEvents(disposable) {
+        repeat(3) { panelOf(suggestionOver(note).shouldNotBeNull()) }
+      }
 
-    events.filter {
-      it.group.id == FigmaAdvertiserUsagesCollector.GROUP_ID && it.event.id == "suggestion.shown"
-    } shouldHaveSize 1
+      events.filter {
+        it.group.id == FigmaAdvertiserUsagesCollector.GROUP_ID && it.event.id == "suggestion.shown"
+      } shouldHaveSize 1
+    }
   }
 
   /** A Markdown file that links to nothing earns no banner, and the answer is kept on the file. */
+  @Test
   fun `test a Markdown file without a Figma link earns no banner and is read once`() {
     val note = myFixture.configureByText("notes.md", "We talked about the design in the meeting.\n")
 
@@ -164,6 +196,7 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * The path decides before the file is opened. A user opens files all day, and none of them is
    * read for this banner unless Markdown claims the extension.
    */
+  @Test
   fun `test a file that is not Markdown is never read`() {
     val note = myFixture.configureByText("notes.txt", "The spec is at https://www.figma.com/design/AbC123/Checkout\n")
 
@@ -176,9 +209,10 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * Tells a switched-off advertisement from a file it has nothing to say about. The same file earns
    * the banner in the cases above, so what changed is the key.
    */
+  @Test
   fun `test no banner is offered while the advertiser is switched off`() {
     val note = designNote()
-    Registry.get(FigmaAdvertiserRegistry.KEY_ADVERTISER_ENABLED).setValue(false, testRootDisposable)
+    Registry.get(FigmaAdvertiserRegistry.KEY_ADVERTISER_ENABLED).setValue(false, disposable)
 
     suggestionOver(note).shouldBeNull()
 
@@ -191,20 +225,22 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * plugins". The platform reads it before the project-open balloon and not before an editor banner,
    * so this banner reads it itself, and the same file earns the banner in the cases above.
    */
+  @Test
   fun `test no banner is offered while the platform plugin suggestions are switched off`() {
     val note = designNote()
     suggestionOver(note).shouldNotBeNull()
 
-    Registry.get(FigmaAdvertiserRegistry.KEY_PLATFORM_PLUGIN_SUGGESTIONS).setValue(false, testRootDisposable)
+    Registry.get(FigmaAdvertiserRegistry.KEY_PLATFORM_PLUGIN_SUGGESTIONS).setValue(false, disposable)
 
     suggestionOver(note).shouldBeNull()
   }
 
   /** The switch the banner answers is the switch the edit that would raise it answers. */
+  @Test
   fun `test no recompute is asked for while the platform plugin suggestions are switched off`() {
     myFixture.configureByText("notes.md", "# Checkout\n")
     val notifications = recordNotifications()
-    Registry.get(FigmaAdvertiserRegistry.KEY_PLATFORM_PLUGIN_SUGGESTIONS).setValue(false, testRootDisposable)
+    Registry.get(FigmaAdvertiserRegistry.KEY_PLATFORM_PLUGIN_SUGGESTIONS).setValue(false, disposable)
 
     myFixture.type("See https://www.figma.com/design/AbC123/Checkout")
 
@@ -215,17 +251,20 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * The answer is recorded on the project that was asked. A second project keeps the offer, which is
    * the accepted cost of not silencing the suggestion for someone who met it in the wrong project.
    */
-  fun `test Dismiss records the answer on the project that was asked`() {
+  @Test
+  fun `test Dismiss records the answer on the project that was asked`(): Unit = timeoutRunBlocking {
     val note = designNote()
-    val panel = bannerOver(note)
+    withContext(Dispatchers.EDT) {
+      val panel = bannerOver(note)
 
-    panel.findLabelByName(DISMISS_LABEL)!!.doClick()
+      panel.findLabelByName(DISMISS_LABEL)!!.doClick()
 
-    PropertiesComponent.getInstance(project).isTrueValue(FIGMA_SUGGESTION_DISMISSED_KEY).shouldBeTrue()
-    PropertiesComponent.getInstance().isTrueValue(FIGMA_SUGGESTION_DISMISSED_KEY).shouldBeFalse()
-    // The default project is a second project this test can read without opening one.
-    isFigmaSuggestionDismissed(ProjectManager.getInstance().defaultProject).shouldBeFalse()
-    suggestionOver(note).shouldBeNull()
+      PropertiesComponent.getInstance(myFixture.project).isTrueValue(FIGMA_SUGGESTION_DISMISSED_KEY).shouldBeTrue()
+      PropertiesComponent.getInstance().isTrueValue(FIGMA_SUGGESTION_DISMISSED_KEY).shouldBeFalse()
+      // The default project is a second project this test can read without opening one.
+      isFigmaSuggestionDismissed(ProjectManager.getInstance().defaultProject).shouldBeFalse()
+      suggestionOver(note).shouldBeNull()
+    }
   }
 
   /**
@@ -236,21 +275,24 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * outlive the case. The three asks around it are what make the middle one mean something: the same
    * provider and the same file answer non-null before and after.
    */
-  fun `test nothing is offered while a plugin with the Figma Connect id is loaded`() {
+  @Test
+  fun `test nothing is offered while a plugin with the Figma Connect id is loaded`(): Unit = timeoutRunBlocking {
     val note = designNote()
     val provider = FigmaConnectPluginSuggestionProvider()
-    provider.getSuggestion(project, note.virtualFile).shouldNotBeNull()
+    provider.getSuggestion(myFixture.project, note.virtualFile).shouldNotBeNull()
 
-    val unload = loadFigmaConnectId()
-    try {
-      PluginManager.getLoadedPlugins().any { it.pluginId.idString == FIGMA_CONNECT_PLUGIN_ID }.shouldBeTrue()
-      provider.getSuggestion(project, note.virtualFile).shouldBeNull()
-    }
-    finally {
-      Disposer.dispose(unload)
+    withContext(Dispatchers.EDT) {
+      val unload = loadFigmaConnectId()
+      try {
+        PluginManager.getLoadedPlugins().any { it.pluginId.idString == FIGMA_CONNECT_PLUGIN_ID }.shouldBeTrue()
+        provider.getSuggestion(myFixture.project, note.virtualFile).shouldBeNull()
+      }
+      finally {
+        Disposer.dispose(unload)
+      }
     }
 
-    provider.getSuggestion(project, note.virtualFile).shouldNotBeNull()
+    provider.getSuggestion(myFixture.project, note.virtualFile).shouldNotBeNull()
   }
 
   /**
@@ -263,17 +305,20 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * is built directly because `buildSuggestionIfNeeded` drops a loaded plugin, so `getSuggestion`
    * cannot reach this.
    */
-  fun `test the offer asks to enable a plugin that is already on disk`() {
-    val unload = loadFigmaConnectId()
-    try {
-      val offer = offerForTest()
+  @Test
+  fun `test the offer asks to enable a plugin that is already on disk`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val unload = loadFigmaConnectId()
+      try {
+        val offer = offerForTest()
 
-      offer.primaryActionText shouldBe
-        MarkdownFigmaAdvertiserBundle.message("markdown.figma.suggestion.action.enable", FIGMA_CONNECT_PLUGIN_NAME)
-      offer.primaryActionText shouldNotBe INSTALL_LABEL
-    }
-    finally {
-      Disposer.dispose(unload)
+        offer.primaryActionText shouldBe
+          MarkdownFigmaAdvertiserBundle.message("markdown.figma.suggestion.action.enable", FIGMA_CONNECT_PLUGIN_NAME)
+        offer.primaryActionText shouldNotBe INSTALL_LABEL
+      }
+      finally {
+        Disposer.dispose(unload)
+      }
     }
   }
 
@@ -287,6 +332,7 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * `PluginSetTestBuilder` is the way in, and the original set is put back in a `finally` because it
    * is application-wide.
    */
+  @Test
   fun `test the offer asks to enable a plugin on disk that is switched on and not loaded`() {
     withFigmaConnectOnDiskAndSwitchedOn {
       PluginManagerCore.getPlugin(PluginId.getId(FIGMA_CONNECT_PLUGIN_ID)).shouldNotBeNull()
@@ -309,9 +355,10 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * `PluginEnabler` is an application service, replaced here so that nothing is loaded into the
    * test application. Its answer is what decides the branch `accept()` takes next.
    */
+  @Test
   fun `test accepting asks the enabler to load a plugin on disk that is switched on`() {
     val enabler = RecordingPluginEnabler(loaded = true)
-    ApplicationManager.getApplication().replaceService(PluginEnabler::class.java, enabler, testRootDisposable)
+    ApplicationManager.getApplication().replaceService(PluginEnabler::class.java, enabler, disposable)
 
     withFigmaConnectOnDiskAndSwitchedOn {
       val offer = offerForTest()
@@ -336,6 +383,7 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * because a link has to meet the change and not merely lie near it. A `distinct()` here would
    * read the same for one ask and for sixteen.
    */
+  @Test
   fun `test a Figma link typed into an open Markdown file asks for a recompute`() {
     val note = myFixture.configureByText("notes.md", "# Checkout\n")
     // Replaced after the file is opened, so what is recorded is what the editing asked for.
@@ -351,10 +399,13 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * answered when it was opened. Asking again would charge the platform a recompute per keystroke
    * for the life of the file.
    */
-  fun `test typing beside a link that is already there asks for nothing`() {
+  @Test
+  fun `test typing beside a link that is already there asks for nothing`(): Unit = timeoutRunBlocking {
     myFixture.configureByText("notes.md", "The spec is at https://www.figma.com/design/AbC123/Checkout\n")
     val notifications = recordNotifications()
-    myFixture.editor.caretModel.moveToOffset(myFixture.file.textLength)
+    withContext(Dispatchers.EDT) {
+      myFixture.editor.caretModel.moveToOffset(myFixture.file.textLength)
+    }
 
     myFixture.type("Ask Ada about the header.")
 
@@ -365,6 +416,7 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * Every document in the IDE reaches the listener, so the text a user types in a Markdown file
    * costs the platform nothing until it names a design.
    */
+  @Test
   fun `test typing text that links to nothing asks for no recompute`() {
     myFixture.configureByText("notes.md", "# Checkout\n")
     val notifications = recordNotifications()
@@ -375,6 +427,7 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
   }
 
   /** The scan finds the link, and the path then rejects a file Markdown does not claim. */
+  @Test
   fun `test a Figma link typed into a file that is not Markdown asks for no recompute`() {
     myFixture.configureByText("notes.txt", "# Checkout\n")
     val notifications = recordNotifications()
@@ -388,10 +441,11 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * Tells a switched-off advertisement from an edit it has nothing to say about. The same typing
    * asks for a recompute in the case above, so what changed is the key.
    */
+  @Test
   fun `test no recompute is asked for while the advertiser is switched off`() {
     myFixture.configureByText("notes.md", "# Checkout\n")
     val notifications = recordNotifications()
-    Registry.get(FigmaAdvertiserRegistry.KEY_ADVERTISER_ENABLED).setValue(false, testRootDisposable)
+    Registry.get(FigmaAdvertiserRegistry.KEY_ADVERTISER_ENABLED).setValue(false, disposable)
 
     myFixture.type("See https://www.figma.com/design/AbC123/Checkout")
 
@@ -399,10 +453,11 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
   }
 
   /** The answer the user already gave is not re-asked by their next keystroke. */
+  @Test
   fun `test no recompute is asked for on a project the offer is dismissed for`() {
     myFixture.configureByText("notes.md", "# Checkout\n")
     val notifications = recordNotifications()
-    dismissFigmaSuggestion(project)
+    dismissFigmaSuggestion(myFixture.project)
 
     myFixture.type("See https://www.figma.com/design/AbC123/Checkout")
 
@@ -418,6 +473,7 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * The document is changed through the platform, so the listener is the instance the extension
    * point holds.
    */
+  @Test
   fun `test a split frontend reads no file property when a Figma link is written`() {
     val file = PropertyRecordingFile("design.md")
     val document = documentOf(file)
@@ -434,6 +490,7 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * read of the file. The file here is one the listener does read when the change links to a design,
    * which is the case below.
    */
+  @Test
   fun `test a change that links to nothing reads no file property`() {
     val file = PropertyRecordingFile("design.md")
     val document = documentOf(file)
@@ -448,6 +505,7 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * links to a design, do make the listener read the path. Without this, a recorder that never sees
    * the listener would pass both.
    */
+  @Test
   fun `test a change that links to a design outside a frontend reads the path`() {
     val file = PropertyRecordingFile("design.md")
     val document = documentOf(file)
@@ -458,17 +516,21 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
   }
 
   /** The dismissal records what the user answered and nothing else. */
-  fun `test the dismissed event names the Markdown trigger`() {
-    val panel = bannerOver(designNote())
+  @Test
+  fun `test the dismissed event names the Markdown trigger`(): Unit = timeoutRunBlocking {
+    val note = designNote()
+    withContext(Dispatchers.EDT) {
+      val panel = bannerOver(note)
 
-    val events = FUCollectorTestCase.collectLogEvents(testRootDisposable) {
-      panel.findLabelByName(DISMISS_LABEL)!!.doClick()
-    }
+      val events = FUCollectorTestCase.collectLogEvents(disposable) {
+        panel.findLabelByName(DISMISS_LABEL)!!.doClick()
+      }
 
-    val dismissed = events.single {
-      it.group.id == FigmaAdvertiserUsagesCollector.GROUP_ID && it.event.id == "suggestion.dismissed"
+      val dismissed = events.single {
+        it.group.id == FigmaAdvertiserUsagesCollector.GROUP_ID && it.event.id == "suggestion.dismissed"
+      }
+      dismissed.event.data["trigger"] shouldBe "MARKDOWN_FIGMA_LINK"
     }
-    dismissed.event.data["trigger"] shouldBe "MARKDOWN_FIGMA_LINK"
   }
 
   /**
@@ -478,7 +540,7 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    * the set is application-wide, so the original goes back in a `finally`.
    */
   private fun <T> withFigmaConnectOnDiskAndSwitchedOn(body: () -> T): T {
-    val pluginsDir = FileUtil.createTempDirectory("figmaAdvertiserTest", "unloaded", true).toPath()
+    val pluginsDir = Files.createTempDirectory(tempDir, "unloaded")
     plugin(FIGMA_CONNECT_PLUGIN_ID) { name = FIGMA_CONNECT_PLUGIN_NAME }.installAt(pluginsDir)
     val originalPluginSet = PluginManagerCore.getPluginSet()
     PluginManagerCore.setPluginSet(
@@ -496,7 +558,7 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
 
   /** Puts a recording [EditorNotifications] on the project and answers it. */
   private fun recordNotifications(): RecordingEditorNotifications = RecordingEditorNotifications().also {
-    project.replaceService(EditorNotifications::class.java, it, testRootDisposable)
+    myFixture.project.replaceService(EditorNotifications::class.java, it, disposable)
   }
 
   /** Records which files something asked the platform to recompute the notifications for. */
@@ -539,16 +601,17 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
       .map { (property, _) -> property }
   }
 
-  private fun documentOf(file: VirtualFile): Document = FileDocumentManager.getInstance().getDocument(file).shouldNotBeNull()
+  private fun documentOf(file: VirtualFile): Document =
+    timeoutRunBlocking { readAction { FileDocumentManager.getInstance().getDocument(file) } }.shouldNotBeNull()
 
   /** Replaces the whole text, which is how a split frontend applies the text the backend sent. */
   private fun resetText(document: Document, text: String) {
-    WriteCommandAction.runWriteCommandAction(project) { document.setText(text) }
+    WriteCommandAction.runWriteCommandAction(myFixture.project) { document.setText(text) }
   }
 
   /** Runs [body] while [IdeProductMode] reports a split frontend. The test application is a monolith. */
   private fun asFrontend(body: () -> Unit) {
-    val disposable = Disposer.newDisposable(testRootDisposable)
+    val disposable = Disposer.newDisposable(this.disposable)
     try {
       ApplicationManager.getApplication().replaceService(IdeProductMode::class.java, object : IdeProductMode {
         override val currentMode: ProductMode
@@ -563,7 +626,7 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
   }
 
   private fun offerForTest(): FigmaSuggestionOffer = FigmaSuggestionOffer(
-    project,
+    myFixture.project,
     FigmaAdvertiserUsagesCollector.SuggestionTrigger.MARKDOWN_FIGMA_LINK,
     FigmaAdvertiserUsagesCollector.SuggestionSurface.EDITOR,
   )
@@ -589,7 +652,7 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
    */
   private fun loadFigmaConnectId(): Disposable = loadPluginWithText(
     pluginSpec = plugin(FIGMA_CONNECT_PLUGIN_ID) { dependsIntellijModulesLang() },
-    pluginsDir = FileUtil.createTempDirectory("figmaAdvertiserTest", "plugins", true).toPath(),
+    pluginsDir = Files.createTempDirectory(tempDir, "plugins"),
   )
 
   private fun designNote(): PsiFile = myFixture.configureByText(
@@ -597,8 +660,9 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
     "# Checkout\n\nThe spec is at https://www.figma.com/design/AbC123/Checkout?node-id=1-2 .\n",
   )
 
-  private fun suggestionOver(file: PsiFile): PluginSuggestion? =
-    FigmaConnectPluginSuggestionProvider().getSuggestion(project, file.virtualFile)
+  private fun suggestionOver(file: PsiFile): PluginSuggestion? = ReadAction.computeBlocking<PluginSuggestion?, Throwable> {
+    FigmaConnectPluginSuggestionProvider().getSuggestion(myFixture.project, file.virtualFile)
+  }
 
   private fun bannerOver(file: PsiFile): EditorNotificationPanel =
     panelOf(suggestionOver(file).shouldNotBeNull())
@@ -610,6 +674,8 @@ class MarkdownFigmaAdvertiserBannerTest : BasePlatformTestCase() {
   }
 
   private companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+
     val PLUGIN_SUGGESTION_EP: ExtensionPointName<PluginSuggestionProvider> =
       ExtensionPointName("com.intellij.pluginSuggestionProvider")
 

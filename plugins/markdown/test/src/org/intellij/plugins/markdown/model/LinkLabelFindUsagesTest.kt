@@ -1,16 +1,26 @@
 package org.intellij.plugins.markdown.model
 
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.model.psi.impl.targetSymbols
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.model.psi.labels.LinkLabelSymbol
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
-class LinkLabelFindUsagesTest: BasePlatformTestCase() {
+@TestApplication
+class LinkLabelFindUsagesTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `shortcut and collapsed reference links are usages`() {
     val content = """
@@ -140,8 +150,12 @@ class LinkLabelFindUsagesTest: BasePlatformTestCase() {
       [//]: https://example.com
     """.trimIndent())
 
-    val target = targetSymbols(myFixture.file, myFixture.caretOffset).filterIsInstance<LinkLabelSymbol>().single()
-    assertEquals(myFixture.file.text.lastIndexOf("[//]") + 1, target.range.startOffset)
+    timeoutRunBlocking {
+      readAction {
+        val target = targetSymbols(myFixture.file, myFixture.caretOffset).filterIsInstance<LinkLabelSymbol>().single()
+        assertEquals(myFixture.file.text.lastIndexOf("[//]") + 1, target.range.startOffset)
+      }
+    }
   }
 
   @Test
@@ -174,16 +188,18 @@ class LinkLabelFindUsagesTest: BasePlatformTestCase() {
       [label]: https://example.com
       [LABEL]: https://example.org
     """.trimIndent())
-    fun resolvedLabel(): String = targetSymbols(myFixture.file, myFixture.caretOffset).filterIsInstance<LinkLabelSymbol>().single().text
+    fun resolvedLabel(): String = timeoutRunBlocking {
+      readAction { targetSymbols(myFixture.file, myFixture.caretOffset).filterIsInstance<LinkLabelSymbol>().single().text }
+    }
 
     assertEquals("label", resolvedLabel())
 
     val document = myFixture.editor.document
     val start = document.text.indexOf("[label]:")
     val end = document.text.indexOf("[LABEL]:")
-    WriteCommandAction.runWriteCommandAction(project) {
+    WriteCommandAction.runWriteCommandAction(myFixture.project) {
       document.deleteString(start, end)
-      PsiDocumentManager.getInstance(project).commitDocument(document)
+      PsiDocumentManager.getInstance(myFixture.project).commitDocument(document)
     }
 
     assertEquals("LABEL", resolvedLabel())
@@ -199,13 +215,17 @@ class LinkLabelFindUsagesTest: BasePlatformTestCase() {
     """.trimIndent()
     myFixture.configureByText("some.md", content)
 
-    for (offset in listOf(
-      myFixture.file.text.indexOf("[^note]"),
-      myFixture.file.text.indexOf("[^note][]"),
-      myFixture.file.text.indexOf("[^note]:")
-    )) {
-      val symbols = targetSymbols(myFixture.file, offset + 2)
-      assertTrue(symbols.none { it is LinkLabelSymbol })
+    timeoutRunBlocking {
+      readAction {
+        for (offset in listOf(
+          myFixture.file.text.indexOf("[^note]"),
+          myFixture.file.text.indexOf("[^note][]"),
+          myFixture.file.text.indexOf("[^note]:")
+        )) {
+          val symbols = targetSymbols(myFixture.file, offset + 2)
+          assertTrue(symbols.none { it is LinkLabelSymbol })
+        }
+      }
     }
   }
 
