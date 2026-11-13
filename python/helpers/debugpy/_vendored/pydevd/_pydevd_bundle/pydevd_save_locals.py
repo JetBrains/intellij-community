@@ -4,6 +4,7 @@ Utility for saving locals.
 import sys
 from _pydevd_bundle.pydevd_constants import IS_PY313_OR_GREATER
 from _pydev_bundle import pydev_log
+from _pydev_bundle.pydev_lazy_imports import store_loaded_lazy_import
 
 try:
     import types
@@ -98,7 +99,11 @@ def update_globals_and_locals(updated_globals, initial_globals, frame):
     removed = set(initial_globals).difference(updated_globals)
 
     for key, val in updated_globals.items():
-        if val is not initial_globals.get(key, _SENTINEL):
+        initial_val = initial_globals.get(key, _SENTINEL)
+        if val is not initial_val:
+            if store_loaded_lazy_import(frame, key, initial_val, val):
+                continue
+
             if f_locals is None:
                 # Note: we call f_locals only once because each time
                 # we call it the values may be reset.

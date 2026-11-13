@@ -435,6 +435,7 @@ public class PyDebugValue extends XNamedValue implements PyXDebugValue {
   private void setAdditionalLinks(@NotNull XValueNode node) {
     if (node instanceof XValueNodeEx valueNode) {
       addConfigureTypeRendererLink(valueNode);
+      PyLoadLazyImportHyperlinkKt.addLoadLazyImportLink(this, valueNode);
     }
   }
 

@@ -64,6 +64,7 @@ object NodeTypes {
   const val NESTED_ORDERED_DICT_NODE_TYPE: String = "NestedOrderedDict"
   const val ORDERED_DICT_NODE_TYPE: String = "OrderedDict"
   const val DATASET_DICT_NODE_TYPE: String = "DatasetDict"
+  const val LAZY_IMPORT_NODE_TYPE: String = "lazy_import"
 }
 
 @ApiStatus.Internal

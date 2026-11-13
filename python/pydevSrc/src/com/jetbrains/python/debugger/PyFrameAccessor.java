@@ -14,6 +14,7 @@ import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.tables.TableCommandParameters;
 import com.jetbrains.python.tables.TableCommandType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,18 @@ import java.util.List;
  */
 public interface PyFrameAccessor {
   default @Nullable Project getProject() { return null; }
+
+  /**
+   * Returns true when {@link #loadLazyImport} loads a PEP 810 lazy import of this accessor.
+   */
+  @ApiStatus.Internal
+  default boolean canLoadLazyImports() { return false; }
+
+  /**
+   * Starts to load the PEP 810 lazy import of the value into the frame globals. The views update when the load ends.
+   */
+  @ApiStatus.Internal
+  default void loadLazyImport(@NotNull PyDebugValue value) { }
 
   default @Nullable XDebuggerTreeNodeHyperlink getUserTypeRenderersLink(@NotNull String typeRendererId) {
     return null;

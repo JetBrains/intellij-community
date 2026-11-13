@@ -8,6 +8,7 @@ from _pydev_bundle.pydev_imports import quote
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, NUMPY_NUMERIC_TYPES, NUMPY_FLOATING_POINT_TYPES
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
+from _pydev_bundle.pydev_lazy_imports import find_lazy_imports, store_loaded_lazy_import
 from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
 from _pydevd_bundle.pydevd_asyncio_provider import get_eval_async_expression
@@ -454,6 +455,7 @@ def evaluate_expression(thread_id, frame_id, expression, doExec):
     updated_globals = {}
     updated_globals.update(frame.f_globals)
     updated_globals.update(frame.f_locals)  # locals later because it has precedence over the actual globals
+    lazy_imports = find_lazy_imports(updated_globals, frame)
 
     try:
         expression = str(expression.replace('@LINE@', '\n'))
@@ -478,8 +480,11 @@ def evaluate_expression(thread_id, frame_id, expression, doExec):
         else:
             return eval_in_context(expression, updated_globals, frame.f_locals)
     finally:
+        for name, lazy_import in lazy_imports.items():
+            store_loaded_lazy_import(frame, name, lazy_import, updated_globals.get(name, lazy_import))
         # Should not be kept alive if an exception happens and this frame is kept in the stack.
         del updated_globals
+        del lazy_imports
         del frame
 
 

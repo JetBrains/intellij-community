@@ -3,6 +3,7 @@ import os.path
 import sys
 
 from _pydev_bundle._pydev_tipper_common import do_find
+from _pydev_bundle.pydev_lazy_imports import getattr_keeping_lazy_imports
 from _pydevd_bundle.pydevd_constants import IS_PY2, IS_PY39_OR_GREATER
 from _pydevd_bundle.pydevd_resolver import suppress_warnings
 
@@ -173,6 +174,7 @@ def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=get
             name, doc, args, type (from the TYPE_* constants)
     '''
     ret = []
+    getattr = getattr_keeping_lazy_imports(obj_to_complete, getattr)
 
     if dir_comps is None:
         dir_comps = dir(obj_to_complete)

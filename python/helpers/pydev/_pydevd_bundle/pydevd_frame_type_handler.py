@@ -1,6 +1,7 @@
 #  Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import threading
 
+from _pydev_bundle.pydev_lazy_imports import is_lazy_import
 from _pydevd_bundle.pydevd_constants import RETURN_VALUES_DICT, dict_iter_items, \
     GET_FRAME_NORMAL_GROUP, GET_FRAME_SPECIAL_GROUP
 
@@ -157,7 +158,7 @@ def is_dunder_var(key_str):
 
 
 def is_hidden_var(value):
-    return get_type(value) in HIDDEN_TYPES
+    return is_lazy_import(value) or get_type(value) in HIDDEN_TYPES
 
 
 def get_type(o):

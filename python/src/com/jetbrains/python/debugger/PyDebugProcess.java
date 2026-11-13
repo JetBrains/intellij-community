@@ -89,6 +89,8 @@ import com.jetbrains.python.remote.RemoteProcessControl;
 import com.jetbrains.python.tables.TableCommandParameters;
 import com.jetbrains.python.tables.TableCommandType;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -154,6 +156,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   private final AtomicBoolean myInlayForFailedTestIsAlreadyShownSentinel = new AtomicBoolean();
 
+  private final @NotNull CoroutineScope myCoroutineScope;
+
   public PyDebugProcess(@NotNull XDebugSession session,
                         @NotNull ServerSocket serverSocket,
                         @NotNull ExecutionConsole executionConsole,
@@ -181,6 +185,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
                          @NotNull ExecutionConsole executionConsole,
                          @Nullable ProcessHandler processHandler) {
     super(session);
+    myCoroutineScope = PythonDebuggerScope.childScope(session.getProject(), "PyDebugProcess");
 
     session.setPauseActionSupported(true);
 
@@ -200,8 +205,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (myProcessHandler != null) {
       myProcessHandler.addProcessListener(this);
     }
-    if (processHandler instanceof PositionConverterProvider) {
-      myPositionConverter = ((PositionConverterProvider)processHandler).createPositionConverter(this);
+    if (processHandler instanceof PositionConverterProvider provider) {
+      myPositionConverter = provider.createPositionConverter(this);
     }
     else {
       myPositionConverter = new PyLocalPositionConverter();
@@ -240,8 +245,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       public void stackFrameChanged() {
         String currentFrameThreadId = null;
         final XStackFrame currentFrame = session.getCurrentStackFrame();
-        if (currentFrame instanceof PyStackFrame) {
-          currentFrameThreadId = ((PyStackFrame)currentFrame).getThreadId();
+        if (currentFrame instanceof PyStackFrame stackFrame) {
+          currentFrameThreadId = stackFrame.getThreadId();
         }
         var suspendContext = session.getSuspendContext();
         if (suspendContext == null) {
@@ -253,8 +258,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         }
         final XStackFrame frameFromSuspendContext = activeStack.getTopFrame();
         String activeStackThreadId = null;
-        if (frameFromSuspendContext instanceof PyStackFrame) {
-          activeStackThreadId = ((PyStackFrame)frameFromSuspendContext).getThreadId();
+        if (frameFromSuspendContext instanceof PyStackFrame stackFrame) {
+          activeStackThreadId = stackFrame.getThreadId();
         }
         if (!currentFrameThreadId.equals(activeStackThreadId)) {
           // another thread was selected, we should update suspendContext
@@ -415,6 +420,18 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
+  @ApiStatus.Internal
+  public boolean canLoadLazyImports() {
+    return true;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void loadLazyImport(@NotNull PyDebugValue value) {
+    PyLoadLazyImportHyperlinkKt.launchLazyImportLoad(myCoroutineScope, this, value, getSession());
+  }
+
+  @Override
   public void init() {
     getSession().rebuildViews();
     registerBreakpoints();
@@ -425,8 +442,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public int handleDebugPort(int localPort) throws IOException {
-    if (myProcessHandler instanceof RemoteProcessControl) {
-      return getRemoteHostPortForDebuggerConnection(localPort, (RemoteProcessControl)myProcessHandler).getSecond();
+    if (myProcessHandler instanceof RemoteProcessControl processControl) {
+      return getRemoteHostPortForDebuggerConnection(localPort, processControl).getSecond();
     }
     else {
       return localPort;
@@ -461,8 +478,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void consoleInputRequested(boolean isStarted) {
-    if (myExecutionConsole instanceof PythonDebugLanguageConsoleView) {
-      PythonConsoleView consoleView = ((PythonDebugLanguageConsoleView)myExecutionConsole).getPydevConsoleView();
+    if (myExecutionConsole instanceof PythonDebugLanguageConsoleView languageConsoleView) {
+      PythonConsoleView consoleView = languageConsoleView.getPydevConsoleView();
       if (isStarted) {
         consoleView.inputRequested();
       }
@@ -658,6 +675,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void stop() {
+    CoroutineScopeKt.cancel(myCoroutineScope, null);
     myDebugger.close();
   }
 
@@ -746,8 +764,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private static @Nullable String threadIdBeforeResumeOrStep(@Nullable XSuspendContext context) {
-    if (context instanceof PySuspendContext) {
-      return ((PySuspendContext)context).getActiveExecutionStack().getThreadId();
+    if (context instanceof PySuspendContext pySuspendContext) {
+      return pySuspendContext.getActiveExecutionStack().getThreadId();
     }
     else {
       return null;
@@ -787,8 +805,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
           if (document != null) {
             for (XBreakpointType<?, ?> breakpointType : XBreakpointType.EXTENSION_POINT_NAME.getExtensionList()) {
-              if (breakpointType instanceof PyBreakpointType &&
-                  ((PyBreakpointType)breakpointType).isBreakpointTypeAllowedInDocument(getSession().getProject(), document)) {
+              if (breakpointType instanceof PyBreakpointType pyBreakpointType &&
+                  pyBreakpointType.isBreakpointTypeAllowedInDocument(getSession().getProject(), document)) {
                 breakpointTypeId = breakpointType.getId();
                 break;
               }

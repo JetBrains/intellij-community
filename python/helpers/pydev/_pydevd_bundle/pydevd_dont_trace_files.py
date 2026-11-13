@@ -55,6 +55,7 @@ DONT_TRACE = {
     'pydev_ipython_console_011.py': PYDEV_FILE,
     'pydev_ipython_rich_output.py': PYDEV_FILE,
     'pydev_is_thread_alive.py': PYDEV_FILE,
+    'pydev_lazy_imports.py': PYDEV_FILE,
     'pydev_localhost.py': PYDEV_FILE,
     'pydev_log.py': PYDEV_FILE,
     'pydev_monkey.py': PYDEV_FILE,

@@ -1,4 +1,5 @@
 from _pydev_bundle import pydev_log
+from _pydev_bundle.pydev_lazy_imports import is_lazy_import
 from _pydevd_bundle.pydevd_utils import hasattr_checked, DAPGrouper, Timer
 from io import StringIO
 import traceback
@@ -837,7 +838,7 @@ def get_var_scope(attr_name, attr_value, evaluate_name, handle_return_values):
     elif attr_name == GENERATED_LEN_ATTR_NAME:
         return ""
 
-    if (attr_name.startswith("__") and attr_name.endswith("__")) or inspect.ismodule(attr_value):
+    if (attr_name.startswith("__") and attr_name.endswith("__")) or inspect.ismodule(attr_value) or is_lazy_import(attr_value):
         return DAPGrouper.SCOPE_SPECIAL_VARS
 
     if attr_name.startswith("_") or attr_name.endswith("__"):

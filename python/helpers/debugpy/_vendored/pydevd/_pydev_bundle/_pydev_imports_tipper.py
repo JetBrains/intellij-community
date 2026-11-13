@@ -3,6 +3,7 @@ import os.path
 import sys
 
 from _pydev_bundle._pydev_tipper_common import do_find
+from _pydev_bundle.pydev_lazy_imports import getattr_keeping_lazy_imports
 from _pydevd_bundle.pydevd_utils import hasattr_checked, dir_checked
 
 from inspect import getfullargspec
@@ -163,6 +164,7 @@ def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=get
         name, doc, args, type (from the TYPE_* constants)
     """
     ret = []
+    getattr = getattr_keeping_lazy_imports(obj_to_complete, getattr)
 
     if dir_comps is None:
         dir_comps = dir_checked(obj_to_complete)
