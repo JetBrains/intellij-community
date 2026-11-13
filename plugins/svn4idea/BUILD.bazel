@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -79,6 +80,15 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.vcs.svn` end
+
+### auto-generated section `plugin intellij.vcs.svn` start
+ij_plugin(
+    name = "vcs-svn_plugin",
+    descriptor_module = ":vcs-svn",
+    content_modules = ["//libraries/sqlite:sqlite_plugin_module"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.vcs.svn` end
 
 ### auto-generated section `iml intellij.vcs.svn` start
 exports_files(
