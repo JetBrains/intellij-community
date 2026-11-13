@@ -69,6 +69,10 @@
     <extensionPoint qualifiedName="com.intellij.commitModeProvider"
                     interface="com.intellij.dvcs.commit.DvcsCommitModeProvider"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.vcs.repositoryNodeIconProvider"
+                    interface="com.intellij.dvcs.ui.RepositoryNodeIconProvider"
+                    dynamic="true"/>
   </extensionPoints>
   <actions resource-bundle="messages.ActionsBundle">
     <action id="Vcs.CopyCurrentBranchName"

@@ -24,7 +24,9 @@ open class RepositoryChangesBrowserNode(
   private val colorManager: VcsLogColorManager = getColorManager(repository.project)
 ) : RepositoryChangesBrowserNodeBase<Repository, BranchData>(repository) {
 
-  override fun getIcon(): Icon = CheckboxIcon.createAndScale(colorManager.getRootColor(getUserObject().root))
+  override fun getIcon(): Icon =
+    RepositoryNodeIconProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getIcon(getUserObject()) }
+    ?: CheckboxIcon.createAndScale(colorManager.getRootColor(getUserObject().root))
 
   final override fun getCurrentBranch(repository: Repository): BranchData? = getCurrentBranch(repository.project, repository.root)
 
