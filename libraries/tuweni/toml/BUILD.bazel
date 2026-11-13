@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.libraries.tuweni.toml` start
@@ -9,13 +9,14 @@ content_module_jar(
 ### auto-generated section `dev intellij.libraries.tuweni.toml` end
 
 ### auto-generated section `build intellij.libraries.tuweni.toml` start
-jvm_library(
+ij_plugin_module(
     name = "toml",
     srcs = glob(
         [],
         allow_empty = True,
     ),
     module_name = "intellij.libraries.tuweni.toml",
+    packed_deps = ["@lib//:libraries-tuweni-toml-tuweni-toml"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
