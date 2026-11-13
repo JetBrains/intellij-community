@@ -140,8 +140,9 @@ object PluginUpdateSourceInitializer {
 
     val customPluginRepositoryHosts = RepositoryHelper.getCustomPluginRepositoryHosts()
     thisLogger().info("Repositories: $customPluginRepositoryHosts")
-    val deduplicatedRepos = customPluginRepositoryHosts.toSet()
-    for (host in deduplicatedRepos) {
+    val handledRepos = mutableSetOf<String>()
+    for (host in customPluginRepositoryHosts) {
+      if (!handledRepos.add(host)) continue
       val updateSourceId = PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(host)
 
       if (host.isEmpty()) {
