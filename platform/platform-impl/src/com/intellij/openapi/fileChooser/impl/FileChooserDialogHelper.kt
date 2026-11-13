@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl
 
 import com.intellij.core.CoreFileTypeRegistry
@@ -22,6 +22,7 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.UIBundle
 import com.intellij.util.UriUtil
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.jetbrains.JBRFileDialog
 import java.awt.Component
@@ -30,14 +31,15 @@ import java.awt.KeyboardFocusManager
 import java.nio.file.FileSystems
 import java.nio.file.Path
 
+@OptIn(LowLevelLocalMachineAccess::class)
 internal class FileChooserDialogHelper(private val descriptor: FileChooserDescriptor) : Disposable {
   @Suppress("SpellCheckingInspection")
   private val ZIP_FS_TYPE = "zipfs"
 
-  private val localFs = lazy {
+  private val localFs by lazy {
     ApplicationManager.getApplication()?.let { StandardFileSystems.local() } ?: CoreLocalFileSystem()
   }
-  private val jarFs = lazy {
+  private val jarFs by lazy {
     ApplicationManager.getApplication()?.let { StandardFileSystems.jar() } ?: CoreJarFileSystem()
   }
 
@@ -95,25 +97,38 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
 
   fun selectedFiles(paths: List<Path>, parent: Component?, title: @NlsContexts.DialogTitle String): Array<VirtualFile> {
     val owner = if (parent != null) ModalTaskOwner.component(parent) else ModalTaskOwner.guess()
-    val (results, misses) = runWithModalProgressBlocking(owner, UIBundle.message("file.chooser.vfs.progress")) {
+    val [results, misses, rejected] = runWithModalProgressBlocking(owner, UIBundle.message("file.chooser.vfs.progress")) {
       val results = mutableListOf<VirtualFile>()
       val misses = mutableListOf<@NlsSafe String>()
+      val rejected = mutableListOf<VirtualFile>()
       for (path in paths) {
         val file = toVirtualFile(path)
-        val adjusted = if (file != null && file.isValid()) descriptor.getFileToSelect(file) else null
-        if (adjusted != null) {
-          results += adjusted
-        }
-        else {
+        if (file == null || !file.isValid()) {
           misses += path.toUri().toString()
         }
+        else {
+          val adjusted = descriptor.getFileToSelect(file)
+          if (adjusted != null) {
+            results += adjusted
+          }
+          else {
+            rejected += file
+          }
+        }
       }
-      results to misses
+      Triple(results, misses, rejected)
     }
 
     if (misses.isNotEmpty()) {
-      val urls = misses.asSequence().map { "&nbsp;&nbsp;&nbsp;${it}" }.joinToString("<br>")
+      val urls = misses.joinToString("<br>") { "&nbsp;&nbsp;&nbsp;${it}" }
       val message = UIBundle.message("file.chooser.vfs.lookup", urls)
+      Messages.showErrorDialog(parent, message, title)
+      return emptyArray()
+    }
+
+    if (rejected.isNotEmpty()) {
+      val urls = rejected.joinToString("<br>") { "&nbsp;&nbsp;&nbsp;${it}" }
+      val message = UIBundle.message("file.chooser.vfs.reject", urls)
       Messages.showErrorDialog(parent, message, title)
       return emptyArray()
     }
@@ -134,13 +149,13 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
 
   private fun toVirtualFile(path: Path): VirtualFile? =
     if (path.fileSystem == FileSystems.getDefault()) {
-      localFs.value.refreshAndFindFileByPath(path.toString())
+      localFs.refreshAndFindFileByPath(path.toString())
     }
     else try {
       val store = path.fileSystem.fileStores.iterator().next()
       if (store.type() == ZIP_FS_TYPE) {
         val localPath = UriUtil.trimTrailingSlashes(store.name())
-        jarFs.value.refreshAndFindFileByPath(UriUtil.trimTrailingSlashes(localPath) + '!' + path)
+        jarFs.refreshAndFindFileByPath(UriUtil.trimTrailingSlashes(localPath) + '!' + path)
       }
       else null
     }
