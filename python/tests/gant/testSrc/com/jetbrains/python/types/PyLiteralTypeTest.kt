@@ -1414,6 +1414,24 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
     )
 
     @Test
+    @TestFor(issues = ["PY-94106"])
+    fun `imported name assigned an int literal gets widened`() = test("""
+      from m import positive, negative, plus
+      expr = positive
+      #└ TYPE Literal[1] FIXME int
+      expr = negative
+      #└ TYPE Type mismatch for code analysis context ('Unknown') and user initiated context ('Literal[-1]') FIXME int # PY-94106
+      expr = plus
+      #└ TYPE Type mismatch for code analysis context ('Unknown') and user initiated context ('Literal[1]') FIXME int # PY-94106
+      """.trimIndent(),
+      "m.py" to """
+        positive = 1
+        negative = -1
+        plus = +1
+        """.trimIndent(),
+    )
+
+    @Test
     @TestFor(issues = ["PY-80620"])
     fun `unary operators on int literal against Literal annotation`() = test("""
       from typing import Literal

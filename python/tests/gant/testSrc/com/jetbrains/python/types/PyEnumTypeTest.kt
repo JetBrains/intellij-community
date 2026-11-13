@@ -1517,6 +1517,29 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
         """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-94107"])
+    @TestCaseOptions(testFileName = "test.pyi")
+    fun `enum base order is checked in a stub`() = test("""
+      from enum import Enum, EnumType
+
+      class Mixin: ...
+
+      class Meta(EnumType): ...
+
+      class Base(Enum): ...
+
+      class Custom(metaclass=Meta): ...
+      
+      class A(Base, Mixin):
+      #       ^^^^ ERROR FIXME Enum class 'Base' must be the last base class 
+          a = 1
+
+      class B(Custom, Mixin):
+      #       ^^^^^^ ERROR FIXME Enum class 'Custom' must be the last base class
+          b = 1
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-90287"])
     @TestCaseOptions(languageLevel = LanguageLevel.PYTHON312)
     fun `reserved sunder names in Python 3_12`() = test("""
