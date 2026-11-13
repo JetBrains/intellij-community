@@ -3,57 +3,80 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class DataFlowInspection16Test extends DataFlowInspectionTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_16;
-  }
+import static com.intellij.java.codeInspection.DataFlowInspectionFixture.addCheckerAnnotations;
+import static com.intellij.java.codeInspection.DataFlowInspectionFixtureKt.dataFlowInspectionFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
-  }
+@TestApplication
+public class DataFlowInspection16Test {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_16);
+  private final TestFixture<DataFlowInspectionFixture> dataFlow =
+    dataFlowInspectionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/");
 
-  public void testInstanceOfPattern() { doTest(); }
-  public void testSwitchStatements() { doTest(); }
-  public void testSwitchStatementUnreachableBranches() { doTest(); }
-  public void testSwitchExpressions() { doTest(); }
-  public void testSwitchExpressionsNullability() { doTest(); }
+  @Test
+  public void testInstanceOfPattern() { dataFlow.get().doTest(); }
+  @Test
+  public void testSwitchStatements() { dataFlow.get().doTest(); }
+  @Test
+  public void testSwitchStatementUnreachableBranches() { dataFlow.get().doTest(); }
+  @Test
+  public void testSwitchExpressions() { dataFlow.get().doTest(); }
+  @Test
+  public void testSwitchExpressionsNullability() { dataFlow.get().doTest(); }
+  @Test
   public void testConstantDescAsWrapperSupertype() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("package java.lang.constant; public interface ConstantDesc {}");
-    doTest();
+    dataFlow.get().doTest();
   }
-  public void testSwitchExpressionAndLambdaInlining() { doTest(); }
-  public void testRecordAccessorStability() { doTest(); }
+  @Test
+  public void testSwitchExpressionAndLambdaInlining() { dataFlow.get().doTest(); }
+  @Test
+  public void testRecordAccessorStability() { dataFlow.get().doTest(); }
+  @Test
   public void testRecordAccessorContainerAnnotation() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     myFixture.addClass("package foo;" +
                        "import static java.lang.annotation.ElementType.*;" +
                        "@javax.annotation.meta.TypeQualifierDefault({PARAMETER, METHOD}) " +
                        "@javax.annotation.Nonnull " +
                        "public @interface NonnullByDefault {}");
-    doTest();
+    dataFlow.get().doTest();
   }
-  public void testStaticFieldInAnonymous() { doTest(); }
+  @Test
+  public void testStaticFieldInAnonymous() { dataFlow.get().doTest(); }
 
+  @Test
   public void testAccessorNullityUnderDefaultQualifier() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     addCheckerAnnotations(myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
   
+  @Test
   public void testCheckerLocalVariableOverridesDefault() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     addCheckerAnnotations(myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
   
+  @Test
   public void testRecordComponentAnnotate() {
-    doTest();
-    IntentionAction intention = myFixture.findSingleIntention("Annotate record component 'member' as '@Nullable'");
-    myFixture.checkPreviewAndLaunchAction(intention);
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
+    dataFlow.get().doTest();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      IntentionAction intention = myFixture.findSingleIntention("Annotate record component 'member' as '@Nullable'");
+      myFixture.checkPreviewAndLaunchAction(intention);
+      myFixture.checkResultByFile(dataFlow.get().getTestName(false) + "_after.java");
+    });
   }
 }

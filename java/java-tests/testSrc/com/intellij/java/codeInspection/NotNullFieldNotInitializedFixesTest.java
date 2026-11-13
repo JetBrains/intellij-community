@@ -15,8 +15,8 @@ public class NotNullFieldNotInitializedFixesTest extends LightQuickFixParameteri
   public void setupInspections() {
     JavaCodeInsightTestFixture fixture = getFixture();
     fixture.enableInspections(NotNullFieldNotInitializedInspection.class);
-    DataFlowInspectionTestCase.addJSpecifyNullMarked(fixture);
-    DataFlowInspectionTestCase.setupTypeUseAnnotations("org.jspecify.annotations", fixture);
+    DataFlowInspectionFixture.addJSpecifyNullMarked(fixture);
+    DataFlowInspectionFixture.setupTypeUseAnnotations("org.jspecify.annotations", fixture);
   }
 
   @Override

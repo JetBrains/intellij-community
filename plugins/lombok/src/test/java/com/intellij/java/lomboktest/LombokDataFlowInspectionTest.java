@@ -1,25 +1,26 @@
 package com.intellij.java.lomboktest;
 
+import com.intellij.java.codeInspection.DataFlowInspectionFixture;
 import com.intellij.java.codeInspection.DataFlowInspectionTest;
-import com.intellij.java.codeInspection.DataFlowInspectionTestCase;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import de.plushnikov.intellij.plugin.LombokTestUtil;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class LombokDataFlowInspectionTest extends DataFlowInspectionTestCase {
+import static com.intellij.java.codeInspection.DataFlowInspectionFixtureKt.dataFlowInspectionFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR;
-  }
+@TestApplication
+public class LombokDataFlowInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<DataFlowInspectionFixture> dataFlow =
+    dataFlowInspectionFixture(projectFixture, LombokTestUtil.getTestDataPath() + "/inspection/dataflow", "test/");
 
-  @Override
-  protected @NotNull String getTestDataPath() {
-    return LombokTestUtil.getTestDataPath() + "/inspection/dataflow";
-  }
-
+  @Test
   public void testSpringNonNullApiOnPackage () {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     myFixture.addClass("""
                          package org.springframework.lang;
@@ -46,11 +47,6 @@ public class LombokDataFlowInspectionTest extends DataFlowInspectionTestCase {
 
       import org.springframework.lang.NonNullApi;""");
 
-    doTest();
-  }
-
-  @Override
-  protected @NotNull String getTestFileName() {
-    return "test/" + super.getTestFileName();
+    dataFlow.get().doTest();
   }
 }

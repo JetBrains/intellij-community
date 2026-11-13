@@ -41,7 +41,7 @@ public class NotNullFieldNotInitializedInspectionTest {
   @Test
   public void testTypeUseNotNullField() {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
-    DataFlowInspectionTestCase.setupTypeUseAnnotations("typeUse", myFixture);
+    DataFlowInspectionFixture.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
   @Test
@@ -87,8 +87,8 @@ public class NotNullFieldNotInitializedInspectionTest {
   @Test
   public void testNullableFieldWithBound() {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
-    DataFlowInspectionTestCase.setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
-    DataFlowInspectionTestCase.addJSpecifyNullMarked(myFixture);
+    DataFlowInspectionFixture.setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    DataFlowInspectionFixture.addJSpecifyNullMarked(myFixture);
     doTest();
   }
 

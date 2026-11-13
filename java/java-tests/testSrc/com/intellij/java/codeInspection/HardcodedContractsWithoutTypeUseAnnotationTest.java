@@ -9,38 +9,40 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.ProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class HardcodedContractsWithoutTypeUseAnnotationTest extends DataFlowInspectionTestCase {
+import static com.intellij.java.codeInspection.DataFlowInspectionFixtureKt.dataFlowInspectionFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  private static final ProjectDescriptor JDK_21_WITH_NOT_TYPE_USE_ANNOTATION = new ProjectDescriptor(LanguageLevel.JDK_21) {
+@TestApplication
+public class HardcodedContractsWithoutTypeUseAnnotationTest {
+
+  //it is necessary for some tests
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(new ProjectDescriptor(LanguageLevel.JDK_21) {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
       addJetBrainsAnnotations(model);
     }
-  };
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    //it is necessary for some tests
-    return JDK_21_WITH_NOT_TYPE_USE_ANNOTATION;
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
-  }
-
+  });
+  private final TestFixture<DataFlowInspectionFixture> dataFlow =
+    dataFlowInspectionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/");
 
   private void checkHighlighting() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.enableInspections(new DataFlowInspection(), new ConstantValueInspection());
-    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+    myFixture.testHighlighting(true, false, true, dataFlow.get().getTestName(false) + ".java");
   }
 
+  @Test
   public void testAssertThat() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("""
                          package org.hamcrest; public class CoreMatchers { public static <T> Matcher<T> notNullValue() {}
                          public static <T> Matcher<T> nullValue() {}

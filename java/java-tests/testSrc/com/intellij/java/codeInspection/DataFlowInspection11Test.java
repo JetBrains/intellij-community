@@ -2,40 +2,52 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class DataFlowInspection11Test extends DataFlowInspectionTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11_ANNOTATED;
-  }
+import static com.intellij.java.codeInspection.DataFlowInspectionFixture.addJSpecifyNullMarked;
+import static com.intellij.java.codeInspection.DataFlowInspectionFixture.setupTypeUseAnnotations;
+import static com.intellij.java.codeInspection.DataFlowInspectionFixtureKt.dataFlowInspectionFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
-  }
+@TestApplication
+public class DataFlowInspection11Test {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_11_ANNOTATED);
+  private final TestFixture<DataFlowInspectionFixture> dataFlow =
+    dataFlowInspectionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/");
 
-  public void testNullabilityJdk11() { doTest();}
+  @Test
+  public void testNullabilityJdk11() { dataFlow.get().doTest();}
   
-  public void testComparatorComparingContract() { doTest();}
+  @Test
+  public void testComparatorComparingContract() { dataFlow.get().doTest();}
 
-  public void testStreamCollector10Inlining() { doTest(); }
+  @Test
+  public void testStreamCollector10Inlining() { dataFlow.get().doTest(); }
   
-  public void testStreamFlatMapOptional() {doTest();}
+  @Test
+  public void testStreamFlatMapOptional() {dataFlow.get().doTest();}
 
-  public void testAvoidWarningAtNotInferredType() { doTest();}
+  @Test
+  public void testAvoidWarningAtNotInferredType() { dataFlow.get().doTest();}
 
-  public void testSameArguments() { doTest(); }
+  @Test
+  public void testSameArguments() { dataFlow.get().doTest(); }
   
+  @Test
   public void testMethodReturnTypeUnmodifiableAnnotation() { 
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testJSpecifyStreamConcatOfNullable() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
 }

@@ -2,47 +2,53 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class DataFlowInspectionPrimitivesInPatternsTest extends DataFlowInspectionTestCase {
+import static com.intellij.java.codeInspection.DataFlowInspectionFixtureKt.dataFlowInspectionFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_23;
-  }
+@TestApplication
+public class DataFlowInspectionPrimitivesInPatternsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_23);
+  private final TestFixture<DataFlowInspectionFixture> dataFlow =
+    dataFlowInspectionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/");
 
+  @Test
   public void testInstanceofFromBoxedObjectToPrimitive() {
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testInstanceofFromObjectToPrimitive() {
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testInstanceofFromPrimitiveToObject() {
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testInstanceofFromPrimitiveToPrimitive() {
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testSwitchWithPrimitive() {
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testSwitchFloatRepresentation() {
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testSwitchBoxedFloatRepresentation() {
-    doTest();
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
+    dataFlow.get().doTest();
   }
 }

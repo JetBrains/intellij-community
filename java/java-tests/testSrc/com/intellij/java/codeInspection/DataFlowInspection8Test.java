@@ -5,43 +5,66 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
+import static com.intellij.java.codeInspection.DataFlowInspectionFixture.addCheckerAnnotations;
+import static com.intellij.java.codeInspection.DataFlowInspectionFixture.addJSpecifyNullMarked;
+import static com.intellij.java.codeInspection.DataFlowInspectionFixture.setupAmbiguousAnnotations;
+import static com.intellij.java.codeInspection.DataFlowInspectionFixture.setupTypeUseAnnotations;
+import static com.intellij.java.codeInspection.DataFlowInspectionFixtureKt.dataFlowInspectionFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8_ANNOTATED;
-  }
+@TestApplication
+public class DataFlowInspection8Test {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8_ANNOTATED);
+  private final TestFixture<DataFlowInspectionFixture> dataFlow =
+    dataFlowInspectionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/");
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
-  }
-
+  @Test
   public void testAnnotatedTypeParameters() { doTestWithCustomAnnotations(); }
-  public void testReturnNullInLambdaExpression() { doTest(); }
-  public void testReturnNullInLambdaStatement() { doTest(); }
-  public void testUnboxingBoxingInLambdaReturn() { doTest(); }
-  public void testUnboxingInMethodReferences() { doTest(); }
-  public void testMethodReferenceOnNullable() { doTest(); }
+  @Test
+  public void testReturnNullInLambdaExpression() { dataFlow.get().doTest(); }
+  @Test
+  public void testReturnNullInLambdaStatement() { dataFlow.get().doTest(); }
+  @Test
+  public void testUnboxingBoxingInLambdaReturn() { dataFlow.get().doTest(); }
+  @Test
+  public void testUnboxingInMethodReferences() { dataFlow.get().doTest(); }
+  @Test
+  public void testMethodReferenceOnNullable() { dataFlow.get().doTest(); }
+  @Test
   public void testObjectsNonNullWithUnknownNullable() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupTypeUseAnnotations("typeUse", myFixture);
-    doTestWith((insp, _) -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
+    dataFlow.get().doTestWith((insp, _) -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
   }
-  public void testNullableVoidLambda() { doTest(); }
+  @Test
+  public void testNullableVoidLambda() { dataFlow.get().doTest(); }
+  @Test
   public void testNullableForeachVariable() { doTestWithCustomAnnotations(); }
+  @Test
   public void testGenericParameterNullity() { doTestWithCustomAnnotations(); }
+  @Test
   public void testMethodReferenceConstantValue() { doTestWithCustomAnnotations(); }
-  public void testLambdaAutoCloseable() { doTest(); }
+  @Test
+  public void testLambdaAutoCloseable() { dataFlow.get().doTest(); }
 
-  public void testOptionalOfNullable() { doTest(); }
-  public void testPrimitiveOptional() { doTest(); }
-  public void testOptionalOrElse() { doTest(); }
-  public void testOptionalIntSwitch() { doTest(); }
+  @Test
+  public void testOptionalOfNullable() { dataFlow.get().doTest(); }
+  @Test
+  public void testPrimitiveOptional() { dataFlow.get().doTest(); }
+  @Test
+  public void testOptionalOrElse() { dataFlow.get().doTest(); }
+  @Test
+  public void testOptionalIntSwitch() { dataFlow.get().doTest(); }
+  @Test
   public void testOptionalIsPresent() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("package org.junit;" +
                        "public class Assert {" +
                        "  public static void assertTrue(boolean b) {}" +
@@ -51,10 +74,11 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
                        "  public static void assertTrue(boolean b) {}" +
                        "}");
     addGuava();
-    doTest();
+    dataFlow.get().doTest();
   }
 
   private void addGuava() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("""
                          package com.google.common.base;
 
@@ -82,154 +106,226 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
                          }""");
   }
 
-  public void testPrimitiveInVoidLambda() { doTest(); }
-  public void testNotNullLambdaParameter() { doTest(); }
-  public void testNotNullOptionalLambdaParameter() { doTest(); }
+  @Test
+  public void testPrimitiveInVoidLambda() { dataFlow.get().doTest(); }
+  @Test
+  public void testNotNullLambdaParameter() { dataFlow.get().doTest(); }
+  @Test
+  public void testNotNullOptionalLambdaParameter() { dataFlow.get().doTest(); }
 
+  @Test
   public void testNullArgumentIsFailingMethodCall() {
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testNullArgumentIsNotFailingMethodCall() {
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testNullArgumentButParameterIsReassigned() {
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testNullArgumentIfMethodExecutionFailsAnyway() {
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testNullableArrayComponent() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupCustomAnnotations();
     DataFlowInspection inspection = new DataFlowInspection();
     inspection.IGNORE_ASSERT_STATEMENTS = true;
     ConstantValueInspection cvInspection = new ConstantValueInspection();
     cvInspection.IGNORE_ASSERT_STATEMENTS = true;
     myFixture.enableInspections(inspection, cvInspection);
-    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+    myFixture.testHighlighting(true, false, true, dataFlow.get().getTestName(false) + ".java");
   }
 
+  @Test
   public void testDontSuggestToMakeLambdaNullable() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     DataFlowInspection inspection = new DataFlowInspection();
     inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
     myFixture.enableInspections(inspection);
-    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+    myFixture.testHighlighting(true, false, true, dataFlow.get().getTestName(false) + ".java");
   }
 
+  @Test
   public void testLambdaParametersWithDefaultNullability() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testNonNullWhenUnknown() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testReturningNullFromTypeAnnotatedNullableMethod() {
     doTestWithCustomAnnotations();
   }
 
   private void doTestWithCustomAnnotations() {
     setupCustomAnnotations();
-    doTest();
+    dataFlow.get().doTest();
   }
 
   private void setupCustomAnnotations() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupTypeUseAnnotations("foo", myFixture);
   }
 
-  public void testCapturedWildcardNotNull() { doTest(); }
+  @Test
+  public void testCapturedWildcardNotNull() { dataFlow.get().doTest(); }
+  @Test
   public void testVarargNotNull() { doTestWithCustomAnnotations(); }
+  @Test
   public void testIgnoreNullabilityOnPrimitiveCast() { doTestWithCustomAnnotations();}
+  @Test
   public void testTypeUseLambdaReturn() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupTypeUseAnnotations("ambiguous", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
+  @Test
   public void testTypeUseInferenceInsideRequireNotNull() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupTypeUseAnnotations("typeUse", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testArrayComponentAndMethodAnnotationConflict() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupAmbiguousAnnotations("withTypeUse", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testTypeUseAmbiguousArrayReturn() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupAmbiguousAnnotations("ambiguous", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
-  public void testLambdaInlining() { doTest(); }
+  @Test
+  public void testLambdaInlining() { dataFlow.get().doTest(); }
 
+  @Test
   public void testOptionalInlining() {
     addGuava();
-    doTest();
+    dataFlow.get().doTest();
   }
-  public void testStreamInlining() { doTest(); }
+  @Test
+  public void testStreamInlining() { dataFlow.get().doTest(); }
+  @Test
   public void testStreamCollectInlining() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupTypeUseAnnotations("foo", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
-  public void testStreamCollectorInlining() { doTest(); }
-  public void testStreamToMapInlining() { doTest(); }
-  public void testStreamToMapInlining2() { doTest(); }
-  public void testStreamToCollectionInlining() { doTest(); }
-  public void testStreamComparatorInlining() { doTest(); }
-  public void testStreamKnownSource() { doTest(); }
+  @Test
+  public void testStreamCollectorInlining() { dataFlow.get().doTest(); }
+  @Test
+  public void testStreamToMapInlining() { dataFlow.get().doTest(); }
+  @Test
+  public void testStreamToMapInlining2() { dataFlow.get().doTest(); }
+  @Test
+  public void testStreamToCollectionInlining() { dataFlow.get().doTest(); }
+  @Test
+  public void testStreamComparatorInlining() { dataFlow.get().doTest(); }
+  @Test
+  public void testStreamKnownSource() { dataFlow.get().doTest(); }
+  @Test
   public void testStreamTypeAnnoInlining() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupTypeUseAnnotations("foo", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
-  public void testStreamFindFirstExpectNotNull() { doTest(); }
-  public void testStreamAnyMatchIsNull() { doTest(); }
-  public void testStreamCustomSumMethod() { doTest(); }
-  public void testStreamReduceLogicalAnd() { doTest(); }
-  public void testStreamSingleElementReduce() { doTest(); }
-  public void testStreamGroupingBy() { doTest(); }
-  public void testStreamNestedIncomplete() { doTest(); }
+  @Test
+  public void testStreamFindFirstExpectNotNull() { dataFlow.get().doTest(); }
+  @Test
+  public void testStreamAnyMatchIsNull() { dataFlow.get().doTest(); }
+  @Test
+  public void testStreamCustomSumMethod() { dataFlow.get().doTest(); }
+  @Test
+  public void testStreamReduceLogicalAnd() { dataFlow.get().doTest(); }
+  @Test
+  public void testStreamSingleElementReduce() { dataFlow.get().doTest(); }
+  @Test
+  public void testStreamGroupingBy() { dataFlow.get().doTest(); }
+  @Test
+  public void testStreamNestedIncomplete() { dataFlow.get().doTest(); }
+  @Test
   public void testRequireNonNullMethodRef() {
-    doTestWith((dfa, _) -> dfa.SUGGEST_NULLABLE_ANNOTATIONS = true);
+    dataFlow.get().doTestWith((dfa, _) -> dfa.SUGGEST_NULLABLE_ANNOTATIONS = true);
   }
 
+  @Test
   public void testMapGetWithValueNullability() { doTestWithCustomAnnotations(); }
+  @Test
   public void testInferNestedForeachNullability() { doTestWithCustomAnnotations(); }
 
+  @Test
   public void testMethodVsExpressionTypeAnnotationConflict() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupAmbiguousAnnotations("withTypeUse", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
 
-  public void testCastInstanceOf() { doTest(); }
+  @Test
+  public void testCastInstanceOf() { dataFlow.get().doTest(); }
 
+  @Test
   public void testMutabilityBasics() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("package org.jetbrains.annotations;public @interface Unmodifiable {}");
-    doTest();
+    dataFlow.get().doTest();
   }
 
-  public void testMutabilityJdk() { doTest(); }
+  @Test
+  public void testMutabilityJdk() { dataFlow.get().doTest(); }
 
-  public void testPrimitiveGetters() { doTest(); }
-  public void testUnknownOnStack() { doTest(); }
+  @Test
+  public void testPrimitiveGetters() { dataFlow.get().doTest(); }
+  @Test
+  public void testUnknownOnStack() { dataFlow.get().doTest(); }
+  @Test
   public void testMapUpdateInlining() { doTestWithCustomAnnotations(); }
-  public void testHashMapImplementation() { doTest(); }
+  @Test
+  public void testHashMapImplementation() { dataFlow.get().doTest(); }
 
-  public void testOptionalTooComplex() { doTest(); }
+  @Test
+  public void testOptionalTooComplex() { dataFlow.get().doTest(); }
 
+  @Test
   public void testMethodReferenceBoundToNullable() { doTestWithCustomAnnotations(); }
-  public void testEscapeAnalysis() { doTest(); }
-  public void testEscapeAnalysisLambdaInConstructor() { doTest(); }
-  public void testThisAsVariable() { doTest(); }
-  public void testQueuePeek() { doTest(); }
-  public void testForeachCollectionElement() { doTest(); }
-  public void testContractReturnValues() { doTest(); }
-  public void testTryFinallySimple() { doTest(); }
+  @Test
+  public void testEscapeAnalysis() { dataFlow.get().doTest(); }
+  @Test
+  public void testEscapeAnalysisLambdaInConstructor() { dataFlow.get().doTest(); }
+  @Test
+  public void testThisAsVariable() { dataFlow.get().doTest(); }
+  @Test
+  public void testQueuePeek() { dataFlow.get().doTest(); }
+  @Test
+  public void testForeachCollectionElement() { dataFlow.get().doTest(); }
+  @Test
+  public void testContractReturnValues() { dataFlow.get().doTest(); }
+  @Test
+  public void testTryFinallySimple() { dataFlow.get().doTest(); }
+  @Test
   public void testAssertAll() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("""
                          package org.junit.jupiter.api;
 
@@ -242,141 +338,215 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
                            public static void assertTrue(boolean b) {}
                          }""");
     myFixture.addClass("package org.junit.jupiter.api.function;public interface Executable { void execute() throws Throwable;}\n");
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testConflictsInInferredTypes() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupAmbiguousAnnotations("foo", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
-  public void testObjectsEquals() { doTest(); }
-  public void testManyObjectEquals() { doTest(); }
-  public void testManyObjectEquals2() { doTest(); }
-  public void testLambdaAfterNullCheck() { doTest(); }
-  public void testFlatMapSideEffect() { doTest(); }
-  public void testOptionalValueTracking() { doTest(); }
-  public void testOptionalAsQualifier() { doTest(); }
+  @Test
+  public void testObjectsEquals() { dataFlow.get().doTest(); }
+  @Test
+  public void testManyObjectEquals() { dataFlow.get().doTest(); }
+  @Test
+  public void testManyObjectEquals2() { dataFlow.get().doTest(); }
+  @Test
+  public void testLambdaAfterNullCheck() { dataFlow.get().doTest(); }
+  @Test
+  public void testFlatMapSideEffect() { dataFlow.get().doTest(); }
+  @Test
+  public void testOptionalValueTracking() { dataFlow.get().doTest(); }
+  @Test
+  public void testOptionalAsQualifier() { dataFlow.get().doTest(); }
+  @Test
   public void testDelegateClassTypeParameter() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
 
-  public void testClearZeroesSize() { doTest(); }
-  public void testLambdaInlineReassignReturnWithDeeperEquality() { doTest(); }
+  @Test
+  public void testClearZeroesSize() { dataFlow.get().doTest(); }
+  @Test
+  public void testLambdaInlineReassignReturnWithDeeperEquality() { dataFlow.get().doTest(); }
 
+  @Test
   public void testReturningNonNullFromMethodWithNullableArrayInReturnType() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupAmbiguousAnnotations("mixed", myFixture);
     setupTypeUseAnnotations("typeUse", myFixture);
-    NullableNotNullManager.getInstance(getProject()).setNullables("mixed.Nullable", "typeUse.Nullable");
-    doTest();
+    NullableNotNullManager.getInstance(myFixture.getProject()).setNullables("mixed.Nullable", "typeUse.Nullable");
+    dataFlow.get().doTest();
   }
 
-  public void testLambdaWritesArrayInTry() { doTest(); }
-  public void testManyNestedOptionals() { doTest(); }
-  public void testGetClass() { doTest(); }
-  public void testParamContract() { doTest(); }
-  public void testParamContractBoolean() { doTest(); }
+  @Test
+  public void testLambdaWritesArrayInTry() { dataFlow.get().doTest(); }
+  @Test
+  public void testManyNestedOptionals() { dataFlow.get().doTest(); }
+  @Test
+  public void testGetClass() { dataFlow.get().doTest(); }
+  @Test
+  public void testParamContract() { dataFlow.get().doTest(); }
+  @Test
+  public void testParamContractBoolean() { dataFlow.get().doTest(); }
+  @Test
   public void testTypeUseVarArg() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupTypeUseAnnotations("typeUse", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
+  @Test
   public void testLambdaReturnFromTypeUse() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupTypeUseAnnotations("typeUse", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
-  public void testInlineLambdaFromLocal() { doTest(); }
-  public void testAllowRequireNonNullInCtor() { doTest(); }
-  public void testNullableNotNullAssignmentInReturn() { doTest(); }
-  public void testTransformMethod() { doTest(); }
-  public void testTernaryExpressionNumericType() { doTest(); }
+  @Test
+  public void testInlineLambdaFromLocal() { dataFlow.get().doTest(); }
+  @Test
+  public void testAllowRequireNonNullInCtor() { dataFlow.get().doTest(); }
+  @Test
+  public void testNullableNotNullAssignmentInReturn() { dataFlow.get().doTest(); }
+  @Test
+  public void testTransformMethod() { dataFlow.get().doTest(); }
+  @Test
+  public void testTernaryExpressionNumericType() { dataFlow.get().doTest(); }
+  @Test
   public void testEclipseDefaultTypeUse() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("package org.eclipse.jdt.annotation;public @interface NonNullByDefault {}");
-    doTest();
+    dataFlow.get().doTest();
   }
+  @Test
   public void testEclipseDefaultOptionalOrElse() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("package org.eclipse.jdt.annotation;public @interface NonNullByDefault {}");
     myFixture.addClass("package org.eclipse.jdt.annotation;import java.lang.annotation.*;" +
                        "@Target({ElementType.TYPE_USE}) public @interface Nullable {}");
-    doTest();
+    dataFlow.get().doTest();
   }
-  public void testClassInsideLambda() { doTest(); }
+  @Test
+  public void testClassInsideLambda() { dataFlow.get().doTest(); }
+  @Test
   public void testMultiDimensionalArrays() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupTypeUseAnnotations("typeUse", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
+  @Test
   public void testImplicitUnboxingInMethodReference() {
-    doTest();
+    dataFlow.get().doTest();
   }
+  @Test
   public void testArrayTypeParameterInference() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupTypeUseAnnotations("typeUse", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
+  @Test
   public void testArrayTypeParameterInferenceAmbiguous() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupAmbiguousAnnotations("ambiguous", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
+  @Test
   public void testGuavaFunction() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupTypeUseAnnotations("typeUse", myFixture);
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
+  @Test
   public void testMethodReferenceNullableToNotNull() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupTypeUseAnnotations("typeUse", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
+  @Test
   public void testModifyListInLambda() {
-    doTest();
+    dataFlow.get().doTest();
   }
-  public void testConstantInClosure() { doTest(); }
+  @Test
+  public void testConstantInClosure() { dataFlow.get().doTest(); }
+  @Test
   public void testUnknownNullability() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("""
                          package org.jetbrains.annotations;
                          import java.lang.annotation.*;
                          @Target(ElementType.TYPE_USE)
                          public @interface UnknownNullability { }""");
-    doTestWith((insp, _) -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false);
+    dataFlow.get().doTestWith((insp, _) -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false);
   }
-  public void testReturnOrElseNull() { doTestWith((insp, _) -> insp.REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true); }
-  public void testArrayIntersectionType() { doTest(); }
-  public void testFunctionType() { doTest(); }
-  public void testIteratorHasNextModifiesPrivateField() { doTest(); }
+  @Test
+  public void testReturnOrElseNull() { dataFlow.get().doTestWith((insp, _) -> insp.REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true); }
+  @Test
+  public void testArrayIntersectionType() { dataFlow.get().doTest(); }
+  @Test
+  public void testFunctionType() { dataFlow.get().doTest(); }
+  @Test
+  public void testIteratorHasNextModifiesPrivateField() { dataFlow.get().doTest(); }
+  @Test
   public void testJsr305TypeUseNoLocal() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
+  @Test
   public void testDefaultAnnotationForLoopParameter() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupTypeUseAnnotations("typeUse", myFixture);
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
+  @Test
   public void testCheckerDefaultQualifier() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     addCheckerAnnotations(myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
+  @Test
   public void testSpotBugsDefaultAnnotation() {
-    doTest();
+    dataFlow.get().doTest();
   }
-  public void testConstructorMethodReferenceNullability() { doTest(); }
-  public void testCustomStreamImplementation() { doTest(); }
-  public void testEmptyCollection() { doTest(); }
-  public void testConsumedStream() { doTest(); }
-  public void testConsumedStreamDifferentMethods() { doTest(); }
-  public void testConsumedStreamWithoutInline()  { doTest(); }
-  public void testLocalityAndConditionalExpression() { doTest(); }
-  public void testParallelStreamThreadId() { doTest(); }
+  @Test
+  public void testConstructorMethodReferenceNullability() { dataFlow.get().doTest(); }
+  @Test
+  public void testCustomStreamImplementation() { dataFlow.get().doTest(); }
+  @Test
+  public void testEmptyCollection() { dataFlow.get().doTest(); }
+  @Test
+  public void testConsumedStream() { dataFlow.get().doTest(); }
+  @Test
+  public void testConsumedStreamDifferentMethods() { dataFlow.get().doTest(); }
+  @Test
+  public void testConsumedStreamWithoutInline()  { dataFlow.get().doTest(); }
+  @Test
+  public void testLocalityAndConditionalExpression() { dataFlow.get().doTest(); }
+  @Test
+  public void testParallelStreamThreadId() { dataFlow.get().doTest(); }
+  @Test
   public void testCompletableFutureWhenComplete() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     setupTypeUseAnnotations("typeUse", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
-  public void testFieldWriteInLambda() { doTest(); }
+  @Test
+  public void testFieldWriteInLambda() { dataFlow.get().doTest(); }
+  @Test
   public void testNewMethodReferenceMustBeNonNull() {
-    doTestWith((insp, _) -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
+    dataFlow.get().doTestWith((insp, _) -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
   }
+  @Test
   public void testExternalTypeParameterAnnotations() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
-    doTest();
+    dataFlow.get().doTest();
   }
 }

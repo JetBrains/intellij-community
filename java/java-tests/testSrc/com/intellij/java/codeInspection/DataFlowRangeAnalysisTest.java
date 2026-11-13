@@ -16,88 +16,138 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8_ANNOTATED;
-  }
+import static com.intellij.java.codeInspection.DataFlowInspectionFixtureKt.dataFlowInspectionFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
-  }
+@TestApplication
+public class DataFlowRangeAnalysisTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8_ANNOTATED);
+  private final TestFixture<DataFlowInspectionFixture> dataFlow =
+    dataFlowInspectionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/");
 
-  public void testLongRangeBasics() { doTest(); }
+  @Test
+  public void testLongRangeBasics() { dataFlow.get().doTest(); }
 
-  public void testLongRangeLoop() { doTest(); }
-  public void testCountedLoopWithOverflow() { doTest(); }
+  @Test
+  public void testLongRangeLoop() { dataFlow.get().doTest(); }
+  @Test
+  public void testCountedLoopWithOverflow() { dataFlow.get().doTest(); }
 
+  @Test
   public void testLongRangeAnnotation() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("""
                          package javax.annotation;
 
                          public @interface Nonnegative {}""");
-    doTest();
+    dataFlow.get().doTest();
   }
 
+  @Test
   public void testLongRangeKnownMethods() {
-    doTest();
+    dataFlow.get().doTest();
   }
+  @Test
   public void testStringSubstring() {
-    doTest();
+    dataFlow.get().doTest();
   }
 
-  public void testLongRangeMod() { doTest(); }
-  public void testLongRangeDivShift() { doTest(); }
+  @Test
+  public void testLongRangeMod() { dataFlow.get().doTest(); }
+  @Test
+  public void testLongRangeDivShift() { dataFlow.get().doTest(); }
 
-  public void testLongRangePlusMinus() { doTest(); }
-  public void testLongRangeMul() { doTest(); }
-  public void testFebruary31() { doTest(); }
+  @Test
+  public void testLongRangePlusMinus() { dataFlow.get().doTest(); }
+  @Test
+  public void testLongRangeMul() { dataFlow.get().doTest(); }
+  @Test
+  public void testFebruary31() { dataFlow.get().doTest(); }
 
-  public void testManyAdditionsDoNotCauseExponentialBlowUp() { doTest(); }
-  public void testBoxedRanges() { doTest(); }
-  public void testLongRangeDiff() { doTest(); }
-  public void testIntLongTypeConversion() { doTest(); }
-  public void testBackPropagation() { doTest(); }
-  public void testTwoArraysDiff() { doTest(); }
-  public void testModRange() { doTest(); }
-  public void testBackPropagationMod() { doTest(); }
-  public void testModPlus() { doTest(); }
-  public void testArithmeticNoOp() { doTest(); }
-  public void testStringConcat() { doTest(); }
-  public void testUnaryPlusMinus() { doTest(); }
-  public void testWidenPlusInLoop() { doTest(); }
-  public void testFloatLoop() { doTest(); }
-  public void testWidenMulInLoop() { doTest(); }
-  public void testReduceBinOpOnCast() { doTest(); }
-  public void testSuppressZeroReport() { doTest(); }
-  public void testCompareMethods() { doTest(); }
-  public void testWidenMismatch() { doTest(); }
-  public void testDontWidenPlusInLoop() { doTest(); }
-  public void testCollectionAddRemove() { doTest(); }
+  @Test
+  public void testManyAdditionsDoNotCauseExponentialBlowUp() { dataFlow.get().doTest(); }
+  @Test
+  public void testBoxedRanges() { dataFlow.get().doTest(); }
+  @Test
+  public void testLongRangeDiff() { dataFlow.get().doTest(); }
+  @Test
+  public void testIntLongTypeConversion() { dataFlow.get().doTest(); }
+  @Test
+  public void testBackPropagation() { dataFlow.get().doTest(); }
+  @Test
+  public void testTwoArraysDiff() { dataFlow.get().doTest(); }
+  @Test
+  public void testModRange() { dataFlow.get().doTest(); }
+  @Test
+  public void testBackPropagationMod() { dataFlow.get().doTest(); }
+  @Test
+  public void testModPlus() { dataFlow.get().doTest(); }
+  @Test
+  public void testArithmeticNoOp() { dataFlow.get().doTest(); }
+  @Test
+  public void testStringConcat() { dataFlow.get().doTest(); }
+  @Test
+  public void testUnaryPlusMinus() { dataFlow.get().doTest(); }
+  @Test
+  public void testWidenPlusInLoop() { dataFlow.get().doTest(); }
+  @Test
+  public void testFloatLoop() { dataFlow.get().doTest(); }
+  @Test
+  public void testWidenMulInLoop() { dataFlow.get().doTest(); }
+  @Test
+  public void testReduceBinOpOnCast() { dataFlow.get().doTest(); }
+  @Test
+  public void testSuppressZeroReport() { dataFlow.get().doTest(); }
+  @Test
+  public void testCompareMethods() { dataFlow.get().doTest(); }
+  @Test
+  public void testWidenMismatch() { dataFlow.get().doTest(); }
+  @Test
+  public void testDontWidenPlusInLoop() { dataFlow.get().doTest(); }
+  @Test
+  public void testCollectionAddRemove() { dataFlow.get().doTest(); }
 
-  public void testCollectionRemoveIf() { doTest(); }
+  @Test
+  public void testCollectionRemoveIf() { dataFlow.get().doTest(); }
 
-  public void testRelationsOnAddition() { doTest(); }
-  public void testModSpecialCase() { doTest(); }
-  public void testArrayAccessWithCastInCountedLoop() { doTest(); }
-  public void testFloatingPointRanges() { doTest(); }
-  public void testFloatingPointCasts() { doTest(); }
-  public void testFloatingPointMaxLoop() { doTest(); }
-  public void testFloatingPointConstantMath() { doTest(); }
-  public void testStringIndexOfRelation() { doTest(); }
-  public void testIncompleteLoop() { doTest(); }
-  public void testTwoFlagsMixed() { doTest(); }
-  public void testArrayInitializersWithMethodCall() { doTest(); }
-  public void testLongMinValue() { doTest(); }
-  public void testArrayBinarySearchNoWarningAtNeedle() { doTest(); }
+  @Test
+  public void testRelationsOnAddition() { dataFlow.get().doTest(); }
+  @Test
+  public void testModSpecialCase() { dataFlow.get().doTest(); }
+  @Test
+  public void testArrayAccessWithCastInCountedLoop() { dataFlow.get().doTest(); }
+  @Test
+  public void testFloatingPointRanges() { dataFlow.get().doTest(); }
+  @Test
+  public void testFloatingPointCasts() { dataFlow.get().doTest(); }
+  @Test
+  public void testFloatingPointMaxLoop() { dataFlow.get().doTest(); }
+  @Test
+  public void testFloatingPointConstantMath() { dataFlow.get().doTest(); }
+  @Test
+  public void testStringIndexOfRelation() { dataFlow.get().doTest(); }
+  @Test
+  public void testIncompleteLoop() { dataFlow.get().doTest(); }
+  @Test
+  public void testTwoFlagsMixed() { dataFlow.get().doTest(); }
+  @Test
+  public void testArrayInitializersWithMethodCall() { dataFlow.get().doTest(); }
+  @Test
+  public void testLongMinValue() { dataFlow.get().doTest(); }
+  @Test
+  public void testArrayBinarySearchNoWarningAtNeedle() { dataFlow.get().doTest(); }
 
+  @Test
   public void testJmhParamRange() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("package org.openjdk.jmh.annotations;public @interface Param {String[] value();}");
-    doTest();
+    dataFlow.get().doTest();
   }
 }

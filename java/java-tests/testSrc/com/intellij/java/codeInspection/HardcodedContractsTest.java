@@ -19,27 +19,32 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.idea.TestFor;
-import com.intellij.testFramework.LightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class HardcodedContractsTest extends DataFlowInspectionTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
+import static com.intellij.java.codeInspection.DataFlowInspectionFixture.addJSpecifyNullMarked;
+import static com.intellij.java.codeInspection.DataFlowInspectionFixtureKt.dataFlowInspectionFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
-  }
+@TestApplication
+public class HardcodedContractsTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<DataFlowInspectionFixture> dataFlow =
+    dataFlowInspectionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/");
 
   private void checkHighlighting() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.enableInspections(new DataFlowInspection(), new ConstantValueInspection());
-    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+    myFixture.testHighlighting(true, false, true, dataFlow.get().getTestName(false) + ".java");
   }
 
+  @Test
   public void testAssumeThat() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("package org.hamcrest; public class CoreMatchers { " +
                        "public static <T> Matcher<T> notNullValue() {}\n" +
                        "}");
@@ -50,7 +55,9 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
     checkHighlighting();
   }
 
+  @Test
   public void testGoogleTruth() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("package com.google.common.truth; public class Truth { " +
                        "public static Subject assertThat(Object o) {}\n" +
                        "}");
@@ -64,7 +71,9 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
     checkHighlighting();
   }
 
+  @Test
   public void testBooleanPreconditions() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("""
                          package com.google.common.base; public class Preconditions { public static <T> T checkArgument(boolean b) {}
                          public static <T> T checkArgument(boolean b, String msg) {}
@@ -73,14 +82,18 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
     checkHighlighting();
   }
 
+  @Test
   public void testGuavaCheckNotNull() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("package com.google.common.base; public class Preconditions { " +
                        "public static <T> T checkNotNull(T reference) {}\n" +
                        "}");
     checkHighlighting();
   }
 
+  @Test
   public void testSpringAssert() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("""
                          package org.springframework.util; public class Assert {
                              public static void isTrue(boolean expression) {}
@@ -91,7 +104,9 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
     checkHighlighting();
   }
 
+  @Test
   public void testJunit5Assert() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("package org.junit.jupiter.api;" +
                        "import java.util.function.BooleanSupplier;" +
                        "public class Assertions {\n" +
@@ -103,7 +118,9 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
     checkHighlighting();
   }
 
+  @Test
   public void testAssertTestNg() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("""
                          package org.testng;
 
@@ -125,35 +142,45 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
     checkHighlighting();
   }
 
+  @Test
   public void testAssertJAssert() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     addJSpecifyNullMarked(myFixture);
     checkHighlighting();
   }
 
+  @Test
   @TestFor(issues = "IDEA-389877")
   public void testAssertJExtracting() {
     checkHighlighting();
   }
 
+  @Test
   public void testHardcodedContractNotNullOverride() {
     checkHighlighting();
   }
 
+  @Test
   public void testArraysEqualsPure() {
     checkHighlighting();
   }
 
+  @Test
   public void testDateContracts() {
     checkHighlighting();
   }
 
+  @Test
   public void testCharacterMethods() { checkHighlighting(); }
 
+  @Test
   public void testDateTimeComparing()  {
     checkHighlighting();
   }
 
+  @Test
   public void testAssertInstanceOf() {
+    LightJavaCodeInsightTestFixture myFixture = dataFlow.get().getFixture();
     myFixture.addClass("""
                          package org.junit.jupiter.api;
                          import java.util.function.Supplier;

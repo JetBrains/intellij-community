@@ -11,7 +11,7 @@ import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
-import static com.intellij.java.codeInspection.DataFlowInspectionTestCase.setupTypeUseAnnotations;
+import static com.intellij.java.codeInspection.DataFlowInspectionFixture.setupTypeUseAnnotations;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
