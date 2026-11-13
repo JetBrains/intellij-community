@@ -11,6 +11,7 @@ import com.intellij.terminal.emulator.createTerminalEmulator
 import com.intellij.terminal.frontend.session.ghostty.TerminalEmulatorOutputProjector
 import com.intellij.terminal.tests.reworked.util.ESC
 import com.intellij.terminal.tests.reworked.util.promptStartedOsc
+import com.intellij.terminal.tests.reworked.util.semanticPromptOsc
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.dto.CursorShapeDto
@@ -194,32 +195,37 @@ internal class TerminalEmulatorOutputProjectorTest {
     }
 
   @Test
-  fun `a window that outruns a small scrollback reports only the screen even below the threshold`() =
+  fun `a window that outruns a small scrollback reads the retained rows at once`() =
     withProjector(columns = 215, rows = 5, maxScrollbackBytes = 1) {
       // 215 columns makes a row expensive, so the two-page floor retains only a few hundred rows: these
-      // finalized rows outrun it while staying under the row-count threshold.
+      // finalized rows outrun it while staying under the row-count threshold. The retained rows cost no
+      // more to read than the rows of a normal update, so there is no deferral.
       write((0 until 600).joinToString("\r\n") { "line-$it" })
 
       val event = collectUpdate()
+      assertThat(projector.isHistoryReplaced).isFalse()
       assertThat(event.startLineLogicalIndex).isEqualTo(0L)
-      assertThat(event.text.split('\n')).hasSizeLessThanOrEqualTo(5)
+      val lines = event.text.split('\n')
+      assertThat(lines).describedAs("the whole retained scrollback, not just the screen").hasSizeGreaterThan(100)
+      assertThat(lines.last()).isEqualTo("line-599")
     }
 
   @Test
-  fun `a burst past the retained scrollback reports only the screen`() = withProjector(rows = 5, maxScrollbackBytes = 1) {
-    write((0 until 5_000).joinToString("\r\n") { "burst-$it" })
+  fun `a burst past the retained scrollback reports only the screen`() =
+    withProjector(rows = 5, maxScrollbackBytes = DEFERRING_SCROLLBACK_BYTES) {
+      write((0 until 5_000).joinToString("\r\n") { "burst-$it" })
 
-    val event = collectUpdate()
-    assertThat(event.startLineLogicalIndex).isEqualTo(0L)
-    assertThat(event.text.split('\n'))
-      .describedAs("only the screen, not the whole retained scrollback")
-      .hasSizeLessThanOrEqualTo(5)
-    assertThat(event.text).contains("burst-4999")
-  }
+      val event = collectUpdate()
+      assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+      assertThat(event.text.split('\n'))
+        .describedAs("only the screen, not the whole retained scrollback")
+        .hasSizeLessThanOrEqualTo(5)
+      assertThat(event.text).contains("burst-4999")
+    }
 
   @Test
   fun `a wrapped line straddling the screen top is not truncated while only the screen is reported`() =
-    withProjector(columns = 80, rows = 5, maxScrollbackBytes = 1) {
+    withProjector(columns = 80, rows = 5, maxScrollbackBytes = DEFERRING_SCROLLBACK_BYTES) {
       // The burst ends with a 480-character line: six 80-column rows, so its first row is pushed into
       // history while the remaining five fill the screen.
       val wrapped = "A".repeat(480)
@@ -233,7 +239,7 @@ internal class TerminalEmulatorOutputProjectorTest {
     }
 
   @Test
-  fun `further heavy output keeps reporting only the screen`() = withProjector(rows = 5, maxScrollbackBytes = 1) {
+  fun `further heavy output keeps reporting only the screen`() = withProjector(rows = 5, maxScrollbackBytes = DEFERRING_SCROLLBACK_BYTES) {
     write((0 until 5_000).joinToString("\r\n") { "b1-$it" })
     collectUpdate() // starts reporting the screen alone
 
@@ -245,32 +251,34 @@ internal class TerminalEmulatorOutputProjectorTest {
   }
 
   @Test
-  fun `a single finalized row keeps reporting only the screen`() = withProjector(rows = 5, maxScrollbackBytes = 1) {
-    write((0 until 5_000).joinToString("\r\n") { "burst-$it" })
-    collectUpdate()
+  fun `a single finalized row keeps reporting only the screen`() =
+    withProjector(rows = 5, maxScrollbackBytes = DEFERRING_SCROLLBACK_BYTES) {
+      write((0 until 5_000).joinToString("\r\n") { "burst-$it" })
+      collectUpdate()
 
-    // One row is enough to count as "still running": the expensive read stays out of the burst.
-    write("\r\ntrickle")
-    val event = collectUpdate()
-    assertThat(event.startLineLogicalIndex).isEqualTo(0L)
-    assertThat(event.text.split('\n')).hasSizeLessThanOrEqualTo(5)
-  }
-
-  @Test
-  fun `once the output stops the retained history is reported again`() = withProjector(rows = 5, maxScrollbackBytes = 1) {
-    write((0 until 5_000).joinToString("\r\n") { "burst-$it" })
-    collectUpdate()
-
-    // Nothing was written since, so this update finalizes nothing and reads the history back.
-    val event = collectUpdate()
-    assertThat(event.startLineLogicalIndex).isEqualTo(0L)
-    assertThat(event.text.split('\n'))
-      .describedAs("the whole retained scrollback, not just the screen")
-      .hasSizeGreaterThan(100)
-  }
+      // One row is enough to count as "still running": the expensive read stays out of the burst.
+      write("\r\ntrickle")
+      val event = collectUpdate()
+      assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+      assertThat(event.text.split('\n')).hasSizeLessThanOrEqualTo(5)
+    }
 
   @Test
-  fun `exact tracking resumes after the output stops`() = withProjector(rows = 5, maxScrollbackBytes = 1) {
+  fun `once the output stops the retained history is reported again`() =
+    withProjector(rows = 5, maxScrollbackBytes = DEFERRING_SCROLLBACK_BYTES) {
+      write((0 until 5_000).joinToString("\r\n") { "burst-$it" })
+      collectUpdate()
+
+      // Nothing was written since, so this update finalizes nothing and reads the history back.
+      val event = collectUpdate()
+      assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+      assertThat(event.text.split('\n'))
+        .describedAs("the whole retained scrollback, not just the screen")
+        .hasSizeGreaterThan(100)
+    }
+
+  @Test
+  fun `exact tracking resumes after the output stops`() = withProjector(rows = 5, maxScrollbackBytes = DEFERRING_SCROLLBACK_BYTES) {
     write((0 until 5_000).joinToString("\r\n") { "burst-$it" })
     collectUpdate()
     collectUpdate() // stops, so this one re-reads the history
@@ -284,29 +292,31 @@ internal class TerminalEmulatorOutputProjectorTest {
   }
 
   @Test
-  fun `steady output keeps reporting only the screen until it pauses`() = withProjector(rows = 5, maxScrollbackBytes = 1) {
-    write((0 until 5_000).joinToString("\r\n") { "burst-$it" })
-    collectUpdate()
+  fun `steady output keeps reporting only the screen until it pauses`() =
+    withProjector(rows = 5, maxScrollbackBytes = DEFERRING_SCROLLBACK_BYTES) {
+      write((0 until 5_000).joinToString("\r\n") { "burst-$it" })
+      collectUpdate()
 
-    // A trickle that never stops never settles - the documented cost of waiting for a full stop.
-    repeat(5) {
-      write("\r\nsteady-$it")
-      assertThat(collectUpdate().text.split('\n')).hasSizeLessThanOrEqualTo(5)
+      // A trickle that never stops never settles - the documented cost of waiting for a full stop.
+      repeat(5) {
+        write("\r\nsteady-$it")
+        assertThat(collectUpdate().text.split('\n')).hasSizeLessThanOrEqualTo(5)
+      }
+
+      // Only once it pauses does the history come back.
+      assertThat(collectUpdate().text.split('\n')).hasSizeGreaterThan(100)
     }
 
-    // Only once it pauses does the history come back.
-    assertThat(collectUpdate().text.split('\n')).hasSizeGreaterThan(100)
-  }
-
   @Test
-  fun `computeCursor stays consistent while only the screen is reported`() = withProjector(rows = 5, maxScrollbackBytes = 1) {
-    write((0 until 5_000).joinToString("\r\n") { "burst-$it" })
-    val event = collectUpdate()
+  fun `computeCursor stays consistent while only the screen is reported`() =
+    withProjector(rows = 5, maxScrollbackBytes = DEFERRING_SCROLLBACK_BYTES) {
+      write((0 until 5_000).joinToString("\r\n") { "burst-$it" })
+      val event = collectUpdate()
 
-    val (line, column) = projector.computeCursor()
-    assertThat(line).isEqualTo(event.cursorLogicalLineIndex)
-    assertThat(column).isEqualTo(event.cursorColumnIndex)
-  }
+      val (line, column) = projector.computeCursor()
+      assertThat(line).isEqualTo(event.cursorLogicalLineIndex)
+      assertThat(column).isEqualTo(event.cursorColumnIndex)
+    }
 
   // ---------------------------------------------------------------------------
   // Cursor
@@ -859,9 +869,9 @@ internal class TerminalEmulatorOutputProjectorTest {
 
   @Test
   fun `a large primary burst discovered only after returning from the alternate screen replaces the history`() =
-    withProjector(columns = 80, rows = 5, maxScrollbackBytes = 1) {
-      // maxScrollbackBytes is floored to two pages, so this burst finalizes far more than is retained -
-      // but nothing reads it before the switch below, so historyMark stays unaware of any of it.
+    withProjector(columns = 80, rows = 5, maxScrollbackBytes = DEFERRING_SCROLLBACK_BYTES) {
+      // This burst finalizes far more than is retained - but nothing reads it before the switch below, so
+      // historyMark stays unaware of any of it.
       write((0 until 5_000).joinToString("\r\n") { "R%04d".format(it) })
 
       write("$ESC[?1049h" + "ALT")
@@ -922,8 +932,8 @@ internal class TerminalEmulatorOutputProjectorTest {
 
   @Test
   fun `a replaced history is restored on the first primary update after the alternate screen`() =
-    withProjector(columns = 80, rows = 5, maxScrollbackBytes = 1) {
-      // maxScrollbackBytes is floored to two pages, so this burst finalizes far more than is retained.
+    withProjector(columns = 80, rows = 5, maxScrollbackBytes = DEFERRING_SCROLLBACK_BYTES) {
+      // This burst finalizes far more than is retained.
       write((0 until 5_000).joinToString("\r\n") { "R%04d".format(it) })
       collectUpdate()
       assertThat(projector.isHistoryReplaced).isTrue()
@@ -1018,8 +1028,8 @@ internal class TerminalEmulatorOutputProjectorTest {
 
   @Test
   fun `a resize while the history is replaced resumes exact tracking`() =
-    withProjector(columns = 80, rows = 5, maxScrollbackBytes = 1) {
-      // maxScrollbackBytes is floored to two pages, so this burst finalizes far more than is retained.
+    withProjector(columns = 80, rows = 5, maxScrollbackBytes = DEFERRING_SCROLLBACK_BYTES) {
+      // This burst finalizes far more than is retained.
       write((0 until 5_000).joinToString("\r\n") { "R%04d".format(it) })
       collectUpdate()
       assertThat(projector.isHistoryReplaced).isTrue()
@@ -1113,26 +1123,25 @@ internal class TerminalEmulatorOutputProjectorTest {
   }
 
   @Test
-  fun `Ctrl+L reports the redrawn prompt as the screen top`() = withProjector(rows = 3) {
-    // Fill the screen so lines scroll into history, then erase the screen alone
-    // (CSI 2J, what a shell sends for Ctrl+L) and redraw the prompt at the home position. The scrollback
-    // survives, so the screen top is well past 0, and it is the prompt's own line: that is what lets the view
-    // put the prompt at the top of the viewport.
-    write("a\r\nb\r\nc\r\nd\r\ne")
-    collectUpdate()
+  fun `Ctrl+L at a prompt keeps the screen as history and reports the redrawn prompt as the screen top`() =
+    withProjector(rows = 4) {
+      writeCommands()
 
-    write(csi("H") + csi("2J") + "prompt> ")
-    val event = collectUpdate()
+      // Home plus CSI 2J, what a shell sends for Ctrl+L, then the redrawn prompt. At a prompt, libghostty
+      // scrolls the screen into the history instead of erasing it.
+      write(csi("H") + csi("2J") + PROMPT)
+      val event = collectUpdate()
 
-    assertThat(event.text).isEqualTo("prompt> ")
-    // "a" and "b" were finalized before the erase, so the surviving screen begins at logical line 2, and the
-    // prompt is that very line. The scrollback is untouched, so nothing here is 0.
-    assertThat(event.startLineLogicalIndex).isEqualTo(2L)
-    assertThat(event.screenTopLogicalLineIndex).isEqualTo(2L)
-    assertThat(event.screenTopColumnIndex).isEqualTo(0)
-    assertThat(event.cursorLogicalLineIndex).isEqualTo(2L)
-    assertThat(event.cursorColumnIndex).isEqualTo(8)
-  }
+      // libghostty holds "$ echo 0" to the old prompt in its history, and the new prompt alone on the screen.
+      // The four screen rows from logical line 3 on are new history rows.
+      assertThat(event.startLineLogicalIndex).isEqualTo(3L)
+      assertThat(event.text).isEqualTo("out1\n$ echo 2\nout2\n$ \n$ ")
+      // The prompt is the screen top: that is what lets the view put it at the top of the viewport.
+      assertThat(event.screenTopLogicalLineIndex).isEqualTo(7L)
+      assertThat(event.screenTopColumnIndex).isEqualTo(0)
+      assertThat(event.cursorLogicalLineIndex).isEqualTo(7L)
+      assertThat(event.cursorColumnIndex).isEqualTo(2)
+    }
 
   @Test
   fun `a wrapped line straddling the screen top reports a column`() = withProjector(columns = 80, rows = 3) {
@@ -1202,6 +1211,45 @@ internal class TerminalEmulatorOutputProjectorTest {
     assertThat(event.startLineLogicalIndex).isGreaterThan(0L)
     assertThat(event.text).doesNotContain("L")
     assertThat(event.text).contains("more")
+  }
+
+  @Test
+  fun `clear that erases the scrollback first keeps previous screen in scrollback`() = withProjector(rows = 4) {
+    writeCommands()
+    // The echo of Enter scrolls "out1" into the history, and an update reports it before the command runs.
+    write("clear\r\n")
+    collectUpdate()
+
+    // The macOS clear: CSI 3J, then CSI 2J. The erase of the screen at a prompt scrolls it into the empty history.
+    write(semanticPromptOsc("C") + csi("3J") + csi("H") + csi("2J") + semanticPromptOsc("D;0") + PROMPT)
+    val event = collectUpdate()
+
+    // libghostty holds the erased screen as its history, and nothing from before it: the update replaces all.
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+    assertThat(event.text).isEqualTo("$ echo 2\nout2\n$ clear\n$ ")
+    assertThat(event.screenTopLogicalLineIndex).isEqualTo(3L)
+    assertThat(event.screenTopColumnIndex).isEqualTo(0)
+    assertThat(event.cursorLogicalLineIndex).isEqualTo(3L)
+    assertThat(event.cursorColumnIndex).isEqualTo(2)
+  }
+
+  @Test
+  fun `clear that erases the scrollback last keeps nothing, with no pause`() = withProjector(rows = 4) {
+    writeCommands()
+    write("clear\r\n")
+    collectUpdate()
+
+    // The ncurses clear: CSI 2J scrolls the screen into the history, and CSI 3J erases all of it.
+    write(semanticPromptOsc("C") + csi("H") + csi("2J") + csi("3J") + semanticPromptOsc("D;0") + PROMPT)
+    val event = collectUpdate()
+
+    assertThat(projector.isHistoryReplaced).isFalse()
+    assertThat(event.startLineLogicalIndex).isEqualTo(0L)
+    assertThat(event.text).isEqualTo("$ ")
+    assertThat(event.screenTopLogicalLineIndex).isEqualTo(0L)
+    assertThat(event.cursorLogicalLineIndex).isEqualTo(0L)
+    assertThat(event.cursorColumnIndex).isEqualTo(2)
   }
 
   // ---------------------------------------------------------------------------
@@ -1467,12 +1515,34 @@ internal class TerminalEmulatorOutputProjectorTest {
   private fun numberedLines(count: Int, length: Int): List<String> =
     (0 until count).map { "L$it".padEnd(length, '-') }
 
+  /**
+   * Three commands at a prompt, with one output line each, and the next prompt. On a 4-row screen, the history
+   * holds "$ echo 0", "out0" and "$ echo 1", and the screen holds "out1" to the prompt.
+   */
+  private fun Fixture.writeCommands() {
+    val commands = (0 until 3).joinToString("") {
+      "echo $it\r\n" + semanticPromptOsc("C") + "out$it\r\n" + semanticPromptOsc("D;0") + PROMPT
+    }
+    write(PROMPT + commands)
+    collectUpdate()
+  }
+
   /** `ESC ] 8 ; ; <uri> ST <text> ESC ] 8 ; ; ST` - [text] hyperlinked to [uri]. */
   private fun osc8(uri: String, text: String): String {
     val st = Char(27) + "\\"
     return Char(27) + "]8;;" + uri + st + text + Char(27) + "]8;;" + st
   }
 }
+
+/**
+ * A scrollback cap that retains more rows than HISTORY_REPLACE_LINES at 80 columns, about 2,600. A 5,000-line burst
+ * outruns it, and the projector defers the read of what it retains. The smallest cap retains about 850 rows, and the
+ * projector reads them at once.
+ */
+private const val DEFERRING_SCROLLBACK_BYTES = 2 * 1024 * 1024
+
+/** The prompt as the zsh shell integration prints it, between the marks of the prompt start and end. */
+private val PROMPT: String = semanticPromptOsc("A;redraw=1") + "$ " + semanticPromptOsc("B")
 
 /** Resizes with an unknown cell pixel size: these cases check the reflow, not the size reports. */
 private fun TerminalEmulator.resize(size: TerminalSize): Unit = resize(TerminalGridGeometry(size))

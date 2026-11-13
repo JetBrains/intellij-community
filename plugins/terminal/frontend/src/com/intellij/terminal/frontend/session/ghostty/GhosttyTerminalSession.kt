@@ -109,10 +109,9 @@ import kotlin.time.Duration.Companion.milliseconds
  * - **Scrollback overflow**: content updates are incremental (only the changed tail),
  *   tracked exactly via a [com.intellij.terminal.emulator.HistoryMark] — except that a
  *   burst fast enough to finalize more than the whole retained scrollback between two
- *   projection ticks makes the old numbering unrecoverable, so the projector resets and reports
- *   only the currently visible tail instead (see
- *   [TerminalEmulatorOutputProjector.buildContentUpdate]) — already-shown history can be
- *   dropped in that case.
+ *   projection ticks makes the old numbering unrecoverable, so the projector resets to the
+ *   retained scrollback (see [TerminalEmulatorOutputProjector.buildContentUpdate]) —
+ *   already-shown history can be dropped in that case.
  * - **Buffer switch same-tick coalescing**: a switch that flips and flips back (or vice
  *   versa) between projection ticks — or inside one still-open synchronized-output
  *   block — is invisible, and whatever was drawn to the other buffer during that round

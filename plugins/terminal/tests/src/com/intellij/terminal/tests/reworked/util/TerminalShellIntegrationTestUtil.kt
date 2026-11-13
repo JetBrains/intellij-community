@@ -14,6 +14,9 @@ internal val BEL: String = Char(0x07).toString()
  */
 internal fun shellIntegrationOsc(payload: String): String = "${ESC}]1341;$payload${BEL}"
 
+/** A semantic prompt mark (`ESC ] 133 ; <body> BEL`), which the bundled shell-integration scripts emit beside their own commands. */
+internal fun semanticPromptOsc(body: String): String = "${ESC}]133;$body${BEL}"
+
 /** Hex-encodes a shell-integration parameter value, matching the scripts' `__jetbrains_intellij_encode`. */
 internal fun String.encodeShellIntegrationValue(): String =
   toByteArray(Charsets.UTF_8).joinToString("") { "%02x".format(it.toInt() and 0xFF) }

@@ -9,6 +9,7 @@ import com.intellij.terminal.tests.reworked.util.ESC
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.text
 import com.intellij.terminal.tests.reworked.util.TerminalViewTestCase
 import com.intellij.terminal.tests.reworked.util.assertOutputModelState
+import com.intellij.terminal.tests.reworked.util.semanticPromptOsc
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CompletableDeferred
@@ -153,11 +154,31 @@ internal class TerminalTextBufferEventsTest(emulatorType: TerminalEmulatorType) 
     fixture.connector.feed((0 until 40).joinToString("\r\n") { "L%02d".format(it) })
     fixture.assertOutputModelState(model) { it.text.contains("L39") }
 
-    // ED2 (erase the active screen) plus the E3 extension (erase scrollback), which `clear` sends.
+    // ED2 (erase the active screen) plus the E3 extension (erase scrollback), in the order of the ncurses `clear`.
     fixture.connector.feed("${ESC}[2J${ESC}[3J${ESC}[H")
 
     fixture.assertOutputModelState(model) { it.text.isBlank() }
     assertThat(model.text).describedAs("no line from before clear may survive").doesNotContain("L")
+  }
+
+  @Test
+  fun `clear that erases the scrollback first keeps previous screen in scrollback`() = doTest { fixture ->
+    // The "clear at a prompt" rule below is libghostty's own.
+    assumeGhostty()
+    val model = fixture.view.activeOutputModel()
+    val prompt = semanticPromptOsc("A;redraw=1") + "$ " + semanticPromptOsc("B")
+
+    // 40 lines of command output on a 24-row screen, then `clear` at the next prompt.
+    val output = (0 until 40).joinToString("") { "L%02d\r\n".format(it) }
+    fixture.connector.feed(prompt + "seq\r\n" + semanticPromptOsc("C") + output + semanticPromptOsc("D;0") + prompt + "clear\r\n")
+    fixture.assertOutputModelState(model) { it.text.contains("$ clear") }
+
+    // The macOS clear: CSI 3J, then CSI 2J. At a prompt, libghostty scrolls the erased screen into the empty history.
+    fixture.connector.feed(semanticPromptOsc("C") + "${ESC}[3J${ESC}[H${ESC}[2J" + semanticPromptOsc("D;0") + prompt)
+
+    // libghostty keeps the screen that `clear` erased, and nothing from before it.
+    val expected = (18 until 40).joinToString("") { "L%02d\n".format(it) } + "$ clear\n$ "
+    fixture.assertOutputModelState(model) { it.text == expected }
   }
 
   @Test

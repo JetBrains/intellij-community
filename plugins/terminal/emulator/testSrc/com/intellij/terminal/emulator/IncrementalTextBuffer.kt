@@ -106,8 +106,8 @@ internal class IncrementalTextBuffer(private val emulator: TerminalEmulator) {
   /**
    * Accumulates the full text buffer ([fullScrollback]) from the [HistoryMark]: appends the lines finalized into
    * history since the previous sync (the newest [HistoryMark.finalizedLineCount] scrollback rows), so it grows past
-   * what the emulator retains. Reflow (resize), clear/reset (count shrinks) and mark eviction ([HistoryMark] returns
-   * `null` when a single write outran the whole retained scrollback) can't be expressed as a suffix append, so
+   * what the emulator retains. Reflow (resize) and a lost mark ([HistoryMark] returns `null` when a single write
+   * outran the whole retained scrollback, or an erase freed it) can't be expressed as a suffix append, so
    * re-sync to the retained window there — the same degradation the bounded [scrollback] mirror makes.
    *
    * Also asserts the core [HistoryMark] contract on every sync: the emulator's retained scrollback is exactly the
@@ -117,8 +117,8 @@ internal class IncrementalTextBuffer(private val emulator: TerminalEmulator) {
   private fun updateFullScrollback(cur: Int) {
     val finalized = historyMark.finalizedLineCount()
     if (pendingResize || finalized == null || finalized < 0) {
-      // Reflow (resize), a mark eviction (finalized == null: a single write outran the whole retained
-      // scrollback), or a resize recovering rows out of scrollback (finalized < 0) can't be a clean suffix
+      // Reflow (resize), a lost mark (finalized == null: a single write outran the whole retained
+      // scrollback, or an erase freed it), or a resize recovering rows out of scrollback (finalized < 0) can't be a clean suffix
       // append -> re-sync to the retained window, degrading like the bounded [scrollback] mirror. Note:
       // ordinary page-based eviction is NOT such a case -- scrollbackRows drops in steps as whole pages are
       // pruned, but the mark tracks the boundary content, so [HistoryMark.finalizedLineCount] stays correct

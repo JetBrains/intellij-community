@@ -1043,69 +1043,47 @@ internal class GhosttyTerminalEmulator(
   }
 
   /**
-   * A [HistoryMark] backed by a ghostty tracked grid reference (grid_ref_tracked.h) pinned at the top
-   * of the active screen — the boundary between finalized scrollback and the live screen. The tracked
-   * reference follows that content as the screen scrolls, so [finalizedLineCount] stays exact even
-   * after the scrollback byte cap begins evicting, where the raw [scrollbackRows] delta would plateau.
+   * A [HistoryMark] backed by two ghostty tracked grid references (grid_ref_tracked.h).
+   *
+   * The [boundaryRef] pins the top of the active screen — the boundary between finalized scrollback
+   * and the live screen. It follows that content as the screen scrolls, so [finalizedLineCount] stays exact
+   * even after the scrollback byte cap begins evicting, where the raw [scrollbackRows] delta would plateau.
+   *
+   * The [tailRef] pins the newest history row. It helps to detect an erase of the history (`CSI 3 J`, a full reset): it frees
+   * that row, and the library then reports the reference gone. The boundary alone cannot see such an erase:
+   * it is on the active screen, which the erase leaves as it is.
    */
   private inner class GhosttyHistoryMark : HistoryMark {
-    // A mark can be closed (its native ref freed) independently of the emulator, so it owns its own
+    // A mark can be closed (its native refs freed) independently of the emulator, so it owns its own
     // arena + scratch rather than borrowing the emulator's shared one.
     private val markArena: Arena = Arena.ofShared()
     private val markPoint: MemorySegment = markArena.allocate(POINT)      // reused for track / set
     private val markCoord: MemorySegment = markArena.allocate(POINT_COORD)
-    private val trackedRef: MemorySegment
-    private var markClosed = false
-
-    init {
-      writeActiveTop(markPoint)
-      val outRef = markArena.allocate(C_PTR)
-      val r = try {
-        LibGhosttyVt.terminalGridRefTrack(terminal, markPoint, outRef)
-      } catch (t: Throwable) {
-        markArena.close()
-        throw RuntimeException("ghostty_terminal_grid_ref_track failed", t)
-      }
-      if (r != GhosttyResult.SUCCESS) {
-        markArena.close()
-        throw IllegalStateException("ghostty_terminal_grid_ref_track returned $r")
-      }
-      trackedRef = outRef.get(C_PTR, 0L)
+    private val boundaryRef: MemorySegment = track(activeTop()) { markArena.close() }
+    private val tailRef: MemorySegment = track(newestHistoryRow()) {
+      LibGhosttyVt.trackedGridRefFree(boundaryRef)
+      markArena.close()
     }
+    private var markClosed = false
 
     override fun finalizedLineCount(): Int? {
       ensureOpen()
       ensureMarkOpen()
-      val r = try {
-        LibGhosttyVt.trackedGridRefPoint(trackedRef, GhosttyPointTag.SCREEN.code, markCoord)
-      } catch (t: Throwable) {
-        throw RuntimeException("ghostty_tracked_grid_ref_point failed", t)
-      }
-      if (r == GhosttyResult.NO_VALUE) {
-        return null // the pinned boundary line has been evicted from the bounded scrollback
-      }
-      if (r != GhosttyResult.SUCCESS) {
-        throw IllegalStateException("ghostty_tracked_grid_ref_point returned $r")
+      if (screenY(tailRef) == null) {
+        return null // the history above the boundary was erased, or evicted up to the boundary
       }
       // SCREEN y is the pinned line's absolute row: history occupies rows [0, scrollbackRows), then the
       // active screen. At anchor time the top active row is at y == scrollbackRows, so the number of
       // lines finalized since is the amount that absolute row has moved above the current boundary.
-      val screenY = markCoord.get(C_INT, POINT_COORD_OFF_Y)
-      return scrollbackRows - screenY
+      val boundaryY = screenY(boundaryRef) ?: return null // the boundary was evicted from the bounded scrollback
+      return scrollbackRows - boundaryY
     }
 
     override fun reset() {
       ensureOpen()
       ensureMarkOpen()
-      writeActiveTop(markPoint)
-      val r = try {
-        LibGhosttyVt.trackedGridRefSet(trackedRef, terminal, markPoint)
-      } catch (t: Throwable) {
-        throw RuntimeException("ghostty_tracked_grid_ref_set failed", t)
-      }
-      if (r != GhosttyResult.SUCCESS) {
-        throw IllegalStateException("ghostty_tracked_grid_ref_set returned $r")
-      }
+      repin(boundaryRef, activeTop())
+      repin(tailRef, newestHistoryRow())
     }
 
     override fun close() {
@@ -1113,10 +1091,14 @@ internal class GhosttyTerminalEmulator(
         return
       }
       markClosed = true
-      // Freeing the tracked ref is safe even after the terminal is freed (grid_ref_tracked.h), so this
+      // Freeing a tracked ref is safe even after the terminal is freed (grid_ref_tracked.h), so this
       // works regardless of whether the emulator was closed first.
       try {
-        LibGhosttyVt.trackedGridRefFree(trackedRef)
+        try {
+          LibGhosttyVt.trackedGridRefFree(boundaryRef)
+        } finally {
+          LibGhosttyVt.trackedGridRefFree(tailRef)
+        }
       } catch (t: Throwable) {
         throw RuntimeException("ghostty_tracked_grid_ref_free failed", t)
       } finally {
@@ -1130,12 +1112,67 @@ internal class GhosttyTerminalEmulator(
       }
     }
 
-    /** Fill [seg] (a `GhosttyPoint`) with the top-left cell of the active screen: `ACTIVE (0, 0)`. */
-    private fun writeActiveTop(seg: MemorySegment) {
-      seg.fill(0.toByte())
-      seg.set(C_INT, POINT_OFF_TAG, GhosttyPointTag.ACTIVE.code)
-      seg.set(C_SHORT, POINT_OFF_X, 0.toShort())
-      seg.set(C_INT, POINT_OFF_Y, 0)
+    /** A new tracked ref at [point]. Runs [onFailure] before it throws, to free what the mark already holds. */
+    private inline fun track(point: MemorySegment, onFailure: () -> Unit): MemorySegment {
+      val outRef = markArena.allocate(C_PTR)
+      val r = try {
+        LibGhosttyVt.terminalGridRefTrack(terminal, point, outRef)
+      } catch (t: Throwable) {
+        onFailure()
+        throw RuntimeException("ghostty_terminal_grid_ref_track failed", t)
+      }
+      if (r != GhosttyResult.SUCCESS) {
+        onFailure()
+        throw IllegalStateException("ghostty_terminal_grid_ref_track returned $r")
+      }
+      return outRef.get(C_PTR, 0L)
+    }
+
+    private fun repin(ref: MemorySegment, point: MemorySegment) {
+      val r = try {
+        LibGhosttyVt.trackedGridRefSet(ref, terminal, point)
+      } catch (t: Throwable) {
+        throw RuntimeException("ghostty_tracked_grid_ref_set failed", t)
+      }
+      if (r != GhosttyResult.SUCCESS) {
+        throw IllegalStateException("ghostty_tracked_grid_ref_set returned $r")
+      }
+    }
+
+    /** The SCREEN row of the cell that [ref] pins, or null when the library reports that row gone. */
+    private fun screenY(ref: MemorySegment): Int? {
+      val r = try {
+        LibGhosttyVt.trackedGridRefPoint(ref, GhosttyPointTag.SCREEN.code, markCoord)
+      } catch (t: Throwable) {
+        throw RuntimeException("ghostty_tracked_grid_ref_point failed", t)
+      }
+      if (r == GhosttyResult.NO_VALUE) {
+        return null
+      }
+      if (r != GhosttyResult.SUCCESS) {
+        throw IllegalStateException("ghostty_tracked_grid_ref_point returned $r")
+      }
+      return markCoord.get(C_INT, POINT_COORD_OFF_Y)
+    }
+
+    /** [markPoint] filled with the top-left cell of the active screen: `ACTIVE (0, 0)`. */
+    private fun activeTop(): MemorySegment = pointAt(GhosttyPointTag.ACTIVE, 0)
+
+    /**
+     * [markPoint] filled with the first cell of the newest history row. With no history, the point is the
+     * active top instead: the tail then pins the boundary row and adds nothing to the boundary check.
+     */
+    private fun newestHistoryRow(): MemorySegment {
+      val rows = scrollbackRows
+      return if (rows > 0) pointAt(GhosttyPointTag.HISTORY, rows - 1) else activeTop()
+    }
+
+    private fun pointAt(tag: GhosttyPointTag, y: Int): MemorySegment {
+      markPoint.fill(0.toByte())
+      markPoint.set(C_INT, POINT_OFF_TAG, tag.code)
+      markPoint.set(C_SHORT, POINT_OFF_X, 0.toShort())
+      markPoint.set(C_INT, POINT_OFF_Y, y)
+      return markPoint
     }
   }
 

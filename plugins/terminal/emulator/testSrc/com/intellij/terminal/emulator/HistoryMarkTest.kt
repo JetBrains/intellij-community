@@ -166,24 +166,65 @@ class HistoryMarkTest {
   }
 
   // ---------------------------------------------------------------------------
-  // Erasing the scrollback
+  // Erasing the history
   // ---------------------------------------------------------------------------
+  //
+  // An erase frees the history that the count is relative to, so the mark reports `null`, as after an eviction.
+  // The erase leaves the active screen, where the boundary is, so the boundary alone would report an ordinary count.
 
-  /**
-   * `CSI 3 J` frees every scrollback page, so afterward `scrollbackRows` is `0`. The native library
-   * relocates the mark's pin instead of reporting it evicted, so the count reads as an ordinary,
-   * misleading `0` — indistinguishable from "nothing happened". A consumer must
-   * detect the erasing some other way, e.g. by noticing `scrollbackRows` dropped to `0` on its own.
-   */
+  /** `CSI 3 J` frees every scrollback page. */
   @Test
-  fun eraseScrollbackReportsAMisleadingZero() = session(20, 4) { session ->
+  fun eraseScrollbackLosesTrack() = session(20, 4) { session ->
     val emulator = session.emulator
     session.writeLinesWithCrlf(listOf("a", "b", "c", "d", "e", "f", "g")) // scrolls a..c into scrollback
     emulator.markHistoryBoundary().use { mark ->
-      mark.reset()
       session.eraseScrollback()
-      assertThat(mark.finalizedLineCount()).isZero()
       assertThat(emulator.scrollbackRows).isZero()
+      assertThat(mark.finalizedLineCount()).isNull()
+    }
+  }
+
+  /**
+   * The order of the macOS `clear`: `CSI 3 J` first, and then rows scroll into the empty history in the same
+   * write. The count of the boundary alone is an ordinary 2 here, which hides the erase of a..c.
+   */
+  @Test
+  fun eraseScrollbackThenScrollLosesTrack() = session(20, 4) { session ->
+    val emulator = session.emulator
+    session.writeLinesWithCrlf(listOf("a", "b", "c", "d", "e", "f", "g"))
+    emulator.markHistoryBoundary().use { mark ->
+      session.eraseScrollback()
+      session.crlf().write("h")
+      session.crlf().write("i")
+      assertThat(emulator.scrollbackRows).isEqualTo(2)
+      assertThat(mark.finalizedLineCount()).isNull()
+    }
+  }
+
+  /** A full reset (RIS) frees the history too. */
+  @Test
+  fun fullResetLosesTrack() = session(20, 4) { session ->
+    val emulator = session.emulator
+    session.writeLinesWithCrlf(listOf("a", "b", "c", "d", "e", "f", "g"))
+    emulator.markHistoryBoundary().use { mark ->
+      session.write(esc("c"))
+      assertThat(mark.finalizedLineCount()).isNull()
+    }
+  }
+
+  /**
+   * Ctrl+L at a prompt erases nothing. With OSC 133 prompt marks, `CSI 2 J` at a prompt scrolls the screen into the
+   * history instead (libghostty's "clear at a prompt" rule), and the count reports those rows.
+   */
+  @Test
+  fun eraseDisplayAtAPromptFinalizesTheScreenRows() = session(20, 4) { session ->
+    val emulator = session.emulator
+    session.writeLinesWithCrlf(listOf("a", "b", "c", "d", "e"), addCrlfAfterLast = true)
+    session.write(osc("133;A") + "$ " + osc("133;B"))
+    emulator.markHistoryBoundary().use { mark ->
+      session.write(csi("H") + csi("2J"))
+      assertThat(mark.finalizedLineCount()).isEqualTo(4)
+      assertThat(mark.newlyFinalized(emulator)).containsExactly("c", "d", "e", "$ ")
     }
   }
 
