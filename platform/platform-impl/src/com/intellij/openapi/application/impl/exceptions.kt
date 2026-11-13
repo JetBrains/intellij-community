@@ -5,7 +5,11 @@ package com.intellij.openapi.application.impl
 import com.intellij.CommonBundle
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.diagnostic.DiagnosticBundle
+import com.intellij.diagnostic.DisablePluginsDialog
+import com.intellij.diagnostic.toProblematicPluginInfo
 import com.intellij.ide.actions.ShowLogAction
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtil
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionContextElement
 import com.intellij.openapi.application.ApplicationManager
@@ -43,16 +47,7 @@ internal fun processUnhandledException(cause: Throwable, coroutineContext: Corou
       )
       if (showError) {
         SwingUtilities.invokeLater {
-          val title = when {
-            interactiveMode.action != null -> DiagnosticBundle.message("unhandled.exception.dialog.title.with.action", interactiveMode.action)
-            else -> DiagnosticBundle.message("unhandled.exception.dialog.title")
-          }
-          val message = DiagnosticBundle.message("unhandled.exception.dialog.message", cause.javaClass.name, cause.message ?: "'null'")
-          val options = arrayOf(CommonBundle.getCloseButtonText(), ShowLogAction.getActionName())
-          val choice = Messages.showDialog(null as Project?, message, title, options, 0, Messages.getErrorIcon())
-          if (choice == 1) {
-            ShowLogAction.showLog()
-          }
+          showErrorDialog(cause, interactiveMode.action)
         }
       }
     }
@@ -60,6 +55,34 @@ internal fun processUnhandledException(cause: Throwable, coroutineContext: Corou
     Mode.NonInteractive -> {
       logExceptionSafely(message, UnhandledException(cause, isInteractive = false))
     }
+  }
+}
+
+private fun showErrorDialog(cause: Throwable, action: String?) {
+  val title = when {
+    action != null -> DiagnosticBundle.message("unhandled.exception.dialog.title.with.action", action)
+    else -> DiagnosticBundle.message("unhandled.exception.dialog.title")
+  }
+  val plugin = PluginUtil.getInstance().findPluginId(cause)
+    ?.let { PluginManagerCore.getPlugin(it) }
+    ?.let { toProblematicPluginInfo(it) }
+  val message = if (plugin == null) {
+    DiagnosticBundle.message("unhandled.exception.dialog.message", cause.javaClass.name, cause.message ?: "'null'")
+  }
+  else {
+    DiagnosticBundle.message("unhandled.exception.dialog.message.with.plugin", plugin.name, cause.javaClass.name, cause.message ?: "'null'")
+  }
+  val options = buildList {
+    add(CommonBundle.getCloseButtonText())
+    add(ShowLogAction.getActionName())
+    if (plugin != null && !plugin.isEssential && !plugin.isImplementationDetail) {
+      add(DiagnosticBundle.message("error.dialog.disable.plugin.action.disable"))
+    }
+  }
+  val choice = Messages.showDialog(null as Project?, message, title, options.toTypedArray(), 0, Messages.getErrorIcon())
+  when (choice) {
+    1 -> ShowLogAction.showLog()
+    2 -> DisablePluginsDialog.confirmDisablePlugins(project = null, listOf(plugin!!))
   }
 }
 
