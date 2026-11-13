@@ -8,6 +8,14 @@ import com.intellij.build.events.FailureResult
 import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.build.events.SuccessResult
+import com.intellij.execution.ExecutionListener
+import com.intellij.execution.ExecutionManager
+import com.intellij.execution.process.BaseProcessHandler
+import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutputType
+import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.assumeVersionAtLeast
@@ -21,6 +29,7 @@ import com.intellij.maven.testFramework.utils.MavenProjectJDKTestFixture
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.EdtTestUtil
@@ -78,6 +87,12 @@ class RealMavenExecutionTest(mavenVersion: String, modelVersion: String) {
         myEvents.add(event)
       }
     }, maven.testRootDisposable)
+    maven.project.messageBus.connect(maven.testRootDisposable).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
+      override fun processStarting(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
+        MavenLog.LOG.warn("Maven command: ${(handler as? BaseProcessHandler<*>)?.commandLineForLog ?: handler}")
+        handler.addProcessListener(MavenOutputLogger())
+      }
+    })
   }
 
   @AfterEach
@@ -268,5 +283,34 @@ class RealMavenExecutionTest(mavenVersion: String, modelVersion: String) {
     MavenLog.LOG.warn(" dir exists = ${maven.projectPath.exists()}")
     MavenLog.LOG.warn(" dir content = ${maven.projectPath.listDirectoryEntries()}")
 
+  }
+
+  /** Logs each line of the output of a Maven process, and then the exit code. */
+  private class MavenOutputLogger : ProcessListener {
+    // The process handler splits a colored line into several text events. Each stream collects its incomplete line here.
+    private val incompleteLines = mapOf(ProcessOutputType.STDOUT to StringBuilder(), ProcessOutputType.STDERR to StringBuilder())
+
+    @Synchronized
+    override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+      val stream = (outputType as? ProcessOutputType)?.baseOutputType ?: return
+      val incompleteLine = incompleteLines[stream] ?: return
+      incompleteLine.append(event.text)
+      var lineEnd = incompleteLine.indexOf("\n")
+      while (lineEnd >= 0) {
+        logLine(stream, incompleteLine.substring(0, lineEnd))
+        incompleteLine.delete(0, lineEnd + 1)
+        lineEnd = incompleteLine.indexOf("\n")
+      }
+    }
+
+    @Synchronized
+    override fun processTerminated(event: ProcessEvent) {
+      incompleteLines.filterValues { it.isNotEmpty() }.forEach { logLine(it.key, it.value.toString()) }
+      MavenLog.LOG.warn("Maven exit code: ${event.exitCode}")
+    }
+
+    private fun logLine(stream: ProcessOutputType, line: String) {
+      MavenLog.LOG.warn("Maven $stream: ${line.trimEnd('\r')}")
+    }
   }
 }
