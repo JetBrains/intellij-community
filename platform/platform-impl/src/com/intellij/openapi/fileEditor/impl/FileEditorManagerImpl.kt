@@ -123,6 +123,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.fileEditor.FileEntry
@@ -1640,6 +1641,10 @@ open class FileEditorManagerImpl(
           }
         }
       }
+    }
+    if (options.requestFocus) {
+      // a frame with guests shows the editors of one project at a time, see FrameEditorArea
+      WindowManagerEx.getInstanceEx().setActiveProject(project)
     }
     if (isNewEditor) {
       openFileSetModificationCount.increment()
