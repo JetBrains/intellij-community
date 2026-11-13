@@ -13,7 +13,7 @@ load(":content_module_jar.bzl", _module_output_jar = "module_output_jar")
 
 def _ij_plugin_impl(ctx):
     plugin_descriptor_module_info = _plugin_module_info(ctx.attr.descriptor_module)
-    dir_name = _module_name_to_directory_name(plugin_descriptor_module_info.module_name)
+    dir_name = _computeDirectoryName(ctx.attr.directory_name, plugin_descriptor_module_info.module_name)
     dist_dir_name = ctx.label.name + _DIST_DIRECTORY_SUFFIX
     output_dir = ctx.actions.declare_directory(dist_dir_name + "/" + dir_name)
     packed_modules_file = ctx.actions.declare_file(dist_dir_name + "/packed-modules.yaml")
@@ -168,6 +168,13 @@ def _computeUntilBuild(until_build, since_build, ide_build_number, ide_stability
         return components[0] + ".*"
     return ".".join(components[:-1]) + ".*"
 
+def _computeDirectoryName(directory_name, descriptor_module_name):
+    if directory_name == "$auto":
+        return _module_name_to_directory_name(descriptor_module_name)
+    if not directory_name or "/" in directory_name or "\\" in directory_name or directory_name in [".", ".."]:
+        fail("`directory_name` must be `$auto` or a valid directory name, but it is '%s'" % directory_name)
+    return directory_name
+
 def _module_name_to_directory_name(module_name):
     if module_name.startswith("intellij."):
         module_name = module_name[len("intellij."):]
@@ -242,6 +249,18 @@ For a module with the `optional` or `on-demand` loading rule, the result depends
   The ultimate modules of a community plugin are not available there.
 """,
             providers = [[_PluginModuleInfo], [_KtJvmInfo]],
+        ),
+        "directory_name": attr.string(
+            doc = """\
+The name of the plugin directory in the distribution.
+
+The default value, `$auto`, takes the name from the name of the descriptor module.
+The rule removes the `intellij.` prefix and the `.plugin` suffix, and replaces each `.` with `-`.
+For example, `intellij.foo.bar.plugin` gives `foo-bar`.
+
+`jps-to-bazel` keeps a manually written value of this attribute in `BUILD.bazel`.
+""",
+            default = "$auto",
         ),
         "since_build": attr.string(
             doc = """\

@@ -8,8 +8,13 @@ import java.util.concurrent.ConcurrentHashMap
 internal class ManuallyWrittenAttributes(private val bazelFilesLoader: BazelFilesLoader) {
   private val parsedBuildFiles = ConcurrentHashMap<Path, ParsedBuildFile>()
 
-  fun getManuallyWrittenAttributes(module: ModuleDescriptor, attributeName: String): List<ManuallyWrittenAttribute> {
-    return getParsedBuildFile(module).attributes.filter { it.targetName == module.targetName && it.attributeName == attributeName }
+  /** Returns the manually written attributes named [attributeName] of the target [targetName] in the BUILD file of [module]. */
+  fun getManuallyWrittenAttributes(
+    module: ModuleDescriptor,
+    attributeName: String,
+    targetName: String = module.targetName,
+  ): List<ManuallyWrittenAttribute> {
+    return getParsedBuildFile(module).attributes.filter { it.targetName == targetName && it.attributeName == attributeName }
   }
 
   /**
@@ -49,7 +54,8 @@ internal fun Target.insertManuallyWrittenAttributes(manuallyWrittenAttributes: L
 
 internal const val DATA_ATTRIBUTE = "data"
 internal const val NON_CLASSPATH_DATA_ATTRIBUTE = "non_classpath_data"
-private val MANUALLY_WRITTEN_ATTRIBUTES = setOf(DATA_ATTRIBUTE, NON_CLASSPATH_DATA_ATTRIBUTE)
+internal const val DIRECTORY_NAME_ATTRIBUTE = "directory_name"
+private val MANUALLY_WRITTEN_ATTRIBUTES = setOf(DATA_ATTRIBUTE, NON_CLASSPATH_DATA_ATTRIBUTE, DIRECTORY_NAME_ATTRIBUTE)
 
 private val FUNCTION_CALL_REGEX = Regex("""([a-zA-Z_][a-zA-Z0-9_]*)\(""")
 private val ATTRIBUTE_ASSIGNMENT_REGEX = Regex(""" *([a-zA-Z_][a-zA-Z0-9_]*) = (.*)""")

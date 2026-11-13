@@ -1005,8 +1005,9 @@ internal class BazelBuildFileGenerator(
     manuallyWrittenAttributes: ManuallyWrittenAttributes,
   ) {
     load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+    val pluginTargetName = getPluginTargetName(moduleDescriptor)
     target("ij_plugin") {
-      option("name", getPluginTargetName(moduleDescriptor))
+      option("name", pluginTargetName)
       option("descriptor_module", ":${moduleDescriptor.targetName}${getPluginModuleTargetNameSuffix(moduleDescriptor, moduleList, manuallyWrittenAttributes)}")
       if (pluginXmlContentData.contentModuleNames.isNotEmpty()) {
         val contentModules = pluginXmlContentData.contentModuleNames.map {
@@ -1024,6 +1025,7 @@ internal class BazelBuildFileGenerator(
           option("content_modules", contentModules.map { it.label }.unsorted())
         }
       }
+      insertManuallyWrittenAttributes(manuallyWrittenAttributes.getManuallyWrittenAttributes(moduleDescriptor, DIRECTORY_NAME_ATTRIBUTE, pluginTargetName))
       // the distribution is consumed from other packages: by the build scripts building this plugin by Bazel,
       // and by the test comparing the result with the build scripts' own output
       visibility(arrayOf("//visibility:public"))

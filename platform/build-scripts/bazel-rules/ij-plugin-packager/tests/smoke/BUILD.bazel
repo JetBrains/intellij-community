@@ -5,6 +5,7 @@ load("//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("//platform/build-scripts/bazel-rules:unpack_archive.bzl", "unpack_zip_archive")
 load(":build_settings_test.bzl", "ij_plugin_settings_test_target")
+load(":directory_name_test.bzl", "directory_name_tests")
 load(":non_classpath_data_test.bzl", "non_classpath_data_attribute_tests")
 
 # A minimal plugin used to check that `ij_plugin` rule and the packager worker actually work.
@@ -187,3 +188,8 @@ ij_plugin_settings_test_target(
 )
 
 non_classpath_data_attribute_tests(name = "non-classpath-data-attributes-tests")
+
+directory_name_tests(
+    name = "directory-name-tests",
+    descriptor_module = ":descriptor-module_plugin_module",
+)

@@ -123,6 +123,9 @@ class BazelGeneratorIntegrationTests {
   @Test fun ijPluginTarget() = doTest("ij-plugin-target")
   @Test fun ijPluginTargetWithNonClasspathData() = doTest("ij-plugin-target-with-non-classpath-data", allowBuildBazelFilesInTestDataProject = true)
 
+  /** The generator keeps a manually written `directory_name` of the `ij_plugin` target, and `bazel-targets.json` does not depend on it. */
+  @Test fun ijPluginTargetWithDirectoryName() = doTest("ij-plugin-target-with-directory-name", allowBuildBazelFilesInTestDataProject = true)
+
   @Test
   fun `modules in the same package do not generate BUILD metadata`() {
     val projectDir = createMetadataProject()

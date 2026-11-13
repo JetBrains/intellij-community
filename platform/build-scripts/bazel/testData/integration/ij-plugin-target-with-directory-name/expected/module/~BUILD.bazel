@@ -1,0 +1,27 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.module` start
+jvm_library(
+    name = "module",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.module",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.module` end
+
+### auto-generated section `iml intellij.module` start
+exports_files(
+    [
+        "intellij.module.iml",
+        "resources/intellij.module.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.module` end

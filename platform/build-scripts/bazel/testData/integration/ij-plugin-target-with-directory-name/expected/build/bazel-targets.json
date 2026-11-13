@@ -1,0 +1,37 @@
+{
+  "modules": {
+    "intellij.module": {
+      "productionTargets": [
+        "@community//module:module.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/module/module.jar"
+      ],
+      "testTargets": [],
+      "testJars": [],
+      "moduleLibraries": {}
+    },
+    "intellij.plugin": {
+      "productionTargets": [
+        "@community//plugin:plugin.jar"
+      ],
+      "productionJars": [
+        "out/bazel-out/jvm-fastbuild/bin/plugin/plugin.jar"
+      ],
+      "testTargets": [],
+      "testJars": [],
+      "moduleLibraries": {}
+    }
+  },
+  "imlTargets": [
+    "@community//module:intellij.module.iml",
+    "@community//plugin:intellij.plugin.iml"
+  ],
+  "projectLibraries": {},
+  "pluginDistributionTargets": {
+    "intellij.plugin": {
+      "target": "@community//plugin:plugin_plugin",
+      "distributionDirectory": "out/bazel-out/jvm-fastbuild/bin/plugin/plugin_plugin_dist"
+    }
+  }
+}
