@@ -2432,7 +2432,7 @@ open class FileEditorManagerImpl(
     @RequiresEdt
     override fun fileTypesChanged(event: FileTypeEvent) {
       for (file in openedFiles.asReversed()) {
-        updateFileIcon(file = file, immediately = true)
+        updateFileIcon(file)
       }
     }
   }
