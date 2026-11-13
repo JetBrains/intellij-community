@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.util.EnumSet
 
@@ -39,7 +38,6 @@ class PyModuleTabsModel(
   private val isMultiModule: () -> Boolean,
   private val usePyprojectToml: () -> Boolean,
 ) {
-  @RequiresEdt
   fun visibleTabs(): EnumSet<PyModuleTab> {
     val tabs = EnumSet.of(PyModuleTab.Sources, PyModuleTab.Dependencies)
     if (isMultiModule() && !usePyprojectToml()) tabs.add(PyModuleTab.ProjectLinks)
