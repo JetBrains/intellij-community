@@ -23,6 +23,7 @@ import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.NativeBinaryDownloader
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.executeStep
+import org.jetbrains.intellij.build.getMacBundleSuffix
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.macOS.MachOUuid
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
@@ -41,6 +42,7 @@ import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.io.substituteTemplatePlaceholders
 import org.jetbrains.intellij.build.io.writeNewFile
 import org.jetbrains.intellij.build.isLanguageServer
+import org.jetbrains.intellij.build.isMacEapBundle
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
@@ -531,9 +533,9 @@ class MacDistributionBuilder(
     val fullName = context.applicationInfo.fullProductName
     //todo improve
     val minor = context.applicationInfo.minorVersion
-    val isNotRelease = context.applicationInfo.isEAP && !minor.contains("RC") && !minor.contains("Beta")
+    val isNotRelease = isMacEapBundle(context.applicationInfo)
     val version = if (isNotRelease) "EAP ${context.fullBuildNumber}" else "${context.applicationInfo.majorVersion}.${minor}"
-    val isEap = if (isNotRelease) "-EAP" else ""
+    val isEap = getMacBundleSuffix(context.applicationInfo)
     val urlSchemes = customizer.urlSchemes
     val urlSchemesString = if (urlSchemes.isEmpty()) ""
     else """
