@@ -75,6 +75,8 @@ import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.junit.Assert.assertArrayEquals;
+
 @SuppressWarnings("SuspiciousPackagePrivateAccess")
 public class JobLauncherImplTest extends LightPlatformTestCase {
   private static final AtomicInteger COUNT = new AtomicInteger();
@@ -138,7 +140,7 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
   }
 
   @PerformanceUnitTest
-  public void testUnbalancedTaskJobUtilPerformance() {
+  public void testUnbalancedCpuWorkPerformance() {
     int N = 10_000;
     List<Integer> things = new ArrayList<>(N);
     int sum = 0;
@@ -150,53 +152,48 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
     //noinspection PointlessArithmeticExpression
     assertEquals((N-50)*1 + 50*1000, sum);
 
+    int iterationsPerUnit = 10_000;
+    long shortResult = computeWorkItem(1, iterationsPerUnit);
+    long longResult = computeWorkItem(1000, 1000 * iterationsPerUnit);
+    Processor<Integer> processor = weight -> {
+      assertEquals(weight == 1 ? shortResult : longResult, computeWorkItem(weight, weight * iterationsPerUnit));
+      COUNT.incrementAndGet();
+      return true;
+    };
+    long sequentialElapsed = TimeoutUtil.measureExecutionTime(() -> things.forEach(processor::process));
+    COUNT.set(0);
     long elapsed = TimeoutUtil.measureExecutionTime(() ->
       assertTrue(ProgressManager.getInstance().runProcess(
-        () -> myJobLauncher.invokeConcurrentlyUnderContextProgress(things, o -> {
-          if (o <= 1) {
-            busySleepAndIncrement(o);
-          }
-          else {
-            longSleep(o);
-          }
-          return true;
-        }),
+        () -> myJobLauncher.invokeConcurrentlyUnderContextProgress(things, processor),
         new ProgressIndicatorBase())));
-    long expected = sum / myPool.getParallelism();
+    assertEquals(N, COUNT.get());
+    int parallelism = Math.min(myPool.getParallelism(), Runtime.getRuntime().availableProcessors());
+    long expected = sequentialElapsed / parallelism;
     String message = "Elapsed: " + elapsed + "; expected: " + expected + "; parallelism=" + myPool.getParallelism() +
+                     "; sequential: " + sequentialElapsed +
                      "; current cores=" + Runtime.getRuntime().availableProcessors();
     assertTrue(message, elapsed <= 2 * expected);
   }
 
-  private static void longSleep(int o) {
-    busySleepAndIncrement(o);
-  }
-
-  private static int busySleepAndIncrement(int ms) {
-    return busySleepAndIncrement(ms, EmptyRunnable.getInstance());
-  }
-  private static int busySleepAndIncrement(int ms, @NotNull Runnable doWhileWait) {
-    long deadline = System.currentTimeMillis() + ms;
-    int nap = Math.max(1, ms / 100);
-    while (System.currentTimeMillis() < deadline)  {
-      TimeoutUtil.sleep(nap);
-      doWhileWait.run();
-    }
-    return COUNT.incrementAndGet();
-  }
-
   private volatile Throwable exception;
-  public void testCorrectlySplitsUpHugeWorkAndFinishesStress() throws Throwable {
+  public void testSplitsHugeCpuWorkAndWaitsForCompletionStress() throws Throwable {
     int N = Timings.adjustAccordingToMySpeed(20_000, true);
+    List<Integer> items = IntStream.range(0, N).boxed().toList();
+    long[] expected = new long[N];
+    for (int i = 0; i < N; i++) {
+      expected[i] = computeWorkItem(i);
+    }
+    long[] results = new long[N];
     AtomicBoolean finished = new AtomicBoolean();
 
     boolean ok = ProgressManager.getInstance().runProcess(
-      () -> myJobLauncher.invokeConcurrentlyUnderContextProgress(Collections.<String>nCopies(N, null), _ -> {
+      () -> myJobLauncher.invokeConcurrentlyUnderContextProgress(items, item -> {
         try {
           if (finished.get()) {
             throw new RuntimeException();
           }
-          busySleepAndIncrement(1);
+          results[item] = computeWorkItem(item);
+          COUNT.incrementAndGet();
           if (finished.get()) {
             throw new RuntimeException();
           }
@@ -211,21 +208,43 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
     finished.set(true);
     if (exception != null) throw exception;
     assertEquals(N, COUNT.get());
+    assertArrayEquals("The processors produced incorrect results", expected, results);
   }
 
-  public void testJobUtilProcessesAllItemsStress() throws Throwable {
-    List<String> list = Collections.nCopies(Timings.adjustAccordingToMySpeed(1000, true), null);
+  private static long computeWorkItem(int item) {
+    return computeWorkItem(item, 100_000);
+  }
+
+  private static long computeWorkItem(int item, int iterations) {
+    long value = item + 1;
+    for (int i = 0; i < iterations; i++) {
+      value = Long.rotateLeft(value * 6364136223846793005L + 1, 7);
+    }
+    return value;
+  }
+
+  public void testProcessesAllCpuWorkItemsStress() throws Throwable {
+    int N = Timings.adjustAccordingToMySpeed(1000, true);
+    List<Integer> list = IntStream.range(0, N).boxed().toList();
+    long[] expected = new long[N];
+    for (int i = 0; i < N; i++) {
+      expected[i] = computeWorkItem(i);
+    }
+    long[] results = new long[N];
     for (int i = 0; i<10 && checkTestTimeout(i); i++) {
       COUNT.set(0);
+      Arrays.fill(results, 0);
       logElapsed(() ->
         ProgressManager.getInstance().runProcess(() -> {
-          myJobLauncher.invokeConcurrentlyUnderContextProgress(list, _ -> {
-            busySleepAndIncrement(1);
+          myJobLauncher.invokeConcurrentlyUnderContextProgress(list, item -> {
+            results[item] = computeWorkItem(item);
+            COUNT.incrementAndGet();
             return true;
           });
         }, new EmptyProgressIndicator()));
       if (exception != null) throw exception;
       assertEquals(list.size(), COUNT.get());
+      assertArrayEquals("The processors produced incorrect results", expected, results);
     }
   }
 
@@ -364,8 +383,12 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
     });
   }
 
-  public void testRecursiveCancel() {
+  public void testRecursiveCpuWorkCancellation() {
     List<Integer> list = IntStream.range(0, 100).boxed().collect(Collectors.toList());
+    long[] expected = new long[list.size()];
+    for (int i = 0; i < expected.length; i++) {
+      expected[i] = computeWorkItem(i);
+    }
     for (int i = 0; i<10 && checkTestTimeout(i); i++) {
       int fingerPrint = i;
       COUNT.set(0);
@@ -376,7 +399,8 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
           success[0] = ProgressManager.getInstance().runProcess(
             () -> myJobLauncher.invokeConcurrentlyUnderContextProgress(list, ind -> {
               boolean nestedSuccess = myJobLauncher.invokeConcurrentlyUnderContextProgress(list, nestedInd -> {
-                                if (busySleepAndIncrement(1) % 1024 == 0) {
+                                assertEquals(expected[nestedInd], computeWorkItem(nestedInd));
+                                if (COUNT.incrementAndGet() % 1024 == 0) {
                                   LOG.debug("throw myMsg ind=" + ind + "; nestedInd=" + nestedInd+"; fingerPrint="+fingerPrint+"; COUNT="+COUNT);
                                   throw new MyException("myMsg"+fingerPrint+"; COUNT="+COUNT);
                                 }
@@ -430,11 +454,18 @@ public class JobLauncherImplTest extends LightPlatformTestCase {
     }
   }
 
-  public void testProcessorReturningFalseDoesNotCrashTheOtherThreadStress() {
+  public void testCpuWorkReturningFalseDoesNotCrashOtherProcessorsStress() {
     AtomicInteger processed = new AtomicInteger();
+    long[] expected = new long[3];
+    for (int i = 0; i < expected.length; i++) {
+      expected[i] = computeWorkItem(i);
+    }
     Processor<String> processor = _ -> {
       int next = processed.incrementAndGet();
-      busySleepAndIncrement(next % 4, ProgressManager::checkCanceled);
+      for (int i = 0; i < next % 4; i++) {
+        assertEquals(expected[i], computeWorkItem(i));
+        ProgressManager.checkCanceled();
+      }
       return next % 100 != 0;
     };
     int N = Timings.adjustAccordingToMySpeed(10_000, true);
