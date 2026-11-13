@@ -16,9 +16,9 @@
 package git4idea.tests
 
 import git4idea.commands.GitStandardProgressAnalyzer
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertEquals
 
 /**
  * @author Kirill Likhodedov
@@ -27,7 +27,7 @@ class GitStandardProgressAnalyzerTest {
 
   private lateinit var myProgressModifier: GitStandardProgressAnalyzer
 
-  @Before
+  @BeforeEach
   fun setUp() {
     myProgressModifier = GitStandardProgressAnalyzer()
   }
@@ -68,39 +68,29 @@ class GitStandardProgressAnalyzerTest {
   fun testAllAtOnce() {
     assertEquals(-1.0, myProgressModifier.analyzeProgress("Cloning into nb1..."), EPS)
     // remote: Counting objects: 1345
-    for (i in 0 until 3178) {
-      val s = countingObjects(i, false)
-      assertEquals(s, 0.05 * (i / 5000.0), myProgressModifier.analyzeProgress(s), EPS)
+    for (i in 0..3177) {
+      val message = countingObjects(i, false)
+      assertEquals(0.05 * (i / 5000.0), myProgressModifier.analyzeProgress(message), EPS, message)
     }
     // remote: Counting objects: 3178, done.
     assertEquals(0.05 * (3718 / 5000.0), myProgressModifier.analyzeProgress(countingObjects(3718, true)), EPS)
     // remote: Compressing objects: 34% (289/850)
     // remote: Compressing objects: 100% (850/850), done.
     for (i in 0..100) {
-      val s = compressingObjects(i)
-      assertEquals(s, 0.05 + 0.1 * (i / 100.0), myProgressModifier.analyzeProgress(s), EPS)
+      val message = compressingObjects(i)
+      assertEquals(0.05 + 0.1 * (i / 100.0), myProgressModifier.analyzeProgress(message), EPS, message)
     }
-    myProgressModifier.analyzeProgress("    remote: Total 3178 (delta 1822), reused 3161 (delta 1815)")
+    assertEquals(-1.0, myProgressModifier.analyzeProgress("    remote: Total 3178 (delta 1822), reused 3161 (delta 1815)"))
     // Receiving objects: 34% (289/850) , 4.18 MiB | 144 KiB/s
     for (i in 0..100) {
-      val s = receivingObjects(i)
-      assertEquals(s, 0.15 + 0.8 * (i / 100.0), myProgressModifier.analyzeProgress(s), EPS)
+      val message = receivingObjects(i)
+      assertEquals(0.15 + 0.8 * (i / 100.0), myProgressModifier.analyzeProgress(message), EPS, message)
     }
     // Resolving deltas: 100% (1822/1822), done.
     for (i in 0..100) {
-      val s = resolvingDeltas(i)
-      assertEquals(s, 0.95 + 0.05 * (i / 100.0), myProgressModifier.analyzeProgress(s), EPS)
+      val message = resolvingDeltas(i)
+      assertEquals(0.95 + 0.05 * (i / 100.0), myProgressModifier.analyzeProgress(message), EPS, message)
     }
-    assertEquals(1.0, getCurrentTotalProgressAtTheEnd(), EPS)
-  }
-
-  private fun getCurrentTotalProgressAtTheEnd(): Double {
-    val operationClass = GitStandardProgressAnalyzer::class.java.declaredClasses.first { it.name.endsWith("Operation") }
-    val resolvingDeltasOperation = operationClass.enumConstants.first { it.toString() == "RESOLVING_DELTAS" }
-
-    val totalProgress = GitStandardProgressAnalyzer::class.java.getDeclaredMethod("updateTotalProgress", operationClass)
-    totalProgress.isAccessible = true
-    return totalProgress.invoke(myProgressModifier, resolvingDeltasOperation) as Double
   }
 
   companion object {

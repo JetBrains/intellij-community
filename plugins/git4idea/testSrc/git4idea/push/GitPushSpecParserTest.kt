@@ -17,36 +17,36 @@ package git4idea.push
 
 import git4idea.GitLocalBranch
 import git4idea.repo.GitRepository
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 
 class GitPushSpecParserTest {
 
   @Test
   fun test_star_position() {
-    assertInvalid("Stars should be in both parts of spec", "HEAD:refs/heads/*")
-    assertInvalid("Stars should be in both parts of spec", "refs/heads/*:refs/for/master")
-    assertInvalid("Star should be at the last position", "refs/for/*/branch:refs/for/*")
-    assertInvalid("Star should be at the last position", "refs/heads/*:refs/*/for")
-    assertInvalid("Star is supported only for refs/heads/*", "refs/for/*:refs/remotes/origin/*")
+    assertNull(getTargetRefMaster("HEAD:refs/heads/*"), "Stars should be in both parts of spec")
+    assertNull(getTargetRefMaster("refs/heads/*:refs/for/master"), "Stars should be in both parts of spec")
+    assertNull(getTargetRefMaster("refs/for/*/branch:refs/for/*"), "Star should be at the last position")
+    assertNull(getTargetRefMaster("refs/heads/*:refs/*/for"), "Star should be at the last position")
+    assertNull(getTargetRefMaster("refs/for/*:refs/remotes/origin/*"), "Star is supported only for refs/heads/*")
 
-    assertValid("Star can be absent", "HEAD:refs/for/master")
-    assertValid("Stars can be at the last positions of both parts", "+refs/heads/*:refs/remotes/origin/*")
-    assertValid("Sole star is allowed", "*:refs/remotes/origin/*")
-    assertValid("Sole star is allowed", "*:*")
+    assertNotNull(getTargetRefMaster("HEAD:refs/for/master"), "Star can be absent")
+    assertNotNull(getTargetRefMaster("+refs/heads/*:refs/remotes/origin/*"), "Stars can be at the last positions of both parts")
+    assertNotNull(getTargetRefMaster("*:refs/remotes/origin/*"), "Sole star is allowed")
+    assertNotNull(getTargetRefMaster("*:*"), "Sole star is allowed")
   }
 
   @Test
   fun test_branch_name_substitution() {
-    assertTarget("master", "+refs/heads/*:refs/remotes/origin/*", "refs/remotes/origin/master")
+    assertEquals("refs/remotes/origin/master", getTargetRefMaster("+refs/heads/*:refs/remotes/origin/*"))
   }
 
   @Test
   fun test_complex_branch_name_can_be_partially_wildcarded() {
-    assertTarget("qa/ticket1", "refs/heads/qa/*:refs/remotes/origin/qa/*", "refs/remotes/origin/qa/ticket1")
+    assertEquals("refs/remotes/origin/qa/ticket1", getTargetRef("qa/ticket1", listOf("refs/heads/qa/*:refs/remotes/origin/qa/*")))
   }
 
   @Test
@@ -78,8 +78,7 @@ class GitPushSpecParserTest {
 
   @Test
   fun test_short_ref_name_wildcard() {
-    val specs = listOf("ma*:refs/heads/ma*")
-    assertNull(getTargetRef("qa/ticket1", specs))
+    assertNull(getTargetRef("qa/ticket1", listOf("ma*:refs/heads/ma*")))
   }
 
   private fun getTargetRef(sourceBranch: String, specs: List<String>): String? {
@@ -87,15 +86,5 @@ class GitPushSpecParserTest {
     return GitPushSpecParser.getTargetRef(myRepo, GitLocalBranch(sourceBranch), specs)
   }
 
-  private fun assertTarget(sourceBranch: String, spec: String, expectedTarget: String) {
-    assertEquals(expectedTarget, getTargetRef(sourceBranch, listOf(spec)))
-  }
-
-  private fun assertInvalid(message: String, spec: String) {
-    assertNull(message, getTargetRef("master", listOf(spec)))
-  }
-
-  private fun assertValid(message: String, spec: String) {
-    assertNotNull(message, getTargetRef("master", listOf(spec)))
-  }
+  private fun getTargetRefMaster(spec: String): String? = getTargetRef("master", listOf(spec))
 }

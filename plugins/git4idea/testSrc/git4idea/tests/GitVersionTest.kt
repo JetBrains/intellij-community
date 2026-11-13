@@ -1,13 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import git4idea.config.GitVersion
 import git4idea.config.GitVersion.Type
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 /**
  * @author Kirill Likhodedov
@@ -18,15 +19,10 @@ class GitVersionTest {
    * Tests that parsing the 'git version' command output returns the correct GitVersion object.
    * Tests on UNIX and on Windows - both CYGWIN and MSYS.
    */
+  @OptIn(LowLevelLocalMachineAccess::class)
   @Test
   fun testParse() {
-    if (SystemInfo.isUnix) {
-      for (test in commonTests) {
-        val version = GitVersion.parse(test.output)
-        assertEqualVersions(version, test, Type.UNIX)
-      }
-    }
-    else if (SystemInfo.isWindows) {
+    if (OS.CURRENT == OS.Windows) {
       for (test in commonTests) {
         val version = GitVersion.parse(test.output)
         assertEqualVersions(version, test, Type.CYGWIN)
@@ -37,8 +33,15 @@ class GitVersionTest {
         assertEqualVersions(version, test, Type.MSYS)
       }
     }
+    else {
+      for (test in commonTests) {
+        val version = GitVersion.parse(test.output)
+        assertEqualVersions(version, test, Type.UNIX)
+      }
+    }
   }
 
+  @OptIn(LowLevelLocalMachineAccess::class)
   @Test
   fun testEqualsAndCompare() {
     val v1 = GitVersion.parse("git version 1.6.3")
@@ -48,7 +51,7 @@ class GitVersionTest {
     assertFalse(v1 == v2)
     assertFalse(v1 == v3)
     assertTrue(v2 == v3)
-    if (SystemInfo.isWindows) {
+    if (OS.CURRENT == OS.Windows) {
       assertFalse(v1 == v4)
       assertFalse(v2 == v4)
       assertFalse(v3 == v4)

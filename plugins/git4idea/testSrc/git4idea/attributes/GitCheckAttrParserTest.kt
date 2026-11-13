@@ -1,8 +1,8 @@
 package git4idea.attributes
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class GitCheckAttrParserTest {
 
@@ -16,9 +16,9 @@ class GitCheckAttrParserTest {
       """.trimIndent()
     val parse = GitCheckAttrParser.parse(output.lines())
     val path = "org/example/MyClass.java"
-    assertTrue("Missing path", parse.attributes.containsKey(path))
+    assertTrue(parse.attributes.containsKey(path), "Missing path")
     val attrs = parse.attributes[path]!!
-    assertTrue("CRLF attribute not found", attrs.contains(GitAttribute.CRLF))
-    assertEquals("Too many attributes", 1, attrs.size)
+    assertTrue(attrs.contains(GitAttribute.CRLF), "CRLF attribute not found")
+    assertEquals(1, attrs.size, "Too many attributes")
   }
 }
