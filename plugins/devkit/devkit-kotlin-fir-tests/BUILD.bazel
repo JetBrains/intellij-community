@@ -77,6 +77,7 @@ jvm_library(
         "//plugins/kotlin/base/facet",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/jps/util/runtime",
+        "//libraries/assertj-core",
     ],
 )
 ### auto-generated section `build intellij.devkit.kotlin.fir.tests` end

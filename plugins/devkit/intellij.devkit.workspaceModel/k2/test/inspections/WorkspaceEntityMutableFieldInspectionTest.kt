@@ -2,5 +2,12 @@
 package com.intellij.devkit.workspaceModel.k2.inspections
 
 import com.intellij.devkit.workspaceModel.inspections.WorkspaceEntityMutableFieldInspectionBaseTest
+import com.intellij.devkit.workspaceModel.inspections.workspaceInspectionProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 
-class WorkspaceEntityMutableFieldInspectionTest : WorkspaceEntityMutableFieldInspectionBaseTest()
+@TestApplication
+class WorkspaceEntityMutableFieldInspectionTest : WorkspaceEntityMutableFieldInspectionBaseTest(projectFixture) {
+  companion object {
+    private val projectFixture = workspaceInspectionProjectFixture()
+  }
+}

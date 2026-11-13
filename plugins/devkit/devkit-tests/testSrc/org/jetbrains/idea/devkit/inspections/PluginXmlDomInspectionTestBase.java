@@ -4,6 +4,10 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
+/**
+ * @deprecated Use {@link PluginXmlDomInspectionFixtureKt#pluginXmlDomInspectionFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class PluginXmlDomInspectionTestBase extends LightJavaCodeInsightFixtureTestCase {
 
   @Override

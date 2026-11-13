@@ -5,6 +5,10 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.internal.AbstractUseDPIAwareInsetsTestBase;
 
+/**
+ * @deprecated Use {@link org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsFixtureKt#useDPIAwareInsetsFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class UseDPIAwareInsetsFixTestBase extends AbstractUseDPIAwareInsetsTestBase {
 
   @SuppressWarnings("SSBasedInspection")

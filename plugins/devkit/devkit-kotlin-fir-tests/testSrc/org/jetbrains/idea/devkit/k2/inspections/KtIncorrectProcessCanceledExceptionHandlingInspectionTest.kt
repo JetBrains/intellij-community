@@ -1,76 +1,92 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections
 
+import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.TestDataPath
-import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.runInEdtAndWait
-import org.intellij.lang.annotations.Language
-import org.jetbrains.idea.devkit.inspections.IncorrectCancellationExceptionHandlingInspectionTestBase
+import com.intellij.testFramework.fixtures.LightJavaProject
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.idea.devkit.inspections.IncorrectCancellationExceptionHandlingFixture
+import org.jetbrains.idea.devkit.inspections.incorrectCancellationExceptionHandlingFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.test.util.invalidateCaches
+import org.junit.jupiter.api.Test
 
-abstract class KtIncorrectCancellationExceptionHandlingInspectionTestBase : IncorrectCancellationExceptionHandlingInspectionTestBase() {
-
-  override fun setUp() {
-    super.setUp()
-    ConfigLibraryUtil.configureKotlinRuntime(module)
-    addKotlinFile("SomeControlFlowException.kt", """
-        package com.example
-        import com.intellij.openapi.diagnostic.ControlFlowException
-        class SomeControlFlowException : RuntimeException(), ControlFlowException
-      """.trimIndent())
-    addKotlinFile("SubclassOfProcessCanceledException.kt", """
-        package com.example
-        import com.intellij.openapi.progress.ProcessCanceledException
-        class SubclassOfProcessCanceledException : ProcessCanceledException()
-      """.trimIndent())
-    addKotlinFile("CancellationException.kt", """
-        package kotlinx.coroutines
-        @SinceKotlin("1.4")
-        typealias CancellationException = java.util.concurrent.CancellationException
-      """.trimIndent())
-    addKotlinFile("Job.kt", """
-        package kotlinx.coroutines
-        interface Job
-        fun Job.ensureActive() {}
-      """.trimIndent())
+/**
+ * Creates an [IncorrectCancellationExceptionHandlingFixture] for one test with Kotlin test files. Declare it as an instance field.
+ *
+ * The fixture adds the Kotlin runtime to the module and the Kotlin stubs of the test exceptions and of `kotlinx.coroutines`.
+ * After the test, it invalidates the Kotlin caches of the project.
+ * [basePath] is the test data path under the community directory.
+ */
+fun ktIncorrectCancellationExceptionHandlingFixture(
+  projectFixture: TestFixture<LightJavaProject>,
+  basePath: String = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/incorrectCeHandling",
+): TestFixture<IncorrectCancellationExceptionHandlingFixture> = testFixture("ktIncorrectCancellationExceptionHandlingFixture") {
+  val cancellation = incorrectCancellationExceptionHandlingFixture(projectFixture, "kt", basePath).init()
+  val fixture = cancellation.fixture
+  withContext(Dispatchers.EDT) {
+    ConfigLibraryUtil.configureKotlinRuntime(fixture.module)
   }
-
-  protected fun addKotlinFile(relativePath: String, @Language("kotlin") fileText: String) {
-    myFixture.addFileToProject(relativePath, fileText)
+  fixture.addFileToProject("SomeControlFlowException.kt", """
+      package com.example
+      import com.intellij.openapi.diagnostic.ControlFlowException
+      class SomeControlFlowException : RuntimeException(), ControlFlowException
+    """.trimIndent())
+  fixture.addFileToProject("SubclassOfProcessCanceledException.kt", """
+      package com.example
+      import com.intellij.openapi.progress.ProcessCanceledException
+      class SubclassOfProcessCanceledException : ProcessCanceledException()
+    """.trimIndent())
+  fixture.addFileToProject("CancellationException.kt", """
+      package kotlinx.coroutines
+      @SinceKotlin("1.4")
+      typealias CancellationException = java.util.concurrent.CancellationException
+    """.trimIndent())
+  fixture.addFileToProject("Job.kt", """
+      package kotlinx.coroutines
+      interface Job
+      fun Job.ensureActive() {}
+    """.trimIndent())
+  initialized(cancellation) {
+    withContext(Dispatchers.EDT) {
+      fixture.project.invalidateCaches()
+    }
   }
-
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/incorrectCeHandling"
-
-  override fun getFileExtension() = "kt"
-
-  override fun tearDown() {
-    runAll(
-      { runInEdtAndWait { project.invalidateCaches() } },
-      { super.tearDown() },
-    )
-  }
-
 }
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/incorrectCeHandling")
-class KtIncorrectProcessCanceledExceptionHandlingInspectionTest : KtIncorrectCancellationExceptionHandlingInspectionTestBase() {
+@TestApplication
+class KtIncorrectProcessCanceledExceptionHandlingInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
+  private val cancellation by ktIncorrectCancellationExceptionHandlingFixture(projectFixture)
+
+  @Test
   fun testIncorrectCeLoggedTests() {
-    doTest()
+    cancellation.doTest()
   }
 
+  @Test
   fun testIncorrectPceHandlingTests() {
-    doTest()
+    cancellation.doTest()
   }
 
+  @Test
   fun testIncorrectPceHandlingWhenMultipleCatchClausesTests() {
-    doTest()
+    cancellation.doTest()
   }
 
+  @Test
   fun testIncorrectPceHandlingWhenPceCaughtImplicitlyTests() {
-    doTest()
+    cancellation.doTest()
   }
 }
 

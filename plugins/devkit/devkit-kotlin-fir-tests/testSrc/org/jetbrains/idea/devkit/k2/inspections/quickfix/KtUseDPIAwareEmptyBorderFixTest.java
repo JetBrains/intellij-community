@@ -1,75 +1,82 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections.quickfix;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.inspections.quickfix.UseDPIAwareEmptyBorderFixTestBase;
+import org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareEmptyBorderFixture;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareEmptyBorderFixture.CONVERT_TO_JB_UI_BORDERS_EMPTY_FIX_NAME;
+import static org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareEmptyBorderFixture.SIMPLIFY_FIX_NAME;
+import static org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareEmptyBorderFixtureKt.useDPIAwareEmptyBorderFixture;
 
-public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTestBase {
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "kt";
-  }
+@TestApplication
+public class KtUseDPIAwareEmptyBorderFixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<UseDPIAwareEmptyBorderFixture> emptyBorder = useDPIAwareEmptyBorderFixture(projectFixture, "kt");
 
   // Swing EmptyBorder conversion tests:
 
+  @Test
   public void testSwingEmptyBorderWithFourZeros() {
-    doTest(
+    emptyBorder.get().doTest(
       CONVERT_TO_JB_UI_BORDERS_EMPTY_FIX_NAME,
       swingBorder("val myBorder = <warning descr=\"'EmptyBorder' is not DPI-aware\">Empty<caret>Border(0, 0, 0, 0)</warning>"),
       jbuiBorder("val myBorder = JBUI.Borders.empty()")
     );
   }
 
+  @Test
   public void testSwingEmptyBorderWithFourTheSameValues() {
-    doTest(
+    emptyBorder.get().doTest(
       CONVERT_TO_JB_UI_BORDERS_EMPTY_FIX_NAME,
       swingBorder("val myBorder = <warning descr=\"'EmptyBorder' is not DPI-aware\">Empty<caret>Border(1, 1, 1, 1)</warning>"),
       jbuiBorder("val myBorder = JBUI.Borders.empty(1)")
     );
   }
 
+  @Test
   public void testSwingEmptyBorderWithFirstThirdAndSecondFourthValuesTheSame() {
-    doTest(
+    emptyBorder.get().doTest(
       CONVERT_TO_JB_UI_BORDERS_EMPTY_FIX_NAME,
       swingBorder("val myBorder = <warning descr=\"'EmptyBorder' is not DPI-aware\">Empty<caret>Border(1, 2, 1, 2)</warning>"),
       jbuiBorder("val myBorder = JBUI.Borders.empty(1, 2)")
     );
   }
 
+  @Test
   public void testSwingEmptyBorderWithThreeZerosAndDifferentFirstParam() {
-    doTest(
+    emptyBorder.get().doTest(
       CONVERT_TO_JB_UI_BORDERS_EMPTY_FIX_NAME,
       swingBorder("val myBorder = <warning descr=\"'EmptyBorder' is not DPI-aware\">Empty<caret>Border(1, 0, 0, 0)</warning>"),
       jbuiBorder("val myBorder = JBUI.Borders.emptyTop(1)")
     );
   }
 
+  @Test
   public void testSwingEmptyBorderWithThreeZerosAndDifferentSecondParam() {
-    doTest(
+    emptyBorder.get().doTest(
       CONVERT_TO_JB_UI_BORDERS_EMPTY_FIX_NAME,
       swingBorder("val myBorder = <warning descr=\"'EmptyBorder' is not DPI-aware\">Empty<caret>Border(0, 1, 0, 0)</warning>"),
       jbuiBorder("val myBorder = JBUI.Borders.emptyLeft(1)")
     );
   }
 
+  @Test
   public void testSwingEmptyBorderWithThreeZerosAndDifferentThirdParam() {
-    doTest(
+    emptyBorder.get().doTest(
       CONVERT_TO_JB_UI_BORDERS_EMPTY_FIX_NAME,
       swingBorder("val myBorder = <warning descr=\"'EmptyBorder' is not DPI-aware\">Empty<caret>Border(0, 0, 1, 0)</warning>"),
       jbuiBorder("val myBorder = JBUI.Borders.emptyBottom(1)")
     );
   }
 
+  @Test
   public void testSwingEmptyBorderWithThreeZerosAndDifferentFourthParam() {
-    doTest(
+    emptyBorder.get().doTest(
       CONVERT_TO_JB_UI_BORDERS_EMPTY_FIX_NAME,
       swingBorder("val myBorder = <warning descr=\"'EmptyBorder' is not DPI-aware\">Empty<caret>Border(0, 0, 0, 1)</warning>"),
       jbuiBorder("val myBorder = JBUI.Borders.emptyRight(1)")
@@ -78,16 +85,18 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
 
   // Simplifying tests:
 
+  @Test
   public void testJBUIBordersEmptyWithZero() {
-    doTest(
+    emptyBorder.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiEmptyBorder("val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">e<caret>mpty(0)</warning>"),
       jbuiEmptyBorder("val myBorder = JBUI.Borders.empty()")
     );
   }
 
+  @Test
   public void testJBUIBordersEmptyWithTwoZeros() {
-    doTest(
+    emptyBorder.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiEmptyBorder(
         "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">em<caret>pty(0, 0)</warning>"),
@@ -95,8 +104,9 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
     );
   }
 
+  @Test
   public void testJBUIBordersEmptyWithTopAndBottomEqualToLeftAndRight() {
-    doTest(
+    emptyBorder.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiEmptyBorder(
         "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">e<caret>mpty(1, 1)</warning>"),
@@ -104,8 +114,9 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
     );
   }
 
+  @Test
   public void testJBUIBordersEmptyWithFourZeros() {
-    doTest(
+    emptyBorder.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiEmptyBorder(
         "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">em<caret>pty(0, 0, 0, 0)</warning>"),
@@ -113,8 +124,9 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
     );
   }
 
+  @Test
   public void testJBUIBordersEmptyWithFourTheSameValues() {
-    doTest(
+    emptyBorder.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiEmptyBorder(
         "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">em<caret>pty(1, 1, 1, 1)</warning>"),
@@ -122,8 +134,9 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
     );
   }
 
+  @Test
   public void testJBUIBordersEmptyWithFirstThirdAndSecondFourthValuesTheSame() {
-    doTest(
+    emptyBorder.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiEmptyBorder(
         "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">emp<caret>ty(1, 2, 1, 2)</warning>"),
@@ -131,8 +144,9 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
     );
   }
 
+  @Test
   public void testJBUIBordersEmptyWithThreeZerosAndDifferentFirstParam() {
-    doTest(
+    emptyBorder.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiEmptyBorder(
         "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">emp<caret>ty(1, 0, 0, 0)</warning>"),
@@ -140,8 +154,9 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
     );
   }
 
+  @Test
   public void testJBUIBordersEmptyWithThreeZerosAndDifferentSecondParam() {
-    doTest(
+    emptyBorder.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiEmptyBorder(
         "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">em<caret>pty(0, 1, 0, 0)</warning>"),
@@ -149,8 +164,9 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
     );
   }
 
+  @Test
   public void testJBUIBordersEmptyWithThreeZerosAndDifferentThirdParam() {
-    doTest(
+    emptyBorder.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiEmptyBorder(
         "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">emp<caret>ty(0, 0, 1, 0)</warning>"),
@@ -158,8 +174,9 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
     );
   }
 
+  @Test
   public void testJBUIBordersEmptyWithThreeZerosAndDifferentFourthParam() {
-    doTest(
+    emptyBorder.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiEmptyBorder(
         "val myBorder = JBUI.Borders.<warning descr=\"Empty border creation can be simplified\">em<caret>pty(0, 0, 0, 1)</warning>"),
@@ -167,8 +184,9 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
     );
   }
 
+  @Test
   public void testJBUIBordersEmptyWithFourZerosAndStaticImportForBorders() {
-    doTest(
+    emptyBorder.get().doTest(
       SIMPLIFY_FIX_NAME,
       kotlin("""
                import javax.swing.border.Border
@@ -195,8 +213,9 @@ public class KtUseDPIAwareEmptyBorderFixTest extends UseDPIAwareEmptyBorderFixTe
     );
   }
 
+  @Test
   public void testJBUIBordersEmptyWithFourZerosAndStaticImportForBordersEmpty() {
-    doTest(
+    emptyBorder.get().doTest(
       SIMPLIFY_FIX_NAME,
       kotlin("""
                import javax.swing.border.Border

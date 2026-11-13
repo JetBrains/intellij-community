@@ -1,75 +1,82 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections.quickfix;
 
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.inspections.quickfix.UseDPIAwareInsetsFixTestBase;
+import org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsFixture;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsFixture.CONVERT_TO_JB_UI_INSETS_EMPTY_FIX_NAME;
+import static org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsFixture.SIMPLIFY_FIX_NAME;
+import static org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsFixtureKt.useDPIAwareInsetsFixture;
 
-public class KtUseDPIAwareInsetsFixTest extends UseDPIAwareInsetsFixTestBase {
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "kt";
-  }
+@TestApplication
+public class KtUseDPIAwareInsetsFixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<UseDPIAwareInsetsFixture> insets = useDPIAwareInsetsFixture(projectFixture, "kt");
 
   // AWT Insets conversion tests:
 
+  @Test
   public void testAwtInsetsWithFourZeros() {
-    doTest(
+    insets.get().doTest(
       CONVERT_TO_JB_UI_INSETS_EMPTY_FIX_NAME,
       awtInsets("val myInsets = <warning descr=\"'Insets' is not DPI-aware\">In<caret>sets(0, 0, 0, 0)</warning>"),
       jbuiInsets("val myInsets = JBUI.emptyInsets()")
     );
   }
 
+  @Test
   public void testAwtInsetsWithFourTheSameValues() {
-    doTest(
+    insets.get().doTest(
       CONVERT_TO_JB_UI_INSETS_EMPTY_FIX_NAME,
       awtInsets("val myInsets = <warning descr=\"'Insets' is not DPI-aware\">In<caret>sets(1, 1, 1, 1)</warning>"),
       jbuiInsets("val myInsets = JBUI.insets(1)")
     );
   }
 
+  @Test
   public void testAwtInsetsWithFirstThirdAndSecondFourthValuesTheSame() {
-    doTest(
+    insets.get().doTest(
       CONVERT_TO_JB_UI_INSETS_EMPTY_FIX_NAME,
       awtInsets("val myInsets = <warning descr=\"'Insets' is not DPI-aware\">In<caret>sets(1, 2, 1, 2)</warning>"),
       jbuiInsets("val myInsets = JBUI.insets(1, 2)")
     );
   }
 
+  @Test
   public void testAwtInsetsWithThreeZerosAndDifferentFirstParam() {
-    doTest(
+    insets.get().doTest(
       CONVERT_TO_JB_UI_INSETS_EMPTY_FIX_NAME,
       awtInsets("val myInsets = <warning descr=\"'Insets' is not DPI-aware\">In<caret>sets(1, 0, 0, 0)</warning>"),
       jbuiInsets("val myInsets = JBUI.insetsTop(1)")
     );
   }
 
+  @Test
   public void testAwtInsetsWithThreeZerosAndDifferentSecondParam() {
-    doTest(
+    insets.get().doTest(
       CONVERT_TO_JB_UI_INSETS_EMPTY_FIX_NAME,
       awtInsets("val myInsets = <warning descr=\"'Insets' is not DPI-aware\">In<caret>sets(0, 1, 0, 0)</warning>"),
       jbuiInsets("val myInsets = JBUI.insetsLeft(1)")
     );
   }
 
+  @Test
   public void testAwtInsetsWithThreeZerosAndDifferentThirdParam() {
-    doTest(
+    insets.get().doTest(
       CONVERT_TO_JB_UI_INSETS_EMPTY_FIX_NAME,
       awtInsets("val myInsets = <warning descr=\"'Insets' is not DPI-aware\">In<caret>sets(0, 0, 1, 0)</warning>"),
       jbuiInsets("val myInsets = JBUI.insetsBottom(1)")
     );
   }
 
+  @Test
   public void testAwtInsetsWithThreeZerosAndDifferentFourthParam() {
-    doTest(
+    insets.get().doTest(
       CONVERT_TO_JB_UI_INSETS_EMPTY_FIX_NAME,
       awtInsets("val myInsets = <warning descr=\"'Insets' is not DPI-aware\">In<caret>sets(0, 0, 0, 1)</warning>"),
       jbuiInsets("val myInsets = JBUI.insetsRight(1)")
@@ -78,88 +85,99 @@ public class KtUseDPIAwareInsetsFixTest extends UseDPIAwareInsetsFixTestBase {
 
   // Simplifying tests:
 
+  @Test
   public void testJBUIInsetsEmptyWithZero() {
-    doTest(
+    insets.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiInsets("val myInsets = JBUI.<warning descr=\"Insets creation can be simplified\">in<caret>sets(0)</warning>"),
       jbuiInsets("val myInsets = JBUI.emptyInsets()")
     );
   }
 
+  @Test
   public void testJBUIInsetsEmptyWithTwoZeros() {
-    doTest(
+    insets.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiInsets("val myInsets = JBUI.<warning descr=\"Insets creation can be simplified\">in<caret>sets(0, 0)</warning>"),
       jbuiInsets("val myInsets = JBUI.emptyInsets()")
     );
   }
 
+  @Test
   public void testJBUIInsetsEmptyWithTopAndBottomEqualToLeftAndRight() {
-    doTest(
+    insets.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiInsets("val myInsets = JBUI.<warning descr=\"Insets creation can be simplified\">in<caret>sets(1, 1)</warning>"),
       jbuiInsets("val myInsets = JBUI.insets(1)")
     );
   }
 
+  @Test
   public void testJBUIInsetsEmptyWithFourZeros() {
-    doTest(
+    insets.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiInsets("val myInsets = JBUI.<warning descr=\"Insets creation can be simplified\">in<caret>sets(0, 0, 0, 0)</warning>"),
       jbuiInsets("val myInsets = JBUI.emptyInsets()")
     );
   }
 
+  @Test
   public void testJBUIInsetsEmptyWithFourTheSameValues() {
-    doTest(
+    insets.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiInsets("val myInsets = JBUI.<warning descr=\"Insets creation can be simplified\">in<caret>sets(1, 1, 1, 1)</warning>"),
       jbuiInsets("val myInsets = JBUI.insets(1)")
     );
   }
 
+  @Test
   public void testJBUIInsetsEmptyWithFirstThirdAndSecondFourthValuesTheSame() {
-    doTest(
+    insets.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiInsets("val myInsets = JBUI.<warning descr=\"Insets creation can be simplified\">in<caret>sets(1, 2, 1, 2)</warning>"),
       jbuiInsets("val myInsets = JBUI.insets(1, 2)")
     );
   }
 
+  @Test
   public void testJBUIInsetsEmptyWithThreeZerosAndDifferentFirstParam() {
-    doTest(
+    insets.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiInsets("val myInsets = JBUI.<warning descr=\"Insets creation can be simplified\">in<caret>sets(1, 0, 0, 0)</warning>"),
       jbuiInsets("val myInsets = JBUI.insetsTop(1)")
     );
   }
 
+  @Test
   public void testJBUIInsetsEmptyWithThreeZerosAndDifferentSecondParam() {
-    doTest(
+    insets.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiInsets("val myInsets = JBUI.<warning descr=\"Insets creation can be simplified\">in<caret>sets(0, 1, 0, 0)</warning>"),
       jbuiInsets("val myInsets = JBUI.insetsLeft(1)")
     );
   }
 
+  @Test
   public void testJBUIInsetsEmptyWithThreeZerosAndDifferentThirdParam() {
-    doTest(
+    insets.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiInsets("val myInsets = JBUI.<warning descr=\"Insets creation can be simplified\">in<caret>sets(0, 0, 1, 0)</warning>"),
       jbuiInsets("val myInsets = JBUI.insetsBottom(1)")
     );
   }
 
+  @Test
   public void testJBUIInsetsEmptyWithThreeZerosAndDifferentFourthParam() {
-    doTest(
+    insets.get().doTest(
       SIMPLIFY_FIX_NAME,
       jbuiInsets("val myInsets = JBUI.<warning descr=\"Insets creation can be simplified\">in<caret>sets(0, 0, 0, 1)</warning>"),
       jbuiInsets("val myInsets = JBUI.insetsRight(1)")
     );
   }
 
+  @Test
   public void testJBUIInsetsEmptyWithFourZerosAndStaticImportForInsets() {
-    doTest(
+    insets.get().doTest(
       SIMPLIFY_FIX_NAME,
       kotlin("""
                import com.intellij.util.ui.JBUI.insets

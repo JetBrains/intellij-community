@@ -3,11 +3,18 @@ package com.intellij.devkit.workspaceModel.k2.inspections
 
 import com.intellij.devkit.workspaceModel.inspections.WorkspaceCodeAbsentInspection
 import com.intellij.devkit.workspaceModel.inspections.WorkspaceCodeAbsentInspectionBaseTest
+import com.intellij.devkit.workspaceModel.inspections.workspaceInspectionProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
 
-class WorkspaceCodeAbsentInspectionTest : WorkspaceCodeAbsentInspectionBaseTest() {
+@TestApplication
+class WorkspaceCodeAbsentInspectionTest : WorkspaceCodeAbsentInspectionBaseTest(projectFixture) {
+  companion object {
+    private val projectFixture = workspaceInspectionProjectFixture()
+  }
 
-  override fun setUp() {
-    super.setUp()
-    myFixture.enableInspections(WorkspaceCodeAbsentInspection())
+  @BeforeEach
+  fun enableWorkspaceCodeAbsentInspection() {
+    workspace.fixture.enableInspections(WorkspaceCodeAbsentInspection())
   }
 }

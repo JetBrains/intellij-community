@@ -2,34 +2,30 @@
 package org.jetbrains.idea.devkit.k2.inspections.internal;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsInspectionTestBase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsFixture;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsFixtureKt.useDPIAwareInsetsFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/useDPIAwareInsets")
-public class KtUseDPIAwareInsetsInspectionTest extends UseDPIAwareInsetsInspectionTestBase {
+@TestApplication
+public class KtUseDPIAwareInsetsInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<UseDPIAwareInsetsFixture> insets =
+    useDPIAwareInsetsFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/useDPIAwareInsets");
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
-  @Override
-  protected String getBasePath() {
-    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/useDPIAwareInsets";
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "kt";
-  }
-
+  @Test
   public void testUseJBUIInsetsThatCanBeSimplified() {
-    doTest();
+    insets.get().doTest();
   }
 
+  @Test
   public void testUseAwtInsets() {
-    doTest();
+    insets.get().doTest();
   }
 }

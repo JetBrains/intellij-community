@@ -5,6 +5,10 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.internal.AbstractUseDPIAwareEmptyBorderTestBase;
 
+/**
+ * @deprecated Use {@link org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareEmptyBorderFixtureKt#useDPIAwareEmptyBorderFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class UseDPIAwareEmptyBorderFixTestBase extends AbstractUseDPIAwareEmptyBorderTestBase {
 
   @SuppressWarnings("SSBasedInspection")

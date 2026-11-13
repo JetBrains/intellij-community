@@ -4,6 +4,10 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use {@link QuickFixGetFamilyNameViolationInspectionFixtureKt#quickFixGetFamilyNameViolationInspectionFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class QuickFixGetFamilyNameViolationInspectionTestBase extends LightJavaCodeInsightFixtureTestCase {
 
   @Override

@@ -1,8 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.path
 
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_17
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevKitBundle.message
-import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.pathAnnotationInspectionFixture
+import org.junit.jupiter.api.Test
 
 /**
  * Tests for the PathAnnotationInspection that verify proper handling of method parameters with path annotations.
@@ -12,14 +16,20 @@ import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
  * - @LocalPath parameters accepting @LocalPath, @Filename values
  * - @Filename parameters accepting @Filename values
  */
-class PathAnnotationInspectionMethodParametersTest : PathAnnotationInspectionTestBase() {
-  override fun getFileExtension(): String = "java"
+@TestApplication
+class PathAnnotationInspectionMethodParametersTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_17)
+  }
+
+  private val pathAnnotation by pathAnnotationInspectionFixture(projectFixture)
 
   /**
    * Test that @MultiRoutingFileSystemPath parameters accept @MultiRoutingFileSystemPath, @LocalPath, and @Filename values.
    */
+  @Test
   fun testMultiRoutingFileSystemPathParameters() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.LocalPath;
       import com.intellij.platform.eel.annotations.NativePath;
@@ -58,8 +68,9 @@ class PathAnnotationInspectionMethodParametersTest : PathAnnotationInspectionTes
   /**
    * Test that @NativePath parameters accept @NativePath and @Filename values.
    */
+  @Test
   fun testNativePathParameters() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.LocalPath;
       import com.intellij.platform.eel.annotations.NativePath;
@@ -98,8 +109,9 @@ class PathAnnotationInspectionMethodParametersTest : PathAnnotationInspectionTes
   /**
    * Test that @LocalPath parameters accept @LocalPath and @Filename values.
    */
+  @Test
   fun testLocalPathParameters() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.LocalPath;
       import com.intellij.platform.eel.annotations.NativePath;
@@ -138,8 +150,9 @@ class PathAnnotationInspectionMethodParametersTest : PathAnnotationInspectionTes
   /**
    * Test that @Filename parameters accept @Filename values.
    */
+  @Test
   fun testFilenameParameters() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.LocalPath;
       import com.intellij.platform.eel.annotations.NativePath;

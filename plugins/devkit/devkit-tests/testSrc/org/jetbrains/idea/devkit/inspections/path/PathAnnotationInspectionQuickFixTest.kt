@@ -2,14 +2,29 @@
 package org.jetbrains.idea.devkit.inspections.path
 
 import com.intellij.java.analysis.JavaAnalysisBundle
+import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_17
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.DevKitBundle.message
-import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.pathAnnotationInspectionFixture
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
 
 /**
  * Tests for the quick fixes in [PathAnnotationInspection].
  */
-class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() {
-  override fun getFileExtension(): String = "java"
+@TestApplication
+class PathAnnotationInspectionQuickFixTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_17)
+  }
+
+  private val pathAnnotation by pathAnnotationInspectionFixture(projectFixture)
+  private val myFixture get() = pathAnnotation.fixture
 
   /**
    * Test a quick fix by applying it to the "before" code and verifying that the result matches the expected "after" code.
@@ -18,8 +33,8 @@ class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() 
    * @param after The expected code after the quick fix is applied
    * @param fixName The name of the quick fix to apply
    */
-  private fun doTestQuickFix(before: String, after: String, fixName: String) {
-    val filePath = getTestName(false) + '.' + getFileExtension()
+  private suspend fun doTestQuickFix(before: String, after: String, fixName: String) {
+    val filePath = myFixture.getTestName(false) + ".java"
 
     // Configure the test fixture with the "before" code
     myFixture.configureByText(filePath, before.trimIndent())
@@ -32,12 +47,14 @@ class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() 
 
     // Try to find the quick fix by text or family name
     val quickFix = allQuickFixes.find { it.text == fixName || it.familyName == fixName }
-    assertNotNull("Could not find quick fix with text or family name \"$fixName\"", quickFix)
+    assertNotNull(quickFix, "Could not find quick fix with text or family name \"$fixName\"")
     if (quickFix != null) {
-      myFixture.launchAction(quickFix)
+      withContext(Dispatchers.EDT) {
+        myFixture.launchAction(quickFix)
 
-      // Verify that the transformed code matches the expected "after" code
-      myFixture.checkResult(after.trimIndent())
+        // Verify that the transformed code matches the expected "after" code
+        myFixture.checkResult(after.trimIndent())
+      }
     }
     else {
       // Manually apply the quick fix by configuring the "after" code
@@ -51,8 +68,9 @@ class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() 
   /**
    * Test for the inspection itself to verify it's working.
    */
+  @Test
   fun testNonAnnotatedStringInPathOf() {
-    doTest("""
+    pathAnnotation.doTest("""
       import java.nio.file.Path;
 
       public class NonAnnotatedStringInPathOf {
@@ -71,7 +89,8 @@ class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() 
    * This test verifies that the quick fix correctly adds the @MultiRoutingFileSystemPath annotation
    * to a string variable used in Path.of().
    */
-  fun testAddMultiRoutingAnnotationFix() {
+  @Test
+  fun testAddMultiRoutingAnnotationFix(): Unit = timeoutRunBlocking {
     val before = """
       import java.nio.file.Path;
 
@@ -107,7 +126,8 @@ class PathAnnotationInspectionQuickFixTest : PathAnnotationInspectionTestBase() 
    * This test verifies that the quick fix correctly adds the @NativePath annotation
    * to a string variable used in FileSystem.getPath().
    */
-  fun testAddNativePathAnnotationFix() {
+  @Test
+  fun testAddNativePathAnnotationFix(): Unit = timeoutRunBlocking {
     val before = """
       import java.nio.file.FileSystem;
       import java.nio.file.FileSystems;

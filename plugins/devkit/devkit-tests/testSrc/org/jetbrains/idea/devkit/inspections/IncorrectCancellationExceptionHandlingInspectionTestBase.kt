@@ -3,6 +3,10 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
+/**
+ * Use [incorrectCancellationExceptionHandlingFixture] in a JUnit 5 test.
+ */
+@Deprecated("Use incorrectCancellationExceptionHandlingFixture in a JUnit 5 test")
 abstract class IncorrectCancellationExceptionHandlingInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
 
   override fun setUp() {

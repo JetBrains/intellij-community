@@ -1,8 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.path
 
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_17
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevKitBundle.message
-import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.pathAnnotationInspectionFixture
+import org.junit.jupiter.api.Test
 
 /**
  * Tests for the extended functionality of [org.jetbrains.idea.devkit.inspections.path.PathAnnotationInspection].
@@ -10,14 +14,20 @@ import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
  * 1. The return type of `java.nio.file.Path.toString()` is considered as annotated with `@MultiRoutingFileSystemPath`
  * 2. The return type of `System.getProperty("user.home")` is considered as annotated with `@LocalPath`
  */
-class PathAnnotationInspectionExtendedTest : PathAnnotationInspectionTestBase() {
-  override fun getFileExtension(): String = "java"
+@TestApplication
+class PathAnnotationInspectionExtendedTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_17)
+  }
+
+  private val pathAnnotation by pathAnnotationInspectionFixture(projectFixture)
 
   /**
    * Test that the return type of `java.nio.file.Path.toString()` is considered as annotated with `@MultiRoutingFileSystemPath`.
    */
+  @Test
   fun testPathToString() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
 
       import java.nio.file.Path;
@@ -53,8 +63,9 @@ class PathAnnotationInspectionExtendedTest : PathAnnotationInspectionTestBase() 
   /**
    * Test that the return type of `System.getProperty("user.home")` is considered as annotated with `@LocalPath`.
    */
+  @Test
   fun testSystemGetPropertyUserHome() {
-    doTest("""
+    pathAnnotation.doTest("""
       import java.nio.file.Path;
 
       class SystemGetPropertyUserHomeTest {
@@ -87,8 +98,9 @@ class PathAnnotationInspectionExtendedTest : PathAnnotationInspectionTestBase() 
   /**
    * Test that both extended features work together.
    */
+  @Test
   fun testCombinedFeatures() {
-    doTest("""
+    pathAnnotation.doTest("""
       import java.nio.file.Path;
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
 

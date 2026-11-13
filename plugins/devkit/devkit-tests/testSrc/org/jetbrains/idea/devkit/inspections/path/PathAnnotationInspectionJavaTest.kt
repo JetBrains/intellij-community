@@ -1,14 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.path
 
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_17
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevKitBundle.message
-import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.pathAnnotationInspectionFixture
+import org.junit.jupiter.api.Test
 
-class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
-  override fun getFileExtension(): String = "java"
+@TestApplication
+class PathAnnotationInspectionJavaTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_17)
+  }
 
+  private val pathAnnotation by pathAnnotationInspectionFixture(projectFixture)
+
+  @Test
   fun testFileSystemGetPath() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.Filename;
       import com.intellij.platform.eel.annotations.NativePath;
 
@@ -43,8 +53,9 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
       """.trimIndent())
   }
 
+  @Test
   fun testNativePathInPathOf() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.NativePath;
       import java.nio.file.Path;
 
@@ -58,8 +69,9 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
       """.trimIndent())
   }
 
+  @Test
   fun testMultiRoutingPathInNativeContext() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.NativePath;
       import com.intellij.platform.eel.annotations.NativeContext;
@@ -87,8 +99,9 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
       """.trimIndent())
   }
 
+  @Test
   fun testNonAnnotatedStringInPathOf() {
-    doTest("""
+    pathAnnotation.doTest("""
       import java.nio.file.Path;
 
       public class NonAnnotatedStringInPathOf {
@@ -104,8 +117,9 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
       """.trimIndent())
   }
 
+  @Test
   fun testNonAnnotatedStringInPathResolve() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
 
       import java.nio.file.Path;
@@ -130,8 +144,9 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
       """.trimIndent())
   }
 
+  @Test
   fun testFilenameAnnotatedStringInPathResolve() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.Filename;
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
 
@@ -158,8 +173,9 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
       """.trimIndent())
   }
 
+  @Test
   fun testPathOfWithMoreParameters() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.Filename;
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.NativePath;
@@ -196,8 +212,9 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
   /**
    * Test that string literals that denote a filename (without slashes) are allowed in places where @Filename is expected.
    */
+  @Test
   fun testStringLiteralFilename() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.NativePath;
 
@@ -235,8 +252,9 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
   /**
    * Test that string literals that denote a filename (without slashes) are allowed in Path.resolve() method.
    */
+  @Test
   fun testPathResolve() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.Filename;
       import java.nio.file.Path;
@@ -273,8 +291,9 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
   /**
    * Test that @LocalPath annotations are processed correctly.
    */
+  @Test
   fun testLocalPath() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.LocalPath;
       import com.intellij.platform.eel.annotations.NativePath;
@@ -301,8 +320,9 @@ class PathAnnotationInspectionJavaTest : PathAnnotationInspectionTestBase() {
       """.trimIndent())
   }
 
+  @Test
   fun testEmptyExpression() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.LocalPath;
       
       import java.nio.file.Paths;

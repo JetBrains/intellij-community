@@ -4,6 +4,10 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.DevKitBundle
 
+/**
+ * Use [controlFlowExceptionManualRethrowFixture] in a JUnit 5 test.
+ */
+@Deprecated("Use controlFlowExceptionManualRethrowFixture in a JUnit 5 test")
 abstract class ControlFlowExceptionManualRethrowInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
 
   override fun setUp() {

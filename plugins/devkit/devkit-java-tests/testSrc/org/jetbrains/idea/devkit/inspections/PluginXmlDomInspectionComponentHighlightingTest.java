@@ -2,37 +2,55 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.PluginXmlDomInspectionFixtureKt.pluginXmlDomInspectionFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registrationProblems/xml/components")
-public class PluginXmlDomInspectionComponentHighlightingTest extends PluginXmlDomInspectionTestBase {
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml/components";
-  }
+@TestApplication
+public class PluginXmlDomInspectionComponentHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<PluginXmlDomInspectionFixture> pluginXml =
+    pluginXmlDomInspectionFixture(projectFixture, DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml/components");
 
+  @Test
   public void testComponentAbstractImplementation() {
+    LightJavaCodeInsightTestFixture myFixture = pluginXml.get().getFixture();
     myFixture.testHighlighting(
       "ComponentAbstractImplementation.xml",
       "AbstractApplicationComponent.java");
   }
 
+  @Test
   public void testComponentMissingImplementation() {
+    LightJavaCodeInsightTestFixture myFixture = pluginXml.get().getFixture();
     myFixture.testHighlighting(
       "ComponentMissingImplementation.xml");
   }
 
+  @Test
   public void testComponentUnresolvedClass() {
+    LightJavaCodeInsightTestFixture myFixture = pluginXml.get().getFixture();
     myFixture.testHighlighting("ComponentUnresolvedClass.xml");
   }
 
+  @Test
   public void testComponentClassNotAssignableToInterface() {
+    LightJavaCodeInsightTestFixture myFixture = pluginXml.get().getFixture();
     myFixture.testHighlighting(
       "ComponentClassNotAssignableToInterface.xml",
       "ApplicationComponent.java");
   }
 
+  @Test
   public void testComponentMultipleWithSameInterface() {
+    LightJavaCodeInsightTestFixture myFixture = pluginXml.get().getFixture();
     myFixture.addClass("package com.intellij.openapi.module; public interface ModuleComponent {}");
 
     myFixture.testHighlighting(

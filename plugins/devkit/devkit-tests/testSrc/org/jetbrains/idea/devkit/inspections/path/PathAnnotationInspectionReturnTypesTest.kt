@@ -1,8 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.path
 
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_17
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevKitBundle.message
-import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.pathAnnotationInspectionFixture
+import org.junit.jupiter.api.Test
 
 /**
  * Tests for the PathAnnotationInspection that verify proper handling of method return types with path annotations.
@@ -12,14 +16,20 @@ import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
  * - Methods returning @LocalPath should return @LocalPath or @Filename values
  * - Methods returning @Filename should return @Filename values
  */
-class PathAnnotationInspectionReturnTypesTest : PathAnnotationInspectionTestBase() {
-  override fun getFileExtension(): String = "java"
+@TestApplication
+class PathAnnotationInspectionReturnTypesTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_17)
+  }
+
+  private val pathAnnotation by pathAnnotationInspectionFixture(projectFixture)
 
   /**
    * Test that methods returning @MultiRoutingFileSystemPath return appropriate values.
    */
+  @Test
   fun testMultiRoutingFileSystemPathReturnType() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.LocalPath;
       import com.intellij.platform.eel.annotations.NativePath;
@@ -79,8 +89,9 @@ class PathAnnotationInspectionReturnTypesTest : PathAnnotationInspectionTestBase
   /**
    * Test that methods returning @NativePath return appropriate values.
    */
+  @Test
   fun testNativePathReturnType() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.LocalPath;
       import com.intellij.platform.eel.annotations.NativePath;
@@ -140,8 +151,9 @@ class PathAnnotationInspectionReturnTypesTest : PathAnnotationInspectionTestBase
   /**
    * Test that methods returning @LocalPath return appropriate values.
    */
+  @Test
   fun testLocalPathReturnType() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.LocalPath;
       import com.intellij.platform.eel.annotations.NativePath;
@@ -201,8 +213,9 @@ class PathAnnotationInspectionReturnTypesTest : PathAnnotationInspectionTestBase
   /**
    * Test that methods returning @Filename return appropriate values.
    */
+  @Test
   fun testFilenameReturnType() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.LocalPath;
       import com.intellij.platform.eel.annotations.NativePath;

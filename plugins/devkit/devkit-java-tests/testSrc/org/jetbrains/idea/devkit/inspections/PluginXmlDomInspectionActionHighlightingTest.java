@@ -2,41 +2,60 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.PluginXmlDomInspectionFixtureKt.pluginXmlDomInspectionFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registrationProblems/xml/actions")
-public class PluginXmlDomInspectionActionHighlightingTest extends PluginXmlDomInspectionTestBase {
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml/actions";
+@TestApplication
+public class PluginXmlDomInspectionActionHighlightingTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<PluginXmlDomInspectionFixture> pluginXml =
+    pluginXmlDomInspectionFixture(projectFixture, DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/xml/actions");
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = pluginXml.get().getFixture();
+
+    pluginXml.get().setUpActionClasses(!myFixture.getTestName(false).contains("Without"));
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    setUpActionClasses(!getTestName(false).contains("Without"));
-  }
-
+  @Test
   public void testActionAbstractClass() {
+    LightJavaCodeInsightTestFixture myFixture = pluginXml.get().getFixture();
     myFixture.testHighlighting("ActionAbstractClass.xml",
                                "MyAbstractAction.java");
   }
 
+  @Test
   public void testActionUnresolvedClass() {
+    LightJavaCodeInsightTestFixture myFixture = pluginXml.get().getFixture();
     myFixture.testHighlighting("ActionUnresolvedClass.xml");
   }
 
+  @Test
   public void testActionWithoutDefaultCtor() {
+    LightJavaCodeInsightTestFixture myFixture = pluginXml.get().getFixture();
     myFixture.testHighlighting("ActionWithoutDefaultCtor.xml",
                                "MyActionWithoutDefaultCtor.java");
   }
 
+  @Test
   public void testActionWrongClass() {
+    LightJavaCodeInsightTestFixture myFixture = pluginXml.get().getFixture();
     myFixture.testHighlighting("ActionWrongClass.xml");
   }
 
+  @Test
   public void testActionComplexHighlighting() {
+    LightJavaCodeInsightTestFixture myFixture = pluginXml.get().getFixture();
     myFixture.copyFileToProject("MyBundle.properties");
     myFixture.copyFileToProject("AnotherBundle.properties");
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction {}");
@@ -92,7 +111,9 @@ public class PluginXmlDomInspectionActionHighlightingTest extends PluginXmlDomIn
     myFixture.testHighlighting("ActionComplexHighlighting.xml");
   }
 
+  @Test
   public void testActionGroupWithoutCanBePerformed() {
+    LightJavaCodeInsightTestFixture myFixture = pluginXml.get().getFixture();
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction {}");
     myFixture.addClass("""
                          package foo.bar;
@@ -104,13 +125,17 @@ public class PluginXmlDomInspectionActionHighlightingTest extends PluginXmlDomIn
     myFixture.testHighlighting("ActionGroupWithoutCanBePerformed.xml");
   }
 
+  @Test
   public void testGroupKeepContent() {
+    LightJavaCodeInsightTestFixture myFixture = pluginXml.get().getFixture();
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction {}");
 
     myFixture.testHighlighting("GroupKeepContent.xml");
   }
 
+  @Test
   public void testReferenceWithoutEffect() {
+    LightJavaCodeInsightTestFixture myFixture = pluginXml.get().getFixture();
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction {}");
 
     myFixture.testHighlighting("ReferenceWithoutEffect.xml");

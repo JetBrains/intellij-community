@@ -2,65 +2,70 @@
 package org.jetbrains.idea.devkit.k2.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.inspections.QuickFixGetFamilyNameViolationInspectionTestBase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.idea.devkit.inspections.QuickFixGetFamilyNameViolationInspectionFixture;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.QuickFixGetFamilyNameViolationInspectionFixtureKt.quickFixGetFamilyNameViolationInspectionFixture;
 
 
 /**
  * @author Dmitry Batkovich
  */
 @TestDataPath("$CONTENT_ROOT/testData/inspections/getFamilyNameViolation")
-public class KtQuickFixGetFamilyNameViolationInspectionTest extends QuickFixGetFamilyNameViolationInspectionTestBase {
+@TestApplication
+public class KtQuickFixGetFamilyNameViolationInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<QuickFixGetFamilyNameViolationInspectionFixture> familyName =
+    quickFixGetFamilyNameViolationInspectionFixture(projectFixture, "kt",
+                                                    DevkitKtTestsUtil.TESTDATA_PATH + "inspections/getFamilyNameViolation");
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
-  @Override
-  protected String getBasePath() {
-    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/getFamilyNameViolation";
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "kt";
-  }
-
+  @Test
   public void testNotViolatedByField() {
-    doTest();
+    familyName.get().doTest();
   }
 
+  @Test
   public void testNotViolatedByGetName() {
-    doTest();
+    familyName.get().doTest();
   }
 
+  @Test
   public void testNotViolatedByExternalParameter() {
-    doTest();
+    familyName.get().doTest();
   }
 
+  @Test
   public void testNotViolatedStaticField() {
-    doTest();
+    familyName.get().doTest();
   }
 
+  @Test
   public void testNotViolatedStaticMethod() {
-    doTest();
+    familyName.get().doTest();
   }
 
+  @Test
   public void testNotViolatedGetNameMethod() {
-    doTest();
+    familyName.get().doTest();
   }
 
+  @Test
   public void testViolationByPsiElementFieldUsage() {
-    doTest();
+    familyName.get().doTest();
   }
 
+  @Test
   public void testViolationByPsiElementFieldUsageInUsedMethod() {
-    doTest();
+    familyName.get().doTest();
   }
 
+  @Test
   public void testViolationByPsiElementFieldUsageInUsedParentClassMethod() {
-    doTest();
+    familyName.get().doTest();
   }
 }

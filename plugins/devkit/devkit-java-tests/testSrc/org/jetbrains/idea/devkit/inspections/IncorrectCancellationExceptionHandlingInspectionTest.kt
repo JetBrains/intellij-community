@@ -2,14 +2,27 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/incorrectCeHandling")
-class IncorrectCancellationExceptionHandlingInspectionTest : IncorrectCancellationExceptionHandlingInspectionTestBase() {
+@TestApplication
+class IncorrectCancellationExceptionHandlingInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun setUp() {
-    super.setUp()
+  private val cancellation by incorrectCancellationExceptionHandlingFixture(
+    projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/incorrectCeHandling")
+  private val myFixture get() = cancellation.fixture
+
+  @BeforeEach
+  fun setUp() {
     myFixture.addClass("""
         package com.example;
         import com.intellij.openapi.diagnostic.ControlFlowException;
@@ -22,23 +35,28 @@ class IncorrectCancellationExceptionHandlingInspectionTest : IncorrectCancellati
         """.trimIndent())
   }
 
+  @Test
   fun testIncorrectCeLoggedTests() {
-    doTest()
+    cancellation.doTest()
   }
 
+  @Test
   fun testIncorrectPceHandlingTests() {
-    doTest()
+    cancellation.doTest()
   }
 
+  @Test
   fun testIncorrectPceHandlingWhenMultipleCatchClausesTests() {
-    doTest()
+    cancellation.doTest()
   }
 
+  @Test
   fun testIncorrectPceHandlingWhenPceCaughtImplicitlyTests() {
-    doTest()
+    cancellation.doTest()
   }
 
   // This fixture has no 'com.intellij.diagnostic.ControlFlowExceptionsKt', as a plugin built against a platform before 263.
+  @Test
   fun testInsertRethrowHelperNotOfferedWithoutHelper() {
     myFixture.configureByText("WithoutHelper.java", """
       import com.intellij.openapi.progress.ProcessCanceledException;
@@ -53,12 +71,8 @@ class IncorrectCancellationExceptionHandlingInspectionTest : IncorrectCancellati
       }
       """.trimIndent())
     myFixture.checkHighlighting()
-    assertEmpty(myFixture.filterAvailableIntentions(
-      DevKitBundle.message("inspections.incorrect.cancellation.exception.insert.rethrow.helper.fix.name")))
+    assertThat(myFixture.filterAvailableIntentions(
+      DevKitBundle.message("inspections.incorrect.cancellation.exception.insert.rethrow.helper.fix.name"))).isEmpty()
   }
-
-  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/incorrectCeHandling"
-
-  override fun getFileExtension() = "java"
 
 }

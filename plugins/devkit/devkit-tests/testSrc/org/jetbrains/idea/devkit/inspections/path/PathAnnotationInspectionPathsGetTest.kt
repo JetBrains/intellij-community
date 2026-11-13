@@ -1,14 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.path
 
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_17
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevKitBundle.message
-import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.pathAnnotationInspectionFixture
+import org.junit.jupiter.api.Test
 
-class PathAnnotationInspectionPathsGetTest : PathAnnotationInspectionTestBase() {
-  override fun getFileExtension(): String = "java"
+@TestApplication
+class PathAnnotationInspectionPathsGetTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_17)
+  }
 
+  private val pathAnnotation by pathAnnotationInspectionFixture(projectFixture)
+
+  @Test
   fun testPathsGetWithAnnotatedFirstArgAndLiteralFilenames() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import java.nio.file.Paths;
       import java.nio.file.Path;
@@ -32,8 +42,9 @@ class PathAnnotationInspectionPathsGetTest : PathAnnotationInspectionTestBase() 
       """.trimIndent())
   }
 
+  @Test
   fun testPathsGetWithNonAnnotatedFirstArg() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath;
       import com.intellij.platform.eel.annotations.Filename;
       import java.nio.file.Paths;

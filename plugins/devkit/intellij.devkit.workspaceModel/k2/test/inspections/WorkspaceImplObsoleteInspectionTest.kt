@@ -3,11 +3,18 @@ package com.intellij.devkit.workspaceModel.k2.inspections
 
 import com.intellij.devkit.workspaceModel.inspections.WorkspaceImplObsoleteInspection
 import com.intellij.devkit.workspaceModel.inspections.WorkspaceImplObsoleteInspectionBaseTest
+import com.intellij.devkit.workspaceModel.inspections.workspaceInspectionProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
 
-class WorkspaceImplObsoleteInspectionTest : WorkspaceImplObsoleteInspectionBaseTest() {
+@TestApplication
+class WorkspaceImplObsoleteInspectionTest : WorkspaceImplObsoleteInspectionBaseTest(projectFixture) {
+  companion object {
+    private val projectFixture = workspaceInspectionProjectFixture()
+  }
 
-  override fun setUp() {
-    super.setUp()
-    myFixture.enableInspections(WorkspaceImplObsoleteInspection())
+  @BeforeEach
+  fun enableWorkspaceImplObsoleteInspection() {
+    workspace.fixture.enableInspections(WorkspaceImplObsoleteInspection())
   }
 }

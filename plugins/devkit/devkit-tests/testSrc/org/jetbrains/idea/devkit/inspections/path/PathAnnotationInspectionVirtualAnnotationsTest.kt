@@ -1,7 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.path
 
-import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_17
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.pathAnnotationInspectionFixture
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 /**
  * Tests for the virtual path annotation registry functionality of [org.jetbrains.idea.devkit.inspections.path.PathAnnotationInspection].
@@ -17,11 +22,17 @@ import org.jetbrains.idea.devkit.inspections.PathAnnotationInspectionTestBase
  * 3. Methods from PathManager that effectively accept `@LocalPath` annotated strings:
  *    - isUnderHomeDirectory()
  */
-class PathAnnotationInspectionVirtualAnnotationsTest : PathAnnotationInspectionTestBase() {
-  override fun getFileExtension(): String = "java"
+@TestApplication
+class PathAnnotationInspectionVirtualAnnotationsTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_17)
+  }
 
-  override fun setUp() {
-    super.setUp()
+  private val pathAnnotation by pathAnnotationInspectionFixture(projectFixture)
+  private val myFixture get() = pathAnnotation.fixture
+
+  @BeforeEach
+  fun setUp() {
     addMockClasses()
   }
 
@@ -76,8 +87,9 @@ class PathAnnotationInspectionVirtualAnnotationsTest : PathAnnotationInspectionT
   /**
    * Test that methods from PathManager that effectively return `@LocalPath` annotated strings.
    */
+  @Test
   fun testPathManagerReturningLocalPath() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.openapi.application.PathManager;
       import java.nio.file.Path;
 
@@ -112,8 +124,9 @@ class PathAnnotationInspectionVirtualAnnotationsTest : PathAnnotationInspectionT
   /**
    * Test that methods from SystemProperties that effectively return `@LocalPath` annotated strings.
    */
+  @Test
   fun testSystemPropertiesReturningLocalPath() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.util.SystemProperties;
       import java.nio.file.Path;
 
@@ -138,8 +151,9 @@ class PathAnnotationInspectionVirtualAnnotationsTest : PathAnnotationInspectionT
   /**
    * Test that methods from PathManager that effectively accept `@LocalPath` annotated strings.
    */
+  @Test
   fun testPathManagerAcceptingLocalPath() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.openapi.application.PathManager;
       import java.nio.file.Path;
 
@@ -163,8 +177,9 @@ class PathAnnotationInspectionVirtualAnnotationsTest : PathAnnotationInspectionT
   /**
    * Test that methods from PathManager and SystemProperties work together with other path-related functionality.
    */
+  @Test
   fun testCombinedFunctionality() {
-    doTest("""
+    pathAnnotation.doTest("""
       import com.intellij.openapi.application.PathManager;
       import com.intellij.util.SystemProperties;
       import java.nio.file.Path;

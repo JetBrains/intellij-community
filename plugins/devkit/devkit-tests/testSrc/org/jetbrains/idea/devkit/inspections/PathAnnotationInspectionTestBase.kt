@@ -9,6 +9,10 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.path.PathAnnotationInspection
 
+/**
+ * Use [pathAnnotationInspectionFixture] in a JUnit 5 test.
+ */
+@Deprecated("Use pathAnnotationInspectionFixture in a JUnit 5 test")
 abstract class PathAnnotationInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_17

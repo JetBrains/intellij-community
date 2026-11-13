@@ -2,21 +2,25 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/controlFlowExceptionManualRethrow")
-class ControlFlowExceptionManualRethrowInspectionTest : ControlFlowExceptionManualRethrowInspectionTestBase() {
-
-  override fun getBasePath(): String {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/controlFlowExceptionManualRethrow"
+@TestApplication
+class ControlFlowExceptionManualRethrowInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
   }
 
-  override fun getFileExtension(): String {
-    return "java"
-  }
+  private val controlFlow by controlFlowExceptionManualRethrowFixture(
+    projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/controlFlowExceptionManualRethrow")
+  private val myFixture get() = controlFlow.fixture
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.addClass("""
         package com.intellij.diagnostic;
         public final class ControlFlowExceptionsKt {
@@ -25,15 +29,18 @@ class ControlFlowExceptionManualRethrowInspectionTest : ControlFlowExceptionManu
         """.trimIndent())
   }
 
+  @Test
   fun testManualGuards() {
     myFixture.testHighlighting("ManualGuards.java")
   }
 
+  @Test
   fun testReplaceInstanceofGuard() {
-    doFixTest()
+    controlFlow.doFixTest()
   }
 
+  @Test
   fun testReplaceShouldRethrowGuard() {
-    doFixTest()
+    controlFlow.doFixTest()
   }
 }

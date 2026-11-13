@@ -2,27 +2,29 @@
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareEmptyBorderFixtureKt.useDPIAwareEmptyBorderFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/useDPIAwareEmptyBorder")
-public class UseDPIAwareEmptyBorderInspectionTest extends UseDPIAwareEmptyBorderInspectionTestBase {
+@TestApplication
+public class UseDPIAwareEmptyBorderInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<UseDPIAwareEmptyBorderFixture> emptyBorder =
+    useDPIAwareEmptyBorderFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useDPIAwareEmptyBorder");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useDPIAwareEmptyBorder";
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "java";
-  }
-
+  @Test
   public void testUseJBUIBordersEmptyThatCanBeSimplified() {
-    doTest();
+    emptyBorder.get().doTest();
   }
 
+  @Test
   public void testUseSwingEmptyBorder() {
-    doTest();
+    emptyBorder.get().doTest();
   }
 }

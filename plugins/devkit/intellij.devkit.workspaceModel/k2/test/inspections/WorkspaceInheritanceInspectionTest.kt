@@ -2,5 +2,12 @@
 package com.intellij.devkit.workspaceModel.k2.inspections
 
 import com.intellij.devkit.workspaceModel.inspections.WorkspaceInheritanceInspectionBaseTest
+import com.intellij.devkit.workspaceModel.inspections.workspaceInspectionProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 
-class WorkspaceInheritanceInspectionTest : WorkspaceInheritanceInspectionBaseTest()
+@TestApplication
+class WorkspaceInheritanceInspectionTest : WorkspaceInheritanceInspectionBaseTest(projectFixture) {
+  companion object {
+    private val projectFixture = workspaceInspectionProjectFixture()
+  }
+}

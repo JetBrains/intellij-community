@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections.path
 
-import org.intellij.lang.annotations.Language
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 /**
  * Tests for PathAnnotationInspection with Kotlin extension methods from kotlin.io.path.
@@ -10,12 +12,23 @@ import org.intellij.lang.annotations.Language
  * - `Path.name`, `Path.nameWithoutExtension`, `Path.extension` should be considered as returning `@Filename`
  * - `Path.pathString`, `Path.absolutePathString()` should be considered as returning `@MultiRoutingFileSystemPath`
  */
-class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspectionKotlinTestBase() {
+@TestApplication
+class PathAnnotationInspectionKotlinExtensionMethodsTest {
+  companion object {
+    private val projectFixture = pathAnnotationInspectionKotlinProjectFixture()
+  }
 
-    
+  private val pathAnnotation by pathAnnotationInspectionKotlinFixture(projectFixture)
+  private val myFixture get() = pathAnnotation.fixture
 
+  @BeforeEach
+  fun setUp() {
+    myFixture.allowTreeAccessForAllFiles()
+  }
+
+  @Test
   fun testPathNameExtensionMethod() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
       
       import com.intellij.platform.eel.annotations.Filename
@@ -41,8 +54,9 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
       """)
   }
 
+  @Test
   fun testPathNameWithoutExtensionExtensionMethod() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
       
       import com.intellij.platform.eel.annotations.Filename
@@ -68,8 +82,9 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
       """)
   }
 
+  @Test
   fun testPathExtensionExtensionMethod() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
       
       import com.intellij.platform.eel.annotations.Filename
@@ -95,8 +110,9 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
       """)
   }
 
+  @Test
   fun testPathPathStringExtensionMethod() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
       
       import com.intellij.platform.eel.annotations.Filename
@@ -122,8 +138,9 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
       """)
   }
 
+  @Test
   fun testPathAbsolutePathStringExtensionMethod() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
       
       import com.intellij.platform.eel.annotations.Filename
@@ -149,8 +166,9 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
       """)
   }
 
+  @Test
   fun testPathExtensionMethodsInPathOf() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
       
       import java.nio.file.Path
@@ -181,8 +199,9 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
       """)
   }
 
+  @Test
   fun testPathExtensionMethodsInPathResolve() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
       
       import java.nio.file.Path
@@ -211,11 +230,5 @@ class PathAnnotationInspectionKotlinExtensionMethodsTest : PathAnnotationInspect
           }
       }      
       """)
-  }
-
-  override fun doTest(@Language("kotlin") code: String) {
-    myFixture.allowTreeAccessForAllFiles()
-
-    super.doTest(code)
   }
 }

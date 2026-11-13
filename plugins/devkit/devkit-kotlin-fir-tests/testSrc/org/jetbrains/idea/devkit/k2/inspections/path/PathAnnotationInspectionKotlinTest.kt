@@ -1,17 +1,26 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.k2.inspections.path
 
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevKitBundle
+import org.junit.jupiter.api.Test
 
 /**
  * Kotlin implementation of tests for PathAnnotationInspection.
  * Some tests might not pass because the inspection implementation might not fully support Kotlin.
  */
-class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBase() {
-    
+@TestApplication
+class PathAnnotationInspectionKotlinTest {
+  companion object {
+    private val projectFixture = pathAnnotationInspectionKotlinProjectFixture()
+  }
 
+  private val pathAnnotation by pathAnnotationInspectionKotlinFixture(projectFixture)
+  private val myFixture get() = pathAnnotation.fixture
+
+  @Test
   fun testFileSystemGetPath() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
 
       import com.intellij.platform.eel.annotations.Filename
@@ -51,8 +60,9 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBas
       """)
   }
 
+  @Test
   fun testNativePathInPathOf() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
 
       import com.intellij.platform.eel.annotations.NativePath
@@ -70,8 +80,9 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBas
       """)
   }
 
+  @Test
   fun testKotlinPathResolve() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
 
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
@@ -111,8 +122,9 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBas
       """)
   }
 
+  @Test
   fun testKotlinStringLiteralFilename() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
 
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
@@ -156,8 +168,9 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBas
       """)
   }
 
+  @Test
   fun testKotlinLocalPath() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
 
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
@@ -190,8 +203,9 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBas
       """)
   }
 
+  @Test
   fun testPathToString() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
 
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
@@ -222,10 +236,11 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBas
       """)
   }
 
+  @Test
   fun testPathToStringAdditionalCases() {
     myFixture.allowTreeAccessForAllFiles()
 
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
 
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
@@ -278,8 +293,9 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBas
       """)
   }
 
+  @Test
   fun testMultiRoutingAnnotationOnParametersTypes() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
 
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
@@ -301,8 +317,9 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBas
    * Several lines containing usages of `annotatedPropertyType` of the test data class are commented,
    * otherwise the test fails due to a bug in UAST: "KTIJ-18821 UAST missing annotations on local variable types".
    */
+  @Test
   fun testMultiRoutingAnnotationOnDataClassProperties() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
 
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
@@ -332,7 +349,7 @@ class PathAnnotationInspectionKotlinTest : PathAnnotationInspectionKotlinTestBas
    */
   @Suppress("unused")
   fun ignoredTestFalseNegative() {
-    doTest("""
+    pathAnnotation.doTest("""
       @file:Suppress("UNUSED_VARIABLE")
 
       import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath

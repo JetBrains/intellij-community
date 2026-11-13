@@ -2,27 +2,29 @@
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsFixtureKt.useDPIAwareInsetsFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/useDPIAwareInsets")
-public class UseDPIAwareInsetsInspectionTest extends UseDPIAwareInsetsInspectionTestBase {
+@TestApplication
+public class UseDPIAwareInsetsInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<UseDPIAwareInsetsFixture> insets =
+    useDPIAwareInsetsFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useDPIAwareInsets");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/useDPIAwareInsets";
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "java";
-  }
-
+  @Test
   public void testUseJBUIInsetsThatCanBeSimplified() {
-    doTest();
+    insets.get().doTest();
   }
 
+  @Test
   public void testUseAwtInsets() {
-    doTest();
+    insets.get().doTest();
   }
 }
