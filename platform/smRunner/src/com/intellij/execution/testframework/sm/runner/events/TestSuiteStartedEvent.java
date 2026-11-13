@@ -47,7 +47,8 @@ public class TestSuiteStartedEvent extends BaseStartedNodeEvent {
           metainfo,
           getNodeType(suiteStarted),
           getNodeArgs(suiteStarted),
-          isRunning(suiteStarted));
+          isRunning(suiteStarted),
+          getOriginalId(suiteStarted));
   }
 
   public TestSuiteStartedEvent(@NotNull String name,

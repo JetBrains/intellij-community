@@ -2,6 +2,7 @@
 
 package com.intellij.rt.junit;
 
+import com.intellij.rt.execution.TestListenerProtocol;
 import com.intellij.rt.execution.junit.TestsRepeater;
 
 import java.util.ArrayList;
@@ -11,11 +12,19 @@ public interface IdeaTestRunner<T> {
   void createListeners(ArrayList<String> listeners, int count);
 
   /**
+   * @param parentId the id of the tree node that gets the nodes of this run. It is null when the runner reports no node ids.
    * @return -2 internal failure
    *         -1 there were failed tests
    *          0 all tests were successful
    */
-  int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree);
+  int startRunnerWithArgs(String[] args, String name, int count, String parentId, boolean sendTree);
+
+  /**
+   * @return true when the runner reports each node with an id and with the id of its parent
+   */
+  default boolean isIdBasedTestTree() {
+    return false;
+  }
 
   T getTestToStart(String[] args, String name);
   List<T> getChildTests(T description);
@@ -32,10 +41,11 @@ public interface IdeaTestRunner<T> {
                                           boolean sendTree) {
       testRunner.createListeners(listeners, count);
       try {
-        return TestsRepeater.repeat(count, sendTree, new TestsRepeater.TestRun() {
+        String rootId = testRunner.isIdBasedTestTree() ? TestListenerProtocol.ROOT_NODE_ID : null;
+        return TestsRepeater.repeat(count, sendTree, rootId, new TestsRepeater.TestRun() {
           @Override
-          public int execute(boolean sendTree) {
-            return testRunner.startRunnerWithArgs(args, name, count, sendTree);
+          public int execute(String parentId, boolean sendTree) {
+            return testRunner.startRunnerWithArgs(args, name, count, parentId, sendTree);
           }
         });
       }

@@ -38,7 +38,8 @@ public class TestStartedEvent extends BaseStartedNodeEvent {
           metainfo,
           getNodeType(testStarted),
           getNodeArgs(testStarted),
-          isRunning(testStarted));
+          isRunning(testStarted),
+          getOriginalId(testStarted));
   }
 
   public TestStartedEvent(@Nullable String name,

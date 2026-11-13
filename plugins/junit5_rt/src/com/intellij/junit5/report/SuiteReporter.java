@@ -48,7 +48,8 @@ public class SuiteReporter extends AbstractTestReporter {
     if (isSkipped()) return Collections.emptyList();
 
     String start = asString(TEST_SUITE_STARTED, attributes(ReportedField.ID, ReportedField.NAME, ReportedField.NODE_ID,
-                                                           ReportedField.PARENT_NODE_ID, ReportedField.HINT, ReportedField.METAINFO));
+                                                           ReportedField.PARENT_NODE_ID, ReportedField.ORIGINAL_ID,
+                                                           ReportedField.HINT, ReportedField.METAINFO));
     return Collections.singletonList(start);
   }
 
@@ -69,7 +70,7 @@ public class SuiteReporter extends AbstractTestReporter {
       TestReporter reporter = new SyntheticTestReporter(this, CLASS_CONFIGURATION);
       out.add(asString(TEST_STARTED, reporter.attributes(ReportedField.ID, ReportedField.NAME,
                                                          ReportedField.NODE_ID, ReportedField.PARENT_NODE_ID,
-                                                         ReportedField.HINT, ReportedField.METAINFO)));
+                                                         ReportedField.ORIGINAL_ID, ReportedField.HINT, ReportedField.METAINFO)));
       out.addAll(reporter.reportFailure(throwable, 0, true, TEST_FAILED, null));
       out.add(asString(TEST_FINISHED, reporter.attributes(ReportedField.ID, ReportedField.NAME,
                                                           ReportedField.NODE_ID, ReportedField.PARENT_NODE_ID)));
@@ -117,7 +118,7 @@ public class SuiteReporter extends AbstractTestReporter {
 
     String started = asString(SUITE_TREE_STARTED, attributes(ReportedField.ID, ReportedField.NAME,
                                                              ReportedField.NODE_ID, ReportedField.PARENT_NODE_ID,
-                                                             ReportedField.HINT, ReportedField.METAINFO
+                                                             ReportedField.ORIGINAL_ID, ReportedField.HINT, ReportedField.METAINFO
     ));
     return Collections.singletonList(started);
   }
@@ -167,9 +168,9 @@ public class SuiteReporter extends AbstractTestReporter {
     }
 
     @Override
-    protected String id() {
-      if (isMethodSource) return super.id();
-      return super.id() + "/[synthetic:method:configuration()]";
+    protected String uniqueId() {
+      if (isMethodSource) return super.uniqueId();
+      return super.uniqueId() + "/[synthetic:method:configuration()]";
     }
 
     @Override

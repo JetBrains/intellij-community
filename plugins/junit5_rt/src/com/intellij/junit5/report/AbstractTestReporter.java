@@ -36,7 +36,11 @@ public abstract class AbstractTestReporter implements TeamCityTestReporter {
   }
 
   protected String id() {
-    return identifier.getUniqueId() + state.suffix();
+    return state.nodeId(uniqueId());
+  }
+
+  protected String uniqueId() {
+    return identifier.getUniqueId();
   }
 
   protected Optional<SuiteReporter> getParent() {
@@ -62,7 +66,10 @@ public abstract class AbstractTestReporter implements TeamCityTestReporter {
           value = name();
           break;
         case PARENT_NODE_ID:
-          value = getParent().map(AbstractTestReporter::id).orElse("0");
+          value = getParent().map(AbstractTestReporter::id).orElse(state.parentId());
+          break;
+        case ORIGINAL_ID:
+          value = uniqueId().equals(id()) ? null : uniqueId();
           break;
         case HINT:
           value = location.locationHint();
@@ -99,6 +106,7 @@ public abstract class AbstractTestReporter implements TeamCityTestReporter {
     NAME("name"),
     NODE_ID("nodeId"),
     PARENT_NODE_ID("parentNodeId"),
+    ORIGINAL_ID("origId"),
     HINT("locationHint"),
     METAINFO("metainfo");
 

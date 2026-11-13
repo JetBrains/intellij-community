@@ -39,8 +39,8 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     myState.initializeIdSuffix(forked);
   }
 
-  public void initializeIdSuffix(int i) {
-    myState.initializeIdSuffix(i);
+  public void setParentId(String parentId) {
+    myState.setParentId(parentId);
   }
 
   public void setRootName(String rootName) {

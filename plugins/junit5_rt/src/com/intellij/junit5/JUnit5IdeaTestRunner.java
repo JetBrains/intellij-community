@@ -14,6 +14,7 @@ import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.core.LauncherFactory;
 
+import java.io.PrintStream;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier> {
-  private final List<JUnit5TestExecutionListener> myExecutionListeners = new ArrayList<>();
+  private PrintStream myOut;
   private ArrayList<String> myListeners;
   private Launcher myLauncher;
 
@@ -36,21 +37,20 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier> {
   @Override
   public void createListeners(ArrayList<String> listeners, int count) {
     myListeners = listeners;
-    do {
-      JUnit5TestExecutionListener currentListener = new JUnit5TestExecutionListener();
-      myExecutionListeners.add(currentListener);
-      if (count > 2) {
-        currentListener.initializeIdSuffix(count);
-      }
-    }
-    while (--count > 0);
+    myOut = System.out;
     myLauncher = LauncherFactory.create();
   }
 
   @Override
-  public int startRunnerWithArgs(String[] args, String programParam, int count, boolean sendTree) {
+  public boolean isIdBasedTestTree() {
+    return true;
+  }
+
+  @Override
+  public int startRunnerWithArgs(String[] args, String programParam, int count, String parentId, boolean sendTree) {
     try {
-      JUnit5TestExecutionListener listener = myExecutionListeners.get(0);
+      JUnit5TestExecutionListener listener = new JUnit5TestExecutionListener(myOut);
+      listener.setParentId(parentId);
       listener.initializeIdSuffix(!sendTree);
       final String[] packageNameRef = new String[1];
       final LauncherDiscoveryRequest discoveryRequest = getHelper().buildRequest(args, packageNameRef, programParam);
@@ -61,10 +61,8 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier> {
         listeners.add(new MyCustomListenerWrapper(junitListener));
       }
       if (sendTree) {
-        for (JUnit5TestExecutionListener executionListener : myExecutionListeners) {
-          executionListener.setRootName(packageNameRef[0]);
-          executionListener.setSendTree();
-        }
+        listener.setRootName(packageNameRef[0]);
+        listener.setSendTree();
       }
 
       getHelper().execute(myLauncher, discoveryRequest, listeners.toArray(new TestExecutionListener[0]));
@@ -75,9 +73,6 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner<TestIdentifier> {
       System.err.println("Internal Error occurred.");
       e.printStackTrace(System.err);
       return -2;
-    }
-    finally {
-      if (count > 0) myExecutionListeners.remove(0);
     }
   }
 

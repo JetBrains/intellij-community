@@ -41,6 +41,24 @@ public class JUnitUniqueIdTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals("nodeId", TestUniqueId.getEffectiveNodeId(proxy, getProject(), GlobalSearchScope.projectScope(getProject())));
   }
 
+  /** A repetition changes the id of the tree node. The runner then reports the id of the test framework apart from it. */
+  public void testOriginalIdReplacesTreeNodeId() {
+    PsiFile file = myFixture.addFileToProject("some.txt", "");
+    SMTestProxy proxy = new SMTestProxy("test1", false, "file://" + file.getVirtualFile().getPath());
+    proxy.setLocator(new FileUrlProvider());
+    proxy.putUserData(SMTestProxy.NODE_ID, "[2]/nodeId");
+    proxy.putUserData(SMTestProxy.ORIGINAL_NODE_ID, "nodeId");
+    assertEquals("nodeId", TestUniqueId.getEffectiveNodeId(proxy, getProject(), GlobalSearchScope.projectScope(getProject())));
+  }
+
+  /** The suite of a repetition is no node of the test framework, so no unique id can run it. */
+  public void testSuiteOfRepetitionHasNoEffectiveNodeId() {
+    SMTestProxy proxy = new SMTestProxy("[2]", true, null);
+    proxy.putUserData(SMTestProxy.NODE_ID, "[2]");
+    proxy.putUserData(SMTestProxy.ORIGINAL_NODE_ID, "");
+    assertNull(TestUniqueId.getEffectiveNodeId(proxy, getProject(), GlobalSearchScope.projectScope(getProject())));
+  }
+
   public void testGeneratedName() {
     PsiClass psiClass = myFixture.addClass("class MyTest {void m() {}}");
 

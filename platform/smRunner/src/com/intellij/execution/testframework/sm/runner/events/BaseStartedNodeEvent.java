@@ -15,6 +15,7 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
   private final String myNodeType;
   private final String myNodeArgs;
   private final boolean myRunning;
+  private final String myOriginalId;
 
   protected BaseStartedNodeEvent(@Nullable String name,
                                  @Nullable String id,
@@ -24,7 +25,20 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
                                  @Nullable String nodeType,
                                  @Nullable String nodeArgs,
                                  boolean running) {
+    this(name, id, parentId, locationUrl, metainfo, nodeType, nodeArgs, running, id);
+  }
+
+  protected BaseStartedNodeEvent(@Nullable String name,
+                                 @Nullable String id,
+                                 @Nullable String parentId,
+                                 final @Nullable String locationUrl,
+                                 final @Nullable String metainfo,
+                                 @Nullable String nodeType,
+                                 @Nullable String nodeArgs,
+                                 boolean running,
+                                 @Nullable String originalId) {
     super(name, id);
+    myOriginalId = originalId == null ? id : originalId;
     myParentId = parentId;
     myLocationUrl = locationUrl;
     myMetainfo =  metainfo;
@@ -60,6 +74,10 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
     return myRunning;
   }
 
+  public @Nullable String getOriginalId() {
+    return myOriginalId;
+  }
+
   @Override
   protected void appendToStringInfo(@NotNull StringBuilder buf) {
     append(buf, "parentId", myParentId);
@@ -82,6 +100,10 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
 
   public static @Nullable String getNodeArgs(@NotNull MessageWithAttributes message) {
     return message.getAttributes().get("nodeArgs");
+  }
+
+  public static @Nullable String getOriginalId(@NotNull MessageWithAttributes message) {
+    return message.getAttributes().get("origId");
   }
 
   public static boolean isRunning(@NotNull MessageWithAttributes message) {

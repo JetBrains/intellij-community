@@ -3,4 +3,5 @@ package com.intellij.rt.execution;
 
 public final class TestListenerProtocol {
   public static final String CLASS_CONFIGURATION = "Class Configuration";
+  public static final String ROOT_NODE_ID = "0";
 }

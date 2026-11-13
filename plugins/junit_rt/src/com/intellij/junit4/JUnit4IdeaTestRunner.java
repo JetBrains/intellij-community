@@ -46,7 +46,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner<Description> {
   }
 
   @Override
-  public int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree) {
+  public int startRunnerWithArgs(String[] args, String name, int count, String parentId, boolean sendTree) {
     try {
       final Request request = JUnit4TestRunnerUtil.buildRequest(args, name, sendTree);
       if (request == null) return -2;

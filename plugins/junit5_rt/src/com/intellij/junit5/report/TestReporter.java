@@ -41,7 +41,7 @@ public class TestReporter extends AbstractTestReporter {
     state.onLeafTestStarted();
     String start = asString(TEST_STARTED, attributes(ReportedField.ID, ReportedField.NAME,
                                                      ReportedField.NODE_ID, ReportedField.PARENT_NODE_ID,
-                                                     ReportedField.HINT, ReportedField.METAINFO));
+                                                     ReportedField.ORIGINAL_ID, ReportedField.HINT, ReportedField.METAINFO));
     return Collections.singletonList(start);
   }
 
@@ -77,7 +77,7 @@ public class TestReporter extends AbstractTestReporter {
   public List<String> treeStarted() {
     String started = asString(SUITE_TREE_NODE, attributes(ReportedField.ID, ReportedField.NAME,
                                                           ReportedField.NODE_ID, ReportedField.PARENT_NODE_ID,
-                                                          ReportedField.HINT, ReportedField.METAINFO
+                                                          ReportedField.ORIGINAL_ID, ReportedField.HINT, ReportedField.METAINFO
     ));
     return Collections.singletonList(started);
   }
@@ -108,7 +108,7 @@ public class TestReporter extends AbstractTestReporter {
     List<String> out = new ArrayList<>();
     out.add(asString(TEST_STARTED, attributes(ReportedField.ID, ReportedField.NAME,
                                               ReportedField.NODE_ID, ReportedField.PARENT_NODE_ID,
-                                              ReportedField.HINT, ReportedField.METAINFO)));
+                                              ReportedField.ORIGINAL_ID, ReportedField.HINT, ReportedField.METAINFO)));
     out.addAll(reportFailure(ex, 0, true, TEST_IGNORED, reason));
     out.add(asString(TEST_FINISHED, attributes(ReportedField.ID, ReportedField.NAME,
                                                ReportedField.NODE_ID, ReportedField.PARENT_NODE_ID)));

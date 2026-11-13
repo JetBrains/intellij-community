@@ -51,7 +51,13 @@ public class TestUniqueId extends TestObject {
    * or if the node or one of its ancestors provides the same location as its parent, the case of parameterized/dynamic tests
    */
   public static String getEffectiveNodeId(AbstractTestProxy testInfo, Project project, GlobalSearchScope searchScope) {
-    String nodeId = testInfo.getUserData(SMTestProxy.NODE_ID);
+    String nodeId = testInfo.getUserData(SMTestProxy.ORIGINAL_NODE_ID);
+    if (nodeId == null) {
+      nodeId = testInfo.getUserData(SMTestProxy.NODE_ID);
+    }
+    else if (nodeId.isEmpty()) {
+      return null;
+    }
     if (nodeId != null) {
       Location location = testInfo.getLocation(project, searchScope);
       if (location == null) return nodeId;

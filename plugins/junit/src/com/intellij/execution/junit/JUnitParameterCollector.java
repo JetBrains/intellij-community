@@ -80,7 +80,15 @@ public final class JUnitParameterCollector {
   public record Parameter(@NotNull List<String> ids, @NotNull @NlsSafe String displayName) {
   }
 
-  private record Node(@NotNull String id, @NotNull String parentId, @NotNull @NlsSafe String name, @Nullable String locationHint) {
+  /**
+   * @param id       the id of the tree node. It links a node to its parent.
+   * @param uniqueId the id that JUnit knows. It differs from {@code id} in a launch with a repeat or with a fork.
+   */
+  private record Node(@NotNull String id,
+                      @NotNull String parentId,
+                      @NotNull @NlsSafe String name,
+                      @Nullable String locationHint,
+                      @NotNull String uniqueId) {
   }
 
   /**
@@ -232,11 +240,12 @@ public final class JUnitParameterCollector {
     List<Node> ofTheTest = ContainerUtil.filter(nodes, node -> isOfTheTest(node, byId));
     Set<String> containers = ContainerUtil.map2Set(ofTheTest, Node::parentId);
 
-    MultiMap<String, String> idsByName = MultiMap.createLinked();
+    // each repetition reports the same test again, with the same unique id
+    MultiMap<String, String> idsByName = MultiMap.createLinkedSet();
     for (Node node : ofTheTest) {
       // something of the test runs inside this node, so the node is the test itself rather than one of its invocations
       if (containers.contains(node.id())) continue;
-      idsByName.putValue(node.name(), node.id());
+      idsByName.putValue(node.name(), node.uniqueId());
     }
     // one entry is the test itself rather than an invocation of it: a pruned tree reports the two the same way, and either way
     // there is nothing to choose from
@@ -262,8 +271,8 @@ public final class JUnitParameterCollector {
   }
 
   /**
-   * The runner reports the test tree as {@code testStarted} and {@code testSuiteStarted} service messages carrying the JUnit
-   * uniqueId of the node and of its parent.
+   * The runner reports the test tree as {@code testStarted} and {@code testSuiteStarted} service messages carrying the id of the
+   * node and of its parent. The id is the JUnit uniqueId, unless the message carries the uniqueId apart from it as {@code origId}.
    */
   private static @Nullable Node parseNode(@NotNull String text) {
     ServiceMessage message = ServiceMessageUtil.parse(text.trim(), false, false);
@@ -272,6 +281,8 @@ public final class JUnitParameterCollector {
     String id = attributes.get("nodeId");
     String parentId = attributes.get("parentNodeId");
     String name = attributes.get("name");
-    return id == null || parentId == null || name == null ? null : new Node(id, parentId, name, attributes.get("locationHint"));
+    if (id == null || parentId == null || name == null) return null;
+    String originalId = attributes.get("origId");
+    return new Node(id, parentId, name, attributes.get("locationHint"), originalId == null ? id : originalId);
   }
 }

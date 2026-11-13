@@ -38,7 +38,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner<T
   }
 
   @Override
-  public int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree) {
+  public int startRunnerWithArgs(String[] args, String name, int count, String parentId, boolean sendTree) {
     setPrinter(new MockResultPrinter());
     try {
       Test suite = TestRunnerUtil.getTestSuite(this, args);

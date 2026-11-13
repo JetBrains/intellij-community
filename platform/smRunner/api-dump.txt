@@ -281,6 +281,7 @@ c:com.intellij.execution.testframework.sm.runner.SMTestProxy
 - com.intellij.execution.testframework.AbstractTestProxy
 - com.intellij.pom.Navigatable
 - sf:NODE_ID:com.intellij.openapi.util.Key
+- sf:ORIGINAL_NODE_ID:com.intellij.openapi.util.Key
 - <init>(java.lang.String,Z,java.lang.String):V
 - <init>(java.lang.String,Z,java.lang.String,java.lang.String,Z):V
 - <init>(java.lang.String,Z,java.lang.String,Z):V
@@ -394,6 +395,7 @@ c:com.intellij.execution.testframework.sm.runner.TestSuiteStack
 a:com.intellij.execution.testframework.sm.runner.events.BaseStartedNodeEvent
 - com.intellij.execution.testframework.sm.runner.events.TreeNodeEvent
 - p:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):V
+- p:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,java.lang.String):V
 - p:appendToStringInfo(java.lang.StringBuilder):V
 - getLocationUrl():java.lang.String
 - getMetainfo():java.lang.String
@@ -402,6 +404,8 @@ a:com.intellij.execution.testframework.sm.runner.events.BaseStartedNodeEvent
 - s:getNodeArgs(jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes):java.lang.String
 - getNodeType():java.lang.String
 - s:getNodeType(jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes):java.lang.String
+- getOriginalId():java.lang.String
+- s:getOriginalId(jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes):java.lang.String
 - getParentId():java.lang.String
 - s:getParentNodeId(jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes):java.lang.String
 - isRunning():Z

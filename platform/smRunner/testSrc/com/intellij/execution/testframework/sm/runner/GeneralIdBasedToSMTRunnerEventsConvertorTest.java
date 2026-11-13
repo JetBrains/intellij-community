@@ -26,11 +26,15 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestUtil;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
+import jetbrains.buildServer.messages.serviceMessages.TestStarted;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.text.ParseException;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -153,6 +157,37 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
   @Test
   public void testCheckMetaUpdateWithNull() {
     runInEdtAndWait(() -> checkMetainfo(null, null));
+  }
+
+  @Test
+  public void testOriginalIdOfStartedNode() throws Exception {
+    runInEdtAndWait(() -> {
+      myEventsProcessor.onTestStarted(testStarted("name='test' nodeId='run2/id' parentNodeId='0' origId='id'"));
+      SMTestProxy proxy = myEventsProcessor.findProxyById("run2/id");
+      assertEquals("run2/id", proxy.getUserData(SMTestProxy.NODE_ID));
+      assertEquals("id", proxy.getUserData(SMTestProxy.ORIGINAL_NODE_ID));
+
+      myEventsProcessor.onTestStarted(testStarted("name='plain' nodeId='plain' parentNodeId='0'"));
+      assertEquals("plain", myEventsProcessor.findProxyById("plain").getUserData(SMTestProxy.ORIGINAL_NODE_ID));
+    });
+  }
+
+  @Test
+  public void testOriginalIdOfNodeFromTree() throws Exception {
+    runInEdtAndWait(() -> {
+      myEventsProcessor.onSuiteTreeNodeAdded(false, "test", null, null, "run2/id", TreeNodeEvent.ROOT_NODE_ID);
+      myEventsProcessor.onBuildTreeEnded();
+      SMTestProxy proxy = myEventsProcessor.findProxyById("run2/id");
+      assertEquals("run2/id", proxy.getUserData(SMTestProxy.ORIGINAL_NODE_ID));
+
+      myEventsProcessor.onTestStarted(testStarted("name='test' nodeId='run2/id' parentNodeId='0' origId='id'"));
+      assertEquals(proxy, myEventsProcessor.findProxyById("run2/id"));
+      assertEquals("id", proxy.getUserData(SMTestProxy.ORIGINAL_NODE_ID));
+    });
+  }
+
+  private static @NotNull TestStartedEvent testStarted(@NotNull String attributes) throws ParseException {
+    return new TestStartedEvent((TestStarted)ServiceMessage.parse("##teamcity[testStarted " + attributes + "]"), null);
   }
 
   private void checkMetainfo(@Nullable String updatedSuiteMetainfo, @Nullable String updatedTestMetainfo) {

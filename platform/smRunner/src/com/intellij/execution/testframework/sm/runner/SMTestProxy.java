@@ -79,6 +79,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   public static final Key<String> NODE_ID = Key.create("test.proxy.id");
+  /**
+   * The id of the node in the test framework. It equals {@link #NODE_ID}, unless the runner sends {@code origId}.
+   * An empty value marks a node that the test framework does not know.
+   */
+  public static final Key<String> ORIGINAL_NODE_ID = Key.create("test.proxy.original.id");
 
   private static final Logger LOG = Logger.getInstance(SMTestProxy.class.getName());
 

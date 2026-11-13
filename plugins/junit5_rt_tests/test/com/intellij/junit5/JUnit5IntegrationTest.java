@@ -4,6 +4,7 @@ package com.intellij.junit5;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitParameterCollector;
 import com.intellij.execution.junit.JUnitParameterCollector.Parameter;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
@@ -16,6 +17,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -258,6 +260,48 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
     assertEmpty(output.err);
     assertTestsStarted(output, "repetition 1 of 3", "repetition 2 of 3", "repetition 3 of 3");
+  }
+
+  public void testRepeatUntilFailureReportsNewNodesForEachRun() throws Exception {
+    PsiClass aClass =
+      JavaPsiFacade.getInstance(myProject).findClass("repeat.FailsInSecondRunTests", GlobalSearchScope.projectScope(myProject));
+    assertNotNull(aClass);
+    RunConfiguration configuration = createConfiguration(aClass);
+    ((JUnitConfiguration)configuration).setRepeatMode(RepeatCount.UNTIL_FAILURE);
+
+    ProcessOutput output = doStartTestsProcess(configuration);
+
+    assertEmpty(output.err);
+    List<ServiceMessage> started = output.messages.stream().filter(TestStarted.class::isInstance).toList();
+    List<String> nodeIds = ContainerUtil.map(started, m -> m.getAttributes().get("nodeId"));
+    assertEquals(4, nodeIds.size());
+    assertEquals("the invocations of the second run need their own node ids: " + nodeIds, 4, nodeIds.stream().distinct().count());
+    assertEquals(1, output.messages.stream().filter(TestFailed.class::isInstance).count());
+
+    // the IDE runs one invocation by the id that JUnit knows, so each run reports the same original ids
+    List<String> originalIds = ContainerUtil.map(started, m -> m.getAttributes().get("origId"));
+    assertEquals(originalIds.subList(0, 2), originalIds.subList(2, 4));
+    assertTrue(originalIds.toString(), originalIds.get(0).startsWith("[engine:junit-jupiter]"));
+    assertTrue(originalIds.toString(), originalIds.get(0).endsWith("[test-template-invocation:#1]"));
+
+    // the suite of a repetition is no node of JUnit, and its empty original id tells that to the IDE
+    List<ServiceMessage> repetitions = output.messages.stream()
+      .filter(m -> m instanceof TestSuiteStarted && "".equals(m.getAttributes().get("origId"))).toList();
+    assertEquals(List.of("[1]", "[2]"), ContainerUtil.map(repetitions, m -> m.getAttributes().get("name")));
+  }
+
+  public void testRepeatUntilSuccessStopsAfterSuccessfulRun() throws Exception {
+    PsiClass aClass =
+      JavaPsiFacade.getInstance(myProject).findClass("repeat.PassesInSecondRunTests", GlobalSearchScope.projectScope(myProject));
+    assertNotNull(aClass);
+    RunConfiguration configuration = createConfiguration(aClass);
+    ((JUnitConfiguration)configuration).setRepeatMode(RepeatCount.UNTIL_SUCCESS);
+
+    ProcessOutput output = doStartTestsProcess(configuration);
+
+    assertEmpty(output.err);
+    assertEquals(2, output.messages.stream().filter(TestStarted.class::isInstance).count());
+    assertEquals(1, output.messages.stream().filter(TestFailed.class::isInstance).count());
   }
 
   public void testFactoryTests() throws Exception {

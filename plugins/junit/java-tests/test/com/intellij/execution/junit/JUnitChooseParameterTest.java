@@ -219,6 +219,23 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
                          new Parameter(List.of("[class:MyTest]/[template]/[#2]"), "[2] -3")), parameters);
   }
 
+  /** A launch with a repeat reports each repetition under its own suite. The tree node ids differ, the original ids do not. */
+  public void testInvocationsOfARepeatedRunAreOfferedOnce() {
+    configureCollectors(PARAMETERIZED_METHOD);
+    String classId = "[class:MyTest]";
+    String templateId = classId + "/[template]";
+    List<String> messages = new ArrayList<>();
+    for (String run : List.of("[1]", "[2]")) {
+      messages.add("##teamcity[testSuiteStarted name='" + escape(run) + "' nodeId='" + escape(run) + "' parentNodeId='0' origId='']");
+      messages.add(withOriginalId(suiteStarted(run + "/" + classId, run, "MyTest", myOfClass), classId));
+      messages.add(withOriginalId(suiteStarted(run + "/" + templateId, run + "/" + classId, "parameterized(int)", myOfMethod), templateId));
+      messages.add(withOriginalId(testStarted(run + "/" + templateId + "/[#1]", run + "/" + templateId, "[1] 1"), templateId + "/[#1]"));
+      messages.add(withOriginalId(testStarted(run + "/" + templateId + "/[#2]", run + "/" + templateId, "[2] -3"), templateId + "/[#2]"));
+    }
+    assertEquals(List.of(new Parameter(List.of(templateId + "/[#1]"), "[1] 1"),
+                         new Parameter(List.of(templateId + "/[#2]"), "[2] -3")), myOfMethod.parse(messages));
+  }
+
   public void testParameterSetsOfClassAreOffered() {
     configureCollectors(PARAMETERIZED_CLASS);
     List<Parameter> parameters = myOfClass.parse(classTemplateRun());
@@ -362,6 +379,10 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
                                                 @NotNull String hint) {
     return "##teamcity[" + type + " name='" + escape(name) + "' nodeId='" + escape(id) + "' parentNodeId='" + escape(parentId) +
            "' locationHint='" + escape(hint) + "']";
+  }
+
+  private static @NotNull String withOriginalId(@NotNull String message, @NotNull String originalId) {
+    return message.substring(0, message.length() - 1) + " origId='" + escape(originalId) + "']";
   }
 
   /** As the runner escapes the values it reports, see {@code MapSerializerUtil}. */

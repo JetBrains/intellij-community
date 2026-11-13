@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit5.report;
 
+import com.intellij.rt.execution.TestListenerProtocol;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.launcher.TestIdentifier;
@@ -24,6 +25,7 @@ final public class ExecutionState {
   private String myPresentableName;
   private boolean mySuccessful = true;
   private String myIdSuffix = "";
+  private String myParentId = TestListenerProtocol.ROOT_NODE_ID;
   private boolean mySendTree;
   private final boolean myUseSuiteDuration;
 
@@ -58,12 +60,23 @@ final public class ExecutionState {
     }
   }
 
-  public void initializeIdSuffix(int i) {
-    myIdSuffix = i + "th";
+  public void setParentId(String parentId) {
+    myParentId = parentId;
   }
 
-  public String suffix() {
-    return myIdSuffix;
+  /**
+   * @return the id of the tree node that gets the top nodes of this run
+   */
+  public String parentId() {
+    return myParentId;
+  }
+
+  /**
+   * @return the id of the tree node of a test. It is the unique id only for a run under the root in the main process.
+   */
+  public String nodeId(String uniqueId) {
+    String scope = TestListenerProtocol.ROOT_NODE_ID.equals(myParentId) ? "" : myParentId + "/";
+    return scope + uniqueId + myIdSuffix;
   }
 
   public void setRootName(String rootName) {

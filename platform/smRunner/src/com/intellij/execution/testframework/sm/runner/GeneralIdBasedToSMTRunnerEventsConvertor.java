@@ -139,6 +139,11 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         // we change the meta-information if its value is different from the default value `null`
         testProxy.setMetainfo(metainfo);
       }
+      final String originalId = startedNodeEvent.getOriginalId();
+      if (originalId != null) {
+        // a node of the tree that was built before the start gets its original id here
+        testProxy.putUserData(SMTestProxy.ORIGINAL_NODE_ID, originalId);
+      }
       if (node.getState() == State.NOT_RUNNING && startedNodeEvent.isRunning()) {
         setNodeAndAncestorsRunning(node);
       }
@@ -169,6 +174,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     String nodeName = startedNodeEvent.getName();
     SMTestProxy childProxy = new SMTestProxy(nodeName, suite, startedNodeEvent.getLocationUrl(), startedNodeEvent.getMetainfo(), true);
     childProxy.putUserData(SMTestProxy.NODE_ID, startedNodeEvent.getId());
+    childProxy.putUserData(SMTestProxy.ORIGINAL_NODE_ID, startedNodeEvent.getOriginalId());
     childProxy.setTreeBuildBeforeStart();
     if (startedNodeEvent instanceof TestStartedEvent testStartedEvent) {
       childProxy.setConfig(testStartedEvent.isConfig());
