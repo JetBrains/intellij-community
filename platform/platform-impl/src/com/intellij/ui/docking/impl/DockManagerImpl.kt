@@ -7,6 +7,9 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -18,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.DockableEditor
 import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
+import com.intellij.openapi.fileEditor.impl.EditorComposite
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.createEditorDockContainer
@@ -57,7 +61,9 @@ import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
@@ -491,7 +497,16 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       window.setupToolWindowPane()
     }
     val isNorthPanelAvailable = isNorthPanelAvailable(result.allEditors)
-    if (isNorthPanelAvailable) {
+    if (result is EditorComposite && !result.isAvailable()) {
+      // The editors say whether the window has the north panel. An open that does not wait for them has none yet.
+      result.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        result.waitForAvailable()
+        if (isNorthPanelAvailable(result.allEditors)) {
+          window.setupNorthPanel()
+        }
+      }
+    }
+    else if (isNorthPanelAvailable) {
       window.setupNorthPanel()
     }
 
