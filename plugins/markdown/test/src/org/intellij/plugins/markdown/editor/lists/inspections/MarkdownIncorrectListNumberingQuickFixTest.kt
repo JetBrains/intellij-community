@@ -1,20 +1,39 @@
 package org.intellij.plugins.markdown.editor.lists.inspections
 
 import com.intellij.markdown.backend.inspections.IncorrectListNumberingInspection
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 
-@RunWith(JUnit4::class)
-class MarkdownIncorrectListNumberingQuickFixTest: LightPlatformCodeInsightFixture4TestCase() {
-  @Test
-  fun `test fix in simple list`() = doTest()
+@TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/plugins/markdown/test/data/editor/lists/inspections/incorrectNumbering")
+class MarkdownIncorrectListNumberingQuickFixTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  private lateinit var testName: String
+
+  @BeforeEach
+  fun setUp(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, true).trimStart().replace(' ', '_')
+  }
 
   @Test
-  fun `test fix in deep sublist`() = doTest()
+  fun `test fix in simple list`(): Unit = doTest()
+
+  @Test
+  fun `test fix in deep sublist`(): Unit = doTest()
 
   @Test
   fun `test fix in unparsed sublist`() {
@@ -24,7 +43,7 @@ class MarkdownIncorrectListNumberingQuickFixTest: LightPlatformCodeInsightFixtur
   }
 
   private fun doTest() {
-    val name = getTestName(true)
+    val name = testName
     myFixture.configureByFile("$name.md")
     myFixture.enableInspections(IncorrectListNumberingInspection())
     val targetText = MarkdownBundle.message("markdown.fix.list.items.numbering,quick.fix.text")
@@ -32,14 +51,5 @@ class MarkdownIncorrectListNumberingQuickFixTest: LightPlatformCodeInsightFixtur
     assertNotNull(fix)
     myFixture.launchAction(fix!!)
     myFixture.checkResultByFile("$name.after.md")
-  }
-
-  override fun getTestName(lowercaseFirstLetter: Boolean): String {
-    val name = super.getTestName(lowercaseFirstLetter)
-    return name.trimStart().replace(' ', '_')
-  }
-
-  override fun getTestDataPath(): String {
-    return "${MarkdownTestingUtil.TEST_DATA_PATH}/editor/lists/inspections/incorrectNumbering/"
   }
 }

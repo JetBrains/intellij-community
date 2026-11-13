@@ -4,20 +4,32 @@ package org.intellij.plugins.markdown.editor.tables.inspections
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.idea.TestFor
 import com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattingInspection
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import com.intellij.openapi.application.EDT
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.withTableStyle
 import org.intellij.plugins.markdown.lang.formatter.settings.TableStyle
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 
 /**
  * These are just sanity checks, since actual tests for reformatting are in the other files.
  */
-@RunWith(JUnit4::class)
 @Suppress("MarkdownIncorrectTableFormatting")
-class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class MarkdownIncorrectTableFormattingInspectionQuickFixTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   private val reformatIntentionFixText
     get() = MarkdownBundle.message("markdown.reformat.table.intention.text")
 
@@ -139,7 +151,11 @@ class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeI
     myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())
     val fix = myFixture.getAllQuickFixes().find { it.text == reformatIntentionFixText }
     checkNotNull(fix) { "Failed to find fix" }
-    myFixture.checkPreviewAndLaunchAction(fix)
+    timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        myFixture.checkPreviewAndLaunchAction(fix)
+      }
+    }
   }
 
   @TestFor(issues = ["IDEA-307242"])
@@ -162,7 +178,7 @@ class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeI
 
   @Test
   fun `reformats to compact style`() {
-    withTableStyle(project, TableStyle.COMPACT) {
+    withTableStyle(myFixture.project, TableStyle.COMPACT) {
       doTest(
         """
         | a |longer|
@@ -180,7 +196,7 @@ class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeI
 
   @Test
   fun `reformats to tight style`() {
-    withTableStyle(project, TableStyle.TIGHT) {
+    withTableStyle(myFixture.project, TableStyle.TIGHT) {
       doTest(
         """
         | a | longer |

@@ -1,11 +1,20 @@
 package org.intellij.plugins.markdown.reference
 
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
-import org.intellij.plugins.markdown.MarkdownBundle
 import com.intellij.markdown.backend.inspections.MarkdownLinkDestinationWithSpacesInspection
-import org.junit.Test
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.intellij.plugins.markdown.MarkdownBundle
+import org.junit.jupiter.api.Test
 
-class FileLinkWithSpacesInspectionTest: LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class FileLinkWithSpacesInspectionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   private val warningMessage by lazy { MarkdownBundle.message("markdown.link.destination.with.spaces.inspection.description") }
 
   @Test

@@ -2,11 +2,20 @@
 package org.intellij.plugins.markdown.editor.toc
 
 import com.intellij.markdown.backend.inspections.OutdatedTableOfContentsInspection
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
-class OutdatedTableOfContentsInspectionTest: LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class OutdatedTableOfContentsInspectionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `blank lines inside toc section are not reported`() {
     doTest("""

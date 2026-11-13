@@ -3,15 +3,22 @@ package org.intellij.plugins.markdown.editor.tables.inspections
 
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.markdown.backend.inspections.MarkdownNoTableBordersInspection
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
 
-@RunWith(JUnit4::class)
 @Suppress("MarkdownIncorrectTableFormatting", "MarkdownNoTableBorders")
-class MarkdownNoTableBordersInspectionQuickFixTest: LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class MarkdownNoTableBordersInspectionQuickFixTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   @Test
   fun `works on table without borders`() {
     // language=Markdown

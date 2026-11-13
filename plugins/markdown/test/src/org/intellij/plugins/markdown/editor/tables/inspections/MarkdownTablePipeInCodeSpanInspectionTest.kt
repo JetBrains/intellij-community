@@ -2,12 +2,21 @@
 package org.intellij.plugins.markdown.editor.tables.inspections
 
 import com.intellij.markdown.backend.inspections.MarkdownTablePipeInCodeSpanInspection
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 @Suppress("MarkdownIncorrectTableFormatting")
-class MarkdownTablePipeInCodeSpanInspectionTest : LightPlatformCodeInsightFixture4TestCase() {
+@TestApplication
+class MarkdownTablePipeInCodeSpanInspectionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
   private val description
     get() = MarkdownBundle.message("markdown.table.pipe.in.code.span.inspection.description")
 
