@@ -1,10 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
-import com.intellij.testFramework.HeavyPlatformTestCase.createChildDirectory
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.config.GitConfigUtil.COMMIT_TEMPLATE
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.io.IOException
 
 @TestApplication
 internal class GitCommitTemplateTest {
@@ -103,8 +105,12 @@ internal class GitCommitTemplateTest {
 
   @Test
   fun `test commit template in multiple repositories`(): Unit = with(context) {
-    val repo1 = createRepository(project, createChildDirectory(projectRoot, "root1").path)
-    val repo2 = createRepository(project, createChildDirectory(projectRoot, "root2").path)
+    val repo1 = createRepository(project, WriteAction.computeAndWait<VirtualFile, IOException> {
+      projectRoot.createChildDirectory(projectRoot, "root1")
+    }.path)
+    val repo2 = createRepository(project, WriteAction.computeAndWait<VirtualFile, IOException> {
+      projectRoot.createChildDirectory(projectRoot, "root2")
+    }.path)
 
     val templateContent1 = """
       Template for first repository
