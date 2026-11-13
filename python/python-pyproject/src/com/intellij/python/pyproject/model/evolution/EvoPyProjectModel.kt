@@ -157,6 +157,12 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      * caller that wants one of them by key or by file asks [forKey] or [forFile] instead.
      */
     val evoPyProjects: Sequence<EvoPyProject> get() = workspaces.asSequence().flatMap { it.members }
+
+    /**
+     * The entry of [evoPyProjects] for each module. [forModule] runs for each file that the indexing pushes
+     * properties to, so a scan of [evoPyProjects] per call costs the product of the file count and the project count.
+     */
+    private val byModule: Map<Module, EvoPyProject> = evoPyProjects.associateBy { it.pyProject.residesOnModule }
     /**
      * The target [key] addresses, or `null` when this generation has no such `PyProject` — a key the frontend held
      * across a change that removed it.
@@ -178,9 +184,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      * For a caller that asks about several projects and wants every answer from one generation. A caller that asks
      * about one project calls [getInterpreter] instead.
      */
-    fun forPyProject(pyProject: PyProject): EvoPyProject? =
-      evoPyProjects.firstOrNull { it.pyProject.residesOnModule == pyProject.residesOnModule }
-        ?.takeUnless { it.pyProject.residesOnModule.isDisposed }
+    fun forPyProject(pyProject: PyProject): EvoPyProject? = forModule(pyProject.residesOnModule)
 
     /**
      * The `PyProject` of [file]:
@@ -200,8 +204,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     }
 
     /** The entry of this generation whose `PyProject` resides on [module], or `null`. A disposed module is rejected. */
-    fun forModule(module: Module): EvoPyProject? =
-      evoPyProjects.firstOrNull { it.pyProject.residesOnModule == module }?.takeUnless { module.isDisposed }
+    fun forModule(module: Module): EvoPyProject? = byModule[module]?.takeUnless { module.isDisposed }
 
     /** Every `PyProject`'s own base dir — a workspace member's own, not its root's. Used to exclude sibling projects from env discovery. */
     val baseDirs: Set<Path> = evoPyProjects.mapTo(mutableSetOf()) { it.pyProject.baseDir }
