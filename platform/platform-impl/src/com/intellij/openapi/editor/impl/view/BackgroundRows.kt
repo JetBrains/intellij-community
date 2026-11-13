@@ -10,6 +10,7 @@ private const val INITIAL_CAPACITY: Int = 16
  *
  * One interval is one rectangle: the row from [top] to [bottom], and the horizontal part from [start] to [end].
  * A caller adds the intervals in any order, and it can add two intervals of one style that overlap.
+ * An interval that fills the line ends at the viewport edge. A narrow clip then does not move the corner of the shape.
  * [BackgroundOutline] and the painter read the union of the intervals of one style.
  */
 @ApiStatus.Internal
@@ -20,7 +21,6 @@ class BackgroundRows {
   private var bottoms = DoubleArray(INITIAL_CAPACITY)
   private var starts = DoubleArray(INITIAL_CAPACITY)
   private var ends = DoubleArray(INITIAL_CAPACITY)
-  private var flags = IntArray(INITIAL_CAPACITY)
 
   /**
    * The number of intervals of every style.
@@ -33,7 +33,6 @@ class BackgroundRows {
     bottom: Double,
     start: Double,
     end: Double,
-    flags: Int,
   ) {
     grow()
     styleIds[count] = styleId
@@ -41,7 +40,6 @@ class BackgroundRows {
     bottoms[count] = bottom
     starts[count] = start
     ends[count] = end
-    this.flags[count] = flags
     count++
   }
 
@@ -54,11 +52,6 @@ class BackgroundRows {
   fun start(index: Int): Double = starts[checkIndex(index)]
 
   fun end(index: Int): Double = ends[checkIndex(index)]
-
-  /**
-   * Says that the interval ends at the fill edge of the paint.
-   */
-  fun isFillEdge(index: Int): Boolean = flags[checkIndex(index)] and FILL_EDGE != 0
 
   private fun checkIndex(index: Int): Int {
     require(index in 0 until count) { "the index $index is outside the $count intervals" }
@@ -75,13 +68,5 @@ class BackgroundRows {
     bottoms = bottoms.copyOf(capacity)
     starts = starts.copyOf(capacity)
     ends = ends.copyOf(capacity)
-    flags = flags.copyOf(capacity)
-  }
-
-  companion object {
-    /**
-     * The flag of an interval that ends at the fill edge of the paint, which is a cut of the clip.
-     */
-    const val FILL_EDGE: Int = 1
   }
 }

@@ -18,7 +18,7 @@ internal class BackgroundOutlineTest {
   fun `one row gives one rectangle, and another style stays out of it`() {
     val rows = BackgroundRows()
     rows.addRow(0, 0.0, 30.0)
-    rows.add(OTHER_STYLE, 0.0, ROW_HEIGHT, 40.0, 50.0, 0)
+    rows.add(OTHER_STYLE, 0.0, ROW_HEIGHT, 40.0, 50.0)
 
     assertEquals(
       listOf(corners(0.0, 0.0, 30.0, 0.0, 30.0, 12.0, 0.0, 12.0)),
@@ -27,6 +27,8 @@ internal class BackgroundOutlineTest {
     val path = BackgroundOutline.build(rows, STYLE, RADIUS)
     assertEquals(10, segmentCount(path))
     assertEquals(RADIUS, radiusAt(path, 0.0, 0.0))
+    assertEquals(RADIUS, radiusAt(path, 30.0, 0.0))
+    assertEquals(RADIUS, radiusAt(path, 30.0, 12.0))
   }
 
   @Test
@@ -148,25 +150,12 @@ internal class BackgroundOutlineTest {
     assertEquals(20, segmentCount(BackgroundOutline.build(rows, STYLE, RADIUS)))
   }
 
-  @Test
-  fun `a corner on the fill edge stays square`() {
-    val rows = BackgroundRows()
-    rows.addRow(0, 0.0, 30.0, fillEdge = true)
-
-    val path = BackgroundOutline.build(rows, STYLE, RADIUS)
-    assertEquals(8, segmentCount(path))
-    assertEquals(0.0, radiusAt(path, 30.0, 0.0))
-    assertEquals(0.0, radiusAt(path, 30.0, 12.0))
-    assertEquals(RADIUS, radiusAt(path, 0.0, 0.0))
-  }
-
   private fun BackgroundRows.addRow(
     row: Int,
     start: Double,
     end: Double,
-    fillEdge: Boolean = false,
   ) {
-    add(STYLE, row * ROW_HEIGHT, (row + 1) * ROW_HEIGHT, start, end, if (fillEdge) BackgroundRows.FILL_EDGE else 0)
+    add(STYLE, row * ROW_HEIGHT, (row + 1) * ROW_HEIGHT, start, end)
   }
 
   /** Gives the cycles of [STYLE], each one from its corner at the top left, and the cycles in that order too. */

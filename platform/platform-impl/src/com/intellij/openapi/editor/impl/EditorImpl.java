@@ -783,6 +783,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }, myCaretModel);
 
     myScrollingModel.addVisibleAreaListener(this::moveCaretIntoViewIfCoveredByToolWindowBelow);
+    myScrollingModel.addVisibleAreaListener(this::repaintVisibleAreaOnHorizontalScroll);
     myScrollingModel.addVisibleAreaListener(myMarkupModel);
 
     PropertyChangeListener propertyChangeListener = e -> {
@@ -1080,6 +1081,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }, ModalityState.any());
       }
+    }
+  }
+
+  /**
+   * Repaints the whole visible area when its x changes while the editor rounds.
+   * So a background that fills the line keeps its rounded corner only at the side of the visible area.
+   */
+  private void repaintVisibleAreaOnHorizontalScroll(@NotNull VisibleAreaEvent e) {
+    Rectangle oldRectangle = e.getOldRectangle();
+    Rectangle newRectangle = e.getNewRectangle();
+    if (oldRectangle != null && oldRectangle.x != newRectangle.x && isRoundedHighlighting()) {
+      myEditorComponent.repaintEditorComponent(newRectangle.x, newRectangle.y, newRectangle.width, newRectangle.height);
     }
   }
 

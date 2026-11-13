@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.ui.IslandsState;
@@ -549,6 +550,43 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
       try {
         myFixture.initText("ab\n<selection>cd\nef<caret></selection>\nghijklmnop");
         checkPartialRepaint(1);
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testNarrowRepaintOfFilledLine() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, false);
+      try {
+        myFixture.initText("ab\n<selection>cd\nef<caret></selection>\nghijklmnop");
+        int[] yRange = myFixture.getEditor().visualLineToYRange(1);
+        int width = myFixture.getEditor().getContentComponent().getPreferredSize().width;
+        checkPartialRepaint(new Rectangle(0, yRange[0], width / 2, yRange[1] - yRange[0]));
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testFillReachesClipWiderThanViewport() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("ab\ncd\nefghijklmnop");
+        Editor editor = myFixture.getEditor();
+        int viewportWidth = editor.visualPositionToXY(new VisualPosition(0, 6)).x;
+        EditorTestUtil.setEditorVisibleSizeInPixels(editor, viewportWidth, 1000);
+        addRangeHighlighter(1, 4, HighlighterLayer.WARNING, null, Color.red);
+        BufferedImage image = paintEditor(false, null, null);
+        int[] yRange = editor.visualLineToYRange(0);
+        int edgeX = image.getWidth() - 1;
+        assertTrue(edgeX > viewportWidth, "the clip is not wider than the viewport");
+        assertEquals(Color.red.getRGB(), image.getRGB(edgeX, (yRange[0] + yRange[1]) / 2), "the fill stops at the viewport edge");
+        assertNotEquals(Color.red.getRGB(), image.getRGB(edgeX, yRange[0]), "the fill has no rounded corner at the clip edge");
       } finally {
         restoreSelectionState(state);
       }

@@ -111,10 +111,21 @@ public abstract class EditorPaintingTestCase {
 
   protected void checkPartialRepaint(int visualLine) throws IOException {
     BufferedImage originalImage = paintEditor(false, null, null);
+    int[] yRange = myFixture.getEditor().visualLineToYRange(visualLine);
+    repaintAndCompare(originalImage, new Rectangle(0, yRange[0], originalImage.getWidth(), yRange[1] - yRange[0]));
+  }
+
+  /**
+   * Repaints the clip over the full image, and asserts that the result is the full image again.
+   */
+  protected void checkPartialRepaint(@NotNull Rectangle clip) throws IOException {
+    repaintAndCompare(paintEditor(false, null, null), clip);
+  }
+
+  private void repaintAndCompare(@NotNull BufferedImage originalImage, @NotNull Rectangle clip) throws IOException {
     BufferedImage updatedImage = createImageForPainting(originalImage.getWidth(), originalImage.getHeight());
     originalImage.copyData(updatedImage.getRaster());
-    int[] yRange = myFixture.getEditor().visualLineToYRange(visualLine);
-    paintEditor(false, updatedImage, new Rectangle(0, yRange[0], updatedImage.getWidth(), yRange[1] - yRange[0]));
+    paintEditor(false, updatedImage, clip);
     assertImagesEqual(originalImage, updatedImage, null);
   }
 

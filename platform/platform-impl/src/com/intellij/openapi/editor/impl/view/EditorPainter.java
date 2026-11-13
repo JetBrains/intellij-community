@@ -292,6 +292,8 @@ public final class EditorPainter implements TextDrawingCallback {
      */
     private final boolean myDryRunRows;
     private final boolean myHuggingHighlighting;
+    private final int myFillStartX;
+    private final int myFillEndX;
     private final float mySelectionExtensionWidth;
     private final @Nullable HighlighterVisualModel myHighlighterVisualModel;
     private boolean myBrokenFragmentRangeReported;
@@ -339,17 +341,54 @@ public final class EditorPainter implements TextDrawingCallback {
                               ? createVirtualSelectionMap(myCaretModel, myStartVisualLine - 1, myEndVisualLine + 1)
                               : createVirtualSelectionMap(myCaretModel, myStartVisualLine, myEndVisualLine);
       myHuggingHighlighting = myEditor.isHuggingHighlighting(myRegistry);
+      myFillStartX = fillStartX();
+      myFillEndX = fillEndX();
       mySelectionExtensionWidth = selectionExtensionWidth();
       if (myRoundedHighlighting) {
         myHighlighterVisualModel = new HighlighterVisualModel(
           myEditor,
-          myClip,
           myYShift,
           myHuggingHighlighting
         );
       } else {
         myHighlighterVisualModel = null;
       }
+    }
+
+    /**
+     * Gives the x where a background that fills the line starts.
+     * While a right-aligned editor rounds, it is the left side of the visible area, or the left side of the clip when the
+     * clip starts further left. It is never left of the left inset.
+     * In every other case, and without a visible area, it is the left inset.
+     */
+    private int fillStartX() {
+      if (!myRoundedHighlighting || !myEditor.isRightAligned()) {
+        return myInsets.left;
+      }
+      Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
+      if (visibleArea.isEmpty()) {
+        return myInsets.left;
+      }
+      int startX = Math.min(visibleArea.x, myClip.x);
+      return Math.max(myInsets.left, startX);
+    }
+
+    /**
+     * Gives the x where a background that fills the line ends.
+     * While the editor rounds, it is the right side of the visible area, or the right side of the clip when the clip ends
+     * further right. Without a visible area, it is the width of the component.
+     * Without rounding, it is the right side of the clip.
+     */
+    private int fillEndX() {
+      int clipEndX = myClip.x + myClip.width;
+      if (!myRoundedHighlighting) {
+        return clipEndX;
+      }
+      Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
+      if (visibleArea.isEmpty()) {
+        return myEditor.getContentComponent().getWidth();
+      }
+      return Math.max(visibleArea.x + visibleArea.width, clipEndX);
     }
 
     void paint() {
@@ -554,8 +593,8 @@ public final class EditorPainter implements TextDrawingCallback {
         });
       }
 
-      int startX = myInsets.left;
-      int endX = myClip.x + myClip.width;
+      int startX = myFillStartX;
+      int endX = myFillEndX;
       int prevY = Math.max(myInsets.top, myClip.y) + myYShift;
       int firstVisualLine = myDryRunRows ? Math.max(0, myStartVisualLine - 1) : myStartVisualLine;
       VisualLinesIterator visLinesIterator = new VisualLinesIterator(myView, firstVisualLine);
@@ -825,11 +864,11 @@ public final class EditorPainter implements TextDrawingCallback {
                      ? xStart
                      : (float)myView.visualPositionToXY(new VisualPosition(visualLine, selectionRange.first)).getX();
 
-      float clipEndX = myClip.x + myClip.width;
+      float fillEndX = myFillEndX;
       if (myHuggingHighlighting) {
-        clipEndX = Math.min(clipEndX, visualLineEnd(visualLine));
+        fillEndX = Math.min(fillEndX, visualLineEnd(visualLine));
       }
-      float endX = (float)Math.min(clipEndX, myView.visualPositionToXY(new VisualPosition(visualLine, selectionRange.second)).getX());
+      float endX = (float)Math.min(fillEndX, myView.visualPositionToXY(new VisualPosition(visualLine, selectionRange.second)).getX());
       paintSelectionBlock(new Rectangle2D.Double(startX, y, endX - startX, myLineHeight));
     }
 
@@ -863,14 +902,14 @@ public final class EditorPainter implements TextDrawingCallback {
       }
       float startX = selectionStartPosition.line == visualLine && selectionStartPosition.column > columnStart ?
                      (float)myView.visualPositionToXY(selectionStartPosition).getX() : xStart;
-      float clipEndX = myClip.x + myClip.width;
+      float fillEndX = myFillEndX;
       if (myHuggingHighlighting) {
-        clipEndX = Math.min(clipEndX, visualLineEnd(visualLine));
+        fillEndX = Math.min(fillEndX, visualLineEnd(visualLine));
       }
       float endX = selectionEndPosition.line == visualLine
                    ?
                    (float)myView.visualPositionToXY(selectionEndPosition).getX()
-                   : clipEndX;
+                   : fillEndX;
 
       paintSelectionBlock(new Rectangle2D.Double(startX, y, endX - startX, myLineHeight));
     }

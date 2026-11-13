@@ -54,7 +54,7 @@ object BackgroundOutline {
    *
    * The path needs the rule [Path2D.WIND_NON_ZERO], which leaves a hole empty.
    * Each corner gets the radius [radius], limited to one half of each of its two edges.
-   * A corner on the fill edge of the paint stays square, because that edge is a cut of the clip.
+   * Every corner rounds, also the corner at the viewport edge of a background that fills the line.
    */
   @JvmStatic
   fun build(rows: BackgroundRows, styleId: Int, radius: Double): Path2D {
@@ -80,7 +80,6 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
   private val cellCount: Int
   private val bandCount: Int
   private val covered: BooleanArray
-  private val fillEdges: BooleanArray
 
   init {
     var intervals = 0
@@ -107,7 +106,6 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
     cellCount = if (xs.size > 1) xs.size - 1 else 0
     bandCount = if (ys.size > 1) ys.size - 1 else 0
     covered = BooleanArray(cellCount * bandCount)
-    fillEdges = BooleanArray(xs.size * bandCount)
     for (index in 0 until rows.size) {
       if (rows.styleId(index) == styleId) {
         cover(rows, index)
@@ -162,9 +160,6 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
   }
 
   private fun cornerRadius(cycle: IntArray, index: Int, radius: Double): Double {
-    if (isOnFillEdge(cycle[index])) {
-      return 0.0
-    }
     val incoming = edgeLength(cycle[(index + cycle.size - 1) % cycle.size], cycle[index])
     val outgoing = edgeLength(cycle[index], cycle[(index + 1) % cycle.size])
     return min(radius, min(incoming, outgoing) / 2)
@@ -299,9 +294,6 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
       for (cell in firstCell until lastCell) {
         covered[band * cellCount + cell] = true
       }
-      if (rows.isFillEdge(index)) {
-        fillEdges[band * xs.size + lastCell] = true
-      }
     }
   }
 
@@ -310,15 +302,6 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
       return false
     }
     return covered[band * cellCount + cell]
-  }
-
-  private fun isOnFillEdge(corner: Int): Boolean {
-    val xIndex = xIndexOf(corner)
-    val yIndex = yIndexOf(corner)
-    if (yIndex > 0 && fillEdges[(yIndex - 1) * xs.size + xIndex]) {
-      return true
-    }
-    return yIndex < bandCount && fillEdges[yIndex * xs.size + xIndex]
   }
 
   private fun firstEdgeFrom(edges: LongArray, corner: Int): Int {

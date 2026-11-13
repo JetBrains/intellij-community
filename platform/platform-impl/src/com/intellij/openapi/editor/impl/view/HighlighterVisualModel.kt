@@ -11,9 +11,6 @@ import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
 import java.util.TreeMap
 
-/** A rectangle that ends nearer than this to the right side of the clip ends at the fill edge of the paint. */
-private const val FILL_EDGE_TOLERANCE: Double = 1e-2
-
 /**
  * Two rectangles that share a strip thinner than this do not overlap.
  */
@@ -27,12 +24,11 @@ private const val MIN_OVERLAP: Double = 1e-2
  * and a straight style fills its rectangles at the device pixels.
  * A box of a background after the end of a line is a shape of its own. [paintAfterLineEndBoxes] fills the boxes.
  * A background of a line extension is a straight rectangle of its own. [paint] fills it among the styles.
- * A rectangle outside [clip] gives the corners of its neighbors, and it paints nothing.
+ * A rectangle outside the clip of the paint gives the corners of its neighbors, and it paints nothing.
  * The model lives for one paint. It keeps no state for the next paint.
  */
 internal class HighlighterVisualModel(
   private val editor: EditorImpl,
-  private val clip: Rectangle2D,
   private val yShift: Int,
   private val huggingHighlighting: Boolean,
 ) {
@@ -169,15 +165,12 @@ internal class HighlighterVisualModel(
 
   private fun addRow(target: BackgroundRows, block: Rectangle2D, styleId: Int) {
     val top = block.y - yShift
-    val end = block.x + block.width
-    val flags = if (end >= clip.x + clip.width - FILL_EDGE_TOLERANCE) BackgroundRows.FILL_EDGE else 0
     target.add(
       styleId,
       top,
       top + block.height,
       block.x,
-      end,
-      flags,
+      block.x + block.width,
     )
   }
 
