@@ -8,7 +8,9 @@ By default, the LSP Client starts the server, sends requests when the user works
 
 We recommend one IntelliJ plugin for each integration. The plugin provides the server executable, implements `LspIntegrationProvider`, and registers it in the `com.intellij.platform.lsp.integrationProvider` extension point.
 
-Users can also configure a server connection on the Settings page. A plugin can add a server with default settings to that page through the `LspIntegrationSettingsProvider`. Besides that, there's no imperative API to modify these user settings, though many integrations provide their own technology-specific settings.
+Users can also configure a server connection on the Settings page. A plugin can add a server with default settings to that page through the `LspIntegrationSettingsProvider`. Besides that, there's no imperative API to modify these user settings, though many integrations provide their own technology-specific settings. The Settings page is in the `community/plugins/lsp.ui/` plugin.
+
+`community/plugins/lsp.client.playground/` is a plugin for development runs, with sample integrations for Dart, Lua, Rust, and Swift servers. Use it to try the LSP Client with a real server by hand.
 
 There are three kinds of integration in our LSP Client:
 
@@ -31,6 +33,8 @@ Do not blindly change the LSP Client to fix one integration. Writing code is che
 Add tests for each change. The tests must not depend on real products or real language plugins. A product can stop using a part of the LSP Client and delete its tests. In that case nothing would test that part, so the LSP Client must have its own tests. Isolated tests are also easier to read and debug.
 
 Use the programmable fake server in `tests/testSrc/common/`. Set it up with `fakeLspIntegrationFixture`.
+
+Performance tests are in the ultimate checkout, in `tests/intelliJPerformanceTests/`
 
 ## Coding guidelines
 
