@@ -38,7 +38,7 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     originalCustomRepositoryHosts = null
 
     PluginUpdateSourceInitializer.allowInitializationHappenAgain()
-    eraseAllPluginUpdateSources(TESTED_PLUGIN_IDS)
+    eraseAllPluginUpdateSources()
   }
 
   @Test
@@ -89,7 +89,7 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
       executeInitializationActivity()
       assertEquals(sourcesAfterFirstInitialization, pluginUpdateSourcesByPluginId())
 
-      eraseAllPluginUpdateSources(TESTED_PLUGIN_IDS)
+      eraseAllPluginUpdateSources()
       executeInitializationActivity()
       for (pluginId in TESTED_PLUGIN_IDS) {
         assertNoPluginUpdateSource(pluginId)
@@ -144,7 +144,7 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
       executeInitializationActivity()
       assertEquals(sourcesAfterFirstInitialization, pluginUpdateSourcesByPluginId())
 
-      eraseAllPluginUpdateSources(TESTED_PLUGIN_IDS)
+      eraseAllPluginUpdateSources()
       executeInitializationActivity()
       for (pluginId in TESTED_PLUGIN_IDS) {
         assertNoPluginUpdateSource(pluginId)
@@ -205,6 +205,36 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     assertTrue(assertNotNull(failure.errorMessage).contains(brokenServer.url))
   }
 
+  @Test
+  fun `plugins in repositories distinguished by query parameters get update sources`(): Unit = timeoutRunBlocking {
+    val firstRepository = Server(server, "repo?name=first")
+    val secondRepository = Server(server, "repo?name=second")
+    val firstPlugin = CustomRepositoryPlugin(FIRST_QUERY_CUSTOM_REPOSITORY_PLUGIN, "2.0")
+    val secondPlugin = CustomRepositoryPlugin(SECOND_QUERY_CUSTOM_REPOSITORY_PLUGIN, "2.0")
+
+    setInstalledPluginMocks(installedPlugin(firstPlugin.pluginId), installedPlugin(secondPlugin.pluginId))
+    setCustomRepositoryHosts(listOf(firstRepository.url, secondRepository.url))
+    server.createContext("/repo") { handler ->
+      val plugin = when (handler.requestURI.rawQuery?.split('&')?.find { it.startsWith("name=") }) {
+        "name=first" -> firstPlugin
+        "name=second" -> secondPlugin
+        else -> error("Unexpected repository query: ${handler.requestURI.rawQuery}")
+      }
+      handler.sendResponseHeaders(200, 0)
+      handler.responseBody.writer().use { it.write("<plugins>${plugin.toPluginXml(server)}</plugins>") }
+    }
+
+    eraseAllPluginUpdateSources()
+    assertNoPluginUpdateSource(firstPlugin.pluginId)
+    assertNoPluginUpdateSource(secondPlugin.pluginId)
+
+    executeInitializationActivity()
+
+    val service = PluginUpdateSourceService.getInstance()
+    assertPluginUpdateSource(firstPlugin.pluginId, service.createCustomRepositoryPluginUpdateSourceId(firstRepository.url))
+    assertPluginUpdateSource(secondPlugin.pluginId, service.createCustomRepositoryPluginUpdateSourceId(secondRepository.url))
+  }
+
   private fun setCustomRepositoryHosts(hosts: List<String>) {
     originalCustomRepositoryHosts = originalCustomRepositoryHosts ?: UpdateSettings.getInstance().storedPluginHosts.toList()
     restoreCustomRepositoryHosts(hosts)
@@ -245,9 +275,9 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     assertNull(PluginUpdateSourceService.getInstance().getPersistedPluginUpdateSourceId(pluginId(pluginId)))
   }
 
-  private fun eraseAllPluginUpdateSources(pluginIds: Collection<String>) {
+  private fun eraseAllPluginUpdateSources() {
     val pluginUpdateSourceService = PluginUpdateSourceService.getInstance()
-    for (pluginId in pluginIds) {
+    for (pluginId in ALL_PLUGIN_IDS) {
       pluginUpdateSourceService.erasePluginUpdateSourceId(pluginId(pluginId))
     }
   }
@@ -278,6 +308,8 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
     const val NIGHTLY_AND_CUSTOM_REPOSITORIES_PLUGIN = "test.nightly.and.custom.repositories"
     const val FIRST_MARKETPLACE_CUSTOM_REPOSITORY_PLUGIN = "test.first.marketplace.channel.custom.repository"
     const val SECOND_MARKETPLACE_CUSTOM_REPOSITORY_PLUGIN = "test.second.marketplace.channel.custom.repository"
+    const val FIRST_QUERY_CUSTOM_REPOSITORY_PLUGIN = "test.first.query.custom.repository"
+    const val SECOND_QUERY_CUSTOM_REPOSITORY_PLUGIN = "test.second.query.custom.repository"
 
     val INSTALLED_PLUGINS = listOf(
       installedPlugin(ALREADY_INITIALIZED_PLUGIN),
@@ -308,6 +340,12 @@ internal class PluginUpdateSourceInitializationActivityTest : UpdateCheckerTestB
       add(UNKNOWN_PLUGIN)
       add(FIRST_MARKETPLACE_CUSTOM_REPOSITORY_PLUGIN)
       add(SECOND_MARKETPLACE_CUSTOM_REPOSITORY_PLUGIN)
+    }
+
+    val ALL_PLUGIN_IDS = buildList {
+      addAll(TESTED_PLUGIN_IDS)
+      add(FIRST_QUERY_CUSTOM_REPOSITORY_PLUGIN)
+      add(SECOND_QUERY_CUSTOM_REPOSITORY_PLUGIN)
     }
 
     private fun installedPlugin(
