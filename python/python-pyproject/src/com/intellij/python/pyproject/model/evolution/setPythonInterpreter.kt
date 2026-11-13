@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyproject.model.evolution
 
-import java.nio.file.Path
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -24,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.python.sdk.backend.PyInterpreterLibraryName
+import com.intellij.python.sdk.backend.interpreterOwnerProjectDir
 import com.intellij.python.sdk.backend.setPyInterpreterDependency
 import com.intellij.python.sdk.backend.pyInterpreterDependency
 
@@ -82,7 +82,7 @@ suspend fun EvoWorkspace.setOnWorkspace(interpreter: PythonInterpreter): PyResul
 
 /** The name of the library of [interpreter] in this project. A project with a Python project has a directory. */
 private fun PyProject.libraryNameOf(interpreter: PythonInterpreter): PyInterpreterLibraryName =
-  libraryNameOf(Path.of(checkNotNull(project.basePath) { "$project has no directory" }), interpreter)
+  libraryNameOf(checkNotNull(project.interpreterOwnerProjectDir) { "$project has no directory" }, interpreter)
 
 /** Writes the interpreter library entry of the module with [name], or removes it for `null`. */
 private suspend fun PyProject.writeInterpreterLibraryEntry(name: PyInterpreterLibraryName?) {

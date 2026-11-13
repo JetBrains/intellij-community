@@ -26,6 +26,7 @@ import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.util.InvalidDataException
 import com.jetbrains.python.PyNames
+import java.nio.file.Path
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -57,7 +58,8 @@ class PythonInterpreterSdks(private val project: Project) : Disposable {
   /**
    * Holds [sdk] as the SDK of [key], and stores its record. An SDK held before for [key] is disposed. The data of [sdk]
    * must name the owner directory of [key], so that the interpreter built from it has [key]. The record keeps its facts
-   * when [sdk] is the SDK held before, and takes them from [sdk] otherwise, see [recordOf].
+   * when [sdk] is the SDK held before, and takes them from [sdk] otherwise, see [recordOf]. A project with no directory
+   * of its own holds the SDK and no record, see [interpreterOwnerProjectDir].
    *
    * One SDK is one interpreter. When the data of [sdk] changed its ref, the key it had before goes with its record.
    */
@@ -69,8 +71,9 @@ class PythonInterpreterSdks(private val project: Project) : Disposable {
     }
     val previous = sdks.put(key, sdk)
     previous?.takeIf { it !== sdk }?.let(::dispose)
+    val projectDir = project.interpreterOwnerProjectDir ?: return
     // The facts of the record are of the SDK held before. Another SDK, such as a new SDK for the same key, brings its own.
-    store.put(key, recordOf(key, sdk, store.recordOf(key).takeIf { previous === sdk }))
+    store.put(key, recordOf(projectDir, key, sdk, store.recordOf(key).takeIf { previous === sdk }))
   }
 
   /** Drops the SDK and the record of [key]. The caller disposes the SDK, see [dispose], when no reader holds it. */
@@ -90,8 +93,9 @@ class PythonInterpreterSdks(private val project: Project) : Disposable {
    */
   fun sdkChanged(sdk: Sdk) {
     val key = keyOf(sdk) ?: return
+    val projectDir = project.interpreterOwnerProjectDir ?: return
     val store = PythonInterpreterRecords.getInstance(project)
-    store.put(key, recordOf(key, sdk, store.recordOf(key)))
+    store.put(key, recordOf(projectDir, key, sdk, store.recordOf(key)))
   }
 
   override fun dispose() {
@@ -140,18 +144,20 @@ class PythonInterpreterSdks(private val project: Project) : Disposable {
 }
 
 /**
- * The record of [sdk], the SDK of [key]: what its ref cannot give, see [PythonInterpreterRecords]. The facts, see
- * [PythonInterpreterFacts], come from [existing], the record that the store holds: the SDK holds no facts. A new record,
- * such as one of an SDK of the SDK table that the migration imports, takes them once from the SDK: its version, and the
- * `sys.path` and the bundled stub packages that its roots state, see [sysPathOfRoots].
+ * The record of [sdk], the SDK of [key] in the project at [projectDir]: what its ref cannot give, see
+ * [PythonInterpreterRecords]. The facts, see [PythonInterpreterFacts], come from [existing], the record that the store
+ * holds: the SDK holds no facts. A new record, such as one of an SDK of the SDK table that the migration imports, takes
+ * them once from the SDK: its version, and the `sys.path` and the bundled stub packages that its roots state, see
+ * [sysPathOfRoots].
  */
 internal fun recordOf(
+  projectDir: Path,
   key: PythonInterpreterKey,
   sdk: Sdk,
   existing: PythonInterpreterRecords.StoredInterpreter? = null,
 ): PythonInterpreterRecords.StoredInterpreter =
   PythonInterpreterRecords.StoredInterpreter().apply {
-    ownerDir = key.ownerDir.toString()
+    ownerDir = PyInterpreterOwnerDir.of(projectDir, key.ownerDir).toString()
     ref = key.ref.toString()
     val data = sdk.sdkAdditionalData as? PythonSdkAdditionalData
     if (existing != null) {

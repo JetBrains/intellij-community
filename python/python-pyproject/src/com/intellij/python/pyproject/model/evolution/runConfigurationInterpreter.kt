@@ -12,8 +12,8 @@ import com.intellij.python.sdk.backend.binaryPathString
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 import com.intellij.python.sdk.backend.PyInterpreterLibraryName
+import com.intellij.python.sdk.backend.interpreterOwnerProjectDir
 
 /**
  * The text a run configuration stores for [interpreter] in its `INTERPRETER` field, in the form of an interpreter
@@ -22,7 +22,7 @@ import com.intellij.python.sdk.backend.PyInterpreterLibraryName
  */
 @ApiStatus.Internal
 fun interpreterTextOf(project: Project, interpreter: PythonInterpreter): String? {
-  val projectDir = project.basePath?.let { Path.of(it) } ?: return null
+  val projectDir = project.interpreterOwnerProjectDir ?: return null
   return libraryNameOf(projectDir, interpreter).toString()
 }
 

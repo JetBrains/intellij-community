@@ -20,11 +20,11 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.python.sdk.backend.PyInterpreterLibraryName
 import com.intellij.python.sdk.backend.PythonInterpreterKey
+import com.intellij.python.sdk.backend.interpreterOwnerProjectDir
 import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import com.intellij.python.sdk.backend.pyInterpreterDependency
 import com.intellij.python.sdk.backend.setPyInterpreterDependency
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
-import java.nio.file.Path
 
 /**
  * The Python SDK that an older build stored on this module, read when the project model has loaded. Only the registry
@@ -64,7 +64,7 @@ fun Module.setPythonSdkForTests(sdk: Sdk?) {
 
 /** Writes the interpreter library entry of [key] to this module, or removes the entry for a `null` [key]. */
 private fun Module.writeInterpreterLibraryEntryForTests(key: PythonInterpreterKey?) {
-  val name = key?.let { PyInterpreterLibraryName.of(Path.of(checkNotNull(project.basePath)), it) }
+  val name = key?.let { PyInterpreterLibraryName.of(checkNotNull(project.interpreterOwnerProjectDir), it) }
   blockingForTests {
     project.workspaceModel.update("Set the Python interpreter of $name for a test") { storage ->
       val module = findModuleEntity(storage) ?: return@update

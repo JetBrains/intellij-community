@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Service(Service.Level.PROJECT)
 @State(name = "PythonInterpreterRecords", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 @ApiStatus.Internal
-class PythonInterpreterRecords : PersistentStateComponent<PythonInterpreterRecords.State> {
+class PythonInterpreterRecords(private val project: Project) : PersistentStateComponent<PythonInterpreterRecords.State> {
   /** The saved form: one record for each key. */
   class State {
     @XCollection(style = XCollection.Style.v2)
@@ -49,6 +49,10 @@ class PythonInterpreterRecords : PersistentStateComponent<PythonInterpreterRecor
   /** The record of one interpreter, see [PythonInterpreterRecords]. */
   @Tag("interpreter")
   class StoredInterpreter {
+    /**
+     * The directory of the owner, in the form the `.iml` of a module uses for the same directory: relative to the
+     * directory of the project, with `/` separators, see [PyInterpreterOwnerDir].
+     */
     @Attribute("owner")
     var ownerDir: String = ""
 
@@ -80,8 +84,16 @@ class PythonInterpreterRecords : PersistentStateComponent<PythonInterpreterRecor
     @XCollection(propertyElementName = "mappings")
     var pathMappings: MutableList<StoredPathMapping> = mutableListOf()
 
-    /** The key of this record, or `null` when its ref does not parse. */
-    fun key(): PythonInterpreterKey? = PyInterpreterRef.parse(ref)?.let { PythonInterpreterKey(Path.of(ownerDir), it) }
+    /**
+     * The key of this record in the project at [projectDir], or `null` when its ref or its owner does not parse. A
+     * project that is moved or renamed so reads its records at its new directory, as its modules read their
+     * interpreter libraries, see [PyInterpreterLibraryName].
+     */
+    fun key(projectDir: Path): PythonInterpreterKey? {
+      val ref = PyInterpreterRef.parse(ref) ?: return null
+      val owner = PyInterpreterOwnerDir.parse(ownerDir) ?: return null
+      return PythonInterpreterKey(owner.resolveIn(projectDir), ref)
+    }
   }
 
   /** One path mapping of a target interpreter, see [StoredInterpreter.pathMappings]. */
@@ -130,9 +142,12 @@ class PythonInterpreterRecords : PersistentStateComponent<PythonInterpreterRecor
 
   override fun loadState(state: State) {
     records.clear()
-    for (record in state.interpreters) {
-      val key = record.key() ?: continue
-      records[key] = record
+    val projectDir = project.interpreterOwnerProjectDir
+    if (projectDir != null) {
+      for (record in state.interpreters) {
+        val key = record.key(projectDir) ?: continue
+        records[key] = record
+      }
     }
     version.update { it + 1 }
   }

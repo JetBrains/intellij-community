@@ -20,6 +20,7 @@ import com.jetbrains.python.sdk.internal.PYTHON_FACET_ID
 import java.nio.file.Path
 import com.intellij.python.sdk.backend.PyInterpreterLibraryName
 import com.intellij.python.sdk.backend.PythonInterpreterKey
+import com.intellij.python.sdk.backend.interpreterOwnerProjectDir
 import com.intellij.python.sdk.backend.setPyInterpreterDependency
 
 private val logger = fileLogger()
@@ -41,7 +42,7 @@ private val logger = fileLogger()
  * module still has such a reference.
  */
 internal suspend fun migrateSdkReferences(project: Project): Boolean {
-  val projectDir = project.basePath?.let { Path.of(it) } ?: return false
+  val projectDir = project.interpreterOwnerProjectDir ?: return false
   val storage = project.workspaceModel.currentSnapshot
   val registry = PythonInterpreterRegistry.getInstance(project)
   val modules = storage.entities<ModuleEntity>().filter { pendingSdkNameOf(it) != null }.toList()

@@ -12,8 +12,8 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 import com.intellij.python.sdk.backend.PyInterpreterLibraryName
+import com.intellij.python.sdk.backend.interpreterOwnerProjectDir
 
 /**
  * The owner directory and the ref of the interpreter that [name] names, or `null` when the project has no directory.
@@ -21,7 +21,7 @@ import com.intellij.python.sdk.backend.PyInterpreterLibraryName
  * of a tool workspace names the interpreter of the workspace root.
  */
 internal fun Project.keyOf(name: PyInterpreterLibraryName): PythonInterpreterKey? {
-  val projectDir = basePath?.let { Path.of(it) } ?: return null
+  val projectDir = interpreterOwnerProjectDir ?: return null
   return PythonInterpreterKey(name.ownerDir.resolveIn(projectDir), name.ref)
 }
 

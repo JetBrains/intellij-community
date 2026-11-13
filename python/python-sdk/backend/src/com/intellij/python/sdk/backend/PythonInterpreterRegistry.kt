@@ -362,7 +362,7 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
    * [key], see [PyInterpreterLibraryName]. That name is unique in the project, so no other SDK of the project has it.
    */
   private suspend fun holdSdk(key: PythonInterpreterKey, sdk: Sdk) {
-    val name = project.basePath?.let { PyInterpreterLibraryName.of(Path.of(it), key).toString() }
+    val name = project.interpreterOwnerProjectDir?.let { PyInterpreterLibraryName.of(it, key).toString() }
     if (name != null && sdk.name != name) {
       val rename = { modificator: SdkModificator ->
         modificator.name = name
@@ -504,7 +504,8 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
 
   /**
    * The key of the interpreter for the SDK named [sdkName], for the PyProject at [ownerDir], or `null` when there is no
-   * such Python SDK. Only the migration of a module of an older build calls it, in the interpreter library flow, see
+   * such Python SDK, or when the project has no directory to name the owner relative to, see [interpreterOwnerProjectDir].
+   * Only the migration of a module of an older build calls it, in the interpreter library flow, see
    * [isInterpreterLibraryFlowEnabled].
    *
    * The import saves the record of the SDK, see [PythonInterpreterRecords], and the registry builds the SDK of the
@@ -517,9 +518,10 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
   @ApiStatus.Obsolete
   fun importTableSdk(sdkName: String, ownerDir: Path): PythonInterpreterKey? {
     val (key, tableSdk) = tableSdkKeyOf(sdkName, ownerDir) ?: return null
+    val projectDir = project.interpreterOwnerProjectDir ?: return null
     val store = PythonInterpreterRecords.getInstance(project)
     // An earlier import of the same SDK already stored it.
-    if (store.recordOf(key) == null) store.put(key, recordOf(key, tableSdk))
+    if (store.recordOf(key) == null) store.put(key, recordOf(projectDir, key, tableSdk))
     return key
   }
 
