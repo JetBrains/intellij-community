@@ -1170,6 +1170,10 @@ as an example
       })
         .then(parseFileContents)
         .then(csvRows => {
+          if (csvRows.length === 0) {
+            //empty data breaks the UI below, so report the unsupported file(s) instead
+            throw new Error("No data to plot: the page reads only 'open-telemetry-metrics.*.csv' files, not '*.json'")
+          }
           document.progressBar.update(69)
 
           document.loadedAndParsedData.parsedCSV = csvRows
@@ -1201,20 +1205,32 @@ as an example
 
       //Plot charts:
       const progressPerPlotter = (100 - 80 - 1) / PLOTTERS.length
-      loadingChain.then(() => {
-        document.progressBar.update(80)
-      })
-      for (const plotter of PLOTTERS) {
-        loadingChain
-          .then(plotter)
-          .then(() => {
+      loadingChain
+        .then(() => {
+          document.progressBar.update(80)
+          //a failed plotter must not stop the other plotters
+          const failedPlotters = []
+          for (const plotter of PLOTTERS) {
+            try {
+              plotter()
+            }
+            catch (error) {
+              console.error(error)
+              failedPlotters.push(plotter.name)
+            }
             document.progressBar.update(document.progressBar.currentValue() + progressPerPlotter)
-          })
-      }
-      loadingChain.then(() => {
-        document.progressBar.update(80)
-        document.progressBar.hide()
-      })
+          }
+          if (failedPlotters.length > 0) {
+            throw new Error(`Failed to plot: ${failedPlotters.join(', ')}. See the browser console for details`)
+          }
+        })
+        .finally(() => {
+          document.progressBar.hide()
+        })
+        .catch(error => {
+          console.error(error)
+          alert(error.message)
+        })
     }
 
     /* @param contents: String, multi-lines csv
@@ -1320,7 +1336,7 @@ as an example
 
     <input type="file"
            id="fileInputSplash" multiple
-           accept="text/csv"
+           accept=".csv,text/csv"
            title="Select 'open-telemetry-metrics.*.csv' files"
            class="fileInput"
            onchange="readFiles(event.target.files)"
@@ -1370,7 +1386,7 @@ as an example
       </label>
       <input type="file"
              id="fileInput"
-             accept="text/csv" multiple
+             accept=".csv,text/csv" multiple
              class="fileInput"
              title="Select 'open-telemetry-metrics.*.csv' files"
              onchange="readFiles(event.target.files)"
