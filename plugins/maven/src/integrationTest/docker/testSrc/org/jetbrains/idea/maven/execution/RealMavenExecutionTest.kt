@@ -60,7 +60,8 @@ class RealMavenExecutionTest(mavenVersion: String, modelVersion: String) {
 
   private val maven by mavenImportingFixture(
     mavenVersion = mavenVersion,
-    modelVersion = modelVersion
+    modelVersion = modelVersion,
+    useCleanLocalRepository = true
   )
   
   private val myEvents: MutableList<BuildEvent> = CopyOnWriteArrayList()

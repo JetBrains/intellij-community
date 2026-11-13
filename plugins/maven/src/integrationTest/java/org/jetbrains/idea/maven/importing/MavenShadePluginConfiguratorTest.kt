@@ -28,7 +28,8 @@ class MavenShadePluginConfiguratorTest(mavenVersion: String, modelVersion: Strin
 
   private val maven by mavenImportingFixture(
     mavenVersion = mavenVersion,
-    modelVersion = modelVersion
+    modelVersion = modelVersion,
+    useCleanLocalRepository = true
   )
   
   @Test

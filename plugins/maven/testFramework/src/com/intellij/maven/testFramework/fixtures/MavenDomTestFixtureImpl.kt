@@ -40,6 +40,7 @@ internal class MavenDomTestFixtureImpl internal constructor(
   override val modelVersion: String = MavenConstants.MODEL_VERSION_4_0_0,
   private val skipPluginResolution: Boolean = true,
   override val indices: MavenDomTestFixtureIndices? = null,
+  private val cleanLocalRepository: Path? = null,
 ) : MavenDomTestFixture {
   override lateinit var disposable: Disposable
   private lateinit var jdkFixture: MavenProjectJDKTestFixture
@@ -120,6 +121,10 @@ internal class MavenDomTestFixtureImpl internal constructor(
     Files.writeString(settingsXml, CACHE_REDIRECTOR_SETTINGS)
     projectsManager.generalSettings.setUserSettingsFile(settingsXml.toString())
     MavenSettingsCache.getInstance(project).reload()
+
+    if (cleanLocalRepository != null) {
+      repositoryPath = cleanLocalRepository
+    }
 
     if (null != indices) {
       indicesFixture = MavenIndicesTestFixture(dir, project, disposable, indices.localRepoDir, *indices.extraRepoDirs.toTypedArray())

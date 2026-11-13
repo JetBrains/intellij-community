@@ -60,14 +60,17 @@ private class MavenBaseTestFixtureImpl(
  * ```
  *
  * @param initialPom the pom imported during fixture set-up; pass `null` to skip the initial import.
+ * @param useCleanLocalRepository when `true`, Maven uses an empty local repository. The fixture creates it before the
+ *   initial import and deletes it after the test. When `false`, Maven uses the default local repository.
  */
 fun mavenImportingFixture(
   mavenVersion: String = "bundled",
   modelVersion: String = MavenConstants.MODEL_VERSION_4_0_0,
   skipPluginResolution: Boolean = true,
   @Language(value = "XML", prefix = "<project>", suffix = "</project>") initialPom: String? = null,
+  useCleanLocalRepository: Boolean = false,
 ): TestFixture<MavenImportingTestFixture> {
-  return mavenFixtureImpl(mavenVersion, modelVersion, skipPluginResolution, initialPom, false, null)
+  return mavenFixtureImpl(mavenVersion, modelVersion, skipPluginResolution, initialPom, false, null, useCleanLocalRepository)
 }
 
 /**
@@ -100,6 +103,7 @@ private fun mavenFixtureImpl(
   @Language(value = "XML", prefix = "<project>", suffix = "</project>") initialPom: String? = null,
   useCodeInsight: Boolean = false,
   indices: MavenDomTestFixtureIndices? = null,
+  useCleanLocalRepository: Boolean = false,
 ): TestFixture<MavenDomTestFixture> {
   val projectRoot = getTestProjectRoot()
   val dirFixture = tempPathFixture(root = projectRoot, subdirName = "project")
@@ -110,6 +114,12 @@ private fun mavenFixtureImpl(
   // `createPomFile(projectRoot.parent, ...)` to test parent resolution by relativePath); without this, that write
   // lands in the shared temp root and leaks across runs (poisoning Maven 4's default `../pom.xml` parent inheritance).
   val projectFixture = projectFixture(pathFixture = dirFixture, openAfterCreation = true)
+  val localRepositoryFixture = if (useCleanLocalRepository) tempPathFixture(root = projectRoot, prefix = "repo") else null
+  if (localRepositoryFixture != null) {
+    // An open project keeps JAR files of the local repository open. The project must close before the framework deletes
+    // the repository.
+    projectFixture.dependsOn(localRepositoryFixture)
+  }
   return testFixture {
     val project = projectFixture.init()
     val dir = dirFixture.get().parent
@@ -119,7 +129,8 @@ private fun mavenFixtureImpl(
       mavenVersion,
       modelVersion,
       skipPluginResolution,
-      indices
+      indices,
+      localRepositoryFixture?.init(),
     )
     try {
       if (useCodeInsight) {
