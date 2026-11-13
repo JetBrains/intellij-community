@@ -313,7 +313,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     // The file is ours from the moment it is named, because the OS runtime creates it to reserve the name: it goes
     // away on every way out, a dry run, a failed excluded build and a panic included. A leaked BEP file is tens of
     // MB for a lane run.
-    let _bep_file = owns_bep_file.then(|| BepFile {
+    let _bep_file = owns_bep_file.then(|| TempFile {
         runtime,
         path: PathBuf::from(&bep_path),
     });
@@ -361,7 +361,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         profile: Some(path_text(&repo_file(runtime, HEAVY_PROFILE_FILE))),
         ..plan.clone()
     });
-    let _heavy_bep_file = heavy_plan.as_ref().map(|heavy| BepFile {
+    let _heavy_bep_file = heavy_plan.as_ref().map(|heavy| TempFile {
         runtime,
         path: PathBuf::from(&heavy.bep_path),
     });
@@ -375,7 +375,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         profile: Some(path_text(&repo_file(runtime, SINGLE_PROFILE_FILE))),
         ..plan.clone()
     });
-    let _single_bep_file = single_plan.as_ref().map(|single| BepFile {
+    let _single_bep_file = single_plan.as_ref().map(|single| TempFile {
         runtime,
         path: PathBuf::from(&single.bep_path),
     });
@@ -693,13 +693,13 @@ pub(crate) fn posix_shell_quote(value: &str) -> String {
     format!("'{}'", value.replace('\'', r"'\''"))
 }
 
-/// Removes a BEP file this invocation asked bazel for, on every way out of the run.
-pub(crate) struct BepFile<'r> {
+/// Removes a temporary file that this invocation named, such as the BEP file of a bazel run, on every way out of the run.
+pub(crate) struct TempFile<'r> {
     pub(crate) runtime: &'r dyn Runtime,
     pub(crate) path: PathBuf,
 }
 
-impl Drop for BepFile<'_> {
+impl Drop for TempFile<'_> {
     fn drop(&mut self) {
         // Nothing to do about a file that cannot be removed: the answer is already decided, and it is a temp file.
         let _ = self.runtime.remove(&self.path);

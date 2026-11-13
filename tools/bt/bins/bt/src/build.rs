@@ -15,7 +15,7 @@ use bt_core::{Refusal, bazel_command, exit};
 
 use crate::check::{Check, CheckCommand, record_green_run, tree_before_run};
 use crate::digest::{format_duration, tail_lines};
-use crate::execute::{BazelRun, BepFile, DIGEST_TAIL_LINES, Outcome, run_bazel, to_json};
+use crate::execute::{BazelRun, DIGEST_TAIL_LINES, Outcome, TempFile, run_bazel, to_json};
 use crate::options::BuildArgs;
 
 /// How many compile errors and failed targets the digest shows.
@@ -31,7 +31,7 @@ pub(crate) fn execute_build(args: &BuildArgs, runtime: &dyn Runtime) -> Result<O
     let overridden_bep = bep_override(&args.passthrough);
     let owns_bep_file = overridden_bep.is_none();
     let bep_path = overridden_bep.unwrap_or_else(|| runtime.temp_file("air-bazel-build-bep").to_string_lossy().into_owned());
-    let _bep_file = owns_bep_file.then(|| BepFile {
+    let _bep_file = owns_bep_file.then(|| TempFile {
         runtime,
         path: PathBuf::from(&bep_path),
     });
