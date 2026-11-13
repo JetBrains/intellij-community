@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
+import com.intellij.openapi.wm.impl.FrameEditorArea
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx
@@ -378,8 +379,14 @@ class IslandsUICustomization : InternalUICustomization() {
             createEditorBorderPainter(it)
             clearParentNoBackground(it)
           }
+          is XNextIslandHolder -> {
+            if (ClientProperty.isTrue(it, FrameEditorArea.ROOT_KEY)) {
+              createFrameEditorAreaPainter(it)
+            }
+          }
           is JBEditorTabs -> {
-            if (it.parent is EditorsSplitters) {
+            val parent = it.parent
+            if (parent is EditorsSplitters || ClientProperty.isTrue(parent, FrameEditorArea.ROOT_KEY)) {
               configureBackgroundPainting(it, recursive = true)
             }
           }
@@ -437,6 +444,13 @@ class IslandsUICustomization : InternalUICustomization() {
           is EditorsSplitters -> {
             it.border = null
             it.borderPainter = DefaultBorderPainter()
+          }
+          is XNextIslandHolder -> {
+            if (ClientProperty.isTrue(it, FrameEditorArea.ROOT_KEY)) {
+              it.border = null
+              it.borderPainter = DefaultBorderPainter()
+              it.background = JBColor.PanelBackground
+            }
           }
           is ManyIslandDivider -> {
             it.configure(false)
@@ -858,6 +872,39 @@ class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
+  override fun configureFrameEditorArea(root: XNextIslandHolder) {
+    if (isManyIslandEnabled) {
+      createFrameEditorAreaPainter(root)
+    }
+  }
+
+  override fun configureFrameEditorAreaCard(editors: JComponent) {
+    if (!isManyIslandEnabled) return
+    // The card mark is set now, so the splitters of the card lose the island they got at creation, see createEditorBorderPainter.
+    for (splitters in UIUtil.findComponentsOfType(editors, EditorsSplitters::class.java)) {
+      createEditorBorderPainter(splitters)
+    }
+  }
+
+  // The root of a frame editor area paints the island for its header and its cards, see FrameEditorArea.
+  private fun createFrameEditorAreaPainter(root: XNextIslandHolder) {
+    root.border = JBEmptyBorder(JBUI.insets("Island.Editor.insets", JBUI.insets(2)))
+    root.background = getMainBackgroundColor()
+
+    // The children, not the root: the enable walk clears the predicate above an EditorsSplitters, see clearParentNoBackground.
+    for (child in root.components) {
+      if (child is JComponent) {
+        configureBackgroundPainting(child, recursive = true)
+      }
+    }
+
+    root.borderPainter = object : AbstractBorderPainter() {
+      override fun paintAfterChildren(component: JComponent, g: Graphics) {
+        paintIslandBorder(component, IdeBackgroundUtil.withEditorBackground(g, component), true)
+      }
+    }
+  }
+
   private fun createToolWindowBorderPainter(toolwindow: ToolWindow, component: XNextIslandHolder) {
     component.border = JBEmptyBorder(JBUI.insets("Island.ToolWindow.insets", JBUI.insets(3)))
 
@@ -871,7 +918,9 @@ class IslandsUICustomization : InternalUICustomization() {
   }
 
   private fun createEditorBorderPainter(component: EditorsSplitters) {
-    component.border = JBEmptyBorder(JBUI.insets("Island.Editor.insets", JBUI.insets(2)))
+    // The editors of a card sit inside the island of their frame editor area, see createFrameEditorAreaPainter.
+    val inCard = ClientProperty.isTrue(component, FrameEditorArea.CARD_EDITORS_KEY)
+    component.border = if (inCard) null else JBEmptyBorder(JBUI.insets("Island.Editor.insets", JBUI.insets(2)))
 
     configureBackgroundPainting(component, recursive = true)
 
@@ -889,6 +938,7 @@ class IslandsUICustomization : InternalUICustomization() {
       }
 
       override fun paintAfterChildren(component: JComponent, g: Graphics) {
+        if (inCard) return
         val editorBG = IdeBackgroundUtil.withEditorBackground(g, component)
 
         paintIslandBorder(component, editorBG, true)

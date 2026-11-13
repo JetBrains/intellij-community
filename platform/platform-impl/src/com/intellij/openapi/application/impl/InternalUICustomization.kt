@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.toolWindow.ToolWindowButtonManager
+import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.Graphics2DDelegate
 import com.intellij.ui.JBColor
 import com.intellij.ui.mac.WindowTabsComponent
@@ -98,6 +99,12 @@ abstract class InternalUICustomization : UIThemeCustomization {
   open fun configureEditorsSplitters(component: EditorsSplitters) {}
 
   open fun installEditorBackground(component: JComponent) {}
+
+  /** The root of a frame editor area that holds a header and one editor card per project, see `FrameEditorArea`. */
+  open fun configureFrameEditorArea(root: XNextIslandHolder) {}
+
+  /** The editors of one project inside the root of a frame editor area, see [configureFrameEditorArea]. */
+  open fun configureFrameEditorAreaCard(editors: JComponent) {}
 
   open fun updateEditorHeader(editorHeaderPanel: JComponent) {}
 

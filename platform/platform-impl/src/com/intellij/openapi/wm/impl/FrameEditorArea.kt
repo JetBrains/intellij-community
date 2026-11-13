@@ -3,9 +3,15 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.application.impl.InternalUICustomization
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.toolWindow.ToolWindowPane
+import com.intellij.toolWindow.xNext.island.XNextIslandHolder
+import com.intellij.ui.ClientProperty
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.CardLayout
 import javax.swing.JComponent
@@ -21,16 +27,23 @@ import javax.swing.JPanel
  * The empty part of a guest card gives the guest as the project of the data context. The tabs and the editors of the guest
  * give it on their own.
  *
+ * A theme that paints islands paints one around the wrapper. The header and the cards share it. The editors of a card
+ * paint no island of their own, see [InternalUICustomization.configureFrameEditorArea]. [ROOT_KEY] marks the wrapper and
+ * [CARD_EDITORS_KEY] marks the editors of a card, so a theme switch finds them in the component tree.
+ *
  * EDT only.
  */
 internal class FrameEditorArea(private val pane: ToolWindowPane) {
   private var ownerEditors: JComponent? = null
   private var header: JComponent? = null
 
-  private var root: JPanel? = null
+  private var root: XNextIslandHolder? = null
   private val cards = CardLayout()
   private var cardPanel: JPanel? = null
-  private val guestCards = LinkedHashMap<Project, JComponent>()
+  private val guestCards = LinkedHashMap<Project, Card>()
+
+  /** The card of a guest: [component] sits in the card stack and holds the [editors] of the guest. */
+  private class Card(val component: JComponent, val editors: JComponent)
 
   /** Puts the editors of the frame owner into the frame. */
   @RequiresEdt
@@ -41,8 +54,7 @@ internal class FrameEditorArea(private val pane: ToolWindowPane) {
       pane.setDocumentComponent(editors)
     }
     else {
-      cardPanel.add(editors, OWNER_CARD)
-      cardPanel.revalidate()
+      addCard(cardPanel, editors, editors, OWNER_CARD)
     }
   }
 
@@ -52,8 +64,14 @@ internal class FrameEditorArea(private val pane: ToolWindowPane) {
     if (guest in guestCards) return
     val cardPanel = cardPanel ?: wrap()
     val card = UiDataProvider.wrapComponent(editors) { sink -> sink[CommonDataKeys.PROJECT] = guest }
-    guestCards[guest] = card
-    cardPanel.add(card, cardId(guest))
+    guestCards[guest] = Card(card, editors)
+    addCard(cardPanel, card, editors, cardId(guest))
+  }
+
+  private fun addCard(cardPanel: JPanel, card: JComponent, editors: JComponent, id: String) {
+    ClientProperty.put(editors, CARD_EDITORS_KEY, true)
+    InternalUICustomization.getInstance()?.configureFrameEditorAreaCard(editors)
+    cardPanel.add(card, id)
     cardPanel.revalidate()
   }
 
@@ -61,7 +79,13 @@ internal class FrameEditorArea(private val pane: ToolWindowPane) {
   fun removeGuestEditors(guest: Project) {
     val card = guestCards.remove(guest) ?: return
     val cardPanel = cardPanel ?: return
-    cardPanel.remove(card)
+    cardPanel.remove(card.component)
+    // The editors leave the island of the wrapper, so they paint their own again.
+    ClientProperty.put(card.editors, CARD_EDITORS_KEY, null)
+    val customization = InternalUICustomization.getInstance()
+    for (splitters in UIUtil.findComponentsOfType(card.editors, EditorsSplitters::class.java)) {
+      customization?.configureEditorsSplitters(splitters)
+    }
     cardPanel.revalidate()
     cardPanel.repaint()
   }
@@ -92,6 +116,7 @@ internal class FrameEditorArea(private val pane: ToolWindowPane) {
     this.header?.let { root.remove(it) }
     this.header = header
     if (header != null) {
+      InternalUICustomization.getInstance()?.installEditorBackground(header)
       root.add(header, BorderLayout.NORTH)
     }
     root.revalidate()
@@ -102,9 +127,12 @@ internal class FrameEditorArea(private val pane: ToolWindowPane) {
   private fun wrap(): JPanel {
     cardPanel?.let { return it }
     val cardPanel = JPanel(cards)
-    ownerEditors?.let { cardPanel.add(it, OWNER_CARD) }
-    val root = JPanel(BorderLayout())
+    ownerEditors?.let { addCard(cardPanel, it, it, OWNER_CARD) }
+    val root = XNextIslandHolder()
+    root.layout = BorderLayout()
+    ClientProperty.put(root, ROOT_KEY, true)
     root.add(cardPanel, BorderLayout.CENTER)
+    InternalUICustomization.getInstance()?.configureFrameEditorArea(root)
     this.cardPanel = cardPanel
     this.root = root
     pane.setDocumentComponent(root)
@@ -112,6 +140,14 @@ internal class FrameEditorArea(private val pane: ToolWindowPane) {
   }
 
   private fun cardId(guest: Project): String = "guest:${guest.locationHash}"
+
+  companion object {
+    /** `true` on the wrapper of a frame editor area that has a header or a guest card. */
+    val ROOT_KEY: Key<Boolean> = Key.create("FrameEditorArea.root")
+
+    /** `true` on the editors of one project inside such a wrapper. */
+    val CARD_EDITORS_KEY: Key<Boolean> = Key.create("FrameEditorArea.cardEditors")
+  }
 }
 
 private const val OWNER_CARD = "owner"
