@@ -541,11 +541,7 @@ public final class CreateFromUsageUtils {
                       classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
                       classKind == CreateClassKind.RECORD ? elementFactory.createRecord(name) :
                       elementFactory.createEnum(name);
-    setupGenericParameters(result, referenceElement);
-    result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
-    if (!StringUtil.isEmpty(superClassName)) {
-      setupSuperClassReference(result, superClassName);
-    }
+    setupClass(classKind, referenceElement, superClassName, result);
     return (PsiClass)psiClass.add(result);
   }
 
