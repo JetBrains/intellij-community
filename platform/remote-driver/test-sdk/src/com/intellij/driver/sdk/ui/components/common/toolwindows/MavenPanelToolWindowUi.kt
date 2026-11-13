@@ -25,10 +25,6 @@ class MavenPanelToolWindowUi(data: ComponentData) : UiComponent(data) {
   val tree: JTreeUiComponent
     get() = tree()
 
-  fun importMavenProject() {
-    driver.invokeAction("Maven.Reimport")
-  }
-
   fun debugTask(vararg pathToTask: String) {
     executeTask(pathToTask = pathToTask, taskName = "Debug '")
   }
