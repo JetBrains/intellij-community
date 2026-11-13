@@ -152,7 +152,7 @@ final class RecordPatternItemProvider extends JavaModCompletionItemProvider impl
         patternType = PsiUtil.captureToplevelWildcards(patternType, pattern);
         PsiSubstitutor substitutor = ((PsiClassType)patternType).resolveGenerics().getSubstitutor();
         return ContainerUtil.map(recordComponentTypes,
-                                 recordComponentType -> JavaVarTypeUtil.getUpwardProjection(substitutor.substitute(recordComponentType)));
+                                 recordComponentType -> JavaVarTypeUtil.getUpwardProjection(substitutor.substitute(recordComponentType), true));
       }
       return recordComponentTypes;
     }

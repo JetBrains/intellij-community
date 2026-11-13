@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -73,7 +73,7 @@ public final class PatternInference {
                                                           @Nullable PsiType type) {
     // JLS 18.5.5
     if (type == null) return null;
-    type = JavaVarTypeUtil.getUpwardProjection(type);
+    type = JavaVarTypeUtil.getUpwardProjection(type, true);
     Project project = recordClass.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiClassType recordRawType = factory.createType(recordClass);

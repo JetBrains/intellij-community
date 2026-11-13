@@ -2,15 +2,14 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
-import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.idea.TestFor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
+public class
+DataFlowInspection21Test extends DataFlowInspectionTestCase {
 
   @NotNull
   @Override
@@ -172,6 +171,20 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testJSpecifyLocalWithGenericsWithVar() {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  @TestFor(issues = "IDEA-396004")
+  public void testJSpecifyVarFromGenericMethodWithDeclarationNullable() {
+    addJSpecifyNullMarked(myFixture);
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    myFixture.addClass(DataFlowInspectionTest.barNullableNick());
+    myFixture.addClass("""
+                         package lib;
+                         public interface ResponseSpec {
+                           @bar.NullableNick
+                           <T> T body(Class<T> bodyType);
+                         }""");
     doTest();
   }
 

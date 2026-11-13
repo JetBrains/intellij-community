@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.codeInsight.NullabilitySource;
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -33,7 +35,26 @@ import java.util.Arrays;
 
 public final class JavaVarTypeUtil {
   public static PsiType getUpwardProjection(@NotNull PsiType t) {
-    return t.accept(new UpwardProjectionTypeVisitor());
+    return getUpwardProjection(t, false);
+  }
+
+  /**
+   * @param keepContainerNullability whether the projection keeps the top-level nullability that comes from a container annotation,
+   *                                 like {@code @NullMarked}; other nullability is always kept
+   */
+  public static PsiType getUpwardProjection(@NotNull PsiType t, boolean keepContainerNullability) {
+    PsiType projection = t.accept(new UpwardProjectionTypeVisitor());
+    if (!keepContainerNullability && projection instanceof PsiClassType && isFromContainer(projection.getNullability().source())) {
+      return projection.withNullability(TypeNullability.UNKNOWN);
+    }
+    return projection;
+  }
+
+  private static boolean isFromContainer(@NotNull NullabilitySource source) {
+    if (source instanceof NullabilitySource.MultiSource) {
+      return ContainerUtil.and(((NullabilitySource.MultiSource)source).sources(), s -> s instanceof NullabilitySource.ContainerAnnotation);
+    }
+    return source instanceof NullabilitySource.ContainerAnnotation;
   }
 
   public static PsiType getDownwardProjection(@NotNull PsiType type) {
