@@ -8,18 +8,14 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.IntEventField
 import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
 import com.intellij.internal.statistic.eventLog.events.StringEventField
+import com.intellij.internal.statistic.project.processIndexedContentFilesByType
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeValidationRule
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.project.stateStore
 import com.intellij.psi.search.FileTypeIndex
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.ProjectScope
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus
 
@@ -30,6 +26,9 @@ import org.jetbrains.annotations.ApiStatus
  * The collector reads no file and walks no directory. A file that the index does not hold, for example a non-indexable file,
  * is not counted. Without [FileBasedIndex] the collector reports nothing.
  *
+ * The read runs in `com.intellij.internal.statistic.project.processIndexedContentFilesByType`, which takes a short
+ * read action per batch of files and suspends between the batches. Thus, a write action waits for one batch at most.
+ *
  * @see FileTypeValidationRule
  */
 @ApiStatus.Internal
@@ -37,38 +36,19 @@ class FileTypeUsagesCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   override suspend fun collect(project: Project): Set<MetricEvent> {
-    if (project.isDisposed || FileBasedIndex.getInstanceIfDefined() == null) return emptySet()
-
-    val scope = ProjectScope.getContentScope(project)
-    val fileTypeManager = FileTypeManager.getInstance()
-    val countsByType = LinkedHashMap<FileType, TypeCount>()
-    for (fileType in fileTypeManager.registeredFileTypes) {
-      checkCanceled()
-      // the block may run again after a write action, so it builds a fresh result each time
-      val typeCount = smartReadAction(project) {
-        if (project.isDisposed) null else countFilesOfType(project, fileType, scope)
-      } ?: return emptySet()
-      if (typeCount.count > 0) {
-        countsByType[fileType] = typeCount
-      }
-    }
-    return buildEvents(countsByType, fileTypeManager)
-  }
-
-  private fun countFilesOfType(project: Project, fileType: FileType, scope: GlobalSearchScope): TypeCount {
     val stateStore = project.stateStore
-    val typeCount = TypeCount()
-    FileTypeIndex.processFiles(fileType, { file ->
-      ProgressManager.checkCanceled()
+    val countsByType = HashMap<FileType, TypeCount>()
+    val hasData = processIndexedContentFilesByType(project) { fileType, file ->
       // skip files from the .idea directory, otherwise 99% of projects would have XML and PLAIN_TEXT file types
       if (!stateStore.isProjectFile(file)) {
+        val typeCount = countsByType.getOrPut(fileType) { TypeCount() }
         typeCount.count++
         // null = no dot in the name; "" (name `b.`) is a real extension, as in the old content walk
         typeCount.countByExtension.merge(file.extension, 1, Int::plus)
       }
-      true
-    }, scope)
-    return typeCount
+    }
+    if (!hasData) return emptySet()
+    return buildEvents(countsByType, FileTypeManager.getInstance())
   }
 
   private fun buildEvents(countsByType: Map<FileType, TypeCount>, fileTypeManager: FileTypeManager): Set<MetricEvent> {

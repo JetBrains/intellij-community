@@ -2,6 +2,9 @@
 package com.intellij.internal.statistic.collectors.fus.fileTypes
 
 import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.openapi.application.ReadActionListener
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -12,11 +15,14 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
 import kotlin.io.path.writeText
+import kotlin.time.Duration.Companion.minutes
 
 @TestApplication
 internal class FileTypeUsagesCollectorTest {
@@ -53,6 +59,40 @@ internal class FileTypeUsagesCollectorTest {
     )
   }
 
+  /**
+   * The collector reads the index in batches, so the read action count follows the batch count, not the file count.
+   * Before the change the collector took one read action per registered file type, and the walk before it took two
+   * read actions per file.
+   */
+  @Test
+  fun `takes a read action per batch of files, not per file`(): Unit = timeoutRunBlocking(timeout = 10.minutes) {
+    val root = tempDirFixture.get()
+    withContext(Dispatchers.IO) {
+      val textDir = root.resolve("text").createDirectories()
+      val xmlDir = root.resolve("xml").createDirectories()
+      repeat(FILES_OF_EACH_TYPE) { index -> textDir.resolve("f$index.txt").writeText("a") }
+      repeat(FILES_OF_EACH_TYPE) { index -> xmlDir.resolve("f$index.xml").writeText("<a/>") }
+      refresh(root)
+    }
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+
+    val counter = ReadActionCounter()
+    val counterDisposable = Disposer.newDisposable()
+    val events = try {
+      ApplicationManagerEx.getApplicationEx().addReadActionListener(counter, counterDisposable)
+      FileTypeUsagesCollector().collect(project)
+    }
+    finally {
+      Disposer.dispose(counterDisposable)
+    }
+
+    assertTrue(events.isNotEmpty(), "The collector reported nothing")
+    assertTrue(
+      counter.count <= MAX_READ_ACTIONS,
+      "${2 * FILES_OF_EACH_TYPE} files took ${counter.count} read actions, and the limit is $MAX_READ_ACTIONS",
+    )
+  }
+
   private fun refresh(root: Path) {
     val dir = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root)) { "No VFS file for $root" }
     dir.refresh(false, true)
@@ -63,4 +103,29 @@ internal class FileTypeUsagesCollectorTest {
       val data = it.data.build()
       data[key] to data["count"]
     }
+
+  /** Counts the outermost read actions of each thread. */
+  private class ReadActionCounter : ReadActionListener {
+    private val depth = ThreadLocal.withInitial { 0 }
+    private val counter = AtomicInteger()
+
+    val count: Int get() = counter.get()
+
+    override fun readActionStarted(action: Class<*>) {
+      depth.set(depth.get() + 1)
+    }
+
+    override fun readActionFinished(action: Class<*>) {
+      val left = depth.get() - 1
+      depth.set(left)
+      if (left == 0) {
+        counter.incrementAndGet()
+      }
+    }
+  }
 }
+
+private const val FILES_OF_EACH_TYPE = 1250
+
+/** One read action for the keys, and for each of the few indexed types one for the iterator and one per batch. */
+private const val MAX_READ_ACTIONS = 25
