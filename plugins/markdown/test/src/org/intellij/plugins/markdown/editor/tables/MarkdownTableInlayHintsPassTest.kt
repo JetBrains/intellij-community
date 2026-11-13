@@ -17,6 +17,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.plugins.markdown.editor.livepreview.computeLivePreviewSpecs
 import org.intellij.plugins.markdown.editor.livepreview.enableLivePreview
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
+import org.intellij.plugins.markdown.editor.tables.ui.presentation.VerticalBarPresentation
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.publishSpecsAndWait
 import org.intellij.plugins.markdown.settings.MarkdownSettings
@@ -59,6 +60,17 @@ class MarkdownTableInlayHintsPassTest : BasePlatformTestCase() {
 
     assertTrue("the bar must grow with the header row, but it stayed $before", getInlayWidth() > before)
     assertEquals(expectedBarWidth(), getInlayWidth())
+  }
+
+  fun `test a row bar of the next pass is a change only when its look changes`() {
+    configureTable()
+    val table = requireNotNull(PsiTreeUtil.findChildOfType(myFixture.file, MarkdownTable::class.java))
+    val row = requireNotNull(table.headerRow)
+    val tableRange = myFixture.editor.document.createRangeMarker(table.textRange)
+    val previous = VerticalBarPresentation(myFixture.editor, row, hover = false, tableRangeMarker = tableRange)
+
+    assertFalse(VerticalBarPresentation(myFixture.editor, row, hover = false, tableRangeMarker = tableRange).updateState(previous))
+    assertTrue(VerticalBarPresentation(myFixture.editor, row, hover = true, tableRangeMarker = tableRange).updateState(previous))
   }
 
   fun `test the pass removes the bar when the table loses its borders`() {

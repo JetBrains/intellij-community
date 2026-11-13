@@ -38,6 +38,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.JBHtmlPane
@@ -46,6 +47,7 @@ import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.util.text.CharArrayUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.StyleSheetUtil
 import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.toTextRange
@@ -60,12 +62,14 @@ import java.awt.Rectangle
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import javax.swing.SwingUtilities
 import javax.swing.text.AttributeSet
 import javax.swing.text.Element
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLDocument
+import javax.swing.text.html.StyleSheet
 
 /** [JBHtmlPane] represents a `<wbr>` with this character. */
 private const val ZERO_WIDTH_SPACE = '\u200B'
@@ -223,7 +227,7 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
     private fun getQuoteIndent(): Int {
       val text = editor.document.charsSequence
       val start = range.startOffset
-      val lastMarker = text.lastIndexOf('>', CharArrayUtil.shiftForward(text, start, range.endOffset, " \t>") - 1)
+      val lastMarker = StringUtil.lastIndexOf(text, '>', start, CharArrayUtil.shiftForward(text, start, range.endOffset, " \t>"))
       if (lastMarker < start) return 0
       val markerEnd = if (text.getOrNull(lastMarker + 1)?.let { it in " \t" } == true) lastMarker + 2 else lastMarker + 1
       return getQuotePrefixWidth(editor, start, markerEnd)
@@ -377,7 +381,7 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
       },
       JBHtmlPaneConfiguration.builder()
         .fontResolver(EditorCssFontResolver.getInstance(editor))
-        .customStyleSheet(css)
+        .customStyleSheetProvider { headingStyleSheet(css) }
         .build(),
     ).apply {
       border = JBUI.Borders.empty()
@@ -391,6 +395,10 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
     }
   }
 }
+
+private val headingStyleSheets = ConcurrentHashMap<String, StyleSheet>()
+
+private fun headingStyleSheet(css: String): StyleSheet = headingStyleSheets.computeIfAbsent(css) { StyleSheetUtil.loadStyleSheet(it) }
 
 /** The width that soft wraps use, or null when the editor does not soft-wrap. */
 private fun wrapWidth(editor: EditorEx): Int? {

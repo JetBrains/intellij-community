@@ -110,6 +110,13 @@ class VerticalBarPresentation private constructor(
   override val height
     get() = boundsState.height
 
+  override fun updateState(previousPresentation: InlayPresentation): Boolean =
+    previousPresentation !is VerticalBarPresentation ||
+    rowLocation != previousPresentation.rowLocation ||
+    hover != previousPresentation.hover ||
+    accent != previousPresentation.accent ||
+    boundsState != previousPresentation.boundsState
+
   override fun paint(graphics: Graphics2D, attributes: TextAttributes) {
     if (editor.isDisposed || boundsState == initialState) {
       return

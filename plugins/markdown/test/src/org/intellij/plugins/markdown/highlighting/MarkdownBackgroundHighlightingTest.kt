@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.IndentsModelImpl
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
@@ -19,6 +20,7 @@ import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil.paintEditor
+import org.intellij.plugins.markdown.editor.fence.MarkdownBackgroundRenderer
 import org.intellij.plugins.markdown.editor.fence.collectBlockQuoteBackground
 import org.intellij.plugins.markdown.editor.fence.collectCodeFenceBackground
 import org.intellij.plugins.markdown.editor.fence.collectCodeSpanBackground
@@ -329,6 +331,22 @@ class MarkdownBackgroundHighlightingTest : BasePlatformTestCase() {
 
     assertEquals(Color.RED, getPixel(image, right, y))
   }
+
+  fun `test a new highlighting keeps the highlighter of an unchanged background`() {
+    myFixture.configureByText("test.md", "`a` `b<caret>`")
+    myFixture.doHighlighting()
+    val kept = getBackgroundHighlighters().single { it.textRange == TextRange(1, 2) }
+
+    myFixture.type("c")
+    myFixture.doHighlighting()
+
+    val after = getBackgroundHighlighters()
+    assertSame(kept, after.single { it.textRange == TextRange(1, 2) })
+    assertEquals(listOf(TextRange(1, 2), TextRange(5, 7)), after.map { it.textRange }.sortedBy { it.startOffset })
+  }
+
+  private fun getBackgroundHighlighters(): List<RangeHighlighter> =
+    myFixture.editor.markupModel.allHighlighters.filter { it.customRenderer is MarkdownBackgroundRenderer }
 
   private fun collectFence(text: String): Pair<TextRange, Document> {
     myFixture.configureByText("test.md", text)

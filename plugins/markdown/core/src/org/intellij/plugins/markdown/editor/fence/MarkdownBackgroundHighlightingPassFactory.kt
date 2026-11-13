@@ -8,6 +8,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -87,11 +88,22 @@ internal class MarkdownBackgroundHighlightingPassFactory :
     }
 
     override fun doApplyInformationToEditor() {
-      myEditor.getUserData(BACKGROUND_HIGHLIGHTERS)?.forEach(myEditor.markupModel::removeHighlighter)
-      val highlighters = elements.map { [renderer, range] ->
-        myEditor.markupModel.addRangeHighlighter(
-          renderer.highlighterKey, range.startOffset, range.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, HighlighterTargetArea.EXACT_RANGE,
-        ).also { it.customRenderer = renderer }
+      val markupModel = myEditor.markupModel as MarkupModelEx
+      val missing = elements.toMutableSet()
+      val highlighters = ArrayList<RangeHighlighter>()
+      for (highlighter in myEditor.getUserData(BACKGROUND_HIGHLIGHTERS).orEmpty()) {
+        if (highlighter.isValid && missing.remove(highlighter.customRenderer to highlighter.textRange)) {
+          highlighters.add(highlighter)
+        }
+        else {
+          markupModel.removeHighlighter(highlighter)
+        }
+      }
+      missing.mapTo(highlighters) { [renderer, range] ->
+        markupModel.addRangeHighlighterAndChangeAttributes(
+          renderer.highlighterKey, range.startOffset, range.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
+          HighlighterTargetArea.EXACT_RANGE, false,
+        ) { it.customRenderer = renderer }
       }
       myEditor.putUserData(BACKGROUND_HIGHLIGHTERS, highlighters)
     }

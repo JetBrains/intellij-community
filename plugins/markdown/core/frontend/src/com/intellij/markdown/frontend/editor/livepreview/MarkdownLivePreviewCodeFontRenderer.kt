@@ -11,7 +11,10 @@ import com.intellij.openapi.util.TextRange
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.toTextRange
 
-/** Shows the code ranges of the [MarkdownLivePreviewSpec.CodeFont] specs in JetBrains Mono. A revealed element keeps the font. */
+/**
+ * Shows the code ranges of the [MarkdownLivePreviewSpec.CodeFont] specs in JetBrains Mono. A revealed element keeps the font.
+ * A code range that touches a caret grows with the text typed at its ends.
+ */
 internal class MarkdownLivePreviewCodeFontRenderer(private val editor: Editor) : MarkdownLivePreviewElementRenderer {
   private val codeFont = createCodeFont()
   private var highlighters = emptyList<RangeHighlighter>()
@@ -41,17 +44,19 @@ internal class MarkdownLivePreviewCodeFontRenderer(private val editor: Editor) :
     for (range in missing) {
       kept.add(addHighlighter(range))
     }
+    val carets = editor.caretModel.allCarets
+    for (highlighter in kept) {
+      val greedy = carets.any { it.selectionStart <= highlighter.endOffset && highlighter.startOffset <= it.selectionEnd }
+      highlighter.isGreedyToLeft = greedy
+      highlighter.isGreedyToRight = greedy
+    }
     highlighters = kept
   }
 
-  private fun addHighlighter(range: TextRange): RangeHighlighter {
-    val highlighter = editor.markupModel.addRangeHighlighter(
+  private fun addHighlighter(range: TextRange): RangeHighlighter =
+    editor.markupModel.addRangeHighlighter(
       range.startOffset, range.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX + 1, codeFont, HighlighterTargetArea.EXACT_RANGE,
     )
-    highlighter.isGreedyToLeft = true
-    highlighter.isGreedyToRight = true
-    return highlighter
-  }
 
   override fun dispose() {
     for (highlighter in highlighters) {
