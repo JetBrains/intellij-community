@@ -274,6 +274,10 @@ rules_rust.patch(
         "//:build/rules_rust-process-wrapper-skip-static-lib-symlinks.patch",  # TODO: remove that once merged to upstream
         "//:build/rules_rust-cdylib-def-file.patch",  # TODO: remove that once merged to upstream
         "//:build/rules_rust-cc-common-link-native-libs.patch",  # TODO: remove that once merged to upstream
+        # we do not see a reality where one would want a transitive dependency to revert
+        # their asked statically linked MSVC runtime, implemented as a patch to avoid setting
+        # transitions manually everywhere or with a wrapper or child rule
+        "//:build/rules_rust-msvc-crt-transition.patch",
     ],
     strip = 1,
 )
@@ -287,6 +291,18 @@ rust_toolchains.toolchain(
     version = "1.93.1",
 )
 use_repo(rust_toolchains, "default_rust_toolchains")
+
+# The test toolchains of the rules_rs Linux triples and of the gnu and gnullvm Windows triples. Not a dev dependency: the
+# tests of the ultimate root need them too.
+register_toolchains(
+    "//build/native/platforms:linux_aarch64_glibc_test_toolchain",
+    "//build/native/platforms:linux_aarch64_musl_test_toolchain",
+    "//build/native/platforms:linux_x86_64_glibc_test_toolchain",
+    "//build/native/platforms:linux_x86_64_musl_test_toolchain",
+    "//build/native/platforms:windows_aarch64_gnullvm_test_toolchain",
+    "//build/native/platforms:windows_x86_64_gnu_test_toolchain",
+    "//build/native/platforms:windows_x86_64_gnullvm_test_toolchain",
+)
 
 # `dev_dependency = True`: register the toolchains only when this module is the root. The ultimate root registers the
 # same toolchains itself.
