@@ -2187,7 +2187,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/build/intellij.pycharm.community.build.iml" filepath="$PROJECT_DIR$/python/build/intellij.pycharm.community.build.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/build/build-debug-binaries/intellij.pycharm.community.build.debugBinaries.iml" filepath="$PROJECT_DIR$/python/build/build-debug-binaries/intellij.pycharm.community.build.debugBinaries.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/build/intellij.pycharm.community.build.tests.iml" filepath="$PROJECT_DIR$/python/build/intellij.pycharm.community.build.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/build/tests/disabled/intellij.pycharm.community.build.tests.disabled.iml" filepath="$PROJECT_DIR$/python/build/tests/disabled/intellij.pycharm.community.build.tests.disabled.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/build/tests/sdks/intellij.pycharm.community.build.tests.sdks.iml" filepath="$PROJECT_DIR$/python/build/tests/sdks/intellij.pycharm.community.build.tests.sdks.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.pycharm.community.customization.iml" filepath="$PROJECT_DIR$/python/intellij.pycharm.community.customization.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/ide/customization.backend/intellij.pycharm.community.customization.backend.iml" filepath="$PROJECT_DIR$/python/ide/customization.backend/intellij.pycharm.community.customization.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/ide/customization.frontend/intellij.pycharm.community.customization.frontend.iml" filepath="$PROJECT_DIR$/python/ide/customization.frontend/intellij.pycharm.community.customization.frontend.iml" />
