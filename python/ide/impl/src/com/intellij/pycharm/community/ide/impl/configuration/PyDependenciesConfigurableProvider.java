@@ -5,6 +5,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.pycharm.community.ide.impl.configuration.interpreter.PyInterpreterSettingsFlags;
 
 public final class PyDependenciesConfigurableProvider extends ConfigurableProvider {
   private final Project myProject;
@@ -15,6 +16,7 @@ public final class PyDependenciesConfigurableProvider extends ConfigurableProvid
 
   @Override
   public boolean canCreateConfigurable() {
+    if (PyInterpreterSettingsFlags.areNewInterpreterPagesEnabled()) return false;
     return ModuleManager.getInstance(myProject).getModules().length > 1;
   }
 
