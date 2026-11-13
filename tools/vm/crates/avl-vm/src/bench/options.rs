@@ -94,7 +94,8 @@ pub(crate) enum BenchVerb {
     /// holds the same for each main module and content module, with its plugin. A main module is `<plugin id> (main)`.
     /// A plugin-classes.txt of the old shape has no time, so a time is `-`. A run needs class-load.log and
     /// plugin-classes.txt for an anchor. --entries lists the first classes of each plugin of the plugin table before
-    /// the anchor, from the median run of the arm.
+    /// the anchor, from the median run of the arm. --kinds counts the classes of each module of the module table by
+    /// their kind, such as a lambda or a Companion, from the same run.
     ///
     /// The process clock starts at the load of com.intellij.idea.Main in class-load.log. A log without that class takes
     /// jvm.loadingTime of startup-stats.json, which puts the start about 100 ms too early, with a note.
@@ -215,12 +216,18 @@ pub(crate) struct ClassesArgs {
     /// anchor, with their ms from the process start. The run needs class-load.log and plugin-classes.txt.
     #[arg(long, value_name = "N", value_parser = clap::value_parser!(u32).range(1..))]
     pub(crate) entries: Option<u32>,
+    /// Adds the kinds of the classes of each module of the module table that the median run of the arm loaded before
+    /// the anchor: top-level classes, file facades (`*Kt`), named nested classes, numbered classes (`$1`: a lambda or
+    /// the coroutine of a function), `Companion`, `WhenMappings` and `$$serializer`. The counts are of the median run,
+    /// not medians. The run needs class-load.log and plugin-classes.txt.
+    #[arg(long)]
+    pub(crate) kinds: bool,
     /// Counts the class loads in the window of the span NAME instead: from the start to the end of the first span NAME
     /// of each run, such as air.emptyState.createContent. The tables hold the loads by plugin, by module, and by
     /// package for a class without a plugin, with the findClass ms of the plugin classes. A hidden class counts with
     /// the class that defines it. A run needs class-load.log, plugin-classes.txt, opentelemetry.json and, for the EDT,
     /// threads.txt.
-    #[arg(long, value_name = "NAME", conflicts_with_all = ["at", "entries", "plugins"])]
+    #[arg(long, value_name = "NAME", conflicts_with_all = ["at", "entries", "kinds", "plugins"])]
     pub(crate) span: Option<String>,
     /// The thread of the loads of --span: `edt`, the EDT, or `all`, every thread. With `edt`, the BG columns give the
     /// loads of the other threads.

@@ -259,6 +259,14 @@ pub enum Answer {
     StateStopped,
     /// `prlctl start` copies this over [`Answer::ListJson`] when it exists.
     StateRunning,
+    /// How many `prlctl exec` calls in a row fail in the channel of `prlctl` before the guest answers: each one prints
+    /// `PrlJob_GetResult: Invalid argument` on stderr, exits 255 and counts the file down.
+    ExecChannelFailures,
+    /// `prlctl start` of a VM that [`Answer::ListJson`] lists as suspended fails as when Apple Virtualization cannot
+    /// restore its saved state: it appends this content, the log lines of the failure, to `parallels.log` beside the
+    /// executable, says "Operation canceled" on stderr, exits 255 and keeps the state. Empty content is a failure that
+    /// logs nothing. A start of a stopped VM boots.
+    StartRestoreFails,
     /// `prlctl suspend` copies this over [`Answer::ListJson`] when it exists.
     StateSuspended,
     /// Exit code of `prlctl suspend`, default 0.
@@ -344,6 +352,8 @@ impl Answer {
             Self::StateStopped => "state-stopped.txt",
             Self::StateRunning => "state-running.txt",
             Self::StateSuspended => "state-suspended.txt",
+            Self::StartRestoreFails => "start-restore-fails.txt",
+            Self::ExecChannelFailures => "exec-channel-failures.txt",
             Self::SuspendExit => "suspend-exit.txt",
             Self::Who => "who.txt",
             Self::Autologin => "autologin.txt",
@@ -493,12 +503,23 @@ if [ "$self" = prlctl ]; then
       [ -f "$dir/state-stopped.txt" ] && cp "$dir/state-stopped.txt" "$dir/list-json.txt"
       exit 0 ;;
     start)
+      if [ -f "$dir/start-restore-fails.txt" ] && grep -q '"State":"suspended"' "$dir/list-json.txt" 2>/dev/null; then
+        cat "$dir/start-restore-fails.txt" >> "$dir/parallels.log"
+        echo 'Failed to start the VM: Operation canceled. The operation has been canceled.' >&2
+        exit 255
+      fi
       [ -f "$dir/state-running.txt" ] && cp "$dir/state-running.txt" "$dir/list-json.txt"
       exit 0 ;;
     suspend)
       [ -f "$dir/state-suspended.txt" ] && cp "$dir/state-suspended.txt" "$dir/list-json.txt"
       exit "$(cat "$dir/suspend-exit.txt" 2>/dev/null || echo 0)" ;;
     exec)
+      failures=$(cat "$dir/exec-channel-failures.txt" 2>/dev/null || echo 0)
+      if [ "$failures" -gt 0 ]; then
+        echo $((failures - 1)) > "$dir/exec-channel-failures.txt"
+        echo 'PrlJob_GetResult: Invalid argument. An invalid argument was passed.' >&2
+        exit 255
+      fi
       case "$3" in
         *relay*)
           words=$(printf '%s' "$3" | tr -d "'")

@@ -11,6 +11,16 @@ source "$script_dir/lib.sh"
 # operator; ADR 0108 states why the pipeline took the dependency.
 resolve_guest_agent_binary
 
+# `vm.cmd image build` names the candidate and serves Packer's SSH to it over the exec channel of Tart on a loopback
+# port, because macOS Local Network privacy refuses the guest address (crates/avl-vm/src/image/ssh_relay.rs of the
+# UI-lane controller). Without both values Packer would wait for an SSH that never connects.
+candidate_vm="${AIR_IMAGE_CANDIDATE_VM:-}"
+ssh_proxy_port="${AIR_IMAGE_SSH_PROXY_PORT:-}"
+[[ -n "$candidate_vm" && -n "$ssh_proxy_port" ]] ||
+  die "run the build through ./community/tools/vm.cmd --backend tart image build, which serves Packer's SSH"
+[[ "$candidate_vm" == "${GOLDEN_VM}-candidate-"* ]] ||
+  die "the candidate $candidate_vm is not a candidate of the golden $GOLDEN_VM"
+
 mkdir -p "$PACKER_PLUGIN_PATH"
 note "initializing and validating pinned Packer plugins"
 cd "$AIR_PROPOSAL_ROOT"
@@ -23,11 +33,11 @@ cd "$AIR_PROPOSAL_ROOT"
   -var "junie_version=$JUNIE_VERSION" \
   -var "node_major=$NODE_MAJOR" \
   -var "guest_agent_binary=$AIR_GUEST_AGENT_BINARY" \
+  -var "ssh_proxy_port=$ssh_proxy_port" \
   air-macos.pkr.hcl
 
 "$script_dir/fetch-base.sh"
 vm_exists "$GOLDEN_VM" && die "golden VM already exists; refusing to replace it: $GOLDEN_VM"
-candidate_vm="${GOLDEN_VM}-candidate-$(date -u +%Y%m%dT%H%M%SZ)-$$"
 vm_exists "$candidate_vm" && die "candidate VM already exists: $candidate_vm"
 
 note "building unapproved candidate $candidate_vm from local pinned base $BASE_VM"
@@ -38,6 +48,7 @@ note "building unapproved candidate $candidate_vm from local pinned base $BASE_V
   -var "junie_version=$JUNIE_VERSION" \
   -var "node_major=$NODE_MAJOR" \
   -var "guest_agent_binary=$AIR_GUEST_AGENT_BINARY" \
+  -var "ssh_proxy_port=$ssh_proxy_port" \
   air-macos.pkr.hcl
 
 require_tart_vm_stopped "$candidate_vm"

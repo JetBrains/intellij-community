@@ -48,8 +48,8 @@
 //! caller can branch on into a worker that silently never got its shares.
 
 use avl_base::{Exit, Refusal};
-use avl_host_sys::Ctx;
 use avl_host_sys::guest::ShareMount;
+use avl_host_sys::{Ctx, SpawnOptions};
 
 use crate::worker::container_linux::ContainerLinux;
 use crate::worker::docker::{ContainerState, Docker};
@@ -188,6 +188,19 @@ impl Machine {
             Self::Parallels(parallels) => Ok(parallels.guest_argv(ctx, worker, argv)),
             Self::Docker(docker) => Ok(exec_argv(ctx, docker.resolved_program(ctx).await?, worker, argv, interactive)),
             Self::ContainerLinux(container_linux) => Ok(container_linux.guest_argv(ctx, worker, argv, interactive)),
+        }
+    }
+
+    /// The options of a guest command line of this machine: `options`, and the run again of a failure of the launcher
+    /// that this backend knows, such as the channel of `prlctl exec`
+    /// ([`PRLCTL_EXEC_CHANNEL_FAILURE`](crate::worker::parallels::PRLCTL_EXEC_CHANNEL_FAILURE)).
+    pub(crate) fn guest_options(&self, options: &SpawnOptions) -> SpawnOptions {
+        match self {
+            #[cfg(unix)]
+            Self::Parallels(_) if options.transient_failure.is_none() => {
+                options.clone().retrying(crate::worker::parallels::PRLCTL_EXEC_CHANNEL_FAILURE)
+            }
+            _ => options.clone(),
         }
     }
 

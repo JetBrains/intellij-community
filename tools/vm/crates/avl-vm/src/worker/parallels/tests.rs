@@ -411,6 +411,89 @@ async fn the_shared_folder_object_separates_the_switch_from_the_shares() {
     assert_eq!(never_configured.shared_folder("air-macos-repo"), None);
 }
 
+// --- start ---------------------------------------------------------------------------------------------------
+
+/// The listing of a VM in `state` whose bundle is the directory of the fake, where the fake writes `parallels.log`.
+fn listing_in_fake_home(fixture: &Fixture, state: &str) -> String {
+    let home = fixture.fake.directory().to_string_lossy().into_owned();
+    format!(
+        r#"[{{"Name":"macOS","Type":"APPLE_VZ_VM","State":"{state}","OS":"macosx","Home":"{home}/",
+          "Host Shared Folders":{}}}]"#,
+        fixture.matching_folders()
+    )
+}
+
+/// The two lines that Parallels logs when Apple Virtualization refuses the saved state of a VM, as a macOS host of a
+/// newer version logged them on 2026-11-08.
+const RESTORE_FAILURE_LOG: &str = "F /macvm:1:1/ Restore failed. Reason : Error Domain=VZErrorDomain Code=12\n\
+F /macvm:1:1/ Sending question PET_QUESTION_MACVM_CANNOT_RESTORE_SUSPEND_STATE\n";
+
+// The saved state of a suspended VM that the host cannot restore fails every start the same way, so the start drops it
+// once and boots, and it says so.
+#[tokio::test]
+async fn a_saved_state_that_the_host_cannot_restore_is_dropped_and_the_vm_boots() {
+    let ctx = Ctx::background();
+    let fixture = Fixture::new();
+    fixture.fake.answer(Answer::ListJson, listing_in_fake_home(&fixture, "suspended"));
+    fixture.fake.answer(Answer::StateStopped, listing_in_fake_home(&fixture, "stopped"));
+    fixture.fake.answer(Answer::StateRunning, listing_in_fake_home(&fixture, "running"));
+    fixture.fake.answer(Answer::StartRestoreFails, RESTORE_FAILURE_LOG);
+
+    let started = fixture.parallels.start(&ctx, WORKER).await.unwrap();
+
+    assert_eq!(started, ParallelsStart::DroppedUnrestorableState);
+    let calls = fixture.fake.calls();
+    let verbs: Vec<&String> = calls
+        .iter()
+        .filter(|call| call.contains("start macOS") || call.contains("stop macOS"))
+        .collect();
+    assert_eq!(verbs.len(), 3, "{calls:?}");
+    assert!(verbs[0].contains("start macOS"), "{calls:?}");
+    assert!(verbs[1].contains("stop macOS --drop-state"), "{calls:?}");
+    assert!(verbs[2].contains("start macOS"), "{calls:?}");
+}
+
+// Only the restore failure that the attempt logged drops the state. A start that fails for another reason, also one
+// of a log that named a restore failure before the attempt, keeps the saved state and refuses with the first failure.
+#[tokio::test]
+async fn another_failure_of_a_start_keeps_the_saved_state() {
+    let ctx = Ctx::background();
+    let fixture = Fixture::new();
+    fixture.fake.answer(Answer::ListJson, listing_in_fake_home(&fixture, "suspended"));
+    fixture.fake.answer(Answer::StartRestoreFails, "");
+    std::fs::write(fixture.fake.directory().join("parallels.log"), RESTORE_FAILURE_LOG).unwrap();
+
+    fixture.parallels.start(&ctx, WORKER).await.unwrap_err();
+    assert!(!fixture.fake.saw_call_containing("--drop-state"), "{:?}", fixture.fake.calls());
+}
+
+// A stopped VM has no saved state, so a start boots it and drops nothing.
+#[tokio::test]
+async fn a_start_of_a_stopped_vm_boots_it() {
+    let ctx = Ctx::background();
+    let fixture = Fixture::new();
+    fixture.fake.answer(Answer::ListJson, listing_in_fake_home(&fixture, "stopped"));
+    fixture.fake.answer(Answer::StartRestoreFails, RESTORE_FAILURE_LOG);
+
+    assert_eq!(fixture.parallels.start(&ctx, WORKER).await.unwrap(), ParallelsStart::Started);
+    assert!(!fixture.fake.saw_call_containing("--drop-state"), "{:?}", fixture.fake.calls());
+}
+
+// A failed channel of `prlctl exec` is no answer of the guest: the probe runs again, and a running guest answers.
+#[tokio::test]
+async fn a_failed_channel_of_prlctl_exec_is_run_again() {
+    let ctx = Ctx::background();
+    let fixture = Fixture::new();
+    fixture.fake.answer(Answer::ExecChannelFailures, "2");
+    assert!(fixture.parallels.guest_answers(&ctx, WORKER, PRLCTL_EXEC_PROBE_TIMEOUT).await);
+    assert_eq!(
+        fixture.fake.calls().iter().filter(|call| call.contains("exec macOS")).count(),
+        3,
+        "{:?}",
+        fixture.fake.calls()
+    );
+}
+
 // --- suspend -------------------------------------------------------------------------------------------------
 
 #[tokio::test]

@@ -239,7 +239,7 @@ impl ClassLoadLog {
     }
 
     /// The named classes before the bound `before_ms` on the JVM clock. No bound takes every named class.
-    fn named_before(&self, before_ms: Option<f64>) -> impl Iterator<Item = &LoadedClass> {
+    pub(crate) fn named_before(&self, before_ms: Option<f64>) -> impl Iterator<Item = &LoadedClass> {
         self.named()
             .filter(move |class| before_ms.is_none_or(|bound| class.uptime_ms < bound))
     }

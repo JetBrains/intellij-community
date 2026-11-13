@@ -36,5 +36,5 @@ pub use interrupt::{Interrupts, Signal};
 pub use poll::{Backoff, Poll};
 pub use proc::{
     Captured, Channel, GuestStream, Interruptible, PipedChild, ProbeExit, ProbeOutput, ProcError, ProcessIdentity, ProcessTable, PsField,
-    Runner, SpawnOptions, probe_unanswered,
+    Runner, SpawnOptions, TransientFailure, probe_unanswered,
 };

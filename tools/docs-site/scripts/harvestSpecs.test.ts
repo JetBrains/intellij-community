@@ -62,6 +62,7 @@ describe('harvestSpecs', () => {
       date: '2026-10-05',
       style: 'plain-1',
       targets: ['../src/*.rs'],
+      rootPaths: false,
       testFiles: ['build/tests/ComposeTest.kt'],
       headings: ['Summary', 'Requirements'],
     })

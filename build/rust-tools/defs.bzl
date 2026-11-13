@@ -329,7 +329,9 @@ def rust_tool_crate(
         test_env = {},
         test_env_inherit = None,
         test_size = None,
-        test_tags = []):
+        test_tags = [],
+        integration_test_data = [],
+        integration_test_env = {}):
     """Declares one crate of a Rust tool workspace, its tests, and the clippy test over all of them.
 
     The hub supplies the crate name, the edition and the dependencies from `Cargo.toml` and `Cargo.lock`. A crate whose
@@ -343,10 +345,10 @@ def rust_tool_crate(
     - `<bin>-bin` per binary of a library crate. The binary is `src/main.rs` or the `[[bin]]` path alone, and it links
       the library.
     - `<name><test_suffix>`: the unit test, `<name>_test` by default.
-    - `<name>_<stem>_test` per `tests/<stem>.rs` of a binary crate, or of a library crate with binaries, when
-      `integration_tests` is set. The separators are the first character of `test_suffix`, so `-test` gives
-      `<name>-<stem>-test`. Such a file is a Cargo integration test of `test_rule`, with the test attributes of the unit
-      test. It gets the dependencies and the dev-dependencies of the crate, and the binaries as data. The run-time
+    - `<name>_<stem>_test` per `tests/<stem>.rs`, when `integration_tests` is set. The separators are the first
+      character of `test_suffix`, so `-test` gives `<name>-<stem>-test`. Such a file is a Cargo integration test of
+      `test_rule`, with the test attributes of the unit test. It gets the dependencies and the dev-dependencies of the
+      crate, the library of a library crate, and the binaries as data. The run-time
       `CARGO_BIN_EXE_<binary>` holds the path of each binary, by the name of the binary: the binary target of a binary
       crate, and each `[[bin]]` of a library crate. Under Bazel, the path is relative to the start directory of the
       test. A test must make it absolute before it runs the binary in another directory.
@@ -377,7 +379,7 @@ def rust_tool_crate(
       closure: pins the crate closure of an action tool in `closure.txt`. Only a binary crate, or a library crate
         with one binary, can have it.
       closure_platform: the `platform` of `rust_crate_closure`, for a binary whose dependencies differ by host.
-      integration_tests: declares a test per `tests/*.rs` of a binary crate or of a library crate with binaries.
+      integration_tests: declares a test per `tests/*.rs`.
       rustc_env: the compile-time environment (`option_env!`) of the library or the binary. Its unit test takes it
         from the crate.
       target_compatible_with: the constraints of the tests, the binaries and the clippy test. The library carries
@@ -396,6 +398,9 @@ def rust_tool_crate(
       test_env_inherit: the variables that the unit test takes from the environment of `bazel test`.
       test_size: the Bazel size of the unit test.
       test_tags: the tags of the unit test.
+      integration_test_data: more run-time data of each integration test, such as a library that the binary loads.
+      integration_test_env: the run-time environment of each integration test, such as an `$(rootpath ...)` of
+        `integration_test_data`.
     """
     package = native.package_name()
     if not hub.crate_name():
@@ -466,6 +471,8 @@ def rust_tool_crate(
         test_env_inherit = test_env_inherit,
         test_size = test_size,
         test_tags = test_tags,
+        integration_test_data = integration_test_data,
+        integration_test_env = integration_test_env,
     )
 
 def rust_tool_sources(*dep_data):
@@ -539,7 +546,9 @@ def _rust_tool_targets(
         test_env = {},
         test_env_inherit = None,
         test_size = None,
-        test_tags = []):
+        test_tags = [],
+        integration_test_data = [],
+        integration_test_env = {}):
     package = native.package_name()
     repo = native.repo_name()
     crate_target = crate_target or name
@@ -649,8 +658,9 @@ def _rust_tool_targets(
     integration_test_names = []
     if integration_tests:
         tests = native.glob(["tests/*.rs"], allow_empty = True)
-        if tests and not is_binary and not binaries:
-            fail("{} is a library without a binary. Only a binary can have an integration test in `tests/`.".format(package))
+
+        # A test of a library links the library, as Cargo does.
+        library = [] if is_binary else [":" + crate_target]
 
         # The binaries a process test runs, by the name `CARGO_BIN_EXE_` takes: the crate itself, or each binary of
         # a library crate.
@@ -664,9 +674,9 @@ def _rust_tool_targets(
                 name = test_name,
                 srcs = [test],
                 compile_data = compile_data + testdata,
-                data = [":" + target for target in under_test.values()] + compile_data + testdata,
-                deps = integration_test_deps,
-                env = env | {"CARGO_BIN_EXE_" + binary: "$(rootpath :{})".format(target) for binary, target in under_test.items()},
+                data = [":" + target for target in under_test.values()] + compile_data + testdata + integration_test_data,
+                deps = integration_test_deps + library,
+                env = env | integration_test_env | {"CARGO_BIN_EXE_" + binary: "$(rootpath :{})".format(target) for binary, target in under_test.items()},
                 lint_config = lints,
                 **(integration_attrs | test_extra)
             )
