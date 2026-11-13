@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.groovy.testFramework;
 
+import com.intellij.openapi.application.ReadAction;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,6 @@ public interface TypingTest extends BaseTest {
   }
 
   default void typingTest(@NotNull GrExpression expression, @Nullable String expectedType) {
-    assertType(expectedType, expression.getType());
+    ReadAction.run(() -> assertType(expectedType, expression.getType()));
   }
 }

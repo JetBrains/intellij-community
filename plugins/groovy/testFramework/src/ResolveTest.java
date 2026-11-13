@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.groovy.testFramework;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -34,7 +35,7 @@ public interface ResolveTest extends BaseTest {
 
   @NotNull
   default <T extends PsiReference> T referenceUnderCaret(@NotNull Class<T> refType) {
-    PsiReference ref = getPsiFile().findReferenceAt(getFixture().getCaretOffset());
+    PsiReference ref = ReadAction.computeBlocking(() -> getPsiFile().findReferenceAt(getFixture().getCaretOffset()));
     return assertInstanceOf(refType, ref);
   }
 
@@ -45,12 +46,14 @@ public interface ResolveTest extends BaseTest {
 
   @NotNull
   default GroovyResolveResult advancedResolveByText(@NotNull String text) {
-    return referenceByText(text).advancedResolve();
+    GroovyReference reference = referenceByText(text);
+    return ReadAction.computeBlocking(() -> reference.advancedResolve());
   }
 
   @NotNull
   default Collection<? extends GroovyResolveResult> multiResolveByText(@NotNull String text) {
-    return referenceByText(text).resolve(false);
+    GroovyReference reference = referenceByText(text);
+    return ReadAction.computeBlocking(() -> reference.resolve(false));
   }
 
   default <T extends PsiElement> T resolveTest(@NotNull String text, @Nullable Class<T> clazz) {
@@ -62,7 +65,7 @@ public interface ResolveTest extends BaseTest {
   }
 
   default <T extends PsiElement> T resolveTest(@NotNull GroovyReference reference, @Nullable Class<T> clazz) {
-    Collection<? extends GroovyResolveResult> results = reference.resolve(false);
+    Collection<? extends GroovyResolveResult> results = ReadAction.computeBlocking(() -> reference.resolve(false));
     if (clazz == null) {
       assertTrue(results.isEmpty(), results::toString);
       return null;
@@ -75,29 +78,34 @@ public interface ResolveTest extends BaseTest {
 
   default void closureDelegateTest(@NotNull String fqn, int strategy) {
     GrClosableBlock closure = elementUnderCaret(GrClosableBlock.class);
-    DelegatesToInfo delegatesToInfo = getDelegatesToInfo(closure);
-    assertNotNull(delegatesToInfo);
-    assertType(fqn, delegatesToInfo.getTypeToDelegate());
-    assertEquals(strategy, delegatesToInfo.getStrategy());
+    ReadAction.run(() -> {
+      DelegatesToInfo delegatesToInfo = getDelegatesToInfo(closure);
+      assertNotNull(delegatesToInfo);
+      assertType(fqn, delegatesToInfo.getTypeToDelegate());
+      assertEquals(strategy, delegatesToInfo.getStrategy());
+    });
   }
 
   default void methodTest(@NotNull PsiMethod method, String name, String fqn) {
-    assertEquals(name, method.getName());
-    PsiClass containingClass = method.getContainingClass();
-    if (fqn == null) {
-      assertNull(containingClass);
-    }
-    else {
-      assertNotNull(containingClass);
-      assertEquals(fqn, containingClass.getQualifiedName());
-    }
+    ReadAction.run(() -> {
+      assertEquals(name, method.getName());
+      PsiClass containingClass = method.getContainingClass();
+      if (fqn == null) {
+        assertNull(containingClass);
+      }
+      else {
+        assertNotNull(containingClass);
+        assertEquals(fqn, containingClass.getQualifiedName());
+      }
+    });
   }
 
   default void setterMethodTest(String name, String originalName, String containingClass) {
-    var result = elementUnderCaret(GrMethodCall.class).advancedResolve();
+    GrMethodCall call = elementUnderCaret(GrMethodCall.class);
+    var result = ReadAction.computeBlocking(() -> call.advancedResolve());
     var method = assertInstanceOf(PsiMethod.class, result.getElement());
     methodTest(method, name, containingClass);
-    var original = assertInstanceOf(PsiMethod.class, method.getNavigationElement());
+    var original = assertInstanceOf(PsiMethod.class, ReadAction.computeBlocking(() -> method.getNavigationElement()));
     methodTest(original, originalName, containingClass);
   }
 }

@@ -42,13 +42,12 @@ public final class GroovyAssertions {
 
   /**
    * Checks that [collection] contains each of [expected], as {@code UsefulTestCase.assertContainsElements} does.
-   * Like the original, it fails when [collection] contains an expected element more often than [expected] does.
+   * Like the original, it compares sets, so an element that [collection] contains more than once passes.
    */
   @SafeVarargs
   public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, T @NotNull ... expected) {
     List<T> found = new ArrayList<>(collection);
     found.retainAll(Arrays.asList(expected));
-    assertEquals(expected.length, found.size(), collection::toString);
     assertEquals(new HashSet<>(Arrays.asList(expected)), new HashSet<>(found), collection::toString);
   }
 

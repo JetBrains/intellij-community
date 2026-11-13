@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.groovy.testFramework;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import org.intellij.lang.annotations.Language;
@@ -36,17 +37,17 @@ public interface ExpressionTest extends ResolveTest, TypingTest {
   @NotNull
   default <T extends PsiMethod> T resolveMethodTest(@NotNull Class<T> clazz) {
     GrMethodCall expression = elementUnderCaret(GrMethodCall.class);
-    GroovyResolveResult[] results = expression.multiResolveGroovy(false);
+    GroovyResolveResult[] results = ReadAction.computeBlocking(() -> expression.multiResolveGroovy(false));
     PsiElement resolved = assertOneElement(results).getElement();
     return assertInstanceOf(clazz, resolved);
   }
 
   default <T extends PsiMethod> T methodCallTest(@Nullable Class<T> clazz, @Nullable String expectedType) {
     GrMethodCall expression = elementUnderCaret(GrMethodCall.class);
-    GroovyResolveResult[] results = expression.multiResolveGroovy(false);
+    GroovyResolveResult[] results = ReadAction.computeBlocking(() -> expression.multiResolveGroovy(false));
     final T resolved;
     if (clazz == null) {
-      assertTrue(results.length == 0, () -> Arrays.toString(results));
+      assertTrue(results.length == 0, () -> ReadAction.computeBlocking(() -> Arrays.toString(results)));
       resolved = null;
     }
     else {

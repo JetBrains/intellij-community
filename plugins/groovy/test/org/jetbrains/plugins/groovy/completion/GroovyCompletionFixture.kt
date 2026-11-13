@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
@@ -22,7 +23,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
  *
  * When a helper gets no text, it configures the file `<test name>.groovy` from the test data.
  * It compares the result with the file `<test name>_after.groovy`.
- * Call the helpers on the EDT.
+ * The helpers work on the EDT and off it.
  */
 @TestOnly
 class GroovyCompletionTestFixture internal constructor(
@@ -55,19 +56,22 @@ class GroovyCompletionTestFixture internal constructor(
 
   /** Completes the single item at the caret, types [type], and checks the result. */
   fun doCompletionTest(before: String?, after: String?, type: String, ct: CompletionType) {
-    configure(before)
-    fixture.complete(ct)
-    for (ch in type) {
-      fixture.type(ch)
-    }
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
-    val msg = fixture.lookupElementStrings?.joinToString(", ") ?: "<empty>"
-    assertNull(fixture.lookupElements, msg)
-    if (after == null) {
-      fixture.checkResultByFile("${testName}_after.groovy", true)
-    }
-    else {
-      fixture.checkResult(after, true)
+    // The completion and the typing run on the EDT, from the start to the last check.
+    EdtTestUtil.runInEdtAndWait<Throwable> {
+      configure(before)
+      fixture.complete(ct)
+      for (ch in type) {
+        fixture.type(ch)
+      }
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+      val msg = fixture.lookupElementStrings?.joinToString(", ") ?: "<empty>"
+      assertNull(fixture.lookupElements, msg)
+      if (after == null) {
+        fixture.checkResultByFile("${testName}_after.groovy", true)
+      }
+      else {
+        fixture.checkResult(after, true)
+      }
     }
   }
 
@@ -94,28 +98,31 @@ class GroovyCompletionTestFixture internal constructor(
 
   /** Invokes the completion at the caret, types [type], and checks the lookup items against [variants] as [testType] tells. */
   fun doVariantableTest(before: String?, type: String, ct: CompletionType, testType: CompletionResult, completionCount: Int, vararg variants: String) {
-    configure(before)
-    fixture.complete(ct, completionCount)
-    for (ch in type) {
-      fixture.type(ch)
-    }
-    assertNotNull(fixture.lookupElements)
-
-    val actual = fixture.lookupElementStrings!!
-    val msg = fixture.lookupElementStrings?.joinToString(", ") ?: "<empty>"
-    when (testType) {
-      CompletionResult.contain -> assertTrue(actual.containsAll(variants.asList()), msg)
-      CompletionResult.equal -> {
-        if (variants.isEmpty()) {
-          assertTrue(actual.isEmpty())
-        }
-        else {
-          fixture.assertPreferredCompletionItems(0, *variants)
-        }
+    // The completion and the typing run on the EDT, from the start to the last check.
+    EdtTestUtil.runInEdtAndWait<Throwable> {
+      configure(before)
+      fixture.complete(ct, completionCount)
+      for (ch in type) {
+        fixture.type(ch)
       }
-      CompletionResult.notContain -> {
-        for (variant in variants) {
-          assertFalse(actual.contains(variant), msg)
+      assertNotNull(fixture.lookupElements)
+
+      val actual = fixture.lookupElementStrings!!
+      val msg = fixture.lookupElementStrings?.joinToString(", ") ?: "<empty>"
+      when (testType) {
+        CompletionResult.contain -> assertTrue(actual.containsAll(variants.asList()), msg)
+        CompletionResult.equal -> {
+          if (variants.isEmpty()) {
+            assertTrue(actual.isEmpty())
+          }
+          else {
+            fixture.assertPreferredCompletionItems(0, *variants)
+          }
+        }
+        CompletionResult.notContain -> {
+          for (variant in variants) {
+            assertFalse(actual.contains(variant), msg)
+          }
         }
       }
     }

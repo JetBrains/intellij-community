@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.completion
 
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.util.groovyFixture
 import org.jetbrains.plugins.groovy.util.groovyProjectFixture
@@ -18,20 +17,20 @@ class GroovyForeachCompletionTest {
   private val completion by groovyCompletionFixture(groovy)
 
   @Test
-  fun testValueVariableType() = runInEdtAndWait { completion.doHasVariantsTest("int", "final") }
+  fun testValueVariableType() { completion.doHasVariantsTest("int", "final") }
 
   @Test
-  fun testValueVariableTypeWithIndexVariable() = runInEdtAndWait { completion.doVariantableTest("int", "final") }
+  fun testValueVariableTypeWithIndexVariable() { completion.doVariantableTest("int", "final") }
 
   @Test
-  fun testIndexVariableType() = runInEdtAndWait { completion.doVariantableTest("int", "final") }
+  fun testIndexVariableType() { completion.doVariantableTest("int", "final") }
 
   @Test
-  fun testIndexVariableAccess() = runInEdtAndWait { completion.doVariantableTest("idx", "identity", "void") }
+  fun testIndexVariableAccess() { completion.doVariantableTest("idx", "identity", "void") }
 
   @Test
-  fun testValueVariableAccess() = runInEdtAndWait { completion.doVariantableTest("value", "var", "metaPropertyValues", "findIndexValues", "findIndexValues", "getMetaPropertyValues") }
+  fun testValueVariableAccess() { completion.doVariantableTest("value", "var", "metaPropertyValues", "findIndexValues", "findIndexValues", "getMetaPropertyValues") }
 
   @Test
-  fun testValueVariableAccessWithIndexVariable() = runInEdtAndWait { completion.doVariantableTest("value", "var", "metaPropertyValues", "findIndexValues", "findIndexValues", "getMetaPropertyValues") }
+  fun testValueVariableAccessWithIndexVariable() { completion.doVariantableTest("value", "var", "metaPropertyValues", "findIndexValues", "findIndexValues", "getMetaPropertyValues") }
 }
