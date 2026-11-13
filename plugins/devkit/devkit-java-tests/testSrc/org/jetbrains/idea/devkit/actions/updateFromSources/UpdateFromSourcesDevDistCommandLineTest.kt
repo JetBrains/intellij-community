@@ -115,7 +115,7 @@ internal class UpdateFromSourcesDevDistCommandLineTest {
     val result = parseDevDistUpdateResult("""
       {
         "version": 1,
-        "apply": ["/tmp/IDEA.app.update-ide", "update-ide", "--apply-staged", "--home=/tmp/IDEA.app/Contents"],
+        "apply": ["/tmp/IDEA.app.dev-dist", "update-ide", "--apply-staged", "--home=/tmp/IDEA.app/Contents"],
         "repository": "/idea/out/update-from-sources/plugins/plugins.xml",
         "skippedPlugins": ["unknown"],
         "fingerprint": "v5:abc",
@@ -123,7 +123,7 @@ internal class UpdateFromSourcesDevDistCommandLineTest {
       }
     """.trimIndent())
 
-    assertThat(result.apply).containsExactly("/tmp/IDEA.app.update-ide", "update-ide", "--apply-staged", "--home=/tmp/IDEA.app/Contents")
+    assertThat(result.apply).containsExactly("/tmp/IDEA.app.dev-dist", "update-ide", "--apply-staged", "--home=/tmp/IDEA.app/Contents")
     assertThat(result.repository).isEqualTo("/idea/out/update-from-sources/plugins/plugins.xml")
     assertThat(result.skippedPlugins).containsExactly("unknown")
     assertThat(result.fingerprint).isEqualTo("v5:abc")
