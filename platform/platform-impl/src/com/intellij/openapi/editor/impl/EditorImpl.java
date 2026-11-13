@@ -2154,7 +2154,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void repaintToScreenBottom(int startLine) {
-    int yStartLine = visualLineToY(Math.max(0, logicalToVisualLine(startLine) - 1));
+    int yStartLine = logicalLineToY(startLine);
     repaintToScreenBottomStartingFrom(yStartLine);
   }
 
@@ -2188,8 +2188,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * Repaints visual lines in provided range (inclusive on both ends)
    */
   private void doRepaint(int startVisualLine, int endVisualLine) {
-    startVisualLine = Math.max(0, startVisualLine - 1);
-    endVisualLine++;
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
     int yStart = visualLineToY(startVisualLine);
     int height = visualLineToYRange(endVisualLine)[1] + 2 - yStart;

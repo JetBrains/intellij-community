@@ -93,18 +93,6 @@ private class HighlightLine(val boundsY: AxisBounds) : IntervalSet<AxisBounds>()
     withAllIntersecting(xStart, xEnd, AxisBounds(xStart, xStart), blockAction)
   }
 
-  fun invalidateSegment(xStart: Double, xEnd: Double) {
-    val toAdd = buildList {
-      withAllIntersectingBlocks(xStart, xEnd) { it, block ->
-        it.remove()
-
-        if (block.start < xStart) add(AxisBounds(block.start, xStart, block.span))
-        if (block.end > xEnd) add(AxisBounds(xEnd, block.end, block.span))
-      }
-    }
-    items.addAll(toAdd)
-  }
-
   fun containsX(x: Double, strict: Boolean): Boolean {
     val probe = AxisBounds(x, x)
     return listOfNotNull(items.floor(probe), items.ceiling(probe)).any { (start, end) ->
@@ -167,26 +155,29 @@ private class PaintedBlock(
   }
 }
 
-internal class HighlighterVisualModel(private val editor: EditorImpl) {
-  var yShift: Int = 0
-
+/**
+ * The highlighter backgrounds of one paint.
+ *
+ * The painter adds one block per background style and rectangle. [paint] fills the blocks from the bottom up.
+ * A block outside [clip] gives the corners of its neighbors, and it paints nothing.
+ * The model lives for one paint. It keeps no state for the next paint.
+ */
+internal class HighlighterVisualModel(
+  private val editor: EditorImpl,
+  private val clip: Rectangle2D,
+  private val yShift: Int,
+  private val huggingHighlighting: Boolean,
+) {
   private val selectionBg get() = editor.editorModel.selectionModel.textAttributes.backgroundColor
   private val linesByLayer = TreeMap<BackgroundLayer, LineSet>(BackgroundLayer.STYLE_ORDER)
-
-  /*
-   * Drop the cached highlighter rectangles
-   * Called when the change might have caused cached rectangles outside
-   * the visible area to become invalid (for example, font size changes)
-   */
-  fun reset() = linesByLayer.clear()
 
   fun paintSelectionBlock(block: Rectangle2D) {
     val color = selectionBg ?: return
     val layer = BackgroundLayer(
       color,
       HighlighterLayer.SELECTION,
-      editor.isRoundedHighlighting,
-      editor.isHuggingHighlighting,
+      true,
+      huggingHighlighting,
       false,
       Int.MAX_VALUE,
     )
@@ -214,26 +205,7 @@ internal class HighlighterVisualModel(private val editor: EditorImpl) {
     linesByLayer.getOrPut(layer) { LineSet() }.add(singleton)
   }
 
-  fun invalidateArea(area: Rectangle2D) {
-    val yStart = area.y - yShift
-    val yEnd = area.y + area.height - yShift
-    val xStart = area.x
-    val xEnd = area.x + area.width
-
-    val lineProbe = HighlightLine(AxisBounds(yStart, yStart))
-    for (lines in linesByLayer.values) {
-      val emptyLines = buildSet {
-        lines.withAllIntersecting(yStart, yEnd, lineProbe) { _, line ->
-          line.invalidateSegment(xStart, xEnd)
-          if (line.items.isEmpty()) add(line)
-        }
-      }
-      lines.items.removeAll(emptyLines)
-    }
-    linesByLayer.values.removeIf { it.items.isEmpty() }
-  }
-
-  fun paint(graphics: Graphics2D, clip: Rectangle2D, lineHeight: Int) {
+  fun paint(graphics: Graphics2D, lineHeight: Int) {
     val (yStart, yEnd) = Pair(clip.y, clip.y + clip.height)
     val (xStart, xEnd) = Pair(clip.x, clip.x + clip.width)
 

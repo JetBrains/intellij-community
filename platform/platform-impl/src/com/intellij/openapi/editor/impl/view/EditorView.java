@@ -100,7 +100,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private final TextLayoutCache myTextLayoutCache;
   private final LogicalPositionCache myLogicalPositionCache;
   private final TabFragment myTabFragment;
-  private final HighlighterVisualModel myHighlighterVisualModel;
 
   public EditorView(
     @NotNull EditorImpl editor,
@@ -122,7 +121,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     mySizeManager = new EditorSizeManager(this);
     myTextLayoutCache = new TextLayoutCache(this, new ComponentVisibilityTracker(myEditor.getContentComponent()));
     myTabFragment = new TabFragment(this);
-    myHighlighterVisualModel = new HighlighterVisualModel(myEditor);
 
     myEditor.getContentComponent().addHierarchyListener(this);
     getScrollingModel().addVisibleAreaListener(this);
@@ -437,7 +435,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myTextLayoutCache.resetToDocumentSize(false);
     invalidateFoldRegionLayouts();
     mySizeManager.reset();
-    myHighlighterVisualModel.reset();
   }
 
   @RequiresEdt
@@ -464,7 +461,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myLogicalPositionCache.reset(true, getTabSize());
     myTextLayoutCache.resetToDocumentSize(true);
     mySizeManager.reset();
-    myHighlighterVisualModel.reset();
   }
 
   public void invalidateFoldRegionLayout(@NotNull FoldRegion region) {
@@ -598,10 +594,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   ScrollingModel getScrollingModel() {
     return myEditorModel.getScrollingModel();
-  }
-
-  @NotNull HighlighterVisualModel getHighlighterVisualModel() {
-    return myHighlighterVisualModel;
   }
 
   EditorSizeManager getSizeManager() {

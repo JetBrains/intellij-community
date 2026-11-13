@@ -378,10 +378,23 @@ public final class EditorComponentImpl extends JTextComponent
     return alignment;
   }
 
+  /**
+   * Asks to repaint this rectangle of the editor area, and the overhangs of the font above and below it.
+   * While the editor rounds the corners of the highlighting, the rectangle also takes the visual line above it and
+   * the visual line below it. So the corners of these two lines follow a change inside the rectangle.
+   */
   public void repaintEditorComponent(int x, int y, int width, int height) {
+    int top = y;
+    int bottom = y + height;
+    if (height > 0 && editor.isRoundedHighlighting()) {
+      int lineAbove = Math.max(0, editor.yToVisualLine(top) - 1);
+      int lineBelow = editor.yToVisualLine(bottom - 1) + 1;
+      top = Math.min(top, editor.visualLineToY(lineAbove));
+      bottom = Math.max(bottom, editor.visualLineToYRange(lineBelow)[1]);
+    }
     int topOverhang = Math.max(0, editor.myView.getTopOverhang());
     int bottomOverhang = Math.max(0, editor.myView.getBottomOverhang());
-    repaint(x, y - topOverhang, width, height + topOverhang + bottomOverhang);
+    repaint(x, top - topOverhang, width, bottom - top + topOverhang + bottomOverhang);
   }
 
   @Override
