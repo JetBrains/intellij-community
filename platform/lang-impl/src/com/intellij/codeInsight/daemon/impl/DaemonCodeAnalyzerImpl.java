@@ -177,7 +177,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
    * A pass that finished for an open file enables the delay. A stop that canceled a running pass of an open file enables it too,
    * because otherwise a held key reruns the unfinished pass on every key repeat.
    * A pass of an embedded editor never enables the delay. See {@link #isPassOfOpenFile}.
-   * The end of an editor load schedules the passes of the loaded editor without a stop, see {@link #scheduleUpdateAfterEditorLoad}.
    */
   private volatile boolean myAutoReparseDelayEnabled;
   private volatile boolean completeEssentialHighlightingRequested;
@@ -669,21 +668,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       myFileStatusMap.markWholeFileScopeDirty(document, r);
       stopProcess(true, r);
     }
-  }
-
-  @Override
-  public synchronized void scheduleUpdateAfterEditorLoad(@NotNull TextEditor textEditor) {
-    Editor editor = textEditor.getEditor();
-    if (myDisposed || editor.isDisposed()) {
-      return;
-    }
-    VirtualFile file = textEditor.getFile();
-    String reason = "AsyncEditorLoader.start " + (file == null ? "?" : file.getName());
-    myFileStatusMap.markWholeFileScopeDirty(editor.getDocument(), reason);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("scheduleUpdateAfterEditorLoad: " + reason + "; progresses: " + Map.copyOf(myUpdateProgress));
-    }
-    scheduleIfNotRunning();
   }
 
   public @NotNull List<ProgressableTextEditorHighlightingPass> getPassesToShowProgressFor(@NotNull Document document) {
@@ -1332,7 +1316,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             PassExecutorService.log(null, null, "runUpdate for ", fileEditor, " rescheduled because the editor was not loaded yet");
           }
           result.add("didn't submit " + fileEditor + " because it's not loaded");
-          // do not restart immediately, because it will be futile; AsyncEditorLoader schedules the update when the editor is loaded
+          // do not restart immediately, because it will be futile; AsyncEditorLoader will restart when the editor is loaded
           shouldRestart = false;
         }
         else {

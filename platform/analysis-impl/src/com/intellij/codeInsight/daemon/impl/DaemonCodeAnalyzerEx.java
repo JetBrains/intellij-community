@@ -109,15 +109,6 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   public abstract @NotNull FileStatusMap getFileStatusMap();
 
   /**
-   * Schedules the passes of {@code textEditor} after its asynchronous load ended.
-   * The daemon creates no pass for an editor that is not loaded, so the loaded editor has no running pass.
-   * The call marks the file of the editor dirty and schedules an update. It cancels no running pass of another
-   * editor, and it keeps the autoreparse delay of the first pass at zero (CPP-53017).
-   */
-  @ApiStatus.Internal
-  public abstract void scheduleUpdateAfterEditorLoad(@NotNull TextEditor textEditor);
-
-  /**
    * Do not use because manual management of highlights is dangerous and may lead to unexpected flicking/disappearing/stuck highlighters.
    * Instead, generate file-level infos in your inspection/annotator, and they will be removed automatically when outdated
    */
