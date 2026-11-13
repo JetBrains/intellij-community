@@ -545,14 +545,6 @@
               icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.BulletList"/>
     </group>
 
-
-    <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
-            id="org.intellij.plugins.markdown.ui.actions.styling.HeaderDownAction"
-            icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Header_level_down"/>
-    <action class="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
-            id="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
-            icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.Header_level_up"/>
-
     <!--
       This group is supposed to override the default generate popup.
       Please make sure to adjust action text for MarkdownActionPlaces.INSERT_POPUP.
