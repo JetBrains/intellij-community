@@ -11,7 +11,6 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.groovy.util.TestUtils
-import org.jetbrains.plugins.groovy.util.configureByExactName
 
 /**
  * Checks a [Surrounder] in [fixture]. It replaces the JUnit 3 base `SurroundTestCase`.
@@ -26,7 +25,7 @@ class SurroundTestFixture internal constructor(val fixture: JavaCodeInsightTestF
   }
 
   fun doTest(surrounder: Surrounder, textBefore: String?, textAfter: String?) {
-    configureByExactName(fixture, "a.groovy", textBefore!!)
+    fixture.configureByText("a.groovy", textBefore!!)
     SurroundWithHandler.invoke(fixture.project, fixture.editor, fixture.file, surrounder)
     fixture.checkResult(textAfter!!)
   }

@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.groovy.ext.ginq;
 
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
@@ -13,14 +13,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 
 @TestApplication
 public class GinqCompletionTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GinqTestUtils.getProjectDescriptor());
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GinqTestUtils.getProjectDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project);
   private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
 
   @BeforeEach

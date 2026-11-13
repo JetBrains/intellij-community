@@ -17,15 +17,14 @@ import com.intellij.slicer.SliceRootNode
 import com.intellij.slicer.SliceTreeStructure
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.testNameFixture
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.slicer.GroovySliceProvider
 import org.jetbrains.plugins.groovy.util.groovyFixture
-import org.jetbrains.plugins.groovy.util.groovyProjectFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -33,13 +32,12 @@ import org.junit.jupiter.api.Test
 @TestApplication
 class GroovySliceTreeGroupingTest {
   // The module has no JDK, as the JUnit 3 base DaemonAnalyzerTestCase of the old test had it.
-  private val myFixture by groovyFixture(groovyProject, LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR, "slicer/tree/")
-  private val testName by testNameFixture(false)
+  private val myFixture by groovyFixture(groovyProject, "slicer/tree/")
 
   private suspend fun loadTreeStructure(getTestFiles: (baseName: String) -> List<String> = { listOf("$it.groovy") }): SliceTreeStructure =
     withContext(Dispatchers.EDT) {
       val project = myFixture.project
-      myFixture.configureByFiles(*getTestFiles(testName).toTypedArray())
+      myFixture.configureByFiles(*getTestFiles(myFixture.getTestName(false)).toTypedArray())
       PsiDocumentManager.getInstance(project).commitAllDocuments()
 
       val element = SliceHandler.create(true).getExpressionAtCaret(myFixture.editor, myFixture.file)!!
@@ -109,6 +107,6 @@ class GroovySliceTreeGroupingTest {
   }
 
   companion object {
-    private val groovyProject = groovyProjectFixture()
+    private val groovyProject = lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR)
   }
 }

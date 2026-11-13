@@ -20,13 +20,14 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,9 +37,8 @@ import org.junit.jupiter.api.Test;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestApplication
@@ -46,9 +46,8 @@ public class ReferenceCompletionTest {
   /** The module has the mock JDK of the Groovy test data, as the heavy JUnit 3 test had it. */
   private static final LightProjectDescriptor DESCRIPTOR =
     new DefaultLightProjectDescriptor(() -> IdeaTestUtil.createMockJdk("java 1.7", TestUtils.getMockJdkHome()));
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, DESCRIPTOR, "groovy/oldCompletion/reference");
-  private final TestFixture<String> lowerTestName = testNameFixture(true);
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project, "groovy/oldCompletion/reference");
 
   @Test public void testEscapedReference() { doTest(); }
   @Test public void testGrvy1021() { doTest(); }
@@ -80,8 +79,8 @@ public class ReferenceCompletionTest {
   private void doTest() {
     JavaCodeInsightTestFixture fixture = groovy.get();
     CamelHumpMatcher.forceStartMatching(fixture.getTestRootDisposable());
-    final List<String> stringList = TestUtils.readInput(fixture.getTestDataPath() + "/" + lowerTestName.get() + ".test");
-    final String fileName = lowerTestName.get() + ".groovy";
+    final List<String> stringList = TestUtils.readInput(fixture.getTestDataPath() + "/" + groovy.get().getTestName(true) + ".test");
+    final String fileName = groovy.get().getTestName(true) + ".groovy";
     fixture.addFileToProject(fileName, stringList.get(0));
     fixture.configureByFile(fileName);
 

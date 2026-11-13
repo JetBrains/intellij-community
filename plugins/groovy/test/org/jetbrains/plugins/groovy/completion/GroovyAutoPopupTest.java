@@ -7,11 +7,11 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
@@ -21,9 +21,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.configureByExactName;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,8 +31,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 public class GroovyAutoPopupTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_2_1);
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_1);
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project);
   private CompletionAutoPopupTester myTester;
 
   @BeforeEach
@@ -64,7 +63,7 @@ public class GroovyAutoPopupTest {
 
   @Test
   public void testGenerallyFocusLookup() {
-    configureByExactName(groovy.get(), "a.groovy", """
+    groovy.get().configureByText("a.groovy", """
       
               String foo(String xxxxxx) {
                 return xx<caret>
@@ -78,14 +77,14 @@ public class GroovyAutoPopupTest {
 
   @Test
   public void testTopLevelFocus() {
-    configureByExactName(groovy.get(), "a.groovy", "<caret>");
+    groovy.get().configureByText("a.groovy", "<caret>");
     type("p");
     assertTrue(getLookup().isFocused());
   }
 
   @Test
   public void testNoLookupFocusOnUnresolvedQualifier() {
-    configureByExactName(groovy.get(), "a.groovy", """
+    groovy.get().configureByText("a.groovy", """
       xxx.<caret>""");
     type("h");//hashCode
     assertNull(getLookup());
@@ -93,7 +92,7 @@ public class GroovyAutoPopupTest {
 
   @Test
   public void testNoLookupFocusOnUntypedQualifier() {
-    configureByExactName(groovy.get(), "a.groovy", """
+    groovy.get().configureByText("a.groovy", """
       
             def foo(xxx) {
               xxx.<caret>
@@ -105,7 +104,7 @@ public class GroovyAutoPopupTest {
 
   @Test
   public void testImpossibleClosureParameter() {
-    configureByExactName(groovy.get(), "a.groovy", "String a; { a.<caret> }");
+    groovy.get().configureByText("a.groovy", "String a; { a.<caret> }");
     type("h");
     assertTrue(getLookup().isFocused());
   }
@@ -113,14 +112,14 @@ public class GroovyAutoPopupTest {
   @Test
   public void testFieldTypeLowercase() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
-    configureByExactName(groovy.get(), "a.groovy", "class Foo { <caret> }");
+    groovy.get().configureByText("a.groovy", "class Foo { <caret> }");
     type("aioobe");
     assertEquals(groovy.get().getLookupElementStrings(), List.of(ArrayIndexOutOfBoundsException.class.getSimpleName()));
   }
 
   @Test
   public void testNoWordCompletionAutoPopup() {
-    configureByExactName(groovy.get(), "a.groovy", "def foo = \"f<caret>\"");
+    groovy.get().configureByText("a.groovy", "def foo = \"f<caret>\"");
     type("o");
     assertNull(getLookup());
   }
@@ -128,14 +127,14 @@ public class GroovyAutoPopupTest {
   @Test
   public void testClassesAndPackagesInUnqualifiedImports() {
     groovy.get().addClass("package Xxxxx; public class Xxxxxxxxx {}");
-    configureByExactName(groovy.get(), "a.groovy", "package foo; import <caret>");
+    groovy.get().configureByText("a.groovy", "package foo; import <caret>");
     type("Xxx");
     assertEquals(groovy.get().getLookupElementStrings(), List.of("Xxxxxxxxx", "Xxxxx"));
   }
 
   @Test
   public void testPopupAfterDotAfterPackage() {
-    configureByExactName(groovy.get(), "a.groovy", "<caret>");
+    groovy.get().configureByText("a.groovy", "<caret>");
     type("import jav");
     assertNotNull(getLookup());
     type(".");
@@ -145,7 +144,7 @@ public class GroovyAutoPopupTest {
   @Test
   public void testTypingFirstVarargDot() {
     groovy.get().addClass("class Foo { static class Bar {} }");
-    configureByExactName(groovy.get(), "a.groovy", "void foo(Foo<caret>[] a) { }");
+    groovy.get().configureByText("a.groovy", "void foo(Foo<caret>[] a) { }");
     type(".");
     assertNotNull(getLookup());
     type(".");
@@ -155,7 +154,7 @@ public class GroovyAutoPopupTest {
   @Test
   public void testTypingFirstVarargDot2() {
     groovy.get().addClass("class Foo { static class Bar {} }");
-    configureByExactName(groovy.get(), "a.groovy", "void foo(Foo<caret>) { }");
+    groovy.get().configureByText("a.groovy", "void foo(Foo<caret>) { }");
     type(".");
     assertNotNull(getLookup());
     type(".");
@@ -164,7 +163,7 @@ public class GroovyAutoPopupTest {
 
   @Test
   public void testDotDot() {
-    configureByExactName(groovy.get(), "a.groovy", "2<caret>");
+    groovy.get().configureByText("a.groovy", "2<caret>");
     type(".");
     assertNotNull(getLookup());
     assertTrue(getLookup().isFocused());
@@ -176,7 +175,7 @@ public class GroovyAutoPopupTest {
 
   @Test
   public void testInsideClosure() {
-    configureByExactName(groovy.get(), "a.groovy", "def cl = { foo(); <caret> }");
+    groovy.get().configureByText("a.groovy", "def cl = { foo(); <caret> }");
     type("h");
     assertNotNull(getLookup());
     assertTrue(getLookup().isFocused());
@@ -185,7 +184,7 @@ public class GroovyAutoPopupTest {
   @Test
   public void testNonImportedClass() {
     groovy.get().addClass("package foo; public class Abcdefg {}");
-    configureByExactName(groovy.get(), "a.groovy", "<caret>");
+    groovy.get().configureByText("a.groovy", "<caret>");
     type("Abcde ");
     groovy.get().checkResult("import foo.Abcdefg\n\nAbcdefg <caret>");
   }
@@ -196,7 +195,7 @@ public class GroovyAutoPopupTest {
 
     groovy.get().addClass("package foo; public class Abcdefg {}");
     groovy.get().addClass("package bar; public class Abcdefg {}");
-    configureByExactName(groovy.get(), "a.groovy", "class Foo extends <caret>");
+    groovy.get().configureByText("a.groovy", "class Foo extends <caret>");
     type("Abcde");
     assertEquals(2, getLookup().getItems().size());
     EdtTestUtil.runInEdtAndWait(() -> groovy.get().performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN));
@@ -211,7 +210,7 @@ public class GroovyAutoPopupTest {
   public void testTwoNonImportedClasses() {
     groovy.get().addClass("package foo; public class Abcdefg {}");
     groovy.get().addClass("package bar; public class Abcdefg {}");
-    configureByExactName(groovy.get(), "a.groovy", "<caret>");
+    groovy.get().configureByText("a.groovy", "<caret>");
     type("Abcde ");
     groovy.get().checkResult("""
                             import bar.Abcdefg
@@ -222,7 +221,7 @@ public class GroovyAutoPopupTest {
   @Test
   public void testPrivate() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
-    configureByExactName(groovy.get(), "a.groovy", "class Foo { <caret> }");
+    groovy.get().configureByText("a.groovy", "class Foo { <caret> }");
     type("pri");
     assertEquals("private", groovy.get().getLookupElementStrings().get(0));
   }
@@ -230,28 +229,28 @@ public class GroovyAutoPopupTest {
   @Test
   public void testFieldTypeNonImported() {
     groovy.get().addClass("package foo; public class PrimaBalerina {}");
-    configureByExactName(groovy.get(), "a.groovy", "class Foo { <caret> }");
+    groovy.get().configureByText("a.groovy", "class Foo { <caret> }");
     type("PrimaB");
     assertEquals(groovy.get().getLookupElementStrings(), List.of("PrimaBalerina"));
   }
 
   @Test
   public void testEnteringLabel() {
-    configureByExactName(groovy.get(), "a.groovy", "<caret>");
+    groovy.get().configureByText("a.groovy", "<caret>");
     type("FIS:");
     assertEquals("FIS:", groovy.get().getEditor().getDocument().getText());
   }
 
   @Test
   public void testEnteringNamedArg() {
-    configureByExactName(groovy.get(), "a.groovy", "foo(<caret>)");
+    groovy.get().configureByText("a.groovy", "foo(<caret>)");
     type("has:");
     groovy.get().checkResult("foo(has:<caret>)");
   }
 
   @Test
   public void testEnteringMapKey() {
-    configureByExactName(groovy.get(), "a.groovy", "[<caret>]");
+    groovy.get().configureByText("a.groovy", "[<caret>]");
     type("has:");
     groovy.get().checkResult("[has:<caret>]");
   }
@@ -259,7 +258,7 @@ public class GroovyAutoPopupTest {
   @Test
   public void testPreferRightCasedVariant() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
-    configureByExactName(groovy.get(), "a.groovy", "<caret>");
+    groovy.get().configureByText("a.groovy", "<caret>");
     type("boo");
     groovy.get().assertPreferredCompletionItems(0, "boolean");
     type("\b\b\bBoo");
@@ -271,14 +270,14 @@ public class GroovyAutoPopupTest {
     CodeInsightSettings.getInstance().setSelectAutopopupSuggestionsByChars(false);
 
     groovy.get().addClass("package com.too; public class Util {}");
-    configureByExactName(groovy.get(), "a.groovy", "void foo(Object command) { <caret> }");
+    groovy.get().configureByText("a.groovy", "void foo(Object command) { <caret> }");
     type("com.t");
     assertTrue(groovy.get().getLookupElementStrings().containsAll(List.of("too", "command.toString")));
   }
 
   @Test
   public void testVarargParenthesis() {
-    configureByExactName(groovy.get(), "a.groovy", """
+    groovy.get().configureByText("a.groovy", """
       
       void foo(File... files) { }
       foo(new <caret>)
@@ -292,7 +291,7 @@ public class GroovyAutoPopupTest {
   @Test
   public void testNoAutopopupAfterDef() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
-    configureByExactName(groovy.get(), "a.groovy", "def <caret>");
+    groovy.get().configureByText("a.groovy", "def <caret>");
     type("a");
     assertNull(getLookup());
   }
@@ -302,7 +301,7 @@ public class GroovyAutoPopupTest {
     groovy.get().addClass("package foo; public class KimeFamilyRange {}");
     groovy.get().addClass("package foo; public class FamiliesRangesMetaData {}");
     groovy.get().addClass("public class KSomethingInCurrentPackage {}");
-    configureByExactName(groovy.get(), "a.groovy", "<caret>");
+    groovy.get().configureByText("a.groovy", "<caret>");
 
     type("F");
     assertFalse(groovy.get().getLookupElementStrings().contains("KimeFamilyRange"));

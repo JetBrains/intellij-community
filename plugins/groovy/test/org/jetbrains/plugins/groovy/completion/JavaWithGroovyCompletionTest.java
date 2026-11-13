@@ -3,26 +3,24 @@ package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.configureByExactName;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 public class JavaWithGroovyCompletionTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.JAVA_LATEST);
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project);
 
   @Test
   public void test_using_java_keywords_in_member_names() {
@@ -33,7 +31,7 @@ public class JavaWithGroovyCompletionTest {
           static final int "continue" = 2;
         }
         """);
-      configureByExactName(groovy.get(), "a.java", "class Bar {{ con<caret> }}");
+      groovy.get().configureByText("a.java", "class Bar {{ con<caret> }}");
       groovy.get().complete(CompletionType.BASIC, 2);
       assertFalse(groovy.get().getLookupElementStrings().contains("const"));
       assertFalse(groovy.get().getLookupElementStrings().contains("continue"));
@@ -48,7 +46,7 @@ public class JavaWithGroovyCompletionTest {
           static void "this"() {}
         }
         """);
-      configureByExactName(groovy.get(), "a.java", "class Bar {{ this<caret> }}");
+      groovy.get().configureByText("a.java", "class Bar {{ this<caret> }}");
       groovy.get().complete(CompletionType.BASIC, 2);
       LookupElement[] elements = groovy.get().getLookupElements();
       assertTrue(elements == null || ContainerUtil.find(elements,

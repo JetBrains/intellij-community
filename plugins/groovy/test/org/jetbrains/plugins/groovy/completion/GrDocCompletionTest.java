@@ -2,26 +2,25 @@
 package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 
 /**
  * @author Max Medvedev
  */
 @TestApplication
 public class GrDocCompletionTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.JAVA_LATEST, "groovy/completion/gdoc");
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project, "groovy/completion/gdoc");
   private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
 
   @Test

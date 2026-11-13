@@ -2,32 +2,30 @@
 package org.jetbrains.plugins.groovy.injection;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.JBIterable;
 import java.io.File;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 
 @TestApplication
 public class InjectedGroovyParsingTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy =
-    groovyFixture(project, GroovyProjectDescriptors.JAVA_LATEST, "injected/");
-  private final TestFixture<String> testName = testNameFixture(false);
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy =
+    groovyFixture(project, "injected/");
 
   @BeforeEach
   public void setUp() {
@@ -38,8 +36,8 @@ public class InjectedGroovyParsingTest {
   public void testCommentInjectionInGroovy() {
     JavaCodeInsightTestFixture fixture = groovy.get();
     EdtTestUtil.runInEdtAndWait(() -> {
-      fixture.configureByFile(testName.get() + ".groovy");
-      PlatformTestUtil.assertSameLinesWithFile(fixture.getTestDataPath() + File.separatorChar + testName.get() + ".txt",
+      fixture.configureByFile(groovy.get().getTestName(false) + ".groovy");
+      PlatformTestUtil.assertSameLinesWithFile(fixture.getTestDataPath() + File.separatorChar + groovy.get().getTestName(false) + ".txt",
                                                toParseTreeText(fixture.getFile()));
     });
   }

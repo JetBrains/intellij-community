@@ -4,12 +4,12 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.testFramework.propertyBased.CheckHighlighterConsistency;
@@ -26,15 +26,14 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.configureByExactName;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 
 @Slow
 @TestApplication
 public class GroovySanityTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_3_0);
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_3_0);
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project);
 
   public CodeInsightTestFixture getFixture() { return groovy.get(); }
 
@@ -50,7 +49,7 @@ public class GroovySanityTest {
 
   @Test
   public void inc() {
-    PsiFile file = configureByExactName(groovy.get(), "_.groovy", """
+    PsiFile file = groovy.get().configureByText("_.groovy", """
     
           /**1*/
           /**2*/

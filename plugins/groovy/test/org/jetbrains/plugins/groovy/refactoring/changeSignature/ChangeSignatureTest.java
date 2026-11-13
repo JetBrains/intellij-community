@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClassType;
@@ -15,13 +14,13 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.io.File;
@@ -32,9 +31,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -42,9 +40,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @TestApplication
 public class ChangeSignatureTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.JAVA_LATEST, "refactoring/changeSignature/");
-  private final TestFixture<String> testName = testNameFixture(false);
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project, "refactoring/changeSignature/");
 
   @Test
   public void testOneNewParameter() {
@@ -457,8 +454,8 @@ public class ChangeSignatureTest {
                       @NotNull List<SimpleInfo> parameterInfo,
                       @NotNull List<ThrownExceptionInfo> exceptionInfo,
                       final boolean generateDelegate) {
-    final String javaTestName = testName.get() + ".java";
-    final String groovyTestName = testName.get() + ".groovy";
+    final String javaTestName = groovy.get().getTestName(false) + ".java";
+    final String groovyTestName = groovy.get().getTestName(false) + ".groovy";
 
 
     final File javaSrc = new File(groovy.get().getTestDataPath() + "/" + javaTestName);
@@ -471,10 +468,10 @@ public class ChangeSignatureTest {
     executeRefactoring(newVisibility, newName, newReturnType, new SimpleParameterGen(parameterInfo, groovy.get().getProject()),
                        new SimpleExceptionsGen(exceptionInfo), generateDelegate);
     if (javaSrc.exists()) {
-      groovy.get().checkResultByFile(javaTestName, testName.get() + "_after.java", true);
+      groovy.get().checkResultByFile(javaTestName, groovy.get().getTestName(false) + "_after.java", true);
     }
 
-    groovy.get().checkResultByFile(groovyTestName, testName.get() + "_after.groovy", true);
+    groovy.get().checkResultByFile(groovyTestName, groovy.get().getTestName(false) + "_after.groovy", true);
   }
 
   private void executeRefactoring(@Nullable @PsiModifier.ModifierConstant String newVisibility,

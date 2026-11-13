@@ -2,10 +2,11 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.groovy.testFramework.ResolveTest;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
@@ -31,14 +32,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 @TestApplication
 public class LiteralConstructorTest implements HighlightingTest, ResolveTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_2_5_REAL_JDK);
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_5_REAL_JDK);
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project);
 
   @Override
   public @NotNull JavaCodeInsightTestFixture getFixture() {

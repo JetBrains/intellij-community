@@ -18,18 +18,16 @@ package org.jetbrains.plugins.groovy.lang.slicer
 import com.intellij.analysis.AnalysisScope
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.slicer.LanguageSlicing
 import com.intellij.slicer.SliceAnalysisParams
 import com.intellij.slicer.SliceHandler
 import com.intellij.slicer.SliceTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.LightJavaProject
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.TestFixture
-import com.intellij.testFramework.junit5.fixture.testNameFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.groovy.util.groovyFixture
@@ -40,10 +38,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
  * The module has no JDK, as the JUnit 3 base `DaemonAnalyzerTestCase` of the old test had it.
  */
 @TestApplication
-abstract class GroovySliceTestCase(projectFixture: TestFixture<Project>, private val isDataFlowToThis: Boolean) {
-  private val myFixture by groovyFixture(projectFixture, LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR,
+abstract class GroovySliceTestCase(projectFixture: TestFixture<LightJavaProject>, private val isDataFlowToThis: Boolean) {
+  private val myFixture by groovyFixture(projectFixture,
                                          "slicer/${if (isDataFlowToThis) "backward" else "forward"}/")
-  private val testName by testNameFixture(false)
 
   protected fun doTest(getTestFiles: (baseName: String) -> List<String> = { listOf("$it.groovy") }) {
     timeoutRunBlocking {
@@ -52,7 +49,7 @@ abstract class GroovySliceTestCase(projectFixture: TestFixture<Project>, private
         val psiManager = PsiManager.getInstance(project)
         val psiDocumentManager = PsiDocumentManager.getInstance(project)
 
-        val testFiles = getTestFiles(testName)
+        val testFiles = getTestFiles(myFixture.getTestName(false))
         myFixture.configureByFiles(*testFiles.toTypedArray())
         val rootDir = myFixture.tempDirFixture.getFile("")!!
 

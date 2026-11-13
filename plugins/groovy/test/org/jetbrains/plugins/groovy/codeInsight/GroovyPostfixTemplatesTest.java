@@ -13,16 +13,15 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrAllPostfixTemplate;
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrArgPostfixTemplate;
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrCastExpressionPostfixTemplate;
@@ -53,17 +52,16 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.configureByExactName;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 public class GroovyPostfixTemplatesTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.JAVA_LATEST);
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project);
   private CompletionAutoPopupTester myTester;
 
   @BeforeEach
@@ -98,7 +96,7 @@ public class GroovyPostfixTemplatesTest {
                                       @Nullable String result,
                                       @NotNull Class<? extends PostfixTemplate> expectedClass,
                                       boolean invokeRefactoring) {
-    configureByExactName(groovy.get(), "_.groovy", baseText);
+    groovy.get().configureByText("_.groovy", baseText);
     type(textToType);
     final LookupEx lookup = groovy.get().getLookup();
     assertNotNull(lookup);
@@ -129,7 +127,7 @@ public class GroovyPostfixTemplatesTest {
   }
 
   private void doNoPopupTest(@NotNull String baseText, @NotNull String textToType, @NotNull Class<? extends PostfixTemplate> clazz) {
-    configureByExactName(groovy.get(), "_.groovy", baseText);
+    groovy.get().configureByText("_.groovy", baseText);
     type(textToType);
     Lookup lookup = groovy.get().getLookup();
     if (lookup != null) {

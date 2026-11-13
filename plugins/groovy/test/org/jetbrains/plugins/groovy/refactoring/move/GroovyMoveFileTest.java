@@ -3,22 +3,24 @@
 package org.jetbrains.plugins.groovy.refactoring.move;
 
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.junit.jupiter.api.Test;
 
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
 
 /**
  * @author Max Medvedev
  */
 public class GroovyMoveFileTest extends GroovyMoveTestBase {
-  private static final TestFixture<Project> project = groovyProjectFixture();
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_5);
 
   public GroovyMoveFileTest() {
     super(project, "refactoring/move/moveFile/");

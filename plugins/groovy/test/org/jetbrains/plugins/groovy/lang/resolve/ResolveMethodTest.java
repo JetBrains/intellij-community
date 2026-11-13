@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.GroovyAssertions;
 import com.intellij.groovy.testFramework.ResolveTest;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -16,6 +15,8 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
@@ -51,17 +52,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.configureByExactName;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 @TestApplication
 public class ResolveMethodTest implements ResolveTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_5_0, "resolve/method");
-  private final TestFixture<String> testName = testNameFixture(false);
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_5_0);
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project, "resolve/method");
 
   @Override
   public @NotNull JavaCodeInsightTestFixture getFixture() {
@@ -69,7 +67,7 @@ public class ResolveMethodTest implements ResolveTest {
   }
 
   public String getTestName() {
-    return testName.get();
+    return groovy.get().getTestName(false);
   }
 
   private @NotNull PsiReference configureByFile(@NonNls String filePath) {
@@ -1500,7 +1498,7 @@ public class ResolveMethodTest implements ResolveTest {
   @Test
   public void runtimeMixin3() {
     runInEdtAndWait(() -> {
-      configureByExactName(getFixture(), "_.groovy",
+      getFixture().configureByText("_.groovy",
         """
           class Foo {
               public static void doSmth(Script u) {
@@ -1518,7 +1516,7 @@ public class ResolveMethodTest implements ResolveTest {
   @Test
   public void runtimeMixin4() {
     runInEdtAndWait(() -> {
-      configureByExactName(getFixture(), "_.groovy",
+      getFixture().configureByText("_.groovy",
         """
           class Foo {
               public static void doSmth(Script u) {
@@ -1536,7 +1534,7 @@ public class ResolveMethodTest implements ResolveTest {
   @Test
   public void runtimeMixin5() {
     runInEdtAndWait(() -> {
-      configureByExactName(getFixture(), "_.groovy",
+      getFixture().configureByText("_.groovy",
         """
           class Foo {
               public static void doSmth(Script u) {
@@ -1694,7 +1692,7 @@ public class ResolveMethodTest implements ResolveTest {
   @Test
   public void runtimeMixin13() {
     runInEdtAndWait(() -> {
-      configureByExactName(getFixture(), "_.groovy",
+      getFixture().configureByText("_.groovy",
         """
           class Foo {
               public static void doSmth(Script u) {
@@ -1712,7 +1710,7 @@ public class ResolveMethodTest implements ResolveTest {
   @Test
   public void runtimeMixin14() {
     runInEdtAndWait(() -> {
-      configureByExactName(getFixture(), "_.groovy",
+      getFixture().configureByText("_.groovy",
         """
           class Foo {
               public static void doSmth(Script u) {
@@ -1730,7 +1728,7 @@ public class ResolveMethodTest implements ResolveTest {
   @Test
   public void runtimeMixin15() {
     runInEdtAndWait(() -> {
-      configureByExactName(getFixture(), "_.groovy",
+      getFixture().configureByText("_.groovy",
         """
           class Foo {
               public static void doSmth(Script u) {

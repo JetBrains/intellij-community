@@ -4,97 +4,32 @@
 package org.jetbrains.plugins.groovy.util
 
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightProjectFixture
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
-import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.testFramework.javaCodeInsightFixture
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture
+import com.intellij.testFramework.fixtures.LightJavaProject
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
-import com.intellij.testFramework.junit5.fixture.disposableFixture
-import com.intellij.testFramework.junit5.fixture.moduleFixture
-import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
-import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
-import com.intellij.testFramework.junit5.fixture.vfsDeletedTempPathFixture
 import org.jetbrains.annotations.TestOnly
-import kotlin.io.path.Path
 
 /**
- * Creates a [JavaCodeInsightTestFixture] in a new project for each test.
- * The project directory is the module directory.
- * Use it only when the code under test needs the project directory. Otherwise, use the overload with a shared project.
- *
- * The module gets the SDK, the language level, and the libraries of [descriptor], as a light module of [descriptor] does.
- * The test data path is [testDataPath] under [TestUtils.getAbsoluteTestDataPath].
- */
-@TestOnly
-@JvmOverloads
-fun groovyFixture(descriptor: LightProjectDescriptor, testDataPath: String = ""): TestFixture<JavaCodeInsightTestFixture> =
-  testFixture("groovyFixture") {
-    val projectFixture = codeInsightProjectFixture()
-    val disposable = disposableFixture().init()
-    val fixture = javaCodeInsightFixture(projectFixture, projectFixture.pathInProjectFixture(Path(""))).init()
-    configureGroovyModule(fixture, descriptor, disposable, testDataPath)
-    initialized(fixture) {}
-  }
-
-/**
- * Creates an opened project to share between the tests of a class. Declare it in a static field, and pass it to [groovyFixture].
- */
-@TestOnly
-fun groovyProjectFixture(): TestFixture<Project> = projectFixture(openAfterCreation = true)
-
-/**
- * Creates a [JavaCodeInsightTestFixture] with a new module and a new temporary directory for each test in the shared [projectFixture].
+ * Creates the fixture of one test in the project of [projectFixture], as [lightJavaCodeInsightFixture] does.
+ * The descriptor of [lightJavaProjectFixture] sets up the module.
  * It replaces the JUnit 3 and JUnit 4 light Groovy bases, such as `LightGroovyTestCase` and `GroovyLatestTest`.
- * The project directory is not the module directory.
  *
- * The module gets the SDK, the language level, and the libraries of [descriptor], as a light module of [descriptor] does.
  * The test data path is [testDataPath] under [TestUtils.getAbsoluteTestDataPath].
  */
 @TestOnly
 @JvmOverloads
-fun groovyFixture(
-  projectFixture: TestFixture<Project>,
-  descriptor: LightProjectDescriptor,
-  testDataPath: String = "",
-): TestFixture<JavaCodeInsightTestFixture> =
+fun groovyFixture(projectFixture: TestFixture<LightJavaProject>, testDataPath: String = ""): TestFixture<LightJavaCodeInsightTestFixture> =
   testFixture("groovyFixture") {
-    val disposable = disposableFixture().init()
-    val pathFixture = vfsDeletedTempPathFixture()
-    val moduleFixture = projectFixture.moduleFixture(pathFixture, addPathToSourceRoot = true)
-    // The editors of the test must close before the module is disposed.
-    val fixture = javaCodeInsightFixture(projectFixture, pathFixture).dependsOn(moduleFixture).init()
-    configureGroovyModule(fixture, descriptor, disposable, testDataPath)
+    val fixture = lightJavaCodeInsightFixture(projectFixture).init()
+    // LightGroovyTestCase loads the extensions before the test, so that the highlighting does not load them.
+    EntryPointsManagerBase.DEAD_CODE_EP_NAME.extensionList
+    fixture.testDataPath = TestUtils.getAbsoluteTestDataPath() + testDataPath
     initialized(fixture) {}
   }
-
-private fun configureGroovyModule(fixture: JavaCodeInsightTestFixture, descriptor: LightProjectDescriptor, disposable: Disposable, testDataPath: String) {
-  val module = fixture.module
-  // The empty descriptor has no SDK and no library, so the module stays as the module fixture made it.
-  if (descriptor !== LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR) {
-    // configureModule is public only on DefaultLightProjectDescriptor.
-    val defaultDescriptor = descriptor as DefaultLightProjectDescriptor
-    val sdk = defaultDescriptor.sdk!!
-    WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().addJdk(sdk, disposable) }
-    ModuleRootModificationUtil.setModuleSdk(module, sdk)
-    ModuleRootModificationUtil.updateModel(module) { defaultDescriptor.configureModule(module, it, it.contentEntries.single()) }
-  }
-  IndexingTestUtil.waitUntilIndexesAreReady(fixture.project)
-  // LightGroovyTestCase loads the extensions before the test, so that the highlighting does not load them.
-  EntryPointsManagerBase.DEAD_CODE_EP_NAME.extensionList
-  fixture.testDataPath = TestUtils.getAbsoluteTestDataPath() + testDataPath
-}
 
 /**
  * Adds a stub of the annotation `groovy.transform.CompileStatic` to the project of [fixture].
@@ -310,24 +245,4 @@ fun addTestCase(fixture: JavaCodeInsightTestFixture) {
       public void setName(java.lang.String name) { /* compiled code */ }
     }
   """.trimIndent())
-}
-
-/**
- * Configures [fixture] with [text] in the file [fileName] in the root of the project, as the JUnit 3 light fixtures do.
- * The file gets exactly this name, and the text replaces the text of an existing file.
- * `configureByText` of a JUnit 6 fixture makes the file name unique, which changes the name of a script class.
- */
-@TestOnly
-fun configureByExactName(fixture: JavaCodeInsightTestFixture, fileName: String, text: String): PsiFile {
-  // The editor of an earlier configuration keeps an unsaved document, which blocks the reload of the new text.
-  val document = fixture.tempDirFixture.getFile(fileName)?.let { FileDocumentManager.getInstance().getCachedDocument(it) }
-  if (document != null) {
-    WriteCommandAction.runWriteCommandAction(fixture.project) {
-      PsiDocumentManager.getInstance(fixture.project).doPostponedOperationsAndUnblockDocument(document)
-      FileDocumentManager.getInstance().saveDocument(document)
-    }
-  }
-  val file = fixture.addFileToProject(fileName, text)
-  fixture.configureFromExistingVirtualFile(file.virtualFile)
-  return fixture.file
 }

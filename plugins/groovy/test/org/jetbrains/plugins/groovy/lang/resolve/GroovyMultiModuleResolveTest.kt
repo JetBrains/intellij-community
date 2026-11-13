@@ -4,19 +4,21 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightProjectFixture
 import com.intellij.psi.PsiReference
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.javaCodeInsightFixture
 import com.intellij.testFramework.junit5.TestApplication
-import org.jetbrains.plugins.groovy.util.configureByExactName
-import org.jetbrains.plugins.groovy.util.groovyFixture
+import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import kotlin.io.path.Path
 
 @TestApplication
 class GroovyMultiModuleResolveTest {
-  // The test adds modules, so each test gets its own project.
-  private val myFixture by groovyFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR)
+  // The test adds modules, which the light fixture does not permit, so each test gets its own project.
+  private val projectFixture = codeInsightProjectFixture()
+  private val myFixture by javaCodeInsightFixture(projectFixture, projectFixture.pathInProjectFixture(Path("")))
 
   @Test
   fun `test same class from different modules`() {
@@ -37,7 +39,7 @@ class GroovyMultiModuleResolveTest {
     """.trimIndent())
     ModuleRootModificationUtil.addDependency(myFixture.module, javaModule)
 
-    configureByExactName(myFixture, "Main.groovy", """
+    myFixture.configureByText("Main.groovy", """
       import foo.Foo
 
       class Main {

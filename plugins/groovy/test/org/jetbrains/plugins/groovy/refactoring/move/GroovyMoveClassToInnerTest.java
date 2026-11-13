@@ -4,20 +4,21 @@ package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import java.util.Arrays;
 import java.util.HashSet;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.junit.jupiter.api.Test;
 
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -25,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * @author Max Medvedev
  */
 public class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
-  private static final TestFixture<Project> project = groovyProjectFixture();
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_2_5);
 
   public GroovyMoveClassToInnerTest() {
     super(project, "refactoring/move/moveClassToInner/");

@@ -15,7 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.lang.slicer
 
-import org.jetbrains.plugins.groovy.util.groovyProjectFixture
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
 import org.junit.jupiter.api.Test
 
 class GroovySliceForwardTest : GroovySliceTestCase(groovyProject, false) {
@@ -29,6 +30,6 @@ class GroovySliceForwardTest : GroovySliceTestCase(groovyProject, false) {
   fun testJavaGroovyJava() = doTest { listOf("$it.java", "$it.groovy") }
 
   companion object {
-    private val groovyProject = groovyProjectFixture()
+    private val groovyProject = lightJavaProjectFixture(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR)
   }
 }

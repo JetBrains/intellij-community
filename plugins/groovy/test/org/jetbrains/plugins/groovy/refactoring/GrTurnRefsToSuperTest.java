@@ -28,7 +28,8 @@ import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
@@ -37,17 +38,15 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @TestApplication
 public class GrTurnRefsToSuperTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy =
-    groovyFixture(project, new DefaultLightProjectDescriptor(), "refactoring/turnRefsToSuper/");
-  private final TestFixture<String> lowerTestName = testNameFixture(true);
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(new DefaultLightProjectDescriptor());
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy =
+    groovyFixture(project, "refactoring/turnRefsToSuper/");
 
   @Test
   public void testNoReturnType() {
@@ -56,8 +55,8 @@ public class GrTurnRefsToSuperTest {
 
   /** Copies `before`, runs the refactoring, and compares the result with `after`, as the JUnit 3 base `MultiFileTestCase` does. */
   private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) {
-    String path = groovy.get().getTestDataPath() + lowerTestName.get();
-    VirtualFile rootDir = groovy.get().copyDirectoryToProject(lowerTestName.get() + "/before", "");
+    String path = groovy.get().getTestDataPath() + groovy.get().getTestName(true);
+    VirtualFile rootDir = groovy.get().copyDirectoryToProject(groovy.get().getTestName(true) + "/before", "");
     VirtualFile rootAfter = StandardFileSystems.local().findFileByPath(path + "/after");
     EdtTestUtil.runInEdtAndWait(() -> {
       performAction(className, superClassName, replaceInstanceOf);

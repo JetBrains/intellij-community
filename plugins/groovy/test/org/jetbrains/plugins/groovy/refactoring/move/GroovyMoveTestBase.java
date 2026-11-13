@@ -2,7 +2,6 @@
 
 package org.jetbrains.plugins.groovy.refactoring.move;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -11,18 +10,17 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -32,15 +30,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  */
 @TestApplication
 public abstract class GroovyMoveTestBase {
-  protected final TestFixture<JavaCodeInsightTestFixture> groovy;
-  private final TestFixture<String> lowerTestName = testNameFixture(true);
+  protected final TestFixture<LightJavaCodeInsightTestFixture> groovy;
 
-  protected GroovyMoveTestBase(@NotNull TestFixture<Project> project, @NotNull String testDataPath) {
-    groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_2_5, testDataPath);
+  protected GroovyMoveTestBase(@NotNull TestFixture<LightJavaProject> project, @NotNull String testDataPath) {
+    groovy = groovyFixture(project, testDataPath);
   }
 
   protected void doTest(String newPackageName, String... names) {
-    String testName = lowerTestName.get();
+    String testName = groovy.get().getTestName(true);
     VirtualFile actualDirectory = groovy.get().copyDirectoryToProject(testName + "/before", "");
     String expectedPath = groovy.get().getTestDataPath().replace(File.separatorChar, '/') + testName + "/after";
     VirtualFile rootAfter = StandardFileSystems.local().findFileByPath(expectedPath);

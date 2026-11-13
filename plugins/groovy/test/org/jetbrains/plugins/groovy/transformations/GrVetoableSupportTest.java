@@ -2,14 +2,14 @@
 package org.jetbrains.plugins.groovy.transformations;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,16 +30,15 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.configureByExactName;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @TestApplication
 public class GrVetoableSupportTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK);
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_LATEST_REAL_JDK);
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project);
 
   public static Collection<Object[]> data() {
     LinkedHashMap<String, String> map = new LinkedHashMap<>(4);
@@ -72,7 +71,7 @@ public class GrVetoableSupportTest {
                                                 "new Person().getVetoableChangeListeners('')");
 
     for (String text : groovyTextList) {
-      GroovyFile file = (GroovyFile)configureByExactName(groovy.get(), "test.groovy", text);
+      GroovyFile file = (GroovyFile)groovy.get().configureByText("test.groovy", text);
       ReadAction.run(() -> {
         GrStatement[] statements = file.getStatements();
         GrCall call = (GrCall)statements[statements.length - 1];
@@ -100,7 +99,7 @@ public class GrVetoableSupportTest {
                                                 "new Person().getVetoableChangeListeners(\"\");");
 
     for (String text : javaTextString) {
-      PsiJavaFile file = (PsiJavaFile)configureByExactName(groovy.get(), "Main.java", "class Main { void bar() {" + text + "} }");
+      PsiJavaFile file = (PsiJavaFile)groovy.get().configureByText("Main.java", "class Main { void bar() {" + text + "} }");
       ReadAction.run(() -> {
         PsiExpressionStatement statement = (PsiExpressionStatement)file.getClasses()[0].getMethods()[0].getBody().getStatements()[0];
         PsiCall call = (PsiCall)statement.getExpression();

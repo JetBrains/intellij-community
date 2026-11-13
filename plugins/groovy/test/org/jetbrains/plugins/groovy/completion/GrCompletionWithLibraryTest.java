@@ -3,9 +3,9 @@ package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import java.util.List;
@@ -14,11 +14,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.configureByExactName;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -26,10 +24,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 @TestApplication
 public class GrCompletionWithLibraryTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.GROOVY_1_7, "groovy/completion/");
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(GroovyProjectDescriptors.GROOVY_1_7);
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project, "groovy/completion/");
   private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
-  private final TestFixture<String> testName = testNameFixture(false);
 
   @Test
   public void testCategoryMethod() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
@@ -93,7 +90,7 @@ public class GrCompletionWithLibraryTest {
   @Test
   public void testEllipsisTypeCompletion() {
     runInEdtAndWait(() -> {
-      configureByExactName(groovy.get(), "a.groovy", """
+      groovy.get().configureByText("a.groovy", """
       
         def foo(def... args) {
           args.si<caret>
@@ -110,7 +107,7 @@ public class GrCompletionWithLibraryTest {
   @Test
   public void testBoxForinParams() {
     runInEdtAndWait(() -> {
-      configureByExactName(groovy.get(), "A.groovy", """
+      groovy.get().configureByText("A.groovy", """
       
         for (def ch: "abc".toCharArray()) {
           print ch.toUpperCa<caret>
@@ -141,7 +138,7 @@ public class GrCompletionWithLibraryTest {
   @Test
   public void testDeclaredMembersGoFirst() {
     runInEdtAndWait(() -> {
-      configureByExactName(groovy.get(), "a.groovy", """
+      groovy.get().configureByText("a.groovy", """
       
               class Foo {
                 def superProp
@@ -261,7 +258,7 @@ public class GrCompletionWithLibraryTest {
   @Test
   public void testGStringConcatenationCompletion() {
     runInEdtAndWait(() -> {
-      groovy.get().testCompletionVariants(testName.get() + ".groovy", "substring", "substring", "subSequence");
+      groovy.get().testCompletionVariants(groovy.get().getTestName(false) + ".groovy", "substring", "substring", "subSequence");
     });
   }
 
@@ -270,7 +267,7 @@ public class GrCompletionWithLibraryTest {
     runInEdtAndWait(() -> {
       groovy.get().addClass("package p; public class Tuple {}");
 
-      configureByExactName(groovy.get(), "a.groovy", "print new Tupl<caret>");
+      groovy.get().configureByText("a.groovy", "print new Tupl<caret>");
       LookupElement tuple = null;
       LookupElement groovyUtilTuple = null;
       StringBuilder msg = new StringBuilder();

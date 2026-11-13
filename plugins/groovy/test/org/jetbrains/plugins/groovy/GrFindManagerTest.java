@@ -4,17 +4,18 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindManagerTestUtils;
 import com.intellij.find.FindModel;
-import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.junit.jupiter.api.Test;
 
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
 
 @TestApplication
 public class GrFindManagerTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture();
 
   @Test
   public void testFindInJavaDocs() {
@@ -42,7 +43,7 @@ public class GrFindManagerTest {
   }
 
   private static void runFindForwardAndBackward(FindModel findModel, String text) {
-    FindManager findManager = FindManager.getInstance(project.get());
+    FindManager findManager = FindManager.getInstance(project.get().getProject());
     EdtTestUtil.runInEdtAndWait(() -> FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "groovy"));
   }
 }

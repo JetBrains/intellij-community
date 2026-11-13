@@ -1,25 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.completion;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
 import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
 
 public abstract class GrFunctionalExpressionCompletionTest {
-  private final TestFixture<JavaCodeInsightTestFixture> groovy;
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy;
   private final TestFixture<GroovyCompletionTestFixture> completion;
-  private final TestFixture<String> testName = testNameFixture(false);
 
-  protected GrFunctionalExpressionCompletionTest(@NotNull TestFixture<Project> project, @NotNull LightProjectDescriptor descriptor, @NotNull String testDataPath) {
-    groovy = groovyFixture(project, descriptor, testDataPath);
+  protected GrFunctionalExpressionCompletionTest(@NotNull TestFixture<LightJavaProject> project, @NotNull String testDataPath) {
+    groovy = groovyFixture(project, testDataPath);
     completion = groovyCompletionFixture(groovy);
   }
 
@@ -38,10 +35,10 @@ public abstract class GrFunctionalExpressionCompletionTest {
   @Test
   public void testEachMethodForEnumRanges() {
     runInEdtAndWait(() -> {
-      groovy.get().configureByFile(testName.get() + ".groovy");
+      groovy.get().configureByFile(groovy.get().getTestName(false) + ".groovy");
       groovy.get().completeBasic();
       groovy.get().type("\n");
-      groovy.get().checkResultByFile(testName.get() + "_after.groovy");
+      groovy.get().checkResultByFile(groovy.get().getTestName(false) + "_after.groovy");
     });
   }
 

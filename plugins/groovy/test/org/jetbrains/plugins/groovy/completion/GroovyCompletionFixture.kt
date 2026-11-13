@@ -12,7 +12,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.groovy.util.configureByExactName
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -177,7 +176,7 @@ class GroovyCompletionTestFixture internal constructor(
       fixture.configureByFile("$testName.groovy")
     }
     else {
-      configureByExactName(fixture, "$testName.groovy", before)
+      fixture.configureByText("$testName.groovy", before)
     }
   }
 }

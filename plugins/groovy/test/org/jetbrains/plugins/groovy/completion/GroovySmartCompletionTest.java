@@ -4,37 +4,33 @@ package org.jetbrains.plugins.groovy.completion;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.StaticallyImportable;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 
 import java.util.List;
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
-import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 import static org.jetbrains.plugins.groovy.completion.GroovyCompletionFixture.groovyCompletionFixture;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.addCompileStatic;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.configureByExactName;
 import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyFixture;
-import static org.jetbrains.plugins.groovy.util.GroovyFixture.groovyProjectFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 public class GroovySmartCompletionTest {
-  private static final TestFixture<Project> project = groovyProjectFixture();
-  private final TestFixture<JavaCodeInsightTestFixture> groovy = groovyFixture(project, GroovyProjectDescriptors.JAVA_LATEST, "groovy/completion/smart");
+  private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> groovy = groovyFixture(project, "groovy/completion/smart");
   private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
-  private final TestFixture<String> testName = testNameFixture(false);
 
   @Test
   public void testSmartCompletionAfterNewInDeclaration() {
     runInEdtAndWait(() -> {
-      groovy.get().configureByFile(testName.get() + ".groovy");
+      groovy.get().configureByFile(groovy.get().getTestName(false) + ".groovy");
       groovy.get().complete(CompletionType.SMART);
       assertEquals(List.of("Bar", "Foo"), groovy.get().getLookupElementStrings());
     });
@@ -138,7 +134,7 @@ public class GroovySmartCompletionTest {
   @Test
   public void testGlobalStaticMembers() {
     runInEdtAndWait(() -> {
-      groovy.get().configureByFile(testName.get() + ".groovy");
+      groovy.get().configureByFile(groovy.get().getTestName(false) + ".groovy");
       groovy.get().complete(CompletionType.SMART, 2);
       assertEquals(List.of("SUBSTRING", "createExpected", "createSubGeneric", "SUB_RAW"), groovy.get().getLookupElementStrings());
     });
@@ -147,7 +143,7 @@ public class GroovySmartCompletionTest {
   @Test
   public void testGlobalStaticMembersForString() {
     runInEdtAndWait(() -> {
-      configureByExactName(groovy.get(), "a.groovy", """
+      groovy.get().configureByText("a.groovy", """
         'class Foo {
           public static String string(){}
           public static Comparator<String> comparator(){}
@@ -165,7 +161,7 @@ public class GroovySmartCompletionTest {
   @Test
   public void testGlobalListCreators() {
     runInEdtAndWait(() -> {
-      groovy.get().configureByFile(testName.get() + ".groovy");
+      groovy.get().configureByFile(groovy.get().getTestName(false) + ".groovy");
       groovy.get().complete(CompletionType.SMART, 2);
       assertEquals(List.of("createGenericList", "createStringList"), groovy.get().getLookupElementStrings());
     });
@@ -183,7 +179,7 @@ public class GroovySmartCompletionTest {
                              public static Expected fooMethod() {}
                            }
                            """);
-      configureByExactName(groovy.get(), "a.groovy", "Expected exp = fo<caret>");
+      groovy.get().configureByText("a.groovy", "Expected exp = fo<caret>");
       LookupElement[] items = groovy.get().complete(CompletionType.SMART);
       assertEquals(List.of("fooField", "fooMethod"), groovy.get().getLookupElementStrings());
       assertTrue(items[0].as(StaticallyImportable.CLASS_CONDITION_KEY).canBeImported());
@@ -200,7 +196,7 @@ public class GroovySmartCompletionTest {
   @Test
   public void testThrow() {
     runInEdtAndWait(() -> {
-      configureByExactName(groovy.get(), "_a.groovy", """
+      groovy.get().configureByText("_a.groovy", """
         throw new RunEx<caret>
         """);
       groovy.get().complete(CompletionType.SMART);
@@ -286,7 +282,7 @@ public class GroovySmartCompletionTest {
   public void testFieldWithAssignment() {
     runInEdtAndWait(() -> {
       addCompileStatic(groovy.get());
-      configureByExactName(groovy.get(), "a.groovy", """
+      groovy.get().configureByText("a.groovy", """
         import groovy.transform.CompileStatic
         @CompileStatic
         class A {
