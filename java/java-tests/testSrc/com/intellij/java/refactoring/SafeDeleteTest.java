@@ -694,7 +694,8 @@ public class SafeDeleteTest extends MultiFileTestCase {
     assertFalse("No element found in text:\n" + getFile().getText(), elements.isEmpty());
     Map<ModPlanOption<?>, Object> answers = new LinkedHashMap<>(defaultAnswers());
     answers.putAll(testAnswers);
-    SafeDeleteTestSupport.NonCodeUsageRecorder nonCodeUsageRecorder = SafeDeleteTestSupport.applyOptions(answers, getTestRootDisposable());
+    SafeDeleteTestSupport.NonCodeUsageRecorder nonCodeUsageRecorder = new SafeDeleteTestSupport.NonCodeUsageRecorder();
+    SafeDeleteTestSupport.applyOptions(answers, nonCodeUsageRecorder, getTestRootDisposable());
     performSafeDelete(elements, answers, nonCodeUsageRecorder);
     // The conflicts list the non-code usages in their messages, so the non-code usages are checked only without them.
     if (!BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {

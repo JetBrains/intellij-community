@@ -55,11 +55,9 @@ object SafeDeleteTestSupport {
    *   [answers] does not set is false, as in the headless flow;
    * - all the answers go to each chain of the legacy flow, through [ModPlanUiInterpreter], on top of the answers that the legacy flow
    *   gives in a unit test, and to the interactive ModPlan flow, through [ModPlanSafeDeleteFlow.answerInTests].
-   *
-   * @return the non-code usages that the two flows show in their previews
    */
   @JvmStatic
-  fun applyOptions(answers: Map<ModPlanOption<*>, Any>, disposable: Disposable): NonCodeUsageRecorder {
+  fun applyOptions(answers: Map<ModPlanOption<*>, Any>, disposable: Disposable) {
     val settings = RefactoringSettings.getInstance()
     val oldSearchInComments = settings.SAFE_DELETE_SEARCH_IN_COMMENTS
     val oldSearchInNonCode = settings.SAFE_DELETE_SEARCH_IN_NON_JAVA
@@ -70,13 +68,17 @@ object SafeDeleteTestSupport {
       settings.SAFE_DELETE_SEARCH_IN_NON_JAVA = oldSearchInNonCode
     }
 
-    val recorder = NonCodeUsageRecorder()
-    BaseRefactoringProcessor.recordPreviewInTests({ usages -> recorder.addUsages(usages.filter { it.isNonCodeUsage }) }, disposable)
-    val application = ApplicationManager.getApplication()
-    application.replaceService(ModPlanUiInterpreter::class.java, AnsweringInterpreter(ModPlanUiInterpreter.getInstance(), answers), disposable)
-    application.replaceService(ModPlanFlowUi::class.java, RecordingFlowUi(recorder), disposable)
+    ApplicationManager.getApplication()
+      .replaceService(ModPlanUiInterpreter::class.java, AnsweringInterpreter(ModPlanUiInterpreter.getInstance(), answers), disposable)
     ModPlanSafeDeleteFlow.answerInTests({ optionValues -> optionValues.withAll(answers) }, disposable)
-    return recorder
+  }
+
+  /** Like [applyOptions], and gives the non-code usages that the two flows show in their previews to [recorder]. */
+  @JvmStatic
+  fun applyOptions(answers: Map<ModPlanOption<*>, Any>, recorder: NonCodeUsageRecorder, disposable: Disposable) {
+    applyOptions(answers, disposable)
+    BaseRefactoringProcessor.recordPreviewInTests({ usages -> recorder.addUsages(usages.filter { it.isNonCodeUsage }) }, disposable)
+    ApplicationManager.getApplication().replaceService(ModPlanFlowUi::class.java, RecordingFlowUi(recorder), disposable)
   }
 
   /**

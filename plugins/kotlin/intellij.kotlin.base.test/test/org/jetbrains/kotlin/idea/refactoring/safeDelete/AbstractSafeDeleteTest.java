@@ -43,6 +43,41 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Safe deletes the elements at the carets of a test data file and compares the result with the expected files. A subclass chooses the
+ * flow in {@link #performSafeDelete} and {@link #performRefusedSafeDelete}. All the flows read the same test data.
+ * <p>
+ * The elements: each caret of the first file with a target marks an element. Several carets delete their elements in one request. A
+ * {@code *WithJava} test also opens the file with the same name and the other extension, {@code .java} or {@code .kt}.
+ * <p>
+ * The options: the directive {@code // SAFE_DELETE_OPTIONS: id=value} gives the answer to the question of an option. The {@code id} is
+ * {@link ModPlanOption#getId()} of an option from {@link #knownOptions()}, and the {@code value} is {@code true} or {@code false}. Separate
+ * more options with commas:
+ * <pre>
+ * // SAFE_DELETE_OPTIONS: searchInComments=true, kotlinDeleteSuperDeclarations=true
+ * </pre>
+ * An unknown id fails the test. The common options of {@link com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteOptions} work in
+ * the legacy flow and in the ModPlan flows. A search option that the directive does not set is false in all the flows. The answers go to
+ * each flow explicitly: the base {@link #performSafeDelete} gives them to the interactive flows through
+ * {@link SafeDeleteTestSupport#applyOptions}, and a headless subclass puts them into the options of its request.
+ * <p>
+ * The other directives:
+ * <ul>
+ *   <li>{@code // IGNORE_CONFLICTS} writes the deletion also with conflicts.</li>
+ *   <li>{@code // REFUSAL: <reason>} expects that the refactoring refuses the deletion with a
+ *   {@link com.intellij.refactoring.modplan.ModPlanAnalysisResult.RefusedReason}, such as {@code NOT_APPLICABLE}.</li>
+ *   <li>{@code // IGNORE_K2} on the last line disables the test.</li>
+ * </ul>
+ * <p>
+ * The files next to {@code <test>.kt}:
+ * <ul>
+ *   <li>{@code <test>.kt.after} holds the expected text after the deletion. {@code <test>.kt.fir.after} replaces it if it exists.</li>
+ *   <li>{@code <test>.kt.messages} holds the expected conflicts, sorted, one on each line. Without it, a conflict fails the test.</li>
+ *   <li>{@code <test>.kt.nonCodeUsages} holds the expected non-code usages of a deletion with no conflict. A search option that is
+ *   true makes the file necessary, see {@link SafeDeleteTestSupport#checkNonCodeUsages}.</li>
+ *   <li>{@code <test>.txt}, {@code <test>.xml} and {@code <test>.properties} go into the project as non-code files.</li>
+ * </ul>
+ */
 public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtureTestCase {
     @NotNull
     @Override
@@ -127,7 +162,8 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
 
     /**
      * Deletes {@code elements} in one request with {@code answers} to the questions. A conflict throws
-     * {@link BaseRefactoringProcessor.ConflictsInTestsException} unless {@code ignoreConflicts}.
+     * {@link BaseRefactoringProcessor.ConflictsInTestsException} unless {@code ignoreConflicts}. The interactive flows ask nothing in a unit
+     * test, so {@link SafeDeleteTestSupport#applyOptions} gives them {@code answers}.
      *
      * @param nonCodeUsagesRecorder gets the non-code usages of a deletion with no conflict
      */
@@ -137,6 +173,7 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
             boolean ignoreConflicts,
             @NotNull SafeDeleteTestSupport.NonCodeUsageRecorder nonCodeUsagesRecorder
     ) {
+        SafeDeleteTestSupport.applyOptions(answers, nonCodeUsagesRecorder, getTestRootDisposable());
         PsiElement[] elementArray = elements.toArray(PsiElement.EMPTY_ARRAY);
         if (ignoreConflicts) {
             BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(
@@ -155,6 +192,7 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
     protected void performRefusedSafeDelete(@NotNull List<PsiElement> elements,
                                             @NotNull Map<ModPlanOption<?>, Object> answers,
                                             @NotNull String expectedReason) {
+        SafeDeleteTestSupport.applyOptions(answers, getTestRootDisposable());
         try {
             SafeDeleteHandler.invoke(getProject(), elements.toArray(PsiElement.EMPTY_ARRAY), null, true, null);
         }
@@ -197,7 +235,7 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
         Map<ModPlanOption<?>, Object> answers = answersOf(dataFileText);
         boolean ignoreConflicts = InTextDirectivesUtils.isDirectiveDefined(dataFileText, "// IGNORE_CONFLICTS");
         String expectedRefusal = InTextDirectivesUtils.findStringWithPrefixes(dataFileText, "// REFUSAL:");
-        SafeDeleteTestSupport.NonCodeUsageRecorder nonCodeUsagesRecorder = SafeDeleteTestSupport.applyOptions(answers, getTestRootDisposable());
+        SafeDeleteTestSupport.NonCodeUsageRecorder nonCodeUsagesRecorder = new SafeDeleteTestSupport.NonCodeUsageRecorder();
 
         // A file with the name of the test and the extension of a non-code file holds the non-code usages in such a file.
         String pathWithoutExtension = FileUtil.getNameWithoutExtension(path);
