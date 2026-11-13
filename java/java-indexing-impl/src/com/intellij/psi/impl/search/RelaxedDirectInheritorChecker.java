@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,6 +39,7 @@ public final class RelaxedDirectInheritorChecker {
   private final PsiClass myBaseClass;
   private final NotNullLazyValue<ClassesAndAmbiguities> myClasses;
   private final ProjectFileIndex myFileIndex;
+  private final Map<GlobalSearchScope, int[]> myClassIndicesInScope = new ConcurrentHashMap<>();
 
   public RelaxedDirectInheritorChecker(@NotNull PsiClass baseClass) {
     myBaseClass = baseClass;
@@ -97,16 +99,13 @@ public final class RelaxedDirectInheritorChecker {
         return true;
       }
 
-      PsiClass[] classes = value.classes;
-      PsiFile[] files = value.containingFiles;
       GlobalSearchScope scope = ResolveScopeManager.getInstance(inheritorCandidateContainingFile.getProject()).getResolveScope(inheritorCandidateContainingFile);
       String ambiguity = null;
       boolean hasBaseClass = false;
-      for (int i = 0; i < classes.length; i++) {
+      for (int i : getClassIndicesInScope(value, scope)) {
         ProgressManager.checkCanceled();
-        PsiClass base = classes[i];
-        PsiFile file = files[i];
-        if (PsiSearchScopeUtil.isInScope(scope, file) && isAccessibleLight(inheritorCandidate, inheritorCandidateContainingFile, base)) {
+        PsiClass base = value.classes[i];
+        if (isAccessibleLight(inheritorCandidate, inheritorCandidateContainingFile, base)) {
           hasBaseClass |= base.equals(myBaseClass);
           ambiguity = hasAmbiguitiesSoFar(base, ambiguity);
         }
@@ -121,6 +120,26 @@ public final class RelaxedDirectInheritorChecker {
     }
 
     return inheritorCandidate.isInheritor(myBaseClass, false);
+  }
+
+  /**
+   * @return the indices of the classes with the base class name whose files are in {@code scope}
+   */
+  private int @NotNull [] getClassIndicesInScope(@NotNull ClassesAndAmbiguities value, @NotNull GlobalSearchScope scope) {
+    int[] cached = myClassIndicesInScope.get(scope);
+    if (cached != null) return cached;
+    PsiFile[] files = value.containingFiles;
+    int[] indices = new int[files.length];
+    int count = 0;
+    for (int i = 0; i < files.length; i++) {
+      ProgressManager.checkCanceled();
+      if (PsiSearchScopeUtil.isInScope(scope, files[i])) {
+        indices[count++] = i;
+      }
+    }
+    int[] result = Arrays.copyOf(indices, count);
+    int[] previous = myClassIndicesInScope.putIfAbsent(scope, result);
+    return previous != null ? previous : result;
   }
 
   private boolean isEnumOrAnnotationInheritor(@NotNull PsiClass inheritorCandidate) {
