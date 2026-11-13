@@ -7,7 +7,7 @@
 use std::collections::BTreeSet;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 
 use avl_trace::protocol::VideoRetention;
 use avl_wire::runtime::{self, RuntimeDescriptor};
@@ -38,9 +38,6 @@ const SCREEN_FLAG: &str = "-Dair.flow.trace.screen=on";
 /// The flag that asks the recorder for the Allure results. No lane target sets it, so a BUILD edit or a `--jvm_flag` of
 /// `lane-run` asks for them.
 pub(crate) const ALLURE_FLAG: &str = "-Dair.flow.trace.allure=on";
-
-/// The key of the `DevIdeConfig` file that names the home of the distribution, `DevIdeConfig.HOME_PATH_KEY`.
-const HOME_PATH_KEY: &str = "home.path";
 
 /// What the lane daemon launches the lane IDE from.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -185,27 +182,9 @@ fn trace_inputs(flags: &[String], runfiles_root: &Path) -> TraceInputs {
     }
 }
 
-/// The home of the distribution: [`HOME_PATH_KEY`] of the `DevIdeConfig` file, relative to the directory of the file
-/// when it is relative.
-///
-/// The file is a properties file that the dev distribution rule writes, one `key=value` line each and no escape, so it
-/// is read by hand: a crate for it would grow the closure of the guest agent.
+/// The home of the distribution, which the `DevIdeConfig` file names, see [`runtime::dev_dist_home`].
 fn distribution_home(ide_config: &Path) -> Result<PathBuf, AgentRefusal> {
-    let text =
-        fs::read_to_string(ide_config).map_err(|error| refused(format!("cannot read the IDE config {}: {error}", ide_config.display())))?;
-    let home = text
-        .lines()
-        .filter_map(|line| line.split_once('='))
-        .find(|(key, _)| key.trim() == HOME_PATH_KEY)
-        .map(|(_, value)| value.trim())
-        .filter(|value| !value.is_empty())
-        .ok_or_else(|| refused(format!("'{HOME_PATH_KEY}' is missing from {}", ide_config.display())))?;
-    let home = Path::new(home);
-    if home.is_absolute() {
-        return Ok(normalize(home));
-    }
-    let directory = ide_config.parent().unwrap_or_else(|| Path::new("/"));
-    Ok(normalize(&directory.join(home)))
+    runtime::dev_dist_home(ide_config).map_err(refused)
 }
 
 /// The Java home of the JBR of `dist_home`: `jbr`, and `jbr/Contents/Home` on macOS. A missing `bin/java` is a refusal,
@@ -308,25 +287,10 @@ fn declared_runtime(name: &str, manifest: &Path, runfiles_root: &Path) -> Result
 fn resolve(location: &str, runfiles_root: &Path) -> PathBuf {
     let path = Path::new(location);
     if path.is_absolute() {
-        normalize(path)
+        runtime::normalize_path(path)
     } else {
-        normalize(&runfiles_root.join(path))
+        runtime::normalize_path(&runfiles_root.join(path))
     }
-}
-
-/// `path` with its `.` components dropped and each `..` folded into its parent, as `Path.normalize` of the JDK does.
-fn normalize(path: &Path) -> PathBuf {
-    let mut normalized = PathBuf::new();
-    for component in path.components() {
-        match component {
-            Component::CurDir => {}
-            Component::ParentDir => {
-                normalized.pop();
-            }
-            other => normalized.push(other.as_os_str()),
-        }
-    }
-    normalized
 }
 
 fn is_executable(path: &Path) -> bool {

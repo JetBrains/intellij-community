@@ -30,6 +30,7 @@ use avl_base::{Exit, Refusal, RefusalExt, Reporter};
 use avl_host_sys::Ctx;
 use avl_host_sys::lock::LockManager;
 use avl_report::digest::{FileDigestCache, PathDigest, path_sensitive_digest, sha256_text};
+use avl_wire::runtime::HOME_PATH_KEY;
 use serde::{Deserialize, Serialize};
 
 use super::launch::OPENED_PACKAGES_FILE;
@@ -162,7 +163,7 @@ pub(crate) fn parse_config(text: &str) -> Result<DistConfig, String> {
         };
         let value = value.trim();
         match key.trim() {
-            "home.path" => home = Some(value.to_owned()),
+            HOME_PATH_KEY => home = Some(value.to_owned()),
             "main.class.name" => main_class = Some(value.to_owned()),
             "platform.prefix" if !value.is_empty() => platform_prefix = Some(value.to_owned()),
             "additional.modules" => {

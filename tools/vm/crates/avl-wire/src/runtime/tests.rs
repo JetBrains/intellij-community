@@ -586,3 +586,27 @@ fn the_runfiles_root_is_derived_from_the_descriptor_path() {
         root.join("_main").join("platform").join("util.jar")
     );
 }
+
+// `home.path` of the IDE config names the home: relative to the directory of the config, or absolute. A config that
+// cannot be read or that has no such key names no home.
+#[test]
+fn the_ide_config_names_the_home_of_the_distribution() {
+    let root = tempfile::tempdir().unwrap();
+    let config = root.path().join("ide/idea_air_lane_dist.ide.config");
+    fs::create_dir_all(config.parent().unwrap()).unwrap();
+    fs::write(
+        &config,
+        "main.class.name=com.intellij.idea.Main\nhome.path=idea_air_lane_dist.dist/./Contents\n",
+    )
+    .unwrap();
+    assert_eq!(
+        dev_dist_home(&config).unwrap(),
+        root.path().join("ide/idea_air_lane_dist.dist/Contents")
+    );
+    fs::write(&config, "home.path=/out/../opt/idea.dist\n").unwrap();
+    assert_eq!(dev_dist_home(&config).unwrap(), PathBuf::from("/opt/idea.dist"));
+    fs::write(&config, "main.class.name=com.intellij.idea.Main\n").unwrap();
+    assert!(dev_dist_home(&config).unwrap_err().starts_with("'home.path' is missing from"));
+    let missing = root.path().join("missing.ide.config");
+    assert!(dev_dist_home(&missing).unwrap_err().starts_with("cannot read the IDE config"));
+}

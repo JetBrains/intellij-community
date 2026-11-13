@@ -175,11 +175,14 @@ fn a_plan_that_cannot_be_made_says_why() {
 
 #[test]
 fn a_macos_app_holds_the_build_file_in_its_resources_and_every_other_distribution_at_its_root() {
-    let dist = Path::new("/out/idea.dist");
-    assert_eq!(build_txt(dist, "darwin_aarch64"), dist.join("Contents/Resources/build.txt"));
-    assert_eq!(build_txt(dist, "darwin_x64"), dist.join("Contents/Resources/build.txt"));
-    assert_eq!(build_txt(dist, "linux_aarch64"), dist.join("build.txt"));
-    assert_eq!(build_txt(dist, "linux_x64"), dist.join("build.txt"));
+    let app = Path::new("/out/idea.dist/Contents");
+    assert_eq!(build_txt(app, "darwin_aarch64"), app.join("Resources/build.txt"));
+    assert_eq!(build_txt(app, "darwin_x64"), app.join("Resources/build.txt"));
+    let language_server = Path::new("/out/kotlin-server.dist");
+    assert_eq!(build_txt(language_server, "darwin_aarch64"), language_server.join("build.txt"));
+    let linux = Path::new("/out/idea_linux.dist");
+    assert_eq!(build_txt(linux, "linux_aarch64"), linux.join("build.txt"));
+    assert_eq!(build_txt(linux, "linux_x64"), linux.join("build.txt"));
 }
 
 #[test]

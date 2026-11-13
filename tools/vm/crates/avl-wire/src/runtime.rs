@@ -12,7 +12,8 @@
 
 use std::collections::HashSet;
 use std::fmt;
-use std::path::{Path, PathBuf};
+use std::fs;
+use std::path::{Component, Path, PathBuf};
 
 use serde::de::{self, Deserializer, MapAccess, Visitor};
 use serde::{Deserialize, Serialize};
@@ -522,4 +523,46 @@ pub fn runfiles_root(descriptor_path: &Path) -> PathBuf {
 /// Where one declared runfile actually is on the host.
 pub fn runtime_file_path(runfiles_root: &Path, file: &RuntimeFile) -> PathBuf {
     runfiles_root.join(&file.logical_path)
+}
+
+/// The key of the `DevIdeConfig` file that names the home of the distribution, `DevIdeConfig.HOME_PATH_KEY`.
+pub const HOME_PATH_KEY: &str = "home.path";
+
+/// The home of the distribution: [`HOME_PATH_KEY`] of the `DevIdeConfig` file `ide_config`, relative to the directory
+/// of the file when it is relative. The error says why the home is unknown: the file cannot be read, or it has no
+/// [`HOME_PATH_KEY`].
+///
+/// The home is the `.dist` directory, or its `Contents` child for a macOS app. The file is a properties file that the
+/// dev distribution rule writes, one `key=value` line each and no escape. So it is read by hand: a crate for it would
+/// grow the closure of the guest agent.
+pub fn dev_dist_home(ide_config: &Path) -> Result<PathBuf, String> {
+    let text = fs::read_to_string(ide_config).map_err(|error| format!("cannot read the IDE config {}: {error}", ide_config.display()))?;
+    let home = text
+        .lines()
+        .filter_map(|line| line.split_once('='))
+        .find(|(key, _)| key.trim() == HOME_PATH_KEY)
+        .map(|(_, value)| value.trim())
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| format!("'{HOME_PATH_KEY}' is missing from {}", ide_config.display()))?;
+    let home = Path::new(home);
+    if home.is_absolute() {
+        return Ok(normalize_path(home));
+    }
+    let directory = ide_config.parent().unwrap_or_else(|| Path::new("/"));
+    Ok(normalize_path(&directory.join(home)))
+}
+
+/// `path` with its `.` components dropped and each `..` folded into its parent, as `Path.normalize` of the JDK does.
+pub fn normalize_path(path: &Path) -> PathBuf {
+    let mut normalized = PathBuf::new();
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                normalized.pop();
+            }
+            other => normalized.push(other.as_os_str()),
+        }
+    }
+    normalized
 }

@@ -340,6 +340,7 @@ fn run_lane(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Re
     let descriptor = runtime::parse_runtime_descriptor(&content, &args.descriptor, guest_platform())
         .map_err(|error| AgentRefusal::refused(error.code, error.message))?;
     let mut launch_inputs = inputs::from_descriptor(&descriptor, &daemon_args)?;
+    let build_file = build_txt(&launch_inputs.dist_home, &descriptor.jbr.platform);
     launch_inputs.trace.bazel_outputs = bazel_outputs(variable);
     let owns_screen = build_owns_screen(variable, cfg!(target_os = "linux"));
     launch_inputs.trace.screen |= owns_screen;
@@ -416,12 +417,7 @@ fn run_lane(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Re
             .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot write the plan: {error}")))?;
         return Ok(0);
     }
-    let performance_plan = performance::plan_or_note(
-        &runfile(&descriptor.ide.lane_documents),
-        &build_txt(&runfile(&descriptor.dev_dist.home), &descriptor.jbr.platform),
-        &args.lane,
-        &mut notes,
-    );
+    let performance_plan = performance::plan_or_note(&runfile(&descriptor.ide.lane_documents), &build_file, &args.lane, &mut notes);
     let end = run_end(&daemon, &request, &split, performance_plan, &root, variable);
     let evidence = bazel_outputs(variable).map(|outputs| Evidence::new(&daemon_args.state_dir, &daemon_args.ide_root, &outputs));
     let stream_path = root.join(STREAM_FILE);

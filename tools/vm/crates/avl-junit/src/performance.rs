@@ -37,13 +37,20 @@ pub const PLAN_EVENT: &str = "performancePlan";
 /// The file of an IDE distribution that names its build, such as `IU-271.1234`.
 pub const BUILD_TXT: &str = "build.txt";
 
-/// The [`BUILD_TXT`] of the IDE distribution `dist` of the guest `platform`, such as `linux_aarch64`. Production puts
-/// it in `Contents/Resources/build.txt` of a macOS app, and at the root of every other distribution.
-pub fn build_txt(dist: &Path, platform: &str) -> PathBuf {
-    if platform.starts_with("darwin_") {
-        dist.join("Contents").join("Resources").join(BUILD_TXT)
+/// The directory name of the home of a macOS app, the home of a distribution below its `.dist` directory.
+const MACOS_APP_HOME: &str = "Contents";
+
+/// The [`BUILD_TXT`] of the IDE home `home` of the guest `platform`, such as `linux_aarch64`. `home.path` of the IDE
+/// config names the home, see [`avl_wire::runtime::dev_dist_home`].
+///
+/// Production puts the file in `Resources/` of a macOS app home, which is the `Contents` directory. It puts the file at
+/// the root of every other home, also of a macOS language server.
+pub fn build_txt(home: &Path, platform: &str) -> PathBuf {
+    let macos_app = platform.starts_with("darwin_") && home.file_name().is_some_and(|name| name == MACOS_APP_HOME);
+    if macos_app {
+        home.join("Resources").join(BUILD_TXT)
     } else {
-        dist.join(BUILD_TXT)
+        home.join(BUILD_TXT)
     }
 }
 

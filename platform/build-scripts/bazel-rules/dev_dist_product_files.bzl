@@ -172,7 +172,7 @@ dev_dist_product_files = rule(
     A product with an embedded frontend also gets the vmoptions file of the frontend, so the rule has five outputs.
     The outputs have fixed names, because the vmoptions file names depend on the OS and a `select` cannot name an
     output. The component that places them maps each one to its path in the distribution. `product_info_destination`
-    states the path of `product-info.json`. The action reads the launch
+    and `build_txt_destination` state the paths of `product-info.json` and `build.txt`. The action reads the launch
     model, the application info sources, `build.txt`, `OpenedPackages.txt`, one `idea.properties` and
     `common.vmoptions`, and nothing else. So it does not read the project model. The launch model states no fact of the
     application info and no build number. The action derives them from the declared sources. So an edit of the version,
