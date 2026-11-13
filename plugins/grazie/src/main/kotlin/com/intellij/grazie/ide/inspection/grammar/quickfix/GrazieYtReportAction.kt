@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
-import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.seemsCloudConnected
 import com.intellij.grazie.spellcheck.TypoProblem
 import com.intellij.grazie.text.GrazieProblem
 import com.intellij.grazie.text.TextProblem
@@ -45,7 +44,6 @@ private const val AGREEMENT_KEY = "grazie.report.bug.yt.agreement.accepted"
 internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFixAction(), Iconable, DumbAware {
   private val naturalLanguage: Language = problem.rule.language
   private val programmingLanguages = problem.text.containingFile.viewProvider.languages
-  private val isCloud: Boolean get() = seemsCloudConnected()
   private val message = problem.shortMessage
   private val clazz: Class<*> = problem.javaClass
   private val isSpellingProblem = problem is TypoProblem
@@ -109,7 +107,6 @@ internal class GrazieYtReportAction(problem: TextProblem) : IntentionAndQuickFix
       appendLine("**Message:** $message")
       appendLine("**Suggestions:** ${suggestions.get().joinToString(", ") { it.presentableText }}")
       appendLine("**Problem Kind:** $problemKind")
-      appendLine("**Processing:** ${if (isCloud) "Cloud" else "Local"}")
       appendLine("**${GrazieBundle.message("grazie.report.bug.additional.information")}:**")
     }
 
