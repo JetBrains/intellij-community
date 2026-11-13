@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -44,136 +45,124 @@ public class SpockHighlightingTest implements HighlightingTest {
 
   @Test
   public void singlePipeColumnSeparator() {
-    runInEdtAndWait(() -> {
-      highlightingTest("""
-  class FooSpec extends spock.lang.Specification {
-    def feature(int a, boolean b) {
-      where:
-      a | b
-      1 | true
-      and:
-      2 | false
-    }
-  
-    def feature(int a) {
-      where:
-      a | _
-      1 | _
-      and:
-      2 | _
-    }
+    highlightingTest("""
+class FooSpec extends spock.lang.Specification {
+  def feature(int a, boolean b) {
+    where:
+    a | b
+    1 | true
+    and:
+    2 | false
   }
-  """);
-    });
+  
+  def feature(int a) {
+    where:
+    a | _
+    1 | _
+    and:
+    2 | _
+  }
+}
+""");
   }
 
   @Test
   public void doublePipeColumnSeparator() {
-    runInEdtAndWait(() -> {
-      highlightingTest("""
-  class FooSpec extends spock.lang.Specification {
+    highlightingTest("""
+class FooSpec extends spock.lang.Specification {
   
-    def feature() {
-      where:
-      a    || false
-      "hi" || false
-    }
-  
-    def feature2() {
-      where:
-      a    || b
-      true || false
-    }
+  def feature() {
+    where:
+    a    || false
+    "hi" || false
   }
-  """);
-    });
+  
+  def feature2() {
+    where:
+    a    || b
+    true || false
+  }
+}
+""");
   }
 
   @Test
   public void interactions() {
-    runInEdtAndWait(() -> {
-      enableInspectionAsWarning(new JavaStylePropertiesInvocationInspection());
-      highlightingTest("""
-  interface Subscriber {
-    def receive(String event)
-    void setIncludeFollowUp(o)
+    enableInspectionAsWarning(new JavaStylePropertiesInvocationInspection());
+    highlightingTest("""
+interface Subscriber {
+  def receive(String event)
+  void setIncludeFollowUp(o)
+}
+
+class FooSpec extends spock.lang.Specification {
+
+  def sub = Mock(Subscriber)
+
+  def feature() {
+    when:
+    sub.receive("hi")
+
+    then:
+    1 * sub.receive(_)
+    0 * sub.setIncludeFollowUp(1)
   }
-
-  class FooSpec extends spock.lang.Specification {
-
-    def sub = Mock(Subscriber)
-
-    def feature() {
-      when:
-      sub.receive("hi")
-
-      then:
-      1 * sub.receive(_)
-      0 * sub.setIncludeFollowUp(1)
-    }
-  }
-  """);
-    });
+}
+""");
   }
 
   @Test
   public void dotInMethodName() {
-    runInEdtAndWait(() -> {
-      highlightingTest("""
-  class FooSpec extends spock.lang.Specification {
-    def <warning descr="Method name contains illegal character(s): '.'">'not.a.feature'</warning>() {}
-    def 'a.feature'() {
-      when:
-      42
-    }
+    highlightingTest("""
+class FooSpec extends spock.lang.Specification {
+  def <warning descr="Method name contains illegal character(s): '.'">'not.a.feature'</warning>() {}
+  def 'a.feature'() {
+    when:
+    42
   }
-  """);
-    });
+}
+""");
   }
 
   @Test
   public void indirectExtending() {
-    runInEdtAndWait(() -> {
-      getFixture().enableInspections(new GrUnresolvedAccessInspection());
-      highlightingTest("""
-  class A extends spock.lang.Specification {}
+    getFixture().enableInspections(new GrUnresolvedAccessInspection());
+    highlightingTest("""
+class A extends spock.lang.Specification {}
 
-  class FooSpec extends A {
-    def foo() {
-      when:
-      def concat = a + b
+class FooSpec extends A {
+  def foo() {
+    when:
+    def concat = a + b
     
-      where:
-      a     | b
-      "foo" | "bar"
-    }
+    where:
+    a     | b
+    "foo" | "bar"
   }
-  """);
-    });
+}
+""");
   }
 
   @Test
   public void useAnnotation() {
-    runInEdtAndWait(() -> {
-      getFixture().enableInspections(new GrUnresolvedAccessInspection());
-      highlightingTest("""
-  import spock.lang.Specification
-  import spock.util.mop.Use
+    getFixture().enableInspections(new GrUnresolvedAccessInspection());
+    highlightingTest("""
+import spock.lang.Specification
+import spock.util.mop.Use
 
-  class A {
-       static String foo(Integer self) {
-          return "abs"
-      }
-  }
+class A {
+     static String foo(Integer self) {
+        return "abs"
+    }
+}
 
-  @Use(A)
-  class HelloSpockSpec extends Specification {
-      def "length of Spock's and his friends' names"() {
-          expect:
-          1.foo() == "abs"
-      }
-  }
-  """);
-    });
+@Use(A)
+class HelloSpockSpec extends Specification {
+    def "length of Spock's and his friends' names"() {
+        expect:
+        1.foo() == "abs"
+    }
+}
+""");
   }
 }

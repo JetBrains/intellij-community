@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -37,39 +38,31 @@ public class GroovyPointlessBooleanInspectionTest implements HighlightingTest, A
 
   @Test
   public void simpleUnary() {
-    runInEdtAndWait(() -> {
-      doTest("<warning descr=\"Redundant boolean operations\">!false</warning>", "true");
-      doTest("<warning descr=\"Redundant boolean operations\">!true</warning>", "false");
-    });
+    doTest("<warning descr=\"Redundant boolean operations\">!false</warning>", "true");
+    doTest("<warning descr=\"Redundant boolean operations\">!true</warning>", "false");
   }
 
   @Test
   public void doubleNegationUnary() {
-    runInEdtAndWait(() -> {
-      doTest("<warning descr=\"Redundant boolean operations\">!!false</warning>", "false");
-      doTest("<warning descr=\"Redundant boolean operations\">!!true</warning>", "true");
-    });
+    doTest("<warning descr=\"Redundant boolean operations\">!!false</warning>", "false");
+    doTest("<warning descr=\"Redundant boolean operations\">!!true</warning>", "true");
   }
 
   @Test
   public void tripleNegationUnary() {
-    runInEdtAndWait(() -> {
-      doTest("!<caret><warning descr=\"Redundant boolean operations\">!!false</warning>", "!false");
-      doTest( "!<caret><warning descr=\"Redundant boolean operations\">!!true</warning>", "!true");
-    });
+    doTest("!<caret><warning descr=\"Redundant boolean operations\">!!false</warning>", "!false");
+    doTest( "!<caret><warning descr=\"Redundant boolean operations\">!!true</warning>", "!true");
   }
 
   @Test
   public void implicationExpression() {
-    runInEdtAndWait(() -> {
-      doTest("<warning descr=\"Redundant boolean operations\">false ==> (false)</warning>", "(false)");
-      doTest( "<warning descr=\"Redundant boolean operations\">(false) ==> true</warning>", "(false)");
-    });
+    doTest("<warning descr=\"Redundant boolean operations\">false ==> (false)</warning>", "(false)");
+    doTest( "<warning descr=\"Redundant boolean operations\">(false) ==> true</warning>", "(false)");
   }
 
   @Test
   public void nonPrimitiveType() {
-    runInEdtAndWait(() -> highlightingTest("Boolean x = null; x == true"));
+    highlightingTest("Boolean x = null; x == true");
   }
 
   private void doTest(String before, String after) {

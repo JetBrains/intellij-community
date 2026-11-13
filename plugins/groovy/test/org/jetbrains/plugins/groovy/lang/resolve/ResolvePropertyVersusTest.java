@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.ResolveTest;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -29,57 +30,49 @@ public class ResolvePropertyVersusTest implements ResolveTest {
 
   @Test
   public void instanceGetterVsInstanceField() {
-    runInEdtAndWait(() -> {
-      getFixture().addFileToProject("classes.groovy", """
-        class C {
-          public foo = "field"
-          def getFoo() { "getter" }
-        }
-        """);
-      resolveTest("new C().<caret>foo", GrMethod.class);
-      resolveTest("C.<caret>foo", GrField.class);
-    });
+    getFixture().addFileToProject("classes.groovy", """
+      class C {
+        public foo = "field"
+        def getFoo() { "getter" }
+      }
+      """);
+    resolveTest("new C().<caret>foo", GrMethod.class);
+    resolveTest("C.<caret>foo", GrField.class);
   }
 
   @Test
   public void staticGetterVsStaticField() {
-    runInEdtAndWait(() -> {
-      getFixture().addFileToProject("classes.groovy", """
-        class C {
-          public static foo = "field"
-          static def getFoo() { "getter" }
-        }
-        """);
-      resolveTest("new C().<caret>foo", GrMethod.class);
-      resolveTest("C.<caret>foo", GrMethod.class);
-    });
+    getFixture().addFileToProject("classes.groovy", """
+      class C {
+        public static foo = "field"
+        static def getFoo() { "getter" }
+      }
+      """);
+    resolveTest("new C().<caret>foo", GrMethod.class);
+    resolveTest("C.<caret>foo", GrMethod.class);
   }
 
   @Test
   public void instanceGetterVsStaticField() {
-    runInEdtAndWait(() -> {
-      getFixture().addFileToProject("classes.groovy", """
-        class C {
-          public static foo = "field"
-          def getFoo() { "getter" }
-        }
-        """);
-      resolveTest("new C().<caret>foo", GrMethod.class);
-      resolveTest("C.<caret>foo", GrField.class);
-    });
+    getFixture().addFileToProject("classes.groovy", """
+      class C {
+        public static foo = "field"
+        def getFoo() { "getter" }
+      }
+      """);
+    resolveTest("new C().<caret>foo", GrMethod.class);
+    resolveTest("C.<caret>foo", GrField.class);
   }
 
   @Test
   public void staticGetterVsInstanceField() {
-    runInEdtAndWait(() -> {
-      getFixture().addFileToProject("classes.groovy", """
-        class C {
-          public foo = "field"
-          static def getFoo() { "getter" }
-        }
-        """);
-      resolveTest("new C().<caret>foo", GrMethod.class);
-      resolveTest("C.<caret>foo", GrMethod.class);
-    });
+    getFixture().addFileToProject("classes.groovy", """
+      class C {
+        public foo = "field"
+        static def getFoo() { "getter" }
+      }
+      """);
+    resolveTest("new C().<caret>foo", GrMethod.class);
+    resolveTest("C.<caret>foo", GrMethod.class);
   }
 }

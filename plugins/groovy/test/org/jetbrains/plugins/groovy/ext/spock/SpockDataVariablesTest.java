@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.groovy.testFramework.BaseTest;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -41,81 +43,81 @@ public class SpockDataVariablesTest implements BaseTest {
                 }
                 """;
     var file = configureByText(fileText);
-    var spec = file.getTypeDefinitions()[0];
-    var feature = (GrMethod) spec.findMethodsByName("feature")[0];
-    return SpockUtils.getVariableMap(feature);
+    return ReadAction.computeBlocking(() -> {
+      var spec = file.getTypeDefinitions()[0];
+      var feature = (GrMethod) spec.findMethodsByName("feature")[0];
+      return SpockUtils.getVariableMap(feature);
+    });
   }
 
   private void testVariableNames(String text, String... names) {
     Map<String, SpockVariableDescriptor> variables = variableMap(text);
-    assertSize(names.length, variables.entrySet());
-    assertContainsElements(ContainerUtil.map(variables.values(), SpockVariableDescriptor::getName), names);
+    ReadAction.run(() -> {
+      assertSize(names.length, variables.entrySet());
+      assertContainsElements(ContainerUtil.map(variables.values(), SpockVariableDescriptor::getName), names);
+    });
   }
 
   @Test
   public void whereBlockWithAdditionalLabels() {
-    runInEdtAndWait(() -> testVariableNames("foo: abc: where: bar = 1", "bar"));
+    testVariableNames("foo: abc: where: bar = 1", "bar");
   }
 
   @Test
   public void derivedParameterization() {
-    runInEdtAndWait(() -> testVariableNames("where: bar = 1", "bar"));
+    testVariableNames("where: bar = 1", "bar");
   }
 
   @Test
   public void simpleParameterization() {
-    runInEdtAndWait(() -> testVariableNames("where: bar << [1]", "bar"));
+    testVariableNames("where: bar << [1]", "bar");
   }
 
   @Test
   public void multiParameterization() {
-    runInEdtAndWait(() -> testVariableNames("where: [bar, baz] << [[1,2]]", "bar", "baz"));
+    testVariableNames("where: [bar, baz] << [[1,2]]", "bar", "baz");
   }
 
   @Test
   public void emptySingleColumnTable() {
-    runInEdtAndWait(() -> testVariableNames("where: bar | _", "bar"));
+    testVariableNames("where: bar | _", "bar");
   }
 
   @Test
   public void emptyMultiColumnTable() {
-    runInEdtAndWait(() -> testVariableNames("where: bar | baz | bad", "bar", "baz", "bad"));
+    testVariableNames("where: bar | baz | bad", "bar", "baz", "bad");
   }
 
   @Test
   public void derivedParameterizationAfterTable() {
-    runInEdtAndWait(() -> {
-      testVariableNames("""
-                  where:
-                  bar | baz | bad
-                  1 | 2 | 3
-                  foo = bar * baz
-                  """, "bar", "baz", "bad", "foo");
-    });
+    testVariableNames("""
+                where:
+                bar | baz | bad
+                1 | 2 | 3
+                foo = bar * baz
+                """, "bar", "baz", "bad", "foo");
   }
 
   @Test
   public void derivedParameterizationWithLabelAfterTable() {
-    runInEdtAndWait(() -> {
-      testVariableNames("""
-                  where:
-                  bar | baz | bad
-                  1 | 2 | 3
-                  and:
-                  foo = bar * baz
-                  """, "bar", "baz", "bad", "foo");
-    });
+    testVariableNames("""
+                where:
+                bar | baz | bad
+                1 | 2 | 3
+                and:
+                foo = bar * baz
+                """, "bar", "baz", "bad", "foo");
   }
 
   @Test
   public void andLabelInsideTable() {
-    runInEdtAndWait(() -> {
-      Map<String, SpockVariableDescriptor> variables = variableMap("""
-                  where:
-                  bar | _
-                  and:
-                  1   | _
-                  """);
+    Map<String, SpockVariableDescriptor> variables = variableMap("""
+                where:
+                bar | _
+                and:
+                1   | _
+                """);
+    ReadAction.run(() -> {
       assertEquals(1, variables.size());
       assertEquals(JAVA_LANG_INTEGER, variables.values().iterator().next().getType().getCanonicalText());
     });

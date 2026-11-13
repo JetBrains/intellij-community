@@ -4,21 +4,26 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava
 
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadAction
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
 /**
  * Checks the Java code that [CodeBlockGenerator] makes from Groovy code. It replaces the JUnit 3 base `CodeBlockGenerationBaseTest`.
- * Call the helpers on the EDT.
+ * The helpers work on the EDT and off it.
  */
 @TestOnly
 class CodeBlockGenerationTestFixture internal constructor(val fixture: JavaCodeInsightTestFixture, private val testName: String) {
@@ -27,16 +32,24 @@ class CodeBlockGenerationTestFixture internal constructor(val fixture: JavaCodeI
     val name = PlatformTestUtil.lowercaseFirstLetter(testName, true)
     val file = assertInstanceOf(GroovyFile::class.java, fixture.configureByFile("$name.groovy"))
 
-    val builder = StringBuilder()
-    val generator = CodeBlockGenerator(builder, ExpressionContext(fixture.project, GroovyFile.EMPTY_ARRAY))
-    for (statement in file.topStatements) {
-      statement.accept(generator)
-      builder.append("\n")
+    val code = ReadAction.computeBlocking<String, Throwable> {
+      val builder = StringBuilder()
+      val generator = CodeBlockGenerator(builder, ExpressionContext(fixture.project, GroovyFile.EMPTY_ARRAY))
+      for (statement in file.topStatements) {
+        statement.accept(generator)
+        builder.append("\n")
+      }
+      builder.toString()
     }
 
-    val result = PsiFileFactory.getInstance(fixture.project).createFileFromText("$name.java", JavaLanguage.INSTANCE, builder.toString(), false, true)
-    PostprocessReformattingAspect.getInstance(fixture.project).doPostponedFormatting()
-    PlatformTestUtil.assertSameLinesWithFile(Path.of(fixture.testDataPath, "$name.java").toString(), result.text)
+    val resultText = timeoutRunBlocking {
+      withContext(Dispatchers.EDT) {
+        val result = PsiFileFactory.getInstance(fixture.project).createFileFromText("$name.java", JavaLanguage.INSTANCE, code, false, true)
+        PostprocessReformattingAspect.getInstance(fixture.project).doPostponedFormatting()
+        result.text
+      }
+    }
+    PlatformTestUtil.assertSameLinesWithFile(Path.of(fixture.testDataPath, "$name.java").toString(), resultText)
   }
 
   fun addFile(text: String): PsiFile = fixture.addFileToProject("Bar.groovy", text)

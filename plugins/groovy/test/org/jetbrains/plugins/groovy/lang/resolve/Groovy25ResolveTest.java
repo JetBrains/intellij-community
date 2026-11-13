@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.ResolveTest;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -32,11 +34,11 @@ public class Groovy25ResolveTest implements ResolveTest {
 
   @Test
   public void tap() {
-    runInEdtAndWait(() -> {
-      GrReferenceExpression expression = elementUnderCaret("""
-        class A { def prop }
-        new A().tap { <caret>prop = 1 }
-        """, GrReferenceExpression.class);
+    GrReferenceExpression expression = elementUnderCaret("""
+      class A { def prop }
+      new A().tap { <caret>prop = 1 }
+      """, GrReferenceExpression.class);
+    ReadAction.run(() -> {
       var reference = expression.getLValueReference();
       Assertions.assertNotNull(reference);
       var resolved = reference.resolve();
@@ -46,32 +48,28 @@ public class Groovy25ResolveTest implements ResolveTest {
 
   @Test
   public void recursiveType() {
-    runInEdtAndWait(() -> {
-      getFixture().addFileToProject("A.java", """
-        class A<SELF extends A<SELF>> {
-           public static A<?> gen() {
-               return null;
-           }
+    getFixture().addFileToProject("A.java", """
+      class A<SELF extends A<SELF>> {
+         public static A<?> gen() {
+             return null;
+         }
 
 
-           public SELF foo() { return (SELF)this;}
-           public void bar(){}
-        }""");
-      resolveTest("A.gen().foo().<caret>bar()", PsiMethod.class);
-    });
+         public SELF foo() { return (SELF)this;}
+         public void bar(){}
+      }""");
+    resolveTest("A.gen().foo().<caret>bar()", PsiMethod.class);
   }
 
   @Test
   public void wildcardType() {
-    runInEdtAndWait(() -> {
-      getFixture().addFileToProject("A.java", """
-        class A<SELF extends Integer> {
-           public static A<?> gen() {
-               return null;
-           }
-           public SELF foo() { return null;}
-        }""");
-      resolveTest("A.gen().foo().<caret>byteValue()", PsiMethod.class);
-    });
+    getFixture().addFileToProject("A.java", """
+      class A<SELF extends Integer> {
+         public static A<?> gen() {
+             return null;
+         }
+         public SELF foo() { return null;}
+      }""");
+    resolveTest("A.gen().foo().<caret>byteValue()", PsiMethod.class);
   }
 }

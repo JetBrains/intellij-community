@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.dynamic;
 import com.intellij.groovy.testFramework.BaseTest;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiType;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -45,13 +46,13 @@ public class DynamicTest implements BaseTest {
 
   @Test
   public void method() {
+    getFixture().enableInspections(new GrUnresolvedAccessInspection());
+    runInEdtAndWait(() -> getFixture().configureByFile(StringUtil.capitalize(getTestName()) + ".groovy"));
+    getFixture().launchAction(getFixture().findSingleIntention("Add dynamic method"));
+
+    GrReferenceExpression referenceExpression = elementUnderCaret(GrReferenceExpression.class);
+
     runInEdtAndWait(() -> {
-      getFixture().enableInspections(new GrUnresolvedAccessInspection());
-      getFixture().configureByFile(StringUtil.capitalize(getTestName()) + ".groovy");
-      getFixture().launchAction(getFixture().findSingleIntention("Add dynamic method"));
-
-      GrReferenceExpression referenceExpression = elementUnderCaret(GrReferenceExpression.class);
-
       final PsiType[] psiTypes = PsiUtil.getArgumentTypes(referenceExpression, false);
       final String[] methodArgumentsNames = GroovyNamesUtil.getMethodArgumentsNames(getProject(), psiTypes);
       final List<ParamInfo> pairs = QuickfixUtil.swapArgumentsAndTypes(methodArgumentsNames, psiTypes);
@@ -62,20 +63,20 @@ public class DynamicTest implements BaseTest {
 
   @Test
   public void property() {
-    runInEdtAndWait(() -> {
-      getFixture().enableInspections(new GrUnresolvedAccessInspection());
-      getFixture().configureByFile(StringUtil.capitalize(getTestName()) + ".groovy");
-      getFixture().launchAction(getFixture().findSingleIntention("Add dynamic property"));
-      GrReferenceExpression referenceExpression = elementUnderCaret(GrReferenceExpression.class);
-      Assertions.assertNotNull(getDClassElement().getPropertyByName(referenceExpression.getReferenceName()));
-    });
+    getFixture().enableInspections(new GrUnresolvedAccessInspection());
+    runInEdtAndWait(() -> getFixture().configureByFile(StringUtil.capitalize(getTestName()) + ".groovy"));
+    getFixture().launchAction(getFixture().findSingleIntention("Add dynamic property"));
+    GrReferenceExpression referenceExpression = elementUnderCaret(GrReferenceExpression.class);
+    runInEdtAndWait(() -> Assertions.assertNotNull(getDClassElement().getPropertyByName(referenceExpression.getReferenceName())));
   }
 
   @NotNull
   private DClassElement getDClassElement() {
-    final DRootElement rootElement = DynamicManager.getInstance(getProject()).getRootElement();
-    final DClassElement classElement = rootElement.getClassElement(StringUtil.capitalize(getTestName()));
-    Assertions.assertNotNull(classElement);
-    return classElement;
+    return EdtTestUtil.runInEdtAndGet(() -> {
+      final DRootElement rootElement = DynamicManager.getInstance(getProject()).getRootElement();
+      final DClassElement classElement = rootElement.getClassElement(StringUtil.capitalize(getTestName()));
+      Assertions.assertNotNull(classElement);
+      return classElement;
+    });
   }
 }

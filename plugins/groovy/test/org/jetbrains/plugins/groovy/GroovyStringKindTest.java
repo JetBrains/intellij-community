@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy;
 
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -34,16 +36,18 @@ public class GroovyStringKindTest {
   }
 
   private static void doEscapeTests(StringKind kind, Map<String, String> data) {
-    TestUtils.runAll(data.entrySet(), entry -> {
-      String unescaped = entry.getKey();
-      String expectedEscaped = entry.getValue();
-      assertEquals(expectedEscaped, kind.escape(unescaped));
+    ReadAction.run(() -> {
+      TestUtils.runAll(data.entrySet(), entry -> {
+        String unescaped = entry.getKey();
+        String expectedEscaped = entry.getValue();
+        assertEquals(expectedEscaped, kind.escape(unescaped));
+      });
     });
   }
 
   @Test
   public void escapeSingleQuoted() {
-    runInEdtAndWait(() -> {
+    ReadAction.run(() -> {
       doEscapeTests(SINGLE_QUOTED, Map.ofEntries(
         Map.entry("\n", "\\n"),
         Map.entry("\r", "\\r"),
@@ -61,7 +65,7 @@ public class GroovyStringKindTest {
 
   @Test
   public void escapeTripleSingleQuoted() {
-    runInEdtAndWait(() -> {
+    ReadAction.run(() -> {
       doEscapeTests(TRIPLE_SINGLE_QUOTED, Map.ofEntries(
         Map.entry("\n", "\n"),
         Map.entry("\b", "\\b"),
@@ -83,7 +87,7 @@ public class GroovyStringKindTest {
 
   @Test
   public void escapeDoubleQuoted() {
-    runInEdtAndWait(() -> {
+    ReadAction.run(() -> {
       doEscapeTests(DOUBLE_QUOTED, Map.ofEntries(
         Map.entry("\n", "\\n"),
         Map.entry("\r", "\\r"),
@@ -102,7 +106,7 @@ public class GroovyStringKindTest {
 
   @Test
   public void escapeTripleDoubleQuoted() {
-    runInEdtAndWait(() -> {
+    ReadAction.run(() -> {
       doEscapeTests(TRIPLE_DOUBLE_QUOTED, Map.ofEntries(
         Map.entry("\n", "\n"),
         Map.entry("\b", "\\b"),
@@ -124,7 +128,7 @@ public class GroovyStringKindTest {
 
   @Test
   public void escapeSlashy() {
-    runInEdtAndWait(() -> {
+    ReadAction.run(() -> {
       doEscapeTests(SLASHY, Map.ofEntries(
         Map.entry("\n", "\n"),
         Map.entry("\r", "\\u000D"),
@@ -142,7 +146,7 @@ public class GroovyStringKindTest {
 
   @Test
   public void escapeDollarSlashy() {
-    runInEdtAndWait(() -> {
+    ReadAction.run(() -> {
       doEscapeTests(DOLLAR_SLASHY, Map.ofEntries(
         Map.entry("\n", "\n"),
         Map.entry("\r", "\\u000D"),

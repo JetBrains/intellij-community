@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.ResolveTest;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -34,12 +36,12 @@ public class ResolveAssertionsTest implements ResolveTest {
 
   @Test
   public void test_substitutor_is_not_computed_within_resolve() {
-    runInEdtAndWait(() -> {
-      GroovyResolveResult result = advancedResolveByText("""
-                                                         [1, 2, 3].with {
-                                                           group<caret>By({2})
-                                                         }
-                                                         """);
+    GroovyResolveResult result = advancedResolveByText("""
+                                                       [1, 2, 3].with {
+                                                         group<caret>By({2})
+                                                       }
+                                                       """);
+    ReadAction.run(() -> {
       assertInstanceOf(MethodResolveResult.class, result);
       Assertions.assertFalse(((MethodResolveResult)result).getFullSubstitutorDelegate().isInitialized());
     });
@@ -47,36 +49,32 @@ public class ResolveAssertionsTest implements ResolveTest {
 
   @Test
   public void no_recursion_when_resolving_l_value_of_operator_assignment() {
-    runInEdtAndWait(() -> {
-      RecursionManager.assertOnRecursionPrevention(getFixture().getTestRootDisposable());
-      Collection<? extends GroovyResolveResult> results = multiResolveByText("""
-                                                                             class Plus {
-                                                                               Plus plus(Plus p) {}
-                                                                             }
-                                                                             class Container {
-                                                                               Plus getFoo() {}
-                                                                               void setFoo(Plus l) {}
-                                                                               void setFoo(String s) {}
-                                                                             }
-                                                                             def c = new Container()
-                                                                             c.<caret>foo += new Plus()
-                                                                             """);
-      assertSize(2, results);
-    });
+    runInEdtAndWait(() -> RecursionManager.assertOnRecursionPrevention(getFixture().getTestRootDisposable()));
+    Collection<? extends GroovyResolveResult> results = multiResolveByText("""
+                                                                           class Plus {
+                                                                             Plus plus(Plus p) {}
+                                                                           }
+                                                                           class Container {
+                                                                             Plus getFoo() {}
+                                                                             void setFoo(Plus l) {}
+                                                                             void setFoo(String s) {}
+                                                                           }
+                                                                           def c = new Container()
+                                                                           c.<caret>foo += new Plus()
+                                                                           """);
+    ReadAction.run(() -> assertSize(2, results));
   }
 
   @Test
   public void no_error_when_computing_applicability_of_a_method_with_ambiguous_generic_method_call_argument() {
-    runInEdtAndWait(() -> {
-      RecursionManager.assertOnRecursionPrevention(getFixture().getTestRootDisposable());
-      Collection<? extends GroovyResolveResult> results = multiResolveByText("""
-                                                                             def foo(Integer i){}
-                                                                             def foo(String s){}
-                                                                             def <T> T bar(Integer i){}
-                                                                             def <T> T bar(String s){}
-                                                                             <caret>foo(bar())
-                                                                             """);
-      assertSize(2, results);
-    });
+    runInEdtAndWait(() -> RecursionManager.assertOnRecursionPrevention(getFixture().getTestRootDisposable()));
+    Collection<? extends GroovyResolveResult> results = multiResolveByText("""
+                                                                           def foo(Integer i){}
+                                                                           def foo(String s){}
+                                                                           def <T> T bar(Integer i){}
+                                                                           def <T> T bar(String s){}
+                                                                           <caret>foo(bar())
+                                                                           """);
+    ReadAction.run(() -> assertSize(2, results));
   }
 }

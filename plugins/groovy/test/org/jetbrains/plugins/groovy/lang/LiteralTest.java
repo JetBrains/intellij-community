@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.groovy.testFramework.BaseTest;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -41,8 +42,8 @@ public class LiteralTest implements BaseTest {
 
   @Test
   public void literalValue() {
+    LinkedHashMap<String, Number> data = new LinkedHashMap<>(19);
     runInEdtAndWait(() -> {
-      LinkedHashMap<String, Number> data = new LinkedHashMap<>(19);
       data.put("42", 42);
       data.put("0b101010", 0b101010);
       data.put("0B101010", 0B101010);
@@ -84,8 +85,8 @@ public class LiteralTest implements BaseTest {
 
   @Test
   public void integerLiteralsWithoutSuffix() {
+    LinkedHashMap<String, String> data = new LinkedHashMap<>(16);
     runInEdtAndWait(() -> {
-      LinkedHashMap<String, String> data = new LinkedHashMap<>(16);
       data.put("2147483647", JAVA_LANG_INTEGER);
       data.put("0b1111111111111111111111111111111", JAVA_LANG_INTEGER);
       data.put("017777777777", JAVA_LANG_INTEGER);

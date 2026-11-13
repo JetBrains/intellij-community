@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -31,30 +32,26 @@ public class UnnecessaryQualifiedReferenceInspectionTest implements Highlighting
 
   @Test
   public void attributeExpression() {
-    runInEdtAndWait(() -> {
-      highlightingTest("""
-                         class A { static foo }
-                         A.@foo
-                         A.@foo()
-                         """);
-    });
+    highlightingTest("""
+                       class A { static foo }
+                       A.@foo
+                       A.@foo()
+                       """);
   }
   
   @Test
   public void testStaticInterfaceMembers() {
-    runInEdtAndWait(() -> {
-      highlightingTest("""
-                         interface Capibration {
-                             int PI = 3
-                             static void x() {
-                                 println <warning descr="Unnecessary qualified reference">Capibration</warning>.PI
-                                 <warning descr="Unnecessary qualified reference">Capibration</warning>.y()
-                             }
+    highlightingTest("""
+                       interface Capibration {
+                           int PI = 3
+                           static void x() {
+                               println <warning descr="Unnecessary qualified reference">Capibration</warning>.PI
+                               <warning descr="Unnecessary qualified reference">Capibration</warning>.y()
+                           }
                        
-                             static void y() {}
-                         }
-                         """);
-    });
+                           static void y() {}
+                       }
+                       """);
   }
 
   @Override

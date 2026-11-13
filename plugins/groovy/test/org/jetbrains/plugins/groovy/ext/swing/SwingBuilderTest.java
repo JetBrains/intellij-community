@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.groovy.ext.swing;
 
 import com.intellij.groovy.testFramework.ResolveTest;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -30,16 +32,14 @@ public final class SwingBuilderTest implements ResolveTest {
 
   @Test
   public void swingBuilderMethod() {
-    runInEdtAndWait(() -> {
-      PsiMethod method = resolveTest("new groovy.swing.SwingBuilder().<caret>frame()", PsiMethod.class);
-      Assertions.assertFalse(method.isPhysical());
-    });
+    PsiMethod method = resolveTest("new groovy.swing.SwingBuilder().<caret>frame()", PsiMethod.class);
+    ReadAction.run(() -> Assertions.assertFalse(method.isPhysical()));
   }
 
   @Test
   public void swingProperty() {
-    runInEdtAndWait(() -> {
-      PsiMethod method = resolveTest("new groovy.swing.SwingBuilder().table(<caret>autoscrolls: false)", PsiMethod.class);
+    PsiMethod method = resolveTest("new groovy.swing.SwingBuilder().table(<caret>autoscrolls: false)", PsiMethod.class);
+    ReadAction.run(() -> {
       Assertions.assertTrue(PropertyUtil.isSimplePropertySetter(method));
       Assertions.assertEquals("javax.swing.JComponent", method.getContainingClass().getQualifiedName());
     });

@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -24,13 +26,13 @@ public class GrDocCompletionTest {
   private final TestFixture<GroovyCompletionTestFixture> completion = groovyCompletionFixture(groovy);
 
   @Test
-  public void testLinkCompletion() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
+  public void testLinkCompletion() {
+    completion.get().doBasicTest();
+  }
 
   @Test
   public void testLinkCompletion1() {
-    runInEdtAndWait(() -> {
-      CodeStyle.getSettings(groovy.get().getProject()).getCustomSettings(GroovyCodeStyleSettings.class).USE_FQ_CLASS_NAMES_IN_JAVADOC = false;
-      completion.get().doBasicTest();
-    });
+    ReadAction.run(() -> CodeStyle.getSettings(groovy.get().getProject()).getCustomSettings(GroovyCodeStyleSettings.class).USE_FQ_CLASS_NAMES_IN_JAVADOC = false);
+    completion.get().doBasicTest();
   }
 }

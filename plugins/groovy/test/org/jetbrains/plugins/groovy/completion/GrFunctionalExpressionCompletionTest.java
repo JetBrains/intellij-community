@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.completion;
 
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
@@ -21,46 +22,60 @@ public abstract class GrFunctionalExpressionCompletionTest {
   }
 
   @Test
-  public void testInjectMethodForCollection() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
+  public void testInjectMethodForCollection() {
+    completion.get().doBasicTest();
+  }
 
   @Test
-  public void testEachMethodForMapWithKeyValue() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
+  public void testEachMethodForMapWithKeyValue() {
+    completion.get().doBasicTest();
+  }
 
   @Test
-  public void testEachMethodForList() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
+  public void testEachMethodForList() {
+    completion.get().doBasicTest();
+  }
 
   @Test
-  public void testClosureDefaultParameterInEachMethod() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
+  public void testClosureDefaultParameterInEachMethod() {
+    completion.get().doBasicTest();
+  }
 
   @Test
   public void testEachMethodForEnumRanges() {
-    runInEdtAndWait(() -> {
-      groovy.get().configureByFile(groovy.get().getTestName(false) + ".groovy");
-      groovy.get().completeBasic();
-      groovy.get().type("\n");
-      groovy.get().checkResultByFile(groovy.get().getTestName(false) + "_after.groovy");
-    });
+    groovy.get().configureByFile(groovy.get().getTestName(false) + ".groovy");
+    groovy.get().completeBasic();
+    groovy.get().type("\n");
+    groovy.get().checkResultByFile(groovy.get().getTestName(false) + "_after.groovy");
   }
 
   @Test
-  public void testEachMethodForMapWithEntry() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
+  public void testEachMethodForMapWithEntry() {
+    completion.get().doBasicTest();
+  }
 
   @Test
-  public void testEachMethodForRanges() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
+  public void testEachMethodForRanges() {
+    completion.get().doBasicTest();
+  }
 
   @Test
-  public void testInjectMethodForArray() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
+  public void testInjectMethodForArray() {
+    completion.get().doBasicTest();
+  }
 
   @Test
   public void testCompletionInEachClosure() {
-    runInEdtAndWait(() -> {
-      completion.get().doHasVariantsTest("intValue", "intdiv");
-    });
+    completion.get().doHasVariantsTest("intValue", "intdiv");
   }
 
   @Test
-  public void testWithMethod() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
+  public void testWithMethod() {
+    completion.get().doBasicTest();
+  }
 
   @Test
-  public void testInjectMethodForMap() { runInEdtAndWait(() -> { completion.get().doBasicTest(); }); }
+  public void testInjectMethodForMap() {
+    completion.get().doBasicTest();
+  }
 }

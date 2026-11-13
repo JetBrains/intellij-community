@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.TypingTest;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -31,60 +32,52 @@ public class TypeInsightTest implements TypingTest {
 
   @Test
   public void mapIterator() {
-    runInEdtAndWait(() -> {
-      typingTest("def usage(Map<String, Integer> m) { <caret>m.iterator() }", GrMethodCall.class,
-                 "java.util.Iterator<java.util.Map.Entry<java.lang.String,java.lang.Integer>>");
-    });
+    typingTest("def usage(Map<String, Integer> m) { <caret>m.iterator() }", GrMethodCall.class,
+               "java.util.Iterator<java.util.Map.Entry<java.lang.String,java.lang.Integer>>");
   }
 
   @Test
   public void mapIteratorExplicit() {
-    runInEdtAndWait(() -> {
-      typingTest("def usage(Map<String, Integer> m) { <caret>org.codehaus.groovy.runtime.DefaultGroovyMethods.iterator(m) }",
-                 GrMethodCall.class, "java.util.Iterator<java.util.Map.Entry<java.lang.String,java.lang.Integer>>");
-    });
+    typingTest("def usage(Map<String, Integer> m) { <caret>org.codehaus.groovy.runtime.DefaultGroovyMethods.iterator(m) }",
+               GrMethodCall.class, "java.util.Iterator<java.util.Map.Entry<java.lang.String,java.lang.Integer>>");
   }
 
   @Test
   public void numberNextPrevious() {
-    runInEdtAndWait(() -> {
-      expressionTypeTest("1.next()", JAVA_LANG_INTEGER);
-      expressionTypeTest("((byte)1).next()", JAVA_LANG_INTEGER);
-      expressionTypeTest("((short)1).next()", JAVA_LANG_INTEGER);
-      expressionTypeTest("1l.next()", JAVA_LANG_LONG);
-      expressionTypeTest("1f.next()", JAVA_LANG_DOUBLE);
-      expressionTypeTest("1d.next()", JAVA_LANG_DOUBLE);
+    expressionTypeTest("1.next()", JAVA_LANG_INTEGER);
+    expressionTypeTest("((byte)1).next()", JAVA_LANG_INTEGER);
+    expressionTypeTest("((short)1).next()", JAVA_LANG_INTEGER);
+    expressionTypeTest("1l.next()", JAVA_LANG_LONG);
+    expressionTypeTest("1f.next()", JAVA_LANG_DOUBLE);
+    expressionTypeTest("1d.next()", JAVA_LANG_DOUBLE);
 
-      expressionTypeTest("1.previous()", JAVA_LANG_INTEGER);
-      expressionTypeTest("((byte)1).previous()", JAVA_LANG_INTEGER);
-      expressionTypeTest("((short)1).previous()", JAVA_LANG_INTEGER);
-      expressionTypeTest("1l.previous()", JAVA_LANG_LONG);
-      expressionTypeTest("1f.previous()", JAVA_LANG_DOUBLE);
-      expressionTypeTest("1d.previous()", JAVA_LANG_DOUBLE);
-    });
+    expressionTypeTest("1.previous()", JAVA_LANG_INTEGER);
+    expressionTypeTest("((byte)1).previous()", JAVA_LANG_INTEGER);
+    expressionTypeTest("((short)1).previous()", JAVA_LANG_INTEGER);
+    expressionTypeTest("1l.previous()", JAVA_LANG_LONG);
+    expressionTypeTest("1f.previous()", JAVA_LANG_DOUBLE);
+    expressionTypeTest("1d.previous()", JAVA_LANG_DOUBLE);
   }
 
   @Test
   public void numberIncDec() {
-    runInEdtAndWait(() -> {
-      expressionTypeTest("++1", JAVA_LANG_INTEGER);
-      expressionTypeTest("++((byte)1)", JAVA_LANG_INTEGER);
-      expressionTypeTest("++((short)1)", JAVA_LANG_INTEGER);
-      expressionTypeTest("++1l", JAVA_LANG_LONG);
-      expressionTypeTest("++1f", JAVA_LANG_DOUBLE);
-      expressionTypeTest("++1d", JAVA_LANG_DOUBLE);
+    expressionTypeTest("++1", JAVA_LANG_INTEGER);
+    expressionTypeTest("++((byte)1)", JAVA_LANG_INTEGER);
+    expressionTypeTest("++((short)1)", JAVA_LANG_INTEGER);
+    expressionTypeTest("++1l", JAVA_LANG_LONG);
+    expressionTypeTest("++1f", JAVA_LANG_DOUBLE);
+    expressionTypeTest("++1d", JAVA_LANG_DOUBLE);
 
-      expressionTypeTest("--1", JAVA_LANG_INTEGER);
-      expressionTypeTest("--((byte)1)", JAVA_LANG_INTEGER);
-      expressionTypeTest("--((short)1)", JAVA_LANG_INTEGER);
-      expressionTypeTest("--1l", JAVA_LANG_LONG);
-      expressionTypeTest("--1f", JAVA_LANG_DOUBLE);
-      expressionTypeTest("--1d", JAVA_LANG_DOUBLE);
-    });
+    expressionTypeTest("--1", JAVA_LANG_INTEGER);
+    expressionTypeTest("--((byte)1)", JAVA_LANG_INTEGER);
+    expressionTypeTest("--((short)1)", JAVA_LANG_INTEGER);
+    expressionTypeTest("--1l", JAVA_LANG_LONG);
+    expressionTypeTest("--1f", JAVA_LANG_DOUBLE);
+    expressionTypeTest("--1d", JAVA_LANG_DOUBLE);
   }
 
   @Test
   public void intdiv() {
-    runInEdtAndWait(() -> expressionTypeTest("1.intdiv(2)", JAVA_LANG_INTEGER));
+    expressionTypeTest("1.intdiv(2)", JAVA_LANG_INTEGER);
   }
 }

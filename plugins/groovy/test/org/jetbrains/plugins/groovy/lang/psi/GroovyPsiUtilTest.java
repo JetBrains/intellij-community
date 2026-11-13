@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi;
 
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -31,8 +32,8 @@ public class GroovyPsiUtilTest {
 
   @Test
   public void application_expression() {
+    LinkedHashMap<String, Boolean> map = new LinkedHashMap<>(20);
     runInEdtAndWait(() -> {
-      LinkedHashMap<String, Boolean> map = new LinkedHashMap<>(20);
       map.put("foo", false);
       map.put("foo.ref", false);
       map.put("foo(a)", false);

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -27,37 +28,31 @@ public class AddParenthesisToLambdaParameterTest implements ActionTest {
   }
 
   private void doTest(String before, String after) {
-    doActionTest(GroovyBundle.message("add.parenthesis.to.lambda.parameter.list"), before, after);
+    runInEdtAndWait(() -> doActionTest(GroovyBundle.message("add.parenthesis.to.lambda.parameter.list"), before, after));
   }
 
   @Test
   public void statementExpression() {
-    runInEdtAndWait(() -> {
-      doTest("<caret>a -> /*mark*/ b", "(a) -> /*mark*/ b");
-    });
+    doTest("<caret>a -> /*mark*/ b", "(a) -> /*mark*/ b");
   }
 
   @Test
   public void nestedLambda() {
-    runInEdtAndWait(() -> {
-      doTest("a -> <caret>b /*mark*/->  c", "a -> (b) /*mark*/ -> c");
-    });
+    doTest("a -> <caret>b /*mark*/->  c", "a -> (b) /*mark*/ -> c");
   }
 
   @Test
   public void multiline() {
-    runInEdtAndWait(() -> {
-      doTest("""
-               true ? a<caret>a -> {
-                   //line comment
-                   aa++
-               } :  () -> {}
-               """, """
-               true ? (aa) -> {
-                   //line comment
-                   aa++
-               } :  () -> {}
-               """);
-    });
+    doTest("""
+             true ? a<caret>a -> {
+                 //line comment
+                 aa++
+             } :  () -> {}
+             """, """
+             true ? (aa) -> {
+                 //line comment
+                 aa++
+             } :  () -> {}
+             """);
   }
 }

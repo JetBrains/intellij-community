@@ -6,11 +6,14 @@ package org.jetbrains.plugins.groovy.completion
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.testFramework.EdtTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -56,7 +59,7 @@ class GroovyCompletionTestFixture internal constructor(
   /** Completes the single item at the caret, types [type], and checks the result. */
   fun doCompletionTest(before: String?, after: String?, type: String, ct: CompletionType) {
     // The completion and the typing run on the EDT, from the start to the last check.
-    EdtTestUtil.runInEdtAndWait<Throwable> {
+    timeoutRunBlocking { withContext(Dispatchers.EDT) {
       configure(before)
       fixture.complete(ct)
       for (ch in type) {
@@ -71,7 +74,7 @@ class GroovyCompletionTestFixture internal constructor(
       else {
         fixture.checkResult(after, true)
       }
-    }
+    } }
   }
 
   fun doCompletionTest(before: String?, after: String?, ct: CompletionType) {
@@ -98,7 +101,7 @@ class GroovyCompletionTestFixture internal constructor(
   /** Invokes the completion at the caret, types [type], and checks the lookup items against [variants] as [testType] tells. */
   fun doVariantableTest(before: String?, type: String, ct: CompletionType, testType: CompletionResult, completionCount: Int, vararg variants: String) {
     // The completion and the typing run on the EDT, from the start to the last check.
-    EdtTestUtil.runInEdtAndWait<Throwable> {
+    timeoutRunBlocking { withContext(Dispatchers.EDT) {
       configure(before)
       fixture.complete(ct, completionCount)
       for (ch in type) {
@@ -124,7 +127,7 @@ class GroovyCompletionTestFixture internal constructor(
           }
         }
       }
-    }
+    } }
   }
 
   fun doVariantableTest(before: String?, type: String, ct: CompletionType, testType: CompletionResult, vararg variants: String) {

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.lang.overriding;
 
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -19,21 +20,37 @@ public class AllSuperMethodsTest {
   private final TestFixture<OverridingTestFixture> overriding = overridingFixture(groovy);
 
   @Test
-  public void testExtendsAndImplements() { runInEdtAndWait(() -> { overriding.get().doTest(AllSuperMethodsTest::findMethod); }); }
+  public void testExtendsAndImplements() {
+    overriding.get().doTest(AllSuperMethodsTest::findMethod);
+  }
   @Test
-  public void testExtendsClass() { runInEdtAndWait(() -> { overriding.get().doTest(AllSuperMethodsTest::findMethod); }); }
+  public void testExtendsClass() {
+    overriding.get().doTest(AllSuperMethodsTest::findMethod);
+  }
   @Test
-  public void testImplementsImplements() { runInEdtAndWait(() -> { overriding.get().doTest(AllSuperMethodsTest::findMethod); }); }
+  public void testImplementsImplements() {
+    overriding.get().doTest(AllSuperMethodsTest::findMethod);
+  }
   @Test
-  public void testImplementsInterface() { runInEdtAndWait(() -> { overriding.get().doTest(AllSuperMethodsTest::findMethod); }); }
+  public void testImplementsInterface() {
+    overriding.get().doTest(AllSuperMethodsTest::findMethod);
+  }
   @Test
-  public void testManyOverrMethods2() { runInEdtAndWait(() -> { overriding.get().doTest(AllSuperMethodsTest::findMethod); }); }
+  public void testManyOverrMethods2() {
+    overriding.get().doTest(AllSuperMethodsTest::findMethod);
+  }
   @Test
-  public void testManySuperMethods() { runInEdtAndWait(() -> { overriding.get().doTest(AllSuperMethodsTest::findMethod); }); }
+  public void testManySuperMethods() {
+    overriding.get().doTest(AllSuperMethodsTest::findMethod);
+  }
   @Test
-  public void testMethodWithoutParameters() { runInEdtAndWait(() -> { overriding.get().doTest(AllSuperMethodsTest::findMethod); }); }
+  public void testMethodWithoutParameters() {
+    overriding.get().doTest(AllSuperMethodsTest::findMethod);
+  }
   @Test
-  public void testMethodWithParameters() { runInEdtAndWait(() -> { overriding.get().doTest(AllSuperMethodsTest::findMethod); }); }
+  public void testMethodWithParameters() {
+    overriding.get().doTest(AllSuperMethodsTest::findMethod);
+  }
 
   private static PsiMethod[] findMethod(PsiMethod method) {
     return method.findSuperMethods();

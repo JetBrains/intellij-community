@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.groovy.testFramework.ResolveTest;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -36,13 +37,14 @@ public class GroovyDynamicMembersTest implements ResolveTest {
 
   @BeforeEach
   public void init_state() {
+    DynamicElementSettings methodDescriptor = new DynamicElementSettings();
     runInEdtAndWait(() -> {
-      DynamicElementSettings methodDescriptor = new DynamicElementSettings();
       methodDescriptor.setContainingClassName(JAVA_LANG_STRING);
       methodDescriptor.setName("foo");
       methodDescriptor.setType("void");
       methodDescriptor.setMethod(true);
-      methodDescriptor.setParams(new ArrayList<>());// Collections.emptyList() // https://issues.apache.org/jira/browse/GROOVY-8961
+      methodDescriptor.setParams(new ArrayList<>());
+      // Collections.emptyList() // https://issues.apache.org/jira/browse/GROOVY-8961
 
       final DynamicElementSettings propertyDescriptor = new DynamicElementSettings();
       propertyDescriptor.setContainingClassName(JAVA_LANG_STRING);
@@ -61,11 +63,11 @@ public class GroovyDynamicMembersTest implements ResolveTest {
 
   @Test
   public void resolve_to_dynamic_method() {
-    runInEdtAndWait(() -> resolveTest("\"hi\".<caret>foo()", PsiMethod.class));
+    resolveTest("\"hi\".<caret>foo()", PsiMethod.class);
   }
 
   @Test
   public void resolve_to_dynamic_property() {
-    runInEdtAndWait(() -> resolveTest("\"hi\".<caret>foo", PsiField.class));
+    resolveTest("\"hi\".<caret>foo", PsiField.class);
   }
 }

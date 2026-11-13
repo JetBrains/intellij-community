@@ -3,7 +3,9 @@ package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -24,15 +26,15 @@ public class JavaWithGroovyCompletionTest {
 
   @Test
   public void test_using_java_keywords_in_member_names() {
+    groovy.get().addFileToProject("a.groovy", """
+      class Foo {
+        static void "const"() {}
+        static final int "continue" = 2;
+      }
+      """);
+    groovy.get().configureByText("a.java", "class Bar {{ con<caret> }}");
+    groovy.get().complete(CompletionType.BASIC, 2);
     runInEdtAndWait(() -> {
-      groovy.get().addFileToProject("a.groovy", """
-        class Foo {
-          static void "const"() {}
-          static final int "continue" = 2;
-        }
-        """);
-      groovy.get().configureByText("a.java", "class Bar {{ con<caret> }}");
-      groovy.get().complete(CompletionType.BASIC, 2);
       assertFalse(groovy.get().getLookupElementStrings().contains("const"));
       assertFalse(groovy.get().getLookupElementStrings().contains("continue"));
     });
@@ -40,15 +42,15 @@ public class JavaWithGroovyCompletionTest {
 
   @Test
   public void test_using_java_expression_keywords_in_member_names() {
-    runInEdtAndWait(() -> {
-      groovy.get().addFileToProject("a.groovy", """
-        class Foo {
-          static void "this"() {}
-        }
-        """);
-      groovy.get().configureByText("a.java", "class Bar {{ this<caret> }}");
-      groovy.get().complete(CompletionType.BASIC, 2);
-      LookupElement[] elements = groovy.get().getLookupElements();
+    groovy.get().addFileToProject("a.groovy", """
+      class Foo {
+        static void "this"() {}
+      }
+      """);
+    groovy.get().configureByText("a.java", "class Bar {{ this<caret> }}");
+    groovy.get().complete(CompletionType.BASIC, 2);
+    LookupElement[] elements = groovy.get().getLookupElements();
+    ReadAction.run(() -> {
       assertTrue(elements == null || ContainerUtil.find(elements,
                                                         element -> element.getLookupString().equals("this") &&
                                                                    element.getObject() instanceof PsiMethod) == null);

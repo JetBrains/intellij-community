@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.ResolveTest;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiModifier;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -31,55 +33,47 @@ public class CategorySupportTest implements ResolveTest {
 
   @Test
   public void staticCategoryMethodOutsideOfCategory() {
-    runInEdtAndWait(() -> {
-      GrReflectedMethod resolved = resolveTest(
-        """
-          @Category(String) class C { def foo() {} }
-          C.<caret>foo("")
-          """, GrReflectedMethod.class);
-      Assertions.assertTrue(resolved.getModifierList().hasModifierProperty(PsiModifier.STATIC));
-    });
+    GrReflectedMethod resolved = resolveTest(
+      """
+        @Category(String) class C { def foo() {} }
+        C.<caret>foo("")
+        """, GrReflectedMethod.class);
+    ReadAction.run(() -> Assertions.assertTrue(resolved.getModifierList().hasModifierProperty(PsiModifier.STATIC)));
   }
 
   @Test
   public void categoryMethodWithinCategory() {
-    runInEdtAndWait(() -> {
-      resolveTest(
-        """
-          @Category(String)
-          class C {
-            def foo() {}
-            def usage() { <caret>foo() }
-          }
-          """, GrGdkMethod.class);
-    });
+    resolveTest(
+      """
+        @Category(String)
+        class C {
+          def foo() {}
+          def usage() { <caret>foo() }
+        }
+        """, GrGdkMethod.class);
   }
 
   @Test
   public void explicitCategoryMethodWithinCategory() {
-    runInEdtAndWait(() -> {
-      resolveTest(
-        """
-          @Category(String)
-          class C {
-            static def foo(String s) {}
-            def usage() { <caret>foo() }
-          }
-          """, GrGdkMethod.class);
-    });
+    resolveTest(
+      """
+        @Category(String)
+        class C {
+          static def foo(String s) {}
+          def usage() { <caret>foo() }
+        }
+        """, GrGdkMethod.class);
   }
 
   @Test
   public void propertyWithinCategoryWithExplicitMethod() {
-    runInEdtAndWait(() -> {
-      resolveTest(
-        """
-          @Category(String)
-          class C {
-            static def foo(String s) {}
-            def usage() { <caret>foo }
-          }
-          """, null);
-    });
+    resolveTest(
+      """
+        @Category(String)
+        class C {
+          static def foo(String s) {}
+          def usage() { <caret>foo }
+        }
+        """, null);
   }
 }

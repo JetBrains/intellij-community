@@ -3,7 +3,9 @@ package org.jetbrains.plugins.groovy.codeInsight.editorActions;
 
 import com.intellij.groovy.testFramework.ResolveTest;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
@@ -36,50 +38,52 @@ public class GroovyParameterInfoHandlerTest implements ResolveTest {
 
   @Test
   public void instanceMethodReferenceZeroParams() {
-    runInEdtAndWait(() -> testParameterHint());
+    testParameterHint();
   }
 
   @Test
   public void instanceMethodReferenceSingleParam() {
-    runInEdtAndWait(() -> testParameterHint());
+    testParameterHint();
   }
 
   @Test
   public void instanceMethodReferenceDefaultParam() {
-    runInEdtAndWait(() -> testParameterHint());
+    testParameterHint();
   }
 
   @Test
   public void instanceMethodReferenceOverloads() {
-    runInEdtAndWait(() -> testParameterHint());
+    testParameterHint();
   }
 
   @Test
   public void methodWithSeveralNamedParams() {
-    runInEdtAndWait(() -> testParameterHint());
+    testParameterHint();
   }
 
   @Test
   public void methodWithNamedParamsAnnotation() {
-    runInEdtAndWait(() -> testParameterHint());
+    testParameterHint();
   }
 
   @Test
   public void closureWithTypedParams() {
-    runInEdtAndWait(() -> testParameterHint());
+    testParameterHint();
   }
 
   @Test
   public void closureWithUntypedParams() {
-    runInEdtAndWait(() -> testParameterHint());
+    testParameterHint();
   }
 
   private void testParameterHint() {
     String name = getTestName() + ".test";
 
-    String input = TestUtils.readInput(getFixture().getTestDataPath() + name).get(0);
-    String hint = getParameterHint(input);
-    configureByText(input + "\n-----\n" + hint);
+    runInEdtAndWait(() -> {
+      String input = TestUtils.readInput(getFixture().getTestDataPath() + name).get(0);
+      String hint = getParameterHint(input);
+      configureByText(input + "\n-----\n" + hint);
+    });
     getFixture().checkResultByFile(name);
   }
 
@@ -87,9 +91,9 @@ public class GroovyParameterInfoHandlerTest implements ResolveTest {
     configureByText(text);
     EditorHintFixture myHintFixture = new EditorHintFixture(getFixture().getTestRootDisposable());
     getFixture().performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    runInEdtAndWait(() -> PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue());
     waitForParameterInfo();
-    return myHintFixture.getCurrentHintText();
+    return ReadAction.computeBlocking(() -> myHintFixture.getCurrentHintText());
   }
 
   public static void waitForParameterInfo() {

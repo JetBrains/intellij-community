@@ -5,6 +5,7 @@ import com.intellij.groovy.testFramework.BaseTest;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -44,8 +45,8 @@ public class GroovyCopyPasteStringTest implements BaseTest {
 
   @Test
   public void copy() {
+    LinkedHashMap<String, String> map = new LinkedHashMap<>(34);
     runInEdtAndWait(() -> {
-      LinkedHashMap<String, String> map = new LinkedHashMap<>(34);
       map.put("<selection>'\\\\'</selection>", "'\\\\'");
       map.put("<selection>'\\\\</selection>'", "'\\\\");
       map.put("'<selection>\\\\'</selection>", "\\\\'");
@@ -94,8 +95,8 @@ public class GroovyCopyPasteStringTest implements BaseTest {
 
   @Test
   public void find_string_kind_for_paste() {
+    LinkedHashMap<String, StringKind> map = new LinkedHashMap<>(84);
     runInEdtAndWait(() -> {
-      LinkedHashMap<String, StringKind> map = new LinkedHashMap<>(84);
       // empty strings
       map.put("'<caret>'", SINGLE_QUOTED);
       map.put("'''<caret>'''", TRIPLE_SINGLE_QUOTED);
@@ -225,9 +226,9 @@ public class GroovyCopyPasteStringTest implements BaseTest {
 
   @Test
   public void paste_new_line() {
+    final String from = "<selection>\n</selection>";
+    LinkedHashMap<String, String> map = new LinkedHashMap<>(6);
     runInEdtAndWait(() -> {
-      final String from = "<selection>\n</selection>";
-      LinkedHashMap<String, String> map = new LinkedHashMap<>(6);
       map.put("'<caret>'", "'\\n'");
       map.put("'''<caret>'''", "'''\n'''");
       map.put("\"<caret>\"", "\"\\n\"");
@@ -243,9 +244,9 @@ public class GroovyCopyPasteStringTest implements BaseTest {
 
   @Test
   public void multiline_paste() {
+    final String from = "<selection>hi\nthere\n</selection>";
+    LinkedHashMap<String, String> map = new LinkedHashMap<String, String>(6);
     runInEdtAndWait(() -> {
-      final String from = "<selection>hi\nthere\n</selection>";
-      LinkedHashMap<String, String> map = new LinkedHashMap<String, String>(6);
       map.put("'<caret>'", "'hi\\n' +\n        'there\\n'");
       map.put("'''<caret>'''", "'''hi\nthere\n'''");
       map.put("\"<caret>\"", "\"hi\\n\" +\n        \"there\\n\"");
@@ -261,16 +262,15 @@ public class GroovyCopyPasteStringTest implements BaseTest {
 
   @Test
   public void multiline_paste_raw() {
+    final String from = "$/<selection>hi\nthere\\u2318</selection>/$";
+    LinkedHashMap<String, String> map = new LinkedHashMap<>(6);
     runInEdtAndWait(() -> {
-      final String from = "$/<selection>hi\nthere\\u2318</selection>/$";
-      LinkedHashMap<String, String> map = new LinkedHashMap<>(6);
       map.put("'<caret>'", "'hi\\n' +\n        'there⌘'");
       map.put("'''<caret>'''", "'''hi\nthere\\u2318'''");
       map.put("\"<caret>\"", "\"hi\\n\" +\n        \"there⌘\"");
       map.put("\"\"\"<caret>\"\"\"", "\"\"\"hi\nthere\\u2318\"\"\"");
       map.put("/ <caret>/", "/ hi\nthere\\u2318/");
       map.put("$/<caret>/$", "$/hi\nthere\\u2318/$");
-
 
       map.forEach((text, expectedCopy) -> {
         doCopyPasteTest(from, text, expectedCopy);

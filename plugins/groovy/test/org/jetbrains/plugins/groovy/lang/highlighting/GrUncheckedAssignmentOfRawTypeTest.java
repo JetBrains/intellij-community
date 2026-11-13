@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -37,38 +38,46 @@ public class GrUncheckedAssignmentOfRawTypeTest implements HighlightingTest {
   }
 
   @Test
-  public void rawMethodAccess() { runInEdtAndWait(() -> fileHighlightingTest()); }
+  public void rawMethodAccess() {
+    fileHighlightingTest();
+  }
 
   @Test
-  public void rawFieldAccess() { runInEdtAndWait(() -> fileHighlightingTest()); }
+  public void rawFieldAccess() {
+    fileHighlightingTest();
+  }
 
   @Test
-  public void rawArrayStyleAccess() { runInEdtAndWait(() -> fileHighlightingTest()); }
+  public void rawArrayStyleAccess() {
+    fileHighlightingTest();
+  }
 
   @Test
-  public void rawArrayStyleAccessToMap() { runInEdtAndWait(() -> fileHighlightingTest()); }
+  public void rawArrayStyleAccessToMap() {
+    fileHighlightingTest();
+  }
 
   @Test
-  public void rawArrayStyleAccessToList() { runInEdtAndWait(() -> fileHighlightingTest()); }
+  public void rawArrayStyleAccessToList() {
+    fileHighlightingTest();
+  }
 
   @Test
   public void rawClosureReturnType() {
-    runInEdtAndWait(() -> {
-      highlightingTest("""
-  class A<T> {
-    A(T t) {this.t = t}
+    highlightingTest("""
+class A<T> {
+  A(T t) {this.t = t}
 
-    T t
-    def cl = {
-      return t
-    }
+  T t
+  def cl = {
+    return t
   }
+}
 
 
-  def a = new A(new Date())
-  Date d = <warning descr="Cannot assign 'Object' to 'Date'">a.cl()</warning>
-  """);
-    });
+def a = new A(new Date())
+Date d = <warning descr="Cannot assign 'Object' to 'Date'">a.cl()</warning>
+""");
   }
 
   @Override

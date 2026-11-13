@@ -3,6 +3,8 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.BaseTest;
 import com.intellij.groovy.testFramework.GroovyAssertions;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -33,8 +35,8 @@ public class SpreadOperatorTest implements BaseTest {
 
   @Test
   public void spreadProperty() {
-    runInEdtAndWait(() -> {
-      GrReferenceExpression expression = lastExpression("[[['a']]]*.bytes", GrReferenceExpression.class);
+    GrReferenceExpression expression = lastExpression("[[['a']]]*.bytes", GrReferenceExpression.class);
+    ReadAction.run(() -> {
       GroovyResolveResult[] results = expression.multiResolve(false);
       Assertions.assertEquals(1, results.length);
       Assertions.assertNotNull(results[0].getSpreadState());
@@ -45,8 +47,8 @@ public class SpreadOperatorTest implements BaseTest {
 
   @Test
   public void implicitSpreadProperty() {
-    runInEdtAndWait(() -> {
-      GrReferenceExpression expression = lastExpression("[[['a']]].bytes", GrReferenceExpression.class);
+    GrReferenceExpression expression = lastExpression("[[['a']]].bytes", GrReferenceExpression.class);
+    ReadAction.run(() -> {
       GroovyResolveResult[] results = expression.multiResolve(false);
       Assertions.assertEquals(1, results.length);
       Assertions.assertNotNull(results[0].getSpreadState());
@@ -57,8 +59,8 @@ public class SpreadOperatorTest implements BaseTest {
 
   @Test
   public void spreadMethod() {
-    runInEdtAndWait(() -> {
-      GrMethodCall expression = lastExpression("[[['a']]]*.getBytes()", GrMethodCall.class);
+    GrMethodCall expression = lastExpression("[[['a']]]*.getBytes()", GrMethodCall.class);
+    ReadAction.run(() -> {
       GroovyResolveResult[] results = expression.multiResolveGroovy(false);
       Assertions.assertEquals(0, results.length);
       GroovyAssertions.assertType(null, expression.getType());
@@ -67,8 +69,8 @@ public class SpreadOperatorTest implements BaseTest {
 
   @Test
   public void implicitSpreadMethod() {
-    runInEdtAndWait(() -> {
-      GrMethodCall expression = lastExpression("[[['a']]].getBytes()", GrMethodCall.class);
+    GrMethodCall expression = lastExpression("[[['a']]].getBytes()", GrMethodCall.class);
+    ReadAction.run(() -> {
       GroovyResolveResult[] results = expression.multiResolveGroovy(false);
       Assertions.assertEquals(0, results.length);
       GroovyAssertions.assertType(null, expression.getType());

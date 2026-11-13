@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.conversions.strings;
 
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -31,8 +32,8 @@ public class ConvertStringIntentionTest implements ActionTest {
 
   @Test
   public void convertSingleQuotedToDollarSlashy() {
+    LinkedHashMap<String, String> data = new LinkedHashMap<>();
     runInEdtAndWait(() -> {
-      LinkedHashMap<String, String> data = new LinkedHashMap<>();
       data.put("/", "/");
       data.put("$", "$$");
       data.put("hello $ world", "hello $ world");
@@ -51,8 +52,8 @@ public class ConvertStringIntentionTest implements ActionTest {
 
   @Test
   public void convertSlashyToDollarSlashy() {
+    LinkedHashMap<String, String> data = new LinkedHashMap<>();
     runInEdtAndWait(() -> {
-      LinkedHashMap<String, String> data = new LinkedHashMap<>();
       data.put("\\/", "/");
       data.put("$", "$$");
       data.put("hello $ world", "hello $ world");
@@ -69,8 +70,8 @@ public class ConvertStringIntentionTest implements ActionTest {
 
   @Test
   public void convertStringWithInjectionToDollarSlashy() {
+    LinkedHashMap<String, String> data = new LinkedHashMap<>();
     runInEdtAndWait(() -> {
-      LinkedHashMap<String, String> data = new LinkedHashMap<>();
       data.put("/${'/'}u21aF/", "$/${'/'}u21aF/$");
       data.put("/x$ ${'a'} y\\/z/", "$/x$ ${'a'} y/z/$");
       data.put("\"a${'b'}c\"", "$/a${'b'}c/$");
@@ -83,8 +84,8 @@ public class ConvertStringIntentionTest implements ActionTest {
 
   @Test
   public void convertSlashyToString() {
+    LinkedHashMap<String, String> data = new LinkedHashMap<>();
     runInEdtAndWait(() -> {
-      LinkedHashMap<String, String> data = new LinkedHashMap<>();
       data.put("asdf", "asdf");
       data.put("hello\\/world", "hello/world");
       for (Map.Entry<String, String> entry : data.entrySet()) {
@@ -97,8 +98,8 @@ public class ConvertStringIntentionTest implements ActionTest {
 
   @Test
   public void convertDollarSlashyToString() {
+    LinkedHashMap<String, String> data = new LinkedHashMap<>();
     runInEdtAndWait(() -> {
-      LinkedHashMap<String, String> data = new LinkedHashMap<>();
       data.put("asdf", "asdf");
       data.put("\\u0041", "A");
       for (Map.Entry<String, String> entry : data.entrySet()) {
@@ -111,8 +112,8 @@ public class ConvertStringIntentionTest implements ActionTest {
 
   @Test
   public void convertDollarSlashyToGString() {
+    LinkedHashMap<String, String> data = new LinkedHashMap<>();
     runInEdtAndWait(() -> {
-      LinkedHashMap<String, String> data = new LinkedHashMap<>();
       data.put("\\u21aF", "\u21aF");
       data.put("\\\\u21aF", "\\\\\\\\u21aF");
       for (Map.Entry<String, String> entry : data.entrySet()) {

@@ -3,6 +3,7 @@
 
 package org.jetbrains.plugins.groovy.lang.overriding
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
@@ -16,7 +17,7 @@ import java.util.function.Function
 
 /**
  * Checks the super methods of the methods of the last class in a test data file. It replaces the JUnit 3 base `OverridingTester`.
- * Call the helpers on the EDT.
+ * The helpers work on the EDT and off it.
  */
 @TestOnly
 class OverridingTestFixture internal constructor(val fixture: JavaCodeInsightTestFixture, private val testName: String) {
@@ -26,19 +27,22 @@ class OverridingTestFixture internal constructor(val fixture: JavaCodeInsightTes
     val strings = TestUtils.readInput(fixture.testDataPath + "/" + testFile)
     val psiFile = fixture.addFileToProject("foo.groovy", strings[0]) as GroovyFileBase
 
-    val buffer = StringBuilder()
-    for (method in psiFile.typeDefinitions.last().methods) {
-      val classes = findMethod.apply(method).map {
-        it.containingClass.toString() + ": " + it.containingClass!!.name + "; " + it.hierarchicalMethodSignature.toString()
-      }.sorted()
-      for (classAsString in classes) {
-        buffer.append(classAsString).append("\n")
+    val actual = ReadAction.computeBlocking<String, Throwable> {
+      val buffer = StringBuilder()
+      for (method in psiFile.typeDefinitions.last().methods) {
+        val classes = findMethod.apply(method).map {
+          it.containingClass.toString() + ": " + it.containingClass!!.name + "; " + it.hierarchicalMethodSignature.toString()
+        }.sorted()
+        for (classAsString in classes) {
+          buffer.append(classAsString).append("\n")
+        }
+        buffer.append("\n")
       }
       buffer.append("\n")
+      buffer.toString().trim()
     }
-    buffer.append("\n")
 
-    assertEquals(strings[1], buffer.toString().trim())
+    assertEquals(strings[1], actual)
   }
 }
 

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.ExpressionTest;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -33,47 +34,45 @@ public class CustomMapPropertyTest implements ExpressionTest {
 
   @BeforeEach
   public void addClasses() {
-    runInEdtAndWait(() -> {
-      getFixture().addFileToProject("classes.groovy", """
-        class Pojo { def pojoProperty }
+    getFixture().addFileToProject("classes.groovy", """
+      class Pojo { def pojoProperty }
       
-        class SomeMapClass extends HashMap<String, Pojo> {
-            public static final CONSTANT = 1
-            static class Inner {
-                public static final INNER_CONSTANT = 4
-            }
-        }
-        """);
-    });
+      class SomeMapClass extends HashMap<String, Pojo> {
+          public static final CONSTANT = 1
+          static class Inner {
+              public static final INNER_CONSTANT = 4
+          }
+      }
+      """);
   }
 
   @Test
   public void constantInInstanceContext() {
-    runInEdtAndWait(() -> referenceExpressionTest("new SomeMapClass().CONSTANT", GroovyMapProperty.class, "Pojo"));
+    referenceExpressionTest("new SomeMapClass().CONSTANT", GroovyMapProperty.class, "Pojo");
   }
 
   @Test
   public void constantInStaticContext() {
-    runInEdtAndWait(() -> referenceExpressionTest("SomeMapClass.CONSTANT", GrField.class, JAVA_LANG_INTEGER));
+    referenceExpressionTest("SomeMapClass.CONSTANT", GrField.class, JAVA_LANG_INTEGER);
   }
 
   @Test
   public void innerClassInInstanceContext() {
-    runInEdtAndWait(() -> referenceExpressionTest("new SomeMapClass().Inner", GroovyMapProperty.class, "Pojo"));
+    referenceExpressionTest("new SomeMapClass().Inner", GroovyMapProperty.class, "Pojo");
   }
 
   @Test
   public void innerClassInStaticContext() {
-    runInEdtAndWait(() -> referenceExpressionTest("SomeMapClass.Inner", GrClassDefinition.class, "java.lang.Class<SomeMapClass.Inner>"));
+    referenceExpressionTest("SomeMapClass.Inner", GrClassDefinition.class, "java.lang.Class<SomeMapClass.Inner>");
   }
 
   @Test
   public void innerPropertyInInstanceContext() {
-    runInEdtAndWait(() -> resolveTest("new SomeMapClass().Inner.<caret>pojoProperty", GrAccessorMethod.class));
+    resolveTest("new SomeMapClass().Inner.<caret>pojoProperty", GrAccessorMethod.class);
   }
 
   @Test
   public void innerPropertyInStaticContext() {
-    runInEdtAndWait(() -> resolveTest("SomeMapClass.Inner.<caret>INNER_CONSTANT", GrField.class));
+    resolveTest("SomeMapClass.Inner.<caret>INNER_CONSTANT", GrField.class);
   }
 }

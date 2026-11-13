@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -22,149 +23,139 @@ public class NamedParamsCompletionTest {
 
   @Test
   public void testWithSetter() {
-    runInEdtAndWait(() -> {
-      completion.get().doCompletionTest("""
-                         import groovy.transform.NamedDelegate
-                         import groovy.transform.NamedVariant
+    completion.get().doCompletionTest("""
+                       import groovy.transform.NamedDelegate
+                       import groovy.transform.NamedVariant
                        
-                         class E {
-                             private int a
-                             void setParam(int tt){}
-                         }
+                       class E {
+                           private int a
+                           void setParam(int tt){}
+                       }
                        
-                         @NamedVariant
-                         String foo(@NamedDelegate E e) {
-                             null
-                         }
+                       @NamedVariant
+                       String foo(@NamedDelegate E e) {
+                           null
+                       }
                        
-                         foo(par<caret>)
-                         """, """
-                         import groovy.transform.NamedDelegate
-                         import groovy.transform.NamedVariant
+                       foo(par<caret>)
+                       """, """
+                       import groovy.transform.NamedDelegate
+                       import groovy.transform.NamedVariant
                        
-                         class E {
-                             private int a
-                             void setParam(int tt){}
-                         }
+                       class E {
+                           private int a
+                           void setParam(int tt){}
+                       }
                        
-                         @NamedVariant
-                         String foo(@NamedDelegate E e) {
-                             null
-                         }
+                       @NamedVariant
+                       String foo(@NamedDelegate E e) {
+                           null
+                       }
                        
-                         foo(param: <caret>)
-                         """, CompletionType.BASIC);
-    });
+                       foo(param: <caret>)
+                       """, CompletionType.BASIC);
   }
 
   @Test
   public void testWithJava() {
-    runInEdtAndWait(() -> {
-      groovy.get().configureByText("A.java", """
+    groovy.get().configureByText("A.java", """
       
-        class A {
-          public void setParam(int tt){}
-        }
-        """);
-      completion.get().doCompletionTest("""
-                         import groovy.transform.NamedDelegate
-                         import groovy.transform.NamedVariant
+      class A {
+        public void setParam(int tt){}
+      }
+      """);
+    completion.get().doCompletionTest("""
+                       import groovy.transform.NamedDelegate
+                       import groovy.transform.NamedVariant
                        
-                         @NamedVariant
-                         String foo(@NamedDelegate A a) {
-                             null
-                         }
+                       @NamedVariant
+                       String foo(@NamedDelegate A a) {
+                           null
+                       }
                        
-                         foo(par<caret>)
-                         """, """
-                         import groovy.transform.NamedDelegate
-                         import groovy.transform.NamedVariant
+                       foo(par<caret>)
+                       """, """
+                       import groovy.transform.NamedDelegate
+                       import groovy.transform.NamedVariant
                        
-                         @NamedVariant
-                         String foo(@NamedDelegate A a) {
-                             null
-                         }
+                       @NamedVariant
+                       String foo(@NamedDelegate A a) {
+                           null
+                       }
                        
-                         foo(param: <caret>)
-                         """, CompletionType.BASIC);
-    });
+                       foo(param: <caret>)
+                       """, CompletionType.BASIC);
   }
 
   @Test
   public void testWithSeveralVariants() {
-    runInEdtAndWait(() -> {
-      completion.get().doVariantableTest("""
-                          import groovy.transform.NamedDelegate
-                          import groovy.transform.NamedVariant
+    completion.get().doVariantableTest("""
+                        import groovy.transform.NamedDelegate
+                        import groovy.transform.NamedVariant
                         
-                          class E {
-                              int param1
-                              void setParam2(int tt){}
-                          }
+                        class E {
+                            int param1
+                            void setParam2(int tt){}
+                        }
                         
-                          @NamedVariant
-                          String foo(@NamedDelegate E e) {
-                              null
-                          }
+                        @NamedVariant
+                        String foo(@NamedDelegate E e) {
+                            null
+                        }
                         
-                          foo(par<caret>)
-                          """, CompletionType.BASIC, "param1", "param2");
-    });
+                        foo(par<caret>)
+                        """, CompletionType.BASIC, "param1", "param2");
   }
 
   @Test
   public void testWithNamedParams() {
-    runInEdtAndWait(() -> {
-      groovy.get().addClass("""
-                           package com.foo;
-                           public class MyCoolClass {}
-                           """);
-      completion.get().doVariantableTest("""
-                          import groovy.transform.NamedParam
-                          import groovy.transform.NamedVariant
-                          import com.foo.MyCoolClass
+    groovy.get().addClass("""
+                         package com.foo;
+                         public class MyCoolClass {}
+                         """);
+    completion.get().doVariantableTest("""
+                        import groovy.transform.NamedParam
+                        import groovy.transform.NamedVariant
+                        import com.foo.MyCoolClass
                         
-                          @NamedVariant
-                          String foo(@NamedParam int param1, @NamedParam MyCoolClass param2) {
-                             null
-                          }
+                        @NamedVariant
+                        String foo(@NamedParam int param1, @NamedParam MyCoolClass param2) {
+                           null
+                        }
                         
-                          foo(par<caret>)
-                          """, CompletionType.BASIC, "param1", "param2");
-    });
+                        foo(par<caret>)
+                        """, CompletionType.BASIC, "param1", "param2");
   }
 
   @Test
   public void testNamedParamsWithValue() {
-    runInEdtAndWait(() -> {
-      groovy.get().addClass("""
-                           package com.foo;
-                           public class MyCoolClass {}
-                           """);
-      completion.get().doCompletionTest("""
-                         import groovy.transform.NamedParam
-                         import groovy.transform.NamedVariant
-                         import com.foo.MyCoolClass
+    groovy.get().addClass("""
+                         package com.foo;
+                         public class MyCoolClass {}
+                         """);
+    completion.get().doCompletionTest("""
+                       import groovy.transform.NamedParam
+                       import groovy.transform.NamedVariant
+                       import com.foo.MyCoolClass
                        
-                         @NamedVariant
-                         String foo(@NamedParam("larch1") int param1, @NamedParam("param2") MyCoolClass larch2) {
-                             null
-                         }
+                       @NamedVariant
+                       String foo(@NamedParam("larch1") int param1, @NamedParam("param2") MyCoolClass larch2) {
+                           null
+                       }
                        
-                         foo(lar<caret>)
-                         """, """
-                         import groovy.transform.NamedParam
-                         import groovy.transform.NamedVariant
-                         import com.foo.MyCoolClass
+                       foo(lar<caret>)
+                       """, """
+                       import groovy.transform.NamedParam
+                       import groovy.transform.NamedVariant
+                       import com.foo.MyCoolClass
                        
-                         @NamedVariant
-                         String foo(@NamedParam("larch1") int param1, @NamedParam("param2") MyCoolClass larch2) {
-                             null
-                         }
+                       @NamedVariant
+                       String foo(@NamedParam("larch1") int param1, @NamedParam("param2") MyCoolClass larch2) {
+                           null
+                       }
                        
-                         foo(larch1: <caret>)
-                         """, CompletionType.BASIC);
-    });
+                       foo(larch1: <caret>)
+                       """, CompletionType.BASIC);
   }
 
 }

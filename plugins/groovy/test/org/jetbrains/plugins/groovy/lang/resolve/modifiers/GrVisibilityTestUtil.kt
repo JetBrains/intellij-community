@@ -4,6 +4,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.modifiers
 
 import com.intellij.extapi.psi.PsiFileBase
+import com.intellij.openapi.application.ReadAction
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
@@ -27,7 +28,7 @@ fun addClass(fixture: JavaCodeInsightTestFixture, packageName: String = "pckg", 
                  "import static groovy.transform.PackageScopeTarget.*\n" +
                  text
   val file = fixture.addFileToProject("$packageName/_.groovy", fileText) as GroovyFile
-  return file.typeDefinitions[0]
+  return ReadAction.computeBlocking<PsiClass, Throwable> { file.typeDefinitions[0] }
 }
 
 /** Checks that [listOwner] has only the visibility [modifier], and that the check does not load the contents of its file. */

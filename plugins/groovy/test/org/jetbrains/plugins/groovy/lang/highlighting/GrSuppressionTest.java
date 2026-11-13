@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -32,67 +33,61 @@ public class GrSuppressionTest implements HighlightingTest {
     fixture.enableInspections(GrazieSpellCheckingInspection.class);
     configureByText(before);
     fixture.checkHighlighting();
-    fixture.launchAction(fixture.getAvailableIntention(AnalysisBundle.message("suppress.inspection.file")));
+    runInEdtAndWait(() -> fixture.launchAction(fixture.getAvailableIntention(AnalysisBundle.message("suppress.inspection.file"))));
     fixture.checkResult(after);
   }
 
   @Test
   public void suppressByFileLevelComment() {
-    runInEdtAndWait(() -> {
-      doTest("""
+    doTest("""
 
 
 
-               println("<TYPO><caret>abcdef</TYPO>")
-               """, """
-               //file:noinspection SpellCheckingInspection
+             println("<TYPO><caret>abcdef</TYPO>")
+             """, """
+             //file:noinspection SpellCheckingInspection
 
 
 
-               println("abcdef")
-               """);
-    });
+             println("abcdef")
+             """);
   }
 
   @Test
   public void suppressByFileLevelCommentAfterAnotherComment() {
-    runInEdtAndWait(() -> {
-      doTest("""
-               /* some other comment */
+    doTest("""
+             /* some other comment */
 
 
 
-               println("<TYPO><caret>abcdef</TYPO>")
-               """, """
-               /* some other comment */
-               //file:noinspection SpellCheckingInspection
+             println("<TYPO><caret>abcdef</TYPO>")
+             """, """
+             /* some other comment */
+             //file:noinspection SpellCheckingInspection
 
 
 
-               println("abcdef")
-               """);
-    });
+             println("abcdef")
+             """);
   }
 
   @Test
   public void suppressByFileLevelCommentAfterHashBang() {
-    runInEdtAndWait(() -> {
-      doTest("""
-               #!/usr/bin/env groovy
-               // some other comment
+    doTest("""
+             #!/usr/bin/env groovy
+             // some other comment
 
 
 
-               println("<TYPO><caret>abcdef</TYPO>")
-               """, """
-               #!/usr/bin/env groovy
-               // some other comment
-               //file:noinspection SpellCheckingInspection
+             println("<TYPO><caret>abcdef</TYPO>")
+             """, """
+             #!/usr/bin/env groovy
+             // some other comment
+             //file:noinspection SpellCheckingInspection
 
 
 
-               println("abcdef")
-               """);
-    });
+             println("abcdef")
+             """);
   }
 }

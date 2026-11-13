@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.TypingTest;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -31,79 +32,69 @@ public class LatestTypeInferenceTest implements TypingTest {
 
   @Test
   public void testNestedCallWithGStringArgumentPassedToStringParameter() {
-    runInEdtAndWait(() -> {
-      typingTest("""
-  			String foo(String s) { s }
-  			foo("${42}").with { <caret>it }
-  			""",
-        GrReferenceExpression.class, JAVA_LANG_STRING);
-    });
+    typingTest("""
+			String foo(String s) { s }
+			foo("${42}").with { <caret>it }
+			""",
+      GrReferenceExpression.class, JAVA_LANG_STRING);
   }
 
   @Test
   public void testWithCallWithIndexAccessQualifier() {
-    runInEdtAndWait(() -> {
-      typingTest(
-        "def usage(Collection<String> strings) { strings[0].with { <caret>it } }",
-        GrReferenceExpression.class,
-        JAVA_LANG_STRING
-      );
-      typingTest(
-        "def usage(Collection<String> strings) { <caret>strings[0].with { it } }",
-        GrIndexProperty.class,
-        JAVA_LANG_STRING
-      );
-    });
+    typingTest(
+      "def usage(Collection<String> strings) { strings[0].with { <caret>it } }",
+      GrReferenceExpression.class,
+      JAVA_LANG_STRING
+    );
+    typingTest(
+      "def usage(Collection<String> strings) { <caret>strings[0].with { it } }",
+      GrIndexProperty.class,
+      JAVA_LANG_STRING
+    );
   }
 
   @Test
   public void testTapCallWithIndexAccessQualifier() {
-    runInEdtAndWait(() -> {
-      typingTest(
-        "def usage(Collection<String> strings) { strings[0].tap { <caret>it } }",
-        GrReferenceExpression.class,
-        JAVA_LANG_STRING
-      );
-      typingTest(
-        "def usage(Collection<String> strings) { <caret>strings[0].tap { it } }",
-        GrIndexProperty.class,
-        JAVA_LANG_STRING
-      );
-    });
+    typingTest(
+      "def usage(Collection<String> strings) { strings[0].tap { <caret>it } }",
+      GrReferenceExpression.class,
+      JAVA_LANG_STRING
+    );
+    typingTest(
+      "def usage(Collection<String> strings) { <caret>strings[0].tap { it } }",
+      GrIndexProperty.class,
+      JAVA_LANG_STRING
+    );
   }
 
   @Test
   public void testParameterizedReturnType() {
-    runInEdtAndWait(() -> {
-      typingTest(
-        """
-  			interface Consumer<T> {
-  			    void consume(T t)
-  			}
+    typingTest(
+      """
+			interface Consumer<T> {
+			    void consume(T t)
+			}
 
-  			static <R> R nested(R obj, Consumer<R> objConsumer) {
-  			    obj
-  			}
+			static <R> R nested(R obj, Consumer<R> objConsumer) {
+			    obj
+			}
 
-  			Integer getSomeClass() {
-  			    nes<caret>ted(1) { }
-  			}""",
-        JAVA_LANG_INTEGER
-      );
-    });
+			Integer getSomeClass() {
+			    nes<caret>ted(1) { }
+			}""",
+      JAVA_LANG_INTEGER
+    );
   }
 
   @Test
   public void assertExplicitlyTypedSetVariableWithListInitializer() {
-    runInEdtAndWait(() -> {
-      typingTest(
-        """
-  			Set<String> a = ['a']
-  			assert a instanceof Set b
-  			<caret>a
-  			""",
-        "java.util.Set<java.lang.String>"
-      );
-    });
+    typingTest(
+      """
+			Set<String> a = ['a']
+			assert a instanceof Set b
+			<caret>a
+			""",
+      "java.util.Set<java.lang.String>"
+    );
   }
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -30,47 +31,41 @@ public class GroovyCompletion40Test {
 
   @Test
   public void test_basic() {
-    runInEdtAndWait(() -> {
-      completion.get().doBasicTest("""
-                    def x = sw<caret>
-                    """, """
-                    def x = switch (<caret>)
-                    """);
-    });
+    completion.get().doBasicTest("""
+                  def x = sw<caret>
+                  """, """
+                  def x = switch (<caret>)
+                  """);
   }
 
   @Test
   public void test_case_inside_switch_expression() {
-    runInEdtAndWait(() -> {
-      completion.get().doBasicTest("""
-                    def x = switch (10) {
-                      ca<caret>
-                    }
-                    """, """
-                    def x = switch (10) {
-                      case <caret>
-                    }
-                    """);
-    });
+    completion.get().doBasicTest("""
+                  def x = switch (10) {
+                    ca<caret>
+                  }
+                  """, """
+                  def x = switch (10) {
+                    case <caret>
+                  }
+                  """);
   }
 
   @Test
   public void test_in_switch_block() {
-    runInEdtAndWait(() -> {
-      completion.get().doBasicTest("""
+    completion.get().doBasicTest("""
                   
-                    def x = switch (10) {
-                      case 10 -> {
-                        yie<caret>
-                      }
-                    }""", """
+                  def x = switch (10) {
+                    case 10 -> {
+                      yie<caret>
+                    }
+                  }""", """
                   
-                    def x = switch (10) {
-                      case 10 -> {
-                        yield <caret>
-                      }
-                    }""");
-    });
+                  def x = switch (10) {
+                    case 10 -> {
+                      yield <caret>
+                    }
+                  }""");
   }
 
 }

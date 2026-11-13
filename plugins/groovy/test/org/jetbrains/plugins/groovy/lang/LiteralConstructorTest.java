@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.groovy.testFramework.ResolveTest;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -48,43 +50,41 @@ public class LiteralConstructorTest implements HighlightingTest, ResolveTest {
 
   @BeforeEach
   public void setUp() {
-    runInEdtAndWait(() -> {
-      RecursionManager.assertOnRecursionPrevention(getFixture().getTestRootDisposable());
-      getFixture().addFileToProject("classes.groovy", """
-        enum En { ONE, TWO, }
-        class Person {
-          String name
-          int age
-          Person parent
-        }
-        class C {
-          C() {}
-          C(Object a, String b) {}
-          C(String a, Object b) {}
-        }
-        class NoDefaultConstructor {
-          NoDefaultConstructor(int a) {}
-        }
-        class CollectionConstructor {
-          CollectionConstructor(Collection c) {}
-          CollectionConstructor(Object a, String b) {}
-          CollectionConstructor(String a, Object b) {}
-        }
-        class M {
-          M() {}
-          M(Map m) {}
-        }
-        class CollectionNoArgConstructor implements Collection {
-          CollectionNoArgConstructor() {}
-        }
-        """);
-    });
+    runInEdtAndWait(() -> RecursionManager.assertOnRecursionPrevention(getFixture().getTestRootDisposable()));
+    getFixture().addFileToProject("classes.groovy", """
+      enum En { ONE, TWO, }
+      class Person {
+        String name
+        int age
+        Person parent
+      }
+      class C {
+        C() {}
+        C(Object a, String b) {}
+        C(String a, Object b) {}
+      }
+      class NoDefaultConstructor {
+        NoDefaultConstructor(int a) {}
+      }
+      class CollectionConstructor {
+        CollectionConstructor(Collection c) {}
+        CollectionConstructor(Object a, String b) {}
+        CollectionConstructor(String a, Object b) {}
+      }
+      class M {
+        M() {}
+        M(Map m) {}
+      }
+      class CollectionNoArgConstructor implements Collection {
+        CollectionNoArgConstructor() {}
+      }
+      """);
   }
 
   @Test
   public void constructorReference() {
-    runInEdtAndWait(() -> {
-      LinkedHashMap<String, Boolean> data = new LinkedHashMap<>();
+    LinkedHashMap<String, Boolean> data = new LinkedHashMap<>();
+    ReadAction.run(() -> {
       data.put("boolean boo = [<caret>]", false);
       data.put("boolean boo = [<caret>:]", false);
       data.put("byte b = [<caret>]", false);
@@ -152,14 +152,14 @@ public class LiteralConstructorTest implements HighlightingTest, ResolveTest {
       data.put("LinkedHashSet lhs = [<caret>:]", true);
       data.put("Person p = [<caret>]", true);
       data.put("Person p = [<caret>:]", true);
-      constructorReferenceTest(data);
     });
+    constructorReferenceTest(data);
   }
 
   @Test
   public void constructorReferenceCS() {
-    runInEdtAndWait(() -> {
-      LinkedHashMap<String, Boolean> data = new LinkedHashMap<>();
+    LinkedHashMap<String, Boolean> data = new LinkedHashMap<>();
+    ReadAction.run(() -> {
       data.put("boolean boo = [<caret>]", false);
       data.put("byte b = [<caret>]", false);
       data.put("char c = [<caret>]", false);
@@ -220,27 +220,27 @@ public class LiteralConstructorTest implements HighlightingTest, ResolveTest {
       data.put("Set s = [<caret>:]", true);
       data.put("Person p = [<caret>]", true);
       data.put("Person p = [<caret>:]", true);
-      constructorReferenceTest(data, true);
     });
+    constructorReferenceTest(data, true);
   }
 
   @Test
   public void constructorReferenceFromNamedArgument() {
-    runInEdtAndWait(() -> {
-      LinkedHashMap<String, Boolean> data = new LinkedHashMap<>(5);
+    LinkedHashMap<String, Boolean> data = new LinkedHashMap<>(5);
+    ReadAction.run(() -> {
       data.put("Person p = [parent: [<caret>]]", true);
       data.put("Person p = [parent: [<caret>:]]", true);
       data.put("Person p = new Person(parent: [<caret>]])", true);
       data.put("Person p = new Person(parent: [<caret>:])", true);
       data.put("M m = [abc:[<caret>:]]", false);
-      constructorReferenceTest(data);
     });
+    constructorReferenceTest(data);
   }
 
   @Test
   public void constructorReferenceFromSafeCast() {
-    runInEdtAndWait(() -> {
-      LinkedHashMap<String, Boolean> data = new LinkedHashMap<>(12);
+    LinkedHashMap<String, Boolean> data = new LinkedHashMap<>(12);
+    ReadAction.run(() -> {
       data.put("[<caret>] as List", false);
       data.put("[<caret>] as Set", false);
       data.put("[<caret>] as SortedSet", false);
@@ -253,21 +253,23 @@ public class LiteralConstructorTest implements HighlightingTest, ResolveTest {
       data.put("[<caret>:] as List", false);
       data.put("[<caret>] as Person", true);
       data.put("[<caret>:] as Person", true);
-      constructorReferenceTest(data);
     });
+    constructorReferenceTest(data);
   }
 
   private void constructorReferenceTest(LinkedHashMap<String, Boolean> data, boolean cs) {
-    TestUtils.runAll(data, (text, expected) -> {
-      String fullText = cs ? "@groovy.transform.CompileStatic def cs() { " + text + " }" : text;
-      GrListOrMap listOrMap = elementUnderCaret(fullText, GrListOrMap.class);
-      GroovyConstructorReference reference = listOrMap.getConstructorReference();
-      if (expected) {
-        Assertions.assertNotNull(reference, text);
-      }
-      else {
-        Assertions.assertNull(reference, text);
-      }
+    runInEdtAndWait(() -> {
+      TestUtils.runAll(data, (text, expected) -> {
+        String fullText = cs ? "@groovy.transform.CompileStatic def cs() { " + text + " }" : text;
+        GrListOrMap listOrMap = elementUnderCaret(fullText, GrListOrMap.class);
+        GroovyConstructorReference reference = listOrMap.getConstructorReference();
+        if (expected) {
+          Assertions.assertNotNull(reference, text);
+        }
+        else {
+          Assertions.assertNull(reference, text);
+        }
+      });
     });
   }
 
@@ -277,8 +279,8 @@ public class LiteralConstructorTest implements HighlightingTest, ResolveTest {
 
   @Test
   public void propertyReference() {
+    LinkedHashMap<String, Boolean> data = new LinkedHashMap<>(8);
     runInEdtAndWait(() -> {
-      LinkedHashMap<String, Boolean> data = new LinkedHashMap<>(8);
       data.put("Person p = [<caret>parent: [parent: []]]", true);
       data.put("Person p = [parent: [<caret>parent: []]]", true);
       data.put("Person p = new Person(<caret>parent: [parent: []])", true);
@@ -302,8 +304,8 @@ public class LiteralConstructorTest implements HighlightingTest, ResolveTest {
 
   @Test
   public void resolveConstructorApplicable() {
+    LinkedHashMap<String, List<Serializable>> data = new LinkedHashMap<>();
     runInEdtAndWait(() -> {
-      LinkedHashMap<String, List<Serializable>> data = new LinkedHashMap<>();
       data.put("Person p = <caret>[]", List.of(0, false));
       data.put("Person p = <caret>[:]", List.of(0, true));
       data.put("C c = <caret>[]", List.of(0, false));
@@ -328,8 +330,8 @@ public class LiteralConstructorTest implements HighlightingTest, ResolveTest {
 
   @Test
   public void resolveConstructorInapplicable() {
+    LinkedHashMap<String, Integer> data = new LinkedHashMap<>(3);
     runInEdtAndWait(() -> {
-      LinkedHashMap<String, Integer> data = new LinkedHashMap<>(3);
       data.put("C c = <caret>[1]", 3);
       data.put("NoDefaultConstructor ndc = <caret>[]", 1);
       data.put("NoDefaultConstructor ndc = <caret>[:]", 1);
@@ -345,8 +347,8 @@ public class LiteralConstructorTest implements HighlightingTest, ResolveTest {
 
   @Test
   public void resolveListLiteralAmbiguous() {
-    runInEdtAndWait(() -> {
-      Collection<? extends GroovyResolveResult> results = multiResolveByText("C c = <caret>[\"42\", \"42\"]");
+    Collection<? extends GroovyResolveResult> results = multiResolveByText("C c = <caret>[\"42\", \"42\"]");
+    ReadAction.run(() -> {
       Assertions.assertEquals(2, results.size());
       for (GroovyResolveResult result : results) {
         Assertions.assertEquals(Applicability.applicable, ((GroovyMethodResult)result).getApplicability());
@@ -356,9 +358,7 @@ public class LiteralConstructorTest implements HighlightingTest, ResolveTest {
 
   @Test
   public void highlighting() {
-    runInEdtAndWait(() -> {
-      getFixture().enableInspections(GroovyAssignabilityCheckInspection.class);
-      getFixture().testHighlighting("highlighting/LiteralConstructorUsages.groovy");
-    });
+    getFixture().enableInspections(GroovyAssignabilityCheckInspection.class);
+    getFixture().testHighlighting("highlighting/LiteralConstructorUsages.groovy");
   }
 }

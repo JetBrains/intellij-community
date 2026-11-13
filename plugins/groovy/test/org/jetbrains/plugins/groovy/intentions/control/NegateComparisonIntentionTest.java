@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.control;
 
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -27,12 +28,10 @@ public class NegateComparisonIntentionTest implements ActionTest {
 
   @Test
   public void negate_considers_context() {
-    runInEdtAndWait(() -> {
-      getFixture().addFileToProject("com/foo/Node.java", "package com.foo; class Node {}");
-      doActionTest("Negate", "import com.foo.Node; (1 as Node) <caret>== 2", """
-        import com.foo.Node;
+    getFixture().addFileToProject("com/foo/Node.java", "package com.foo; class Node {}");
+    doActionTest("Negate", "import com.foo.Node; (1 as Node) <caret>== 2", """
+      import com.foo.Node;
       
-        !((1 as Node) != 2)""");
-    });
+      !((1 as Node) != 2)""");
   }
 }

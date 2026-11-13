@@ -26,11 +26,9 @@ public class GroovyBraceMatcherTest implements BaseTest {
   }
 
   private void doTest(String before, String charsToType, String after) {
-    EdtTestUtil.runInEdtAndWait(() -> {
-      configureByText(before);
-      getFixture().type(charsToType);
-      getFixture().checkResult(after);
-    });
+    configureByText(before);
+    getFixture().type(charsToType);
+    getFixture().checkResult(after);
   }
 
   @Test

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.TypingTest;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -29,59 +30,53 @@ public class ExpressionTypeTest implements TypingTest {
 
   @Test
   public void untypedLocalVariableReferenceCs() {
-    runInEdtAndWait(() -> typingTest("@groovy.transform.CompileStatic def usage() { def a; <caret>a }", JAVA_LANG_OBJECT));
+    typingTest("@groovy.transform.CompileStatic def usage() { def a; <caret>a }", JAVA_LANG_OBJECT);
   }
 
   @Test
   public void untypedParameterReferenceCs() {
-    runInEdtAndWait(() -> typingTest("@groovy.transform.CompileStatic def usage(a) { <caret>a }", JAVA_LANG_OBJECT));
+    typingTest("@groovy.transform.CompileStatic def usage(a) { <caret>a }", JAVA_LANG_OBJECT);
   }
 
   @Test
   public void ternary_with_primitive_types() {
-    runInEdtAndWait(() -> expressionTypeTest("char a = '1'; char b = '1'; c ? a : b", JAVA_LANG_CHARACTER));
+    expressionTypeTest("char a = '1'; char b = '1'; c ? a : b", JAVA_LANG_CHARACTER);
   }
 
   @Test
   public void unaryIncrement() {
-    runInEdtAndWait(() -> {
-      getFixture().addFileToProject("classes.groovy", """
-        class A { B next() { new B() } }
-        class B {}
-        """);
-      expressionTypeTest("new A()++", "A");
-      expressionTypeTest("++new A()", "B");
-    });
+    getFixture().addFileToProject("classes.groovy", """
+      class A { B next() { new B() } }
+      class B {}
+      """);
+    expressionTypeTest("new A()++", "A");
+    expressionTypeTest("++new A()", "B");
   }
 
   @Test
   public void thisInsideAnonymousDefinition() {
-    runInEdtAndWait(() -> {
-      typingTest("""
-                   class Test {
-                       void main2() {
-                           new A(th<caret>is){}
-                       }
-                   }
+    typingTest("""
+                 class Test {
+                     void main2() {
+                         new A(th<caret>is){}
+                     }
+                 }
                  
-                   class A{}
-                   """, "Test");
-    });
+                 class A{}
+                 """, "Test");
   }
 
   @Test
   public void superInsideAnonymousDefinition() {
-    runInEdtAndWait(() -> {
-      typingTest("""
-                   class Test extends C {
-                       void main2() {
-                           new A(su<caret>per.equals("")){}
-                       }
-                   }
-                   class C {}
-                   class B {}
-                   class A extends B {}
-                   """, "C");
-    });
+    typingTest("""
+                 class Test extends C {
+                     void main2() {
+                         new A(su<caret>per.equals("")){}
+                     }
+                 }
+                 class C {}
+                 class B {}
+                 class A extends B {}
+                 """, "C");
   }
 }

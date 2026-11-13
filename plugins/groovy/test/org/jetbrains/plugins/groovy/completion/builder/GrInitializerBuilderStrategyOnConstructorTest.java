@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.completion.builder;
 
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -21,192 +22,170 @@ public class GrInitializerBuilderStrategyOnConstructorTest {
 
   @Test
   public void test_no_builder_method() {
-    runInEdtAndWait(() -> {
-      completion.get().doCompletionTest("""
-                         import groovy.transform.builder.Builder
-                         import groovy.transform.builder.InitializerStrategy
+    completion.get().doCompletionTest("""
+                       import groovy.transform.builder.Builder
+                       import groovy.transform.builder.InitializerStrategy
                        
-                         class Pojo {
-                             @Builder(builderStrategy = InitializerStrategy)
-                             Pojo(name, dynamic, counter) {}
-                         }
+                       class Pojo {
+                           @Builder(builderStrategy = InitializerStrategy)
+                           Pojo(name, dynamic, counter) {}
+                       }
                        
-                         Pojo.<caret>
-                         """, "createInitializer");
-    });
+                       Pojo.<caret>
+                       """, "createInitializer");
   }
 
   @Test
   public void test_custom_builder_method() {
-    runInEdtAndWait(() -> {
-      completion.get().doCompletionTest("""
-                         import groovy.transform.builder.Builder
-                         import groovy.transform.builder.InitializerStrategy
+    completion.get().doCompletionTest("""
+                       import groovy.transform.builder.Builder
+                       import groovy.transform.builder.InitializerStrategy
                        
-                         class Pojo {
-                             @Builder(builderStrategy = InitializerStrategy, builderMethodName = 'customBuilderMethod')
-                             Pojo(name, dynamic, counter) {}
-                         }
+                       class Pojo {
+                           @Builder(builderStrategy = InitializerStrategy, builderMethodName = 'customBuilderMethod')
+                           Pojo(name, dynamic, counter) {}
+                       }
                        
-                         Pojo.<caret>
-                         """, "customBuilderMethod");
-    });
+                       Pojo.<caret>
+                       """, "customBuilderMethod");
   }
 
   @Test
   public void test_null_builder_method() {
-    runInEdtAndWait(() -> {
-      completion.get().doCompletionTest("""
-                         import groovy.transform.builder.Builder
-                         import groovy.transform.builder.InitializerStrategy
+    completion.get().doCompletionTest("""
+                       import groovy.transform.builder.Builder
+                       import groovy.transform.builder.InitializerStrategy
                        
-                         class Pojo {
-                             @Builder(builderStrategy = InitializerStrategy, builderMethodName = null)
-                             Pojo(name, dynamic, counter) {}
-                         }
+                       class Pojo {
+                           @Builder(builderStrategy = InitializerStrategy, builderMethodName = null)
+                           Pojo(name, dynamic, counter) {}
+                       }
                        
-                         Pojo.<caret>
-                         """, "createInitializer");
-    });
+                       Pojo.<caret>
+                       """, "createInitializer");
   }
 
   @Test
   public void test_empty_builder_method() {
-    runInEdtAndWait(() -> {
-      completion.get().doCompletionTest("""
-                         import groovy.transform.builder.Builder
-                         import groovy.transform.builder.InitializerStrategy
+    completion.get().doCompletionTest("""
+                       import groovy.transform.builder.Builder
+                       import groovy.transform.builder.InitializerStrategy
                        
-                         class Pojo {
-                             @Builder(builderStrategy = InitializerStrategy, builderMethodName = '')
-                             Pojo(name, dynamic, counter) {}
-                         }
+                       class Pojo {
+                           @Builder(builderStrategy = InitializerStrategy, builderMethodName = '')
+                           Pojo(name, dynamic, counter) {}
+                       }
                        
-                         Pojo.<caret>
-                         """, "createInitializer");
-    });
+                       Pojo.<caret>
+                       """, "createInitializer");
   }
 
   @Test
   public void test_spaces_builder_method() {
-    runInEdtAndWait(() -> {
-      completion.get().doCompletionTest("""
-                         import groovy.transform.builder.Builder
-                         import groovy.transform.builder.InitializerStrategy
+    completion.get().doCompletionTest("""
+                       import groovy.transform.builder.Builder
+                       import groovy.transform.builder.InitializerStrategy
                        
-                         class Pojo {
-                             @Builder(builderStrategy = InitializerStrategy, builderMethodName = '   ')
-                             Pojo(name, dynamic, counter) {}
-                         }
+                       class Pojo {
+                           @Builder(builderStrategy = InitializerStrategy, builderMethodName = '   ')
+                           Pojo(name, dynamic, counter) {}
+                       }
                        
-                         Pojo.<caret>
-                         """, "   ");
-    });
+                       Pojo.<caret>
+                       """, "   ");
   }
 
   @Test
   public void test_empty_prefix() {
-    runInEdtAndWait(() -> {
-      completion.get().doCompletionTest("""
-                         import groovy.transform.builder.Builder
-                         import groovy.transform.builder.InitializerStrategy
+    completion.get().doCompletionTest("""
+                       import groovy.transform.builder.Builder
+                       import groovy.transform.builder.InitializerStrategy
                        
-                         class Pojo {
-                             @Builder(builderStrategy = InitializerStrategy, prefix = '')
-                             Pojo(name, dynamic, counter) {}
-                         }
+                       class Pojo {
+                           @Builder(builderStrategy = InitializerStrategy, prefix = '')
+                           Pojo(name, dynamic, counter) {}
+                       }
                        
-                         Pojo.createInitializer().<caret>
-                         """, "name", "dynamic", "counter");
-    });
+                       Pojo.createInitializer().<caret>
+                       """, "name", "dynamic", "counter");
   }
 
   @Test
   public void test_custom_prefix() {
-    runInEdtAndWait(() -> {
-      completion.get().doCompletionTest("""
-                         import groovy.transform.builder.Builder
-                         import groovy.transform.builder.InitializerStrategy
+    completion.get().doCompletionTest("""
+                       import groovy.transform.builder.Builder
+                       import groovy.transform.builder.InitializerStrategy
                        
-                         class Pojo {
-                             @Builder(builderStrategy = InitializerStrategy, prefix = 'customPrefix')
-                             Pojo(name, dynamic, counter) {}
-                         }
+                       class Pojo {
+                           @Builder(builderStrategy = InitializerStrategy, prefix = 'customPrefix')
+                           Pojo(name, dynamic, counter) {}
+                       }
                        
-                         Pojo.createInitializer().<caret>
-                         """, "customPrefixName", "customPrefixDynamic", "customPrefixCounter");
-    });
+                       Pojo.createInitializer().<caret>
+                       """, "customPrefixName", "customPrefixDynamic", "customPrefixCounter");
   }
 
   @Test
   public void test_spaces_prefix() {
-    runInEdtAndWait(() -> {
-      completion.get().doCompletionTest("""
-                         import groovy.transform.builder.Builder
-                         import groovy.transform.builder.InitializerStrategy
+    completion.get().doCompletionTest("""
+                       import groovy.transform.builder.Builder
+                       import groovy.transform.builder.InitializerStrategy
                        
-                         class Pojo {
-                             @Builder(builderStrategy = InitializerStrategy, prefix = '   ')
-                             Pojo(name, dynamic, counter) {}
-                         }
+                       class Pojo {
+                           @Builder(builderStrategy = InitializerStrategy, prefix = '   ')
+                           Pojo(name, dynamic, counter) {}
+                       }
                        
                        
-                         Pojo.createInitializer().<caret>
-                         """, "   Name", "   Dynamic", "   Counter");
-    });
+                       Pojo.createInitializer().<caret>
+                       """, "   Name", "   Dynamic", "   Counter");
   }
 
   @Test
   public void test_null_prefix() {
-    runInEdtAndWait(() -> {
-      completion.get().doCompletionTest("""
-                         import groovy.transform.builder.Builder
-                         import groovy.transform.builder.InitializerStrategy
+    completion.get().doCompletionTest("""
+                       import groovy.transform.builder.Builder
+                       import groovy.transform.builder.InitializerStrategy
                        
-                         class Pojo {
-                             @Builder(builderStrategy = InitializerStrategy, prefix = null)
-                             Pojo(name, dynamic, counter) {}
-                         }
+                       class Pojo {
+                           @Builder(builderStrategy = InitializerStrategy, prefix = null)
+                           Pojo(name, dynamic, counter) {}
+                       }
                        
                        
-                         Pojo.createInitializer().<caret>
-                         """, "name", "dynamic", "counter");
-    });
+                       Pojo.createInitializer().<caret>
+                       """, "name", "dynamic", "counter");
   }
 
   @Test
   public void test_next_setter() {
-    runInEdtAndWait(() -> {
-      completion.get().doCompletionTest("""
-                         import groovy.transform.builder.Builder
-                         import groovy.transform.builder.InitializerStrategy
+    completion.get().doCompletionTest("""
+                       import groovy.transform.builder.Builder
+                       import groovy.transform.builder.InitializerStrategy
                        
-                         class Pojo {
-                             @Builder(builderStrategy = InitializerStrategy)
-                             Pojo(name, dynamic, counter) {}
-                         }
+                       class Pojo {
+                           @Builder(builderStrategy = InitializerStrategy)
+                           Pojo(name, dynamic, counter) {}
+                       }
                        
                        
-                         Pojo.createInitializer().counter(1).<caret>
-                         """, "name", "dynamic", "counter");
-    });
+                       Pojo.createInitializer().counter(1).<caret>
+                       """, "name", "dynamic", "counter");
   }
 
   @Test
   public void test_one_more_setter_further() {
-    runInEdtAndWait(() -> {
-      completion.get().doCompletionTest("""
-                         import groovy.transform.builder.Builder
-                         import groovy.transform.builder.InitializerStrategy
+    completion.get().doCompletionTest("""
+                       import groovy.transform.builder.Builder
+                       import groovy.transform.builder.InitializerStrategy
                        
-                         class Pojo {
-                             @Builder(builderStrategy = InitializerStrategy)
-                             Pojo(name, dynamic, counter) {}
-                         }
+                       class Pojo {
+                           @Builder(builderStrategy = InitializerStrategy)
+                           Pojo(name, dynamic, counter) {}
+                       }
                        
                        
-                         Pojo.createInitializer().counter(1).name("Janet").<caret>
-                         """, "name", "dynamic", "counter");
-    });
+                       Pojo.createInitializer().counter(1).name("Janet").<caret>
+                       """, "name", "dynamic", "counter");
   }
 }

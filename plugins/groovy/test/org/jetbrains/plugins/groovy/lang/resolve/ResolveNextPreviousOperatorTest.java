@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.ResolveTest;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -36,30 +38,28 @@ public class ResolveNextPreviousOperatorTest implements ResolveTest {
 
   @BeforeEach
   public void addClasses() {
-    runInEdtAndWait(() -> {
-      getFixture().addFileToProject("classes.groovy",
-                                    """
-                                      class P {
-                                        A getProp() { println "$this: getProp"; new A() }
-                                        void setProp(B b) { println "$this: setProp $b" }
+    getFixture().addFileToProject("classes.groovy",
+                                  """
+                                    class P {
+                                      A getProp() { println "$this: getProp"; new A() }
+                                      void setProp(B b) { println "$this: setProp $b" }
                                     
-                                        A getAt(int i) { println "$this: getAt $i"; new A() }
-                                        void putAt(int i, B b) { println "$this: putAt $i $b" }
-                                      }
+                                      A getAt(int i) { println "$this: getAt $i"; new A() }
+                                      void putAt(int i, B b) { println "$this: putAt $i $b" }
+                                    }
                                     
-                                      class A {
-                                        B next() { println "$this: next"; new B() }
-                                      }
+                                    class A {
+                                      B next() { println "$this: next"; new B() }
+                                    }
                                     
-                                      class B {}
-                                      """);
-    });
+                                    class B {}
+                                    """);
   }
 
   @Test
   public void postfixGetterSetter() {
-    runInEdtAndWait(() -> {
-      GrReferenceExpression expression = elementUnderCaret("new P().<caret>prop++", GrReferenceExpression.class);
+    GrReferenceExpression expression = elementUnderCaret("new P().<caret>prop++", GrReferenceExpression.class);
+    ReadAction.run(() -> {
       GroovyReference rValueReference = expression.getRValueReference();
 
       GroovyResolveResult rResult = rValueReference.advancedResolve();
@@ -77,9 +77,9 @@ public class ResolveNextPreviousOperatorTest implements ResolveTest {
 
   @Test
   public void prefixGetterSetter() {
-    runInEdtAndWait(() -> {
-      GrReferenceExpression expression = elementUnderCaret("++new P().<caret>prop", GrReferenceExpression.class);
+    GrReferenceExpression expression = elementUnderCaret("++new P().<caret>prop", GrReferenceExpression.class);
 
+    ReadAction.run(() -> {
       GroovyReference rValueReference = expression.getRValueReference();
       GroovyResolveResult rResult = rValueReference.advancedResolve();
       Assertions.assertTrue(rResult instanceof AccessorResolveResult);
@@ -96,8 +96,8 @@ public class ResolveNextPreviousOperatorTest implements ResolveTest {
 
   @Test
   public void postfixIndexGetPut() {
-    runInEdtAndWait(() -> {
-      GrIndexProperty expression = elementUnderCaret("new P()<caret>[42]++", GrIndexProperty.class);
+    GrIndexProperty expression = elementUnderCaret("new P()<caret>[42]++", GrIndexProperty.class);
+    ReadAction.run(() -> {
       GroovyMethodCallReference rValueReference = expression.getRValueReference();
       GroovyResolveResult rResult = rValueReference.advancedResolve();
       PsiElement rElement = rResult.getElement();
@@ -116,8 +116,8 @@ public class ResolveNextPreviousOperatorTest implements ResolveTest {
 
   @Test
   public void prefixIndexGetPut() {
-    runInEdtAndWait(() -> {
-      GrIndexProperty expression = elementUnderCaret("++new P()<caret>[42]", GrIndexProperty.class);
+    GrIndexProperty expression = elementUnderCaret("++new P()<caret>[42]", GrIndexProperty.class);
+    ReadAction.run(() -> {
       GroovyMethodCallReference rValueReference = expression.getRValueReference();
       GroovyResolveResult rResult = rValueReference.advancedResolve();
       PsiElement element = rResult.getElement();

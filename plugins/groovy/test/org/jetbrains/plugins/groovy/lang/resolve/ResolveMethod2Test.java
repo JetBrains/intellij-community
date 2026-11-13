@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.groovy.testFramework.ResolveTest;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -31,8 +33,8 @@ public class ResolveMethod2Test implements ResolveTest {
 
   @Test
   public void voidArgument() {
-    runInEdtAndWait(() -> {
-      GroovyResolveResult result = advancedResolveByText("def foo(p); void bar(); <caret>foo(bar())");
+    GroovyResolveResult result = advancedResolveByText("def foo(p); void bar(); <caret>foo(bar())");
+    ReadAction.run(() -> {
       Assertions.assertTrue(result instanceof GroovyMethodResult);
       Assertions.assertEquals(Applicability.applicable, ((GroovyMethodResult)result).getApplicability());
     });

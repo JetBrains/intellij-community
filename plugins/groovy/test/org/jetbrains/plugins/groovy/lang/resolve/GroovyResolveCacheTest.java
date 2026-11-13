@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -40,9 +41,9 @@ public class GroovyResolveCacheTest {
 
   @Test
   public void testDropCachesOnOutOfCodeBlockChange() {
-    runInEdtAndWait(() -> {
-      final Ref<Integer> counter = new Ref<>(0);
+    final Ref<Integer> counter = new Ref<>(0);
 
+    runInEdtAndWait(() -> {
       AstTransformationSupport transformationSupport = new AstTransformationSupport() {
 
         @Override
@@ -51,8 +52,10 @@ public class GroovyResolveCacheTest {
         }
       };
       AstTransformationSupport.EP_NAME.getPoint().registerExtension(transformationSupport, getFixture().getTestRootDisposable());
-      GroovyFile file =
-        (GroovyFile)getFixture().addFileToProject("_.groovy", "class Super { def foo() {} }");
+    });
+    GroovyFile file =
+      (GroovyFile)getFixture().addFileToProject("_.groovy", "class Super { def foo() {} }");
+    runInEdtAndWait(() -> {
       final GrTypeDefinition clazz = file.getTypeDefinitions()[0];
 
       Assertions.assertEquals(0, (int)counter.get());
@@ -70,9 +73,9 @@ public class GroovyResolveCacheTest {
   @Disabled
   @Test
   public void testDoNotDropCachesOnCodeBlockChange() {
-    runInEdtAndWait(() -> {
-      final Ref<Integer> counter = new Ref<>(0);
+    final Ref<Integer> counter = new Ref<>(0);
 
+    runInEdtAndWait(() -> {
       AstTransformationSupport transformationSupport = new AstTransformationSupport(){
 
         @Override
@@ -81,8 +84,10 @@ public class GroovyResolveCacheTest {
         }
       };
       AstTransformationSupport.EP_NAME.getPoint().registerExtension(transformationSupport, getFixture().getTestRootDisposable());
-      GroovyFile file =
-        (GroovyFile)getFixture().addFileToProject("_.groovy", "class Super { def foo() { 1 } }");
+    });
+    GroovyFile file =
+      (GroovyFile)getFixture().addFileToProject("_.groovy", "class Super { def foo() { 1 } }");
+    runInEdtAndWait(() -> {
       final GrTypeDefinition clazz = file.getTypeDefinitions()[0];
 
       Assertions.assertEquals(0, (int)counter.get());

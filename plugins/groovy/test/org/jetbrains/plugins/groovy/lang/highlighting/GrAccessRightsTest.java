@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -37,80 +38,74 @@ public class GrAccessRightsTest implements HighlightingTest {
 
   @Test
   public void privateMembers() {
-    runInEdtAndWait(() -> fileHighlightingTest("accessPrivateMembers.groovy"));
+    fileHighlightingTest("accessPrivateMembers.groovy");
   }
 
   @Test
   public void privateScriptMembers() {
-    runInEdtAndWait(() -> fileHighlightingTest("accessPrivateScriptMembers.groovy"));
+    fileHighlightingTest("accessPrivateScriptMembers.groovy");
   }
 
   @Test
   public void constructor() {
-    runInEdtAndWait(() -> {
-      getFixture().addClass("""
-                               package p1;
-                               public class MyClass {
-                                 public MyClass() {}
-                                 protected MyClass(int i) {}
-                                 MyClass(int i, int j) {}
-                                 private MyClass(int i, int j, int k) {}
-                               }
-                               """);
-      fileHighlightingTest("accessConstructor.groovy");
-    });
+    getFixture().addClass("""
+                             package p1;
+                             public class MyClass {
+                               public MyClass() {}
+                               protected MyClass(int i) {}
+                               MyClass(int i, int j) {}
+                               private MyClass(int i, int j, int k) {}
+                             }
+                             """);
+    fileHighlightingTest("accessConstructor.groovy");
   }
 
   @Test
   public void method() {
-    runInEdtAndWait(() -> {
-      getFixture().addClass("""
-                               package p1;
-                               public class MyClass {
-                                 public void publicMethod() {}
-                                 protected void protectedMethod() {}
-                                 void packageLocalMethod() {}
-                                 private void privateMethod() {}
-                               }
-                               """);
-      fileHighlightingTest("accessMethod.groovy");
-    });
+    getFixture().addClass("""
+                             package p1;
+                             public class MyClass {
+                               public void publicMethod() {}
+                               protected void protectedMethod() {}
+                               void packageLocalMethod() {}
+                               private void privateMethod() {}
+                             }
+                             """);
+    fileHighlightingTest("accessMethod.groovy");
   }
 
   @Test
   public void property() {
-    runInEdtAndWait(() -> fileHighlightingTest("accessProperty.groovy"));
+    fileHighlightingTest("accessProperty.groovy");
   }
 
   @Test
   public void traitMethod() {
-    runInEdtAndWait(() -> fileHighlightingTest("accessTraitMethod.groovy"));
+    fileHighlightingTest("accessTraitMethod.groovy");
   }
 
   @Test
   public void nestedClass() {
-    runInEdtAndWait(() -> {
-      getFixture().addClass("""
-                               package p1;
+    getFixture().addClass("""
+                             package p1;
 
-                               public class Outer {
-                                 public static class PublicClass {}
-                                 protected static class ProtectedClass {}
-                                 static class PackageLocalClass {}
-                                 private static class PrivateClass {}
-                               }
-                               """);
-      fileHighlightingTest("accessClass.groovy");
-    });
+                             public class Outer {
+                               public static class PublicClass {}
+                               protected static class ProtectedClass {}
+                               static class PackageLocalClass {}
+                               private static class PrivateClass {}
+                             }
+                             """);
+    fileHighlightingTest("accessClass.groovy");
   }
 
   @Test
   public void methodCS() {
-    runInEdtAndWait(() -> fileHighlightingTest("accessMethodCS.groovy"));
+    fileHighlightingTest("accessMethodCS.groovy");
   }
 
   @Test
   public void staticImportedProperty() {
-    runInEdtAndWait(() -> fileHighlightingTest("accessStaticImportedProperty.groovy"));
+    fileHighlightingTest("accessStaticImportedProperty.groovy");
   }
 }
