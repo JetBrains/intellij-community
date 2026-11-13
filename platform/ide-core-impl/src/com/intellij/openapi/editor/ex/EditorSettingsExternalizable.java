@@ -233,6 +233,23 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES, old, val);
   }
 
+  /**
+   * Gives the choice of the user for the rounded corners of the highlighting and the selection.
+   * {@code null} follows the theme.
+   */
+  @ApiStatus.Internal
+  public @Nullable Boolean getRoundedHighlightingOption() {
+    return myOptions.ROUNDED_HIGHLIGHTING;
+  }
+
+  @ApiStatus.Internal
+  public void setRoundedHighlightingOption(@Nullable Boolean val) {
+    Boolean old = myOptions.ROUNDED_HIGHLIGHTING;
+    if (Objects.equals(old, val)) return;
+    myOptions.ROUNDED_HIGHLIGHTING = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ROUNDED_HIGHLIGHTING, old, val);
+  }
+
   public boolean isWhitespacesShown() {
     return myOptions.IS_WHITESPACES_SHOWN;
   }
@@ -1150,6 +1167,9 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     @OptionTag(converter = CaretEasingConverter.class)
     public @Nullable EditorSettings.CaretEasing CARET_EASING = DEFAULT_CARET_EASING;
     public boolean IS_HIGHLIGHT_SELECTION_OCCURRENCES = true;
+    /** {@code null} follows the theme. Read it through {@link #getRoundedHighlightingOption()}. */
+    @ApiStatus.Internal
+    public @Nullable Boolean ROUNDED_HIGHLIGHTING = null;
     public boolean IS_WHITESPACES_SHOWN = false;
     public boolean IS_LEADING_WHITESPACES_SHOWN = true;
     public boolean IS_INNER_WHITESPACES_SHOWN = true;
@@ -1291,6 +1311,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     @ApiStatus.Experimental public static final @NonNls String PROP_IS_ANIMATED_CARET = "isSmoothCaretMovement";
     @ApiStatus.Experimental public static final @NonNls String PROP_CARET_EASING = "caretEasing";
     public static final @NonNls String PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES = "isHighlightSelectionOccurrences";
+    @ApiStatus.Internal public static final @NonNls String PROP_ROUNDED_HIGHLIGHTING = "roundedHighlighting";
     public static final @NonNls String PROP_IS_WHITESPACES_SHOWN = "isWhitespacesShown";
     public static final @NonNls String PROP_IS_LEADING_WHITESPACES_SHOWN = "isLeadingWhitespacesShown";
     public static final @NonNls String PROP_IS_INNER_WHITESPACES_SHOWN = "isInnerWhitespacesShown";

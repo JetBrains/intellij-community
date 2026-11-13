@@ -5511,13 +5511,32 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  /**
+   * Says that the editor rounds the corners of the highlighting and of the selection. Without a choice of the user, the
+   * current theme decides, also after a theme switch. Column mode always gives straight corners.
+   */
   @ApiStatus.Internal
-  public boolean isAutoRoundedHighlighters() {
-    return isAutoRoundedHighlighters(EditorRegistry.current());
+  public boolean isRoundedHighlighting() {
+    Boolean option = getSettingsSnapshot().getRoundedHighlightingOption();
+    boolean rounded = option == null ? IslandsState.Companion.isEnabled() : option;
+    return rounded && !isColumnMode();
   }
 
+  /**
+   * Gives {@link #isHuggingHighlighting(EditorRegistry)} for the current registry.
+   */
   @ApiStatus.Internal
-  public boolean isAutoRoundedHighlighters(@NotNull EditorRegistry registry) {
+  public boolean isHuggingHighlighting() {
+    return isHuggingHighlighting(EditorRegistry.current());
+  }
+
+  /**
+   * Says that the selection stops at the text, and that it does not fill the line. This is true when the Islands theme
+   * is on, the editor is not in column mode, and the registry key {@code editor.old.full.horizontal.selection.enabled}
+   * of {@code registry} is off.
+   */
+  @ApiStatus.Internal
+  public boolean isHuggingHighlighting(@NotNull EditorRegistry registry) {
     return !registry.isOldFullHorizontalSelectionEnabled()
            && !isColumnMode()
            && IslandsState.Companion.isEnabled();

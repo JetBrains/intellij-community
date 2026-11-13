@@ -28,6 +28,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -49,6 +50,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @TestApplication
 public class IterationStateTest {
+  private static final String OLD_SELECTION_KEY = "editor.old.full.horizontal.selection.enabled";
+
   @SuppressWarnings("deprecation")
   private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
@@ -56,6 +59,7 @@ public class IterationStateTest {
 
   private EditorModelFixture myFixture;
 
+  private boolean myOldFullSelection;
   private Color DEFAULT_BACKGROUND;
   private Color CARET_ROW_BACKGROUND;
   private Color SELECTION_BACKGROUND;
@@ -65,7 +69,8 @@ public class IterationStateTest {
   void setUp() {
     myFixture = editorFixture.get();
 
-    Registry.get("editor.old.full.horizontal.selection.enabled").setValue(true);
+    myOldFullSelection = Registry.is(OLD_SELECTION_KEY);
+    Registry.get(OLD_SELECTION_KEY).setValue(true);
     EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     DEFAULT_BACKGROUND = new DebugColor("DEFAULT_BACKGROUND", colorsScheme.getDefaultBackground());
     CARET_ROW_BACKGROUND = new DebugColor(EditorColors.CARET_ROW_COLOR);
@@ -73,6 +78,11 @@ public class IterationStateTest {
     READONLY_FRAGMENT_BACKGROUND = new DebugColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR);
     Set<Color> colors = Set.of(DEFAULT_BACKGROUND, CARET_ROW_BACKGROUND, SELECTION_BACKGROUND, READONLY_FRAGMENT_BACKGROUND);
     assertEquals(4, colors.size());
+  }
+
+  @AfterEach
+  void tearDown() {
+    Registry.get(OLD_SELECTION_KEY).setValue(myOldFullSelection);
   }
 
   @Test

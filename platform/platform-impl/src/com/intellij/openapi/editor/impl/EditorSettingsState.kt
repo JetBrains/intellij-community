@@ -137,6 +137,13 @@ class EditorSettingsState(
   // Global-only settings from EditorSettingsExternalizable. A `val` has no override, so it always follows the
   // global setting.
   val myCaretEasing: EditorSettings.CaretEasing by property { externalizable().caretEasing }
+
+  /**
+   * The choice of the user for the rounded corners of the highlighting and of the selection, or `null` without a
+   * choice. [EditorImpl.isRoundedHighlighting] resolves `null` with the theme.
+   */
+  val roundedHighlightingOption: Boolean? by property { externalizable().roundedHighlightingOption }
+
   val myStickyLinesShown: Boolean by property { externalizable().areStickyLinesShown() }
   val myStickyLinesShownForLanguage: Boolean by property { computeStickyLinesShownForLanguage() }
   val myStickyLinesLimit: Int by property { externalizable().stickyLineLimit }
@@ -352,6 +359,7 @@ class EditorSettingsState(
       EditorSettingsExternalizable.PropNames.PROP_IS_SMOOTH_CARET_BLINKING -> refresh(::myIsSmoothCaretBlinking)
       EditorSettingsExternalizable.PropNames.PROP_IS_RIGHT_MARGIN_SHOWN -> refresh(::myIsRightMarginShown)
       EditorSettingsExternalizable.PropNames.PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES -> refresh(::myIsHighlightSelectionOccurrences)
+      EditorSettingsExternalizable.PropNames.PROP_ROUNDED_HIGHLIGHTING -> refresh(::roundedHighlightingOption)
 
       EditorSettingsExternalizable.PropNames.PROP_VERTICAL_SCROLL_OFFSET -> refresh(::myVerticalScrollOffset)
       EditorSettingsExternalizable.PropNames.PROP_VERTICAL_SCROLL_JUMP -> refresh(::myVerticalScrollJump)

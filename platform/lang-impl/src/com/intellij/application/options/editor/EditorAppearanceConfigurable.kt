@@ -18,6 +18,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.IslandsState
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
@@ -43,6 +44,7 @@ private val myCbBlockCursor                           get() = CheckboxDescriptor
 private val myCbFullLineHeightCursor                  get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.full.line.height.caret"), model::isFullLineHeightCursor, model::setFullLineHeightCursor)
 private val myCbSmoothCaretMovement                   get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.animated.caret"), model::isSmoothCaretMovement, model::setSmoothCaretMovement)
 private val myCbHighlightSelectionOccurrences         get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.highlight.selection.occurrences"), model::isHighlightSelectionOccurrences, model::setHighlightSelectionOccurrences)
+private val myCbRoundedCorners                        get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.use.rounded.corners"), { model.roundedHighlightingOption ?: IslandsState.isEnabled() }, { model.roundedHighlightingOption = it })
 private val myCbRightMargin                           get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.right.margin"), model::isRightMarginShown, model::setRightMarginShown)
 private val myCbShowLineNumbers                       get() = CheckboxDescriptor(ApplicationBundle.message("checkbox.show.line.numbers"), model::isLineNumbersShown, model::setLineNumbersShown)
 private val myCbShowMethodSeparators                  get() = CheckboxDescriptor(if (PlatformUtils.isDataGrip()) ApplicationBundle.message("checkbox.show.method.separators.DataGrip") else  ApplicationBundle.message("checkbox.show.method.separators"), DaemonCodeAnalyzerSettings.getInstance()::SHOW_METHOD_SEPARATORS)
@@ -141,6 +143,9 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
 
         row {
           checkBox(myCbHighlightSelectionOccurrences)
+        }
+        row {
+          checkBox(myCbRoundedCorners)
         }
 
         lateinit var cbWhitespace: Cell<JBCheckBox>

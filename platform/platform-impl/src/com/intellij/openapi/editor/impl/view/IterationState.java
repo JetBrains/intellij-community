@@ -158,7 +158,7 @@ public final class IterationState {
     myUseOnlyFontOrForegroundAffectingHighlighters = useOnlyFontOrForegroundAffectingHighlighters;
     myStickyLinesPainting = editor instanceof EditorImpl impl && impl.isStickyLinePainting();
     myEditorRightAligned = editor instanceof EditorImpl impl && impl.isRightAligned();
-    myAutoRoundedHighlighters = editor instanceof EditorImpl impl && impl.isAutoRoundedHighlighters();
+    myAutoRoundedHighlighters = editor instanceof EditorImpl impl && impl.isRoundedHighlighting();
     myReverseIteration = iterateBackwards;
     myHighlighterIterator = useOnlyFullLineHighlighters ? null : getHighlighter(editor).createIterator(start);
     myCaretData = ObjectUtils.notNull(caretData, CaretData.getNullCaret());
