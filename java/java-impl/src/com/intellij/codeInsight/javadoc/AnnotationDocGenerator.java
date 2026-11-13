@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -53,13 +53,16 @@ public final class AnnotationDocGenerator {
   private final @NotNull PsiElement myContext;
   private final @Nullable PsiClass myTargetClass;
   private final boolean myResolveNotPossible;
+  private final boolean myForceInferred;
 
   private AnnotationDocGenerator(@NotNull PsiAnnotation annotation,
                                  @NotNull PsiJavaCodeReferenceElement nameReference,
-                                 @NotNull PsiElement context) {
+                                 @NotNull PsiElement context,
+                                 boolean forceInferred) {
     myAnnotation = annotation;
     myNameReference = nameReference;
     myContext = context;
+    myForceInferred = forceInferred;
 
     boolean indexNotReady = false;
     PsiElement target = null;
@@ -97,7 +100,7 @@ public final class AnnotationDocGenerator {
   }
 
   public boolean isInferred() {
-    return AnnotationUtil.isInferredAnnotation(myAnnotation);
+    return myForceInferred || AnnotationUtil.isInferredAnnotation(myAnnotation);
   }
 
   private static void appendStyledSpan(
@@ -308,7 +311,7 @@ public final class AnnotationDocGenerator {
       return getAnnotationsToShow(typeParameter);
     }
     if (owner instanceof PsiModifierList modifierList) {
-      return getAnnotationsToShow(((PsiModifierListOwner)modifierList.getParent()));
+      return getAnnotationsToShow((PsiModifierListOwner)modifierList.getParent());
     }
     Set<String> shownAnnotations = new HashSet<>();
     List<AnnotationDocGenerator> generators = ContainerUtil.mapNotNull(
@@ -342,10 +345,18 @@ public final class AnnotationDocGenerator {
   static @Nullable AnnotationDocGenerator forAnnotation(@NotNull PsiElement context,
                                                         @NotNull Set<String> shownAnnotations,
                                                         @NotNull PsiAnnotation annotation) {
+    return forAnnotation(context, shownAnnotations, annotation, false);
+  }
+
+  /// Creates an annotation generator, optionally marking it as inferred even when the annotation is not inferred on the element.
+  static @Nullable AnnotationDocGenerator forAnnotation(@NotNull PsiElement context,
+                                                        @NotNull Set<String> shownAnnotations,
+                                                        @NotNull PsiAnnotation annotation,
+                                                        boolean forceInferred) {
     PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
     if (nameReferenceElement == null) return null;
 
-    AnnotationDocGenerator anno = new AnnotationDocGenerator(annotation, nameReferenceElement, context);
+    var anno = new AnnotationDocGenerator(annotation, nameReferenceElement, context, forceInferred);
     if (anno.isNonDocumentedAnnotation()) return null;
 
     if (!(shownAnnotations.add(annotation.getQualifiedName()) ||

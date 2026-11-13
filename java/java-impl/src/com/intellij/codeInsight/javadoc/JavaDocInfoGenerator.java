@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.CommonBundle;
@@ -939,7 +939,7 @@ public class JavaDocInfoGenerator {
       aClass.isEnum() ? JavaKeywords.ENUM :
       aClass.isRecord() ? JavaKeywords.RECORD : JavaKeywords.CLASS;
 
-    generateAnnotations(buffer, aClass, place, true, false, true);
+    generateSignatureAnnotations(buffer, aClass, place);
     generateModifiers(buffer, aClass, false);
     if (aClass.isAnnotationType()) {
       buffer.append("@");
@@ -1155,7 +1155,7 @@ public class JavaDocInfoGenerator {
 
   private void generateFieldSignature(StringBuilder buffer, PsiField field, SignaturePlace place) {
     StringBuilder signatureBuffer = new StringBuilder();
-    generateAnnotations(signatureBuffer, field, place, true, false, true);
+    generateSignatureAnnotations(signatureBuffer, field, place);
     generateModifiers(signatureBuffer, field, false);
     generateType(signatureBuffer, field.getType(), field, place == SignaturePlace.Javadoc);
     signatureBuffer.append(" ");
@@ -1481,6 +1481,17 @@ public class JavaDocInfoGenerator {
     return len;
   }
 
+  /// Variant of [#generateAnnotations(StringBuilder, PsiModifierListOwner, SignaturePlace, boolean, boolean, boolean)] that takes into 
+  /// account if a Nullability container annotation affects the `owner` of its components
+  private void generateSignatureAnnotations(StringBuilder buffer, PsiModifierListOwner owner, SignaturePlace place) {
+    var annotations = AnnotationDocGenerator.getAnnotationsToShow(owner);
+    var containerAnnotation = JavaDocNullabilityUtil.findContainerAnnotation(owner, annotations);
+    if (containerAnnotation != null) {
+      annotations = ContainerUtil.append(annotations, containerAnnotation);
+    }
+    generateAnnotations(buffer, owner, annotations, place, true, false, true);
+  }
+
   private void generateAnnotations(
     StringBuilder buffer,
     PsiModifierListOwner owner,
@@ -1489,8 +1500,21 @@ public class JavaDocInfoGenerator {
     boolean ignoreNonSourceAnnotations,
     boolean generateLink
   ) {
+    generateAnnotations(buffer, owner, AnnotationDocGenerator.getAnnotationsToShow(owner),
+                        place, splitAnnotations, ignoreNonSourceAnnotations, generateLink);
+  }
+
+  private void generateAnnotations(
+    StringBuilder buffer,
+    PsiModifierListOwner owner,
+    List<AnnotationDocGenerator> annotations,
+    SignaturePlace place,
+    boolean splitAnnotations,
+    boolean ignoreNonSourceAnnotations,
+    boolean generateLink
+  ) {
     AnnotationFormat format = place == SignaturePlace.Javadoc ? AnnotationFormat.JavaDocShort : AnnotationFormat.ToolTip;
-    for (AnnotationDocGenerator anno : AnnotationDocGenerator.getAnnotationsToShow(owner)) {
+    for (AnnotationDocGenerator anno : annotations) {
       if (ignoreNonSourceAnnotations && (anno.isInferred() || anno.isExternal())) continue;
       if (anno.isInferredTypeUseAnnotation() && AnnotationDocGenerator.getContextType(owner) instanceof PsiArrayType) continue;
       anno.generateAnnotation(buffer, format, generateLink, isRendered(), doHighlightSignatures(), myPrinter);
@@ -1514,7 +1538,7 @@ public class JavaDocInfoGenerator {
     StringBuilder signatureBuffer = new StringBuilder();
     generateModifiers(signatureBuffer, variable, false);
     if (annotations) {
-      generateAnnotations(signatureBuffer, variable, SignaturePlace.Javadoc, true, false, true);
+      generateSignatureAnnotations(signatureBuffer, variable, SignaturePlace.Javadoc);
     }
     PsiType type = variable.getOriginalElement() instanceof PsiVariable original ? original.getType() : variable.getType();
     generateType(signatureBuffer, type, variable);
@@ -1700,7 +1724,7 @@ public class JavaDocInfoGenerator {
     boolean isTooltip = place == SignaturePlace.ToolTip;
     boolean generateLink = place == SignaturePlace.Javadoc;
 
-    generateAnnotations(buffer, method, place, true, false, true);
+    generateSignatureAnnotations(buffer, method, place);
 
     if (!isTooltip) {
       generateModifiers(buffer, method, true);
