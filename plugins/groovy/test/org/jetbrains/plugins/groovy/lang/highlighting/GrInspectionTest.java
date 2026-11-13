@@ -179,6 +179,7 @@ public class GrInspectionTest {
     highlighting.get().doTestHighlighting("""
                          class Class2 {
 
+
                            /** dependency injection for {@link GrailsFilterInvocationDefinition} */
                            @SuppressWarnings("GroovyDocCheck")
                            static main(args) {}
