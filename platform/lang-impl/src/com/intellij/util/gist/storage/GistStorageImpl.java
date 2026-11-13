@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
@@ -24,6 +25,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.progress.CancellationUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -244,11 +246,8 @@ public final class GistStorageImpl extends GistStorage {
             }
             else {
               Path gistPath = dedicatedGistFilePath(file, gistRecord.externalFileSuffix);
-              if (!Files.exists(gistPath)) {
-                //looks like data corruption: if gist value was indeed null, we would have stored it as VALUE_KIND_NULL
-                throw new IOException("Gist file [" + gistPath + "] doesn't exist -> looks like data corruption?");
-              }
-              try (DataInputStream gistStream = new DataInputStream(Files.newInputStream(gistPath, StandardOpenOption.READ))) {
+              byte[] gistBytes = readDedicatedGistFile(gistPath);
+              try (DataInputStream gistStream = new DataInputStream(new UnsyncByteArrayInputStream(gistBytes))) {
                 return GistData.valid(
                   externalizer.read(gistStream),
                   gistRecord.gistStamp
@@ -267,6 +266,20 @@ public final class GistStorageImpl extends GistStorage {
       finally {
         lock.readLock().unlock();
       }
+    }
+
+    /**
+     * Reads the file on a pooled thread, so that a stalled disk does not block the cancellation of the caller.
+     * The externalizer parses the bytes on the calling thread.
+     */
+    private static byte @NotNull [] readDedicatedGistFile(@NotNull Path gistPath) throws IOException {
+      return DiskQueryRelay.compute(() -> {
+        if (!Files.exists(gistPath)) {
+          //looks like data corruption: if gist value was indeed null, we would have stored it as VALUE_KIND_NULL
+          throw new IOException("Gist file [" + gistPath + "] doesn't exist -> looks like data corruption?");
+        }
+        return Files.readAllBytes(gistPath);
+      });
     }
 
     @Override
