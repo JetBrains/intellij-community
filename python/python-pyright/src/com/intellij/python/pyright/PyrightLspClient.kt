@@ -15,7 +15,10 @@ import com.intellij.python.lsp.core.PyLspTool
 import com.intellij.python.lsp.core.PyLspToolDescriptor
 import com.intellij.python.lsp.core.PyLspToolIntegrationProvider
 import com.intellij.python.lsp.core.PyLspToolSettings
+import com.intellij.python.pytools.backend.PyExecutable
+import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.isEnabledOn
+import com.intellij.python.pytools.backend.pyExecutable
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.project
 import org.eclipse.lsp4j.DidChangeConfigurationParams
@@ -25,6 +28,9 @@ private fun pyrightFamilyTools(): List<PyLspTool<*>> = listOf(
   BasedpyrightPyTool.getInstance(),
   PyrightPyTool.getInstance(),
 )
+
+/** The `<package>-langserver` executable that a pyright-family [tool] installs beside its CLI. The IDE starts it as the language server. */
+internal fun languageServerExecutable(tool: PyTool): PyExecutable = pyExecutable("${tool.packageName.name}-langserver")
 
 /** The pyright-family tool that should serve a project: the first enabled one, or basedpyright as a (disabled) fallback. */
 private fun activePyrightTool(project: Project): PyLspTool<*> {
@@ -64,10 +70,10 @@ class PyrightLspClientDescriptor(pyProject: PyProject) : PyLspToolDescriptor(
   }
 
   override val executableName: String
-    get() = "${pyTool.packageName.name}-langserver"
+    get() = languageServerExecutable(pyTool).fusId.value
 
   override fun lspArguments(): List<String> {
-    return listOf("server", "--stdio")
+    return listOf("--stdio")
   }
 
   override val toolConfig: PyLspToolSettings

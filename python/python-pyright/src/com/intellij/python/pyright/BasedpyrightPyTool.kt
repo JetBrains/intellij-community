@@ -4,6 +4,7 @@ package com.intellij.python.pyright
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.python.lsp.core.PyLspTool
+import com.intellij.python.pytools.backend.PyExecutable
 import com.intellij.python.pytools.backend.PyTool
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
@@ -18,6 +19,9 @@ class BasedpyrightPyTool : PyLspTool<BasedpyrightConfiguration>() {
   override val lspServerName: String = "Basedpyright"
   override val icon: Icon = PyrightUtil.getDefaultBasedPyrightIcon()
   override val packageName: PyPackageName = PyPackageName.from("basedpyright")
+
+  /** The CLI and the language server. Each one has its own custom path and detection cache entry. */
+  override val executables: List<PyExecutable> get() = listOf(this, languageServerExecutable(this))
 
   override fun configuration(project: Project): BasedpyrightConfiguration = project.service()
 
