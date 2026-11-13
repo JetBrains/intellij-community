@@ -16,6 +16,8 @@ import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider
  * Alternatively, YAML headers can be closed with triple dots (`...`)
  * as per [YAML spec](https://yaml.org/spec/1.2.2/#structures).
  *
+ * A delimiter line can end with spaces or tabs.
+ *
  * Front matter header should *always* precede the document content.
  *
  * Example of TOML header:
@@ -88,7 +90,7 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
     }
 
     private fun isYamlDashedDelimiterLine(line: CharSequence): Boolean {
-      return line.length >= 3 && line.all { it == '-' }
+      return isDelimiterLine(line, '-')
     }
 
     internal fun canBePairedWithClosingDots(opening: CharSequence): Boolean {
@@ -96,7 +98,7 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
     }
 
     private fun isYamlDottedDelimiterLine(line: CharSequence): Boolean {
-      return line.length >= 3 && line.all { it == '.' }
+      return isDelimiterLine(line, '.')
     }
 
     internal fun isYamlDelimiters(opening: CharSequence, closing: CharSequence): Boolean {
@@ -104,7 +106,13 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
     }
 
     private fun isTomlDelimiterLine(line: CharSequence): Boolean {
-      return line.length >= 3 && line.all { it == '+' }
+      return isDelimiterLine(line, '+')
+    }
+
+    private fun isDelimiterLine(line: CharSequence, char: Char): Boolean {
+      var end = 0
+      while (end < line.length && line[end] == char) end++
+      return end >= 3 && (end until line.length).all { line[it] == ' ' || line[it] == '\t' }
     }
 
     internal fun isTomlDelimiters(opening: CharSequence, closing: CharSequence): Boolean {

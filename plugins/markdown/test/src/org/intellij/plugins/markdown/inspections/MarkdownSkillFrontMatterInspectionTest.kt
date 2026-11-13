@@ -1,6 +1,7 @@
 package org.intellij.plugins.markdown.inspections
 
 import com.intellij.codeInsight.intention.EmptyIntentionAction
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.markdown.backend.inspections.MarkdownSkillFrontMatterInspection
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.junit.Test
@@ -14,6 +15,35 @@ class MarkdownSkillFrontMatterInspectionTest: LightPlatformCodeInsightFixture4Te
   @Test
   fun `test valid front matter`() = checkHighlighting("""
     ---
+    name: valid-skill
+    description: Does useful work.
+    ---
+  """.trimIndent())
+
+  @Test
+  fun `test delimiters with trailing whitespace`() = checkHighlighting("---  \nname: valid-skill\ndescription: Does useful work.\n---\t")
+
+  @Test
+  fun `test description on the next line`() = checkHighlighting("""
+    ---
+    name: valid-skill
+    description:
+      Does useful work.
+    ---
+  """.trimIndent())
+
+  @Test
+  fun `test long description on many lines`() {
+    myFixture.configureByText("SKILL.md", "---\nname: valid-skill\ndescription:" + "\n  word".repeat(50_000) + "\n---")
+    val warnings = myFixture.doHighlighting(HighlightSeverity.WARNING).map { it.description }
+    assertEquals(listOf("`description` must not exceed 1024 characters"), warnings)
+  }
+
+  @Test
+  fun `test nested name is not the skill name`() = checkHighlighting("""
+    ---
+    metadata:
+      name: Internal Name!
     name: valid-skill
     description: Does useful work.
     ---

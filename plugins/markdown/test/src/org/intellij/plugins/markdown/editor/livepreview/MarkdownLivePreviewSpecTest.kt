@@ -626,6 +626,13 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     )
   }
 
+  fun testFrontMatterDelimitersWithTrailingWhitespaceAreConcealed() {
+    val content = "---  \nname: valid-skill\n---\t\n"
+    val breaks = elements(content).filterIsInstance<MarkdownLivePreviewSpec.HorizontalRule>()
+
+    assertEquals(listOf("---  ", "---\t"), breaks.map { content.substring(it.range.startOffset, it.range.endOffset) })
+  }
+
   fun testCodeFontCoversCodeButNotItsMarkupOrFootnoteContinuations() {
     val content = """
       |Call `foo()` here

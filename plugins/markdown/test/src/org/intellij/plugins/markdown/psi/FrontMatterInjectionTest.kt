@@ -33,6 +33,11 @@ class FrontMatterInjectionTest: LightPlatformCodeInsightTestCase() {
   }
 
   @Test
+  fun `test yaml gets injected with trailing whitespace after delimiters`() {
+    doTest("---  \ntitle: Some<caret> title\n---\t\n", YAMLLanguage.INSTANCE)
+  }
+
+  @Test
   fun `test toml gets injected`() {
     val content = """
     +++

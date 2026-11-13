@@ -151,7 +151,7 @@ private const val NAME_FIELD = "name"
 private const val DESCRIPTION_FIELD = "description"
 private const val DESCRIPTION_MAX_LENGTH = 1024
 private val EMPTY_FRONT_MATTER_PATTERN = Regex("\\A---[ \\t]*\\r?\\n---[ \\t]*(?=\\r?\\n|\\z)")
-private val FIELD_PATTERN = Regex("(?m)^[ \\t]*(name|description)[ \\t]*:[ \\t]*(.*)$")
+private val FIELD_PATTERN = Regex("(?m)^(name|description)[ \\t]*:[ \\t]*(.*(?:\\n[ \\t]+\\S.*)*+)")
 private val INVALID_NAME_CHARACTERS_PATTERN = Regex("[^a-z0-9]+")
 private val NAME_PATTERN = Regex("[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?")
 
@@ -159,7 +159,8 @@ private data class Field(val value: String, val rangeInContent: TextRange)
 
 private fun findField(content: MarkdownFrontMatterHeaderContent, fieldName: String): Field? {
   val match = FIELD_PATTERN.findAll(content.text).firstOrNull { it.groupValues[1] == fieldName } ?: return null
-  return Field(match.groupValues[2].trim(), TextRange(match.range.first, match.range.last + 1))
+  val value = match.groupValues[2].lines().joinToString(" ") { it.trim() }.trim()
+  return Field(value, TextRange(match.range.first, match.range.last + 1))
 }
 
 private fun isValidName(name: String): Boolean = NAME_PATTERN.matches(name)

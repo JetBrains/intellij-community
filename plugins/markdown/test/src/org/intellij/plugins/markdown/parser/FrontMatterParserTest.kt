@@ -22,6 +22,10 @@ class FrontMatterParserTest: LightPlatformCodeInsightTestCase() {
   fun `test yaml header with dots as closing delimiter`() = doTest()
 
   @Test
+  @TestFor(issues = ["IJPL-261379"])
+  fun `test yaml header with trailing whitespace`() = doTest()
+
+  @Test
   fun `dots are not recognised as opening delimiter`() = doTest()
 
   @Test

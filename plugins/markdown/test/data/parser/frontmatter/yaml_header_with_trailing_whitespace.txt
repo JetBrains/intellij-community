@@ -1,0 +1,15 @@
+MarkdownFile
+  PsiElement(Markdown:Markdown:FRONT_MATTER_HEADER)
+    PsiElement(Markdown:Markdown:FRONT_MATTER_HEADER_DELIMITER)('---  ')
+    PsiWhiteSpace('\n')
+    MarkdownFrontMatterHeaderContent(Markdown:Markdown:FRONT_MATTER_HEADER_CONTENT)('name: valid-skill\ndescription: Does useful work.')
+    PsiWhiteSpace('\n')
+    PsiElement(Markdown:Markdown:FRONT_MATTER_HEADER_DELIMITER)('---\t')
+  PsiWhiteSpace('\n')
+  PsiWhiteSpace('\n')
+  Markdown:Markdown:ATX_1
+    PsiElement(Markdown:Markdown:ATX_HEADER)('#')
+    MarkdownHeaderContent(Markdown:ATX_CONTENT)
+      PsiWhiteSpace(' ')
+      PsiElement(Markdown:Markdown:TEXT)('Some header')
+  PsiWhiteSpace('\n')

@@ -359,7 +359,7 @@ private fun PsiElement.toHorizontalRuleSpec(): MarkdownLivePreviewSpec.Horizonta
 }
 
 private fun PsiElement.toFrontMatterDelimiterSpec(): MarkdownLivePreviewSpec? {
-  return if (text.all { it == '-' }) toHorizontalRuleSpec() else null
+  return if (text.trimEnd().all { it == '-' }) toHorizontalRuleSpec() else null
 }
 
 private fun PsiElement.wholeLineRange(): TextRange? {
