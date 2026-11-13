@@ -19,7 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 open class PsiAwareFileEditorManagerImpl(project: Project, coroutineScope: CoroutineScope) : FileEditorManagerImpl(project, coroutineScope) {
-  private val problemSolver by lazy(LazyThreadSafetyMode.NONE) { WolfTheProblemSolver.getInstance(this.project) }
+  private val problemSolver: WolfTheProblemSolver by lazy(LazyThreadSafetyMode.NONE) { WolfTheProblemSolver.getInstance(this.project) }
 
   /**
    * Updates icons for open files when project roots change

@@ -660,9 +660,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
         if (fileType == null) {
           if (INSTANTIATED != null && !INSTANTIATED.add(fileTypeName)) {
-            throw new IllegalStateException("File type '" + fileTypeName + "' instantiated twice. Descriptor=" + bean.getPluginDescriptor() + "; fieldName=" + bean.fieldName + "." +
-                                            " Maybe adding this to the class '" + bean.implementationClass + "' will help: `private static final " +
-                                            bean.implementationClass + " INSTANCE = new " + bean.implementationClass + "()`");
+            throw new IllegalStateException("File types are singletons but '" + fileTypeName + "' was instantiated twice. " +
+                                            "Descriptor=" + bean.getPluginDescriptor() + "; fieldName=" + bean.fieldName + "." +
+                                            " Add static final instance field to the class '" + bean.implementationClass + "', like this: `private static final " +
+                                            bean.implementationClass + " INSTANCE = new " + bean.implementationClass + "()` to avoid double instantiation");
           }
           fileType = ApplicationManager.getApplication().instantiateClass(bean.implementationClass, bean.getPluginDescriptor());
         }

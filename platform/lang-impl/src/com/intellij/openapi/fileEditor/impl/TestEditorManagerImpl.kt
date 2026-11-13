@@ -15,6 +15,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager.Companion.getProjectSession
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -66,8 +67,8 @@ import javax.swing.JComponent
 
 internal class TestEditorManagerImpl(override val project: Project) : FileEditorManagerEx(), Disposable {
   companion object {
-    private val LOG = logger<TestEditorManagerImpl>()
-    private val LIGHT_VIRTUAL_FILE = MyLightVirtualFile()
+    private val LOG: Logger = logger<TestEditorManagerImpl>()
+    private val LIGHT_VIRTUAL_FILE: MyLightVirtualFile = MyLightVirtualFile()
     private val stubProvider: FileEditorProvider
       get() {
         return object : FileEditorProvider {
@@ -90,9 +91,9 @@ internal class TestEditorManagerImpl(override val project: Project) : FileEditor
       }
   }
 
-  private val testEditorSplitter = TestEditorSplitter()
-  private var counter = 0
-  private val virtualFileToEditor = Collections.synchronizedMap(HashMap<VirtualFile, Editor?>())
+  private val testEditorSplitter: TestEditorSplitter = TestEditorSplitter()
+  private var counter: Int = 0
+  private val virtualFileToEditor: MutableMap<VirtualFile?, Editor?> = Collections.synchronizedMap(HashMap<VirtualFile, Editor?>())
   private var activeFile: VirtualFile? = null
 
   private class MyLightVirtualFile : LightVirtualFile("Dummy.java") {
@@ -385,7 +386,7 @@ internal class TestEditorManagerImpl(override val project: Project) : FileEditor
     return arrayOf(getSelectedEditor(file) ?: return FileEditor.EMPTY_ARRAY)
   }
 
-  override fun getAllEditorList(file: VirtualFile): MutableList<FileEditor> {
+  override fun getAllEditorList(file: VirtualFile): List<FileEditor> {
     val result = ArrayList<FileEditor>()
     result.addAll(getEditorList(file))
     for (clientManager in allClientFileEditorManagers) {
@@ -520,9 +521,9 @@ internal class TestEditorManagerImpl(override val project: Project) : FileEditor
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun openTextEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Editor? {
-    for ((editor, _) in doOpenFile(descriptor, FileEditorOpenOptions(requestFocus = focusEditor)).allEditorsWithProviders) {
-      if (editor is TextEditor) {
-        return editor.editor
+    for ((fileEditor, _) in doOpenFile(descriptor, FileEditorOpenOptions(requestFocus = focusEditor)).allEditorsWithProviders) {
+      if (fileEditor is TextEditor) {
+        return fileEditor.editor
       }
     }
     return null
@@ -531,11 +532,11 @@ internal class TestEditorManagerImpl(override val project: Project) : FileEditor
   private fun doOpenFile(descriptor: FileEditorNavigatable, options: FileEditorOpenOptions): FileEditorComposite {
     val hostDescriptor = runReadActionBlocking { normalizeFileEditorDescriptor(descriptor) }
     val composite = openFileImpl3(hostDescriptor, options)
-    for ((editor, provider) in composite.allEditorsWithProviders) {
-      if (editor is NavigatableFileEditor && hostDescriptor.file == editor.file) {
-        if (editor.canNavigateTo(hostDescriptor)) {
+    for ((fileEditor, provider) in composite.allEditorsWithProviders) {
+      if (fileEditor is NavigatableFileEditor && hostDescriptor.file == fileEditor.file) {
+        if (fileEditor.canNavigateTo(hostDescriptor)) {
           setSelectedEditor(file = hostDescriptor.file, fileEditorProviderId = provider.editorTypeId)
-          editor.navigateTo(hostDescriptor)
+          fileEditor.navigateTo(hostDescriptor)
         }
         break
       }
