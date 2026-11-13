@@ -30,6 +30,8 @@ object KotlinBuildToolsLoader {
 
   private var cached: Pair<List<Path>, KotlinToolchains>? = null
 
+  private val IMPLEMENTATION_JAR = Regex("kotlin-build-tools-impl-(\\d.*)\\.jar")
+
   /**
    * @return the jars of the implementation directory, or `null` when the IDE handed over nothing usable.
    */
@@ -41,6 +43,15 @@ object KotlinBuildToolsLoader {
       .sortedBy { it.name }
       .map { it.toPath() }
       .takeIf { it.isNotEmpty() }
+
+  /**
+   * @return the version of the implementation jar in [classpath], or `null` when the classpath holds none.
+   *
+   * The implementation home keeps the Maven file names of the jars, so the version needs no load of the
+   * implementation: a build without Kotlin never loads it.
+   */
+  fun resolveImplementationVersion(classpath: List<Path>): String? =
+    classpath.firstNotNullOfOrNull { IMPLEMENTATION_JAR.matchEntire(it.fileName.toString())?.groupValues?.get(1) }
 
   /**
    * Loads the implementation, or returns the loaded one when the directory did not change.

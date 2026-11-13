@@ -83,14 +83,20 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
     }
 
     /**
-     * Says which implementation the build uses, as a build message, so that the Build tool window shows it. The jars are
-     * only listed here, not loaded: a build without Kotlin never loads the implementation.
+     * Says which implementation the build uses, as a build message, so that the Build tool window shows it. The version
+     * comes from the name of the implementation jar, and the jars are only listed here, not loaded: a build without
+     * Kotlin never loads the implementation.
      */
     private fun reportImplementation(context: CompileContext) {
         val home = KotlinBuildToolsLoader.implHomeProperty ?: return
         val classpath = KotlinBuildToolsLoader.resolveClasspath(home) ?: return
         LOG.debug { "Build Tools API implementation home $home holds ${classpath.joinToString { it.fileName.toString() }}" }
-        val text = KotlinJpsBuilderBundle.message("info.compiling.through.build.tools.api.0.1", classpath.size, home)
+        val implementationVersion = KotlinBuildToolsLoader.resolveImplementationVersion(classpath)
+        val text = KotlinJpsBuilderBundle.message(
+            "info.compiling.through.build.tools.api.0.1",
+            implementationVersion ?: classpath.size,
+            home
+        )
         context.processMessage(CompilerMessage(KOTLIN_COMPILER_NAME, BuildMessage.Kind.JPS_INFO, text))
     }
 

@@ -44,8 +44,8 @@ enum class KotlinBtaImplementation {
 
   /** The version of the implementation jar in [home]. */
   val version: String by lazy {
-    home.listDirectoryEntries("*.jar").firstNotNullOfOrNull { IMPLEMENTATION_JAR.matchEntire(it.name)?.groupValues?.get(1) }
-    ?: error("No kotlin-build-tools-impl jar in $home")
+    KotlinBuildToolsLoader.resolveImplementationVersion(home.listDirectoryEntries("*.jar"))
+      ?: error("No kotlin-build-tools-impl jar in $home")
   }
 
   /**
@@ -85,8 +85,6 @@ enum class KotlinBtaImplementation {
   private companion object {
     const val LOCAL_HOME_PROPERTY: String = "kotlin.jps.tests.build.tools.impl.home"
     const val LOCAL_HOME_ENVIRONMENT_VARIABLE: String = "KOTLIN_JPS_BTA_IMPL_HOME"
-
-    val IMPLEMENTATION_JAR = Regex("kotlin-build-tools-impl-(\\d.*)\\.jar")
     val STDLIB_JAR = Regex("kotlin-stdlib(-\\d.*)?\\.jar")
     val ANNOTATIONS_JAR = Regex("annotations-13\\.0\\.jar")
   }
