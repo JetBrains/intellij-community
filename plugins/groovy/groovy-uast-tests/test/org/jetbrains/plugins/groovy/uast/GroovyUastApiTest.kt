@@ -5,51 +5,58 @@ package org.jetbrains.plugins.groovy.uast
 
 import com.intellij.platform.uast.testFramework.env.findElementByText
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
-import junit.framework.TestCase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UAnnotationEx
-import org.jetbrains.uast.UFile
 import org.jetbrains.uast.ULiteralExpression
 import org.jetbrains.uast.getValueIfStringLiteral
 import org.jetbrains.uast.isStringLiteral
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class GroovyUastApiTest : AbstractGroovyUastTest() {
-  override fun check(testName: String, file: UFile) {
+@TestApplication
+class GroovyUastApiTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
   }
+
+  private val uast by groovyUastFixture(projectFixture)
 
   @Test
   fun testUastAnchors() {
-    doTest("SimpleClass.groovy") { name, file ->
+    uast.doTest("SimpleClass.groovy") { name, file ->
       val uClass = file.classes.single { it.qualifiedName == "SimpleClass" }
-      TestCase.assertEquals("SimpleClass", uClass.uastAnchor?.psi?.text)
+      assertEquals("SimpleClass", uClass.uastAnchor?.psi?.text)
       val uMethod = uClass.methods.single { it.name == "bar" }
-      TestCase.assertEquals("bar", uMethod.uastAnchor?.psi?.text)
+      assertEquals("bar", uMethod.uastAnchor?.psi?.text)
       val uParameter = uMethod.uastParameters.single()
-      TestCase.assertEquals("param", uParameter.uastAnchor?.psi?.text)
+      assertEquals("param", uParameter.uastAnchor?.psi?.text)
     }
   }
 
   @Test
   fun testAnnotationAnchor() {
-    doTest("SimpleClass.groovy") { name, file ->
+    uast.doTest("SimpleClass.groovy") { name, file ->
       val uAnnotation = file.findElementByText<UAnnotation>("@java.lang.Deprecated")
-      TestCase.assertEquals("Deprecated", (uAnnotation as UAnnotationEx).uastAnchor?.psi?.text)
+      assertEquals("Deprecated", (uAnnotation as UAnnotationEx).uastAnchor?.psi?.text)
     }
   }
 
   @Test
   fun testStringLiteral() {
-    doTest("Annotations.groovy") { name, file ->
+    uast.doTest("Annotations.groovy") { name, file ->
       file.findElementByTextFromPsi<ULiteralExpression>("\"abc\"").let { literal ->
-        TestCase.assertTrue(literal.isStringLiteral())
-        TestCase.assertEquals("abc", literal.value)
-        TestCase.assertEquals("abc", literal.getValueIfStringLiteral())
+        assertTrue(literal.isStringLiteral())
+        assertEquals("abc", literal.value)
+        assertEquals("abc", literal.getValueIfStringLiteral())
       }
       file.findElementByTextFromPsi<ULiteralExpression>("123").let { literal ->
-        TestCase.assertFalse(literal.isStringLiteral())
-        TestCase.assertEquals(123, literal.value)
-        TestCase.assertEquals(null, literal.getValueIfStringLiteral())
+        assertFalse(literal.isStringLiteral())
+        assertEquals(123, literal.value)
+        assertEquals(null, literal.getValueIfStringLiteral())
       }
 
     }

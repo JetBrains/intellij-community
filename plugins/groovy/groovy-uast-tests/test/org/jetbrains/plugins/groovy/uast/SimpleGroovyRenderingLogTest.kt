@@ -2,23 +2,28 @@
 package org.jetbrains.plugins.groovy.uast
 
 import com.intellij.platform.uast.testFramework.common.RenderLogTestBase
-import org.jetbrains.uast.UFile
-import org.junit.Test
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
 
-class SimpleGroovyRenderingLogTest : AbstractGroovyRenderLogTest(), RenderLogTestBase {
-
-  override fun check(testName: String, file: UFile) {
-    super<RenderLogTestBase>.check(testName, file)
+@TestApplication
+class SimpleGroovyRenderingLogTest : RenderLogTestBase {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
   }
 
-  @Test
-  fun testSimple() = doTest("SimpleClass.groovy")
+  private val uast by groovyUastFixture(projectFixture) { testName, file -> check(testName, file) }
+
+  override fun getTestDataPath(): String = uast.fixture.testDataPath
 
   @Test
-  fun testClassWithInners() = doTest("ClassWithInners.groovy")
+  fun testSimple(): Unit = uast.doTest("SimpleClass.groovy")
 
   @Test
-  fun testAnnotations() = doTest("Annotations.groovy")
+  fun testClassWithInners(): Unit = uast.doTest("ClassWithInners.groovy")
+
+  @Test
+  fun testAnnotations(): Unit = uast.doTest("Annotations.groovy")
 
 }

@@ -38,6 +38,7 @@ jvm_library(
         "//platform/vcs-api:vcs",
         "//java/testFramework",
         "//platform/vcs-impl",
+        "//platform/testFramework/junit5",
         ":libraries_junit4_provided",
     ],
 )

@@ -4,185 +4,212 @@ package org.jetbrains.uast.test.java
 import com.intellij.platform.uast.testFramework.common.ValuesTestBase
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.PerformanceUnitTest
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.UVariable
 import org.jetbrains.uast.evaluation.SimpleEvaluatorExtension
+import org.jetbrains.uast.evaluation.UEvaluatorExtension
+import org.jetbrains.uast.java.JavaUFile
 import org.jetbrains.uast.values.UBooleanConstant
 import org.jetbrains.uast.values.UValue
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
-class JavaValuesTest : AbstractJavaValuesTest(), ValuesTestBase {
+@TestApplication
+class JavaValuesTest : ValuesTestBase {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun check(testName: String, file: UFile) {
-    super<ValuesTestBase>.check(testName, file)
+  private val uast by javaUastFixture(projectFixture) { testName, file -> check(testName, file) }
+
+  private var _evaluatorExtension: UEvaluatorExtension? = null
+
+  override fun getTestDataPath(): String = uast.fixture.testDataPath
+
+  override fun getEvaluatorExtension(): UEvaluatorExtension? = _evaluatorExtension
+
+  override fun createCopyToCheck(file: UFile): UFile? {
+    // TODO: when JavaUFile (and/or its constructor) becomes `internal`, this should move into JavaUFile.
+    return if (file is JavaUFile) JavaUFile(file.sourcePsi, file.languagePlugin) else null
+  }
+
+  private fun doTest(name: String, extension: UEvaluatorExtension) {
+    _evaluatorExtension = extension
+    try {
+      uast.doTest(name)
+    }
+    finally {
+      _evaluatorExtension = null
+    }
   }
 
   @Test
-  fun testAliveThenElse() = doTest("Simple/AliveThenElse.java")
+  fun testAliveThenElse(): Unit = uast.doTest("Simple/AliveThenElse.java")
 
   @Test
-  fun testAnonymous() = doTest("Simple/Anonymous.java")
+  fun testAnonymous(): Unit = uast.doTest("Simple/Anonymous.java")
 
   @Test
-  fun testBitwise() = doTest("Simple/Bitwise.java")
+  fun testBitwise(): Unit = uast.doTest("Simple/Bitwise.java")
 
   @Test
-  fun testByteShort() = doTest("Simple/ByteShort.java")
+  fun testByteShort(): Unit = uast.doTest("Simple/ByteShort.java")
 
   @Test
-  fun testCascadeIf() = doTest("Simple/CascadeIf.java")
+  fun testCascadeIf(): Unit = uast.doTest("Simple/CascadeIf.java")
 
   @Test
-  fun testCharacters() = doTest("Simple/Characters.java")
+  fun testCharacters(): Unit = uast.doTest("Simple/Characters.java")
 
   @Test
-  fun testClassLiteral() = doTest("Simple/ClassLiteral.java")
+  fun testClassLiteral(): Unit = uast.doTest("Simple/ClassLiteral.java")
 
   @Test
-  fun testDeadElse() = doTest("Simple/DeadElse.java")
+  fun testDeadElse(): Unit = uast.doTest("Simple/DeadElse.java")
 
   @Test
-  fun testDeadFor() = doTest("Simple/DeadFor.java")
+  fun testDeadFor(): Unit = uast.doTest("Simple/DeadFor.java")
 
   @Test
-  fun testDeadIfComparison() = doTest("Simple/DeadIfComparison.java")
+  fun testDeadIfComparison(): Unit = uast.doTest("Simple/DeadIfComparison.java")
 
   @Test
-  fun testDeadSwitchEntries() = doTest("Simple/DeadSwitchEntries.java")
+  fun testDeadSwitchEntries(): Unit = uast.doTest("Simple/DeadSwitchEntries.java")
 
   @Test
-  fun testDeadSwitchEntriesWithoutBreaks() = doTest("Simple/DeadSwitchEntriesWithoutBreaks.java")
+  fun testDeadSwitchEntriesWithoutBreaks(): Unit = uast.doTest("Simple/DeadSwitchEntriesWithoutBreaks.java")
 
   @Test
-  fun testDeadThen() = doTest("Simple/DeadThen.java")
+  fun testDeadThen(): Unit = uast.doTest("Simple/DeadThen.java")
 
   @Test
-  fun testDependents() = doTest("Simple/Dependents.java")
+  fun testDependents(): Unit = uast.doTest("Simple/Dependents.java")
 
   @Test
-  fun testDoWhile() = doTest("Simple/DoWhile.java")
+  fun testDoWhile(): Unit = uast.doTest("Simple/DoWhile.java")
 
   @Test
-  fun testDoWhileInfinite() = doTest("Simple/DoWhileInfinite.java")
+  fun testDoWhileInfinite(): Unit = uast.doTest("Simple/DoWhileInfinite.java")
 
   @Test
-  fun testDoWhileWithReturn() = doTest("Simple/DoWhileWithReturn.java")
+  fun testDoWhileWithReturn(): Unit = uast.doTest("Simple/DoWhileWithReturn.java")
 
   @Test
-  fun testEnumChoice() = doTest("Simple/EnumChoice.java")
+  fun testEnumChoice(): Unit = uast.doTest("Simple/EnumChoice.java")
 
   @Test
-  fun testEnumSwitch() = doTest("Simple/EnumSwitch.java")
+  fun testEnumSwitch(): Unit = uast.doTest("Simple/EnumSwitch.java")
 
   @Test
-  fun testEnhancedSwitch() = doTest("Simple/EnhancedSwitch.java")
+  fun testEnhancedSwitch(): Unit = uast.doTest("Simple/EnhancedSwitch.java")
 
   @Test
-  fun testEnhancedSwitchComplexEvaluations() = doTest("Simple/EnhancedSwitchComplexEvaluations.java")
+  fun testEnhancedSwitchComplexEvaluations(): Unit = uast.doTest("Simple/EnhancedSwitchComplexEvaluations.java")
 
   @Test
-  fun testEnumSwitchConditionalBreak() = doTest("Simple/EnumSwitchConditionalBreak.java")
+  fun testEnumSwitchConditionalBreak(): Unit = uast.doTest("Simple/EnumSwitchConditionalBreak.java")
 
   @Test
-  fun testEnumSwitchWithoutBreaks() = doTest("Simple/EnumSwitchWithoutBreaks.java")
+  fun testEnumSwitchWithoutBreaks(): Unit = uast.doTest("Simple/EnumSwitchWithoutBreaks.java")
 
   @Test
-  fun testExternal() = doTest("Simple/External.java")
+  fun testExternal(): Unit = uast.doTest("Simple/External.java")
 
   @Test
-  fun testFieldRef() = doTest("Simple/FieldRef.java")
+  fun testFieldRef(): Unit = uast.doTest("Simple/FieldRef.java")
 
   @Test
-  fun testFloatDouble() = doTest("Simple/FloatDouble.java")
+  fun testFloatDouble(): Unit = uast.doTest("Simple/FloatDouble.java")
 
   @Test
-  fun testFor() = doTest("Simple/For.java")
+  fun testFor(): Unit = uast.doTest("Simple/For.java")
 
   @Test
-  fun testForEach() = doTest("Simple/ForEach.java")
+  fun testForEach(): Unit = uast.doTest("Simple/ForEach.java")
 
   @Test
-  fun testForEachMutableIterable() = doTest("Simple/ForEachMutableIterable.java")
+  fun testForEachMutableIterable(): Unit = uast.doTest("Simple/ForEachMutableIterable.java")
 
   @Test
-  fun testIdentityEquals() = doTest("Simple/IdentityEquals.java")
+  fun testIdentityEquals(): Unit = uast.doTest("Simple/IdentityEquals.java")
 
   @Test
-  fun testImmutableField() = doTest("Simple/ImmutableField.java")
+  fun testImmutableField(): Unit = uast.doTest("Simple/ImmutableField.java")
 
   @Test
-  fun testIncDec() = doTest("Simple/IncDec.java")
+  fun testIncDec(): Unit = uast.doTest("Simple/IncDec.java")
 
   @Test
-  fun testIntLong() = doTest("Simple/IntLong.java")
+  fun testIntLong(): Unit = uast.doTest("Simple/IntLong.java")
 
   @Test
-  fun testLabeled() = doTest("Simple/Labeled.java")
+  fun testLabeled(): Unit = uast.doTest("Simple/Labeled.java")
 
   @Test
-  fun testLabeledOuter() = doTest("Simple/LabeledOuter.java")
+  fun testLabeledOuter(): Unit = uast.doTest("Simple/LabeledOuter.java")
 
   @Test
-  fun testLambda() = doTest("Simple/Lambda.java")
+  fun testLambda(): Unit = uast.doTest("Simple/Lambda.java")
 
   @Test
-  fun testLogicals() = doTest("Simple/Logicals.java")
+  fun testLogicals(): Unit = uast.doTest("Simple/Logicals.java")
 
   @Test
-  fun testMethodReference() = doTest("Simple/MethodReference.java")
+  fun testMethodReference(): Unit = uast.doTest("Simple/MethodReference.java")
 
   @Test
-  fun testModification() = doTest("Simple/Modification.java")
+  fun testModification(): Unit = uast.doTest("Simple/Modification.java")
 
   @Test
-  fun testMutableField() = doTest("Simple/MutableField.java")
+  fun testMutableField(): Unit = uast.doTest("Simple/MutableField.java")
 
   @Test
-  fun testNotANumber() = doTest("Simple/NotANumber.java")
+  fun testNotANumber(): Unit = uast.doTest("Simple/NotANumber.java")
 
   @Test
-  fun testReturnMinusX() = doTest("Simple/ReturnMinusX.java")
+  fun testReturnMinusX(): Unit = uast.doTest("Simple/ReturnMinusX.java")
 
   @Test
-  fun testReturnSum() = doTest("Simple/ReturnSum.java")
+  fun testReturnSum(): Unit = uast.doTest("Simple/ReturnSum.java")
 
   @Test
-  fun testReturnX() = doTest("Simple/ReturnX.java")
+  fun testReturnX(): Unit = uast.doTest("Simple/ReturnX.java")
 
   @Test
-  fun testShift() = doTest("Simple/Shift.java")
+  fun testShift(): Unit = uast.doTest("Simple/Shift.java")
 
   @Test
-  fun testStrings() = doTest("Simple/Strings.java")
+  fun testStrings(): Unit = uast.doTest("Simple/Strings.java")
 
   @Test
-  fun testTernary() = doTest("Simple/Ternary.java")
+  fun testTernary(): Unit = uast.doTest("Simple/Ternary.java")
 
   @Test
-  fun testTryCatch() = doTest("Simple/TryCatch.java")
+  fun testTryCatch(): Unit = uast.doTest("Simple/TryCatch.java")
 
   @Test
-  fun testWhile() = doTest("Simple/While.java")
+  fun testWhile(): Unit = uast.doTest("Simple/While.java")
 
   @Test
-  fun testWhileWithContinue() = doTest("Simple/WhileWithContinue.java")
+  fun testWhileWithContinue(): Unit = uast.doTest("Simple/WhileWithContinue.java")
 
   @Test
-  fun testWhileWithIncrement() = doTest("Simple/WhileWithIncrement.java")
+  fun testWhileWithIncrement(): Unit = uast.doTest("Simple/WhileWithIncrement.java")
 
   @Test
-  fun testWhileWithMutableCondition() = doTest("Simple/WhileWithMutableCondition.java")
+  fun testWhileWithMutableCondition(): Unit = uast.doTest("Simple/WhileWithMutableCondition.java")
 
   @Test
-  fun testWhileWithReturn() = doTest("Simple/WhileWithReturn.java")
+  fun testWhileWithReturn(): Unit = uast.doTest("Simple/WhileWithReturn.java")
 
   @PerformanceUnitTest
   @Test
-  fun testPerformanceLoopWithReassignment() = doTest("Performance/LoopWithReassignment.java")
+  fun testPerformanceLoopWithReassignment(): Unit = uast.doTest("Performance/LoopWithReassignment.java")
 
   @Test
-  fun testEvaluatorExtension() = doTest("Simple/EvaluatorExtension.java", object : SimpleEvaluatorExtension() {
+  fun testEvaluatorExtension(): Unit = doTest("Simple/EvaluatorExtension.java", object : SimpleEvaluatorExtension() {
     override fun evaluateMethodCall(target: PsiMethod, argumentValues: List<UValue>): Any? {
       if (target.name == "getTestName") {
         (argumentValues.singleOrNull() as? UBooleanConstant)?.let { arg ->
@@ -195,7 +222,7 @@ class JavaValuesTest : AbstractJavaValuesTest(), ValuesTestBase {
   })
 
   @Test
-  fun testParamViaEvaluatorExtension() = doTest("Simple/ParamViaEvaluatorExtension.java", object : SimpleEvaluatorExtension() {
+  fun testParamViaEvaluatorExtension(): Unit = doTest("Simple/ParamViaEvaluatorExtension.java", object : SimpleEvaluatorExtension() {
     override fun evaluateVariable(variable: UVariable): Any? {
       if (variable is UParameter && variable.name == "x") {
         return "0"

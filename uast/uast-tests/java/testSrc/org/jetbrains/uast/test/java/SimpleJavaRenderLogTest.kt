@@ -2,108 +2,132 @@
 package org.jetbrains.uast.test.java
 
 import com.intellij.platform.uast.testFramework.common.RenderLogTestBase
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaFile
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UFile
-import org.junit.Test
+import org.jetbrains.uast.visitor.UastVisitor
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Test
 
-class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest(), RenderLogTestBase {
+@TestApplication
+class SimpleJavaRenderLogTest : RenderLogTestBase {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun check(testName: String, file: UFile) {
-    super<RenderLogTestBase>.check(testName, file)
+  private val uast by javaUastFixture(projectFixture) { testName, file -> check(testName, file) }
+
+  override fun getTestDataPath(): String = uast.fixture.testDataPath
+
+  override fun check(testName: String, file: UFile, checkParentConsistency: Boolean) {
+    super.check(testName, file, checkParentConsistency)
+
+    file.accept(object : UastVisitor {
+      override fun visitElement(node: UElement): Boolean {
+        if (node is PsiElement && node.isPhysical) {
+          assertInstanceOf(PsiJavaFile::class.java, node.containingFile)
+        }
+        return false
+      }
+    })
   }
 
   @Test
-  fun testComments() = doTest("Simple/Comments.java")
+  fun testComments(): Unit = uast.doTest("Simple/Comments.java")
 
   @Test
-  fun testDataClass() = doTest("DataClass/DataClass.java")
+  fun testDataClass(): Unit = uast.doTest("DataClass/DataClass.java")
 
   @Test
-  fun testEnumSwitch() = doTest("Simple/EnumSwitch.java")
+  fun testEnumSwitch(): Unit = uast.doTest("Simple/EnumSwitch.java")
 
   @Test
-  fun testEnhancedSwitch() = doTest("Simple/EnhancedSwitch.java")
+  fun testEnhancedSwitch(): Unit = uast.doTest("Simple/EnhancedSwitch.java")
 
   @Test
-  fun testLocalClass() = doTest("Simple/LocalClass.java")
+  fun testLocalClass(): Unit = uast.doTest("Simple/LocalClass.java")
 
   @Test
-  fun testReturnX() = doTest("Simple/ReturnX.java")
+  fun testReturnX(): Unit = uast.doTest("Simple/ReturnX.java")
 
   @Test
-  fun testJava() = doTest("Simple/Simple.java")
+  fun testJava(): Unit = uast.doTest("Simple/Simple.java")
 
   @Test
-  fun testClass() = doTest("Simple/SuperTypes.java")
+  fun testClass(): Unit = uast.doTest("Simple/SuperTypes.java")
 
   @Test
-  fun testTryWithResources() = doTest("Simple/TryWithResources.java")
+  fun testTryWithResources(): Unit = uast.doTest("Simple/TryWithResources.java")
 
   @Test
-  fun testEnumValueMembers() = doTest("Simple/EnumValueMembers.java")
+  fun testEnumValueMembers(): Unit = uast.doTest("Simple/EnumValueMembers.java")
 
   @Test
-  fun testQualifiedConstructorCall() = doTest("Simple/QualifiedConstructorCall.java")
+  fun testQualifiedConstructorCall(): Unit = uast.doTest("Simple/QualifiedConstructorCall.java")
 
   @Test
-  fun testAnonymousClassWithParameters() = doTest("Simple/AnonymousClassWithParameters.java")
+  fun testAnonymousClassWithParameters(): Unit = uast.doTest("Simple/AnonymousClassWithParameters.java")
 
   @Test
-  fun testVariableAnnotation() = doTest("Simple/VariableAnnotation.java")
+  fun testVariableAnnotation(): Unit = uast.doTest("Simple/VariableAnnotation.java")
 
   @Test
-  fun testPackageInfo() = doTest("Simple/package-info.java")
+  fun testPackageInfo(): Unit = uast.doTest("Simple/package-info.java")
 
   @Test
-  fun testStrings() = doTest("Simple/Strings.java")
+  fun testStrings(): Unit = uast.doTest("Simple/Strings.java")
 
   @Test
-  fun testAnnotation() = doTest("Simple/Annotation.java")
+  fun testAnnotation(): Unit = uast.doTest("Simple/Annotation.java")
 
   @Test
-  fun testComplexCalls() = doTest("Simple/ComplexCalls.java")
+  fun testComplexCalls(): Unit = uast.doTest("Simple/ComplexCalls.java")
 
   @Test
-  fun testImports() = doTest("Simple/External.java")
+  fun testImports(): Unit = uast.doTest("Simple/External.java")
 
   @Test
-  fun testLambda() = doTest("Simple/Lambda.java")
+  fun testLambda(): Unit = uast.doTest("Simple/Lambda.java")
 
   @Test
-  fun testBlock() = doTest("Simple/Block.java")
+  fun testBlock(): Unit = uast.doTest("Simple/Block.java")
 
   @Test
-  fun testTryCatch() = doTest("Simple/TryCatch.java")
+  fun testTryCatch(): Unit = uast.doTest("Simple/TryCatch.java")
   
   @Test
-  fun testRecord() = doTest("Simple/Record.java")
+  fun testRecord(): Unit = uast.doTest("Simple/Record.java")
 
   @Test
-  fun testTypeUseAnnotations() = doTest("Simple/TypeUseAnnotations.java")
+  fun testTypeUseAnnotations(): Unit = uast.doTest("Simple/TypeUseAnnotations.java")
 
   @Test
-  fun testTypeAndConstructorAnnotations() = doTest("Simple/TypeAndConstructorAnnotations.java")
+  fun testTypeAndConstructorAnnotations(): Unit = uast.doTest("Simple/TypeAndConstructorAnnotations.java")
 
   @Test
-  fun testInstanceOfTypeTestPattern() = doTest("Simple/InstanceOfTypeTestPattern.java")
+  fun testInstanceOfTypeTestPattern(): Unit = uast.doTest("Simple/InstanceOfTypeTestPattern.java")
 
   @Test
-  fun testInstanceOfRecordPattern() = doTest("Simple/InstanceOfRecordPattern.java")
+  fun testInstanceOfRecordPattern(): Unit = uast.doTest("Simple/InstanceOfRecordPattern.java")
 
   @Test
-  fun testSwitchCaseTypeTestPattern() = doTest("Simple/SwitchCaseTypeTestPattern.java")
+  fun testSwitchCaseTypeTestPattern(): Unit = uast.doTest("Simple/SwitchCaseTypeTestPattern.java")
 
   @Test
-  fun testSwitchCaseRecordPattern() = doTest("Simple/SwitchCaseRecordPattern.java")
+  fun testSwitchCaseRecordPattern(): Unit = uast.doTest("Simple/SwitchCaseRecordPattern.java")
 
   @Test
-  fun testOldStyleSwitchStatementWithGuard() = doTest("Simple/OldStyleSwitchStatementWithGuard.java")
+  fun testOldStyleSwitchStatementWithGuard(): Unit = uast.doTest("Simple/OldStyleSwitchStatementWithGuard.java")
 
   @Test
-  fun testNewStyleSwitchStatementWithGuard() = doTest("Simple/NewStyleSwitchStatementWithGuard.java")
+  fun testNewStyleSwitchStatementWithGuard(): Unit = uast.doTest("Simple/NewStyleSwitchStatementWithGuard.java")
 
   @Test
-  fun testOldStyleSwitchExpressionWithGuard() = doTest("Simple/OldStyleSwitchExpressionWithGuard.java")
+  fun testOldStyleSwitchExpressionWithGuard(): Unit = uast.doTest("Simple/OldStyleSwitchExpressionWithGuard.java")
 
   @Test
-  fun testNewStyleSwitchExpressionWithGuard() = doTest("Simple/NewStyleSwitchExpressionWithGuard.java")
+  fun testNewStyleSwitchExpressionWithGuard(): Unit = uast.doTest("Simple/NewStyleSwitchExpressionWithGuard.java")
 }

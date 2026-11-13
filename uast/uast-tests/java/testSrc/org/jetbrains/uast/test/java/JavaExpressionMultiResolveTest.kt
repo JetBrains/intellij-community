@@ -1,12 +1,74 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.java
 
-import org.junit.Test
+import com.intellij.platform.uast.testFramework.common.visitUFileAndGetResult
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.testFramework.assertEqualsToFile
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.UMultiResolvable
+import org.jetbrains.uast.UResolvable
+import org.jetbrains.uast.toUElementOfType
+import org.jetbrains.uast.util.IndentedPrintingVisitor
+import org.junit.jupiter.api.Test
+import java.io.File
 
-class JavaExpressionMultiResolveTest : AbstractJavaExpressionMultiResolveTest() {
-  @Test
-  fun testConstructorCallWithParameters() = doTest("Simple/ConstructorCallWithParameters.java") // must resolve to PsiMethodImpl
+@TestApplication
+class JavaExpressionMultiResolveTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val uast by javaUastFixture(projectFixture) { testName, file -> check(testName, file) }
+
+  private fun UFile.resolvableWithTargets() = object : IndentedPrintingVisitor(PsiCodeBlock::class, PsiModifierListOwner::class) {
+    override fun render(element: PsiElement): CharSequence? =
+      element
+        .takeIf { it !is PsiIdentifier } // no sense to handle PsiIdentifier, see IDEA-207979
+        ?.toUElementOfType<UExpression>()?.let { ref ->
+          StringBuilder().apply {
+            val parent = ref.uastParent
+            append(parent?.asLogString())
+            append(" -> ")
+            append(ref.asLogString())
+            append(" -> ")
+            append(multiResolve(ref))
+            append(" ~= ")
+            append(resolve(ref))
+          }
+        }
+  }.visitUFileAndGetResult(this)
+
+  private fun multiResolve(ref: UExpression): String {
+    if (ref is UMultiResolvable) {
+      return "[M] " + ref.multiResolve().joinToString(",") { it.element?.javaClass?.simpleName ?: "[]" }
+    }
+    if (ref is UResolvable) {
+      return "[S] " + (ref.resolve()?.toString() ?: "[]")
+    }
+    return "[]"
+  }
+
+  private fun resolve(ref: UExpression): String {
+    if (ref is UResolvable) {
+      return (ref.resolve()?.toString() ?: "[]")
+    }
+    return "[]"
+  }
+
+  private fun check(testName: String, file: UFile) {
+    val expected = File(uast.fixture.testDataPath, testName.substringBeforeLast('.') + ".resolved.txt")
+    assertEqualsToFile("resolved", expected, file.resolvableWithTargets())
+  }
 
   @Test
-  fun testDefaultConstructorCall() = doTest("Simple/DefaultConstructorCall.java") // must resolve to PsiClassImpl
+  fun testConstructorCallWithParameters(): Unit = uast.doTest("Simple/ConstructorCallWithParameters.java") // must resolve to PsiMethodImpl
+
+  @Test
+  fun testDefaultConstructorCall(): Unit = uast.doTest("Simple/DefaultConstructorCall.java") // must resolve to PsiClassImpl
 }

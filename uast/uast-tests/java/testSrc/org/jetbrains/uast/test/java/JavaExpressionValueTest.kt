@@ -15,11 +15,53 @@
  */
 package org.jetbrains.uast.test.java
 
-import org.junit.Test
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.evaluation.uValueOf
+import org.jetbrains.uast.java.internal.JavaUElementWithComments
+import org.jetbrains.uast.visitor.UastVisitor
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class JavaExpressionValueTest : AbstractJavaExpressionValueTest() {
+@TestApplication
+class JavaExpressionValueTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val uast by javaUastFixture(projectFixture) { testName, file -> check(testName, file) }
+
+  private fun check(testName: String, file: UFile) {
+    var valuesFound = 0
+    file.accept(object : UastVisitor {
+      override fun visitElement(node: UElement): Boolean {
+        if (node !is JavaUElementWithComments) return false
+        for (comment in node.comments) {
+          val text = comment.text.removePrefix("/* ").removeSuffix(" */")
+          val parts = text.split(" = ")
+          if (parts.size != 2) continue
+          when (parts[0]) {
+            "constant" -> {
+              val expectedValue = parts[1]
+              val actualValue =
+                (node as? UExpression)?.uValueOf()?.toConstant()?.toString()
+                ?: "cannot evaluate $node of ${node.javaClass}"
+              assertEquals(expectedValue, actualValue)
+              valuesFound++
+            }
+          }
+        }
+        return false
+      }
+    })
+    assertTrue(valuesFound > 0, "No values found, add some /* constant = ... */ to the input file")
+  }
 
   @Test
-  fun testColor() = doTest("Expression/Color.java")
+  fun testColor(): Unit = uast.doTest("Expression/Color.java")
 
 }

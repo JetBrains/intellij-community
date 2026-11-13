@@ -10,6 +10,10 @@ import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.toUElementOfType
 import org.jetbrains.uast.visitor.UastVisitor
 
+/**
+ * The JUnit 3 base of the UAST tests. In a JUnit 5 test, use [uastFixture].
+ */
+@Deprecated("Use uastFixture in a JUnit 5 test")
 abstract class AbstractUastFixtureTest : LightJavaCodeInsightFixtureTestCase() {
   abstract fun check(testName: String, file: UFile)
 

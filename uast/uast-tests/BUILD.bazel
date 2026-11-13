@@ -50,7 +50,6 @@ jvm_library(
         "//platform/lang-api:lang",
         "//uast/uast-common:uast",
         "@lib//:kotlin-stdlib",
-        "//libraries/junit4",
         "//platform/core-impl",
         "//uast/uast-java-ide:java-uast-ide",
         "//java/java-runtime:rt",

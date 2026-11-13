@@ -1,14 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.java.analysis
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.testFramework.PerformanceUnitTest
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
-import junit.framework.TestCase
+import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UReturnExpression
 import org.jetbrains.uast.analysis.BuilderLikeExpressionEvaluator
 import org.jetbrains.uast.analysis.BuilderMethodEvaluator
@@ -16,10 +19,21 @@ import org.jetbrains.uast.analysis.UNeDfaConfiguration
 import org.jetbrains.uast.analysis.UStringBuilderEvaluator
 import org.jetbrains.uast.analysis.UStringEvaluator
 import org.jetbrains.uast.getUastParentOfType
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 
-class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
+@TestApplication
+class UStringEvaluatorWithSideEffectsTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val evaluator by stringEvaluatorFixture(projectFixture)
+
+  @Test
   fun `test StringBuilder toString evaluate`() {
-    doTest(
+    evaluator.doTest(
       """
       class MyFile {
         String a(boolean param) {
@@ -52,7 +66,8 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
-  fun `test candidates`() = doTest(
+  @Test
+  fun `test candidates`(): Unit = evaluator.doTest(
     """
       class MyFile {
         String a(boolean param) {
@@ -81,8 +96,9 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     }
   )
 
+  @Test
   fun `test mixed assignment and side effect changes for StringBuilder`() {
-    doTest(
+    evaluator.doTest(
       """
       class MyFile {
         String a(boolean param) {
@@ -104,8 +120,9 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
+  @Test
   fun `test StringBuilder change through possible reference`() {
-    doTest(
+    evaluator.doTest(
       """
       class MyFile {
         String a(boolean param) {
@@ -141,8 +158,9 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
+  @Test
   fun `test StringBuilder update through another equal reference`() {
-    doTest(
+    evaluator.doTest(
       """
       class MyFile {
         String a(boolean param) {
@@ -164,8 +182,9 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
+  @Test
   fun `test StringBuilder with if`() {
-    doTest(
+    evaluator.doTest(
       """
       class MyFile {
         String a(boolean param) {
@@ -190,8 +209,9 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
+  @Test
   fun `test StringBuilder reassignment and side effect change in if`() {
-    doTest(
+    evaluator.doTest(
       """
         class MyFile {
           String a(boolean param) {
@@ -216,8 +236,9 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
+  @Test
   fun `test StringBuilder reference reassignment to another object`() {
-    doTest(
+    evaluator.doTest(
       """
       class MyFile {
         String a(boolean param) {
@@ -243,8 +264,9 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
+  @Test
   fun `test deep StringBuilder update by another reference`() {
-    doTest(
+    evaluator.doTest(
       """
       class MyFile {
         String a(boolean param) {
@@ -275,8 +297,9 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
+  @Test
   fun `test StringBuilder update through reference with lower scope`() {
-    doTest(
+    evaluator.doTest(
       """
         class MyFile {
           String a(boolean param) {
@@ -301,7 +324,8 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
-  fun `test StringBuilder with conditional potential update`() = doTest(
+  @Test
+  fun `test StringBuilder with conditional potential update`(): Unit = evaluator.doTest(
     """
       class MyFile {
         String a(boolean param) {
@@ -322,7 +346,8 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  fun `test StringBuilder with false deep evidence`() = doTest(
+  @Test
+  fun `test StringBuilder with false deep evidence`(): Unit = evaluator.doTest(
     """
       class MyFile {
         String a(boolean param) {
@@ -344,7 +369,8 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  fun `test candidates in different scopes`() = doTest(
+  @Test
+  fun `test candidates in different scopes`(): Unit = evaluator.doTest(
     """
       class MyFile {
         String falseEvidenceInIf(boolean param, boolean param2) {
@@ -372,7 +398,8 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  fun `test false candidates with many branches`() = doTest(
+  @Test
+  fun `test false candidates with many branches`(): Unit = evaluator.doTest(
     """
       class MyFile {
         String falseEvidenceInIf(boolean param, boolean param2, boolean param3) {
@@ -406,7 +433,8 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  fun `test StringBuilder reassignment to new value`() = doTest(
+  @Test
+  fun `test StringBuilder reassignment to new value`(): Unit = evaluator.doTest(
     """
       class MyFile {
         String falseEvidenceInIf() {
@@ -428,7 +456,8 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  fun `test strange one line change`() = doTest(
+  @Test
+  fun `test strange one line change`(): Unit = evaluator.doTest(
     """
       class MyFile {
         String a() {
@@ -454,8 +483,9 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     }
   )
 
+  @Test
   fun `test StringBuilder result from method usages`() {
-    doTest(
+    evaluator.doTest(
       """
         class MyFile {
           String build(StringBuilder sb) {
@@ -490,15 +520,17 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
         UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator),
           parameterUsagesDepth = 3,
-          usagesSearchScope = LocalSearchScope(myFixture.file)
+          usagesSearchScope = LocalSearchScope(evaluator.fixture.file)
         )
       }
     )
   }
 
   @PerformanceUnitTest
+  @Test
   fun `test many appends performance`() {
     val size = 250
+    val myFixture = evaluator.fixture
     val file = myFixture.configureByText("MyFile.java", """
       class MyFile {
         String b() {
@@ -515,18 +547,22 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
 
     myFixture.doHighlighting()
 
-    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.getUastParentOfType<UReturnExpression>()?.returnExpression
-                         ?: fail("Cannot find UElement at caret")
+    val elementAtCaret = ReadAction.computeBlocking<UExpression, RuntimeException> {
+      file.findElementAt(myFixture.caretOffset)?.getUastParentOfType<UReturnExpression>()?.returnExpression
+      ?: fail("Cannot find UElement at caret")
+    }
 
     val expected = "'a''b'".repeat(size)
     Benchmark.newBenchmark("calculate value of many assignments") {
-      val pks = UStringEvaluator().calculateValue(elementAtCaret, UNeDfaConfiguration(
-        methodCallDepth = 2,
-        methodsToAnalyzePattern = PsiJavaPatterns.psiMethod().withName("b"),
-        builderEvaluators = listOf(UStringBuilderEvaluator),
-      )) ?: fail("Cannot evaluate string")
-      TestCase.assertEquals(expected, pks.debugConcatenation)
-    }.attempts(2).start()
+      ReadAction.runBlocking<RuntimeException> {
+        val pks = UStringEvaluator().calculateValue(elementAtCaret, UNeDfaConfiguration(
+          methodCallDepth = 2,
+          methodsToAnalyzePattern = PsiJavaPatterns.psiMethod().withName("b"),
+          builderEvaluators = listOf(UStringBuilderEvaluator),
+        )) ?: fail("Cannot evaluate string")
+        assertEquals(expected, pks.debugConcatenation)
+      }
+    }.attempts(2).runAsStressTest().start()
   }
 
   private class CloneAwareStringBuilderEvaluator : BuilderLikeExpressionEvaluator<PartiallyKnownString> by UStringBuilderEvaluator {

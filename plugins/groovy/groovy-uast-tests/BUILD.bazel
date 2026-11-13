@@ -47,7 +47,8 @@ jvm_library(
         "//platform/testFramework",
         "//java/testFramework",
         "//plugins/groovy",
-        "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
     ],
 )
 ### auto-generated section `build intellij.groovy.uast.tests` end

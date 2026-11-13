@@ -2,18 +2,27 @@
 package org.jetbrains.uast.test.java
 
 import com.intellij.platform.uast.testFramework.common.CommentsTestBase
-import org.jetbrains.uast.UFile
-import org.junit.Test
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
+import java.io.File
 
-class JavaUastCommentOwnersTest : AbstractJavaUastCommentsTest(), CommentsTestBase {
-
-  override fun check(testName: String, file: UFile) {
-    super<CommentsTestBase>.check(testName, file)
+@TestApplication
+class JavaUastCommentOwnersTest : CommentsTestBase {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
   }
 
-  @Test
-  fun testCommentOwners() = doTest("Simple/CommentOwners.java")
+  private val uast by javaUastFixture(projectFixture) { testName, file -> check(testName, file) }
+
+  private fun getTestFile(testName: String, ext: String) =
+    File(uast.fixture.testDataPath, testName.substringBeforeLast('.') + '.' + ext)
+
+  override fun getCommentsFile(testName: String) = getTestFile(testName, "comments.txt")
 
   @Test
-  fun testComments() = doTest("Simple/Comments.java")
+  fun testCommentOwners(): Unit = uast.doTest("Simple/CommentOwners.java")
+
+  @Test
+  fun testComments(): Unit = uast.doTest("Simple/Comments.java")
 }

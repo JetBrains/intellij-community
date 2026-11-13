@@ -2,33 +2,39 @@
 package org.jetbrains.uast.test.java
 
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.platform.uast.testFramework.common.PsiClassToString
 import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantTest
 import com.intellij.platform.uast.testFramework.common.UastMappingsAccountantTestBase
 import com.intellij.platform.uast.testFramework.common.sourcesFromDirRecursive
-import org.jetbrains.uast.UFile
-import org.junit.Ignore
-import org.junit.Test
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import java.io.File
 
 
 /**
- * Computes Java PSI to UAST mappings over the [AbstractJavaUastTest.getTestDataPath]
+ * Computes Java PSI to UAST mappings over the [javaUastTestDataPath]
  */
-@Ignore("Not a test suite, should be called manually only")
-class JavaUastMappingsAccountantTest :
-  AbstractJavaUastTest(),
-  UastMappingsAccountantTestBase {
+@Disabled("Not a test suite, should be called manually only")
+@TestApplication
+class JavaUastMappingsAccountantTest : UastMappingsAccountantTestBase {
+  companion object {
+    private val LOG = Logger.getInstance(JavaUastMappingsAccountantTest::class.java)
 
-  override fun check(testName: String, file: UFile) = throw AssertionError("Must not be called")
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val uast by javaUastFixture(projectFixture)
 
   private val javaFileMatcher = ExtensionFileNameMatcher(JavaFileType.INSTANCE.defaultExtension)
 
   private val delegate by lazy(LazyThreadSafetyMode.NONE) {
-    File(testDataPath).let { testData ->
+    File(uast.fixture.testDataPath).let { testData ->
       UastMappingsAccountantTest(
-        sources = sourcesFromDirRecursive(testData, javaFileMatcher, myFixture).asIterable(),
+        sources = sourcesFromDirRecursive(testData, javaFileMatcher, uast.fixture).asIterable(),
         storeResultsTo = testData.absoluteFile.parentFile.toPath(),
         resultsNamePrefix = "java-mappings",
         psiClassPrinter = PsiClassToString.asClosestInterface,
@@ -38,38 +44,38 @@ class JavaUastMappingsAccountantTest :
   }
 
   @Test
-  override fun `test compute mappings by PSI element and print as trees oriented as child to parent`() =
+  override fun `test compute mappings by PSI element and print as trees oriented as child to parent`(): Unit =
     delegate.`test compute mappings by PSI element and print as trees oriented as child to parent`()
 
   @Test
-  override fun `test compute mappings by PSI element and print as trees oriented as parent to child`() =
+  override fun `test compute mappings by PSI element and print as trees oriented as parent to child`(): Unit =
     delegate.`test compute mappings by PSI element and print as trees oriented as parent to child`()
 
   @Test
-  override fun `test compute mappings by PSI element and print as lists oriented as child to parent`() =
+  override fun `test compute mappings by PSI element and print as lists oriented as child to parent`(): Unit =
     delegate.`test compute mappings by PSI element and print as lists oriented as child to parent`()
 
   @Test
-  override fun `test compute mappings by PSI element and print as lists oriented as parent to child`() =
+  override fun `test compute mappings by PSI element and print as lists oriented as parent to child`(): Unit =
     delegate.`test compute mappings by PSI element and print as lists oriented as parent to child`()
 
   @Test
-  override fun `test compute mappings by UAST element and print as trees oriented as child to parent`() =
+  override fun `test compute mappings by UAST element and print as trees oriented as child to parent`(): Unit =
     delegate.`test compute mappings by UAST element and print as trees oriented as child to parent`()
 
   @Test
-  override fun `test compute mappings by UAST element and print as trees oriented as parent to child`() =
+  override fun `test compute mappings by UAST element and print as trees oriented as parent to child`(): Unit =
     delegate.`test compute mappings by UAST element and print as trees oriented as parent to child`()
 
   @Test
-  override fun `test compute mappings by UAST element and print as lists oriented as child to parent`() =
+  override fun `test compute mappings by UAST element and print as lists oriented as child to parent`(): Unit =
     delegate.`test compute mappings by UAST element and print as lists oriented as child to parent`()
 
   @Test
-  override fun `test compute mappings by UAST element and print as lists oriented as parent to child`() =
+  override fun `test compute mappings by UAST element and print as lists oriented as parent to child`(): Unit =
     delegate.`test compute mappings by UAST element and print as lists oriented as parent to child`()
 
   @Test
-  override fun `test compute mappings by UAST element and print as a priory lists of PSI elements`() =
+  override fun `test compute mappings by UAST element and print as a priory lists of PSI elements`(): Unit =
     delegate.`test compute mappings by UAST element and print as a priory lists of PSI elements`()
 }

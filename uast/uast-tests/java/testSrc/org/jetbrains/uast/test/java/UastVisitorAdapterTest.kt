@@ -3,16 +3,24 @@ package org.jetbrains.uast.test.java
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.uast.UastVisitorAdapter
-import junit.framework.TestCase
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class UastVisitorAdapterTest : AbstractJavaUastTest() {
+@TestApplication
+class UastVisitorAdapterTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun check(testName: String, file: UFile) {
+  private val uast by javaUastFixture(projectFixture) { testName, file -> check(testName, file) }
+
+  private fun check(testName: String, file: UFile) {
     val psiFile = file.sourcePsi
     val toList = SyntaxTraverser.psiTraverser(psiFile).toList()
 
@@ -20,7 +28,7 @@ class UastVisitorAdapterTest : AbstractJavaUastTest() {
     val visitor = UastVisitorAdapter(object : AbstractUastNonRecursiveVisitor() {
       override fun visitElement(node: UElement): Boolean {
         node.sourcePsi?.let {
-          TestCase.assertTrue("source elements should be unique ($it)", listSources.add(it))
+          assertTrue(listSources.add(it), "source elements should be unique ($it)")
         }
         return super.visitElement(node)
       }
@@ -29,7 +37,7 @@ class UastVisitorAdapterTest : AbstractJavaUastTest() {
   }
 
   @Test
-  fun testCallExpression() = doTest("Simple/CallExpression.java")
+  fun testCallExpression(): Unit = uast.doTest("Simple/CallExpression.java")
 
 }
 

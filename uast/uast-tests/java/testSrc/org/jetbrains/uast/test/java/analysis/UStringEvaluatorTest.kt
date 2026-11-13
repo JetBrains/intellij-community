@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.test.java.analysis
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PsiJavaPatterns.psiMethod
 import com.intellij.patterns.uast.callExpression
@@ -10,10 +11,12 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
 import com.intellij.testFramework.PerformanceUnitTest
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.asSafely
-import junit.framework.TestCase
 import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpressionList
 import org.jetbrains.uast.ULiteralExpression
 import org.jetbrains.uast.analysis.DeclarationValueEvaluator
@@ -22,9 +25,20 @@ import org.jetbrains.uast.analysis.UNeDfaConfiguration
 import org.jetbrains.uast.analysis.UNeDfaValueEvaluator
 import org.jetbrains.uast.analysis.UStringEvaluator
 import org.jetbrains.uast.toUElement
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 
-class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
-  fun `test simple string`() = doTest(
+@TestApplication
+class UStringEvaluatorTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
+
+  private val evaluator by stringEvaluatorFixture(projectFixture)
+
+  @Test
+  fun `test simple string`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String a() {
@@ -34,10 +48,11 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
   """.trimIndent(),
     "'abc'"
   ) {
-    TestCase.assertEquals(1, it.segments.size)
+    assertEquals(1, it.segments.size)
   }
 
-  fun `test simple concatenation`() = doTest(
+  @Test
+  fun `test simple concatenation`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String a() {
@@ -47,10 +62,11 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'abc''def'"
   ) {
-    TestCase.assertEquals(2, it.segments.size)
+    assertEquals(2, it.segments.size)
   }
 
-  fun `test concatenation with variable`() = doTest(
+  @Test
+  fun `test concatenation with variable`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String a() {
@@ -61,10 +77,11 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'abc''def'"
   ) {
-    TestCase.assertEquals(2, it.segments.size)
+    assertEquals(2, it.segments.size)
   }
 
-  fun `test concatenation with ternary op and variable`() = doTest(
+  @Test
+  fun `test concatenation with ternary op and variable`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String a(boolean condition) {
@@ -75,10 +92,11 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'abc'{'def'|'xyz'}"
   ) {
-    TestCase.assertEquals(2, it.segments.size)
+    assertEquals(2, it.segments.size)
   }
 
-  fun `test concatenation with if and variable`() = doTest(
+  @Test
+  fun `test concatenation with if and variable`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String a(boolean condition) {
@@ -94,10 +112,11 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'abc'{'def'|'xyz'}"
   ) {
-    TestCase.assertEquals(2, it.segments.size)
+    assertEquals(2, it.segments.size)
   }
 
-  fun `test concatenation with unknown`() = doTest(
+  @Test
+  fun `test concatenation with unknown`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String a(boolean condition, String a) {
@@ -107,10 +126,11 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'abc'NULL"
   ) {
-    TestCase.assertEquals(2, it.segments.size)
+    assertEquals(2, it.segments.size)
   }
 
-  fun `test concatenation with constant`() = doTest(
+  @Test
+  fun `test concatenation with constant`(): Unit = evaluator.doTest(
     """
     class MyFile {
       public static final String myConst = "def";
@@ -122,10 +142,11 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'abc''def'"
   ) {
-    TestCase.assertEquals(2, it.segments.size)
+    assertEquals(2, it.segments.size)
   }
 
-  fun `test concatenation with constant from different file`() = doTest(
+  @Test
+  fun `test concatenation with constant from different file`(): Unit = evaluator.doTest(
     """
     class MyFile {
       public static final String myConst = "def" + A.myConst;
@@ -137,7 +158,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """.trimIndent(),
     "'abc''def''xyz'",
     additionalSetup = {
-      myFixture.configureByText("A.java", """
+      evaluator.fixture.configureByText("A.java", """
         class A {
           public static final String myConst = "xyz";
         }
@@ -145,7 +166,8 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  fun `test concatenation with parameter with value in another function`() = doTest(
+  @Test
+  fun `test concatenation with parameter with value in another function`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String b() {
@@ -165,12 +187,13 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     configuration = {
       UNeDfaConfiguration(
         parameterUsagesDepth = 2,
-        usagesSearchScope = LocalSearchScope(file)
+        usagesSearchScope = LocalSearchScope(evaluator.fixture.file)
       )
     }
   )
 
-  fun `test concatenation with parameter with complex values`() = doTest(
+  @Test
+  fun `test concatenation with parameter with complex values`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String b() {
@@ -190,12 +213,13 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     configuration = {
       UNeDfaConfiguration(
         parameterUsagesDepth = 2,
-        usagesSearchScope = LocalSearchScope(file)
+        usagesSearchScope = LocalSearchScope(evaluator.fixture.file)
       )
     }
   )
 
-  fun `test concatenation with function`() = doTest(
+  @Test
+  fun `test concatenation with function`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String a() {
@@ -218,7 +242,8 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  fun `test concatenation with function with parameter`() = doTest(
+  @Test
+  fun `test concatenation with function with parameter`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String a() {
@@ -242,7 +267,8 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  fun `test concatenation with recursive function`() = doTest(
+  @Test
+  fun `test concatenation with recursive function`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String a() {
@@ -263,7 +289,8 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  fun `test concatenation with self recursive function with parameter`() = doTest(
+  @Test
+  fun `test concatenation with self recursive function with parameter`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String a(String param) {
@@ -280,7 +307,8 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  fun `test concatenation with two recursive functions with parameter`() = doTest(
+  @Test
+  fun `test concatenation with two recursive functions with parameter`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String a(String param) {
@@ -301,7 +329,8 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  fun `test parentheses`() = doTest(
+  @Test
+  fun `test parentheses`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String a() {
@@ -322,7 +351,8 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  fun `test deep function call`() = doTest(
+  @Test
+  fun `test deep function call`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String a() {
@@ -355,6 +385,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     }
   )
 
+  @Test
   fun `test custom evaluator`() {
     val myAnnoValueProvider = DeclarationValueEvaluator { declaration ->
       val myAnnotation = declaration.uAnnotations.firstOrNull { anno -> anno.qualifiedName == "MyAnno" }
@@ -363,7 +394,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     }
 
-    doTest(
+    evaluator.doTest(
       """
       @interface MyAnno {
         String value();
@@ -394,7 +425,8 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     )
   }
 
-  fun `test method filter`() = doTest(
+  @Test
+  fun `test method filter`(): Unit = evaluator.doTest(
     """
     class MyFile {
       String a() {
@@ -419,7 +451,8 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  fun `test join method evaluator`() = doTest(
+  @Test
+  fun `test join method evaluator`(): Unit = evaluator.doTest(
     """
     class Strings {
       public static String join(String separator, String... separators) {
@@ -466,8 +499,10 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
   )
 
   @PerformanceUnitTest
+  @Test
   fun `test many assignments performance`() {
     val updateTimes = 500
+    val myFixture = evaluator.fixture
     val file = myFixture.configureByText("MyFile.java", """
       class MyFile {
         String b() {
@@ -482,17 +517,21 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     """.trimIndent())
 
-    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.parent?.toUElement() ?: fail("Cannot find UElement at caret")
+    val elementAtCaret = ReadAction.computeBlocking<UElement, RuntimeException> {
+      file.findElementAt(myFixture.caretOffset)?.parent?.toUElement() ?: fail("Cannot find UElement at caret")
+    }
 
     myFixture.doHighlighting()
 
     val expected = "'a'${"{'a'|'b'}".repeat(updateTimes + 1)}"
     Benchmark.newBenchmark("calculate value of many assignments") {
-      val pks = UStringEvaluator().calculateValue(elementAtCaret, UNeDfaConfiguration(
-        methodCallDepth = 2,
-        methodsToAnalyzePattern = psiMethod().withName("b")
-      )) ?: fail("Cannot evaluate string")
-      TestCase.assertEquals(expected, pks.debugConcatenation)
-    }.attempts(2).start()
+      ReadAction.runBlocking<RuntimeException> {
+        val pks = UStringEvaluator().calculateValue(elementAtCaret, UNeDfaConfiguration(
+          methodCallDepth = 2,
+          methodsToAnalyzePattern = psiMethod().withName("b")
+        )) ?: fail("Cannot evaluate string")
+        assertEquals(expected, pks.debugConcatenation)
+      }
+    }.attempts(2).runAsStressTest().start()
   }
 }
