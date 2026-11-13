@@ -1,0 +1,2 @@
+// NO_DIRECTORY_PACKAGES
+class Foo

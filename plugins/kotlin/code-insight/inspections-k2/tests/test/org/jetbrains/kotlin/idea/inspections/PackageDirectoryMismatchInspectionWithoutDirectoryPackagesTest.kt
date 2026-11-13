@@ -1,61 +1,58 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.PackageIndex
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.runAll
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.codeInsight.inspections.PackageDirectoryMismatchInspection
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinSingleFileSourceRootProjectDescriptor
+import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.test.util.invalidateCaches
 
 /**
- * Checks [PackageDirectoryMismatchInspection] under a source root whose `packageMatchesDirectory` is `false`.
- * A directory under such a root has no package, so the inspection must not report a mismatch.
+ * Checks [PackageDirectoryMismatchInspection] for a file whose directory has no package.
+ * This is the case under a source root whose `packageMatchesDirectory` is `false` (`// NO_DIRECTORY_PACKAGES`),
+ * and for a single-file source root (`// SINGLE_FILE_SOURCE_ROOT`). The inspection must not report a mismatch there.
  */
+@TestRoot("code-insight/inspections-k2/tests")
+@TestMetadata("testData/inspections/packageDirectoryMismatchWithoutDirectoryPackages")
 class PackageDirectoryMismatchInspectionWithoutDirectoryPackagesTest : KotlinLightCodeInsightFixtureTestCase() {
-    fun `test non-empty package`() = doTest("package com.example\n\nclass Foo\n")
+    fun testNonEmptyPackage() = doTest()
 
-    fun `test non-empty package with the implicit package prefix option`() =
-        doTest("package com.example\n\nclass Foo\n", reportImplicitPackagePrefix = true)
+    fun testNonEmptyPackageWithImplicitPackagePrefix() = doTest(reportImplicitPackagePrefix = true)
 
-    fun `test empty package`() = doTest("class Foo\n")
+    fun testEmptyPackage() = doTest()
 
-    private fun doTest(text: String, reportImplicitPackagePrefix: Boolean = false) {
+    fun testSingleFileSourceRoot() = doTest()
+
+    private fun doTest(reportImplicitPackagePrefix: Boolean = false) {
         val inspection = PackageDirectoryMismatchInspection()
         inspection.reportImplicitPackagePrefix = reportImplicitPackagePrefix
         myFixture.enableInspections(inspection)
-        val file = myFixture.addFileToProject("a/b/Foo.kt", text).virtualFile
+        val file = addTestFile(dataFile().readText())
         assertNull(
-            "The directory of $file has a package, so the descriptor did not apply packageMatchesDirectory",
+            "The directory of $file has a package, so the project descriptor does not give the expected layout",
             PackageIndex.getInstance(project).getPackageNameByDirectory(file.parent),
         )
         myFixture.configureFromExistingVirtualFile(file)
         myFixture.checkHighlighting(true, false, true)
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = WithoutDirectoryPackagesDescriptor
+    /** Puts [text] into the single-file source root of the descriptor, or into `a/b/Foo.kt` under the light source root. */
+    private fun addTestFile(text: String): VirtualFile =
+        if (projectDescriptor === KotlinSingleFileSourceRootProjectDescriptor) {
+            KotlinSingleFileSourceRootProjectDescriptor.sourceRootFile(module).also { myFixture.saveText(it, text) }
+        }
+        else {
+            myFixture.addFileToProject("a/b/Foo.kt", text).virtualFile
+        }
 
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },
             { super.tearDown() },
         )
-    }
-
-    /**
-     * Sets `packageMatchesDirectory` to `false` on the Java source folders of the light module.
-     */
-    private object WithoutDirectoryPackagesDescriptor : KotlinWithJdkAndRuntimeLightProjectDescriptor() {
-        override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
-            super.configureModule(module, model, contentEntry)
-            for (sourceFolder in contentEntry.sourceFolders) {
-                sourceFolder.jpsElement.getProperties(JavaModuleSourceRootTypes.SOURCES)?.isPackageMatchesDirectory = false
-            }
-        }
     }
 }
