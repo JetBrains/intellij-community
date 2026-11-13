@@ -138,10 +138,10 @@ object PluginUpdateSourceInitializer {
   private fun doInitializePlugins(): Result {
     val dataMap = mutableMapOf<PluginId, MutableList<PluginUpdateSource>>()
 
-    val updateSourceIds = mutableSetOf<PluginUpdateSource>()
+    val repositoryUrls = mutableSetOf<String>()
     for (host in RepositoryHelper.getCustomPluginRepositoryHosts()) {
+      if (!repositoryUrls.add(host)) continue
       val updateSourceId = PluginUpdateSourceService.getInstance().createCustomRepositoryPluginUpdateSourceId(host)
-      if (!updateSourceIds.add(updateSourceId)) continue
 
       if (host.isEmpty()) continue
       val pluginResult = runCatching { RepositoryHelper.loadPluginModels(host, null, null) }
