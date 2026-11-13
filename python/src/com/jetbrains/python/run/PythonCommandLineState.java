@@ -826,6 +826,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   /**
+   * {@link #shouldAddPyCharmHosted(Sdk)} for {@code interpreter}.
+   */
+  @ApiStatus.Internal
+  public static boolean shouldAddPyCharmHosted(@NotNull PythonInterpreter interpreter) {
+    return shouldAddPyCharmHosted(sdkOf(interpreter));
+  }
+
+  /**
    * Adds the environment variables every launched Python process is expected to have: the common ones
    * ({@code PYTHONUNBUFFERED}, {@code PYCHARM_HOSTED}, …) and the ones produced by activating the
    * virtualenv of {@link PythonRunParams#getPythonInterpreter()}.
