@@ -18,6 +18,10 @@ import javax.swing.JPanel
 /**
  * Dependencies tab. Dumb UI: owns no workspace-model / Module access — [PyModuleDependenciesModel]
  * does. Read-only mode driven by [PyModuleDependenciesModel.isEditable].
+ *
+ * Candidates + initial dependencies are preloaded off-EDT by the caller (see `PyModuleDetailsPane`
+ * construction in `PyWorkspaceStructureConfigurable`), so the pane renders its final state from
+ * the first paint — no empty-then-populated flash.
  */
 internal class PyModuleDependenciesPane(
   subject: PyProject,

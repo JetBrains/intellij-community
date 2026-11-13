@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.python.pyproject.model.PyProjectModelSettings
+import com.intellij.python.pyproject.model.api.getPythonDependencies
 import com.intellij.python.pyproject.model.usePyprojectToml
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.OnePixelSplitter
@@ -41,6 +42,7 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import com.jetbrains.python.project.PyProject.Companion.getPyProjects
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -267,7 +269,7 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
         }
       }
       PyWorkspaceStructurePresenter.ToggleOutcome.ToggledOn -> {
-        modulePanes.values.forEach { it.refreshDependenciesEnabled() }
+        modulePanes.values.forEach { it.refreshProjectLinksEnabled() }
       }
       PyWorkspaceStructurePresenter.ToggleOutcome.NoChange -> Unit
     }
@@ -353,15 +355,21 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
       detailsCards.show(detailsHolder, cardName)
       return
     }
-    // Pane needs a PyProject (not a bare Module); resolve off-EDT, then build + show.
+    // Pane needs a PyProject (not a bare Module); resolve off-EDT alongside the project-links
+    // preload (sibling PyProjects + current live deps), then build + show in one EDT hop so the
+    // Project Links tab paints its final state from the first frame.
     sessionScope.launch {
       val pyProject = module.asPyProject() ?: return@launch
+      val projectLinkCandidates = project.getPyProjects().filter { it.baseDir != pyProject.baseDir }
+      val initialProjectLinks = pyProject.getPythonDependencies()
       withContext(Dispatchers.EDT) {
         if (modulePanes[module] != null) return@withContext
         val pane = PyModuleDetailsPane(
           pyProject = pyProject,
           projectSdksModel = projectSdksModel,
           isMultiModuleProvider = ::isMultiModule,
+          initialProjectLinkCandidates = projectLinkCandidates,
+          initialProjectLinks = initialProjectLinks,
           parentDisposable = sessionDisposable,
         )
         modulePanes[module] = pane

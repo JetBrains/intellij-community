@@ -23,9 +23,9 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.python.pyproject.model.api.getPythonDependencies
 import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
+import com.intellij.python.pyproject.model.usePyprojectToml
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
@@ -37,7 +37,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.project.PyProject.Companion.getPyProjects
 import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.collectAddInterpreterActions
@@ -54,6 +53,7 @@ import java.awt.GridBagLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import org.jetbrains.annotations.Nls
 
 /**
  * One row of the interpreter combo. Typed so the renderer's `when` is exhaustive and the model
@@ -81,6 +81,8 @@ internal class PyModuleDetailsPane(
   private val pyProject: PyProject,
   private val projectSdksModel: ProjectSdksModel,
   private val isMultiModuleProvider: () -> Boolean,
+  initialProjectLinkCandidates: List<PyProject>,
+  initialProjectLinks: Set<PyProject>,
   parentDisposable: Disposable,
 ) {
   private val project = pyProject.project
@@ -193,11 +195,32 @@ internal class PyModuleDetailsPane(
   private val sourcesHolder: JPanel = JPanel(BorderLayout())
 
   /**
-   * `null` until [ensureDependenciesBuilt] resolves the candidate PyProjects off the EDT and
-   * attaches the pane. Accessors null-check instead of keeping a separate "built" flag.
+   * Built with preloaded candidate PyProjects + live deps that the caller resolved off-EDT, so the
+   * tab paints its final state immediately — no empty-then-populated flash — and the field stays
+   * non-null for the whole editor lifetime.
    */
-  private var dependenciesPane: PyModuleDependenciesPane? = null
-  private val dependenciesHolder: JPanel = JPanel(BorderLayout())
+  private val projectLinksPane: PyModuleDependenciesPane =
+    PyModuleDependenciesPane(pyProject, initialProjectLinkCandidates, initialProjectLinks)
+
+  /**
+   * All "which tabs are visible right now" rules live here. The two providers are polled lazily so
+   * the editor sees the current auto-configure toggle state on every rebuild.
+   */
+  private val tabsModel: PyModuleTabsModel = PyModuleTabsModel(
+    isMultiModule = isMultiModuleProvider,
+    usePyprojectToml = { project.usePyprojectToml },
+  )
+
+  /**
+   * Tab strip. Content is populated by [rebuildTabs] from [tabsModel] — both at [buildLayout] time
+   * and whenever the auto-configure toggle flips via [refreshProjectLinksEnabled].
+   */
+  private val tabs: JBTabbedPane = JBTabbedPane().apply {
+    minimumSize = Dimension(0, 0)
+    preferredSize = Dimension(0, 0)
+    putClientProperty("JTabbedPane.hideContentBorder", true)
+    tabComponentInsets = null
+  }
 
   /**
    * Snapshot of the module's Python SDK, populated by the init coroutine through the suspending
@@ -228,7 +251,7 @@ internal class PyModuleDetailsPane(
   fun isModified(): Boolean {
     if (model.isSdkChanged(selectedExistingSdk()?.name)) return true
     if (sourcesConfigurable.isModified()) return true
-    return dependenciesPane?.isModified() == true
+    return projectLinksPane.isModified()
   }
 
   fun reset() {
@@ -239,7 +262,7 @@ internal class PyModuleDetailsPane(
         reloadSdkComboItems()
         resetSdkComboSelection()
         sourcesConfigurable.reset()
-        dependenciesPane?.reset()
+        projectLinksPane.reset()
         refreshPackages()
       }
     }
@@ -254,15 +277,14 @@ internal class PyModuleDetailsPane(
     else resetSdkComboSelection()
   }
 
-  /** Sync. Sources: modal progress. Deps: runWriteAction. SDK: runWithSdkConfigurationLock → modal. */
+  /** Sync. Sources: modal progress. Links: runWriteAction. SDK: runWithSdkConfigurationLock → modal. */
   @Throws(ConfigurationException::class)
   fun apply() {
     val sourcesDirty = sourcesConfigurable.isModified()
     if (sourcesDirty) sourcesConfigurable.apply()
 
-    val depsPane = dependenciesPane
-    val depsDirty = depsPane?.isModified() == true
-    if (depsDirty) depsPane.apply()
+    val linksDirty = projectLinksPane.isModified()
+    if (linksDirty) projectLinksPane.apply()
 
     val chosenSdk = selectedExistingSdk()
     val sdkChanged = model.isSdkChanged(chosenSdk?.name)
@@ -273,9 +295,9 @@ internal class PyModuleDetailsPane(
     }
 
     if (sdkChanged) sourcesConfigurable.reset()
-    if (sdkChanged) dependenciesPane?.reset()
+    if (sdkChanged) projectLinksPane.reset()
 
-    if (sourcesDirty || depsDirty || sdkChanged) model.flushSettings(project)
+    if (sourcesDirty || linksDirty || sdkChanged) model.flushSettings(project)
   }
 
   fun dispose() {
@@ -287,30 +309,50 @@ internal class PyModuleDetailsPane(
     sourcesConfigurable.disposeAsync()
   }
 
-  /** Candidate filter via baseDir (PyProject discourages residesOnModule). */
-  private fun ensureDependenciesBuilt() {
-    if (dependenciesPane != null) return
-    moduleScope.launch {
-      val candidates = project.getPyProjects().filter { it.baseDir != pyProject.baseDir }
-      val initialDeps = pyProject.getPythonDependencies()
-      withContext(Dispatchers.EDT) {
-        if (dependenciesPane != null) return@withContext
-        val pane = PyModuleDependenciesPane(pyProject, candidates, initialDeps)
-        dependenciesPane = pane
-        dependenciesHolder.add(pane.component, BorderLayout.CENTER)
-        dependenciesHolder.revalidate()
-        dependenciesHolder.repaint()
-      }
-    }
+  /**
+   * Called from [PyWorkspaceStructureConfigurable.apply] after the page-level auto-configure
+   * checkbox is committed, so the per-module tab strip reflects the new mode without a Settings
+   * reopen. Also refreshes the pane's editable state when the tab remains visible.
+   */
+  fun refreshProjectLinksEnabled() {
+    rebuildTabs()
+    projectLinksPane.refreshEnabled()
   }
 
   /**
-   * Flips the Dependencies tab between editable and the "Managed by pyproject.toml" banner.
-   * Called from [PyWorkspaceStructureConfigurable.apply] after the page-level auto-configure
-   * checkbox is committed, so the per-module tab reflects the new mode without reopening Settings.
+   * Title + component for each tab the model can return. Keeping the lookup here (and not in
+   * [PyModuleTabsModel]) is deliberate — the model stays Swing-free and testable; the pane owns
+   * every Swing-touching detail. An exhaustive `when` keeps a new [PyModuleTab] variant from
+   * compiling silently.
    */
-  fun refreshDependenciesEnabled() {
-    dependenciesPane?.refreshEnabled()
+  private val PyModuleTab.componentAndTitle: Pair<@Nls String, JComponent>
+    get() = when (this) {
+      PyModuleTab.Sources ->
+        PyBundle.message("configurable.PyWorkspaceStructureConfigurable.tab.sources") to sourcesHolder
+      PyModuleTab.Dependencies ->
+        PyBundle.message("configurable.PyWorkspaceStructureConfigurable.tab.dependencies") to packagesTree.component
+      PyModuleTab.ProjectLinks ->
+        PyBundle.message("configurable.PyWorkspaceStructureConfigurable.tab.project.links") to projectLinksPane.component
+    }
+
+  /**
+   * Rebuild the tab strip from [tabsModel]. Preserves the user-selected tab across the rebuild
+   * when possible — only the Project Links tab can come and go, and switching to Sources is the
+   * safe fallback when the previously selected tab is dropped. Idempotent — safe to call from
+   * init, from the apply-side toggle, and from reset.
+   */
+  private fun rebuildTabs() {
+    val visible = tabsModel.visibleTabs()
+    val previouslySelectedTitle = tabs.selectedIndex.takeIf { it >= 0 }?.let { tabs.getTitleAt(it) }
+    tabs.removeAll()
+    for (tab in visible) {
+      val (title, component) = tab.componentAndTitle
+      tabs.addTab(title, component)
+    }
+    previouslySelectedTitle
+      ?.let { tabs.indexOfTab(it) }
+      ?.takeIf { it >= 0 }
+      ?.let { tabs.selectedIndex = it }
   }
 
   /** Resolve the combo's Sdk to a `PythonInterpreter`. Null `chosen` → null interpreter (clears SDK). */
@@ -457,22 +499,8 @@ internal class PyModuleDetailsPane(
     sourcesHolder.minimumSize = Dimension(0, 0)
     sourcesHolder.preferredSize = Dimension(0, 0)
 
-    val tabs = JBTabbedPane().apply {
-      minimumSize = Dimension(0, 0)
-      preferredSize = Dimension(0, 0)
-      putClientProperty("JTabbedPane.hideContentBorder", true)
-      tabComponentInsets = null
-    }
     sourcesHolder.add(sourcesConfigurable.createComponent(), BorderLayout.CENTER)
-    tabs.addTab(PyBundle.message("configurable.PyWorkspaceStructureConfigurable.tab.sources"), sourcesHolder)
-    // Module → module dependencies make sense only when the project has more than one module;
-    // a single-module project (the shape after the user turns off `pyproject.toml` auto-config)
-    // has no sibling modules to depend on, so hide the tab entirely.
-    if (isMultiModuleProvider()) {
-      tabs.addTab(PyBundle.message("configurable.PyWorkspaceStructureConfigurable.tab.dependencies"), dependenciesHolder)
-    }
-    tabs.addTab(PyBundle.message("configurable.PyWorkspaceStructureConfigurable.tab.packages"), packagesTree.component)
-    if (isMultiModuleProvider()) ensureDependenciesBuilt()
+    rebuildTabs()
 
     val header = JPanel(GridBagLayout()).apply {
       border = JBUI.Borders.emptyBottom(LEFT_RIGHT_INSET.get())
