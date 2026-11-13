@@ -43,6 +43,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/statistics",
         "//libraries/junit4",
+        "//platform/consoleView",
     ],
 )
 ### auto-generated section `build intellij.testng.rt.tests.ideaTestFrameworks` end

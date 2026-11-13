@@ -2,7 +2,19 @@
 package com.intellij.testng.integration;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.NopProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerTreeStructure;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
+import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -12,13 +24,16 @@ import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import jetbrains.buildServer.messages.serviceMessages.BaseTestMessage;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
@@ -82,5 +97,58 @@ public class TestNGIntegrationTest extends AbstractTestFrameworkCompilingIntegra
                    ##teamcity[testFinished name='%s' nodeId='a.Test1/simple']
                    ##teamcity[testStarted name='Test1.simple2' nodeId='a.Test1/simple2' parentNodeId='a.Test1' locationHint='java:test://a.Test1/simple2']
                    ##teamcity[testFinished name='Test1.simple2' nodeId='a.Test1/simple2']""".formatted(testName, testName), messages);
+  }
+
+  @Test
+  public void configurationMethods() throws ExecutionException {
+    PsiClass psiClass = findClass(myModule, "a.ConfigTest");
+    assertNotNull(psiClass);
+    TestNGConfiguration configuration = createConfiguration(psiClass);
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    SMTRunnerConsoleProperties properties = configuration.createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance());
+    boolean hidePassedTests = TestConsoleProperties.HIDE_PASSED_TESTS.value(properties);
+    boolean hideSuccessfulConfig = TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.value(properties);
+    TestConsoleProperties.HIDE_PASSED_TESTS.set(properties, false);
+    TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.set(properties, true);
+    try {
+      SMTRunnerConsoleView console = (SMTRunnerConsoleView)SMTestRunnerConnectionUtil.createConsole("TestNG", properties);
+      Disposer.register(getTestRootDisposable(), console);
+      ProcessHandler processHandler = new NopProcessHandler();
+      console.attachToProcess(processHandler);
+      processHandler.startNotify();
+      for (ServiceMessage message : processOutput.messages) {
+        processHandler.notifyTextAvailable(message.asString() + "\n", ProcessOutputTypes.STDOUT);
+      }
+      processHandler.destroyProcess();
+
+      SMTestRunnerResultsForm resultsViewer = console.getResultsViewer();
+      SMTestProxy root = resultsViewer.getTestsRootNode();
+      List<String> visibleTests = new ArrayList<>();
+      collectVisibleTests(resultsViewer.getTreeBuilder().getTreeStructure(), root, visibleTests);
+      assertEquals("visible tests: " + visibleTests, 2, resultsViewer.getFinishedTestCount());
+      assertEquals(List.of("ConfigTest.test1", "ConfigTest.test2"), visibleTests);
+      assertEquals(List.of("ConfigTest.beforeClass",
+                           "ConfigTest.beforeMethod", "ConfigTest.afterMethod",
+                           "ConfigTest.beforeMethod (1)", "ConfigTest.afterMethod (1)",
+                           "ConfigTest.afterClass"),
+                   ContainerUtil.map(ContainerUtil.filter(root.getAllTests(), SMTestProxy::isConfig), SMTestProxy::getName));
+    }
+    finally {
+      TestConsoleProperties.HIDE_PASSED_TESTS.set(properties, hidePassedTests);
+      TestConsoleProperties.HIDE_SUCCESSFUL_CONFIG.set(properties, hideSuccessfulConfig);
+    }
+  }
+
+  private static void collectVisibleTests(SMTRunnerTreeStructure treeStructure, SMTestProxy parent, List<String> names) {
+    for (Object child : treeStructure.getChildElements(parent)) {
+      SMTestProxy proxy = (SMTestProxy)child;
+      if (proxy.isSuite()) {
+        collectVisibleTests(treeStructure, proxy, names);
+      }
+      else {
+        names.add(proxy.getName());
+      }
+    }
   }
 }
