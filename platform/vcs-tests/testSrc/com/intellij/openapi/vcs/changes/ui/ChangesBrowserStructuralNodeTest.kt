@@ -850,7 +850,7 @@ internal class ChangesBrowserStructuralNodeTest {
     val splitter = withContext(Dispatchers.EDT) {
       PreviewDiffSplitterComponent(EmptyDiffPreview(), "ChangesBrowserStructuralNodeTest.splitter").apply {
         firstComponent = fixture.view
-        openPreview(false)
+        showPreview()
       }
     }
 

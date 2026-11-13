@@ -249,7 +249,7 @@ abstract class TreeHandlerEditorDiffPreview(
   protected open fun isOpenPreviewWithNextDiffShortcut(): Boolean = true
   protected open fun handleNextDiffShortcut() {
     if (!isOpenPreviewWithNextDiffShortcut()) return
-    openPreview(true)
+    requestOpenPreview(true)
   }
 
   override fun handleEscapeKey() {

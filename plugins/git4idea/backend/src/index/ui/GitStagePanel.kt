@@ -25,8 +25,6 @@ import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ChangeListManagerRefreshHelper
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
-import com.intellij.openapi.vcs.changes.DiffPreview
-import com.intellij.openapi.vcs.changes.DiffPreview.Companion.setPreviewVisible
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction
@@ -266,7 +264,7 @@ internal class GitStagePanel(
 
     if (hasSplitterPreview) {
       val preview = ShelveSplitterDiffPreview()
-      setPreviewVisible(preview, VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN)
+      preview.setPreviewVisible(VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN)
       splitPreview = preview
     }
     else {
@@ -311,7 +309,7 @@ internal class GitStagePanel(
     }
   }
 
-  private inner class ShelveSplitterDiffPreview : DiffPreview, Disposable {
+  private inner class ShelveSplitterDiffPreview : Disposable {
     private val processor: GitStageDiffRequestProcessor
     private val splitterComponent: PreviewDiffSplitterComponent
 
@@ -333,12 +331,8 @@ internal class GitStagePanel(
       }
     }
 
-    override fun openPreview(requestFocus: Boolean): Boolean {
-      return splitterComponent.openPreview(requestFocus)
-    }
-
-    override fun closePreview() {
-      splitterComponent.closePreview()
+    fun setPreviewVisible(value: Boolean) {
+      if (value) splitterComponent.showPreview() else splitterComponent.closePreview()
     }
   }
 
@@ -360,7 +354,7 @@ internal class GitStagePanel(
       VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state
 
       val preview = splitPreview ?: return
-      setPreviewVisible(preview, state)
+      preview.setPreviewVisible(state)
       updateLayout()
     }
   }

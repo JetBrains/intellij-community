@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.frame
 
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.external.ExternalDiffTool
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.showExternalToolIfNeeded
@@ -15,6 +16,7 @@ import com.intellij.ui.content.Content
 import com.intellij.vcs.log.VcsLogBundle
 import java.awt.Component
 import java.lang.ref.WeakReference
+import java.util.concurrent.CompletableFuture
 
 internal class VcsLogEditorDiffPreview(private val changesBrowser: VcsLogChangesBrowser)
   : TreeHandlerEditorDiffPreview(changesBrowser.viewer, VcsLogDiffPreviewHandler(changesBrowser)) {
@@ -25,9 +27,9 @@ internal class VcsLogEditorDiffPreview(private val changesBrowser: VcsLogChanges
 
   private var oldToolWindowFocus: ToolWindowFocus? = null
 
-  override fun openPreview(requestFocus: Boolean): Boolean {
+  override fun submitOpenRequest(requestFocus: Boolean): CompletableFuture<List<FileEditor>> {
     oldToolWindowFocus = getCurrentToolWindowFocus()
-    return super.openPreview(requestFocus)
+    return super.submitOpenRequest(requestFocus)
   }
 
   override fun returnFocusToTree() {

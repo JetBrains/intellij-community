@@ -2152,13 +2152,11 @@ com.intellij.openapi.vcs.changes.DiffPreview
 - sf:Companion:com.intellij.openapi.vcs.changes.DiffPreview$Companion
 - a:closePreview():V
 - s:closePreviewFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
-- a:openPreview(Z):Z
-- performDiffAction():Z
-- s:setPreviewVisible(com.intellij.openapi.vcs.changes.DiffPreview,Z):V
+- a:openPreview(Z,kotlin.coroutines.Continuation):java.lang.Object
+- a:performDiffAction():Z
 - updateDiffAction(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.vcs.changes.DiffPreview$Companion
 - f:closePreviewFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
-- f:setPreviewVisible(com.intellij.openapi.vcs.changes.DiffPreview,Z):V
 a:com.intellij.openapi.vcs.changes.EditorTabDiffPreview
 - com.intellij.openapi.util.CheckedDisposable
 - com.intellij.openapi.vcs.changes.DiffPreview
@@ -2175,8 +2173,10 @@ a:com.intellij.openapi.vcs.changes.EditorTabDiffPreview
 - a:hasContent():Z
 - isDisposed():Z
 - f:isPreviewOpen():Z
-- openPreview(Z):Z
+- openPreview(Z,kotlin.coroutines.Continuation):java.lang.Object
 - performDiffAction():Z
+- f:requestOpenPreview(Z):java.util.concurrent.CompletableFuture
+- p:submitOpenRequest(Z):java.util.concurrent.CompletableFuture
 - updateDiffAction(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.openapi.vcs.ex.BlockI
 - a:getEnd():I

@@ -5,12 +5,16 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.ClientFileEditorManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenMode
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.FileOpenedSyncListener
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
+import com.intellij.openapi.fileEditor.ex.buildFileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
@@ -20,8 +24,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.headTail
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.future.future
+import java.util.concurrent.CompletableFuture
 
-internal class DiffEditorTabFilesManagerImpl(val project: Project) : DiffEditorTabFilesManager {
+internal class DiffEditorTabFilesManagerImpl(
+  val project: Project,
+  private val coroutineScope: CoroutineScope,
+) : DiffEditorTabFilesManager {
+  // should be migrated
   override fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean, openInEditor: Boolean): Array<out FileEditor> {
     val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
     val openMode = if (openInEditor) FileEditorManagerImpl.OpenMode.DEFAULT else FileEditorManagerImpl.OpenMode.NEW_WINDOW
@@ -36,6 +48,50 @@ internal class DiffEditorTabFilesManagerImpl(val project: Project) : DiffEditorT
       ),
     )
     return newTab.allEditors.toTypedArray()
+  }
+
+  override fun requestShowDiffFile(diffFile: VirtualFile, request: FileEditorOpenRequest): CompletableFuture<List<FileEditor>> {
+    val diffRequest = diffFile.resolve(request)
+    if (diffRequest.openMode == FileEditorOpenMode.NEW_WINDOW) {
+      val context = ModalityState.defaultModalityState().asContextElement() + ClientId.coroutineContext()
+      // the start in the call lets the editor manager track the open from the request
+      return coroutineScope.future(context, CoroutineStart.UNDISPATCHED) {
+        openInWindow(diffFile, diffRequest)
+      }
+    }
+
+    val composite = FileEditorManager.getInstance(project).requestOpenFile(diffFile, diffRequest)
+    val editors = composite.thenApply { it.allEditors }
+    // a cancel of a dependent future does not reach its source
+    editors.whenComplete { _, _ -> if (editors.isCancelled) composite.cancel(false) }
+    return editors
+  }
+
+  override suspend fun openDiffFile(diffFile: VirtualFile, request: FileEditorOpenRequest): List<FileEditor> {
+    val diffRequest = diffFile.resolve(request)
+    if (diffRequest.openMode == FileEditorOpenMode.NEW_WINDOW) {
+      return openInWindow(diffFile, diffRequest)
+    }
+    return FileEditorManager.getInstanceAsync(project).openFile(diffFile, diffRequest).allEditors
+  }
+
+  /** Gives the request an explicit place, and makes it reuse the open tab of the diff. */
+  private fun VirtualFile.resolve(request: FileEditorOpenRequest): FileEditorOpenRequest {
+    if (request.openMode != FileEditorOpenMode.MANAGED) {
+      if (request.openMode == FileEditorOpenMode.NEW_WINDOW) {
+        // the window of an explicit request survives the diff-in-editor setting
+        DiffEditorTabFilesUtil.setForceOpeningsInNewWindow(this, true)
+      }
+      return request.withReuseOpen(true)
+    }
+    DiffEditorTabFilesUtil.setForceOpeningsInNewWindow(this, null)
+    val openMode = if (DiffEditorTabFilesUtil.isDiffInEditor) FileEditorOpenMode.DEFAULT else FileEditorOpenMode.NEW_WINDOW
+    return request.withOpenMode(openMode).withReuseOpen(true)
+  }
+
+  private suspend fun openInWindow(diffFile: VirtualFile, request: FileEditorOpenRequest): List<FileEditor> {
+    val editorManager = FileEditorManager.getInstanceAsync(project) as FileEditorManagerImpl
+    return editorManager.openFile(diffFile, buildFileEditorOpenOptions(request).copy(isSingletonEditorInWindow = true)).allEditors
   }
 
   override fun isDiffOpenedInWindow(file: VirtualFile): Boolean {

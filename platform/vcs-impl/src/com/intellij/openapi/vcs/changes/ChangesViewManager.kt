@@ -263,7 +263,7 @@ class ChangesViewManager internal constructor(private val project: Project, priv
 
       if (hasSplitterPreview) {
         splitterDiffPreview = ChangesViewSplitterDiffPreview(changesView.createDiffPreviewProcessor(false))
-        DiffPreview.setPreviewVisible(splitterDiffPreview!!, vcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN)
+        splitterDiffPreview!!.setPreviewVisible(vcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN)
       }
       else {
         Disposer.dispose(splitterDiffPreview!!)
@@ -273,7 +273,7 @@ class ChangesViewManager internal constructor(private val project: Project, priv
 
     private inner class ChangesViewSplitterDiffPreview(
       private val processor: UpdatableMultipleChangesDiffRequestProcessor,
-    ) : DiffPreview, Disposable {
+    ) : Disposable {
       private val splitterComponent = PreviewDiffSplitterComponent(processor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION)
 
       init {
@@ -289,12 +289,8 @@ class ChangesViewManager internal constructor(private val project: Project, priv
         }
       }
 
-      override fun openPreview(requestFocus: Boolean): Boolean {
-        return splitterComponent.openPreview(requestFocus)
-      }
-
-      override fun closePreview() {
-        splitterComponent.closePreview()
+      fun setPreviewVisible(value: Boolean) {
+        if (value) splitterComponent.showPreview() else splitterComponent.closePreview()
       }
     }
 
@@ -302,8 +298,12 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       get() = splitterDiffPreview != null
 
     override fun toggleDiffPreview(state: Boolean) {
-      val preview = splitterDiffPreview ?: editorDiffPreview
-      DiffPreview.setPreviewVisible(preview, state)
+      val splitterPreview = splitterDiffPreview
+      when {
+        splitterPreview != null -> splitterPreview.setPreviewVisible(state)
+        state -> editorDiffPreview.requestOpenPreview(false)
+        else -> editorDiffPreview.closePreview()
+      }
       updatePanelLayout()
     }
 

@@ -2,13 +2,16 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager
-import com.intellij.diff.editor.DiffEditorTabFilesUtil.forceOpenInNewWindow
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorOpenMode
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowType
+import java.util.concurrent.CompletableFuture
 
 internal object CommitToolWindowUtil {
   @JvmStatic
@@ -17,19 +20,15 @@ internal object CommitToolWindowUtil {
   }
 
 
+  /** Creates the open request of the diff preview, into a window when the commit tool window forces one. */
   @JvmStatic
-  fun openDiff(sourceTwId: String, diffPreview: EditorTabDiffPreview, requestFocus: Boolean): Boolean {
-    if (!diffPreview.hasContent()) return false
-
+  fun openDiff(sourceTwId: String, diffPreview: EditorTabDiffPreview, requestFocus: Boolean): CompletableFuture<List<FileEditor>> {
     val project = diffPreview.project
-    val diffFile = diffPreview.previewFile
-
+    var request = FileEditorOpenRequest.withFocus(requestFocus)
     if (forceDiffInEditor(project, sourceTwId)) {
-      forceOpenInNewWindow(project, diffFile, requestFocus)
-    } else {
-      DiffEditorTabFilesManager.getInstance(project).showDiffFile(diffFile, requestFocus)
+      request = request.withOpenMode(FileEditorOpenMode.NEW_WINDOW)
     }
-    return true
+    return DiffEditorTabFilesManager.getInstance(project).requestShowDiffFile(diffPreview.previewFile, request)
   }
 
   @JvmStatic

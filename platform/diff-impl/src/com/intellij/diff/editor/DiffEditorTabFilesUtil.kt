@@ -2,7 +2,6 @@
 package com.intellij.diff.editor
 
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
@@ -35,11 +34,5 @@ object DiffEditorTabFilesUtil {
 
   fun isForceOpeningsInNewWindow(file: VirtualFile): Boolean {
     return file.getUserData(FORCE_OPENING_IN_NEW_WINDOW) == true
-  }
-
-  @JvmStatic
-  fun forceOpenInNewWindow(project: Project, file: VirtualFile, requestFocus: Boolean) {
-    setForceOpeningsInNewWindow(file, true)
-    DiffEditorTabFilesManager.getInstance(project).showDiffFile(file, requestFocus, false)
   }
 }
