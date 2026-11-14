@@ -55,12 +55,11 @@ def report_data(dumper, commands_to_skip):
         if not command:
             if fetcher.command_lead_to_exception:
                 sys.stderr.write("Command '{0}' skipped\n".format(command_name))
-                continue
             else:
                 sys.stderr.write(
-                    "Command '{0}' took too long and may freeze everything. Consider adding it to 'skip commands' list\n".format(
+                    "Command '{0}' took too long and was skipped. Consider adding it to 'skip commands' list\n".format(
                         command_name))
-                sys.exit(1)
+            continue
 
         use_argparse = False
         # There is no optparse in 1.10
