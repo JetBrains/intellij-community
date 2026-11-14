@@ -260,6 +260,140 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
               expr = value
       #       └ TYPE T
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `membership of a decimal in literals keeps the branch reachable`() = test("""
+      from decimal import Decimal
+
+      def f(value: Decimal):
+          if value in (0, 1):
+              expr = value
+      #       └ TYPE Decimal
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `membership with an element that is not a literal does not narrow`() = test("""
+      from typing import Literal
+
+      def f(value: Literal["a", "b"], other: str):
+          if value in ("c", other):
+              expr = value
+      #       └ TYPE Literal["a", "b"]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `literal patterns of a decimal keep the cases reachable`() = test("""
+      from decimal import Decimal
+
+      def f(value: Decimal):
+          match value:
+              case 0:
+                  expr = value
+      #           └ TYPE Decimal
+              case 1 | 2:
+                  expr = value
+      #           └ TYPE Decimal
+              case (3 as three):
+                  expr = value
+      #           └ TYPE Decimal
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `or pattern of a literal and None keeps the case reachable`() = test("""
+      from decimal import Decimal
+
+      def f(value: Decimal | None):
+          match value:
+              case 0 | None:
+                  expr = value
+      #           └ TYPE Decimal | None
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `None among the values does not keep a builtin of another equality group`() = test("""
+      def f(value: int | None):
+          if value in (None, "a"):
+              expr = value
+      #       └ TYPE None
+          match value:
+              case "a" | None:
+                  expr = value
+      #           └ TYPE None
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `an enum with members compares with the default equality`() = test("""
+      from enum import Enum
+
+      class Color(Enum):
+          RED = 1
+          GREEN = 2
+
+      def f(value: Color | str):
+          if value == "red":
+              expr = value
+      #       └ TYPE Literal["red"]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `enum value pattern does not keep a builtin`() = test("""
+      from enum import Enum
+
+      class Color(Enum):
+          RED = 1
+          GREEN = 2
+
+      def f(value: Color | str):
+          match value:
+              case Color.RED:
+                  expr = value
+      #           └ TYPE Literal[Color.RED]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `None pattern still compares by identity`() = test("""
+      from decimal import Decimal
+
+      def f(value: Decimal | None):
+          match value:
+              case None:
+                  expr = value
+      #           └ TYPE None
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `or pattern with a class pattern narrows by the class`() = test("""
+      def f(value: int | str):
+          match value:
+              case 0 | int():
+                  expr = value
+      #           └ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
+    fun `value pattern of an Any value keeps the subject type`() = test("""
+      from decimal import Decimal
+      from typing import Any
+
+      class Holder:
+          CONST: Any
+
+      def f(value: Decimal | str):
+          match value:
+              case Holder.CONST:
+                  expr = value
+      #           └ TYPE Decimal | str
+      """.trimIndent())
   }
 
   @Nested
