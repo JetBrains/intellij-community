@@ -291,6 +291,13 @@ public final class EditorPainter implements TextDrawingCallback {
      * The rounded paint has dry-run rows, except on the sticky lines panel, which shows no neighbor line.
      */
     private final boolean myDryRunRows;
+    /**
+     * Gives how far the paint of the backgrounds visits a visual line past each side of the clip.
+     * While the editor rounds, it is twice the corner radius, rounded up. Otherwise, it is zero.
+     * A row of a rounded shape then never ends so near the clip that the clip shows a changed corner.
+     * A corner reaches one radius from its point, and the radius of a corner depends on the length of its two edges.
+     */
+    private final int myVisitMargin;
     private final boolean myHuggingHighlighting;
     private final int myFillStartX;
     private final int myFillEndX;
@@ -337,6 +344,7 @@ public final class EditorPainter implements TextDrawingCallback {
       myCaretDataInView = myEditor.isPaintSelection()? new CaretDataInView(myCaretModel, myStartOffset, myEndOffset) : null;
       myRoundedHighlighting = myEditor.isRoundedHighlighting();
       myDryRunRows = myRoundedHighlighting && !myEditor.isStickyLinePainting();
+      myVisitMargin = myRoundedHighlighting ? (int)Math.ceil(2 * HighlighterVisualModel.cornerRadius(myLineHeight)) : 0;
       myVirtualSelectionMap = myDryRunRows
                               ? createVirtualSelectionMap(myCaretModel, myStartVisualLine - 1, myEndVisualLine + 1)
                               : createVirtualSelectionMap(myCaretModel, myStartVisualLine, myEndVisualLine);
@@ -1797,6 +1805,8 @@ public final class EditorPainter implements TextDrawingCallback {
       int maxColumn = 0;
       int endLogicalLine = visLineIterator.getEndLogicalLine();
       boolean marginReached = false;
+      double visitStartX = myClip.getMinX() - myVisitMargin;
+      double visitEndX = myClip.getMaxX() + myVisitMargin;
       for (var fragment : VisualLineFragmentsIterator.create(myView, myDocument, visLineIterator, null, true)) {
         int fragmentStartOffset = fragment.getStartOffset();
         int start = fragmentStartOffset;
@@ -1813,7 +1823,7 @@ public final class EditorPainter implements TextDrawingCallback {
             if (it.getEndOffset() <= offset) {
               it.advance();
             }
-            if (x >= myClip.getMinX()) {
+            if (x >= visitStartX) {
               List<BackgroundLayer> layers;
               if (it.getStartOffset() == offset) {
                 layers = it.getBeforeLineStartBackgroundLayers();
@@ -1842,7 +1852,7 @@ public final class EditorPainter implements TextDrawingCallback {
             List<BackgroundLayer> layers = atBreak ? it.getBreakBackgroundLayers(false) : it.getBackgroundLayers();
             TextAttributes attributes = atBreak ? it.getBreakAttributes() : it.getMergedAttributes();
             float xNew = fragment.getEndX();
-            if (xNew >= myClip.getMinX()) {
+            if (xNew >= visitStartX) {
               painter.paint(fragment, 0, 0, attributes, layers, x, xNew, y);
             }
             x = xNew;
@@ -1865,7 +1875,7 @@ public final class EditorPainter implements TextDrawingCallback {
                 break;
               }
               float xNew = fragment.offsetToX(x, start, curEnd);
-              if (xNew >= myClip.getMinX()) {
+              if (xNew >= visitStartX) {
                 painter.paint(fragment,
                               fragment.isRtl() ? fragmentStartOffset - start : start - fragmentStartOffset,
                               fragment.isRtl() ? fragmentStartOffset - curEnd : curEnd - fragmentStartOffset,
@@ -1886,7 +1896,7 @@ public final class EditorPainter implements TextDrawingCallback {
         }
         else {
           float xNew = fragment.getEndX();
-          if (xNew >= myClip.getMinX()) {
+          if (xNew >= visitStartX) {
             TextAttributes attributes = getFoldRegionAttributes(foldRegion);
             List<BackgroundLayer> layers = getFoldRegionBackgroundLayers(foldRegion);
             painter.paint(fragment, 0, fragment.getVisualLength(), attributes, layers, x, xNew, y);
@@ -1895,7 +1905,7 @@ public final class EditorPainter implements TextDrawingCallback {
           prevEndOffset = -1;
           it = null;
         }
-        if (x > myClip.getMaxX()) return;
+        if (x > visitEndX) return;
         maxColumn = fragment.getEndVisualColumn();
       }
       if (firstFragment && myEditor.isRightAligned()) {

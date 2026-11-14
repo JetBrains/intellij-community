@@ -557,6 +557,39 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   @Test
+  public void testNarrowRepaintRightOfLineEnd() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, false);
+      try {
+        myFixture.initText("ab\n<selection>cdef\ngh<caret></selection>\nijklmnopqr");
+        Editor editor = myFixture.getEditor();
+        int lineEndX = editor.visualPositionToXY(new VisualPosition(1, 4)).x;
+        int[] yRange = editor.visualLineToYRange(1);
+        int width = editor.getContentComponent().getPreferredSize().width;
+        checkPartialRepaint(new Rectangle(lineEndX + 1, yRange[0], width - lineEndX - 1, yRange[1] - yRange[0]));
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testNarrowRepaintLeftOfLineEnd() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, false);
+      try {
+        myFixture.initText("ab\n<selection>cdef\ngh<caret></selection>\nijklmnopqr");
+        Editor editor = myFixture.getEditor();
+        int lineEndX = editor.visualPositionToXY(new VisualPosition(1, 4)).x;
+        int[] yRange = editor.visualLineToYRange(1);
+        checkPartialRepaint(new Rectangle(0, yRange[0], lineEndX - 1, yRange[1] - yRange[0]));
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
   public void testFillReachesClipWiderThanViewport() {
     myFixture.runTest(() -> {
       var state = setSelectionLook(true, true);

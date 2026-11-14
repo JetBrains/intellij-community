@@ -156,7 +156,7 @@ internal class HighlighterVisualModel(
    * It gives [fill] the corner radius of [paint].
    */
   private inline fun fillShapes(graphics: Graphics2D, lineHeight: Int, fill: (radius: Double) -> Unit) {
-    val radius = lineHeight / 6.0
+    val radius = cornerRadius(lineHeight)
     val config = GraphicsUtil.setupAAPainting(graphics)
     graphics.translate(0.0, yShift.toDouble())
     try {
@@ -368,6 +368,17 @@ internal class HighlighterVisualModel(
     styleIds[layer] = id
     styles.add(layer)
     return id
+  }
+
+  companion object {
+    /**
+     * Gives the radius of a corner of a rounded shape for [lineHeight].
+     * A corner never gets a larger radius.
+     */
+    @JvmStatic
+    fun cornerRadius(lineHeight: Int): Double {
+      return lineHeight / 6.0
+    }
   }
 }
 
