@@ -19,6 +19,9 @@ import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.psi.PyFStringFragment
 import com.jetbrains.python.psi.PyFStringFragmentFormatPart
 import org.jetbrains.annotations.Nls
+import java.math.BigDecimal
+import java.math.MathContext
+import java.math.RoundingMode
 import java.util.Locale
 
 // The example is rendered eagerly from the width and the precision in the document, so both need a
@@ -262,8 +265,8 @@ internal class PyFormatSpecDocumentationTarget(private val spec: PyFormatSpec) :
       'f', 'F' -> String.format(Locale.ROOT, "%.${precision}f", (value as Number).toDouble())
       'e' -> String.format(Locale.ROOT, "%.${precision}e", (value as Number).toDouble())
       'E' -> String.format(Locale.ROOT, "%.${precision}E", (value as Number).toDouble())
-      'g' -> String.format(Locale.ROOT, "%.${precision}g", (value as Number).toDouble())
-      'G' -> String.format(Locale.ROOT, "%.${precision}G", (value as Number).toDouble())
+      'g' -> formatGeneral((value as Number).toDouble(), precision, keepFraction = false)
+      'G' -> formatGeneral((value as Number).toDouble(), precision, keepFraction = false).uppercase()
       '%' -> String.format(Locale.ROOT, "%.${precision}f%%", (value as Number).toDouble() * 100)
       'b' -> java.lang.Long.toBinaryString((value as Number).toLong())
       'o' -> java.lang.Long.toOctalString((value as Number).toLong())
@@ -276,7 +279,7 @@ internal class PyFormatSpecDocumentationTarget(private val spec: PyFormatSpec) :
         // No type specified - format based on value type
         when (value) {
           is Double, is Float -> {
-            if (spec.precision != null) String.format(Locale.ROOT, "%.${precision}f", (value as Number).toDouble())
+            if (spec.precision != null) formatGeneral((value as Number).toDouble(), precision, keepFraction = true)
             else value.toString()
           }
           else -> value.toString()
@@ -334,15 +337,46 @@ internal class PyFormatSpecDocumentationTarget(private val spec: PyFormatSpec) :
     return result
   }
 
+  /**
+   * Formats [value] as Python's general format `g` does.
+   *
+   * [keepFraction] gives the behavior of a precision with no presentation type, such as `.2`. A fixed-point result
+   * then keeps at least one digit after the decimal point, and the exponent form starts one exponent earlier.
+   * The alternate form `#` keeps the trailing zeros and the decimal point.
+   */
+  private fun formatGeneral(value: Double, precision: Int, keepFraction: Boolean): String {
+    // Python treats a precision of 0 as 1.
+    val significantDigits = maxOf(precision, 1)
+    val rounded = BigDecimal(value).round(MathContext(significantDigits, RoundingMode.HALF_EVEN))
+    val exponent = if (rounded.signum() == 0) 0 else rounded.precision() - rounded.scale() - 1
+    val exponentLimit = if (keepFraction) significantDigits - 1 else significantDigits
+    if (exponent < -4 || exponent >= exponentLimit) {
+      val mantissa = stripFraction(rounded.movePointLeft(exponent).setScale(significantDigits - 1, RoundingMode.HALF_EVEN).toPlainString())
+      return mantissa + String.format(Locale.ROOT, "e%+03d", exponent)
+    }
+    val fixed = stripFraction(rounded.setScale(maxOf(significantDigits - 1 - exponent, 0), RoundingMode.HALF_EVEN).toPlainString())
+    return if (keepFraction && '.' !in fixed) "$fixed.0" else fixed
+  }
+
+  /**
+   * Removes the trailing zeros of the fraction, and the decimal point when no fraction is left.
+   * The alternate form keeps both, and it adds a decimal point to a number with no fraction.
+   */
+  private fun stripFraction(number: String): String {
+    if (spec.hasAlternateForm) return if ('.' in number) number else "$number."
+    if ('.' !in number) return number
+    return number.trimEnd('0').removeSuffix(".")
+  }
+
+  /** Groups the integer digits of [value]. The sign, the fraction, the exponent and a `%` stay as they are. */
   private fun applyGrouping(value: String, groupingChar: Char, groupSize: Int): String {
-    // Find the integer part (before decimal point)
-    val parts = value.split('.')
-    val intPart = parts[0].trimStart('-', '+', ' ')
+    val hasHexDigits = spec.type == 'x' || spec.type == 'X'
     val prefix = value.takeWhile { it == '-' || it == '+' || it == ' ' }
-    val decPart = if (parts.size > 1) ".${parts[1]}" else ""
+    val intPart = value.substring(prefix.length).takeWhile { it in '0'..'9' || hasHexDigits && it.lowercaseChar() in 'a'..'f' }
+    val suffix = value.substring(prefix.length + intPart.length)
 
     // Group digits from right to left
     val grouped = intPart.reversed().chunked(groupSize).joinToString(groupingChar.toString()).reversed()
-    return prefix + grouped + decPart
+    return prefix + grouped + suffix
   }
 }
