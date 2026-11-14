@@ -39,10 +39,46 @@ internal class RuffConfigDiscoveryTest {
     write("plain/pyproject.toml", "[project]\nname = \"plain\"\n")
     write("dotted/pyproject.toml", "[tool.ruff.lint]\nselect = [\"E\"]\n")
     write("broken/pyproject.toml", "[tool.ruff\n")
+    write("array/pyproject.toml", "[[tool.ruff]]\nline-length = 1\n")
 
     assertNull(ruffConfigIn(dir("plain")))
     assertEquals("dotted/pyproject.toml", relative(ruffConfigIn(dir("dotted"))?.file))
     assertNull(ruffConfigIn(dir("broken")))
+    assertNull(ruffConfigIn(dir("array")))
+  }
+
+  @TestFor(issues = ["PY-93871"])
+  @Test
+  fun `a tool ruff table after its subtables keeps all settings`() {
+    write(
+      "dir/pyproject.toml",
+      """
+      [tool.ruff.lint.isort]
+      known-first-party = ["app"]
+
+      [tool.ruff.lint]
+      select = ["F401"]
+
+      [tool.ruff.ruff]
+      x = 1
+
+      [tool.ruff]
+      line-length = 120
+      """.trimIndent(),
+    )
+
+    assertEquals(
+      """{"lint":{"isort":{"known-first-party":["app"]},"select":["F401"]},"ruff":{"x":1},"line-length":120}""",
+      ruffConfigIn(dir("dir"))?.settings,
+    )
+  }
+
+  @TestFor(issues = ["PY-93871"])
+  @Test
+  fun `pyproject toml with a table defined twice does not count`() {
+    write("dir/pyproject.toml", "[tool.ruff]\nline-length = 1\n\n[tool.ruff]\nindent-width = 2\n")
+
+    assertNull(ruffConfigIn(dir("dir")))
   }
 
   @Test
