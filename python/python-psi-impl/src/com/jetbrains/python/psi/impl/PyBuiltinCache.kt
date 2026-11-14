@@ -67,8 +67,13 @@ class PyBuiltinCache private constructor(
     myExceptionsFile = getFileForSdk(project, sdk, QualifiedName.fromDottedString(EXCEPTIONS_MODULE)).toCachedFile(),
   )
 
+  /**
+   * True when the builtins file is present and each cached file is still valid.
+   * Otherwise [com.jetbrains.python.psi.resolve.PythonSdkPathCache.getBuiltins] makes a new cache.
+   */
   val isValid: Boolean
-    get() = builtinsFile?.isValid() == true
+    get() = builtinsFile?.isValid() == true &&
+            myTypesFile.isAbsentOrValid() && myTypeshedFile.isAbsentOrValid() && myExceptionsFile.isAbsentOrValid()
 
   /**
    * Looks for a top-level named item. (Package builtins does not contain any sensible nested names anyway.)
@@ -341,6 +346,8 @@ private class CachedFile(
     return file.findTopLevelClass(name)?.let { pyClass -> PyClassTypeImpl(pyClass, false) }
   }
 }
+
+private fun CachedFile?.isAbsentOrValid(): Boolean = this == null || file.isValid()
 
 private fun PyFile?.toCachedFile() =
   this?.let { CachedFile(this) }
