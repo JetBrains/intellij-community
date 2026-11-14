@@ -8,13 +8,15 @@ import java.util.concurrent.ConcurrentHashMap
 internal class ManuallyWrittenAttributes(private val bazelFilesLoader: BazelFilesLoader) {
   private val parsedBuildFiles = ConcurrentHashMap<Path, ParsedBuildFile>()
 
-  /** Returns the manually written attributes named [attributeName] of the target [targetName] in the BUILD file of [module]. */
+  /** Returns the manually written [attribute] of the target [targetName] in the BUILD file of [module]. */
   fun getManuallyWrittenAttributes(
     module: ModuleDescriptor,
-    attributeName: String,
+    attribute: ManuallyWrittenAttributeDefinition,
     targetName: String = module.targetName,
   ): List<ManuallyWrittenAttribute> {
-    return getParsedBuildFile(module).attributes.filter { it.targetName == targetName && it.attributeName == attributeName }
+    return getParsedBuildFile(module).attributes.filter {
+      it.targetName == targetName && attribute.matches(ruleName = it.targetType, attributeName = it.attributeName)
+    }
   }
 
   /**
@@ -33,7 +35,7 @@ internal class ManuallyWrittenAttributes(private val bazelFilesLoader: BazelFile
   }
 }
 
-private class ParsedBuildFile(
+internal class ParsedBuildFile(
   @JvmField val attributes: List<ManuallyWrittenAttribute>,
   /** Maps the name of a target to the name of its rule. */
   @JvmField val targetTypes: Map<String, String>,
@@ -52,15 +54,27 @@ internal fun Target.insertManuallyWrittenAttributes(manuallyWrittenAttributes: L
   }
 }
 
-internal const val DATA_ATTRIBUTE = "data"
-internal const val NON_CLASSPATH_DATA_ATTRIBUTE = "non_classpath_data"
-internal const val DIRECTORY_NAME_ATTRIBUTE = "directory_name"
-private val MANUALLY_WRITTEN_ATTRIBUTES = setOf(DATA_ATTRIBUTE, NON_CLASSPATH_DATA_ATTRIBUTE, DIRECTORY_NAME_ATTRIBUTE)
+/**
+ * An attribute that `jps-to-bazel` keeps in a BUILD file, because a developer writes it manually.
+ * Another rule can have an attribute with the same name that the generator writes. So the definition also names the rules.
+ */
+internal class ManuallyWrittenAttributeDefinition(
+  val attributeName: String,
+  /** The names of the rules whose targets can have the manually written attribute. */
+  val ruleNames: Set<String>,
+) {
+  fun matches(ruleName: String, attributeName: String): Boolean = attributeName == this.attributeName && ruleName in ruleNames
+}
+
+internal val DATA_ATTRIBUTE = ManuallyWrittenAttributeDefinition("data", ruleNames = setOf(JVM_LIBRARY_RULE, IJ_PLUGIN_MODULE_RULE))
+internal val NON_CLASSPATH_DATA_ATTRIBUTE = ManuallyWrittenAttributeDefinition("non_classpath_data", ruleNames = setOf(IJ_PLUGIN_MODULE_RULE))
+internal val DIRECTORY_NAME_ATTRIBUTE = ManuallyWrittenAttributeDefinition("directory_name", ruleNames = setOf(IJ_PLUGIN_RULE))
+private val MANUALLY_WRITTEN_ATTRIBUTES = listOf(DATA_ATTRIBUTE, NON_CLASSPATH_DATA_ATTRIBUTE, DIRECTORY_NAME_ATTRIBUTE)
 
 private val FUNCTION_CALL_REGEX = Regex("""([a-zA-Z_][a-zA-Z0-9_]*)\(""")
 private val ATTRIBUTE_ASSIGNMENT_REGEX = Regex(""" *([a-zA-Z_][a-zA-Z0-9_]*) = (.*)""")
 
-private fun parseBuildFile(bazelFile: Path, fileContent: String?): ParsedBuildFile {
+internal fun parseBuildFile(bazelFile: Path, fileContent: String?): ParsedBuildFile {
   val lines = fileContent?.lineSequence() ?: return ParsedBuildFile(attributes = emptyList(), targetTypes = emptyMap())
   var lastTargetType: String? = null
   var lastTargetName: String? = null
@@ -101,7 +115,8 @@ private fun parseBuildFile(bazelFile: Path, fileContent: String?): ParsedBuildFi
         continue
       }
       registerManuallyWrittenAttribute()
-      if (name in MANUALLY_WRITTEN_ATTRIBUTES) {
+      val targetType = lastTargetType
+      if (targetType != null && MANUALLY_WRITTEN_ATTRIBUTES.any { it.matches(ruleName = targetType, attributeName = name) }) {
         manuallyWrittenAttributeName = name
         manuallyWrittenValue.clear()
         manuallyWrittenValue.append(valueStart)

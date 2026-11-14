@@ -77,7 +77,9 @@ internal class ModuleList(
 
 }
 
-private const val IJ_PLUGIN_MODULE_RULE = "ij_plugin_module"
+internal const val JVM_LIBRARY_RULE = "jvm_library"
+internal const val IJ_PLUGIN_MODULE_RULE = "ij_plugin_module"
+internal const val IJ_PLUGIN_RULE = "ij_plugin"
 
 /**
  * The `config_setting` which matches if the community repository is loaded inside the ultimate repository.
@@ -795,7 +797,7 @@ internal class BazelBuildFileGenerator(
       resourceJarTargets.addAll(result.resourceJarsTargets)
     }
 
-    load("@rules_jvm//:jvm.bzl", "jvm_library")
+    load("@rules_jvm//:jvm.bzl", JVM_LIBRARY_RULE)
 
     if (deps != null && deps.provided.isNotEmpty()) {
       val wrappedProvidedLibs = generateProvidedLibs(deps.provided)
@@ -836,7 +838,7 @@ internal class BazelBuildFileGenerator(
       moduleTargetType = IJ_PLUGIN_MODULE_RULE
     }
     else {
-      moduleTargetType = "jvm_library"
+      moduleTargetType = JVM_LIBRARY_RULE
     }
     val targetName = moduleDescriptor.targetName + (if (moduleDescriptor.isTestModule) TEST_LIB_NAME_SUFFIX else "")
     val targetLabel = BazelLabel(targetName, moduleDescriptor)
@@ -1004,9 +1006,9 @@ internal class BazelBuildFileGenerator(
     moduleList: ModuleList,
     manuallyWrittenAttributes: ManuallyWrittenAttributes,
   ) {
-    load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+    load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", IJ_PLUGIN_RULE)
     val pluginTargetName = getPluginTargetName(moduleDescriptor)
-    target("ij_plugin") {
+    target(IJ_PLUGIN_RULE) {
       option("name", pluginTargetName)
       option("descriptor_module", ":${moduleDescriptor.targetName}${getPluginModuleTargetNameSuffix(moduleDescriptor, moduleList, manuallyWrittenAttributes)}")
       if (pluginXmlContentData.contentModuleNames.isNotEmpty()) {
