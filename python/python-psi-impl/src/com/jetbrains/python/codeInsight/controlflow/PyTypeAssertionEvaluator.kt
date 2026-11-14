@@ -10,6 +10,7 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.getType
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.isFinalClass
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyAsPattern
 import com.jetbrains.python.psi.PyAssertStatement
@@ -26,8 +27,6 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyGeneratorExpression
 import com.jetbrains.python.psi.PyGroupPattern
-import com.jetbrains.python.psi.PyKnownDecorator
-import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyListLiteralExpression
 import com.jetbrains.python.psi.PyLiteralPattern
 import com.jetbrains.python.psi.PyMatchStatement
@@ -223,8 +222,11 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
         }
       }
       else {
-        type !is PyLiteralType && !type.isNoneType && !type.containsAny(context = context) &&
-        !isRelated(type) && canEqualUnrelated(type, candidates, context)
+        // Two builtin literals are equal only when they are the same literal. An enum member of a builtin mixin, as in
+        // `class Number(IntEnum)`, can be equal to a builtin literal.
+        val comparable = if (type.isBuiltinLiteral) candidates.filter { !it.isBuiltinLiteral } else candidates
+        !type.isNoneType && !type.containsAny(context = context) &&
+        !isRelated(type) && canEqualUnrelated(type, comparable, context)
       }
     }
     val narrowed = if (remainingTypes.isEmpty()) {
@@ -242,12 +244,32 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
    */
   private fun canEqualUnrelated(type: PyType?, candidates: List<PyType?>, context: TypeEvalContext): Boolean {
     val comparable = candidates.filter { !it.isNoneType }
-    val group = builtinEqualityGroup(type) ?: return comparable.isNotEmpty() &&
+    val group = equalityGroup(type, context) ?: return comparable.isNotEmpty() &&
                                                    (canHaveCustomEquality(type, context) || comparable.any { canHaveCustomEquality(it, context) })
     return comparable.any { candidate ->
-      val candidateGroup = builtinEqualityGroup(candidate)
+      val candidateGroup = equalityGroup(candidate, context)
       candidateGroup == group || candidateGroup == null && canHaveCustomEquality(candidate, context)
     }
+  }
+
+  /**
+   * Returns the equality group of a builtin [type]. An enum with members and a builtin mixin, as in `class Number(IntEnum)`,
+   * cannot have a subclass. So it is in the group of the builtin class that defines its `__eq__` and `__ne__`.
+   */
+  private fun equalityGroup(type: PyType?, context: TypeEvalContext): Int? {
+    if (type !is PyClassType || type.isDefinition) return null
+    if (type.isBuiltin) return BUILTIN_EQUALITY_GROUPS[type.pyClass.name]
+    if (!PyStdlibTypeProvider.isFinalEnum(type.pyClass, context)) return null
+    val groups = listOf(PyNames.EQ, NE).flatMap { name ->
+      val members = type.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext(context))
+      if (members.isNullOrEmpty()) return null
+      members.map { member ->
+        val definingClass = (member.element as? PyFunction)?.containingClass ?: return null
+        if (!PyBuiltinCache.getInstance(definingClass).isBuiltin(definingClass)) return null
+        BUILTIN_EQUALITY_GROUPS[definingClass.name] ?: return null
+      }
+    }
+    return groups.distinct().singleOrNull()
   }
 
   /**
@@ -259,7 +281,7 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
   private fun canHaveCustomEquality(type: PyType?, context: TypeEvalContext): Boolean {
     if (type !is PyClassType || type.isDefinition) return true
     if (type is PyLiteralType && type.isBuiltin) return false
-    if (type !is PyLiteralType && !isFinal(type, context) && !PyStdlibTypeProvider.isFinalEnum(type.pyClass, context)) return true
+    if (type !is PyLiteralType && !isFinalClass(type.pyClass, context)) return true
     val objectClass = PyBuiltinCache.getInstance(type.pyClass).objectType?.pyClass ?: return true
     return listOf(PyNames.EQ, NE).any { name ->
       val members = type.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext(context))
@@ -451,9 +473,9 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
       PyNames.TYPE_BYTES to 2,
     )
 
-    private fun builtinEqualityGroup(type: PyType?): Int? {
-      return if (type is PyClassType && !type.isDefinition && type.isBuiltin) BUILTIN_EQUALITY_GROUPS[type.pyClass.name] else null
-    }
+    private val PyType?.isBuiltinLiteral: Boolean
+      get() = this is PyLiteralType && isBuiltin
+
 
     private fun isSafeForNegativeAssertion(expression: PyExpression, context: TypeEvalContext): Boolean {
       val elements: MutableList<PyExpression> = expandClassInfoExpressions(expression)
@@ -616,11 +638,6 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
     }
 
 
-    private fun isFinal(classType: PyClassType, context: TypeEvalContext): Boolean {
-      val deco = PyKnownDecoratorUtil.getKnownDecorators(classType.pyClass, context)
-      return deco.contains(PyKnownDecorator.TYPING_FINAL) || deco.contains(PyKnownDecorator.TYPING_FINAL_EXT)
-    }
-
     private fun isLiteralOrNoneType(type: PyType?): Boolean {
       return type is PyLiteralType || type.isNoneType
     }
@@ -641,7 +658,7 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
         if (areDisjoint(initial, suggested, context)) {
           return PyNeverType.NEVER
         }
-        if (isFinal(initial, context) || isFinal(suggested, context)) {
+        if (isFinalClass(initial.pyClass, context) || isFinalClass(suggested.pyClass, context)) {
           if (!PyTypeChecker.match(initial, suggested, context) && !PyTypeChecker.match(suggested, initial, context)) {
             return PyNeverType.NEVER
           }

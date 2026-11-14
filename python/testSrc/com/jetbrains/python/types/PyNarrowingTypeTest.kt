@@ -342,6 +342,101 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-94131"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
+    fun `an enum with members is never equal to a literal of another class`() = test("""
+      from enum import Enum
+
+      class Color(Enum):
+          RED = 1
+          GREEN = 2
+
+      def equality(color: Color):
+          if color == "red":
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+
+      def isinstance_check(color: Color):
+          if isinstance(color, str):
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94131"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
+    fun `an enum with a builtin mixin can be equal to a literal of the mixin`() = test("""
+      from enum import Enum, IntEnum
+      from typing import Literal
+
+      class Color(str, Enum):
+          RED = "red"
+
+      class Number(IntEnum):
+          ONE = 1
+
+      def str_mixin(color: Color):
+          if color == "red":
+              expr = color
+      #       └ TYPE Color
+
+      def int_mixin(number: Number):
+          if number == 1:
+              expr = number
+      #       └ TYPE Number
+
+      def member_literals(one: Literal[Number.ONE], red: Literal[Color.RED], i: Literal[1]):
+          if one == 1:
+              expr = one
+      #       └ TYPE Literal[Number.ONE]
+          if red == "red":
+              expr = red
+      #       └ TYPE Literal[Color.RED]
+          if i == Number.ONE:
+              expr = i
+      #       └ TYPE Literal[1]
+          match one:
+              case 1:
+                  expr = one
+      #           └ TYPE Literal[Number.ONE]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94131"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
+    fun `an enum with a builtin mixin is never equal to a literal of another builtin`() = test("""
+      from enum import IntEnum
+      from typing import Literal
+
+      class Number(IntEnum):
+          ONE = 1
+
+      def f(s: Literal["a"], t: Literal["a", "b"], one: Literal[Number.ONE], number: Number):
+          if s == Number.ONE:
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if one == "a":
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if number == "a":
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if t in ("a", Number.ONE):
+              expr = t
+      #       └ TYPE Literal["a"]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94131"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
+    fun `an enum without members can have a subclass`() = test("""
+      from enum import Enum
+
+      class Base(Enum):
+          def describe(self) -> str: ...
+
+      def f(value: Base):
+          if isinstance(value, str):
+              print(1)
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-93614"], classes = [PyTypeAssertionEvaluator::class])
     fun `enum value pattern does not keep a builtin`() = test("""
       from enum import Enum
