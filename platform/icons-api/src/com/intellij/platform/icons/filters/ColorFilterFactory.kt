@@ -8,4 +8,5 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface ColorFilterFactory {
     fun tintColor(color: Color, blendMode: BlendMode): ColorFilter
+    fun gray(brightness: Int, contrast: Int, alpha: Int): ColorFilter
 }

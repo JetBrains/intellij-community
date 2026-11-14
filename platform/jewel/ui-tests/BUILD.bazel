@@ -39,6 +39,7 @@ jvm_library(
         "//libraries/skiko",
         "//platform/jewel/foundation",
         "//platform/jewel/ui",
+        "//platform/icons-impl",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
         "//libraries/compose-foundation-desktop",
         "//libraries/junit4",

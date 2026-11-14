@@ -143,7 +143,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   /**
    * Creates a new action with the given text, description and both icon flavors.
    * {@code iconDescriptor} is rendered when the experimental icons pipeline is on
-   * ({@link ExperimentalIcons}), {@code icon} otherwise; pass both during the migration.
+   * ({@link ExperimentalIconRendering}), {@code icon} otherwise; pass both during the migration.
    *
    * @param text           serves as a tooltip when the presentation is a button,
    *                       and the name of the menu item when the presentation is a menu item (with mnemonic)
