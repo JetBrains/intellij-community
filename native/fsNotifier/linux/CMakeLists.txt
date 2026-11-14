@@ -16,6 +16,19 @@ target_compile_definitions(fsnotifier PRIVATE VERSION="${VERSION}")
 target_compile_options(fsnotifier PRIVATE "-O2" "-Wall" "-Wextra" "-Wpedantic")
 target_link_options(fsnotifier PRIVATE "-static" "-flto=full")
 
+include(CTest)
+if(BUILD_TESTING)
+    target_compile_definitions(fsnotifier PRIVATE FSNOTIFIER_TESTING)
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    add_test(
+        NAME fsnotifier-integration
+        COMMAND Python3::Interpreter ${CMAKE_CURRENT_LIST_DIR}/test_fsnotifier.py
+            --executable $<TARGET_FILE:fsnotifier>
+            --registration-race-hook
+    )
+    set_tests_properties(fsnotifier-integration PROPERTIES TIMEOUT 30)
+endif()
+
 if(CMAKE_SYSTEM_PROCESSOR STREQUAL "amd64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
     cmake_path(SET install_dir NORMALIZE ${CMAKE_CURRENT_LIST_DIR}/../../../bin/linux)
     install(TARGETS fsnotifier DESTINATION ${install_dir}/${CMAKE_SYSTEM_PROCESSOR})
