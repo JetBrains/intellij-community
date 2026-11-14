@@ -2,7 +2,6 @@
 package com.jetbrains.python
 
 import com.intellij.idea.TestFor
-import com.intellij.python.community.testFramework.fixme
 import com.intellij.testFramework.runInEdtAndGet
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
@@ -88,53 +87,82 @@ class PyTypeParameterCompletionTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-93937"])
-  fun `class type parameter not in its own default`() = fixme<AssertionError>("PY-93937", "U is in") {
-    assertNotOffered("""
-      y = 1
-      class C[T, U = ]: ...
-      #              └ CARET
-    """, "U", visible = "y")
-  }
+  fun `class type parameter not in its own default`() = assertNotOffered("""
+    y = 1
+    class C[T, U = ]: ...
+    #              └ CARET
+  """, "U", visible = "y")
 
   @Test
   @TestFor(issues = ["PY-93937"])
-  fun `function type parameters not in a default before the later type parameter`() = fixme<AssertionError>("PY-93937", "T is in") {
-    assertNotOffered("""
-      y = 1
-      def f[T = , U = int](a: T) -> U: ...
-      #         └ CARET
-    """, "T", "U", visible = "y")
-  }
+  fun `function type parameters not in a default before the later type parameter`() = assertNotOffered("""
+    y = 1
+    def f[T = , U = int](a: T) -> U: ...
+    #         └ CARET
+  """, "T", "U", visible = "y")
 
   @Test
   @TestFor(issues = ["PY-93937"])
-  fun `alias type parameters not in a default before the later type parameter`() = fixme<AssertionError>("PY-93937", "T is in") {
-    assertNotOffered("""
-      y = 1
-      type A[T = , U = int] = dict[T, U]
-      #          └ CARET
-    """, "T", "U", visible = "y")
-  }
+  fun `alias type parameters not in a default before the later type parameter`() = assertNotOffered("""
+    y = 1
+    type A[T = , U = int] = dict[T, U]
+    #          └ CARET
+  """, "T", "U", visible = "y")
 
   @Test
   @TestFor(issues = ["PY-93937"])
-  fun `function type parameters not in a bound`() = fixme<AssertionError>("PY-93937", "T is in") {
-    assertNotOffered("""
-      y = 1
-      def f[T, U: ](a: T, b: U) -> U: ...
-      #           └ CARET
-    """, "T", "U", visible = "y")
-  }
+  fun `function type parameters not in a bound`() = assertNotOffered("""
+    y = 1
+    def f[T, U: ](a: T, b: U) -> U: ...
+    #           └ CARET
+  """, "T", "U", visible = "y")
 
   @Test
   @TestFor(issues = ["PY-93937"])
-  fun `class type parameters not in a constraint`() = fixme<AssertionError>("PY-93937", "T is in") {
-    assertNotOffered("""
-      y = 1
-      class C[T, U: (, int)]: ...
-      #              └ CARET
-    """, "T", "U", visible = "y")
-  }
+  fun `class type parameters not in a constraint`() = assertNotOffered("""
+    y = 1
+    class C[T, U: (, int)]: ...
+    #              └ CARET
+  """, "T", "U", visible = "y")
+
+  @Test
+  @TestFor(issues = ["PY-93937"])
+  fun `class type parameters not in a bound of a method type parameter`() = assertNotOffered("""
+    y = 1
+    class C[T]:
+        def m[S: ](self) -> S: ...
+    #            └ CARET
+  """, "T", "S", visible = "y")
+
+  @Test
+  @TestFor(issues = ["PY-93937"])
+  fun `only the earlier method type parameter in a default of a method type parameter`() = assertNotOffered("""
+    class C[T]:
+        def m[R, S = ](self) -> S: ...
+    #                └ CARET
+  """, "T", "S", visible = "R")
+
+  @Test
+  @TestFor(issues = ["PY-93937"])
+  fun `only the earlier class type parameter in a subscription in a type parameter default`() = assertNotOffered("""
+    class C[T, U = list[]]: ...
+    #                   └ CARET
+  """, "U", visible = "T")
+
+  @Test
+  @TestFor(issues = ["PY-93937"])
+  fun `class type parameter not in its own default after a typed prefix`() = assertNotOffered("""
+    class C[Key, Value = V]: ...
+    #                     └ CARET
+  """, "Value", visible = "ValueError")
+
+  @Test
+  @TestFor(issues = ["PY-93937"])
+  fun `a ParamSpec not in a bound`() = assertNotOffered("""
+    y = 1
+    def f[**P, T: ](a: T) -> T: ...
+    #             └ CARET
+  """, "P", "T", visible = "y")
 
   @Test
   fun `class type parameters in the class body`() = assertOffered("""

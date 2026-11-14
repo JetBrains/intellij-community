@@ -656,9 +656,9 @@ public class PyReferenceImpl extends PyReferenceBase {
           return false;
         }
       }
-      else if (e instanceof PyTypeParameter) {
+      else if (e instanceof PyTypeParameter typeParameter) {
         // The control flow does not define a type parameter.
-        return true;
+        return isTypeParameterAllowed(typeParameter, element);
       }
       else if (ScopeUtil.getScopeOwner(e) == ScopeUtil.getScopeOwner(element)) {
         return PyDefUseUtil.isDefinedBefore(e, element);
@@ -698,6 +698,27 @@ public class PyReferenceImpl extends PyReferenceBase {
 
     ret.addAll(getOriginalElements(processor));
     return ret.toArray();
+  }
+
+  /**
+   * Returns true when the completion can offer {@code candidate} at {@code reference}.
+   * A bound or a constraint of a type parameter must not refer to a type parameter.
+   * A default of a type parameter refers only to the type parameters before it in the same list.
+   */
+  private static boolean isTypeParameterAllowed(@NotNull PyTypeParameter candidate, @NotNull PsiElement reference) {
+    final PyTypeParameter owner = PsiTreeUtil.getParentOfType(reference, PyTypeParameter.class);
+    if (owner == null) {
+      return true;
+    }
+    final PyExpression bound = owner.getBoundExpression();
+    if (bound != null && PsiTreeUtil.isAncestor(bound, reference, false)) {
+      return false;
+    }
+    final PyExpression defaultExpression = owner.getDefaultExpression();
+    if (defaultExpression != null && PsiTreeUtil.isAncestor(defaultExpression, reference, false)) {
+      return candidate.getParent() == owner.getParent() && candidate.getTextOffset() < owner.getTextOffset();
+    }
+    return true;
   }
 
   /**
