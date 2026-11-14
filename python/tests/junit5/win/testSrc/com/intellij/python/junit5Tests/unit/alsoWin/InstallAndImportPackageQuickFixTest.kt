@@ -81,4 +81,38 @@ internal class InstallAndImportPackageQuickFixTest {
     assertTrue(fixture.filterAvailableIntentions("Ignore unresolved reference").isNotEmpty())
     assertEquals(emptyList<String>(), fixture.filterAvailableIntentions("Install").map { it.text })
   }
+
+  @Test
+  @TestFor(issues = ["PY-93886"])
+  fun `install and import is not offered when the inspection does not suggest installing packages`(fixture: CodeInsightTestFixture) {
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(fixture.project, availablePackageNames = listOf("pandas"))
+    fixture.enableInspections(PyUnresolvedReferencesInspection().apply { suggestInstallingPackages = false })
+
+    fixture.configureByText("foo.py", "pd<caret>.array()")
+
+    fixture.findSingleIntention("Import 'turtle.pd'")
+    assertEquals(emptyList<String>(), fixture.filterAvailableIntentions("Install").map { it.text })
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93886"])
+  fun `install package is offered for an import`(fixture: CodeInsightTestFixture) {
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(fixture.project, availablePackageNames = listOf("pandas"))
+
+    fixture.configureByText("foo.py", "import pandas<caret>")
+
+    assertEquals(listOf("Install package pandas"), fixture.filterAvailableIntentions("Install").map { it.text })
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93886"])
+  fun `install package is not offered for an import when the inspection does not suggest installing packages`(fixture: CodeInsightTestFixture) {
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(fixture.project, availablePackageNames = listOf("pandas"))
+    fixture.enableInspections(PyUnresolvedReferencesInspection().apply { suggestInstallingPackages = false })
+
+    fixture.configureByText("foo.py", "import pandas<caret>")
+
+    assertTrue(fixture.filterAvailableIntentions("Ignore unresolved reference").isNotEmpty())
+    assertEquals(emptyList<String>(), fixture.filterAvailableIntentions("Install").map { it.text })
+  }
 }

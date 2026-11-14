@@ -57,8 +57,15 @@ import com.jetbrains.python.psi.resolve.fromModule
 import com.jetbrains.python.psi.resolve.resolveInRoot
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * The quick fixes of an unresolved reference.
+ *
+ * [suggestInstallingPackages] is the option of the [PyUnresolvedReferencesInspection] that runs. The companion object has none,
+ * so it reads the option from the current inspection profile of the project.
+ */
 @ApiStatus.Internal
-object PyUnresolvedReferenceQuickFixesImpl : PyUnresolvedReferenceQuickFixes {
+open class PyUnresolvedReferenceQuickFixesImpl(private val suggestInstallingPackages: Boolean? = null) : PyUnresolvedReferenceQuickFixes {
+  companion object : PyUnresolvedReferenceQuickFixesImpl()
 
   override fun getInstallPackageQuickFixes(
       node: PyElement,
@@ -73,6 +80,10 @@ object PyUnresolvedReferenceQuickFixesImpl : PyUnresolvedReferenceQuickFixes {
 
     // Don't suggest installing "name" for `import pkg.name` or `from pkg.name import foo`.
     if (node !is PyReferenceExpression || node.isQualified) {
+      return emptyList()
+    }
+
+    if (!suggestsInstallingPackages(node)) {
       return emptyList()
     }
 
@@ -230,7 +241,7 @@ object PyUnresolvedReferenceQuickFixesImpl : PyUnresolvedReferenceQuickFixes {
 
     val referencedName = if (node is PyReferenceExpression && !node.isQualified) node.referencedName else null
     val interpreter = node.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter
-    if (referencedName != null && interpreter != null) {
+    if (referencedName != null && interpreter != null && suggestsInstallingPackages(node)) {
       ContainerUtil.addIfNotNull(result, createInstallAndImportQuickFix(node.project, interpreter, referencedName, null))
       val realPackageName = PY_COMMON_IMPORT_ALIASES[referencedName]
       if (realPackageName != null) {
@@ -244,6 +255,9 @@ object PyUnresolvedReferenceQuickFixesImpl : PyUnresolvedReferenceQuickFixes {
   override fun getPluginQuickFixes(fixes: MutableList<LocalQuickFix>, reference: PsiReference) {
     PyUnresolvedReferenceQuickFixProvider.EP_NAME.forEachExtensionSafe { it.registerQuickFixes(reference, fixes) }
   }
+
+  private fun suggestsInstallingPackages(node: PyElement): Boolean =
+    suggestInstallingPackages ?: (PyUnresolvedReferencesInspection.getInstance(node)?.suggestInstallingPackages != false)
 
   private fun createInstallAndImportQuickFix(project: Project, interpreter: PythonInterpreter, importedModuleName: String, asName: String?): LocalQuickFix? {
     if (!PyPsiPackageUtil.isModuleNameCaseTrusted(importedModuleName)) {

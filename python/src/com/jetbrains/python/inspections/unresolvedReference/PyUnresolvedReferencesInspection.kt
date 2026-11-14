@@ -33,6 +33,10 @@ class PyUnresolvedReferencesInspection : PyInspection() {
   @JvmField
   var strictInstanceAttributes: Boolean = true
 
+  /** Whether the quick fixes of a problem offer to install a missing package. */
+  @JvmField
+  var suggestInstallingPackages: Boolean = true
+
   @Pattern(VALID_ID_PATTERN)
   override fun getID(): String = "PyUnresolvedReferences"
 
@@ -47,7 +51,7 @@ class PyUnresolvedReferencesInspection : PyInspection() {
                                                 getEffectiveLanguageLevel(session.file),
                                                 strictClassAttributes,
                                                 strictInstanceAttributes,
-                                                PyUnresolvedReferenceQuickFixesImpl)
+                                                PyUnresolvedReferenceQuickFixesImpl(suggestInstallingPackages))
     // buildVisitor() will be called on injected files in the same session - don't overwrite if we already have one
     val existingVisitor = session.getUserData(KEY)
     if (existingVisitor == null) {
@@ -70,7 +74,9 @@ class PyUnresolvedReferencesInspection : PyInspection() {
     OptPane.checkbox("strictClassAttributes",
                      PyPsiBundle.message("INSP.unresolved.refs.strict.class.attr.option")),
     OptPane.checkbox("strictInstanceAttributes",
-                     PyPsiBundle.message("INSP.unresolved.refs.strict.instance.attr.option")))
+                     PyPsiBundle.message("INSP.unresolved.refs.strict.instance.attr.option")),
+    OptPane.checkbox("suggestInstallingPackages",
+                     PyPsiBundle.message("INSP.unresolved.refs.suggest.installing.packages.option")))
 
   companion object {
     private val KEY = Key.create<PyUnresolvedReferencesVisitor>("PyUnresolvedReferencesInspection.Visitor")
