@@ -15,11 +15,13 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.python.lsp.core.pyLspWorkspaceRootOf
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.apache.tuweni.toml.Toml
-import org.apache.tuweni.toml.TomlTable
+import tools.jackson.core.JacksonException
+import tools.jackson.dataformat.toml.TomlMapper
 import java.io.IOException
 
 private val LOG = fileLogger()
+
+private val TOML_MAPPER = TomlMapper()
 
 /** The names of the Ruff config files, in the order that Ruff reads them in one directory. */
 internal val RUFF_CONFIG_FILE_NAMES: List<String> = listOf(".ruff.toml", "ruff.toml", PY_PROJECT_TOML)
@@ -111,9 +113,14 @@ private fun isRuffConfigRename(event: VFilePropertyChangeEvent): Boolean =
 
 /** The `tool.ruff` table of the `pyproject.toml` text [text] as JSON, or `null` when the text has none or does not parse. */
 private fun ruffTableOf(text: String): String? {
-  val toml = Toml.parse(text)
-  if (toml.hasErrors()) return null
-  return (toml.get(listOf("tool", "ruff")) as? TomlTable)?.toJson()
+  val root = try {
+    TOML_MAPPER.readTree(text)
+  }
+  catch (e: JacksonException) {
+    LOG.debug("Cannot parse pyproject.toml", e)
+    return null
+  }
+  return root.at("/tool/ruff").takeIf { it.isObject }?.toString()
 }
 
 private fun loadText(file: VirtualFile): String? =
