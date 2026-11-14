@@ -4199,6 +4199,51 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/destructuringDeclarationEntryInLoop.kt");
         }
 
+        @TestMetadata("destructuringDeclarationEntryNameBasedVarSameType.kt")
+        public void testDestructuringDeclarationEntryNameBasedVarSameType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/destructuringDeclarationEntryNameBasedVarSameType.kt");
+        }
+
+        @TestMetadata("destructuringDeclarationEntryNameBasedVarWiderType.kt")
+        public void testDestructuringDeclarationEntryNameBasedVarWiderType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/destructuringDeclarationEntryNameBasedVarWiderType.kt");
+        }
+
+        @TestMetadata("destructuringDeclarationEntryPositionalVarSameType.kt")
+        public void testDestructuringDeclarationEntryPositionalVarSameType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/destructuringDeclarationEntryPositionalVarSameType.kt");
+        }
+
+        @TestMetadata("destructuringDeclarationEntryPositionalVarWiderType.kt")
+        public void testDestructuringDeclarationEntryPositionalVarWiderType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/destructuringDeclarationEntryPositionalVarWiderType.kt");
+        }
+
+        @TestMetadata("destructuringDeclarationEntryValWiderType.kt")
+        public void testDestructuringDeclarationEntryValWiderType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/destructuringDeclarationEntryValWiderType.kt");
+        }
+
+        @TestMetadata("destructuringDeclarationEntryValWiderTypeChangesOverload.kt")
+        public void testDestructuringDeclarationEntryValWiderTypeChangesOverload() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/destructuringDeclarationEntryValWiderTypeChangesOverload.kt");
+        }
+
+        @TestMetadata("destructuringDeclarationEntryVarNullableType.kt")
+        public void testDestructuringDeclarationEntryVarNullableType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/destructuringDeclarationEntryVarNullableType.kt");
+        }
+
+        @TestMetadata("destructuringDeclarationEntryVarSameType.kt")
+        public void testDestructuringDeclarationEntryVarSameType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/destructuringDeclarationEntryVarSameType.kt");
+        }
+
+        @TestMetadata("destructuringDeclarationEntryVarWiderType.kt")
+        public void testDestructuringDeclarationEntryVarWiderType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/destructuringDeclarationEntryVarWiderType.kt");
+        }
+
         @TestMetadata("dotQualifiedInitializer.kt")
         public void testDotQualifiedInitializer() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/dotQualifiedInitializer.kt");

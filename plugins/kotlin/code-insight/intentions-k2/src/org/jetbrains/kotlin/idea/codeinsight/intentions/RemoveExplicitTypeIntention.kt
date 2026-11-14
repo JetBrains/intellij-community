@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -85,7 +86,8 @@ internal class RemoveExplicitTypeIntention :
     context(session: KaSession)
     override fun prepareContext(element: KtDeclarationWithReturnType): Unit? =
         when (element) {
-            is KtParameter, is KtDestructuringDeclarationEntry -> true
+            is KtParameter -> true
+            is KtDestructuringDeclarationEntry -> element.hasSameTypeWithoutExplicitType()
             is KtNamedFunction if element.hasBlockBody() -> element.returnType.classId == KaStandardTypeClassIds.UNIT
             is KtNamedFunction if element.isRecursive() -> false
             is KtCallableDeclaration if publicReturnTypeShouldBePresentInApiMode(element) -> false
@@ -126,6 +128,12 @@ internal class RemoveExplicitTypeIntention :
             initializerType.isSubtypeOf(explicitType)
         }
         return !typeCanBeRemoved
+    }
+
+    context(_: KaSession)
+    private fun KtDestructuringDeclarationEntry.hasSameTypeWithoutExplicitType(): Boolean {
+        val call = resolveSuccessfulCall() ?: return false
+        return call.signature.returnType.semanticallyEquals(symbol.returnType)
     }
 
     /**
