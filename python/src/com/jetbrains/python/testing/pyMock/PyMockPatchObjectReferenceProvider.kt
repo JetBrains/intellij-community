@@ -31,10 +31,12 @@ import org.jetbrains.annotations.ApiStatus
  * - `patch.object(Target, "attr")` and `mocker.patch.object(Target, "attr")` — plain calls
  *
  * When `create=True` is present, the reference is marked soft (no unresolved error).
+ * An f-string with placeholders gets no reference.
  */
 internal class PyMockPatchObjectReferenceProvider : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val str = element as? PyStringLiteralExpression ?: return emptyArray()
+    if (str.isInterpolated) return emptyArray()
     val callExpr = getPatchObjectCall(str) ?: return emptyArray()
 
     val createAllowed = isCreateAllowed(callExpr)
