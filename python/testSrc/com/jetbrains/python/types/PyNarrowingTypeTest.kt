@@ -492,6 +492,177 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
+  @TestInspections(enableInspections = [PyUnreachableCodeInspection::class])
+  inner class ComparisonReachability {
+    @Test
+    @TestFor(issues = ["PY-94129"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
+    fun `values of disjoint final classes are never equal or identical`() = test("""
+      from typing import final
+
+      @final
+      class A: ...
+
+      @final
+      class B: ...
+
+      def f(a: A, b: B, a2: A):
+          if A() == B():
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if a == b:
+              print(2)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if a is b:
+              print(3)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if a != b:
+              print(4)
+          else:
+              print(5)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if a2 == a == b:
+              print(6)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if a == a2:
+              print(7)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94129"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
+    fun `a class with its own comparison or a subclass keeps the branch reachable`() = test("""
+      from typing import final
+
+      @final
+      class A: ...
+
+      @final
+      class WithEq:
+          def __eq__(self, other: object) -> bool: ...
+
+      @final
+      class WithNe:
+          def __ne__(self, other: object) -> bool: ...
+
+      class Open: ...
+
+      def f(a: A, with_eq: WithEq, with_ne: WithNe, open: Open, nothing: None):
+          if a == with_eq:
+              print(1)
+          if with_eq == a:
+              print(2)
+          if a == with_ne:
+              print(3)
+          if a == open:
+              print(4)
+          if open == nothing:
+              print(5)
+          if a == nothing:
+              print(6)
+      #       ^^^^^^^^ WARNING This code is unreachable
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94129"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
+    fun `a false negated chain keeps the branch reachable`() = test("""
+      from typing import final
+
+      @final
+      class A: ...
+
+      @final
+      class B: ...
+
+      def f(x: A, y: A, b: B):
+          if x != y != b:
+              print(1)
+          else:
+              print(2)
+          if x is not y is not b:
+              print(3)
+          else:
+              print(4)
+          if x == b == False:
+              print(5)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          else:
+              print(6)
+          if x is b is False:
+              print(7)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          else:
+              print(8)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94129"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
+    fun `builtin values compare by their equality groups`() = test("""
+      def f(i: int, s: str, b: bytes, x: float):
+          if i == s:
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if s == b:
+              print(2)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if i == x:
+              print(3)
+          if i is x:
+              print(4)
+          if i is s:
+              print(5)
+      #       ^^^^^^^^ WARNING This code is unreachable
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94129"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
+    fun `one final class is enough for identity`() = test("""
+      from typing import final
+
+      @final
+      class A: ...
+
+      class Open: ...
+
+      class Base: ...
+
+      class Derived(Base): ...
+
+      def f(a: A, open: Open, base: Base, derived: Derived):
+          if a is open:
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if base is derived:
+              print(2)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94129"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
+    fun `members of different enums are never equal unless a builtin mixin compares them`() = test("""
+      from enum import Enum, IntEnum
+
+      class Color(Enum):
+          RED = 1
+
+      class Shape(Enum):
+          SQUARE = 1
+
+      class Number(IntEnum):
+          ONE = 1
+
+      class Size(IntEnum):
+          SMALL = 1
+
+      def f(color: Color, shape: Shape, number: Number, size: Size, i: int):
+          if color == shape:
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if number == size:
+              print(2)
+          if number == i:
+              print(3)
+      """.trimIndent())
+  }
+
+  @Nested
   inner class IsinstanceNarrowing {
     @Test
     @TestFor(classes = [PyCustomType::class])
