@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.Stack
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.ast.PyAstBinaryExpression
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.getType
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.isFinalClass
@@ -143,7 +144,16 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
     val isIdentity = node.isOperator(PyNames.IS) || node.isOperator("isnot")
     val isEquality = PyTokenTypes.EQEQ == operator || PyTokenTypes.NE == operator || PyTokenTypes.NE_OLD == operator
     if (isIdentity || isEquality) {
-      setPositive(node.isOperator(PyNames.IS) || PyTokenTypes.EQEQ == operator) { processIsOrEquals(lhs, rhs, isIdentity) }
+      val isPositiveOperator = node.isOperator(PyNames.IS) || PyTokenTypes.EQEQ == operator
+      val chainAwareLhs = PyAstBinaryExpression.getChainedComparisonAwareLeftExpression(node) as? PyExpression
+      // In `a == b == c`, the right comparison is `b == c`. Only a true chain of `==` or `is` proves that each comparison is true.
+      val isChain = chainAwareLhs !== node.leftExpression
+      val comparedLhs = when {
+        !isChain -> lhs
+        isPositiveOperator -> PyPsiUtils.flattenParens(chainAwareLhs)
+        else -> null
+      }
+      setPositive(isPositiveOperator) { processIsOrEquals(lhs, rhs, isIdentity, isChain, comparedLhs) }
     }
 
     if (PyTokenTypes.IN_KEYWORD == operator || node.isOperator("notin")) {
@@ -151,17 +161,25 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
     }
   }
 
-  private fun processIsOrEquals(lhs: PyExpression, rhs: PyExpression, isIdentity: Boolean) {
-    val leftBoolean = PyEvaluator.evaluateNoResolve(lhs, Boolean::class.java)
-    if (leftBoolean != null) {
-      setPositive(leftBoolean) { rhs.accept(this) }
-      return
-    }
+  /**
+   * @param isChain whether [lhs] is the comparison before [rhs] in a chain such as `a == b == c`
+   * @param comparedLhs the left operand of the comparison of [rhs], or `null` when a true edge does not prove that this
+   * comparison is true, as in a negated chain `a != b != c`
+   */
+  private fun processIsOrEquals(lhs: PyExpression, rhs: PyExpression, isIdentity: Boolean, isChain: Boolean, comparedLhs: PyExpression?) {
+    // `a == b == False` means `a == b and b == False`, not `(a == b) == False`
+    if (!isChain) {
+      val leftBoolean = PyEvaluator.evaluateNoResolve(lhs, Boolean::class.java)
+      if (leftBoolean != null) {
+        setPositive(leftBoolean) { rhs.accept(this) }
+        return
+      }
 
-    val rightBoolean = PyEvaluator.evaluateNoResolve(rhs, Boolean::class.java)
-    if (rightBoolean != null) {
-      setPositive(rightBoolean) { lhs.accept(this) }
-      return
+      val rightBoolean = PyEvaluator.evaluateNoResolve(rhs, Boolean::class.java)
+      if (rightBoolean != null) {
+        setPositive(rightBoolean) { lhs.accept(this) }
+        return
+      }
     }
 
     if (isNone(lhs)) {
@@ -197,6 +215,36 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
     else {
       pushAssertion(lhs, false, suggestedType, ::createEqualityAssertionType)
     }
+    if (positive && comparedLhs != null) {
+      // A comparison that is never true makes its true edge unreachable, also when no operand can be narrowed.
+      // The assertion has no target, so the operand types after the condition do not change.
+      myStack.push(Assertion(null) { context ->
+        if (canNeverCompareTrue(context.getType(comparedLhs), context.getType(rhs), isIdentity, context)) Ref(PyNeverType.NEVER) else null
+      })
+    }
+  }
+
+  /**
+   * Returns `true` when no value of [left] can be identical to ([isIdentity]) or equal to a value of [right].
+   */
+  private fun canNeverCompareTrue(left: PyType?, right: PyType?, isIdentity: Boolean, context: TypeEvalContext): Boolean {
+    val rightMembers = right.asUnionSequence().toList()
+    return left.asUnionSequence().all { leftMember ->
+      rightMembers.all { rightMember -> canNeverCompareTrueMembers(leftMember, rightMember, isIdentity, context) }
+    }
+  }
+
+  private fun canNeverCompareTrueMembers(left: PyType?, right: PyType?, isIdentity: Boolean, context: TypeEvalContext): Boolean {
+    if (left !is PyClassType || right !is PyClassType || left.isDefinition || right.isDefinition) return false
+    if (listOf(left, right).any { isUnknown(it, context) || it.inheritsAny(context) }) return false
+    // A value of a class can be equal or identical to a value of its subclass
+    if (left.pyClass.isSubclass(right.pyClass, context) || right.pyClass.isSubclass(left.pyClass, context)) return false
+    if (isIdentity) {
+      // A variable of `float` or `complex` can hold an `int`
+      val group = equalityGroup(left, context)
+      return (group == null || group != equalityGroup(right, context)) && intersect(left, right, context) is PyNeverType
+    }
+    return !canEqualUnrelated(left, listOf(right), context) && !canEqualUnrelated(right, listOf(left), context)
   }
 
   /**
