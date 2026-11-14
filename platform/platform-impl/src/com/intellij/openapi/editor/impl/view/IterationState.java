@@ -119,7 +119,11 @@ public final class IterationState {
   private final boolean myReverseIteration;
   private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<>();
   private final List<TextAttributes> myCachedAttributesList = new ArrayList<>(5);
-  private final List<BackgroundLayer> myCachedBackgroundLayers = new ArrayList<>(5);
+  private final List<BackgroundLayer> myStepLayers = new ArrayList<>(5);
+  private final List<BackgroundLayer> myStepLayersView = Collections.unmodifiableList(myStepLayers);
+  private final List<BackgroundLayer> myBreakLayers = new ArrayList<>(5);
+  private final List<BackgroundLayer> myBreakLayersView = Collections.unmodifiableList(myBreakLayers);
+  private final TextAttributes myBreakAttributes = new TextAttributes();
   private final GuardedBlocksIndex myGuardedBlocks;
 
   private int myStartOffset;
@@ -127,8 +131,21 @@ public final class IterationState {
   private int myCurrentSelectionIndex;
   private List<BackgroundLayer> myBackgroundLayers;
   private List<BackgroundLayer> myLastBackgroundLayers;
+  private BackgroundLayer mySelectionLayer;
+  private BackgroundLayer myFoldLayer;
+  private BackgroundLayer myGuardLayer;
+  private BackgroundLayer myCaretRowLayer;
+  private BackgroundLayer mySyntaxLayer;
+  private TextAttributes myGuardAttributes;
+  private TextAttributes mySyntaxAttributes;
   private FoldRegion myCurrentFold;
   private boolean myNextIsFoldRegion;
+  /**
+   * Says that {@link #myBreakAttributes} and {@link #myBreakLayers} hold the values at a line break of the current step,
+   * for the argument {@link #myBreakComputedBeforeBreak}. {@link #advance()} clears it.
+   */
+  private boolean myBreakComputed;
+  private boolean myBreakComputedBeforeBreak;
 
   @ApiStatus.Internal
   public IterationState(
@@ -220,6 +237,7 @@ public final class IterationState {
   @ApiStatus.Internal
   public void advance() {
     myNextIsFoldRegion = false;
+    myBreakComputed = false;
     myStartOffset = myEndOffset;
     advanceSegmentHighlighters();
     advanceCurrentSelectionIndex();
@@ -267,11 +285,14 @@ public final class IterationState {
     return getBreakAttributes(false);
   }
 
+  /**
+   * Gives the attributes at a line break.
+   * The attributes are read-only, and they are valid as long as the list of {@link #getBreakBackgroundLayers(boolean)}.
+   */
   @ApiStatus.Internal
   public @NotNull TextAttributes getBreakAttributes(boolean beforeBreak) {
-    TextAttributes attributes = new TextAttributes();
-    setAttributes(attributes, true, beforeBreak);
-    return attributes;
+    computeAtBreak(beforeBreak);
+    return myBreakAttributes;
   }
 
   @ApiStatus.Internal
@@ -279,14 +300,37 @@ public final class IterationState {
     return myMergedAttributes;
   }
 
+  /**
+   * Gives the background layers of the current step, from the top layer down.
+   * The list is read-only, and it is valid until the next {@link #advance()}. A caller that keeps it longer must copy it.
+   */
   @ApiStatus.Internal
   public @NotNull List<BackgroundLayer> getBackgroundLayers() {
     return myBackgroundLayers;
   }
 
+  /**
+   * Gives the background layers at a line break, from the top layer down.
+   * The list is read-only. It is valid until the next {@link #advance()}, or until a call of this method or of
+   * {@link #getBreakAttributes(boolean)} with the other argument.
+   */
   @ApiStatus.Internal
   public @NotNull List<BackgroundLayer> getBreakBackgroundLayers(boolean beforeBreak) {
-    return setAttributes(new TextAttributes(), true, beforeBreak);
+    computeAtBreak(beforeBreak);
+    return myBreakLayers.isEmpty() ? Collections.emptyList() : myBreakLayersView;
+  }
+
+  /**
+   * Computes the attributes and the layers at a line break, once for each step and argument.
+   * Only the result of the last argument stays.
+   */
+  private void computeAtBreak(boolean beforeBreak) {
+    if (myBreakComputed && myBreakComputedBeforeBreak == beforeBreak) {
+      return;
+    }
+    setAttributes(myBreakAttributes, true, beforeBreak);
+    myBreakComputed = true;
+    myBreakComputedBeforeBreak = beforeBreak;
   }
 
   @ApiStatus.Internal
@@ -584,26 +628,147 @@ public final class IterationState {
   }
 
   private void reinit() {
-    myLastBackgroundLayers = myBackgroundLayers;
+    if (myEditorRightAligned && myBackgroundLayers != null) {
+      // a right-aligned editor fills after the line end with the layers of the previous step
+      myLastBackgroundLayers = List.copyOf(myBackgroundLayers);
+    }
     myBackgroundLayers = setAttributes(myMergedAttributes, false, false);
   }
 
   private void addAttributes(
+    @NotNull List<BackgroundLayer> layers,
     @NotNull TextAttributes attributes,
+    @Nullable BackgroundLayer layer
+  ) {
+    myCachedAttributesList.add(attributes);
+    if (layer != null) {
+      layers.add(layer);
+    }
+  }
+
+  /**
+   * Gives a background layer of this color, or null when the color is absent or the iteration reads no background.
+   */
+  private @Nullable BackgroundLayer createLayer(
+    @Nullable Color color,
     int layer,
     boolean rounded,
     boolean hugs,
     boolean forcesBackground,
     int span
   ) {
-    myCachedAttributesList.add(attributes);
-    Color color = attributes.getBackgroundColor();
-    if (color != null) {
-      myCachedBackgroundLayers.add(new BackgroundLayer(color, layer, rounded, hugs, forcesBackground, span));
+    if (color == null || myUseOnlyFontOrForegroundAffectingHighlighters) {
+      return null;
     }
+    return new BackgroundLayer(color, layer, rounded, hugs, forcesBackground, span);
+  }
+
+  /**
+   * Gives the layer of the selection, or null when the selection sets no background.
+   */
+  private @Nullable BackgroundLayer selectionLayer(@NotNull TextAttributes selection) {
+    if (mySelectionLayer == null) {
+      mySelectionLayer = createLayer(
+        selection.getBackgroundColor(),
+        HighlighterLayer.SELECTION,
+        myRoundedHighlighting,
+        myHuggingHighlighting,
+        false,
+        Integer.MAX_VALUE
+      );
+    }
+    return mySelectionLayer;
+  }
+
+  /**
+   * Gives the layer of the fold placeholder, or null when the placeholder sets no background.
+   */
+  private @Nullable BackgroundLayer foldLayer(@NotNull TextAttributes fold) {
+    if (myFoldLayer == null) {
+      myFoldLayer = createLayer(
+        fold.getBackgroundColor(),
+        HighlighterLayer.GUARDED_BLOCKS,
+        myRoundedHighlighting,
+        false,
+        false,
+        Integer.MAX_VALUE
+      );
+    }
+    return myFoldLayer;
+  }
+
+  /**
+   * Gives the layer of a guarded block, or null when the scheme sets no read-only color.
+   */
+  private @Nullable BackgroundLayer guardLayer() {
+    if (myGuardLayer == null) {
+      myGuardLayer = createLayer(
+        myReadOnlyColor,
+        HighlighterLayer.GUARDED_BLOCKS,
+        myRoundedHighlighting,
+        false,
+        true,
+        Integer.MAX_VALUE
+      );
+    }
+    return myGuardLayer;
+  }
+
+  /**
+   * Gives the layer of the caret row, or null when the caret row sets no background.
+   */
+  private @Nullable BackgroundLayer caretRowLayer(@NotNull TextAttributes caret) {
+    if (myCaretRowLayer == null) {
+      myCaretRowLayer = createLayer(
+        caret.getBackgroundColor(),
+        HighlighterLayer.CARET_ROW,
+        false,
+        false,
+        false,
+        Integer.MAX_VALUE
+      );
+    }
+    return myCaretRowLayer;
+  }
+
+  /**
+   * Gives the layer of these syntax attributes, or null when they set no background.
+   */
+  private @Nullable BackgroundLayer syntaxLayer(@NotNull TextAttributes syntax) {
+    if (mySyntaxAttributes != syntax) {
+      mySyntaxAttributes = syntax;
+      mySyntaxLayer = createLayer(
+        syntax.getBackgroundColor(),
+        HighlighterLayer.SYNTAX,
+        false,
+        false,
+        false,
+        Integer.MAX_VALUE
+      );
+    }
+    return mySyntaxLayer;
+  }
+
+  /**
+   * Gives the attributes of a guarded block of this iteration.
+   */
+  private @NotNull TextAttributes guardAttributes() {
+    if (myGuardAttributes == null) {
+      myGuardAttributes = new TextAttributes(null, myReadOnlyColor, null, EffectType.BOXED, Font.PLAIN);
+    }
+    return myGuardAttributes;
   }
 
   private @NotNull List<BackgroundLayer> setAttributes(@NotNull TextAttributes attributes, boolean atBreak, boolean beforeBreak) {
+    List<BackgroundLayer> layers;
+    List<BackgroundLayer> layersView;
+    if (atBreak) {
+      layers = myBreakLayers;
+      layersView = myBreakLayersView;
+    } else {
+      layers = myStepLayers;
+      layersView = myStepLayersView;
+    }
     boolean isInSelection = isInSelection(atBreak);
     boolean isInCaretRow = isInCaretRow(
       !myReverseIteration && (!atBreak || !beforeBreak),
@@ -619,9 +784,7 @@ public final class IterationState {
     TextAttributes selection = getSelectionAttributes(isInSelection);
     TextAttributes caret = getCaretRowAttributes(isInCaretRow);
     TextAttributes fold = myCurrentFold != null ? myFoldTextAttributes : null;
-    TextAttributes guard = isInGuardedBlock
-                           ? new TextAttributes(null, myReadOnlyColor, null, EffectType.BOXED, Font.PLAIN)
-                           : null;
+    TextAttributes guard = isInGuardedBlock ? guardAttributes() : null;
 
     int size = myCurrentHighlighters.size();
     if (size > 1) {
@@ -637,7 +800,7 @@ public final class IterationState {
 
     List<TextAttributes> cachedAttributes = myCachedAttributesList;
     if (!cachedAttributes.isEmpty()) cachedAttributes.clear();
-    if (!myCachedBackgroundLayers.isEmpty()) myCachedBackgroundLayers.clear();
+    if (!layers.isEmpty()) layers.clear();
 
     for (int i = 0; i < size; i++) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
@@ -648,46 +811,50 @@ public final class IterationState {
       }
       if (highlighter.getLayer() < HighlighterLayer.SELECTION) {
         if (selection != null) {
-          addAttributes(selection, HighlighterLayer.SELECTION, myRoundedHighlighting, myHuggingHighlighting, false, Integer.MAX_VALUE);
+          addAttributes(layers, selection, selectionLayer(selection));
           selection = null;
         }
       }
 
       if (fold != null && highlighter.getLayer() < HighlighterLayer.GUARDED_BLOCKS) {
-        addAttributes(fold, HighlighterLayer.GUARDED_BLOCKS, myRoundedHighlighting, false, false, Integer.MAX_VALUE);
+        addAttributes(layers, fold, foldLayer(fold));
         fold = null;
       }
 
       if (guard != null && highlighter.getLayer() < HighlighterLayer.GUARDED_BLOCKS) {
-        addAttributes(guard, HighlighterLayer.GUARDED_BLOCKS, myRoundedHighlighting, false, true, Integer.MAX_VALUE);
+        addAttributes(layers, guard, guardLayer());
         guard = null;
       }
 
       if (caret != null && highlighter.getLayer() < HighlighterLayer.CARET_ROW) {
-        addAttributes(caret, HighlighterLayer.CARET_ROW, false, false, false, Integer.MAX_VALUE);
+        addAttributes(layers, caret, caretRowLayer(caret));
         caret = null;
       }
 
       if (syntax != null && highlighter.getLayer() < HighlighterLayer.SYNTAX) {
-        addAttributes(syntax, HighlighterLayer.SYNTAX, false, false, false, Integer.MAX_VALUE);
+        addAttributes(layers, syntax, syntaxLayer(syntax));
         syntax = null;
       }
 
       TextAttributes textAttributes = highlighter.getTextAttributes(myColorsScheme);
       if (textAttributes != null && textAttributes != TextAttributes.ERASE_MARKER) {
-        boolean rounded = BackgroundLayer.isRounded(highlighter.getTargetArea(), myRoundedHighlighting);
-        int span = highlighter.getAffectedAreaEndOffset() - highlighter.getAffectedAreaStartOffset();
-        addAttributes(textAttributes, highlighter.getLayer(), rounded, false, false, span);
+        BackgroundLayer layer = createLayer(
+          textAttributes.getBackgroundColor(),
+          highlighter.getLayer(),
+          BackgroundLayer.isRounded(highlighter.getTargetArea(), myRoundedHighlighting),
+          false,
+          false,
+          highlighter.getAffectedAreaEndOffset() - highlighter.getAffectedAreaStartOffset()
+        );
+        addAttributes(layers, textAttributes, layer);
       }
     }
 
-    if (selection != null) {
-      addAttributes(selection, HighlighterLayer.SELECTION, myRoundedHighlighting, myHuggingHighlighting, false, Integer.MAX_VALUE);
-    }
-    if (fold != null) addAttributes(fold, HighlighterLayer.GUARDED_BLOCKS, myRoundedHighlighting, false, false, Integer.MAX_VALUE);
-    if (guard != null) addAttributes(guard, HighlighterLayer.GUARDED_BLOCKS, myRoundedHighlighting, false, true, Integer.MAX_VALUE);
-    if (caret != null) addAttributes(caret, HighlighterLayer.CARET_ROW, false, false, false, Integer.MAX_VALUE);
-    if (syntax != null) addAttributes(syntax, HighlighterLayer.SYNTAX, false, false, false, Integer.MAX_VALUE);
+    if (selection != null) addAttributes(layers, selection, selectionLayer(selection));
+    if (fold != null) addAttributes(layers, fold, foldLayer(fold));
+    if (guard != null) addAttributes(layers, guard, guardLayer());
+    if (caret != null) addAttributes(layers, caret, caretRowLayer(caret));
+    if (syntax != null) addAttributes(layers, syntax, syntaxLayer(syntax));
 
     Color fore = null;
     Color back = isInGuardedBlock ? myReadOnlyColor : null;
@@ -730,7 +897,7 @@ public final class IterationState {
     if (effectsBuilder != null) {
       effectsBuilder.applyTo(attributes);
     }
-    return myCachedBackgroundLayers.isEmpty() ? Collections.emptyList() : List.copyOf(myCachedBackgroundLayers);
+    return layers.isEmpty() ? Collections.emptyList() : layersView;
   }
 
   private boolean isInCaretRow(boolean includeLineStart, boolean includeLineEnd) {

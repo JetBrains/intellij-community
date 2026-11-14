@@ -47,6 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 public class IterationStateTest {
@@ -417,6 +418,19 @@ public class IterationStateTest {
       assertFalse(it.atEnd());
       assertEquals(Color.blue, it.getMergedAttributes().getBackgroundColor());
       assertEquals(mono, it.getMergedAttributes().getFontFamilies());
+    });
+  }
+
+  @Test
+  public void testFontOnlyStateHasNoBackgroundLayers() {
+    myFixture.runTest(() -> {
+      init("abc");
+      addRangeHighlighter(0, 3, 0, Color.red);
+      EditorEx editor = (EditorEx)myFixture.getEditor();
+      CaretData caretData = CaretData.createCaretData(editor.getDocument(), editor.getCaretModel());
+      IterationState it = new IterationState(editor, 0, 3, caretData, false, true, true, false);
+      assertEquals(CARET_ROW_BACKGROUND, it.getMergedAttributes().getBackgroundColor());
+      assertTrue(it.getBackgroundLayers().isEmpty());
     });
   }
 

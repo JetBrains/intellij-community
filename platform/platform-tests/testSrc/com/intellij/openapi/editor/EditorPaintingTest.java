@@ -1,8 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.indentGuide.IndentGuidePass;
 import com.intellij.codeInsight.daemon.impl.indentGuide.IndentGuideRenderer;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ReadAction;
@@ -41,6 +45,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -749,6 +754,69 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   @Test
+  public void testShorterHighlighterOfOneLayerPaintsOnTop() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("abcdefghij\n<caret>klm");
+        RangeHighlighter wide = addRangeHighlighter(0, 8, HighlighterLayer.WARNING, null, Color.red);
+        RangeHighlighter narrow = addRangeHighlighter(2, 6, HighlighterLayer.WARNING, null, Color.green);
+        assertTopBackground(narrow, wide);
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testShorterHighlighterOfOneLayerPaintsOnTopWithThirdHighlighter() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("abcdefghijklmnopqrstuvwxyz\nabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\n<caret>klm");
+        RangeHighlighter wide = addRangeHighlighter(0, 20, HighlighterLayer.WARNING, null, Color.red);
+        RangeHighlighter narrow = addRangeHighlighter(8, 12, HighlighterLayer.WARNING, null, Color.green);
+        addRangeHighlighter(27, 67, HighlighterLayer.WARNING, null, Color.green);
+        assertTopBackground(narrow, wide);
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testHighlighterWithForegroundOfOneLayerPaintsOnTop() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("abcdefghij\n<caret>klm");
+        RangeHighlighter withForeground = addRangeHighlighter(2, 6, HighlighterLayer.WARNING, Color.black, Color.green);
+        RangeHighlighter withoutForeground = addRangeHighlighter(2, 6, HighlighterLayer.WARNING, null, Color.red);
+        assertTopBackground(withForeground, withoutForeground);
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
+  public void testHigherSeverityHighlighterOfOneLayerPaintsOnTop() {
+    myFixture.runTest(() -> {
+      var state = setSelectionLook(true, true);
+      try {
+        myFixture.initText("abcdefghij\n<caret>klm");
+        RangeHighlighter error = addRangeHighlighter(2, 6, HighlighterLayer.WARNING, null, Color.green);
+        RangeHighlighter warning = addRangeHighlighter(2, 6, HighlighterLayer.WARNING, null, Color.red);
+        setSeverity(error, HighlightSeverity.ERROR);
+        setSeverity(warning, HighlightSeverity.WARNING);
+        assertTopBackground(error, warning);
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
   public void testRoundedHighlighterAcrossBlockInlay() {
     myFixture.runTest(() -> {
       var state = setSelectionLook(true, true);
@@ -1295,6 +1363,35 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
       }
     }
     return false;
+  }
+
+  private static void setSeverity(RangeHighlighter highlighter, HighlightSeverity severity) {
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
+      .severity(severity)
+      .range(highlighter.getStartOffset(), highlighter.getEndOffset())
+      .createUnconditionally();
+    BackgroundUpdateHighlightersUtil.associateInfoAndHighlighter(info, (RangeHighlighterEx)highlighter);
+  }
+
+  /**
+   * Asserts the paint order of two backgrounds of one layer.
+   * The background of {@code top} covers the middle of its own range, and the background of {@code bottom} is absent there.
+   */
+  private void assertTopBackground(RangeHighlighter top, RangeHighlighter bottom) throws IOException {
+    Color expected = top.getTextAttributes(null).getBackgroundColor();
+    Color rejected = bottom.getTextAttributes(null).getBackgroundColor();
+    BufferedImage image = paintEditor(false, null, null);
+    Editor editor = myFixture.getEditor();
+    Point start = editor.offsetToXY(top.getStartOffset());
+    int middleX = (start.x + editor.offsetToXY(top.getEndOffset()).x) / 2;
+    int lineHeight = editor.getLineHeight();
+    boolean expectedFound = false;
+    for (int y = start.y + 1; y < start.y + lineHeight - 1; y++) {
+      int rgb = image.getRGB(middleX, y);
+      assertNotEquals(rejected.getRGB(), rgb, "the lower background paints over the upper one at y = " + y);
+      expectedFound |= rgb == expected.getRGB();
+    }
+    assertTrue(expectedFound, "the upper background is absent");
   }
 
   /**
