@@ -13,8 +13,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyDecorator
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySequenceExpression
+import com.jetbrains.python.psi.PyStarArgument
+import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
@@ -47,15 +51,16 @@ class PyTestParametrizeInlayHintsProvider : InlayHintsProvider {
       val valueSets = element.arguments.getOrNull(1)?.let(PyPsiUtils::flattenParens) as? PySequenceExpression ?: return
 
       for (valueSet in valueSets.elements) {
-        when (val valueSet = PyPsiUtils.flattenParens(valueSet)) {
+        val values = when (val valueSet = PyPsiUtils.flattenParens(valueSet)) {
           is PyCallExpression
             if (valueSet.callee as? PyReferenceExpression)
               ?.let(PyResolveUtil::resolveImportedElementQNameLocally)
               ?.any { it.toString() == paramName } == true
-            -> valueSet.arguments
-          is PyTupleExpression -> valueSet.elements
+            -> valueSet.arguments.filterNot { it is PyKeywordArgument || it is PyStarArgument && it.isKeyword }
+          is PyTupleExpression -> valueSet.elements.toList()
           else -> continue
-        }.zip(parameterNames).forEach { (expr, name) ->
+        }
+        matchValuesToParameters(values, parameterNames).forEach { (expr, name) ->
           sink.addPresentation(
             position = InlineInlayPosition(expr.textRange.startOffset, false),
             hintFormat = hintFormat,
@@ -65,6 +70,28 @@ class PyTestParametrizeInlayHintsProvider : InlayHintsProvider {
         }
       }
     }
+
+    /**
+     * Pairs each value with its parameter.
+     *
+     * A starred value, such as `*get_ids()`, stands for an unknown count of values and gets no hint.
+     * The values before the first starred value match the first parameters.
+     * The values after the last starred value match the last parameters.
+     * The values between two starred values get no hint.
+     * When the leading and the trailing values outnumber the parameters, the trailing values get no hint.
+     */
+    private fun matchValuesToParameters(values: List<PyExpression>, parameterNames: List<String>): List<Pair<PyExpression, String>> {
+      val firstStarred = values.indexOfFirst { it.isStarred }
+      if (firstStarred < 0) return values.zip(parameterNames)
+
+      val leading = values.subList(0, firstStarred).zip(parameterNames)
+      val trailingValues = values.subList(values.indexOfLast { it.isStarred } + 1, values.size)
+      if (firstStarred + trailingValues.size > parameterNames.size) return leading
+      return leading + trailingValues.zip(parameterNames.takeLast(trailingValues.size))
+    }
+
+    private val PyExpression.isStarred: Boolean
+      get() = this is PyStarExpression || this is PyStarArgument
 
     private val PyDecorator.parameterNames: List<String>?
       get() {
