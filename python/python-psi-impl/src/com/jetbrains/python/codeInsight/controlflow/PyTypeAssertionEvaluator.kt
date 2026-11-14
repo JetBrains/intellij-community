@@ -11,9 +11,11 @@ import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.getType
 import com.jetbrains.python.psi.AccessDirection
+import com.jetbrains.python.psi.PyAsPattern
 import com.jetbrains.python.psi.PyAssertStatement
 import com.jetbrains.python.psi.PyAssignmentExpression
 import com.jetbrains.python.psi.PyBinaryExpression
+import com.jetbrains.python.psi.PyBoolLiteralExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCaseClause
 import com.jetbrains.python.psi.PyClass
@@ -23,11 +25,16 @@ import com.jetbrains.python.psi.PyDisjointBaseUtil.areDisjoint
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyGeneratorExpression
+import com.jetbrains.python.psi.PyGroupPattern
 import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyListLiteralExpression
+import com.jetbrains.python.psi.PyLiteralPattern
 import com.jetbrains.python.psi.PyMatchStatement
+import com.jetbrains.python.psi.PyNoneLiteralExpression
+import com.jetbrains.python.psi.PyOrPattern
 import com.jetbrains.python.psi.PyParenthesizedExpression
+import com.jetbrains.python.psi.PyPattern
 import com.jetbrains.python.psi.PyPrefixExpression
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
@@ -37,6 +44,7 @@ import com.jetbrains.python.psi.PySetLiteralExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.PyValuePattern
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
@@ -229,22 +237,30 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
     return Ref(PyUnionType.unionOrUnknown(preservedTypes + narrowed))
   }
 
+  /**
+   * `None` compares by identity. A builtin [type] is equal only to a value of its own equality group, or to a value whose
+   * class defines its own comparison.
+   */
   private fun canEqualUnrelated(type: PyType?, candidates: List<PyType?>, context: TypeEvalContext): Boolean {
-    val group = builtinEqualityGroup(type)
-    val comparable = if (group == null) candidates else candidates.filter { builtinEqualityGroup(it).let { g -> g == null || g == group } }
-    return comparable.isNotEmpty() &&
-           (canHaveCustomEquality(type, context) || comparable.any { canHaveCustomEquality(it, context) })
+    val comparable = candidates.filter { !it.isNoneType }
+    val group = builtinEqualityGroup(type) ?: return comparable.isNotEmpty() &&
+                                                   (canHaveCustomEquality(type, context) || comparable.any { canHaveCustomEquality(it, context) })
+    return comparable.any { candidate ->
+      val candidateGroup = builtinEqualityGroup(candidate)
+      candidateGroup == group || candidateGroup == null && canHaveCustomEquality(candidate, context)
+    }
   }
 
   /**
    * Returns `false` only when [type] is known to compare with the default `object` implementation:
-   * a builtin literal, or a final class (or an enum member) that resolves both `__eq__` and `__ne__` to `object`.
+   * a builtin literal, or a final class, an enum with members or an enum member that resolves both `__eq__` and `__ne__`
+   * to `object`.
    * Open classes can get a custom comparison in a subclass.
    */
   private fun canHaveCustomEquality(type: PyType?, context: TypeEvalContext): Boolean {
     if (type !is PyClassType || type.isDefinition) return true
     if (type is PyLiteralType && type.isBuiltin) return false
-    if (type !is PyLiteralType && !isFinal(type, context)) return true
+    if (type !is PyLiteralType && !isFinal(type, context) && !PyStdlibTypeProvider.isFinalEnum(type.pyClass, context)) return true
     val objectClass = PyBuiltinCache.getInstance(type.pyClass).objectType?.pyClass ?: return true
     return listOf(PyNames.EQ, NE).any { name ->
       val members = type.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext(context))
@@ -279,17 +295,25 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
   private fun processIn(lhs: PyExpression, rhs: PyExpression) {
     if (rhs is PyTupleExpression || rhs is PyListLiteralExpression || rhs is PySetLiteralExpression) {
       val positive = myPositive
-      pushAssertion(lhs, myPositive) { context ->
+      val suggestedType: (TypeEvalContext) -> PyType? = suggestedType@{ context ->
         val elements = rhs.elements
         val types: MutableList<PyType?> = ArrayList(elements.size)
         val noneType = PyBuiltinCache.getInstance(rhs).noneType
         for (element in elements) {
           val type: PyType? = if (isNone(element)) noneType else getLiteralType(element, context)
+          // An element that is not a literal can be equal to any value
+          if (type == null && positive) return@suggestedType null
           if (type != null && (positive || type === noneType || type is PyLiteralType)) {
             types.add(type)
           }
         }
         if (types.isEmpty()) null else PyUnionType.unionOrUnknown(types)
+      }
+      if (positive) {
+        pushAssertion(lhs, allowAnyExpr = false, suggestedType, ::createEqualityAssertionType)
+      }
+      else {
+        pushAssertion(lhs, positive, suggestedType)
       }
     }
   }
@@ -312,8 +336,35 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
     if (pattern == null) return
     val matchStatement = node.parent
     if (matchStatement is PyMatchStatement) {
-      pushAssertion(matchStatement.subject, myPositive) { context -> context.getType(pattern) }
+      val suggestedType: (TypeEvalContext) -> PyType? = { context -> context.getType(pattern) }
+      if (myPositive && isEqualityPattern(pattern)) {
+        pushAssertion(matchStatement.subject, allowAnyExpr = false, suggestedType, ::createEqualityAssertionType)
+      }
+      else {
+        pushAssertion(matchStatement.subject, myPositive, suggestedType)
+      }
     }
+  }
+
+  /**
+   * A literal pattern and a value pattern compare the subject with `==`. The literals `None`, `True` and `False` compare it with `is`.
+   * The equality narrowing keeps each member that the identity narrowing keeps, so one `==` alternative is sufficient.
+   */
+  private fun isEqualityPattern(pattern: PyPattern): Boolean {
+    return getLiteralAlternatives(pattern)?.any { alternative ->
+      alternative !is PyLiteralPattern || alternative.expression.let { it !is PyNoneLiteralExpression && it !is PyBoolLiteralExpression }
+    } == true
+  }
+
+  /**
+   * The literal patterns and value patterns that [pattern] consists of, or `null` if it has another kind of pattern.
+   */
+  private fun getLiteralAlternatives(pattern: PyPattern): List<PyPattern>? = when (pattern) {
+    is PyValuePattern, is PyLiteralPattern -> listOf(pattern)
+    is PyAsPattern -> getLiteralAlternatives(pattern.getPattern())
+    is PyGroupPattern -> getLiteralAlternatives(pattern.pattern)
+    is PyOrPattern -> pattern.alternatives.flatMap { getLiteralAlternatives(it) ?: return null }
+    else -> null
   }
 
   /**
