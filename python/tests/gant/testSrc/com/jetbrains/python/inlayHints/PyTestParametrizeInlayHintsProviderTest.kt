@@ -140,6 +140,94 @@ class PyTestParametrizeInlayHintsProviderTest {
     """)
   }
 
+  @TestFor(issues = ["PY-91742"])
+  @Test
+  fun `test values after a starred value match the last parameters`() {
+    doTest("""
+      import pytest
+
+      def get_ids():
+          return 1, 2
+
+      @pytest.mark.parametrize("id_for_payment, id_for_db, plugin_fields", [
+          (*get_ids(), /*<# plugin_fields #>*/"foo"),
+      ])
+      def test_something(id_for_payment, id_for_db, plugin_fields): ...
+    """)
+  }
+
+  @TestFor(issues = ["PY-91742"])
+  @Test
+  fun `test values before a starred value match the first parameters`() {
+    doTest("""
+      import pytest
+
+      @pytest.mark.parametrize("a, b, c", [
+          (/*<# a #>*/1, *(2, 3)),
+      ])
+      def test_something(a, b, c): ...
+    """)
+  }
+
+  @TestFor(issues = ["PY-91742"])
+  @Test
+  fun `test values between two starred values get no hint`() {
+    doTest("""
+      import pytest
+
+      @pytest.mark.parametrize("a, b, c, d, e", [
+          (/*<# a #>*/1, *(2,), 3, *(4,), /*<# e #>*/5),
+      ])
+      def test_something(a, b, c, d, e): ...
+    """)
+  }
+
+  @TestFor(issues = ["PY-91742"])
+  @Test
+  fun `test pytest param with a starred argument and marks`() {
+    doTest("""
+      import pytest
+
+      def get_ids():
+          return 1, 2
+
+      @pytest.mark.parametrize("id_for_payment, id_for_db, plugin_fields", [
+          pytest.param(*get_ids(), /*<# plugin_fields #>*/"foo", marks=pytest.mark.skip),
+      ])
+      def test_something(id_for_payment, id_for_db, plugin_fields): ...
+    """)
+  }
+
+  @TestFor(issues = ["PY-91742"])
+  @Test
+  fun `test keyword arguments of pytest param get no hint`() {
+    doTest("""
+      import pytest
+
+      def get_ys():
+          return 2,
+      
+      @pytest.mark.parametrize("x, y", [
+          pytest.param(/*<# x #>*/1, *get_ys(), id="one"),
+          pytest.param(/*<# x #>*/1, **{"marks": ()}),
+      ])
+      def test_function(x, y): ...
+    """)
+  }
+
+  @TestFor(issues = ["PY-91742"])
+  @Test
+  fun `test no hints after a starred value when the trailing values outnumber the parameters`() {
+    doTest("""
+      import pytest
+
+      @pytest.mark.parametrize("a, b", [
+          (*(), 1, 2, 3),
+      ])
+      def test_something(a, b): ...
+    """, verifyHintsPresence = false)
+  }
+
   private fun doTest(text: String, verifyHintsPresence: Boolean = true) {
     doTestProvider(myFixture, 
       "test.py",
