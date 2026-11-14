@@ -697,6 +697,10 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
       return type is PyLiteralType || type.isNoneType
     }
 
+    private fun isBuiltinLiteralOrNoneType(type: PyType?): Boolean {
+      return type is PyLiteralType && type.isBuiltin || type.isNoneType
+    }
+
     private fun intersect(
       initial: PyType?,
       suggested: PyType?,
@@ -710,6 +714,10 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
       }
 
       if (initial is PyClassType && suggested is PyClassType) {
+        // A builtin literal and `None` each have one value, and the checks above found that the two values differ
+        if (isBuiltinLiteralOrNoneType(initial) && isBuiltinLiteralOrNoneType(suggested)) {
+          return PyNeverType.NEVER
+        }
         if (areDisjoint(initial, suggested, context)) {
           return PyNeverType.NEVER
         }

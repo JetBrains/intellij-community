@@ -8,7 +8,9 @@ import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.junit5.TestDisposable
+import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.inspections.PyUnreachableCodeInspection
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -498,6 +500,39 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           if (v != w):
               expr = v
       #       └ TYPE Literal["a", "b"]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94130"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
+    @TestInspections(enableInspections = [PyUnreachableCodeInspection::class])
+    fun `a literal is never equal to another literal of its class`() = test("""
+      from typing import Literal
+      def foo(s: Literal["a"], u: Literal["a", "c"], i: Literal[1], b: Literal[b"a"], n: None):
+          if s == "b":
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if u == "b":
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if i == 2:
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if b == b"b":
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if n == "a":
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          match s:
+              case "b":
+                  print(1)
+      #           ^^^^^^^^ WARNING This code is unreachable
+          if s in ("b", "c"):
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if s == "a":
+              expr = s
+      #       └ TYPE Literal["a"]
       """.trimIndent())
   }
 
