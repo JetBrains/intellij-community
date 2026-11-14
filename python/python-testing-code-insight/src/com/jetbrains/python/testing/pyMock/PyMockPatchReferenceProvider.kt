@@ -24,10 +24,12 @@ import org.jetbrains.annotations.ApiStatus
  * - `mocker.patch("target")`, `mocker.patch.dict(...)` and `mocker.patch.multiple(...)` from pytest-mock
  *
  * When `create=True` is present, references are marked soft (no unresolved error).
+ * An f-string with placeholders gets no references.
  */
 internal class PyMockPatchReferenceProvider : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val str = element as? PyStringLiteralExpression ?: return emptyArray()
+    if (str.isInterpolated) return emptyArray()
     val typeContext = TypeEvalContext.codeAnalysis(str.project, str.containingFile)
     val callExpr = getPatchTargetCall(str, typeContext)?.call ?: return emptyArray()
 

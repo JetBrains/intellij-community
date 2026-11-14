@@ -36,11 +36,13 @@ import com.jetbrains.python.testing.pyMock.findMemberByName
  * - `monkeypatch.setattr(obj, "attr", value)` — second arg is an attribute name on `obj`
  * - `monkeypatch.delattr(obj, "attr")` — second arg is an attribute name on `obj`
  * → The attribute string gets a single reference resolved against `obj`'s type.
+ *
+ * An f-string with placeholders gets no references in either form.
  */
 internal class PyMonkeypatchSetAttrReferenceProvider : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val str = element as? PyStringLiteralExpression ?: return emptyArray()
-    if (str.stringValue.isEmpty()) return emptyArray()
+    if (str.stringValue.isEmpty() || str.isInterpolated) return emptyArray()
 
     val callExpr = findMonkeypatchAttrCall(str) ?: return emptyArray()
     val args = callExpr.argumentList?.arguments ?: return emptyArray()
