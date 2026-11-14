@@ -37,8 +37,6 @@ import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.facet.Facet;
-import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -84,7 +82,6 @@ import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.PyEelSdkKt;
 import com.jetbrains.python.debugger.PyTargetPathMapper;
 import com.jetbrains.python.facet.LibraryContributingFacet;
-import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.library.PythonLibraryType;
 import com.jetbrains.python.packaging.PyExecutionException;
 import com.jetbrains.python.remote.PyRemotePathMapper;
@@ -1120,15 +1117,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
       final VirtualFile pathForTests = extension.getCompilerOutputPathForTests();
       if (pathForTests != null) {
         pythonPathList.add(pathForTests.getPath());
-      }
-    }
-
-    //additional paths from facets (f.e. buildout)
-    final Facet<?>[] facets = FacetManager.getInstance(module).getAllFacets();
-    for (Facet<?> facet : facets) {
-      if (facet instanceof PythonPathContributingFacet) {
-        List<String> more_paths = ((PythonPathContributingFacet)facet).getAdditionalPythonPath();
-        if (more_paths != null) pythonPathList.addAll(more_paths);
       }
     }
   }

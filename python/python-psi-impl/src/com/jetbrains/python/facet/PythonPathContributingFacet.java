@@ -2,7 +2,6 @@
 package com.jetbrains.python.facet;
 
 import org.jetbrains.annotations.ApiStatus;
-import java.util.List;
 
 
 /**
@@ -11,7 +10,5 @@ import java.util.List;
 @Deprecated
 @ApiStatus.Internal
 public interface PythonPathContributingFacet {
-  List<String> getAdditionalPythonPath();
-
   boolean acceptRootAsTopLevelPackage();
 }
