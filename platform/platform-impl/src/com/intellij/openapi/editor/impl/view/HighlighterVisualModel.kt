@@ -19,11 +19,14 @@ private const val MIN_OVERLAP: Double = 1e-2
 /**
  * The highlighter backgrounds of one paint.
  *
+ * The painter creates the model only while the editor rounds the corners of the highlighting.
+ * [BackgroundLayer] tells which backgrounds are rounded.
  * The painter adds one rectangle per background style. [paint] fills the styles from the bottom up.
  * One style gives one shape, also across visual lines. A rounded style fills one outline with antialiasing,
  * and a straight style fills its rectangles at the device pixels.
  * A box of a background after the end of a line is a shape of its own. [paintAfterLineEndBoxes] fills the boxes.
  * A background of a line extension is a straight rectangle of its own. [paint] fills it among the styles.
+ * A rectangle that fills the line ends at the viewport edge, not at the clip edge.
  * A rectangle outside the clip of the paint gives the corners of its neighbors, and it paints nothing.
  * The model lives for one paint. It keeps no state for the next paint.
  */
@@ -106,6 +109,7 @@ internal class HighlighterVisualModel(
   }
 
   /**
+   * Fills the shapes of all styles from the bottom up.
    * A style fills after each style that a block of [paintLayeredBlock] puts below it.
    * The backgrounds of [addLineExtensionBackground] fill among the styles.
    * A background of a line extension fills after each style of an earlier block that overlaps it.
@@ -114,6 +118,7 @@ internal class HighlighterVisualModel(
    * When the blocks put two of them in both orders, the first unpainted one of this order fills next.
    * Then the styles that force the background fill, in the [BackgroundLayer] order. They take no part in the order above.
    * A background of a line extension that no later block overlaps fills last.
+   * A corner of a rounded shape gets the radius `lineHeight / 6`, limited to one half of each of its two edges.
    */
   fun paint(graphics: Graphics2D, lineHeight: Int) {
     if (styles.isEmpty() && extensionColors.isEmpty()) {

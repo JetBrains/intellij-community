@@ -16,6 +16,16 @@
 package com.intellij.openapi.editor.markup;
 
 public enum HighlighterTargetArea {
+  /**
+   * The highlighter covers the text from its start offset to its end offset.
+   * A background that covers a line break fills the rest of the visual line.
+   * When the editor rounds the corners of the highlighting, the background gets rounded corners.
+   */
   EXACT_RANGE,
+  /**
+   * The highlighter covers each line that its range touches, from the line start to the line break included.
+   * The background fills the whole visual line.
+   * Its corners stay straight, also when the editor rounds the corners of the highlighting.
+   */
   LINES_IN_RANGE
 }

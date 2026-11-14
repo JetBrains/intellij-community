@@ -54,6 +54,7 @@ object BackgroundOutline {
    *
    * The path needs the rule [Path2D.WIND_NON_ZERO], which leaves a hole empty.
    * Each corner gets the radius [radius], limited to one half of each of its two edges.
+   * A concave corner and a convex corner take the same radius.
    * Every corner rounds, also the corner at the viewport edge of a background that fills the line.
    */
   @JvmStatic

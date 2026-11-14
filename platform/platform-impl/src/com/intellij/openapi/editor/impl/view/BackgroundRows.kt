@@ -10,7 +10,8 @@ private const val INITIAL_CAPACITY: Int = 16
  *
  * One interval is one rectangle: the row from [top] to [bottom], and the horizontal part from [start] to [end].
  * A caller adds the intervals in any order, and it can add two intervals of one style that overlap.
- * An interval that fills the line ends at the viewport edge. A narrow clip then does not move the corner of the shape.
+ * An interval that fills the line ends at the viewport edge, not at the clip edge.
+ * So a narrow clip gives the same corners as a full paint.
  * [BackgroundOutline] and the painter read the union of the intervals of one style.
  */
 @ApiStatus.Internal
