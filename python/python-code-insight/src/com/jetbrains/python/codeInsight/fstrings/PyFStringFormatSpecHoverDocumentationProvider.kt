@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.PyFStringFragment
 import com.jetbrains.python.psi.PyFStringFragmentFormatPart
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.util.Locale
 
 // The example is rendered eagerly from the width and the precision in the document, so both need a
 // bound. Without one, a spec such as ".999999999f" makes the popup allocate a string of that size.
@@ -260,12 +261,12 @@ internal class PyFormatSpecDocumentationTarget(private val spec: PyFormatSpec) :
     // Format the core value first
     var result = when (type) {
       'd' -> (value as? Number)?.toLong()?.toString() ?: value.toString()
-      'f', 'F' -> String.format("%.${precision}f", (value as Number).toDouble())
-      'e' -> String.format("%.${precision}e", (value as Number).toDouble())
-      'E' -> String.format("%.${precision}E", (value as Number).toDouble())
-      'g' -> String.format("%.${precision}g", (value as Number).toDouble())
-      'G' -> String.format("%.${precision}G", (value as Number).toDouble())
-      '%' -> String.format("%.${precision}f%%", (value as Number).toDouble() * 100)
+      'f', 'F' -> String.format(Locale.ROOT, "%.${precision}f", (value as Number).toDouble())
+      'e' -> String.format(Locale.ROOT, "%.${precision}e", (value as Number).toDouble())
+      'E' -> String.format(Locale.ROOT, "%.${precision}E", (value as Number).toDouble())
+      'g' -> String.format(Locale.ROOT, "%.${precision}g", (value as Number).toDouble())
+      'G' -> String.format(Locale.ROOT, "%.${precision}G", (value as Number).toDouble())
+      '%' -> String.format(Locale.ROOT, "%.${precision}f%%", (value as Number).toDouble() * 100)
       'b' -> java.lang.Long.toBinaryString((value as Number).toLong())
       'o' -> java.lang.Long.toOctalString((value as Number).toLong())
       'x' -> java.lang.Long.toHexString((value as Number).toLong())
@@ -277,7 +278,7 @@ internal class PyFormatSpecDocumentationTarget(private val spec: PyFormatSpec) :
         // No type specified - format based on value type
         when (value) {
           is Double, is Float -> {
-            if (spec.precision != null) String.format("%.${precision}f", (value as Number).toDouble())
+            if (spec.precision != null) String.format(Locale.ROOT, "%.${precision}f", (value as Number).toDouble())
             else value.toString()
           }
           else -> value.toString()

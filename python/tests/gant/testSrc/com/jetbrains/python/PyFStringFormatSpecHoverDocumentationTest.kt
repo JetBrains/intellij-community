@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.util.Locale
 
 /**
  * Tests for f-string format specification hover documentation.
@@ -132,9 +133,38 @@ class PyFStringFormatSpecHoverDocumentationTest : PyCodeInsightTestCase() {
   }
 
   @Test
+  @TestFor(issues = ["PY-92416"])
+  fun `example uses a dot as the decimal point in a locale with a decimal comma`() = withDefaultLocale(Locale.GERMANY) {
+    val html = computeFormatSpecHtml("f'{x:<caret>.2f}'")
+    assertTrue("<code>1234.57</code>" in html, "Expected a dot as the decimal point in the example, got: $html")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-92416"])
+  fun `example groups only the integer part in a locale with a decimal comma`() = withDefaultLocale(Locale.GERMANY) {
+    val html = computeFormatSpecHtml("f'{x:<caret>,.2f}'")
+    assertTrue("<code>1,234.57</code>" in html, "Expected a grouped integer part and a dot as the decimal point, got: $html")
+  }
+
+  @Test
   fun `no style block in the documentation`() =
     // A raw stylesheet would leak its global selectors into the rest of the popup and ignore the theme.
     doTestNoMarkup("f'{value:<caret>*>+10,.2f}'", "<style>")
+
+  private fun withDefaultLocale(locale: Locale, action: () -> Unit) {
+    val savedDefault = Locale.getDefault()
+    val savedDisplay = Locale.getDefault(Locale.Category.DISPLAY)
+    val savedFormat = Locale.getDefault(Locale.Category.FORMAT)
+    Locale.setDefault(locale)
+    try {
+      action()
+    }
+    finally {
+      Locale.setDefault(savedDefault)
+      Locale.setDefault(Locale.Category.DISPLAY, savedDisplay)
+      Locale.setDefault(Locale.Category.FORMAT, savedFormat)
+    }
+  }
 
   private fun computeFormatSpecHtml(code: String): String {
     var html = ""
