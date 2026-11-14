@@ -3,6 +3,7 @@ package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.testFramework.runInEdtAndGet
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
@@ -14,9 +15,11 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.types.PyCloningTypeVisitor
 import com.jetbrains.python.psi.types.PyOverloadType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -1039,6 +1042,97 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
         val reordered = PyOverloadType(clone.items.reversed(), clone.impl)
         assertNotEquals(clone, reordered)
       }
+    }
+  }
+
+  @Nested
+  @TestFor(issues = ["PY-92587"], classes = [PyOverloadType::class])
+  inner class OverloadedFunctionMembers {
+    @Test
+    fun `an attribute of an overloaded function resolves in the function class`() = test("""
+      from typing import overload
+
+      @overload
+      def f(x: int) -> int: ...
+      @overload
+      def f(x: str) -> str: ...
+      def f(x): return x
+
+      name = f.__name__
+      #└ TYPE str
+      """.trimIndent())
+
+    @Test
+    fun `an attribute of an overloaded method accessed on the class resolves in the function class`() = test("""
+      from typing import overload
+
+      class A:
+          @overload
+          def m(self, x: int) -> int: ...
+          @overload
+          def m(self, x: str) -> str: ...
+          def m(self, x): return x
+
+      name = A.m.__name__
+      #└ TYPE str
+      """.trimIndent())
+
+    @Test
+    fun `an attribute assigned to an overloaded function is not reported`() = test("""
+      from typing import overload
+
+      @overload
+      def f(x: int) -> int: ...
+      @overload
+      def f(x: str) -> str: ...
+      def f(x): return x
+
+      f.attr = 1
+      f.attr
+      """.trimIndent())
+
+    @Test
+    fun `completion of an overloaded function lists the attributes of the function class`() {
+      assertContainsFunctionAttributes(complete(module = null, text = """
+        from typing import overload
+
+        @overload
+        def f(x: int) -> int: ...
+        @overload
+        def f(x: str) -> str: ...
+        def f(x): return x
+
+        f.
+        # └ CARET
+        """))
+    }
+
+    @Test
+    fun `completion of an overloaded function from a stub with no implementation lists the attributes of the function class`() {
+      assertContainsFunctionAttributes(complete(module = """
+        from typing import overload
+
+        @overload
+        def f(x: int) -> int: ...
+        @overload
+        def f(x: str) -> str: ...
+        """, text = """
+        from mod import f
+
+        f.
+        # └ CARET
+        """))
+    }
+
+    private fun complete(@Language("Python") module: String?, @Language("Python") text: String): List<String> = runInEdtAndGet {
+      module?.let { myFixture.addFileToProject("mod.pyi", it.trimIndent()) }
+      configureWithCaret(text)
+      myFixture.completeBasic()
+      myFixture.lookupElementStrings.orEmpty()
+    }
+
+    private fun assertContainsFunctionAttributes(variants: List<String>) {
+      assertTrue(variants.containsAll(listOf("__name__", "__defaults__")), "Function attributes are not in $variants")
     }
   }
 
