@@ -28,6 +28,8 @@ class RuffImportOptimizer : SuspendableImportOptimizer {
     val virtualFile = psiFile.virtualFile ?: return false
     // An injected fragment or a non-local file has no path that Ruff can read its configuration from.
     if (!virtualFile.isInLocalFileSystem || virtualFile is VirtualFileWindow) return false
+    // The platform also asks for the Python part of another file type, such as a reStructuredText file.
+    if (!isRuffFileType(virtualFile.fileType)) return false
 
     val project = psiFile.project
     if (project.isDefault) return false
@@ -42,8 +44,6 @@ class RuffImportOptimizer : SuspendableImportOptimizer {
   override suspend fun processFileSuspend(file: PsiFile): Runnable {
     val noResult = Runnable { }
     val virtualFile = file.virtualFile ?: return noResult
-    // Remove this guard after PY-85408.
-    if (virtualFile.extension.equals("ipynb", ignoreCase = true)) return noResult
     val path = virtualFile.ruffPath() ?: return noResult
 
     val snapshot = readAction {
