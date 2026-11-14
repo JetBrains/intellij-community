@@ -376,6 +376,8 @@ class SePopupContentPane(
       textField.configure(pattern) { newText ->
         vm.setSearchText(newText)
       }
+      // The last search text arrives only with the VM. A popup with text must not stay compact.
+      updateViewMode()
 
       SeLog.log(SeLog.CARET) { "SePopupContentPane.connectTo did configure - ${textField.stateLogMessage()}" }
     }
