@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.configuration
 
+import com.intellij.configurationStore.ComponentSerializationUtil
+import com.intellij.configurationStore.serialize
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -23,15 +25,20 @@ import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.HyperlinkLabel
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider
+import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -87,6 +94,28 @@ class KotlinSetupEnvironmentNotificationProviderJpsTest {
         ExtensionTestUtil.maskExtensions(KotlinProjectConfigurator.EP_NAME, listOf(unavailableConfigurator), disposableFixture.get())
 
         assertNull(getNotificationPanel())
+    }
+
+    @Test
+    fun testIgnoredBannerStaysHiddenAfterComponentReload() {
+        clickNotificationLink(KotlinProjectConfigurationBundle.message("action.text.ignore"))
+        assertNull(getNotificationPanel())
+
+        val project = projectFixture.get()
+        val savedState = serialize(KotlinNotConfiguredSuppressedModulesState.getInstance(project).state)
+        val reloadedComponent = KotlinNotConfiguredSuppressedModulesState()
+
+        project.replaceService(KotlinNotConfiguredSuppressedModulesState::class.java, reloadedComponent, disposableFixture.get())
+        assertNotNull(getNotificationPanel())
+
+        ComponentSerializationUtil.loadComponentState(reloadedComponent, savedState)
+        assertNull(getNotificationPanel())
+    }
+
+    private fun clickNotificationLink(linkText: String) {
+        val panel = getNotificationPanel() ?: error("the notification panel is not shown")
+        val link = UIUtil.findComponentsOfType(panel, HyperlinkLabel::class.java).single { it.text == linkText }
+        runInEdtAndWait { link.doClick() }
     }
 
     private fun addKotlinStdlibProjectLibrary(resolved: Boolean) {
