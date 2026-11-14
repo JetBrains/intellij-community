@@ -56,6 +56,7 @@ import com.intellij.util.Consumer
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.toArray
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 
 /**
@@ -105,6 +106,10 @@ internal class WelcomeNewEmptyFileAction : DumbAwareAction(), FusAwareAction {
 }
 
 internal class WelcomeChangeLanguageAction : ChangeLanguageAction() {
+  override fun getChangeLanguageActionName(languageName: String): @Nls String {
+    return ActionsBundle.message("action.WelcomeFileChangeLanguage.text")
+  }
+
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project != null && !WelcomeUtils.isWelcomeProject(project)) {
