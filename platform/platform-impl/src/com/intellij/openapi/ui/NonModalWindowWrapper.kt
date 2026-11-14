@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.debug
@@ -37,6 +38,7 @@ import com.intellij.ui.mac.MacFullScreenSupport
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -497,7 +499,8 @@ abstract class NonModalWindowWrapper(
     content.launchOnShow("Non-modal settings AWT event listener") {
       // The default modality prevents us from processing nested modal dialogs,
       // but we absolutely do want to process them here.
-      withContext(ModalityState.any().asContextElement()) {
+      // A page can take a read lock in reset() or isModified(). Dispatchers.UI forbids the read lock.
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         val globallyActiveWindow = MutableStateFlow<Window?>(null)
 
         // Track whether a child dialog of our window was recently active.
