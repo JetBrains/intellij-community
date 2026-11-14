@@ -170,6 +170,35 @@ class Py2QuickFixTest : PyTestCase() {
     assertEquals(emptyList<String>(), myFixture.filterAvailableIntentions("Install").map { it.text })
   }
 
+  @TestFor(issues = ["PY-93886"])
+  fun testInstallAndImportNotOfferedWhenInspectionDoesNotSuggestInstallingPackages(): Unit = timeoutRunBlocking {
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(myFixture.project, availablePackageNames = listOf("pandas"))
+
+    myFixture.enableInspections(PyUnresolvedReferencesInspection().apply { suggestInstallingPackages = false })
+    myFixture.configureByText(PythonFileType.INSTANCE, "pd<caret>.array()")
+    myFixture.findSingleIntention("Import 'turtle.pd'")
+    assertEquals(emptyList<String>(), myFixture.filterAvailableIntentions("Install").map { it.text })
+  }
+
+  @TestFor(issues = ["PY-93886"])
+  fun testInstallPackageOfferedForImport(): Unit = timeoutRunBlocking {
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(myFixture.project, availablePackageNames = listOf("pandas"))
+
+    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+    myFixture.configureByText(PythonFileType.INSTANCE, "import pandas<caret>")
+    assertEquals(listOf("Install package pandas"), myFixture.filterAvailableIntentions("Install").map { it.text })
+  }
+
+  @TestFor(issues = ["PY-93886"])
+  fun testInstallPackageNotOfferedForImportWhenInspectionDoesNotSuggestInstallingPackages(): Unit = timeoutRunBlocking {
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(myFixture.project, availablePackageNames = listOf("pandas"))
+
+    myFixture.enableInspections(PyUnresolvedReferencesInspection().apply { suggestInstallingPackages = false })
+    myFixture.configureByText(PythonFileType.INSTANCE, "import pandas<caret>")
+    assertTrue(myFixture.filterAvailableIntentions("Ignore unresolved reference").isNotEmpty())
+    assertEquals(emptyList<String>(), myFixture.filterAvailableIntentions("Install").map { it.text })
+  }
+
   fun testImportFromModule() {
     doInspectionTest(
       arrayOf("importFromModule/foo/bar.py", "importFromModule/foo/baz.py", "importFromModule/foo/__init__.py"),
