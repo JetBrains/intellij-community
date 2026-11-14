@@ -251,7 +251,6 @@ private fun androidDesignPlugin(mainModuleName: String = "intellij.android.desig
 fun getContribRepositoryPlugins(): List<PluginLayout> = java.util.List.of(
   pluginAuto("intellij.cucumber.java") { spec ->
     spec.withModule("intellij.cucumber.jvmFormatter3", "cucumber-jvmFormatter3.jar")
-    spec.withModule("intellij.cucumber.jvmFormatter4", "cucumber-jvmFormatter4.jar")
   },
   pluginAuto("intellij.serial.monitor") { spec ->
     // jSerialComm java JAR - Remember to update the binary dependency when updating to a new version!
