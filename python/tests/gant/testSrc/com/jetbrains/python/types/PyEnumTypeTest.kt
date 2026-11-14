@@ -1516,8 +1516,8 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-94107"])
     @TestCaseOptions(testFileName = "test.pyi")
-    fun `enum base order is checked in a stub`() = test("""
-      from enum import Enum, EnumType
+    fun `enum definition errors are checked in a stub`() = test("""
+      from enum import Enum, EnumType, unique
 
       class Mixin: ...
 
@@ -1528,12 +1528,27 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       class Custom(metaclass=Meta): ...
       
       class A(Base, Mixin):
-      #       ^^^^ ERROR FIXME Enum class 'Base' must be the last base class
+      #       ^^^^ ERROR Enum class 'Base' must be the last base class
           a = 1
 
       class B(Custom, Mixin):
-      #       ^^^^^^ ERROR FIXME Enum class 'Custom' must be the last base class
+      #       ^^^^^^ ERROR Enum class 'Custom' must be the last base class
           b = 1
+
+      @unique
+      class C(Enum):
+          _foo_ = 1
+      #   ^^^^^ ERROR The name '_foo_' is reserved for future Enum use
+          c = 1
+          d = 1
+      #       └ ERROR Unique enum member 'd' has the same value as 'c'
+
+      @unique
+      class D(Enum):
+          e = ...
+          f = ...
+          g: int
+          h: int
       """.trimIndent())
 
     @Test
