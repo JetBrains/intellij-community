@@ -30,7 +30,6 @@ import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.pyi.PyiUtil
 import java.math.BigDecimal
 
 class PyEnumInspection : PyInspection() {
@@ -45,8 +44,6 @@ class PyEnumInspection : PyInspection() {
           PyStdlibTypeProvider.getEnumAttributeInfo(node, attribute, myTypeEvalContext)?.let { attribute to it }
         }
         validateEnumMembers(node, attributes)
-        // A stub declares an enum but does not run its class body, so a definition error cannot occur there
-        if (PyiUtil.isInsideStub(node)) return
         validateEnumBaseOrder(node)
         validateSunderNames(node)
         validateUniqueValues(node, attributes)
