@@ -7,6 +7,7 @@ import com.intellij.psi.InjectedLanguagePlaces;
 import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.restructuredtext.psi.RestLine;
+import com.jetbrains.python.documentation.doctest.PyDoctestExamples;
 import com.jetbrains.python.documentation.doctest.PyDoctestLanguageDialect;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,48 +17,10 @@ public final class PyRestDocstringLanguageInjector implements LanguageInjector {
   @Override
   public void getLanguagesToInject(final @NotNull PsiLanguageInjectionHost host, final @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
     if (host instanceof RestLine) {
-      int start = 0;
-      int end = host.getTextLength() - 1;
-      final String text = host.getText();
-      final List<String> strings = StringUtil.split(text, "\n", false);
-
-      boolean gotExample = false;
-
-      int currentPosition = 0;
-      boolean endsWithSlash = false;
-      for (String string : strings) {
-        final String trimmedString = string.trim();
-        final boolean isPromptLine = trimmedString.startsWith(">>>") || trimmedString.startsWith("...") && gotExample;
-        if (gotExample && !isPromptLine) {
-          if (endsWithSlash) {
-            // A bare line continuing a backslash-terminated statement still belongs to the example
-            endsWithSlash = trimmedString.endsWith("\\");
-            end = getEndOffset(currentPosition, string);
-            currentPosition += string.length();
-            continue;
-          }
-          gotExample = false;
-          if (start < end) {
-            injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
-          }
-        }
-
-        if (trimmedString.startsWith(">>>")) {
-          if (!gotExample)
-            start = currentPosition;
-
-          gotExample = true;
-          endsWithSlash = trimmedString.endsWith("\\");
-          end = getEndOffset(currentPosition, string);
-        }
-        else if (trimmedString.startsWith("...") && gotExample) {
-          endsWithSlash = trimmedString.endsWith("\\");
-          end = getEndOffset(currentPosition, string);
-        }
-        currentPosition += string.length();
+      final List<String> strings = StringUtil.split(host.getText(), "\n", false);
+      for (TextRange range : PyDoctestExamples.findRanges(strings, PyRestDocstringLanguageInjector::getEndOffset)) {
+        injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(), range, null, null);
       }
-      if (gotExample && start < end)
-        injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
     }
   }
 
