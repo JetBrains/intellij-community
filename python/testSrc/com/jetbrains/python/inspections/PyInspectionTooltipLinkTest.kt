@@ -11,9 +11,11 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyTargetExpression
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -206,6 +208,54 @@ class PyInspectionTooltipLinkTest : PyCodeInsightTestCase() {
     assertLink(info, "typing.Any")
   }
 
+  @Test
+  @TestFor(issues = ["PY-91660"])
+  fun `typing Never is a clickable link`() {
+    val info = highlight<PyTypeCheckerInspection>(
+      """
+      from typing import assert_never
+      assert_never(42)
+      """.trimIndent(),
+      "Expected type"
+    )
+    assertEquals("Expected type 'Never', got 'Literal[42]' instead", info.description)
+    assertTrue("""<a href="#element/typing.Never">Never</a>""" in info.toolTip!!, info.toolTip!!)
+    assertResolvesToModuleAttribute("typing.Never")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-91660"])
+  fun `typing NoReturn is a clickable link`() {
+    val info = highlight<PyTypeCheckerInspection>(
+      """
+      from typing import NoReturn
+      def stop() -> NoReturn: ...
+      x: int = stop
+      """.trimIndent(),
+      "Expected type"
+    )
+    assertEquals("Expected type 'int', got '() -> NoReturn' instead", info.description)
+    assertTrue("""<a href="#element/typing.NoReturn">NoReturn</a>""" in info.toolTip!!, info.toolTip!!)
+    assertResolvesToModuleAttribute("typing.NoReturn")
+  }
+
+  // `typing` declares `Never` since Python 3.11, so the link of an older version goes to `typing_extensions`.
+  @Test
+  @TestFor(issues = ["PY-91660"])
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON310)
+  fun `typing Never before Python 3_11 is a clickable link to typing_extensions`() {
+    val info = highlight<PyTypeCheckerInspection>(
+      """
+      from typing_extensions import assert_never
+      assert_never(42)
+      """.trimIndent(),
+      "Expected type"
+    )
+    assertEquals("Expected type 'Never', got 'Literal[42]' instead", info.description)
+    assertTrue("""<a href="#element/typing_extensions.Never">Never</a>""" in info.toolTip!!, info.toolTip!!)
+    assertResolvesToModuleAttribute("typing_extensions.Never")
+  }
+
   // a module type renders as its qualified name, which is also a navigable link to the module.
   @Test
   @TestFor(issues = ["PY-90264"])
@@ -313,6 +363,13 @@ class PyInspectionTooltipLinkTest : PyCodeInsightTestCase() {
   private fun assertResolves(fqn: String) {
     // resolution queries the stub index, which requires a read action (the test body itself runs without one)
     assertInstanceOf<PyClass>(runReadActionBlocking { QualifiedNameProviderUtil.qualifiedNameToElement(fqn, myFixture.project) })
+  }
+
+  /** The `#element/<fqn>` link target of a module-level variable, such as `typing.Never`, must resolve to its declaration. */
+  private fun assertResolvesToModuleAttribute(fqn: String) {
+    val target = runReadActionBlocking { QualifiedNameProviderUtil.qualifiedNameToElement(fqn, myFixture.project) }
+    val attribute = assertInstanceOf<PyTargetExpression>(target)
+    assertEquals(fqn, runReadActionBlocking { attribute.qualifiedName })
   }
 
   private inline fun <reified T: LocalInspectionTool> highlight(text: String, descriptionPrefix: String): HighlightInfo {
