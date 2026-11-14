@@ -6,6 +6,7 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpressionStatement
@@ -265,6 +266,25 @@ class PyMonkeypatchTest : PyTestCase() {
 
     val refs = PyMockPatchTargetReferenceSet(strArg!!, false).createReferences()
     assertTrue("Test function should still get references", refs.isNotEmpty())
+  }
+
+  // --- f-string arguments ---
+
+  @TestFor(issues = ["PY-91732"])
+  fun `test f-string with a placeholder is not reported as unresolved`() {
+    myFixture.configureByText("test_fstring.py", """
+      from example_module import MyClass
+
+      _MODULE = "example_module"
+      _NAME = "my_method"
+
+      def test_foo(monkeypatch):
+          monkeypatch.setattr(f"{_MODULE}.DoesNotExist", lambda: None)
+          monkeypatch.setattr(MyClass, f"{_NAME}_does_not_exist", lambda self: None)
+          monkeypatch.setattr("example_module.<error descr="Unresolved reference 'DoesNotExist'">DoesNotExist</error>", lambda: None)
+    """.trimIndent())
+    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+    myFixture.checkHighlighting(true, false, false)
   }
 
   // --- Helpers ---
