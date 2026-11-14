@@ -4,6 +4,7 @@ package com.intellij.platform.icons.impl.intellij.rendering.images
 import com.intellij.platform.icons.impl.intellij.rendering.IntelliJImageModifiers
 import com.intellij.ui.icons.LoadIconParameters
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.SVGLoader
 import com.intellij.platform.icons.impl.intellij.rendering.toAwtFilter
 import com.intellij.platform.icons.impl.intellij.rendering.toIJPatcher
 import com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher
@@ -15,7 +16,7 @@ import java.awt.image.ImageFilter
 
 internal interface SwingImageResourceHolder {
   fun getImage(scale: ScaleContext, imageModifiers: ImageModifiers?): Image?
-  fun getExpectedDimensions(): Dimensions
+  fun getExpectedDimensions(imageModifiers: ImageModifiers?): Dimensions
 }
 
 internal fun ImageModifiers?.toLoadParameters(): LoadIconParameters {
@@ -32,7 +33,7 @@ internal fun ImageModifiers?.toLoadParameters(): LoadIconParameters {
   val colorPatcher = toIJPatcher(
     stroke = stroke,
     patcher = this?.svgPatcher as? DefaultSvgPatcher,
-    rootPatcher = ijModifiers?.legacyPatcherProvider,
+    rootPatcher = ijModifiers?.legacyPatcherProvider ?: SVGLoader.colorPatcherProvider,
   )
   val isStroke = stroke != null
   return LoadIconParameters(

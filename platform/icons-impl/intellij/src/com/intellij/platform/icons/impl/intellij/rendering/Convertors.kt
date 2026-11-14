@@ -30,14 +30,14 @@ internal fun ColorFilter.toAwtFilter(): RGBImageFilter {
  * The color patcher this frontend hands to the IntelliJ SVG loader for an icon stroked in [stroke] and patched by
  * [patcher], on top of whatever [rootPatcher] already patches.
  *
- * Returns `null` when there is nothing of our own to patch, which is what tells the loader to take its plain path.
+ * Returns [rootPatcher] unchanged when there is nothing of our own to patch.
  */
 internal fun toIJPatcher(
   stroke: DesignColor?,
   patcher: DefaultSvgPatcher?,
   rootPatcher: SVGLoader.SvgElementColorPatcherProvider?,
 ): SVGLoader.SvgElementColorPatcherProvider? {
-  if (stroke == null && patcher == null) return null
+  if (stroke == null && patcher == null) return rootPatcher
   return ProxySvgPatcher(stroke = stroke, patcher = patcher, rootPatcher = rootPatcher)
 }
 
