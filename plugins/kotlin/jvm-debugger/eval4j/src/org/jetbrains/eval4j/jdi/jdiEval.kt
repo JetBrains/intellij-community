@@ -77,7 +77,7 @@ open class JDIEval(
         val loadedClasses = vm.classesByName(classType.className)
         if (loadedClasses.isNotEmpty()) {
             for (loadedClass in loadedClasses) {
-                if (loadedClass.isPrepared && (classType.descriptor in BOOTSTRAP_CLASS_DESCRIPTORS || loadedClass.classLoader() == classLoader)) {
+                if (loadedClass.isPrepared && loadedClass.isInitialized && (classType.descriptor in BOOTSTRAP_CLASS_DESCRIPTORS || loadedClass.classLoader() == classLoader)) {
                     return loadedClass
                 }
             }

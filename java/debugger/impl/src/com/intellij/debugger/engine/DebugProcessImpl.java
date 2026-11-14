@@ -1916,7 +1916,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public @NotNull List<ReferenceType> findLoadedClasses(@Nullable SuspendContext suspendContext, String className) {
-    return ContainerUtil.filter(getCurrentVm(suspendContext).classesByName(className), ReferenceType::isPrepared);
+    return ContainerUtil.filter(getCurrentVm(suspendContext).classesByName(className), type -> type.isPrepared() && type.isInitialized());
   }
 
   private static VirtualMachineProxyImpl getCurrentVm(@Nullable SuspendContext suspendContext) {
