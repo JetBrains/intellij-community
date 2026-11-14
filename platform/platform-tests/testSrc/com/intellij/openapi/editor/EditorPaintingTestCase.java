@@ -4,6 +4,7 @@ package com.intellij.openapi.editor;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -19,6 +20,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.EditorTestUtil;
@@ -30,6 +32,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Graphics2DDelegate;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +64,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public abstract class EditorPaintingTestCase {
   protected static final String TEST_DATA_PATH = "platform/platform-tests/testData/editor/painting";
+  private static final String OLD_SELECTION_KEY = "editor.old.full.horizontal.selection.enabled";
 
   @SuppressWarnings("deprecation")
   protected static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
@@ -87,6 +91,43 @@ public abstract class EditorPaintingTestCase {
       () -> JBUIScale.setUserScaleFactorForTest(oldUserScaleFactor),
       () -> FontLayoutService.setInstance(null)
     ).run();
+  }
+
+  /**
+   * The rounding option, the Islands theme and the registry key {@link #OLD_SELECTION_KEY} before {@link #setSelectionLook}.
+   */
+  protected record SelectionState(@Nullable Boolean rounded, boolean islands, boolean oldSelection) {}
+
+  /**
+   * Sets the look of Islands with {@code enabled}: the rounded corners and the hugging selection. Without it, both are off.
+   */
+  protected static @NotNull SelectionState setNewSelectionEnabled(boolean enabled) {
+    return setSelectionLook(enabled, enabled);
+  }
+
+  /**
+   * Sets the rounding option, and makes the selection hug or fill.
+   * The selection hugs under Islands while the registry key {@link #OLD_SELECTION_KEY} is off.
+   * {@link #restoreSelectionState} puts the returned state back.
+   */
+  protected static @NotNull SelectionState setSelectionLook(boolean rounded, boolean hugging) {
+    var settings = EditorSettingsExternalizable.getInstance();
+    var oldSelection = Registry.get(OLD_SELECTION_KEY);
+    var state = new SelectionState(
+      settings.getRoundedHighlightingOption(),
+      IslandsState.Companion.isEnabled(),
+      oldSelection.asBoolean()
+    );
+    IslandsState.Companion.setEnabled(hugging, false);
+    oldSelection.setValue(!hugging);
+    settings.setRoundedHighlightingOption(rounded);
+    return state;
+  }
+
+  protected static void restoreSelectionState(@NotNull SelectionState state) {
+    IslandsState.Companion.setEnabled(state.islands(), false);
+    Registry.get(OLD_SELECTION_KEY).setValue(state.oldSelection());
+    EditorSettingsExternalizable.getInstance().setRoundedHighlightingOption(state.rounded());
   }
 
   protected @NotNull String getName() {

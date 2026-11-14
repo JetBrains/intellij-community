@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -28,16 +27,13 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.junit5.TestApplication;
-import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import javax.swing.Icon;
@@ -64,38 +60,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestDataPath("$PROJECT_ROOT/community/platform/platform-tests/testData/editor/painting")
 @TestApplication
 public class EditorPaintingTest extends EditorPaintingTestCase {
-  private static final String OLD_SELECTION_KEY = "editor.old.full.horizontal.selection.enabled";
-
-  private record SelectionState(@Nullable Boolean rounded, boolean islands, boolean oldSelection) {}
-
-  private static SelectionState setNewSelectionEnabled(boolean enabled) {
-    return setSelectionLook(enabled, enabled);
-  }
-
-  /**
-   * Sets the rounding option, and makes the selection hug or fill.
-   * The selection hugs under Islands while the registry key {@link #OLD_SELECTION_KEY} is off.
-   */
-  private static SelectionState setSelectionLook(boolean rounded, boolean hugging) {
-    var settings = EditorSettingsExternalizable.getInstance();
-    var oldSelection = Registry.get(OLD_SELECTION_KEY);
-    var state = new SelectionState(
-      settings.getRoundedHighlightingOption(),
-      IslandsState.Companion.isEnabled(),
-      oldSelection.asBoolean()
-    );
-    IslandsState.Companion.setEnabled(hugging, false);
-    oldSelection.setValue(!hugging);
-    settings.setRoundedHighlightingOption(rounded);
-    return state;
-  }
-
-  private static void restoreSelectionState(SelectionState state) {
-    IslandsState.Companion.setEnabled(state.islands(), false);
-    Registry.get(OLD_SELECTION_KEY).setValue(state.oldSelection());
-    EditorSettingsExternalizable.getInstance().setRoundedHighlightingOption(state.rounded());
-  }
-
   @Test
   public void testWholeLineHighlighterAtDocumentEnd() {
     myFixture.runTest(() -> {
