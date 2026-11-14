@@ -535,6 +535,22 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
   }
 
   @Test
+  public void testColumnModeSelectionOnShortLine() {
+    myFixture.runTest(() -> {
+      var state = setNewSelectionEnabled(true);
+      try {
+        myFixture.initText("ab\ncdefghij");
+        EditorEx editor = (EditorEx)myFixture.getEditor();
+        editor.setColumnMode(true);
+        editor.getSelectionModel().setBlockSelection(new LogicalPosition(0, 1), new LogicalPosition(1, 5));
+        checkResult();
+      } finally {
+        restoreSelectionState(state);
+      }
+    });
+  }
+
+  @Test
   public void testMultiLineHighlighterRounded() {
     myFixture.runTest(() -> {
       var state = setSelectionLook(true, true);
