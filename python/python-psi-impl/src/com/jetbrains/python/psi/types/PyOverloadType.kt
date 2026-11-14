@@ -13,15 +13,25 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 class PyOverloadType(val items: List<PyCallableType>, val impl: Ref<PyType?>?) : PyType {
 
+  /**
+   * The type of the object that the overloaded name refers to at runtime:
+   * the implementation or, when its type is not known, the first overload.
+   */
+  private val runtimeType: PyType?
+    get() = impl?.get() ?: items.firstOrNull()
+
   override fun resolveMember(
     name: String,
     location: PyExpression?,
     direction: AccessDirection,
     resolveContext: PyResolveContext,
-  ): List<RatedResolveResult> = emptyList()
+  ): List<RatedResolveResult>? {
+    val runtimeType = runtimeType ?: return emptyList()
+    return runtimeType.resolveMember(name, location, direction, resolveContext)
+  }
 
   override fun getCompletionVariants(completionPrefix: String?, location: PsiElement, context: ProcessingContext): Array<out Any> =
-    emptyArray()
+    runtimeType?.getCompletionVariants(completionPrefix, location, context) ?: emptyArray()
 
   override val name: String = PyNames.OVERLOAD_TYPE
 
