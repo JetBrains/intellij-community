@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap
  * - the macOS "natural text editing" chords (Cmd/Option + arrows, Cmd+Backspace). The
  *   Ghostty app resolves them above VT encoding too: a VT encoder reports SUPER as the
  *   xterm meta modifier, which shells ignore;
+ * - Shift+Enter as `ESC CR` outside the Kitty keyboard protocol, while the "Send Esc+CR on Shift+Enter" setting is on;
  * - whether Alt is a modifier for the shell (the `altSendsEscape` setting). The encoder
  *   gets it as its `macos_option_as_alt` option and applies the active protocol;
  * - splitting AWT's KEY_PRESSED/KEY_TYPED pair so each keystroke is encoded exactly once.
@@ -114,6 +115,10 @@ internal class TerminalEmulatorKeyEventEncoder(
     // Numpad Delete with NumLock on: the key code says Delete, but the key types '.'.
     if (e.keyCode == KeyEvent.VK_DELETE && e.keyChar == '.') {
       return bytesResult(byteArrayOf('.'.code.toByte()), e)
+    }
+
+    if (isShiftEnterAsEscCR(e)) {
+      return bytesResult(byteArrayOf(ESC, CR), e)
     }
 
     macNaturalTextEditingChord(e)?.let { chord ->
@@ -384,6 +389,25 @@ internal class TerminalEmulatorKeyEventEncoder(
       else -> null
     }
   }
+
+  /**
+   * Whether Shift+Enter is encoded as `ESC CR`, the legacy xterm encoding of Alt+Enter. JediTerm sends the same bytes.
+   * This applies while the "Send Esc+CR on Shift+Enter" setting is on and the Kitty keyboard protocol is off.
+   * Under the Kitty protocol, this function returns false, and the program gets `CSI 13;2u`, a real Shift+Enter.
+   *
+   * This is not a standard encoding.
+   * Without the Kitty protocol and without this function, the encoder sends `CSI 27;2;13~`, the xterm modifyOtherKeys form.
+   * However, ConPTY drops that sequence, so a Windows console program gets no key, and Codex inserts no new line (IJPL-260895).
+   *
+   * TODO: Consider to expose the modifyOtherKeys state in the emulator.
+   *  Then this function can return false when modifyOtherKeys is on and no ConPTY is used.
+   *  Another option is to support win32-input-mode. Then a Windows console program gets a real Shift+Enter through ConPTY.
+   */
+  private fun isShiftEnterAsEscCR(e: KeyEvent): Boolean =
+    e.keyCode == KeyEvent.VK_ENTER &&
+    modifierKeys(e) == InputEvent.SHIFT_DOWN_MASK &&
+    settings.shiftEnterSendsEscCR() &&
+    emulator.kittyKeyboardFlags.isEmpty()
 
   private fun bytesResult(bytes: ByteArray, e: KeyEvent): KeyEventProcessingResultDto.BytesResult {
     val shouldScroll = settings.scrollToBottomOnTyping() && isCodeThatScrolls(e.keyCode)
