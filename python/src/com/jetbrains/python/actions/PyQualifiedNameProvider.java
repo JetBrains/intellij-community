@@ -53,14 +53,25 @@ public final class PyQualifiedNameProvider implements QualifiedNameProvider {
     if (!functions.isEmpty()) {
       return functions.get(0);
     }
-    return qualifiedNameToModule(fqn, project);
+    PyFile module = qualifiedNameToModule(fqn, project);
+    return module != null ? module : qualifiedNameToModuleAttribute(fqn, project);
+  }
+
+  /**
+   * Resolves the qualified name of a module-level variable, for example {@code typing.Never}, to its target expression.
+   */
+  private static @Nullable PsiElement qualifiedNameToModuleAttribute(@NotNull String fqn, @NotNull Project project) {
+    QualifiedName qualifiedName = QualifiedName.fromDottedString(fqn);
+    if (qualifiedName.getComponentCount() < 2) return null;
+    PyFile module = qualifiedNameToModule(qualifiedName.removeLastComponent().toString(), project);
+    return module != null ? module.findTopLevelAttribute(qualifiedName.getLastComponent()) : null;
   }
 
   /**
    * Resolves a module/package qualified name (e.g. {@code collections}) to its file, turning a package
    * directory into its {@code __init__} file so navigation lands on the module rather than the directory.
    */
-  private static @Nullable PsiElement qualifiedNameToModule(@NotNull String fqn, @NotNull Project project) {
+  private static @Nullable PyFile qualifiedNameToModule(@NotNull String fqn, @NotNull Project project) {
     QualifiedName qualifiedName = QualifiedName.fromDottedString(fqn);
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       PyQualifiedNameResolveContext context = PyResolveImportUtil.fromModule(module);

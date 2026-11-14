@@ -467,7 +467,17 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   @Override
   public @NotNull HtmlChunk visitPyNeverType(@NotNull PyNeverType neverType) {
-    return className(neverType.getName());
+    return qualifiedNameLink(neverType.getName(), getNeverQualifiedName(neverType));
+  }
+
+  private @NotNull String getNeverQualifiedName(@NotNull PyNeverType neverType) {
+    if (neverType == PyNeverType.NO_RETURN) {
+      return PyTypingTypeProvider.NO_RETURN;
+    }
+    // `typing` declares `Never` since Python 3.11, and `typing_extensions` declares it for the older versions
+    PsiFile origin = myTypeEvalContext.getOrigin();
+    boolean inTyping = origin == null || PyLanguageFacadeKt.getEffectiveLanguageLevel(origin).isAtLeast(LanguageLevel.PYTHON311);
+    return inTyping ? PyTypingTypeProvider.NEVER : PyTypingTypeProvider.NEVER_EXT;
   }
 
   @Override
