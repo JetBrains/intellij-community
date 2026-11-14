@@ -79,6 +79,9 @@ jvm_library(
         "//platform/vcs-api:vcs",
         "//platform/vcs-impl",
         "//platform/progress/shared:ide-progress",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jackson3/databind",
+        "//libraries/jackson3/dataformat-toml:libraries-jackson3-dataformat-toml",
     ],
 )
 ### auto-generated section `build intellij.python.ruff` end

@@ -7,6 +7,9 @@
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.dataformat.toml"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.codeStyle.impl"/>
@@ -34,8 +37,8 @@
     <module name="intellij.python.lsp.core"/>
     <module name="intellij.python.lsp.core.common"/>
     <module name="intellij.python.pytools.backend"/>
-    <module name="intellij.python.pytools.common"/>
     <module name="intellij.python.pytools.backend.runtime"/>
+    <module name="intellij.python.pytools.common"/>
     <module name="intellij.python.ruff.common"/>
     <module name="intellij.toml.core"/>
     <module name="intellij.xml.parser"/>
