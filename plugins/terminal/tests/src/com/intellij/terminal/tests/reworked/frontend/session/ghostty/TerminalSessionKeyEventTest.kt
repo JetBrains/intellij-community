@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.frontend.session.ghostty
 
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.terminal.tests.reworked.util.LoopbackTtyConnector
 import org.assertj.core.api.Assertions.assertThat
@@ -39,13 +41,31 @@ internal class TerminalSessionKeyEventTest : GhosttyTerminalSessionTestCase() {
   }
 
   @Test
-  fun `shift+enter is the xterm chord outside the Kitty keyboard protocol and CSI u under it`() = runSessionTest { session, connector, _ ->
-    // The "Send Esc+CR on Shift+Enter" setting applies to the JediTerm emulator only. Here the encoder
-    // answers the way the Ghostty app does, so a program tells Shift+Enter from Enter under either protocol.
-    fun shiftEnter() = pressed(KeyEvent.VK_ENTER, Char(10), InputEvent.SHIFT_DOWN_MASK)
-    assertThat(bytesOf(session.processKeyEvent(shiftEnter()))).isEqualTo(csi("27;2;13~"))
-    applyModes(connector, csi(">1u"))
-    assertThat(bytesOf(session.processKeyEvent(shiftEnter()))).isEqualTo(csi("13;2u"))
+  fun `encoding Shift+Enter when the Esc+CR setting is on`() {
+    setShiftEnterSendsEscCr(true)
+    runSessionTest { session, connector, _ ->
+      fun shiftEnter() = pressed(KeyEvent.VK_ENTER, Char(10), InputEvent.SHIFT_DOWN_MASK)
+      assertThat(bytesOf(session.processKeyEvent(shiftEnter()))).isEqualTo(Char(27) + "\r")
+      applyModes(connector, csi(">4;2m")) // turns on modifyOtherKeys state 2
+      assertThat(bytesOf(session.processKeyEvent(shiftEnter()))).isEqualTo(Char(27) + "\r")
+      applyModes(connector, csi(">1u")) // pushes the Kitty flag 1, "disambiguate escape codes"
+      assertThat(bytesOf(session.processKeyEvent(shiftEnter()))).isEqualTo(csi("13;2u"))
+      // The setting changes only Shift+Enter without other modifiers.
+      assertThat(bytesOf(session.processKeyEvent(pressed(KeyEvent.VK_ENTER, Char(10))))).isEqualTo("\r")
+      val ctrlShiftEnter = pressed(KeyEvent.VK_ENTER, Char(10), InputEvent.CTRL_DOWN_MASK or InputEvent.SHIFT_DOWN_MASK)
+      assertThat(bytesOf(session.processKeyEvent(ctrlShiftEnter))).isEqualTo(csi("13;6u"))
+    }
+  }
+
+  @Test
+  fun `encoding Shift+Enter when the Esc+CR setting is off`() {
+    setShiftEnterSendsEscCr(false)
+    runSessionTest { session, connector, _ ->
+      fun shiftEnter() = pressed(KeyEvent.VK_ENTER, Char(10), InputEvent.SHIFT_DOWN_MASK)
+      assertThat(bytesOf(session.processKeyEvent(shiftEnter()))).isEqualTo(csi("27;2;13~"))
+      applyModes(connector, csi(">1u"))
+      assertThat(bytesOf(session.processKeyEvent(shiftEnter()))).isEqualTo(csi("13;2u"))
+    }
   }
 
   @Test
@@ -352,6 +372,14 @@ internal class TerminalSessionKeyEventTest : GhosttyTerminalSessionTestCase() {
   }
 
   // ---- harness ----
+
+  /** Sets the "Send Esc+CR on Shift+Enter" setting until the end of the test. */
+  private fun setShiftEnterSendsEscCr(value: Boolean) {
+    val settingId = "terminal.shift.enter.sends.esc.cr"
+    val previousValue = AdvancedSettings.getBoolean(settingId)
+    AdvancedSettings.setBoolean(settingId, value)
+    Disposer.register(testDisposable) { AdvancedSettings.setBoolean(settingId, previousValue) }
+  }
 
   private fun bytesOf(result: KeyEventProcessingResultDto): String {
     assertThat(result).isInstanceOf(KeyEventProcessingResultDto.BytesResult::class.java)
