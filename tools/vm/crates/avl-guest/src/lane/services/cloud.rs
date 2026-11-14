@@ -3,8 +3,7 @@
 //! The emulated account is one user. The login approves at once: the authorization answers a redirect to the IDE's
 //! callback with a fixed code. The id token is unsigned and names this server as its issuer, so a login survives an
 //! IDE restart. The JCP routes answer the AI access discovery and the provisioning that Air reads before it offers a
-//! cloud run, the repository access check of `repo-connections` that Air makes before it launches one, and the
-//! mobile control grant that a signed-in IDE asks the Agent Spawner for. [spawner]
+//! cloud run, and the repository access check of `repo-connections` that Air makes before it launches one. [spawner]
 //! serves the Agent Spawner below them. The agreement routes of the license service answer that the account has no
 //! document. A request to any other path answers 501, and the emulator records it.
 
@@ -51,7 +50,6 @@ const AGENTS_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/agent
 const ACP_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/acp";
 const MCP_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/mcp";
 const REPOSITORY_ACCESS_PATH: &str = "/repo-connections/tokens/state/meta";
-const MOBILE_CONTROL_GRANT_PATH: &str = "/agent-spawner/hosts/v0/remote-control/availability";
 /// The read of an agreement document: the AI terms of Air, and the privacy policy that the IDE updates on its own.
 const OBTAIN_AGREEMENT_PATH: &str = "/lservice/rpc/obtainAgreement.action";
 /// The read of the revocation and block lists, which the IDE updates with its privacy policy.
@@ -78,8 +76,6 @@ const ACP_PROVISIONING_BODY: &str = r#"{"registry":"","allowAcpAgentManagement":
 /// The JetBrains VCS App of the emulated user can read every repository, so no launch stops at the access check.
 const REPOSITORY_ACCESS_BODY: &str =
     r#"{"type":"VALID","provider":"github","username":"air-lane","repositoryPermissions":{"read":true,"write":true}}"#;
-/// No grant, so a lane IDE keeps mobile control off: the emulator serves no host registration of the spawner.
-const MOBILE_CONTROL_GRANT_BODY: &str = r#"{"available":false}"#;
 
 /// What the emulated account belongs to, as the AI access discovery states it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -297,7 +293,6 @@ impl Cloud {
             AGENTS_PROVISIONING_PATH => Some(AGENTS_PROVISIONING_BODY),
             ACP_PROVISIONING_PATH => Some(ACP_PROVISIONING_BODY),
             REPOSITORY_ACCESS_PATH => Some(REPOSITORY_ACCESS_BODY),
-            MOBILE_CONTROL_GRANT_PATH => Some(MOBILE_CONTROL_GRANT_BODY),
             // The organization provisions no MCP server. Air reads 404 as "not configured".
             MCP_PROVISIONING_PATH => None,
             _ => return None,
