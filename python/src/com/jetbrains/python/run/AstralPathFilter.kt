@@ -7,8 +7,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
-import kotlin.io.path.Path
-import kotlin.io.path.pathString
 
 /**
  * Console filter that creates hyperlinks for file paths in Ruff/ty diagnostic output.
@@ -20,24 +18,31 @@ import kotlin.io.path.pathString
  *
  * This format uses a separate line for file paths with an arrow prefix,
  * allowing multiple file references in a single diagnostic.
+ *
+ * A location in a Jupyter notebook names the cell, and its line and column count from the start of that cell:
+ * ```
+ *   --> notebooks/analysis.ipynb:cell 3:3:1
+ * ```
+ * The link of such a location opens the notebook at its start.
  */
 internal class AstralPathFilter(private val project: Project, private val workingDirectory: String?) : Filter, DumbAware {
 
-  private val pattern = Regex("""( *--> )(?<file>.+):(?<line>\d+):(?<column>\d+)""")
+  private val pattern = Regex("""( *--> )(?<file>.+?)(?<cell>:cell \d+)?:(?<line>\d+):(?<column>\d+)""")
 
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
     val lineTrimmed = line.trimEnd()
-    val (prefix, file, linerGroup, columnGroup) = pattern.matchEntire(lineTrimmed)?.destructured ?: return null
+    val (prefix, file, cellGroup, lineGroup, columnGroup) = pattern.matchEntire(lineTrimmed)?.destructured ?: return null
 
     val fileName = file.replace('\\', '/')
 
     val virtualFile = findFileByName(fileName) ?: return null
 
+    val isCellLocation = cellGroup.isNotEmpty()
     val hyperlinkInfo = AstralFileHyperlinkInfo(
       virtualFile = virtualFile,
       project = project,
-      line = linerGroup.toInt() - 1,
-      column = columnGroup.toInt() - 1,
+      line = if (isCellLocation) 0 else lineGroup.toInt() - 1,
+      column = if (isCellLocation) 0 else columnGroup.toInt() - 1,
     )
 
     val lineOffset = entireLength - line.length
@@ -59,7 +64,7 @@ internal class AstralPathFilter(private val project: Project, private val workin
     // Try relative to project base path
     val projectBasePath = project.basePath
     if (projectBasePath != null) {
-      vFile = fs.findFileByPath(Path(projectBasePath, fileName).pathString)
+      vFile = fs.findFileByPath("$projectBasePath/$fileName")
       if (vFile != null) {
         return vFile
       }
@@ -67,7 +72,7 @@ internal class AstralPathFilter(private val project: Project, private val workin
 
     // Try relative to working directory
     if (!workingDirectory.isNullOrBlank()) {
-      vFile = fs.findFileByPath(Path(workingDirectory, fileName).pathString)
+      vFile = fs.findFileByPath("$workingDirectory/$fileName")
       if (vFile != null) {
         return vFile
       }
