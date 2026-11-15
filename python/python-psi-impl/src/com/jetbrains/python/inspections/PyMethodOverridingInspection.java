@@ -17,11 +17,16 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil;
+import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableParameterImpl;
+import com.jetbrains.python.psi.types.PyCallableParameterListType;
 import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyParamSpecType;
 import com.jetbrains.python.psi.types.PySelfType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
@@ -29,6 +34,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 public final class PyMethodOverridingInspection extends PyInspection {
@@ -55,9 +61,13 @@ public final class PyMethodOverridingInspection extends PyInspection {
 
       if (containingClass == null || skipFunctionValidation(function)) return;
 
-      for (PsiElement psiElement : PySuperMethodsSearch.search(function, myTypeEvalContext).findAll()) {
+      Collection<PsiElement> superMethods = PySuperMethodsSearch.search(function, myTypeEvalContext).findAll();
+      if (superMethods.isEmpty()) return;
+
+      PyTypeChecker.GenericSubstitutions substitutions = collectAncestorSubstitutions(containingClass);
+      for (PsiElement psiElement : superMethods) {
         if (psiElement instanceof PyFunction baseMethod) {
-          validateOverriddenFunction(function, baseMethod, containingClass);
+          validateOverriddenFunction(function, baseMethod, containingClass, substitutions);
         }
       }
     }
@@ -76,7 +86,8 @@ public final class PyMethodOverridingInspection extends PyInspection {
 
     private void validateOverriddenFunction(@NotNull PyFunction function,
                                             @NotNull PyFunction baseMethod,
-                                            @NotNull PyClass containingClass) {
+                                            @NotNull PyClass containingClass,
+                                            @Nullable PyTypeChecker.GenericSubstitutions substitutions) {
       PyClass baseClass = baseMethod.getContainingClass();
       String methodSignature = containingClass.getName() + "." + function.getName() + "()";
       String baseClassName = baseClass != null ? baseClass.getName() : "";
@@ -97,6 +108,8 @@ public final class PyMethodOverridingInspection extends PyInspection {
         baseMethodParameters = ParamHelper.dropSelf(baseMethodParameters);
         functionParameters = ParamHelper.dropSelf(functionParameters);
       }
+
+      baseMethodParameters = substituteParameters(baseMethodParameters, substitutions);
 
       PyCallableParameterListTypeImpl baseMethodInputSignature = new PyCallableParameterListTypeImpl(baseMethodParameters);
       PyCallableParameterListTypeImpl functionInputSignature = new PyCallableParameterListTypeImpl(functionParameters);
@@ -125,13 +138,57 @@ public final class PyMethodOverridingInspection extends PyInspection {
 
       if (returnExpression == null || baseMethodAnnotation == null) return;
 
-      PyType baseMethodReturnType = myTypeEvalContext.getReturnType(baseMethod);
+      PyType baseMethodReturnType = substitute(myTypeEvalContext.getReturnType(baseMethod), substitutions);
       PyType overriddenReturnType = myTypeEvalContext.getReturnType(function);
 
       if (!PyTypeChecker.match(baseMethodReturnType, overriddenReturnType, myTypeEvalContext)) {
         ProblemMessage msg = PyPsiBundle.problemMessage("INSP.overridden.method.return.type.mismatch", methodSignatureParam, baseClassParam);
         registerOverrideMismatch(returnExpression, baseMethodReturnType, overriddenReturnType, msg);
       }
+    }
+
+    /**
+     * Returns the substitutions of the type parameters of the ancestors of {@code containingClass} with the type arguments
+     * that {@code containingClass} gives them. The own type parameters of a generic class map to themselves.
+     * Returns {@code null} when no ancestor is generic.
+     */
+    private @Nullable PyTypeChecker.GenericSubstitutions collectAncestorSubstitutions(@NotNull PyClass containingClass) {
+      PyClassType classType = PyTypeChecker.findGenericDefinitionType(containingClass, myTypeEvalContext);
+      if (classType == null && myTypeEvalContext.getType(containingClass) instanceof PyClassType plainClassType) {
+        classType = plainClassType;
+      }
+      if (classType == null) return null;
+      PyTypeChecker.GenericSubstitutions substitutions =
+        PyTypeChecker.INSTANCE.collectTypeSubstitutions(classType.toInstance(), myTypeEvalContext);
+      return substitutions.getTypeVars().isEmpty() && substitutions.getTypeVarTuples().isEmpty() && substitutions.getParamSpecs().isEmpty()
+             ? null
+             : substitutions;
+    }
+
+    private @Nullable PyType substitute(@Nullable PyType type, @Nullable PyTypeChecker.GenericSubstitutions substitutions) {
+      if (substitutions == null || !PyTypeChecker.hasGenerics(type, myTypeEvalContext)) return type;
+      return PyTypeChecker.substitute(type, substitutions, myTypeEvalContext);
+    }
+
+    /**
+     * Replaces {@code *args: P.args, **kwargs: P.kwargs} with the parameters of {@code P}.
+     * Otherwise, substitutes the type of each parameter separately, so that a parameter such as {@code *args: *Ts} stays one parameter.
+     */
+    private @NotNull List<PyCallableParameter> substituteParameters(@NotNull List<PyCallableParameter> parameters,
+                                                                    @Nullable PyTypeChecker.GenericSubstitutions substitutions) {
+      if (substitutions == null) return parameters;
+      if ((ParamHelper.isArgsKwargsSignature(parameters) || ParamHelper.isSelfArgsKwargsSignature(parameters)) &&
+          ContainerUtil.getLastItem(parameters).getType(myTypeEvalContext) instanceof PyParamSpecType &&
+          substitute(new PyCallableParameterListTypeImpl(parameters), substitutions) instanceof PyCallableParameterListType paramSpecParameters) {
+        return paramSpecParameters.getParameters();
+      }
+      return ContainerUtil.map(parameters, parameter -> {
+        PyParameter psi = parameter.getParameter();
+        if (psi == null) return parameter;
+        PyType type = parameter.getType(myTypeEvalContext);
+        PyType substituted = substitute(type, substitutions);
+        return substituted == type ? parameter : PyCallableParameterImpl.psi(psi, substituted);
+      });
     }
 
     /**
