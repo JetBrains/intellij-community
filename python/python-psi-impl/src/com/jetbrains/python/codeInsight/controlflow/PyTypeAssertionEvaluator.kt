@@ -223,29 +223,6 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
   }
 
   /**
-   * Returns `true` when no value of [left] can be identical to ([isIdentity]) or equal to a value of [right].
-   */
-  private fun canNeverCompareTrue(left: PyType?, right: PyType?, isIdentity: Boolean, context: TypeEvalContext): Boolean {
-    val rightMembers = right.asUnionSequence().toList()
-    return left.asUnionSequence().all { leftMember ->
-      rightMembers.all { rightMember -> canNeverCompareTrueMembers(leftMember, rightMember, isIdentity, context) }
-    }
-  }
-
-  private fun canNeverCompareTrueMembers(left: PyType?, right: PyType?, isIdentity: Boolean, context: TypeEvalContext): Boolean {
-    if (left !is PyClassType || right !is PyClassType || left.isDefinition || right.isDefinition) return false
-    if (listOf(left, right).any { isUnknown(it, context) || it.inheritsAny(context) }) return false
-    // A value of a class can be equal or identical to a value of its subclass
-    if (left.pyClass.isSubclass(right.pyClass, context) || right.pyClass.isSubclass(left.pyClass, context)) return false
-    if (isIdentity) {
-      // A variable of `float` or `complex` can hold an `int`
-      val group = equalityGroup(left, context)
-      return (group == null || group != equalityGroup(right, context)) && intersect(left, right, context) is PyNeverType
-    }
-    return !canEqualUnrelated(left, listOf(right), context) && !canEqualUnrelated(right, listOf(left), context)
-  }
-
-  /**
    * Narrows [initial] on the positive edge of an equality check (`==`, `!=`) against the [suggested] types.
    *
    * Unlike identity, equality can hold between unrelated types, e.g. `Decimal(0) == 0`. Members of [initial] that are
@@ -283,57 +260,6 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
       createAssertionType(PyUnionType.unionOrUnknown(remainingTypes), suggested, true, isStrictNarrowingAllowed, context)?.get()
     }
     return Ref(PyUnionType.unionOrUnknown(preservedTypes + narrowed))
-  }
-
-  /**
-   * `None` compares by identity. A builtin [type] is equal only to a value of its own equality group, or to a value whose
-   * class defines its own comparison.
-   */
-  private fun canEqualUnrelated(type: PyType?, candidates: List<PyType?>, context: TypeEvalContext): Boolean {
-    val comparable = candidates.filter { !it.isNoneType }
-    val group = equalityGroup(type, context) ?: return comparable.isNotEmpty() &&
-                                                   (canHaveCustomEquality(type, context) || comparable.any { canHaveCustomEquality(it, context) })
-    return comparable.any { candidate ->
-      val candidateGroup = equalityGroup(candidate, context)
-      candidateGroup == group || candidateGroup == null && canHaveCustomEquality(candidate, context)
-    }
-  }
-
-  /**
-   * Returns the equality group of a builtin [type]. An enum with members and a builtin mixin, as in `class Number(IntEnum)`,
-   * cannot have a subclass. So it is in the group of the builtin class that defines its `__eq__` and `__ne__`.
-   */
-  private fun equalityGroup(type: PyType?, context: TypeEvalContext): Int? {
-    if (type !is PyClassType || type.isDefinition) return null
-    if (type.isBuiltin) return BUILTIN_EQUALITY_GROUPS[type.pyClass.name]
-    if (!PyStdlibTypeProvider.isFinalEnum(type.pyClass, context)) return null
-    val groups = listOf(PyNames.EQ, NE).flatMap { name ->
-      val members = type.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext(context))
-      if (members.isNullOrEmpty()) return null
-      members.map { member ->
-        val definingClass = (member.element as? PyFunction)?.containingClass ?: return null
-        if (!PyBuiltinCache.getInstance(definingClass).isBuiltin(definingClass)) return null
-        BUILTIN_EQUALITY_GROUPS[definingClass.name] ?: return null
-      }
-    }
-    return groups.distinct().singleOrNull()
-  }
-
-  /**
-   * Returns `false` only when [type] is known to compare with the default `object` implementation:
-   * a builtin literal, or a final class, an enum with members or an enum member that resolves both `__eq__` and `__ne__`
-   * to `object`.
-   * Open classes can get a custom comparison in a subclass.
-   */
-  private fun canHaveCustomEquality(type: PyType?, context: TypeEvalContext): Boolean {
-    if (type !is PyClassType || type.isDefinition) return true
-    if (type is PyLiteralType && type.isBuiltin) return false
-    if (type !is PyLiteralType && !isFinalClass(type.pyClass, context)) return true
-    val objectClass = PyBuiltinCache.getInstance(type.pyClass).objectType?.pyClass ?: return true
-    return listOf(PyNames.EQ, NE).any { name ->
-      val members = type.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext(context))
-      members.isNullOrEmpty() || members.any { (it.element as? PyFunction)?.containingClass != objectClass }
-    }
   }
 
   /**
@@ -522,6 +448,81 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
 
     private val PyType?.isBuiltinLiteral: Boolean
       get() = this is PyLiteralType && isBuiltin
+
+    /**
+     * Returns `true` when no value of [left] can be identical to ([isIdentity]) or equal to a value of [right].
+     */
+    fun canNeverCompareTrue(left: PyType?, right: PyType?, isIdentity: Boolean, context: TypeEvalContext): Boolean {
+      val rightMembers = right.asUnionSequence().toList()
+      return left.asUnionSequence().all { leftMember ->
+        rightMembers.all { rightMember -> canNeverCompareTrueMembers(leftMember, rightMember, isIdentity, context) }
+      }
+    }
+
+    private fun canNeverCompareTrueMembers(left: PyType?, right: PyType?, isIdentity: Boolean, context: TypeEvalContext): Boolean {
+      if (left !is PyClassType || right !is PyClassType || left.isDefinition || right.isDefinition) return false
+      if (listOf(left, right).any { isUnknown(it, context) || it.inheritsAny(context) }) return false
+      // A value of a class can be equal or identical to a value of its subclass
+      if (left.pyClass.isSubclass(right.pyClass, context) || right.pyClass.isSubclass(left.pyClass, context)) return false
+      if (isIdentity) {
+        // A variable of `float` or `complex` can hold an `int`
+        val group = equalityGroup(left, context)
+        return (group == null || group != equalityGroup(right, context)) && intersect(left, right, context) is PyNeverType
+      }
+      return !canEqualUnrelated(left, listOf(right), context) && !canEqualUnrelated(right, listOf(left), context)
+    }
+
+    /**
+     * `None` compares by identity. A builtin [type] is equal only to a value of its own equality group, or to a value whose
+     * class defines its own comparison.
+     */
+    private fun canEqualUnrelated(type: PyType?, candidates: List<PyType?>, context: TypeEvalContext): Boolean {
+      val comparable = candidates.filter { !it.isNoneType }
+      val group = equalityGroup(type, context)
+                  ?: return comparable.isNotEmpty() &&
+                            (canHaveCustomEquality(type, context) || comparable.any { canHaveCustomEquality(it, context) })
+      return comparable.any { candidate ->
+        val candidateGroup = equalityGroup(candidate, context)
+        candidateGroup == group || candidateGroup == null && canHaveCustomEquality(candidate, context)
+      }
+    }
+
+    /**
+     * Returns the equality group of a builtin [type]. An enum with members and a builtin mixin, as in `class Number(IntEnum)`,
+     * cannot have a subclass. So it is in the group of the builtin class that defines its `__eq__` and `__ne__`.
+     */
+    private fun equalityGroup(type: PyType?, context: TypeEvalContext): Int? {
+      if (type !is PyClassType || type.isDefinition) return null
+      if (type.isBuiltin) return BUILTIN_EQUALITY_GROUPS[type.pyClass.name]
+      if (!PyStdlibTypeProvider.isFinalEnum(type.pyClass, context)) return null
+      val groups = listOf(PyNames.EQ, NE).flatMap { name ->
+        val members = type.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext(context))
+        if (members.isNullOrEmpty()) return null
+        members.map { member ->
+          val definingClass = (member.element as? PyFunction)?.containingClass ?: return null
+          if (!PyBuiltinCache.getInstance(definingClass).isBuiltin(definingClass)) return null
+          BUILTIN_EQUALITY_GROUPS[definingClass.name] ?: return null
+        }
+      }
+      return groups.distinct().singleOrNull()
+    }
+
+    /**
+     * Returns `false` only when [type] is known to compare with the default `object` implementation:
+     * a builtin literal, or a final class, an enum with members or an enum member that resolves both `__eq__` and `__ne__`
+     * to `object`.
+     * Open classes can get a custom comparison in a subclass.
+     */
+    private fun canHaveCustomEquality(type: PyType?, context: TypeEvalContext): Boolean {
+      if (type !is PyClassType || type.isDefinition) return true
+      if (type is PyLiteralType && type.isBuiltin) return false
+      if (type !is PyLiteralType && !isFinalClass(type.pyClass, context)) return true
+      val objectClass = PyBuiltinCache.getInstance(type.pyClass).objectType?.pyClass ?: return true
+      return listOf(PyNames.EQ, NE).any { name ->
+        val members = type.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext(context))
+        members.isNullOrEmpty() || members.any { (it.element as? PyFunction)?.containingClass != objectClass }
+      }
+    }
 
 
     private fun isSafeForNegativeAssertion(expression: PyExpression, context: TypeEvalContext): Boolean {
