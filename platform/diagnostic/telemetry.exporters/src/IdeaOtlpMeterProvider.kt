@@ -8,6 +8,7 @@ import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import com.intellij.platform.diagnostic.telemetry.exporters.meters.CsvMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.meters.TelemetryMeterJsonExporter
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.SystemProperties.getIntProperty
 import com.intellij.util.SystemProperties.getLongProperty
 import com.intellij.util.containers.addIfNotNull
 import io.opentelemetry.sdk.metrics.SdkMeterProvider
@@ -76,7 +77,10 @@ object IdeaOtlpMeterProvider {
     val metricsJsonPath: Path = OpenTelemetryUtils.metricsJsonReportingPath() ?: return null
     return MetricsExporterEntry(
       metrics = listOf(
-        TelemetryMeterJsonExporter(RollingFileSupplier(basePath = metricsJsonPath, maxFilesToKeep = 30)),
+        TelemetryMeterJsonExporter(RollingFileSupplier(
+          basePath = metricsJsonPath,
+          maxFilesToKeep = getIntProperty("idea.diagnostic.opentelemetry.metrics.max-files-to-keep", 30),
+        )),
       ),
       duration = DEFAULT_METRICS_REPORTING_PERIOD
     )
