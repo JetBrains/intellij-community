@@ -1905,6 +1905,7 @@
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl"/>
     <applicationActivity implementation="com.intellij.ide.ui.UiDslAndHtmlClassesWarmUp"/>
     <applicationActivity implementation="com.intellij.openapi.wm.impl.FrameClassesWarmUp"/>
+    <applicationActivity implementation="com.intellij.openapi.actionSystem.impl.ActionListenerClassesWarmUp"/>
     <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
     <recoveryAction implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRecoveryAction"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidatorBackgroundActivity"/>

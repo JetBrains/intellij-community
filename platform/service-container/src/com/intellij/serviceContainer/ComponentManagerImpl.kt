@@ -91,6 +91,7 @@ import com.intellij.util.IntelliJCoroutinesFacade
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.UList
+import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
@@ -189,6 +190,17 @@ fun Constructor<*>.newInstanceOrThrow(vararg args: Any?): Any {
   catch (e: InvocationTargetException) {
     throw e.cause ?: e
   }
+}
+
+/**
+ * Tells whether the container registers the declarative [listener] for the current OS.
+ */
+@ApiStatus.Internal
+fun isListenerApplicable(listener: ListenerDescriptor, isUnitTestMode: Boolean, isHeadless: Boolean): Boolean {
+  if ((isUnitTestMode && !listener.activeInTestMode) || (isHeadless && !listener.activeInHeadlessMode)) {
+    return false
+  }
+  return listener.os?.isSuitableForOs() != false
 }
 
 @ApiStatus.Internal
@@ -411,10 +423,7 @@ abstract class ComponentManagerImpl(
         listenersByTopicName = ConcurrentHashMap()
       }
       for (listener in containerDescriptor.listeners) {
-        if ((isUnitTestMode && !listener.activeInTestMode) || (isHeadless && !listener.activeInHeadlessMode)) {
-          continue
-        }
-        if (listener.os != null && !listener.os!!.isSuitableForOs()) {
+        if (!isListenerApplicable(listener, isUnitTestMode = isUnitTestMode, isHeadless = isHeadless)) {
           continue
         }
         listenersByTopicName.computeIfAbsent(listener.topicClassName) { ArrayList() }
