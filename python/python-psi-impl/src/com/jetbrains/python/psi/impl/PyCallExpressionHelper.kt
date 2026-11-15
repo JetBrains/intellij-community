@@ -1168,11 +1168,23 @@ object PyCallExpressionHelper {
 
     val allPositionalArguments = positionalResults.allPositionalArguments
     val reservedForPostArgs = mutableListOf<PyCallableArgument?>()
+    val trailingMatch = matchTrailingPositionalArguments(parameters, positionalResults, keywordArguments,
+                                                         variadicKeywordArguments.isNotEmpty(), context)
+    val trailingArgumentsBySlot = trailingMatch.argumentsBySlot
 
     for ((index, parameter) in parameters.withIndex()) {
       val psi = parameter.parameter
 
-      if (parameter.isPositionOnlySeparator) {
+      if (index in trailingArgumentsBySlot) {
+        val trailingArgument = trailingArgumentsBySlot[index]
+        if (trailingArgument == null || positionalComponentsOfVariadicArguments.contains(trailingArgument)) {
+          parametersMappedToVariadicPositionalArguments.add(parameter)
+        }
+        if (trailingArgument != null) {
+          mappedParameters[trailingArgument] = parameter
+        }
+      }
+      else if (parameter.isPositionOnlySeparator) {
         positionalOnlyMode = false
       }
       else if (parameter.isKeywordOnlySeparator) {
@@ -1340,6 +1352,7 @@ object PyCallExpressionHelper {
       variadicPositionalArguments.clear()
       variadicKeywordArguments.clear()
     }
+    unmappedArguments.addAll(trailingMatch.surplusArguments)
 
     // Drop the `*tuple` placeholder slots: they stand for already-supplied values, not surplus arguments.
     unmappedArguments.addAll(allPositionalArguments.filterNotNull())
@@ -1545,6 +1558,57 @@ object PyCallExpressionHelper {
     return TupleMappingResults(mappedParameters, unmappedParameters, unmappedArguments)
   }
 
+  /**
+   * Matches the positional arguments after the last spread of unknown length to the last positional parameters.
+   *
+   * In `f(*xs, 1)` with `def f(a, b, c)`, the call fills the positional parameters in one way only, so `1` matches `c`.
+   * A keyword argument for a parameter that is not positional-only ends the positional parameters before that parameter.
+   *
+   * The result is empty in these cases, because the count of the positional values is not certain:
+   * - `*args`, a ParamSpec or a tuple parameter is among the positional parameters.
+   * - The last positional parameter has a default value.
+   * - The call has a `**kwargs` argument.
+   *
+   * When the positional arguments outnumber the positional parameters, the last arguments are surplus.
+   */
+  private fun matchTrailingPositionalArguments(
+    parameters: List<PyCallableParameter>,
+    positionalResults: PositionalArgumentsAnalysisResults,
+    keywordArguments: List<PyCallableArgument>,
+    hasVariadicKeywordArgument: Boolean,
+    context: TypeEvalContext,
+  ): TrailingArgumentsMatch {
+    val trailingArguments = positionalResults.trailingPositionalArguments
+    if (trailingArguments.isEmpty()) return TrailingArgumentsMatch.NONE
+
+    val keywords = keywordArguments.mapNotNullTo(mutableSetOf()) { (it.expression as? PyKeywordArgument)?.keyword }
+    val slashIndex = parameters.indexOfFirst { it.isPositionOnlySeparator }
+    // As in PEP 484, a `__x` parameter is positional-only only in the leading run of such parameters.
+    var inLegacyPositionalOnlyRun = slashIndex < 0
+    val slots = mutableListOf<Int>()
+    for ((index, parameter) in parameters.withIndex()) {
+      if (parameter.isPositionOnlySeparator) continue
+      if (parameter.isKeywordOnlySeparator || parameter.isKeywordContainer) break
+      if (parameter.isPositionalContainer || parameter.parameter is PyTupleParameter || isParamSpecOrConcatenate(parameter, context)) {
+        return TrailingArgumentsMatch.NONE
+      }
+      if (!parameter.isSelf && !isLegacyPositionalOnly(parameter)) {
+        inLegacyPositionalOnlyRun = false
+      }
+      val positionalOnly = index < slashIndex || inLegacyPositionalOnlyRun && isLegacyPositionalOnly(parameter)
+      if (!positionalOnly && parameter.name in keywords) break
+      slots.add(index)
+    }
+
+    val surplusCount = positionalResults.allPositionalArguments.size + trailingArguments.size - slots.size
+    if (surplusCount > 0) {
+      return TrailingArgumentsMatch(emptyMap(), trailingArguments.takeLast(surplusCount).filterNotNull())
+    }
+    val lastSlot = slots.lastOrNull() ?: return TrailingArgumentsMatch.NONE
+    if (parameters[lastSlot].hasDefaultValue() || hasVariadicKeywordArgument) return TrailingArgumentsMatch.NONE
+    return TrailingArgumentsMatch(slots.takeLast(trailingArguments.size).zip(trailingArguments).toMap(), emptyList())
+  }
+
   private fun removeKeywordArgument(arguments: MutableList<PyCallableArgument>, name: String?): PyCallableArgument? {
     name ?: return null
     val result = arguments.find { (it.expression as? PyKeywordArgument)?.keyword == name }
@@ -1560,6 +1624,7 @@ object PyCallExpressionHelper {
   ): PositionalArgumentsAnalysisResults {
     val variadicArguments = ArrayList<PyCallableArgument>()
     val allPositionalArguments = ArrayList<PyCallableArgument?>()
+    val trailingPositionalArguments = ArrayList<PyCallableArgument?>()
     val componentsOfVariadicPositionalArguments = ArrayList<PyCallableArgument>()
     var seenVariadicPositionalArgument = false
     var seenVariadicKeywordArgument = false
@@ -1574,7 +1639,7 @@ object PyCallExpressionHelper {
           val expr: PsiElement? = PyPsiUtils.flattenParens(PsiTreeUtil.getChildOfType(argumentExpression, PyExpression::class.java))
           if (expr is PySequenceExpression) {
             val elements = expr.elements.map { PyCallableArgument(it) }
-            allPositionalArguments.addAll(elements)
+            (if (seenVariadicPositionalArgument) trailingPositionalArguments else allPositionalArguments).addAll(elements)
             componentsOfVariadicPositionalArguments.addAll(elements)
           }
           else {
@@ -1587,11 +1652,14 @@ object PyCallExpressionHelper {
               next !is PyStarArgument && next !is PyKeywordArgument
             }
             if (knownLength >= 0 && followedByPositional) {
-              repeat(knownLength) { allPositionalArguments.add(null) }
+              val target = if (seenVariadicPositionalArgument) trailingPositionalArguments else allPositionalArguments
+              repeat(knownLength) { target.add(null) }
             }
             else {
               seenVariadicPositionalArgument = true
               variadicArguments.add(argument)
+              // The arguments between two spreads of unknown length have unknown positions.
+              trailingPositionalArguments.clear()
             }
           }
         }
@@ -1600,13 +1668,14 @@ object PyCallExpressionHelper {
         seenKeywordArgument = true
       }
       else {
-        if (seenKeywordArgument || seenVariadicKeywordArgument || seenVariadicPositionalArgument) {
+        if (seenKeywordArgument || seenVariadicKeywordArgument) {
           continue
         }
-        allPositionalArguments.add(argument)
+        (if (seenVariadicPositionalArgument) trailingPositionalArguments else allPositionalArguments).add(argument)
       }
     }
-    return PositionalArgumentsAnalysisResults(allPositionalArguments, componentsOfVariadicPositionalArguments, variadicArguments)
+    return PositionalArgumentsAnalysisResults(allPositionalArguments, trailingPositionalArguments,
+                                              componentsOfVariadicPositionalArguments, variadicArguments)
   }
 
   /** Number of values a `*operand` spread contributes for a fixed-length tuple, or `-1` when the length is indeterminate. */
@@ -1703,8 +1772,26 @@ private class TupleMappingResults(
   val unmappedArguments: List<PyExpression>,
 )
 
+/**
+ * The match of the positional arguments after the last spread of unknown length.
+ * [argumentsBySlot] gives the argument for the index of a parameter. A `null` argument stands for a value of a fixed-length spread.
+ */
+private class TrailingArgumentsMatch(
+  val argumentsBySlot: Map<Int, PyCallableArgument?>,
+  val surplusArguments: List<PyCallableArgument>,
+) {
+  companion object {
+    val NONE = TrailingArgumentsMatch(emptyMap(), emptyList())
+  }
+}
+
 private class PositionalArgumentsAnalysisResults(
   val allPositionalArguments: MutableList<PyCallableArgument?>,
+  /**
+   * The positional arguments after the last spread of unknown length, such as `1` in `f(*xs, 1)`.
+   * A `null` stands for a value of a fixed-length spread.
+   */
+  val trailingPositionalArguments: List<PyCallableArgument?>,
   val componentsOfVariadicPositionalArguments: List<PyCallableArgument>,
   val variadicPositionalArguments: MutableList<PyCallableArgument>,
 )
