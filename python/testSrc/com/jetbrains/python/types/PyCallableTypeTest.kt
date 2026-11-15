@@ -435,6 +435,170 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
+  inner class ArgumentsAfterSpreadOfUnknownLength {
+    @Test
+    @TestFor(issues = ["PY-94140"])
+    fun `argument after a spread of unknown length matches the last parameter`() = test("""
+      def f(a: int, b: int, c: str): ...
+      def xs() -> list[int]: ...
+
+      f(*xs(), 1)
+      #        └ WARNING Expected type 'str', got 'Literal[1]' instead
+      f(*xs(), "s")
+      f(0, *xs(), 1)
+      #           └ WARNING Expected type 'str', got 'Literal[1]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-94140"])
+    fun `default value makes the position of a trailing argument uncertain`() = test("""
+      def f(a: int, b: int, c: str = ""): ...
+      def xs() -> list[int]: ...
+
+      f(*xs(), 1)
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-94140"])
+    fun `args parameter makes the position of a trailing argument uncertain`() = test("""
+      def f(a: str, *args: int): ...
+      def xs() -> list[str]: ...
+
+      f(*xs(), 1)
+      f(*xs(), "s")
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-94140"])
+    fun `keyword argument ends the positional parameters`() = test("""
+      def f(a: int, b: str, c: int): ...
+      def xs() -> list[int]: ...
+
+      f(*xs(), 1, c=0)
+      #        └ WARNING Expected type 'str', got 'Literal[1]' instead
+      f(*xs(), "s", c=0)
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-94140"])
+    fun `keyword argument for a positional-only parameter does not end the positional parameters`() = test("""
+      def f(a: int, b: str, /, **kwargs: int): ...
+      def xs() -> list[int]: ...
+
+      f(*xs(), 1, b=0)
+      #        └ WARNING Expected type 'str', got 'Literal[1]' instead
+      f(*xs(), "s", b=0)
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-94140"])
+    fun `arguments between two spreads of unknown length match no parameter`() = test("""
+      def f(a: int, b: int, c: str): ...
+      def xs() -> list[int]: ...
+
+      f(*xs(), 1, *xs(), "s")
+      f(*xs(), "s", *xs(), 1)
+      #                    └ WARNING Expected type 'str', got 'Literal[1]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-94140"])
+    fun `spread of a fixed length after a spread of unknown length matches the last parameters`() = test("""
+      def f(a: int, b: int, c: str): ...
+      def xs() -> list[int]: ...
+
+      f(*xs(), *(1, "s"))
+      f(*xs(), *("s", 1))
+      #          │    └ WARNING Expected type 'str', got 'Literal[1]' instead
+      #          ^^^ WARNING Expected type 'int', got 'Literal["s"]' instead
+
+      pair: tuple[int, int] = (1, 2)
+      f(*xs(), *pair, "s")
+      # ^^^^^ WARNING Unexpected argument
+      f(*xs(), *pair, 1)
+      # │             └ WARNING Expected type 'str', got 'Literal[1]' instead
+      # ^^^^^ WARNING Unexpected argument
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-94140"])
+    fun `spread that gets no parameter is an unexpected argument`() = test("""
+      def f(a: int, b: str): ...
+      def xs() -> list[int]: ...
+
+      f(*xs(), 1, "s")
+      # ^^^^^ WARNING Unexpected argument
+      f(*xs(), 1, 2)
+      # │         └ WARNING Expected type 'str', got 'Literal[2]' instead
+      # ^^^^^ WARNING Unexpected argument
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-94140"])
+    fun `keyword spread makes the position of a trailing argument uncertain`() = test("""
+      def f(a: int, b: int, c: str): ...
+      def xs() -> list[int]: ...
+      def kw() -> dict[str, str]: ...
+
+      f(*xs(), 1, **kw())
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-94140"])
+    fun `legacy positional-only name after a regular parameter can be a keyword argument`() = test("""
+      def f(a: int, __b: str, c: str): ...
+      #             ^^^^^^^^ WARNING Positional-only parameter follows parameter that is not positional-only
+      def xs() -> list[int]: ...
+
+      f(*xs(), 1, __b="x", c="y")
+      # ^^^^^ WARNING Unexpected argument
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-94140"])
+    fun `surplus argument after a spread of unknown length is reported`() = test("""
+      def f(a: int, b: int, c: int): ...
+      def xs() -> list[int]: ...
+
+      f(*xs(), 1, 2, 3, 4)
+      #                 └ WARNING Unexpected argument
+      f(*xs(), 1, c=3)
+      f(*xs(), 1, 2, c=3)
+      # ^^^^^ WARNING Unexpected argument
+      f(*xs(), 1, 2, 3, c=4)
+      #              └ WARNING Unexpected argument
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-94140"])
+    fun `overload is selected by the arguments after a spread of unknown length`() = test("""
+      from typing import Any, overload
+
+      @overload
+      def g(a: str, b: str) -> str: ...
+      @overload
+      def g(a: int, b: int) -> int: ...
+      def g(a: int | str, b: int | str) -> int | str: ...
+
+      def xs() -> list[Any]: ...
+
+      expr = g(*xs(), 1)
+      #└ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-94140"])
+    fun `method call matches the argument after a spread of unknown length`() = test("""
+      class C:
+          def m(self, a: int, b: str): ...
+      def xs() -> list[int]: ...
+
+      C().m(*xs(), 1)
+      #            └ WARNING Expected type 'str', got 'Literal[1]' instead
+      """)
+  }
+
+  @Nested
   inner class TypedArgsAndKwargs {
     @Test
     @TestFor(issues = ["PY-19723"])
