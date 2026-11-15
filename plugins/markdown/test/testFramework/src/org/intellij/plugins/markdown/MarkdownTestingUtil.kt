@@ -20,7 +20,7 @@ import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.File
 
-internal object MarkdownTestingUtil {
+object MarkdownTestingUtil {
   @JvmField
   val TEST_DATA_PATH = findTestDataPath()
 
@@ -63,6 +63,6 @@ internal object MarkdownTestingUtil {
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-internal fun MarkdownLivePreviewReconciler.publishSpecsAndWait(specSet: MarkdownLivePreviewSpecSet?) {
+fun MarkdownLivePreviewReconciler.publishSpecsAndWait(specSet: MarkdownLivePreviewSpecSet?) {
   PlatformTestUtil.waitForFuture(GlobalScope.future { publishSpecs(specSet) })
 }

@@ -32,7 +32,7 @@ import javax.swing.JComponent
 import kotlin.io.path.inputStream
 import kotlin.math.ceil
 
-internal object TestScaleHelper {
+object TestScaleHelper {
   private const val STANDALONE_PROP = "intellij.test.standalone"
   private val originalSysProps = HashMap<String, String?>()
   private val originalRegProps = HashMap<String, String>()
