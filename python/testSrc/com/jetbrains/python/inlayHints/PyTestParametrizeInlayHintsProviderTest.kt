@@ -116,7 +116,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
   }
 
   @TestFor(issues = ["PY-91742"])
-  fun `test values after a starred value match the last parameters`() {
+  fun `test values after a spread match the last parameters`() {
     doTest("""
       import pytest
 
@@ -130,7 +130,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
   }
 
   @TestFor(issues = ["PY-91742"])
-  fun `test values before a starred value match the first parameters`() {
+  fun `test values before a spread match the first parameters`() {
     doTest("""
       import pytest
 
@@ -144,7 +144,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
   }
 
   @TestFor(issues = ["PY-91742"])
-  fun `test values between two starred values get no hint`() {
+  fun `test values between two spreads get no hint`() {
     doTest("""
       import pytest
 
@@ -158,7 +158,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
   }
 
   @TestFor(issues = ["PY-91742"])
-  fun `test pytest param with a starred argument and marks`() {
+  fun `test pytest param with a spread and marks`() {
     doTest("""
       import pytest
 
@@ -187,7 +187,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
   }
 
   @TestFor(issues = ["PY-91742"])
-  fun `test no hints after a starred value when the trailing values outnumber the parameters`() {
+  fun `test no hints after a spread when the trailing values outnumber the parameters`() {
     doTest("""
       import pytest
 
@@ -201,7 +201,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
   }
 
   @TestFor(issues = ["PY-91742"])
-  fun `test elements of a starred display match their parameters`() {
+  fun `test elements of a spread display match their parameters`() {
     doTest("""
       import pytest
 
@@ -220,8 +220,11 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
 
       PAIR = (1, 2)
 
+      def get_some() -> list[int]: ...
+
       @pytest.mark.parametrize("a, b, c, d", [
-          (*PAIR, /*<# c #>*/3, /*<# d #>*/4),
+          (*PAIR, /*<# c #>*/3, *get_some()),
+          (*PAIR, /*<# c #>*/3, /*<# d #>*/4, 5),
           (/*<# a #>*/0, *PAIR, /*<# d #>*/4),
           pytest.param(*PAIR, *PAIR),
       ])
@@ -230,7 +233,7 @@ class PyTestParametrizeInlayHintsProviderTest : DeclarativeInlayHintsProviderTes
   }
 
   @TestFor(issues = ["PY-91742"])
-  fun `test a starred display with a spread of unknown length`() {
+  fun `test a spread display with a spread of unknown length`() {
     doTest("""
       import pytest
 
