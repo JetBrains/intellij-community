@@ -1450,7 +1450,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/plugin/intellij.markdown.plugin.main.iml" filepath="$PROJECT_DIR$/plugins/markdown/plugin/intellij.markdown.plugin.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/projectView/intellij.markdown.projectView.iml" filepath="$PROJECT_DIR$/plugins/markdown/projectView/intellij.markdown.projectView.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/spellchecker/intellij.markdown.spellchecker.iml" filepath="$PROJECT_DIR$/plugins/markdown/spellchecker/intellij.markdown.spellchecker.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/markdown/test/testFramework/intellij.markdown.testFramework.iml" filepath="$PROJECT_DIR$/plugins/markdown/test/testFramework/intellij.markdown.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/test/intellij.markdown.tests.iml" filepath="$PROJECT_DIR$/plugins/markdown/test/intellij.markdown.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/markdown/test/jcef/intellij.markdown.tests.jcef.iml" filepath="$PROJECT_DIR$/plugins/markdown/test/jcef/intellij.markdown.tests.jcef.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/vcs/intellij.markdown.vcs.iml" filepath="$PROJECT_DIR$/plugins/markdown/vcs/intellij.markdown.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/xml/intellij.markdown.xml.iml" filepath="$PROJECT_DIR$/plugins/markdown/xml/intellij.markdown.xml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/marketplace-ml/intellij.marketplaceMl.iml" filepath="$PROJECT_DIR$/plugins/marketplace-ml/intellij.marketplaceMl.iml" />
@@ -2071,6 +2073,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/debugger/intellij.platform.tests.debugger.iml" filepath="$PROJECT_DIR$/platform/platform-tests/debugger/intellij.platform.tests.debugger.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/editorStress/intellij.platform.tests.editorStress.iml" filepath="$PROJECT_DIR$/platform/platform-tests/editorStress/intellij.platform.tests.editorStress.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/eelLocalApi/intellij.platform.tests.eelLocalApi.iml" filepath="$PROJECT_DIR$/platform/platform-tests/eelLocalApi/intellij.platform.tests.eelLocalApi.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/jcef/intellij.platform.tests.jcef.iml" filepath="$PROJECT_DIR$/platform/platform-tests/jcef/intellij.platform.tests.jcef.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/lowLevelPerformance/intellij.platform.tests.lowLevelPerformance.iml" filepath="$PROJECT_DIR$/platform/platform-tests/lowLevelPerformance/intellij.platform.tests.lowLevelPerformance.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/wsl/intellij.platform.tests.wsl.iml" filepath="$PROJECT_DIR$/platform/platform-tests/wsl/intellij.platform.tests.wsl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/wslPyEnv/intellij.platform.tests.wslPyEnv.iml" filepath="$PROJECT_DIR$/platform/platform-tests/wslPyEnv/intellij.platform.tests.wslPyEnv.iml" />
