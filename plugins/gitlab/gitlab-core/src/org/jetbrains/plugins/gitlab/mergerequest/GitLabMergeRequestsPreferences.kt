@@ -25,7 +25,8 @@ internal class GitLabMergeRequestsPreferences
     val usedAsDraftSubmitActionLast: Boolean = true,
     val editorReviewEnabled: Boolean = true,
     val changesGrouping: Set<String> = setOf(ChangesGroupingSupport.DIRECTORY_GROUPING, ChangesGroupingSupport.MODULE_GROUPING),
-    val editorReviewViewOption: DiscussionsViewOption = DiscussionsViewOption.UNRESOLVED_ONLY
+    val editorReviewViewOption: DiscussionsViewOption = DiscussionsViewOption.UNRESOLVED_ONLY,
+    val hideTestSources: Boolean = false,
   )
 
   var selectedUrlAndAccountId: Pair<String, String>?
@@ -86,4 +87,13 @@ internal class GitLabMergeRequestsPreferences
       }
     }
   val changesGroupingState: StateFlow<Set<String>> = stateFlow.mapState { it.changesGrouping }
+
+  var hideTestSources: Boolean
+    get() = state.hideTestSources
+    set(value) {
+      updateStateAndEmit {
+        it.copy(hideTestSources = value)
+      }
+    }
+  val hideTestSourcesState: StateFlow<Boolean> = stateFlow.mapState { it.hideTestSources }
 }
