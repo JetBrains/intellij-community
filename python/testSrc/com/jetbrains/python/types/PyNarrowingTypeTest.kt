@@ -613,6 +613,43 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-94128"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
+    fun `two different literals of one builtin class are never equal or identical`() = test("""
+      from typing import Literal
+
+      def equality(x: Literal["a"], y: Literal["b"]):
+          if x == y:
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if x == "a":
+              print(2)
+
+      def identity(x: Literal["a"], y: Literal["b"]):
+          if x is y:
+              print(3)
+      #       ^^^^^^^^ WARNING This code is unreachable
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94128"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
+    fun `a subclass of a builtin with its own comparison is ignored`() = test("""
+      from enum import Enum
+
+      class Color(Enum):
+          RED = "red"
+
+      def f(color: Color, name: str):
+          if color == name:
+              print(1)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          if name == color:
+              print(2)
+      #       ^^^^^^^^ WARNING This code is unreachable
+          else:
+              print(3)
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-94129"], classes = [PyTypeAssertionEvaluator::class, PyUnreachableCodeInspection::class])
     fun `one final class is enough for identity`() = test("""
       from typing import final

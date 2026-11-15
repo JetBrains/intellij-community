@@ -1,0 +1,24 @@
+<html>
+<body>
+<p>Reports an <code>==</code>, <code>!=</code>, <code>is</code>, <code>is not</code>, <code>in</code> or <code>not in</code> comparison
+  that is always <code>True</code> or always <code>False</code>, because the types of its operands do not overlap.</p>
+<p>The inspection does not report a comparison with a type that can define its own <code>__eq__</code> method,
+  for example <code>Decimal == 0</code>. A class that is not final can get its own <code>__eq__</code> method in a subclass.
+  The inspection ignores the subclasses of <code>str</code>, <code>bytes</code> and the number types.</p>
+<p>The inspection reports <code>in</code> and <code>not in</code> only for a builtin <code>tuple</code>, <code>list</code>,
+  <code>set</code>, <code>frozenset</code> or <code>dict</code>. Another container can define its own <code>__contains__</code> method.</p>
+<p><b>Example:</b></p>
+<pre><code>
+def f(name: str, data: bytes, count: int):
+    if name == 0:  # Always False
+        ...
+    if data == "a":  # Always False
+        ...
+    if count is not None:  # Always True
+        ...
+    if name in (1, 2):  # Always False
+        ...
+</code></pre>
+<p>As a fix, compare values of the same type, or correct the type annotation.</p>
+</body>
+</html>
