@@ -660,6 +660,11 @@
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.general"
                      key="INSP.NAME.patterns" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.inspections.PyPatternInspection"/>
+    <localInspection language="Python" shortName="PyNonOverlappingComparisonInspection" suppressId="PyNonOverlappingComparison"
+                     bundle="messages.PyPsiBundle"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.control.flow.issues"
+                     key="INSP.NAME.non.overlapping.comparison" enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyNonOverlappingComparisonInspection"/>
     <localInspection language="Python" shortName="PySuspiciousBooleanConditionInspection" suppressId="PySuspiciousBooleanCondition"
                      bundle="messages.PyPsiBundle"
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.asynchronous.code"

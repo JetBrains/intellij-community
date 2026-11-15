@@ -464,6 +464,10 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
     private fun canNeverCompareTrueMembers(left: PyType?, right: PyType?, isIdentity: Boolean, context: TypeEvalContext): Boolean {
       if (left !is PyClassType || right !is PyClassType || left.isDefinition || right.isDefinition) return false
       if (listOf(left, right).any { isUnknown(it, context) || it.inheritsAny(context) }) return false
+      // Two builtin literals of one class are equal only when they are the same literal
+      if (left.isBuiltinLiteral && right.isBuiltinLiteral && left.pyClass == right.pyClass) {
+        return !PyTypeChecker.match(left, right, context)
+      }
       // A value of a class can be equal or identical to a value of its subclass
       if (left.pyClass.isSubclass(right.pyClass, context) || right.pyClass.isSubclass(left.pyClass, context)) return false
       if (isIdentity) {
@@ -476,13 +480,14 @@ class PyTypeAssertionEvaluator(private var myPositive: Boolean) : PyRecursiveEle
 
     /**
      * `None` compares by identity. A builtin [type] is equal only to a value of its own equality group, or to a value whose
-     * class defines its own comparison.
+     * class defines its own comparison. A value of an equality group cannot define its own comparison.
      */
     private fun canEqualUnrelated(type: PyType?, candidates: List<PyType?>, context: TypeEvalContext): Boolean {
       val comparable = candidates.filter { !it.isNoneType }
       val group = equalityGroup(type, context)
                   ?: return comparable.isNotEmpty() &&
-                            (canHaveCustomEquality(type, context) || comparable.any { canHaveCustomEquality(it, context) })
+                            (canHaveCustomEquality(type, context) ||
+                             comparable.any { equalityGroup(it, context) == null && canHaveCustomEquality(it, context) })
       return comparable.any { candidate ->
         val candidateGroup = equalityGroup(candidate, context)
         candidateGroup == group || candidateGroup == null && canHaveCustomEquality(candidate, context)
