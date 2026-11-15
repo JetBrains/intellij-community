@@ -1837,7 +1837,8 @@ object PyCallExpressionHelper {
   }
 
   /** Number of values a `*operand` spread contributes for a fixed-length tuple, or `-1` when the length is indeterminate. */
-  private fun knownFixedTupleSpreadLength(operand: PyExpression, context: TypeEvalContext): Int {
+  @ApiStatus.Internal
+  fun knownFixedTupleSpreadLength(operand: PyExpression, context: TypeEvalContext): Int {
     val type = context.getType(operand)
     if (type !is PyTupleType || type.isHomogeneous) return -1
     if (type.elementTypes.any { it is PyUnpackedTupleType }) return -1
