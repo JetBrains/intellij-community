@@ -76,6 +76,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -1046,7 +1047,9 @@ public class GridUtil extends GridUtilCore {
         RevealFileAction.openFile(VfsUtilCore.virtualToIoFile(virtualFile));
         return;
       }
-      FileEditorManager.getInstance(project).openEditor(new OpenFileDescriptor(project, virtualFile), true);
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile);
+      FileEditorManager.getInstance(project)
+        .requestOpenEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(true));
     }
   }
 
