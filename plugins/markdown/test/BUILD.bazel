@@ -38,6 +38,7 @@ jvm_library(
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
         "//json/plugin",
+        "//plugins/markdown/test/jcef:jcef_test_lib",
         "//plugins/yaml/plugin",
     ],
     deps = [
@@ -145,6 +146,7 @@ jvm_library(
         "//plugins/git4idea/backend",
         "//plugins/git4idea:vcs-git-backend-tests_test_lib",
         "//platform/productMode",
+        "//plugins/markdown/test/testFramework:testFramework_test_lib",
     ],
 )
 ### auto-generated section `build intellij.markdown.tests` end

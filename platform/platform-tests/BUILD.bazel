@@ -263,6 +263,7 @@ jvm_library(
         "//platform/platform-tests/editorStress:editorStress_test_lib",
         "//platform/platform-tests/testFramework",
         "//platform/scratch/plugin",
+        "//platform/platform-tests/jcef:jcef_test_lib",
         "//libraries/kotlinx/coroutines/test",
     ],
 )

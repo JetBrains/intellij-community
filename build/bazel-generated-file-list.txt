@@ -1004,6 +1004,7 @@ platform/platform-tests/durability
 platform/platform-tests/editorStress
 platform/platform-tests/eel-helper
 platform/platform-tests/eelLocalApi
+platform/platform-tests/jcef
 platform/platform-tests/lowLevelPerformance
 platform/platform-tests/testFramework
 platform/platform-tests/wsl
@@ -1779,6 +1780,8 @@ plugins/markdown/plugin
 plugins/markdown/projectView
 plugins/markdown/spellchecker
 plugins/markdown/test
+plugins/markdown/test/jcef
+plugins/markdown/test/testFramework
 plugins/markdown/textMate
 plugins/markdown/vcs
 plugins/markdown/xml
