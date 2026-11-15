@@ -18,10 +18,15 @@ follow it.
   reason.
 - `rustfmt.toml`: the format, with the repository width of 140 columns.
 - `clippy.toml`: the banned methods, each with its replacement.
+- `clippy-preserve-order.toml`: the banned removals of a `serde_json::Map` for a workspace that turns on the feature
+  `preserve_order` of `serde_json`. With the feature, `Map::remove` moves the last key into the place of the removed
+  key. Without it, the map has no `shift_remove`, so only a workspace that `clippyAdditions` names takes the file.
 - `sync.mjs`: writes the tables into every workspace `Cargo.toml` of `manifestPaths`, and writes a copy of
-  `rustfmt.toml` and `clippy.toml` into the directory of each such manifest. The first line of a copy names its
-  source. `--check` names a copy that differs or is missing, and writes nothing. A manifest outside the checkout is
-  skipped with a note, and so is a copy that `skippedCopies` names, with its reason.
+  `rustfmt.toml` and `clippy.toml` into the directory of each such manifest. The copy of `clippy.toml` of a workspace
+  that `clippyAdditions` names also gets the banned methods of its added sources. The first line of a copy names its
+  sources. `--check` names a copy that differs or is missing, and writes nothing. A manifest outside the checkout is
+  skipped with a note, and so is a copy that `skippedCopies` names, with its reason. `--render` writes the copy of one
+  workspace to a file that it names, for a Bazel test that compares the copy with it.
 - `defs.bzl`: the lint rules and the macro core. `rust_lints_as_errors` appends `-Dwarnings` to the clippy flags of a
   rendered table. `rust_lints_equal_check` fails when two crate hubs render different tables. The macro core is the
   next section.
@@ -145,7 +150,12 @@ analyzes it too.
 
 `community/.bazelrc` gives `clippy.toml` to the Bazel clippy aspect of the community root, and the root `.bazelrc` of
 the ultimate root gives it the same file. So the bans apply under Bazel to every clippy test of the Rust tool
-workspaces, and under cargo to every workspace that has the copy.
+workspaces, and under cargo to every workspace that has the copy. The aspect does not read the added sources of
+`clippyAdditions`. So a workspace with added sources gives its copy to `rust_tool_crate` as `clippy_config`, and
+its clippy tests read the bans that cargo reads. Bazel then reads a copy, not the sources. So such a workspace also
+has a `diff_test` of its copy against the output of `sync.mjs --render`, which reads `:copy_sources`. The test
+fails when a person edits a source and does not run `sync.mjs`. `//plugins/air/native:clippy-copy_test` is the test
+of the Air native workspace.
 
 ## How a workspace joins
 
@@ -185,3 +195,5 @@ written: the error model and the command line by audience, the crate rule, the t
   `allow_attributes_without_reason` is on.
 - A site that needs a banned method of `clippy.toml` says why with
   `#[expect(clippy::disallowed_methods, reason = "...")]`.
+- A ban that only some workspaces can follow goes into an added source of `clippyAdditions`, not into `clippy.toml`.
+  An added source holds its `disallowed-methods` array and comments only. `sync.mjs` refuses any other line.

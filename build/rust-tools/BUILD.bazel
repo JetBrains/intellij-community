@@ -1,6 +1,7 @@
 # The shared configuration of the Rust tool workspaces. `README.md` is the spec: what every workspace has and the
-# commands that check it. `lints.toml`, `rustfmt.toml` and `clippy.toml` are the sources, `sync.mjs` writes the copies,
-# and `defs.bzl` holds the rules that apply them under Bazel.
+# commands that check it. `lints.toml`, `rustfmt.toml` and `clippy.toml` are the sources. `clippy-preserve-order.toml`
+# is a source that `clippyAdditions` of `sync.mjs` adds to some copies. `sync.mjs` writes the copies, and `defs.bzl`
+# holds the rules that apply them under Bazel.
 
 load("@avl//:data.bzl", AVL = "DEP_DATA")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
@@ -10,11 +11,21 @@ load("//tools/jscpd-test:defs.bzl", "code_gates")
 load(":defs.bzl", "COMMUNITY_WORKSPACE_LINTS", "NOT_ON_WINDOWS", "rust_lints_equal_check", "rust_tool_sources")
 
 # `community/.bazelrc` gives `clippy.toml` to the Bazel clippy aspect as `@rules_rust//rust/settings:clippy.toml`.
+# `sync.mjs --render` writes the copy of one workspace, which a Bazel test of that workspace compares with its copy.
 exports_files(
     [
         "clippy.toml",
         "lints.toml",
+        "sync.mjs",
     ],
+    visibility = ["//visibility:public"],
+)
+
+# The sources that `sync.mjs --render` reads: every TOML file here, so an added source of `clippyAdditions` is an input
+# without an edit of this file.
+filegroup(
+    name = "copy_sources",
+    srcs = glob(["*.toml"]),
     visibility = ["//visibility:public"],
 )
 
