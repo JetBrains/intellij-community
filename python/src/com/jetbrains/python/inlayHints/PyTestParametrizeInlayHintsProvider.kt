@@ -81,6 +81,7 @@ class PyTestParametrizeInlayHintsProvider : InlayHintsProvider {
      * Gives the positions that [values] fill.
      *
      * A spread of a tuple or a list display, such as `*(1, 2)`, gives the positions of its elements.
+     * A spread inside such a display expands in the same way.
      * A spread of a fixed-length tuple type gives one position for each element. These positions get no hint.
      * Every other spread, such as `*get_ids()`, has an unknown length.
      */
@@ -107,18 +108,29 @@ class PyTestParametrizeInlayHintsProvider : InlayHintsProvider {
      * When the leading and the trailing values outnumber the parameters, the trailing values get no hint.
      */
     private fun matchValuesToParameters(slots: List<Slot>, parameterNames: List<String>): List<Pair<PyExpression, String>> {
-      val firstUnknown = slots.indexOfFirst { it is Slot.UnknownSpread }
+      val firstUnknown = slots.indexOfFirst { it.hasUnknownLength }
       val pairs = if (firstUnknown < 0) {
         slots.zip(parameterNames)
       }
       else {
         val leading = slots.subList(0, firstUnknown).zip(parameterNames)
-        val trailing = slots.subList(slots.indexOfLast { it is Slot.UnknownSpread } + 1, slots.size)
+        val trailing = slots.subList(slots.indexOfLast { it.hasUnknownLength } + 1, slots.size)
         if (firstUnknown + trailing.size > parameterNames.size) leading
         else leading + trailing.zip(parameterNames.takeLast(trailing.size))
       }
-      return pairs.mapNotNull { (slot, name) -> (slot as? Slot.Value)?.let { it.value to name } }
+      return pairs.mapNotNull { (slot, name) ->
+        when (slot) {
+          is Slot.Value -> slot.value to name
+          Slot.FixedSpread, Slot.UnknownSpread -> null
+        }
+      }
     }
+
+    private val Slot.hasUnknownLength: Boolean
+      get() = when (this) {
+        is Slot.Value, Slot.FixedSpread -> false
+        Slot.UnknownSpread -> true
+      }
 
     private val PyDecorator.parameterNames: List<String>?
       get() {
@@ -130,16 +142,16 @@ class PyTestParametrizeInlayHintsProvider : InlayHintsProvider {
   }
 }
 
-/** One position in a set of parametrize values. */
+/** One item in the values of a parametrize case. */
 private sealed interface Slot {
   /** A position that [value] fills. */
   class Value(val value: PyExpression) : Slot
 
   /** A position that a spread of a fixed-length tuple fills. */
-  object FixedSpread : Slot
+  data object FixedSpread : Slot
 
   /** A spread of unknown length. */
-  object UnknownSpread : Slot
+  data object UnknownSpread : Slot
 }
 
 private const val paramName = "pytest.param"
