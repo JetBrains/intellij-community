@@ -76,9 +76,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.WINDOWS)
     },
     CommunityKotlinPluginBuilder.kotlinPlugin(),
-    pluginAuto(listOf("intellij.vcs.git")) { spec ->
-      spec.withModule("intellij.vcs.git.rt", "git4idea-rt.jar")
-    },
     // The relative paths below (`lib/maven3`, `lib/intellij.maven.server3`, ...) are a runtime contract, not an
     // internal packaging detail: the Maven plugin reads them back at runtime through
     // `MavenClasspathBuilder.addMavenServerLibraries` and `MavenDistributionsCache.resolveEmbeddedMavenHome`.
