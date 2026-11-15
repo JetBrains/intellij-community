@@ -146,8 +146,7 @@ class PyTestParametrizeInlayHintsProviderTest {
     doTest("""
       import pytest
 
-      def get_ids():
-          return 1, 2
+      def get_ids() -> list[int]: ...
 
       @pytest.mark.parametrize("id_for_payment, id_for_db, plugin_fields", [
           (*get_ids(), /*<# plugin_fields #>*/"foo"),
@@ -162,8 +161,10 @@ class PyTestParametrizeInlayHintsProviderTest {
     doTest("""
       import pytest
 
+      def get_rest() -> list[int]: ...
+
       @pytest.mark.parametrize("a, b, c", [
-          (/*<# a #>*/1, *(2, 3)),
+          (/*<# a #>*/1, *get_rest()),
       ])
       def test_something(a, b, c): ...
     """)
@@ -175,8 +176,10 @@ class PyTestParametrizeInlayHintsProviderTest {
     doTest("""
       import pytest
 
+      def get_some() -> list[int]: ...
+
       @pytest.mark.parametrize("a, b, c, d, e", [
-          (/*<# a #>*/1, *(2,), 3, *(4,), /*<# e #>*/5),
+          (/*<# a #>*/1, *get_some(), 3, *get_some(), /*<# e #>*/5),
       ])
       def test_something(a, b, c, d, e): ...
     """)
@@ -188,8 +191,7 @@ class PyTestParametrizeInlayHintsProviderTest {
     doTest("""
       import pytest
 
-      def get_ids():
-          return 1, 2
+      def get_ids() -> list[int]: ...
 
       @pytest.mark.parametrize("id_for_payment, id_for_db, plugin_fields", [
           pytest.param(*get_ids(), /*<# plugin_fields #>*/"foo", marks=pytest.mark.skip),
@@ -204,8 +206,7 @@ class PyTestParametrizeInlayHintsProviderTest {
     doTest("""
       import pytest
 
-      def get_ys():
-          return 2,
+      def get_ys() -> list[int]: ...
       
       @pytest.mark.parametrize("x, y", [
           pytest.param(/*<# x #>*/1, *get_ys(), id="one"),
@@ -221,11 +222,59 @@ class PyTestParametrizeInlayHintsProviderTest {
     doTest("""
       import pytest
 
+      def get_some() -> list[int]: ...
+
       @pytest.mark.parametrize("a, b", [
-          (*(), 1, 2, 3),
+          (*get_some(), 1, 2, 3),
       ])
       def test_something(a, b): ...
     """, verifyHintsPresence = false)
+  }
+
+  @TestFor(issues = ["PY-91742"])
+  @Test
+  fun `test elements of a starred display match their parameters`() {
+    doTest("""
+      import pytest
+
+      @pytest.mark.parametrize("a, b, c", [
+          (/*<# a #>*/1, *(/*<# b #>*/2, /*<# c #>*/3)),
+          pytest.param(*[/*<# a #>*/1, /*<# b #>*/2], /*<# c #>*/3),
+      ])
+      def test_something(a, b, c): ...
+    """)
+  }
+
+  @TestFor(issues = ["PY-91742"])
+  @Test
+  fun `test values after a fixed-length tuple spread match their parameters`() {
+    doTest("""
+      import pytest
+
+      PAIR = (1, 2)
+
+      @pytest.mark.parametrize("a, b, c, d", [
+          (*PAIR, /*<# c #>*/3, /*<# d #>*/4),
+          (/*<# a #>*/0, *PAIR, /*<# d #>*/4),
+          pytest.param(*PAIR, *PAIR),
+      ])
+      def test_something(a, b, c, d): ...
+    """)
+  }
+
+  @TestFor(issues = ["PY-91742"])
+  @Test
+  fun `test a starred display with a spread of unknown length`() {
+    doTest("""
+      import pytest
+
+      def get_some() -> list[int]: ...
+
+      @pytest.mark.parametrize("a, b, c", [
+          (*(/*<# a #>*/1, *get_some()), /*<# c #>*/3),
+      ])
+      def test_something(a, b, c): ...
+    """)
   }
 
   private fun doTest(text: String, verifyHintsPresence: Boolean = true) {
