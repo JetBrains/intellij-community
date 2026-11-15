@@ -12,13 +12,13 @@ import com.intellij.platform.diagnostic.telemetry.JVM
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.util.io.IOUtil
 import com.sun.management.ThreadMXBean
-import io.opentelemetry.api.metrics.BatchCallback
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit.NANOSECONDS
 import kotlin.Any
@@ -44,156 +44,12 @@ internal class JVMStatsToOTelReporter : ProjectActivity {
 
   @Service(Service.Level.APP)
   private class ReportingService(cs: CoroutineScope) {
-    private var batchCallback: BatchCallback? = null
-
     init {
-      val otelMeter = TelemetryManager.getMeter(JVM)
-
-      //OS-provided memory metrics
-      val ramGauge = otelMeter.gaugeBuilder("MEM.ramBytes").ofLongs().buildObserver()
-      val ramMinusFileMappingsGauge = otelMeter.gaugeBuilder("MEM.ramMinusFileMappingsBytes").ofLongs().buildObserver()
-      val ramPlusSwapMinusFileMappingsGauge = otelMeter.gaugeBuilder("MEM.ramPlusSwapMinusFileMappingsBytes").ofLongs().buildObserver()
-      val fileMappingsRamGauge = otelMeter.gaugeBuilder("MEM.fileMappingsRamBytes").ofLongs().buildObserver()
-
-      //JVM memory metrics
-      val usedHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.usedHeapBytes").ofLongs().buildObserver()
-      val committedHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.committedHeapBytes").ofLongs().buildObserver()
-      val maxHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.maxHeapBytes").ofLongs().buildObserver()
-
-      //Off-heap memory used by JVM structures
-      val usedNativeMemoryGauge = otelMeter.gaugeBuilder("JVM.usedNativeBytes").ofLongs().buildObserver()
-      //Off-heap memory used by direct ByteBuffers
-      val totalDirectByteBuffersGauge = otelMeter.gaugeBuilder("JVM.totalDirectByteBuffersBytes").ofLongs().buildObserver()
-
-      val threadCountGauge = otelMeter.gaugeBuilder("JVM.threadCount").ofLongs().buildObserver()
-      val threadCountMaxGauge = otelMeter.gaugeBuilder("JVM.maxThreadCount").ofLongs().buildObserver()
-      val newThreadsCounter = otelMeter.counterBuilder("JVM.newThreadsCount").buildObserver()
-
-      val osLoadAverageGauge = otelMeter.gaugeBuilder("OS.loadAverage").buildObserver()
-
-      val gcCollectionsCounter = otelMeter.counterBuilder("JVM.GC.collections").buildObserver()
-      val gcCollectionTimesCounterMs = otelMeter.counterBuilder("JVM.GC.collectionTimesMs").buildObserver()
-      val totalBytesAllocatedCounter = otelMeter.counterBuilder("JVM.totalBytesAllocated").buildObserver()
-
-      val totalCpuTimeCounterMs = otelMeter.counterBuilder("JVM.totalCpuTimeMs").buildObserver()
-
-      val totalSafepointCounter = otelMeter.counterBuilder("JVM.totalSafepointCount").buildObserver()
-      val totalTimeAtSafepointsCounterMs = otelMeter.counterBuilder("JVM.totalTimeAtSafepointsMs").buildObserver()
-      val totalTimeToSafepointsCounterMs = otelMeter.counterBuilder("JVM.totalTimeToSafepointsMs").buildObserver()
-
-
-      val memoryMXBean = ManagementFactory.getMemoryMXBean()
-      val threadMXBean = ManagementFactory.getThreadMXBean() as ThreadMXBean
-      val allocatedMemoryProvider = AllocatedMemoryProvider(threadMXBean)
-
-      val gcBeans = ManagementFactory.getGarbageCollectorMXBeans()
-
-      val osMXBean = ManagementFactory.getOperatingSystemMXBean() as com.sun.management.OperatingSystemMXBean
-
-      val safepointBean = SafepointBean
-
-
-      batchCallback = otelMeter.batchCallback(
-        {
-          val memStats = PlatformMemoryUtil.getInstance().getCurrentProcessMemoryStats()
-          if (memStats != null) {
-            ramGauge.record(memStats.ram)
-            ramMinusFileMappingsGauge.record(memStats.ramMinusFileMappings)
-            ramPlusSwapMinusFileMappingsGauge.record(memStats.ramPlusSwapMinusFileMappings)
-            fileMappingsRamGauge.record(memStats.fileMappingsRam)
-          }
-
-          //Memory (heap/off-heap):
-          val heapUsage = memoryMXBean.heapMemoryUsage
-          //It seems like nonHeapMemoryUsage is unrelated to DirectByteBuffers usage -- that we're mostly interested in:
-          val nonHeapUsage = memoryMXBean.nonHeapMemoryUsage
-
-          usedHeapMemoryGauge.record(heapUsage.used)
-          committedHeapMemoryGauge.record(heapUsage.committed)
-          maxHeapMemoryGauge.record(heapUsage.max)
-
-          usedNativeMemoryGauge.record(nonHeapUsage.used)
-          totalDirectByteBuffersGauge.record(IOUtil.directBuffersTotalAllocatedSize())
-
-          //Threads:
-          threadCountGauge.record(threadMXBean.threadCount.toLong())
-          threadCountMaxGauge.record(threadMXBean.peakThreadCount.toLong())
-          newThreadsCounter.record(threadMXBean.totalStartedThreadCount)
-
-          //GC:
-          var gcCount: Long = 0
-          var gcTimeMs: Long = 0
-          for (gcBean in gcBeans) {
-            gcCount += gcBean.collectionCount
-            gcTimeMs += gcBean.collectionTime
-          }
-          gcCollectionsCounter.record(gcCount)
-          gcCollectionTimesCounterMs.record(gcTimeMs)
-
-          if (allocatedMemoryProvider.isAvailable()) {
-            totalBytesAllocatedCounter.record(allocatedMemoryProvider.totalBytesAllocatedSinceStartup())
-          }
-
-          //JVM safepoints:
-          totalSafepointCounter.record(safepointBean.safepointCount() ?: -1)
-          totalTimeToSafepointsCounterMs.record(safepointBean.totalTimeToSafepointMs() ?: -1)
-          totalTimeAtSafepointsCounterMs.record(safepointBean.totalTimeAtSafepointMs() ?: -1)
-
-          //OS/process load:
-          osLoadAverageGauge.record(osMXBean.systemLoadAverage)
-
-          val processCpuTimeNs = osMXBean.processCpuTime
-          if (processCpuTimeNs != -1L) {
-            totalCpuTimeCounterMs.record(NANOSECONDS.toMillis(processCpuTimeNs))
-          }
-        },
-
-        ramGauge, ramMinusFileMappingsGauge, ramPlusSwapMinusFileMappingsGauge, fileMappingsRamGauge,
-
-        usedHeapMemoryGauge, committedHeapMemoryGauge, maxHeapMemoryGauge,
-        usedNativeMemoryGauge, totalDirectByteBuffersGauge,
-
-        threadCountGauge, threadCountMaxGauge, newThreadsCounter,
-
-        gcCollectionsCounter, gcCollectionTimesCounterMs,
-        totalBytesAllocatedCounter,
-
-        totalCpuTimeCounterMs, osLoadAverageGauge,
-
-        totalSafepointCounter, totalTimeToSafepointsCounterMs, totalTimeAtSafepointsCounterMs
-      )
-
-      if (ApplicationManagerEx.isInIntegrationTest()) {
-        val avgRamGauge = otelMeter.gaugeBuilder("MEM.avgRamBytes").ofLongs().buildObserver()
-        val avgRamMinusFileMappingsGauge = otelMeter.gaugeBuilder("MEM.avgRamMinusFileMappingsBytes").ofLongs().buildObserver()
-        val avgRamPlusSwapMinusFileMappingsGauge = otelMeter.gaugeBuilder("MEM.avgRamPlusSwapMinusFileMappingsBytes").ofLongs().buildObserver()
-        val avgFileMappingsRamGauge = otelMeter.gaugeBuilder("MEM.avgFileMappingsRamBytes").ofLongs().buildObserver()
-        val avgMemUsageProvider = AvgMemoryUsageProvider(cs)
-
-        otelMeter.batchCallback(
-          {
-            val avgMemStats = avgMemUsageProvider.getAvgCurrentProcessMemoryStats()
-            if (avgMemStats != null) {
-              avgRamGauge.record(avgMemStats.ram)
-              avgRamMinusFileMappingsGauge.record(avgMemStats.ramMinusFileMappings)
-              avgRamPlusSwapMinusFileMappingsGauge.record(avgMemStats.ramPlusSwapMinusFileMappings)
-              avgFileMappingsRamGauge.record(avgMemStats.fileMappingsRam)
-            }
-          },
-          avgRamGauge, avgRamMinusFileMappingsGauge, avgRamPlusSwapMinusFileMappingsGauge, avgFileMappingsRamGauge,
-        )
-      }
-
-      //We intentionally don't unregister batchCallback registered above -- because we register OTel.shutdown()
-      // in a ShutDownTracker, and expect it to squeeze the last reading from all Metrics registered at the very
-      // end of app lifecycle. If we unregister the callback here -- it prevents this batchCallback from participate
-      // in that last reading. It doesn't matter much for real-life app runs (which usually hours long, so single
-      // last reading is not that important) -- but it seems like we need this last reading of JVM stats for the
-      // performance dashboard?
+      startJvmStatsReporting(TelemetryManager.getInstance(), cs)
     }
   }
 
-  private class AvgMemoryUsageProvider(cs: CoroutineScope) {
+  internal class AvgMemoryUsageProvider(cs: CoroutineScope) {
     @Volatile
     private var counters: Counters = Counters()
     private val provider = PlatformMemoryUtil.getInstance().newMemoryStatsProvider()
@@ -313,6 +169,158 @@ internal class JVMStatsToOTelReporter : ProjectActivity {
     }
   }
 
+}
+
+/**
+ * Registers the JVM stats meters on the [JVM] meter of [telemetryManager] for the rest of the process lifetime.
+ * Only the `MEM.avg*` sampling of an integration test runs in [cs].
+ * Call it once per process: the IDE does it on the first project open, a process without projects calls it directly.
+ */
+@ApiStatus.Internal
+fun startJvmStatsReporting(telemetryManager: TelemetryManager, cs: CoroutineScope) {
+  val otelMeter = telemetryManager.getMeter(JVM)
+
+  //OS-provided memory metrics
+  val ramGauge = otelMeter.gaugeBuilder("MEM.ramBytes").ofLongs().buildObserver()
+  val ramMinusFileMappingsGauge = otelMeter.gaugeBuilder("MEM.ramMinusFileMappingsBytes").ofLongs().buildObserver()
+  val ramPlusSwapMinusFileMappingsGauge = otelMeter.gaugeBuilder("MEM.ramPlusSwapMinusFileMappingsBytes").ofLongs().buildObserver()
+  val fileMappingsRamGauge = otelMeter.gaugeBuilder("MEM.fileMappingsRamBytes").ofLongs().buildObserver()
+
+  //JVM memory metrics
+  val usedHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.usedHeapBytes").ofLongs().buildObserver()
+  val committedHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.committedHeapBytes").ofLongs().buildObserver()
+  val maxHeapMemoryGauge = otelMeter.gaugeBuilder("JVM.maxHeapBytes").ofLongs().buildObserver()
+
+  //Off-heap memory used by JVM structures
+  val usedNativeMemoryGauge = otelMeter.gaugeBuilder("JVM.usedNativeBytes").ofLongs().buildObserver()
+  //Off-heap memory used by direct ByteBuffers
+  val totalDirectByteBuffersGauge = otelMeter.gaugeBuilder("JVM.totalDirectByteBuffersBytes").ofLongs().buildObserver()
+
+  val threadCountGauge = otelMeter.gaugeBuilder("JVM.threadCount").ofLongs().buildObserver()
+  val threadCountMaxGauge = otelMeter.gaugeBuilder("JVM.maxThreadCount").ofLongs().buildObserver()
+  val newThreadsCounter = otelMeter.counterBuilder("JVM.newThreadsCount").buildObserver()
+
+  val osLoadAverageGauge = otelMeter.gaugeBuilder("OS.loadAverage").buildObserver()
+
+  val gcCollectionsCounter = otelMeter.counterBuilder("JVM.GC.collections").buildObserver()
+  val gcCollectionTimesCounterMs = otelMeter.counterBuilder("JVM.GC.collectionTimesMs").buildObserver()
+  val totalBytesAllocatedCounter = otelMeter.counterBuilder("JVM.totalBytesAllocated").buildObserver()
+
+  val totalCpuTimeCounterMs = otelMeter.counterBuilder("JVM.totalCpuTimeMs").buildObserver()
+
+  val totalSafepointCounter = otelMeter.counterBuilder("JVM.totalSafepointCount").buildObserver()
+  val totalTimeAtSafepointsCounterMs = otelMeter.counterBuilder("JVM.totalTimeAtSafepointsMs").buildObserver()
+  val totalTimeToSafepointsCounterMs = otelMeter.counterBuilder("JVM.totalTimeToSafepointsMs").buildObserver()
+
+
+  val memoryMXBean = ManagementFactory.getMemoryMXBean()
+  val threadMXBean = ManagementFactory.getThreadMXBean() as ThreadMXBean
+  val allocatedMemoryProvider = JVMStatsToOTelReporter.AllocatedMemoryProvider(threadMXBean)
+
+  val gcBeans = ManagementFactory.getGarbageCollectorMXBeans()
+
+  val osMXBean = ManagementFactory.getOperatingSystemMXBean() as com.sun.management.OperatingSystemMXBean
+
+  val safepointBean = SafepointBean
+
+
+  otelMeter.batchCallback(
+    {
+      val memStats = PlatformMemoryUtil.getInstance().getCurrentProcessMemoryStats()
+      if (memStats != null) {
+        ramGauge.record(memStats.ram)
+        ramMinusFileMappingsGauge.record(memStats.ramMinusFileMappings)
+        ramPlusSwapMinusFileMappingsGauge.record(memStats.ramPlusSwapMinusFileMappings)
+        fileMappingsRamGauge.record(memStats.fileMappingsRam)
+      }
+
+      //Memory (heap/off-heap):
+      val heapUsage = memoryMXBean.heapMemoryUsage
+      //It seems like nonHeapMemoryUsage is unrelated to DirectByteBuffers usage -- that we're mostly interested in:
+      val nonHeapUsage = memoryMXBean.nonHeapMemoryUsage
+
+      usedHeapMemoryGauge.record(heapUsage.used)
+      committedHeapMemoryGauge.record(heapUsage.committed)
+      maxHeapMemoryGauge.record(heapUsage.max)
+
+      usedNativeMemoryGauge.record(nonHeapUsage.used)
+      totalDirectByteBuffersGauge.record(IOUtil.directBuffersTotalAllocatedSize())
+
+      //Threads:
+      threadCountGauge.record(threadMXBean.threadCount.toLong())
+      threadCountMaxGauge.record(threadMXBean.peakThreadCount.toLong())
+      newThreadsCounter.record(threadMXBean.totalStartedThreadCount)
+
+      //GC:
+      var gcCount: Long = 0
+      var gcTimeMs: Long = 0
+      for (gcBean in gcBeans) {
+        gcCount += gcBean.collectionCount
+        gcTimeMs += gcBean.collectionTime
+      }
+      gcCollectionsCounter.record(gcCount)
+      gcCollectionTimesCounterMs.record(gcTimeMs)
+
+      if (allocatedMemoryProvider.isAvailable()) {
+        totalBytesAllocatedCounter.record(allocatedMemoryProvider.totalBytesAllocatedSinceStartup())
+      }
+
+      //JVM safepoints:
+      totalSafepointCounter.record(safepointBean.safepointCount() ?: -1)
+      totalTimeToSafepointsCounterMs.record(safepointBean.totalTimeToSafepointMs() ?: -1)
+      totalTimeAtSafepointsCounterMs.record(safepointBean.totalTimeAtSafepointMs() ?: -1)
+
+      //OS/process load:
+      osLoadAverageGauge.record(osMXBean.systemLoadAverage)
+
+      val processCpuTimeNs = osMXBean.processCpuTime
+      if (processCpuTimeNs != -1L) {
+        totalCpuTimeCounterMs.record(NANOSECONDS.toMillis(processCpuTimeNs))
+      }
+    },
+
+    ramGauge, ramMinusFileMappingsGauge, ramPlusSwapMinusFileMappingsGauge, fileMappingsRamGauge,
+
+    usedHeapMemoryGauge, committedHeapMemoryGauge, maxHeapMemoryGauge,
+    usedNativeMemoryGauge, totalDirectByteBuffersGauge,
+
+    threadCountGauge, threadCountMaxGauge, newThreadsCounter,
+
+    gcCollectionsCounter, gcCollectionTimesCounterMs,
+    totalBytesAllocatedCounter,
+
+    totalCpuTimeCounterMs, osLoadAverageGauge,
+
+    totalSafepointCounter, totalTimeToSafepointsCounterMs, totalTimeAtSafepointsCounterMs
+  )
+
+  if (ApplicationManagerEx.isInIntegrationTest()) {
+    val avgRamGauge = otelMeter.gaugeBuilder("MEM.avgRamBytes").ofLongs().buildObserver()
+    val avgRamMinusFileMappingsGauge = otelMeter.gaugeBuilder("MEM.avgRamMinusFileMappingsBytes").ofLongs().buildObserver()
+    val avgRamPlusSwapMinusFileMappingsGauge = otelMeter.gaugeBuilder("MEM.avgRamPlusSwapMinusFileMappingsBytes").ofLongs().buildObserver()
+    val avgFileMappingsRamGauge = otelMeter.gaugeBuilder("MEM.avgFileMappingsRamBytes").ofLongs().buildObserver()
+    val avgMemUsageProvider = JVMStatsToOTelReporter.AvgMemoryUsageProvider(cs)
+
+    otelMeter.batchCallback(
+      {
+        val avgMemStats = avgMemUsageProvider.getAvgCurrentProcessMemoryStats()
+        if (avgMemStats != null) {
+          avgRamGauge.record(avgMemStats.ram)
+          avgRamMinusFileMappingsGauge.record(avgMemStats.ramMinusFileMappings)
+          avgRamPlusSwapMinusFileMappingsGauge.record(avgMemStats.ramPlusSwapMinusFileMappings)
+          avgFileMappingsRamGauge.record(avgMemStats.fileMappingsRam)
+        }
+      },
+      avgRamGauge, avgRamMinusFileMappingsGauge, avgRamPlusSwapMinusFileMappingsGauge, avgFileMappingsRamGauge,
+    )
+  }
+
+  //We intentionally don't unregister batchCallback registered above -- because we register OTel.shutdown()
+  // in a ShutDownTracker, and expect it to squeeze the last reading from all Metrics registered at the very
+  // end of app lifecycle. If we unregister the callback here -- it prevents this batchCallback from participate
+  // in that last reading. It doesn't matter much for real-life app runs (which usually hours long, so single
+  // last reading is not that important) -- but it seems like we need this last reading of JVM stats for the
+  // performance dashboard?
 }
 
 /**
