@@ -221,8 +221,7 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.copyDirectoryToProject("deprecation/deprecatedMemberInPyiNotParsed", "");
     myFixture.configureByFile("main.py");
     myFixture.checkHighlighting(true, false, false);
-    assertNotParsed(myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("lib.pyi")));
-    assertNotParsed(myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("lib.py")));
+    assertProjectFilesNotParsed(myFixture.getFile());
   }
 
   // PY-80732
