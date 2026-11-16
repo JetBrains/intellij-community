@@ -356,7 +356,7 @@ public class XmlNamespacesTest {
   public void testPatternPerformanceProblem() {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile("idproblem.html");
-    Benchmark.newBenchmark(myFixture.getTestName(false), () -> myFixture.doHighlighting()).start();
+    Benchmark.newBenchmark(myFixture.getTestName(false), () -> myFixture.doHighlighting()).runAsStressTest().start();
   }
 
   private void doUnusedDeclarationTest(String text, String after, String name) {
