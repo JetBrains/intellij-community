@@ -36,8 +36,15 @@ internal fun Project.getPyProjectsWithCurrentStorage(): Pair<List<PyProjectImpl>
 }
 
 private suspend fun Project.getSnapshot(): ImmutableEntityStorage {
+  awaitSynchronizationWithJpsModel()
+  return WorkspaceModel.getInstance(this).currentSnapshot
+}
+
+/**
+ * Waits until the workspace model of [this] project is synchronized with the JPS model. The global model, which holds
+ * the SDK table, is synchronized first. Call it only in a non-modal context.
+ */
+internal suspend fun Project.awaitSynchronizationWithJpsModel() {
   @Suppress("UnsafeOpenServiceCast") // See IJPL-249625
-  val workspaceModel = WorkspaceModel.getInstance(this) as WorkspaceModelInternal
-  workspaceModel.awaitSynchronizationWithJpsModel()
-  return workspaceModel.currentSnapshot
+  (WorkspaceModel.getInstance(this) as WorkspaceModelInternal).awaitSynchronizationWithJpsModel()
 }

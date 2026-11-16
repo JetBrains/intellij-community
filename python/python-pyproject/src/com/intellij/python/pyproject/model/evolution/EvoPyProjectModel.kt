@@ -31,6 +31,7 @@ import com.intellij.platform.workspace.storage.entities
 import com.intellij.psi.PsiElement
 import com.intellij.python.community.common.sdk.sendPythonAvailableEvent
 import com.intellij.python.externalIndex.PyExternalFilesIndexService
+import com.intellij.python.pyproject.model.internal.pyProject.awaitSynchronizationWithJpsModel
 import com.intellij.python.pyproject.model.internal.pyProject.getPyProjectsWithCurrentStorage
 import com.intellij.python.pyproject.model.internal.pyProject.getPyProjectsWithStorage
 import com.intellij.python.pyproject.model.internal.workspaceBridge.affectsWorkspaceLayout
@@ -143,11 +144,6 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      * does not hold. A change of one of them in the registry starts a recompute.
      */
     val interpreterKeys: Set<PythonInterpreterKey>,
-    /**
-     * Whether a module still refers to a Python SDK that the registry does not hold, see [migrateSdkReferences]. A
-     * change of the registry then starts a recompute, so the reference is replaced when its SDK appears.
-     */
-    val hasPendingSdkReferences: Boolean,
   ) {
     /**
      * Every `PyProject` of this generation, one workspace after another and each workspace's root first.
@@ -232,13 +228,28 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
 
   private val selectionChanges = MutableStateFlow(0)
 
+  /**
+   * Whether the workspace model is synchronized with the JPS model, so the SDK table is complete and
+   * [migrateSdkReferences] can run. The legacy flow migrates nothing, so it does not wait.
+   */
+  private val jpsSynchronized = MutableStateFlow(false)
+
   init {
+    if (isInterpreterLibraryFlowEnabled()) {
+      scope.launch {
+        project.awaitSynchronizationWithJpsModel()
+        jpsSynchronized.value = true
+      }
+    }
+
     scope.launch {
       // Compute up front, then on every workspace-model change that can alter the PyProject set. Conflated: a
       // recomputation reads the whole model from scratch, so an intermediate generation is worth nothing.
       merge(
         WorkspaceModel.getInstance(project).eventLog.filter { it.affectsPyProjects() }.map { },
         interpreterChanges(),
+        // The pass that follows the synchronization migrates the SDK references, see [writeDerivedEntities].
+        jpsSynchronized.filter { it }.map { },
       )
         .onStart { emit(Unit) }
         .conflate()
@@ -323,37 +334,37 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
   /**
    * An event for each change of [PythonInterpreterRegistry] that adds or removes an interpreter in
    * [Snapshot.interpreterKeys]. The project event log does not report interpreters. A change before the first snapshot is
-   * ignored.
+   * ignored. The legacy flow lets the SDK table decide, so there each change of the registry is an event.
    */
-  private fun interpreterChanges(): Flow<Unit> =
-    PythonInterpreterRegistry.getInstance(project).interpreterKeysFlow
+  private fun interpreterChanges(): Flow<Unit> {
+    val libraryFlow = isInterpreterLibraryFlowEnabled()
+    return PythonInterpreterRegistry.getInstance(project).interpreterKeysFlow
       .zipWithNext()
       .filter { (before, after) ->
         val snapshot = state.value ?: return@filter false
-        snapshot.hasPendingSdkReferences || snapshot.interpreterKeys.any { key -> (key in before) != (key in after) }
+        !libraryFlow || snapshot.interpreterKeys.any { key -> (key in before) != (key in after) }
       }
       .map { }
+  }
 
   /**
    * Replaces the SDK references of the modules, see [migrateSdkReferences], and builds the interpreter libraries of
    * [snapshot], see [PyInterpreterLibrarySync]. A module of an older build, the platform or a facet can still refer to an
-   * SDK. The legacy flow reads the SDK name of each module, see [isInterpreterLibraryFlowEnabled], so it migrates nothing.
+   * SDK. The migration waits for the synchronization with the JPS model, see [jpsSynchronized]. The pass does not wait
+   * for it, so the libraries do not wait either. The legacy flow reads the SDK name of each module, see
+   * [isInterpreterLibraryFlowEnabled], so it migrates nothing.
    */
   private suspend fun writeDerivedEntities(snapshot: Snapshot) {
-    if (isInterpreterLibraryFlowEnabled()) migrateSdkReferences(project)
+    if (isInterpreterLibraryFlowEnabled() && jpsSynchronized.value) migrateSdkReferences(project)
     PyInterpreterLibrarySync.getInstance(project).sync(snapshot.evoPyProjects)
   }
 
   private suspend fun computeSnapshot(): Snapshot {
-    // The legacy flow lets the SDK table decide, so it recomputes on each change of the registry, as
-    // [hasPendingSdkReferences] says.
-    val libraryFlow = isInterpreterLibraryFlowEnabled()
     // Read all module data from this one storage. It does not change, so a module removal cannot break the pass. It
     // does not wait for the JPS model, so a reader gets a snapshot while the project opens, also under a modal dialog
     // that holds the synchronization back (PY-93821). The synchronization changes the workspace model, so the next pass
     // reads its result.
     val (sources, storage) = project.getPyProjectsWithCurrentStorage()
-    val hasPendingSdkReferences = !libraryFlow || hasPendingSdkReferences(project, storage)
     val layouts = sources.associate { it.residesOnModule to it.residesOnModule.getWorkspaceLayout(storage) }
     val references = sources.associate { pyProject ->
       pyProject.residesOnModule to pyProject.residesOnModule.findModuleEntity(storage)?.let { project.storedInterpreterReferenceOf(it, storage) }
@@ -394,7 +405,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     val mainKey = project.basePath?.let { FileUtil.toSystemIndependentName(it) }
     // One workspace per group, built where its first member appears, so the order follows the project model.
     val workspaces = sources.map { it.residesOnModule }.distinctBy(::workspaceKeyOf).map(::workspaceOf)
-    return Snapshot(workspaces, projectsByModule.values.firstOrNull { it.key == mainKey }, interpreterKeys, hasPendingSdkReferences)
+    return Snapshot(workspaces, projectsByModule.values.firstOrNull { it.key == mainKey }, interpreterKeys)
   }
 
   /**
@@ -408,8 +419,12 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
    * error, so a snapshot that never agrees cannot block the caller forever.
    */
   suspend fun awaitInterpreterOf(pyProjects: Collection<PyProject>) {
-    // A test can still write an SDK to a module. Replace it first, so the expected interpreter is the one it names.
-    if (isInterpreterLibraryFlowEnabled()) migrateSdkReferences(project)
+    // A test can still write an SDK to a module. Replace it first, so the expected interpreter is the one it names. The
+    // read of the storage below waits for the synchronization with the JPS model too.
+    if (isInterpreterLibraryFlowEnabled()) {
+      project.awaitSynchronizationWithJpsModel()
+      migrateSdkReferences(project)
+    }
     // The interpreter each module refers to now, read the same way as the snapshot reads it.
     val (_, storage) = project.getPyProjectsWithStorage()
     val registry = PythonInterpreterRegistry.getInstance(project)
