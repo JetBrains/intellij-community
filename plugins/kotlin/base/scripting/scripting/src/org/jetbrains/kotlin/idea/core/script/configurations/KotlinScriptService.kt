@@ -300,7 +300,8 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
         }
 
         val collectedData = smartReadAction(project) {
-            val ktFile = PsiManager.getInstance(project).findFile(virtualFile) as? KtFile ?: error("Unable to load PSI from ${virtualFile.path}")
+            val ktFile = PsiManager.getInstance(project).findFile(virtualFile) as? KtFile
+                ?: error(KotlinBaseScriptingBundle.message("script.not.kotlin.file", virtualFile.path, virtualFile.fileType.description))
             getScriptCollectedData(ktFile, providedConfiguration, definition.contextClassLoader)
         }
 

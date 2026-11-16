@@ -141,6 +141,16 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
+    fun `test load names the file type of a kts file that is not Kotlin`() = runBlocking {
+        val file = LightVirtualFile("plain.kts", FileTypes.PLAIN_TEXT, "val x = 1")
+
+        val notifications = catchNotificationsAsync(project, "KotlinScriptNotificationGroup", testRootDisposable) {
+            KotlinScriptService.getInstance(project).load(file)
+        }
+
+        assertTrue(notifications.joinToString { it.content }, notifications.single().content.endsWith("its file type is 'Text'"))
+    }
+
     fun `test load skips a file without content`() = runBlocking {
         val file = object : LightVirtualFile("build.gradle.kts", FileTypes.PLAIN_TEXT, ""), VirtualFileWithoutContent {}
 
