@@ -16,9 +16,12 @@
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.pytools.backend.runtime"/>
+    <module name="intellij.python.pytools.common"/>
     <module name="intellij.python.sdk.backend"/>
+    <module name="intellij.python.sdk.common"/>
     <module name="intellij.python.test.env.junit5"/>
     <module name="intellij.python.uv.backend"/>
+    <module name="intellij.python.uv.common"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

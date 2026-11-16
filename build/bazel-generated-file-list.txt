@@ -2009,6 +2009,7 @@ python/openapi
 python/pipenv
 python/pipenv/common
 python/pipenv/frontend
+python/pipenv/tests
 python/pluginCore
 python/pluginCore/frontend
 python/pluginCore/impl
@@ -2036,6 +2037,7 @@ python/python-grazie
 python/python-hatch
 python/python-hatch/common
 python/python-hatch/frontend
+python/python-hatch/tests
 python/python-lsp-core
 python/python-lsp-core/common
 python/python-lsp-core/frontend
@@ -2055,6 +2057,7 @@ python/python-pixi/tests/junit5Env
 python/python-poetry/backend
 python/python-poetry/common
 python/python-poetry/frontend
+python/python-poetry/tests
 python/python-process-output/common
 python/python-process-output/frontend
 python/python-process-output/frontend/tests/junit5Env

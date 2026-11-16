@@ -3,7 +3,6 @@ package com.jetbrains.python.poetry.sdk.configuration
 
 import com.intellij.util.PathUtil
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.annotations.ApiStatus
 import kotlin.io.path.exists
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.poetry.poetryCacheEnvRefVersion
@@ -63,8 +62,7 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-@ApiStatus.Internal
-class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
+internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
 
   companion object {
     private val LOGGER = Logger.getInstance(PyPoetrySdkConfiguration::class.java)

@@ -48,6 +48,9 @@ jvm_library(
         "//python/python-pytools-runtime/backend:python-pytools-backend-runtime",
         "//python/python-sdk/backend",
         "//libraries/assertj-core",
+        "//python/python-uv/common",
+        "//python/python-pytools/common",
+        "//python/python-sdk/common",
     ],
 )
 ### auto-generated section `build intellij.python.uv.tests` end
