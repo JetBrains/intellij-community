@@ -446,7 +446,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
         && PsiUtil.isLValue(ref)) {
 
       final PsiClass containingClass = field.getContainingClass();
-      if (containingClass != null && PsiTreeUtil.isAncestor(containingClass, ref, true)) {
+      if (PsiTreeUtil.isAncestor(containingClass, ref, true)) {
         GrMember container = GrHighlightUtil.findClassMemberContainer(ref, containingClass);
 
         if (field.hasModifierProperty(PsiModifier.STATIC)) {
@@ -1002,12 +1002,9 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
           if (method.isConstructor()) {
             myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("cannot.return.from.constructor")).range(value).create();
           }
-          else {
-            final PsiType methodType = method.getReturnType();
-            if (methodType != null && PsiTypes.voidType().equals(methodType)) {
-              String message = GroovyBundle.message("cannot.return.from.void.method");
-              myHolder.newAnnotation(HighlightSeverity.ERROR, message).range(value).create();
-            }
+          else if (PsiTypes.voidType().equals(method.getReturnType())) {
+            String message = GroovyBundle.message("cannot.return.from.void.method");
+            myHolder.newAnnotation(HighlightSeverity.ERROR, message).range(value).create();
           }
         }
       }
@@ -1072,10 +1069,9 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
 
   @Override
   public void visitTypeElement(@NotNull GrTypeElement typeElement) {
-    final PsiElement parent = typeElement.getParent();
-    if (!(parent instanceof GrMethod method)) return;
+    if (!(typeElement.getParent() instanceof GrMethod method)) return;
 
-    if (parent instanceof GrAnnotationMethod) {
+    if (method instanceof GrAnnotationMethod) {
       checkAnnotationAttributeType(typeElement, myHolder);
     }
     else if (method.isConstructor()) {
@@ -1210,9 +1206,9 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       if (returnType == null || superReturnType == null || method == superMethod) continue;
       PsiClass superClass = superMethod.getContainingClass();
       if (superClass == null) continue;
-      String highlightInfo = checkSuperMethodSignature(superMethod, superMethodSignature, superReturnType, method, signature, returnType);
-      if (highlightInfo != null) {
-        holder.newAnnotation(HighlightSeverity.ERROR, highlightInfo).range(toHighlight).create();
+      String message = checkSuperMethodSignature(superMethod, superMethodSignature, superReturnType, method, signature, returnType);
+      if (message != null) {
+        holder.newAnnotation(HighlightSeverity.ERROR, message).range(toHighlight).create();
         return;
       }
     }
