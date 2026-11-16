@@ -6,6 +6,6 @@ interface I {
   def foo()
 }
 
-<error descr="Method 'foo' is not implemented">enum EI implements I</error> {
+<error descr="Method 'foo()' not implemented">enum EI implements I</error> {
 
 }

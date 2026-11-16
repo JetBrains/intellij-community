@@ -1,5 +1,5 @@
 import java.awt.event.ActionListener
 
-new <error descr="Method 'actionPerformed' is not implemented">ActionListener</error>(){
+new <error descr="Method 'actionPerformed()' not implemented">ActionListener</error>(){
 
 }

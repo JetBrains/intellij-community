@@ -205,7 +205,7 @@ public class ResolveCompiledTraitTest {
   public void testNotImplementedCompiledTraitMethod() {
     testHighlighting(
       """
-        <error descr="Method 'someAbstractMethod' is not implemented">class ExternalConcrete implements somepackage.TT</error> {
+        <error descr="Method 'someAbstractMethod()' not implemented">class ExternalConcrete implements somepackage.TT</error> {
             @Override
             void anotherInterfaceMethod() {}
         }""");
@@ -215,7 +215,7 @@ public class ResolveCompiledTraitTest {
   public void testNotImplementedCompiledInterfaceMethodWithTraitInHierarchy() {
     testHighlighting(
       """
-        <error descr="Method 'anotherInterfaceMethod' is not implemented">class ExternalConcrete implements somepackage.TT</error> {
+        <error descr="Method 'anotherInterfaceMethod()' not implemented">class ExternalConcrete implements somepackage.TT</error> {
             @Override
             def someAbstractMethod() {}
         }""");

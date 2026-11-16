@@ -1819,12 +1819,12 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     if (typeDefinition.isAnnotationType()) return;
     if (typeDefinition instanceof GrTypeParameter) return;
 
-    PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(typeDefinition);
+    PsiMethod abstractMethod = ClassUtil.getAnyMethodToImplement(typeDefinition);
     if (abstractMethod == null) return;
 
     final TextRange range = GrHighlightUtil.getClassHeaderTextRange(typeDefinition);
     String message = GroovyBundle.message("method.is.not.implemented", abstractMethod.getName());
-   AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, message).range(range);
+    AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, message).range(range);
     registerImplementsMethodsFix(typeDefinition, abstractMethod, builder, message, range).create();
   }
 

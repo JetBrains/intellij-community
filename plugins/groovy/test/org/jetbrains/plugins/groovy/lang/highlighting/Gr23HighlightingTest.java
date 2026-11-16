@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -360,7 +360,7 @@ public class Gr23HighlightingTest {
   public void testNotImplementedTraitMethod() {
     highlighting.get().doTestHighlighting("""
                          trait T {abstract def foo()}
-                         <error descr="Method 'foo' is not implemented">class C implements T</error> {}
+                         <error descr="Method 'foo()' not implemented">class C implements T</error> {}
                          """);
   }
 
@@ -369,7 +369,7 @@ public class Gr23HighlightingTest {
     highlighting.get().doTestHighlighting("""
                          interface T {def foo()}
                          trait X implements T {}
-                         <error descr="Method 'foo' is not implemented">class C implements X</error> {}
+                         <error descr="Method 'foo()' not implemented">class C implements X</error> {}
                          """);
   }
 
@@ -428,7 +428,7 @@ public class Gr23HighlightingTest {
   public void testAbstractMethodWithDefaultParametersInAbstractClass() {
     highlighting.get().doTestHighlighting("""
                          abstract class A { abstract foo(x, y = 3) }
-                         <error descr="Method 'foo' is not implemented">class B extends A</error> {}
+                         <error descr="Method 'foo()' not implemented">class B extends A</error> {}
                          """);
     highlighting.get().doTestHighlighting("""
                          abstract class A { abstract foo(x, y = 3) }
@@ -440,7 +440,7 @@ public class Gr23HighlightingTest {
   public void testAbstractMethodWithDefaultParametersInTrait() {
     highlighting.get().doTestHighlighting("""
                          trait A { abstract foo(x, y = 3) }
-                         <error descr="Method 'foo' is not implemented">class B implements A</error> {}
+                         <error descr="Method 'foo()' not implemented">class B implements A</error> {}
                          """);
     highlighting.get().doTestHighlighting("""
                          trait A { abstract foo(x, y = 3) }

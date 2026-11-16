@@ -395,7 +395,7 @@ public class GroovyHighlightingTest {
           @Delegate private I list
       }
 
-      <error descr="Method 'foo' is not implemented">class Bar implements I</error> {
+      <error descr="Method 'foo()' not implemented">class Bar implements I</error> {
         def <T> void foo(List<T> a){}
       }
 
@@ -541,7 +541,7 @@ public class GroovyHighlightingTest {
         }
       }
 
-      <error descr="Method 'actionPerformed' is not implemented">public class IncorrectImplementor implements ActionListener</error> {
+      <error descr="Method 'actionPerformed()' not implemented">public class IncorrectImplementor implements ActionListener</error> {
         public void actionPerformed (Object e) {
         }
       }

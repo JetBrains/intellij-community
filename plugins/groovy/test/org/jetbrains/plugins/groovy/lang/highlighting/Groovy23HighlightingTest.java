@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
@@ -124,7 +124,7 @@ public class Groovy23HighlightingTest {
                          trait A {
                            abstract foo
                          }
-                         <error descr="Method 'getFoo' is not implemented">class B implements A</error> {}
+                         <error descr="Method 'getFoo()' not implemented">class B implements A</error> {}
                          """);
     highlighting.get().doTestHighlighting("""
                          trait A {
@@ -176,7 +176,7 @@ public class Groovy23HighlightingTest {
                          trait A {
                            abstract foo(a, b = null, c = null)
                          }
-                         <error descr="Method 'foo' is not implemented">class B implements A</error> {}
+                         <error descr="Method 'foo()' not implemented">class B implements A</error> {}
                          """);
     ReadAction.runBlocking(() -> {
       GrTypeDefinition definition = (GrTypeDefinition)myFixture.findClass("B");
