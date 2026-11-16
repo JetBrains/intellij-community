@@ -44,7 +44,7 @@ import kotlin.time.Duration.Companion.minutes
 
 private const val DISTRACTION_FREE_MODE_KEY = "editor.distraction.free.mode"
 
-fun Finder.ideFrame(): IdeaFrameUI = x(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
+fun Finder.ideFrame(): IdeaFrameUI = x(IdeaFrameUI::class.java) { byJavaClass("com.intellij.openapi.wm.impl.IdeFrameImpl") }
 
 fun Finder.currentIdeFrame(): IdeaFrameUI = ideFrames().list().let { frames ->
   when (frames.size) {
@@ -54,7 +54,7 @@ fun Finder.currentIdeFrame(): IdeaFrameUI = ideFrames().list().let { frames ->
   }
 }
 
-fun Finder.ideFrames(): UIComponentsList<IdeaFrameUI> = xx(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
+fun Finder.ideFrames(): UIComponentsList<IdeaFrameUI> = xx(IdeaFrameUI::class.java) { byJavaClass("com.intellij.openapi.wm.impl.IdeFrameImpl") }
 
 /** Waits until the frame is found and ready, and then runs [action] on it. */
 fun Finder.ideFrame(action: IdeaFrameUI.() -> Unit) {
@@ -149,7 +149,7 @@ fun Driver.waitForIdeFrameReady(timeout: Duration = DEFAULT_FIND_TIMEOUT) {
 }
 
 fun Finder.projectIdeFrame(projectName: String, action: IdeaFrameUI.() -> Unit) {
-  x(IdeaFrameUI::class.java) { and(byClass("IdeFrameImpl"), contains(byAccessibleName(projectName))) }.action()
+  x(IdeaFrameUI::class.java) { and(byJavaClass("com.intellij.openapi.wm.impl.IdeFrameImpl"), contains(byAccessibleName(projectName))) }.action()
 }
 
 fun Driver.projectIdeFrame(projectName: String, action: IdeaFrameUI.() -> Unit) {
@@ -171,10 +171,10 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
     get() = ideaFrameComponent.getExtendedState().and(JFrame.MAXIMIZED_BOTH) != 0
 
   val leftToolWindowToolbar: ToolWindowLeftToolbarUi =
-    x(ToolWindowLeftToolbarUi::class.java) { byClass("ToolWindowLeftToolbar") }
+    x(ToolWindowLeftToolbarUi::class.java) { byJavaClass("com.intellij.toolWindow.ToolWindowLeftToolbar") }
 
   val rightToolWindowToolbar: ToolWindowRightToolbarUi =
-    x(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }
+    x(ToolWindowRightToolbarUi::class.java) { byJavaClass("com.intellij.toolWindow.ToolWindowRightToolbar") }
 
   override fun waitReady(timeout: Duration) {
     val readinessTimeout = maxOf(timeout, 1.minutes)
