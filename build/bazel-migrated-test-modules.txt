@@ -23,6 +23,7 @@ intellij.python.pyproject.tests
 intellij.python.sdk.tests
 intellij.tasks.tests.vcs
 intellij.vcs.git.coverage.tests
+intellij.vcs.git.terminal.tests
 intellij.vcs.gitlab.tests
 intellij.xml.tests.js
 language-server.*
