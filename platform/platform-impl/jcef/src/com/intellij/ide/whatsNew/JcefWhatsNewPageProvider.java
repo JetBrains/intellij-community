@@ -4,7 +4,6 @@ package com.intellij.ide.whatsNew;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -73,13 +72,10 @@ final class JcefWhatsNewPageProvider implements WhatsNewPageProvider {
     // The page can redirect to the web site, for example from a short link.
     var urls = ExternalProductResourceUrls.getInstance();
     var webSiteUrl = urls instanceof BaseJetBrainsExternalProductResourceUrls jetBrainsUrls ? jetBrainsUrls.getBaseWebSiteUrl().toExternalForm() : null;
-    setQueryHandler(request, queryHandler, trustedOrigins(url, webSiteUrl));
-
-    // The page shows the IJ Air block only for the `code` parameter.
-    if (parameters.containsKey("code")) {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(WhatsNewAirPromoListener.TOPIC)
-        .blockShown(project, WelcomeScreenProjectProvider.isWelcomeScreenProject(project));
-    }
+    var promoQueryHandler = WhatsNewAirPromoQueryHandler.create(
+      new WhatsNewAirPromoPage(project, WelcomeScreenProjectProvider.isWelcomeScreenProject(project)),
+      parameters.containsKey("code"), queryHandler);
+    setQueryHandler(request, promoQueryHandler, trustedOrigins(url, webSiteUrl));
 
     var title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
     HTMLEditorProvider.openEditorWithoutBlocking(project, title, request);

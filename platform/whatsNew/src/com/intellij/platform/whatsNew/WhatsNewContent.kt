@@ -7,8 +7,10 @@ import com.intellij.ide.Region
 import com.intellij.ide.RegionSettingsService
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.whatsNew.AIR_PROMO_REQUEST
+import com.intellij.ide.whatsNew.AIR_PROMO_ACTION_ID
 import com.intellij.ide.whatsNew.DefaultWhatsNewQueryHandler
-import com.intellij.ide.whatsNew.WhatsNewAirPromoListener
+import com.intellij.ide.whatsNew.WhatsNewAirPromoPage
+import com.intellij.ide.whatsNew.WhatsNewAirPromoQueryHandler
 import com.intellij.ide.whatsNew.WhatsNewUtil
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.actionSystem.ActionManager
@@ -16,6 +18,7 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
@@ -252,11 +255,14 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
 
   override suspend fun isAvailable(): Boolean = true
 
-  private fun getQueryHandler(dataContext: DataContext?, project: Project): JsQueryHandler? {
-    dataContext ?: return null
+  internal fun showsAirPromo(isChinaRegion: Boolean, airPluginLoaded: Boolean): Boolean =
+    !isChinaRegion && airPluginLoaded && (AIR_PROMO_REQUEST in myActionWhiteList || AIR_PROMO_ACTION_ID in myActionWhiteList)
 
-    return object : JsQueryHandler {
-      private val delegate = DefaultWhatsNewQueryHandler(project)
+  private fun getQueryHandler(dataContext: DataContext?, project: Project, airPromoEnabled: Boolean): JsQueryHandler? {
+    val page = WhatsNewAirPromoPage(project)
+    val actionContext = SimpleDataContext.getSimpleContext(WhatsNewAirPromoPage.DATA_KEY, page, dataContext ?: DataContext.EMPTY_CONTEXT)
+    val actionHandler = if (dataContext == null) null else object : JsQueryHandler {
+      private val delegate = DefaultWhatsNewQueryHandler(project, page)
 
       override suspend fun query(id: Long, request: String): String {
         val contains = myActionWhiteList.contains(request)
@@ -276,7 +282,7 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
           if (action != null) {
             withContext(Dispatchers.EDT) {
               action.actionPerformed(
-                AnActionEvent.createEvent(action, dataContext, /*presentation =*/ null, WhatsNewUtil.PLACE, ActionUiKind.NONE, /*event =*/ null)
+                AnActionEvent.createEvent(action, actionContext, /*presentation =*/ null, WhatsNewUtil.PLACE, ActionUiKind.NONE, /*event =*/ null)
               )
               logger.trace { "EapWhatsNew action $request performed" }
               WhatsNewCounterUsageCollector.actionPerformed(dataContext.project, request)
@@ -295,6 +301,7 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
         return "false"
       }
     }
+    return WhatsNewAirPromoQueryHandler.create(page, airPromoEnabled, actionHandler)
   }
 
   override suspend fun show(project: Project, dataContext: DataContext?, triggeredByUser: Boolean, reactionChecker: FUSReactionChecker) {
@@ -309,10 +316,6 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
       val disposable = Disposer.newDisposable(project)
       val startPageId = WhatsNewMultipageStartIdProvider.getInstance(project).getId()
       val request = getRequest(startPageId, dataContext, project, isChinaRegion)
-      if (myActionWhiteList.contains(AIR_PROMO_REQUEST)) {
-        application.messageBus.syncPublisher(WhatsNewAirPromoListener.TOPIC)
-          .blockShown(project, WelcomeScreenProjectProvider.isWelcomeScreenProject(project))
-      }
       val editor = openEditorAsync(project, title, request)
 
       editor?.let {
@@ -339,10 +342,11 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
   }
 
   private fun getRequest(startPageId: String, dataContext: DataContext?, project: Project, isChinaRegion: Boolean): HTMLEditorProvider.Request {
+    val airPluginLoaded = PluginManagerCore.isLoaded(AIR_PLUGIN_ID)
     val pageContent = getContent(
       isWelcomeScreenProject = WelcomeScreenProjectProvider.isWelcomeScreenProject(project),
       isChinaRegion = isChinaRegion,
-      isAiNotAllowed = !PluginManagerCore.isLoaded(AIR_PLUGIN_ID),
+      isAiNotAllowed = !airPluginLoaded,
     )
     // One-page case
     val request = if (startPageId == WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID || multipageIds.size == 1) {
@@ -355,7 +359,7 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
       }
     }
     return request
-      .withQueryHandler(getQueryHandler(dataContext, project))
+      .withQueryHandler(getQueryHandler(dataContext, project, showsAirPromo(isChinaRegion, airPluginLoaded)))
       .withResourceHandler(getRequestHandler(dataContext))
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -45,7 +46,15 @@ private const val AIR_PROMO_TOOLTIP_SHOWN_PROPERTY: String = "whats.new.air.prom
 const val AIR_PROMO_REQUEST: String = "promo-get-some-air"
 
 @ApiStatus.Internal
-class DefaultWhatsNewQueryHandler(private val project: Project) : HTMLEditorProvider.JsQueryHandler {
+const val AIR_PROMO_ACTION_ID: String = "AgentThreads.MainToolbar.NewThread"
+
+@ApiStatus.Internal
+class DefaultWhatsNewQueryHandler @JvmOverloads constructor(
+  private val project: Project,
+  private val page: WhatsNewAirPromoPage = WhatsNewAirPromoPage(project),
+) : HTMLEditorProvider.JsQueryHandler {
+  internal fun forPage(page: WhatsNewAirPromoPage): DefaultWhatsNewQueryHandler = DefaultWhatsNewQueryHandler(project, page)
+
   override suspend fun query(id: Long, request: String): String = when (request) {
     AIR_PROMO_REQUEST -> {
       doAirPromo()
@@ -59,8 +68,8 @@ class DefaultWhatsNewQueryHandler(private val project: Project) : HTMLEditorProv
 
   // 2026.3 Air promo
   private suspend fun doAirPromo() {
-    val welcomeScreenProject = WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
-    ApplicationManager.getApplication().messageBus.syncPublisher(WhatsNewAirPromoListener.TOPIC).blockClicked(project, welcomeScreenProject)
+    val welcomeScreenProject = page.welcomeScreenProject
+    ApplicationManager.getApplication().messageBus.syncPublisher(WhatsNewAirPromoListener.TOPIC).blockClicked(page)
     if (welcomeScreenProject) {
       val connection = ApplicationManager.getApplication().messageBus.connect()
       connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
@@ -78,7 +87,7 @@ class DefaultWhatsNewQueryHandler(private val project: Project) : HTMLEditorProv
         connection.disconnect()
       }
     }
-    else if (!performAction("AgentThreads.MainToolbar.NewThread")) {
+    else if (!performAction(AIR_PROMO_ACTION_ID)) {
       notifyAirMissing(project)
     }
     WhatsNewUsagesCollector.airPromoButtonClicked(project)
@@ -90,10 +99,13 @@ class DefaultWhatsNewQueryHandler(private val project: Project) : HTMLEditorProv
       LOG.info("no '${actionId}' action")
       return false
     }
-    val dataContext = DataManager.getInstance().dataContextFromFocusAsync.await()
+    val actionContext = SimpleDataContext.builder()
+      .setParent(DataManager.getInstance().dataContextFromFocusAsync.await())
+      .add(WhatsNewAirPromoPage.DATA_KEY, page)
+      .build()
     withContext(Dispatchers.EDT) {
       action.actionPerformed(
-        AnActionEvent.createEvent(action, dataContext, /*presentation =*/ null, WhatsNewUtil.PLACE, ActionUiKind.NONE, /*event =*/ null)
+        AnActionEvent.createEvent(action, actionContext, /*presentation =*/ null, WhatsNewUtil.PLACE, ActionUiKind.NONE, /*event =*/ null)
       )
     }
     return true

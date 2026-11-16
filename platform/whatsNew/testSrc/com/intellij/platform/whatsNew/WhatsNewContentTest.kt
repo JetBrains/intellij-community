@@ -6,6 +6,22 @@ import org.junit.jupiter.api.Test
 class WhatsNewContentTest {
 
   @Test
+  fun `the Air block show respects its actions region and plugin state`() {
+    for (action in listOf("promo-get-some-air", "AgentThreads.MainToolbar.NewThread", "OtherAction")) {
+      val content = WhatsNewVisionContent(WhatsNewInVisionContentProvider(), WhatsNewInVisionContentProvider.Page(
+        id = 1,
+        actions = listOf(WhatsNewInVisionContentProvider.Action(action, "")),
+        html = "",
+        languages = emptyList(),
+        publicVars = emptyList(),
+      ))
+      Assertions.assertEquals(action != "OtherAction", content.showsAirPromo(isChinaRegion = false, airPluginLoaded = true))
+      Assertions.assertFalse(content.showsAirPromo(isChinaRegion = true, airPluginLoaded = true))
+      Assertions.assertFalse(content.showsAirPromo(isChinaRegion = false, airPluginLoaded = false))
+    }
+  }
+
+  @Test
   fun `Content version comparison`() {
     val nonEap = WhatsNewContent.ContentVersion("2024", "1", eap = null, hash = null)
     val eap1 = WhatsNewContent.ContentVersion("2024", "1", eap = 1, hash = null)
