@@ -1933,31 +1933,55 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                             @NotNull Collection<VFileCreateEvent> createEvents) {
     int parentId = fileId(parent);
     NewVirtualFile vf = findFileById(parentId);
-    if (!(vf instanceof VirtualDirectoryImpl)) {
+    if (!(vf instanceof VirtualDirectoryImpl parentDir)) {
       return;
     }
-    parent = (VirtualDirectoryImpl)vf;
-    NewVirtualFileSystem fs = fileSystemOf(parent);
+    NewVirtualFileSystem fs = fileSystemOf(parentDir);
+    boolean caseSensitive = parentDir.isCaseSensitive();
 
-    List<ChildInfo> childrenAdded = new ArrayList<>(createEvents.size());
+    // Collect child attributes outside the vfsPeer.update()'s lock:
+    record PreparedCreation(VFileCreateEvent event, Pair<@NotNull FileAttributes, String> childData) { }
+    Map<String, PreparedCreation> preparedCreations = createFilePathMap(createEvents.size(), caseSensitive);
     for (VFileCreateEvent createEvent : createEvents) {
       createEvent.resetCache();
       String name = createEvent.getChildName();
       Pair<@NotNull FileAttributes, String> childData =
         getChildData(fs, createEvent.getParent(), name, createEvent.getAttributes(), createEvent.getSymlinkTarget());
       if (childData != null) {
-        ChildInfo child = makeChildRecord(parent, parentId, name, childData, fs, createEvent.getChildren(), createEvent.isAllChildren());
-        childrenAdded.add(child);
+        preparedCreations.putIfAbsent(name, new PreparedCreation(createEvent, childData));
       }
     }
-    childrenAdded.sort(ChildInfo.BY_ID);
-    boolean caseSensitive = parent.isCaseSensitive();
+    var childrenToInitialize = new ArrayList<ChildInfo>(preparedCreations.size());
+    vfsPeer.update(parentDir, parentId, oldChildren -> {
+      // Child name uniqueness is already checked in dir.validateChildrenToCreate(createEvents) before events are processed,
+      // but children could change a) in 'before' listeners, after validation b) by parallel dir.findChild(name) lookup without
+      // RA around (aka 'local refresh'). So we _must_ re-check it again, under exclusive lock:
+      Map<String, ChildInfo> existingChildren = createFilePathMap(oldChildren.children.size(), caseSensitive);
+      for (ChildInfo child : oldChildren.children) {
+        existingChildren.put(child.getName().toString(), child);
+      }
+      for (PreparedCreation prepared : preparedCreations.values()) {
+        VFileCreateEvent event = prepared.event();
+        String name = event.getChildName();
+        ChildInfo existing = existingChildren.get(name);
+        if (existing == null) {
+          childrenToInitialize.add(makeChildRecord(parentDir, parentId, name, prepared.childData(), fs, event.getChildren(), event.isAllChildren()));
+        }
+        else {
+          FileAttributes fileAttributes = prepared.childData().first;
+          String symLinkTarget = prepared.childData().second;
+          childrenToInitialize.add(new ChildInfoImpl(existing.getId(), existing.getNameId(), fileAttributes,
+                                                     event.getChildren(), symLinkTarget, event.isAllChildren()));
+        }
+      }
+      childrenToInitialize.sort(ChildInfo.BY_ID);
+      return oldChildren.merge(vfsPeer, childrenToInitialize, caseSensitive);
+    }, /*setAllChildrenCached: */ false);
     //@formatter:off
-    vfsPeer.update(parent, parentId, oldChildren -> oldChildren.merge(vfsPeer, childrenAdded, caseSensitive), /*setAllChildrenCached: */ false);
-    parent.initializeAndAddChildren(childrenAdded, /*allChildrenLoaded: */ false, (__, ___) -> { });
+    parentDir.initializeAndAddChildren(childrenToInitialize, /*allChildrenLoaded: */ false, (__, ___) -> { });
     //@formatter:on
 
-    saveScannedChildrenRecursively(createEvents, fs, parent.isCaseSensitive());
+    saveScannedChildrenRecursively(createEvents, fs, caseSensitive);
   }
 
   private void saveScannedChildrenRecursively(@NotNull Collection<VFileCreateEvent> createEvents,

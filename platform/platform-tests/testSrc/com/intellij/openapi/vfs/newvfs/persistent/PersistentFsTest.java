@@ -1417,6 +1417,73 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   }
 
 
+  @Test
+  public void testChildLoadedBetweenValidationAndApplicationOfCreateEventIsNotDuplicated() throws IOException {
+    checkChildLoadedBeforeCreateEvent(false);
+  }
+
+  @Test
+  public void testChildRecordLoadedBeforeCreateEventIsAddedToMemory() throws IOException {
+    checkChildLoadedBeforeCreateEvent(true);
+  }
+
+  @SuppressWarnings("UseOptimizedEelFunctions")
+  private void checkChildLoadedBeforeCreateEvent(boolean persistentRecordOnly) throws IOException {
+    // PY-92800: a lookup loads the new child between the validation of the VFileCreateEvent and its application.
+    // The applied event must not add a second child with the same name.
+    File dir = tempDirectory.newDirectory("dir");
+    VirtualDirectoryImpl vDir = (VirtualDirectoryImpl)refreshAndFind(dir);
+    // The lookup fails, so the name becomes 'adopted'. A partial refresh reports an adopted name as created.
+    assertNull(vDir.findChild("child.txt"));
+
+    //now create just-missing file:
+    Files.writeString(dir.toPath().resolve("child.txt"), "text");
+
+    AtomicBoolean loadedEarly = new AtomicBoolean();
+    var loadedId = new AtomicInteger();
+    var eventFile = new AtomicReference<VirtualFile>();
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
+    //setup tight race between PersistentFSImpl.applyCreateEventsInDirectory() and parallel directory lookup without RA:
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
+        // A `before` listener runs after the validation of the events and before the applyCreateEventsInDirectory()
+        // The load here plays the role of a lookup from another thread, which needs no read action.
+        for (VFileEvent event : events) {
+          if (event instanceof VFileCreateEvent create && "child.txt".equals(create.getChildName())) {
+            if (persistentRecordOnly) {
+              // Stop the lookup before it publishes the child in memory
+              var children = ((PersistentFSImpl)PersistentFS.getInstance()).listAllChildren(vDir).children();
+              loadedId.set(assertOneElement(children).getId());
+            }
+            else {
+              loadedId.set(((VirtualFileWithId)assertOneElement(vDir.getChildren())).getId());
+            }
+            loadedEarly.set(true);
+          }
+        }
+      }
+
+      @Override
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (event instanceof VFileCreateEvent create && "child.txt".equals(create.getChildName())) {
+            eventFile.set(create.getFile());
+          }
+        }
+      }
+    });
+
+    vDir.refresh(/*async: */ false, /*recursive: */ false);
+
+    assertTrue("The refresh must report 'child.txt' as created, or the test checks nothing", loadedEarly.get());
+    assertNotNull("The child must be available to after listeners", eventFile.get());
+    assertEquals("The event must preserve the record loaded by the lookup", loadedId.get(), ((VirtualFileWithId)eventFile.get()).getId());
+    assertEquals("The directory must hold one 'child.txt'",
+                 List.of("child.txt"),
+                 ContainerUtil.map(vDir.getChildren(), VirtualFile::getName));
+  }
+
   private static void checkEvents(String expectedEvents, VFileEvent... eventsToApply) {
     StringBuilder log = new StringBuilder();
 
