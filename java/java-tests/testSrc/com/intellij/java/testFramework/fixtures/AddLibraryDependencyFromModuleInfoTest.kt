@@ -2,12 +2,23 @@
 package com.intellij.java.testFramework.fixtures
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import org.junit.Assert
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 
-class AddLibraryDependencyFromModuleInfoTest : LightJava9ModulesCodeInsightFixtureTestCase() {
+@TestApplication
+class AddLibraryDependencyFromModuleInfoTest {
+  companion object {
+    private val projectFixture = lightJava9ModulesProjectFixture()
+  }
+
+  private val java9 by lightJava9ModulesFixture(projectFixture)
+  private val myFixture get() = java9.fixture
+
+  @Test
   fun testAddDependencyNoLibrariesFound() {
     val file = myFixture.addFileToProject("../src_m2/module-info.java", "module M2 {requires lib.na<caret>med;}")
     myFixture.configureFromExistingVirtualFile(file.virtualFile)
-    Assert.assertNull(myFixture.getAvailableIntention (QuickFixBundle.message("orderEntry.fix.add.library.to.classpath", "lib.named")))
+    assertNull(myFixture.getAvailableIntention (QuickFixBundle.message("orderEntry.fix.add.library.to.classpath", "lib.named")))
   }
 }

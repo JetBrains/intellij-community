@@ -5,97 +5,133 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateServiceClassFixBase
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesFixture
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesProjectFixture
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class CreateServiceInterfaceOrClassTest : LightJava9ModulesCodeInsightFixtureTestCase() {
-
-  fun testSameModuleExistingPackage() {
-    addFile("foo/bar/Anything.java", "package foo.bar; class Anything { }")
-
-    val moduleInfo = myFixture.configureByText("module-info.java", "module foo.bar { uses foo.bar.<caret>MyService; }") as PsiJavaFile
-    doAction("foo.bar.MyService", moduleInfo)
-
-    myFixture.checkResult("foo/bar/MyService.java",
-                          "package foo.bar;\n\n" +
-                          "public class MyService {\n" +
-                          "}\n", true)
+@TestApplication
+class CreateServiceInterfaceOrClassTest {
+  companion object {
+    private val projectFixture = lightJava9ModulesProjectFixture()
   }
 
-  fun testSameModuleExistingPackageInterface() {
-    addFile("foo/bar/Anything.java", "package foo.bar; class Anything { }")
+  private val java9 by lightJava9ModulesFixture(projectFixture)
+  private val myFixture get() = java9.fixture
+
+  @Test
+  fun testSameModuleExistingPackage(): Unit = timeoutRunBlocking {
+    java9.addFile("foo/bar/Anything.java", "package foo.bar; class Anything { }")
 
     val moduleInfo = myFixture.configureByText("module-info.java", "module foo.bar { uses foo.bar.<caret>MyService; }") as PsiJavaFile
-    doAction("foo.bar.MyService", moduleInfo, classKind = CreateClassKind.INTERFACE)
+    withContext(Dispatchers.EDT) {
+      doAction("foo.bar.MyService", moduleInfo)
 
-    myFixture.checkResult("foo/bar/MyService.java",
-                          "package foo.bar;\n\n" +
-                          "public interface MyService {\n" +
-                          "}\n", true)
+      myFixture.checkResult("foo/bar/MyService.java",
+                            "package foo.bar;\n\n" +
+                            "public class MyService {\n" +
+                            "}\n", true)
+    }
   }
 
-  fun testSameModuleExistingPackageAnnotation() {
-    addFile("foo/bar/Anything.java", "package foo.bar; class Anything { }")
+  @Test
+  fun testSameModuleExistingPackageInterface(): Unit = timeoutRunBlocking {
+    java9.addFile("foo/bar/Anything.java", "package foo.bar; class Anything { }")
 
     val moduleInfo = myFixture.configureByText("module-info.java", "module foo.bar { uses foo.bar.<caret>MyService; }") as PsiJavaFile
-    doAction("foo.bar.MyService", moduleInfo, classKind = CreateClassKind.ANNOTATION)
+    withContext(Dispatchers.EDT) {
+      doAction("foo.bar.MyService", moduleInfo, classKind = CreateClassKind.INTERFACE)
 
-    myFixture.checkResult("foo/bar/MyService.java",
-                          "package foo.bar;\n\n" +
-                          "public @interface MyService {\n" +
-                          "}\n", true)
+      myFixture.checkResult("foo/bar/MyService.java",
+                            "package foo.bar;\n\n" +
+                            "public interface MyService {\n" +
+                            "}\n", true)
+    }
   }
 
-  fun testOtherModuleExistingPackage() {
-    val otherModuleInfo = moduleInfo("module foo.bar.other { exports foo.bar.other; }", OTHER)
-      .let { PsiManager.getInstance(project).findFile(it) as PsiJavaFile }
-    addFile("foo/bar/other/Anything.java", "package foo.bar.other; class Anything { }", OTHER)
+  @Test
+  fun testSameModuleExistingPackageAnnotation(): Unit = timeoutRunBlocking {
+    java9.addFile("foo/bar/Anything.java", "package foo.bar; class Anything { }")
+
+    val moduleInfo = myFixture.configureByText("module-info.java", "module foo.bar { uses foo.bar.<caret>MyService; }") as PsiJavaFile
+    withContext(Dispatchers.EDT) {
+      doAction("foo.bar.MyService", moduleInfo, classKind = CreateClassKind.ANNOTATION)
+
+      myFixture.checkResult("foo/bar/MyService.java",
+                            "package foo.bar;\n\n" +
+                            "public @interface MyService {\n" +
+                            "}\n", true)
+    }
+  }
+
+  @Test
+  fun testOtherModuleExistingPackage(): Unit = timeoutRunBlocking {
+    val otherModuleInfo = java9.moduleInfo("module foo.bar.other { exports foo.bar.other; }", OTHER)
+      .let { readAction { PsiManager.getInstance(myFixture.project).findFile(it) as PsiJavaFile } }
+    java9.addFile("foo/bar/other/Anything.java", "package foo.bar.other; class Anything { }", OTHER)
 
     myFixture.configureByText("module-info.java", "module foo.bar { requires foo.bar.other; uses foo.bar.other.<caret>MyService; }")
-    doAction("foo.bar.other.MyService", otherModuleInfo, otherModuleInfo.containingDirectory)
+    withContext(Dispatchers.EDT) {
+      doAction("foo.bar.other.MyService", otherModuleInfo, otherModuleInfo.containingDirectory)
 
-    myFixture.checkResult("../${OTHER.sourceRootName}/foo/bar/other/MyService.java",
-                          "package foo.bar.other;\n\n" +
-                          "public class MyService {\n" +
-                          "}\n", true)
+      myFixture.checkResult("../${OTHER.sourceRootName}/foo/bar/other/MyService.java",
+                            "package foo.bar.other;\n\n" +
+                            "public class MyService {\n" +
+                            "}\n", true)
+    }
   }
 
-  fun testSameModuleExistingOuterClass() {
-    addFile("foo/bar/Outer.java", "package foo.bar; public class Outer { }")
+  @Test
+  fun testSameModuleExistingOuterClass(): Unit = timeoutRunBlocking {
+    java9.addFile("foo/bar/Outer.java", "package foo.bar; public class Outer { }")
 
     val moduleInfo = myFixture.configureByText("module-info.java", "module foo.bar { uses foo.bar.Outer.<caret>MyService; }") as PsiJavaFile
-    doAction("foo.bar.Outer.MyService", moduleInfo)
+    withContext(Dispatchers.EDT) {
+      doAction("foo.bar.Outer.MyService", moduleInfo)
 
-    myFixture.checkResult("foo/bar/Outer.java",
-                          "package foo.bar; public class Outer {\n" +
-                          "    public static class MyService {\n" +
-                          "    }\n" +
-                          "}", true)
+      myFixture.checkResult("foo/bar/Outer.java",
+                            "package foo.bar; public class Outer {\n" +
+                            "    public static class MyService {\n" +
+                            "    }\n" +
+                            "}", true)
+    }
   }
 
-  fun testSameModuleExistingParentPackage() {
-    addFile("foo/bar/Anything.java", "package foo.bar; class Anything { }")
+  @Test
+  fun testSameModuleExistingParentPackage(): Unit = timeoutRunBlocking {
+    java9.addFile("foo/bar/Anything.java", "package foo.bar; class Anything { }")
 
     val moduleInfo = myFixture.configureByText("module-info.java", "module foo.bar { uses foo.bar.<caret>api.MyService; }") as PsiJavaFile
-    doAction("foo.bar.api.MyService", moduleInfo)
+    withContext(Dispatchers.EDT) {
+      doAction("foo.bar.api.MyService", moduleInfo)
 
-    myFixture.checkResult("foo/bar/api/MyService.java",
-                          "package foo.bar.api;\n\n" +
-                          "public class MyService {\n" +
-                          "}\n", true)
+      myFixture.checkResult("foo/bar/api/MyService.java",
+                            "package foo.bar.api;\n\n" +
+                            "public class MyService {\n" +
+                            "}\n", true)
+    }
   }
 
+  @Test
   fun testExistingLibraryPackage(): Unit = doTestNoAction("module foo.bar { uses java.io.<caret>MyService; }")
 
+  @Test
   fun testExistingLibraryOuterClass(): Unit = doTestNoAction("module foo.bar { uses java.io.File.<caret>MyService; }")
 
   private fun doAction(interfaceFQN: String, moduleInfo: PsiJavaFile,
                        rootDirectory: PsiDirectory? = null, classKind: CreateClassKind = CreateClassKind.CLASS) {
-    file.putUserData(CreateServiceClassFixBase.SERVICE_ROOT_DIR, rootDirectory ?: file.containingDirectory)
-    file.putUserData(CreateServiceClassFixBase.SERVICE_CLASS_KIND, classKind)
+    myFixture.file.putUserData(CreateServiceClassFixBase.SERVICE_ROOT_DIR, rootDirectory ?: myFixture.file.containingDirectory)
+    myFixture.file.putUserData(CreateServiceClassFixBase.SERVICE_CLASS_KIND, classKind)
 
     val action = myFixture.findSingleIntention("Create service '$interfaceFQN'")
     myFixture.launchAction(action)

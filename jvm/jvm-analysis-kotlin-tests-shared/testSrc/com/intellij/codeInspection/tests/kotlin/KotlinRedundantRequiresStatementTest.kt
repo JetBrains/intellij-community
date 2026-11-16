@@ -4,38 +4,51 @@ package com.intellij.codeInspection.tests.kotlin
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper
 import com.intellij.codeInspection.java19modules.Java9RedundantRequiresStatementInspection
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesFixture
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesProjectFixture
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.InspectionTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.createGlobalContextForTool
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Test
 import java.io.File
+import kotlin.time.Duration.Companion.minutes
 
-abstract class KotlinRedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureTestCase() {
-  
+@TestApplication
+abstract class KotlinRedundantRequiresStatementTest {
+  companion object {
+    private val projectFixture = lightJava9ModulesProjectFixture()
+  }
 
-  fun testStdlib() {
+  private val java9 by lightJava9ModulesFixture(
+    projectFixture,
+    PathManager.getCommunityHomePath().replace(File.separatorChar, '/') +
+    KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/redundantRequires/",
+  )
+  private val myFixture get() = java9.fixture
+
+  @Test
+  fun testStdlib(): Unit = timeoutRunBlocking(timeout = 2.minutes) {
     val mainText = """
         package org.example.main
         class Main {
           fun main() {}
         }""".trimIndent()
-    addFile("org.example.main/Main.kt", mainText)
-    addFile("module-info.java", "module MAIN { requires kotlin.stdlib; }", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN)
+    java9.addFile("org.example.main/Main.kt", mainText)
+    java9.addFile("module-info.java", "module MAIN { requires kotlin.stdlib; }", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN)
 
     val toolWrapper = GlobalInspectionToolWrapper(Java9RedundantRequiresStatementInspection())
-    val scope = AnalysisScope(project)
-    val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
-    InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
-    InspectionTestUtil.compareToolResults(globalContext, toolWrapper, true, testDataPath + getTestName(true))
-  }
-
-  override fun getBasePath(): String {
-    return KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/redundantRequires/"
-  }
-
-  override fun getTestDataPath(): String {
-    return PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + basePath
+    val scope = AnalysisScope(myFixture.project)
+    val globalContext = createGlobalContextForTool(scope, myFixture.project, listOf(toolWrapper))
+    withContext(Dispatchers.EDT) {
+      InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
+      InspectionTestUtil.compareToolResults(globalContext, toolWrapper, true, myFixture.testDataPath + myFixture.getTestName(true))
+    }
   }
 }

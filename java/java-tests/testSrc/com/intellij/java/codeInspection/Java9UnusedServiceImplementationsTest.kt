@@ -4,59 +4,85 @@ package com.intellij.java.codeInspection
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M6
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M7
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesFixture
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesProjectFixture
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.JavaInspectionTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtureTestCase() {
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/unusedServiceImplementations/"
-
-  override fun setUp() {
-    super.setUp()
-
-    moduleInfo("module MAIN { requires API; }", MAIN)
-
-    addFile("my/api/MyService.java", "package my.api; public interface MyService { void foo(); }", API)
+@TestApplication
+class Java9UnusedServiceImplementationsTest {
+  companion object {
+    private val projectFixture = lightJava9ModulesProjectFixture()
   }
 
-  fun testImplementation() = doTest()
+  private val java9 by lightJava9ModulesFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/unusedServiceImplementations/")
+  private val myFixture get() = java9.fixture
 
-  fun testConstructor() = doTest()
+  @BeforeEach
+  fun setUp() {
+    java9.moduleInfo("module MAIN { requires API; }", MAIN)
 
-  fun testProvider() = doTest()
+    java9.addFile("my/api/MyService.java", "package my.api; public interface MyService { void foo(); }", API)
+  }
 
-  fun testVarargConstructor() = doTest()
+  @Test
+  fun testImplementation(): Unit = doTest()
 
-  fun testUnusedImplementation() = doTest(false)
+  @Test
+  fun testConstructor(): Unit = doTest()
 
-  fun testUnusedConstructor() = doTest(false)
+  @Test
+  fun testProvider(): Unit = doTest()
 
-  fun testUnusedProvider() = doTest(false)
+  @Test
+  fun testVarargConstructor(): Unit = doTest()
 
-  fun testUnusedVarargConstructor() = doTest(false)
+  @Test
+  fun testUnusedImplementation(): Unit = doTest(false)
 
-  fun testExternalImplementation() = doTest(sameModule = false)
+  @Test
+  fun testUnusedConstructor(): Unit = doTest(false)
 
-  fun testExternalConstructor() = doTest(sameModule = false)
+  @Test
+  fun testUnusedProvider(): Unit = doTest(false)
 
-  fun testExternalProvider() = doTest(sameModule = false)
+  @Test
+  fun testUnusedVarargConstructor(): Unit = doTest(false)
 
-  fun testUnusedExternalImplementation() = doTest(false, sameModule = false)
+  @Test
+  fun testExternalImplementation(): Unit = doTest(sameModule = false)
 
-  fun testUnusedExternalConstructor() = doTest(false, sameModule = false)
+  @Test
+  fun testExternalConstructor(): Unit = doTest(sameModule = false)
 
-  fun testUnusedExternalProvider() = doTest(false, sameModule = false)
+  @Test
+  fun testExternalProvider(): Unit = doTest(sameModule = false)
 
-  fun testUnusedImplementationWithEntryPoint() = doTest(false, withModuleEntryPoints = true)
+  @Test
+  fun testUnusedExternalImplementation(): Unit = doTest(false, sameModule = false)
 
-  fun testUnusedConstructorWithEntryPoint() = doTest(false, withModuleEntryPoints = true)
+  @Test
+  fun testUnusedExternalConstructor(): Unit = doTest(false, sameModule = false)
 
-  fun testUnusedProviderWithEntryPoint() = doTest(false, withModuleEntryPoints = true)
+  @Test
+  fun testUnusedExternalProvider(): Unit = doTest(false, sameModule = false)
 
+  @Test
+  fun testUnusedImplementationWithEntryPoint(): Unit = doTest(false, withModuleEntryPoints = true)
+
+  @Test
+  fun testUnusedConstructorWithEntryPoint(): Unit = doTest(false, withModuleEntryPoints = true)
+
+  @Test
+  fun testUnusedProviderWithEntryPoint(): Unit = doTest(false, withModuleEntryPoints = true)
 
   private fun doTest(withUsage: Boolean = true, sameModule: Boolean = true, withModuleEntryPoints: Boolean = false) {
     @Language("JAVA")
@@ -69,31 +95,31 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
             }
         }
     }"""
-    if (withUsage) addFile("my/app/MyApp.java", usageText, MAIN)
+    if (withUsage) java9.addFile("my/app/MyApp.java", usageText, MAIN)
 
     if (sameModule) {
-      moduleInfo("module API { exports my.api; provides my.api.MyService with my.impl.MyServiceImpl; }", API)
+      java9.moduleInfo("module API { exports my.api; provides my.api.MyService with my.impl.MyServiceImpl; }", API)
     }
     else {
-      moduleInfo("module API { exports my.api; }", API)
-      moduleInfo("module EXT { requires API; provides my.api.MyService with my.ext.MyServiceExt; }", EXT)
+      java9.moduleInfo("module API { exports my.api; }", API)
+      java9.moduleInfo("module EXT { requires API; provides my.api.MyService with my.ext.MyServiceExt; }", EXT)
     }
 
-    val testPath = testDataPath + getTestName(true)
+    val testPath = myFixture.testDataPath + myFixture.getTestName(true)
     val sourceFile = FileUtil.findFirstThatExist("$testPath/MyService${if (sameModule) "Impl" else "Ext"}.java")
-    assertNotNull("Test data: $testPath", sourceFile)
+    assertNotNull(sourceFile, "Test data: $testPath")
     val implText = String(FileUtil.loadFileText(sourceFile!!))
     if (sameModule)
-      addFile("my/impl/MyServiceImpl.java", implText, API)
+      java9.addFile("my/impl/MyServiceImpl.java", implText, API)
     else
-      addFile("my/ext/MyServiceExt.java", implText, EXT)
+      java9.addFile("my/ext/MyServiceExt.java", implText, EXT)
 
     val moduleEntryPoint = EntryPointsManagerBase.DEAD_CODE_EP_NAME.extensionList.find { it is Java9ModuleEntryPoint }
     val wasSelected = moduleEntryPoint?.isSelected ?: true
 
     try {
       moduleEntryPoint?.isSelected = withModuleEntryPoints
-      doGlobalInspectionTest(testPath, JavaInspectionTestCase.getUnusedDeclarationWrapper())
+      java9.doGlobalInspectionTest(testPath, JavaInspectionTestCase.getUnusedDeclarationWrapper())
     }
     finally {
       moduleEntryPoint?.isSelected = wasSelected

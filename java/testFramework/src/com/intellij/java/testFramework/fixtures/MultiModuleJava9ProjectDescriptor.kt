@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.testFramework.fixtures
 
 import com.intellij.JavaTestUtil
@@ -20,8 +20,11 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import java.nio.file.Path
 
 /**
  * Compile Dependencies: 'main' -> 'm2', 'main' -> 'm4', 'main' -> 'm5', 'main' -> 'm6' => 'm7', 'm6' -> 'm8'
@@ -63,88 +66,122 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
     runWriteAction {
       val main = ModuleManager.getInstance(project).findModuleByName(TEST_MODULE_NAME)!!
-
-      val m2 = makeModule(project, ModuleDescriptor.M2)
-      ModuleRootModificationUtil.addDependency(main, m2)
-
-      makeModule(project, ModuleDescriptor.M3)
-
-      val m4 = makeModule(project, ModuleDescriptor.M4)
-      ModuleRootModificationUtil.addDependency(main, m4)
-
-      val m5 = makeModule(project, ModuleDescriptor.M5)
-      ModuleRootModificationUtil.addDependency(main, m5)
-
-      val m6 = makeModule(project, ModuleDescriptor.M6)
-      ModuleRootModificationUtil.addDependency(main, m6)
-
-      val m7 = makeModule(project, ModuleDescriptor.M7)
-      ModuleRootModificationUtil.addDependency(m6, m7, DependencyScope.COMPILE, true)
-
-      val m8 = makeModule(project, ModuleDescriptor.M8)
-      ModuleRootModificationUtil.addDependency(m6, m8)
-
-      val mrMain = makeModule(project, ModuleDescriptor.MR_MAIN)
-      val mrAdd = makeModule(project, ModuleDescriptor.MR_JAVA9)
-      ModuleRootModificationUtil.addDependency(mrAdd, mrMain, DependencyScope.COMPILE, false)
-
-      makeModule(project, ModuleDescriptor.INTERNAL_MAIN)
-
-      val m_test = makeModule(project, ModuleDescriptor.M_TEST)
-      ModuleRootModificationUtil.addDependency(m_test, m2, DependencyScope.TEST, false)
-
-      val libDir = "jar://${JavaTestUtil.getJavaTestDataPath()}/codeInsight/jigsaw"
-      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-named-1.0.jar!/")
-      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-named-2.0.jar!/")
-      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-with-claimed-name.jar!/")
-      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-auto-1.0.jar!/")
-      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-auto-2.0.jar!/")
-      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-multi-release.jar!/")
-      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib_invalid_1_2.jar!/")
-      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-xml-bind.jar!/")
-
-      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-xml-ws.jar!/")
-      ModuleRootModificationUtil.updateModel(main) {
-        val entries = it.orderEntries.toMutableList()
-        entries.add(0, entries.last())  // places an upgrade module before the JDK
-        entries.removeAt(entries.size - 1)
-        it.rearrangeOrderEntries(entries.toTypedArray())
+      val modules = createModules { descriptor ->
+        val path = "${FileUtil.getTempDirectory()}/${descriptor.moduleName}.iml"
+        val module = createModule(project, path)
+        ModuleRootModificationUtil.updateModel(module) { configureModule(module, it, descriptor, ::createSourceRoot) }
+        module
       }
-
-      ModuleRootModificationUtil.addModuleLibrary(m2, "${libDir}/lib-auto-1.0.jar!/")
-      ModuleRootModificationUtil.addModuleLibrary(m4, "${libDir}/lib-auto-2.0.jar!/")
-      ModuleRootModificationUtil.addModuleLibrary(m6, "${libDir}/lib-named-2.0.jar!/")
-      ModuleRootModificationUtil.addModuleLibrary(m8, "lib-with-module-info", listOf("${libDir}/lib-with-module-info.jar!/"), listOf("${libDir}/lib-with-module-info-sources.zip!/src"))
+      configureMainModule(main, modules)
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
-  private fun makeModule(project: Project, descriptor: ModuleDescriptor): Module {
-    val path = "${FileUtil.getTempDirectory()}/${descriptor.moduleName}.iml"
-    val module = createModule(project, path)
-    ModuleRootModificationUtil.updateModel(module) { configureModule(module, it, descriptor) }
-    return module
+  /**
+   * Applies this descriptor to the main module of a JUnit 5 test, see [lightJava9ModulesProjectFixture].
+   *
+   * The roots of all modules are the directories next to [sourceRoot] on disk.
+   * The fixture calls this method again when it creates the main module again. Then the other modules exist already.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  override fun setUpExistingModule(module: Module, sourceRoot: VirtualFile) {
+    checkCanSetUpExistingModule(MultiModuleJava9ProjectDescriptor::class.java)
+    val project = module.project
+    val baseDir = sourceRoot.parent
+    val createRoot: (String) -> VirtualFile = { name -> baseDir.findChild(name) ?: baseDir.createChildDirectory(this, name) }
+    ModuleRootModificationUtil.updateModel(module) {
+      it.sdk = sdk
+      it.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
+      configureModule(module, it, ModuleDescriptor.MAIN, createRoot)
+    }
+    val moduleManager = ModuleManager.getInstance(project)
+    val modules = if (moduleManager.findModuleByName(ModuleDescriptor.M2.moduleName) == null) {
+      createModules { descriptor ->
+        val newModule = createModule(project, Path.of(baseDir.path, "${descriptor.moduleName}.iml"))
+        ModuleRootModificationUtil.updateModel(newModule) { configureModule(newModule, it, descriptor, createRoot) }
+        newModule
+      }
+    }
+    else {
+      ModuleDescriptor.entries.filter { it !== ModuleDescriptor.MAIN }.associateWith { moduleManager.findModuleByName(it.moduleName)!! }
+    }
+    configureMainModule(module, modules)
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
-  override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) =
-    configureModule(module, model, ModuleDescriptor.MAIN)
+  /**
+   * Creates the modules of [ModuleDescriptor] except [ModuleDescriptor.MAIN] with [makeModule],
+   * and adds their dependencies and libraries.
+   */
+  private fun createModules(makeModule: (ModuleDescriptor) -> Module): Map<ModuleDescriptor, Module> {
+    val modules = ModuleDescriptor.entries.filter { it !== ModuleDescriptor.MAIN }.associateWith(makeModule)
+    val m2 = modules.getValue(ModuleDescriptor.M2)
+    val m4 = modules.getValue(ModuleDescriptor.M4)
+    val m6 = modules.getValue(ModuleDescriptor.M6)
+    val m8 = modules.getValue(ModuleDescriptor.M8)
+    ModuleRootModificationUtil.addDependency(m6, modules.getValue(ModuleDescriptor.M7), DependencyScope.COMPILE, true)
+    ModuleRootModificationUtil.addDependency(m6, m8)
+    ModuleRootModificationUtil.addDependency(modules.getValue(ModuleDescriptor.MR_JAVA9), modules.getValue(ModuleDescriptor.MR_MAIN),
+                                             DependencyScope.COMPILE, false)
+    ModuleRootModificationUtil.addDependency(modules.getValue(ModuleDescriptor.M_TEST), m2, DependencyScope.TEST, false)
 
-  private fun configureModule(module: Module, model: ModifiableRootModel, descriptor: ModuleDescriptor) {
+    ModuleRootModificationUtil.addModuleLibrary(m2, "${libDir()}/lib-auto-1.0.jar!/")
+    ModuleRootModificationUtil.addModuleLibrary(m4, "${libDir()}/lib-auto-2.0.jar!/")
+    ModuleRootModificationUtil.addModuleLibrary(m6, "${libDir()}/lib-named-2.0.jar!/")
+    ModuleRootModificationUtil.addModuleLibrary(m8, "lib-with-module-info", listOf("${libDir()}/lib-with-module-info.jar!/"),
+                                                listOf("${libDir()}/lib-with-module-info-sources.zip!/src"))
+    return modules
+  }
+
+  /**
+   * Adds the dependencies and the libraries of the main module.
+   */
+  private fun configureMainModule(main: Module, modules: Map<ModuleDescriptor, Module>) {
+    for (descriptor in listOf(ModuleDescriptor.M2, ModuleDescriptor.M4, ModuleDescriptor.M5, ModuleDescriptor.M6)) {
+      ModuleRootModificationUtil.addDependency(main, modules.getValue(descriptor))
+    }
+
+    val libDir = libDir()
+    ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-named-1.0.jar!/")
+    ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-named-2.0.jar!/")
+    ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-with-claimed-name.jar!/")
+    ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-auto-1.0.jar!/")
+    ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-auto-2.0.jar!/")
+    ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-multi-release.jar!/")
+    ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib_invalid_1_2.jar!/")
+    ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-xml-bind.jar!/")
+
+    ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-xml-ws.jar!/")
+    ModuleRootModificationUtil.updateModel(main) {
+      val entries = it.orderEntries.toMutableList()
+      entries.add(0, entries.last())  // places an upgrade module before the JDK
+      entries.removeAt(entries.size - 1)
+      it.rearrangeOrderEntries(entries.toTypedArray())
+    }
+  }
+
+  private fun libDir(): String = "jar://${JavaTestUtil.getJavaTestDataPath()}/codeInsight/jigsaw"
+
+  override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) =
+    configureModule(module, model, ModuleDescriptor.MAIN, ::createSourceRoot)
+
+  private fun configureModule(module: Module, model: ModifiableRootModel, descriptor: ModuleDescriptor, createRoot: (String) -> VirtualFile) {
     model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel =
       if (descriptor == ModuleDescriptor.MR_MAIN) LanguageLevel.JDK_1_8 else LanguageLevel.JDK_1_9
     if (descriptor !== ModuleDescriptor.MAIN) {
       model.sdk = sdk
     }
     if (descriptor.sourceRootName != null) {
-      val sourceRoot = createSourceRoot(descriptor.sourceRootName)
+      val sourceRoot = createRoot(descriptor.sourceRootName)
       model.addContentEntry(sourceRoot).addSourceFolder(sourceRoot, JavaSourceRootType.SOURCE)
     }
     if (descriptor.testRootName != null) {
-      val testRoot = createSourceRoot(descriptor.testRootName)
+      val testRoot = createRoot(descriptor.testRootName)
       model.addContentEntry(testRoot).addSourceFolder(testRoot, JavaSourceRootType.TEST_SOURCE)
     }
     if (descriptor.resourceRootName != null) {
-      val resourceRoot = createSourceRoot(descriptor.resourceRootName)
+      val resourceRoot = createRoot(descriptor.resourceRootName)
       model.addContentEntry(resourceRoot).addSourceFolder(resourceRoot, JavaResourceRootType.RESOURCE)
     }
   }

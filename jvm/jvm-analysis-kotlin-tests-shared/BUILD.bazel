@@ -53,6 +53,7 @@ jvm_library(
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//java/java-syntax:syntax",
         "//libraries/junit4",
+        "//libraries/junit6",
         "//platform/scratch/plugin",
     ],
 )

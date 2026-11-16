@@ -3,10 +3,11 @@ package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
+import com.intellij.java.testFramework.fixtures.LightJava9ModulesFixture;
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.DependencyScope;
@@ -21,34 +22,41 @@ import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.java.testFramework.fixtures.LightJava9ModulesFixtureKt.lightJava9ModulesFixture;
+import static com.intellij.java.testFramework.fixtures.LightJava9ModulesFixtureKt.lightJava9ModulesProjectFixture;
 import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2;
 import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M3;
 import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M4;
 import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M5;
 import static com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN;
 
-public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsightFixtureTestCase {
+@TestApplication
+public class OptimizeImportsWithModulesTest {
   static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/psi/optimizeImportsWithModules";
+  private static final TestFixture<LightJavaProject> projectFixture = lightJava9ModulesProjectFixture();
+  private static final Logger LOG = Logger.getInstance(OptimizeImportsWithModulesTest.class);
+  private final TestFixture<LightJava9ModulesFixture> java9 = lightJava9ModulesFixture(projectFixture, BASE_PATH);
 
-  @Override
-  protected String getTestDataPath() {
-    return BASE_PATH;
-  }
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    com.intellij.openapi.module.Module main = ModuleManager.getInstance(myFixture.getProject()).findModuleByName(MAIN.moduleName);
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    com.intellij.openapi.module.Module main = ModuleManager.getInstance(getProject()).findModuleByName(MAIN.moduleName);
+    com.intellij.openapi.module.Module m2 = ModuleManager.getInstance(myFixture.getProject()).findModuleByName(M2.moduleName);
 
-    com.intellij.openapi.module.Module m2 = ModuleManager.getInstance(getProject()).findModuleByName(M2.moduleName);
+    com.intellij.openapi.module.Module m3 = ModuleManager.getInstance(myFixture.getProject()).findModuleByName(M3.moduleName);
 
-    com.intellij.openapi.module.Module m3 = ModuleManager.getInstance(getProject()).findModuleByName(M3.moduleName);
-
-    com.intellij.openapi.module.Module m4 = ModuleManager.getInstance(getProject()).findModuleByName(M4.moduleName);
-    Module m5 = ModuleManager.getInstance(getProject()).findModuleByName(M5.moduleName);
+    com.intellij.openapi.module.Module m4 = ModuleManager.getInstance(myFixture.getProject()).findModuleByName(M4.moduleName);
+    Module m5 = ModuleManager.getInstance(myFixture.getProject()).findModuleByName(M5.moduleName);
     //m2(B) -> m4(C) -> m5(D)
     //m3(E)
     ModuleRootModificationUtil.addDependency(m2, m4, DependencyScope.COMPILE, true);
@@ -82,13 +90,13 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
       }
       """, M5);
 
-    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     boolean preserveModuleImports = javaSettings.isPreserveModuleImports();
     boolean deleteUnusedModuleImports = javaSettings.isDeleteUnusedModuleImports();
     PackageEntryTable table = javaSettings.IMPORT_LAYOUT_TABLE;
     int classOnDemand = javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
     int namesOnDemand = javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
-    Disposer.register(getTestRootDisposable(), new Disposable() {
+    Disposer.register(myFixture.getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
         javaSettings.setDeleteUnusedModuleImports(deleteUnusedModuleImports);
@@ -102,11 +110,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     myFixture.enableInspections(new UnusedImportInspection());
   }
 
-
+  @Test
   public void testHierarchy() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleD/Sql.java", """
           package my.source.moduleD;
           public class Sql {}
@@ -119,10 +128,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
       });
   }
 
+  @Test
   public void testHierarchy2() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleD/Sql.java", """
           package my.source.moduleD;
           public class Sql {}
@@ -135,10 +146,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
       });
   }
 
+  @Test
   public void testParentNotUsedChildUsed() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleC/Sql.java", """
           package my.source.moduleC;
           public class Sql {}
@@ -148,11 +161,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
-
+  @Test
   public void testParentNotUsedChildUsedDeleteUnused() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleC/Sql.java", """
           package my.source.moduleC;
           public class Sql {}
@@ -162,11 +176,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
-
+  @Test
   public void testParentUsedChildNotUsed() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
           public class Sql {}
@@ -176,11 +191,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
-
+  @Test
   public void testParentUsedChildNotUsedDeleteUnused() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
           public class Sql {}
@@ -190,11 +206,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
-
+  @Test
   public void testParentUsedChildUsed() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
           public class Sql {}
@@ -208,11 +225,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
-
+  @Test
   public void testParentUsedChildUsedDeleteUnused() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
           public class Sql {}
@@ -226,11 +244,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
-
+  @Test
   public void testParentUsedChildUsedGrandChildUsed() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
           public class Sql {}
@@ -248,10 +267,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
+  @Test
   public void testParentUsedChildUsedGrandChildUsedDeleteUnused() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
           public class Sql {}
@@ -269,10 +290,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
+  @Test
   public void testOneUsed() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
           public class Sql {}
@@ -282,10 +305,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
+  @Test
   public void testOneUsedDeleteUnused() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
           public class Sql {}
@@ -295,37 +320,45 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
+  @Test
   public void testNoOneUsed() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(false);
         doTest();
       }
     );
   }
 
+  @Test
   public void testNoOneUsedDeleteUnused() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(true);
         doTest();
       }
     );
   }
 
+  @Test
   public void testParentNotUsedChildNotUsed() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(false);
         doTest();
       }
     );
   }
 
+  @Test
   public void testParentUsedChildUsedParentCovered() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
           public class Sql {}
@@ -339,11 +372,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
-
+  @Test
   public void testParentUsedChildUsedParentCoveredDeleteUnused() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
           public class Sql {}
@@ -357,10 +391,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
+  @Test
   public void testParentUsedChildUsedChildCovered() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
           public class Sql {}
@@ -374,10 +410,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
+  @Test
   public void testParentUsedChildUsedChildCoveredDeleteUnused() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
           public class Sql {}
@@ -391,10 +429,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
+  @Test
   public void testParentUsedChildUsedChildCoveredParentCovered() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(false);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
           public class Sql {}
@@ -408,10 +448,12 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
     );
   }
 
+  @Test
   public void testParentUsedChildUsedChildCoveredParentCoveredDeleteUnused() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     IdeaTestUtil.withLevel(
-      getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
-        JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
+      myFixture.getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getStandardLevel(), () -> {
+        JavaCodeStyleSettings.getInstance(myFixture.getProject()).setDeleteUnusedModuleImports(true);
         addCode("my/source/moduleB/Sql.java", """
           package my.source.moduleB;
           public class Sql {}
@@ -430,16 +472,17 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
   }
 
   protected void doTest(@NotNull String extension) {
-    String fileName = getTestName(false) + extension;
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    String fileName = myFixture.getTestName(false) + extension;
     PsiFile file = myFixture.configureByFile(fileName);
     myFixture.testHighlighting(true , false, false);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
       try {
-        JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
-        PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        myFixture.checkResultByFile(getTestName(false) + "_after" + extension);
+        JavaCodeStyleManager.getInstance(myFixture.getProject()).optimizeImports(file);
+        PostprocessReformattingAspect.getInstance(myFixture.getProject()).doPostponedFormatting();
+        PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+        myFixture.checkResultByFile(myFixture.getTestName(false) + "_after" + extension);
         PsiTestUtil.checkFileStructure(file);
       }
       catch (Exception e) {
@@ -449,6 +492,6 @@ public class OptimizeImportsWithModulesTest extends LightJava9ModulesCodeInsight
   }
 
   private void addCode(@NotNull String name, @NotNull @Language("JAVA") String text, @NotNull MultiModuleJava9ProjectDescriptor.ModuleDescriptor descriptor) {
-    addFile(name, text, descriptor);
+    java9.get().addFile(name, text, descriptor);
   }
 }

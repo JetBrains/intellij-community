@@ -18,28 +18,41 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.DeprecatedIsStillUsedInspection;
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase;
+import com.intellij.java.testFramework.fixtures.LightJava9ModulesFixture;
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class DeprecatedIsStillUsedInspectionTest extends LightJava9ModulesCodeInsightFixtureTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/deprecatedIsStillUsed";
-  }
+import static com.intellij.java.testFramework.fixtures.LightJava9ModulesFixtureKt.lightJava9ModulesFixture;
+import static com.intellij.java.testFramework.fixtures.LightJava9ModulesFixtureKt.lightJava9ModulesProjectFixture;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+@TestApplication
+public class DeprecatedIsStillUsedInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJava9ModulesProjectFixture();
+  private final TestFixture<LightJava9ModulesFixture> java9 =
+    lightJava9ModulesFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/deprecatedIsStillUsed");
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     myFixture.enableInspections(new DeprecatedIsStillUsedInspection());
   }
 
+  @Test
   public void testSimple() {
-    myFixture.testHighlighting(getTestName(false) + ".java");
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
   }
 
+  @Test
   public void testOverloadedAndStaticImport() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     myFixture.addClass("""
                          package bar;
                          import static foo.OverloadedAndStaticImport.bar;
@@ -48,33 +61,38 @@ public class DeprecatedIsStillUsedInspectionTest extends LightJava9ModulesCodeIn
                              bar();
                            }
                          }""");
-    myFixture.testHighlighting(getTestName(false) + ".java");
+    myFixture.testHighlighting(myFixture.getTestName(false) + ".java");
   }
 
+  @Test
   public void testDeprecatedWithManyOccurrences() {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     for (int i = 0; i < 20; i++) {
       myFixture.addClass("class MyTest" + i + "{ DeprecatedWithManyOccurrences d;}");
     }
-    myFixture.testFile(getTestName(false) + ".java").checkSymbolNames().test();
+    myFixture.testFile(myFixture.getTestName(false) + ".java").checkSymbolNames().test();
   }
 
+  @Test
   public void testJavaModuleIsDeprecated() {
-    VirtualFile firstModuleInfo = moduleInfo("module first {requires second;}", ModuleDescriptor.MAIN);
-    VirtualFile secondModuleInfo = moduleInfo("@Deprecated module second {}", ModuleDescriptor.M2);
+    VirtualFile firstModuleInfo = java9.get().moduleInfo("module first {requires second;}", ModuleDescriptor.MAIN);
+    VirtualFile secondModuleInfo = java9.get().moduleInfo("@Deprecated module second {}", ModuleDescriptor.M2);
     testJavaModule("@Deprecated module <warning descr=\"Deprecated member 'second' is still used\">second</warning> {}",
                    firstModuleInfo, secondModuleInfo);
   }
 
+  @Test
   public void testJavaModuleDependantIsDeprecatedToo() {
-    VirtualFile firstModuleInfo = moduleInfo("@Deprecated module first {requires second;}", ModuleDescriptor.MAIN);
-    VirtualFile secondModuleInfo = moduleInfo("@Deprecated module second {}", ModuleDescriptor.M2);
+    VirtualFile firstModuleInfo = java9.get().moduleInfo("@Deprecated module first {requires second;}", ModuleDescriptor.MAIN);
+    VirtualFile secondModuleInfo = java9.get().moduleInfo("@Deprecated module second {}", ModuleDescriptor.M2);
     testJavaModule("@Deprecated module second {}", firstModuleInfo, secondModuleInfo);
   }
 
   private void testJavaModule(@NotNull String expectedResult, @NotNull VirtualFile firstModuleInfo, @NotNull VirtualFile secondModuleInfo) {
+    LightJavaCodeInsightTestFixture myFixture = java9.get().getFixture();
     myFixture.allowTreeAccessForFile(firstModuleInfo);
     myFixture.allowTreeAccessForFile(secondModuleInfo);
-    myFixture.configureFromExistingVirtualFile(addFile("module-info.java", expectedResult, ModuleDescriptor.M2));
+    myFixture.configureFromExistingVirtualFile(java9.get().addFile("module-info.java", expectedResult, ModuleDescriptor.M2));
     myFixture.checkHighlighting();
   }
 }

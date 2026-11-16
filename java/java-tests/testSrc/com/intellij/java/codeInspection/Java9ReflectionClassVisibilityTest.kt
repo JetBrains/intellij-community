@@ -17,60 +17,76 @@ package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.reflectiveAccess.Java9ReflectionClassVisibilityInspection
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesFixture
+import com.intellij.java.testFramework.fixtures.lightJava9ModulesProjectFixture
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class Java9ReflectionClassVisibilityTest : LightJava9ModulesCodeInsightFixtureTestCase() {
+@TestApplication
+class Java9ReflectionClassVisibilityTest {
+  companion object {
+    private val projectFixture = lightJava9ModulesProjectFixture()
+  }
 
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/inspection/java9ReflectionClassVisibility"
+  private val java9 by lightJava9ModulesFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/java9ReflectionClassVisibility")
+  private val myFixture get() = java9.fixture
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.enableInspections(Java9ReflectionClassVisibilityInspection())
   }
 
+  @Test
   fun testOpenModule() {
-    moduleInfo("module MAIN { requires API; }", MAIN)
-    moduleInfo("open module API { }", M2)
+    java9.moduleInfo("module MAIN { requires API; }", MAIN)
+    java9.moduleInfo("open module API { }", M2)
     doTestHighlighting()
   }
 
+  @Test
   fun testOpensPackage() {
-    moduleInfo("module MAIN { requires API; }", MAIN)
-    moduleInfo("module API { opens my.api; }", M2)
+    java9.moduleInfo("module MAIN { requires API; }", MAIN)
+    java9.moduleInfo("module API { opens my.api; }", M2)
     doTestHighlighting()
   }
 
+  @Test
   fun testExportsPackage() {
-    moduleInfo("module MAIN { requires API; }", MAIN)
-    moduleInfo("module API { exports my.api; }", M2)
+    java9.moduleInfo("module MAIN { requires API; }", MAIN)
+    java9.moduleInfo("module API { exports my.api; }", M2)
     javaClass("my.api", "PackageLocal", M2, "")
     doTestHighlighting()
   }
 
+  @Test
   fun testExportsPackagePreview() {
-    moduleInfo("module MAIN { requires API; }", MAIN)
-    moduleInfo("module API { exports my.api; }", M2)
+    java9.moduleInfo("module MAIN { requires API; }", MAIN)
+    java9.moduleInfo("module API { exports my.api; }", M2)
     doTestPreview("Add 'exports my.impl' directive to module-info.java",
                   "module API { exports my.api;\n    exports my.impl;\n}")
   }
 
+  @Test
   fun testNotInRequirements() {
-    moduleInfo("module MAIN { }", MAIN)
-    moduleInfo("open module API { }", M2)
+    java9.moduleInfo("module MAIN { }", MAIN)
+    java9.moduleInfo("open module API { }", M2)
     doTestHighlighting()
   }
 
   private fun configureMainFile() {
-    val testPath = "$testDataPath/${getTestName(false)}.java"
+    val testPath = "${myFixture.testDataPath}/${myFixture.getTestName(false)}.java"
     val mainFile = FileUtil.findFirstThatExist(testPath)
-    assertNotNull("Test data: $testPath", mainFile)
+    assertNotNull(mainFile, "Test data: $testPath")
     val mainText = String(FileUtil.loadFileText(mainFile!!))
 
-    myFixture.configureFromExistingVirtualFile(addFile("my/main/Main.java", mainText, MAIN))
+    myFixture.configureFromExistingVirtualFile(java9.addFile("my/main/Main.java", mainText, MAIN))
   }
 
   private fun doTestHighlighting() {
@@ -89,6 +105,6 @@ class Java9ReflectionClassVisibilityTest : LightJava9ModulesCodeInsightFixtureTe
   }
 
   private fun javaClass(packageName: String, className: String, descriptor: ModuleDescriptor, modifier: String = "public") {
-    addFile("${packageName.replace('.', '/')}/$className.java", "package $packageName; $modifier class $className {}", descriptor)
+    java9.addFile("${packageName.replace('.', '/')}/$className.java", "package $packageName; $modifier class $className {}", descriptor)
   }
 }
