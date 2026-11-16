@@ -34,7 +34,7 @@ private const val ROOT = "ws"
 /**
  * The message of the exception the auto-configurator throws for the root module of the workspace in some runs, see
  * `PyUvWorkspaceInterpreterTest.drainTheKnownConfiguratorFailure`. It is the sanity check of the configurator
- * itself, `sdkConfigImpl.kt:54`.
+ * itself, `sdkConfigImpl.kt:54`. The defect it reports is PY-94148.
  */
 private const val NO_INTERPRETER = "has no interpreter in the snapshot after it was configured"
 
@@ -136,9 +136,9 @@ internal class PyUvWorkspaceInterpreterTest {
    * rarely: it was thrown in 1 of 7 CI runs of this class (build 1128368029) and in none of the five repeats of
    * build 1128411011. So nothing here states that it comes, and no tripwire waits for it to stop coming — a claim
    * about an event of that frequency is a claim this class cannot hold. The coverage is the three cases; this only
-   * keeps them from going red for a reason of their own.
+   * keeps them from going red for a reason of their own. The drain goes when PY-94148 is fixed.
    *
-   * The defect is in `autoConfigureSdk`, `sdkConfigImpl.kt:44-57`: it waits with `EvoPyProjectModel.awaitInterpreterOf`
+   * The defect is PY-94148, in `autoConfigureSdk`: it waits with `EvoPyProjectModel.awaitInterpreterOf`
    * and then reads the snapshot again with `PyProject.getInterpreter`, so what it asserts is not what it waited for.
    * The wait also returns the same way when it times out, and is satisfied at once when the interpreter it expects is
    * `null`.
