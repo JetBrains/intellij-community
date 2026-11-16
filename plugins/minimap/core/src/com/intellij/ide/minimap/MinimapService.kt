@@ -34,11 +34,11 @@ class MinimapService(private val scope: CoroutineScope) : Disposable {
   }
 
   init {
-    MinimapSettings.getInstance().settingsChangeCallback += onSettingsChange
+    settings.settingsChangeCallback += onSettingsChange
   }
 
   override fun dispose() {
-    MinimapSettings.getInstance().settingsChangeCallback -= onSettingsChange
+    settings.settingsChangeCallback -= onSettingsChange
   }
 
   fun editorOpened(editor: Editor) {
