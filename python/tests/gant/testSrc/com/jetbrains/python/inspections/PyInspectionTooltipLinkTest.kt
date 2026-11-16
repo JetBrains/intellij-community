@@ -128,6 +128,41 @@ class PyInspectionTooltipLinkTest : PyCodeInsightTestCase() {
   }
 
   @Test
+  @TestFor(issues = ["PY-90867"])
+  fun `union member without the attribute has clickable type links`() {
+    val info = highlight<PyUnresolvedReferencesInspection>(
+      """
+      class Node:
+          next: "Node | None"
+
+      def foo(node: Node) -> None:
+          node.next.next
+      """.trimIndent(),
+      "Member"
+    )
+    assertEquals("Member 'None' of 'Node | None' does not have attribute 'next'", info.description)
+    assertTrue(Regex("""<a href="#element/[\w.]*\bNode">""").containsMatchIn(info.toolTip!!), info.toolTip!!)
+    // the member slot and the union slot each link `None`
+    assertLinkCount(info, "types.NoneType", 2)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-90867"])
+  fun `union with no member that has the attribute has clickable type links`() {
+    val info = highlight<PyUnresolvedReferencesInspection>(
+      """
+      def foo(x: int | str) -> None:
+          x.missing
+      """.trimIndent(),
+      "Member"
+    )
+    assertEquals("Member 'int' of 'int | str' does not have attribute 'missing'", info.description)
+    // the member slot and the union slot each link `int`
+    assertLinkCount(info, "builtins.int", 2)
+    assertLink(info, "builtins.str")
+  }
+
+  @Test
   @TestFor(issues = ["PY-90264"])
   fun `collections abc type is a clickable link`() {
     val info = highlight<PyTypeCheckerInspection>(
@@ -318,6 +353,10 @@ class PyInspectionTooltipLinkTest : PyCodeInsightTestCase() {
 
   private fun assertLink(info: HighlightInfo, name: String) {
     assertTrue("""href="#element/$name"""" in info.toolTip!!, info.toolTip!!)
+  }
+
+  private fun assertLinkCount(info: HighlightInfo, name: String, expected: Int) {
+    assertEquals(expected, info.toolTip!!.split("""href="#element/$name"""").size - 1, info.toolTip!!)
   }
 
   /** The `#element/<fqn>` link target must resolve, so clicking it in the tooltip navigates. */
