@@ -1,8 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.python.junit5Tests.unit.pipenv
+package com.intellij.python.junit5Tests.env.tests.hatch
 
-import com.intellij.python.community.impl.pipenv.PipEnvBundle
-import com.intellij.python.community.impl.pipenv.PipEnvPyTool
+import com.intellij.python.hatch.HatchPyTool
+import com.intellij.python.hatch.PyHatchBundle
+import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.python.junit5Tests.framework.entryKeyOf
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
@@ -13,44 +14,29 @@ import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
-import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.seconds
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 /**
- * Which gone environments of an interpreter library entry the pipenv configurator makes again, see
+ * Which gone environments of an interpreter library entry the hatch configurator makes again, see
  * `PyProjectSdkConfigurationExtension.prepareSdkCreatorFor`. The creator is asked for, never called, so no tool runs.
  */
 @RegistryKeyAppLevel(key = "python.interpreter.library.entries", value = "true")
 @TestApplication
-internal class PipenvEnvCreatorForEntryTest {
+internal class HatchEnvCreatorForEntryTest {
   private val projectPath = tempPathFixture(prefix = "project")
   private val projectFixture = projectFixture(projectPath, openAfterCreation = true)
   private val module = projectFixture.pyModuleFixture(projectPath, addPathToSourceRoot = true)
   private val pyProject = module.pyProjectFixture()
 
-  private val pipenv: FusId get() = PipEnvPyTool.getInstance().fusId
+  private val hatch: FusId get() = HatchPyTool.getInstance().fusId
 
   @Test
-  fun `pipenv makes the in-project environment`(): Unit = timeoutRunBlocking(30.seconds) {
-    assertThat(intentionOf(pipenv, ".venv")).isEqualTo(PipEnvBundle.message("sdk.recreate.pipenv.environment"))
-  }
-
-  @Test
-  fun `pipenv makes an absolute environment where the entry names it`(): Unit = timeoutRunBlocking(30.seconds) {
-    val elsewhere = projectPath.get().resolveSibling("virtualenvs").resolve("app-Xa2b3c4d").resolve("bin").resolve("python")
-    assertThat(intentionOf(pipenv, elsewhere.pathString))
-      .describedAs("pipenv is told the exact directory, so an absolute home is made where the entry names it")
-      .isEqualTo(PipEnvBundle.message("sdk.recreate.pipenv.environment"))
-  }
-
-  @Test
-  fun `pipenv does not make another relative environment`(): Unit = timeoutRunBlocking(30.seconds) {
-    assertThat(intentionOf(pipenv, "envs/other")).isNull()
+  fun `hatch makes the environment of the entry by its name`(): Unit = timeoutRunBlocking(30.seconds) {
+    assertThat(intentionOf(hatch, "test")).isEqualTo(PyHatchBundle.message("sdk.recreate.hatch.environment", "test"))
   }
 
   private suspend fun intentionOf(manager: FusId, envRef: String): String? =
-    recreateIntentionOf(PIPENV_TOOL_ID, pyProject.get(), entryKeyOf(pyProject.get(), manager, envRef))
+    recreateIntentionOf(HATCH_TOOL_ID, pyProject.get(), entryKeyOf(pyProject.get(), manager, envRef))
 }
