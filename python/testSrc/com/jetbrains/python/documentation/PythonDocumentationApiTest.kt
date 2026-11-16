@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
@@ -18,6 +19,7 @@ import com.jetbrains.python.psi.PyNumericLiteralExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.intellij.lang.annotations.Language
@@ -220,6 +222,26 @@ class PythonDocumentationApiTest : PyCodeInsightTestCase() {
       val type = typeOf(parameter("f"))
       assertEquals("C", PythonDocumentationProvider.getTypeHint(type, context))
       assertEquals("mod.C", PythonDocumentationProvider.getFullyQualifiedTypeHint(type, context))
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-94135"])
+  fun `only a fully qualified hint qualifies Never and NoReturn with typing`() {
+    inFile("") {
+      assertEquals("typing.Never", PythonDocumentationProvider.getFullyQualifiedTypeHint(PyNeverType.NEVER, context))
+      assertEquals("typing.NoReturn", PythonDocumentationProvider.getFullyQualifiedTypeHint(PyNeverType.NO_RETURN, context))
+      assertEquals("Never", PythonDocumentationProvider.getTypeHint(PyNeverType.NEVER, context))
+      assertEquals("NoReturn", PythonDocumentationProvider.getTypeHint(PyNeverType.NO_RETURN, context))
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["PY-94135"])
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON310)
+  fun `a fully qualified hint qualifies Never with typing_extensions before Python 3_11`() {
+    inFile("") {
+      assertEquals("typing_extensions.Never", PythonDocumentationProvider.getFullyQualifiedTypeHint(PyNeverType.NEVER, context))
     }
   }
 
