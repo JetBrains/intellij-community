@@ -3,25 +3,34 @@ package com.intellij.xdebugger
 
 import com.intellij.ide.bookmark.BookmarksListProvider
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.debugger.impl.bookmarks.BreakpointListUpdaterService
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.xdebugger.XBreakpointsFixture.MyBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
 import org.assertj.core.api.Assertions
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 /**
  * Tests for breakpoint tree structure in the Bookmarks tool window (IJPL-237810).
  */
-@RunWith(JUnit4::class)
-class BreakpointListProviderTest : XBreakpointsTestCase() {
+@TestApplication
+@RegistryKey(key = "ide.bookmark.show.all.breakpoints", value = "true")
+class BreakpointListProviderTest {
+  private val breakpoints by xBreakpointsFixture()
+
+  @TestDisposable
+  lateinit var disposable: Disposable
 
   private class MyFieldBreakpointType :
     XBreakpointType<XBreakpoint<MyBreakpointProperties>, MyBreakpointProperties>("testField", "Field Watchpoints") {
@@ -31,10 +40,9 @@ class BreakpointListProviderTest : XBreakpointsTestCase() {
 
   private val myFieldBreakpointType = MyFieldBreakpointType()
 
-  override fun setUp() {
-    super.setUp()
-    Registry.get("ide.bookmark.show.all.breakpoints").setValue(true, testRootDisposable)
-    XBreakpointType.EXTENSION_POINT_NAME.point.registerExtension(myFieldBreakpointType, testRootDisposable)
+  @BeforeEach
+  fun setUp() {
+    XBreakpointType.EXTENSION_POINT_NAME.point.registerExtension(myFieldBreakpointType, disposable)
     // Force lazy init of RootNode and its collection coroutine
     findProvider().createNode()
   }
@@ -46,7 +54,7 @@ class BreakpointListProviderTest : XBreakpointsTestCase() {
     breakpointManager.addBreakpoint(myFieldBreakpointType, properties)
 
   private fun findProvider(): BookmarksListProvider =
-    BookmarksListProvider.EP.getExtensions(myProject).first { it.javaClass.name.contains("BreakpointListProvider") }
+    BookmarksListProvider.EP.getExtensions(breakpoints.project).first { it.javaClass.name.contains("BreakpointListProvider") }
 
   private fun getNodeText(node: AbstractTreeNode<*>): String {
     node.update()
@@ -80,17 +88,25 @@ class BreakpointListProviderTest : XBreakpointsTestCase() {
     Assertions.assertThat(lastDump).isEqualTo(exp)
   }
 
+  /**
+   * Waits for the update job that is current at its end.
+   * A breakpoint change cancels the update job and starts a new one.
+   */
   fun awaitUpdate() {
-    val service = project.service<BreakpointListUpdaterService>()
+    val service = breakpoints.project.service<BreakpointListUpdaterService>()
     runBlockingMaybeCancellable {
-      service.updateJob?.join()
+      while (true) {
+        val job = service.updateJob ?: break
+        job.join()
+        if (!job.isCancelled && service.updateJob === job) break
+      }
     }
   }
 
   @Test
   fun testGroupedByType() {
-    addLineBreakpoint(myBreakpointManager, "file:///a.java", 1, MyBreakpointProperties("a"))
-    addLineBreakpoint(myBreakpointManager, "file:///b.java", 2, MyBreakpointProperties("b"))
+    breakpoints.addLineBreakpoint("file:///a.java", 1, MyBreakpointProperties("a"))
+    breakpoints.addLineBreakpoint("file:///b.java", 2, MyBreakpointProperties("b"))
 
     assertTree("""
       Breakpoints
@@ -102,7 +118,7 @@ class BreakpointListProviderTest : XBreakpointsTestCase() {
 
   @Test
   fun testCustomGroupNesting() {
-    val bp = addLineBreakpoint(myBreakpointManager, "file:///a.java", 1, MyBreakpointProperties("a"))
+    val bp = breakpoints.addLineBreakpoint("file:///a.java", 1, MyBreakpointProperties("a"))
     (bp as XBreakpointBase<*, *, *>).group = "MyGroup"
 
     assertTree("""
@@ -115,8 +131,8 @@ class BreakpointListProviderTest : XBreakpointsTestCase() {
 
   @Test
   fun testGroupedAndUngrouped() {
-    val bp1 = addLineBreakpoint(myBreakpointManager, "file:///in.java", 1, MyBreakpointProperties("in"))
-    addLineBreakpoint(myBreakpointManager, "file:///out.java", 2, MyBreakpointProperties("out"))
+    val bp1 = breakpoints.addLineBreakpoint("file:///in.java", 1, MyBreakpointProperties("in"))
+    breakpoints.addLineBreakpoint("file:///out.java", 2, MyBreakpointProperties("out"))
     (bp1 as XBreakpointBase<*, *, *>).group = "TestGroup"
 
     assertTree("""
@@ -131,8 +147,8 @@ class BreakpointListProviderTest : XBreakpointsTestCase() {
 
   @Test
   fun testTwoCustomGroupsSameType() {
-    val bp1 = addLineBreakpoint(myBreakpointManager, "file:///a.java", 1, MyBreakpointProperties("a"))
-    val bp2 = addLineBreakpoint(myBreakpointManager, "file:///b.java", 2, MyBreakpointProperties("b"))
+    val bp1 = breakpoints.addLineBreakpoint("file:///a.java", 1, MyBreakpointProperties("a"))
+    val bp2 = breakpoints.addLineBreakpoint("file:///b.java", 2, MyBreakpointProperties("b"))
     (bp1 as XBreakpointBase<*, *, *>).group = "GroupA"
     (bp2 as XBreakpointBase<*, *, *>).group = "GroupB"
 
@@ -149,8 +165,8 @@ class BreakpointListProviderTest : XBreakpointsTestCase() {
 
   @Test
   fun testLineAndFieldBreakpointsGroupedByType() {
-    addLineBreakpoint(myBreakpointManager, "file:///a.java", 1, MyBreakpointProperties("a"))
-    addFieldBreakpoint(myBreakpointManager, MyBreakpointProperties("myField"))
+    breakpoints.addLineBreakpoint("file:///a.java", 1, MyBreakpointProperties("a"))
+    addFieldBreakpoint(breakpoints.breakpointManager, MyBreakpointProperties("myField"))
 
     assertTree("""
       Breakpoints
@@ -163,8 +179,8 @@ class BreakpointListProviderTest : XBreakpointsTestCase() {
 
   @Test
   fun testCustomGroupWithMixedTypes() {
-    val bp1 = addLineBreakpoint(myBreakpointManager, "file:///a.java", 1, MyBreakpointProperties("a"))
-    val bp2 = addFieldBreakpoint(myBreakpointManager, MyBreakpointProperties("myField"))
+    val bp1 = breakpoints.addLineBreakpoint("file:///a.java", 1, MyBreakpointProperties("a"))
+    val bp2 = addFieldBreakpoint(breakpoints.breakpointManager, MyBreakpointProperties("myField"))
     (bp1 as XBreakpointBase<*, *, *>).group = "MyGroup"
     (bp2 as XBreakpointBase<*, *, *>).group = "MyGroup"
 
@@ -180,10 +196,10 @@ class BreakpointListProviderTest : XBreakpointsTestCase() {
 
   @Test
   fun testMixedTypesGroupedAndUngrouped() {
-    val bp1 = addLineBreakpoint(myBreakpointManager, "file:///a.java", 1, MyBreakpointProperties("a"))
-    val bp2 = addFieldBreakpoint(myBreakpointManager, MyBreakpointProperties("myField"))
-    addLineBreakpoint(myBreakpointManager, "file:///b.java", 2, MyBreakpointProperties("b"))
-    addFieldBreakpoint(myBreakpointManager, MyBreakpointProperties("myOtherField"))
+    val bp1 = breakpoints.addLineBreakpoint("file:///a.java", 1, MyBreakpointProperties("a"))
+    val bp2 = addFieldBreakpoint(breakpoints.breakpointManager, MyBreakpointProperties("myField"))
+    breakpoints.addLineBreakpoint("file:///b.java", 2, MyBreakpointProperties("b"))
+    addFieldBreakpoint(breakpoints.breakpointManager, MyBreakpointProperties("myOtherField"))
     (bp1 as XBreakpointBase<*, *, *>).group = "TestGroup"
     (bp2 as XBreakpointBase<*, *, *>).group = "TestGroup"
 
@@ -207,7 +223,7 @@ class BreakpointListProviderTest : XBreakpointsTestCase() {
     awaitUpdate()
     val node = provider.createNode()
     if (node != null) {
-      assertFalse("Tree should have no non-default breakpoints", hasTestBreakpoints(node))
+      assertFalse(hasTestBreakpoints(node), "Tree should have no non-default breakpoints")
     }
   }
 }
