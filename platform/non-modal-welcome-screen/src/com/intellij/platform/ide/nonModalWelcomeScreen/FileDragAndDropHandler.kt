@@ -4,19 +4,17 @@ package com.intellij.platform.ide.nonModalWelcomeScreen
 import com.intellij.ide.TrustedFiles
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.projectImport.ProjectOpenProcessor
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Unmodifiable
 import java.nio.file.Path
 
@@ -50,9 +48,7 @@ object DefaultFileDragAndDropHandler : FileDragAndDropHandler {
       for (virtualFile in regularFiles) {
         NonProjectFileWritingAccessProvider.allowWriting(listOf(virtualFile))
         TrustedFiles.markExternallyOpened(virtualFile)
-        withContext(Dispatchers.EDT) {
-          fileEditorManager.openFile(virtualFile, true)
-        }
+        fileEditorManager.openFile(virtualFile, FileEditorOpenRequest.withFocus(true))
       }
     }
     return true
