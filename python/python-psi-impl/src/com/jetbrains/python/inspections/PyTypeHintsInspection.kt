@@ -2202,20 +2202,47 @@ class PyTypeHintsInspection : PyInspection() {
         registerProblem(flatIndexExpr, message)
       }
       else {
-        for (pair in mapping.mappedTypes) {
+        for ((index, pair) in mapping.mappedTypes.withIndex()) {
           val matched =
             PyTypeChecker.match(pair.getFirst(), pair.getSecond(), myTypeEvalContext)
           if (!matched) {
             val expectedName = PythonDocumentationProvider.getVerboseTypeName(pair.getFirst(), myTypeEvalContext)
             val actualName = PythonDocumentationProvider.getTypeName(pair.getSecond(), myTypeEvalContext)
             registerProblem(
-              flatIndexExpr,
+              findMappedTypeArgument(node, mapping, typeArguments, index) ?: flatIndexExpr,
               PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName),
             )
             return
           }
         }
       }
+    }
+
+    /**
+     * Returns the type argument expression of [node] that gives the type of the mapped pair at [mappedIndex].
+     *
+     * The mapped pairs align with the type arguments from the start up to a pair that takes several type arguments or a default,
+     * for example a `TypeVarTuple`. After such a pair, they align from the end.
+     * Returns `null` when the mapped pair aligns with no type argument from either end.
+     */
+    private fun findMappedTypeArgument(
+      node: PySubscriptionExpression,
+      mapping: PyTypeParameterMapping,
+      typeArguments: List<PyType?>,
+      mappedIndex: Int,
+    ): PyExpression? {
+      val mappedTypes = mapping.mappedTypes
+      val flatIndexExpr = PyPsiUtils.flattenParens(node.indexExpression) ?: return null
+      val arguments = (flatIndexExpr as? PyTupleExpression)?.elements ?: arrayOf(flatIndexExpr)
+      if (mappedIndex < typeArguments.size && (0..mappedIndex).all { mappedTypes[it].getSecond() === typeArguments[it] }) {
+        return arguments.getOrNull(mappedIndex)
+      }
+      val offset = typeArguments.size - mappedTypes.size
+      if (mappedIndex + offset in typeArguments.indices &&
+          (mappedIndex..<mappedTypes.size).all { mappedTypes[it].getSecond() === typeArguments[it + offset] }) {
+        return arguments.getOrNull(mappedIndex + offset)
+      }
+      return null
     }
 
     private fun checkAnnotatedNonSelfAttribute(node: PyTargetExpression) {
