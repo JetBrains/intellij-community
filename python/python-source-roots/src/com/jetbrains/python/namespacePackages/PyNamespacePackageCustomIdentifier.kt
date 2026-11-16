@@ -10,7 +10,8 @@ import com.jetbrains.python.psi.PyCustomPackageIdentifier
 
 class PyNamespacePackageCustomIdentifier : PyCustomPackageIdentifier {
   init {
-    if (!Registry.`is`("python.explicit.namespace.packages")) {
+    // The default of the key: a tree update can create the extension while PythonCore loads, before the key is registered.
+    if (!Registry.`is`("python.explicit.namespace.packages", true)) {
       throw ExtensionNotApplicableException.create()
     }
   }
