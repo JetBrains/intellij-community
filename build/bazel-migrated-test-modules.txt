@@ -278,6 +278,7 @@ intellij.platform.vcs.impl.shared.tests.log
 intellij.platform.vcs.impl.shared.tests.ui
 intellij.platform.vcs.impl.tests.util
 intellij.platform.vcs.log.graph.impl.tests
+intellij.platform.vcs.log.impl.tests
 intellij.platform.versionDownloadManager.tests
 intellij.platform.whatsNew.tests
 intellij.platform.workspace.jps.tests
