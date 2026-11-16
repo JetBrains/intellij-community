@@ -48,6 +48,15 @@ final class JcefWhatsNewPageProvider implements WhatsNewPageProvider {
     @Nullable HTMLEditorProvider.JsQueryHandler queryHandler
   ) {
     var parameters = getRequestParameters(includePlatformData, project);
+    project.getService(JcefWhatsNewPageOpening.class).openAfterRegionCheck(parameters.containsKey("code"),
+      showAirPromo -> openWhatsNewPage(project, url, parameters, queryHandler, showAirPromo));
+  }
+
+  private static void openWhatsNewPage(@NotNull Project project,
+                                      @NotNull String url,
+                                      @NotNull Map<String, String> parameters,
+                                      @Nullable HTMLEditorProvider.JsQueryHandler queryHandler,
+                                      boolean showAirPromo) {
     var request = HTMLEditorProvider.Request.url(
       Urls.newFromEncoded(url)
         .addParameters(parameters)
@@ -74,7 +83,7 @@ final class JcefWhatsNewPageProvider implements WhatsNewPageProvider {
     var webSiteUrl = urls instanceof BaseJetBrainsExternalProductResourceUrls jetBrainsUrls ? jetBrainsUrls.getBaseWebSiteUrl().toExternalForm() : null;
     var promoQueryHandler = WhatsNewAirPromoQueryHandler.create(
       new WhatsNewAirPromoPage(project, WelcomeScreenProjectProvider.isWelcomeScreenProject(project)),
-      parameters.containsKey("code"), queryHandler);
+      showAirPromo, queryHandler);
     setQueryHandler(request, promoQueryHandler, trustedOrigins(url, webSiteUrl));
 
     var title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
