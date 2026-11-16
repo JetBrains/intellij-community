@@ -30,12 +30,16 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.SingleEdtTaskScheduler;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +70,14 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   private static boolean NotFound;
 
   private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  /**
+   * Contains this preview's occurrence highlighters, keyed by their packed start and end offsets.
+   * Each range has a list because edits can move highlighters with different attributes to the same range.
+   * Rebuilt from current offsets for each full update.
+   * Retained between streamed chunks, which share the same document version.
+   * Released after the final full update or when the highlighters are dropped.
+   */
+  private @Nullable Long2ObjectMap<List<RangeHighlighter>> myHighlighterIndex;
   /**
    * The occurrences that currently carry an {@link #IN_SELECTION_KEY} companion. Tracking them is what lets a selection
    * change touch only the occurrences it can actually affect, instead of asking every match on screen.
@@ -149,13 +161,10 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
       dropHighlighters();
       return;
     }
-    // Only the appended occurrences can need a highlighter, and none of the existing ones can have become stale, so
-    // there is nothing to look for among the occurrences already on screen. The same goes for the in-selection
-    // highlighting: neither the selection nor the cursor moves while a search streams - the cursor is only settled once
-    // the whole search is over - so the highlighters already on screen keep whatever they were given. Revisiting them
-    // per chunk would make a streamed search quadratic in the number of matches. The cursor being unsettled is also why
-    // there is no cursor highlighting to redo here.
-    List<RangeHighlighter> newHighlighters = addNewHighlighters(added);
+    if (myHighlighterIndex == null) {
+      myHighlighterIndex = createHighlighterIndex();
+    }
+    List<RangeHighlighter> newHighlighters = addNewHighlighters(added, myHighlighterIndex);
     myHighlighters.addAll(newHighlighters);
     updateInSelectionHighlighters(newHighlighters);
   }
@@ -345,10 +354,14 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     // Only the in-selection tail is deferred: addNewHighlighters marks the highlighters it reused and
     // clearUnusedHighlighters drops the ones it did not, so those two have to stay together and stay synchronous, or a
     // chunk appended in between would be taken for a leftover of the previous search and removed.
-    List<RangeHighlighter> newHighlighters = isBelowMatchesLimit()
-                                             ? addNewHighlighters(mySearchResults.getOccurrences()) : Collections.emptyList();
+    Long2ObjectMap<List<RangeHighlighter>> index =
+      isBelowMatchesLimit() && mySearchResults.getMatchesCount() > 0 ? createHighlighterIndex() : null;
+    List<RangeHighlighter> newHighlighters = index == null
+                                             ? Collections.emptyList()
+                                             : addNewHighlighters(mySearchResults.getOccurrences(), index);
     clearUnusedHighlighters();
     myHighlighters.addAll(newHighlighters);
+    myHighlighterIndex = mySearchResults.isUpdating() ? index : null;
     requestInSelectionUpdate();
   }
 
@@ -361,21 +374,38 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
       removeHighlighterWithDependent(h);
     }
     myHighlighters.clear();
+    myHighlighterIndex = null;
     myInSelectionHighlighters.clear();
   }
 
-  private @NotNull List<RangeHighlighter> addNewHighlighters(@NotNull List<? extends FindResult> occurrences) {
+  private @NotNull Long2ObjectMap<List<RangeHighlighter>> createHighlighterIndex() {
+    Long2ObjectMap<List<RangeHighlighter>> index =
+      new Long2ObjectOpenHashMap<>(Math.max(myHighlighters.size(), mySearchResults.getMatchesCount()));
+    for (RangeHighlighter highlighter : myHighlighters) {
+      if (!highlighter.isValid()) continue;
+      long range = TextRangeScalarUtil.toScalarRange(highlighter.getStartOffset(), highlighter.getEndOffset());
+      index.computeIfAbsent(range, _ -> new SmartList<>()).add(highlighter);
+    }
+    return index;
+  }
+
+  private @NotNull List<RangeHighlighter> addNewHighlighters(
+    @NotNull List<? extends FindResult> occurrences,
+    @NotNull Long2ObjectMap<List<RangeHighlighter>> existingHighlighters
+  ) {
     List<RangeHighlighter> newHighlighters = new ArrayList<>(occurrences.size());
     for (FindResult range : occurrences) {
       if (range.getEndOffset() > mySearchResults.getEditor().getDocument().getTextLength()) continue;
       TextAttributes attributes = createAttributes(range);
-      RangeHighlighter existingHighlighter = findExistingHighlighter(range.getStartOffset(), range.getEndOffset(), attributes);
+      long rangeKey = TextRangeScalarUtil.toScalarRange(range.getStartOffset(), range.getEndOffset());
+      RangeHighlighter existingHighlighter = findExistingHighlighter(existingHighlighters.get(rangeKey), attributes);
       if (existingHighlighter == null) {
         RangeHighlighter highlighter = addHighlighter(range.getStartOffset(), range.getEndOffset(),
                                                       attributes, myPresentation.getDefaultLayer());
         if (highlighter != null) {
           highlighter.putUserData(SEARCH_MARKER, Boolean.TRUE);
           newHighlighters.add(highlighter);
+          existingHighlighters.computeIfAbsent(rangeKey, _ -> new SmartList<>()).add(highlighter);
         }
       }
       else {
@@ -397,19 +427,17 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     }
   }
 
-  private RangeHighlighter findExistingHighlighter(int startOffset, int endOffset, TextAttributes attributes) {
-    MarkupModelEx markupModel = (MarkupModelEx)mySearchResults.getEditor().getMarkupModel();
-    RangeHighlighter[] existing = new RangeHighlighter[1];
-    markupModel.processRangeHighlightersOverlappingWith(startOffset, startOffset, highlighter -> {
-      if (highlighter.getUserData(SEARCH_MARKER) != null &&
-          highlighter.getStartOffset() == startOffset && highlighter.getEndOffset() == endOffset &&
-          Objects.equals(highlighter.getTextAttributes(mySearchResults.getEditor().getColorsScheme()), attributes)) {
-        existing[0] = highlighter;
-        return false;
+  private @Nullable RangeHighlighter findExistingHighlighter(@Nullable List<? extends RangeHighlighter> candidates,
+                                                             @NotNull TextAttributes attributes) {
+    if (candidates != null) {
+      for (RangeHighlighter highlighter : candidates) {
+        if (highlighter.isValid() &&
+            Objects.equals(highlighter.getTextAttributes(mySearchResults.getEditor().getColorsScheme()), attributes)) {
+          return highlighter;
+        }
       }
-      return true;
-    });
-    return existing[0];
+    }
+    return null;
   }
 
   /**

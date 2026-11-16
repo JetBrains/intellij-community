@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -205,6 +206,83 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     finally {
       preview.dispose();
     }
+  }
+
+  public void testLivePreviewReusesOccurrenceHighlightersAfterDocumentChanges() {
+    init("foo bar foo bar foo bar foo");
+    SearchResults searchResults = new SearchResults(getEditor(), getProject());
+    searchResults.setChunkMatchLimit(1);
+    LivePreviewController controller = new LivePreviewController(searchResults, null, getTestRootDisposable());
+    EditorColorsScheme scheme = (EditorColorsScheme)EditorColorsManager.getInstance().getGlobalScheme().clone();
+    LivePreviewPresentation presentation = new EditorLivePreviewPresentation(scheme);
+    LivePreview preview = new LivePreview(searchResults, presentation);
+    try {
+      FindModel findModel = new FindModel();
+      findModel.setStringToFind("foo");
+      controller.updateInBackground(findModel, false);
+      List<RangeHighlighter> occurrences = findOccurrenceHighlighters(presentation);
+      assertEquals(4, occurrences.size());
+
+      preview.searchResultsUpdated(searchResults);
+      assertSameElements(occurrences, findOccurrenceHighlighters(presentation));
+
+      searchResults.setChunkMatchLimit(Integer.MAX_VALUE);
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> getEditor().getDocument().insertString(0, "bar "));
+      controller.updateInBackground(findModel, false);
+      assertSameElements(occurrences, findOccurrenceHighlighters(presentation));
+      for (RangeHighlighter highlighter : occurrences) {
+        assertTrue(highlighter.isValid());
+        assertEquals("foo", getEditor().getDocument().getText(highlighter.getTextRange()));
+      }
+
+      findModel.setStringToFind("missing");
+      controller.updateInBackground(findModel, false);
+      assertEmpty(findOccurrenceHighlighters(presentation));
+      for (RangeHighlighter highlighter : occurrences) {
+        assertFalse(highlighter.isValid());
+      }
+    }
+    finally {
+      preview.dispose();
+    }
+  }
+
+  public void testLivePreviewDoesNotDuplicateEmptyMatchesAcrossChunks() {
+    init("bar foo bar foo bar foo bar foo");
+    SearchResults searchResults = new SearchResults(getEditor(), getProject());
+    searchResults.setChunkMatchLimit(1);
+    LivePreviewController controller = new LivePreviewController(searchResults, null, getTestRootDisposable());
+    EditorColorsScheme scheme = (EditorColorsScheme)EditorColorsManager.getInstance().getGlobalScheme().clone();
+    LivePreviewPresentation presentation = new EditorLivePreviewPresentation(scheme);
+    LivePreview preview = new LivePreview(searchResults, presentation);
+    try {
+      searchResults.setChunkHook(() -> {
+        List<RangeHighlighter> highlighters = findEmptyMatchHighlighters(presentation);
+        assertEquals(highlighters.size(), highlighters.stream().map(RangeHighlighter::getTextRange).distinct().count());
+      });
+      FindModel findModel = new FindModel();
+      findModel.setStringToFind("(?=foo)");
+      findModel.setRegularExpressions(true);
+      controller.updateInBackground(findModel, false);
+      assertEquals(4, findEmptyMatchHighlighters(presentation).size());
+    }
+    finally {
+      searchResults.setChunkHook(null);
+      preview.dispose();
+    }
+  }
+
+  private List<RangeHighlighter> findEmptyMatchHighlighters(LivePreviewPresentation presentation) {
+    return ContainerUtil.filter(getEditor().getMarkupModel().getAllHighlighters(),
+                                highlighter -> presentation.getEmptyRangeAttributes().equals(
+                                  highlighter.getTextAttributes(getEditor().getColorsScheme())));
+  }
+
+  private List<RangeHighlighter> findOccurrenceHighlighters(LivePreviewPresentation presentation) {
+    return ContainerUtil.filter(getEditor().getMarkupModel().getAllHighlighters(),
+                                highlighter -> highlighter.getLayer() == presentation.getDefaultLayer() &&
+                                               presentation.getDefaultAttributes().equals(
+                                                 highlighter.getTextAttributes(getEditor().getColorsScheme())));
   }
 
   private RangeHighlighter findCursorHighlighter(LivePreviewPresentation presentation) {
