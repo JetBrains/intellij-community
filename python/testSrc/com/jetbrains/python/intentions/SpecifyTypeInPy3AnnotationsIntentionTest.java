@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.intentions;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.allure.Components;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
@@ -34,6 +35,11 @@ public class SpecifyTypeInPy3AnnotationsIntentionTest extends PyIntentionTestCas
 
   // PY-55548
   public void testAddsImportsWhenNeeded() {
+    doTestReturnType();
+  }
+
+  @TestFor(issues = "PY-94135")
+  public void testAddsImportForNoReturn() {
     doTestReturnType();
   }
 
