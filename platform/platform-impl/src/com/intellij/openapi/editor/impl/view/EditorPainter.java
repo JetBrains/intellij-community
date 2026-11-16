@@ -267,7 +267,6 @@ public final class EditorPainter implements TextDrawingCallback {
      * The map covers the visual lines of the clip, and with {@link #myDryRunRows} also the two dry-run rows.
      */
     private final Int2ObjectMap<IntPair> myVirtualSelectionMap;
-    private final Int2ObjectMap<List<LineExtensionData>> myExtensionData = new Int2ObjectOpenHashMap<>(); // key is visual line
     private final Int2ObjectMap<TextAttributes> myBetweenLinesAttributes = new Int2ObjectOpenHashMap<>(); // key is bottom visual line
     private final int myLineHeight;
     private final int myAscent;
@@ -561,12 +560,19 @@ public final class EditorPainter implements TextDrawingCallback {
       LineLayout prefixLayout = myView.getPrefixLayout();
       if (myStartVisualLine == 0 && prefixLayout != null) {
         float width = prefixLayout.getWidth();
-        TextAttributes attributes = myViewSnapshot.prefixAttributes();
-        paintBackground(attributes, myCorrector.startX(myStartVisualLine), myYShift + myView.visualLineToY(0), width);
+        TextAttributes attributes = Objects.requireNonNull(myViewSnapshot.prefixAttributes());
+        float x = myCorrector.startX(myStartVisualLine);
+        int y = myYShift + myView.visualLineToY(0);
+        paintBackground(attributes, x, y, width, myLineHeight);
         myTextDrawingTasks.add(_ -> {
-          paintLineLayoutWithEffect(prefixLayout,
-                                    myCorrector.startX(myStartVisualLine), myAscent + myYShift + myView.visualLineToY(0),
-                                    attributes.getForegroundColor(), attributes.getEffectColor(), attributes.getEffectType());
+          paintLineLayoutWithEffect(
+            prefixLayout,
+            myCorrector.startX(myStartVisualLine),
+            myAscent + myYShift + myView.visualLineToY(0),
+            attributes.getForegroundColor(),
+            attributes.getEffectColor(),
+            attributes.getEffectType()
+          );
         });
       }
 
@@ -733,23 +739,14 @@ public final class EditorPainter implements TextDrawingCallback {
               }
               int logicalLine = myDocument.lineNumber(offset);
               List<Inlay<?>> inlays = myInlayModel.getAfterLineEndElementsForLogicalLine(logicalLine);
-              float extensionsStartX = inlays.isEmpty()
-                                       ? x
-                                       : x + myViewSnapshot.plainSpaceWidth() + inlays.stream().mapToInt(Inlay::getWidthInPixels).sum();
-              collectExtensions(visualLine, offset);
-              paintLineExtensionsBackground(visualLine, extensionsStartX, y);
+              float extensionsStartX = getExtensionsStartX(x, inlays);
+              List<LineExtensionLayout> lineExtensions = myEditor.getLineExtensions().getLayout(logicalLine);
+              paintLineExtensionsBackground(lineExtensions, extensionsStartX, y);
               paintHuggingBlockPastLineEnd(it, x, y);
               paintVirtualSelectionIfNecessary(visualLine, columnStart, x, y);
               myTextDrawingTasks.add(g -> {
-                if (!inlays.isEmpty()) {
-                  float curX = x + myViewSnapshot.plainSpaceWidth();
-                  for (Inlay<?> inlay : inlays) {
-                    int width = inlay.getWidthInPixels();
-                    inlay.getRenderer().paint(inlay, g, new Rectangle2D.Double(curX, y, width, myLineHeight), backgroundAttributes);
-                    curX += width;
-                  }
-                }
-                paintLineExtensions(visualLine, logicalLine, extensionsStartX, y + myAscent);
+                paintAfterLineEndInlays(x, y, g, inlays, backgroundAttributes);
+                paintLineExtensions(lineExtensions, visualLine, logicalLine, extensionsStartX, y + myAscent);
               });
             }
             else {
@@ -774,7 +771,26 @@ public final class EditorPainter implements TextDrawingCallback {
         myHighlighterVisualModel.paintAfterLineEndBoxes(myGraphics, myLineHeight);
       }
       if (calculateMarginWidths && myEndVisualLine >= lineCount - 1) {
-        myMarginPositions.y()[myMarginPositions.y().length - 1] = myMarginPositions.y()[myMarginPositions.y().length - 2] + myLineHeight;
+        int length = myMarginPositions.y().length;
+        myMarginPositions.y()[length - 1] = myMarginPositions.y()[length - 2] + myLineHeight;
+      }
+    }
+
+    private float getExtensionsStartX(float x, List<Inlay<?>> inlays) {
+      if (inlays.isEmpty()) {
+        return x;
+      }
+      return x + myViewSnapshot.plainSpaceWidth() + inlays.stream().mapToInt(Inlay::getWidthInPixels).sum();
+    }
+
+    private void paintAfterLineEndInlays(float x, int y, Graphics2D g, List<Inlay<?>> inlays, TextAttributes backgroundAttributes) {
+      if (!inlays.isEmpty()) {
+        float curX = x + myViewSnapshot.plainSpaceWidth();
+        for (Inlay<?> inlay : inlays) {
+          int width = inlay.getWidthInPixels();
+          inlay.getRenderer().paint(inlay, g, new Rectangle2D.Double(curX, y, width, myLineHeight), backgroundAttributes);
+          curX += width;
+        }
       }
     }
 
@@ -994,18 +1010,10 @@ public final class EditorPainter implements TextDrawingCallback {
       }
     }
 
-    private void paintBackground(TextAttributes attributes, float x, int y, float width) {
-      paintBackground(attributes, x, y, width, myLineHeight);
-    }
-
-    private void paintBackground(TextAttributes attributes, float x, int y, float width, int height) {
+    private void paintBackground(@Nullable TextAttributes attributes, float x, int y, float width, int height) {
       if (attributes != null) {
         paintBackground(attributes.getBackgroundColor(), x, y, width, height);
       }
-    }
-
-    private void paintBackground(Color color, float x, int y, float width) {
-      paintBackground(color, x, y, width, myLineHeight);
     }
 
     private void paintBackground(Color color, float x, int y, float width, int height) {
@@ -1307,25 +1315,14 @@ public final class EditorPainter implements TextDrawingCallback {
       return ((float)editor.getColorsScheme().getEditorFontSize()) / FontPreferences.DEFAULT_FONT_SIZE;
     }
 
-    private void collectExtensions(int visualLine, int offset) {
-      myEditor.processLineExtensions(myDocument.lineNumber(offset), (info) -> {
-        List<LineExtensionData> list = myExtensionData.get(visualLine);
-        if (list == null) myExtensionData.put(visualLine, list = new ArrayList<>());
-        list.add(new LineExtensionData(info, LineLayout.createForStandaloneText(myView, info.getText(), info.getFontType())));
-        return true;
-      });
-    }
-
     /**
      * Paints the backgrounds of the line extensions of this visual line.
      * The order is the same in both modes. They cover the highlighter backgrounds and the filling selection at the line end.
      * The virtual selection, the hugging block past the line end, the backgrounds after the end of a line and the right
      * margin cover them.
      */
-    private void paintLineExtensionsBackground(int visualLine, float x, int y) {
-      List<LineExtensionData> data = myExtensionData.get(visualLine);
-      if (data == null) return;
-      for (LineExtensionData datum : data) {
+    private void paintLineExtensionsBackground(List<LineExtensionLayout> lineExtensions, float x, int y) {
+      for (LineExtensionLayout datum : lineExtensions) {
         float width = datum.layout().getWidth();
         paintLineExtensionBackground(datum.info().getBgColor(), x, y, width);
         x += width;
@@ -1334,16 +1331,17 @@ public final class EditorPainter implements TextDrawingCallback {
 
     private void paintLineExtensionBackground(Color color, float x, int y, float width) {
       if (myHighlighterVisualModel == null) {
-        paintBackground(color, x, y, width);
+        paintBackground(color, x, y, width, myLineHeight);
       } else if (width > 0 && color != null && !isDefaultBackground(color)) {
         myHighlighterVisualModel.addLineExtensionBackground(new Rectangle2D.Float(x, y, width, myLineHeight), color);
       }
     }
 
-    private void paintLineExtensions(int visualLine, int logicalLine, float x, int y) {
-      List<LineExtensionData> data = myExtensionData.get(visualLine);
-      if (data == null) return;
-      for (LineExtensionData datum : data) {
+    private void paintLineExtensions(List<LineExtensionLayout> lineExtensions, int visualLine, int logicalLine, float x, int y) {
+      if (lineExtensions.isEmpty()) {
+        return;
+      }
+      for (LineExtensionLayout datum : lineExtensions) {
         x = paintLineLayoutWithEffect(datum.layout(), x, y, datum.info().getColor(), datum.info().getEffectColor(), datum.info().getEffectType());
       }
       int currentLineWidth = myCorrector.lineWidth(visualLine, x);
