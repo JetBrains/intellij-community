@@ -68,9 +68,10 @@ public class TemplateSegments {
     RangeMarker rangeMarker = mySegments.get(index);
     boolean greedyToLeft = rangeMarker.isGreedyToLeft();
     boolean greedyToRight = rangeMarker.isGreedyToRight();
-    rangeMarker.dispose();
-    
-    rangeMarker = myDocument.createRangeMarker(start, end);
+    if (!rangeMarker.isValid() || rangeMarker.getStartOffset() != start || rangeMarker.getEndOffset() != end) {
+      rangeMarker.dispose();
+      rangeMarker = myDocument.createRangeMarker(start, end);
+    }
     rangeMarker.setGreedyToLeft(greedyToLeft || !preserveGreediness);
     rangeMarker.setGreedyToRight(greedyToRight || !preserveGreediness);
     mySegments.set(index, rangeMarker);
