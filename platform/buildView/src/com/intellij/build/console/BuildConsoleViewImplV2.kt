@@ -13,10 +13,12 @@ import com.intellij.build.events.OutputId
 import com.intellij.build.events.OutputReferenceEvent
 import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.impl.ConsoleViewImpl
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.ConsoleViewWithDelegate
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.ObservableConsoleView
+import com.intellij.execution.ui.unwrapDelegate
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -56,11 +58,13 @@ import javax.swing.event.HyperlinkListener
 
 internal class BuildConsoleViewImplV2(
   private val project: Project,
-  override val delegate: ConsoleViewImpl,
-  private val node: ExecutionNode? = null,
+  private val node: ExecutionNode,
+  override val delegate: ConsoleView,
 ) : BuildConsoleView, ConsoleViewWithDelegate, ExecutionConsole by delegate {
 
-  private val state = ConsoleViewState(delegate)
+  private val consoleView: ConsoleViewImpl = delegate.unwrapDelegate() as ConsoleViewImpl
+
+  private val state = ConsoleViewState(consoleView)
 
   /**
    * `@TestOnly` per-node projection of the text this single console renders. The output text is read directly from the
@@ -86,7 +90,7 @@ internal class BuildConsoleViewImplV2(
 
 
   init {
-    delegate.editor?.configureEditor()
+    consoleView.editor?.configureEditor()
     Disposer.register(this, delegate)
   }
 
@@ -121,7 +125,7 @@ internal class BuildConsoleViewImplV2(
   }
 
   private fun onOutputEvent(event: OutputBuildEvent) {
-    BuildTextConsoleView.print(delegate, event.message, event.outputType, event.id)
+    BuildTextConsoleView.print(consoleView, event.message, event.outputType, event.id)
   }
 
   private fun onOutputReferenceEvent(event: OutputReferenceEvent) {
@@ -130,8 +134,8 @@ internal class BuildConsoleViewImplV2(
 
   @TestOnly
   override fun getNodeOutputText(nodeId: Any): String {
-    if (nodeId == node?.id) {
-      return delegate.text
+    if (nodeId == node.id) {
+      return consoleView.text
     }
 
     val result = StringBuilder()

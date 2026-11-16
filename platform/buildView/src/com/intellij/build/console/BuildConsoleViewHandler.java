@@ -8,6 +8,7 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.execution.actions.ClearConsoleAction;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -93,9 +94,9 @@ public final class BuildConsoleViewHandler implements Disposable.Default {
     myPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
 
     myRootExecutionNode = buildProgressRootNode;
-    if (executionConsole != null) {
+    if (executionConsole instanceof ConsoleView consoleView) {
       var rootConsoleViewName = getNodeConsoleViewName(buildProgressRootNode);
-      var rootConsoleView = myStrategy.createRootConsoleView(project, myRootExecutionNode, executionConsole);
+      var rootConsoleView = myStrategy.createRootConsoleView(project, myRootExecutionNode, consoleView);
       myView.addViewAndShowIfNeeded(rootConsoleView, rootConsoleViewName, true, false);
     }
 
