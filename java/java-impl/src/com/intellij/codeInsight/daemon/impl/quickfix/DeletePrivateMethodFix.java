@@ -92,6 +92,7 @@ public final class DeletePrivateMethodFix extends PsiBasedModCommandAction<PsiMe
           }
         }
       }
+      finalElements.remove(method);
       elements = List.copyOf(finalElements);
     }
     if (elements.isEmpty()) {
