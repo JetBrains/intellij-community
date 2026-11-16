@@ -919,12 +919,12 @@ public class GroovyHighlightingTest {
                          @interface Int {
                            int a()
                            String b()
-                           <error descr="Unexpected attribute type: 'PsiType:Date'">Date</error> c()
+                           <error descr="Type 'java.util.Date' not allowed for annotation element">Date</error> c()
                            Int d()
                            int[] e()
                            String[] f()
                            boolean[][] g()
-                           <error descr="Unexpected attribute type: 'PsiType:Boolean'">Boolean</error>[] h()
+                           <error descr="Type 'java.lang.Boolean' not allowed for annotation element">Boolean</error>[] h()
                            Int[][][][] i()
                          }
                          """);

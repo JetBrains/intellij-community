@@ -1186,7 +1186,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       }
     }
 
-    String message = GroovyBundle.message("unexpected.attribute.type.0", element.getType());
+    String message = GroovyBundle.message("unexpected.attribute.type.0", element.getType().getCanonicalText());
     holder.newAnnotation(HighlightSeverity.ERROR, message).range(element).create();
   }
 
