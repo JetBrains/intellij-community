@@ -1,10 +1,10 @@
-package com.intellij.mcpserver.frontend.util
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.mcpserver.util
 
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpServerConsentUi
 import com.intellij.mcpserver.settings.McpServerConsent
 import com.intellij.mcpserver.settings.McpServerSettings
-import com.intellij.mcpserver.util.getHelpLink
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder

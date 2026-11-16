@@ -4,6 +4,7 @@
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.mcpserver"/>
+    <module name="intellij.mcpserver.configurables"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.compose.swing"/>
     <module name="intellij.platform.core"/>
@@ -27,29 +28,13 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.mcpserver.McpServerConsentUi"
-                        serviceImplementation="com.intellij.mcpserver.frontend.util.McpServerConsentUiImpl"/>
+                        serviceImplementation="com.intellij.mcpserver.util.McpServerConsentUiImpl"/>
 
     <serviceViewContributor implementation="com.intellij.mcpserver.frontend.services.McpServiceViewContributor"/>
 
     <statusBarWidgetFactory id="McpServerStatusBarWidget"
                             implementation="com.intellij.mcpserver.frontend.widget.McpServerStatusBarWidgetFactory"
                             order="after PowerSaveMode"/>
-
-    <applicationConfigurable
-      instance="com.intellij.mcpserver.frontend.settings.McpServerSettingsConfigurable"
-      id="com.intellij.mcpserver.settings"
-      key="mcp.server.configurable.name"
-      bundle="messages.McpServerBundle"
-      dynamic="true"
-      parentId="ai"/>
-
-    <applicationConfigurable
-      instance="com.intellij.mcpserver.frontend.settings.McpToolFilterConfigurable"
-      id="com.intellij.mcpserver.settings.filter"
-      key="configurable.mcp.tool.filter"
-      bundle="messages.McpServerBundle"
-      dynamic="true"
-      parentId="com.intellij.mcpserver.settings"/>
   </extensions>
 
   <actions resource-bundle="messages.McpServerBundle">
