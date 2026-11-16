@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.uv.sdk.configuration
 
+import com.intellij.python.venv.environment.isUvEnv
 import java.nio.file.Path
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.intellij.openapi.application.readAction
@@ -109,7 +110,3 @@ private suspend fun uvEnvTarget(pyProject: PyProject, venvs: List<PythonBinary>)
  */
 internal suspend fun uvOwnsSetupOf(pyProject: PyProject): Boolean =
   readAction { pyProject.residesOnModule.getToolWorkspaceLayout(UV_TOOL_ID) } != null
-
-internal fun PythonBinary.isUvEnv(): Boolean {
-  return detectPythonEnvironment().successOrNull?.let { it is VenvEnvironment && "uv" in it.config } == true
-}

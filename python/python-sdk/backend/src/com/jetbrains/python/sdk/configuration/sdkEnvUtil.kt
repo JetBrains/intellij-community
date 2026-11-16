@@ -11,10 +11,10 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.mapResult
 import com.jetbrains.python.orLogException
 
-internal suspend fun PythonBinary.findEnvOrNull(@IntentionName intentionName: String): EnvCheckerResult.EnvFound? =
+suspend fun PythonBinary.findEnvOrNull(@IntentionName intentionName: String): EnvCheckerResult.EnvFound? =
   detectPythonEnvironment().mapResult { it.getPythonInfo() }.findEnvOrNull(intentionName)
 
-internal fun PyResult<PythonInfo>.findEnvOrNull(@IntentionName intentionName: String): EnvCheckerResult.EnvFound? {
+fun PyResult<PythonInfo>.findEnvOrNull(@IntentionName intentionName: String): EnvCheckerResult.EnvFound? {
   return orLogException(logger)?.let { EnvCheckerResult.EnvFound(it, intentionName) }
 }
 private val logger = fileLogger()

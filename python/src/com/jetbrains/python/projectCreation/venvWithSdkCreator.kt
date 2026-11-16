@@ -23,6 +23,7 @@ import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.community.services.systemPython.getSystemPython
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
 import com.intellij.python.community.services.systemPython.findMatchingPython
 import com.intellij.python.sdk.backend.PythonInterpreter
@@ -152,46 +153,6 @@ private suspend fun findExistingVenv(
     }
   }
 }
-
-internal suspend fun getSystemPython(
-  confirmInstallation: suspend () -> Boolean,
-  pythonService: SystemPythonService,
-  versionSpecifiers: PyVersionSpecifiers = PyVersionSpecifiers.ANY_SUPPORTED,
-  eelDescriptor: EelDescriptor,
-): Result<SystemPython, MessageError> {
-  val eel = eelDescriptor.toEelApi()
-  // First, find the latest python according to strategy
-  var systemPythonBinary = pythonService.findSystemPythons(eel, forceRefresh = true).findMatchingPython(versionSpecifiers)
-
-  // No python found?
-  if (systemPythonBinary == null) {
-    // Install it
-    val installer = pythonService.getInstaller(eel)
-                    ?: return PyResult.localizedError(PyBundle.message("project.error.install.not.supported"))
-    if (confirmInstallation()) {
-      // Install
-      when (val r = installer.installLatestPython(versionSpecifiers)) {
-        is Result.Failure -> {
-          val error = r.error
-          logger.warn("Python installation failed $error")
-          return PyResult.localizedError(PyBundle.message("project.error.install.python", error))
-        }
-        is Result.Success -> {
-          // Find the latest python again, after installation
-          systemPythonBinary = pythonService.findSystemPythons(eel, forceRefresh = true).findMatchingPython(versionSpecifiers)
-        }
-      }
-    }
-  }
-
-  return if (systemPythonBinary == null) {
-    PyResult.localizedError(PyBundle.message("project.error.all.pythons.bad"))
-  }
-  else {
-    Result.Success(systemPythonBinary)
-  }
-}
-
 
 private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit = edtWriteAction {
   with(module.rootManager.modifiableModel) {

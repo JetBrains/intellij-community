@@ -29,7 +29,7 @@ import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.findEnvOrNull
 import com.jetbrains.python.sdk.configuration.prepareSdkCreator
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.uv.sdk.configuration.isUvEnv
+import com.intellij.python.venv.environment.isUvEnv
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

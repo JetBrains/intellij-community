@@ -76,5 +76,6 @@
     <orderEntry type="module" module-name="intellij.platform.project" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.annotations" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

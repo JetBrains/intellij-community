@@ -11,16 +11,16 @@ object PySdkConfigurationCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  internal enum class VirtualEnvResult { DEPS_NOT_FOUND, CREATED }
-  internal enum class CondaEnvResult { CREATION_FAILURE, CREATED }
-  internal enum class PipEnvResult { CREATION_FAILURE, CREATED }
+  enum class VirtualEnvResult { DEPS_NOT_FOUND, CREATED }
+  enum class CondaEnvResult { CREATION_FAILURE, CREATED }
+  enum class PipEnvResult { CREATION_FAILURE, CREATED }
 
 
-  internal fun logVirtualEnv(project: Project, result: VirtualEnvResult): Unit = venvEvent.log(project, result)
+  fun logVirtualEnv(project: Project, result: VirtualEnvResult): Unit = venvEvent.log(project, result)
 
-  internal fun logCondaEnv(project: Project, result: CondaEnvResult): Unit = condaEnvEvent.log(project, result)
+  fun logCondaEnv(project: Project, result: CondaEnvResult): Unit = condaEnvEvent.log(project, result)
 
-  internal fun logPipEnv(project: Project, result: PipEnvResult): Unit = pipenvEvent.log(project, result)
+  fun logPipEnv(project: Project, result: PipEnvResult): Unit = pipenvEvent.log(project, result)
 
 
   private val venvEvent = GROUP.registerEvent("venv.created", EventFields.Enum("env_result", VirtualEnvResult::class.java))

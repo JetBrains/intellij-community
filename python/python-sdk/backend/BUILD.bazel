@@ -91,6 +91,7 @@ jvm_library(
         "//platform/platform-impl/rpc",
         "//platform/lang-impl",
         "//platform/util/annotations",
+        "//platform/statistics",
     ],
 )
 ### auto-generated section `build intellij.python.sdk.backend` end

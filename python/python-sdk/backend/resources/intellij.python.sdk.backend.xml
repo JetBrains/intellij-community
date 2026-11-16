@@ -29,6 +29,7 @@
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.remote.core"/>
     <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.annotations"/>
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.util.ui"/>
@@ -107,6 +108,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector
+      implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.python.sdk.backend.PySitePackagesExcludeWorkspaceFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.python.sdk.backend.PyTestEnvExcludeProjectRootContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.python.sdk.backend.PyTestEnvExcludeContentRootContributor"/>

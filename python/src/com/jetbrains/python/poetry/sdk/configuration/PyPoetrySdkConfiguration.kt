@@ -28,7 +28,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyVersionSpecifiers
 import com.jetbrains.python.poetry.findPoetryLock
 import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
-import com.jetbrains.python.projectCreation.getSystemPython
+import com.intellij.python.community.services.systemPython.getSystemPython
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.eelDescriptor
 import com.jetbrains.python.project.getEel

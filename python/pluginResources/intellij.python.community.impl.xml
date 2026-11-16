@@ -628,8 +628,6 @@
     <registryKey defaultValue="3" description="Timeout to guess the best suitable SDK when adding new interpreter (seconds)"
                  key="python.guess.sdk.timeout.seconds"/>
 
-    <statistics.counterUsagesCollector
-      implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
   </extensions>
 
   <extensionPoints>
