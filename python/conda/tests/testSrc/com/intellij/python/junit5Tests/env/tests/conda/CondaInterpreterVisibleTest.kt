@@ -12,6 +12,9 @@ import com.intellij.python.sdk.backend.removeTestSdkFromOpenProjects
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -26,6 +29,9 @@ import kotlin.time.Duration.Companion.minutes
  * environment is in the interpreter store when its creation returns, so nothing reports it as not found, see PY-93079.
  */
 @RegistryKeyAppLevel(key = "python.interpreter.library.entries", value = "true")
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 @PyEnvTestCaseWithConda
 class CondaInterpreterVisibleTest {
   private val projectFixture = projectFixture()
