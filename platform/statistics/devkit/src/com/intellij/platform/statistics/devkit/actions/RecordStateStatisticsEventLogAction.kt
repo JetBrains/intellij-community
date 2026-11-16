@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.options.ex.SingleConfigurableEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -69,7 +70,7 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
       if (virtualFile != null) {
         notification.addAction(NotificationAction.createSimple(
           StatisticsBundle.message("stats.open.log.notification.action"),
-          Runnable { FileEditorManager.getInstance(project).openFile(virtualFile, true) }))
+          Runnable { FileEditorManager.getInstance(project).requestOpenFile(virtualFile, FileEditorOpenRequest.withFocus(true)) }))
       }
       notification.notify(project)
     }
