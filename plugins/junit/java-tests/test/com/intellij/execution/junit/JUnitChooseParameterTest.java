@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.Ref;
@@ -25,15 +26,33 @@ import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.RegistryKey;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCase {
-  private static final LightProjectDescriptor DESCRIPTOR = new JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT5);
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+@RegistryKey(key = "junit.choose.test.parameter", value = "true")
+public class JUnitChooseParameterTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(new JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT5));
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   private static final String PARAMETERIZED_METHOD = """
     import org.junit.jupiter.params.ParameterizedTest;
@@ -66,18 +85,9 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
   private JUnitParameterCollector myOfClass;
   private JUnitParameterCollector myOfMethod;
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return DESCRIPTOR;
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    RegistryManager.getInstance().get("junit.choose.test.parameter").setValue(true, getTestRootDisposable());
-  }
-
+  @Test
   public void testParameterizedTestAlwaysAsks() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("MyTest.java", """
       import org.junit.jupiter.params.ParameterizedTest;
       import org.junit.jupiter.params.provider.ValueSource;
@@ -89,7 +99,9 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
     assertConfigurationIsReused(caretMethod(file), false);
   }
 
+  @Test
   public void testParameterizedClassAlwaysAsks() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("MyTest.java", """
       import org.junit.jupiter.api.Test;
       import org.junit.jupiter.params.ParameterizedClass;
@@ -106,7 +118,9 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
     assertConfigurationIsReused(topLevelClass(file), false);
   }
 
+  @Test
   public void testPlainTestReusesItsConfiguration() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("MyTest.java", """
       import org.junit.jupiter.api.Test;
       public class MyTest {
@@ -116,18 +130,22 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
     assertConfigurationIsReused(caretMethod(file), true);
   }
 
+  @Test
   public void testPlainTestIsRunWithoutAsking() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("MyTest.java", """
       import org.junit.jupiter.api.Test;
       public class MyTest {
         @Test
         public void pla<caret>in() {}
       }""");
-    assertTrue("a test without parameters has to be run right away", isRunWithoutAsking(caretMethod(file)));
+    assertTrue(isRunWithoutAsking(caretMethod(file)), "a test without parameters has to be run right away");
   }
 
+  @Test
   public void testParameterizedTestIsRunWithoutAskingWhenTheFeatureIsOff() {
-    RegistryManager.getInstance().get("junit.choose.test.parameter").setValue(false, getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    RegistryManager.getInstance().get("junit.choose.test.parameter").setValue(false, myFixture.getTestRootDisposable());
     PsiFile file = myFixture.configureByText("MyTest.java", """
       import org.junit.jupiter.params.ParameterizedTest;
       import org.junit.jupiter.params.provider.ValueSource;
@@ -145,17 +163,19 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
    * through, and it has to let a parameterized one through while the feature is off.
    */
   private boolean isRunWithoutAsking(@NotNull PsiMember test) {
-    ConfigurationContext context = createContext(test);
+    ConfigurationContext context = ReadAction.computeBlocking(() -> createContext(test));
     RunConfigurationProducer<?> producer = RunConfigurationProducer.getInstance(TestInClassConfigurationProducer.class);
-    ConfigurationFromContext fromContext = producer.createConfigurationFromContext(context);
+    ConfigurationFromContext fromContext = ReadAction.computeBlocking(() -> producer.createConfigurationFromContext(context));
     assertNotNull(fromContext);
     Ref<Boolean> run = Ref.create(false);
-    producer.onFirstRun(fromContext, context, () -> run.set(true));
+    EdtTestUtil.runInEdtAndWait(() -> producer.onFirstRun(fromContext, context, () -> run.set(true)));
     return run.get();
   }
 
+  @Test
   public void testNothingIsOfferedWhenTheFeatureIsOff() {
-    RegistryManager.getInstance().get("junit.choose.test.parameter").setValue(false, getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    RegistryManager.getInstance().get("junit.choose.test.parameter").setValue(false, myFixture.getTestRootDisposable());
     PsiFile file = myFixture.configureByText("MyTest.java", """
       import org.junit.jupiter.params.ParameterizedTest;
       import org.junit.jupiter.params.provider.ValueSource;
@@ -167,7 +187,9 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
     assertConfigurationIsReused(caretMethod(file), true);
   }
 
+  @Test
   public void testRepeatedTestReusesItsConfiguration() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("MyTest.java", """
       import org.junit.jupiter.api.RepeatedTest;
       public class MyTest {
@@ -178,7 +200,9 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
     assertConfigurationIsReused(caretMethod(file), true);
   }
 
+  @Test
   public void testTestFactoryAlwaysAsks() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("MyTest.java", """
       import org.junit.jupiter.api.TestFactory;
       public class MyTest {
@@ -188,7 +212,9 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
     assertConfigurationIsReused(caretMethod(file), false);
   }
 
+  @Test
   public void testPlainTestClassReusesItsConfiguration() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("MyTest.java", """
       import org.junit.jupiter.params.ParameterizedTest;
       import org.junit.jupiter.params.provider.ValueSource;
@@ -202,12 +228,14 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
   }
 
   /** The one place the location format is written down: every test below builds its messages out of the derived location. */
+  @Test
   public void testLocationIsWhatTheRunnerReports() {
     configureCollectors(PARAMETERIZED_METHOD);
     assertEquals("java:suite://MyTest", myOfClass.locationHint());
     assertEquals("java:test://MyTest/parameterized", myOfMethod.locationHint());
   }
 
+  @Test
   public void testInvocationsOfMethodAreOffered() {
     configureCollectors(PARAMETERIZED_METHOD);
     List<Parameter> parameters = myOfMethod.parse(
@@ -220,6 +248,7 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
   }
 
   /** A launch with a repeat reports each repetition under its own suite. The tree node ids differ, the original ids do not. */
+  @Test
   public void testInvocationsOfARepeatedRunAreOfferedOnce() {
     configureCollectors(PARAMETERIZED_METHOD);
     String classId = "[class:MyTest]";
@@ -236,6 +265,7 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
                          new Parameter(List.of(templateId + "/[#2]"), "[2] -3")), myOfMethod.parse(messages));
   }
 
+  @Test
   public void testParameterSetsOfClassAreOffered() {
     configureCollectors(PARAMETERIZED_CLASS);
     List<Parameter> parameters = myOfClass.parse(classTemplateRun());
@@ -248,6 +278,7 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
    * A method of a parameterized class runs once per parameter set of that class, so its own parameters are reported that many times.
    * Each of them has to be offered once, and running it has to run it for every parameter set.
    */
+  @Test
   public void testParametersOfAMethodOfAParameterizedClassAreOfferedOnce() {
     configureCollectors(PARAMETERIZED_CLASS);
     List<Parameter> parameters = myOfMethod.parse(classTemplateRun());
@@ -276,22 +307,26 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
     return messages;
   }
 
+  @Test
   public void testNothingToOfferForASingleInvocation() {
     configureCollectors(PARAMETERIZED_METHOD);
-    assertEmpty(myOfClass.parse(
+    assertThat(myOfClass.parse(
       List.of(suiteStarted("[class:MyTest]", "0", "MyTest", myOfClass),
-              suiteStarted("[class:MyTest]/[template]", "[class:MyTest]", "parameterized(int)", myOfMethod))));
+              suiteStarted("[class:MyTest]/[template]", "[class:MyTest]", "parameterized(int)", myOfMethod)))).isEmpty();
   }
 
+  @Test
   public void testOutputThatIsNotATestTreeIsIgnored() {
     configureCollectors(PARAMETERIZED_METHOD);
-    assertEmpty(myOfMethod.parse(
+    assertThat(myOfMethod.parse(
       List.of("just some output of the test",
-              "##teamcity[testFinished name='hello' nodeId='child' parentNodeId='root']")));
+              "##teamcity[testFinished name='hello' nodeId='child' parentNodeId='root']"))).isEmpty();
   }
 
   /** Running one parameter runs that parameter alone, and names the launch after it. */
+  @Test
   public void testNarrowingRunsTheChosenParameterAlone() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("MyTest.java", PARAMETERIZED_METHOD);
     RunnerAndConfigurationSettings launch = launchOf(caretMethod(file));
     JUnitConfiguration configuration = (JUnitConfiguration)launch.getConfiguration();
@@ -299,15 +334,17 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
     new JUnitSingleParameter(launch).updateConfiguration(new Parameter(List.of(FIRST_ID), "[1] 1"));
 
     assertEquals(JUnitConfiguration.TEST_UNIQUE_ID, configuration.getPersistentData().TEST_OBJECT);
-    assertOrderedEquals(configuration.getPersistentData().getUniqueIds(), FIRST_ID);
-    assertEquals("named after the test and the parameter", "MyTest.parameterized.[1] 1", configuration.getName());
+    assertArrayEquals(new String[]{FIRST_ID}, configuration.getPersistentData().getUniqueIds());
+    assertEquals("MyTest.parameterized.[1] 1", configuration.getName(), "named after the test and the parameter");
   }
 
   /**
    * A configuration the user saved for that very parameter answers for how to run it, as the user set it up on purpose. The launch
    * keeps its own name even then: it comes from the context, and not from that saved configuration.
    */
+  @Test
   public void testNarrowingTakesTheSavedSettingsAndKeepsItsOwnName() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     PsiFile file = myFixture.configureByText("MyTest.java", PARAMETERIZED_METHOD);
     RunnerAndConfigurationSettings launch = launchOf(caretMethod(file));
     JUnitConfiguration configuration = (JUnitConfiguration)launch.getConfiguration();
@@ -315,23 +352,24 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
     try {
       new JUnitSingleParameter(launch).updateConfiguration(new Parameter(List.of(FIRST_ID), "[1] 1"));
 
-      assertEquals("the settings the user saved for the parameter", "-Dsaved=true", configuration.getVMParameters());
-      assertOrderedEquals(configuration.getPersistentData().getUniqueIds(), FIRST_ID);
-      assertEquals("named after the test and the parameter", "MyTest.parameterized.[1] 1", configuration.getName());
+      assertEquals("-Dsaved=true", configuration.getVMParameters(), "the settings the user saved for the parameter");
+      assertArrayEquals(new String[]{FIRST_ID}, configuration.getPersistentData().getUniqueIds());
+      assertEquals("MyTest.parameterized.[1] 1", configuration.getName(), "named after the test and the parameter");
     }
     finally {
-      RunManager.getInstance(getProject()).removeConfiguration(saved);
+      RunManager.getInstance(codeInsightFixture.get().getProject()).removeConfiguration(saved);
     }
   }
 
   /** A configuration the user saved to run exactly {@code ids}, registered in the RunManager as a saved one is. */
   private @NotNull RunnerAndConfigurationSettings saveParameterConfiguration(@NotNull String vmParameters, String @NotNull ... ids) {
-    RunManager runManager = RunManager.getInstance(getProject());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    RunManager runManager = RunManager.getInstance(myFixture.getProject());
     RunnerAndConfigurationSettings saved =
       runManager.createConfiguration("saved", JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
     JUnitConfiguration configuration = (JUnitConfiguration)saved.getConfiguration();
     configuration.beUniqueIdConfiguration(ids);
-    configuration.setModule(getModule());
+    configuration.setModule(myFixture.getModule());
     configuration.setVMParameters(vmParameters);
     runManager.addConfiguration(saved);
     return saved;
@@ -342,22 +380,22 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
    * location they look for is the one the runner reports for that very launch.
    */
   private void configureCollectors(@NotNull String text) {
-    PsiFile file = myFixture.configureByText("MyTest.java", text);
+    PsiFile file = codeInsightFixture.get().configureByText("MyTest.java", text);
     myOfClass = collectorOf(topLevelClass(file));
     myOfMethod = collectorOf(caretMethod(file));
   }
 
   private @NotNull JUnitParameterCollector collectorOf(@NotNull PsiMember test) {
-    String testName = test.getName();
+    String testName = ReadAction.computeBlocking(() -> test.getName());
     assertNotNull(testName);
     return new JUnitParameterCollector(launchOf(test), testName);
   }
 
   /** The launch a run from the context of {@code test} produces. It is not registered in the RunManager, as no launch from a context is. */
   private @NotNull RunnerAndConfigurationSettings launchOf(@NotNull PsiMember test) {
-    RunnerAndConfigurationSettings settings = createContext(test).getConfiguration();
+    RunnerAndConfigurationSettings settings = ReadAction.computeBlocking(() -> createContext(test).getConfiguration());
     assertNotNull(settings);
-    assertInstanceOf(settings.getConfiguration(), JUnitConfiguration.class);
+    assertInstanceOf(JUnitConfiguration.class, settings.getConfiguration());
     return settings;
   }
 
@@ -396,16 +434,16 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
    * would silently apply to every launch after it.
    */
   private void assertConfigurationIsReused(@NotNull PsiMember test, boolean reused) {
-    RunManager runManager = RunManager.getInstance(getProject());
-    RunnerAndConfigurationSettings settings = createContext(test).getConfiguration();
+    RunManager runManager = RunManager.getInstance(codeInsightFixture.get().getProject());
+    RunnerAndConfigurationSettings settings = ReadAction.computeBlocking(() -> createContext(test).getConfiguration());
     assertNotNull(settings);
-    assertInstanceOf(settings.getConfiguration(), JUnitConfiguration.class);
+    assertInstanceOf(JUnitConfiguration.class, settings.getConfiguration());
     try {
       runManager.setTemporaryConfiguration(settings);
-      assertEquals("temporary configuration", reused ? settings : null, createContext(test).findExisting());
+      assertEquals(reused ? settings : null, ReadAction.computeBlocking(() -> createContext(test).findExisting()), "temporary configuration");
 
       runManager.makeStable(settings);
-      assertEquals("saved configuration", reused ? settings : null, createContext(test).findExisting());
+      assertEquals(reused ? settings : null, ReadAction.computeBlocking(() -> createContext(test).findExisting()), "saved configuration");
     }
     finally {
       runManager.removeConfiguration(settings);
@@ -413,8 +451,9 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
   }
 
   private @NotNull ConfigurationContext createContext(@NotNull PsiMember test) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     DataContext dataContext = SimpleDataContext.builder()
-      .add(CommonDataKeys.PROJECT, getProject())
+      .add(CommonDataKeys.PROJECT, myFixture.getProject())
       .add(CommonDataKeys.EDITOR, myFixture.getEditor())
       .add(PlatformCoreDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(test))
       .add(Location.DATA_KEY, PsiLocation.fromPsiElement(test))
@@ -424,13 +463,13 @@ public class JUnitChooseParameterTest extends LightJavaCodeInsightFixtureTestCas
 
   private @NotNull PsiMethod caretMethod(@NotNull PsiFile file) {
     assertNotNull(file);
-    PsiMethod method = (PsiMethod)myFixture.getElementAtCaret();
+    PsiMethod method = (PsiMethod)ReadAction.computeBlocking(() -> codeInsightFixture.get().getElementAtCaret());
     assertNotNull(method);
     return method;
   }
 
   private static @NotNull PsiClass topLevelClass(@NotNull PsiFile file) {
-    PsiClass testClass = ((PsiClassOwner)file).getClasses()[0];
+    PsiClass testClass = ReadAction.computeBlocking(() -> ((PsiClassOwner)file).getClasses()[0]);
     assertNotNull(testClass);
     return testClass;
   }

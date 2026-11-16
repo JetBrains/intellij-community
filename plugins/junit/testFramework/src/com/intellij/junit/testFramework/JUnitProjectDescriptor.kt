@@ -14,10 +14,13 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.LanguageLevelModuleExtension
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 open class JUnitProjectDescriptor(
   private val languageLevel: LanguageLevel,
@@ -33,6 +36,16 @@ open class JUnitProjectDescriptor(
       AcceptedLanguageLevelsSettings.allowLevel(project, languageLevel)
     }
     super.setUpProject(project, handler)
+  }
+
+  @TestOnly
+  @ApiStatus.Internal
+  override fun setUpExistingModule(module: Module, sourceRoot: VirtualFile) {
+    checkCanSetUpExistingModule(JUnitProjectDescriptor::class.java)
+    if (languageLevel.isPreview || languageLevel == LanguageLevel.JDK_X) {
+      AcceptedLanguageLevelsSettings.allowLevel(module.project, languageLevel)
+    }
+    createContentEntry(module, sourceRoot)
   }
 
   override fun getSdk(): Sdk {

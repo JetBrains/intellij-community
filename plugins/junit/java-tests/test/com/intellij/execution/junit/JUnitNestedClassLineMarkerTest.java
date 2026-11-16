@@ -17,41 +17,44 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class JUnitNestedClassLineMarkerTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(new JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT5));
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
   private final Set<RunnerAndConfigurationSettings> myTempSettings = new HashSet<>();
-  private static final LightProjectDescriptor descriptor = new JUnitProjectDescriptor(LanguageLevel.HIGHEST, MavenTestLib.JUNIT5);
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      RunManager runManager = RunManager.getInstance(getProject());
-      for (RunnerAndConfigurationSettings setting : myTempSettings) {
-        runManager.removeConfiguration(setting);
-      }
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
+  @AfterEach
+  void tearDown() {
+    RunManager runManager = RunManager.getInstance(codeInsightFixture.get().getProject());
+    for (RunnerAndConfigurationSettings setting : myTempSettings) {
+      runManager.removeConfiguration(setting);
     }
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return descriptor;
-  }
-
+  @Test
   public void testNestedClassInAbstractOuter() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("MyTest.java",
                               """
                                 import org.junit.jupiter.api.Nested;
@@ -69,7 +72,9 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
     assertEquals("ConcreteTest$NestedTests", data.MAIN_CLASS_NAME);
   }
 
+  @Test
   public void testAbstractOuterWithSingleInheritor() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("MyTest.java",
                               """
                                 import org.junit.jupiter.api.Test;
@@ -83,7 +88,9 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
     assertEquals("ConcreteTest", data.MAIN_CLASS_NAME);
   }
 
+  @Test
   public void testAbstractOuterWithSingleInheritorInNested() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("MyTest.java",
                               """
                                 import org.junit.jupiter.api.Test;
@@ -100,7 +107,9 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
     assertEquals("TemplateTest$ConcreteTest", data.MAIN_CLASS_NAME);
   }
 
+  @Test
   public void testMethodInStaticNestedInheritorClassInAbstractOuter() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("MyTest.java",
                               """
                                 import org.junit.jupiter.api.Nested;
@@ -122,7 +131,9 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
     assertEquals("myTest", data.METHOD_NAME);
   }
 
+  @Test
   public void testMethodInNestedClassInAbstractOuter() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("MyTest.java",
                               """
                                 import org.junit.jupiter.api.Nested;
@@ -141,7 +152,9 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
     assertEquals("myTest", data.METHOD_NAME);
   }
 
+  @Test
   public void testMethodInStaticClassInAbstractOuter() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("MyTest.java",
                               """
                                 import org.junit.jupiter.api.Nested;
@@ -161,7 +174,9 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
     assertEquals("myTest", data.METHOD_NAME);
   }
 
+  @Test
   public void testMethodInNestedInheritorClassInAbstractOuter() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("MyTest.java",
                               """
                                 import org.junit.jupiter.api.Nested;
@@ -185,6 +200,11 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
 
   @NotNull
   private RunConfiguration startConfigurationFromGutter(String expectedRunTitle) {
+    return EdtTestUtil.runInEdtAndGet(() -> doStartConfigurationFromGutter(expectedRunTitle));
+  }
+
+  private @NotNull RunConfiguration doStartConfigurationFromGutter(String expectedRunTitle) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
@@ -196,14 +216,14 @@ public class JUnitNestedClassLineMarkerTest extends LightJavaCodeInsightFixtureT
       String text = factory.getPresentation(action).getText();
       return text != null && text.startsWith("Run '") && text.endsWith("'");
     });
-    assertEquals(list.toString(), 1, list.size());
+    assertEquals(1, list.size(), list.toString());
     assertEquals(expectedRunTitle, factory.getPresentation(list.get(0)).getText());
     myFixture.testAction(list.get(0));
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(getProject()).getSelectedConfiguration();
+    RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(myFixture.getProject()).getSelectedConfiguration();
     myTempSettings.add(selectedConfiguration);
     RunConfiguration configuration = selectedConfiguration.getConfiguration();
-    assertInstanceOf(configuration, JUnitConfiguration.class);
+    assertInstanceOf(JUnitConfiguration.class, configuration);
     return configuration;
   }
 }

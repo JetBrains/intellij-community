@@ -15,6 +15,18 @@ jvm_library(
     ),
     module_name = "intellij.junit.groovy.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/properties/plugin",
+        "//xml/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//aether-dependency-resolver/plugin",
+        "//plugins/groovy-scripting",
+        "//platform/testRunner/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+        "//platform/vcs/plugin",
+    ],
     deps = [
         # do not sort,
         "//plugins/groovy",
@@ -30,6 +42,8 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//platform/editor-ui-api:editor-ui",
         "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
     ],
 )
 ### auto-generated section `build intellij.junit.groovy.tests` end
