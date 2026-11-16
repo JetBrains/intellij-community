@@ -97,8 +97,8 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   /**
    * Counts the changes of a level that no PSI change reports: a pushed or a specified level, a forced level, and a root
    * change, which can give a module a new SDK. Use it as a dependency of a cached value that holds a language level,
-   * together with {@link com.intellij.psi.util.PsiModificationTracker#MODIFICATION_COUNT}: the level of a file also follows the
-   * directory and the module that hold it, and those change with no level change at all, see
+   * together with the file: the level of a file also follows the directory and the module that hold it, and a move
+   * changes them with no level change at all, see
    * {@link PyFileImpl#getEffectiveLanguageLevel()}.
    * <p>
    * The count is of the application, not of a project: a forced level is a static field and a specified level is set on
