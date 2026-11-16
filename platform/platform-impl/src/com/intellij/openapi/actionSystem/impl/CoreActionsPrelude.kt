@@ -80,6 +80,7 @@ private fun checkActionsOnly(descriptor: RawPluginDescriptor, path: String) {
     if (descriptor.contentModules.isNotEmpty()) add("content modules")
     if (descriptor.depends.isNotEmpty() || descriptor.dependencies.isNotEmpty()) add("dependencies")
     if (descriptor.incompatibleWith.isNotEmpty()) add("incompatibilities")
+    if (descriptor.technologies.isNotEmpty()) add("technologies")
     addScopeOffenders("application", descriptor.appElementsContainer)
     addScopeOffenders("project", descriptor.projectElementsContainer)
     addScopeOffenders("module", descriptor.moduleElementsContainer)

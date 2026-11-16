@@ -73,6 +73,12 @@ object PluginXmlConst {
 
   const val INCOMPATIBLE_WITH_ELEM: String = "incompatible-with"
 
+  const val TECHNOLOGY_ELEM: String = "technology"
+  const val TECHNOLOGY_ID_ATTR: String = "id"
+  const val TECHNOLOGY_NAME_ATTR: String = "name"
+  const val TECHNOLOGY_DESCRIPTION_ATTR: String = "description"
+  const val TECHNOLOGY_ICON_ATTR: String = "icon"
+
   const val ACTIONS_ELEM: String = "actions"
   const val ACTIONS_RESOURCE_BUNDLE_ATTR: String = "resource-bundle"
   const val ACTION_ELEM: String = "action"

@@ -70,6 +70,40 @@ class PluginXmlParserTest {
     Assertions.assertThat(module4.requiredIfAvailable).isNull()
   }
 
+  @Test
+  fun `technology elements are parsed in the declaration order`() {
+    val xml = """
+      <idea-plugin>
+        <technology id="rust" name="Rust" description="The Rust language and Cargo" icon="/icons/rust.svg"/>
+        <technology id="go"/>
+        <technology name="Nameless" icon=""/>
+      </idea-plugin>
+    """.trimIndent()
+
+    val technologies = parse(xml).technologies
+
+    Assertions.assertThat(technologies).hasSize(3)
+    val rust = technologies[0]
+    Assertions.assertThat(rust.id).isEqualTo("rust")
+    Assertions.assertThat(rust.name).isEqualTo("Rust")
+    Assertions.assertThat(rust.description).isEqualTo("The Rust language and Cargo")
+    Assertions.assertThat(rust.icon).isEqualTo("/icons/rust.svg")
+    val go = technologies[1]
+    Assertions.assertThat(go.id).isEqualTo("go")
+    Assertions.assertThat(go.name).isNull()
+    Assertions.assertThat(go.description).isNull()
+    Assertions.assertThat(go.icon).isNull()
+    val withoutId = technologies[2]
+    Assertions.assertThat(withoutId.id).isNull()
+    Assertions.assertThat(withoutId.name).isEqualTo("Nameless")
+    Assertions.assertThat(withoutId.icon).isNull()
+  }
+
+  @Test
+  fun `a descriptor without technology elements has no technologies`() {
+    Assertions.assertThat(parse("<idea-plugin><id>test.plugin</id></idea-plugin>").technologies).isEmpty()
+  }
+
   private fun parse(xml: String): RawPluginDescriptor {
     return parseBytes(xml.toByteArray())
   }

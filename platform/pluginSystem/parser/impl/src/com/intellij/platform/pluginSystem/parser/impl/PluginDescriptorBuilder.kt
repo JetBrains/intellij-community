@@ -7,6 +7,7 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.DependenciesEleme
 import com.intellij.platform.pluginSystem.parser.impl.elements.DependsElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.ExtensionElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.TechnologyElement
 import java.time.LocalDate
 
 interface PluginDescriptorBuilder {
@@ -57,6 +58,9 @@ interface PluginDescriptorBuilder {
 
   fun addIncompatibleWith(incompatibleWith: String)
   val incompatibleWith: List<String>
+
+  fun addTechnology(technology: TechnologyElement)
+  val technologies: List<TechnologyElement>
 
   val appContainerBuilder: ScopedElementsContainerBuilder
   val projectContainerBuilder: ScopedElementsContainerBuilder

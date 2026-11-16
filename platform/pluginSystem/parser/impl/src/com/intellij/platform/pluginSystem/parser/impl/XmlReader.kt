@@ -24,6 +24,7 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityV
 import com.intellij.platform.pluginSystem.parser.impl.elements.OSValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.PreloadModeValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ServiceElement
+import com.intellij.platform.pluginSystem.parser.impl.elements.TechnologyElement
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
@@ -215,6 +216,7 @@ private fun readRootElementChild(
         builder.addIncompatibleWith(id)
       }
     }
+    PluginXmlConst.TECHNOLOGY_ELEM -> readTechnology(reader, builder)
     PluginXmlConst.APPLICATION_COMPONENTS_ELEM -> readComponents(reader, builder.appContainerBuilder)
     PluginXmlConst.PROJECT_COMPONENTS_ELEM -> readComponents(reader, builder.projectContainerBuilder)
     PluginXmlConst.MODULE_COMPONENTS_ELEM -> readComponents(reader, builder.moduleContainerBuilder)
@@ -252,6 +254,23 @@ private fun readRootElementChild(
     throw XMLStreamException("Unexpected state (expected=END_ELEMENT, actual=${getEventTypeString(reader.eventType)}, lastProcessedElement=$localName)",
                              reader.location)
   }
+}
+
+private fun readTechnology(reader: XMLStreamReader2, builder: PluginDescriptorBuilder) {
+  var id: String? = null
+  var name: String? = null
+  var description: String? = null
+  var icon: String? = null
+  for (i in 0 until reader.attributeCount) {
+    when (reader.getAttributeLocalName(i)) {
+      PluginXmlConst.TECHNOLOGY_ID_ATTR -> id = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.TECHNOLOGY_NAME_ATTR -> name = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.TECHNOLOGY_DESCRIPTION_ATTR -> description = getNullifiedAttributeValue(reader, i)
+      PluginXmlConst.TECHNOLOGY_ICON_ATTR -> icon = getNullifiedAttributeValue(reader, i)
+    }
+  }
+  builder.addTechnology(TechnologyElement(id = id, name = name, description = description, icon = icon))
+  reader.skipElement()
 }
 
 private fun readIdeaVersion(reader: XMLStreamReader2, builder: PluginDescriptorBuilder) {

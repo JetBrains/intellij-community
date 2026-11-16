@@ -8,6 +8,7 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.DependenciesEleme
 import com.intellij.platform.pluginSystem.parser.impl.elements.DependsElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.ExtensionElement
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
+import com.intellij.platform.pluginSystem.parser.impl.elements.TechnologyElement
 import org.jetbrains.annotations.ApiStatus
 import java.time.LocalDate
 
@@ -56,6 +57,9 @@ class RawPluginDescriptor(
   val actions: List<ActionElement>,
 
   val incompatibleWith: List<String>,
+
+  /** The `<technology>` elements of this descriptor, in the declaration order. */
+  val technologies: List<TechnologyElement>,
 
   val appElementsContainer: ScopedElementsContainer,
   val projectElementsContainer: ScopedElementsContainer,
