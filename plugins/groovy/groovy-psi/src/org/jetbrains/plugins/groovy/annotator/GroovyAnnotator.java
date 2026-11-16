@@ -2168,18 +2168,19 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(typeDefinition.getProject());
       GlobalSearchScope scope = inferClassScopeForSearchingDuplicates(typeDefinition);
       final PsiClass[] classes = facade.findClasses(qName, scope);
-      if (classes.length > 1 && (!GroovyConfigUtils.isAtLeastGroovy50(typeDefinition) || areInTheDifferentFiles(classes))) {
+      if (classes.length > 1 && (!GroovyConfigUtils.isAtLeastGroovy50(typeDefinition) || areInDifferentFiles(classes))) {
         String packageName = getPackageName(typeDefinition);
-
-        String message = !isScriptGeneratedClass(classes)
-                         ? GroovyBundle.message("duplicate.class", name, packageName)
-                         : GroovyBundle.message("script.generated.with.same.name", qName);
+        boolean scriptGeneratedClass =
+          classes.length == 2 && (classes[0] instanceof GroovyScriptClass || classes[1] instanceof GroovyScriptClass);
+        String message = scriptGeneratedClass
+                         ? GroovyBundle.message("script.generated.with.same.name", qName)
+                         : GroovyBundle.message("duplicate.class", name, packageName);
         holder.newAnnotation(HighlightSeverity.ERROR, message).range(typeDefinition.getNameIdentifierGroovy()).create();
       }
     }
   }
 
-  private static boolean areInTheDifferentFiles(PsiClass[] classes) {
+  private static boolean areInDifferentFiles(PsiClass[] classes) {
     if (classes.length <= 1) return true;
 
     List<PsiFile> fileList = ContainerUtil.map(classes, it -> it.getContainingFile());
@@ -2209,10 +2210,6 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       if (!name.isEmpty()) packageName = name;
     }
     return packageName;
-  }
-
-  private static boolean isScriptGeneratedClass(PsiClass[] allClasses) {
-    return allClasses.length == 2 && (allClasses[0] instanceof GroovyScriptClass || allClasses[1] instanceof GroovyScriptClass);
   }
 }
 
