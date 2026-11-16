@@ -25,6 +25,7 @@ intellij.tasks.tests.vcs
 intellij.vcs.git.backend.split.tests
 intellij.vcs.git.coverage.tests
 intellij.vcs.git.terminal.tests
+intellij.vcs.github.ultimate.cron.tests
 intellij.vcs.gitlab.tests
 intellij.xml.tests.js
 language-server.*
