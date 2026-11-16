@@ -929,6 +929,8 @@ def _declare_run_launcher(
     _check_before_run(tables, name, jvm_flags, compile_clion_backend_before_run)
     if tables.launcher_jvm_flags != None:
         jvm_flags = tables.launcher_jvm_flags(product, additional_modules, jvm_flags)
+    if getattr(tables, "launcher_data", None) != None:
+        data = tables.launcher_data(product, additional_modules, data)
 
     plan = _plan(tables, product)
     destinations = {os: _launch_destinations(plan, os) for os in plan.launch.vmoptions}

@@ -16,8 +16,10 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.bazel.runfiles.BazelRunfiles
+import com.intellij.platform.ijent.community.buildConstants.IJENT_BAZEL_BINARIES_SYSTEM_PROPERTY
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+import com.intellij.platform.ijent.community.buildConstants.USE_IJENT_FROM_BAZEL_SYSTEM_PROPERTY
 import com.intellij.testFramework.TeamCityLogger
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.lang.UrlClassLoader
@@ -717,6 +719,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       "user.home" to System.getProperty("user.home"),
       TestingOptions.USE_ARCHIVED_COMPILED_CLASSES to "${options.useArchivedCompiledClasses}",
       TestingOptions.TEST_JVM_OF_BUILD_SCRIPTS_PROPERTY to "true",
+      USE_IJENT_FROM_BAZEL_SYSTEM_PROPERTY to System.getProperty(USE_IJENT_FROM_BAZEL_SYSTEM_PROPERTY),
+      IJENT_BAZEL_BINARIES_SYSTEM_PROPERTY to System.getProperty(IJENT_BAZEL_BINARIES_SYSTEM_PROPERTY),
     )) {
       if (v != null) {
         systemProperties.putIfAbsent(k, v)

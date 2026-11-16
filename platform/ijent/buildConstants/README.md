@@ -1,0 +1,1 @@
+This module is for constants and trivial functions only. This is not a regular module for various utils.
