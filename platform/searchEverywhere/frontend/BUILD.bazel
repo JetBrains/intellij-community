@@ -192,6 +192,10 @@ jvm_library(
         "//platform/ide-core",
         "//platform/scopes",
         "//platform/scopes:scopes_test_lib",
+        "//platform/kernel/shared:kernel",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//fleet/rhizomedb",
+        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend.tests` end

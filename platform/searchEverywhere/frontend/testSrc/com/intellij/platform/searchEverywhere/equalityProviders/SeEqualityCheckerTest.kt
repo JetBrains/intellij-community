@@ -19,13 +19,15 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeItemDataFactory
 import com.intellij.platform.searchEverywhere.SeLegacyItem
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
-import com.intellij.platform.searchEverywhere.SeSessionImpl
-import com.intellij.platform.searchEverywhere.impl.SeItemRegistry
+import com.intellij.platform.searchEverywhere.SeSession
+import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.asRef
 import com.intellij.platform.searchEverywhere.presentations.SeAdaptedItemEmptyPresentation
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.toProviderId
@@ -33,9 +35,12 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.Processor
+import fleet.kernel.change
+import fleet.kernel.rebase.shared
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -51,12 +56,7 @@ class SeEqualityCheckerTest {
   @TestDisposable
   lateinit var disposable: Disposable
 
-  private val session = SeSessionImpl(UUID.randomUUID().toString())
-
-  @AfterEach
-  fun closeSession() {
-    SeItemRegistry.getInstance().closeSession(session)
-  }
+  private lateinit var session: SeSession
 
   @Test
   fun addsItemsThatAreNotEqual() = runTest {
@@ -348,7 +348,21 @@ class SeEqualityCheckerTest {
   private fun runTest(block: suspend () -> Unit) {
     runBlocking {
       withTimeout(30.seconds) {
-        block()
+        withKernel {
+          session = SeSessionEntity.createSession()
+          try {
+            block()
+          }
+          finally {
+            withContext(NonCancellable) {
+              change {
+                shared {
+                  session.asRef().derefOrNull()?.delete()
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
