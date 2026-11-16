@@ -54,6 +54,36 @@ internal class MarkdownCodeSpanConfigurationRunnerTest {
   }
 
   @Test
+  fun `test code span run marker is not shown for nested class of runnable Java class`() {
+    myFixture.addClass("""
+      public class JavaClass {
+        static void main(String[] args) {}
+        static class Nested {}
+      }
+    """.trimIndent())
+    configureMarkdown("`Nested`")
+
+    val markers = findRunMarkers()
+    assertThat(markers).isNullOrEmpty()
+  }
+
+  @Test
+  fun `test code span run marker is shown for runnable nested Java class`() {
+    myFixture.addClass("""
+      public class JavaClass {
+        static class Nested {
+          static void main(String[] args) {}
+        }
+      }
+    """.trimIndent())
+    configureMarkdown("`Nested`")
+
+    val markers = findRunMarkers()
+    assertEquals(1, markers.size)
+    assertEquals(1, getPopupActionCount(markers))
+  }
+
+  @Test
   fun `test duplicate code spans on one line produce one Java run action`() {
     addJavaClassWithMainMethod("JavaClass")
     configureMarkdown("`JavaClass` `JavaClass` `JavaClass`")
