@@ -1,11 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.ide.plugins.CurrentProductMode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.NotClosedProperlyRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
+import com.intellij.platform.productMode.ProductMode;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CorruptedException;
@@ -67,7 +69,7 @@ public final class PersistentFSConnector {
         PersistentFSConnection connection = tryInit(
           cachesDir,
           expectedVersion,
-          RECOVERERS
+          recoverers()
         );
         //heuristics: just created VFS contains only 1 record (=super-root):
         boolean justCreated = connection.records().recordsCount() == 1
@@ -96,6 +98,23 @@ public final class PersistentFSConnector {
       fail.addSuppressed(failure);
     }
     throw fail;
+  }
+
+  /**
+   * JetBrains Light has no file-based index, so a VFS rebuild costs it only a lazy re-population of the file tree.
+   * The not-closed-properly scan of a large VFS costs seconds, so Light skips the scan and rebuilds the VFS instead.
+   */
+  private static @NotNull List<VFSRecoverer> recoverers() {
+    boolean rebuildIfNotClosedProperly = SystemProperties.getBooleanProperty(
+      "vfs.rebuild-if-not-closed-properly",
+      CurrentProductMode.INSTANCE.getValue() == ProductMode.LIGHT_MONOLITH
+    );
+    if (!rebuildIfNotClosedProperly) {
+      return RECOVERERS;
+    }
+    return RECOVERERS.stream()
+      .filter(recoverer -> !(recoverer instanceof NotClosedProperlyRecoverer))
+      .toList();
   }
 
   @VisibleForTesting

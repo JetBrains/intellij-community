@@ -1,10 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.ide.plugins.CurrentProductMode;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.NotClosedProperlyRecoverer;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
+import com.intellij.platform.productMode.ProductMode;
 import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageOverMMappedFile;
 import com.intellij.testFramework.TemporaryDirectory;
@@ -319,6 +322,33 @@ public class VFSCorruptionRecoveryTest {
       Collections.singletonList(new NotClosedProperlyRecoverer())
     );
     connection.close();
+  }
+
+  @Test
+  public void VFS_connect_InLightMonolith_RebuildsVFS_If_NotClosedProperly() throws Exception {
+    Path cachesDir = temporaryDirectory.createDir();
+
+    setupVFSFillSomeDataAndClose(cachesDir);
+    emulateImproperClose(cachesDir);
+
+    VFSInitializationResult result = CurrentProductMode.INSTANCE.withProductMode(
+      ProductMode.LIGHT_MONOLITH,
+      () -> PersistentFSConnector.connect(cachesDir, FSRecordsImpl.currentImplementationVersion())
+    );
+    try {
+      assertEquals(
+        "VFS wasn't closed properly in Light -> the first attempt must fail without a recovery",
+        1,
+        result.attemptsFailures.size()
+      );
+      assertTrue(
+        "VFS wasn't closed properly in Light -> VFS must be rebuilt from scratch",
+        result.vfsCreatedAnew
+      );
+    }
+    finally {
+      result.connection.close();
+    }
   }
 
 
