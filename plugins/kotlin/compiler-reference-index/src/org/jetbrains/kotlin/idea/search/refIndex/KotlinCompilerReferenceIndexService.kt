@@ -50,6 +50,7 @@ import com.intellij.util.Processor
 import com.intellij.util.containers.generateRecursiveSequence
 import com.intellij.util.indexing.StorageException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.syntheticAccessors
@@ -168,7 +169,9 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
 
         // TODO KTIJ-37446 Make Kotlin Compiler Reference Index JPS-agnostic
         // eager attempt covers reopened projects
-        installBtaFileWatcherIfApplicable()
+        // Note: this needs to run in a different thread to prevent blocking the calling thread when waiting for a read lock
+        // and to allow for cancellation when closing the project.
+        coroutineScope.launch { installBtaFileWatcherIfApplicable() }
         // for first-time project `GradleSettings.linkedProjectsSettings` is still empty,
         // so we retry once Gradle import registers linked projects
         connection.subscribe(ProjectDataImportListener.TOPIC, object : ProjectDataImportListener {
