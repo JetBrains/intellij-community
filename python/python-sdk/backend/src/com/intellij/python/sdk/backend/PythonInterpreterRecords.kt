@@ -135,6 +135,13 @@ class PythonInterpreterRecords(private val project: Project) : PersistentStateCo
     if (before == null || !before.sameAs(record)) version.update { it + 1 }
   }
 
+  /** Stores [record] as the record of [key] when the store has none. Returns whether it stored [record]. */
+  fun putIfAbsent(key: PythonInterpreterKey, record: StoredInterpreter): Boolean {
+    if (records.putIfAbsent(key, record) != null) return false
+    version.update { it + 1 }
+    return true
+  }
+
   /** Removes the record of [key]. Returns it, or `null` when there was none. */
   fun remove(key: PythonInterpreterKey): StoredInterpreter? = records.remove(key)?.also { version.update { it + 1 } }
 

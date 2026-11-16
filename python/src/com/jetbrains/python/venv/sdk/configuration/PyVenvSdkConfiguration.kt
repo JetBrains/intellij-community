@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.venv.sdk.configuration
 
+import com.intellij.python.sdk.backend.PIP_MANAGER
+import com.intellij.python.sdk.backend.PythonInterpreterKey
+import com.jetbrains.python.sdk.configuration.nativeHomeOf
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.community.common.tools.ToolId
@@ -42,6 +45,18 @@ internal class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
     ) { envExists -> { setupVenv(pyProject, venvs, envExists) } }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
+
+  /**
+   * A virtual environment that the entry places at its home, see [nativeHomeOf]. An environment that no tool manages has
+   * the pip manager.
+   */
+  override suspend fun prepareSdkCreatorFor(pyProject: PyProject, key: PythonInterpreterKey): CreateInterpreterInfo? {
+    if (key.ref.manager != PIP_MANAGER) return null
+    val home = nativeHomeOf(key) ?: return null
+    return prepareSdkCreator(
+      { EnvCheckerResult.EnvNotFound(PyBundle.message("sdk.recreate.venv.suggestion", home.fileName)) }
+    ) { { createVenvAndSdk(ModuleOrProject.ModuleAndProject(pyProject), venvDir = home) } }
+  }
 
   private suspend fun checkManageableEnv(
     pyProject: PyProject,

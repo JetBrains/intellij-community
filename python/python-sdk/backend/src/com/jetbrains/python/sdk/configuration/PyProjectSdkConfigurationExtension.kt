@@ -1,6 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.configuration
 
+import kotlin.io.path.exists
+import java.nio.file.Path
+import com.intellij.python.sdk.common.PyInterpreterRef
+import com.intellij.python.sdk.backend.resolveHomeEnvRef
+import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.python.community.common.tools.ToolId
 import com.jetbrains.python.PythonBinary
@@ -161,6 +166,16 @@ interface PyProjectSdkConfigurationExtension {
   suspend fun checkEnvironmentAndPrepareSdkCreator(pyProject: PyProject, venvs: List<PythonBinary>): CreateInterpreterInfo?
 
   /**
+   * Prepares a creator that makes the environment of [key] again, for a project whose interpreter library entry names
+   * [key] while its environment is gone. [pyProject] is the owner of [key], see [PythonInterpreterKey.ownerDir], so the
+   * interpreter that the creator makes has the key that the entry names. Only the manager of the ref of [key] knows what
+   * the ref means, so a configurator answers only for its own manager, and `null` otherwise. It is asked only when the
+   * tool of the manager is installed. Like [checkEnvironmentAndPrepareSdkCreator], it creates nothing itself.
+   */
+  @CheckReturnValue
+  suspend fun prepareSdkCreatorFor(pyProject: PyProject, key: PythonInterpreterKey): CreateInterpreterInfo? = null
+
+  /**
    * Returns this extension as a [PyProjectTomlConfigurationExtension] when a tool supports configuring with
    * pyproject.toml, or null otherwise.
    *
@@ -170,6 +185,21 @@ interface PyProjectSdkConfigurationExtension {
   fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension?
 }
 
+
+/**
+ * The home of the environment of [key] for [PyProjectSdkConfigurationExtension.prepareSdkCreatorFor], or `null`. Only a
+ * native ref whose env ref is a path relative to the owner names a home, see [resolveHomeEnvRef]. A home that is there
+ * gives `null` too: it needs no creator, because the registry builds its interpreter.
+ */
+@ApiStatus.Internal
+suspend fun nativeHomeOf(key: PythonInterpreterKey): Path? {
+  when (key.ref.mode) {
+    PyInterpreterRef.Mode.Native -> Unit
+    is PyInterpreterRef.Mode.Target -> return null
+  }
+  val home = resolveHomeEnvRef(key.ownerDir, key.ref.env.envRef) ?: return null
+  return home.takeUnless { withContext(Dispatchers.IO) { it.exists() } }
+}
 
 /**
  * [createSdkInfo] with [toolId] that created it

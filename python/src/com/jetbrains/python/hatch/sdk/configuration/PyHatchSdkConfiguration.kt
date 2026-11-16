@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hatch.sdk.configuration
 
+import com.intellij.python.sdk.backend.PySdkBundle
+import com.intellij.python.sdk.common.PyInterpreterRef
+import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.jetbrains.python.sdk.ModuleOrProject
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
@@ -61,6 +64,19 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
 
+  /** The hatch environment that the entry names by its name, see `HatchSdkFlavor.toolEnvRefOf`. */
+  override suspend fun prepareSdkCreatorFor(pyProject: PyProject, key: PythonInterpreterKey): CreateInterpreterInfo? {
+    if (key.ref.manager != HatchPyTool.getInstance().fusId) return null
+    when (key.ref.mode) {
+      PyInterpreterRef.Mode.Native -> Unit
+      is PyInterpreterRef.Mode.Target -> return null
+    }
+    val envName = key.ref.env.envRef.value
+    return prepareSdkCreator(
+      { EnvCheckerResult.EnvNotFound(PyBundle.message("sdk.recreate.hatch.environment", envName)) },
+    ) { { createSdk(pyProject, envExists = false, envName = envName) } }
+  }
+
   private suspend fun checkManageableEnv(
     pyProject: PyProject, checkToml: CheckToml,
   ): EnvCheckerResult = reportRawProgress {
@@ -92,8 +108,9 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
    *
    * @param pyProject project used to create SDK
    * @param envExists shows whether the environment already exists or a new one should be created
+   * @param envName the name of the hatch environment to create, or `null` for the default one
    */
-  private fun createSdk(pyProject: PyProject, envExists: EnvExists): PyResult<PythonInterpreter> = runWithModalBlockingOrInBackground(
+  private fun createSdk(pyProject: PyProject, envExists: EnvExists, envName: String? = null): PyResult<PythonInterpreter> = runWithModalBlockingOrInBackground(
     project = pyProject.project,
     msg = PyBundle.message("sdk.set.up.hatch.environment")
   ) {
@@ -101,6 +118,12 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
     val hatchExecutablePath = HatchPyTool.getInstance().resolveExecutable(fileSystem)
                               ?: return@runWithModalBlockingOrInBackground Result.failure(HatchExecutableNotFoundHatchError(null))
     val hatchService = pyProject.baseDir.getHatchService(fileSystem, hatchExecutablePath).getOr { return@runWithModalBlockingOrInBackground it }
+
+    // A named environment must still be declared in the project: hatch creates only what the project declares.
+    val hatchEnvironment = if (envName == null) HatchEnvironment.DEFAULT
+    else hatchService.findVirtualEnvironments().getOr { return@runWithModalBlockingOrInBackground it }
+           .firstOrNull { it.hatchEnvironment.name == envName }?.hatchEnvironment
+         ?: return@runWithModalBlockingOrInBackground PyResult.localizedError(PySdkBundle.message("evolution.error.env.not.found", envName))
 
     val environment = if (envExists) {
       val defaultEnv = hatchService.findDefaultVirtualEnvironmentOrNull()
@@ -114,10 +137,10 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
       }
     }
     else {
-      hatchService.createVirtualEnvironment().getOr { return@runWithModalBlockingOrInBackground it }
+      hatchService.createVirtualEnvironment(envName = envName).getOr { return@runWithModalBlockingOrInBackground it }
     }
 
-    val hatchVenv = HatchVirtualEnvironment(HatchEnvironment.DEFAULT, environment)
+    val hatchVenv = HatchVirtualEnvironment(hatchEnvironment, environment)
     hatchVenv.createSdk(
       moduleOrProject = ModuleOrProject.ModuleAndProject(pyProject),
       workingDirectoryPath = hatchService.getWorkingDirectoryPath(),

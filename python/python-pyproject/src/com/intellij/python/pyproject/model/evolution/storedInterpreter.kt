@@ -63,6 +63,16 @@ private fun Module.storedInterpreterReference(): StoredInterpreterReference? {
 }
 
 /**
+ * The key that the interpreter library entry of this module names, or `null`: the module has no entry, or the legacy
+ * flow names the interpreter by its SDK. It reads the module itself, not the snapshot.
+ */
+internal fun Module.storedInterpreterKey(): PythonInterpreterKey? =
+  when (val reference = storedInterpreterReference()) {
+    is StoredInterpreterReference.Library -> reference.key
+    is StoredInterpreterReference.SdkName, null -> null
+  }
+
+/**
  * The interpreter that this module stores now, see [StoredInterpreterReference], or `null`. It reads the module
  * itself, not the snapshot.
  *

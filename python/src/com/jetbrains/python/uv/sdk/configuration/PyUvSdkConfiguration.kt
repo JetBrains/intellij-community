@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.uv.sdk.configuration
 
+import com.jetbrains.python.sdk.configuration.nativeHomeOf
+import com.intellij.python.sdk.backend.resolveHomeEnvRef
+import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pytools.backend.PyExecutableCache
@@ -65,6 +68,15 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
    * offered no uv option at all, so on a machine without uv another tool's option was offered for it instead.
    */
   private suspend fun declaresUv(pyProject: PyProject): Boolean = findUvLock(pyProject) != null || uvOwnsSetupOf(pyProject)
+
+  /** A uv environment that the entry places at its home, see [resolveHomeEnvRef]. A home that is there gives nothing. */
+  override suspend fun prepareSdkCreatorFor(pyProject: PyProject, key: PythonInterpreterKey): CreateInterpreterInfo? {
+    if (key.ref.manager != UvPyTool.getInstance().fusId) return null
+    val home = nativeHomeOf(key) ?: return null
+    return prepareSdkCreator(
+      { EnvCheckerResult.EnvNotFound(PyBundle.message("sdk.recreate.uv.environment", home.fileName)) }
+    ) { { createUvSdk(pyProject, emptyList(), envExists = false, venvPath = home) } }
+  }
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
 }

@@ -53,6 +53,7 @@ private val logger = fileLogger()
 
 /**
  * Create a venv in a [moduleOrProject] (or in [explicitPath]) and SDK out of it (existing venv will be used if valid).
+ * The venv is the `.venv` directory there, or [venvDir] when it is set.
  *
  *  If a project has no module -- one will be created.
  *
@@ -66,6 +67,7 @@ suspend fun createVenvAndSdk(
   moduleOrProject: ModuleOrProject,
   systemPythonRequirements: SystemPythonRequirements = SystemPythonRequirements.ByVersionSpecifier(),
   explicitPath: VirtualFile? = null,
+  venvDir: Path? = null,
 ): PyResult<PythonInterpreter> {
   val project = moduleOrProject.project
   val vfsPath = run {
@@ -81,7 +83,7 @@ suspend fun createVenvAndSdk(
     } ?: error("No path provided and can't guess path for $moduleOrProject")
   }
 
-  val venvDirPath = vfsPath.toNioPath().resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
+  val venvDirPath = venvDir ?: vfsPath.toNioPath().resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
 
   // Find venv in a project
   var venvPython: PythonBinary? = findExistingVenv(venvDirPath)

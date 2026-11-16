@@ -349,13 +349,20 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
 
   /**
    * Replaces the SDK references of the modules, see [migrateSdkReferences], and builds the interpreter libraries of
-   * [snapshot], see [PyInterpreterLibrarySync]. A module of an older build, the platform or a facet can still refer to an
-   * SDK. The migration waits for the synchronization with the JPS model, see [jpsSynchronized]. The pass does not wait
-   * for it, so the libraries do not wait either. The legacy flow reads the SDK name of each module, see
-   * [isInterpreterLibraryFlowEnabled], so it migrates nothing.
+   * [snapshot], see [PyInterpreterLibrarySync]. It gives a record to each interpreter that an entry names and the store
+   * does not hold, see [PythonInterpreterRegistry.adoptEntryKey]. A module of an older build, the platform or a facet
+   * can still refer to an SDK. The migration waits for the synchronization with the JPS model, see [jpsSynchronized].
+   * The pass does not wait for it, so the libraries do not wait either. The legacy flow reads the SDK name of each
+   * module, see [isInterpreterLibraryFlowEnabled], so it migrates nothing.
    */
   private suspend fun writeDerivedEntities(snapshot: Snapshot) {
-    if (isInterpreterLibraryFlowEnabled() && jpsSynchronized.value) migrateSdkReferences(project)
+    if (isInterpreterLibraryFlowEnabled()) {
+      if (jpsSynchronized.value) migrateSdkReferences(project)
+      // An entry needs no record to name its interpreter, such as after a fresh checkout. The stored record makes the
+      // registry build the interpreter, and the change of the registry starts the next pass.
+      val registry = PythonInterpreterRegistry.getInstance(project)
+      snapshot.interpreterKeys.forEach(registry::adoptEntryKey)
+    }
     PyInterpreterLibrarySync.getInstance(project).sync(snapshot.evoPyProjects)
   }
 

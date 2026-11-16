@@ -231,6 +231,8 @@ private class ToolDetectionService(project: Project, val coroutineScope: Corouti
         is SdkForModuleConfigInstruction.SameAs -> detectBestTool(r.parent)
         null -> null
       }
+      // The project names its interpreter, so the dialog guesses no other tool for it.
+      is ModuleSdkState.Unavailable -> null
     }
 
   private fun detectBestToolAsync(module: Module): CachedValueProvider.Result<Deferred<CreateSdkInfoWithTool?>> {

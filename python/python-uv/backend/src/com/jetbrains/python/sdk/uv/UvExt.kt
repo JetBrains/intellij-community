@@ -101,12 +101,13 @@ suspend fun setupNewUvSdkAndEnv(
   version: Version?,
   errorSink: ErrorSink,
   mode: UvMode,
+  venvPath: Path? = null,
 ): PyResult<PythonInterpreter> =
   setupNewUvSdkAndEnv(
     moduleOrProject = moduleOrProject,
     uvExecutable = PathHolder.Eel(uvExecutable),
     workingDir = workingDir,
-    venvPath = null,
+    venvPath = venvPath?.let { PathHolder.Eel(it) },
     fileSystem = uvExecutable.toFileSystem(),
     version = version,
     errorSink = errorSink,

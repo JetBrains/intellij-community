@@ -226,18 +226,19 @@ private suspend fun Module.getQuickFixBySdkSuggestion(): FindQuickFixResult {
   // the synchronization with it replaces the module.
   // A module that is not a Python project has no suggestion, but it still needs an interpreter.
   val pyProject = asPyProject() ?: return FindQuickFixResult.ShowUserFix(null)
-  return when (val r = pyProject.getModuleSdkState()) {
-    is ModuleSdkState.HasSdk -> FindQuickFixResult.SdkAppliedAutomatically
-    is ModuleSdkState.NoSdk -> {
-      r.sdkConfigInstruction?.let { instruction ->
-        when (val r = instruction.autoConfigureSdkDoNotCreateFiles()) {
-          is InterpreterConfigurationResult.ToolNotInstalled, is InterpreterConfigurationResult.NotConfigured -> r
-          is InterpreterConfigurationResult.ParentHasNoInterpreter -> r.reason
-          is InterpreterConfigurationResult.Configured -> return FindQuickFixResult.SdkAppliedAutomatically // SDK was configured automatically (e.g. existing env attached)
-        }
-      }?.toQuickFix(this).let { FindQuickFixResult.ShowUserFix(it) }
-    }
+  val instruction = when (val r = pyProject.getModuleSdkState()) {
+    is ModuleSdkState.HasSdk -> return FindQuickFixResult.SdkAppliedAutomatically
+    is ModuleSdkState.NoSdk -> r.sdkConfigInstruction
+    // The module names an interpreter whose environment is gone: install its tool, or make the environment again.
+    is ModuleSdkState.Unavailable -> r.sdkConfigInstruction
   }
+  return instruction?.let {
+    when (val r = it.autoConfigureSdkDoNotCreateFiles()) {
+      is InterpreterConfigurationResult.ToolNotInstalled, is InterpreterConfigurationResult.NotConfigured -> r
+      is InterpreterConfigurationResult.ParentHasNoInterpreter -> r.reason
+      is InterpreterConfigurationResult.Configured -> return FindQuickFixResult.SdkAppliedAutomatically // SDK was configured automatically (e.g. existing env attached)
+    }
+  }?.toQuickFix(this).let { FindQuickFixResult.ShowUserFix(it) }
 }
 
 private sealed interface FindQuickFixResult {

@@ -1,6 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.poetry.sdk.configuration
 
+import kotlin.io.path.exists
+import com.jetbrains.python.venvReader.VirtualEnvReader
+import com.jetbrains.python.sdk.poetry.poetryCacheEnvRefVersion
+import com.jetbrains.python.sdk.poetry.POETRY_IN_PROJECT_ENV_REF
+import com.intellij.python.sdk.common.PyInterpreterRef
+import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -77,6 +83,33 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
 
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
 
+  /**
+   * The poetry environment that the entry names: the in-project `.venv`, or the cache environment of one Python version,
+   * see [poetryEnvRefOf]. An env ref of another form names an environment by its path, and poetry does not place one
+   * there, so it gives nothing. So does an in-project `.venv` that is there.
+   */
+  override suspend fun prepareSdkCreatorFor(pyProject: PyProject, key: PythonInterpreterKey): CreateInterpreterInfo? {
+    if (key.ref.manager != PoetryPyTool.getInstance().fusId) return null
+    when (key.ref.mode) {
+      PyInterpreterRef.Mode.Native -> Unit
+      is PyInterpreterRef.Mode.Target -> return null
+    }
+    val envRef = key.ref.env.envRef.value
+    val target = when {
+      envRef == POETRY_IN_PROJECT_ENV_REF -> PoetryEnvTarget(inProject = true, pythonVersion = null)
+      CACHE_ENV_REF.matches(envRef) -> PoetryEnvTarget(inProject = false, pythonVersion = poetryCacheEnvRefVersion(envRef))
+      else -> return null
+    }
+    if (target.inProject && withContext(Dispatchers.IO) { pyProject.baseDir.resolve(VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME).exists() }) {
+      return null
+    }
+    val intentionName = when (val version = target.pythonVersion) {
+      null -> PyBundle.message("sdk.recreate.poetry.in.project.environment")
+      else -> PyBundle.message("sdk.recreate.poetry.cache.environment", version)
+    }
+    return prepareSdkCreator({ EnvCheckerResult.EnvNotFound(intentionName) }) { { createPoetry(pyProject, envExists = false, target) } }
+  }
+
   private suspend fun checkManageableEnv(
     pyProject: PyProject, checkToml: CheckToml,
   ): EnvCheckerResult = reportRawProgress {
@@ -122,7 +155,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
     else EnvCheckerResult.CannotConfigure
   }
 
-  private suspend fun createPoetry(pyProject: PyProject, envExists: EnvExists): PyResult<PythonInterpreter> =
+  private suspend fun createPoetry(pyProject: PyProject, envExists: EnvExists, target: PoetryEnvTarget? = null): PyResult<PythonInterpreter> =
     withBackgroundProgress(pyProject.project, PyBundle.message("sdk.progress.text.setting.up.poetry.environment")) {
       val basePath = pyProject.baseDir
       val existingEnv =
@@ -139,7 +172,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
         )
       }
 
-      val poetry = existingEnv ?: createPoetryEnv(pyProject).getOr { return@withBackgroundProgress it }
+      val poetry = existingEnv ?: createPoetryEnv(pyProject, target).getOr { return@withBackgroundProgress it }
       val path =
         poetry.resolvePythonBinary() ?: return@withBackgroundProgress PyResult.localizedError(
           PySdkBundle.message("cannot.find.executable", "python", poetry)
@@ -161,12 +194,16 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
       PyResult.success(sdk)
     }
 
-  private suspend fun createPoetryEnv(pyProject: PyProject): PyResult<Path> {
+  /**
+   * Creates the poetry environment of [pyProject]. [target] places it, see [PoetryEnvTarget]. Without it, the base Python
+   * follows `requires-python`, and the poetry setting `virtualenvs.in-project` decides the place.
+   */
+  private suspend fun createPoetryEnv(pyProject: PyProject, target: PoetryEnvTarget? = null): PyResult<Path> {
     LOGGER.debug("Creating poetry environment")
 
     val basePath = pyProject.baseDir
     val tomlFile = PyProjectToml.findPyProjectTomlFile(pyProject)
-    val versionSpecifiers = tomlFile?.let { pyProjectTomlFile ->
+    val versionSpecifiers = target?.pythonVersion?.let { PyVersionSpecifiers("==$it") } ?: tomlFile?.let { pyProjectTomlFile ->
       readAction { pyProjectTomlFile.virtualFile.findPsiFile(pyProject.project)?.resolvePythonVersionSpecifiers() }
     } ?: PyVersionSpecifiers.ANY_SUPPORTED
 
@@ -177,9 +214,9 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
       eelDescriptor = pyProject.eelDescriptor,
     ).getOr { return it }
 
-    val inProjectEnv = runPoetry(basePath.asEelOrJustPath(), "config", "virtualenvs.in-project")
+    val inProjectEnv = target?.inProject ?: (runPoetry(basePath.asEelOrJustPath(), "config", "virtualenvs.in-project")
       .getOr { return it }
-      .trim() == "true"
+      .trim() == "true")
 
     return setupPoetry(
       projectPath = basePath,
@@ -194,3 +231,13 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
   private suspend fun findPoetryEnvHome(basePath: EelOrJustPath): PyResult<Path?> =
     runPoetry(basePath, "env", "info", "-p").mapSuccess { it.trim().toNioPathOrNull() }
 }
+
+/**
+ * Where a poetry environment goes: the in-project `.venv` when [inProject], else the cache environment of Python
+ * [pythonVersion], such as `3.13`. `null` [pythonVersion] lets `requires-python` choose the base Python.
+ */
+private data class PoetryEnvTarget(val inProject: Boolean, val pythonVersion: String?)
+
+/** The env ref of a poetry cache environment, see [poetryCacheEnvRef]. */
+private val CACHE_ENV_REF = Regex("""py\d+\.\d+""")
+

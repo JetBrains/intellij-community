@@ -1,6 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.conda.sdk.configuration
 
+import com.intellij.openapi.vfs.findPsiFile
+import com.intellij.openapi.application.readAction
+import com.jetbrains.python.packaging.PyVersionSpecifiers
+import com.intellij.python.pyproject.psi.resolvePythonVersionSpecifiers
+import com.intellij.python.pyproject.PyProjectToml
+import com.jetbrains.python.sdk.conda.condaSupportedLanguages
+import com.jetbrains.python.psi.LanguageLevel
+import com.intellij.python.community.execService.python.getLanguageLevelFromVersionStringSafe
+import com.intellij.python.sdk.backend.PythonInterpreterRecords
+import com.intellij.python.sdk.backend.resolveExecutable
+import kotlin.io.path.exists
+import com.intellij.openapi.util.io.FileUtil
+import com.jetbrains.python.sdk.conda.condaIdentityOf
+import com.intellij.python.sdk.common.PyInterpreterRef
+import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.ValidationInfo
@@ -125,6 +140,64 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
       is PyCondaEnvIdentity.NamedEnv -> envPath?.toNioPathOrNull()
       is PyCondaEnvIdentity.UnnamedEnv -> envPath.toNioPathOrNull()
     }
+
+  /**
+   * The conda environment that the entry names by its identity: its name, or its prefix, see `CondaEnvSdkFlavor`. It is
+   * made again at that identity, in the form the entry writes it, so the interpreter keeps the ref of the entry. The
+   * `environment.yml` of the project gives its Python and packages. Without the file it is an empty environment, see
+   * [pythonLevelOf]. A prefix that is there gives nothing.
+   */
+  override suspend fun prepareSdkCreatorFor(pyProject: PyProject, key: PythonInterpreterKey): CreateInterpreterInfo? {
+    if (key.ref.manager != CondaPyTool.getInstance().fusId) return null
+    when (key.ref.mode) {
+      PyInterpreterRef.Mode.Native -> Unit
+      is PyInterpreterRef.Mode.Target -> return null
+    }
+    // Remote targets aren't supported yet, as for a new environment.
+    if (PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(pyProject.residesOnModule) != null) return null
+    val identity = condaIdentityOf(key.ref.env.envRef)
+    when (identity) {
+      is PyCondaEnvIdentity.NamedEnv -> Unit
+      // The prefix can be written relative to the user home, such as `~/app/.conda`. conda reads that form itself.
+      is PyCondaEnvIdentity.UnnamedEnv -> if (withContext(Dispatchers.IO) { Path.of(FileUtil.expandUserHome(identity.envPath)).exists() }) return null
+    }
+    return prepareSdkCreator(
+      { EnvCheckerResult.EnvNotFound(PyBundle.message("sdk.recreate.conda.environment", identity.userReadableName)) }
+    ) { { recreateCondaEnv(pyProject, key, identity) } }
+  }
+
+  /** Makes the conda environment with [identity], which [key] names, and its interpreter. */
+  private suspend fun recreateCondaEnv(pyProject: PyProject, key: PythonInterpreterKey, identity: PyCondaEnvIdentity): PyResult<PythonInterpreter> {
+    val eel = pyProject.getEel()
+    val condaExecutable = EelFileSystem(eel).resolveExecutable(CondaPyTool.getInstance())
+    validateCondaPath(condaExecutable?.path?.pathString, eel.getPlatformAndRoot())?.let {
+      return PyResult.localizedError(it.message)
+    }
+    val environmentYml = getEnvironmentYml(pyProject)
+    val request = when {
+      environmentYml != null -> NewCondaEnvRequest.LocalEnvByLocalEnvironmentFileAt(environmentYml.toNioPath(), identity)
+      else -> when (identity) {
+        is PyCondaEnvIdentity.NamedEnv -> NewCondaEnvRequest.EmptyNamedEnv(pythonLevelOf(pyProject, key), identity.envName)
+        is PyCondaEnvIdentity.UnnamedEnv -> NewCondaEnvRequest.EmptyUnnamedEnv(pythonLevelOf(pyProject, key), identity.envPath)
+      }
+    }
+    return PyCondaCommand(condaExecutable!!.path.pathString, null)
+      .createCondaSdkAlongWithNewEnv(ModuleOrProject.ModuleAndProject(pyProject), request, pyProject.baseDir)
+  }
+
+  /**
+   * The Python of an empty conda environment for [key]: the version that the record of [key] saved, else the newest
+   * version that conda supports and the `requires-python` of [pyProject] allows.
+   */
+  private suspend fun pythonLevelOf(pyProject: PyProject, key: PythonInterpreterKey): LanguageLevel {
+    PythonInterpreterRecords.getInstance(pyProject.project).recordOf(key)?.version
+      ?.let(::getLanguageLevelFromVersionStringSafe)
+      ?.let { return it }
+    val specifiers = PyProjectToml.findPyProjectTomlFile(pyProject)?.let { toml ->
+      readAction { toml.virtualFile.findPsiFile(pyProject.project)?.resolvePythonVersionSpecifiers() }
+    } ?: PyVersionSpecifiers.ANY_SUPPORTED
+    return condaSupportedLanguages.firstOrNull { specifiers.isValid(it) } ?: condaSupportedLanguages.first()
+  }
 
   private suspend fun getEnvironmentYml(pyProject: PyProject) = CondaEnvironmentYmlSdkUtils.envFileNames.firstNotNullOfOrNull {
     pyProject.resolveFile(it)?.let { VirtualFileManager.getInstance().findFileByNioPath(it) }

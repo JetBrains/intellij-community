@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.uv.sdk.configuration
 
+import java.nio.file.Path
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.fileLogger
@@ -41,7 +42,16 @@ internal suspend fun checkManageableUvEnvBase(
   return envFound ?: EnvCheckerResult.EnvNotFound(intentionName)
 }
 
-internal suspend fun createUvSdk(pyProject: PyProject, venvs: List<PythonBinary>, envExists: Boolean): PyResult<PythonInterpreter> {
+/**
+ * The uv interpreter of [pyProject]: the environment that is there when [envExists], else a new one. A new environment
+ * goes to [venvPath], or to the default place of uv for `null`.
+ */
+internal suspend fun createUvSdk(
+  pyProject: PyProject,
+  venvs: List<PythonBinary>,
+  envExists: Boolean,
+  venvPath: Path? = null,
+): PyResult<PythonInterpreter> {
   val uv = UvPyTool.getInstance().resolveExecutable(EelFileSystem(pyProject.getEel()))?.path
            ?: return PyResult.localizedError(PyBundle.message("sdk.cannot.find.uv.executable"))
   val target = uvEnvTarget(pyProject, venvs)
@@ -57,10 +67,10 @@ internal suspend fun createUvSdk(pyProject: PyProject, venvs: List<PythonBinary>
     } ?: run {
       logger.warn("Can't find existing uv environment in project, but it was expected. " +
                   "Probably it was deleted. New environment will be created")
-      setupNewUvSdkAndEnv(ModuleOrProject.ModuleAndProject(sdkAssociatedProject), uv, workingDir, null, errorSink, mode)
+      setupNewUvSdkAndEnv(ModuleOrProject.ModuleAndProject(sdkAssociatedProject), uv, workingDir, null, errorSink, mode, venvPath)
     }
   }
-  else setupNewUvSdkAndEnv(ModuleOrProject.ModuleAndProject(sdkAssociatedProject), uv, workingDir, null, errorSink, mode)
+  else setupNewUvSdkAndEnv(ModuleOrProject.ModuleAndProject(sdkAssociatedProject), uv, workingDir, null, errorSink, mode, venvPath)
 
   return sdkSetupResult
 }

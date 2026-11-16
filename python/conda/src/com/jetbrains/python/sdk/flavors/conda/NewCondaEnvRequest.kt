@@ -87,6 +87,19 @@ sealed class NewCondaEnvRequest {
     }
   }
 
+  /**
+   * Create the env with [identity] based on [environmentYaml], whatever name or prefix the file states. For an env that a
+   * project names by its identity and that is gone.
+   */
+  @ApiStatus.Internal
+  class LocalEnvByLocalEnvironmentFileAt(private val environmentYaml: Path, val identity: PyCondaEnvIdentity) : NewCondaEnvRequest() {
+    override val envName: String = identity.userReadableName
+
+    @ApiStatus.Internal
+    override suspend fun create(binaryToExec: BinaryToExec): PyResult<Unit> =
+      CondaExecutor.createFileEnv(binaryToExec, environmentYaml, identity)
+  }
+
   @ApiStatus.Internal
   companion object {
     private val yamlMapper = YAMLMapper.builder().build()

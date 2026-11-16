@@ -72,6 +72,14 @@ internal object CondaExecutor {
     ) { PyResult.success(Unit) }
   }
 
+  /** `conda env create -f [environmentYaml]` with the name or the prefix of [envIdentity], whatever the file names. */
+  suspend fun createFileEnv(binaryToExec: BinaryToExec, environmentYaml: Path, envIdentity: PyCondaEnvIdentity): PyResult<Unit> {
+    val args = listOf("env", "create", "-f", environmentYaml.pathString)
+    return runConda(
+      binaryToExec, args, envIdentity
+    ) { PyResult.success(Unit) }
+  }
+
   suspend fun updateFromEnvironmentFile(binaryToExec: BinaryToExec, envYmlPath: String, envIdentity: PyCondaEnvIdentity): PyResult<Unit> {
     val args = listOf("env", "update", "--file", envYmlPath, "--prune")
     return runConda(

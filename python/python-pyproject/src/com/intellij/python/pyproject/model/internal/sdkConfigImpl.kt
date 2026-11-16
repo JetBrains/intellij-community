@@ -158,8 +158,11 @@ private suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdkImpl
       when (val parentSdkResult = parent.getModuleSdkState(fresh = true)) {
         // Parent already has SDK
         is ModuleSdkState.HasSdk -> inheritFromParent(parentSdkResult.interpreter)
-        is ModuleSdkState.NoSdk -> {
-          val parentSdkInfo = parentSdkResult.sdkConfigInstruction
+        is ModuleSdkState.NoSdk, is ModuleSdkState.Unavailable -> {
+          val parentSdkInfo = when (parentSdkResult) {
+            is ModuleSdkState.NoSdk -> parentSdkResult.sdkConfigInstruction
+            is ModuleSdkState.Unavailable -> parentSdkResult.sdkConfigInstruction
+          }
           val error = if (parentSdkInfo == null) {
             null // Parent module has no SDK config info
           }

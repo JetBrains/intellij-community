@@ -65,6 +65,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -95,9 +96,10 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
   /**
    * One computed list, with one interpreter for each SDK. It compares by reference, so each recompute emits. It is a
    * list because [PythonInterpreter] compares by its ref, and two SDKs can have one ref. A set keeps only one of them, so
-   * a lookup by the other SDK finds nothing.
+   * a lookup by the other SDK finds nothing. [recordsVersion] is the change count of [PythonInterpreterRecords] that the
+   * computation read, so a caller that changed the store can wait for a list that holds the change.
    */
-  private class Computed(val interpreters: List<PythonInterpreter>)
+  private class Computed(val interpreters: List<PythonInterpreter>, val recordsVersion: Long)
 
   private val state = MutableStateFlow<Computed?>(null)
 
@@ -114,8 +116,9 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
         .onStart { emit(Unit) }
         .conflate()
         .collect {
+          val recordsVersion = PythonInterpreterRecords.getInstance(project).changeCount
           val interpreters = compute()
-          state.value = Computed(interpreters)
+          state.value = Computed(interpreters, recordsVersion)
           // The roots of an interpreter that the registry no longer holds are of no use, see PythonInterpreterDetails.
           project.serviceIfCreated<PythonInterpreterRoots>()?.retain(interpreters.mapTo(mutableSetOf()) { it.key })
         }
@@ -551,6 +554,37 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
     // An earlier import of the same SDK already stored it.
     if (store.recordOf(key) == null) store.put(key, recordOf(projectDir, key, tableSdk))
     return key
+  }
+
+  /**
+   * Stores a record for [key] when the store has none: the owner, the ref and a new UUID. A module names [key] by its
+   * interpreter library entry, and the key gives the interpreter, see [PythonInterpreterRecords]. So a project whose
+   * workspace file has no record of it, such as a fresh checkout, still gets the interpreter. Returns whether it stored
+   * a record. The recompute that follows builds the interpreter, or keeps the record while the environment is gone, see
+   * [buildSdk]. Only the interpreter library flow names an interpreter by its key, see [isInterpreterLibraryFlowEnabled].
+   */
+  fun adoptEntryKey(key: PythonInterpreterKey): Boolean {
+    if (!isInterpreterLibraryFlowEnabled()) return false
+    val projectDir = project.interpreterOwnerProjectDir ?: return false
+    val record = PythonInterpreterRecords.StoredInterpreter().apply {
+      // In the form that `recordOf` writes, relative to the project, so the record follows the project when it moves.
+      ownerDir = PyInterpreterOwnerDir.of(projectDir, key.ownerDir).toString()
+      ref = key.ref.toString()
+      uuid = UUID.randomUUID().toString()
+    }
+    return PythonInterpreterRecords.getInstance(project).putIfAbsent(key, record)
+  }
+
+  /**
+   * The interpreter of [key], which a module names by its interpreter library entry, or `null` while its environment is
+   * gone. A key without a record gets one first, see [adoptEntryKey], and the call waits for the computation that reads
+   * it. For a caller that needs a true answer at this instant, such as the configuration lock. It writes the store, so the
+   * computation of a snapshot does not call it.
+   */
+  suspend fun resolveEntryKey(key: PythonInterpreterKey): PythonInterpreter? {
+    adoptEntryKey(key)
+    val needed = PythonInterpreterRecords.getInstance(project).changeCount
+    return state.filterNotNull().first { it.recordsVersion >= needed }.interpreters.firstOrNull { it.key == key }
   }
 
   /**
