@@ -7,7 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -21,7 +21,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.asSafely
-import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
@@ -66,13 +65,11 @@ class GroovyMacroRegistryServiceImpl(val project: Project, val cs: CoroutineScop
           return@createCachedValue CachedValueProvider.Result(emptySet(), PsiModificationTracker.MODIFICATION_COUNT)
         }
         val macroRegistry = mutableSetOf<PsiMethod>()
-        val extensionClassFiles = mutableListOf<VirtualFile>()
         for (extensionVirtualFile in extensionFiles) {
           val psi = PsiUtilBase.getPsiFile(module.project, extensionVirtualFile)
           val inst = psi.asSafely<PropertiesFile>()?.findPropertyByKey("extensionClasses")
           val extensionClassName = inst?.value ?: continue
           val extensionClass = JavaPsiFacade.getInstance(module.project).findClass(extensionClassName, scope) ?: continue
-          extensionClassFiles.addIfNotNull(extensionClass.containingFile.virtualFile)
           val macroMethods = extensionClass.methods.filter {
             it.hasAnnotation(GroovyCommonClassNames.ORG_CODEHAUS_GROOVY_MACRO_RUNTIME_MACRO) &&
             it.parameterList.parameters[0].typeElement != null &&
@@ -80,7 +77,9 @@ class GroovyMacroRegistryServiceImpl(val project: Project, val cs: CoroutineScop
           }
           macroRegistry.addAll(macroMethods)
         }
-        CachedValueProvider.Result(macroRegistry.mapTo(HashSet()) { SmartPointerManager.createPointer(it) }, ProjectRootModificationTracker.getInstance(module.project))
+        CachedValueProvider.Result(macroRegistry.mapTo(HashSet()) { SmartPointerManager.createPointer(it) },
+                                   ProjectRootModificationTracker.getInstance(module.project),
+                                   VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS)
       }
       moduleRegistry
     }.value
