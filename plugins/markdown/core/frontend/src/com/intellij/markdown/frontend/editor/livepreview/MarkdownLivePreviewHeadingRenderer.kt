@@ -85,6 +85,7 @@ private const val SOURCE_RANGE_ATTRIBUTE = "md-src-pos"
  * Paints each heading line as HTML in a custom fold. The HTML heading element supplies its font size, scaled as in the JCEF preview.
  * While a heading shows its source, a block inlay below it takes the height difference to prevent UI jumps.
  * On a sticky line, a revealed heading paints as a folded one.
+ * A sticky line shows the heading on one line, without soft wraps.
  * A plain click on a painted heading moves the caret to the source character under the mouse.
  * The Go-to Declaration mouse shortcut, such as Ctrl+Click, also runs Go to Declaration there.
  */
@@ -279,6 +280,7 @@ private data class HeadingLook(
 private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook, width: Int?) : CustomFoldRegionRenderer, CustomHighlighterRenderer {
   private val pane = createPane()
   private var layoutWidth: Int? = null
+  private var isWrapped = false
 
   init { layout(width) }
 
@@ -307,10 +309,15 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
   override fun getOrder(): CustomHighlighterOrder = CustomHighlighterOrder.AFTER_TEXT
 
   private fun paintPane(g: Graphics2D, targetRegion: Rectangle2D) {
+    val isStickyLine = (editor as? EditorImpl)?.isStickyLinePainting == true
+    val wrapWidth = layoutWidth
+    val isWrapped = isWrapped
+    if (isStickyLine && isWrapped) layout(null)
+    val regionHeight = if (isStickyLine) editor.lineHeight else targetRegion.height.toInt()
     val graphics = g.create() as Graphics2D
     try {
-      graphics.translate(targetRegion.x + look.indent, targetRegion.y + paneY(targetRegion.height.toInt()))
-      if (pane.height > editor.lineHeight && (editor as? EditorImpl)?.isStickyLinePainting == true) {
+      graphics.translate(targetRegion.x + look.indent, targetRegion.y + paneY(regionHeight))
+      if (isStickyLine && pane.height > editor.lineHeight) {
         // A sticky line shows exactly one line, so the size of the header needs to be adjusted to fit
         val scale = editor.lineHeight.toDouble() / pane.height
         graphics.scale(scale, scale)
@@ -320,6 +327,7 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
     }
     finally {
       graphics.dispose()
+      if (isStickyLine && isWrapped) layout(wrapWidth)
     }
   }
 
@@ -357,6 +365,7 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
     val preferred = pane.preferredSize
     pane.setSize(paneWidth ?: preferred.width.coerceAtLeast(1), preferred.height)
     layoutWidth = width
+    isWrapped = paneWidth != null && preferred.width > paneWidth
   }
 
   private fun paneY(regionHeight: Int): Int = ((regionHeight - pane.height) / 2).coerceAtLeast(0)

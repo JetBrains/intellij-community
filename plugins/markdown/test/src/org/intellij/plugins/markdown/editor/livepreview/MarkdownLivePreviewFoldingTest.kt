@@ -411,6 +411,29 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertFalse(highlighter.isValid)
   }
 
+  fun testStickyLineOfWrappedHeadingPaintsOneLine() {
+    configure("# " + "word ".repeat(30).trim() + "\n\ntail<caret>")
+    val editor = myFixture.editor as EditorImpl
+    EditorTestUtil.configureSoftWraps(editor, 300, 1000, 10)
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    val fold = headingFolds().single()
+    assertTrue("The heading must wrap", fold.heightInPixels > 2 * editor.lineHeight)
+    val background = editor.colorsScheme.defaultBackground
+    val wrappedRows = paintHeading(fold, background).paintedRows(background)
+
+    editor.isStickyLinePainting = true
+    try {
+      val rows = paintHeading(fold, background).paintedRows(background)
+      val columns = paintedHeadingColumns()
+      assertTrue("The sticky line must paint within one line: $rows", rows.last < editor.lineHeight)
+      assertTrue("The sticky line must paint up to the fold end: $columns", columns.last > fold.widthInPixels * 3 / 4)
+    }
+    finally {
+      editor.isStickyLinePainting = false
+    }
+    assertEquals("The editor must paint the wrapped heading again", wrappedRows, paintHeading(fold, background).paintedRows(background))
+  }
+
   fun testHeadingAtDocumentEnd() {
     configure("<caret>before\n## last")
     assertEquals(1, headingFolds().size)
