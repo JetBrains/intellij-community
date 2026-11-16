@@ -28,15 +28,14 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.osFamily
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
@@ -47,14 +46,16 @@ import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.produceIn
-import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
+import java.io.InterruptedIOException
 import java.nio.ByteBuffer
+import java.nio.channels.ClosedByInterruptException
 import java.nio.channels.FileChannel
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.FileSystemException
@@ -98,6 +99,17 @@ object EelPathTransfer {
   }
 
   @Throws(IOException::class)
+  suspend fun walkingTransferSuspend(
+    sourceRoot: Path,
+    targetRoot: Path,
+    removeSource: Boolean,
+    copyAttributes: Boolean,
+  ) {
+    val fileAttributesStrategy = if (copyAttributes) EelFileTransferAttributesStrategy.Copy else EelFileTransferAttributesStrategy.Skip
+    walkingTransferSuspend(sourceRoot, targetRoot, removeSource, fileAttributesStrategy)
+  }
+
+  @Throws(IOException::class)
   fun walkingTransfer(
     sourceRoot: Path,
     targetRoot: Path,
@@ -116,11 +128,36 @@ object EelPathTransfer {
       recursive = true,
       replaceExisting = true,
       continueOnError = false,
-      cancellableJobs = emptyList(),
+      cancellable = false,
       progressFlows = emptyList(),
     )
   }
 
+  @Throws(IOException::class)
+  suspend fun walkingTransferSuspend(
+    sourceRoot: Path,
+    targetRoot: Path,
+    removeSource: Boolean,
+    fileAttributesStrategy: EelFileTransferAttributesStrategy,
+    absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler? = null,
+    filter: ((Path) -> Boolean)? = null,
+  ) {
+    walkingTransferSuspend(
+      sourceRoot = sourceRoot,
+      targetRoot = targetRoot,
+      removeSource = removeSource,
+      fileAttributesStrategy = fileAttributesStrategy,
+      absoluteSymlinkHandler = absoluteSymlinkHandler,
+      filter = filter,
+      recursive = true,
+      replaceExisting = true,
+      continueOnError = false,
+      cancellable = true,
+      progressFlows = emptyList(),
+    )
+  }
+
+  @Throws(IOException::class)
   fun walkingTransfer(
     sourceRoot: Path,
     targetRoot: Path,
@@ -131,80 +168,102 @@ object EelPathTransfer {
     recursive: Boolean,
     replaceExisting: Boolean,
     continueOnError: Boolean,
-    cancellableJobs: List<Job>,
+    cancellable: Boolean,
+    progressFlows: List<MutableSharedFlow<ProgressEvent>>,
+  ) {
+    runTransferBlocking(cancellable = cancellable) {
+      walkingTransferSuspend(
+        sourceRoot = sourceRoot,
+        targetRoot = targetRoot,
+        removeSource = removeSource,
+        fileAttributesStrategy = fileAttributesStrategy,
+        absoluteSymlinkHandler = absoluteSymlinkHandler,
+        filter = filter,
+        recursive = recursive,
+        replaceExisting = replaceExisting,
+        continueOnError = continueOnError,
+        cancellable = cancellable,
+        progressFlows = progressFlows,
+      )
+    }
+  }
+
+  @Throws(IOException::class)
+  suspend fun walkingTransferSuspend(
+    sourceRoot: Path,
+    targetRoot: Path,
+    removeSource: Boolean,
+    fileAttributesStrategy: EelFileTransferAttributesStrategy,
+    absoluteSymlinkHandler: IncrementalWalkingTransferAbsoluteSymlinkHandler?,
+    filter: ((Path) -> Boolean)?,
+    recursive: Boolean,
+    replaceExisting: Boolean,
+    continueOnError: Boolean,
+    cancellable: Boolean,
     progressFlows: List<MutableSharedFlow<ProgressEvent>>,
   ) {
     if (LOG.isLoggable(Level.FINE)) LOG.fine("walkingTransfer($sourceRoot -> $targetRoot)")
-    for (externalJob in cancellableJobs) {
-      externalJob.ensureActive()
-    }
-    runSuspendBlocking {
-      val scopeJob = coroutineContext.job
-      val handles = cancellableJobs.map { externalJob ->
-        externalJob.invokeOnCompletion { cause ->
-          if (cause != null) {
-            val cancellation = cause as? CancellationException ?: CancellationException(cause.message ?: "Operation cancelled", cause)
-            scopeJob.cancel(cancellation)
-          }
-        }
-      }
-      try {
-        for (externalJob in cancellableJobs) {
-          externalJob.ensureActive()
-        }
-        val allSucceeded = incrementalWalkingTransfer(
-          sourceRoot = sourceRoot,
-          targetRoot = targetRoot,
-          fileAttributesStrategy = fileAttributesStrategy,
-          absoluteSymlinkHandler = absoluteSymlinkHandler,
-          filter = filter,
-          recursive = recursive,
-          replaceExisting = replaceExisting,
-          continueOnError = continueOnError,
-          cancellableJobs = cancellableJobs,
-          progressFlows = progressFlows,
-        )
-        for (externalJob in cancellableJobs) {
-          externalJob.ensureActive()
-        }
-        if (removeSource && allSucceeded) {
-          val sourceEel = sourceRoot.asEelPath()
-          val targetEel = targetRoot.asEelPath()
-          if (sourceEel.descriptor != targetEel.descriptor || sourceEel.normalize() != targetEel.normalize()) {
-            val sourceEelApi = sourceEel.descriptor.toEelApi()
-            sourceEelApi.fs.delete(sourceEel, recursive).getOrThrowFileSystemException()
-          }
-        }
-      }
-      finally {
-        for (handle in handles) {
-          handle.dispose()
-        }
+    checkCancellable(cancellable)
+    val allSucceeded = incrementalWalkingTransfer(
+      sourceRoot = sourceRoot,
+      targetRoot = targetRoot,
+      fileAttributesStrategy = fileAttributesStrategy,
+      absoluteSymlinkHandler = absoluteSymlinkHandler,
+      filter = filter,
+      recursive = recursive,
+      replaceExisting = replaceExisting,
+      continueOnError = continueOnError,
+      cancellable = cancellable,
+      progressFlows = progressFlows,
+    )
+    checkCancellable(cancellable)
+    if (removeSource && allSucceeded) {
+      val sourceEel = sourceRoot.asEelPath()
+      val targetEel = targetRoot.asEelPath()
+      if (!sourceEel.descriptor.equalsMayBeUsingMachine(targetEel.descriptor) || sourceEel.normalize() != targetEel.normalize()) {
+        val sourceEelApi = sourceEel.descriptor.toEelApi()
+        sourceEelApi.fs.delete(sourceEel, recursive).getOrThrowFileSystemException()
       }
     }
   }
 
-  private fun <T> runSuspendBlocking(block: suspend CoroutineScope.() -> T): T {
-    val latch = java.util.concurrent.CountDownLatch(1)
-    var result: Result<T>? = null
-    val scope = CoroutineScope(Dispatchers.Unconfined + Job())
-    val suspendBlock: suspend () -> T = { scope.block() }
-    suspendBlock.startCoroutine(object : Continuation<T> {
-      override val context get() = scope.coroutineContext
-      override fun resumeWith(outcome: Result<T>) {
-        result = outcome
-        latch.countDown()
+  @Suppress("RAW_RUN_BLOCKING")
+  internal fun <T> runTransferBlocking(cancellable: Boolean, block: suspend CoroutineScope.() -> T): T {
+    val wasInterrupted = if (cancellable) {
+      if (Thread.interrupted()) {
+        throw InterruptedException()
       }
-    })
+      false
+    }
+    else {
+      Thread.interrupted()
+    }
     try {
-      latch.await()
+      return runBlocking(block = block)
     }
-    catch (e: InterruptedException) {
-      scope.cancel()
-      Thread.currentThread().interrupt()
-      throw CancellationException("Interrupted while waiting for transfer", e)
+    finally {
+      if (wasInterrupted) {
+        Thread.currentThread().interrupt()
+      }
     }
-    return result!!.getOrThrow()
+  }
+
+  private suspend fun checkCancellable(cancellable: Boolean) {
+    if (cancellable) {
+      if (Thread.interrupted()) {
+        throw InterruptedException()
+      }
+      currentCoroutineContext().ensureActive()
+    }
+  }
+
+  private suspend fun rethrowIfInterrupted(cancellable: Boolean, e: IOException) {
+    if (cancellable) {
+      currentCoroutineContext().ensureActive()
+      if (Thread.interrupted() || e is ClosedByInterruptException || e is InterruptedIOException) {
+        throw InterruptedException().apply { initCause(e) }
+      }
+    }
   }
 
 
@@ -1041,7 +1100,7 @@ object EelPathTransfer {
       recursive = true,
       replaceExisting = true,
       continueOnError = false,
-      cancellableJobs = emptyList(),
+      cancellable = true,
       progressFlows = emptyList(),
     )
   }
@@ -1055,7 +1114,7 @@ object EelPathTransfer {
     recursive: Boolean,
     replaceExisting: Boolean,
     continueOnError: Boolean,
-    cancellableJobs: List<Job>,
+    cancellable: Boolean,
     progressFlows: List<MutableSharedFlow<ProgressEvent>>,
   ): Boolean {
     val totalBytesTransferred = AtomicLong(0L)
@@ -1128,7 +1187,7 @@ object EelPathTransfer {
     val resolvedTargetRoot = targetRootEel.asNioPath()
 
     val sourceAttrs = resolvedSourceRoot.fileAttributesView<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
-    if (sourceDescriptor == targetDescriptor) {
+    if (sourceDescriptor.equalsMayBeUsingMachine(targetDescriptor)) {
       val normSource = sourcePathEel.normalize()
       val normTarget = targetRootEel.normalize()
       if (normSource == normTarget) {
@@ -1147,7 +1206,8 @@ object EelPathTransfer {
     val targetAttrs = try {
       resolvedTargetRoot.fileAttributesViewOrNull<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS)?.readAttributes()
     }
-    catch (_: IOException) {
+    catch (e: IOException) {
+      rethrowIfInterrupted(cancellable, e)
       null
     }
     val targetExistedBefore = targetAttrs != null
@@ -1264,10 +1324,7 @@ object EelPathTransfer {
           recordFileTransferred(srcEntry.path.asNioPath(), dstEntry.path.asNioPath())
         },
       ).collect { diffOp ->
-        for (externalJob in cancellableJobs) {
-          externalJob.ensureActive()
-        }
-        currentCoroutineContext().ensureActive()
+        checkCancellable(cancellable)
 
         val directorySourceFile = when (diffOp) {
           is DiffOperation.Create -> diffOp.sourceFile.takeIf { it.type is WalkDirectoryEntry.Type.Directory }
@@ -1280,10 +1337,7 @@ object EelPathTransfer {
           val targetAbsolutePath = resolvedTargetRoot.resolve(relativePath)
           try {
             withContext(Dispatchers.IO) {
-              for (externalJob in cancellableJobs) {
-                externalJob.ensureActive()
-              }
-              currentCoroutineContext().ensureActive()
+              checkCancellable(cancellable)
               if (LOG.isLoggable(Level.FINER)) LOG.finer("Applying directory diff operation: $diffOp")
               if (diffOp is DiffOperation.ReplaceFile) {
                 if (diffOp.targetFile.type is WalkDirectoryEntry.Type.Directory) {
@@ -1316,10 +1370,7 @@ object EelPathTransfer {
             throw e
           }
           catch (e: IOException) {
-            for (externalJob in cancellableJobs) {
-              externalJob.ensureActive()
-            }
-            currentCoroutineContext().ensureActive()
+            rethrowIfInterrupted(cancellable, e)
             recordError(sourceFileNioPath, targetAbsolutePath, e)
             if (!continueOnError) {
               throw e
@@ -1334,9 +1385,7 @@ object EelPathTransfer {
           var currentSourcePath = resolvedSourceRoot
           var currentTargetPath = resolvedTargetRoot
           try {
-            for (externalJob in cancellableJobs) {
-              externalJob.ensureActive()
-            }
+            checkCancellable(cancellable)
             if (LOG.isLoggable(Level.FINER)) LOG.finer("Applying diff operation: $diffOp")
             when (diffOp) {
               is DiffOperation.Create, is DiffOperation.ReplaceFile -> {
@@ -1378,7 +1427,7 @@ object EelPathTransfer {
                         targetDescriptor = targetDescriptor,
                         targetEelApi = targetEelApi,
                         continueOnError = continueOnError,
-                        cancellableJobs = cancellableJobs,
+                        cancellable = cancellable,
                         onBytesCopied = { bytesRead -> recordBytesCopied(sourceFileNioPath, targetAbsolutePath, bytesRead) },
                       )
                       Files.move(targetAbsoluteTempPath, targetAbsolutePath, StandardCopyOption.REPLACE_EXISTING)
@@ -1451,7 +1500,7 @@ object EelPathTransfer {
                     targetDescriptor = targetDescriptor,
                     targetEelApi = targetEelApi,
                     continueOnError = continueOnError,
-                    cancellableJobs = cancellableJobs,
+                    cancellable = cancellable,
                     onBytesCopied = { bytesRead -> recordBytesCopied(sourcePathNio, targetPathNio, bytesRead) },
                   )
                   Files.move(tempRemotePath, targetPathNio, StandardCopyOption.REPLACE_EXISTING)
@@ -1502,18 +1551,13 @@ object EelPathTransfer {
                 }
               }
             }
-            for (externalJob in cancellableJobs) {
-              externalJob.ensureActive()
-            }
+            checkCancellable(cancellable)
           }
           catch (e: CancellationException) {
             throw e
           }
           catch (e: IOException) {
-            for (externalJob in cancellableJobs) {
-              externalJob.ensureActive()
-            }
-            currentCoroutineContext().ensureActive()
+            rethrowIfInterrupted(cancellable, e)
             recordError(currentSourcePath, currentTargetPath, e)
             if (!continueOnError) {
               throw e
@@ -1524,10 +1568,6 @@ object EelPathTransfer {
           }
         }
       }
-    }
-
-    for (externalJob in cancellableJobs) {
-      externalJob.ensureActive()
     }
 
     if (errors.isEmpty() && successfulItems.get() == 0) {
@@ -1572,7 +1612,7 @@ object EelPathTransfer {
     targetDescriptor: EelDescriptor,
     targetEelApi: EelApi,
     continueOnError: Boolean,
-    cancellableJobs: List<Job>,
+    cancellable: Boolean,
     onBytesCopied: (Long) -> Unit,
   ) {
     if (sourceDescriptor === targetDescriptor) {
@@ -1581,10 +1621,7 @@ object EelPathTransfer {
           // this buffer size gave the best overall performance when benchmarking
           val buffer = ByteArray(64 * 1024)
           while (true) {
-            for (externalJob in cancellableJobs) {
-              externalJob.ensureActive()
-            }
-            currentCoroutineContext().ensureActive()
+            checkCancellable(cancellable)
             val bytesRead = sourceFile.read(buffer)
             if (bytesRead < 0) break
             if (bytesRead == 0) continue
@@ -1603,10 +1640,7 @@ object EelPathTransfer {
       val chunks = flow {
         FileChannel.open(sourcePathNio, READ).use { chan ->
           while (true) {
-            for (externalJob in cancellableJobs) {
-              externalJob.ensureActive()
-            }
-            currentCoroutineContext().ensureActive()
+            checkCancellable(cancellable)
             // this buffer size gave the best overall performance when benchmarking
             val buffer = ByteBuffer.allocate(256 * 1024)
             val bytesRead = chan.read(buffer)

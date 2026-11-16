@@ -1,16 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.fs
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.CopyOption
 import java.nio.file.Path
-import kotlin.coroutines.CoroutineContext
 
 /**
  * Additional options for [java.nio.file.Files.copy] and [java.nio.file.Files.move].
@@ -37,19 +33,11 @@ sealed interface EelCopyOption : CopyOption {
   }
 
   /**
-   * Makes the copy or move operation cancellable via the given coroutine [job].
-   * When [job] is cancelled, the operation aborts and throws [kotlinx.coroutines.CancellationException].
+   * Makes the copy or move operation cancellable via thread interruption (for example, when wrapped in
+   * [kotlinx.coroutines.runInterruptible]).
    */
-  class Cancellable(val job: Job) : EelCopyOption {
-    constructor(scope: CoroutineScope) : this(scope.coroutineContext.job)
-    constructor(context: CoroutineContext) : this(context.job)
-
-    override fun equals(other: Any?): Boolean =
-      this === other || (other is Cancellable && job == other.job)
-
-    override fun hashCode(): Int = job.hashCode()
-
-    override fun toString(): String = "EelCopyOption.Cancellable(job=$job)"
+  object Cancellable : EelCopyOption {
+    override fun toString(): String = "EelCopyOption.Cancellable"
   }
 
   /**
