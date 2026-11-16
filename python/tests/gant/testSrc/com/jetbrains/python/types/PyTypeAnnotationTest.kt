@@ -4283,6 +4283,75 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-94142"])
+  fun `class bound mismatch highlights only the bad type argument`() = test("""
+    class Base[K, V: str]: ...
+
+    class Child(Base[bytes, int]): ...
+    #                       ^^^ WARNING Expected type 'V ≤: str', got 'int' instead
+
+    b: Base[int, int]
+    #            ^^^ WARNING Expected type 'V ≤: str', got 'int' instead
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-94142"])
+  fun `old-style class bound mismatch highlights only the bad type argument`() = test("""
+    from typing import Generic, TypeVar
+
+    K = TypeVar("K", bound=int)
+    V = TypeVar("V")
+
+    class Base(Generic[K, V]): ...
+
+    b: Base[str, str]
+    #       ^^^ WARNING Expected type 'K ≤: int', got 'str' instead
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-94142"])
+  fun `type alias bound mismatch highlights only the bad type argument`() = test("""
+    type Alias[K, V: str] = dict[K, V]
+    a: Alias[int, int]
+    #             ^^^ WARNING Expected type 'V ≤: str', got 'int' instead
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-94142"])
+  fun `bound mismatch after a TypeVarTuple highlights only the bad type argument`() = test("""
+    class Base[*Ts, V: str]: ...
+
+    b: Base[int, int, int]
+    #                 ^^^ WARNING Expected type 'V ≤: str', got 'int' instead
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-94142"])
+  fun `bound mismatch before a TypeVarTuple highlights only the bad type argument`() = test("""
+    class Base[V: str, *Ts]: ...
+
+    b: Base[int, int, int]
+    #       ^^^ WARNING Expected type 'V ≤: str', got 'int' instead
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-94142"])
+  fun `bound mismatch after a ParamSpec highlights only the bad type argument`() = test("""
+    class Base[**P, V: str]: ...
+
+    b: Base[[int], int]
+    #              ^^^ WARNING Expected type 'V ≤: str', got 'int' instead
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-94142"])
+  fun `bound mismatch before a default highlights only the bad type argument`() = test("""
+    class Base[K, V: str, D = int]: ...
+
+    b: Base[int, int]
+    #            ^^^ WARNING Expected type 'V ≤: str', got 'int' instead
+    """.trimIndent())
+  @Test
   @TestFor(issues = ["PY-88277"])
   fun `class TypeVarTuple bound mismatch`() = test("""
     from typing import Unpack
