@@ -11,15 +11,19 @@ import com.intellij.psi.PsiReferenceProvider
 import com.intellij.psi.ResolveResult
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyModuleType
+import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.pyMock.PyMockPatchTargetReferenceSet
 import com.jetbrains.python.testing.pyMock.collectMemberVariants
@@ -84,8 +88,9 @@ private fun findMonkeypatchAttrCall(str: PyStringLiteralExpression): PyCallExpre
  * Reference for the attribute name in `monkeypatch.setattr(obj, "attr", value)`.
  * Resolves "attr" against the class or the module that `obj` stands for.
  *
- * The reference is soft when the code analysis context cannot name that class or module, for example when the
- * type of `obj` is `Any` or is inferred from the source of another file. Then the attribute cannot be checked.
+ * The reference is soft when the attribute cannot be checked. That is when the code analysis context cannot name
+ * the class or the module, for example for `Any` or for a type inferred from the source of another file. It is also
+ * when `obj` is an instance of `object` or of `type`, which can stand for any class.
  */
 private class PyMonkeypatchAttrReference(
   element: PyStringLiteralExpression,
@@ -101,7 +106,11 @@ private class PyMonkeypatchAttrReference(
     return arrayOf(PsiElementResolveResult(member))
   }
 
-  override fun isSoft(): Boolean = resolveTarget(codeAnalysisContext()) == null
+  override fun isSoft(): Boolean {
+    val context = codeAnalysisContext()
+    val targetExpr = targetExpression() ?: return true
+    return standsForAnyClass(context.getType(targetExpr), targetExpr) || resolveTarget(context) == null
+  }
 
   override fun getVariants(): Array<Any> {
     val target = resolveTarget(TypeEvalContext.codeCompletion(element.project, element.containingFile)) ?: return emptyArray()
@@ -110,10 +119,11 @@ private class PyMonkeypatchAttrReference(
 
   private fun codeAnalysisContext(): TypeEvalContext = TypeEvalContext.codeAnalysis(element.project, element.containingFile)
 
+  private fun targetExpression(): PyExpression? = callExpr.argumentList?.arguments?.firstOrNull { it !is PyKeywordArgument }
+
   /** Returns the class or the module whose attribute is patched, or null when [context] cannot tell. */
   private fun resolveTarget(context: TypeEvalContext): PsiElement? {
-    val args = callExpr.argumentList?.arguments ?: return null
-    val targetExpr = args.firstOrNull { it !is PyKeywordArgument } ?: return null
+    val targetExpr = targetExpression() ?: return null
 
     when (val type = context.getType(targetExpr)) {
       is PyClassType -> return type.pyClass
@@ -124,4 +134,11 @@ private class PyMonkeypatchAttrReference(
       .map { PyUtil.turnDirIntoInit(it) ?: it }
       .firstOrNull { it is PyClass || it is PyFile }
   }
+}
+
+/** An instance of `object`, or of `type` as for `type[Any]`, can be an instance of any class or any class. */
+private fun standsForAnyClass(type: PyType?, anchor: PsiElement): Boolean {
+  if (type !is PyClassType || type.isDefinition || type.name != PyNames.OBJECT && type.name != PyNames.TYPE) return false
+  val builtins = PyBuiltinCache.getInstance(anchor)
+  return type == builtins.objectType || type == builtins.typeType
 }
