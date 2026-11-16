@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.Processor
 import org.jetbrains.annotations.TestOnly
 
 /**
@@ -139,6 +140,42 @@ internal class SnapshotHighlighterStorage(
     val lineRange = MarkupModelImpl.roundToLineBoundaries(document, startOffset, endOffset)
     val lines = markupIterator(roots.linesInRangeRoot, lineRange.startOffset, lineRange.endOffset, tastePreference)
     return MarkupIterator.mergeIterators(exact, lines, RangeHighlighterEx.BY_AFFECTED_START_OFFSET)
+  }
+
+  fun processRangeHighlightersOverlappingWith(
+    startOffset: Int,
+    endOffset: Int,
+    processor: Processor<in RangeHighlighterEx>,
+  ): Boolean {
+    val roots = rootStore.root(currentSnapshot()) as? CompoundPMarkerRoot ?: return true
+    var start = startOffset.coerceIn(0, document.textLength)
+    var end = endOffset.coerceIn(start, document.textLength)
+    if (!roots.exactRangeRoot.isEmpty() && !roots.linesInRangeRoot.isEmpty()) {
+      overlappingIterator(start, end, 0).use { iterator ->
+        while (iterator.hasNext()) {
+          if (!processor.process(iterator.next())) return false
+        }
+      }
+      return true
+    }
+    val root = if (roots.linesInRangeRoot.isEmpty()) roots.exactRangeRoot
+    else {
+      val lineRange = MarkupModelImpl.roundToLineBoundaries(document, start, end)
+      start = lineRange.startOffset
+      end = lineRange.endOffset
+      roots.linesInRangeRoot
+    }
+    iteratorDepth.set(iteratorDepth.get() + 1)
+    try {
+      return root.processRangeMarkersOverlappingWith(start, end, 0) { entry ->
+        val marker = entry.marker
+        marker !is SnapshotRangeHighlighterImpl || !marker.isValid || processor.process(marker)
+      }
+    }
+    finally {
+      val depth = iteratorDepth.get() - 1
+      if (depth == 0) iteratorDepth.remove() else iteratorDepth.set(depth)
+    }
   }
 
   private fun highlightersChanged(invalidatedHandles: List<SnapshotMarkerReference<SnapshotRangeHighlighterImpl>>) {

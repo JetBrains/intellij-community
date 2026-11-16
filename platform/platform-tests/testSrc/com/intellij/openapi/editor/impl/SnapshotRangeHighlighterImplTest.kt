@@ -33,6 +33,7 @@ import it.unimi.dsi.fastutil.longs.LongArrayList
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.ValueSource
 import java.awt.Color
 import java.awt.Font
@@ -619,6 +620,91 @@ class SnapshotRangeHighlighterImplTest {
         Assertions.assertThat(readEntryCount).isEqualTo(2)
         Assertions.assertThat(iterator.next()).isSameAs(highlighters[1])
       }
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @ParameterizedTest
+  @EnumSource(HighlighterTargetArea::class)
+  fun `overlap processing matches the iterator after an edit`(targetArea: HighlighterTargetArea) {
+    val document = DocumentImpl("abcd\nefgh\nijkl", true)
+    val model = MarkupModelImpl(document)
+    try {
+      for (start in listOf(1, 6, 11)) {
+        model.addRangeHighlighter(start, start + 1, 1, null, targetArea)
+        model.addRangeHighlighter(start, start, 2, null, targetArea)
+      }
+      model.addRangeHighlighter(3, 4, 1, null, targetArea).dispose()
+      document.insertString(0, "x")
+
+      for ((start, end) in listOf(-10 to -1, -10 to 100, 0 to 0, 2 to 2, 3 to 3, 5 to 5, 7 to 7, 10 to 1, 100 to 100)) {
+        val expected = model.overlappingIterator(start, end).use { it.asSequence().toList() }
+        val actual = ArrayList<RangeHighlighterEx>()
+        Assertions.assertThat(model.processRangeHighlightersOverlappingWith(start, end) {
+          actual.add(it)
+          true
+        }).isTrue()
+        Assertions.assertThat(actual).containsExactlyElementsOf(expected)
+      }
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @ParameterizedTest
+  @EnumSource(HighlighterTargetArea::class)
+  fun `overlap processing releases the mutation guard after termination`(targetArea: HighlighterTargetArea) {
+    val document = DocumentImpl("abcd\nefgh", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val first = model.addRangeHighlighter(1, 2, 1, null, targetArea)
+      model.addRangeHighlighter(6, 7, 1, null, targetArea)
+      val visited = ArrayList<RangeHighlighter>()
+      Assertions.assertThat(model.processRangeHighlightersOverlappingWith(0, document.textLength) {
+        visited.add(it)
+        false
+      }).isFalse()
+      Assertions.assertThat(visited).containsExactly(first)
+
+      Assertions.assertThatThrownBy {
+        model.processRangeHighlightersOverlappingWith(0, document.textLength) {
+          model.addRangeHighlighter(0, 1, 1, null, targetArea)
+          true
+        }
+      }.isInstanceOf(IllegalStateException::class.java).hasMessage("Cannot change range highlighters during iteration")
+
+      first.dispose()
+      model.addRangeHighlighter(0, 1, 1, null, targetArea)
+      Assertions.assertThat(model.allHighlighters).hasSize(2)
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
+  fun `overlap processing preserves the order of mixed highlighter trees`() {
+    val document = DocumentImpl("abcd\nefgh", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val exact = model.addRangeHighlighter(1, 2, 1, null, HighlighterTargetArea.EXACT_RANGE)
+      val line = model.addRangeHighlighter(3, 4, 1, null, HighlighterTargetArea.LINES_IN_RANGE)
+      val last = model.addRangeHighlighter(6, 7, 1, null, HighlighterTargetArea.EXACT_RANGE)
+      val visited = ArrayList<RangeHighlighter>()
+      Assertions.assertThat(model.processRangeHighlightersOverlappingWith(0, document.textLength) {
+        visited.add(it)
+        it !== exact
+      }).isFalse()
+      Assertions.assertThat(visited).containsExactly(line, exact)
+      visited.clear()
+      Assertions.assertThat(model.processRangeHighlightersOverlappingWith(0, document.textLength) {
+        visited.add(it)
+        true
+      }).isTrue()
+      Assertions.assertThat(visited).containsExactly(line, exact, last)
     }
     finally {
       model.dispose()

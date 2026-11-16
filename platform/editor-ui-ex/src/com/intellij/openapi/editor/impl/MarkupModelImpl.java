@@ -390,6 +390,10 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public boolean processRangeHighlightersOverlappingWith(int start, int end, @NotNull Processor<? super RangeHighlighterEx> processor) {
+    SnapshotHighlighterStorage snapshotStorage = mySnapshotHighlighterStorage;
+    if (snapshotStorage != null) {
+      return snapshotStorage.processRangeHighlightersOverlappingWith(start, end, processor);
+    }
     try (MarkupIterator<RangeHighlighterEx> iterator = overlappingIterator(start, end)) {
       return ContainerUtil.process(iterator, processor);
     }
