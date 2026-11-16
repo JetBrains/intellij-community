@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
+import kotlinx.coroutines.flow.drop
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.PythonSdkTable
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -148,6 +150,14 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
       ProjectJdkTable.JDK_TABLE_TOPIC,
       model,
     )
+
+    // The interpreter of a module can change outside this page, such as in the widget, and the interpreter library flow
+    // fires no JDK-table event for it. Each snapshot states the interpreters after the change, so the panes follow it.
+    sessionScope.launch {
+      EvoPyProjectModel.getInstance(project).snapshotFlow().drop(1).collect {
+        withContext(Dispatchers.EDT) { modulePanes.values.forEach { it.refreshModuleSdk() } }
+      }
+    }
 
     rebuildContentHolder()
     val toggleVisible = isAutoConfigToggleVisible()

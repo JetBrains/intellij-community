@@ -270,6 +270,21 @@ internal class PyModuleDetailsPane(
     }
   }
 
+  /**
+   * Reads the interpreter of the module again, and rebuilds only the SDK combo. For a change outside this page, such as
+   * a pick in the widget. A selection that the user made here and has not applied stays when the combo still holds it.
+   */
+  fun refreshModuleSdk() {
+    moduleScope.launch {
+      val sdk = findModuleSdk(pyProject)
+      withContext(Dispatchers.EDT) {
+        moduleSdkSnapshot = sdk
+        model.markSdkApplied(sdk?.name)
+        refreshSdkCombo()
+      }
+    }
+  }
+
   /** Rebuild only the SDK combo — for JDK-table add/remove/rename events fired outside this page. */
   fun refreshSdkCombo() {
     val previouslySelected = selectedExistingSdk()?.name

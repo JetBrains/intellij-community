@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
+import com.intellij.python.sdk.backend.PythonInterpreterKey
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import com.intellij.python.sdk.backend.PythonSdkTable
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
@@ -276,9 +278,11 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     val allEditable = project.asModuleOrProject.filterAssignablePythonSdks(PythonSdkTable.allSdks(project))
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
       // A broken SDK names no interpreter, so it gets a row that says why, and the user can remove it.
+      // The interpreters a project uses: this page is a history of environments, so they cannot be removed here.
+      val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
       val rows = allEditable.map { sdk ->
         when (val result = sdk.pythonInterpreterResultAsync()) {
-          is Result.Success -> PyInterpreterRow.Interpreter(result.result)
+          is Result.Success -> PyInterpreterRow.Interpreter(result.result, inUse = snapshot.isInUse(result.result))
           is Result.Failure -> PyInterpreterRow.Broken(sdk, result.error.message)
         }
       }
@@ -335,7 +339,7 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     AllIcons.General.Remove,
   ) {
     override fun actionPerformed(e: AnActionEvent) {
-      val row = selectedRow() ?: return
+      val row = selectedRow()?.takeUnless { it.isInUse() } ?: return
       PyPackageCoroutine.launch(project) {
         PythonInterpreterRegistry.getInstance(project).removeSdk(row.sdk)
         withContext(Dispatchers.EDT) {
@@ -346,7 +350,10 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     }
 
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = selectedRow() != null
+      val row = selectedRow()
+      val inUse = row?.isInUse() == true
+      e.presentation.isEnabled = row != null && !inUse
+      e.presentation.description = if (inUse) PyBundle.message("python.interpreters.remove.in.use.description") else null
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -593,7 +600,8 @@ internal sealed interface PyInterpreterRow {
   /** What the row draws. */
   fun presentation(): PythonInterpreterPresentation
 
-  class Interpreter(val interpreter: PythonInterpreter) : PyInterpreterRow {
+  /** A row of [interpreter]. [inUse] when a project uses it, so it cannot be removed, see [isInUse]. */
+  class Interpreter(val interpreter: PythonInterpreter, val inUse: Boolean = false) : PyInterpreterRow {
     override val sdk: Sdk get() = interpreter.sdk
     override fun presentation(): PythonInterpreterPresentation = interpreter.presentation()
   }
@@ -746,6 +754,7 @@ private class PyInterpreterNameAndVersionRenderer(
       val item = value.presentation()
       label.icon = item.icon.icon()
       renderPyInterpreterItemText(label, item)
+      if (value.isInUse()) label.append("  " + PyBundle.message("python.interpreters.in.use"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
     val bg = list?.background ?: UIUtil.getListBackground(false, false)
     panel.background = bg
@@ -760,3 +769,18 @@ private class PyInterpreterNameAndVersionRenderer(
   }
 
 }
+
+/** Whether a project uses the interpreter of this row. A broken SDK names no interpreter, so no project uses it. */
+private fun PyInterpreterRow.isInUse(): Boolean = when (this) {
+  is PyInterpreterRow.Interpreter -> inUse
+  is PyInterpreterRow.Broken -> false
+}
+
+/**
+ * Whether a project of this snapshot uses [interpreter]: an interpreter library entry names it, or in the legacy flow a
+ * module uses it. All Interpreters is a history of environments, so an interpreter in use cannot be removed there: a
+ * module would keep naming an interpreter that is gone.
+ */
+internal fun EvoPyProjectModel.Snapshot.isInUse(interpreter: PythonInterpreter): Boolean =
+  PythonInterpreterKey(interpreter.ownerDir, interpreter.ref) in interpreterKeys || interpreter in interpreters
+
