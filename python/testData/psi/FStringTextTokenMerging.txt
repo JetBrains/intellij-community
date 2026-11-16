@@ -5,8 +5,7 @@ PyFile:FStringTextTokenMerging.py
     PsiWhiteSpace(' ')
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
-    PyStringLiteralExpression: foo""bar"\{rf'green"eggs{42:for"mat}'}
-baz
+    PyStringLiteralExpression: foo""bar"\{rf'green"eggs{42:for"mat}'}baz
 quux
 
       PyFormattedStringElement
