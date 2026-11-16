@@ -650,7 +650,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       }
     }
 
-    fixOverlappedSegments(myCurrentSegmentNumber);
+    getSegments().fixOverlappedSegments(myCurrentSegmentNumber);
 
     Runnable action = () -> {
       if (isDisposed()) {
@@ -731,30 +731,6 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     });
   }
 
-  /**
-   * Must be invoked on every segment change in order to avoid overlapping editing segment with its neighbours
-   */
-  private void fixOverlappedSegments(int currentSegment) {
-    if (currentSegment >= 0) {
-      int currentSegmentStart = getSegments().getSegmentStart(currentSegment);
-      int currentSegmentEnd = getSegments().getSegmentEnd(currentSegment);
-      for (int i = 0; i < getSegments().getSegmentsCount(); i++) {
-        if (i > currentSegment) {
-          final int startOffset = getSegments().getSegmentStart(i);
-          if (currentSegmentStart <= startOffset && startOffset < currentSegmentEnd) {
-            getSegments().replaceSegmentAt(i, currentSegmentEnd, Math.max(getSegments().getSegmentEnd(i), currentSegmentEnd), true);
-          }
-        }
-        else if (i < currentSegment) {
-          final int endOffset = getSegments().getSegmentEnd(i);
-          if (currentSegmentStart < endOffset && endOffset <= currentSegmentEnd) {
-            getSegments().replaceSegmentAt(i, Math.min(getSegments().getSegmentStart(i), currentSegmentStart), currentSegmentStart, true);
-          }
-        }
-      }
-    }
-  }
-
   private @NotNull String getVariableValueText(String variableName) {
     TextResult value = getVariableValue(variableName);
     return value != null ? value.getText() : "";
@@ -825,7 +801,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       int newEnd = start + newValue.length();
       getSegments().replaceSegmentAt(segmentNumber, start, newEnd);
       getSegments().setNeighboursGreedy(segmentNumber, true);
-      fixOverlappedSegments(segmentNumber);
+      getSegments().fixOverlappedSegments(segmentNumber, start != end);
     }
   }
 

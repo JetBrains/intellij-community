@@ -2,15 +2,20 @@
 
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @ApiStatus.Internal
 public class TemplateSegments {
+  private static final Key<Integer> SEGMENT_INDEX = Key.create("TemplateSegments.index");
   private final ArrayList<RangeMarker> mySegments = new ArrayList<>();
   private final @NotNull Document myDocument;
 
@@ -40,8 +45,13 @@ public class TemplateSegments {
   }
 
   void addSegment(int start, int end) {
+    mySegments.add(createSegment(mySegments.size(), start, end));
+  }
+
+  private RangeMarker createSegment(int index, int start, int end) {
     RangeMarker rangeMarker = myDocument.createRangeMarker(start, end);
-    mySegments.add(rangeMarker);
+    rangeMarker.putUserData(SEGMENT_INDEX, index);
+    return rangeMarker;
   }
 
   void setSegmentsGreedy(boolean greedy) {
@@ -70,11 +80,58 @@ public class TemplateSegments {
     boolean greedyToRight = rangeMarker.isGreedyToRight();
     if (!rangeMarker.isValid() || rangeMarker.getStartOffset() != start || rangeMarker.getEndOffset() != end) {
       rangeMarker.dispose();
-      rangeMarker = myDocument.createRangeMarker(start, end);
+      rangeMarker = createSegment(index, start, end);
     }
     rangeMarker.setGreedyToLeft(greedyToLeft || !preserveGreediness);
     rangeMarker.setGreedyToRight(greedyToRight || !preserveGreediness);
     mySegments.set(index, rangeMarker);
+  }
+
+  void fixOverlappedSegments(int currentSegment) {
+    fixOverlappedSegments(currentSegment, false);
+  }
+
+  void fixOverlappedSegments(int currentSegment, boolean mayHaveInvalidSegments) {
+    if (currentSegment < 0) return;
+    int currentSegmentStart = getSegmentStart(currentSegment);
+    int currentSegmentEnd = getSegmentEnd(currentSegment);
+    if (currentSegmentStart == currentSegmentEnd) return;
+
+    if (!mayHaveInvalidSegments && myDocument instanceof DocumentEx document && !(document instanceof DocumentWindow)) {
+      List<Integer> overlappingSegments = new ArrayList<>();
+      boolean completed = document.processRangeMarkersOverlappingWith(currentSegmentStart, currentSegmentEnd, marker -> {
+        Integer index = marker.getUserData(SEGMENT_INDEX);
+        if (index != null && index != currentSegment && index < mySegments.size() && mySegments.get(index) == marker) {
+          overlappingSegments.add(index);
+        }
+        return true;
+      });
+      if (completed) {
+        overlappingSegments.sort(null);
+        for (int index : overlappingSegments) {
+          fixOverlappedSegment(index, currentSegment, currentSegmentStart, currentSegmentEnd);
+        }
+        return;
+      }
+    }
+    for (int i = 0; i < mySegments.size(); i++) {
+      fixOverlappedSegment(i, currentSegment, currentSegmentStart, currentSegmentEnd);
+    }
+  }
+
+  private void fixOverlappedSegment(int index, int currentSegment, int currentSegmentStart, int currentSegmentEnd) {
+    if (index > currentSegment) {
+      int startOffset = getSegmentStart(index);
+      if (currentSegmentStart <= startOffset && startOffset < currentSegmentEnd) {
+        replaceSegmentAt(index, currentSegmentEnd, Math.max(getSegmentEnd(index), currentSegmentEnd), true);
+      }
+    }
+    else if (index < currentSegment) {
+      int endOffset = getSegmentEnd(index);
+      if (currentSegmentStart < endOffset && endOffset <= currentSegmentEnd) {
+        replaceSegmentAt(index, Math.min(getSegmentStart(index), currentSegmentStart), currentSegmentStart, true);
+      }
+    }
   }
 
   void setNeighboursGreedy(final int segmentNumber, final boolean greedy) {
