@@ -74,6 +74,9 @@ jvm_library(
         "//python/python-venv:venv",
         "//platform/remote-core",
         "//libraries/kotlin/reflect",
+        "//platform/progress/shared:ide-progress",
+        "//python/common",
+        "//platform/statistics",
     ],
 )
 ### auto-generated section `build intellij.python.community.impl.conda` end

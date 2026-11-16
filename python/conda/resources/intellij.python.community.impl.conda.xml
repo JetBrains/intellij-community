@@ -18,9 +18,12 @@
     <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.remote.core"/>
+    <module name="intellij.platform.statistics"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.impl.conda.common"/>
@@ -52,6 +55,9 @@
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>
     <pythonEnvironmentProvider id="conda" order="after venv"
                                implementation="com.intellij.python.community.impl.conda.environment.CondaEnvironmentProvider"/>
+    <projectSdkConfigurationExtension
+      implementation="com.jetbrains.python.conda.sdk.configuration.PyEnvironmentYmlSdkConfiguration"
+      id="environmentYml" order="after requirementsTxtOrSetupPy, before uv"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript.JsonSchema">

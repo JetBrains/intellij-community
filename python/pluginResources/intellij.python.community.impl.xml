@@ -837,9 +837,6 @@
     <projectSdkConfigurationExtension
       implementation="com.jetbrains.python.venv.sdk.configuration.PyRequirementsTxtOrSetupPySdkConfiguration"
       id="requirementsTxtOrSetupPy" order="before uv"/>
-    <projectSdkConfigurationExtension
-      implementation="com.jetbrains.python.conda.sdk.configuration.PyEnvironmentYmlSdkConfiguration"
-      id="environmentYml"/>
     <projectSdkConfigurationExtension implementation="com.jetbrains.python.venv.sdk.configuration.PyVenvSdkConfiguration"
                                       id="venv" order="last"/>
 

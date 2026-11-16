@@ -67,5 +67,8 @@
     <orderEntry type="module" module-name="intellij.python.venv" />
     <orderEntry type="module" module-name="intellij.platform.remote.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
+    <orderEntry type="module" module-name="intellij.python.community.common" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

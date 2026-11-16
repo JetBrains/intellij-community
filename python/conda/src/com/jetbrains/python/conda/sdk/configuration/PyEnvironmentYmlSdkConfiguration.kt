@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.conda.sdk.configuration
 
+import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.application.readAction
 import com.jetbrains.python.packaging.PyVersionSpecifiers
@@ -28,7 +29,6 @@ import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.impl.conda.CondaPyTool
 import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
-import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.sdk.backend.PythonEnvironment
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
@@ -37,7 +37,7 @@ import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.PyBundle
+import com.intellij.python.community.impl.conda.PyCondaBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -52,7 +52,7 @@ import com.jetbrains.python.project.project
 import com.jetbrains.python.project.resolveFile
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
@@ -71,7 +71,6 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemDependent
 import java.nio.file.Path
 import kotlin.io.path.name
@@ -96,10 +95,10 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
   override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
 
   private suspend fun checkManageableEnv(pyProject: PyProject): EnvCheckerResult =
-    withBackgroundProgress(pyProject.project, PyBundle.message("python.sdk.validating.environment")) {
-      val condaPath = CondaPyTool.getInstance().resolveExecutable(EelFileSystem(pyProject.getEel()))
+    withBackgroundProgress(pyProject.project, PySdkBundle.message("python.sdk.validating.environment")) {
+      val condaPath = pyProject.getEel().toFileSystem().resolveExecutable(CondaPyTool.getInstance())
                       ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
-      val intentionName = PyBundle.message("sdk.create.condaenv.suggestion")
+      val intentionName = PyCondaBundle.message("sdk.create.condaenv.suggestion")
 
       findExistingEnv(pyProject, condaPath, intentionName)
       ?: if (getEnvironmentYml(pyProject) != null) EnvCheckerResult.EnvNotFound(intentionName)
@@ -162,14 +161,14 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
       is PyCondaEnvIdentity.UnnamedEnv -> if (withContext(Dispatchers.IO) { Path.of(FileUtil.expandUserHome(identity.envPath)).exists() }) return null
     }
     return prepareSdkCreator(
-      { EnvCheckerResult.EnvNotFound(PyBundle.message("sdk.recreate.conda.environment", identity.userReadableName)) }
+      { EnvCheckerResult.EnvNotFound(PyCondaBundle.message("sdk.recreate.conda.environment", identity.userReadableName)) }
     ) { { recreateCondaEnv(pyProject, key, identity) } }
   }
 
   /** Makes the conda environment with [identity], which [key] names, and its interpreter. */
   private suspend fun recreateCondaEnv(pyProject: PyProject, key: PythonInterpreterKey, identity: PyCondaEnvIdentity): PyResult<PythonInterpreter> {
     val eel = pyProject.getEel()
-    val condaExecutable = EelFileSystem(eel).resolveExecutable(CondaPyTool.getInstance())
+    val condaExecutable = eel.toFileSystem().resolveExecutable(CondaPyTool.getInstance())
     validateCondaPath(condaExecutable?.path?.pathString, eel.getPlatformAndRoot())?.let {
       return PyResult.localizedError(it.message)
     }
@@ -207,11 +206,11 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     val targetConfig = PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(pyProject.residesOnModule)
     if (targetConfig != null) {
       // Remote targets aren't supported yet
-      return PyResult.localizedError(PyBundle.message("sdk.remote.target.are.not.supported.for.conda.environment"))
+      return PyResult.localizedError(PyCondaBundle.message("sdk.remote.target.are.not.supported.for.conda.environment"))
     }
 
     val eel = pyProject.getEel()
-    val condaExecutable = CondaPyTool.getInstance().resolveExecutable(EelFileSystem(eel))
+    val condaExecutable = eel.toFileSystem().resolveExecutable(CondaPyTool.getInstance())
     validateCondaPath(condaExecutable?.path?.pathString, eel.getPlatformAndRoot())?.let {
       return PyResult.localizedError(it.message)
     }
@@ -228,7 +227,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     }
     else {
       val environmentYml = getEnvironmentYml(pyProject)
-                           ?: return PyResult.localizedError(PyBundle.message("sdk.cannot.create.conda.environment.yml.not.found"))
+                           ?: return PyResult.localizedError(PyCondaBundle.message("sdk.cannot.create.conda.environment.yml.not.found"))
       createCondaEnv(pyProject, condaExecutable, environmentYml).also {
         PySdkConfigurationCollector.logCondaEnv(pyProject.project, CondaEnvResult.CREATED)
       }
@@ -241,7 +240,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
 
   private suspend fun useExistingCondaEnv(pyProject: PyProject, condaExecutable: PathHolder.Eel): PyResult<PythonInterpreter> {
     val condaIdentity = getCondaEnvIdentity(pyProject, condaExecutable)
-                        ?: return PyResult.localizedError(PyBundle.message("sdk.cannot.use.existing.conda.environment"))
+                        ?: return PyResult.localizedError(PyCondaBundle.message("sdk.cannot.use.existing.conda.environment"))
     val workingDirectory = pyProject.baseDir
     return PyCondaCommand(condaExecutable.path.pathString, null).createCondaSdkFromExistingEnvironment(
       ModuleOrProject.ModuleAndProject(pyProject),
@@ -291,15 +290,14 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
 }
 
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-@ApiStatus.Internal
-fun validateCondaPath(
+private fun validateCondaPath(
   condaExecutable: @SystemDependent String?,
   platformAndRoot: PlatformAndRoot,
 ): ValidationInfo? {
   return validateExecutableFile(
     ValidationRequest(
       condaExecutable,
-      PyBundle.message("python.add.sdk.conda.executable.path.is.empty"),
+      PyCondaBundle.message("python.add.sdk.conda.executable.path.is.empty"),
       platformAndRoot,
       null
     ))
