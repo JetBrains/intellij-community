@@ -41,29 +41,26 @@ internal class ComponentAreaPopupContext(
 ) : DefaultPopupContext(project, null) {
 
   private val myComponentReference = WeakReference(component)
-  private var boundsHandler: DocSessionPopupBoundsHandler? = null
+  private val boundsHandler = DocSessionPopupBoundsHandler()
 
   private var mouseMovementTracker = MouseMovementTracker()
 
   val session: DocumentationManager.DocumentationOnHoverSession = object : DocumentationManager.DocumentationOnHoverSession {
     override fun mouseOutsideOfSourceArea() {
-      boundsHandler?.mouseOutsideOfSourceArea()
+      boundsHandler.mouseOutsideOfSourceArea()
     }
 
     override fun mouseWithinSourceArea() {
-      boundsHandler?.mouseWithinSourceArea()
+      boundsHandler.mouseWithinSourceArea()
     }
 
     override fun tryFinishImmediately(): Boolean {
-      boundsHandler?.let { return it.tryFinishImmediately() }
-      onDocumentationSessionDone?.run()
-      return true
+      return boundsHandler.tryFinishImmediately()
     }
 
   }
 
-  override fun boundsHandler(): PopupBoundsHandler =
-    DocSessionPopupBoundsHandler().also { boundsHandler = it }
+  override fun boundsHandler(): PopupBoundsHandler = boundsHandler
 
   inner class DocSessionPopupBoundsHandler : PopupBoundsHandler {
 
@@ -140,7 +137,7 @@ internal class ComponentAreaPopupContext(
     }
 
     fun mouseOutsideOfSourceArea() {
-      if (popup?.isVisible == false) {
+      if (popup?.isVisible != true) {
         hideRequested = true
         alarm?.cancelAllRequests()
         popup?.cancel()
@@ -224,12 +221,28 @@ internal class ComponentAreaPopupContext(
         popup.cancel()
         return
       }
+      val bottom = bottomAboveArea(popup)
       if (!resized) {
         resizePopup(popup, popupUpdateEvent)
         yield()
       }
       adjustPopupHeight(popup, popupUpdateEvent)
+      if (bottom != null) {
+        // A popup above the area keeps its bottom edge when its height changes.
+        val location = popup.locationOnScreen
+        val y = bottom - popup.size.height
+        if (y != location.y) {
+          popup.setLocation(Point(location.x, y))
+        }
+      }
       relocatePopupIfNeeded(popup)
+    }
+
+    private fun bottomAboveArea(popup: AbstractPopup): Int? {
+      if (!popup.isVisible) return null
+      val componentLocation = myComponentReference.get()?.locationOnScreen ?: return null
+      val bottom = popup.locationOnScreen.y + popup.size.height
+      return bottom.takeIf { it <= componentLocation.y + areaWithinComponent.y }
     }
 
     private fun adjustPopupHeight(

@@ -15,6 +15,7 @@ import com.intellij.codeWithMe.asContextElement
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.DocumentationSettings
+import com.intellij.lang.documentation.ide.DocumentationLinkNavigatable
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.openapi.Disposable
@@ -135,6 +136,8 @@ class DocumentationManager(private val project: Project, private val coroutineSc
    * popup may be canceled if mouse moves outside the desired area.
    * Once the documentation session is done, [onDocumentationSessionDone] will be invoked.
    * Use the returned [DocumentationOnHoverSession] to control the session.
+   * The result is `null` when no popup starts, for example when a popup is already visible
+   * or the documentation goes to a tool window. Then [onDocumentationSessionDone] does not run.
    */
   @ApiStatus.Experimental
   fun showDocumentationOnHoverAround(
@@ -171,10 +174,10 @@ class DocumentationManager(private val project: Project, private val coroutineSc
     if (requests.isEmpty()) return null
 
     val popupContext = ComponentAreaPopupContext(project, component, areaWithinComponent, onDocumentationSessionDone, minHeight, delay)
-    showDocumentation(requests, popupContext, null) {
+    val started = showDocumentation(requests, popupContext, null) {
       onDocumentationSessionDone?.run()
     }
-    return popupContext.session
+    return if (started) popupContext.session else null
   }
 
   private fun getPopup(): AbstractPopup? {
@@ -204,30 +207,35 @@ class DocumentationManager(private val project: Project, private val coroutineSc
     documentationUiDependencies?.let { Disposer.register(documentationUI, it) }
   }
 
+  /**
+   * Returns `true` when a popup starts. The documentation can go to a tool window instead,
+   * or a visible popup can keep the request away.
+   */
   private fun showDocumentation(
     requests: List<DocumentationRequest>,
     popupContext: PopupContext,
     popupDependencies: Disposable? = null,
     documentationUiDependencies: Disposable? = null,
-  ) {
+  ): Boolean {
     val toolWindowManager = DocumentationToolWindowManager.getInstance(project)
     val initial = requests.first()
     if (skipPopup) {
       toolWindowManager.showInToolWindow(requests)
-      return
+      return false
     }
     else if (toolWindowManager.updateVisibleReusableTab(initial)) {
-      return
+      return false
     }
 
     if (getPopup() != null) {
-      return
+      return false
     }
     popupScope.coroutineContext.job.cancelChildren()
     popupScope.launch(context = Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
       val (popup, documentationUi) = showDocumentationPopup(project, requests, popupContext)
       setPopup(popup, documentationUi, popupDependencies, documentationUiDependencies)
     }
+    return true
   }
 
   internal fun autoShowDocumentationOnItemChange(lookup: LookupEx) {
@@ -292,6 +300,13 @@ class DocumentationManager(private val project: Project, private val coroutineSc
   fun navigateInlineLink(
     url: String,
     targetSupplier: () -> DocumentationTarget?,
+  ) = navigateInlineLink(url, null, null, targetSupplier)
+
+  fun navigateInlineLink(
+    url: String,
+    editor: Editor?,
+    popupPosition: Point?,
+    targetSupplier: () -> DocumentationTarget?,
   ) {
     EDT.assertIsEdt()
     coroutineScope.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
@@ -301,7 +316,12 @@ class DocumentationManager(private val project: Project, private val coroutineSc
       if (result is InternalResolveLinkResult.Value) {
         val navigatable = result.value
         if (navigatable != null && navigatable.canNavigate()) {
-          navigatable.navigate(true)
+          if (navigatable is DocumentationLinkNavigatable && editor != null && popupPosition != null) {
+            navigatable.navigate(editor, popupPosition)
+          }
+          else {
+            navigatable.navigate(true)
+          }
         }
       }
     }

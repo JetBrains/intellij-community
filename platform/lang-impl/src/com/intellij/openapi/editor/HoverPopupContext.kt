@@ -78,7 +78,7 @@ internal class HoverPopupContext(
 
   fun getPopupPosition(editor: Editor): VisualPosition {
     val highlightInfo = getHighlightInfo()
-    if (highlightInfo == null) {
+    if (highlightInfo?.toolTip == null) {
       return HoverDocPopupLocationProvider.getInstance().getPopupPosition(targetOffset, getElementForQuickDoc(), editor)
     }
     val targetPosition = editor.offsetToVisualPosition(targetOffset)

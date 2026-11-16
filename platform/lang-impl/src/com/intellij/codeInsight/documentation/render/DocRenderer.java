@@ -375,7 +375,11 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     pane.setSelectedTextColor(textColor);
     UIUtil.enableEagerSoftWrapping(pane);
     pane.setText(text);
+    DocRenderLinkHoverHandler hoverHandler = new DocRenderLinkHoverHandler(this, myLinkActivationHandler);
+    Disposer.register(pane, hoverHandler);
+    pane.addMouseMotionListener(hoverHandler);
     pane.addHyperlinkListener(e -> {
+      hoverHandler.hyperlinkUpdate(e);
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         myLinkActivationHandler.activateLink(e, this);
       }

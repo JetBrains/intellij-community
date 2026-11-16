@@ -13,7 +13,7 @@ internal object DocRenderDefaultLinkActivationHandler : DocRenderLinkActivationH
     val project = editor.project ?: return
     if (isGotoDeclarationEvent) {
       DocumentationManager.getInstance(project).navigateInlineLink(
-        url) { item.getInlineDocumentationTarget() }
+        url, editor, popupPosition(location, renderer)) { item.getInlineDocumentationTarget() }
     }
     else {
       DocumentationManager.getInstance(project).activateInlineLink(
