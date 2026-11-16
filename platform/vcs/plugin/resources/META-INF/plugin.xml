@@ -1,7 +1,7 @@
 <!--suppress SplitModeMixedDependencies -->
 <!--suppress SplitModeImplicitModuleKind, AllContentModulesOptionalLoadingRule -->
 <!--suppress PluginXmlPluginLogo, AllContentModulesOptionalLoadingRule -->
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <id>com.intellij.platform.vcs</id>
   <name>Version Control</name>
   <description><![CDATA[
