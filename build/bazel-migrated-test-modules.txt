@@ -349,6 +349,7 @@ intellij.xml.tests
 intellij.xml.xmlbeans.tests
 intellij.xpath.tests
 intellij.yaml.backend.tests
+intellij.yaml.backend.tests.exploratory
 intellij.yaml.tests
 kotlin.gradle.gradle-java.tests
 kotlin.gradle.gradle-java.tests.shared
