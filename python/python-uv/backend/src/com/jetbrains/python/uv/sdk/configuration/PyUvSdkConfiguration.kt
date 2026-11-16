@@ -9,7 +9,7 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pytools.backend.PyExecutableCache
 import com.intellij.python.uv.backend.UvPyTool
 import com.intellij.python.uv.common.UV_TOOL_ID
-import com.jetbrains.python.PyBundle
+import com.intellij.python.uv.backend.PyUvBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.eelDescriptor
@@ -54,7 +54,7 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
         EnvCheckerResult.SuggestToolInstallation(
           toolToInstall = toolName,
           pathPersister = pathPersister,
-          intentionName = PyBundle.message("sdk.create.custom.venv.install.fix.title", toolName)
+          intentionName = PyUvBundle.message("sdk.create.custom.venv.install.fix.title", toolName)
         )
       } else baseCheckResult
     }
@@ -74,7 +74,7 @@ internal class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
     if (key.ref.manager != UvPyTool.getInstance().fusId) return null
     val home = nativeHomeOf(key) ?: return null
     return prepareSdkCreator(
-      { EnvCheckerResult.EnvNotFound(PyBundle.message("sdk.recreate.uv.environment", home.fileName)) }
+      { EnvCheckerResult.EnvNotFound(PyUvBundle.message("sdk.recreate.uv.environment", home.fileName)) }
     ) { { createUvSdk(pyProject, emptyList(), envExists = false, venvPath = home) } }
   }
 

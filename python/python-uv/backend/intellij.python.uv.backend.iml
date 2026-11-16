@@ -59,5 +59,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.python.venv" />
+    <orderEntry type="module" module-name="intellij.python.sdk.common" />
   </component>
 </module>

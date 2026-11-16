@@ -28,13 +28,19 @@
     <module name="intellij.python.pytools.backend.runtime"/>
     <module name="intellij.python.requirements.backend"/>
     <module name="intellij.python.requirements.common"/>
+    <module name="intellij.python.sdk.common"/>
     <module name="intellij.python.uv.common"/>
+    <module name="intellij.python.venv"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="Pythonid">
     <!-- Uv -->
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.uv.UvSdkFlavorProvider"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.sdk.uv.UvPackageManagerProvider"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.uv.sdk.configuration.PyUvSdkConfiguration"
+                                      id="uv" order="before poetry"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.uv.sdk.configuration.PyUvBaseSdkConfiguration"
+                                      id="uvBase" order="after hatch, after poetry, before venv"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <python.pytools.pyTool implementation="com.intellij.python.uv.backend.UvPyTool"/>
