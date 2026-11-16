@@ -217,11 +217,13 @@ class RuffLspClientDescriptor(
   }
 
   override val commandDescriptions: Map<String, String?> = mapOf(
-    "ruff.applyFormat" to "Format document",
-    "ruff.applyAutofix" to null,
+    "ruff.applyFormat" to RuffBundle.message("ruff.command.apply.format"),
+    "ruff.applyAutofix" to RuffBundle.message("ruff.command.apply.autofix"),
     "ruff.applyOrganizeImports" to null,
-    "ruff.printDebugInformation" to "Print debug information",
+    "ruff.printDebugInformation" to RuffBundle.message("ruff.command.print.debug.information"),
   )
+
+  override val documentCommands: Set<String> = setOf("ruff.applyFormat", "ruff.applyAutofix")
 
   override val lspServerListener: PyLspToolDescriptorLspServerListener = object : PyLspToolDescriptorLspServerListener() {
     override fun serverInitialized(params: InitializeResult) {

@@ -9,7 +9,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
+import com.intellij.python.ruff.server.RuffLspClientDescriptor
 import com.intellij.python.ty.TyLspClientDescriptor
+import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.testFramework.junit5.TestApplication
@@ -22,6 +24,7 @@ import org.eclipse.lsp4j.ServerCapabilities
 import org.eclipse.lsp4j.ServerInfo
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
@@ -167,12 +170,37 @@ internal class PyLspToolCommandActionsTest {
     }
   }
 
+  @Test
+  @TestFor(issues = ["PY-86194"])
+  fun `the Ruff autofix command gets an action that needs an editor`() {
+    val descriptor = RuffLspClientDescriptor(moduleFixture.get())
+    // The listener of the base class registers the actions without the Ruff version lookup, which needs a Ruff executable.
+    val listener = descriptor.PyLspToolDescriptorLspServerListener()
+    listener.serverInitialized(initializeResult(ServerInfo("Ruff"), listOf("ruff.applyAutofix", "ruff.applyOrganizeImports")))
+    try {
+      val action = ActionManager.getInstance().getAction(commandActionId(descriptor, "ruff.applyAutofix"))
+      assertNotNull(action)
+      assertEquals("Ruff: Fix all auto-fixable problems", action.templateText)
+      assertNull(ActionManager.getInstance().getAction(commandActionId(descriptor, "ruff.applyOrganizeImports")))
+
+      val event = TestActionEvent.createTestEvent(action)
+      action.update(event)
+      assertFalse(event.presentation.isEnabled, "the command needs the document of an editor")
+    }
+    finally {
+      listener.serverStopped(true)
+    }
+  }
+
   private fun initializeResult(serverInfo: ServerInfo? = ServerInfo("ty"), commands: List<String> = listOf(COMMAND)): InitializeResult =
     InitializeResult(ServerCapabilities().apply { executeCommandProvider = ExecuteCommandOptions(commands) }, serverInfo)
 
   private val presentableName by lazy { TyLspClientDescriptor(moduleFixture.get()).presentableName }
 
   private fun commandActionId(command: String): String = "LSP.Command.$presentableName.$command"
+
+  private fun commandActionId(descriptor: PyLspToolDescriptor, command: String): String =
+    "LSP.Command.${descriptor.presentableName}.$command"
 
   private val commandActionId by lazy { commandActionId(COMMAND) }
 
