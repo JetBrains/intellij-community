@@ -1515,6 +1515,26 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             public void testOrdinaryClass() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/runtimeTypeCast/ordinaryClass.kt");
             }
+
+            @TestMetadata("privateJdkClass.kt")
+            public void testPrivateJdkClass() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/runtimeTypeCast/privateJdkClass.kt");
+            }
+
+            @TestMetadata("sequenceLambda.kt")
+            public void testSequenceLambda() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/runtimeTypeCast/sequenceLambda.kt");
+            }
+
+            @TestMetadata("thisReceiver.kt")
+            public void testThisReceiver() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/runtimeTypeCast/thisReceiver.kt");
+            }
+
+            @TestMetadata("valueClass.kt")
+            public void testValueClass() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/runtimeTypeCast/valueClass.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

@@ -1,0 +1,9 @@
+LineBreakpoint created at valueClass.kt:12
+Run Java
+Connected to the target VM
+valueClass.kt:12
+Compile bytecode for (v as valueClass.V).x
+Compile bytecode for (v as valueClass.V).x + 1
+Disconnected from the target VM
+
+Process finished with exit code 0

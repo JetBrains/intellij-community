@@ -1,0 +1,9 @@
+LineBreakpoint created at privateJdkClass.kt:8
+Run Java
+Connected to the target VM
+privateJdkClass.kt:8
+Compile bytecode for (single as java.util.Collections.SingletonList<*>).size
+Compile bytecode for (pair as java.util.Arrays.ArrayList<*>).size
+Disconnected from the target VM
+
+Process finished with exit code 0

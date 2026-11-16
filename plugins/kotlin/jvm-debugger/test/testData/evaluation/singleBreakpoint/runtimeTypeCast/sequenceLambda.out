@@ -1,0 +1,8 @@
+LineBreakpoint created at sequenceLambda.kt:15
+Run Java
+Connected to the target VM
+sequenceLambda.kt:15
+Compile bytecode for (s as sequenceLambda.B).p
+Disconnected from the target VM
+
+Process finished with exit code 0
