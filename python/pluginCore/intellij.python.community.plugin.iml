@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="intellij.toml" scope="RUNTIME" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.lang" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.basic.plugin" scope="RUNTIME" />
   </component>
 </module>

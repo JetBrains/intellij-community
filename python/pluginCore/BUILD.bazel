@@ -9,10 +9,6 @@ dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.python.community.common",
-        "intellij.python.parser",
-        "intellij.python.ast",
-        "intellij.python.syntax.core",
-        "intellij.python.syntax",
         "intellij.python.processOutput.common",
         "intellij.python.processOutput.frontend",
         "intellij.python.community.plugin.frontend",
@@ -198,10 +194,6 @@ dist_complex_plugin(
     execution_version = 2,
     independent_artifacts = [
         "//python/common:common_content_module_jar",
-        "//python/python-parser:parser_content_module_jar",
-        "//python/python-ast:ast_content_module_jar",
-        "//python/python-syntax-core:syntax-core_content_module_jar",
-        "//python/python-syntax:syntax_content_module_jar",
         "//python/python-process-output/common:common_content_module_jar",
         "//python/python-process-output/frontend:frontend_content_module_jar",
         "//python/pluginCore/frontend:frontend_content_module_jar",
@@ -353,10 +345,6 @@ dist_complex_plugin(
     execution_version = 2,
     independent_artifacts = [
         "//python/common:common_content_module_jar",
-        "//python/python-parser:parser_content_module_jar",
-        "//python/python-ast:ast_content_module_jar",
-        "//python/python-syntax-core:syntax-core_content_module_jar",
-        "//python/python-syntax:syntax_content_module_jar",
         "//python/python-process-output/common:common_content_module_jar",
         "//python/python-process-output/frontend:frontend_content_module_jar",
         "//python/pluginCore/frontend:frontend_content_module_jar",
@@ -508,10 +496,6 @@ dist_complex_plugin(
     execution_version = 2,
     independent_artifacts = [
         "//python/common:common_content_module_jar",
-        "//python/python-parser:parser_content_module_jar",
-        "//python/python-ast:ast_content_module_jar",
-        "//python/python-syntax-core:syntax-core_content_module_jar",
-        "//python/python-syntax:syntax_content_module_jar",
         "//python/python-process-output/common:common_content_module_jar",
         "//python/python-process-output/frontend:frontend_content_module_jar",
         "//python/pluginCore/frontend:frontend_content_module_jar",
@@ -663,10 +647,6 @@ dist_complex_plugin(
     execution_version = 2,
     independent_artifacts = [
         "//python/common:common_content_module_jar",
-        "//python/python-parser:parser_content_module_jar",
-        "//python/python-ast:ast_content_module_jar",
-        "//python/python-syntax-core:syntax-core_content_module_jar",
-        "//python/python-syntax:syntax_content_module_jar",
         "//python/python-process-output/common:common_content_module_jar",
         "//python/python-process-output/frontend:frontend_content_module_jar",
         "//python/pluginCore/frontend:frontend_content_module_jar",
@@ -818,10 +798,6 @@ dist_complex_plugin(
     execution_version = 2,
     independent_artifacts = [
         "//python/common:common_content_module_jar",
-        "//python/python-parser:parser_content_module_jar",
-        "//python/python-ast:ast_content_module_jar",
-        "//python/python-syntax-core:syntax-core_content_module_jar",
-        "//python/python-syntax:syntax_content_module_jar",
         "//python/python-process-output/common:common_content_module_jar",
         "//python/python-process-output/frontend:frontend_content_module_jar",
         "//python/pluginCore/frontend:frontend_content_module_jar",
@@ -973,10 +949,6 @@ dist_complex_plugin(
     execution_version = 2,
     independent_artifacts = [
         "//python/common:common_content_module_jar",
-        "//python/python-parser:parser_content_module_jar",
-        "//python/python-ast:ast_content_module_jar",
-        "//python/python-syntax-core:syntax-core_content_module_jar",
-        "//python/python-syntax:syntax_content_module_jar",
         "//python/python-process-output/common:common_content_module_jar",
         "//python/python-process-output/frontend:frontend_content_module_jar",
         "//python/pluginCore/frontend:frontend_content_module_jar",
@@ -1144,6 +1116,7 @@ jvm_library(
         # do not sort,
         "//plugins/toml",
         "//platform/lang-api:lang",
+        "//python/basic-plugin",
     ],
 )
 ### auto-generated section `build intellij.python.community.plugin` end

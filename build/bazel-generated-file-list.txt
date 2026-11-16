@@ -1984,6 +1984,7 @@ plugins/yaml/syntax
 python
 python/IntelliLang-python
 python/aliasProvider
+python/basic-plugin
 python/build
 python/build/build-debug-binaries
 python/build/tests/sdks

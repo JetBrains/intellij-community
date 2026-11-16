@@ -201,10 +201,10 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
     pluginAuto("intellij.textmate.plugin") { spec ->
       spec.withResourceFromModule("intellij.textmate", "lib/bundles", "lib/bundles")
     },
-    PythonCommunityPluginModules.pythonCommunityPluginLayout { spec ->
+    *PythonCommunityPluginModules.pythonCommunityPluginLayouts { spec ->
       spec.withBundledPyrefly()
       spec.withBundledPydevdNativeDeps()
-    },
+    }.toTypedArray(),
     androidDesignPlugin(),
     pluginAuto("intellij.completionMlRankingModels") { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE

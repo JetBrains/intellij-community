@@ -1,0 +1,22 @@
+<idea-plugin allow-bundled-update="true">
+  <id>com.intellij.python.basic</id>
+  <name>Python Light</name>
+  <description><![CDATA[
+    Adds basic support for Python files: lexer-based syntax highlighting, the Python parser and PSI, formatting, brace matching, and the editor handlers.
+    The Python plugin adds interpreters, code analysis, completion, inspections, and the other coding assistance features.
+  ]]></description>
+
+  <vendor>JetBrains</vendor>
+  <category>Languages</category>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
+  <content namespace="jetbrains">
+    <module name="intellij.python.parser" loading="embedded"/>
+    <module name="intellij.python.ast" loading="embedded"/>
+    <module name="intellij.python.syntax.core" loading="embedded"/>
+    <module name="intellij.python.syntax" loading="embedded"/>
+  </content>
+</idea-plugin>
