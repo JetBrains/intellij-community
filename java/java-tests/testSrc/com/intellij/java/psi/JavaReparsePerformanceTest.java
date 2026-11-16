@@ -15,28 +15,42 @@
  */
 package com.intellij.java.psi;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.AbstractReparseTestCase;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.ReparseFixture;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.StressTestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.psi.ReparseFixtureKt.reparseFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
 
 @PerformanceUnitTest
-public class JavaReparsePerformanceTest extends AbstractReparseTestCase {
+@StressTestApplication
+public class JavaReparsePerformanceTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<ReparseFixture> reparseFixture = reparseFixture(projectFixture);
+
+  @Test
   public void testChangingVeryDeepTreePerformance() {
+    ReparseFixture reparse = reparseFixture.get();
     String call1 = "a('b').";
     String call2 = "c(new Some()).";
     String suffix = "x(); } }";
-    PsiFile file = myFixture.addFileToProject("a.java", "class Foo { { u." + StringUtil.repeat(call1 + call2, 500) + suffix);
+    PsiFile file = reparse.getFixture().addFileToProject("a.java", "class Foo { { u." + StringUtil.repeat(call1 + call2, 500) + suffix);
 
-    PsiDocumentManager pdm = PsiDocumentManager.getInstance(getProject());
-    Document document = pdm.getDocument(file);
+    PsiDocumentManager pdm = PsiDocumentManager.getInstance(reparse.getProject());
+    Document document = ReadAction.computeBlocking(() -> pdm.getDocument(file));
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+    WriteCommandAction.runWriteCommandAction(reparse.getProject(), () -> {
       Benchmark.newBenchmark("deep reparse", () -> {
         document.insertString(document.getTextLength() - suffix.length(), call1);
         pdm.commitDocument(document);
@@ -46,7 +60,7 @@ public class JavaReparsePerformanceTest extends AbstractReparseTestCase {
 
         document.insertString(document.getTextLength() - suffix.length(), "\n");
         pdm.commitDocument(document);
-      }).start();
+      }).start(JavaReparsePerformanceTest.class.getName() + ".testChangingVeryDeepTreePerformance");
 
       PsiTestUtil.checkFileStructure(file);
     });

@@ -16,11 +16,11 @@
 package com.intellij.java.psi;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.MockLanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.psi.AbstractReparseTestCase;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -28,6 +28,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.ReparseFixture;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiExpressionCodeFragmentImpl;
@@ -35,35 +36,59 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaReparseTest extends AbstractReparseTestCase {
+import static com.intellij.psi.ReparseFixtureKt.reparseFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestApplication
+public class JavaReparseTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<ReparseFixture> reparseFixture = reparseFixture(projectFixture, null, (reparse, fileName, text) -> {
+    if (reparse.getTestName(true).equals("codeFragment")) return new PsiExpressionCodeFragmentImpl(reparse.getProject(), true, "fragment.java", text, null,
+                                                                                                    null);
+    return reparse.createDefaultDummyFile(fileName, text);
+  });
+
+  @Test
   public void testInsertLBrace() {
-    setFileType(JavaFileType.INSTANCE);
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.setFileType(JavaFileType.INSTANCE);
     final String text2 = "}}}";
     final String text1 = "class Foo{ void method(){{";
-    prepareFile(text1, text2);
-    insert("{");
+    reparse.prepareFile(text1, text2);
+    reparse.insert("{");
   }
 
+  @Test
   public void testJavaDoc() {
-    setFileType(JavaFileType.INSTANCE);
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.setFileType(JavaFileType.INSTANCE);
     String text2 = "void method() {}}";
     final String text1 = "class Foo { /** ";
-    prepareFile(text1, text2);
-    insert("*/");
+    reparse.prepareFile(text1, text2);
+    reparse.insert("*/");
   }
 
+  @Test
   public void testSCR5665() {
-    setFileType(JavaFileType.INSTANCE);
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.setFileType(JavaFileType.INSTANCE);
     final String text2 = """
        "and then insert it again"}
         };
@@ -72,31 +97,28 @@ public class JavaReparseTest extends AbstractReparseTestCase {
       class RedTest {
         String[][] test = {
           {"remove the comma >",""";
-    prepareFile(text1, text2);
-    remove(1);
-    insert(",");
-    PsiFile file1 = myDummyFile;
-    prepareFile(text1, text2);
-    assertEquals(DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(file1), true),
-                 DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(myDummyFile), true));
+    reparse.prepareFile(text1, text2);
+    reparse.remove(1);
+    reparse.insert(",");
+    PsiFile file1 = reparse.getDummyFile();
+    reparse.prepareFile(text1, text2);
+    ReadAction.runBlocking(() -> {
+      assertEquals(DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(file1), true),
+                   DebugUtil.treeToString(SourceTreeToPsiMap.psiElementToTree(reparse.getDummyFile()), true));
+    });
   }
 
-
-  @NotNull
-  @Override
-  protected PsiFile createDummyFile(@NotNull String fileName, @NotNull String text) throws IncorrectOperationException {
-    if (getTestName(true).equals("codeFragment")) return new PsiExpressionCodeFragmentImpl(getProject(), true, "fragment.java", text, null,
-                                                                                           null);
-    return super.createDummyFile(fileName, text);
-  }
-
+  @Test
   public void testCodeFragment() {
-    setFileType(JavaFileType.INSTANCE);
-    prepareFile("a", "a");
-    insert("xxx xxx xxx xxx xxx xxx xxx");
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.setFileType(JavaFileType.INSTANCE);
+    reparse.prepareFile("a", "a");
+    reparse.insert("xxx xxx xxx xxx xxx xxx xxx");
   }
 
+  @Test
   public void testReparseAfterReformatReplacesWhitespaceNodesOnly() {
+    ReparseFixture reparse = reparseFixture.get();
     @NonNls final String text =
       """
         class  RedTest   {  \s
@@ -137,7 +159,7 @@ public class JavaReparseTest extends AbstractReparseTestCase {
 
           } \s""";
 
-    final PsiFile file = myFixture.addFileToProject("reparseAfterReformat.java", text);
+    final PsiFile file = reparse.getFixture().addFileToProject("reparseAfterReformat.java", text);
     final int[] added = {0};
     final int[] removed = {0};
     final int[] replacedWhite = {0};
@@ -180,11 +202,11 @@ public class JavaReparseTest extends AbstractReparseTestCase {
       public void childMoved(@NotNull PsiTreeChangeEvent event) {
         moved[0]++;
       }
-    }, getProject());
+    }, reparse.getFixture().getProjectDisposable());
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      CodeStyleManager.getInstance(getProject()).reformatText(file, 0, file.getTextLength());
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    WriteCommandAction.runWriteCommandAction(reparse.getProject(), () -> {
+      CodeStyleManager.getInstance(reparse.getProject()).reformatText(file, 0, file.getTextLength());
+      PsiDocumentManager.getInstance(reparse.getProject()).commitAllDocuments();
     });
 
     assertEquals(0, added[0]);
@@ -194,7 +216,9 @@ public class JavaReparseTest extends AbstractReparseTestCase {
     assertTrue(0 != replacedWhite[0]);
   }
 
+  @Test
   public void testInsertXMLSubTagProducesAddEvents() {
+    ReparseFixture reparse = reparseFixture.get();
     @NonNls @Language("XML")
     final String text = """
       <preface>
@@ -206,8 +230,8 @@ public class JavaReparseTest extends AbstractReparseTestCase {
       </preface>
       """;
 
-    final PsiFile file = myFixture.addFileToProject("aaa.xml", text);
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    final PsiFile file = reparse.getFixture().addFileToProject("aaa.xml", text);
+    EdtTestUtil.runInEdtAndWait(() -> PsiDocumentManager.getInstance(reparse.getProject()).commitAllDocuments());
 
     final List<PsiElement> added = new ArrayList<>();
     final List<PsiElement> removed = new ArrayList<>();
@@ -233,57 +257,72 @@ public class JavaReparseTest extends AbstractReparseTestCase {
       public void childMoved(@NotNull PsiTreeChangeEvent event) {
         moved.add(event.getElement());
       }
-    }, getTestRootDisposable());
+    }, reparse.getFixture().getTestRootDisposable());
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    WriteCommandAction.runWriteCommandAction(reparse.getProject(), () -> {
+      Document document = PsiDocumentManager.getInstance(reparse.getProject()).getDocument(file);
       int offset = document.getText().indexOf("</para>\n\n") + "</para>\n\n".length();
       document.insertString(offset, "<another></another>");
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      PsiDocumentManager.getInstance(reparse.getProject()).commitAllDocuments();
     });
 
-    assertEquals(2, added.size());
-    assertTrue(added.get(0) instanceof XmlTag);
-    assertEquals("<another></another>", added.get(0).getText());
-    assertTrue(added.get(1) instanceof XmlText);
-    assertEquals("\n", added.get(1).getText());
-    assertEmpty(removed);
-    assertEmpty(moved);
-    assertEmpty(replaced);
+    ReadAction.runBlocking(() -> {
+      assertEquals(2, added.size());
+      assertInstanceOf(XmlTag.class, added.get(0));
+      assertEquals("<another></another>", added.get(0).getText());
+      assertInstanceOf(XmlText.class, added.get(1));
+      assertEquals("\n", added.get(1).getText());
+    });
+    assertTrue(removed.isEmpty(), removed::toString);
+    assertTrue(moved.isEmpty(), moved::toString);
+    assertTrue(replaced.isEmpty(), replaced::toString);
   }
 
+  @Test
   public void testPlainTextSubstitution() {
+    ReparseFixture reparse = reparseFixture.get();
     LightVirtualFile vFile = new LightVirtualFile("a.xxx", MockLanguageFileType.INSTANCE, "aaa");
-    PsiFile file = myDummyFile = PsiManager.getInstance(getProject()).findFile(vFile);
+    PsiFile file = ReadAction.computeBlocking(() -> PsiManager.getInstance(reparse.getProject()).findFile(vFile));
+    reparse.setDummyFile(file);
     assertNotNull(file);
 
-    assertEquals(com.intellij.lang.Language.ANY, file.getViewProvider().getBaseLanguage());
-    assertEquals(PlainTextLanguage.INSTANCE, file.getLanguage());
-    assertEquals(file, file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage()));
+    ReadAction.runBlocking(() -> {
+      assertEquals(com.intellij.lang.Language.ANY, file.getViewProvider().getBaseLanguage());
+      assertEquals(PlainTextLanguage.INSTANCE, file.getLanguage());
+      assertEquals(file, file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage()));
+    });
 
-    doReparse("b", 0);
-    assertTrue("baaa", file.isValid());
-    assertEquals("baaa", file.getText());
-    assertEquals("baaa", file.getFirstChild().getText());
+    reparse.doReparse("b", 0);
+    ReadAction.runBlocking(() -> {
+      assertTrue(file.isValid(), "baaa");
+      assertEquals("baaa", file.getText());
+      assertEquals("baaa", file.getFirstChild().getText());
+    });
   }
 
+  @Test
   public void testOverlappingCommonPrefixAndSuffix() {
-    setFileType(JavaFileType.INSTANCE);
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.setFileType(JavaFileType.INSTANCE);
     String toRemove = "} {foobar";
-    prepareFile("class Foo { {goo} {foobar" + toRemove, " foobar} }");
-    remove(toRemove.length());
+    reparse.prepareFile("class Foo { {goo} {foobar" + toRemove, " foobar} }");
+    reparse.remove(toRemove.length());
   }
 
+  @Test
   public void testDocComment() {
+    ReparseFixture reparse = reparseFixture.get();
     String text = "/** .../ */";
     final int offset = text.indexOf("...");
-    myDummyFile = createDummyFile(getName() + ".java", text);
-    String treeBefore = DebugUtil.psiTreeToString(myDummyFile, false);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      BlockSupport.getInstance(getProject()).reparseRange(myDummyFile, offset, offset + 3, "*");
-      BlockSupport.getInstance(getProject()).reparseRange(myDummyFile, offset, offset + 1, "...");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      reparse.setDummyFile(reparse.createDummyFile(reparse.getName() + ".java", text));
+      String treeBefore = DebugUtil.psiTreeToString(reparse.getDummyFile(), false);
+      WriteCommandAction.runWriteCommandAction(reparse.getProject(), () -> {
+        BlockSupport.getInstance(reparse.getProject()).reparseRange(reparse.getDummyFile(), offset, offset + 3, "*");
+        BlockSupport.getInstance(reparse.getProject()).reparseRange(reparse.getDummyFile(), offset, offset + 1, "...");
+      });
+      String treeAfter = DebugUtil.psiTreeToString(reparse.getDummyFile(), false);
+      assertEquals(treeBefore, treeAfter);
     });
-    String treeAfter = DebugUtil.psiTreeToString(myDummyFile, false);
-    assertEquals(treeBefore, treeAfter);
   }
 }

@@ -17,125 +17,155 @@
 package com.intellij.codeInsight;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.psi.AbstractReparseTestCase;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.ReparseFixture;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.IncorrectOperationException;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-public class XmlReparseTest extends AbstractReparseTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    setFileType(XmlFileType.INSTANCE);
-  }
+import static com.intellij.psi.ReparseFixtureKt.reparseFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
+@TestApplication
+public class XmlReparseTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<ReparseFixture> reparseFixture = reparseFixture(projectFixture, XmlFileType.INSTANCE);
+
+  @Test
   public void test1() {
+    ReparseFixture reparse = reparseFixture.get();
     String s1 = "<a>";
     String s2 = "</a>";
 
-    prepareFile(s1, s2);
-    final String beforeReparse = DebugUtil.treeToString(((XmlFileImpl)myDummyFile).getTreeElement(), false);
-    insert("");
-    assertEquals("Tree changed after empty reparse", beforeReparse, DebugUtil.treeToString(((XmlFileImpl)myDummyFile).getTreeElement(),
-                                                                                           false));
+    reparse.prepareFile(s1, s2);
+    final String beforeReparse = ReadAction.computeBlocking(() -> DebugUtil.treeToString(((XmlFileImpl)reparse.getDummyFile()).getTreeElement(), false));
+    reparse.insert("");
+    ReadAction.runBlocking(() -> {
+      assertEquals(beforeReparse, DebugUtil.treeToString(((XmlFileImpl)reparse.getDummyFile()).getTreeElement(),
+                                                         false), "Tree changed after empty reparse");
+    });
   }
 
+  @Test
   public void testTagData1() {
+    ReparseFixture reparse = reparseFixture.get();
     String s1 = "<a>";
     String s2 = "</a>";
 
-    prepareFile(s1, s2);
-    insert("x");
-    insert(" ");
-    insert("xxxxx");
-    insert("\n");
-    insert("xxxxx");
+    reparse.prepareFile(s1, s2);
+    reparse.insert("x");
+    reparse.insert(" ");
+    reparse.insert("xxxxx");
+    reparse.insert("\n");
+    reparse.insert("xxxxx");
   }
 
+  @Test
   public void testTagData2() {
+    ReparseFixture reparse = reparseFixture.get();
     String s1 = "<a><b>\nSomeDataHere";
     String s2 = "\n</b></a>";
 
-    prepareFile(s1, s2);
+    reparse.prepareFile(s1, s2);
 
-    PsiElement element1 = ((XmlFile)myDummyFile).getDocument().getRootTag();
+    PsiElement element1 = ReadAction.computeBlocking(() -> ((XmlFile)reparse.getDummyFile()).getDocument().getRootTag());
 
-    insert("x");
-    insert(" ");
-    insert("xxxxx");
-    insert("\n");
-    insert("xxxxx");
+    reparse.insert("x");
+    reparse.insert(" ");
+    reparse.insert("xxxxx");
+    reparse.insert("\n");
+    reparse.insert("xxxxx");
 
-    assertSame(element1, ((XmlFile)myDummyFile).getDocument().getRootTag());
+    ReadAction.runBlocking(() -> {
+      assertSame(element1, ((XmlFile)reparse.getDummyFile()).getDocument().getRootTag());
+    });
   }
 
+  @Test
   public void testTagInTag1() {
+    ReparseFixture reparse = reparseFixture.get();
     String s1 = "<a><b>";
     String s2 = "</b></a>";
 
-    prepareFile(s1, s2);
+    reparse.prepareFile(s1, s2);
 
-    insert("<");
-    insert("c");
-    insert("/");
-    insert(">");
+    reparse.insert("<");
+    reparse.insert("c");
+    reparse.insert("/");
+    reparse.insert(">");
   }
 
+  @Test
   public void testTagInTag2() {
+    ReparseFixture reparse = reparseFixture.get();
     String s1 = "<a><b>";
     String s2 = "</b></a>";
 
-    prepareFile(s1, s2);
+    reparse.prepareFile(s1, s2);
 
-    insert("<");
-    insert("c");
-    insert(">");
-    insert("\nxxx \nxxxx\n");
-    insert("<");
-    insert("/");
-    insert("c");
-    insert(">");
+    reparse.insert("<");
+    reparse.insert("c");
+    reparse.insert(">");
+    reparse.insert("\nxxx \nxxxx\n");
+    reparse.insert("<");
+    reparse.insert("/");
+    reparse.insert("c");
+    reparse.insert(">");
   }
 
+  @Test
   public void testTagInTag3() {
+    ReparseFixture reparse = reparseFixture.get();
     String s1 = "<a><b>";
     String s2 = "</b></a>";
 
-    prepareFile(s1, s2);
+    reparse.prepareFile(s1, s2);
 
-    insert("<");
-    insert("/");
-    insert("b");
-    insert(">");
+    reparse.insert("<");
+    reparse.insert("/");
+    reparse.insert("b");
+    reparse.insert(">");
   }
 
+  @Test
   public void testSCR5925() {
+    ReparseFixture reparse = reparseFixture.get();
     String s1 = "<one>     <two ";
     String s2 = ",b\"/></one>";
 
-    prepareFile(s1, s2);
-    insert("a");
-    insert("t");
-    insert("t");
-    insert("r");
-    insert("=");
-    insert("\"");
+    reparse.prepareFile(s1, s2);
+    reparse.insert("a");
+    reparse.insert("t");
+    reparse.insert("t");
+    reparse.insert("r");
+    reparse.insert("=");
+    reparse.insert("\"");
   }
 
+  @Test
   public void testXmlReparseProblem() throws IncorrectOperationException {
-    prepareFile("""
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.prepareFile("""
                   <table>
                       <tr>
                   <td>
@@ -143,62 +173,71 @@ public class XmlReparseTest extends AbstractReparseTestCase {
                    </td>
                       </tr>
                   </table>""");
-    insert("=");
+    reparse.insert("=");
   }
   private static final String marker = "<marker>";
+  @Test
   public void testXmlDeclDtd() throws Exception {
-    PsiFile file = myFixture.addFileToProject("x.xml", "<!DOCTYPE name [\n" +
+    ReparseFixture reparse = reparseFixture.get();
+    PsiFile file = reparse.getFixture().addFileToProject("x.xml", "<!DOCTYPE name [\n" +
                                        "  <!ELEMENT name (" + marker+ "a b c d" + marker+ ")>\n" +
                                        "  <!ELEMENT name2 (" + marker+ "%entity;" + marker+ ")>\n" +
                                        "]>\n" +
                                        "<name></name>");
 
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
-    Document document = documentManager.getDocument(file);
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(reparse.getProject());
+    Document document = ReadAction.computeBlocking(() -> documentManager.getDocument(file));
 
-    removeGarbage(document);
+    removeGarbage(reparse, document);
 
-    documentManager.commitAllDocuments();
+    EdtTestUtil.runInEdtAndWait(() -> documentManager.commitAllDocuments());
     String myFullDataPath = getTestDataPath() + "psi/xml";
-    ParsingTestCase.doCheckResult(myFullDataPath, file, true, "testXmlDeclDtd", false, false);
+    ReadAction.runBlocking(() -> ParsingTestFixture.doCheckResult(myFullDataPath, file, true, "testXmlDeclDtd", false, false));
   }
 
-  private void removeGarbage(Document document) {
-    int i = document.getText().indexOf(marker);
+  private static void removeGarbage(ReparseFixture reparse, Document document) {
+    int i = ReadAction.computeBlocking(() -> document.getText()).indexOf(marker);
     if (i==-1) return;
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(i, i + marker.length(), ""));
+    WriteCommandAction.runWriteCommandAction(reparse.getProject(), () -> document.replaceString(i, i + marker.length(), ""));
 
-    removeGarbage(document);
+    removeGarbage(reparse, document);
   }
 
-  @Override
-  protected String getTestDataPath() {
+  private static String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";
   }
 
+  @Test
   public void testXml() {
-    setFileType(XmlFileType.INSTANCE);
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.setFileType(XmlFileType.INSTANCE);
     String text2 = "</root>";
     final String text1 = "<root>/n";
-    prepareFile(text1, text2);
-    insert("<");
-    PsiElement element = myDummyFile.findElementAt(10);
-    assert element != null;
-    assertNotNull(element.getTextRange());
+    reparse.prepareFile(text1, text2);
+    reparse.insert("<");
+    ReadAction.runBlocking(() -> {
+      PsiElement element = reparse.getDummyFile().findElementAt(10);
+      assert element != null;
+      assertNotNull(element.getTextRange());
+    });
   }
 
+  @Test
   public void testNoExceptionsDummyIdentifierMovementWithSpace() {
-    setFileType(XmlFileType.INSTANCE);
+    ReparseFixture reparse = reparseFixture.get();
+    reparse.setFileType(XmlFileType.INSTANCE);
     String text1 = "<rf oot><xc></root>";
     String text2 = "<root><f xc></root>"; // moved "f " to another place
-    prepareFile(text1, "");
-    Document document = myDummyFile.getViewProvider().getDocument();
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      ((XmlFile)myDummyFile).getRootTag().replace(XmlElementFactory.getInstance(getProject()).createTagFromText(text2));
+    reparse.prepareFile(text1, "");
+    Document document = ReadAction.computeBlocking(() -> reparse.getDummyFile().getViewProvider().getDocument());
+    WriteCommandAction.runWriteCommandAction(reparse.getProject(), () -> {
+      ((XmlFile)reparse.getDummyFile()).getRootTag().replace(XmlElementFactory.getInstance(reparse.getProject()).createTagFromText(text2));
     });
-    PsiTestUtil.checkFileStructure(myDummyFile);
-    assertEquals(text2, myDummyFile.getText());
-    assertEquals(text2, document.getText());
+    ReadAction.runBlocking(() -> {
+      PsiTestUtil.checkFileStructure(reparse.getDummyFile());
+      assertEquals(text2, reparse.getDummyFile().getText());
+      assertEquals(text2, document.getText());
+    });
   }
 
 }
