@@ -4,22 +4,33 @@ package com.intellij.xdebugger
 import com.intellij.ide.bookmark.BookmarksListProvider
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.debugger.impl.bookmarks.BreakpointListUpdaterService
+import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.xdebugger.XBreakpointsFixture.Companion.MY_LINE_BREAKPOINT_TYPE
+import com.intellij.xdebugger.XBreakpointsFixture.Companion.MY_SIMPLE_BREAKPOINT_TYPE
 import com.intellij.xdebugger.XBreakpointsFixture.MyBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Tests for breakpoint tree structure in the Bookmarks tool window (IJPL-237810).
@@ -89,12 +100,46 @@ class BreakpointListProviderTest {
   }
 
   /**
-   * Waits for the update job that is current at its end.
-   * A breakpoint change cancels the update job and starts a new one.
+   * Waits until the frontend breakpoint manager has each test breakpoint of the backend, with the same group.
+   * The frontend gets the backend changes asynchronously, and the tree reads the frontend.
    */
-  fun awaitUpdate() {
+  private fun awaitFrontend() {
+    val testTypes = setOf(MY_LINE_BREAKPOINT_TYPE, MY_SIMPLE_BREAKPOINT_TYPE, myFieldBreakpointType)
+    val expected = runReadActionBlocking { breakpoints.breakpointManager.allBreakpoints }
+      .filter { it.type in testTypes }
+      .associate { it.breakpointId to it.group }
+    val proxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(breakpoints.project)
+    val changes = Channel<Unit>(Channel.CONFLATED)
+    val subscription = Disposer.newDisposable()
+    proxy.subscribeOnBreakpointsChanges(subscription) { changes.trySend(Unit) }
+    try {
+      runBlockingMaybeCancellable {
+        withTimeout(10.seconds) {
+          while (true) {
+            val actual = proxy.getAllBreakpoints().associate { it.id to it.getGroup() }
+            if (expected.all { it.key in actual && actual[it.key] == it.value }) break
+            changes.receive()
+          }
+        }
+      }
+    }
+    finally {
+      Disposer.dispose(subscription)
+    }
+  }
+
+  /**
+   * Waits until the breakpoint list shows the current breakpoints of the backend.
+   * The function waits for the frontend, starts a new update of the list, and waits for the update job that is current at its end.
+   * A breakpoint change cancels the update job and starts a new one, which also reads the breakpoints after the frontend wait.
+   */
+  private fun awaitUpdate() {
+    awaitFrontend()
     val service = breakpoints.project.service<BreakpointListUpdaterService>()
     runBlockingMaybeCancellable {
+      withContext(Dispatchers.EDT) {
+        service.requestUpdate()
+      }
       while (true) {
         val job = service.updateJob ?: break
         job.join()
