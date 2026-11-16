@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -34,7 +35,7 @@ internal class CorpusToFileAction : AnAction() {
       .joinToString(separator = "\n")
 
     val virtualFile = writeToFile(project, corpusSentences)
-    FileEditorManager.getInstance(project).openFile(virtualFile, true)
+    FileEditorManager.getInstance(project).requestOpenFile(virtualFile, FileEditorOpenRequest.withFocus(true))
   }
 
   private fun writeToFile(project: Project, content: CharSequence): VirtualFile {

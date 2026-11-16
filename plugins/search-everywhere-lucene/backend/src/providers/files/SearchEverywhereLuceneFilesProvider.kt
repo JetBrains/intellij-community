@@ -6,6 +6,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -92,7 +93,12 @@ class SearchEverywhereLuceneFilesProvider(private val project: Project) : SeItem
       PsiManager.getInstance(project).findFile(file)
     }
 
-    psi?.navigate(false) ?: FileEditorManager.getInstance(project).openFile(file, true)
+    if (psi != null) {
+      psi.navigate(false)
+    }
+    else {
+      FileEditorManager.getInstanceAsync(project).openFile(file, FileEditorOpenRequest.withFocus(true))
+    }
 
     return true
   }
