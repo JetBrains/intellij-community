@@ -321,7 +321,7 @@ http_file(
 http_file(
     name = "kotlin-annotation-processing-embeddable_http",
     downloaded_file_path = "kotlin-annotation-processing-embeddable-%s.jar" % _KOTLIN_VERSION,
-    sha256 = "58d6961bddcddd7c201b8dc0b78ae49add83199204be18425646392b2139182c",
+    sha256 = "a721eddef921565748a7ebcd1c2759f6af76a036f9d97fa4efa592659079fd56",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-annotation-processing-embeddable/%s/kotlin-annotation-processing-embeddable-%s.jar" % (_KOTLIN_VERSION, _KOTLIN_VERSION),
 )
 
