@@ -339,6 +339,47 @@ class PyMonkeypatchTest : PyTestCase() {
     assertEquals("Reqs", (resolved as PyFunction).containingClass?.name)
   }
 
+  @TestFor(issues = ["PY-90524"])
+  fun `test only a target that can stand for any class skips the check of the attribute`() {
+    myFixture.configureByText("test_any.py", """
+      from typing import Any
+
+      def test_any(monkeypatch, a: Any):
+          monkeypatch.setattr(a, "abc", None)
+
+      def test_object(monkeypatch, o: object):
+          monkeypatch.setattr(o, "abc", None)
+
+      def test_class_of_any(monkeypatch, c: type[Any], t: type):
+          monkeypatch.setattr(c, "abc", None)
+          monkeypatch.setattr(t, "abc", None)
+
+      def test_no_annotation(monkeypatch, p):
+          monkeypatch.setattr(p, "abc", None)
+
+      def test_class_of_int(monkeypatch, c: type[int]):
+          monkeypatch.setattr(c, "<error descr="Unresolved reference 'abc'">abc</error>", None)
+
+      def test_object_class(monkeypatch):
+          monkeypatch.setattr(object, "<error descr="Unresolved reference 'abc'">abc</error>", None)
+    """.trimIndent())
+    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+    myFixture.checkHighlighting(true, false, false)
+  }
+
+  @TestFor(issues = ["PY-90524"])
+  fun `test attribute of an instance of object resolves`() {
+    myFixture.configureByText("test_object.py", """
+      def test_object(monkeypatch, o: object):
+          monkeypatch.setattr(o, "__repr__", None)
+    """.trimIndent())
+    val func = (myFixture.file as PyFile).findTopLevelFunction("test_object")!!
+    val strArg = findSecondStringArg(func)!!
+    val resolved = strArg.references.last().resolve()
+    assertInstanceOf(resolved, PyFunction::class.java)
+    assertEquals("object", (resolved as PyFunction).containingClass?.name)
+  }
+
   private fun addClientModule() {
     myFixture.addFileToProject("bla/__init__.py", "")
     myFixture.addFileToProject("bla/_client.py", """
