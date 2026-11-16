@@ -296,6 +296,7 @@ intellij.platform.versionDownloadManager.tests
 intellij.platform.whatsNew.tests
 intellij.platform.workspace.jps.tests
 intellij.platform.workspace.storage.tests
+intellij.platform.workspace.storage.tests.exploratory
 intellij.properties.propertyBased.tests
 intellij.properties.tests
 intellij.python.community.execService.tests
