@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
+import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import com.intellij.python.sdk.backend.PythonSdkTable
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.impl.presentation
@@ -408,6 +409,12 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       hideOthers = state
       reloadList()
+    }
+
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      // The interpreter library flow lists the interpreters of this project alone, so there is nothing to hide.
+      e.presentation.isVisible = !isInterpreterLibraryFlowEnabled()
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
