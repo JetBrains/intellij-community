@@ -408,7 +408,8 @@ class PyUnresolvedReferencesVisitor(
               severity = HighlightSeverity.WEAK_WARNING
             }
             else {
-              message = PyPsiBundle.problemMessage("INSP.unresolved.refs.cannot.find.reference.in.type", refText, type.name)
+              message = PyPsiBundle.problemMessage("INSP.unresolved.refs.cannot.find.reference.in.type", refText,
+                                                   typeNameInMessage(type, qualifier))
             }
           }
           markedQualified = true
@@ -539,6 +540,17 @@ class PyUnresolvedReferencesVisitor(
   private fun hasUnknownAttrsDecorator(type: PyOverloadType): Boolean {
     val runtimeCandidates = type.impl?.get()?.let(::listOf) ?: type.items
     return runtimeCandidates.any { it is PyCallableType && hasUnknownAttrsDecorator(it.callable) }
+  }
+
+  /**
+   * The name of [type] in "Cannot find reference". An overloaded function searches its members in the runtime class
+   * of its implementation, such as `FunctionType`, so the message names that class. Without that class it names the
+   * implementation, as for a function that is not overloaded.
+   */
+  private fun typeNameInMessage(type: PyType, qualifier: PyExpression?): String? {
+    if (type !is PyOverloadType) return type.name
+    val runtimeType = type.impl?.get() as? PyCallableType ?: type.items.firstOrNull() ?: return type.name
+    return PyUtil.selectCallableTypeRuntimeClass(runtimeType, qualifier, myTypeEvalContext)?.name ?: runtimeType.name
   }
 
   private fun isIgnoredByExtension(type: PyType, name: String): Boolean =
