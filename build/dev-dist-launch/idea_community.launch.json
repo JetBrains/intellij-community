@@ -49,7 +49,7 @@
         "-Dqodana.product.name=Qodana Community for JVM",
         "-Dqodana.build.number=QDJVMC-@@build_number@@",
         "-Dqodana.eap=true",
-        "-Dqodana.structural.fingerprints.default=true"
+        "-Dqodana.structural.fingerprints.default=false"
       ]
     },
     {
