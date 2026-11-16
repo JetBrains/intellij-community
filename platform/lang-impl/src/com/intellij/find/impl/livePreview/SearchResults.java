@@ -161,6 +161,7 @@ public class SearchResults implements DocumentListener, CaretListener {
   }
 
   public boolean isExcluded(FindResult occurrence) {
+    if (myExcluded.isEmpty()) return false;
     for (RangeMarker rangeMarker : myExcluded) {
       if (TextRange.areSegmentsEqual(rangeMarker, occurrence)) {
         return true;
