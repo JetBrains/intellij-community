@@ -6,6 +6,8 @@ import com.intellij.tests.bazel.BazelJUnitOutputListener;
 import com.intellij.tests.bazel.IjSmTestExecutionListener;
 import com.intellij.tests.bazel.TestExecutionOutputDecorator;
 import com.intellij.util.ArrayUtil;
+import org.junit.platform.commons.support.HierarchyTraversalMode;
+import org.junit.platform.commons.support.ReflectionSupport;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.Filter;
 import org.junit.platform.engine.FilterResult;
@@ -384,7 +386,7 @@ public final class JUnit5BazelRunner {
             out.add(selectClass(classLoader, /*className*/ parts[0]));
             break;
           case 2:
-            out.add(selectMethod(classLoader, /*className*/ parts[0], /*methodName*/ parts[1]));
+            out.addAll(selectMethodsByName(classLoader, /*className*/ parts[0], /*methodName*/ parts[1]));
             break;
           case 3:
             out.add(selectMethod(classLoader, /*className*/ parts[0], /*methodName*/ parts[1], /*parameterTypeNames*/ parts[2]));
@@ -582,9 +584,46 @@ public final class JUnit5BazelRunner {
       String methodName = parts[1];
       System.err.println("Selecting class: " + className);
       System.err.println("Selecting method: " + methodName);
-      return List.of(selectMethod(classLoader, className, methodName));
+      return selectMethodsByName(classLoader, className, methodName);
     } else {
       return Collections.emptyList();
+    }
+  }
+
+  /**
+   * The selectors of the methods named {@code methodName} in the class {@code className}, with any parameter list.
+   * <p>
+   * {@code selectMethod(classLoader, className, methodName)} finds only a method without parameters. A test method can take
+   * a parameter that JUnit injects, such as {@code @TempDir root: Path}. The test XML names it without its parameter list,
+   * so the rerun line of bt names it so too.
+   * <p>
+   * The method can also be inherited. Its selector names the filter class, so the test runs in that class.
+   * A name with {@code (} and a name that no method has keep the selector that JUnit resolves.
+   * Then JUnit reports a missing method as before.
+   */
+  private static List<MethodSelector> selectMethodsByName(ClassLoader classLoader, String className, String methodName) {
+    MethodSelector byJUnit = selectMethod(classLoader, className, methodName);
+    if (methodName.indexOf('(') != -1) {
+      return List.of(byJUnit);
+    }
+    try {
+      Class<?> type = Class.forName(className, false, classLoader);
+      List<Method> methods = ReflectionSupport.findMethods(type, method -> method.getName().equals(methodName), HierarchyTraversalMode.TOP_DOWN);
+      if (methods.isEmpty()) {
+        return List.of(byJUnit);
+      }
+      List<MethodSelector> selectors = new ArrayList<>(methods.size());
+      for (Method method : methods) {
+        System.err.println("Selecting method: " + method.getName() + "(" +
+                           Arrays.stream(method.getParameterTypes()).map(Class::getName).collect(Collectors.joining(", ")) + ")" +
+                           " of " + method.getDeclaringClass().getName());
+        selectors.add(selectMethod(type, method));
+      }
+      return selectors;
+    }
+    catch (LinkageError | RuntimeException | ClassNotFoundException e) {
+      System.err.println("Cannot find the methods named " + methodName + " in " + className + ": " + e);
+      return List.of(byJUnit);
     }
   }
 
