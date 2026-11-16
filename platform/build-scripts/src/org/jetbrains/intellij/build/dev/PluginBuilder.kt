@@ -200,7 +200,12 @@ internal fun devModePluginCandidates(request: BuildRequest, context: BuildContex
   )
 }
 
-/** Selects original layouts from source/model facts. Dev builds do not apply release-cycle restrictions. */
+/**
+ * Selects original layouts from source/model facts. Dev builds do not apply release-cycle restrictions.
+ *
+ * A layout of a module of [updateModules] is the layout that the product publishes, as the old update path builds it. So
+ * its marketplace layout is selectable, see [satisfiesDevBundlingRequirements]. Every other module keeps the bundled rule.
+ */
 @ApiStatus.Internal
 fun devModePluginCandidates(
   owned: List<PluginLayout>,
@@ -211,6 +216,7 @@ fun devModePluginCandidates(
   os: OsFamily,
   arch: JvmArchitecture,
   bundledPluginDirectoriesToSkip: Collection<String>,
+  updateModules: Set<String> = emptySet(),
 ): List<PluginLayout> {
   return selectDevModePluginVariants(
     owned = owned,
@@ -218,14 +224,16 @@ fun devModePluginCandidates(
     arch = arch,
     isApplicable = { plugin ->
       isPluginApplicable(bundledMainModuleNames, plugin, os) { targetOs ->
-        satisfiesDevBundlingRequirements(plugin, targetOs, arch, bundledPluginDirectoriesToSkip)
+        satisfiesDevBundlingRequirements(plugin, targetOs, arch, bundledPluginDirectoriesToSkip, plugin.mainModule in updateModules)
       }
     },
     checkAbsence = { mainModule, variants ->
       checkTheAbsenceIsIntended(
         mainModule, variants, demanded, fragmentName, platformPrefix, os, arch,
         isAbsentBecauseOfTargetPlatform = { plugin ->
-          isAbsentBecauseOfTheTargetPlatform(plugin) { targetOs, targetArch ->
+          // A selectable marketplace layout is absent only because of a skipped directory, which is no platform reason.
+          val selectableMarketplace = plugin.mainModule in updateModules && plugin.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE
+          !selectableMarketplace && isAbsentBecauseOfTheTargetPlatform(plugin) { targetOs, targetArch ->
             satisfiesDevBundlingRequirements(plugin, targetOs, targetArch, bundledPluginDirectoriesToSkip)
           }
         },

@@ -69,6 +69,45 @@ class DevModePluginCandidatesTest {
     assertThat(candidates).isEmpty()
   }
 
+  @Test
+  fun `an update module admits its marketplace layout, and another module keeps the bundled rule`() {
+    val other = "intellij.other.plugin"
+    val updateLayout = PluginLayout.pluginAuto(listOf(plugin)) { it.bundlingRestrictions.marketplace = true }
+    val otherLayout = PluginLayout.pluginAuto(listOf(other)) { it.bundlingRestrictions.marketplace = true }
+    fun select(updateModules: Set<String>, demanded: Set<String> = emptySet()): List<PluginLayout> {
+      return devModePluginCandidates(
+        owned = listOf(updateLayout, otherLayout),
+        bundledMainModuleNames = setOf(plugin, other),
+        demanded = demanded,
+        fragmentName = "all",
+        platformPrefix = "Example",
+        os = TARGET_OS,
+        arch = TARGET_ARCH,
+        bundledPluginDirectoriesToSkip = emptyList(),
+        updateModules = updateModules,
+      )
+    }
+
+    assertThat(select(updateModules = setOf(plugin))).containsExactly(updateLayout)
+    assertThat(select(updateModules = emptySet())).isEmpty()
+    // A marketplace layout of an update module is absent only because of a skipped directory, so a demand of it fails.
+    assertThatThrownBy {
+      devModePluginCandidates(
+        owned = listOf(updateLayout),
+        bundledMainModuleNames = setOf(plugin),
+        demanded = setOf(plugin),
+        fragmentName = "all",
+        platformPrefix = "Example",
+        os = TARGET_OS,
+        arch = TARGET_ARCH,
+        bundledPluginDirectoriesToSkip = listOf(updateLayout.directoryName),
+        updateModules = setOf(plugin),
+      )
+    }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining(plugin)
+  }
+
   // IJAI-955: the release cycle dropped `intellij.air.plugin` and `intellij.devkit` from an assembly that had asked for
   // them by name. The only symptom was 149 Bazel-built jars with no destination, two layers away.
   @Test

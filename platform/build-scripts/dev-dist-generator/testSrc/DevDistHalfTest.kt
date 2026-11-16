@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.devDistGenerator
 
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Assertions.entry
@@ -31,6 +33,49 @@ class DevDistHalfTest {
     assertThat(half.extraPluginModules("Idea")).isEmpty()
     assertThat(half.extraPluginModules("Other", contextPlugins)).isNull()
     assertThat(half.handExtraPopulation(contextPlugins = contextPlugins)).containsExactly("intellij.devkit")
+  }
+
+  @Test
+  fun `the update plugins of each mode come from the published rows without the bundled plugins`() {
+    val half = object : DevDistHalf by CommunityDevDistHalf {
+      override val splitDistributions: Map<String, SplitDevDistribution> = linkedMapOf(
+        "all" to SplitDevDistribution(updatePlugins = DevDistUpdatePlugins.ALL, updatePluginHoldOuts = mapOf("intellij.held" to "a reason")),
+        "published" to SplitDevDistribution(updatePlugins = DevDistUpdatePlugins.PUBLISHED),
+        "none" to SplitDevDistribution(),
+      )
+    }
+    val properties = SyntheticProductProperties().apply {
+      productLayout.bundledPluginModules = persistentListOf("intellij.bundled")
+      productLayout.pluginModulesToPublish = persistentSetOf("intellij.published", "intellij.bundled")
+    }
+    val rows = listOf("intellij.published", "intellij.compatible", "intellij.bundled", "intellij.held", "intellij.compatible")
+
+    val modules = half.updatePluginModules(
+      properties = mapOf("all" to properties, "published" to properties, "none" to properties),
+      publishedRows = mapOf("all" to rows, "published" to rows, "none" to rows),
+      bundledPluginModules = { it.productLayout.bundledPluginModules },
+    )
+
+    assertThat(modules).containsExactly(
+      entry("all", listOf("intellij.compatible", "intellij.held", "intellij.published")),
+      entry("published", listOf("intellij.published")),
+    )
+    assertThat(CommunityDevDistHalf.updatePluginModules(emptyMap(), emptyMap()) { emptyList() }).isEmpty()
+    assertThat(CommunityDevDistHalf.splitDistributions.values.map { it.updatePlugins }.distinct()).containsExactly(DevDistUpdatePlugins.NONE)
+  }
+
+  @Test
+  fun `an updater product without a published row fails and names the product`() {
+    val half = object : DevDistHalf by CommunityDevDistHalf {
+      override val splitDistributions: Map<String, SplitDevDistribution> = linkedMapOf(
+        "published" to SplitDevDistribution(updatePlugins = DevDistUpdatePlugins.PUBLISHED),
+      )
+    }
+    val properties = SyntheticProductProperties().apply { productLayout.pluginModulesToPublish = persistentSetOf("intellij.published") }
+
+    assertThatThrownBy { half.updatePluginModules(mapOf("published" to properties), mapOf("published" to listOf("intellij.compatible"))) { emptyList() } }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessage("The updater product 'published' of the community half has no published row of the mode PUBLISHED")
   }
 
   @Test

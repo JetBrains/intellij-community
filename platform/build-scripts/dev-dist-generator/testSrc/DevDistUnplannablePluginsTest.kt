@@ -233,6 +233,125 @@ class DevDistUnplannablePluginsTest {
   }
 
   @Test
+  fun `a marketplace-only update module gets an additional request, and of a pair the marketplace layout`() {
+    val marketplaceOnly = PluginLayout.pluginAuto("intellij.marketplace") { it.bundlingRestrictions.marketplace = true }
+    val bundledVariant = PluginLayout.pluginAuto("intellij.pair") { it.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX) }
+    val marketplaceVariant = PluginLayout.pluginAuto("intellij.pair") { it.bundlingRestrictions.marketplace = true }
+    val properties = SyntheticProductProperties(persistentListOf(marketplaceOnly, bundledVariant, marketplaceVariant))
+
+    val requests = enumerateDevDistPluginRequests(
+      product = "idea",
+      properties = properties,
+      bundledPluginModules = emptyList(),
+      variants = listOf(linuxX64, macAarch64),
+      additionalModules = emptyList(),
+      extraPluginModules = emptyList(),
+      updateModules = listOf("intellij.marketplace", "intellij.pair"),
+    )
+
+    assertThat(requests.map { listOf(it.layout.mainModule, it.variant.id, it.tier, it.updateOnly) }).containsExactly(
+      listOf("intellij.marketplace", "linux_x64", DevDistPluginTier.ADDITIONAL, true),
+      listOf("intellij.pair", "linux_x64", DevDistPluginTier.ADDITIONAL, true),
+      listOf("intellij.marketplace", "mac_aarch64", DevDistPluginTier.ADDITIONAL, true),
+      listOf("intellij.pair", "mac_aarch64", DevDistPluginTier.ADDITIONAL, true),
+    )
+    assertThat(requests.filter { it.layout.mainModule == "intellij.pair" }.map { it.layout }).allMatch { it === marketplaceVariant }
+    // The registry tier keeps the bundled rule, see `a marketplace-only registry layout yields no request`.
+    assertThat(registryRequests(properties, registryModules = listOf("intellij.marketplace"))).isEmpty()
+  }
+
+  @Test
+  fun `several refused update modules are named in one failure, and a hold-out is not`() {
+    val crossPlatformOnly = PluginLayout.pluginAutoWithCustomDirName("intellij.cross") {
+      it.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
+    }
+    val macOnly = PluginLayout.pluginAutoWithCustomDirName("intellij.mac") {
+      it.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
+    }
+    val properties = SyntheticProductProperties(persistentListOf(crossPlatformOnly, macOnly, plainLayout("intellij.plain")))
+    val updateModules = listOf("intellij.cross", "intellij.mac", "intellij.plain")
+    val refusals = DevDistUpdateRefusals()
+
+    val requests = enumerateDevDistPluginRequests(
+      product = "idea",
+      properties = properties,
+      bundledPluginModules = emptyList(),
+      variants = listOf(linuxX64),
+      additionalModules = emptyList(),
+      extraPluginModules = emptyList(),
+      updateModules = updateModules,
+      refuseUpdate = { mainModule, reason -> refusals.add("idea", mainModule, DevDistUpdateRefusalStage.ENUMERATION, reason) },
+    )
+
+    assertThat(requests.map { it.layout.mainModule }).containsExactly("intellij.plain")
+    assertThat(refusals.refused("idea")).containsExactly("intellij.cross", "intellij.mac")
+    assertThatThrownBy { refusals.check(holdOuts = mapOf("idea" to emptyMap()), updatePluginModules = mapOf("idea" to updateModules)) }
+      .isInstanceOf(DevDistUnplannableLayoutException::class.java)
+      .hasMessage(
+        "The plan cannot state these update plugins (2). Fix each one, or hold it out with a reason in `updatePluginHoldOuts` of its split product:\n" +
+        "  idea intellij.cross (request enumeration): The update plugin 'intellij.cross' of 'idea' has no plugin layout\n" +
+        "  idea intellij.mac (request enumeration): No platform variant selects the update plugin 'intellij.mac' of 'idea'"
+      )
+    // Two hold-outs cover the refusals. A hold-out that the plan states, or that is no update plugin, is stale.
+    refusals.check(
+      holdOuts = mapOf("idea" to mapOf("intellij.cross" to "no layout", "intellij.mac" to "macOS only")),
+      updatePluginModules = mapOf("idea" to updateModules),
+    )
+    assertThatThrownBy {
+      refusals.check(
+        holdOuts = mapOf("idea" to mapOf("intellij.cross" to "a", "intellij.mac" to "b", "intellij.plain" to "c", "intellij.gone" to "d")),
+        updatePluginModules = mapOf("idea" to updateModules),
+      )
+    }
+      .isInstanceOf(DevDistUnplannableLayoutException::class.java)
+      .hasMessage(
+        "Remove these stale hold-outs (2) from `updatePluginHoldOuts`:\n" +
+        "  idea intellij.gone: it is no update plugin of the product\n" +
+        "  idea intellij.plain: the plan states it"
+      )
+  }
+
+  @Test
+  fun `a refused update module that a run configuration names stops the run`() {
+    val crossPlatformOnly = PluginLayout.pluginAutoWithCustomDirName("intellij.cross") {
+      it.bundlingRestrictions.includeInDistribution = PluginDistribution.CROSS_PLATFORM_DIST_ONLY
+    }
+    val properties = SyntheticProductProperties(persistentListOf(crossPlatformOnly))
+
+    assertThatThrownBy {
+      enumerateDevDistPluginRequests(
+        product = "idea",
+        properties = properties,
+        bundledPluginModules = emptyList(),
+        variants = listOf(linuxX64),
+        additionalModules = listOf("intellij.cross"),
+        extraPluginModules = emptyList(),
+        updateModules = listOf("intellij.cross"),
+        refuseUpdate = { _, _ -> throw AssertionError("A configured module is no collected refusal") },
+      )
+    }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessage("The update plugin 'intellij.cross' of 'idea' has no plugin layout")
+  }
+
+  @Test
+  fun `the layout bindings collect a refused update request and keep the plugin of another product`() {
+    val refused = request(layoutWithUnplacedResource(), DevDistPluginTier.ADDITIONAL).copy(updateOnly = true)
+    val kept = request(plainLayout("intellij.unplaced"), DevDistPluginTier.BUNDLED).copy(product = "other")
+    val refusals = DevDistUpdateRefusals()
+
+    val outcome = bindGeneratedDevDistPluginLayouts(listOf(kept, refused), emptyIndex(), emptyOutputProvider(), CommunityDevDistHalf, refusals = refusals)
+
+    assertThat(outcome.bindings.keys).containsExactly(kept.key)
+    assertThat(outcome.dropped).isEmpty()
+    assertThat(refusals.refused("idea")).containsExactly("intellij.unplaced")
+    assertThat(refusals.refused("other")).isEmpty()
+    // Without a collector, the same request stops the run.
+    assertThatThrownBy { bindGeneratedDevDistPluginLayouts(listOf(kept, refused), emptyIndex(), emptyOutputProvider(), CommunityDevDistHalf) }
+      .isInstanceOf(DevDistUnplannableLayoutException::class.java)
+  }
+
+  @Test
   fun `a registry module that is bundled or additional is refused`() {
     val properties = SyntheticProductProperties(persistentListOf(plainLayout("intellij.x")))
 

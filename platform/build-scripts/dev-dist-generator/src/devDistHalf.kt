@@ -3,6 +3,7 @@
 
 package com.intellij.platform.buildScripts.devDistGenerator
 
+import com.intellij.platform.distributionContent.DevDistPlatformJars
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.ProductProperties
@@ -10,6 +11,7 @@ import org.jetbrains.intellij.build.dev.LayoutAssetSource
 import org.jetbrains.intellij.build.dev.devBuildPathIdentity
 import org.jetbrains.intellij.build.impl.DevPlatformEntryPatch
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.getBundledPluginModules
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
 import java.nio.file.Path
 
@@ -182,7 +184,105 @@ data class SplitDevDistribution(
    * payload packs do not change that set.
    */
   @JvmField val runtimeClasspathModules: List<String> = emptyList(),
+  /**
+   * The update mode of the product. A product with another mode than [DevDistUpdatePlugins.NONE] is an updater product:
+   * each of its update plugins gets a component in the `additional` tier, see [DevDistHalf.updatePluginModules].
+   */
+  @JvmField val updatePlugins: DevDistUpdatePlugins = DevDistUpdatePlugins.NONE,
+  /**
+   * The update plugins that the product holds out, keyed by main module and valued by the reason. A hold-out gets no
+   * component. The run fails when the plan does not refuse a hold-out, so a fixed plugin leaves this map.
+   */
+  @JvmField val updatePluginHoldOuts: Map<String, String> = emptyMap(),
 )
+
+/**
+ * The update mode of a split product: which published rows of the product become update plugins. The published rows
+ * are the plugins that the old update path puts into its local plugin repository, see `nonBundledPlugins` of
+ * [DevDistPlatformJars].
+ */
+@ApiStatus.Internal
+enum class DevDistUpdatePlugins {
+  /** The product has no update plugins. */
+  NONE,
+
+  /** The published rows whose main module is in `pluginModulesToPublish` of the product layout. */
+  PUBLISHED,
+
+  /** Every published row of the product, also each compatible plugin when the product builds them all. */
+  ALL,
+}
+
+/**
+ * The update plugins of each updater product of the half, keyed by product in map order, each list sorted.
+ *
+ * The rows come from `nonBundledPlugins` of [platformJars], the derivation of the old update path, filtered by the
+ * mode of the product, see [DevDistUpdatePlugins]. A bundled plugin of the product drops out. The hold-outs stay in the
+ * list, so the plan can tell a stale hold-out. An updater product without a row, or one that [products] do not hold,
+ * fails the run.
+ */
+@ApiStatus.Internal
+fun DevDistHalf.updatePluginModules(
+  products: List<DiscoveredProduct>,
+  platformJars: DevDistPlatformJars,
+  outputProvider: ModuleOutputProvider,
+): Map<String, List<String>> {
+  val properties = LinkedHashMap<String, ProductProperties>()
+  for (product in products) {
+    (product.properties as? ProductProperties)?.let { properties.put(product.name, it) }
+  }
+  return updatePluginModules(
+    properties = properties,
+    publishedRows = publishedRowsByProduct(platformJars),
+    bundledPluginModules = { getBundledPluginModules(it, outputProvider) },
+  )
+}
+
+/**
+ * The update plugins of each updater product, see the public overload. [publishedRows] holds the main modules of the
+ * published rows of each product, and [bundledPluginModules] answers the bundled plugins of a product.
+ */
+internal fun DevDistHalf.updatePluginModules(
+  properties: Map<String, ProductProperties>,
+  publishedRows: Map<String, List<String>>,
+  bundledPluginModules: (ProductProperties) -> Collection<String>,
+): Map<String, List<String>> {
+  val result = LinkedHashMap<String, List<String>>()
+  for ((product, distribution) in splitDistributions) {
+    if (distribution.updatePlugins == DevDistUpdatePlugins.NONE) {
+      continue
+    }
+    val productProperties = checkNotNull(properties.get(product)) { "The updater product '$product' of the $name half has no ProductProperties" }
+    val rows = updatePluginRows(distribution.updatePlugins, productProperties, publishedRows.get(product).orEmpty())
+    check(rows.isNotEmpty()) { "The updater product '$product' of the $name half has no published row of the mode ${distribution.updatePlugins}" }
+    val bundled = bundledPluginModules(productProperties).toHashSet()
+    result.put(product, rows.filterNot(bundled::contains))
+  }
+  return java.util.Collections.unmodifiableMap(result)
+}
+
+/** The main modules of the published rows of [platformJars], keyed by product. */
+internal fun publishedRowsByProduct(platformJars: DevDistPlatformJars): Map<String, List<String>> {
+  val result = LinkedHashMap<String, MutableList<String>>()
+  for (row in platformJars.nonBundledPlugins) {
+    result.computeIfAbsent(row.product) { ArrayList() }.add(row.mainModule)
+  }
+  return result
+}
+
+/** The published rows of a product that [mode] selects, sorted and distinct, bundled plugins included. */
+internal fun updatePluginRows(mode: DevDistUpdatePlugins, properties: ProductProperties, publishedRows: Collection<String>): List<String> {
+  val published = properties.productLayout.pluginModulesToPublish
+  val result = java.util.TreeSet<String>()
+  for (mainModule in publishedRows) {
+    when (mode) {
+      DevDistUpdatePlugins.NONE -> {}
+      DevDistUpdatePlugins.PUBLISHED -> if (mainModule in published) result.add(mainModule)
+      DevDistUpdatePlugins.ALL -> result.add(mainModule)
+    }
+  }
+  return java.util.List.copyOf(result)
+}
 
 /** The `build/dev-build.json` keys of the split products of the half, in map order. */
 @get:ApiStatus.Internal

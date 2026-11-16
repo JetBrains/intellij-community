@@ -771,13 +771,22 @@ internal fun satisfiesBundlingRequirements(plugin: PluginLayout, osFamily: OsFam
   }
 }
 
-/** Applies the dev path's bundling rules without release-cycle restrictions or build context access. */
+/**
+ * Applies the dev path's bundling rules without release-cycle restrictions or build context access.
+ *
+ * With [acceptsMarketplace], a marketplace layout serves every platform. The dev distribution gives such a layout to a
+ * plugin that the product publishes, as the old update path builds it.
+ */
 internal fun satisfiesDevBundlingRequirements(
   plugin: PluginLayout,
   osFamily: OsFamily?,
   arch: JvmArchitecture?,
   bundledPluginDirectoriesToSkip: Collection<String>,
+  acceptsMarketplace: Boolean = false,
 ): Boolean {
+  if (acceptsMarketplace && plugin.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE) {
+    return !bundledPluginDirectoriesToSkip.contains(plugin.directoryName)
+  }
   return satisfiesBundlingRequirements(plugin, osFamily, arch, bundledPluginDirectoriesToSkip) { true }
 }
 

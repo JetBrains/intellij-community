@@ -417,6 +417,13 @@ internal fun collectPluginDescriptorPlan(
   embeddedClasses: DevDistEmbeddedFrontendClasses,
   /** Every mode a split product uses, except the monolith. Each plugin entry states the modules each of them refuses. */
   refusingModes: List<ProductMode> = emptyList(),
+  /**
+   * The plugins that only the update set of the product names, see [DevDistPluginRequest.updateOnly]. A failure of the
+   * entries of such a plugin goes to [refuseUpdate], and the plan has no entry of the plugin. A failure of every other
+   * plugin stops the run.
+   */
+  updateOnly: Set<String> = emptySet(),
+  refuseUpdate: (mainModule: String, reason: String) -> Unit = { _, reason -> error(reason) },
 ): PluginDescriptorPlan {
   val bundledPluginModules = layouts.map(PluginLayout::mainModule).distinct().sorted()
   val project = outputProvider.findRequiredModule(properties.applicationInfoModule).project
@@ -462,8 +469,7 @@ internal fun collectPluginDescriptorPlan(
   }
 
   val layoutsByMainModule = layouts.groupBy(PluginLayout::mainModule)
-  val plugins = ArrayList<PluginDescriptorEntry>()
-  for (mainModule in bundledPluginModules) {
+  fun planEntries(mainModule: String): List<PluginDescriptorEntry> {
     // One plugin reaches the assembly as one layout variant per (os, arch) or per marketplace restriction, and the
     // target platform then selects one - `devModePluginCandidates`. So a plan entry is one (plugin, variant), and it
     // states which platforms the variant serves. A release-cycle restriction such as `NOT_FOR_RELEASE` is not a
@@ -472,7 +478,7 @@ internal fun collectPluginDescriptorPlan(
     val entries = ArrayList<PluginDescriptorEntry>()
     val claimant = HashMap<String, String>()
     for (layout in variants) {
-      val restriction = when (val answer = layoutVariant(layout)) {
+      val restriction = when (val answer = layoutVariant(layout, marketplaceAlone = variants.size == 1)) {
         is VariantResult.Selected -> answer.variant
         VariantResult.NotSelected -> continue
         VariantResult.Unstatable -> error(
@@ -504,12 +510,36 @@ internal fun collectPluginDescriptorPlan(
       ))
     }
     entries.sortBy { it.variant }
-    plugins.addAll(entries)
+    return entries
+  }
+
+  val plugins = ArrayList<PluginDescriptorEntry>()
+  val refused = HashSet<String>()
+  for (mainModule in bundledPluginModules) {
+    if (mainModule !in updateOnly) {
+      plugins.addAll(planEntries(mainModule))
+      continue
+    }
+    // Any failure of an update plugin is a refusal, so one run names every update plugin that the plan cannot state.
+    val failure = try {
+      plugins.addAll(planEntries(mainModule))
+      null
+    }
+    catch (e: IllegalStateException) {
+      e
+    }
+    catch (e: IllegalArgumentException) {
+      e
+    }
+    if (failure != null) {
+      refuseUpdate(mainModule, failure.message ?: failure.toString())
+      refused.add(mainModule)
+    }
   }
 
   // Every plugin must reach an entry. A plugin whose every layout variant is `NotSelected` reaches none.
   val accounted = plugins.mapTo(HashSet()) { it.mainModule }
-  val unaccounted = bundledPluginModules.filterNot { it in accounted }
+  val unaccounted = bundledPluginModules.filterNot { it in accounted || it in refused }
   check(unaccounted.isEmpty()) {
     "The descriptor plan of '$platformPrefix' has no entry for $unaccounted. Every bundled plugin must reach an entry."
   }
@@ -746,19 +776,21 @@ private sealed interface VariantResult {
 /**
  * Which platforms one layout variant serves.
  *
- * `isPluginApplicable` is the authority, and this mirrors it. A marketplace-only variant reaches no distribution, so it
- * is [VariantResult.NotSelected] rather than an error - `intellij.webp` and `intellij.fullLine` each declare one beside
- * their bundled variant. `getPluginLayoutsByJpsModuleNames` has already dropped the cross-platform-only variants. A
- * release-cycle restriction such as `NOT_FOR_RELEASE` is not a platform restriction and does not split a plugin.
+ * `isPluginApplicable` is the authority, and this mirrors it. A marketplace variant beside a bundled variant reaches no
+ * distribution, so it is [VariantResult.NotSelected] rather than an error - `intellij.webp` and `intellij.fullLine` each
+ * declare one. A marketplace layout that is the only layout of its plugin, [marketplaceAlone], serves every platform.
+ * Only an update plugin reaches the plan with such a layout, see `devModePluginCandidates`, as the old update path
+ * publishes it. `getPluginLayoutsByJpsModuleNames` has already dropped the cross-platform-only variants. A release-cycle
+ * restriction such as `NOT_FOR_RELEASE` is not a platform restriction and does not split a plugin.
  *
  * Four platform shapes exist: no restriction, one operating system, one architecture, and one of each.
  * `isPluginApplicable` asks `satisfiesBundlingRequirements` twice, once with the operating system and once with `null`,
  * which is what makes the architecture-only shape applicable to every operating system of that architecture.
  */
-private fun layoutVariant(layout: PluginLayout): VariantResult {
+private fun layoutVariant(layout: PluginLayout, marketplaceAlone: Boolean): VariantResult {
   val restrictions = layout.bundlingRestrictions
   if (restrictions == PluginBundlingRestrictions.MARKETPLACE) {
-    return VariantResult.NotSelected
+    return if (marketplaceAlone) VariantResult.Selected(LayoutVariant(variant = "", os = null, arch = null)) else VariantResult.NotSelected
   }
   val everyOs = restrictions.supportedOs == OsFamily.ALL
   val everyArch = restrictions.supportedArch == JvmArchitecture.ALL

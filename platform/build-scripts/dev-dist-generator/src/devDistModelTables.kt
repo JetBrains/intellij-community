@@ -34,6 +34,11 @@ internal class PluginPackingDerivation(
   @JvmField val registryLayouts: Set<String> = emptySet(),
   /** The context plugins of each product, see [DevDistHalf.contextPluginModules]. The dev sections give each a component. */
   @JvmField val contextPluginModules: Map<String, List<String>> = emptyMap(),
+  /**
+   * The update plugins of each updater product, hold-outs included, see [DevDistHalf.updatePluginModules]. The population
+   * already holds each of them, because it holds every published row. The requests give each one a component.
+   */
+  @JvmField val updatePluginModules: Map<String, List<String>> = emptyMap(),
 )
 
 /**
@@ -113,5 +118,6 @@ internal fun derivePluginPackings(
     runConfigurations = runConfigurations,
     registryLayouts = registryLayouts,
     contextPluginModules = contextPluginModules,
+    updatePluginModules = half.updatePluginModules(derivation.products, platformRows, outputProvider),
   )
 }

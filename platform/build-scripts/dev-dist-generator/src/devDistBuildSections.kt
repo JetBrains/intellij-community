@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.dev.DevPluginPreparationRecipe
 import org.jetbrains.intellij.build.dev.DevPluginResourceExclusions
 import org.jetbrains.intellij.build.devDist.ReusableJarArtifact
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.intellij.build.productLayout.TestPluginSpec
 import org.jetbrains.intellij.build.productLayout.discovery.DiscoveredProduct
@@ -113,6 +114,8 @@ internal class DevDistBuildSections private constructor(
    * module and sorted. Only the community half has any, see [collectRegistrySourceTrees].
    */
   private val registrySourceTrees: Map<String, List<DeclaredResourceSource>> = emptyMap(),
+  /** The planned update plugins of each updater product, see [DevDistSectionInputs.updatePluginModules]. */
+  @JvmField val updatePluginModules: Map<String, List<String>> = emptyMap(),
 ) {
   private val canonicalOwnerIndex = DevDistCanonicalOwners(verdicts.contentModuleJarLabels.mapValues { it.value.canonicalArtifact }, index)
   private val completedPluginPlans = LinkedHashMap<DevDistPluginPlanKey, DevDistPluginPlanRecord>()
@@ -678,6 +681,7 @@ internal class DevDistBuildSections private constructor(
           verifyPlanUnits = inputs.verifyPlanUnits,
           relocatedContentModuleJarCalls = inputs.relocatedContentModuleJarCalls,
           registrySourceTrees = inputs.registrySourceTrees,
+          updatePluginModules = inputs.updatePluginModules,
         )
         buildSpan("dev sections: register plugin plans") { span ->
           val reusedGroups = registerGeneratedDevDistPluginPlans(
@@ -730,6 +734,8 @@ internal class DevDistSectionInputs private constructor(
   @JvmField val population: Set<String>,
   @JvmField val frontendRootDescriptorJars: Map<String, String>,
   @JvmField val renderedFrontendRootDescriptorJars: List<Target>,
+  /** The planned update plugins of each updater product, without the hold-outs, see [DevDistHalf.updatePluginModules]. */
+  @JvmField val updatePluginModules: Map<String, List<String>> = emptyMap(),
 ) {
   /** A copy of [loadStatements] that a fold owns. [DevDistBuildSections.bindPluginExecutions] adds the loads of its calls. */
   fun copyLoadStatements(): TreeMap<String, MutableList<LoadStatement>> {
@@ -780,9 +786,11 @@ internal class DevDistSectionInputs private constructor(
       // Every rejection site stops the run, for a bundled and an additional plugin alike. The run-configuration reader
       // rejects a module the project does not have or that has no plugin descriptor. The request enumeration rejects a
       // module without a layout or a platform variant. The layout bindings reject an undeclared callback or resource.
-      // The descriptor plan rejects a layout fact that is code. Only a registry request that the layout bindings reject
-      // does not stop the run.
+      // The descriptor plan rejects a layout fact that is code. A registry request that the layout bindings reject does
+      // not stop the run. A plugin that only the update set names does not stop it at once: each stage collects its
+      // refusal, and the run fails once at the end, see `DevDistUpdateRefusals`.
       val additionalModulesByProduct = derivation.runConfigurations.modulesByProduct
+      val refusals = DevDistUpdateRefusals()
       val allPluginRequests = buildSpan("dev sections: plugin requests") { span ->
         fun enumerate(registryLayoutsByProduct: Map<String, List<String>>): List<DevDistPluginRequest> {
           return enumerateGeneratedDevDistPluginRequests(
@@ -793,6 +801,8 @@ internal class DevDistSectionInputs private constructor(
             testPlugins = testPlugins,
             registryLayoutsByProduct = registryLayoutsByProduct,
             contextPluginModules = derivation.contextPluginModules,
+            updatePluginModules = derivation.updatePluginModules,
+            refusals = refusals,
           )
         }
         // Only the community half has registry plugins. A plugin that a split product bundles or names keeps that tier.
@@ -827,6 +837,7 @@ internal class DevDistSectionInputs private constructor(
         (if (registryLayoutsByProduct.isEmpty()) composedRequests else enumerate(registryLayoutsByProduct))
           .also { span.setAttribute("count", it.size.toLong()) }
       }
+      printUpdateCensus(half = half, products = products, derivation = derivation, refusals = refusals)
       fun testPluginsByProduct(requests: List<DevDistPluginRequest>): Map<String, Map<String, TestPluginSpec>> {
         return requests.groupBy(DevDistPluginRequest::product).mapValues { (_, ofProduct) ->
           val result = LinkedHashMap<String, TestPluginSpec>()
@@ -865,12 +876,54 @@ internal class DevDistSectionInputs private constructor(
           half = half,
           embeddedHomeOf = embeddedClasses::home,
           tolerated = { it.tier == DevDistPluginTier.REGISTRY },
+          refusals = refusals,
         ).also { span.setAttribute("count", it.bindings.size.toLong()) }
       }
       for ((mainModule, reason) in layoutBindings.dropped) {
         println("registry layout $mainModule is not planned: $reason")
       }
-      val pluginRequests = allPluginRequests.filter { it.layout.mainModule !in layoutBindings.dropped }
+      val boundRequests = allPluginRequests.filter {
+        it.layout.mainModule !in layoutBindings.dropped && !refusals.isRefused(it.product, it.layout.mainModule)
+      }
+      val unfilteredPlans = buildSpan("dev sections: descriptor plans") {
+        collectPluginDescriptorPlans(
+          walk = walk,
+          index = index,
+          outputProvider = outputProvider,
+          products = products,
+          requestLayoutsByProduct = boundRequests.groupBy(DevDistPluginRequest::product).mapValues { (_, ofProduct) ->
+            val seen = Collections.newSetFromMap(IdentityHashMap<PluginLayout, Boolean>())
+            ofProduct.mapNotNull { request -> if (seen.add(request.layout)) request.layout else null }
+          },
+          testPluginsByProduct = testPluginsByProduct(boundRequests),
+          half = half,
+          embeddedClasses = embeddedClasses,
+          updateOnlyByProduct = boundRequests.filter { it.updateOnly }.groupBy(DevDistPluginRequest::product).mapValues { (_, ofProduct) ->
+            ofProduct.mapTo(HashSet()) { it.layout.mainModule }
+          },
+          refusals = refusals,
+        )
+      }
+      // A refused update plugin and a hold-out leave before the residue classes, so neither renders a plan file.
+      val holdOuts = updatePluginHoldOuts(half)
+      fun leaves(product: String, mainModule: String): Boolean {
+        return refusals.isRefused(product, mainModule) || holdOuts.get(product)?.containsKey(mainModule) == true
+      }
+      val pluginRequests = boundRequests.filter { !leaves(it.product, it.layout.mainModule) }
+      val plans = unfilteredPlans.map { plan ->
+        if (plan.plugins.none { leaves(plan.platformPrefix, it.mainModule) }) {
+          plan
+        }
+        else {
+          PluginDescriptorPlan(
+            platformPrefix = plan.platformPrefix,
+            mode = plan.mode,
+            plugins = plan.plugins.filter { !leaves(plan.platformPrefix, it.mainModule) },
+            productDescriptor = plan.productDescriptor,
+            moduleSets = plan.moduleSets,
+          )
+        }
+      }
       if (half.writesCommunityPackages) {
         // A registry request without an explicit layout of its product has the automatic layout.
         val registryRequests = pluginRequests.filter { it.tier == DevDistPluginTier.REGISTRY }
@@ -891,21 +944,6 @@ internal class DevDistSectionInputs private constructor(
       }
       else {
         emptyMap()
-      }
-      val plans = buildSpan("dev sections: descriptor plans") {
-        collectPluginDescriptorPlans(
-          walk = walk,
-          index = index,
-          outputProvider = outputProvider,
-          products = products,
-          requestLayoutsByProduct = pluginRequests.groupBy(DevDistPluginRequest::product).mapValues { (_, ofProduct) ->
-            val seen = Collections.newSetFromMap(IdentityHashMap<PluginLayout, Boolean>())
-            ofProduct.mapNotNull { request -> if (seen.add(request.layout)) request.layout else null }
-          },
-          testPluginsByProduct = testPluginsByProduct(pluginRequests),
-          half = half,
-          embeddedClasses = embeddedClasses,
-        )
       }
 
       val candidacy = buildSpan("dev sections: content module jar candidacy") {
@@ -1004,6 +1042,7 @@ internal class DevDistSectionInputs private constructor(
           loadStatements.computeIfAbsent(mainModule) { ArrayList() }.addAll(draft.loadStatements)
         }
       }
+      refusals.check(holdOuts = holdOuts, updatePluginModules = derivation.updatePluginModules)
       return DevDistSectionInputs(
         outputProvider = outputProvider,
         half = half,
@@ -1026,8 +1065,48 @@ internal class DevDistSectionInputs private constructor(
         population = derivation.population,
         frontendRootDescriptorJars = embeddedClasses.frontendRootDescriptorJars(),
         renderedFrontendRootDescriptorJars = embeddedClasses.renderFrontendRootDescriptorJars(),
+        updatePluginModules = derivation.updatePluginModules.mapValues { (product, modules) ->
+          modules.filter { holdOuts.get(product)?.containsKey(it) != true }
+        },
       )
     }
+  }
+}
+
+/** The hold-outs of each updater product of [half], keyed by product, see [SplitDevDistribution.updatePluginHoldOuts]. */
+private fun updatePluginHoldOuts(half: DevDistHalf): Map<String, Map<String, String>> {
+  val result = LinkedHashMap<String, Map<String, String>>()
+  for ((product, distribution) in half.splitDistributions) {
+    if (distribution.updatePlugins != DevDistUpdatePlugins.NONE) {
+      result.put(product, distribution.updatePluginHoldOuts)
+    }
+  }
+  return result
+}
+
+/**
+ * Prints one census line for each updater product of [half]: the published rows of its mode, the bundled rows, the
+ * update plugins that the `additional` tier already held, the new ones, the hold-outs, the refusals of the enumeration
+ * and the configured plugins whose layout the published layout replaces.
+ */
+private fun printUpdateCensus(half: DevDistHalf, products: List<DiscoveredProduct>, derivation: PluginPackingDerivation, refusals: DevDistUpdateRefusals) {
+  for ((product, modules) in derivation.updatePluginModules) {
+    val distribution = half.splitDistributions.getValue(product)
+    val properties = products.first { it.name == product }.properties as ProductProperties
+    val rows = updatePluginRows(distribution.updatePlugins, properties, publishedRowsByProduct(derivation.platformJars).get(product).orEmpty())
+    val configured = LinkedHashSet(half.extraPluginModules(product, derivation.contextPluginModules).orEmpty())
+    configured.addAll(derivation.runConfigurations.modulesByProduct.get(product).orEmpty())
+    val already = modules.filter(configured::contains)
+    val layoutChanged = already.filter { module ->
+      val bundled = getPluginLayoutsByJpsModuleNames(listOf(module), properties.productLayout).toList()
+      val published = getPluginLayoutsByJpsModuleNames(listOf(module), properties.productLayout, toPublish = true).toList()
+      bundled.map { it.bundlingRestrictions } != published.map { it.bundlingRestrictions }
+    }
+    println(
+      "update plugins of $product (${distribution.updatePlugins}): ${rows.size} rows, ${rows.size - modules.size} bundled, " +
+      "${already.size} already additional, ${modules.size - already.size} new, ${distribution.updatePluginHoldOuts.size} held out, " +
+      "${refusals.refused(product).size} refused by the enumeration; layout changed: $layoutChanged"
+    )
   }
 }
 

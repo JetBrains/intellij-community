@@ -327,7 +327,8 @@ internal fun bindDevDistPluginLayout(
 
 /**
  * The layout bindings of the kept requests, keyed by request key, and the main modules that the bindings drop, sorted.
- * The value of [dropped] is the reason of the first rejected request of the main module.
+ * The value of [dropped] is the reason of the first rejected request of the main module. A rejected update request is
+ * not in [dropped]: [DevDistUpdateRefusals] holds it, and the bindings leave out its plan group.
  */
 internal class DevDistPluginLayoutBindingOutcome(
   @JvmField val bindings: Map<DevDistPluginPlanKey, DevDistPluginLayoutBindings>,
@@ -343,6 +344,10 @@ internal class DevDistPluginLayoutBindingOutcome(
  *
  * A rejected request that [tolerated] accepts does not stop the run. The outcome drops every request of its main
  * module then, because a plan group needs the bindings of each of its requests.
+ *
+ * With [refusals], a rejected request that only the update set names does not stop the run either, see
+ * [DevDistPluginRequest.updateOnly]. [refusals] takes the reason, and the outcome drops every request of the plugin of
+ * that product, which is its plan group.
  */
 internal fun bindGeneratedDevDistPluginLayouts(
   requests: List<DevDistPluginRequest>,
@@ -352,6 +357,7 @@ internal fun bindGeneratedDevDistPluginLayouts(
   resources: DevDistResourceSources = DevDistResourceSources(index, outputProvider),
   embeddedHomeOf: (String) -> String = { it },
   tolerated: (DevDistPluginRequest) -> Boolean = { false },
+  refusals: DevDistUpdateRefusals? = null,
 ): DevDistPluginLayoutBindingOutcome {
   // The bindings of a request read no state of another request, so they are computed beside each other. The outcomes
   // are then read in request order, so the run stops on the first rejected request, as a sequential loop did.
@@ -362,10 +368,23 @@ internal fun bindGeneratedDevDistPluginLayouts(
     catch (e: DevDistUnplannableLayoutException) {
       Result.failure(e)
     }
+    catch (e: IllegalStateException) {
+      // Any failure of a collected update request is a refusal, so one run names every such plugin.
+      if (refusals == null || !request.updateOnly) throw e
+      Result.failure(e)
+    }
+    catch (e: IllegalArgumentException) {
+      if (refusals == null || !request.updateOnly) throw e
+      Result.failure(e)
+    }
   }
   val dropped = TreeMap<String, String>()
   for ((request, outcome) in requests.zip(outcomes)) {
     val failure = outcome.exceptionOrNull() ?: continue
+    if (refusals != null && request.updateOnly) {
+      refusals.add(request.product, request.layout.mainModule, DevDistUpdateRefusalStage.LAYOUT_BINDINGS, failure.message.orEmpty())
+      continue
+    }
     if (!tolerated(request)) {
       throw failure
     }
@@ -373,7 +392,7 @@ internal fun bindGeneratedDevDistPluginLayouts(
   }
   val result = LinkedHashMap<DevDistPluginPlanKey, DevDistPluginLayoutBindings>()
   for ((request, outcome) in requests.zip(outcomes)) {
-    if (request.layout.mainModule !in dropped) {
+    if (request.layout.mainModule !in dropped && refusals?.isRefused(request.product, request.layout.mainModule) != true) {
       result.put(request.key, outcome.getOrThrow())
     }
   }
@@ -795,7 +814,9 @@ private fun requireNoModuleExcludes(layout: PluginLayout) {
  * request stops the run. [testPlugins] are the Product DSL test plugins that such a module can be.
  * [registryLayoutsByProduct] holds the registry plugins that each product plans in the registry tier, see
  * [assignRegistryLayoutsToProducts]. [contextPluginModules] holds the context plugins of each product, which join its
- * extra plugin modules, see [DevDistHalf.extraPluginModules].
+ * extra plugin modules, see [DevDistHalf.extraPluginModules]. [updatePluginModules] holds the update plugins of each
+ * updater product, see [DevDistHalf.updatePluginModules]. [refusals] collects the refusal of each one that only the
+ * update set names. Without [refusals], such a refusal stops the run.
  */
 internal fun enumerateGeneratedDevDistPluginRequests(
   products: List<DiscoveredProduct>,
@@ -805,6 +826,8 @@ internal fun enumerateGeneratedDevDistPluginRequests(
   testPlugins: List<TestPluginSpec>,
   registryLayoutsByProduct: Map<String, List<String>>,
   contextPluginModules: Map<String, List<String>> = emptyMap(),
+  updatePluginModules: Map<String, List<String>> = emptyMap(),
+  refusals: DevDistUpdateRefusals? = null,
 ): List<DevDistPluginRequest> {
   val variants = SUPPORTED_DISTRIBUTIONS.map { distribution ->
     PluginSymbolicVariant(id = devDistHostPlatform(distribution), distribution = distribution)
@@ -818,6 +841,10 @@ internal fun enumerateGeneratedDevDistPluginRequests(
       testPlugins = testPlugins,
       additionalModules = additionalModulesByProduct.get(product.name).orEmpty(),
       registryModules = registryLayoutsByProduct.get(product.name).orEmpty(),
+      updateModules = updatePluginModules.get(product.name).orEmpty(),
+      refuseUpdate = { mainModule, reason ->
+        checkNotNull(refusals) { reason }.add(product.name, mainModule, DevDistUpdateRefusalStage.ENUMERATION, reason)
+      },
     )
   }
 }

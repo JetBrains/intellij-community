@@ -482,7 +482,7 @@ internal fun computeDevDistPlan(
       }
       add(DEV_DIST_FRAGMENT_INPUTS_RELATIVE_PATH to renderFragmentInputs(sortedProducts, half))
       add(DEV_DIST_MODULE_SETS_RELATIVE_PATH to renderModuleSets(collected.moduleSets, half))
-      add(DEV_DIST_CONTENT_SETS_RELATIVE_PATH to renderContentSets(pluginExecutions, half))
+      add(DEV_DIST_CONTENT_SETS_RELATIVE_PATH to renderContentSets(pluginExecutions, half, sections.updatePluginModules))
       add(DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH to renderDevServerRunConfigurations(
         rows = runConfigurations,
         splitProducts = splitProducts,
@@ -862,7 +862,8 @@ private class CollectedPlan(
  *
  * After the flat walk, because the per-plugin partition needs the flat walk's resolutions, so that both walks credit
  * one module with a load path. The dev sections read these entries first, and the plan reads the same entries after
- * them. [index] gives the module and library labels and the root of the half. A plugin the plan cannot state stops the run.
+ * them. [index] gives the module and library labels and the root of the half. A plugin the plan cannot state stops the run,
+ * except a plugin of [updateOnlyByProduct]: [refusals] collects its refusal, and its plan has no entry of it.
  *
  * Each entry states the refusals of every mode of [DEV_DIST_STATED_PRODUCT_MODES], and not only of the modes of the
  * split products of [half]. So both halves render one leaf of a community plugin.
@@ -876,6 +877,8 @@ internal fun collectPluginDescriptorPlans(
   testPluginsByProduct: Map<String, Map<String, TestPluginSpec>> = emptyMap(),
   half: DevDistHalf,
   embeddedClasses: DevDistEmbeddedFrontendClasses,
+  updateOnlyByProduct: Map<String, Set<String>> = emptyMap(),
+  refusals: DevDistUpdateRefusals? = null,
 ): List<PluginDescriptorPlan> {
   val splitModes = products
     .filter { it.name in half.splitDistributions }
@@ -919,6 +922,10 @@ internal fun collectPluginDescriptorPlans(
       half = half,
       embeddedClasses = embeddedClasses,
       refusingModes = refusingModes,
+      updateOnly = if (refusals == null) emptySet() else updateOnlyByProduct.get(product.name).orEmpty(),
+      refuseUpdate = { mainModule, reason ->
+        checkNotNull(refusals) { reason }.add(product.name, mainModule, DevDistUpdateRefusalStage.DESCRIPTOR_PLAN, reason)
+      },
     )
   }.filterNotNull()
   checkEmbeddedDescriptorClassesPlanAlike(plans)
@@ -3872,7 +3879,11 @@ private fun StringBuilder.appendStringDict(name: String, values: Map<String, Str
   append("        },\n")
 }
 
-private fun renderContentSets(pluginExecutions: DevDistPluginExecutionRendering, half: DevDistHalf): String = buildString {
+private fun renderContentSets(
+  pluginExecutions: DevDistPluginExecutionRendering,
+  half: DevDistHalf,
+  updatePlugins: Map<String, List<String>>,
+): String = buildString {
   append(half.generatedByHeader)
   append("#\n")
   append("# `DEV_DIST_PLUGIN_COMPONENTS`, derived from the Product DSL, the layouts and the plugin descriptors: the\n")
@@ -3904,6 +3915,30 @@ private fun renderContentSets(pluginExecutions: DevDistPluginExecutionRendering,
     append("# a test plugin has no key.\n")
     append(testPlugins)
   }
+  if (updatePlugins.isNotEmpty()) {
+    append("\n")
+    append("# `DEV_DIST_UPDATE_PLUGINS`, derived from the published plugins of each updater product: the update plugins in\n")
+    append("# the `additional` tier of `DEV_DIST_PLUGIN_COMPONENTS`, without the hold-outs, by product key. The modules are\n")
+    append("# sorted. An updater product keeps its key also with no plugin.\n")
+    append(renderUpdatePlugins(updatePlugins))
+  }
+}
+
+/** The `DEV_DIST_UPDATE_PLUGINS` dict of [updatePlugins], in the key order of the map. */
+private fun renderUpdatePlugins(updatePlugins: Map<String, List<String>>): String = buildString {
+  append("DEV_DIST_UPDATE_PLUGINS = {\n")
+  for ((product, modules) in updatePlugins) {
+    if (modules.isEmpty()) {
+      append("    \"").append(product).append("\": [],\n")
+      continue
+    }
+    append("    \"").append(product).append("\": [\n")
+    for (module in modules) {
+      append("        \"").append(module).append("\",\n")
+    }
+    append("    ],\n")
+  }
+  append("}\n")
 }
 
 /**
