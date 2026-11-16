@@ -108,6 +108,7 @@ fun Project.getEelDescriptor(): EelDescriptor {
   "com.intellij.air.shared.core.AirAgentEnvironmentTest",
   "com.intellij.draft.customization.DraftProjectEelPreInit",
   "com.intellij.ide.lightProducts.LightProjectOpeningKt",
+  "com.intellij.platform.testFramework.junit5.eel.EelProjectUtilsTest",
   "com.intellij.rustrover.solana.runconfig.anchor.AnchorTestCommandLineStateTest",
   "com.jetbrains.php.config.interpreters.eel.PhpFakeEelEnvironment",
   "com.jetbrains.thinclient.connection.ThinClientRdProjectViewSession",
