@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
@@ -51,6 +52,9 @@ public final class PythonRegexpInjector implements MultiHostInjector {
 
   private static final String FLAGS = "flags";
 
+  private static final String PYDANTIC_FIELD = "pydantic.fields.Field";
+  private static final String PYDANTIC_PATTERN = "pattern";
+
   private final List<RegexpMethodDescriptor> myDescriptors = new ArrayList<>();
 
   public PythonRegexpInjector() {
@@ -75,6 +79,11 @@ public final class PythonRegexpInjector implements MultiHostInjector {
 
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
+    if (isPydanticFieldPattern(context)) {
+      // The closest dialect to the Rust `regex` crate, the default engine of Pydantic
+      PyInjectionUtil.registerStringLiteralInjection(context, registrar, PythonMrabRegexpLanguage.INSTANCE);
+      return;
+    }
     final PyArgumentList argumentList = PyUtil.as(context.getParent(), PyArgumentList.class);
     if (PyInjectionUtil.getLargestStringLiteral(context) == context && argumentList != null) {
       final PyCallExpression call = PsiTreeUtil.getParentOfType(context, PyCallExpression.class);
@@ -86,6 +95,23 @@ public final class PythonRegexpInjector implements MultiHostInjector {
         }
       }
     }
+  }
+
+  /**
+   * Checks that {@code context} is the whole value of the {@code pattern} argument of {@code pydantic.Field}.
+   */
+  private static boolean isPydanticFieldPattern(@NotNull PsiElement context) {
+    if (!(context.getParent() instanceof PyKeywordArgument keywordArgument) ||
+        !PYDANTIC_PATTERN.equals(keywordArgument.getKeyword()) ||
+        PyInjectionUtil.getLargestStringLiteral(context) != context ||
+        !(keywordArgument.getParent() instanceof PyArgumentList argumentList) ||
+        !(argumentList.getParent() instanceof PyCallExpression call) ||
+        !(call.getCallee() instanceof PyReferenceExpression callee)) {
+      return false;
+    }
+    final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(call.getProject(), call.getContainingFile());
+    return callee.getReference(PyResolveContext.defaultContext(typeEvalContext)).resolve() instanceof PyFunction function &&
+           PYDANTIC_FIELD.equals(function.getQualifiedName());
   }
 
   private @Nullable PsiElement resolvePossibleRegexpCall(@NotNull PyCallExpression call) {
