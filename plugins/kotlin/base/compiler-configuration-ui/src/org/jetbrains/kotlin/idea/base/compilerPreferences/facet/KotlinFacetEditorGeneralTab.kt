@@ -28,9 +28,10 @@ import org.jetbrains.kotlin.cli.common.arguments.Freezable
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.copyCommonCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.getFatalDiagnosticsMessage
+import org.jetbrains.kotlin.cli.common.arguments.hasFatalError
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.arguments.unfrozen
-import org.jetbrains.kotlin.cli.common.arguments.validateArguments
 import org.jetbrains.kotlin.compilerRunner.copyProperties
 import org.jetbrains.kotlin.compilerRunner.mergeBeans
 import org.jetbrains.kotlin.config.CompilerSettings
@@ -332,7 +333,9 @@ class KotlinFacetEditorGeneralTab(
             val argumentClass = primaryArguments.javaClass
             val additionalArguments = argumentClass.getDeclaredConstructor().newInstance().apply {
                 parseCommandLineArguments(splitArgumentString(editor.compilerConfigurable.additionalArgsOptionsField.text), this)
-                validateArguments(errors)?.let { message -> return ValidationResult(message) }
+                if (diagnostics.hasFatalError) {
+                    return ValidationResult(@Suppress("HardCodedStringLiteral") getFatalDiagnosticsMessage())
+                }
             }
             val emptyArguments = argumentClass.getDeclaredConstructor().newInstance()
             val fieldNamesToCheck = getExposedFacetFields(platform.idePlatformKind)

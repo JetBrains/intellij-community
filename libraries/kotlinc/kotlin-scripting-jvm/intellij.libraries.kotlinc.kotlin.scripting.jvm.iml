@@ -25,19 +25,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlin-scripting-jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:2.5.20-dev-3853">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:2.5.20-dev-4873">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.20-dev-3853/kotlin-scripting-jvm-2.5.20-dev-3853.jar">
-              <sha256sum>981cde4e199ec281b4ce3e2038a32d185327f44f527ac285d05bf56e357fddce</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.20-dev-4873/kotlin-scripting-jvm-2.5.20-dev-4873.jar">
+              <sha256sum>218594c76cf0123743988446fc3aa2d046209104c161c6a5b29347d17298741f</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.20-dev-3853/kotlin-scripting-jvm-2.5.20-dev-3853.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.20-dev-4873/kotlin-scripting-jvm-2.5.20-dev-4873.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.20-dev-3853/kotlin-scripting-jvm-2.5.20-dev-3853-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.5.20-dev-4873/kotlin-scripting-jvm-2.5.20-dev-4873-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
