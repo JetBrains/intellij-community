@@ -24,10 +24,10 @@ import com.jetbrains.python.codeInsight.PySubstitutionChunkReference
 import com.jetbrains.python.codeInsight.controlflow.Reachability
 import com.jetbrains.python.codeInsight.controlflow.getReachabilityForInspection
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.documentation.docstrings.DocStringTypeReference
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.inspections.PyInspectionMessages
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.quickfix.PyRenameUnresolvedRefQuickFix
 import com.jetbrains.python.psi.AccessDirection
@@ -251,10 +251,10 @@ class PyUnresolvedReferencesVisitor(
     containingUnion: PyUnionType,
     missingMembers: List<StrictUnionMissingMember>,
   ) {
-    val unionRender = PythonDocumentationProvider.getTypeName(containingUnion, myTypeEvalContext)
+    val unionRender = CodifiedParam.ofType(containingUnion, node, myTypeEvalContext)
 
     for ((unionMemberType, attributeName) in missingMembers.distinct()) {
-      val memberRender = PythonDocumentationProvider.getTypeName(unionMemberType, myTypeEvalContext)
+      val memberRender = CodifiedParam.ofType(unionMemberType, node, myTypeEvalContext)
       val message = PyPsiBundle.problemMessage(
         "INSP.unresolved.refs.unresolved.attribute.in.union.type",
         memberRender,
@@ -401,8 +401,8 @@ class PyUnresolvedReferencesVisitor(
           else {
             val unionMemberWithoutAttr = findStrictUnionMemberMissingAttribute(type, reference, refName)
             if (unionMemberWithoutAttr != null) {
-              val unionTypeRender = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext)
-              val unionMemberRender = PythonDocumentationProvider.getTypeName(unionMemberWithoutAttr, myTypeEvalContext)
+              val unionTypeRender = CodifiedParam.ofType(type, element, myTypeEvalContext)
+              val unionMemberRender = CodifiedParam.ofType(unionMemberWithoutAttr, element, myTypeEvalContext)
               message = PyPsiBundle.problemMessage("INSP.unresolved.refs.unresolved.attribute.in.union.type",
                                                    unionMemberRender, unionTypeRender, refName)
               severity = HighlightSeverity.WEAK_WARNING
