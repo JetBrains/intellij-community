@@ -1168,7 +1168,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-94134"])
-    fun `an unknown attribute of an overloaded method is reported in the runtime class`() = test("""
+    fun `an unknown attribute of an overloaded method names the runtime class`() = test("""
       from typing import overload
 
       class A:
@@ -1181,7 +1181,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       A.m.registered
       #   ^^^^^^^^^^ WARNING Cannot find reference 'registered' in 'FunctionType'
       A().m.registered
-      #     ^^^^^^^^^^ WARNING Cannot find reference 'registered' in '(x: Unknown) -> Unknown'
+      #     ^^^^^^^^^^ WARNING Cannot find reference 'registered' in '(x: Unknown) -> Unknown' FIXME Cannot find reference 'registered' in 'MethodType'
       """.trimIndent())
 
     @Test
