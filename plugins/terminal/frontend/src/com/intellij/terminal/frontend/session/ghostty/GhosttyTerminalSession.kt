@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -72,7 +73,6 @@ import org.jetbrains.plugins.terminal.session.toTermSize
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
@@ -122,7 +122,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class GhosttyTerminalSession internal constructor(
   private val ttyConnector: TtyConnector,
   initialGeometry: TerminalGridGeometry,
-  initialWorkingDirectory: Path?,
+  initialWorkingDirectory: EelPath?,
   /** The `TERM` of the started process, which the emulator reports for the `XTGETTCAP` query `TN`; null if not set. */
   private val terminfoName: String?,
   private val shellIntegrationController: TerminalShellIntegrationController,
@@ -222,7 +222,7 @@ class GhosttyTerminalSession internal constructor(
   // and is kept fresh by the working-directory tracker (see
   // createGhosttyTerminalSession). Guarded by emulatorLock; the next projection reports the
   // new value.
-  private var currentDirectory: Path? = initialWorkingDirectory
+  private var currentDirectory: EelPath? = initialWorkingDirectory
 
   @Volatile
   override var isClosed: Boolean = false
@@ -269,7 +269,7 @@ class GhosttyTerminalSession internal constructor(
    * Invoked by the working-directory tracker; the new value is reported by the next
    * projection tick.
    */
-  fun updateCurrentDirectory(directory: Path) {
+  fun updateCurrentDirectory(directory: EelPath) {
     emulatorLock.withLock {
       currentDirectory = directory
       changedSinceLastProjection = true

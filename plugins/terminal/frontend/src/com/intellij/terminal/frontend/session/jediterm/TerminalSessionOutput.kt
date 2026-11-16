@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.session.jediterm
 
-import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.session.TerminalShellIntegrationController
 import com.intellij.terminal.frontend.session.addWorkingDirectoryListener
@@ -67,7 +66,7 @@ internal fun createTerminalOutputFlow(
       isBracketedPasteMode = terminalDisplay.isBracketedPasteMode,
       windowTitle = terminalDisplay.windowTitleText,
       isShellIntegrationEnabled = false,
-      currentDirectory = getInitialWorkingDirectory(services.startupOptions)?.asEelPath()?.toString(),
+      currentDirectory = getInitialWorkingDirectory(services.startupOptions)?.toString(),
     )
   )
 
@@ -237,7 +236,7 @@ internal fun createTerminalOutputFlow(
       workingDirectoryTrackingScope
     ) { directory ->
       textBuffer.withLock {
-        stateChangesTracker.updateState { it.copy(currentDirectory = directory.asEelPath().toString()) }
+        stateChangesTracker.updateState { it.copy(currentDirectory = directory.toString()) }
       }
     }
   }

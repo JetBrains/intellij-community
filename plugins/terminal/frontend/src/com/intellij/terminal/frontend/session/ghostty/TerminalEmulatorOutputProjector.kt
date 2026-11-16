@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.session.ghostty
 
-import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.terminal.emulator.CellStyle
 import com.intellij.terminal.emulator.CursorShape
 import com.intellij.terminal.emulator.HistoryMark
@@ -28,7 +28,6 @@ import org.jetbrains.plugins.terminal.session.impl.dto.TerminalColorDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStateDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TextStyleDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TextStyleOptionDto
-import java.nio.file.Path
 
 /**
  * Projects [TerminalEmulator] state into the [org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent]
@@ -306,7 +305,7 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
    * A [TerminalStateDto] snapshot of the emulator's current modes. [isShellIntegrationEnabled] and
    * [currentDirectory] are supplied by the session — they are tracked by shell integration, not the emulator.
    */
-  fun buildState(isShellIntegrationEnabled: Boolean, currentDirectory: Path?): TerminalStateDto = TerminalStateDto(
+  fun buildState(isShellIntegrationEnabled: Boolean, currentDirectory: EelPath?): TerminalStateDto = TerminalStateDto(
     isCursorVisible = emulator.cursor.visible,
     cursorShape = toCursorShapeDto(emulator.cursorShape, emulator.cursorBlinking),
     mouseMode = toMouseModeDto(emulator.mouseProtocol),
@@ -319,7 +318,7 @@ class TerminalEmulatorOutputProjector(private val emulator: TerminalEmulator) {
     isBracketedPasteMode = emulator.bracketedPaste,
     windowTitle = emulator.title,
     isShellIntegrationEnabled = isShellIntegrationEnabled,
-    currentDirectory = currentDirectory?.asEelPath()?.toString(),
+    currentDirectory = currentDirectory?.toString(),
   )
 
   /** Releases the [HistoryMark]. */

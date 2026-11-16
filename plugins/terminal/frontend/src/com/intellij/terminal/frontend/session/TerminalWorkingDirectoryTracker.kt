@@ -1,7 +1,8 @@
 package com.intellij.terminal.frontend.session
 
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CancellationException
@@ -18,14 +19,12 @@ import org.jetbrains.plugins.terminal.arrangement.ProcessInfoUtil
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.original
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
-import org.jetbrains.plugins.terminal.util.convertNativePathToNioPath
-import java.nio.file.Path
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Returns the directory that the session can report before the process reports one.
  */
-internal fun getInitialWorkingDirectory(options: ShellStartupOptions): Path? {
+internal fun getInitialWorkingDirectory(options: ShellStartupOptions): EelPath? {
   if (options.processType == TerminalProcessType.SHELL) {
     // Do not use a directory requested for a shell process as an initial directory.
     // Because shell may actually decide to start in a different directory.
@@ -34,11 +33,11 @@ internal fun getInitialWorkingDirectory(options: ShellStartupOptions): Path? {
   }
   // But if it is a NON_SHELL process, it is safe to use the directory where the process started.
   // Because it shouldn't change.
-  return options.workingDirectoryEelPathNotNull.asNioPath()
+  return options.workingDirectoryEelPathNotNull
 }
 
 /**
- * Reports the working directory of the process to [listener].
+ * Reports the working directory of the process to [listener] as a path in the Eel environment of the process.
  * Reports nothing if [ttyConnector] does not wrap a [LocalTerminalTtyConnector],
  * because only this connector knows the Eel environment of the process.
  */
@@ -46,7 +45,7 @@ internal fun addWorkingDirectoryListener(
   ttyConnector: ObservableTtyConnector,
   shellIntegrationController: TerminalShellIntegrationController,
   coroutineScope: CoroutineScope,
-  listener: (Path) -> Unit,
+  listener: (EelPath) -> Unit,
 ) {
   val localTtyConnector = ttyConnector.original as? LocalTerminalTtyConnector ?: run {
     LOG.info("Failed to get local TTY connector: $ttyConnector. Working directory won't be updated.")
@@ -54,12 +53,15 @@ internal fun addWorkingDirectoryListener(
   }
   val eelDescriptor = localTtyConnector.eelDescriptor
   val reportDirectory = { directory: String ->
-    val path = convertNativePathToNioPath(directory, eelDescriptor)
+    val path = try {
+      EelPath.parse(directory, eelDescriptor)
+    }
+    catch (e: EelPathException) {
+      LOG.warn("Failed to parse working directory '$directory' on $eelDescriptor: ${e.message}")
+      null
+    }
     if (path != null) {
       listener(path)
-    }
-    else {
-      LOG.warn("Failed to convert working directory '$directory' to a path on $eelDescriptor")
     }
   }
 
