@@ -20,7 +20,9 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -44,9 +46,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestApplication
 public class ReferenceCompletionTest {
-  /** The module has the mock JDK of the Groovy test data, as the heavy JUnit 3 test had it. */
+  /**
+   * The module has the mock JDK of the Groovy test data, as the heavy JUnit 3 test had it.
+   * The descriptor allows the access to the JDK root before it creates the JDK, as `JavaModuleFixtureBuilderImpl` does.
+   */
   private static final LightProjectDescriptor DESCRIPTOR =
-    new DefaultLightProjectDescriptor(() -> IdeaTestUtil.createMockJdk("java 1.7", TestUtils.getMockJdkHome()));
+    new DefaultLightProjectDescriptor(() -> IdeaTestUtil.createMockJdk("java 1.7", TestUtils.getMockJdkHome())) {
+      @Override
+      public void registerSdk(Disposable disposable) {
+        VfsRootAccess.allowRootAccess(disposable, TestUtils.getMockJdkHome());
+        super.registerSdk(disposable);
+      }
+    };
   private static final TestFixture<LightJavaProject> project = lightJavaProjectFixture(DESCRIPTOR);
   private final TestFixture<LightJavaCodeInsightTestFixture> groovy = lightJavaCodeInsightFixture(project);
 
