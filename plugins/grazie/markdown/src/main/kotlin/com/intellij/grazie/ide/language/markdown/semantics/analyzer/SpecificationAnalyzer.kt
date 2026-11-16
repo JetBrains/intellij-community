@@ -1,21 +1,20 @@
 package com.intellij.grazie.ide.language.markdown.semantics.analyzer
 
-import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
+import ai.grazie.rules.cloud.JBCloudAPI
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Specification
+import ai.grazie.rules.promptAnalysis.LlmProviders.HttpCallException
 import ai.grazie.utils.mpp.money.Credit
-import com.intellij.grazie.cloud.APIQueries
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.grazie.ide.language.markdown.semantics.fus.SpecificationFUSCollector
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.runWithCheckCanceled
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.updateUserData
 import com.intellij.psi.PsiFile
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus
@@ -39,7 +38,7 @@ internal object SpecificationAnalyzer {
   fun getCosts(file: PsiFile): Costs? = file.viewProvider.virtualFile.getUserData(costKey)
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  fun <T> analyze(analyzer: LlmAnalyzer<T>, file: PsiFile, files: Set<PsiFile>, client: SuspendableAPIGatewayClient): List<LlmIssue<T>> {
+  fun <T> analyze(analyzer: LlmAnalyzer<T>, file: PsiFile, files: Set<PsiFile>, api: JBCloudAPI): List<LlmIssue<T>> {
     @Suppress("UNCHECKED_CAST") val analyzerKey = cacheKeys
       .computeIfAbsent(analyzer.javaClass.name) { Key.create("cache key for ${analyzer.javaClass.name}") }
       as AnalyzerCacheKey<T>
@@ -59,7 +58,7 @@ internal object SpecificationAnalyzer {
           val start = System.currentTimeMillis()
           val analyzerName = analyzer::class.simpleName
           log.info("$analyzerName starts executing request with lock")
-          val analysis = analyzer.analyze(specifications, client)
+          val analysis = analyzer.analyze(specifications, api)
           val timeMs = System.currentTimeMillis() - start
           val credits = analysis.spentCredits() / Credit.CREDITS_IN_DOLLAR
           log.info("""
@@ -83,10 +82,7 @@ internal object SpecificationAnalyzer {
       return storages.first { it.file == file }.cache!!.data
     }
     catch (e: Throwable) {
-      val cause = ExceptionUtil.getRootCause(e)
-      if (cause is ProcessCanceledException) {
-        throw cause
-      }
+      rethrowControlFlowException(e)
       throw e
     }
   }
@@ -103,12 +99,16 @@ internal object SpecificationAnalyzer {
     val mutexKey = mutexKeys.computeIfAbsent(analyzer.javaClass.name) { Key.create("mutex key for ${analyzer.javaClass.name}") }
     val mutexes = getMutexes(files, mutexKey)
     return runWithCheckCanceled {
-      APIQueries.handleExceptions {
+      try {
         mutexes.withLock {
           action()
         }
       }
-    } ?: emptyList()
+      catch (e: HttpCallException) {
+        log.warn("HTTP call failed while analyzing text", e)
+        emptyList()
+      }
+    }
   }
 
   private fun getMutexes(files: Collection<PsiFile>, mutexKey: Key<Mutex>): List<Mutex> =

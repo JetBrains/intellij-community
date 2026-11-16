@@ -4,6 +4,7 @@
     <module name="intellij.grazie.core"/>
     <module name="intellij.libraries.ai.grazie.semantic.engine"/>
     <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
+    <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.markdown"/>
     <module name="intellij.markdown.backend"/>
     <module name="intellij.platform.analysis"/>
