@@ -76,10 +76,17 @@ class PythonInterpreterSdks(private val project: Project) : Disposable {
     store.put(key, recordOf(projectDir, key, sdk, store.recordOf(key).takeIf { previous === sdk }))
   }
 
-  /** Drops the SDK and the record of [key]. The caller disposes the SDK, see [dispose], when no reader holds it. */
+  /**
+   * Drops the SDK and the record of [key]. The caller disposes the SDK, see [dispose], when no reader holds it.
+   *
+   * The SDK goes first. The removal of the record recomputes the list, and a module entry that still names [key] can put
+   * the record back before that, see [PythonInterpreterRegistry.adoptEntryKey]. The list then gets a new SDK of the
+   * record, not the dropped one.
+   */
   fun remove(key: PythonInterpreterKey): Sdk? {
+    val sdk = sdks.remove(key)
     PythonInterpreterRecords.getInstance(project).remove(key)
-    return sdks.remove(key)
+    return sdk
   }
 
   /** Disposes [sdk], an SDK that left this service, so what is parented to it goes too. */
