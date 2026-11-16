@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -32,12 +31,16 @@ import com.intellij.platform.searchEverywhere.testFramework.SeProvidersTestFixtu
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestApplicationManager;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import org.assertj.core.api.SoftAssertions;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,17 +54,26 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiPredicate;
 
-public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
+public class GotoActionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
   private static final DataKey<Boolean> SHOW_HIDDEN_KEY = DataKey.create("GotoActionTest.DataKey");
   private static final Comparator<MatchedValue> MATCH_COMPARATOR = MatchedValue::compareWeights;
   private static final BiPredicate<MatchedValue, MatchedValue> MATCH_EQUALITY = MatchedValue::equals;
   private static final int ELEMENTS_LIMIT = 30;
 
-  @Override
-  protected boolean runInDispatchThread() {
-    return false;
-  }
-
+  @Test
   public void testShorterActionsFirstDespiteEllipsis() {
     String pattern = "Rebas";
     String fork = "Sync Fork";
@@ -71,6 +83,7 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(List.of(rebase, fork), ContainerUtil.map(items, item -> item.getValueText()));
   }
 
+  @Test
   public void testSortByMatchMode() {
     String pattern = "by";
     String byName = "By Name";
@@ -80,6 +93,7 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(List.of(byName, byDesc), ContainerUtil.map(items, item -> item.getValueText()));
   }
 
+  @Test
   public void testSortByDegree() {
     String pattern = "c";
     String copy = "Copy";
@@ -100,6 +114,7 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(List.of(c, copy, cut, aardvark, eclaire, boom, deaf), ContainerUtil.map(items, item -> item.getValueText()));
   }
 
+  @Test
   public void testMatchActionByParentAndGrandparentGroupName() {
     AnAction extractMethod = ActionManager.getInstance().getAction("IntroduceVariable");
     assertEquals(MatchMode.NAME, actionMatches("variable", extractMethod));
@@ -107,6 +122,7 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(MatchMode.GROUP, actionMatches("refactor variable", extractMethod));
   }
 
+  @Test
   public void testNoLowercaseCamelHumpActionDescriptionMatch() {
     AnAction action = ActionManager.getInstance().getAction("InvalidateCaches");
     assertEquals(MatchMode.NAME, actionMatches("invalid", action));
@@ -116,6 +132,7 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(MatchMode.NAME, actionMatches("invcach", action));
   }
 
+  @Test
   public void testFixingLayoutMatch() {
     AnAction action = ActionManager.getInstance().getAction("InvalidateCaches");
     assertEquals(MatchMode.NAME, actionMatches("штм", action));
@@ -127,7 +144,9 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     }));
   }
 
+  @Test
   public void testCamelCaseTextInActionNames() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     List<OptionDescription> options =
       List.of(new OptionDescription("CamelCase option", null, null),
               new OptionDescription("non camel case option", null, null),
@@ -151,12 +170,14 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     };
 
     List<Object> topHits = new ArrayList<>(2);
-    provider.consumeTopHits("/testprovider CamelCase", o -> topHits.add(o), getProject());
+    provider.consumeTopHits("/testprovider CamelCase", o -> topHits.add(o), myFixture.getProject());
     assertEquals(List.of(options.get(0), options.get(3)), topHits);
   }
 
+  @Test
   public void testTopHitCamelCaseActionsFoundInLowerCase() {
-    ExtensionTestUtil.maskExtensions(GotoActionAliasMatcher.EP_NAME, Collections.emptyList(), getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ExtensionTestUtil.maskExtensions(GotoActionAliasMatcher.EP_NAME, Collections.emptyList(), myFixture.getTestRootDisposable());
     AnAction action1 = createAction("CamelCase Name", "none");
     AnAction action2 = createAction("Simple Name", "CamelCase description");
     AnAction action3 = createAction("Prefix-CamelCase Name", "none");
@@ -170,8 +191,10 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(MatchMode.NAME, actionMatches(pattern, action5));
   }
 
+  @Test
   public void testTopHitCamelCaseOptionsFoundInLowerCase() {
-    ExtensionTestUtil.maskExtensions(GotoActionAliasMatcher.EP_NAME, Collections.emptyList(), getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    ExtensionTestUtil.maskExtensions(GotoActionAliasMatcher.EP_NAME, Collections.emptyList(), myFixture.getTestRootDisposable());
     OptionDescription option1 = new OptionDescription("CamelCase Name", null, null);
     OptionDescription option2 = new OptionDescription("Simple Name", null, null);
     OptionDescription option3 = new OptionDescription("Prefix-CamelCase Name", null, null);
@@ -185,6 +208,7 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     assertFalse(optionMatches(pattern, option5));
   }
 
+  @Test
   public void testMatchedValueComparator() throws ExecutionException, InterruptedException, TimeoutException {
     String pattern = "Text";
     List<String> names = List.of("Text", "Text completion", "Completion Text", "Add text", "Retextovize mapping", "Value", "A", "Z");
@@ -207,10 +231,12 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       () -> PlatformTestUtil.assertComparisonContractNotViolated(items, MATCH_COMPARATOR, MATCH_EQUALITY)).get(20000, TimeUnit.MILLISECONDS);
   }
 
+  @Test
   public void testSameActionIsNotReportedTwice() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     List<String> patterns = List.of("Patch", "Add", "Delete", "Show", "Toggle", "New", "New Class");
 
-    SeProvidersTestFixture fixture = SeProvidersTestFixture.createBlocking(getProject(), getTestRootDisposable());
+    SeProvidersTestFixture fixture = SeProvidersTestFixture.createBlocking(myFixture.getProject(), myFixture.getTestRootDisposable());
     patterns.forEach(pattern -> {
       List<?> result = findActions(fixture, pattern);
       Collection<Object> actions =
@@ -233,14 +259,18 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testDetectedActionGroups() {
-    assertEquals("Images", getPresentableGroupName(getProject(), "Zoom", "Images.Editor.ZoomIn"));
-    assertEquals("Help", getPresentableGroupName(getProject(), "Open Log in Editor", "OpenLog"));
-    assertEquals("Window | Editor Tabs", getPresentableGroupName(getProject(), "Close Unmodified", "CloseAllUnmodifiedEditors"));
-    assertEquals("Tabs", getPresentableGroupName(getProject(), "Next Tab", "NextEditorTab"));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    assertEquals("Images", getPresentableGroupName(myFixture.getProject(), "Zoom", "Images.Editor.ZoomIn"));
+    assertEquals("Help", getPresentableGroupName(myFixture.getProject(), "Open Log in Editor", "OpenLog"));
+    assertEquals("Window | Editor Tabs", getPresentableGroupName(myFixture.getProject(), "Close Unmodified", "CloseAllUnmodifiedEditors"));
+    assertEquals("Tabs", getPresentableGroupName(myFixture.getProject(), "Next Tab", "NextEditorTab"));
   }
 
+  @Test
   public void testSameInvisibleGroupsAreIgnored() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String pattern = "GotoActionTest.TestAction";
 
     AnAction testAction = createAction(pattern);
@@ -257,28 +287,30 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
     runWithGlobalAction(pattern, testAction, () -> 
       runWithMainMenuGroup(outerGroup, () -> {
-        assertEquals("Outer | VisibleGroup", getPresentableGroupName(getProject(), pattern, testAction, false));
-        assertEquals("Outer | A HiddenGroup1", getPresentableGroupName(getProject(), pattern, testAction, true));
+        assertEquals("Outer | VisibleGroup", getPresentableGroupName(myFixture.getProject(), pattern, testAction, false));
+        assertEquals("Outer | A HiddenGroup1", getPresentableGroupName(myFixture.getProject(), pattern, testAction, true));
 
         outerGroup.remove(visibleGroup);
 
-        assertNull(getPresentableGroupName(getProject(), pattern, testAction, false));
-        assertEquals("Outer | A HiddenGroup1", getPresentableGroupName(getProject(), pattern, testAction, true));
+        assertNull(getPresentableGroupName(myFixture.getProject(), pattern, testAction, false));
+        assertEquals("Outer | A HiddenGroup1", getPresentableGroupName(myFixture.getProject(), pattern, testAction, true));
 
         outerGroup.remove(hiddenGroup1);
 
-        assertNull(getPresentableGroupName(getProject(), pattern, testAction, false));
-        assertEquals("Outer | Z HiddenGroup2", getPresentableGroupName(getProject(), pattern, testAction, true));
+        assertNull(getPresentableGroupName(myFixture.getProject(), pattern, testAction, false));
+        assertEquals("Outer | Z HiddenGroup2", getPresentableGroupName(myFixture.getProject(), pattern, testAction, true));
 
         hiddenGroup2.remove(testAction);
 
-        assertNull(getPresentableGroupName(getProject(), pattern, testAction, false));
-        assertNull(getPresentableGroupName(getProject(), pattern, testAction, true));
+        assertNull(getPresentableGroupName(myFixture.getProject(), pattern, testAction, false));
+        assertNull(getPresentableGroupName(myFixture.getProject(), pattern, testAction, true));
       })
     );
   }
 
+  @Test
   public void testActionOrderIsStableWithDifferentPresentation() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String pattern = "GotoActionTest.TestAction";
 
     AnAction testAction1 = createAction(pattern);
@@ -297,8 +329,8 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     runWithGlobalAction(pattern + "1", testAction1, () -> {
       runWithGlobalAction(pattern + "2", testAction2, () -> {
         runWithMainMenuGroup(outerGroup, () -> {
-          List<ActionWrapper> order1 = computeWithCustomDataProvider(true, () -> getSortedActionsFromPopup(getProject(), pattern));
-          List<ActionWrapper> order2 = computeWithCustomDataProvider(false, () -> getSortedActionsFromPopup(getProject(), pattern));
+          List<ActionWrapper> order1 = computeWithCustomDataProvider(true, () -> getSortedActionsFromPopup(myFixture.getProject(), pattern));
+          List<ActionWrapper> order2 = computeWithCustomDataProvider(false, () -> getSortedActionsFromPopup(myFixture.getProject(), pattern));
 
           assertEquals(order1, order2);
         });
@@ -306,9 +338,11 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testNavigableSettingsOptionsAppearInResults() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     SoftAssertions.assertSoftly(softly -> {
-      SeProvidersTestFixture fixture = SeProvidersTestFixture.createBlocking(getProject(), getTestRootDisposable());
+      SeProvidersTestFixture fixture = SeProvidersTestFixture.createBlocking(myFixture.getProject(), myFixture.getTestRootDisposable());
       for (String pattern : List.of("support screen readers", "show line numbers", "tab placement")) {
         List<?> elements = findActions(fixture, pattern);
         boolean result = false;
@@ -325,7 +359,9 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     });
   }
 
+  @Test
   public void testUseUpdatedPresentationForMatching() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String templateName = "TemplateActionName";
     String updatedName = "UpdatedActionName";
     AnAction testAction = new AnAction(templateName) {
@@ -343,15 +379,17 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       }
     };
 
-    SeProvidersTestFixture fixture = SeProvidersTestFixture.createBlocking(getProject(), getTestRootDisposable());
+    SeProvidersTestFixture fixture = SeProvidersTestFixture.createBlocking(myFixture.getProject(), myFixture.getTestRootDisposable());
     runWithGlobalAction("myTestAction", testAction, () -> {
       List<?> result = findActions(fixture, "UpdatedActionName");
       assertEquals(1, result.size());
     });
   }
 
+  @Test
   public void testSearchWorks() {
-    SeProvidersTestFixture fixture = SeProvidersTestFixture.createBlocking(getProject(), getTestRootDisposable());
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    SeProvidersTestFixture fixture = SeProvidersTestFixture.createBlocking(myFixture.getProject(), myFixture.getTestRootDisposable());
     List<?> list = fixture.findElementsBlocking(SeProviderIdUtils.ACTIONS_ID, "sea", true, false, 10);
     assertEquals(10, list.size());
   }
@@ -361,7 +399,8 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private List<ActionWrapper> getSortedActionsFromPopup(Project project, String pattern) {
-    List<ActionWrapper> wrappers = new ArrayList<>(getActionsFromPopup(project, getTestRootDisposable(), pattern));
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
+    List<ActionWrapper> wrappers = new ArrayList<>(getActionsFromPopup(project, myFixture.getTestRootDisposable(), pattern));
     wrappers.sort(Comparator.comparing(ActionWrapper::getActionText));
     return wrappers;
   }
@@ -373,8 +412,9 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private String getPresentableGroupName(Project project, String pattern, AnAction testAction, boolean passFlag) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     return computeWithCustomDataProvider(passFlag, () -> {
-      List<ActionWrapper> result = getActionsFromPopup(project, getTestRootDisposable(), pattern);
+      List<ActionWrapper> result = getActionsFromPopup(project, myFixture.getTestRootDisposable(), pattern);
       List<ActionWrapper> matches =
         ContainerUtil.findAll(result, wrapper -> wrapper.getAction().equals(testAction));
       if (matches.size() != 1) {
@@ -433,8 +473,9 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private MatchMode actionMatches(String pattern, AnAction action) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Matcher matcher = ActionSearchUtilKt.buildMatcher(pattern);
-    GotoActionModel model = new GotoActionModel(getProject(), null, null);
+    GotoActionModel model = new GotoActionModel(myFixture.getProject(), null, null);
     model.buildGroupMappings();
     return model.actionMatches(pattern, matcher, action);
   }

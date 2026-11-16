@@ -26,14 +26,18 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,8 +49,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@RunWith(Parameterized.class)
-public class JSpecifyAnnotationOldTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+@ParameterizedClass(name = "{0}")
+@MethodSource("getData")
+public class JSpecifyAnnotationOldTest {
   private static final LightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public Sdk getSdk() {
@@ -61,27 +70,25 @@ public class JSpecifyAnnotationOldTest extends LightJavaCodeInsightFixtureTestCa
   
   private static final String PACKAGE_NAME = "org.jspecify.annotations";
   private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/codeanalysis/");
-  @Parameterized.Parameter
+  // Cannot share project descriptor with previous test, as NullableNotNullManager caches the supported annotations
+  // so it won't be updated after Registry.setValue()
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(PROJECT_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Parameter
   public String myFileName;
 
-  @Parameterized.Parameters(name = "{0}")
   public static List<String> getData() throws IOException {
     return Files.walk(PATH).filter(Files::isRegularFile).map(PATH::relativize).map(Path::toString).collect(Collectors.toList());
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    // Cannot share project descriptor with previous test, as NullableNotNullManager caches the supported annotations
-    // so it won't be updated after Registry.setValue()
-    return PROJECT_DESCRIPTOR;
-  }
-
-  @Before
+  @BeforeEach
   public void before() {
     mockAnnotations();
   }
 
   private void mockAnnotations() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String template = "package " + PACKAGE_NAME + ";import java.lang.annotation.*;\n\n@Target(%s)public @interface %s {}";
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "NonNull"));
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "Nullable"));
@@ -90,6 +97,7 @@ public class JSpecifyAnnotationOldTest extends LightJavaCodeInsightFixtureTestCa
 
   @Test
   public void test() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Path path = PATH.resolve(myFileName);
     String fileText = Files.readString(path).replace("\r\n", "\n");
     String stripped = fileText.replaceAll("/\\*ca-[a-z\\-]+\\*/", "");
@@ -97,7 +105,7 @@ public class JSpecifyAnnotationOldTest extends LightJavaCodeInsightFixtureTestCa
 
     CodeAnalysisDataFlowInspection inspection = new CodeAnalysisDataFlowInspection();
     ReadAction.run(() -> {
-      PsiElementVisitor visitor = inspection.buildVisitor(new ProblemsHolder(new InspectionManagerEx(getProject()), file, false), false);
+      PsiElementVisitor visitor = inspection.buildVisitor(new ProblemsHolder(new InspectionManagerEx(myFixture.getProject()), file, false), false);
       PsiTreeUtil.processElements(file, e -> {
         e.accept(visitor);
         return true;

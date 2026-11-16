@@ -5,25 +5,34 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-public class JavaDocReferenceInspectionFixTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_20;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_20;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class JavaDocReferenceInspectionFixTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(JAVA_20);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    codeInsightFixture.get().enableInspections(new JavaDocReferenceInspection());
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new JavaDocReferenceInspection());
-  }
-  
+  @Test
   public void testQualifyReference() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       /**
        * Hi {@link <error descr="Cannot resolve symbol 'ArrayList'"><caret>ArrayList</error>}
@@ -32,8 +41,10 @@ public class JavaDocReferenceInspectionFixTest extends LightJavaCodeInsightFixtu
       """);
     myFixture.checkHighlighting();
     IntentionAction action = myFixture.findSingleIntention("Add qualifier");
-    myFixture.launchAction(action);
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.launchAction(action);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    });
     myFixture.checkResult("""
                             import java.util.ArrayList;
                                                         
@@ -44,7 +55,9 @@ public class JavaDocReferenceInspectionFixTest extends LightJavaCodeInsightFixtu
                             """);
   }
 
+  @Test
   public void testRenameParameter() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     //noinspection JavadocDeclaration
     myFixture.configureByText("Test.java", """
       class Test {
@@ -67,7 +80,9 @@ public class JavaDocReferenceInspectionFixTest extends LightJavaCodeInsightFixtu
                             """);
   }
 
+  @Test
   public void testCreateSnippetClass() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("Test.java", """
       /**
        * {@snippet class=<error descr="Snippet file 'snippet-files/a/b/Hello.java' is not found">"a.<caret>b.Hello"</error>}
@@ -79,7 +94,7 @@ public class JavaDocReferenceInspectionFixTest extends LightJavaCodeInsightFixtu
     myFixture.checkIntentionPreviewHtml(action, """
         Create file <icon src="file"/>&nbsp;snippet-files#a#b#Hello.java<br/>\
         including intermediate directories<br/>\
-        inside directory <icon src="dir"/>&nbsp;#src""".replace('#', File.separatorChar));
+        inside directory <icon src="dir"/>&nbsp;""".replace('#', File.separatorChar) + projectFixture.get().getSourceRoot().getPresentableUrl());
     myFixture.launchAction(action);
     VirtualFile path = myFixture.getFile().getVirtualFile().findFileByRelativePath("../snippet-files/a/b/Hello.java");
     assertTrue(path.exists());

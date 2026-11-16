@@ -11,7 +11,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDisjunctionType;
@@ -25,9 +24,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PsiEnumConstantImpl;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.testFramework.propertyBased.ActionOnFile;
 import com.intellij.testFramework.propertyBased.CheckHighlighterConsistency;
 import com.intellij.testFramework.propertyBased.DeleteRange;
@@ -40,40 +43,37 @@ import com.intellij.testFramework.propertyBased.StripTestDataMarkup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.PropertyChecker;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
 @SkipSlowTestLocally
-public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    Disposer.setDebugMode(false);
-    super.setUp();
-    RecursionManager.disableMissedCacheAssertions(getTestRootDisposable());
+@TestApplication
+public class JavaCodeInsightSanityTest {
+  private static final TestFixture<LightJavaProject> projectFixture =
+    lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @BeforeEach
+  void setUp() {
+    RecursionManager.disableMissedCacheAssertions(codeInsightFixture.get().getTestRootDisposable());
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     // remove jdk if it was created during highlighting to avoid leaks
-    try {
-      JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+    JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK;
-  }
-
+  @Test
   public void testRandomActivity() {
     enableInspections();
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
@@ -82,14 +82,18 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
                                     new StripTestDataMarkup(file),
                                     new DeleteRange(file),
                                     new IntroduceVariableActionOnFile(file));
-    PropertyChecker
-      .checkScenarios(actionsOnJavaFiles(fileActions));
+    checkScenarios(actionsOnJavaFiles(fileActions));
+  }
+
+  private static void checkScenarios(Supplier<MadTestingAction> scenarios) {
+    EdtTestUtil.runInEdtAndWait(() -> PropertyChecker.checkScenarios(scenarios));
   }
 
   private void enableInspections() {
-    MadTestingUtil.enableAllInspections(getProject(), JavaLanguage.INSTANCE, "GrazieInspection", "GrazieStyle");
+    MadTestingUtil.enableAllInspections(codeInsightFixture.get().getProject(), JavaLanguage.INSTANCE, "GrazieInspection", "GrazieStyle");
   }
 
+  @Test
   public void testPreserveComments() {
     boolean oldSettings = getJavaSettings().ENABLE_JAVADOC_FORMATTING;
     try {
@@ -98,8 +102,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
       Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
         file -> Generator.sampledFrom(new InvokeIntention(file, new JavaCommentingStrategy()),
                                       new InsertLineComment(file, "//simple end comment\n"));
-      PropertyChecker
-        .checkScenarios(actionsOnJavaFiles(fileActions));
+      checkScenarios(actionsOnJavaFiles(fileActions));
     }
     finally {
       getJavaSettings().ENABLE_JAVADOC_FORMATTING = oldSettings;
@@ -107,10 +110,11 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   private JavaCodeStyleSettings getJavaSettings() {
-    CodeStyleSettings rootSettings = CodeStyle.getSettings(getProject());
+    CodeStyleSettings rootSettings = CodeStyle.getSettings(codeInsightFixture.get().getProject());
     return rootSettings.getCommonSettings(JavaLanguage.INSTANCE).getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
   }
 
+  @Test
   public void testRemoveRedundantCast() {
     enableInspections();
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
@@ -121,9 +125,10 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
                                       }
                                     }, PsiTypeCastExpression.class, Function.identity()),
                                     new InsertTypeCastCommand(file));
-    PropertyChecker.customized()
+    Supplier<MadTestingAction> scenarios = actionsOnJavaFiles(fileActions);
+    EdtTestUtil.runInEdtAndWait(() -> PropertyChecker.customized()
       .withIterationCount(50)
-      .checkScenarios(actionsOnJavaFiles(fileActions));
+      .checkScenarios(scenarios));
   }
 
   /**
@@ -133,11 +138,11 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
     enableInspections();
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
       file -> Generator.sampledFrom(new InvokeIntention(file, new JavaParenthesesPolicy()), new StripTestDataMarkup(file));
-    PropertyChecker
-      .checkScenarios(actionsOnJavaFiles(fileActions));
+    checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
   private @NotNull Supplier<MadTestingAction> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"),
                                                 f -> {
                                                   ProjectFileIndex projectFileIndex =
@@ -152,18 +157,19 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
     MadTestingUtil.testFileGenerator(new File(PathManager.getHomePath()), f -> f.getName().endsWith(".java"), 10000, System.out);
   }
 
+  @Test
   public void testReparse() {
-    PropertyChecker
-      .checkScenarios(actionsOnJavaFiles(MadTestingUtil::randomEditsWithReparseChecks));
+    checkScenarios(actionsOnJavaFiles(MadTestingUtil::randomEditsWithReparseChecks));
   }
 
+  @Test
   public void testIncrementalHighlighterUpdate() {
-    PropertyChecker
-      .checkScenarios(actionsOnJavaFiles(CheckHighlighterConsistency.randomEditsWithHighlighterChecks));
+    checkScenarios(actionsOnJavaFiles(CheckHighlighterConsistency.randomEditsWithHighlighterChecks));
   }
 
+  @Test
   public void testPsiAccessors() {
-    PropertyChecker.checkScenarios(actionsOnJavaFiles(
+    checkScenarios(actionsOnJavaFiles(
       MadTestingUtil.randomEditsWithPsiAccessorChecks(
         method ->
           method.getName().equals("getElementType") && method.getDeclaringClass().equals(StubBasedPsiElementBase.class) ||

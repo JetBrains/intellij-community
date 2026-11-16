@@ -16,15 +16,18 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -38,18 +41,24 @@ import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * The goal of this test is to check that IDEA supports popular cases of JSpecify annotations and doesn't have regressions.
  * This test contains a set of filters, which are used to filter out some cases that are not supported by IDEA or aren't expected to be supported.
  */
-@RunWith(Parameterized.class)
-public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+@ParameterizedClass(name = "{0}")
+@MethodSource("getData")
+public class JSpecifyFilteredAnnotationTest {
 
   private static final String PACKAGE_NAME = "org.jspecify.annotations";
   private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/jspecify/");
   private static final JSpecifyCorpus.Statistic STATISTIC = new JSpecifyCorpus.Statistic(new LongAdder(), new LongAdder(), new LongAdder(), MultiMap.create());
 
-  @Parameterized.Parameter
+  @Parameter
   public String myFileName;
 
   private static final List<JSpecifyCorpus.ErrorFilter> FILTERS = List.of(
@@ -69,19 +78,18 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     }
   };
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    // Cannot share project descriptor with previous test, as NullableNotNullManager caches the supported annotations
-    // so it won't be updated after Registry.setValue()
-    return PROJECT_DESCRIPTOR;
-  }
+  // Cannot share project descriptor with previous test, as NullableNotNullManager caches the supported annotations
+  // so it won't be updated after Registry.setValue()
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(PROJECT_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
-  @Before
+  @BeforeEach
   public void before() {
     mockAnnotations();
   }
 
   private void mockAnnotations() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String template = "package " + PACKAGE_NAME + ";import java.lang.annotation.*;\n\n@Target(%s)public @interface %s {}";
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "NonNull"));
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "Nullable"));
@@ -92,6 +100,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
 
   @Test
   public void test() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Path path = PATH.resolve(myFileName);
     boolean dirMode = Files.isDirectory(path);
     List<Path> files = Files.walk(path)
@@ -115,12 +124,12 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       PsiFile file = data.psiFile;
 
       ReadAction.run(() -> {
-        Map<PsiElement, String> actual = JSpecifyCorpus.collectMarkers(getProject(), file);
+        Map<PsiElement, String> actual = JSpecifyCorpus.collectMarkers(myFixture.getProject(), file);
         Map<Integer, String> byOffset = new LinkedHashMap<>();
         actual.forEach((anchor, message) -> byOffset.put(anchor.getTextRange().getStartOffset(), message));
         String actualText = JSpecifyCorpus.getActualText(file.getName(), byOffset, stripped, FILTERS);
         if (!FILTERS.isEmpty()) {
-          Assert.assertEquals("Messages don't match (" + data.path.getFileName().toString() + ")", fileText, actualText);
+          assertEquals(fileText, actualText, "Messages don't match (" + data.path.getFileName().toString() + ")");
         }
         if (FILTERS.isEmpty() && !fileText.equals(actualText)) {
           throw new FileComparisonFailedError("Messages don't match (" + data.path.getFileName().toString() + ")",
@@ -130,17 +139,16 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     }
   }
 
-  @AfterClass
+  @AfterAll
   public static void reportUnusedFilters() {
     FILTERS.forEach(JSpecifyCorpus.ErrorFilter::reportUnused);
   }
 
-  @AfterClass
+  @AfterAll
   public static void afterClass() {
     System.out.println(STATISTIC);
   }
 
-  @Parameterized.Parameters(name = "{0}")
   public static List<String> getData() throws IOException {
     return Files.list(PATH).filter(f -> !f.getFileName().toString().startsWith("."))
       .filter(f -> Files.isDirectory(f) || f.toString().endsWith(".java"))
@@ -152,7 +160,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
     String restoredText = JSpecifyCorpus.getExpectedText(data.psiFile.getName(), data.path.toString(), data.stripped, data.errorContainer,
                                           FILTERS, STATISTIC);
     if (JSpecifyFilteredAnnotationTest.FILTERS.isEmpty()) {
-      Assert.assertEquals("incorrect restored file", data.fileText, restoredText);
+      assertEquals(data.fileText, restoredText, "incorrect restored file");
     }
     return restoredText;
   }

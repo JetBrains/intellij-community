@@ -2,37 +2,61 @@
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.codeInsight.navigation.CtrlMouseHandler;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiReference;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import junit.framework.TestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider;
+import org.junit.jupiter.api.Test;
 
-public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
+import java.net.URL;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+@TestApplication
+public class GroovyDocumentationTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testGenericMethod() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
       
       class Bar<T> { java.util.List<T> foo(T param); }
       new Bar<String>().f<caret>oo();""");
-    PsiReference ref = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
     assertEquals("""
                    <span style="color:#000000;">Bar</span>
                    <a href="psi_element://java.util.List"><code><span style="color:#0000ff;">List</span></code></a><span style="">&lt;</span><a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a><span style="">&gt;</span> <span style="color:#000000;">foo</span><span style="">(</span><a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a> <span style="color:#000000;">param</span><span style="">)</span>""",
-                 CtrlMouseHandler.getInfo(ref.resolve(), ref.getElement()));
+                 ReadAction.computeBlocking(() -> {
+                   PsiReference ref = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
+                   return CtrlMouseHandler.getInfo(ref.resolve(), ref.getElement());
+                 }));
   }
 
+  @Test
   public void testGenericField() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("a.groovy", """
       
       class Bar<T> { T field; }
       new Bar<Integer>().fi<caret>eld""");
-    PsiReference ref = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
     assertEquals("""
                    <span style="color:#000000;">Bar</span>
                    <a href="psi_element://java.lang.Integer"><code><span style="color:#0000ff;">Integer</span></code></a> <span style="color:#000000;">getField</span><span style="">(</span><span style="">)</span>""",
-                 CtrlMouseHandler.getInfo(ref.resolve(), ref.getElement()));
+                 ReadAction.computeBlocking(() -> {
+                   PsiReference ref = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
+                   return CtrlMouseHandler.getInfo(ref.resolve(), ref.getElement());
+                 }));
   }
 
+  @Test
   public void testLink() {
     doTest(
       """
@@ -51,6 +75,7 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
            </div><table class='sections'></table>""");
   }
 
+  @Test
   public void test_link_with_label() {
     doTest("""
              /**
@@ -66,6 +91,7 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
               </div><table class='sections'></table>""");
   }
 
+  @Test
   public void test_link_to_method() {
     doTest(
       """
@@ -94,6 +120,7 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
            </div><table class='sections'></table>""");
   }
 
+  @Test
   public void test_untyped_local_variable() {
     doTest("""
              def aa = 1
@@ -102,6 +129,7 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
            "<div class='definition'><pre><a href=\"psi_element://java.lang.Object\"><code><span style=\"color:#0000ff;\">Object</span></code></a> <span style=\"color:#000000;\">aa</span></pre></div><table class='sections'></table><p style='padding-left:8px;'><span style=\"color: #909090\">[Inferred type]</span> <a href=\"psi_element://java.lang.Integer\"><code><span style=\"color:#0000ff;\">Integer</span></code></a>");
   }
 
+  @Test
   public void test_implicit_closure_parameter() {
     doTest("""
              List<String> ss = []
@@ -110,6 +138,7 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
            "<div class='definition'><pre><a href=\"psi_element://java.lang.Object\"><code><span style=\"color:#0000ff;\">Object</span></code></a> <span style=\"color:#000000;\">it</span></pre></div><p style='padding-left:8px;'><span style=\"color: #909090\">[Inferred type]</span> <a href=\"psi_element://java.lang.String\"><code><span style=\"color:#0000ff;\">String</span></code></a>");
   }
 
+  @Test
   public void test_code_tag() {
     doTest(
       """
@@ -129,6 +158,7 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
              </div><table class='sections'></table>""");
   }
 
+  @Test
   public void test_IDEA_261068() {
     doTest("""
              
@@ -141,6 +171,7 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
            "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://_\"><code><span style=\"color:#000000;\">_</span></code></a></div><div class='definition'><pre><a href=\"psi_element://java.lang.Object\"><code><span style=\"color:#000000;\">Object</span></code></a>&nbsp;<span style=\"color:#000000;\">foo</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Returns:</td><td valign='top'><p><code> lorem ipsum </code></td></table>");
   }
 
+  @Test
   public void test_web_reference() {
     doTest("""
              
@@ -153,6 +184,7 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
            "<div class='definition'><pre><span style=\"color:#000043;font-weight:bold;\">class</span> <span style=\"color:#000000;\">GroovyDocTest</span><span style=\"\">&lt;</span><span style=\"color:#20999d;\">T</span><span style=\"\">&gt;</span></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>See Also:</td><td valign='top'><p><a href=\"https://google.com\">ref</a></td></table>");
   }
 
+  @Test
   public void test_type_parameter_in_param() {
     doTest("""
              
@@ -165,6 +197,7 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
            "<div class='definition'><pre><span style=\"color:#000043;font-weight:bold;\">class</span> <span style=\"color:#000000;\">GroovyDocTest</span><span style=\"\">&lt;</span><span style=\"color:#20999d;\">T</span><span style=\"\">&gt;</span></pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Type parameters:</td><td valign='top'><code>&lt;<span style=\"color:#20999d;\">T</span>&gt;</code> &ndash;  kej</td></table>");
   }
 
+  @Test
   public void test_render_multiline_inline_code_tag() {
     doTest("""
              
@@ -185,10 +218,14 @@ public class GroovyDocumentationTest extends LightJavaCodeInsightFixtureTestCase
   }
 
   private void doTest(String text, @Language("HTML") String doc) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText("_.groovy", text);
-    PsiReference ref = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
-    GroovyDocumentationProvider provider = new GroovyDocumentationProvider();
-    String info = provider.generateDoc(ref.resolve(), ref.getElement());
-    TestCase.assertEquals(doc, info);
+    String info = ReadAction.computeBlocking(() -> {
+      PsiReference ref = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset());
+      GroovyDocumentationProvider provider = new GroovyDocumentationProvider();
+      return provider.generateDoc(ref.resolve(), ref.getElement());
+    });
+    URL baseUrl = VfsUtilCore.convertToURL(myFixture.getFile().getVirtualFile().getUrl());
+    assertEquals("<html><head><base href=\"" + baseUrl + "\"></head><body>" + doc, info);
   }
 }

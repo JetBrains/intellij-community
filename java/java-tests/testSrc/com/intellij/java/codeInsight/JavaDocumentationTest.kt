@@ -5,6 +5,7 @@ import com.intellij.codeInsight.javadoc.DocumentationDelegateProvider
 import com.intellij.lang.documentation.impl.documentationTargets
 import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.documentation.impl.computeDocHintBlocking
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
 import com.intellij.pom.java.LanguageLevel
@@ -15,14 +16,27 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ui.UIUtil
-import junit.framework.TestCase
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFails
 
-class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
+@TestApplication
+class JavaDocumentationTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
   fun testConstructorJavadoc() {
     configure("""\
       class Foo { Foo() {} Foo(int param) {} }
@@ -43,6 +57,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(expected, doc)
   }
 
+  @Test
   fun testConstructorJavadoc2() {
     configure("""
       class Foo { Foo() {} Foo(int param) {} }
@@ -63,6 +78,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(expected, doc)
   }
 
+  @Test
   fun testMethodDocWhenInArgList() {
     configure("""
       class Foo { void doFoo() {} }
@@ -76,9 +92,10 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     val expected =
       "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://Foo\"><code><span style=\"color:#000000;\">Foo</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">doFoo</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><table class='sections'><p></table>"
 
-    assertEquals(expected, doc)
+    assertEquals(withBaseUrl(expected), doc)
   }
 
+  @Test
   fun testPatternDoc() {
     configure("""
       /**
@@ -99,9 +116,10 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     val expected =
       "<div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">int</span> <span style=\"color:#000000;\">patternName1</span></pre></div><div class='content'>my parameter</div>"
 
-    assertEquals(expected, doc)
+    assertEquals(withBaseUrl(expected), doc)
   }
 
+  @Test
   fun testRecordComponent() {
     configure("""
       /**
@@ -117,9 +135,10 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     val expected =
       "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://Rec\"><code><span style=\"color:#000000;\">Rec</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">int</span> <span style=\"color:#000000;\">foo</span></pre></div><div class='content'>doc for foo  </div>"
 
-    assertEquals(expected, doc)
+    assertEquals(withBaseUrl(expected), doc)
   }
 
+  @Test
   fun testGenericMethod() {
     doTestCtrlHoverDoc(
       """\
@@ -132,6 +151,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     )
   }
 
+  @Test
   fun testGenericField() {
     doTestCtrlHoverDoc(
       """\
@@ -145,6 +165,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     )
   }
 
+  @Test
   fun testMethodInAnonymousClass() {
     doTestCtrlHoverDoc(
       """\
@@ -163,6 +184,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
 
+  @Test
   fun testAnnotationInCtrlHoverDoc() {
     doTestCtrlHoverDoc(
       """\
@@ -177,6 +199,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     )
   }
 
+  @Test
   fun testInnerClass() {
     doTestCtrlHoverDoc(
       """\
@@ -194,6 +217,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     )
   }
 
+  @Test
   fun testAsterisksFiltering() {
     configure("""
       class C {
@@ -209,9 +233,10 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     val doc = getDocumentationHtml()
 
     val expected = "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://C\"><code><span style=\"color:#000000;\">C</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'>\n For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\"><code><span style=\"color:#0000ff;\">String</span><span style=\"\">.</span><span style=\"color:#0000ff;\">String</span><span style=\"\">(</span><span style=\"color:#000080;font-weight:bold;\">byte</span><span style=\"\">[],&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;String)</span></code></a>.\n   </div><table class='sections'></table>"
-    TestCase.assertEquals(expected, doc)
+    assertEquals(withBaseUrl(expected), doc)
   }
 
+  @Test
   fun testInlineTagSpacing() {
     configure("""
       class C {
@@ -223,11 +248,12 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     val doc = getDocumentationHtml()
 
     val expected = "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://C\"><code><span style=\"color:#000000;\">C</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class='content'> Visit the \"<code><span style=\"\">/login</span></code>\" URL. </div><table class='sections'></table>"
-    TestCase.assertEquals(expected, doc)
+    assertEquals(withBaseUrl(expected), doc)
   }
 
+  @Test
   fun testInlineReturnJava16() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_16) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_16) {
       configure("""
       class C {
         /** {@return smth} */
@@ -242,11 +268,12 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
 
+  @Test
   fun testMethodToMethodDelegate() {
     val provider: DocumentationDelegateProvider = object : DocumentationDelegateProvider() {
       override fun computeDocumentationDelegate(member: PsiMember): PsiDocCommentOwner? {
         if (member is PsiMethod && member.name == "foo") {
-          return JavaPsiFacade.getInstance(project).findClass("Foo", member.getResolveScope())!!.findMethodBySignature(member, false)
+          return JavaPsiFacade.getInstance(myFixture.project).findClass("Foo", member.getResolveScope())!!.findMethodBySignature(member, false)
         }
         return null
       }
@@ -268,9 +295,10 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     val doc = getDocumentationHtml()
     val expected = "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Class\">&nbsp;<a href=\"psi_element://Bar\"><code><span style=\"color:#000000;\">Bar</span></code></a></div><div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">foo</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><table class=\'sections\'><p><tr><td valign=\'top\' class=\'section\'><p>From class:</td><td valign=\'top\'><p><a href=\"psi_element://Foo\"><code><span style=\"color:#000000;\">Foo</span></code></a><br>\n Some doc\n  </td></table>"
 
-    TestCase.assertEquals(expected, doc)
+    assertEquals(withBaseUrl(expected), doc)
   }
 
+  @Test
   fun `test at method name with overloads`() {
     configure("""
       class Foo {
@@ -284,9 +312,10 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
     val expected = """<html>Candidates for method call <b>s.regionMatches()</b> are:<br><br>&nbsp;&nbsp;<a href="psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)">boolean regionMatches(int, String, int, int)</a><br>&nbsp;&nbsp;<a href="psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)">boolean regionMatches(boolean, int, String, int, int)</a><br></html>""";
 
-    TestCase.assertEquals(expected, doc)
+    assertEquals(expected, doc)
   }
 
+  @Test
   fun `test candidates for new expression`() {
     configure("""
       class Foo {{
@@ -295,7 +324,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       """)
 
     val doc1 = getDocumentationHtml()
-    assertFalse(doc1, doc1.contains("Candidates for new <b>StringBuilder</b>() are:"))
+    assertFalse(doc1.contains("Candidates for new <b>StringBuilder</b>() are:"), doc1)
 
     configure("""
       class Foo {{
@@ -304,7 +333,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       """)
 
     val doc2 = getDocumentationHtml()
-    assertTrue(doc2, doc2.contains("Candidates for new <b>StringBuilder</b>() are:"))
+    assertTrue(doc2.contains("Candidates for new <b>StringBuilder</b>() are:"), doc2)
 
     configure("""
       class Foo {{
@@ -313,9 +342,10 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       """)
 
     val doc3 = getDocumentationHtml()
-    assertTrue(doc3, doc3.contains("Candidates for new <b>StringBuilder</b>() are:"))
+    assertTrue(doc3.contains("Candidates for new <b>StringBuilder</b>() are:"), doc3)
   }
 
+  @Test
   fun `test candidates for method call`() {
     configure("""
       class Foo {{
@@ -324,7 +354,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       """)
 
     val doc1 = getDocumentationHtml()
-    assertTrue(doc1, doc1.contains("Candidates for method call"))
+    assertTrue(doc1.contains("Candidates for method call"), doc1)
 
     configure("""
       class Foo {{
@@ -333,7 +363,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       """)
 
     val doc2 = getDocumentationHtml()
-    assertTrue(doc2, doc2.contains("Candidates for method call"))
+    assertTrue(doc2.contains("Candidates for method call"), doc2)
 
     configure("""
       class Foo {{
@@ -342,7 +372,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       """)
 
     val doc3 = getDocumentationHtml()
-    assertTrue(doc3, doc3.contains("Candidates for method call"))
+    assertTrue(doc3.contains("Candidates for method call"), doc3)
 
     configure("""
       class Foo {{
@@ -351,9 +381,10 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       """)
 
     val doc4 = getDocumentationHtml()
-    assertFalse(doc4, doc4.contains("Candidates for method call"))
+    assertFalse(doc4.contains("Candidates for method call"), doc4)
   }
 
+  @Test
   fun testBlockquotePre() {
     configure("""
       class C {
@@ -396,9 +427,10 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
         </pre> </blockquote>
         </div><table class='sections'></table>
     """.trimIndent()
-    TestCase.assertEquals(expected, doc)
+    assertEquals(withBaseUrl(expected), doc)
   }
 
+  @Test
   fun testInheritDoc() {
     configure("""
       public interface A {
@@ -433,19 +465,26 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
   private fun getDocumentationHtml(): String {
     val file = myFixture.file
-    val offset = myFixture.editor.caretModel.offset
     val data = timeoutRunBlocking {
-      val targets = readAction { documentationTargets(file, offset) }
-      assertFalse("No documentation targets found", targets.isEmpty())
-      val target = targets.first()
-      computeDocumentationBlocking(target.createPointer())
+      val targets = readAction { documentationTargets(file, myFixture.editor.caretModel.offset) }
+      assertFalse(targets.isEmpty(), "No documentation targets found")
+      val pointer = readAction { targets.first().createPointer() }
+      computeDocumentationBlocking(pointer)
     }
-    assertNotNull("Documentation data is null", data)
+    assertNotNull(data, "Documentation data is null")
     return data!!.html
   }
 
   private fun retrieveMethodDocString(): String = getDocumentationHtml()
 
+  /**
+   * Adds the prologue that [com.intellij.codeInsight.javadoc.JavaDocInfoGenerator] writes for an element of a file on disk.
+   * The prologue holds the URL of the configured file.
+   */
+  private fun withBaseUrl(html: String): String =
+    "<html><head><base href=\"${VfsUtilCore.convertToURL(myFixture.file.virtualFile.url)}\"></head><body>$html"
+
+  @Test
   fun testInheritDocRecursive() {
     configure("""
       public interface A {
@@ -472,6 +511,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     assertContains(text, "A::m-param")
   }
 
+  @Test
   fun testInheritDocImplementOrder() {
     data class Param(val order: String, val contains: String, val notContains: String)
 
@@ -500,6 +540,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     }
   }
 
+  @Test
   fun testInheritDocOrder() {
     configure("""
       public interface A {
@@ -562,6 +603,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     assertContains(text, "E::foo-e")
   }
 
+  @Test
   fun testInheritDocSkipObject() {
     configure("""
       public interface A {
@@ -590,6 +632,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     assertContains(text, "if this object is the same as the obj")
   }
 
+  @Test
   fun testInheritDocThrows() {
     configure("""
       interface A1 {
@@ -629,6 +672,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     assertContains(text, "A2::m-E4")
   }
 
+  @Test
   fun testInheritDocParam() {
     configure("""
       interface A1 {
@@ -668,6 +712,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     assertContains(text, "A2::m-p4")
   }
 
+  @Test
   fun testInheritDocTypeParam() {
     configure("""
       interface A1 {
@@ -707,6 +752,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     assertContains(text, "A2::m-T4")
   }
 
+  @Test
   fun testInheritDocReturn() {
     configure("""
       interface A1 {
@@ -738,22 +784,23 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
       "m4" to "A2::m4",
     )
 
-    for (method in PsiTreeUtil.findChildrenOfType(file, PsiMethod::class.java)) {
-      if (method.containingClass?.name != "B") continue
-      val data = timeoutRunBlocking {
-        val target = readAction { psiDocumentationTargets(method, null).firstOrNull() }
-        assertNotNull(target)
-        computeDocumentationBlocking(target!!.createPointer())
+    timeoutRunBlocking {
+      for (method in readAction { PsiTreeUtil.findChildrenOfType(myFixture.file, PsiMethod::class.java) }) {
+        val (className, methodName) = readAction { method.containingClass?.name to method.name }
+        if (className != "B") continue
+        val pointer = readAction { psiDocumentationTargets(method, null).firstOrNull()?.createPointer() }
+        assertNotNull(pointer)
+        val data = computeDocumentationBlocking(pointer!!)
+        assertNotNull(data, "Documentation is null for $methodName")
+        assertContains(data!!.html, expected[methodName]!!)
       }
-      assertNotNull("Documentation is null for ${method.name}", data)
-      assertContains(data!!.html, expected[method.name]!!)
     }
   }
 
   private fun doTestCtrlHoverDoc(inputFile: String, expectedDoc: String) {
     configure(inputFile.trimIndent())
-    val hint = computeDocHintBlocking(editor, file)
-    assertNotNull("Documentation hint is null", hint)
+    val hint = computeDocHintBlocking(myFixture.editor, myFixture.file)
+    assertNotNull(hint, "Documentation hint is null")
     assertEquals(expectedDoc, UIUtil.getHtmlBodyWithoutPreWrapper(hint!!))
   }
 

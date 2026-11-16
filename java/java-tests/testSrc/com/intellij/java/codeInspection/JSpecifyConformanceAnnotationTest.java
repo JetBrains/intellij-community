@@ -28,15 +28,19 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -56,9 +60,14 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl.getAnnotationShortName;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(Parameterized.class)
-public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtureTestCase {
+@TestApplication
+@ParameterizedClass(name = "{0}")
+@MethodSource("getData")
+public class JSpecifyConformanceAnnotationTest {
   private static final LightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public Sdk getSdk() {
@@ -73,10 +82,14 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
 
   private static final String PACKAGE_NAME = "org.jspecify.annotations";
   private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/jspecifyConformance/");
-  @Parameterized.Parameter
+  // Cannot share project descriptor with previous test, as NullableNotNullManager caches the supported annotations
+  // so it won't be updated after Registry.setValue()
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(PROJECT_DESCRIPTOR);
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Parameter
   public String myFileName;
 
-  @Parameterized.Parameters(name = "{0}")
   public static List<String> getData() throws IOException {
     List<String> files = Files.walk(PATH)
       .filter(f -> !f.getFileName().toString().startsWith("."))
@@ -88,14 +101,7 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
     return files;
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    // Cannot share project descriptor with previous test, as NullableNotNullManager caches the supported annotations
-    // so it won't be updated after Registry.setValue()
-    return PROJECT_DESCRIPTOR;
-  }
-
-  @Before
+  @BeforeEach
   public void before() {
     mockAnnotations();
   }
@@ -113,6 +119,7 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
   }
 
   private void mockAnnotations() {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     String template = "package " + PACKAGE_NAME + ";import java.lang.annotation.*;\n\n@Target(%s)public @interface %s {}";
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "NonNull"));
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "Nullable"));
@@ -129,6 +136,7 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
 
   @Test
   public void test() throws IOException {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     Path path = PATH.resolve(myFileName);
     String fileText = Files.readString(path).replace("\r\n", "\n");
     fileText = clean(fileText, path.getFileName().toString());
@@ -142,7 +150,7 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
     var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
     List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection);
     ReadAction.run(() -> {
-      ProblemsHolder holder = new ProblemsHolder(new InspectionManagerEx(getProject()), file, false);
+      ProblemsHolder holder = new ProblemsHolder(new InspectionManagerEx(myFixture.getProject()), file, false);
       for (LocalInspectionTool inspection : inspections) {
         PsiElementVisitor visitor = inspection.buildVisitor(holder, false);
         PsiTreeUtil.processElements(file, e -> {
@@ -151,8 +159,8 @@ public class JSpecifyConformanceAnnotationTest extends LightJavaCodeInsightFixtu
         });
       }
     });
-    String actualText = getActualText(actual, stripped);
-    assertEquals("Messages don't match (" + path.getFileName().toString() + ")", fileText, actualText);
+    String actualText = ReadAction.computeBlocking(() -> getActualText(actual, stripped));
+    assertEquals(fileText, actualText, "Messages don't match (" + path.getFileName().toString() + ")");
   }
 
   String getActualText(Map<PsiElement, String> actual, String stripped) {

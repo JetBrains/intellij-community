@@ -7,9 +7,22 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class BlockIndentOnPasteTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
+
+  @Test
   public void testJavaBlockDecreasedIndentOnTwoLinesPasting() {
     String before = """
       class Test {
@@ -24,7 +37,6 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
       foo();
          foo();""";
 
-
     String expected = """
       class Test {
           void test() {
@@ -37,6 +49,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected);
   }
 
+  @Test
   public void testStringBeforeAnotherStringShouldNotIncreaseIndentOfTheFollowingString() {
     String before = """
       class Test {
@@ -60,6 +73,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected);
   }
 
+  @Test
   public void testJavaComplexBlockWithDecreasedIndent() {
     String before = """
       class Test {
@@ -98,6 +112,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected);
   }
 
+  @Test
   public void testJavaBlockIncreasedIndentOnTwoLinesPasting() {
     String before = """
       class Test {
@@ -112,7 +127,6 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
       foo();
          foo();""";
 
-
     String expected = """
       class Test {
           void test() {
@@ -125,6 +139,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected);
   }
 
+  @Test
   public void testPastingBlockEndedByLineFeed() {
     String before = """
       class Test {
@@ -138,7 +153,6 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
       int i = 1;
       """;
 
-
     String expected = """
       class Test {
           void test() {
@@ -150,6 +164,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected);
   }
 
+  @Test
   public void testPasteAtZeroColumn() {
     String before = """
       class Test {
@@ -164,7 +179,6 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
       foo();
        foo();""";
 
-
     String expected = """
       class Test {
           void test() {
@@ -177,6 +191,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected);
   }
 
+  @Test
   public void testPasteAtDocumentStartColumn() {
     String before = "<caret>";
 
@@ -184,13 +199,13 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
       class Test {
       }""";
 
-
     String expected = """
       class Test {
       }""";
     doTest(before, toPaste, expected);
   }
 
+  @Test
   public void testBlockDecreasedIndentOnThreeLinesPasting() {
     String before = """
       class Test {
@@ -206,7 +221,6 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
       foo();
          foo();""";
 
-
     String expected = """
       class Test {
           void test() {
@@ -220,6 +234,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected);
   }
 
+  @Test
   public void testBlockIncreasedIndentOnThreeLinesPasting() {
     String before = """
       class Test {
@@ -235,7 +250,6 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
        foo();
           foo();""";
 
-
     String expected = """
       class Test {
           void test() {
@@ -249,6 +263,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected);
   }
 
+  @Test
   public void testBlockWithIndentOnFirstLine() {
     String before = """
       class Test {
@@ -264,7 +279,6 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
          foo();
        foo();""";
 
-
     String expected = """
       class Test {
           void test() {
@@ -278,6 +292,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected);
   }
 
+  @Test
   public void testPasteAfterExistingSymbols() {
     String before = """
       class Test {
@@ -293,7 +308,6 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
         foo();
       foo();""";
 
-
     String expected = """
       class Test {
           void test() {
@@ -307,6 +321,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected);
   }
 
+  @Test
   public void testPasteAtZeroColumnAfterBlankLineWithWhiteSpaces() {
     String before = """
       class Test {
@@ -326,7 +341,6 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
           }
       }""";
 
-
     String expected = """
       class Test {
           void test() {
@@ -344,6 +358,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected);
   }
 
+  @Test
   public void testPasteAtNonZeroColumnAfterBlankLineWithWhiteSpaces() {
     String before = """
       class Test {
@@ -363,7 +378,6 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
           }
       }""";
 
-
     String expected = """
       class Test {
           void test() {
@@ -381,6 +395,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected);
   }
 
+  @Test
   public void testPasteToNonEmptyStringTextWithTrailingLineFeed() {
     String before = """
       class Test {
@@ -408,6 +423,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste2, expected);
   }
 
+  @Test
   public void testPasteTextThatStartsWithLineFeedAfterNonEmptyLine() {
     String before = """
       class Test {
@@ -457,6 +473,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste2, expected2);
   }
 
+  @Test
   public void testPasteTextThatStartsWithLineFeedToNewLine() {
     String before = """
       class Test {
@@ -504,6 +521,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste2, expected2);
   }
 
+  @Test
   public void testPasteMultilineTextThatStartsWithLineFeedToNewLineWithBigCaretIndent() {
     String before = """
       class Test {
@@ -532,7 +550,6 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
       }""";
     doTest(before, toPaste, expected);
 
-
     String toPaste2 = """
 
            test(1);
@@ -541,6 +558,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste2, expected);
   }
 
+  @Test
   public void testPlainTextPaste() {
     String before = """
       line1
@@ -551,7 +569,6 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
       line to paste #1
            line to paste #2""";
 
-
     String expected = """
       line1
       line2
@@ -560,6 +577,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected, FileTypes.PLAIN_TEXT);
   }
 
+  @Test
   public void testPlainTextWhenPastedStringEndsByLineFeed() {
     String before = """
         line1
@@ -582,6 +600,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected, FileTypes.PLAIN_TEXT);
   }
 
+  @Test
   public void testPlainTextWhenCaretIsAfterSelection() {
     String before = """
       <selection>  line1
@@ -592,7 +611,6 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
       line to paste #2
       """;
 
-
     String expected = """
         line1
       line to paste #1
@@ -601,6 +619,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste, expected, FileTypes.PLAIN_TEXT);
   }
 
+  @Test
   public void testPlainTextThatStartsByLineFeed() {
     String before = """
       line 1
@@ -636,6 +655,7 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
     doTest(before, toPaste2, expected2, FileTypes.PLAIN_TEXT);
   }
 
+  @Test
   public void testFormatterBasedPasteThatStartsWithWhiteSpace() {
     String before = """
       class Test {
@@ -667,27 +687,30 @@ public class BlockIndentOnPasteTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   public void doTest(String before, String toPaste, String expected, FileType fileType) {
+    LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByText(fileType, before);
 
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    int old = settings.REFORMAT_ON_PASTE;
-    settings.REFORMAT_ON_PASTE = CodeInsightSettings.INDENT_BLOCK;
-    try {
-      int offset = myFixture.getEditor().getCaretModel().getOffset();
-      int column = myFixture.getEditor().getCaretModel().getLogicalPosition().column;
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        myFixture.getEditor().getDocument().insertString(offset, toPaste);
-        TypingActionsExtension.findForContext(getProject(), myFixture.getEditor())
-          .format(getProject(), myFixture.getEditor(), CodeInsightSettings.INDENT_BLOCK, offset, offset + toPaste.length(), column, false,
-                  false);
-        }
-      );
-    }
-    finally {
-      settings.REFORMAT_ON_PASTE = old;
-    }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      CodeInsightSettings settings = CodeInsightSettings.getInstance();
+      int old = settings.REFORMAT_ON_PASTE;
+      settings.REFORMAT_ON_PASTE = CodeInsightSettings.INDENT_BLOCK;
+      try {
+        int offset = myFixture.getEditor().getCaretModel().getOffset();
+        int column = myFixture.getEditor().getCaretModel().getLogicalPosition().column;
+        WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+          myFixture.getEditor().getDocument().insertString(offset, toPaste);
+          TypingActionsExtension.findForContext(myFixture.getProject(), myFixture.getEditor())
+            .format(myFixture.getProject(), myFixture.getEditor(), CodeInsightSettings.INDENT_BLOCK, offset, offset + toPaste.length(), column, false,
+                    false);
+          }
+        );
+      }
+      finally {
+        settings.REFORMAT_ON_PASTE = old;
+      }
 
-    myFixture.getEditor().getSelectionModel().removeSelection();
+      myFixture.getEditor().getSelectionModel().removeSelection();
+    });
     myFixture.checkResult(expected);
   }
 
