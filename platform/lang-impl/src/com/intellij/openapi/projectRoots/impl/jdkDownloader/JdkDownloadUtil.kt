@@ -70,6 +70,14 @@ object JdkDownloadUtil {
   fun createDownloadSdkInternal(sdkType: SdkType, sdkDownloadTask: SdkDownloadTask): Sdk {
     val sdkTable = ProjectJdkTable.getInstance()
     val sdks = sdkTable.allJdks.asList()
+    val tracker = SdkDownloadTracker.getInstance()
+    val downloadingSdk = sdks.firstOrNull { sdk ->
+      sdk.sdkType == sdkType &&
+      tracker.isDownloading(sdk) &&
+      sdk.homePath?.let { FileUtil.pathsEqual(it, sdkDownloadTask.plannedHomeDir) } == true
+    }
+    if (downloadingSdk != null) return downloadingSdk
+
     val sdk = ProjectSdksModel.createDownloadSdkInternal(sdkType, sdkDownloadTask, sdks)
     sdkTable.addJdk(sdk)
     return sdk
