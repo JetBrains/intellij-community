@@ -123,7 +123,13 @@ open class SnapshotRangeMarkerImpl private constructor(
            (documentOrFile is Document || (documentOrFile as VirtualFile).isValid)
   }
 
-  protected open fun isValidInRoot(root: PMarkerRoot): Boolean = root.isValid(markerHandle)
+  protected open fun isValidInRoot(root: PMarkerRoot): Boolean {
+    val cached = cachedResolution
+    if (cached != null && cached.identity === root.resolutionCacheIdentity) {
+      return PMarkerResolution.isValid(cached.resolution)
+    }
+    return root.isValid(markerHandle)
+  }
 
   override fun isGreedyToLeft(): Boolean = MarkerSpec.isGreedyToLeft(spec)
 

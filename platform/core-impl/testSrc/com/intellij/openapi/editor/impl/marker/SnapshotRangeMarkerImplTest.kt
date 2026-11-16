@@ -217,6 +217,29 @@ internal class SnapshotRangeMarkerImplTest {
   }
 
   @Test
+  fun `cached validity follows root changes and disposal`() {
+    val document = DocumentImpl("abcdefgh", true)
+    val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
+    val reference = marker.currentRootReference()
+    val original = reference.get()
+    val removed = original.remove(marker.markerHandle)
+
+    for (cachedRoot in listOf(original, removed)) {
+      reference.set(cachedRoot)
+      assertEquals(TextRange(2, 4), marker.textRange)
+      for (currentRoot in listOf(original, removed)) {
+        reference.set(currentRoot)
+        assertEquals(currentRoot === original, marker.isValid)
+      }
+    }
+
+    reference.set(original)
+    marker.dispose()
+    reference.set(original)
+    assertFalse(marker.isValid)
+  }
+
+  @Test
   fun `validity checks do not resolve offsets`() {
     val document = DocumentImpl("abcdefgh", true)
     val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
