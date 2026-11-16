@@ -19,6 +19,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -277,7 +278,7 @@ public final class ExportTestResultsAction extends DumbAwareAction {
   private static void openEditorOrBrowser(final VirtualFile result, final Project project, final boolean editor) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (editor) {
-        FileEditorManager.getInstance(project).openFile(result, true);
+        FileEditorManager.getInstance(project).requestOpenFile(result, FileEditorOpenRequest.withFocus(true));
       }
       else {
         BrowserUtil.browse(result);

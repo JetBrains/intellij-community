@@ -11,13 +11,13 @@ import com.intellij.ide.plugins.contentModuleName
 import com.intellij.internal.PluginDescriptionDumper.Companion.getDumpFileLocation
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -89,10 +89,8 @@ private class PluginDescriptionDumper(val coroutineScope: CoroutineScope) {
       if (project != null) {
         val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(dumpPath)
         if (virtualFile != null) {
-          withContext(Dispatchers.EDT) {
-            if (!project.isDisposed) {
-              FileEditorManager.getInstance(project).openFile(virtualFile, true)
-            }
+          if (!project.isDisposed) {
+            FileEditorManager.getInstanceAsync(project).openFile(virtualFile, FileEditorOpenRequest.withFocus(true))
           }
         }
       }

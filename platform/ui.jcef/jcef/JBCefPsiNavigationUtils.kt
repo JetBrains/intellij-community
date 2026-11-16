@@ -3,8 +3,8 @@ package com.intellij.ui.jcef
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.text.LineColumn
@@ -40,9 +40,8 @@ object JBCefPsiNavigationUtils {
                        ?: lineColumn?.let { OpenFileDescriptor(project, virtualFile, lineColumn.line, lineColumn.column) }
                        ?: return@onSuccess
 
-      ApplicationManager.getApplication().invokeLater {
-        FileEditorManager.getInstance(project).openEditor(descriptor, true)
-      }
+      FileEditorManager.getInstance(project)
+        .requestOpenEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(true))
     }
     return true
   }
