@@ -359,6 +359,91 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       #       └ TYPE int | None
           pass
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93623"])
+    fun `default None keeps Any`() = test("""
+      from typing import Any
+
+      def foo(expr: Any = None):
+      #       └ TYPE Any
+          pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93623"])
+    fun `default None keeps object`() = test("""
+      def foo(expr: object = None):
+      #       └ TYPE object
+          pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93623"])
+    fun `default None keeps a protocol that None implements`() = test("""
+      from collections.abc import Hashable
+
+      def foo(expr: Hashable = None):
+      #       └ TYPE Hashable
+          pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93623"])
+    fun `default None widens a protocol that None does not implement`() = test("""
+      from collections.abc import Iterable
+
+      def foo(expr: Iterable[int] = None):
+      #       │                     ^^^^ WARNING Expected type 'Iterable[int]', got 'None' instead
+      #       └ TYPE Iterable[int] | None
+          pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93623"])
+    fun `default None widens type of a type parameter`() = test("""
+      def foo[T](expr: type[T] = None) -> T:
+      #          │               ^^^^ WARNING Expected type 'type[T]', got 'None' instead
+      #          └ TYPE type[T] | None
+          pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93623"])
+    fun `default None in a protocol method with a parameter of the same protocol`() = test("""
+      from typing import Protocol
+
+      class P(Protocol):
+          def method(self, expr: "P" = None) -> str: ...
+      #                    │           ^^^^ WARNING Expected type 'P', got 'None' instead
+      #                    └ TYPE P | None
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93623"])
+    fun `default None keeps a union with None`() = test("""
+      def foo(expr: int | None = None):
+      #       └ TYPE int | None
+          pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93623"])
+    fun `default None widens a union that does not accept None`() = test("""
+      def foo(expr: int | str = None):
+      #       │                 ^^^^ WARNING Expected type 'int | str', got 'None' instead
+      #       └ TYPE int | str | None
+          pass
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93623"])
+    fun `default None widens an unresolved type`() = test("""
+      def foo(expr: Unresolved = None):
+      #       │     ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+      #       └ TYPE Unknown | None
+          pass
+      """.trimIndent())
   }
 
   @Nested

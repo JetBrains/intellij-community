@@ -152,6 +152,7 @@ import com.jetbrains.python.psi.types.PyVariance
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isObject
+import com.jetbrains.python.psi.types.isUnknown
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.ApiStatus
@@ -226,8 +227,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
     if (PyNames.NONE == param.defaultValueText) {
       val noneType = PyBuiltinCache.getInstance(param).noneType
-      // A type variable that admits `None` is solved by the `None` default, so the parameter type is not widened
-      if (type.asUnionSequence().none { it is PyTypeVarType && it.admitsNone(noneType, context.typeContext) }) {
+      if (!type.acceptsNoneDefault(noneType, context.typeContext)) {
         return Ref(PyUnionType.unionOrUnknown(type, noneType ?: PyAnyType.unknown))
       }
     }
@@ -3170,10 +3170,11 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
 }
 
 /**
- * Tells if the solver may set this type variable to `None`.
- * This is the case when the type variable has no bound, a bound that accepts `None`, or a constraint that accepts `None`.
+ * Tells if a parameter of this type takes a `None` default without the implicit `| None`.
+ * This is the case for a type that `None` matches, such as `Any`, `object` or `Hashable`.
+ * It is also the case for a type variable that admits `None`, alone or in a union, because the `None` default solves it.
+ * A type with an unknown member keeps the `| None`, because a match against an unknown type always passes.
  */
-private fun PyTypeVarType.admitsNone(noneType: PyType?, context: TypeEvalContext): Boolean {
-  if (constraints.isNotEmpty()) return noneType != null && constraints.any { PyTypeChecker.match(it, noneType, context) }
-  return bound == null || noneType != null && PyTypeChecker.match(bound, noneType, context)
+private fun PyType?.acceptsNoneDefault(noneType: PyType?, context: TypeEvalContext): Boolean {
+  return noneType != null && asUnionSequence().none { it.isUnknown } && PyTypeChecker.match(this, noneType, context)
 }
