@@ -1148,7 +1148,7 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       def f(x): return x
 
       f.registered
-      # ^^^^^^^^^^ WARNING Cannot find reference 'registered' in 'Overload'
+      # ^^^^^^^^^^ WARNING Cannot find reference 'registered' in 'FunctionType'
       """.trimIndent())
 
     @Test
@@ -1163,7 +1163,25 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       def f(x): return x
 
       f.registered
-      # ^^^^^^^^^^ WARNING Cannot find reference 'registered' in 'Overload'
+      # ^^^^^^^^^^ WARNING Cannot find reference 'registered' in 'FunctionType'
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-94134"])
+    fun `an unknown attribute of an overloaded method is reported in the runtime class`() = test("""
+      from typing import overload
+
+      class A:
+          @overload
+          def m(self, x: int) -> int: ...
+          @overload
+          def m(self, x: str) -> str: ...
+          def m(self, x): return x
+
+      A.m.registered
+      #   ^^^^^^^^^^ WARNING Cannot find reference 'registered' in 'FunctionType'
+      A().m.registered
+      #     ^^^^^^^^^^ WARNING Cannot find reference 'registered' in '(x: Unknown) -> Unknown'
       """.trimIndent())
 
     @Test
