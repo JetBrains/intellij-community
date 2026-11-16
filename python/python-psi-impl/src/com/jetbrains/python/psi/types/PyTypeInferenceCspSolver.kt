@@ -9,6 +9,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.StackOverflowPreventedException
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyCallable
@@ -124,6 +126,7 @@ class CspBuilder(val context: TypeEvalContext) {
    */
   fun addInferenceVariable(typeVariable: PyTypeVarType, si: SubstitutionsIdentifier) : PyInferenceVariable {
     if (typeVariable.isDefinition) throw NotSupportedException()
+    PyCodeInsightCounters.inc(Counter.CSP_INFERENCE_VARIABLES)
     return inferenceVars.add(typeVariable, si)
   }
 

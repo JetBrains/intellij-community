@@ -5,6 +5,8 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallSiteExpression
@@ -151,6 +153,7 @@ object PyTypeInferenceCspFactory {
 
   private fun buildAndSolveCsp(si: SubstitutionsIdentifier, tmpContext: TypeEvalContextImpl) : CspBuilder? {
     try {
+      PyCodeInsightCounters.inc(Counter.CSP_PROBLEMS_BUILT)
       val builder = CspBuilder(tmpContext)
       val returnType = when (si.expression) {
         is PyCallExpression -> buildCallSiteExpressionCsp(si, builder, tmpContext)
