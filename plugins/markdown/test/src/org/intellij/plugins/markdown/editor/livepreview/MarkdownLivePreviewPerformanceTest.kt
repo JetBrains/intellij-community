@@ -21,6 +21,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import kotlinx.coroutines.Dispatchers
 import org.intellij.plugins.markdown.MarkdownTestingUtil
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
@@ -72,7 +73,7 @@ internal class MarkdownLivePreviewPerformanceTest {
   }
 
   @ParameterizedTest(name = "{0}")
-  @EnumSource(Sample::class)
+  @EnumSource(Sample::class, mode = EnumSource.Mode.EXCLUDE, names = ["NESTED_LISTS"])
   fun `reveal and conceal elements at offset`(sample: Sample): Unit = onEdt {
     val editor = open(sample)
     // The line before the first target is blank, so a caret there touches no element.
@@ -85,7 +86,7 @@ internal class MarkdownLivePreviewPerformanceTest {
   }
 
   @ParameterizedTest(name = "{0}")
-  @EnumSource(Sample::class)
+  @EnumSource(Sample::class, mode = EnumSource.Mode.EXCLUDE, names = ["NESTED_LISTS"])
   fun `type at offset with live preview`(sample: Sample): Unit = onEdt {
     benchmark("${sample.file}: type", setup = {
       val editor = open(sample)
@@ -97,6 +98,27 @@ internal class MarkdownLivePreviewPerformanceTest {
     }
     myFixture.doHighlighting()
     waitForPresentation(myFixture.editor, true)
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @EnumSource(Sample::class)
+  fun `zoom in and out`(sample: Sample): Unit = onEdt {
+    open(sample)
+    benchmark("${sample.file}: zoom in and out") {
+      repeat(ZOOM_STEPS) { myFixture.performEditorAction("EditorIncreaseFontSize") }
+      repeat(ZOOM_STEPS) { myFixture.performEditorAction("EditorDecreaseFontSize") }
+    }
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @EnumSource(Sample::class)
+  fun `change the font`(sample: Sample): Unit = onEdt {
+    val editor = open(sample)
+    val livePreviewFont = editor.colorsScheme.editorFontName
+    benchmark("${sample.file}: change the font", setup = { editor.colorsScheme.editorFontName = livePreviewFont }) {
+      editor.colorsScheme.editorFontName = null
+    }
+    assertNotEquals(livePreviewFont, editor.colorsScheme.editorFontName)
   }
 
   private fun onEdt(body: () -> Unit): Unit = timeoutRunBlocking(TIMEOUT, context = Dispatchers.EDT) { body() }
@@ -144,7 +166,8 @@ internal class MarkdownLivePreviewPerformanceTest {
   @Suppress("unused")
   enum class Sample(val file: String, vararg val caretOffsets: Int) {
     CHANGELOG("CHANGELOG.md", 28),
-    INDEX("index.md", 380, 1536);
+    INDEX("index.md", 380, 1536),
+    NESTED_LISTS("nested-lists.md");
 
     override fun toString(): String = file
   }
@@ -152,5 +175,6 @@ internal class MarkdownLivePreviewPerformanceTest {
   companion object {
     private val projectFixture = projectFixture(openAfterCreation = true)
     private val TIMEOUT = 10.minutes
+    private const val ZOOM_STEPS = 5
   }
 }

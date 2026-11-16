@@ -5,7 +5,6 @@ import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -35,10 +34,8 @@ internal class MarkdownLivePreviewEditorListener : EditorFactoryListener {
       EditorScopeProvider.getInstance(project).getEditorScope(editor).launch(Dispatchers.Default) {
         try {
           // Skips the initial off state, so an editor that never turns live preview on keeps its look and makes no RPC calls.
-          editor.livePreviewEnablednessFlow().dropWhile { !it }.collectLatest { enabled ->
-            withContext(Dispatchers.EDT) { MarkdownLivePreviewEditorAppearance.getOrCreate(editor)?.change(enabled) }
-            synchronize(editor, editorId, enabled)
-          }
+          editor.livePreviewEnablednessFlow().dropWhile { !it }
+            .collectLatest { enabled -> synchronize(editor, editorId, enabled) }
         }
         catch (exception: Throwable) {
           rethrowControlFlowException(exception)
@@ -48,7 +45,10 @@ internal class MarkdownLivePreviewEditorListener : EditorFactoryListener {
     }
   }
 
-  private suspend fun synchronize(editor: Editor, editorId: EditorId, enabled: Boolean) {
+  private suspend fun synchronize(editor: EditorEx, editorId: EditorId, enabled: Boolean) {
+    if (enabled) {
+      withContext(Dispatchers.EDT) { MarkdownLivePreviewEditorAppearance.getOrCreate(editor)?.change(true) }
+    }
     durable {
       val api = MarkdownLivePreviewRemoteApi.getInstance()
       api.setLivePreviewSupport(editorId, enabled)
@@ -58,6 +58,10 @@ internal class MarkdownLivePreviewEditorListener : EditorFactoryListener {
           MarkdownLivePreviewReconciler.getOrCreate(editor)?.publishSpecs(specSet)
         }
       }
+    }
+    if (!enabled) {
+      // Remove live-preview inlays before font restoration to avoid a O(lines x inlays) at `InlayModelImpl#reinitSettings`
+      withContext(Dispatchers.EDT) { MarkdownLivePreviewEditorAppearance.getOrCreate(editor)?.change(false) }
     }
   }
 
