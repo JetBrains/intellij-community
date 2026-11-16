@@ -332,8 +332,8 @@ describe('render-guides skills', () => {
 
   // NOTE: The committed-skill-output freshness / collision check lives in the Kotlin test
   // `AgentGuidelinesConsistencyTest.committed skill outputs are up to date and free of source collisions`,
-  // which runs in the ideaProjectStructure smoke suite on CI. Keep it the single source of truth for that
-  // invariant. The tests below still exercise the generator's rendering behavior directly.
+  // which runs as `//tests/agentGuidelines:agentGuidelines-tests_test` in the smoke suite on CI. Keep it the single
+  // source of truth for that invariant. The tests below still exercise the generator's rendering behavior directly.
 
   it('in ULTIMATE, emits ultimate-only stubs and cleans stale generated dirs', async () => {
     const {rootDir, communitySourceDir, agentsDir, claudeDir, communityClaudeDir} = createFixture()

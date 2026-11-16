@@ -24,6 +24,7 @@ intellij.python.sdk.tests
 intellij.vcs.gitlab.tests
 intellij.xml.tests.js
 language-server.*
+intellij.agentGuidelines.tests
 intellij.air.frontend.session.view.tests
 intellij.ant.jps.tests
 intellij.ant.tests

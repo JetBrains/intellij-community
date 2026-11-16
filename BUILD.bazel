@@ -3,6 +3,7 @@ load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//build:source_tree.bzl", "source_tree_files")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
@@ -45,6 +46,15 @@ filegroup(
         ".idea/modules.xml",
     ] + glob([".idea/libraries/*.xml"]),
     visibility = ["//visibility:public"],
+)
+
+# The community skill sources and their Claude Code copies, which `//tests/agentGuidelines` of the ultimate root checks.
+source_tree_files(
+    name = "skills_tree_files",
+    roots = [
+        ".agents/skills",
+        ".claude/skills",
+    ],
 )
 
 create_kotlinc_options(
