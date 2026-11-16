@@ -18,43 +18,90 @@ package com.intellij.java.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileFixture;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NonNls;
+import org.junit.jupiter.api.Test;
 
-public class TurnRefsToSuperTest extends LightMultiFileTestCase {
+import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@TestApplication
+public class TurnRefsToSuperTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightMultiFileFixture> multiFile =
+    lightMultiFileFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/refactoring/turnRefsToSuper/");
+
+  @Test
   public void testSuperClass() { doTest("AClass", "ASuper", true); }
+  @Test
   public void testMethodFromSuper() { doTest("AClass", "ASuper", true); }
+  @Test
   public void testRemoveImport() { doTest("pack1.AClass", "pack1.AnInterface", true); }
+  @Test
   public void testToArray() { doTest("A", "I", true); }
+  @Test
   public void testArrayElementAssignment() { doTest("C", "I", true); }
+  @Test
   public void testReturnValue() { doTest("A", "I", true); }
+  @Test
   public void testReturnValue2() { doTest("A", "I", true); }
+  @Test
   public void testCast() { doTest("A", "I", true); }
+  @Test
   public void testUseAsArg() { doTest("AClass", "I", true); }
+  @Test
   public void testClassUsage() { doTest("A", "I", true); }
+  @Test
   public void testInstanceOf() { doTest("A", "I", false); }
+  @Test
   public void testFieldTest() { doTest("Component1", "IDoSomething", false); }
+  @Test
   public void testScr34000() { doTest("SimpleModel", "Model", false); }
+  @Test
   public void testScr34020() { doTest(CommonClassNames.JAVA_UTIL_LIST, CommonClassNames.JAVA_UTIL_COLLECTION, false); }
+  @Test
   public void testCommonInheritor() { doTest("Client.V", "Client.L", false); }
+  @Test
   public void testCommonInheritorFail() { doTest("Client.V", "Client.L", false); }
+  @Test
   public void testCommonInheritorResults() { doTest("Client.V", "Client.L", false); }
+  @Test
   public void testCommonInheritorResultsFail() { doTest("Client.V", "Client.L", false); }
+  @Test
   public void testCommonInheritorResultsFail2() { doTest("Client.V", "Client.L", false); }
+  @Test
   public void testIDEA6505() { doTest("Impl", "IB", false); }
+  @Test
   public void testIDEADEV5517() { doTest("Xyz", "XInt", false); }
+  @Test
   public void testIDEADEV5517NOOP() { doTest("Xyz", "XInt", false); }
+  @Test
   public void testIDEADEV6136() { doTest("A", "B", false); }
+  @Test
   public void testIDEADEV25669() { doTest("p.A", "p.Base", false); }
+  @Test
   public void testIDEADEV23807() { doTest("B", "A", false); }
+  @Test
   public void testTypeArgumentsRH() { doTest("IImpl", "I", false); }
+  @Test
   public void testTypeArgumentsRH1() { doTest("IImpl", "I", false); }
+  @Test
   public void testAnonymousWithTypeArguments() { doTest("Clazz", "IntF", false); }
+  @Test
   public void testTypeArgumentsParam() { doTest("Clazz", "IntF", false); }
+  @Test
   public void testTryWithResources1() { doTest("Test.MyResourceImpl", "Test.MyResource", false); }
+  @Test
   public void testTryWithResources2() { doTest("Test.MyResourceImpl", "Test.MyResource", false); }
+  @Test
   public void testDifferentNumberOfParams() { doTest("Bar", "SuperBar", false); }
+  @Test
   public void testSelfReference() { doTest("Bar", "SuperBar", false); }
 
   //todo[ann] fix and uncomment
@@ -66,20 +113,16 @@ public class TurnRefsToSuperTest extends LightMultiFileTestCase {
   //public void testForEach2() throws Exception { doTest("Test.MyIterableImpl", "Test.MyIterable", false); }
 
   private void doTest(@NonNls final String className, @NonNls final String superClassName, final boolean replaceInstanceOf) {
-    doTest(() -> this.performAction(className, superClassName, replaceInstanceOf), true);
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/turnRefsToSuper/";
+    multiFile.get().doTest(() -> this.performAction(className, superClassName, replaceInstanceOf), true);
   }
 
   private void performAction(final String className, final String superClassName, boolean replaceInstanceOf) {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     final PsiClass aClass = myFixture.findClass(className);
-    assertNotNull("Class " + className + " not found", aClass);
+    assertNotNull(aClass, "Class " + className + " not found");
     PsiClass superClass = myFixture.findClass(superClassName);
-    assertNotNull("Class " + superClassName + " not found", superClass);
+    assertNotNull(superClass, "Class " + superClassName + " not found");
 
-    new TurnRefsToSuperProcessor(getProject(), aClass, superClass, replaceInstanceOf).run();
+    new TurnRefsToSuperProcessor(myFixture.getProject(), aClass, superClass, replaceInstanceOf).run();
   }
 }

@@ -14,17 +14,28 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileFixture;
 import com.intellij.refactoring.inline.InlineToAnonymousClassHandler;
 import com.intellij.refactoring.inline.InlineToAnonymousClassProcessor;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class InlineToAnonymousClassMultifileTest extends LightMultiFileTestCase {
+@TestApplication
+public class InlineToAnonymousClassMultifileTest {
 
   private static final String BASE_PATH = JavaTestUtil.getJavaTestDataPath() + "/refactoring/inlineToAnonymousClass/multifile/";
   private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
@@ -43,42 +54,38 @@ public class InlineToAnonymousClassMultifileTest extends LightMultiFileTestCase 
       libraryModel.commit();
     }
   };
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(PROJECT_DESCRIPTOR);
+  private final TestFixture<LightMultiFileFixture> multiFile = lightMultiFileFixture(projectFixture, BASE_PATH);
 
+  @Test
   public void testProtectedMember() {   // IDEADEV-18738
     doTest("p1.SubjectWithSuper");
   }
 
+  @Test
   public void testImportForConstructor() {   // IDEADEV-18714
     doTest("p1.ChildCtor");
   }
 
+  @Test
   public void testStaticImports() {   // IDEADEV-18745
     doTest("p1.Inlined");
   }
 
+  @Test
   public void testFromLibrary() {   // IDEADEV-18745
     doTest("p.P");
   }
 
-  @Override
-  protected String getTestDataPath() {
-    return BASE_PATH;
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
-  }
-
   private void doTest(String className) {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
 
-    doTest(() -> {
+    multiFile.get().doTest(() -> {
       PsiClass classToInline = myFixture.findClass(className);
       classToInline = (PsiClass)classToInline.getNavigationElement();
       assertNull(InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
       assertTrue(new InlineToAnonymousClassHandler().canInlineElement(classToInline));
-      InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(),
+      InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(myFixture.getProject(),
                                                                                       classToInline,
                                                                                       null, false, false, false);
       UsageInfo[] usages = processor.findUsages();

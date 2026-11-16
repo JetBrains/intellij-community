@@ -23,34 +23,47 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
-import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileFixture;
 import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.containers.MultiMap;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashSet;
 
+import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 //pull first method from class a.A to class b.B
-public class PullUpMultifileTest extends LightMultiFileTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/pullUp/";
-  }
+@TestApplication
+public class PullUpMultifileTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightMultiFileFixture> multiFile =
+    lightMultiFileFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/refactoring/pullUp/");
 
   private void doTest(final String... conflicts) {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     final MultiMap<PsiElement, String> conflictsMap = new MultiMap<>();
-    doTest(() -> {
+    multiFile.get().doTest(() -> {
       final PsiClass srcClass = myFixture.findClass("a.A");
-      assertNotNull("Source class not found", srcClass);
+      assertNotNull(srcClass, "Source class not found");
 
       final PsiClass targetClass = myFixture.findClass("b.B");
-      assertNotNull("Target class not found", targetClass);
+      assertNotNull(targetClass, "Target class not found");
 
       final PsiMethod[] methods = srcClass.getMethods();
-      assertTrue("No methods found", methods.length > 0);
+      assertTrue(methods.length > 0, "No methods found");
       final MemberInfo[] membersToMove = new MemberInfo[1];
       final MemberInfo memberInfo = new MemberInfo(methods[0]);
       memberInfo.setChecked(true);
@@ -79,35 +92,40 @@ public class PullUpMultifileTest extends LightMultiFileTestCase {
     }
   }
 
-
+  @Test
   public void testInaccessible() {
     doTest("Method <b><code>A.foo()</code></b> is package-private and will not be accessible from method <b><code>method2Move()</code></b>.",
            "Method <b><code>method2Move()</code></b> uses method <b><code>A.foo()</code></b>, which is not moved to the superclass");
   }
 
+  @Test
   public void testAccessibleViaInheritanceInsideAnonymousClass() {
     doTest("Method <b><code>method2Move()</code></b> uses method <b><code>A.bar()</code></b>, which is not accessible from the superclass",
            "Method <b><code>A.bar()</code></b> is protected and will not be accessible from method <b><code>method2Move()</code></b>.");
   }
 
+  @Test
   public void testReuseSuperMethod() {
     doTest();
   }
 
+   @Test
    public void testReuseSuperSuperMethod() {
     doTest();
   }
 
+  @Test
   public void testClassPackageConflict() {
-    doTest(() -> {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
+    multiFile.get().doTest(() -> {
       final PsiClass srcClass = myFixture.findClass("a.a");
-      assertNotNull("Source class not found", srcClass);
+      assertNotNull(srcClass, "Source class not found");
 
       final PsiClass targetClass = myFixture.findClass("a.B");
-      assertNotNull("Target class not found", targetClass);
+      assertNotNull(targetClass, "Target class not found");
 
       final PsiMethod[] methods = srcClass.getMethods();
-      assertTrue("No methods found", methods.length > 0);
+      assertTrue(methods.length > 0, "No methods found");
       final MemberInfo[] membersToMove = new MemberInfo[1];
       final MemberInfo memberInfo = new MemberInfo(methods[0]);
       memberInfo.setChecked(true);

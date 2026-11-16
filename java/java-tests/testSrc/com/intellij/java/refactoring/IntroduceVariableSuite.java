@@ -7,9 +7,6 @@ import org.junit.runners.Suite;
 
 @Ignore("Manual only")
 @RunWith(Suite.class)
-@Suite.SuiteClasses({
-  IntroduceVariableTest.class,
-  IntroduceVariableMultifileTest.class
-})
+@Suite.SuiteClasses(IntroduceVariableTest.class)
 public class IntroduceVariableSuite {
 }

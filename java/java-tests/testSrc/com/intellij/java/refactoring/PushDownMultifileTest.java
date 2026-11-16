@@ -6,19 +6,30 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.refactoring.LightMultiFileFixture;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
+import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 //push first method from class a.A to class b.B
-public class PushDownMultifileTest extends LightMultiFileTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/refactoring/pushDown/";
-  }
+@TestApplication
+public class PushDownMultifileTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightMultiFileFixture> multiFile =
+    lightMultiFileFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/refactoring/pushDown/");
 
   private void doTest() {
     doTest(false);
@@ -29,8 +40,9 @@ public class PushDownMultifileTest extends LightMultiFileTestCase {
   }
 
   private void doTest(final boolean fail, final String sourceClassName, final String... targetClassNames) {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     try {
-      doTest(() -> {
+      multiFile.get().doTest(() -> {
         final PsiClass srcClass = myFixture.findClass(sourceClassName);
 
         for (String targetClassName : targetClassNames) {
@@ -38,7 +50,7 @@ public class PushDownMultifileTest extends LightMultiFileTestCase {
         }
 
         final PsiMethod[] methods = srcClass.getMethods();
-        assertTrue("No methods found", methods.length > 0);
+        assertTrue(methods.length > 0, "No methods found");
         final MemberInfo memberInfo = new MemberInfo(methods[0]);
         memberInfo.setChecked(true);
         new PushDownProcessor<>(srcClass, Collections.singletonList(memberInfo), new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
@@ -61,36 +73,42 @@ public class PushDownMultifileTest extends LightMultiFileTestCase {
     }
   }
 
-
+  @Test
   public void testStaticImportsInsidePushedMethod() {
     doTest();
   }
 
+  @Test
   public void testStaticImportOfPushedMethod() {
     doTest();
   }
 
+  @Test
   public void testReuseOverrideMethod() {
     doTest();
   }
 
+  @Test
   public void testFromInterface() {
     doTest(false, "a.I", "a.I1");
   }
 
+  @Test
   public void testTwoInheritors() {
     doTest(false, "c.Super", "a.SomeA", "b.SomeB");
   }
 
+  @Test
   public void testUsagesInXml() {
+    LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     try {
-      doTest(() -> {
+      multiFile.get().doTest(() -> {
         final PsiClass srcClass = myFixture.findClass("a.A");
 
         myFixture.findClass("b.B");
 
         final PsiField[] fields = srcClass.getFields();
-        assertTrue("No methods found", fields.length > 0);
+        assertTrue(fields.length > 0, "No methods found");
         final MemberInfo memberInfo = new MemberInfo(fields[0]);
         memberInfo.setChecked(true);
         new PushDownProcessor<>(srcClass, Collections.singletonList(memberInfo), new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
