@@ -161,7 +161,7 @@ open class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
                     RemoveUselessCallFix()
                 } else {
                     val receiver = expression.receiverExpression
-                    if (receiver.isTemporaryListExpression()) {
+                    if (receiver.isTemporaryListExpression() && receiver.expressionType?.classId == StandardClassIds.List) {
                         RemoveUselessCallFix()
                     } else {
                         ReplaceSelectorOfQualifiedExpressionFix("toList()")
