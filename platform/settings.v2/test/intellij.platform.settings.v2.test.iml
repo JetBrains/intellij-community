@@ -47,6 +47,10 @@
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.settings.v2.vcs" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.settings.v2.backend" />
