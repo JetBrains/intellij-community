@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.livepreview
 
+import com.intellij.idea.TestFor
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.markdown.frontend.editor.livepreview.CodeFenceRenderingService
@@ -1122,6 +1123,24 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(3, thematicBreakHighlighters().size)
     assertEquals(listOf("---", "***", "___"), concealed())
     myFixture.checkResult(content)
+  }
+
+  @TestFor(issues = ["IJPL-261672"])
+  fun testSplittingThematicBreakIntoTwoLinesKeepsBothRules() {
+    val rule = "-----------------"
+    val content = "$rule\n\ntail"
+    val splitOffset = rule.length / 2 + 1
+    configure("$content<caret>")
+
+    moveCaretTo(splitOffset)
+    myFixture.type("\n")
+    myFixture.checkResult("${rule.take(splitOffset)}\n<caret>${rule.drop(splitOffset)}\n\ntail")
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    moveCaretTo(myFixture.editor.document.textLength)
+
+    assertEquals(listOf(rule.take(splitOffset), rule.drop(splitOffset)), concealed())
+    assertEquals(2, thematicBreakHighlighters().size)
   }
 
   fun testThematicBreakRevealsAndRestores() {

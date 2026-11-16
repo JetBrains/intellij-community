@@ -61,7 +61,7 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
   }
 
   private fun hasClosingDelimiter(startPosition: LookaheadText.Position, openingDelimiter: CharSequence): Boolean {
-    var current = startPosition.nextLinePosition() ?: return false
+    var current = startPosition.nextLinePosition()?.nextLinePosition() ?: return false
     while (true) {
       val line = current.currentLine
       if (isYamlDelimiters(openingDelimiter, line) || isTomlDelimiters(openingDelimiter, line)) {
