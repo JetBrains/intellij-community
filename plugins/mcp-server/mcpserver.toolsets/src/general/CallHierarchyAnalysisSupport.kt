@@ -15,6 +15,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
 import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
+import com.intellij.lang.Language
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
@@ -152,13 +153,16 @@ private class CallHierarchyAnalyzer(
       }
     }
 
-    val matchingCandidates = candidates.distinctBy { it.identityKey }
-    val exactCandidates = exactSearchCandidates.distinctBy { it.identityKey }
-    val resolvedCandidates = matchingCandidates.ifEmpty { exactCandidates }
+    val matchingCandidates = candidates.preferCallablePresentation().distinctBy { it.identityKey }
+    val exactCandidates = exactSearchCandidates.preferCallablePresentation().distinctBy { it.identityKey }
+    val parameterlessMatches =
+      if ('(' in symbolFqn) exactCandidates.filter { !it.hasCallablePresentation && it.matchesPlainFqn(symbolFqn.removeValueParameters()) }
+      else emptyList()
+    val resolvedCandidates = matchingCandidates.ifEmpty { parameterlessMatches.ifEmpty { exactCandidates } }
 
     if (resolvedCandidates.isEmpty()) {
       mcpFail("No callable symbol found for ${CallHierarchyRequest::symbolFqn.name} `$symbolFqn`.\n" +
-              "Pass a callable FQN such as `com.example.Service.run` or `com.example.Service.run(String)`.\n" +
+              "Pass a callable FQN such as `com.example.Service.run`, `com.example.Service.run(String)` or `\\App\\Service::run`.\n" +
               "Type roots are supported only when the language call hierarchy provider maps them to a callable target; " +
               "use `search_symbol` to find callable symbols when needed.")
     }
@@ -417,7 +421,7 @@ private class CallHierarchyAnalyzer(
     val referenceAwareDescriptor = descriptor as? ReferenceAwareNodeDescriptor
     val element = referenceAwareDescriptor?.enclosingElement ?: descriptor.psiElement ?: return null
     val displayName = referenceAwareDescriptor?.getPresentation()?.singleLine()?.takeIf { it.isNotBlank() }
-    val symbol = createCallSymbol(element, displayNameOverride = displayName, requireCallable = false) ?: return null
+    val symbol = createCallSymbol(element, displayNameOverride = displayName) ?: return null
     return CallNode(symbol, usageCount, descriptor)
   }
 
@@ -426,12 +430,11 @@ private class CallHierarchyAnalyzer(
     return references?.size?.takeIf { it > 0 } ?: 1
   }
 
-  private fun createCallSymbol(element: PsiElement, displayNameOverride: String? = null, requireCallable: Boolean = true): CallSymbol? {
+  private fun createCallSymbol(element: PsiElement, displayNameOverride: String? = null): CallSymbol? {
     val namedElement = canonicalNamedElement(element) ?: return null
     if (!isPresentableCallNode(namedElement)) return null
     val displayName = displayNameOverride ?: displayName(namedElement)
     val longName = safeUsageViewText(namedElement, UsageViewTextKind.LONG_NAME)
-    if (requireCallable && !isCallableSymbol(namedElement, displayName, longName)) return null
     val signature = readableSignature(namedElement, displayName, longName)
     val fqnCandidates = searchableNames(namedElement, displayName, longName)
     return CallSymbol(
@@ -441,6 +444,8 @@ private class CallHierarchyAnalyzer(
       signature = signature,
       fqnCandidates = fqnCandidates,
       filePath = symbolFilePath(namedElement),
+      hasCallablePresentation = isCallableSymbol(namedElement, displayName, longName),
+      language = namedElement.language,
     )
   }
 
@@ -675,6 +680,8 @@ private data class CallSymbol(
   val signature: String,
   val fqnCandidates: Set<String>,
   val filePath: String?,
+  val hasCallablePresentation: Boolean,
+  val language: Language,
 ) {
   val identityKey: String = fqnCandidates
     .asSequence()
@@ -757,6 +764,14 @@ private fun isCallableSymbol(element: PsiNamedElement, displayName: String, long
   val name = element.name ?: return false
   return valueParameters(longName, name) != null || valueParameters(displayName, name) != null
 }
+
+private fun List<CallSymbol>.preferCallablePresentation(): List<CallSymbol> {
+  val languagesWithCallablePresentation = filter { it.hasCallablePresentation }.mapTo(HashSet()) { it.rootLanguage }
+  return filter { it.hasCallablePresentation || it.rootLanguage !in languagesWithCallablePresentation }
+}
+
+private val CallSymbol.rootLanguage: Language
+  get() = generateSequence(language) { it.baseLanguage }.last()
 
 private fun hasCallablePresentation(element: PsiNamedElement): Boolean {
   val name = element.name ?: return false
@@ -852,6 +867,10 @@ private fun comparableNameVariants(name: String, includeParameterlessName: Boole
       if (includeParameterlessName) {
         add(shortName.removeValueParameters())
       }
+    }
+    val withoutGlobalPrefix = singleLineName.removePrefix("\\")
+    if (withoutGlobalPrefix != singleLineName && withoutGlobalPrefix.isNotBlank()) {
+      addAll(comparableNameVariants(withoutGlobalPrefix, includeParameterlessName))
     }
   }
 }

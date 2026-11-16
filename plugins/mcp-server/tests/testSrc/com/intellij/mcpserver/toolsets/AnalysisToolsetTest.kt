@@ -92,6 +92,25 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
   }
 
   @Test
+  fun analyze_calls_prefers_method_over_same_named_field() = runBlocking(Dispatchers.Default) {
+    assumeTrue(isJavaPluginInstalled(), "Java plugin is required for this test")
+
+    testMcpTool(
+      AnalysisToolset::analyze_calls.name,
+      buildJsonObject {
+        put("symbolFqn", JsonPrimitive("calls.SameNameMember.value"))
+        put("analysisKind", JsonPrimitive(AnalysisToolset.AnalysisKind.INCOMING_CALLS.name))
+        put("depth", JsonPrimitive(1))
+      },
+    ) { result ->
+      val text = result.textContent.text
+      assertThat(result.isError).describedAs(text).isFalse()
+      assertThat(text.lineSequence().first()).describedAs(text).startsWith("└─ + value()")
+      assertThat(text).contains("caller")
+    }
+  }
+
+  @Test
   fun analyze_calls_reports_ambiguity_with_exact_signatures() = runBlocking(Dispatchers.Default) {
     assumeTrue(isJavaPluginInstalled(), "Java plugin is required for this test")
 
