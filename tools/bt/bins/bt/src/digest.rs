@@ -131,13 +131,20 @@ const JVM_FORBIDDEN_METHOD_CHARACTERS: &[char] = &['.', ';', '[', ']', '/', '<',
 /// `#` selector built from one reaches the runner as a method it cannot find. The run then reports NO TESTS for a
 /// class that plainly failed.
 ///
-/// The method survives two checks. It must round-trip through [`Selector::classify`], the parser this tool already
-/// owns, so the hint grows no second grammar. It must also hold no character a JVM method name forbids.
+/// The method survives three checks. Its class must be a top-level class, because the selector of an `@Nested` class is
+/// its outer class (see [`rerun_class_name`]). It must round-trip through [`Selector::classify`], the parser this tool
+/// already owns, so the hint grows no second grammar. It must also hold no character a JVM method name forbids.
+///
+/// The name of a method that takes a parameter, such as `@TempDir root: Path`, is a selectable method. The runner finds
+/// a method by its name with any parameter list.
 pub(crate) fn rerun_selector(case: &TestCase) -> String {
     let simple_class = rerun_class_name(&case.class_name);
     if simple_class.is_empty() {
         // No class to fall back to. The name is all there is, and a caller at least reads what failed.
         return case.name.clone();
+    }
+    if case.class_name.contains('$') {
+        return simple_class.to_owned();
     }
     let candidate = format!("{simple_class}#{}", case.name);
     if !case.name.contains(JVM_FORBIDDEN_METHOD_CHARACTERS)
@@ -151,7 +158,9 @@ pub(crate) fn rerun_selector(case: &TestCase) -> String {
 /// The class part of a rerun selector: the last dotted segment, and the outer half of a nested pair.
 ///
 /// A `@Nested` class reaches test.xml as `Outer$Nested`, which the selector parser refuses. `Outer` is a selector
-/// it accepts, and it runs the nested class too, because the runner's class filter matches a prefix.
+/// it accepts, and it runs the nested class too, because the runner's class filter matches a prefix. `Outer#method`
+/// is no such selector: the runner looks for the method in `Outer` only. It then finds no test, or it runs a method of
+/// the same name in `Outer`. So [`rerun_selector`] gives the class of a nested test without its method.
 fn rerun_class_name(class_name: &str) -> &str {
     let simple = class_name.rsplit_once('.').map_or(class_name, |(_, simple)| simple);
     simple.split_once('$').map_or(simple, |(outer, _)| outer)
@@ -394,8 +403,8 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
                 } else if sum.skipped > 0 {
                     "cause     every matched test was skipped (assumeTrue / @Disabled) — a required *_BIN may be absent"
                 } else if options.method_filtered {
-                    // The `#method` half of the filter is the suspect the reader can act on. A display name and a
-                    // method that takes a parameter both land here, and the class-level rerun runs either.
+                    // The `#method` half of the filter is the suspect the reader can act on. A display name lands
+                    // here, and the class-level rerun runs it.
                     "cause     the #method filter matched no method — rerun the class alone, without the #"
                 } else {
                     "cause     no test target matched, or every shard was filtered out"

@@ -589,8 +589,9 @@ fn rerun_selector_keeps_a_method_only_when_the_method_is_selectable() {
         ("com.intellij.air.x.FooTest", "a;b", "FooTest"),
         ("com.intellij.air.x.FooTest", "a/b", "FooTest"),
         ("com.intellij.air.x.FooTest", "<init>", "FooTest"),
-        // A `@Nested` class reaches test.xml as `Outer$Nested`, and the outer class runs the nested one.
-        ("com.intellij.air.x.FooTest$Inner", "resolvesCwd", "FooTest#resolvesCwd"),
+        // A `@Nested` class reaches test.xml as `Outer$Nested`. The outer class alone runs the nested one, and
+        // `Outer#method` would look for the method in the outer class.
+        ("com.intellij.air.x.FooTest$Inner", "resolvesCwd", "FooTest"),
         // A suite that named no class leaves the name as the only thing there is to print.
         ("", "orphan", "orphan"),
     ] {
