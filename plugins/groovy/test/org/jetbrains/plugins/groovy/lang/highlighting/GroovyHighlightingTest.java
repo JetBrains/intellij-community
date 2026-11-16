@@ -575,9 +575,9 @@ public class GroovyHighlightingTest {
     LightJavaCodeInsightTestFixture myFixture = highlighting.get().getFixture();
     myFixture.configureByText("_.groovy", """
       class C <T extends String> {}
-      C<<warning descr="Type parameter 'java.lang.Double' is not in its bound; should extend 'java.lang.String'">Double</warning>> c
+      C<<error descr="Type parameter 'java.lang.Double' is not within its bound; should extend 'java.lang.String'">Double</error>> c
       C<String> c2
-      C<warning descr="Wrong number of type arguments: 2; required: 1"><String, Double></warning> c3
+      C<error descr="Wrong number of type arguments: 2; required: 1"><String, Double></error> c3
       """);
     myFixture.testHighlighting(true, false, true);
   }
@@ -1342,7 +1342,7 @@ public class GroovyHighlightingTest {
                          class AgentInfo extends NodeInfo {}
 
                          print new HashSet<TrackerEventsListener<AgentInfo, NodeEvent<AgentInfo>>>() //correct
-                         print new HashSet<TrackerEventsListener<AgentInfo, <warning descr="Type parameter 'NodeEvent<java.lang.Object>' is not in its bound; should extend 'NodeEvent<N>'">NodeEvent<Object></warning>>>() //incorrect
+                         print new HashSet<TrackerEventsListener<AgentInfo, <error descr="Type parameter 'NodeEvent<java.lang.Object>' is not within its bound; should extend 'NodeEvent<N>'">NodeEvent<Object></error>>>() //incorrect
                          """);
   }
 

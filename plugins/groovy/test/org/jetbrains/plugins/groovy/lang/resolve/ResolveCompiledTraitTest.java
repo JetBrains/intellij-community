@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.application.ReadAction;
@@ -44,8 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestApplication
 public class ResolveCompiledTraitTest {
 
-  @NotNull
-  private static final TestLibrary SOME_LIBRARY = new TestLibrary() {
+  private static final @NotNull TestLibrary SOME_LIBRARY = new TestLibrary() {
 
     @Override
     public void addTo(@NotNull Module module, @NotNull ModifiableRootModel model) {
@@ -61,8 +60,7 @@ public class ResolveCompiledTraitTest {
     }
   };
 
-  @NotNull
-  private static final LightProjectDescriptor DESCRIPTOR = new LibraryLightProjectDescriptor(LIB_GROOVY_LATEST.plus(SOME_LIBRARY));
+  private static final @NotNull LightProjectDescriptor DESCRIPTOR = new LibraryLightProjectDescriptor(LIB_GROOVY_LATEST.plus(SOME_LIBRARY));
   private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(DESCRIPTOR);
   private final TestFixture<GroovyResolveFixture> resolve =
     groovyResolveFixture(projectFixture, TestUtils.getAbsoluteTestDataPath() + "resolve/");
@@ -227,7 +225,7 @@ public class ResolveCompiledTraitTest {
   public void testTraitParameterNotWithinItsBounds() {
     testHighlighting(
       """
-        class ExternalConcrete2 implements somepackage.GenericTrait<String, somepackage.Pojo, <warning descr="Type parameter 'java.lang.Integer' is not in its bound; should extend 'A'">Integer</warning>> {}
+        class ExternalConcrete2 implements somepackage.GenericTrait<String, somepackage.Pojo, <error descr="Type parameter 'java.lang.Integer' is not within its bound; should extend 'A'">Integer</error>> {}
         """);
   }
 

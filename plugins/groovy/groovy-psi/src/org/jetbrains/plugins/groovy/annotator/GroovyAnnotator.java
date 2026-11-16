@@ -245,7 +245,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     if (resolved == null) return;
 
     if (!(resolved instanceof PsiTypeParameterListOwner owner)) {
-      myHolder.newAnnotation(HighlightSeverity.WARNING, GroovyBundle.message("type.argument.list.is.not.allowed.here")).create();
+      myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("type.argument.list.is.not.allowed.here")).create();
       return;
     }
 
@@ -253,10 +253,9 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
 
     final PsiTypeParameter[] parameters = owner.getTypeParameters();
     final GrTypeElement[] arguments = typeArgumentList.getTypeArgumentElements();
-
     if (arguments.length != parameters.length) {
-      myHolder.newAnnotation(HighlightSeverity.WARNING,
-                                       GroovyBundle.message("wrong.number.of.type.arguments", arguments.length, parameters.length)).create();
+      myHolder.newAnnotation(HighlightSeverity.ERROR,
+                             GroovyBundle.message("wrong.number.of.type.arguments", arguments.length, parameters.length)).create();
       return;
     }
 
@@ -267,7 +266,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
         if (substitutedSuper != null && !substitutedSuper.isAssignableFrom(argType)) {
           String message = GroovyBundle.message("type.argument.0.is.not.in.its.bound.should.extend.1",
                                                 argType.getCanonicalText(), superType.getCanonicalText());
-          myHolder.newAnnotation(HighlightSeverity.WARNING, message).range(arguments[i]).create();
+          myHolder.newAnnotation(HighlightSeverity.ERROR, message).range(arguments[i]).create();
           break;
         }
       }
