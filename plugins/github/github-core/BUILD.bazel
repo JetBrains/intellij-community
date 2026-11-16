@@ -5,7 +5,7 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 jps_test(
     name = "vcs-github-tests_test",
     timeout = "moderate",
-    tags = ["community-aggregator"],
+    tags = ["community-vcs-tests"],
     runtime_deps = [":vcs-github-tests_test_lib"],
 )
 ### skip generation section `test intellij.vcs.github.tests`
