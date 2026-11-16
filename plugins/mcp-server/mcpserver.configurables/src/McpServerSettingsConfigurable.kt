@@ -38,7 +38,9 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -92,6 +94,7 @@ import org.jetbrains.compose.swing.style.toolTip
 import org.jetbrains.compose.swing.style.visible
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 import javax.swing.JComponent
 import kotlin.io.path.createFile
@@ -592,7 +595,7 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
             performConfiguration { client.configure(client.getStdioConfig()) }
           })
           add(action(McpServerBundle.message("open.settings.json")) { event ->
-            openFileInEditor(client.configPath, event.project ?: project)
+            requestOpenFileInEditor(client.configPath, event.project ?: project)
           })
           add(action(McpServerBundle.message("copy.mcp.server.configuration")) { event ->
             event.coroutineScope.launch {
@@ -694,9 +697,9 @@ private interface CheckboxValidator {
 }
 
 @ApiStatus.Internal
-fun openFileInEditor(filePath: Path, project: Project?) {
+fun requestOpenFileInEditor(filePath: Path, project: Project?): CompletableFuture<FileEditorComposite>? {
   if (project == null) {
-    return
+    return null
   }
   val definitelyCreatedFile = if (!Files.exists(filePath)) {
     filePath.createParentDirectories().createFile()
@@ -704,10 +707,8 @@ fun openFileInEditor(filePath: Path, project: Project?) {
   else {
     filePath
   }
-  val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(definitelyCreatedFile)
-  virtualFile?.let { file ->
-    FileEditorManager.getInstance(project).openFile(file, true)
-  }
+  val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(definitelyCreatedFile) ?: return null
+  return FileEditorManager.getInstance(project).requestOpenFile(virtualFile, FileEditorOpenRequest.withFocus(true))
 }
 
 private fun showCopiedBallon(event: AnActionEvent) {

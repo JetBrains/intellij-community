@@ -4,7 +4,7 @@ package com.intellij.mcpserver.settings
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.configurables.McpServerSettingsConfigurable
 import com.intellij.mcpserver.configurables.TerminalPromotionSetting
-import com.intellij.mcpserver.configurables.openFileInEditor
+import com.intellij.mcpserver.configurables.requestOpenFileInEditor
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.impl.McpServerTerminalPromotionDismissalState
@@ -25,6 +25,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.assertj.core.api.Assertions.assertThat
@@ -49,23 +50,23 @@ class McpServerSettingsConfigurableTest {
   }
 
   @Test
-  fun `openFileInEditor opens existing file`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+  fun `requestOpenFileInEditor opens existing file`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     val existingPath = projectRoot.resolve(".mcp/settings.json")
     val existingFile = runWriteAction {
       VfsUtil.createDirectories(existingPath.parent.toString()).findOrCreateFile(existingPath.fileName.toString())
     }
 
-    openFileInEditor(existingPath, project)
+    checkNotNull(requestOpenFileInEditor(existingPath, project)).await()
 
     assertThat(FileEditorManager.getInstance(project).isFileOpen(existingFile)).isTrue()
   }
 
   @Test
-  fun `openFileInEditor creates missing file and opens it`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+  fun `requestOpenFileInEditor creates missing file and opens it`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     val missingPath = projectRoot.resolve(".codex/config.toml")
     assertThat(missingPath.exists()).isFalse()
 
-    openFileInEditor(missingPath, project)
+    checkNotNull(requestOpenFileInEditor(missingPath, project)).await()
 
     val createdFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(missingPath)
     assertThat(missingPath.exists()).isTrue()
