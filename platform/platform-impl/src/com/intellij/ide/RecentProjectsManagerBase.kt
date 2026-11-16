@@ -865,6 +865,24 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
+  /**
+   * Shows or hides the existing row of [path], see the overload for a project. A path without a row stays without one.
+   *
+   * [path] has the form that [hasPath] takes. The call needs no open project.
+   */
+  @Internal
+  fun setProjectHidden(path: String, hidden: Boolean) {
+    synchronized(stateLock) {
+      val info = state.additionalInfo[path] ?: return
+      if (info.hidden == hidden) {
+        return
+      }
+
+      info.hidden = hidden
+      modCounter.increment()
+    }
+  }
+
   override val groups: List<ProjectGroup>
     get() {
       synchronized(stateLock) {
