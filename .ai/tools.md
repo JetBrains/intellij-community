@@ -32,8 +32,8 @@ Below, `accio` stands for `accio.cmd`. `accio <command> --help` lists the option
 ## Text wrappers
 
 - `fd.cmd` and `rg.cmd` skip a dot-directory by default. Agent assets live in `.agents/`, `.claude/`,
-  and `.codex/`. Pass `-H` (`--hidden`) to find a skill, a guideline, or a hook. Without it you
-  will conclude they do not exist.
+  and `.codex/`. Pass `--hidden` to find a skill, a guideline, or a hook. Without it you
+  will conclude they do not exist. `-H` is the short form for `fd.cmd` only: for `rg.cmd` it is another flag.
 - An absolute path through a wrapper is fine.
 
 ## Windows and PowerShell
