@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview.accessor
 
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.testFramework.awaitPendingEditorOpen
 import com.intellij.testFramework.dispatchAllEventsInIdeEventQueue
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -25,6 +26,7 @@ class MarkdownSourceLinkNavigatorTest : BasePlatformTestCase() {
 
     assertThat(handled).isTrue()
     dispatchAllEventsInIdeEventQueue()
+    awaitPendingEditorOpen(project)
     val editorManager = FileEditorManager.getInstance(project)
     assertThat(editorManager.selectedFiles).containsExactly(targetFile)
     assertThat(editorManager.selectedTextEditor?.caretModel?.offset).isEqualTo(targetOffset)
