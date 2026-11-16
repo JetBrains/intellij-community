@@ -234,15 +234,17 @@ private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
   val xmlVisited = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
   val serializer = ConfigurableEntry.serializer()
   for (module in getPluginSet().getEnabledModules()) {
-    val classLoader = module.pluginClassLoader
-    if (classLoader !is UrlClassLoader) {
-      continue
-    }
+    val classLoader = module.pluginClassLoader ?: continue
 
     val classifier = if (module !is ContentModuleDescriptor) "p-${module.pluginId.idString}" else "m-${module.moduleId.name}"
 
     val fileName = "$classifier-${SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME}.json"
-    val data = classLoader.getResourceAsBytes(fileName, false)
+    val data = if (classLoader is UrlClassLoader) {
+      classLoader.getResourceAsBytes(fileName, false)
+    }
+    else {
+      classLoader.getResourceAsStream(fileName)?.use { it.readAllBytes() }
+    }
     if (data != null) {
       val locale = LocalizationUtil.getLocaleOrNullForDefault()
       val localeSpecificLoader = LocalizationUtil.getPluginClassLoader()
@@ -267,7 +269,7 @@ private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
       continue
     }
 
-    if (!xmlVisited.add(classLoader)) {
+    if (classLoader !is UrlClassLoader || !xmlVisited.add(classLoader)) {
       continue
     }
     val xmlName = "${SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME}.xml"
