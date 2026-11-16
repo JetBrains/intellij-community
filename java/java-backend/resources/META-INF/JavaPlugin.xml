@@ -582,19 +582,13 @@
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaModuleRenameValidator"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.JavaTypeRenameValidator"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiPackageProcessor"/>
-    <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiPackageProcessor$HeadlessRenamePsiPackageProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiDirectoryProcessor"/>
     <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiDirectoryProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaClassProcessor"/>
-    <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaClassProcessor$HeadlessRenameJavaClassProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaMethodProcessor" id="javamethod"/>
-    <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaMethodProcessor$HeadlessRenameJavaMethodProcessor" id="javamethod"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaVariableProcessor" id="javaVariable"/>
-    <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaVariableProcessor$HeadlessRenameJavaVariableProcessor" id="javaVariable"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaModuleProcessor"/>
-    <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaModuleProcessor"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor" id="aliasingPom"/>
-    <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor" id="aliasingPom"/>
     <!-- Temporary. See HeadlessRenameSupportedLanguage. Remove it when every language is converted. -->
     <headlessRenameSupportedLanguage language="JAVA"/>
     <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.JavaFindUsagesHandlerFactory" id="java"
@@ -648,6 +642,17 @@
                                                    language="JAVA"/>
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor" id="javaProcessor"/>
     <refactoring.modPlanSafeDeleteProvider implementation="com.intellij.refactoring.safeDelete.ModPlanJavaSafeDeleteProvider"/>
+    <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.rename.RenameJavaClassProcessor$ModPlanJavaClassRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.rename.RenameJavaMethodProcessor$ModPlanJavaMethodRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.rename.RenameJavaVariableProcessor$ModPlanJavaVariableRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.rename.ModPlanJavaRenameProvider$ModPlanJavaLabelRenameProvider"/>
+    <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.rename.ModPlanJavaPackageRenameProvider"/>
+    <refactoring.modPlanRenameProvider
+      implementation="com.intellij.refactoring.rename.RenameJavaModuleProcessor$ModPlanRenameJavaModuleProvider"/>
+    <refactoring.modPlanRenameProvider
+      implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor$ModPlanRenameAliasingPomTargetProvider"/>
+    <refactoring.modPlanRenameProvider
+      implementation="com.intellij.refactoring.rename.RenamePsiDirectoryProcessor$ModPlanRenamePsiDirectoryProvider"/>
     <refactoring.moveInnerHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveInner.MoveJavaInnerHandler"
                                   id="java"/>
     <refactoring.moveMemberHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveMembers.MoveJavaMemberHandler"

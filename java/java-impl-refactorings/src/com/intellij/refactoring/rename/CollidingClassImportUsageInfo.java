@@ -17,8 +17,29 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiImportStatement;
+import com.intellij.refactoring.modplan.ModPlanEdit;
+import com.intellij.refactoring.modplan.rename.ModPlanWritableUsageInfo;
+import org.jetbrains.annotations.NotNull;
 
-public class CollidingClassImportUsageInfo extends ResolvableCollisionUsageInfo {
+import java.util.List;
+import java.util.Map;
+
+/**
+ * A single import of another class whose simple name the renamed class takes. After the rename the import would keep the simple name
+ * for the other class, so the write deletes it. The references to the other class get its qualified name, see
+ * {@link ClassHidesImportedClassUsageInfo}.
+ *
+ * <pre>{@code
+ * // pack2/Usage.java
+ * import java.util.List;
+ * import pack1.*;
+ * class Usage { void m() { List list = null; MyList myList = null; } }
+ * // rename pack1.MyList to List
+ * import pack1.*;
+ * class Usage { void m() { java.util.List list = null; List myList = null; } }
+ * }</pre>
+ */
+public class CollidingClassImportUsageInfo extends ResolvableCollisionUsageInfo implements ModPlanWritableUsageInfo {
   private final PsiImportStatement myImportStatement;
 
   public CollidingClassImportUsageInfo(PsiImportStatement element, PsiElement referencedElement) {
@@ -30,4 +51,9 @@ public class CollidingClassImportUsageInfo extends ResolvableCollisionUsageInfo 
     return myImportStatement;
   }
 
+  /** The import of the other class of the new name is deleted, as the legacy rename of a class deletes it. */
+  @Override
+  public @NotNull List<ModPlanEdit> asModPlanEdits(@NotNull String newName, @NotNull Map<PsiElement, String> renamed) {
+    return List.of(ModPlanEdit.delete(myImportStatement));
+  }
 }

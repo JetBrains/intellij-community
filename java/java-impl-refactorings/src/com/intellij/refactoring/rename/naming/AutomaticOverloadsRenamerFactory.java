@@ -30,6 +30,11 @@ public class AutomaticOverloadsRenamerFactory implements AutomaticRenamerFactory
   }
 
   @Override
+  public @NotNull String getOptionId() {
+    return "renameOverloads";
+  }
+
+  @Override
   public boolean isEnabled() {
     return JavaRefactoringSettings.getInstance().isRenameOverloads();
   }

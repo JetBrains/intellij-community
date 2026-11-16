@@ -14,7 +14,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -104,9 +104,9 @@ public final class SuperMethodWarningUtil {
    * a collection of elements to ignore during the search.
    *
    * It runs on EDT for a rename with a user, and on a background thread inside a read action for a
-   * rename with no user. The search for a sibling below goes under a modal progress only on EDT. A
-   * modal progress on a background thread stops the interface of a person who asked for nothing, and
-   * it needs the write thread to enter the modality.
+   * rename with no user. On EDT the whole search goes under one modal progress, and a cancel throws
+   * {@link ProcessCanceledException}. A modal progress on a background thread stops the interface of
+   * a person who asked for nothing, and it needs the write thread to enter the modality.
    *
    * @param method the method for which super methods are to be retrieved; must not be null
    * @param aClass the class containing the method; used to determine certain aspects of the search
@@ -118,28 +118,30 @@ public final class SuperMethodWarningUtil {
   public static @NotNull Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<? extends PsiElement> ignore) {
     ThreadingAssertions.assertReadAccess();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
+    if (!EDT.isCurrentThreadEdt()) {
+      return ReadAction.nonBlocking(() -> searchSuperMethods(method, aClass, ignore)).executeSynchronously();
+    }
+    Ref<Collection<PsiMethod>> superMethods = new Ref<>();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> superMethods.set(ReadAction.compute(() -> searchSuperMethods(method, aClass, ignore))),
+      JavaBundle.message("progress.title.searching.for.super.methods"), true, aClass.getProject())) {
+      throw new ProcessCanceledException();
+    }
+    return superMethods.get();
+  }
+
+  private static @NotNull Collection<PsiMethod> searchSuperMethods(@NotNull PsiMethod method,
+                                                                   PsiClass aClass,
+                                                                   @NotNull Collection<? extends PsiElement> ignore) {
     Collection<PsiMethod> superMethods = new ArrayList<>(DeepestSuperMethodsSearch.search(method).findAll());
     superMethods.removeAll(ignore);
 
     if (superMethods.isEmpty()) {
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
       if (virtualFile != null && ProjectRootManager.getInstance(aClass.getProject()).getFileIndex().isInSourceContent(virtualFile)) {
-        PsiMethod[] siblingSuperMethod = new PsiMethod[1];
-        ThrowableComputable<PsiMethod, RuntimeException> searchSibling = () -> FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
-        if (!EDT.isCurrentThreadEdt()) {
-          ReadAction.nonBlocking(
-            () -> siblingSuperMethod[0] = searchSibling.compute()
-          ).executeSynchronously();
-        }
-        else if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
-          () -> {
-            siblingSuperMethod[0] = ReadAction.compute(searchSibling);
-          },
-          JavaBundle.message("progress.title.searching.for.sub.classes"), true, aClass.getProject())) {
-          throw new ProcessCanceledException();
-        }
-        if (siblingSuperMethod[0] != null) {
-          superMethods.add(siblingSuperMethod[0]);
+        PsiMethod siblingSuperMethod = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
+        if (siblingSuperMethod != null) {
+          superMethods.add(siblingSuperMethod);
           superMethods.add(method); // add original method too because sometimes FindUsages can't find usages of this method by sibling super method
         }
       }

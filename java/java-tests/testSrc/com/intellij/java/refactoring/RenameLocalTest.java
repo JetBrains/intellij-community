@@ -78,7 +78,7 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
 
   private void doTest(String newName) {
     configureByFile();
-    new RenameProcessor(getProject(), getTargetElement(), newName, true, true).run();
+    rename(getTargetElement(), newName, false);
     checkResultByFile();
   }
 
@@ -104,12 +104,22 @@ public class RenameLocalTest extends LightJavaCodeInsightTestCase {
 
   public void testRenameFieldWithConstructorParamAutomatic() {
     configureByFile();
-    RenameProcessor processor = new RenameProcessor(getProject(), getTargetElement(), "pp", true, true);
-    for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
-      processor.addRenamerFactory(factory);
+    rename(getTargetElement(), "pp", true);
+    checkResultByFile();
+  }
+
+  /**
+   * Renames {@code element}, searching in comments and in text occurrences, with every automatic renamer if {@code withRenamers}; a
+   * subclass renames with another engine.
+   */
+  protected void rename(@NotNull PsiElement element, @NotNull String newName, boolean withRenamers) {
+    RenameProcessor processor = new RenameProcessor(getProject(), element, newName, true, true);
+    if (withRenamers) {
+      for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
+        processor.addRenamerFactory(factory);
+      }
     }
     processor.run();
-    checkResultByFile();
   }
 
   public void testConflictWithPattern() {

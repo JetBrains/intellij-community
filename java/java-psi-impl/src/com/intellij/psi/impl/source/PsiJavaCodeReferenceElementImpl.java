@@ -28,6 +28,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiImplicitClass;
+import com.intellij.psi.PsiImportList;
 import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
@@ -67,6 +68,8 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.impl.source.resolve.RenamedClassView;
+import com.intellij.psi.impl.source.resolve.ResolveAfterRenameUtil;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
 import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
@@ -95,6 +98,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -611,6 +615,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   public @NotNull PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     PsiFile containingFile = getContainingFile();
     CheckUtil.checkWritable(containingFile);
+    // The view is equivalent to the class to rename, so isReferenceTo is true for it.
+    if (element instanceof RenamedClassView) {
+      String name = nameAfterRename(this, (RenamedClassView)element);
+      return name == null ? handleElementRename(((RenamedClassView)element).getName()) : replaceWithClassName(name, (PsiClass)element);
+    }
     if (isReferenceTo(element)) return this;
 
     Kind kind = getKindEnum(containingFile);
@@ -665,6 +674,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     return new IncorrectOperationException("Cannot bind to " + element+" of kind: "+kind+" because "+reason);
   }
 
+  /**
+   * Binds to {@code aClass}. A class of a ModCommand copy of a directory, which the index does not know, gets an import here, see
+   * {@link #isUnindexedTopLevelClass}. A {@link RenamedClassView} does not come here: {@link #bindToElement} gives the reference the form
+   * of {@link #formAfterRename}.
+   */
   private @NotNull PsiElement bindToClass(@NotNull PsiClass aClass, @NotNull PsiFile containingFile) throws IncorrectOperationException {
     String qName = aClass.getQualifiedName();
     Project project = containingFile.getProject();
@@ -698,6 +712,20 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       assert qName != null : aClass;
     }
 
+    PsiJavaCodeReferenceElement ref = replaceWithClassName(qName, aClass);
+    if (!preserveQualification && !unindexed) {
+      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+      ref = (PsiJavaCodeReferenceElement)codeStyleManager.shortenClassReferences(ref, JavaCodeStyleManager.INCOMPLETE_CODE);
+    }
+    return ref;
+  }
+
+  /**
+   * Replaces this reference with {@code qName}, with the type arguments and the annotations of this reference. The name is not shortened.
+   */
+  private @NotNull PsiJavaCodeReferenceElement replaceWithClassName(@NotNull String qName, @NotNull PsiClass aClass)
+    throws IncorrectOperationException {
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     StringBuilder text = new StringBuilder(qName);
     PsiReferenceParameterList parameterList = getParameterList();
     if (parameterList != null) {
@@ -741,12 +769,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
 
     getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
-
-    if (!preserveQualification && !unindexed) {
-      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-      ref = (PsiJavaCodeReferenceElement)codeStyleManager.shortenClassReferences(ref, JavaCodeStyleManager.INCOMPLETE_CODE);
-    }
-
     return ref;
   }
 
@@ -777,10 +799,168 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     Project project = containingFile.getProject();
     // A visible class with the same name hides the class
     if (JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedClass(name, this) != null) return false;
+    return importClass(aClass, qName, javaFile);
+  }
+
+  /**
+   * Adds the import of {@code aClass}, of the qualified name {@code qName}, to {@code javaFile} if the file needs it.
+   *
+   * @return true when the short name of the class refers to the class after this call
+   */
+  private static boolean importClass(@NotNull PsiClass aClass, @NotNull String qName, @NotNull PsiJavaFile javaFile) {
     String packageName = StringUtil.getPackageName(qName);
     if (packageName.equals(javaFile.getPackageName())) return true;
     if (packageName.isEmpty()) return false;
-    return JavaCodeStyleManager.getInstance(project).addImport(javaFile, aClass);
+    return JavaCodeStyleManager.getInstance(javaFile.getProject()).addImport(javaFile, aClass);
+  }
+
+  /**
+   * How {@link #bindToElement} writes a reference to a {@link RenamedClassView}, as the legacy rename leaves it after the rename. A
+   * reference that is not here keeps its qualifier and gets the new name: {@link RenamedClassForm#RENAMED}.
+   */
+  @ApiStatus.Internal
+  public enum RenamedClassForm {
+    /** The new name, with the qualifier of the reference. */
+    RENAMED,
+    /** The qualified new name, as another class takes the short one. */
+    QUALIFIED,
+    /** The short new name. */
+    SHORT,
+    /** The short new name, with a single import of the class in the file. */
+    IMPORTED
+  }
+
+  /**
+   * The form of {@code reference} after the rename of the class of {@code view}. Nothing is written, so the plan of a rename calls it on
+   * the code before the write too.
+   * <p>
+   * A reference that a package qualifies is shortened if the short name means the class after the rename:
+   * {@link RenamedClassForm#SHORT}.
+   * <pre>{@code
+   * package p; class Loader { p.Loader next; }
+   * // rename p.Loader to Reader
+   * package p; class Reader { Reader next; }
+   * }</pre>
+   * If the short name means nothing, or several classes, the class is imported: {@link RenamedClassForm#IMPORTED}.
+   * <pre>{@code
+   * package q; class Use { p.Old o; }
+   * // rename p.Old to New
+   * package q; import p.New; class Use { New o; }
+   * }</pre>
+   * If another class takes the short name through an import on demand, the class is imported too, unless the file uses the other class.
+   * Then it keeps the qualifier: {@link RenamedClassForm#RENAMED}.
+   * <pre>{@code
+   * // Usage3.java
+   * import java.util.*;
+   * class Usage3 { pack1.MyList myList; }
+   * // Usage2.java
+   * import java.util.*;
+   * class Usage2 { List list; pack1.MyList myList; }
+   * // rename pack1.MyList to List
+   * import pack1.List;
+   * class Usage3 { List myList; }
+   * import java.util.*;
+   * class Usage2 { List list; pack1.List myList; }
+   * }</pre>
+   * A short reference gets the qualified name if another class takes the short name: {@link RenamedClassForm#QUALIFIED}. Here it is the
+   * member class {@code MyList123}:
+   * <pre>{@code
+   * import test.*;
+   * class Use { interface MyList123 {} Object list = new @AssertTrue MyList<>(); }
+   * // rename test.MyList to MyList123
+   * class Use { interface MyList123 {} Object list = new test.@AssertTrue MyList123<>(); }
+   * }</pre>
+   * A short reference whose name means several classes is imported: {@link RenamedClassForm#IMPORTED}. A nested class gets the qualified
+   * name instead.
+   * <pre>{@code
+   * package q; import p.*; import r.*; class Use { Old o; }
+   * // rename p.Old to New, r.New exists
+   * package q; import p.*; import r.*; import p.New; class Use { New o; }
+   * }</pre>
+   * A reference in an import or in Javadoc, the qualified reference to a nested class, a reference in a file whose code style asks for
+   * qualified names, and the reference to a class of the default package keep the form: {@link RenamedClassForm#RENAMED}.
+   */
+  @ApiStatus.Internal
+  public static @NotNull RenamedClassForm formAfterRename(@NotNull PsiJavaCodeReferenceElement reference, @NotNull RenamedClassView view) {
+    PsiClass aClass = view.getToRename();
+    String qualifiedName = view.getQualifiedName();
+    if (qualifiedName == null || !qualifiedName.contains(".") ||
+        PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class, PsiDocComment.class) != null) {
+      return RenamedClassForm.RENAMED;
+    }
+    PsiFile file = reference.getContainingFile();
+    ResolveAfterRenameUtil.Target target;
+    if (reference.isQualified()) {
+      PsiElement qualifier = reference.getQualifier();
+      if (aClass.getContainingClass() != null || !(qualifier instanceof PsiJavaCodeReferenceElement) ||
+          !(((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiPackage) ||
+          JavaFileCodeStyleFacade.forContext(file).useFQClassNames()) {
+        return RenamedClassForm.RENAMED;
+      }
+      target = ResolveAfterRenameUtil.resolveClass(view, reference);
+      switch (target.kind()) {
+        case RENAMED:
+          return RenamedClassForm.SHORT;
+        case OTHER:
+          return isImportBlocked(target, file) ? RenamedClassForm.RENAMED : RenamedClassForm.IMPORTED;
+        default:
+          return RenamedClassForm.IMPORTED;
+      }
+    }
+    target = ResolveAfterRenameUtil.resolveClass(view, reference);
+    switch (target.kind()) {
+      case OTHER:
+        return RenamedClassForm.QUALIFIED;
+      case AMBIGUOUS:
+        return aClass.getContainingClass() == null ? RenamedClassForm.IMPORTED : RenamedClassForm.QUALIFIED;
+      default:
+        return RenamedClassForm.RENAMED;
+    }
+  }
+
+  /**
+   * @return whether {@code ImportHelper.addImport} cannot import the renamed class for {@code other}, which takes its short name: a class of
+   * an inner scope, of the file or of a single import, or one that the file uses
+   */
+  private static boolean isImportBlocked(@NotNull ResolveAfterRenameUtil.Target other, @NotNull PsiFile file) {
+    PsiElement otherElement = other.element();
+    PsiElement fileContext = other.fileContext();
+    boolean onDemand = fileContext instanceof PsiImportStatementBase
+                       ? ((PsiImportStatementBase)fileContext).isOnDemand()
+                       : otherElement instanceof PsiClass && ((PsiClass)otherElement).getContainingClass() == null &&
+                         otherElement.getContainingFile() != file;
+    if (!onDemand) return true;
+    for (PsiJavaCodeReferenceElement reference : PsiTreeUtil.findChildrenOfType(file, PsiJavaCodeReferenceElement.class)) {
+      if (otherElement != null && reference.isReferenceTo(otherElement)) return true;
+    }
+    return false;
+  }
+
+  /**
+   * Decides the form of {@code reference} after the rename, see {@link #formAfterRename}, and adds the import of
+   * {@link RenamedClassForm#IMPORTED}. If the import cannot be added, the reference gets the qualified name.
+   *
+   * @return the name that replaces the text of {@code reference}; null if the reference only gets the new name
+   */
+  @ApiStatus.Internal
+  public static @Nullable String nameAfterRename(@NotNull PsiJavaCodeReferenceElement reference, @NotNull RenamedClassView view) {
+    String qualifiedName = view.getQualifiedName();
+    switch (formAfterRename(reference, view)) {
+      case QUALIFIED:
+        return qualifiedName;
+      case SHORT:
+        return view.getName();
+      case IMPORTED:
+        PsiFile file = reference.getContainingFile();
+        if (!(file instanceof PsiJavaFile) || qualifiedName == null) return qualifiedName;
+        PsiImportList importList = ((PsiJavaFile)file).getImportList();
+        // The copy of a file does not see the renamed class, so an import that an earlier bind added does not resolve.
+        boolean imported = importList != null && importList.findSingleClassImportStatement(qualifiedName) != null ||
+                           importClass(view, qualifiedName, (PsiJavaFile)file);
+        return imported ? view.getName() : qualifiedName;
+      default:
+        return null;
+    }
   }
 
   private @NotNull List<PsiAnnotation> getAnnotations() {

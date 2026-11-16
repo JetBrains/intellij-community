@@ -3,6 +3,7 @@ package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.Ref;
@@ -34,7 +35,7 @@ public final class JavaModuleNamingInspection extends AbstractBaseJavaLocalInspe
             if (newName.isNull()) {
               newName.set(StringUtil.join(psiTraverser().children(name).filter(PsiIdentifier.class).map(i -> trimDigits(i.getText())), "."));
             }
-            holder.registerProblem(id, message, QuickFixFactory.getInstance().createRenameElementFix(module, newName.get()));
+            holder.registerProblem(id, message, LocalQuickFix.from(QuickFixFactory.getInstance().createModPlanRenameFix(module, newName.get())));
           }
         });
       }

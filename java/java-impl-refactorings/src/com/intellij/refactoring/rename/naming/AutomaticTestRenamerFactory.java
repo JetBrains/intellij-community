@@ -36,6 +36,11 @@ public class AutomaticTestRenamerFactory implements AutomaticRenamerFactory {
   }
 
   @Override
+  public @NotNull String getOptionId() {
+    return "renameTests";
+  }
+
+  @Override
   public boolean isEnabled() {
     return JavaRefactoringSettings.getInstance().isToRenameTests();
   }

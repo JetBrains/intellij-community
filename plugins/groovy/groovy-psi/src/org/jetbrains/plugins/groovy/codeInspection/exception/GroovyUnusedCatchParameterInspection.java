@@ -56,7 +56,7 @@ public final class GroovyUnusedCatchParameterInspection extends BaseInspection {
       if (!visitor.isUsed()) {
         final PsiElement nameIdentifier = parameter.getNameIdentifierGroovy();
         registerError(nameIdentifier, GroovyBundle.message("inspection.message.unused.catch.parameter.ref"),
-                      new LocalQuickFix[]{QuickFixFactory.getInstance().createRenameElementFix(parameter, IGNORED)},
+                      new LocalQuickFix[]{LocalQuickFix.from(QuickFixFactory.getInstance().createModPlanRenameFix(parameter, IGNORED))},
                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
     }

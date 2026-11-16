@@ -31,6 +31,11 @@ public final class AutomaticParametersRenamerFactory implements AutomaticRenamer
   }
 
   @Override
+  public @NotNull String getOptionId() {
+    return "renameParametersInHierarchy";
+  }
+
+  @Override
   public boolean isEnabled() {
     return JavaRefactoringSettings.getInstance().isRenameParameterInHierarchy();
   }

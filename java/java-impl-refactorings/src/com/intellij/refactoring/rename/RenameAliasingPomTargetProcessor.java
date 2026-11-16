@@ -9,12 +9,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.targets.AliasingPsiTarget;
 import com.intellij.psi.targets.AliasingPsiTargetMapper;
+import com.intellij.refactoring.modplan.rename.ModPlanBridgeRenameProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public final class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor
-  implements DelegatingHeadlessRenamePsiElementProcessor {
+public final class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance(RenameAliasingPomTargetProcessor.class);
 
   @Override
@@ -66,6 +67,25 @@ public final class RenameAliasingPomTargetProcessor extends RenamePsiElementProc
       if (!newTargetName.equals(((PsiNamedElement)psiElement).getName())) {
         allRenames.put(psiElement, newTargetName);
       }
+    }
+  }
+
+  /**
+   * Renames an element of this processor on the ModPlan engine, see {@link ModPlanBridgeRenameProvider}.
+   * <p>
+   * An aliasing POM target is a name that a framework derives from the name of another element. {@link AliasingPsiTarget} converts the
+   * name in both directions. The rename of the target renames that element, and the rename of an element renames the targets that an
+   * {@link AliasingPsiTargetMapper} gives for it.
+   * <pre>{@code
+   * class UserService {}   // a Spring service: the bean name "userService" is the aliasing target of the class
+   * // rename the bean name to "accountService"
+   * class AccountService {}
+   * }</pre>
+   */
+  @ApiStatus.Internal
+  public static final class ModPlanRenameAliasingPomTargetProvider extends ModPlanBridgeRenameProvider {
+    public ModPlanRenameAliasingPomTargetProvider() {
+      super(RenameAliasingPomTargetProcessor.class);
     }
   }
 }

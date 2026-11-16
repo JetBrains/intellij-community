@@ -161,7 +161,11 @@ public class RenameFieldTest extends LightJavaCodeInsightTestCase {
     PsiElement element = TargetElementUtil.findTargetElement(getEditor(), flags);
     element = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, getEditor());
     assertNotNull(element);
+    rename(element, newName);
+  }
 
+  /** Renames {@code element} with every automatic renamer; a subclass renames with another engine. */
+  protected void rename(@NotNull PsiElement element, @NotNull String newName) {
     RenameProcessor processor = new RenameProcessor(getProject(), element, newName, false, false);
     for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
       processor.addRenamerFactory(factory);

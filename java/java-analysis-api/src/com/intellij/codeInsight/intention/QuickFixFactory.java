@@ -247,10 +247,13 @@ public abstract class QuickFixFactory {
 
   public abstract @Nullable IntentionAction createRenameFix(@NotNull PsiElement element);
 
-  public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element);
+  public abstract @NotNull ModCommandAction createRenameElementFix(@NotNull PsiNamedElement element);
 
   public abstract @NotNull LocalQuickFixAndIntentionActionOnPsiElement createRenameElementFix(@NotNull PsiNamedElement element,
                                                                                               @NotNull String newName);
+
+  @ApiStatus.Experimental
+  public abstract @NotNull ModCommandAction createModPlanRenameFix(@NotNull PsiNamedElement element, @NotNull String newName);
 
   public abstract @NotNull IntentionAction createChangeExtendsToImplementsFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom);
 

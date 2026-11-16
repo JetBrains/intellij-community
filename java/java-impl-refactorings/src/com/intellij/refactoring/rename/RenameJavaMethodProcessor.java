@@ -4,9 +4,11 @@ package com.intellij.refactoring.rename;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.model.SymbolPointer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -49,6 +51,11 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.modplan.ModPlanChain;
+import com.intellij.refactoring.modplan.ModPlanChainBuilder;
+import com.intellij.refactoring.modplan.ModPlanOption;
+import com.intellij.refactoring.modplan.ModPlanOptionValues;
+import com.intellij.refactoring.modplan.ModPlanQuestion;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -352,11 +359,22 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
    *
    * @param askUser false answers the base-method question with the base method and its whole
    *                hierarchy, and reports an error through a return value instead of a dialog. A
-   *                rename with no user passes false. See
-   *                {@link HeadlessRenameJavaMethodProcessor#substituteElementToRenameHeadless}.
+   *                rename with no user passes false.
    */
   @ApiStatus.Internal
   public @Nullable PsiElement substituteElementToRename(@NotNull PsiElement element, @Nullable Editor editor, boolean askUser) {
+    return substituteElementToRename(element, editor, askUser, true);
+  }
+
+  /**
+   * @param renameBaseMethod the answer to the base-method question when {@code askUser} is false: false renames {@code element} alone, as
+   *                         the answer "no" of the user does
+   */
+  @ApiStatus.Internal
+  public static @Nullable PsiElement substituteElementToRename(@NotNull PsiElement element,
+                                                               @Nullable Editor editor,
+                                                               boolean askUser,
+                                                               boolean renameBaseMethod) {
     PsiMethod psiMethod = (PsiMethod)element;
     if (psiMethod.isConstructor()) {
       PsiClass containingClass = psiMethod.getContainingClass();
@@ -376,10 +394,60 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     }
     PsiMethod[] superMethods = askUser
                                ? SuperMethodWarningUtil.checkSuperMethods(psiMethod, RefactoringBundle.message("to.rename"))
-                               : SuperMethodWarningUtil.getTargetMethodCandidates(psiMethod, List.of());
+                               : renameBaseMethod ? SuperMethodWarningUtil.getTargetMethodCandidates(psiMethod, List.of())
+                                                  : new PsiMethod[]{psiMethod};
     if (superMethods.length == 0) return null;
     SuperMethodWarningUtil.putSiblings(superMethods, superMethods[0]);
     return superMethods[0];
+  }
+
+  /**
+   * The question about the base method of an override, then the method to rename, as {@link #substituteElementToRename} with no editor.
+   * The ModPlan provider runs it.
+   *
+   * @return the chain that ends with the subject to rename; null refuses the rename
+   */
+  @ApiStatus.Internal
+  public static @NotNull ModPlanChain<@Nullable SymbolPointer> methodToRename(@NotNull ModPlanChainBuilder chainBuilder,
+                                                                             @NotNull SymbolPointer subject) {
+    if (!(subject.element() instanceof PsiMethod method)) return chainBuilder.passValue(null);
+    ModPlanQuestion question = asksForBaseMethod(method) ? new BaseMethodQuestion(subject) : null;
+    return chainBuilder.ask(question, afterBaseMethod -> {
+      if (!(subject.element() instanceof PsiMethod current)) return afterBaseMethod.passValue(null);
+      boolean renameBaseMethod = afterBaseMethod.getRequest().optionValues().get(ModPlanJavaRenameOptions.RENAME_BASE_METHOD);
+      PsiElement renamed = substituteElementToRename(current, null, false, renameBaseMethod);
+      return afterBaseMethod.passValue(renamed == null ? null : renamed == current ? subject : SymbolPointer.of(renamed));
+    });
+  }
+
+  /**
+   * @return whether the rename of {@code method} asks about its base method, as {@link SuperMethodWarningUtil#checkSuperMethods} does: the
+   * method has a base method, or a sibling method that a subclass inherits for it
+   */
+  private static boolean asksForBaseMethod(@NotNull PsiMethod method) {
+    if (method.isConstructor() || JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) return false;
+    PsiMethod[] candidates = SuperMethodWarningUtil.getTargetMethodCandidates(method, List.of());
+    return candidates.length != 1 || candidates[0] != method;
+  }
+
+  /**
+   * The question "the method overrides a method, rename the base method instead?", in the dialog of the legacy rename. Its answer is
+   * {@link ModPlanJavaRenameOptions#RENAME_BASE_METHOD}.
+   */
+  private record BaseMethodQuestion(@NotNull SymbolPointer subject) implements ModPlanQuestion.Custom {
+    @Override
+    public @NotNull List<ModPlanOption<?>> options() {
+      return List.of(ModPlanJavaRenameOptions.RENAME_BASE_METHOD);
+    }
+
+    @Override
+    public @Nullable ModPlanOptionValues ask(@NotNull Project project, @NotNull ModPlanOptionValues currentValues) {
+      if (!(subject.element() instanceof PsiMethod method)) return currentValues;
+      PsiMethod[] superMethods = SuperMethodWarningUtil.checkSuperMethods(method, RefactoringBundle.message("to.rename"));
+      if (superMethods.length == 0) return null;
+      boolean renamesAlone = superMethods.length == 1 && superMethods[0] == method;
+      return currentValues.with(ModPlanJavaRenameOptions.RENAME_BASE_METHOD, !renamesAlone);
+    }
   }
 
   @Override
@@ -465,23 +533,94 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   }
 
   /**
-   * Renames a Java method for a caller that has no user.
-   * <p>
-   * The outer class does not implement {@link HeadlessRenamePsiElementProcessor}, because it has
-   * subclasses in several plugins. A subclass must not inherit the statement that it renames with no
-   * user, so this class carries the statement alone.
+   * What {@code renameElement} finds after the write: the method overrides nothing under the new name, so its {@code @Override} goes.
+   * Under the new name it overrides a method of a superclass that is renamed to it, or that has it now and is not renamed.
+   *
+   * <p>The annotation goes, as {@code Foo.foo} is renamed to {@code bar} and {@code Bar.foo} keeps its name:
+   * <pre>{@code
+   * class Bar { public void foo() {} }
+   * class Foo extends Bar { @Override public void foo() {} }   // rename Foo.foo to bar
+   * // after
+   * class Foo extends Bar { public void bar() {} }
+   * }</pre>
+   *
+   * <p>The annotation stays, as the method that {@code Sub.run} overrides is renamed to the new name too:
+   * <pre>{@code
+   * class Worker { public void run() {} }   // rename Worker.run to execute
+   * class Sub extends Worker { @Override public void run() {} }
+   * // after
+   * class Worker { public void execute() {} }
+   * class Sub extends Worker { @Override public void execute() {} }
+   * }</pre>
+   *
+   * <p>The annotation stays, as a superclass already has a method of the new name:
+   * <pre>{@code
+   * class A { void execute() {} }
+   * class B extends A { void run() {} }
+   * class C extends B { @Override void run() {} }   // rename C.run to execute
+   * // after
+   * class C extends B { @Override void execute() {} }   // it overrides A.execute
+   * }</pre>
    */
-  public static final class HeadlessRenameJavaMethodProcessor extends RenameJavaMethodProcessor
-    implements DelegatingHeadlessRenamePsiElementProcessor {
-    /**
-     * The base method and its whole hierarchy, when {@code element} overrides something.
-     * <p>
-     * Java asks the user here whether to rename the base method. This answers that question with
-     * yes, so that the code stays consistent.
-     */
+  @ApiStatus.Internal
+  public static @Nullable PsiAnnotation overrideAfterRename(@NotNull PsiMethod method,
+                                                            @NotNull String newName,
+                                                            @NotNull Map<PsiElement, String> renamed) {
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null || method.isConstructor() || method instanceof LightElement ||
+        JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+      return null;
+    }
+    PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, CommonClassNames.JAVA_LANG_OVERRIDE);
+    if (annotation == null) return null;
+    for (PsiMethod superMethod : method.findSuperMethods()) {
+      if (newName.equals(renamed.get(superMethod))) return null;
+      // A light method of another language, such as a Kotlin function, is renamed by its source, maybe to another name, as a mangled one.
+      PsiElement source = superMethod.getNavigationElement();
+      if (source != superMethod && renamed.containsKey(source)) return null;
+    }
+    MethodSignature signature =
+      MethodSignatureUtil.createMethodSignature(newName, method.getParameterList(), method.getTypeParameterList(), PsiSubstitutor.EMPTY);
+    for (PsiMethod candidate : containingClass.findMethodsByName(newName, true)) {
+      PsiClass candidateClass = candidate.getContainingClass();
+      if (candidateClass == null || candidateClass == containingClass || renamed.containsKey(candidate) ||
+          candidate.hasModifierProperty(PsiModifier.STATIC) || candidate.hasModifierProperty(PsiModifier.PRIVATE)) {
+        continue;
+      }
+      PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(candidateClass, containingClass, PsiSubstitutor.EMPTY);
+      if (MethodSignatureUtil.isSubsignature(candidate.getSignature(substitutor), signature)) return null;
+    }
+    return annotation;
+  }
+
+  /** The rename on the ModPlan engine of the elements that this processor renames. */
+  @ApiStatus.Internal
+  public static final class ModPlanJavaMethodRenameProvider extends ModPlanJavaRenameProvider {
+    public ModPlanJavaMethodRenameProvider() {
+      super(RenameJavaMethodProcessor.class);
+    }
+
     @Override
-    public @Nullable PsiElement substituteElementToRenameHeadless(@NotNull PsiElement element) {
-      return substituteElementToRename(element, null, false);
+    protected @NotNull List<ModPlanQuestion> substitutionQuestions(@NotNull SymbolPointer subject, @NotNull PsiElement element) {
+      return element instanceof PsiMethod method && asksForBaseMethod(method) ? List.of(new BaseMethodQuestion(subject)) : List.of();
+    }
+
+    @Override
+    protected @Nullable PsiElement substitute(@NotNull PsiElement element, @NotNull ModPlanOptionValues answers) {
+      if (!(element instanceof PsiMethod)) return element;
+      return substituteElementToRename(element, null, false, answers.get(ModPlanJavaRenameOptions.RENAME_BASE_METHOD));
+    }
+
+    /** As {@code LightRecordMethod.setName}, the implicit accessor of a record component is renamed by the component. */
+    @Override
+    protected void prepareRenaming(@NotNull PsiElement element,
+                                   @NotNull String newName,
+                                   @NotNull Map<PsiElement, String> renamed,
+                                   @NotNull ModPlanOptionValues answers) {
+      super.prepareRenaming(element, newName, renamed, answers);
+      if (element instanceof LightRecordMethod accessor) {
+        renamed.putIfAbsent(accessor.getRecordComponent(), newName);
+      }
     }
   }
 }

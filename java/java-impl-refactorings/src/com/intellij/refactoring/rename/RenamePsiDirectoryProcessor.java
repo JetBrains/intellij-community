@@ -14,6 +14,9 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.modplan.ModPlanOptionValues;
+import com.intellij.refactoring.modplan.rename.ModPlanBridgeRenameProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +34,14 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor
 
   @Override
   public @Nullable PsiElement substituteElementToRenameHeadless(@NotNull PsiElement element) {
-    PsiDirectory directory = (PsiDirectory)element;
+    return directoryOrItsPackage((PsiDirectory)element);
+  }
+
+  /**
+   * @return what a caller with no UI renames instead of {@code directory}: the package, if the directory is the only one of it;
+   * the directory, if it is not a package; null, which refuses the rename, if the package has more directories or a package prefix
+   */
+  private static @Nullable PsiElement directoryOrItsPackage(@NotNull PsiDirectory directory) {
     PsiPackage aPackage = JavaDirectoryService.getInstance().getPackageInSources(directory);
     if (aPackage == null || aPackage.getQualifiedName().isEmpty()) {
       return directory;
@@ -118,6 +128,19 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor
     element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     if (element != null) {
       JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = enabled;
+    }
+  }
+
+  /** Renames a directory on the ModPlan engine with this processor, see {@link ModPlanBridgeRenameProvider}. */
+  @ApiStatus.Internal
+  public static final class ModPlanRenamePsiDirectoryProvider extends ModPlanBridgeRenameProvider {
+    public ModPlanRenamePsiDirectoryProvider() {
+      super(RenamePsiDirectoryProcessor.class);
+    }
+
+    @Override
+    protected @Nullable PsiElement substitute(@NotNull PsiElement element, @NotNull ModPlanOptionValues answers) {
+      return directoryOrItsPackage((PsiDirectory)element);
     }
   }
 }

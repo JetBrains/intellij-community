@@ -26,6 +26,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
@@ -64,7 +65,12 @@ public class SPIRenameTest {
       assert element != null;
       final PsiElement substitution = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, myFixture.getEditor());
       assert substitution != null;
-      new RenameProcessor(myFixture.getProject(), substitution, newName, true, true).run();
+      rename(substitution, newName);
     });
+  }
+
+  /** Renames {@code element}, searching in comments and in text occurrences; a subclass renames with another engine. */
+  protected void rename(@NotNull PsiElement element, @NotNull String newName) {
+    new RenameProcessor(element.getProject(), element, newName, true, true).run();
   }
 }

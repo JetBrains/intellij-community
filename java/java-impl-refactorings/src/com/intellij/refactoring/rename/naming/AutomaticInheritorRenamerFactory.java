@@ -23,6 +23,11 @@ public final class AutomaticInheritorRenamerFactory implements AutomaticRenamerF
   }
 
   @Override
+  public @NotNull String getOptionId() {
+    return "renameInheritors";
+  }
+
+  @Override
   public boolean isEnabled() {
     return JavaRefactoringSettings.getInstance().isToRenameInheritors();
   }

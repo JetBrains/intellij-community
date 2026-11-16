@@ -196,8 +196,8 @@ open class RenameGrFieldProcessor : RenameJavaVariableProcessor() {
    */
   class HeadlessRenameGrFieldProcessor : RenameGrFieldProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
     /**
-     * Dispatches the conflicts of every element through [HeadlessRenamePsiElementProcessor], for the
-     * reason [RenameJavaVariableProcessor.HeadlessRenameJavaVariableProcessor] states.
+     * Dispatches the conflicts of every element through [HeadlessRenamePsiElementProcessor]: a caller with no user can leave the
+     * `renamePsiElementProcessor` extension point empty, and the default processor collects no conflict.
      */
     override fun findExistingNameConflictsHeadless(element: PsiElement,
                                                    newName: String,

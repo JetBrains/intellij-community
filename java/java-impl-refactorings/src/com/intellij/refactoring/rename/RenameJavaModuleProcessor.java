@@ -7,15 +7,16 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.refactoring.modplan.rename.ModPlanBridgeRenameProvider;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 
-public final class RenameJavaModuleProcessor extends RenamePsiElementProcessor
-  implements DelegatingHeadlessRenamePsiElementProcessor {
+public final class RenameJavaModuleProcessor extends RenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PsiJavaModule;
@@ -35,6 +36,14 @@ public final class RenameJavaModuleProcessor extends RenamePsiElementProcessor
           return JavaRefactoringBundle.message("rename.module.already.exists", newName);
         }
       });
+    }
+  }
+
+  /** Renames an element of this processor on the ModPlan engine, see {@link ModPlanBridgeRenameProvider}. */
+  @ApiStatus.Internal
+  public static final class ModPlanRenameJavaModuleProvider extends ModPlanBridgeRenameProvider {
+    public ModPlanRenameJavaModuleProvider() {
+      super(RenameJavaModuleProcessor.class);
     }
   }
 }

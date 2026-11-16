@@ -66,7 +66,7 @@ public final class GroovyEmptyCatchBlockInspection extends BaseInspection {
       if (parameter == null) return;
       if (myIgnore && GrExceptionUtil.ignore(parameter)) return;
 
-      LocalQuickFix fix = QuickFixFactory.getInstance().createRenameElementFix(parameter, NEW_NAME);
+      LocalQuickFix fix = LocalQuickFix.from(QuickFixFactory.getInstance().createModPlanRenameFix(parameter, NEW_NAME));
       final LocalQuickFix[] fixes = myIgnore
                                     ? new LocalQuickFix[]{fix}
                                     : LocalQuickFix.EMPTY_ARRAY;

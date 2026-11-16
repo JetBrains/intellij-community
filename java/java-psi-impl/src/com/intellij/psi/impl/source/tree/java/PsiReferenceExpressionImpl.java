@@ -71,6 +71,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.impl.source.resolve.RenamedClassView;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -717,11 +718,19 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
 
-    if (isReferenceTo(element)) return this;
-
     PsiManager manager = getManager();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     PsiJavaParserFacade parserFacade = facade.getParserFacade();
+    // The view is equivalent to the class to rename, so isReferenceTo is true for it.
+    if (element instanceof RenamedClassView) {
+      String name = PsiJavaCodeReferenceElementImpl.nameAfterRename(this, (RenamedClassView)element);
+      if (name == null) return handleElementRename(((RenamedClassView)element).getName());
+      PsiExpression ref = parserFacade.createExpressionFromText(name, this);
+      getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
+      return ref;
+    }
+    if (isReferenceTo(element)) return this;
+
     if (element instanceof PsiClass) {
       boolean preserveQualification = JavaCodeStyleSettingsFacade.getInstance(getProject()).useFQClassNames() && isFullyQualified(this);
       String qName = ((PsiClass)element).getQualifiedName();

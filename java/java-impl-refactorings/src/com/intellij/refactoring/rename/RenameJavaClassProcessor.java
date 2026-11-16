@@ -46,6 +46,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -377,13 +378,11 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_CLASS = enabled;
   }
 
-  /**
-   * Renames a Java class for a caller that has no user.
-   * <p>
-   * The outer class asks the user nothing, but it does not state the headless rename itself, because
-   * it has a subclass. A subclass must not inherit that statement.
-   */
-  public static final class HeadlessRenameJavaClassProcessor extends RenameJavaClassProcessor
-    implements DelegatingHeadlessRenamePsiElementProcessor {
+  /** The rename on the ModPlan engine of the elements that this processor renames. */
+  @ApiStatus.Internal
+  public static final class ModPlanJavaClassRenameProvider extends ModPlanJavaRenameProvider {
+    public ModPlanJavaClassRenameProvider() {
+      super(RenameJavaClassProcessor.class);
+    }
   }
 }

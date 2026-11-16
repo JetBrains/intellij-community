@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.refactoring.LightMultiFileFixture;
@@ -34,8 +35,11 @@ import com.intellij.ui.UiInterceptors;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
 import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
@@ -43,9 +47,6 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 @TestApplication
 public class RenameClassTest {
@@ -160,14 +161,27 @@ public class RenameClassTest {
     MessageBusConnection connection = myFixture.getProject().getMessageBus().connect();
     Disposer.register(myFixture.getTestRootDisposable(), connection);
 
-    RefactoringEventListener listener = mock(RefactoringEventListener.class);
-    connection.subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, listener);
+    List<String> events = new ArrayList<>();
+    connection.subscribe(RefactoringEventListener.REFACTORING_EVENT_TOPIC, new RefactoringEventListener() {
+      @Override
+      public void refactoringDone(@NotNull String refactoringId, @Nullable RefactoringEventData afterData) {
+        events.add(afterData != null ? "done" : "done without data");
+      }
+
+      @Override
+      public void undoRefactoring(@NotNull String refactoringId) {
+        events.add("undo");
+      }
+
+      @Override
+      public void redoRefactoring(@NotNull String refactoringId) {
+        events.add("redo");
+      }
+    });
 
     doUndoRedoRenameClass("foo.AnotherTestClass", "AnotherTestClass1");
 
-    verify(listener).refactoringDone(any(String.class), any(RefactoringEventData.class));
-    verify(listener).undoRefactoring(any(String.class));
-    verify(listener).redoRefactoring(any(String.class));
+    assertEquals(List.of("done", "undo", "redo"), events);
   }
 
   @Test
@@ -209,10 +223,19 @@ public class RenameClassTest {
     LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     PsiClass aClass = myFixture.findClass(className);
     assertNotNull(aClass, "Class XX not found");
+    rename(aClass, newName, true);
+  }
 
-    final RenameProcessor processor = new RenameProcessor(myFixture.getProject(), aClass, newName, true, true);
-    for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
-      processor.addRenamerFactory(factory);
+  /**
+   * Renames {@code element}, searching in comments and in text occurrences, with every automatic renamer if {@code withRenamers}; a
+   * subclass renames with another engine.
+   */
+  protected void rename(@NotNull PsiElement element, @NotNull String newName, boolean withRenamers) {
+    final RenameProcessor processor = new RenameProcessor(element.getProject(), element, newName, true, true);
+    if (withRenamers) {
+      for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
+        processor.addRenamerFactory(factory);
+      }
     }
     processor.run();
   }
@@ -258,7 +281,6 @@ public class RenameClassTest {
     LightJavaCodeInsightTestFixture myFixture = multiFile.get().getFixture();
     PsiClass aClass = myFixture.findClass(qClassName);
     assertNotNull(aClass, "Class " + qClassName + " not found");
-
-    new RenameProcessor(myFixture.getProject(), aClass, newName, true, true).run();
+    rename(aClass, newName, false);
   }
 }

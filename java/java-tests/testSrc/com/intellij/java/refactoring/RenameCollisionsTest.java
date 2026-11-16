@@ -236,7 +236,7 @@ public class RenameCollisionsTest extends LightJavaCodeInsightTestCase {
   
   private void doTestConflict(String newName, String conflictText) {
     try {
-      new RenameProcessor(getProject(), getTarget(), newName, true, true).run();
+      rename(getTarget(), newName);
       fail("No conflicts found");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException | CommonRefactoringUtil.RefactoringErrorHintException e) {
@@ -245,8 +245,13 @@ public class RenameCollisionsTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTest(String newName) {
-    new RenameProcessor(getProject(), getTarget(), newName, true, true).run();
+    rename(getTarget(), newName);
     checkResultByFile(BASE_PATH + getTestName(false) + ".java.after");
+  }
+
+  /** Renames {@code target}, searching in comments and in text occurrences; a subclass renames with another engine. */
+  protected void rename(@NotNull PsiElement target, @NotNull String newName) {
+    new RenameProcessor(getProject(), target, newName, true, true).run();
   }
 
   private @NotNull PsiElement getTarget() {

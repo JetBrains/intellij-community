@@ -202,7 +202,7 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
   public static final class HeadlessRenameAliasImportedMethodProcessor extends RenameAliasImportedMethodProcessor
     implements DelegatingHeadlessRenamePsiElementProcessor {
     /**
-     * The base method and its whole hierarchy, as {@link HeadlessRenameJavaMethodProcessor} answers.
+     * The base method and its whole hierarchy, as {@code RenameJavaMethodProcessor.substituteElementToRename} answers with no user.
      */
     @Override
     public @Nullable PsiElement substituteElementToRenameHeadless(@NotNull PsiElement element) {

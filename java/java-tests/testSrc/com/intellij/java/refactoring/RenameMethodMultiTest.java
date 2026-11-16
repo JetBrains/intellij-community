@@ -6,6 +6,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -17,6 +18,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import static com.intellij.refactoring.LightMultiFileFixtureKt.lightMultiFileFixture;
@@ -116,8 +118,7 @@ public class RenameMethodMultiTest {
       final PsiMethod methodBySignature = aClass.findMethodBySignature(JavaPsiFacade.getElementFactory(myFixture.getProject()).createMethodFromText(
                 methodSignature + "{}", null), false);
       assertNotNull(methodBySignature);
-      final RenameProcessor renameProcessor = new RenameProcessor(myFixture.getProject(), methodBySignature, newName, false, false);
-      renameProcessor.run();
+      rename(methodBySignature, newName, false);
     });
   }
 
@@ -129,12 +130,18 @@ public class RenameMethodMultiTest {
       final PsiMethod methodBySignature = aClass.findMethodBySignature(JavaPsiFacade.getElementFactory(myFixture.getProject()).createMethodFromText(
         methodSignature + "{}", null), false);
       assertNotNull(methodBySignature);
+      rename(methodBySignature, newName, true);
+    });
+  }
 
-      final RenameProcessor processor = new RenameProcessor(myFixture.getProject(), methodBySignature, newName, false, false);
+  /** Renames {@code element}, with every automatic renamer if {@code withRenamers}; a subclass renames with another engine. */
+  protected void rename(@NotNull PsiElement element, @NotNull String newName, boolean withRenamers) {
+    RenameProcessor processor = new RenameProcessor(element.getProject(), element, newName, false, false);
+    if (withRenamers) {
       for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
         processor.addRenamerFactory(factory);
       }
-      processor.run();
-    });
+    }
+    processor.run();
   }
 }
