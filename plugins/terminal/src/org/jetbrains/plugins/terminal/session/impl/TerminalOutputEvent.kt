@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.session.impl
 
+import com.intellij.platform.util.annotations.paths.OsPath
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus
@@ -74,7 +75,7 @@ data class TerminalCommandStartedEvent(val command: String) : TerminalShellInteg
 
 @ApiStatus.Internal
 @Serializable
-data class TerminalCommandFinishedEvent(val command: String, val exitCode: Int, val currentDirectory: String?) : TerminalShellIntegrationEvent
+data class TerminalCommandFinishedEvent(val command: String, val exitCode: Int, val currentDirectory: @OsPath String?) : TerminalShellIntegrationEvent
 
 @ApiStatus.Internal
 @Serializable
@@ -94,4 +95,4 @@ data class TerminalCompletionFinishedEvent(val result: String) : TerminalShellIn
 
 @ApiStatus.Internal
 @Serializable
-data class TerminalCommandHistoryPathReceivedEvent(val path: String?) : TerminalShellIntegrationEvent
+data class TerminalCommandHistoryPathReceivedEvent(val path: @OsPath String?) : TerminalShellIntegrationEvent
