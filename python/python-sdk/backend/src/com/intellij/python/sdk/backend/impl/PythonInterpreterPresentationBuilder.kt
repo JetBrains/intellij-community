@@ -72,7 +72,7 @@ fun PythonInterpreter.presentation(): PythonInterpreterPresentation {
   return PythonInterpreterPresentation(
     name = listOfNotNull(envName(), whereItRuns()).joinToString(" · "),
     suffix = secondary,
-    description = FileUtil.getLocationRelativeToUserHome(environmentRoot()),
+    description = FileUtil.getLocationRelativeToUserHome(environmentRoot(), false),
     problem = problem,
     icon = icon(problem).rpcId(),
     isPathDerivedName = false,
@@ -86,7 +86,7 @@ fun PythonInterpreter.presentation(): PythonInterpreterPresentation {
 private fun PythonInterpreter.envName(): @NlsSafe String {
   val envRef = ref.envRef.value
   val isAbsolute = envRef.startsWith("/") || envRef.toNioPathOrNull()?.isAbsolute == true
-  return if (isAbsolute) FileUtil.getLocationRelativeToUserHome(environmentRoot()) else envRef
+  return if (isAbsolute) FileUtil.getLocationRelativeToUserHome(environmentRoot(), false) else envRef
 }
 
 /**
