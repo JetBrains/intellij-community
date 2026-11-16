@@ -1,6 +1,8 @@
 package com.intellij.tools.ide.metrics.collector.starter.metrics
 
 import com.intellij.ide.starter.models.IDEStartResult
+import com.intellij.tools.ide.metrics.collector.JVM_METERS
+import com.intellij.tools.ide.metrics.collector.collectJvmMetrics
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.starter.collector.StarterTelemetryJsonMeterCollector
@@ -50,42 +52,10 @@ object CommonMetrics {
     = mapOf("MEM.avgRamBytes" to MetricsSelectionStrategy.LATEST,
             "MEM.avgRamMinusFileMappingsBytes" to MetricsSelectionStrategy.LATEST,
             "MEM.avgRamPlusSwapMinusFileMappingsBytes" to MetricsSelectionStrategy.LATEST,
-            "MEM.avgFileMappingsRamBytes" to MetricsSelectionStrategy.LATEST,
-            "JVM.GC.collections" to MetricsSelectionStrategy.SUM,
-            "JVM.GC.collectionTimesMs" to MetricsSelectionStrategy.SUM,
-            "JVM.totalCpuTimeMs" to MetricsSelectionStrategy.SUM,
-            "JVM.maxHeapBytes" to MetricsSelectionStrategy.MAXIMUM,
-            "JVM.committedHeapBytes" to MetricsSelectionStrategy.LATEST,
-            "JVM.maxThreadCount" to MetricsSelectionStrategy.MAXIMUM,
-            "JVM.totalTimeToSafepointsMs" to MetricsSelectionStrategy.SUM,
-            // total time the application was stopped at safepoints (the true stop-the-world time, distinct from time-to-safepoint above)
-            "JVM.totalTimeAtSafepointsMs" to MetricsSelectionStrategy.SUM,
-            "JVM.totalSafepointCount" to MetricsSelectionStrategy.SUM,
-            // bytes allocated across all threads; the "Bytes" suffix makes it publish as JVM.totalMegabytesAllocated
-            "JVM.totalBytesAllocated" to MetricsSelectionStrategy.SUM,
-            "JVM.usedHeapBytes" to MetricsSelectionStrategy.MAXIMUM,
-            "JVM.usedNativeBytes" to MetricsSelectionStrategy.MAXIMUM,
-            "JVM.totalDirectByteBuffersBytes" to MetricsSelectionStrategy.MAXIMUM,
-            "JVM.newThreadsCount" to MetricsSelectionStrategy.SUM,
-            "OS.loadAverage" to MetricsSelectionStrategy.MAXIMUM),
+            "MEM.avgFileMappingsRamBytes" to MetricsSelectionStrategy.LATEST) + JVM_METERS,
   ): List<PerformanceMetrics.Metric> {
     try {
-      return metricsStrategies.flatMap { (metricName, strategy) ->
-        StarterTelemetryJsonMeterCollector(strategy) { it.name.startsWith(metricName) }.collect(startResult.runContext){ name, value ->
-          if (name.contains("Bytes")){
-            return@collect name.replace("Bytes", "Megabytes") to (value / 1024 / 1024).toInt()
-          } else {
-            name to value.toInt()
-          }
-        }.map {
-          if (it.id.name.contains("Time")) {
-            PerformanceMetrics.Metric.newDuration(it.id.name, it.value)
-          }
-          else {
-            PerformanceMetrics.Metric.newCounter(it.id.name, it.value)
-          }
-        }
-      }
+      return collectJvmMetrics(startResult.runContext.logsDir, metricsStrategies)
     }
     catch (e: Exception) {
       logError("Collecting JVM metrics: ${e.message}")
