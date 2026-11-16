@@ -1,6 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyproject.model.evolution
 
+import java.nio.file.Path
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.python.sdk.backend.PythonInterpreterKey
+import com.intellij.python.sdk.backend.resolveHomeEnvRef
+import com.intellij.python.sdk.common.PyInterpreterRef
+import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -55,6 +62,8 @@ suspend fun PyProject.setPythonInterpreter(interpreter: PythonInterpreter?, wait
   val libraryFlow = isInterpreterLibraryFlowEnabled()
   val name = if (libraryFlow) set?.let { libraryNameOf(it) } else null
   val previous = residesOnModule.readStoredInterpreter()
+  // From the entry, so it is known also when the environment is gone and the interpreter does not resolve.
+  val previousHome = residesOnModule.storedInterpreterKey()?.let(::homeOf)
   @Suppress("DEPRECATION") // An older build reads the SDK of the module, and the listeners take SDKs.
   val (previousSdk, sdk) = previous?.getSdkAPI() to set?.getSdkAPI()
   if (libraryFlow) {
@@ -64,6 +73,7 @@ suspend fun PyProject.setPythonInterpreter(interpreter: PythonInterpreter?, wait
     residesOnModule.writePythonSdk(sdk)
   }
   residesOnModule.notifyPythonSdkChanged(previousSdk, sdk)
+  previousHome?.let { removeGoneEnvExclusion(it) }
   set?.let { excludeInnerVirtualEnv(it) }
   if (waitForSnapshot) EvoPyProjectModel.getInstance(project).awaitInterpreterOf(listOf(this))
   return PyResult.success(set)
@@ -98,6 +108,26 @@ private suspend fun PyProject.writeInterpreterLibraryEntry(name: PyInterpreterLi
     if (previous == null && name == null) return@update
     logger.info("Set the Python interpreter of ${residesOnModule.name}: ${previous?.library?.name} -> $name")
     storage.modifyModuleEntity(module) { dependencies.setPyInterpreterDependency(name) }
+  }
+}
+
+/** The home of a native environment that [key] places relative to its owner, or `null`, see [resolveHomeEnvRef]. */
+private fun homeOf(key: PythonInterpreterKey): Path? = when (key.ref.mode) {
+  PyInterpreterRef.Mode.Native -> resolveHomeEnvRef(key.ownerDir, key.ref.env.envRef)
+  is PyInterpreterRef.Mode.Target -> null
+}
+
+/**
+ * Removes the exclusion of [home] from the module when the directory is gone. [excludeInnerVirtualEnv] excluded it for
+ * an earlier interpreter. A directory that is there keeps its exclusion, so the files of an environment are not indexed
+ * as the files of the project.
+ */
+private suspend fun PyProject.removeGoneEnvExclusion(home: Path) {
+  if (withContext(Dispatchers.IO) { home.exists() }) return
+  val url = VfsUtilCore.pathToUrl(home.invariantSeparatorsPathString)
+  project.workspaceModel.update("Remove the exclusion of a gone Python environment of ${residesOnModule.name}") { storage ->
+    val module = residesOnModule.findModuleEntity(storage) ?: return@update
+    module.contentRoots.flatMap { it.excludedUrls }.filter { it.url.url == url }.forEach(storage::removeEntity)
   }
 }
 
