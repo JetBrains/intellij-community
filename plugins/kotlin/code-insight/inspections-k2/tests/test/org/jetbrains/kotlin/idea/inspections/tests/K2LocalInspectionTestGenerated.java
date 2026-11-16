@@ -20915,9 +20915,19 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/redundantSemicolon/companionWithName.kt");
             }
 
+            @TestMetadata("escapedStringInjection.kt")
+            public void testEscapedStringInjection() throws Exception {
+                runTest("testData/inspectionsLocal/redundantSemicolon/escapedStringInjection.kt");
+            }
+
             @TestMetadata("ifElse.kt")
             public void testIfElse() throws Exception {
                 runTest("testData/inspectionsLocal/redundantSemicolon/ifElse.kt");
+            }
+
+            @TestMetadata("injection.kt")
+            public void testInjection() throws Exception {
+                runTest("testData/inspectionsLocal/redundantSemicolon/injection.kt");
             }
 
             @TestMetadata("localClass.kt")

@@ -12,7 +12,9 @@ import org.intellij.plugins.intelliLang.inject.InjectedLanguage
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.intellij.plugins.intelliLang.inject.registerSupport
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtElement
@@ -44,7 +46,8 @@ abstract class KotlinLanguageInjectionPerformerBase : LanguageInjectionPerformer
 
         if (parts.ranges.isEmpty()) return false
 
-        InjectorUtils.registerInjection(language, file, parts.ranges, registrar) {
+        val fileExtension = if (language == KotlinLanguage.INSTANCE) KotlinParserDefinition.STD_SCRIPT_SUFFIX else null
+        InjectorUtils.registerInjection(language, file, parts.ranges, registrar, fileExtension) {
             it.registerSupport(support, false)
                 .frankensteinInjection(parts.isUnparsable)
         }

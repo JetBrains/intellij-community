@@ -135,6 +135,7 @@ f:org.intellij.plugins.intelliLang.inject.InjectorUtils
 - s:isRegexp(java.lang.String):Z
 - s:putInjectedFileUserData(com.intellij.psi.PsiElement,com.intellij.lang.Language,com.intellij.openapi.util.Key,java.lang.Object):V
 - s:registerInjection(com.intellij.lang.Language,com.intellij.psi.PsiFile,java.util.List,com.intellij.lang.injection.MultiHostRegistrar):V
+- s:registerInjection(com.intellij.lang.Language,com.intellij.psi.PsiFile,java.util.List,com.intellij.lang.injection.MultiHostRegistrar,java.lang.String,java.util.function.Consumer):V
 - s:registerInjection(com.intellij.lang.Language,com.intellij.psi.PsiFile,java.util.List,com.intellij.lang.injection.MultiHostRegistrar,java.util.function.Consumer):V
 - s:registerInjectionSimple(com.intellij.psi.PsiLanguageInjectionHost,org.intellij.plugins.intelliLang.inject.config.BaseInjection,org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport,com.intellij.lang.injection.MultiHostRegistrar):Z
 - s:registerSupport(com.intellij.lang.injection.MultiHostRegistrar,org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport,Z):V

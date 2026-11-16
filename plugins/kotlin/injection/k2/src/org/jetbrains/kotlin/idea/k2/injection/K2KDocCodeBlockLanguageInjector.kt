@@ -15,6 +15,7 @@ import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
+import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import kotlin.math.min
 
@@ -262,8 +263,7 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector, DumbAware {
     ) {
         if (textRanges.isEmpty()) return
 
-        registrar
-            .startInjecting(language)
+        registrar.startInjecting(language, if (language == KotlinLanguage.INSTANCE) KotlinParserDefinition.STD_SCRIPT_SUFFIX else null)
             .makeInspectionsLenient(true)
 
         textRanges.forEach {
