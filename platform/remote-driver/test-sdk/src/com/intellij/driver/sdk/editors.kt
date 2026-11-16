@@ -108,6 +108,8 @@ interface CaretVisualAttributes {
 interface ScrollingModel {
   fun scrollToCaret(type: ScrollType)
   fun scrollTo(pos: LogicalPosition, scrollType: ScrollType)
+  fun scrollVertically(scrollOffset: Int)
+  fun scrollHorizontally(scrollOffset: Int)
   fun getVisibleArea(): Rectangle
   fun getVisibleAreaOnScrollingFinished(): Rectangle
 }
