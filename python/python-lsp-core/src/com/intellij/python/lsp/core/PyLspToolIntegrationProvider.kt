@@ -17,16 +17,21 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.SearchableConfigurable
@@ -104,6 +109,8 @@ import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.DiagnosticSeverity
 import org.eclipse.lsp4j.ExecuteCommandParams
 import org.eclipse.lsp4j.InitializeResult
+import org.eclipse.lsp4j.VersionedTextDocumentIdentifier
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.Collections
@@ -834,20 +841,38 @@ abstract class PyLspToolDescriptor(
           val actionId = "LSP.Command.$presentableName.$command"
           val hidden = command in commandDescriptions && commandDescriptions[command] == null
           val text = "${params.serverInfo?.name ?: presentableName}: " + (commandDescriptions[command] ?: command)
+          val takesDocument = command in documentCommands
           val action = if (hidden) null else object : AnAction(text) {
-            override fun actionPerformed(e: AnActionEvent) {
-              val lspServerManager = LspClientManager.getInstance(project)
+            private val providerClass: Class<out LspIntegrationProvider>?
+              get() = if (this@PyLspToolDescriptor::supportProvider.isInitialized) supportProvider::class.java else null
 
-              lspServerManager
-                .getClients(supportProvider::class.java)
-                .firstOrNull()
-                ?.let { server ->
-                  project.service<PyLspService>().cs.launch {
-                    server.sendRequest {
-                      it.workspaceService.executeCommand(ExecuteCommandParams(command, null))
-                    }
+            override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+            override fun update(e: AnActionEvent) {
+              if (takesDocument) e.presentation.isEnabled = providerClass?.let { documentTarget(e, it) } != null
+            }
+
+            // The action ID is shared by all projects, so the action serves the project of the event.
+            override fun actionPerformed(e: AnActionEvent) {
+              val eventProject = e.project ?: return
+              val providerClass = providerClass ?: return
+              val (server, arguments) = if (takesDocument) {
+                val (server, document) = runReadActionBlocking { documentTarget(e, providerClass) } ?: return
+                server to listOf(document)
+              }
+              else {
+                (LspClientManager.getInstance(eventProject).getClients(providerClass).firstOrNull() ?: return) to null
+              }
+              eventProject.service<PyLspService>().cs.launch {
+                try {
+                  server.sendRequest {
+                    it.workspaceService.executeCommand(ExecuteCommandParams(command, arguments))
                   }
                 }
+                catch (error: ResponseErrorException) {
+                  logger<PyLspToolDescriptor>().warn("${pyTool.lspServerName} failed to run '$command'", error)
+                }
+              }
             }
           }
           synchronized(commandActionIdsLock) {
@@ -889,6 +914,12 @@ abstract class PyLspToolDescriptor(
 
   // workaround for IJPL-196574
   open val commandDescriptions: Map<String, String?> = emptyMap()
+
+  /**
+   * The commands of [commandDescriptions] that act on one document. Their action passes the document of the editor
+   * as a [VersionedTextDocumentIdentifier], and it is disabled when there is no editor.
+   */
+  open val documentCommands: Set<String> = emptySet()
 
   override val clientCapabilities: ClientCapabilities
     get() = super.clientCapabilities.apply {
@@ -1135,4 +1166,17 @@ class PyLspService(val cs: CoroutineScope) {
   /** Lets one restart of the servers of this project run at a time. */
   @ApiStatus.Internal
   val restartMutex: Mutex = Mutex()
+}
+
+/**
+ * The client of [providerClass] that serves the file of the editor of [e], and the identifier of the document
+ * of that editor for the client. Returns null when no client serves the file.
+ */
+@RequiresReadLock
+private fun documentTarget(e: AnActionEvent, providerClass: Class<out LspIntegrationProvider>): Pair<LspClient, VersionedTextDocumentIdentifier>? {
+  val project = e.project ?: return null
+  val document = e.getData(CommonDataKeys.EDITOR)?.document ?: return null
+  val file = FileDocumentManager.getInstance().getFile(document) ?: return null
+  val client = LspClientManager.getInstance(project).getClients(providerClass).firstOrNull { it.descriptor.isSupportedFile(file) } ?: return null
+  return client to VersionedTextDocumentIdentifier(client.getDocumentIdentifier(file).uri, client.getDocumentVersion(document))
 }
