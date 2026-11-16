@@ -1904,15 +1904,12 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     checkForAbstractAndFinalCombination(holder, method, modifiersList);
 
     //script methods
-    boolean isMethodAbstract = modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT);
-    PsiElement modifierOrList = getModifierOrList(modifiersList, PsiModifier.ABSTRACT);
+    PsiElement abstractModifier = modifiersList.getModifier(PsiModifier.ABSTRACT);
     if (method.getParent() instanceof GroovyFileBase) {
-      if (isMethodAbstract) {
+      if (abstractModifier != null) {
         String message = GroovyBundle.message("script.method.cannot.have.modifier.abstract");
-        AnnotationBuilder builder =
-          holder.newAnnotation(HighlightSeverity.ERROR, message)
-            .range(modifierOrList);
-        registerMakeAbstractMethodNotAbstractFix(builder, method, false, message, modifierOrList.getTextRange()).create();
+        AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, message).range(abstractModifier);
+        registerMakeAbstractMethodNotAbstractFix(builder, method, false, message, abstractModifier.getTextRange()).create();
       }
 
       checkModifierIsNotAllowed(modifiersList, PsiModifier.NATIVE, GroovyBundle.message("script.cannot.have.modifier.native"), holder);
@@ -1935,10 +1932,10 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
                                   GroovyBundle.message("interface.members.are.not.allowed.to.be", PsiModifier.PROTECTED), holder);
       }
       else if (containingTypeDef.isAnonymous()) {
-        if (isMethodAbstract) {
+        if (abstractModifier != null) {
           String message = GroovyBundle.message("anonymous.class.cannot.have.abstract.method");
-          AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, message).range(modifierOrList);
-          registerMakeAbstractMethodNotAbstractFix(builder, method, false, message, modifierOrList.getTextRange()).create();
+          AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, message).range(abstractModifier);
+          registerMakeAbstractMethodNotAbstractFix(builder, method, false, message, abstractModifier.getTextRange()).create();
         }
       }
       //class
@@ -1946,10 +1943,10 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
         PsiModifierList typeDefModifiersList = containingTypeDef.getModifierList();
         LOG.assertTrue(typeDefModifiersList != null, "modifiers list must be not null");
 
-        if (!typeDefModifiersList.hasModifierProperty(PsiModifier.ABSTRACT) && isMethodAbstract) {
+        if (!typeDefModifiersList.hasModifierProperty(PsiModifier.ABSTRACT) && abstractModifier != null) {
           String message = GroovyBundle.message("only.abstract.class.can.have.abstract.method");
           AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, message).range(modifiersList);
-          registerMakeAbstractMethodNotAbstractFix(builder, method, true, message, modifierOrList.getTextRange()).create();
+          registerMakeAbstractMethodNotAbstractFix(builder, method, true, message, abstractModifier.getTextRange()).create();
         }
       }
 
@@ -1959,12 +1956,12 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       }
     }
 
-    if (method.hasModifierProperty(PsiModifier.NATIVE) && method.getBlock() != null) {
+    PsiElement nativeModifier = modifiersList.getModifier(PsiModifier.NATIVE);
+    if (nativeModifier != null && method.getBlock() != null) {
       String message = GroovyBundle.message("native.methods.cannot.have.body");
-      PsiElement list = getModifierOrList(modifiersList, PsiModifier.NATIVE);
-      AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, message).range(list);
+      AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, message).range(nativeModifier);
       GrModifierFix fix = new GrModifierFix(method, PsiModifier.NATIVE, true, false, GrModifierFix.MODIFIER_LIST);
-      builder = registerLocalFix(builder, fix, modifiersList, message, ProblemHighlightType.ERROR, list.getTextRange());
+      builder = registerLocalFix(builder, fix, modifiersList, message, ProblemHighlightType.ERROR, nativeModifier.getTextRange());
       builder.withFix(QuickFixFactory.getInstance().createDeleteMethodBodyFix(method)).create();
     }
   }
@@ -1979,12 +1976,6 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       builder = registerLocalFix(builder, fix2, modifiersList, message, ProblemHighlightType.ERROR, modifiersList.getTextRange());
       builder.create();
     }
-  }
-
-  private static @NotNull PsiElement getModifierOrList(@NotNull GrModifierList modifiersList,
-                                                       @GrModifier.GrModifierConstant String modifier) {
-    PsiElement m = modifiersList.getModifier(modifier);
-    return m != null ? m : modifiersList;
   }
 
   private static void checkOverrideAnnotation(AnnotationHolder holder, GrModifierList list, GrMethod method) {
