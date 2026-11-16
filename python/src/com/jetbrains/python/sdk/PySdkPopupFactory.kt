@@ -22,7 +22,7 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.ui.popup.ActionPopupOptions
@@ -217,9 +217,11 @@ class PySdkPopupFactory(val module: Module) {
 
     override fun actionPerformed(e: AnActionEvent) {
       runWithSdkConfigurationLock(module.project) {
-        // The popup does not read the snapshot back.
-        // A broken SDK names no interpreter, so the module gets none, as for no SDK.
-        module.asPyProject()?.setPythonInterpreter(sdk.pythonInterpreterResultAsync().successOrNull, waitForSnapshot = false)
+        // The popup does not read the snapshot back. The row sets the interpreter that the registry holds for its SDK,
+        // with the key of the registry. An interpreter built again from the SDK data can name another owner or target
+        // (PY-94164). A row whose interpreter is gone sets nothing.
+        val interpreter = PythonInterpreterRegistry.getInstance(module.project).interpreterOf(sdk) ?: return@runWithSdkConfigurationLock
+        module.asPyProject()?.setPythonInterpreter(interpreter, waitForSnapshot = false)
       }
     }
   }

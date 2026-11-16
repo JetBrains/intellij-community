@@ -18,12 +18,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
 import com.intellij.openapi.util.Disposer
@@ -37,10 +39,14 @@ import com.intellij.psi.util.ParameterizedCachedValue
 import com.intellij.python.pyproject.model.api.ModuleSdkState
 import com.intellij.python.pyproject.model.api.SdkForModuleConfigInstruction
 import com.intellij.python.pyproject.model.api.getModuleSdkState
+import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.emit
+import com.jetbrains.python.errorProcessing.withProject
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.allowCreationTargetOfThisType
 import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
@@ -191,16 +197,30 @@ internal class AddInterpreterOnTargetAction(
 
   private fun exitHandler(dialogWrapper: TargetEnvironmentWizard) {
     if (dialogWrapper.exitCode != OK_EXIT_CODE) return
-    val pythonInterpreter = (dialogWrapper.currentStepObject as? TargetCustomToolWizardStep)?.customTool as? PythonInterpreter ?: return
+    val built = (dialogWrapper.currentStepObject as? TargetCustomToolWizardStep)?.customTool as? PythonInterpreter ?: return
 
     service<LogCollectorService>().coroutineScope.launch(Dispatchers.Default) {
-      PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(pythonInterpreter, isPreviouslyConfigured = true)
+      PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(built, isPreviouslyConfigured = true)
     }
-    // The wizard has set this interpreter on the module, see PythonLanguageRuntimeUI.createCustomTool. A caller must not
-    // build it again from its SDK: the SDK data can name another interpreter (PY-94081).
-    onInterpreterSet(pythonInterpreter)
+    // The wizard only builds the interpreter, see PythonLanguageRuntimeUI.createCustomTool. It is set here, after the
+    // wizard has saved its target, so the entry names a target of the project (PY-94164).
+    val module = when (moduleOrProject) {
+      is ModuleAndProject -> moduleOrProject.module
+      is ProjectOnly -> moduleOrProject.project.modules.firstOrNull()
+    } ?: return
+    module.project.service<TargetInterpreterSetService>().coroutineScope.launch {
+      val set = withSdkConfigurationLock(module.project) {
+        module.asPyProjectAddingFacet()?.setPythonInterpreter(built, waitForSnapshot = false)
+      }?.onFailure { ErrorSink().withProject(module.project).emit(it) }?.successOrNull ?: return@launch
+      // A caller must not build the interpreter again from its SDK: the SDK data can name another interpreter (PY-94081).
+      withContext(Dispatchers.EDT) { onInterpreterSet(set) }
+    }
   }
 }
+
+/** The scope in which [AddInterpreterOnTargetAction] sets the interpreter that its wizard has built. */
+@Service(Service.Level.PROJECT)
+private class TargetInterpreterSetService(val coroutineScope: CoroutineScope)
 
 @Service
 private class LogCollectorService(val coroutineScope: CoroutineScope)

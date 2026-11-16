@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.target
 
-import com.jetbrains.python.sdk.asPyProjectAddingFacet
 import com.intellij.execution.target.CustomToolLanguageConfigurable
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
@@ -33,7 +32,6 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.sdk.add.v2.PythonLocalAddInterpreterModel
 import com.jetbrains.python.sdk.add.v2.TargetFileSystem
 import com.jetbrains.python.sdk.baseDir
-import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.supervisorScope
@@ -120,14 +118,12 @@ internal class PythonLanguageRuntimeUI(
 
     val interpreter = runWithSdkConfigurationLock(project) {
       withContext(TraceContext(message("trace.context.add.remote.python.sdk.dialog", targetSupplier.get().getTargetType().displayName))) {
+        // Only builds the interpreter. The wizard saves its target after this call, so the caller sets the interpreter
+        // after the wizard has closed (PY-94164).
         val built = sdkManager.setupSdk(ModuleOrProject.ModuleAndProject(module)).onFailure {
           errorSink.emit(it)
         }.successOrNull ?: return@withContext null
-        // The interpreter the module then has: the registry can adopt an existing SDK for it.
-        val set = module.asPyProjectAddingFacet()?.setPythonInterpreter(built, waitForSnapshot = false)?.onFailure {
-          errorSink.emit(it)
-        }?.successOrNull ?: return@withContext null
-        set.also { PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(it, false) }
+        built.also { PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(it, false) }
       }
     }
 

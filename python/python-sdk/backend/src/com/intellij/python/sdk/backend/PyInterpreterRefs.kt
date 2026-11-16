@@ -4,6 +4,7 @@ package com.intellij.python.sdk.backend
 import com.intellij.execution.Platform
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentsManager
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -146,7 +147,11 @@ fun pathEnvRef(sdk: Sdk): String? {
 @ApiStatus.Internal
 suspend fun PyInterpreterRef.fileSystem(project: Project): FileSystem<*>? = when (val mode = mode) {
   PyInterpreterRef.Mode.Native -> project.getEelDescriptor().toEelApi().toFileSystem()
-  is PyInterpreterRef.Mode.Target -> findTarget(project, mode.targetId)?.let { FileSystemFactory.getInstance().create(it) }
+  is PyInterpreterRef.Mode.Target -> {
+    val target = findTarget(project, mode.targetId)
+    if (target == null) logUnknownTarget(project, mode.targetId)
+    target?.let { FileSystemFactory.getInstance().create(it) }
+  }
 }
 
 /** The target of [project] with the id [targetId], or `null` when [project] has none. See [registerTarget]. */
@@ -170,4 +175,13 @@ fun registerTarget(project: Project, target: TargetEnvironmentConfiguration) {
   }
   val copy = state.toTargetConfiguration() ?: return
   TargetEnvironmentsManager.getInstance(project).addTarget(copy)
+  logger.info("Registered the target ${copy.uuid} (${copy.displayName}) of a Python interpreter")
 }
+
+/** Logs the targets of [project] when a ref names the target [targetId], which it does not have (PY-94164). */
+private fun logUnknownTarget(project: Project, targetId: String) {
+  val known = TargetEnvironmentsManager.getInstance(project).targets.resolvedConfigs().joinToString { it.uuid }
+  logger.info("A Python interpreter names the target $targetId, which the project does not have. The project has: [$known]")
+}
+
+private val logger = fileLogger()
