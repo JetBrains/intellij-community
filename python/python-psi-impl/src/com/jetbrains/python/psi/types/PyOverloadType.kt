@@ -17,7 +17,7 @@ class PyOverloadType(val items: List<PyCallableType>, val impl: Ref<PyType?>?) :
    * The type of the object that the overloaded name refers to at runtime:
    * the implementation or, when its type is not known, the first overload.
    */
-  private val runtimeType: PyType?
+  internal val runtimeType: PyType?
     get() = impl?.get() ?: items.firstOrNull()
 
   override fun resolveMember(

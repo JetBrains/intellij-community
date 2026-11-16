@@ -549,7 +549,7 @@ class PyUnresolvedReferencesVisitor(
    */
   private fun typeNameInMessage(type: PyType, qualifier: PyExpression?): String? {
     if (type !is PyOverloadType) return type.name
-    val runtimeType = type.impl?.get() as? PyCallableType ?: type.items.firstOrNull() ?: return type.name
+    val runtimeType = type.runtimeType as? PyCallableType ?: return type.name
     return PyUtil.selectCallableTypeRuntimeClass(runtimeType, qualifier, myTypeEvalContext)?.name ?: runtimeType.name
   }
 
