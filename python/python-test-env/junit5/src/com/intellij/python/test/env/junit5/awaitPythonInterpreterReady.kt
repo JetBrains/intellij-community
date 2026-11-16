@@ -3,6 +3,7 @@ package com.intellij.python.test.env.junit5
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.python.pyproject.model.evolution.PyInterpreterLibrarySync
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
@@ -29,6 +30,8 @@ suspend fun awaitPythonInterpreterReady(interpreter: PythonInterpreter, project:
   }
   // The roots follow the facts of the update on their own, so the index follows them only after they are committed.
   PythonInterpreterRoots.getInstance(project).awaitCommittedForTests()
+  // The interpreter library of a module follows the roots in a coroutine of its own, so a test builds it here.
+  PyInterpreterLibrarySync.getInstance(project).syncForTests()
   IndexingTestUtil.suspendUntilIndexesAreReady(project)
 }
 
