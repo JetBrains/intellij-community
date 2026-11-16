@@ -13,6 +13,7 @@ intellij.platform.tests.editorStress
 intellij.platform.tests.wsl
 intellij.platform.vcs.impl.shared.tests
 intellij.platform.vcs.impl.tests
+intellij.platform.vcs.tests
 intellij.python.community.junit5Tests.framework
 intellij.python.community.services.internal.impl.tests
 intellij.python.community.tests.env
