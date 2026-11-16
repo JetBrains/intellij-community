@@ -28,6 +28,7 @@ import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowRightT
 import com.intellij.driver.sdk.ui.components.elements.WindowUiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Window
+import com.intellij.driver.sdk.ui.settings.getCurrentUiSettings
 import com.intellij.driver.sdk.ui.isIdeFocused
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitForIndicators
@@ -199,10 +200,14 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
     }
     // The frame is ready when each group has one element present. The list holds only the frame parts of every product.
     // The toolbar is in the main toolbar or in the frame header. Tool-window stripes are layout state, so they are not here.
-    // Distraction-free mode and Zen mode hide all of these parts.
+    // Distraction-free mode and Zen mode hide the toolbar. The status bar follows its UI setting.
     val distractionFreeMode = isDistractionFreeMode()
     if (distractionFreeMode) {
-      logger<Driver>().info("The IDE frame is in distraction-free mode, skipping the toolbar and status bar checks")
+      logger<Driver>().info("The IDE frame is in distraction-free mode, skipping the toolbar checks")
+    }
+    val statusBarShown = isStatusBarShown()
+    if (!statusBarShown) {
+      logger<Driver>().info("The UI settings hide the status bar, skipping the status bar check")
     }
     val requiredComponents = buildList {
       if (!distractionFreeMode) {
@@ -210,6 +215,8 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
         add(listOf(abstractToolbarCombo {
           and(byType("com.intellij.openapi.wm.impl.AbstractToolbarCombo"), contains(byAccessibleName(currentProject.getName())))
         }))
+      }
+      if (statusBarShown) {
         add(listOf(ideStatusBar()))
       }
     }
@@ -230,6 +237,13 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
       checker = { it.isEmpty() },
     )
   }
+
+  private fun isStatusBarShown(): Boolean =
+    runCatching {
+      driver.getCurrentUiSettings().showStatusBar
+    }.onFailure {
+      logger<Driver>().info("The status bar setting is not available: ${it.message}")
+    }.getOrDefault(true)
 
   private fun isDistractionFreeMode(): Boolean =
     runCatching {
