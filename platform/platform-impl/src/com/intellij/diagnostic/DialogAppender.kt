@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.openapi.diagnostic.IdeaLogRecord
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.diagnostic.UnhandledExceptionKind
+import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.pagecache.impl.Throttler
 import kotlinx.coroutines.CompletableDeferred
@@ -90,7 +91,7 @@ class DialogAppender : Handler() {
   private suspend fun processEvent(entry: Entry) {
     try {
       val app = ApplicationManager.getApplication()
-      if (app == null || app.isExitInProgress || app.isDisposed()) return
+      if (app == null || app.isExitInProgress || app.isDisposed() || ShutDownTracker.isShutdownStarted()) return
 
       val throwable = entry.throwable
       val oomErrorKind = DefaultIdeaErrorLogger.getOOMErrorKind(throwable)
