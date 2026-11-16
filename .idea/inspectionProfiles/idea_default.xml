@@ -22,6 +22,9 @@
       <scope name="IDE Testing Framework" level="WARNING" enabled="true" />
     </inspection_tool>
     <inspection_tool class="60116a3f-d0e5-3ea6-bf7a-7856244d8ffc" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
+    <inspection_tool class="36be0558-3c34-4a01-97c1-df4b9f1416c2" enabled="true" level="WARNING" enabled_by_default="false">
+      <scope name="Python" level="WARNING" enabled="true" />
+    </inspection_tool>
     <inspection_tool class="4eb51d7d-e527-31f8-ab15-76a399786587" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="Python" level="WARNING" enabled="true" />
     </inspection_tool>
@@ -3965,6 +3968,16 @@
         <constraint name="Argument" minCount="0" within="" contains="" />
         <constraint name="Condition" regexp="is Filesystem.Eel" within="" contains="" />
         <constraint name="Expression" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use PythonInterpreter instead of Sdk in PyCharm" uuid="36be0558-3c34-4a01-97c1-df4b9f1416c2" description="PyCharm must not use &lt;code&gt;com.intellij.openapi.projectRoots.Sdk&lt;/code&gt;. Use &lt;code&gt;com.intellij.python.sdk.backend.PythonInterpreter&lt;/code&gt; instead. Get it with &lt;code&gt;Sdk.pythonInterpreterResult&lt;/code&gt; at the boundary to platform code that gives an &lt;code&gt;Sdk&lt;/code&gt;. Only the module &lt;code&gt;intellij.python.sdk.backend&lt;/code&gt; can use &lt;code&gt;Sdk&lt;/code&gt;." suppressId="PySdkUsage" problemDescriptor="Do not use Sdk in PyCharm. Use PythonInterpreter instead." text="com.intellij.openapi.projectRoots.Sdk" recursive="true" caseInsensitive="false" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use PythonInterpreter instead of Sdk in PyCharm" uuid="36be0558-3c34-4a01-97c1-df4b9f1416c2" suppressId="PySdkUsage" problemDescriptor="Do not use Sdk in PyCharm. Use PythonInterpreter instead." text="com.intellij.openapi.projectRoots.Sdk" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use PythonInterpreter instead of Sdk in PyCharm" uuid="36be0558-3c34-4a01-97c1-df4b9f1416c2" suppressId="PySdkUsage" problemDescriptor="Do not use Sdk in PyCharm. Use PythonInterpreter instead." text="$SdkExpr$" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="SdkExpr" nameOfExprType="com\.intellij\.openapi\.projectRoots\.Sdk" exprTypeWithinHierarchy="true" within="" contains="" />
       </searchConfiguration>
       <searchConfiguration name="Use RecursionManager?" suppressId="RecursionManagerUsage" text="class $Class$ { &#10;  ThreadLocal&lt;$FieldType$&gt; $FieldName$ = $Init$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="Class" within="" contains="" />
