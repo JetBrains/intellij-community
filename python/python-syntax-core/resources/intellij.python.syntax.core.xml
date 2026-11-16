@@ -27,6 +27,9 @@
     <applicationService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings$AppService"/>
     <applicationService serviceInterface="com.jetbrains.python.PythonCodeStyleService"
                         serviceImplementation="com.jetbrains.python.PythonCodeStyleServiceImpl"/>
+    <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
+                    serviceImplementation="com.jetbrains.python.debugger.PyEmptySignatureCacheManager"
+                    open="true"/>
     <workspaceModel.customImlComponentNameContributor
       implementation="com.jetbrains.python.documentation.PyDocumentationSettingsImlComponentNameContributor"/>
 
