@@ -92,7 +92,7 @@ private fun showNotification(project: Project, settings: PyProjectModelSettings)
   )
     .setSuggestionType(true)
     .addAction(NotificationAction.createSimpleExpiring(PyProjectTomlBundle.message("pyproject.notification.configure")) {
-      openPyProjectPreview(project, settings)
+      requestOpenPyProjectPreview(project, settings)
       PyProjectTomlCollector.setupNotificationConfigureClicked()
     })
     .addAction(NotificationAction.createSimpleExpiring(PyProjectTomlBundle.message("pyproject.notification.dont.show.again")) {

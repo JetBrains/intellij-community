@@ -4,6 +4,7 @@ package com.intellij.restructuredtext.python.run.docutils;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.restructuredtext.python.run.RestCommandLineState;
 import com.jetbrains.python.HelperPackage;
@@ -29,7 +30,7 @@ public class DocutilsCommandLineState extends RestCommandLineState {
           BrowserUtil.browse(virtualFile);
         }
         else {
-          FileEditorManager.getInstance(myConfiguration.getProject()).openFile(virtualFile, true);
+          FileEditorManager.getInstance(myConfiguration.getProject()).requestOpenFile(virtualFile, FileEditorOpenRequest.withFocus(true));
         }
       }
     };
