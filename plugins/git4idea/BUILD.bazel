@@ -126,7 +126,6 @@ jvm_library(
         "//platform/vcs-impl",
         "//platform/vcs-impl/shared",
         "//platform/lang-api:lang",
-        "//libraries/junit4",
         "//platform/lvcs-api:lvcs",
         "//platform/testFramework",
         "//platform/testRunner",
