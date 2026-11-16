@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.python.sdk.backend.PyInterpreterRefsKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.common.PyInterpreterItem;
 import com.intellij.python.sdk.common.PyInterpreterRef;
@@ -120,7 +121,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private @NotNull DropDownLink<?> getAddInterpreterDropDownLink(@NotNull Project project, @Nullable Module module) {
     final DropDownLink<?> additionalAction = new DropDownLink<>(
       PyBundle.message("active.sdk.dialog.link.add.interpreter.text"),
-      link -> createAddInterpreterPopup(project, module, link, this::updateSdkListAndSelect)
+      link -> createAddInterpreterPopup(project, module, link, interpreter -> updateListAndSelect(interpreter.getRef()))
     );
     // Keep the link visible when it gets disabled while an SDK configuration is in progress.
     additionalAction.setAutoHideOnDisable(false);
@@ -272,6 +273,11 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   private void updateSdkListAndSelect(@Nullable Sdk selectedSdk) {
+    updateListAndSelect(selectedSdk != null ? PyInterpreterRefsKt.interpreterRefOf(selectedSdk) : null);
+  }
+
+  /** Reloads the list and selects the interpreter with {@code selectedRef}, or no interpreter for {@code null}. */
+  private void updateListAndSelect(@Nullable PyInterpreterRef selectedRef) {
     final List<Sdk> allPythonSdks = getAvailableSdks();
 
     final Map<PyRenderedSdkType, List<PyInterpreterItem>> moduleSdksByTypes =
@@ -294,7 +300,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     items.add(getShowAll());
 
     mySdkCombo.setRenderer(new PySdkListCellRenderer());
-    final PyInterpreterItem selection = findItemFor(moduleSdksByTypes, selectedSdk);
+    final PyInterpreterItem selection = findItemFor(moduleSdksByTypes, selectedRef);
     mySdkCombo.setModel(new CollectionComboBoxModel<>(items, selection));
     // The call of `setSelectedItem` is required to notify `PyPathMappingsUiProvider` about initial setting of `Sdk` via `setModel` above
     // Fragile as it is vulnerable to changes of `setSelectedItem` method in respect to processing `ActionEvent`
@@ -303,16 +309,14 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   /**
-   * The item that names {@code sdk}, or null when the list has none.
+   * The item that names the interpreter with {@code ref}, or null when the list has none.
    * <p>
-   * Matched by interpreter name, because the "Python Interpreters" dialog may hand over an editable copy rather than
-   * the SDK the live table holds.
+   * Matched by the ref, because the "Python Interpreters" dialog may hand over an editable copy rather than the SDK the
+   * live table holds.
    */
   @Nullable
   private static PyInterpreterItem findItemFor(@NotNull Map<PyRenderedSdkType, List<PyInterpreterItem>> itemsByType,
-                                               @Nullable Sdk sdk) {
-    if (sdk == null) return null;
-    PyInterpreterRef ref = PyInterpreterRefsKt.interpreterRefOf(sdk);
+                                               @Nullable PyInterpreterRef ref) {
     if (ref == null) return null;
     for (List<PyInterpreterItem> items : itemsByType.values()) {
       PyInterpreterItem item = ContainerUtil.find(items, candidate -> ref.equals(candidate.getRef()));
@@ -332,12 +336,12 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   public static @NotNull ListPopup createAddInterpreterPopup(@NotNull Project project,
                                                              @Nullable Module module,
                                                              @NotNull Component dataContextComponent,
-                                                             @NotNull Consumer<Sdk> onSdkCreated) {
+                                                             @NotNull Consumer<PythonInterpreter> onInterpreterSet) {
     DataContext dataContext = DataManager.getInstance().getDataContext(dataContextComponent);
     var moduleOrProject = (module != null) ? new ModuleOrProject.ModuleAndProject(module) : new ModuleOrProject.ProjectOnly(project);
     return JBPopupFactory.getInstance().createActionGroupPopup(
       null,
-      AddInterpreterActions.createAddInterpreterActionGroup(moduleOrProject, onSdkCreated),
+      AddInterpreterActions.createAddInterpreterActionGroup(moduleOrProject, onInterpreterSet),
       dataContext,
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
       false,

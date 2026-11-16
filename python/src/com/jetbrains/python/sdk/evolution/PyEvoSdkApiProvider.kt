@@ -70,7 +70,6 @@ import com.intellij.python.sdk.backend.evolution.toSectionLabel
 import com.intellij.python.sdk.backend.evolution.withCreators
 import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.sdk.backend.interpreterItem
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.sdk.common.EvoRowAction
 import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
@@ -1245,22 +1244,14 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       return EvoSelectResultDto.Error(PySdkBundle.message("evolution.error.select.failed"))
     }
     val widgetScope = project.service<EvoWidgetTraceScope>().scope
-    // Re-collect the same actions the node was built from and run the index-th one. Associate any SDK the action
-    // creates with the module — and with the rest of its workspace (target wizards report the new SDK via this
-    // callback; the local dialog also self-associates).
-    val actions = collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(target.pyProject.pyProject)) { sdk ->
+    // Re-collect the same actions the node was built from and run the index-th one. The dialog of the action sets the
+    // interpreter on the module, and the callback gives it to the rest of the workspace.
+    val actions = collectAddInterpreterActions(ModuleOrProject.ModuleAndProject(target.pyProject.pyProject)) { interpreter ->
       // The callback may run inside a write action, and the setter does its own EDT write, so it runs on a background
       // coroutine. The widget does not read the snapshot back.
       widgetScope.launch {
-        // A broken SDK names no interpreter, so the members get none, as for no SDK.
-        val interpreter = sdk.pythonInterpreterResultAsync().successOrNull
-        if (interpreter == null) {
-          for (member in target.workspace.members) member.pyProject.setPythonInterpreter(null, waitForSnapshot = false)
-        }
-        else {
-          val result = target.workspace.setOnWorkspace(interpreter)
-          if (result is com.jetbrains.python.Result.Failure) ErrorSink().emit(result.error, project)
-        }
+        val result = target.workspace.setOnWorkspace(interpreter)
+        if (result is com.jetbrains.python.Result.Failure) ErrorSink().emit(result.error, project)
       }
     }
     val action = actions.getOrNull(index) ?: run {

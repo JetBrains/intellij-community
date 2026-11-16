@@ -262,7 +262,9 @@ public final class PythonSdkType extends SdkType {
                                PyBundle.message("python.sdk.add.python.interpreter.title"));
       return;
     }
-    PyAddSdkDialog.show(project, module, sdk -> {
+    PyAddSdkDialog.show(project, module, interpreter -> {
+      // The SDK UI of the platform takes an SDK back, so this is the place where the interpreter becomes one.
+      Sdk sdk = PythonInterpreterExtKt.getSdkAPI(interpreter);
       sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
       sdkCreatedCallback.accept(sdk);
     });

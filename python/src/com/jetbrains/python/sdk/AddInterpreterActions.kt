@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
 import com.intellij.openapi.util.Disposer
@@ -39,7 +38,6 @@ import com.intellij.python.pyproject.model.api.ModuleSdkState
 import com.intellij.python.pyproject.model.api.SdkForModuleConfigInstruction
 import com.intellij.python.pyproject.model.api.getModuleSdkState
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -93,8 +91,8 @@ abstract class DialogAction(
   }
 }
 
-internal fun createAddInterpreterActionGroup(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>): DefaultActionGroup =
-  DefaultActionGroup(collectAddInterpreterActions(moduleOrProject, onSdkCreated)).apply {
+internal fun createAddInterpreterActionGroup(moduleOrProject: ModuleOrProject, onInterpreterSet: Consumer<PythonInterpreter>): DefaultActionGroup =
+  DefaultActionGroup(collectAddInterpreterActions(moduleOrProject, onInterpreterSet)).apply {
     ActionManager.getInstance().getAction("Python.NewInterpreter.Extra")?.let { add(it) }
     templatePresentation.putClientProperty(
       ActionUtil.POPUP_AD_TEXT,
@@ -105,9 +103,12 @@ internal fun createAddInterpreterActionGroup(moduleOrProject: ModuleOrProject, o
 /**
  * The actions that add an interpreter to the module of [moduleOrProject]. None for [ProjectOnly]: every interpreter
  * belongs to a `PyProject`, so a place without a module offers no Add.
+ *
+ * Each dialog sets the interpreter it adds on the module itself, and then calls [onInterpreterSet] with the interpreter
+ * that the module has.
  */
 @ApiStatus.Internal
-fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>): List<DialogAction> {
+fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onInterpreterSet: Consumer<PythonInterpreter>): List<DialogAction> {
   // If module resides on this target, we can't use any target except same target and target types that explicitly allow that
   // example: on ``\\wsl$`` you can only use wsl target and dockers
   val targetModuleSitsOn = when (moduleOrProject) {
@@ -116,30 +117,30 @@ fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated:
   }
   return mutableListOf<DialogAction>().apply {
     if (targetModuleSitsOn == null || eelNativeMode) {
-      add(createAddLocalInterpreterAction(moduleOrProject, onSdkCreated::accept))
+      add(createAddLocalInterpreterAction(moduleOrProject, onInterpreterSet::accept))
       PythonAddInterpreterProviders().quickActionProviders().forEach { provider ->
-        add(createAddLocalInterpreterAction(moduleOrProject, onSdkCreated::accept, provider))
+        add(createAddLocalInterpreterAction(moduleOrProject, onInterpreterSet::accept, provider))
       }
     }
-    addAll(collectNewInterpreterOnTargetActions(moduleOrProject, targetModuleSitsOn, onSdkCreated::accept))
+    addAll(collectNewInterpreterOnTargetActions(moduleOrProject, targetModuleSitsOn, onInterpreterSet::accept))
   }
 }
 
 private fun collectNewInterpreterOnTargetActions(
   moduleOrProject: ModuleOrProject,
   targetTypeModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
-  onSdkCreated: (Sdk) -> Unit,
+  onInterpreterSet: (PythonInterpreter) -> Unit,
 ): List<DialogAction> =
   PythonInterpreterTargetEnvironmentFactory.EP_NAME.extensionList
     .filter { it.getTargetType().isSystemCompatible() }
     .filter { targetTypeModuleSitsOn == null || targetTypeModuleSitsOn.allowCreationTargetOfThisType(it.getTargetType()) }
     // filter create new interpreter actions on targets that need to be associated with module like PyDockerComposeTargetEnvironmentFactory
     .filterNot { moduleOrProject.project.isDefault && it.needAssociateWithModule() }
-    .map { AddInterpreterOnTargetAction(moduleOrProject, it.getTargetType(), onSdkCreated) }
+    .map { AddInterpreterOnTargetAction(moduleOrProject, it.getTargetType(), onInterpreterSet) }
 
 internal class AddLocalInterpreterAction(
   private val moduleOrProject: ModuleOrProject,
-  private val onSdkCreated: (Sdk) -> Unit,
+  private val onInterpreterSet: (PythonInterpreter) -> Unit,
   private val bestGuessCreateSdkInfo: Deferred<CreateSdkInfoWithTool?>,
   private val preselectManager: PythonEnvironmentManager? = null,
   dynamicText: Supplier<@NlsActions.ActionText String> = PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"),
@@ -156,7 +157,7 @@ internal class AddLocalInterpreterAction(
       moduleOrProject, errorSink = ErrorSink(), bestGuessCreateSdkInfo = bestGuessCreateSdkInfo
     ).apply {
       // Model provides flow, but we need to call Consumer
-      sdkCreatedFlow.oneShotConsumer(onSdkCreated)
+      interpreterSetFlow.oneShotConsumer(onInterpreterSet)
     }
     return PythonAddLocalInterpreterDialog(dialogPresenter, preselectManager)
   }
@@ -165,7 +166,7 @@ internal class AddLocalInterpreterAction(
 internal class AddInterpreterOnTargetAction(
   private val moduleOrProject: ModuleOrProject,
   private val targetType: TargetEnvironmentType<*>,
-  private val onSdkCreated: (Sdk) -> Unit,
+  private val onInterpreterSet: (PythonInterpreter) -> Unit,
 ) : DialogAction(
   dynamicText = PyBundle.messagePointer("python.sdk.action.add.interpreter.based.on.target.text", targetType.displayName),
   icon = targetType.icon,
@@ -195,7 +196,9 @@ internal class AddInterpreterOnTargetAction(
     service<LogCollectorService>().coroutineScope.launch(Dispatchers.Default) {
       PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(pythonInterpreter, isPreviouslyConfigured = true)
     }
-    onSdkCreated(pythonInterpreter.getSdkAPI())
+    // The wizard has set this interpreter on the module, see PythonLanguageRuntimeUI.createCustomTool. A caller must not
+    // build it again from its SDK: the SDK data can name another interpreter (PY-94081).
+    onInterpreterSet(pythonInterpreter)
   }
 }
 
@@ -259,7 +262,7 @@ private class ToolDetectionService(project: Project, val coroutineScope: Corouti
 
 private fun createAddLocalInterpreterAction(
   moduleOrProject: ModuleOrProject,
-  onSdkCreated: (Sdk) -> Unit,
+  onInterpreterSet: (PythonInterpreter) -> Unit,
   provider: PythonAddInterpreterProvider? = null,
 ): AddLocalInterpreterAction {
   val bestGuessCreateSdkInfo = moduleOrProject.moduleIfExists?.let {
@@ -267,7 +270,7 @@ private fun createAddLocalInterpreterAction(
   } ?: CompletableDeferred(value = null)
   return AddLocalInterpreterAction(
     moduleOrProject = moduleOrProject,
-    onSdkCreated = onSdkCreated,
+    onInterpreterSet = onInterpreterSet,
     bestGuessCreateSdkInfo = bestGuessCreateSdkInfo,
     preselectManager = provider?.manager,
     dynamicText = provider?.quickActionName?.let { name -> Supplier { name } }

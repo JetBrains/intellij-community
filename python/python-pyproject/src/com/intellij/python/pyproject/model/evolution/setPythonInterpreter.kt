@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.jps.entities.modifyModuleEntity
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
@@ -26,6 +27,8 @@ import com.intellij.python.sdk.backend.PyInterpreterLibraryName
 import com.intellij.python.sdk.backend.interpreterOwnerProjectDir
 import com.intellij.python.sdk.backend.setPyInterpreterDependency
 import com.intellij.python.sdk.backend.pyInterpreterDependency
+
+private val logger = fileLogger()
 
 /**
  * Makes [interpreter] the interpreter of this project, and returns the interpreter that it then has. It writes the
@@ -84,11 +87,16 @@ suspend fun EvoWorkspace.setOnWorkspace(interpreter: PythonInterpreter): PyResul
 private fun PyProject.libraryNameOf(interpreter: PythonInterpreter): PyInterpreterLibraryName =
   libraryNameOf(checkNotNull(project.interpreterOwnerProjectDir) { "$project has no directory" }, interpreter)
 
-/** Writes the interpreter library entry of the module with [name], or removes it for `null`. */
+/**
+ * Writes the interpreter library entry of the module with [name], or removes it for `null`. It logs the entry before
+ * and after, so a log shows which writer gave the module which interpreter.
+ */
 private suspend fun PyProject.writeInterpreterLibraryEntry(name: PyInterpreterLibraryName?) {
   project.workspaceModel.update("Set the Python interpreter of ${residesOnModule.name}") { storage ->
     val module = residesOnModule.findModuleEntity(storage) ?: return@update
-    if (module.dependencies.pyInterpreterDependency == null && name == null) return@update
+    val previous = module.dependencies.pyInterpreterDependency
+    if (previous == null && name == null) return@update
+    logger.info("Set the Python interpreter of ${residesOnModule.name}: ${previous?.library?.name} -> $name")
     storage.modifyModuleEntity(module) { dependencies.setPyInterpreterDependency(name) }
   }
 }

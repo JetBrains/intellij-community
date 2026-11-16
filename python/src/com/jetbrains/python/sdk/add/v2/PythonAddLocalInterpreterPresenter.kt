@@ -2,8 +2,7 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.jetbrains.python.sdk.asPyProjectAddingFacet
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.emit
@@ -22,8 +21,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 import java.nio.file.Path
 
 /**
- * When [okClicked] creates sdk and reports it to [sdkCreatedFlow].
- * Only one latest SDK is cached, hence must be collected before next [okClicked] which is used one time in production anyway
+ * When [okClicked] creates an interpreter, it sets it on the module and reports it to [interpreterSetFlow].
+ * Only one latest interpreter is cached, hence must be collected before next [okClicked] which is used one time in production anyway
  *
  * @see PythonAddLocalInterpreterDialog
  */
@@ -38,8 +37,8 @@ class PythonAddLocalInterpreterPresenter(
   val pathForVEnv: Path
     get() = moduleOrProject.workingDirectory ?: envReader.getVEnvRootDir()
 
-  private val _sdkShared = MutableSharedFlow<Sdk>(1)
-  val sdkCreatedFlow: Flow<Sdk> = _sdkShared.asSharedFlow()
+  private val _interpreterShared = MutableSharedFlow<PythonInterpreter>(1)
+  val interpreterSetFlow: Flow<PythonInterpreter> = _interpreterShared.asSharedFlow()
 
   suspend fun okClicked(addEnvironment: PythonAddEnvironment<PathHolder.Eel>): Unit = withSdkConfigurationLock(moduleOrProject.project) {
     when (val r = addEnvironment.setupSdk(moduleOrProject)) {
@@ -55,7 +54,7 @@ class PythonAddLocalInterpreterPresenter(
         } ?: r.result
         val isPreviouslyConfigured = addEnvironment.createStatisticsInfo(PythonInterpreterCreationTargets.LOCAL_MACHINE).previouslyConfigured
         PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(set, isPreviouslyConfigured)
-        _sdkShared.emit(set.getSdkAPI())
+        _interpreterShared.emit(set)
       }
     }
   }

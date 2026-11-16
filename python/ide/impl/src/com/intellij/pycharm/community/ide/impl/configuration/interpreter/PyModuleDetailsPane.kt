@@ -27,6 +27,8 @@ import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.pyproject.model.usePyprojectToml
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.interpreterRefOf
+import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.sdk.common.PyInterpreterItem
@@ -163,11 +165,11 @@ internal class PyModuleDetailsPane(
   ) {
     override fun actionPerformed(e: AnActionEvent) {
       val group = DefaultActionGroup().apply {
-        addAll(collectAddInterpreterActions(moduleOrProject) { newSdk ->
+        addAll(collectAddInterpreterActions(moduleOrProject) { interpreter ->
           projectSdksModel.reset(project)
           reloadSdkComboItems()
           resetSdkComboSelection()
-          findExistingByName(newSdk.name)?.let { sdkComboModel.selectedItem = it }
+          findExistingByRef(interpreter.ref)?.let { sdkComboModel.selectedItem = it }
         })
       }
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(
@@ -476,6 +478,17 @@ internal class PyModuleDetailsPane(
    * Returns the `Existing` row whose SDK name matches [name], or `null`. Uses an exhaustive `when`
    * so a new [SdkComboItem] variant forces a compile error here instead of a silent skip.
    */
+  /** The row of the interpreter with [ref], or `null` when the combo has none. */
+  private fun findExistingByRef(ref: PyInterpreterRef): SdkComboItem.Existing? {
+    for (row in sdkComboModel.items) {
+      when (row) {
+        is SdkComboItem.Existing -> if (interpreterRefOf(row.sdk) == ref) return row
+        SdkComboItem.NoInterpreter, SdkComboItem.ShowAll, null -> Unit
+      }
+    }
+    return null
+  }
+
   private fun findExistingByName(name: String): SdkComboItem.Existing? {
     for (row in sdkComboModel.items) {
       when (row) {
