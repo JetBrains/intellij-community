@@ -50,6 +50,7 @@ jvm_library(
         "//python/python-pytools/backend",
         "//python/python-sdk/backend",
         "//python/python-sdk/common",
+        "//platform/analysis-api:analysis",
     ],
 )
 ### auto-generated section `build intellij.python.hatch.tests` end
