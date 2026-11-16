@@ -24,7 +24,13 @@ import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.isSubtypeRelated
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyUnionType
+import com.jetbrains.python.psi.types.PyUnsafeUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+
+/**
+ * The largest product of the union member counts of the target type and the actual type that the inspection checks.
+ */
+private const val MAX_ANALYZED_UNION_MEMBER_PAIRS = 100
 
 class PyInvalidCastInspection : PyInspection() {
   @JvmField
@@ -58,6 +64,8 @@ class PyInvalidCastInspection : PyInspection() {
         val targetTypeRef = PyTypingTypeProvider.getType(args[0], myTypeEvalContext)
         val targetType = targetTypeRef.derefOrUnknown()
         val actualType = myTypeEvalContext.getType(args[1])
+
+        if (targetType.unionMemberCount() * actualType.unionMemberCount() > MAX_ANALYZED_UNION_MEMBER_PAIRS) return
 
         if (targetType.isSubtypeRelated(actualType, myTypeEvalContext)) return
 
@@ -140,6 +148,15 @@ private fun isSubtypeRelatedIgnoringVariance(t1: PyType?, t2: PyType?, context: 
   }
 
   return t1.isSubtypeRelated(t2, context)
+}
+
+/**
+ * Returns the number of union members that [isSubtypeRelated] compares, with the members of nested unions.
+ */
+private fun PyType?.unionMemberCount(): Int = when (this) {
+  is PyUnionType -> members.sumOf { it.unionMemberCount() }
+  is PyUnsafeUnionType -> members.sumOf { it.unionMemberCount() }
+  else -> 1
 }
 
 /**
