@@ -199,6 +199,7 @@ private fun installedFilterText(filter: UnifiedPluginInstalledFilter): String {
     UnifiedPluginInstalledFilter.Disabled -> "plugins.configurable.InstalledSearchOption.Disabled"
     UnifiedPluginInstalledFilter.Invalid -> "plugins.configurable.InstalledSearchOption.Invalid"
     UnifiedPluginInstalledFilter.UpdatedBundled -> "plugins.configurable.InstalledSearchOption.UpdatedBundled"
+    UnifiedPluginInstalledFilter.BuiltIn -> "plugins.configurable.InstalledSearchOption.BuiltIn"
   }
   return IdeBundle.message(key)
 }
@@ -209,6 +210,7 @@ private val INSTALLED_FILTERS = listOf(
   UnifiedPluginInstalledFilter.Disabled,
   UnifiedPluginInstalledFilter.Invalid,
   UnifiedPluginInstalledFilter.UpdatedBundled,
+  UnifiedPluginInstalledFilter.BuiltIn,
 )
 
 private val SORT_OPTIONS = listOf(

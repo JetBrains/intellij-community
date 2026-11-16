@@ -93,7 +93,7 @@ internal class UnifiedPluginInventoryTest {
   }
 
   @Test
-  fun `implementation detail plugin is excluded when either side marks it hidden`() {
+  fun `implementation detail plugin is kept apart when either side marks it hidden`() {
     val local = entry("detail.plugin", "Client", PluginSource.LOCAL)
     val remote = entry("detail.plugin", "Host", PluginSource.REMOTE, implementationDetail = true)
 
@@ -101,6 +101,9 @@ internal class UnifiedPluginInventoryTest {
 
     assertThat(result.installedPlugins).isEmpty()
     assertThat(result.bundledPlugins).isEmpty()
+    val item = result.implementationDetailPlugins.single()
+    assertThat(item.model).isSameAs(local.model)
+    assertThat(item.installedOn).isEqualTo(PluginSource.BOTH)
   }
 
   @Test

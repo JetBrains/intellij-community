@@ -96,7 +96,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   override fun getTarget(): PluginSource = PluginSource.LOCAL
 
   override suspend fun getPluginInventory(): PluginInventorySnapshot {
-    val runtimeDescriptors = PluginManager.getVisiblePlugins(false).toList()
+    val runtimeDescriptors = PluginManager.getVisiblePlugins(true).toList()
     val state = InstalledPluginsState.getInstance()
     val stagedDescriptors = state.installedPlugins + state.updatedPluginDescriptors
     return PluginInventorySnapshot(

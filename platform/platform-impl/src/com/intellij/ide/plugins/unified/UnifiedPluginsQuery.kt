@@ -21,6 +21,7 @@ internal enum class UnifiedPluginInstalledFilter(val command: String) {
   Disabled("/disabled"),
   Invalid("/invalid"),
   UpdatedBundled("/updatedBundled"),
+  BuiltIn("/built-in"),
 }
 
 internal enum class UnifiedPluginQueryCommand(val command: String) {
@@ -29,6 +30,7 @@ internal enum class UnifiedPluginQueryCommand(val command: String) {
   Disabled(UnifiedPluginInstalledFilter.Disabled.command),
   Invalid(UnifiedPluginInstalledFilter.Invalid.command),
   UpdatedBundled(UnifiedPluginInstalledFilter.UpdatedBundled.command),
+  BuiltIn(UnifiedPluginInstalledFilter.BuiltIn.command),
   Bundled("/bundled"),
   UserInstalled("/userInstalled"),
   Downloaded("/downloaded"),
