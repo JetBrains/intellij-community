@@ -147,6 +147,12 @@ abstract class WelcomeScreenProjectProvider {
     return Path.of(getProjectsBasePath(), getWelcomeScreenProjectDirName()).absolute()
   }
 
+  private fun defaultProjectPath(): Path {
+    val defaultProjectDir = getUserHomeProjectDir()
+    cachedProjectsBasePath = defaultProjectDir
+    return Path.of(defaultProjectDir, getWelcomeScreenProjectDirName()).absolute()
+  }
+
   @OptIn(ExperimentalPathApi::class)
   @Internal
   fun getWelcomeScreenProjectPathForInternalUsage(): Path {
@@ -157,6 +163,13 @@ abstract class WelcomeScreenProjectProvider {
         projectPath.createDirectories()
       }
       catch (_: IOException) {
+        try {
+          val defaultPath = defaultProjectPath()
+          defaultPath.createDirectories()
+          return defaultPath
+        }
+        catch (_: IOException) {
+        }
       }
     }
     else {
@@ -273,6 +286,8 @@ abstract class WelcomeScreenProjectProvider {
 
 @Suppress("DuplicatedCode")
 private fun getProjectsBasePath(): String {
+  cachedProjectsBasePath?.let { return it }
+
   val application = ApplicationManager.getApplication()
   val fromSettings = if (application == null || application.isHeadlessEnvironment) null else GeneralLocalSettings.getInstance().defaultProjectDirectory
   if (!fromSettings.isNullOrEmpty()) {
