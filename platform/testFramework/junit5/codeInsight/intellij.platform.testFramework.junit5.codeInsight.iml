@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.syntax" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="PROVIDED" />
   </component>
 </module>

@@ -20,6 +20,11 @@ jvm_provided_library(
     lib = "//libraries/junit4",
 )
 
+jvm_provided_library(
+    name = "libraries_junit6-params_provided",
+    lib = "//libraries/junit6-params",
+)
+
 jvm_library(
     name = "codeInsight",
     srcs = glob(
@@ -54,6 +59,7 @@ jvm_library(
         "//platform/syntax/syntax-api:syntax",
         ":libraries_junit6_provided",
         ":libraries_junit4_provided",
+        ":libraries_junit6-params_provided",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5.codeInsight` end
