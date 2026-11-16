@@ -1,4 +1,4 @@
-// ERROR: Initializer type mismatch: expected 'Enumeration<DefaultMutableTreeNode>', actual 'Enumeration<TreeNode!>!'.
+// ERROR: INITIALIZER_TYPE_MISMATCH
 import java.util.Enumeration
 import javax.swing.tree.DefaultMutableTreeNode
 

@@ -1,4 +1,4 @@
-// ERROR: 'public' sub-interface exposes its 'internal' supertype 'Base'.
+// ERROR: EXPOSED_SUPER_INTERFACE
 internal interface Base {
     fun test()
 }

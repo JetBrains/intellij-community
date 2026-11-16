@@ -1,4 +1,4 @@
-// ERROR: Unresolved reference 'add' on receiver of type 'List<String>'.
+// ERROR: UNRESOLVED_REFERENCE
 internal class A {
     fun changed(list: MutableList<String>) {
         list.reversed().add("a")

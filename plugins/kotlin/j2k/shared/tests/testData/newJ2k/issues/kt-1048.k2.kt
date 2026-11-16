@@ -1,6 +1,6 @@
-// ERROR: Receiver type 'HashMap<*, *>' contains star projection which prohibits the use of 'fun put(key: K, value: V): V?'.
-// ERROR: Receiver type 'HashMap<*, *>' contains star projection which prohibits the use of 'fun put(key: K, value: V): V?'.
-// ERROR: Type argument is not within its bounds: type parameter 'T (of class G<T : String?>)' must be subtype of 'String?', but actual: 'Any?'.
+// ERROR: MEMBER_PROJECTED_OUT
+// ERROR: MEMBER_PROJECTED_OUT
+// ERROR: UPPER_BOUND_VIOLATED
 internal class G<T : String?>(t: T?)
 
 class Java {

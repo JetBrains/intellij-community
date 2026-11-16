@@ -1,5 +1,5 @@
-// ERROR: 'getX' overrides nothing.
-// ERROR: Class 'Child' is not abstract and does not implement abstract member: val x: Unit
+// ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
+// ERROR: NOTHING_TO_OVERRIDE
 //Interface
 interface Parent {
     val x: Unit

@@ -1,4 +1,4 @@
-// ERROR: Inapplicable candidate(s): var content: String
+// ERROR: INAPPLICABLE_CANDIDATE
 import java.util.function.Function
 
 class Test {

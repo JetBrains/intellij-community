@@ -1,4 +1,4 @@
-// ERROR: 'internal' function exposes its 'private-in-class' parameter type 'C'.
+// ERROR: EXPOSED_PARAMETER_TYPE
 internal class Outer {
     fun test(c: C) {
         println(c.string)

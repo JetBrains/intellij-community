@@ -1,4 +1,4 @@
-// ERROR: Cannot access 'var prop: String?': it is private in 'J.S'.
+// ERROR: INVISIBLE_REFERENCE
 class J {
     private val s = S()
 

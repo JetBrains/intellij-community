@@ -1,7 +1,7 @@
-// ERROR: 'getSomething1' overrides nothing.
-// ERROR: 'getSomething2' overrides nothing.
-// ERROR: 'getSomething3' overrides nothing.
-// ERROR: 'setSomething3' overrides nothing.
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: NOTHING_TO_OVERRIDE
 package test
 
 abstract class C internal constructor(private val mySomething1: Int) : B(), I {

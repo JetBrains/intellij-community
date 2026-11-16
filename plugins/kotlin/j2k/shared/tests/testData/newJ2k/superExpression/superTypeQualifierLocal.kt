@@ -1,5 +1,5 @@
-// ERROR: Interface 'A' cannot be local. Try to use an anonymous object or abstract class instead.
-// ERROR: Interface 'B' cannot be local. Try to use an anonymous object or abstract class instead.
+// ERROR: LOCAL_INTERFACE_NOT_ALLOWED
+// ERROR: LOCAL_INTERFACE_NOT_ALLOWED
 class J {
     fun foo() {
         interface A {

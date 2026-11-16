@@ -1,4 +1,4 @@
-// ERROR: Initializer type mismatch: expected 'MutableList<String>', actual 'MutableList<String?>?'.
+// ERROR: INITIALIZER_TYPE_MISMATCH
 import java.util.stream.Collectors
 
 internal class A {

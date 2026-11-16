@@ -1,5 +1,5 @@
-// ERROR: 'getName' overrides nothing.
-// ERROR: 'name' hides member of supertype 'IUser' and needs an 'override' modifier.
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: VIRTUAL_MEMBER_HIDDEN
 package test
 
 class UserImpl(private val name: String?) : IUser {

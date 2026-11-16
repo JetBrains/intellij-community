@@ -1,5 +1,5 @@
-// ERROR: Cannot check for instance of erased type 'Array<String>'.
-// ERROR: Cannot check for instance of erased type 'Array<String>'.
+// ERROR: CANNOT_CHECK_FOR_ERASED
+// ERROR: CANNOT_CHECK_FOR_ERASED
 class J {
     fun testObject(obj: Any?): Boolean {
         return obj is Array<String>

@@ -1,4 +1,4 @@
-// ERROR: Cannot access 'val p: Int': it is private in 'E'.
+// ERROR: INVISIBLE_REFERENCE
 enum class E(private val p: Int) {
     A(1) {
         override fun bar() {

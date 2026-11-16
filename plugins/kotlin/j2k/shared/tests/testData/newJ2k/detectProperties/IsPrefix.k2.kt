@@ -1,4 +1,4 @@
-// ERROR: 'isSomething1' overrides nothing.
+// ERROR: NOTHING_TO_OVERRIDE
 internal interface I {
     val isSomething1: Boolean
 

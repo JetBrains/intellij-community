@@ -1,2 +1,2 @@
-// ERROR: Modifier 'protected' is not applicable inside 'file'.
+// ERROR: WRONG_MODIFIER_CONTAINING_DECLARATION
 protected class Test

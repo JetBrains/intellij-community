@@ -1,4 +1,4 @@
-// ERROR: Argument type mismatch: actual type is '(Number?) -> Unit', but '((CapturedType(in Number?)!) -> Unit)!' was expected.
+// ERROR: ARGUMENT_TYPE_MISMATCH
 class Test {
     fun useSamUpper(acceptor: SamAcceptor<out Number?>) {
         acceptor.acceptSam({ p: Number? -> })

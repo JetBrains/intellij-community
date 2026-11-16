@@ -1,4 +1,4 @@
-// ERROR: 'public' function exposes its 'internal' return type 'B'.
+// ERROR: EXPOSED_FUNCTION_RETURN_TYPE
 class J {
     internal class B
 

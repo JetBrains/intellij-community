@@ -1,3 +1,3 @@
-// ERROR: Unresolved reference 'NO_NAME_PROVIDED'.
+// ERROR: UNRESOLVED_REFERENCE
 @NO_NAME_PROVIDED
 internal class Test

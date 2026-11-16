@@ -1,5 +1,5 @@
-// ERROR: Label does not denote a reachable loop.
-// ERROR: Multiple labels per statement are forbidden.
+// ERROR: MULTIPLE_LABELS_ARE_FORBIDDEN
+// ERROR: NOT_A_LOOP_LABEL
 object TestClass {
     @JvmStatic
     fun main(args: Array<String>) {

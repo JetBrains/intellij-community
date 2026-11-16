@@ -1,5 +1,5 @@
-// ERROR: Argument type mismatch: actual type is 'ArrayList<String?>', but 'ArrayList<String>' was expected.
-// ERROR: Argument type mismatch: actual type is 'ArrayList<String?>?', but 'ArrayList<String>?' was expected.
+// ERROR: ARGUMENT_TYPE_MISMATCH
+// ERROR: ARGUMENT_TYPE_MISMATCH
 class Foo {
     fun testAssignment(k: K) {
         val l1 = k.return1()

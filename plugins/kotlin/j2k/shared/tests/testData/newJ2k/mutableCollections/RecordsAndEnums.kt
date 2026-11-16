@@ -1,4 +1,4 @@
-// ERROR: Using @JvmRecord is only allowed with -jvm-target 16 or later (or -jvm-target 15 with the -Xjvm-enable-preview flag enabled).
+// ERROR: JVM_RECORDS_ILLEGAL_BYTECODE_TARGET
 @JvmRecord
 internal data class Names(val values: MutableList<String?>) {
     fun count(): Int {

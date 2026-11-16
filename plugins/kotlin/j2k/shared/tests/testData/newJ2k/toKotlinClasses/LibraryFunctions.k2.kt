@@ -1,4 +1,4 @@
-// ERROR: Argument type mismatch: actual type is '(String) -> Boolean', but '(String?) -> Boolean' was expected.
+// ERROR: ARGUMENT_TYPE_MISMATCH
 package demo
 
 class TestJava {

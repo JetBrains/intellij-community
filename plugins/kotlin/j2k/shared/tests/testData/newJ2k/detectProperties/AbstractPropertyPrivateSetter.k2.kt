@@ -1,4 +1,4 @@
-// ERROR: 'isVisible' hides member of supertype 'KotlinClassAbstractProperty' and needs an 'override' modifier.
+// ERROR: VIRTUAL_MEMBER_HIDDEN
 // !ADD_KOTLIN_API
 package test
 

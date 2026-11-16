@@ -1,4 +1,4 @@
-// ERROR: Initializer type mismatch: expected 'Array<Array<String?>>', actual 'Array<Array<String?>?>'.
+// ERROR: INITIALIZER_TYPE_MISMATCH
 class Java8Class {
     fun foo0(r: Function0<String?>?) {
     }

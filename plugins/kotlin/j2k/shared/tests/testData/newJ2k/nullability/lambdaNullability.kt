@@ -1,4 +1,4 @@
-// ERROR: Unresolved label.
+// ERROR: UNRESOLVED_LABEL
 import java.util.function.BiFunction
 
 class Test {

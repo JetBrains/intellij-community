@@ -1,4 +1,4 @@
-// ERROR: 'x' hides member of supertype 'I' and needs an 'override' modifier.
+// ERROR: VIRTUAL_MEMBER_HIDDEN
 package test
 
 class J(@JvmField val x: Int) : I

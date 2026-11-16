@@ -1,4 +1,4 @@
-// ERROR: Type argument is not within its bounds: type parameter 'T (of fun <T : Comparable<in T!>!> naturalOrder)' must be subtype of 'Comparable<in Int?>!', but actual: 'Int?'.
+// ERROR: UPPER_BOUND_VIOLATED
 import java.util.stream.Collectors
 
 internal class Test {

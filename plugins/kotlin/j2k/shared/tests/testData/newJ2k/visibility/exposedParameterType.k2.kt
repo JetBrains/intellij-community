@@ -1,4 +1,4 @@
-// ERROR: 'public' function exposes its 'internal' parameter type 'B'.
+// ERROR: EXPOSED_PARAMETER_TYPE
 class J {
     internal class B
 

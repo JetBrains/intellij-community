@@ -1,4 +1,4 @@
-// ERROR: 'name' hides member of supertype 'Enum' and needs an 'override' modifier.
+// ERROR: VIRTUAL_MEMBER_HIDDEN
 internal enum class E {
     I;
 

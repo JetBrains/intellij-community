@@ -1,5 +1,5 @@
-// ERROR: Argument type mismatch: actual type is 'Topic<String?>', but 'Topic<String>' was expected.
-// ERROR: Argument type mismatch: actual type is 'Topic<String?>', but 'Topic<String>' was expected.
+// ERROR: ARGUMENT_TYPE_MISMATCH
+// ERROR: ARGUMENT_TYPE_MISMATCH
 internal class J {
     var topic: Topic<String?> = Topic<String?>()
 

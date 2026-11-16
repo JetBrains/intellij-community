@@ -1,6 +1,6 @@
-// ERROR: 'getX' overrides nothing.
-// ERROR: 'setX' overrides nothing.
-// ERROR: 'x' hides member of supertype 'I' and needs an 'override' modifier.
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: VIRTUAL_MEMBER_HIDDEN
 internal interface I {
     var x: Int
 }

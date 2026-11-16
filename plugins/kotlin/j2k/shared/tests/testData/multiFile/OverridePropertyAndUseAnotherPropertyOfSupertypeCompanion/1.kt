@@ -1,4 +1,4 @@
-// ERROR: 'type' hides member of supertype 'K' and needs an 'override' modifier.
+// ERROR: VIRTUAL_MEMBER_HIDDEN
 internal class J : K() {
     val type: Int
         get() = FOO

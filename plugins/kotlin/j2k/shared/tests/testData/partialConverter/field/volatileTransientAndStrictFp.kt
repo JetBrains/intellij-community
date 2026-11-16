@@ -1,4 +1,4 @@
-// ERROR: This annotation is not applicable to target 'member property with backing field'. Applicable targets: function, constructor, getter, setter, class
+// ERROR: WRONG_ANNOTATION_TARGET
 import kotlin.concurrent.Volatile
 
 internal class A {

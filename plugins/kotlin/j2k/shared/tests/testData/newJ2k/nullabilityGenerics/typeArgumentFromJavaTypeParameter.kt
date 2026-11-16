@@ -1,6 +1,6 @@
-// ERROR: Null cannot be a value of a non-null type 'Any?'.
-// ERROR: Type argument is not within its bounds: type parameter 'T (of fun <T : Any> notNullTypeParameter)' must be subtype of 'Any', but actual: 'Any?'.
-// ERROR: Type argument is not within its bounds: type parameter 'T (of fun <T : Any> notNullTypeParameter)' must be subtype of 'Any', but actual: 'String?'.
+// ERROR: NULL_FOR_NONNULL_TYPE
+// ERROR: UPPER_BOUND_VIOLATED
+// ERROR: UPPER_BOUND_VIOLATED
 class Foo {
     fun test(s: String) {
         J.unannotated<String>(s)

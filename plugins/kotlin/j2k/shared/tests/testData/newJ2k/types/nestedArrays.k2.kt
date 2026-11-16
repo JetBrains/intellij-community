@@ -1,4 +1,4 @@
-// ERROR: Return type mismatch: expected 'Array<IntArray>', actual 'Array<IntArray?>?'.
+// ERROR: RETURN_TYPE_MISMATCH
 internal object A {
     fun sampleFunction(a: Array<IntArray?>?, b: Array<IntArray?>?): Array<IntArray> {
         val n = a!![0]!!.size

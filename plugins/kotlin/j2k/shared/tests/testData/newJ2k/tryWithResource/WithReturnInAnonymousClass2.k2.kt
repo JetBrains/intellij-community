@@ -1,4 +1,4 @@
-// ERROR: 'public' function exposes its 'internal' parameter type 'I'.
+// ERROR: EXPOSED_PARAMETER_TYPE
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream

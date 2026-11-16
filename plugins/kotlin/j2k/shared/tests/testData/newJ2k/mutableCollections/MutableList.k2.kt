@@ -1,5 +1,5 @@
-// ERROR: 'fun <T> MutableList<T>.sort(comparator: Comparator<in T>): Unit' is deprecated. Use sortWith(comparator) instead. Replace with 'this.sortWith(comparator)'.
-// ERROR: Type argument is not within its bounds: type parameter 'T (of fun <T : Comparable<in T!>!> naturalOrder)' must be subtype of 'Comparable<in Double?>!', but actual: 'Double?'.
+// ERROR: DEPRECATION_ERROR
+// ERROR: UPPER_BOUND_VIOLATED
 class J {
     var natural: Comparator<Double?> = Comparator.naturalOrder<Double?>()
 

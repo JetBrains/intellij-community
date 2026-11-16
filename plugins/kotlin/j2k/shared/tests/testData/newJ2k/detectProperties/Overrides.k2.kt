@@ -1,12 +1,12 @@
-// ERROR: 'getFromB1' overrides nothing.
-// ERROR: 'getFromB2' overrides nothing.
-// ERROR: 'getFromB3' overrides nothing.
-// ERROR: 'getSomething1' overrides nothing.
-// ERROR: 'getSomething2' overrides nothing.
-// ERROR: 'getSomething3' overrides nothing.
-// ERROR: 'setFromB2' overrides nothing.
-// ERROR: 'setFromB4' overrides nothing.
-// ERROR: 'setSomething3' overrides nothing.
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: NOTHING_TO_OVERRIDE
 internal interface I {
     val something1: Int
 

@@ -1,5 +1,5 @@
-// ERROR: 'onPreferenceClick' hides member of supertype 'OnPreferenceClickListener' and needs an 'override' modifier.
-// ERROR: This type does not have a constructor.
+// ERROR: NO_CONSTRUCTOR
+// ERROR: VIRTUAL_MEMBER_HIDDEN
 import Preference.OnPreferenceClickListener
 
 class Foo {

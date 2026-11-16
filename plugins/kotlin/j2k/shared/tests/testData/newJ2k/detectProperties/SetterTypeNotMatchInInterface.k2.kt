@@ -1,5 +1,5 @@
-// ERROR: 'getSomething' overrides nothing.
-// ERROR: Class 'C' is not abstract and does not implement abstract member: val something: Int
+// ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
+// ERROR: NOTHING_TO_OVERRIDE
 internal interface I {
     val something: Int
     fun setSomething(value: String?)

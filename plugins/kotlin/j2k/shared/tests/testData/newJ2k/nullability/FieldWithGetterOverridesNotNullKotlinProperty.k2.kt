@@ -1,5 +1,5 @@
-// ERROR: 'getS' overrides nothing.
-// ERROR: 's' hides member of supertype 'I' and needs an 'override' modifier.
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: VIRTUAL_MEMBER_HIDDEN
 class A(private val s: String?) : I {
     override fun getS(): String {
         return s!!

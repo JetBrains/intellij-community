@@ -1,4 +1,4 @@
-// ERROR: Interface 'interface FunctionalI<A, B> : Any' does not have constructors.
+// ERROR: INTERFACE_AS_FUNCTION
 internal class Test {
     fun <A, B> foo(value: A?, `fun`: FunctionalI<A?, B?>): B? {
         return `fun`.apply(value)

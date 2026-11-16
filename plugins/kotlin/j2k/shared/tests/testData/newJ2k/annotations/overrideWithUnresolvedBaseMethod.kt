@@ -1,7 +1,7 @@
-// ERROR: Unresolved reference 'CustomFragment'.
-// ERROR: Unresolved reference 'CustomFragment'.
-// ERROR: Unresolved reference 'androidx'.
-// ERROR: Unresolved reference 'onFragmentCreate'.
+// ERROR: UNRESOLVED_IMPORT
+// ERROR: UNRESOLVED_REFERENCE
+// ERROR: UNRESOLVED_REFERENCE
+// ERROR: UNRESOLVED_REFERENCE
 import androidx.fragment.app.CustomFragment
 
 class Test : CustomFragment() {

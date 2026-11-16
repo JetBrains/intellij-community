@@ -1,4 +1,4 @@
-// ERROR: 'public' generic exposes its 'internal' parameter bound type 'B'.
+// ERROR: EXPOSED_TYPE_PARAMETER_BOUND
 internal class B
 
 class J<T : B?>

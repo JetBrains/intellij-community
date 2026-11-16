@@ -1,4 +1,4 @@
-// ERROR: Modifier 'protected' is not applicable inside 'standalone object'.
+// ERROR: WRONG_MODIFIER_CONTAINING_DECLARATION
 internal object Outer {
     fun foo() {
         val nested1 = Nested1(1)

@@ -1,4 +1,4 @@
-// ERROR: Unresolved reference 'NO_NAME_PROVIDED'.
+// ERROR: UNRESOLVED_REFERENCE
 internal object Test {
     @JvmStatic
     fun main(args: Array<String>) {

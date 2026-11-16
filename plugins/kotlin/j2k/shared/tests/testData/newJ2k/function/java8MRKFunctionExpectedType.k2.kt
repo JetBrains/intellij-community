@@ -1,4 +1,4 @@
-// ERROR: Initializer type mismatch: expected '(Int?) -> String?', actual '(Int) -> String?'.
+// ERROR: INITIALIZER_TYPE_MISMATCH
 package test
 
 internal class Test {

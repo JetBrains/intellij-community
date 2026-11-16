@@ -1,4 +1,4 @@
-// ERROR: Initializer type mismatch: expected 'Array<Any?>', actual 'Array<String?>'.
+// ERROR: INITIALIZER_TYPE_MISMATCH
 class Foo {
     fun test() {
         val list = listOf<String>("a", "b")

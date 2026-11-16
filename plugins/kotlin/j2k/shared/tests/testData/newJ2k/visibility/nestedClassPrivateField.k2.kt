@@ -1,4 +1,4 @@
-// ERROR: Cannot access 'val MAGIC: Int': it is private in 'J.Z'.
+// ERROR: INVISIBLE_REFERENCE
 class J {
     object Z {
         private const val MAGIC = 42

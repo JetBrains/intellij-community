@@ -1,4 +1,4 @@
-// ERROR: This annotation is not applicable to target 'member property without backing field or delegate'. Applicable targets: field, expression
+// ERROR: WRONG_ANNOTATION_TARGET
 class FieldOnlyEntity(private val location: String?) {
     @FieldOnly
     val summary: String?

@@ -1,9 +1,9 @@
-// ERROR: 'getSomeVar1' overrides nothing.
-// ERROR: 'setSomeVar3' overrides nothing.
-// ERROR: 'someVal' hides member of supertype 'KotlinClassWithProperties' and needs an 'override' modifier.
-// ERROR: 'someVar1' hides member of supertype 'KotlinClassWithProperties' and needs an 'override' modifier.
-// ERROR: 'someVar2' hides member of supertype 'KotlinClassWithProperties' and needs an 'override' modifier.
-// ERROR: 'someVar4' hides member of supertype 'KotlinClassWithProperties' and needs an 'override' modifier.
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: NOTHING_TO_OVERRIDE
+// ERROR: VIRTUAL_MEMBER_HIDDEN
+// ERROR: VIRTUAL_MEMBER_HIDDEN
+// ERROR: VIRTUAL_MEMBER_HIDDEN
+// ERROR: VIRTUAL_MEMBER_HIDDEN
 import javaApi.JavaClassDerivedFromKotlinClassWithProperties
 import javaApi.JavaClassWithProperties
 import kotlinApi.KotlinClassWithProperties

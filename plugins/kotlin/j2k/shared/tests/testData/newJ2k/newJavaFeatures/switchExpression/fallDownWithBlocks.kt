@@ -1,6 +1,6 @@
-// ERROR: 'when' expression must be exhaustive. Add an 'else' branch.
-// ERROR: Initializer type mismatch: expected 'Int', actual 'Unit'.
-// ERROR: Return type mismatch: expected 'Int', actual 'Unit'.
+// ERROR: INITIALIZER_TYPE_MISMATCH
+// ERROR: NO_ELSE_IN_WHEN
+// ERROR: RETURN_TYPE_MISMATCH
 object C {
     @JvmStatic
     fun main(args: Array<String>) {

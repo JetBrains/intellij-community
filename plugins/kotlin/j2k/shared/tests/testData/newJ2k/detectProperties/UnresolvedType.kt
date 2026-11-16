@@ -1,5 +1,5 @@
-// ERROR: Unresolved reference 'Type'.
-// ERROR: Unresolved reference 'Type'.
+// ERROR: UNRESOLVED_REFERENCE
+// ERROR: UNRESOLVED_REFERENCE
 internal interface I {
     val type: Type?
 }

@@ -1,4 +1,4 @@
-// ERROR: No value passed for parameter 'field'.
+// ERROR: NO_VALUE_FOR_PARAMETER
 import kotlinApi.KotlinClass
 
 internal class C : KotlinClass() {

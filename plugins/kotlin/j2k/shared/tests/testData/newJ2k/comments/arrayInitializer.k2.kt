@@ -1,4 +1,4 @@
-// ERROR: Initializer type mismatch: expected 'Array<Array<Any>>', actual 'Array<Array<Any>?>'.
+// ERROR: INITIALIZER_TYPE_MISMATCH
 internal class Test {
     var field: Array<Array<Any>> = arrayOf<Array<Any>?>( // 1st row
         arrayOf<Any>(1, "2", 3.0),  // 2nd row

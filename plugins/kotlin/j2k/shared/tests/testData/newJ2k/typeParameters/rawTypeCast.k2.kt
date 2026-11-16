@@ -1,4 +1,4 @@
-// ERROR: Return type mismatch: expected 'MutableMap<String?, String?>', actual 'HashMap<Any?, Any?>'.
+// ERROR: RETURN_TYPE_MISMATCH
 import java.util.Properties
 
 internal object A {

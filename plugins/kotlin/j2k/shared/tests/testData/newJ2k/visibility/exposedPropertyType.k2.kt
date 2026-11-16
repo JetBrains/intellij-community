@@ -1,4 +1,4 @@
-// ERROR: 'public' property exposes its 'internal' type 'B'.
+// ERROR: EXPOSED_PROPERTY_TYPE
 class J {
     var b: B? = null
 

@@ -1,5 +1,5 @@
-// ERROR: Unresolved reference 'ast'.
-// ERROR: Unresolved reference 'ast2'.
+// ERROR: UNRESOLVED_IMPORT
+// ERROR: UNRESOLVED_IMPORT
 package test
 
 import ast

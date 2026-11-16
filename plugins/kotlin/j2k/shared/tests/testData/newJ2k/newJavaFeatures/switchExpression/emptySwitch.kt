@@ -1,5 +1,5 @@
-// ERROR: 'when' expression must be exhaustive. Add an 'else' branch.
-// ERROR: Initializer type mismatch: expected 'Int', actual 'Unit'.
+// ERROR: INITIALIZER_TYPE_MISMATCH
+// ERROR: NO_ELSE_IN_WHEN
 object NonDefault {
     @JvmStatic
     fun main(args: Array<String>) {

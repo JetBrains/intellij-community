@@ -1,4 +1,4 @@
-// ERROR: Unresolved reference 'getYY' on receiver of type 'B'.
+// ERROR: UNRESOLVED_REFERENCE
 package test
 
 class AAA {

@@ -1,4 +1,4 @@
-// ERROR: Return type mismatch: expected 'MutableList<String>?', actual 'ArrayList<String?>'.
+// ERROR: RETURN_TYPE_MISMATCH
 import java.util.function.Consumer
 
 internal class A {

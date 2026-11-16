@@ -1,6 +1,6 @@
-// ERROR: Cannot infer type for type parameter 'R'. Specify it explicitly.
-// ERROR: Cannot infer type for type parameter 'T'. Specify it explicitly.
-// ERROR: Unresolved reference 'someRunnable'.
+// ERROR: CANNOT_INFER_PARAMETER_TYPE
+// ERROR: CANNOT_INFER_PARAMETER_TYPE
+// ERROR: UNRESOLVED_REFERENCE
 class Test {
     fun someMethod() {
         var someRunnable: Runnable = object : Runnable {

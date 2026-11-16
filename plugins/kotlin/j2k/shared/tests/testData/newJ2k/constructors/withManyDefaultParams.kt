@@ -1,4 +1,4 @@
-// ERROR: Property must be initialized or be abstract.
+// ERROR: MUST_BE_INITIALIZED_OR_BE_ABSTRACT
 class Test {
     private val myName: String
     var a: Boolean = false

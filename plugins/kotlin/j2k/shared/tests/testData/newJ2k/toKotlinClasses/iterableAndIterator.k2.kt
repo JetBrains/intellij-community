@@ -1,5 +1,5 @@
-// ERROR: Null cannot be a value of a non-null type 'MutableIterator<String?>'.
-// ERROR: Null cannot be a value of a non-null type 'MutableIterator<String?>'.
+// ERROR: NULL_FOR_NONNULL_TYPE
+// ERROR: NULL_FOR_NONNULL_TYPE
 package demo
 
 internal class Test : Iterable<String?> {

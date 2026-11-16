@@ -1,5 +1,5 @@
-// ERROR: This annotation is not applicable to target 'type parameter'. Applicable targets: type usage, expression
-// ERROR: This annotation is not applicable to target 'type parameter'. Applicable targets: type usage, expression
+// ERROR: WRONG_ANNOTATION_TARGET
+// ERROR: WRONG_ANNOTATION_TARGET
 import javaApi.Anon5
 import javaApi.TypeUseAnon1
 import javaApi.TypeUseAnon2
