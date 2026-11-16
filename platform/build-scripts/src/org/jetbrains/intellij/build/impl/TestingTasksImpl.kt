@@ -18,6 +18,8 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.intellij.platform.ijent.community.buildConstants.MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+import com.intellij.testFramework.TeamCityLogger
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.lang.UrlClassLoader
 import io.opentelemetry.api.trace.Span
 import jetbrains.buildServer.messages.serviceMessages.BlockClosed
@@ -1152,7 +1154,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
       val messages = context.messages
       messages.info("Effective main module: $mainModule")
-      messages.info("Effective classpath:\n${classpath.joinToString("\n")}")
+      TeamCityLogger.block("Effective classpath", ThrowableRunnable {
+        messages.info("Effective classpath:\n${classpath.joinToString("\n")}")
+      })
       messages.info("Effective boot classpath:\n${bootClasspath.joinToString("\n")}")
 
       val args = jvmArgs.toMutableList()
