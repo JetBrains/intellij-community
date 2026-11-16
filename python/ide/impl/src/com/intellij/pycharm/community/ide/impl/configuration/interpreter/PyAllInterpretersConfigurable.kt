@@ -25,7 +25,6 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.ToolWindowManager
@@ -48,6 +47,7 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.hover.ListHoverListener
 import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.insets
@@ -62,7 +62,7 @@ import com.jetbrains.python.project.PyProject.Companion.getPyProjects
 import com.jetbrains.python.sdk.asModuleOrProject
 import com.jetbrains.python.sdk.associatedModuleNioPath
 import com.jetbrains.python.sdk.collectAddInterpreterActions
-import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
+import com.jetbrains.python.sdk.getAssignablePythonSdks
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
@@ -91,7 +91,8 @@ import javax.swing.event.HyperlinkEvent
  */
 internal class PyAllInterpretersConfigurable(private val project: Project) : SearchableConfigurable {
 
-  private val projectSdksModel = ProjectSdksModel()
+  /** The SDKs that the Remove action took off the list. [apply] removes them from the SDK table. [reset] shows them again. */
+  private val pendingRemovals: MutableSet<Sdk> = LinkedHashSet()
   private val listModel = CollectionListModel<PythonInterpreter>()
   private val rowActionsState = RowActionsState()
 
@@ -234,14 +235,8 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
   }
 
   /**
-   * Signals that at least one editable SDK was mutated through a per-row dialog
-   * ([PyInterpreterEditDialogLauncher] / [PyInterpreterPathsDialogLauncher]) since the last apply.
-   *
-   * `ProjectSdksModel.isModified` only flips on add / remove / rename via the model's own API;
-   * committing a `SdkModificator` on an editable clone bypasses that flag. Without this manual
-   * signal the outer Settings **Apply** button stays disabled and the editable-to-registered
-   * propagation in [apply] never runs — closing Settings would then throw the user's edit away
-   * (`reset` re-clones editable copies from the registered SDK table on next open).
+   * Signals that a per-row dialog ([PyInterpreterEditDialogLauncher] / [PyInterpreterPathsDialogLauncher]) changed an SDK
+   * since the last apply. The dialogs write to the SDK table at once, so [apply] has nothing to write for them.
    */
   private var perRowSdkModified: Boolean = false
 
@@ -249,29 +244,26 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     perRowSdkModified = true
   }
 
-  // Add / Remove / Edit flows mutate `ProjectJdkTable` and real SDKs directly, so there is nothing
-  // pending in `projectSdksModel` to apply or revert — the model only serves as a lazy source for
-  // the list and gets re-read via `reset(project)` whenever the JDK table or the per-row dialogs
-  // change state.
-  override fun isModified(): Boolean = perRowSdkModified
+  override fun isModified(): Boolean = perRowSdkModified || pendingRemovals.isNotEmpty()
 
   override fun reset() {
-    projectSdksModel.reset(project)
+    pendingRemovals.clear()
     perRowSdkModified = false
     reloadList()
   }
 
   override fun apply() {
+    val removed = pendingRemovals.toList()
+    pendingRemovals.clear()
     perRowSdkModified = false
+    removeFromSdkTable(removed)
+    reloadList()
   }
 
-  override fun disposeUIResources() {
-    projectSdksModel.disposeUIResources()
-  }
-
+  @RequiresEdt
   private fun reloadList(preferredSelection: Sdk? = null) {
     val previouslySelected = (preferredSelection?.name ?: selectedInterpreter()?.sdk?.name)?.let(::PySdkName)
-    val allEditable = project.asModuleOrProject.filterAssignablePythonSdks(projectSdksModel.sdks.toList())
+    val allEditable = listedPythonSdks(project, pendingRemovals)
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
       val interpreters = allEditable.map { it.pythonInterpreterAsync() }
       val moduleBasePaths = project.getPyProjects().mapTo(HashSet()) { it.baseDir }
@@ -301,10 +293,7 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     override fun actionPerformed(e: AnActionEvent) {
       val group = DefaultActionGroup().apply {
         addAll(collectAddInterpreterActions(project.asModuleOrProject) { newSdk ->
-          // Wizard already committed `newSdk` to `ProjectJdkTable`. Re-reading `projectSdksModel`
-          // from the live table picks it up (with its `PythonSdkUpdater`-filled paths) without
-          // going through the add-time clone that caused PY-92599.
-          projectSdksModel.reset(project)
+          // The wizard already added `newSdk` to the SDK table, so the reload lists it.
           reloadList(preferredSelection = newSdk)
         })
         // Optional third-party extras (AI Assistant / Toolbox / others). The group is declared
@@ -353,8 +342,7 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     AllIcons.General.Remove,
   ) {
     override fun perform(interpreter: PythonInterpreter) {
-      interpreter.removeFromJdkTable()
-      projectSdksModel.reset(project)
+      pendingRemovals.add(interpreter.sdk)
       reloadList()
     }
   }
@@ -582,18 +570,29 @@ private object RowActionMetrics {
 
 /**
  * The [Sdk] behind [PythonInterpreter], for the redesigned page's per-row edit / remove / paths flows
- * that still bottom out in `Sdk`-typed APIs (`ProjectSdksModel`, `PyInterpreterEditDialogLauncher`, …).
+ * that still bottom out in `Sdk`-typed APIs (`ProjectJdkTable`, `PyInterpreterPathsDialogLauncher`, …).
  * The `getSdkAPI` bridge is deprecated by design; this single file-local accessor keeps the
  * suppression in one place instead of scattering it across every call site.
  */
 private val PythonInterpreter.sdk: Sdk
   get() = getSdkAPI()
 
-/** Removes the underlying SDK from `ProjectJdkTable`. */
-internal fun PythonInterpreter.removeFromJdkTable() {
-  val target = sdk
-  WriteAction.runAndWait<RuntimeException> {
-    ProjectJdkTable.getInstance().removeJdk(target)
+/**
+ * The Python SDKs of the SDK table that the page lists for [project], except [pendingRemovals].
+ *
+ * These are the SDKs of the table, not copies. A per-row dialog that commits an `SdkModificator` on one of them
+ * changes the SDK table.
+ */
+internal fun listedPythonSdks(project: Project, pendingRemovals: Set<Sdk>): List<Sdk> =
+  project.asModuleOrProject.getAssignablePythonSdks().filterNot { it in pendingRemovals }
+
+/** Removes [sdks] from the SDK table. */
+@RequiresEdt
+internal fun removeFromSdkTable(sdks: Collection<Sdk>) {
+  if (sdks.isEmpty()) return
+  WriteAction.run<RuntimeException> {
+    val table = ProjectJdkTable.getInstance()
+    sdks.forEach(table::removeJdk)
   }
 }
 
