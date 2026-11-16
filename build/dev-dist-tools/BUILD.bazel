@@ -17,6 +17,7 @@ rust_lints_as_errors(
 # community root only.
 windows_clippy_tests(
     targets = [
+        "//build/dev-dist-tools/bins/checkout-files",
         "//build/dev-dist-tools/bins/content-module-packer",
         "//build/dev-dist-tools/bins/dev-dist-collector",
         "//build/dev-dist-tools/bins/dev-dist-composer",

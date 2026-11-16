@@ -1,0 +1,25 @@
+# The package name differs from the library `checkout-files`, because Cargo needs one name per package. The binary
+# keeps the name of its Bazel target.
+[package]
+name = "checkout-files-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "checkout-files"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+checkout-files.workspace = true
+cli.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+testkit.workspace = true
