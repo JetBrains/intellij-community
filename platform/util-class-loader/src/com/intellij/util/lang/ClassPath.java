@@ -17,6 +17,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.ProtectionDomain;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -89,6 +90,7 @@ public final class ClassPath {
 
   private final boolean useCache;
   final boolean isClassPathIndexEnabled;
+  final boolean defineProtectionDomain;
   private final @Nullable CachePoolImpl cachePool;
   private final @Nullable Predicate<? super Path> cachingCondition;
 
@@ -112,6 +114,14 @@ public final class ClassPath {
     Class<?> consumeClassData(String name, byte[] data) throws IOException;
 
     Class<?> consumeClassData(String name, ByteBuffer data) throws IOException;
+
+    default Class<?> consumeClassData(String name, byte[] data, @Nullable ProtectionDomain protectionDomain) throws IOException {
+      return consumeClassData(name, data);
+    }
+
+    default Class<?> consumeClassData(String name, ByteBuffer data, @Nullable ProtectionDomain protectionDomain) throws IOException {
+      return consumeClassData(name, data);
+    }
   }
 
   public ClassPath(@NotNull Collection<Path> files,
@@ -122,6 +132,7 @@ public final class ClassPath {
     cachePool = configuration.cachePool;
     cachingCondition = configuration.cachingCondition;
     isClassPathIndexEnabled = configuration.isClassPathIndexEnabled;
+    defineProtectionDomain = configuration.defineProtectionDomain;
     this.mimicJarUrlConnection = mimicJarUrlConnection;
 
     this.files = files.toArray(new Path[]{});
@@ -665,6 +676,28 @@ public final class ClassPath {
       long start = startTiming();
       try {
         return classDataConsumer.consumeClassData(name, data);
+      }
+      finally {
+        record(start);
+      }
+    }
+
+    @Override
+    public Class<?> consumeClassData(String name, byte[] data, @Nullable ProtectionDomain protectionDomain) throws IOException {
+      long start = startTiming();
+      try {
+        return classDataConsumer.consumeClassData(name, data, protectionDomain);
+      }
+      finally {
+        record(start);
+      }
+    }
+
+    @Override
+    public Class<?> consumeClassData(String name, ByteBuffer data, @Nullable ProtectionDomain protectionDomain) throws IOException {
+      long start = startTiming();
+      try {
+        return classDataConsumer.consumeClassData(name, data, protectionDomain);
       }
       finally {
         record(start);

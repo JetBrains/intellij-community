@@ -8,10 +8,14 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
+import java.security.cert.Certificate;
 import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -41,6 +45,7 @@ public final class JarLoader implements Loader {
   public final URL url;
   public final ResourceFile zipFile;
   private final Path path;
+  private volatile @Nullable ProtectionDomain protectionDomain;
 
   JarLoader(@NotNull Path path, @NotNull ClassPath configuration, @NotNull ResourceFile zipFile) throws IOException {
     this.path = path;
@@ -48,6 +53,23 @@ public final class JarLoader implements Loader {
     this.configuration = configuration;
     this.zipFile = zipFile;
     url = new URL("jar", "", -1, fileToUri(path) + "!/");
+  }
+
+  public @Nullable ProtectionDomain getProtectionDomain() {
+    if (!configuration.defineProtectionDomain) {
+      return null;
+    }
+    ProtectionDomain result = protectionDomain;
+    if (result == null) {
+      try {
+        URL codeSourceUrl = fileToUri(path).toURL();
+        result = new ProtectionDomain(new CodeSource(codeSourceUrl, (Certificate[])null), null);
+        protectionDomain = result;
+      }
+      catch (MalformedURLException ignored) {
+      }
+    }
+    return result;
   }
 
   @Override

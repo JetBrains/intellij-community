@@ -16,6 +16,7 @@ import java.net.URLStreamHandler;
 import java.nio.ByteBuffer;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.security.ProtectionDomain;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.jar.Attributes;
@@ -108,6 +109,7 @@ final class ZipResourceFile implements ResourceFile {
   @Override
   public @Nullable Class<?> findClass(String fileName, String className, JarLoader jarLoader, ClassPath.ClassDataConsumer classConsumer)
     throws IOException {
+    ProtectionDomain protectionDomain = jarLoader.getProtectionDomain();
     if (!defineClassUsingBytes && classConsumer.isByteBufferSupported(className)) {
       ByteBuffer buffer = zipFile.getByteBuffer(fileName);
       if (buffer == null) {
@@ -115,7 +117,9 @@ final class ZipResourceFile implements ResourceFile {
       }
 
       try {
-        return classConsumer.consumeClassData(className, buffer);
+        return protectionDomain == null
+               ? classConsumer.consumeClassData(className, buffer)
+               : classConsumer.consumeClassData(className, buffer, protectionDomain);
       }
       finally {
         zipFile.releaseBuffer(buffer);
@@ -126,7 +130,9 @@ final class ZipResourceFile implements ResourceFile {
       if (data == null) {
         return null;
       }
-      return classConsumer.consumeClassData(className, data);
+      return protectionDomain == null
+             ? classConsumer.consumeClassData(className, data)
+             : classConsumer.consumeClassData(className, data, protectionDomain);
     }
   }
 
