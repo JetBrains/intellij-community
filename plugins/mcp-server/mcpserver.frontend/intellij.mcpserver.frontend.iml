@@ -35,6 +35,7 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.frontend" />
     <orderEntry type="module" module-name="intellij.mcpserver" />
+    <orderEntry type="module" module-name="intellij.mcpserver.configurables" />
     <orderEntry type="module" module-name="intellij.platform.compose.swing" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.lang" />

@@ -95,6 +95,8 @@ jvm_library(
         "//plugins/mcp-server/mcpserver.vcs:mcpserver.vcs_test_lib",
         "//plugins/mcp-server/mcpserver.terminal",
         "//plugins/mcp-server/mcpserver.terminal:mcpserver.terminal_test_lib",
+        "//plugins/mcp-server/mcpserver.configurables",
+        "//plugins/mcp-server/mcpserver.configurables:mcpserver.configurables_test_lib",
         "//plugins/editorconfig/backend",
         "//plugins/editorconfig/backend:backend_test_lib",
         "//aether-dependency-resolver",

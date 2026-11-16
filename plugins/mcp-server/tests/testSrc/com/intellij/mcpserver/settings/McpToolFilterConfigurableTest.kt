@@ -9,10 +9,10 @@ import com.intellij.mcpserver.McpToolDescriptor
 import com.intellij.mcpserver.McpToolFilterProvider
 import com.intellij.mcpserver.McpToolInvocationMode
 import com.intellij.mcpserver.McpToolSchema
-import com.intellij.mcpserver.frontend.settings.McpToolFilterConfigurable
-import com.intellij.mcpserver.frontend.settings.McpToolFilterPanel
-import com.intellij.mcpserver.frontend.settings.buildDescriptionRenderModel
-import com.intellij.mcpserver.frontend.settings.userConfigurableTools
+import com.intellij.mcpserver.configurables.McpToolFilterConfigurable
+import com.intellij.mcpserver.configurables.McpToolFilterPanel
+import com.intellij.mcpserver.configurables.buildDescriptionRenderModel
+import com.intellij.mcpserver.configurables.userConfigurableTools
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings.ToolState
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
