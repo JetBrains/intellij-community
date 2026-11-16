@@ -174,7 +174,6 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
         installDirtyListeners()
         bindCompactHeight(definitionClassesList, definitionClassesModel, definitionClassesPanel)
         bindCompactHeight(classpathList, classpathModel, classpathPanel)
-        reset()
         return ScrollPaneFactory.createScrollPane(ViewportWidthPanel(panel), true)
     }
 
@@ -189,8 +188,7 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
         val edited = currentSnapshot()
         reportChanges(edited)
         KotlinScriptingSettings.getInstance(project).update { edited.toSettingsState() }
-        appliedSnapshot = edited.detached()
-        updateReloadAvailability()
+        showSnapshot(readSnapshot() ?: edited)
 
         KotlinScriptService.getInstance(project).scheduleReloadOutdatedOpenScripts()
     }
