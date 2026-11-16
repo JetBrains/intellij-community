@@ -12,11 +12,14 @@ import com.intellij.psi.ResolveResult
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyModuleType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.testing.pyMock.PyMockPatchTargetReferenceSet
 import com.jetbrains.python.testing.pyMock.collectMemberVariants
@@ -79,7 +82,10 @@ private fun findMonkeypatchAttrCall(str: PyStringLiteralExpression): PyCallExpre
 
 /**
  * Reference for the attribute name in `monkeypatch.setattr(obj, "attr", value)`.
- * Resolves "attr" against the type of `obj`.
+ * Resolves "attr" against the class or the module that `obj` stands for.
+ *
+ * The reference is soft when the code analysis context cannot name that class or module, for example when the
+ * type of `obj` is `Any` or is inferred from the source of another file. Then the attribute cannot be checked.
  */
 private class PyMonkeypatchAttrReference(
   element: PyStringLiteralExpression,
@@ -88,36 +94,34 @@ private class PyMonkeypatchAttrReference(
 ) : PsiPolyVariantReferenceBase<PyStringLiteralExpression>(element, rangeInElement) {
 
   override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
-    val target = resolveTarget() ?: return emptyArray()
-    val attrName = element.stringValue
-    val member = findMember(target, attrName) ?: return emptyArray()
+    val target = resolveTarget(codeAnalysisContext())
+                 ?: resolveTarget(TypeEvalContext.userInitiated(element.project, element.containingFile))
+                 ?: return emptyArray()
+    val member = findMemberByName(target, element.stringValue) ?: return emptyArray()
     return arrayOf(PsiElementResolveResult(member))
   }
 
-  override fun isSoft(): Boolean = false
+  override fun isSoft(): Boolean = resolveTarget(codeAnalysisContext()) == null
 
   override fun getVariants(): Array<Any> {
-    val target = resolveTarget() ?: return emptyArray()
-    return getMemberVariants(target).toTypedArray()
+    val target = resolveTarget(TypeEvalContext.codeCompletion(element.project, element.containingFile)) ?: return emptyArray()
+    return collectMemberVariants(target).toTypedArray()
   }
 
-  private fun resolveTarget(): PsiElement? {
+  private fun codeAnalysisContext(): TypeEvalContext = TypeEvalContext.codeAnalysis(element.project, element.containingFile)
+
+  /** Returns the class or the module whose attribute is patched, or null when [context] cannot tell. */
+  private fun resolveTarget(context: TypeEvalContext): PsiElement? {
     val args = callExpr.argumentList?.arguments ?: return null
-    val positionalArgs = args.filter { it !is PyKeywordArgument }
-    val targetExpr = positionalArgs.firstOrNull() ?: return null
-    val context = TypeEvalContext.codeAnalysis(element.project, element.containingFile)
+    val targetExpr = args.firstOrNull { it !is PyKeywordArgument } ?: return null
 
-    val type = context.getType(targetExpr)
-    if (type is PyClassType) return type.pyClass
+    when (val type = context.getType(targetExpr)) {
+      is PyClassType -> return type.pyClass
+      is PyModuleType -> return type.module
+    }
 
-    return PyUtil.multiResolveTopPriority(
-      targetExpr, PyResolveContext.defaultContext(context),
-    ).firstOrNull()
+    return PyUtil.multiResolveTopPriority(targetExpr, PyResolveContext.defaultContext(context))
+      .map { PyUtil.turnDirIntoInit(it) ?: it }
+      .firstOrNull { it is PyClass || it is PyFile }
   }
-
-  private fun findMember(target: PsiElement, name: String): PsiElement? =
-    findMemberByName(target, name)
-
-  private fun getMemberVariants(target: PsiElement): List<PsiElement> =
-    collectMemberVariants(target)
 }
