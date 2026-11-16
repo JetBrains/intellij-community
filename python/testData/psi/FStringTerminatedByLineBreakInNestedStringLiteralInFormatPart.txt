@@ -24,7 +24,6 @@ PyFile:FStringTerminatedByLineBreakInNestedStringLiteralInFormatPart.py
                   PyFStringFragment
                     PsiElement(Py:FSTRING_FRAGMENT_START)('{')
                     PyStringLiteralExpression: 
-
                       PsiElement(Py:SINGLE_QUOTED_STRING)(''\\n'')
                     PsiElement(Py:FSTRING_FRAGMENT_END)('}')
                 PsiElement(Py:FSTRING_FRAGMENT_END)('}')

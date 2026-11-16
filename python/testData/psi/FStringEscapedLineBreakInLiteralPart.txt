@@ -5,8 +5,7 @@ PyFile:FStringEscapedLineBreakInLiteralPart.py
     PsiWhiteSpace(' ')
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
-    PyStringLiteralExpression: foo
-bar{42}
+    PyStringLiteralExpression: foobar{42}
       PyFormattedStringElement
         PsiElement(Py:FSTRING_START)('f'')
         PsiElement(Py:FSTRING_TEXT)('foo\\nbar')
