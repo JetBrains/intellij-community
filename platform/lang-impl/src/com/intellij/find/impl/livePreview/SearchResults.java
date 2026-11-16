@@ -568,14 +568,14 @@ public class SearchResults implements DocumentListener, CaretListener {
     return searchArea;
   }
 
-  private static class EditorSelectionSearchAreaProvider implements EditorSearchAreaProvider {
+  static final class EditorSelectionSearchAreaProvider implements EditorSearchAreaProvider {
     @Override
     public boolean isEnabled(@NotNull Editor editor, @NotNull FindModel findModel) {
       return !findModel.isGlobal();
     }
 
     @Override
-    public @Nullable SearchArea getSearchArea(@NotNull Editor editor, @NotNull FindModel findModel) {
+    public @NotNull SearchArea getSearchArea(@NotNull Editor editor, @NotNull FindModel findModel) {
       SelectionModel selection = editor.getSelectionModel();
       return SearchArea.create(selection.getBlockSelectionStarts(), selection.getBlockSelectionEnds());
     }
