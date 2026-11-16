@@ -430,7 +430,9 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   private @Nullable RangeHighlighter findExistingHighlighter(@Nullable List<? extends RangeHighlighter> candidates,
                                                              @NotNull TextAttributes attributes) {
     if (candidates != null) {
-      for (RangeHighlighter highlighter : candidates) {
+      //noinspection ForCanBeForeach
+      for (int i = 0; i < candidates.size(); i++) {
+        RangeHighlighter highlighter = candidates.get(i);
         if (highlighter.isValid() &&
             Objects.equals(highlighter.getTextAttributes(mySearchResults.getEditor().getColorsScheme()), attributes)) {
           return highlighter;
