@@ -232,19 +232,19 @@ public final class EventLogMetadataSettingsPersistence implements PersistentStat
   ) {
     static final EventLogOptionsSnapshot EMPTY = new EventLogOptionsSnapshot(false, Map.of(), Map.of(), Map.of());
 
-    @NotNull EventLogMetadataSettingsPersistence.EventLogOptionsSnapshot withInternal(boolean internal) {
+    @NotNull EventLogOptionsSnapshot withInternal(boolean internal) {
       return new EventLogOptionsSnapshot(internal, recorderToPathSettings, options, recorderToBuildNumber);
     }
 
-    @NotNull EventLogMetadataSettingsPersistence.EventLogOptionsSnapshot withPathSettings(@NotNull String recorderId, @NotNull EventsSchemePathSettings settings) {
+    @NotNull EventLogOptionsSnapshot withPathSettings(@NotNull String recorderId, @NotNull EventsSchemePathSettings settings) {
       return new EventLogOptionsSnapshot(internal, with(recorderToPathSettings, recorderId, settings), options, recorderToBuildNumber);
     }
 
-    @NotNull EventLogMetadataSettingsPersistence.EventLogOptionsSnapshot withOptions(@NotNull String recorderId, @NotNull @Unmodifiable Map<String, String> recorderOptions) {
+    @NotNull EventLogOptionsSnapshot withOptions(@NotNull String recorderId, @NotNull @Unmodifiable Map<String, String> recorderOptions) {
       return new EventLogOptionsSnapshot(internal, recorderToPathSettings, with(options, recorderId, recorderOptions), recorderToBuildNumber);
     }
 
-    @NotNull EventLogMetadataSettingsPersistence.EventLogOptionsSnapshot withBuildNumber(@NotNull String recorderId, @NotNull String buildNumber) {
+    @NotNull EventLogOptionsSnapshot withBuildNumber(@NotNull String recorderId, @NotNull String buildNumber) {
       return new EventLogOptionsSnapshot(internal, recorderToPathSettings, options, with(recorderToBuildNumber, recorderId, buildNumber));
     }
   }
