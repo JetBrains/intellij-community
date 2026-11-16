@@ -190,6 +190,22 @@ public class GroovyHighlighting50Test implements HighlightingTest {
   }
 
   @Test
+  public void testAsyncAwait() {
+    highlightingTest("""
+                       <error descr="Async/await support is available in Groovy 6.0. or later">defer</error> {}
+                       <error descr="Async/await support is available in Groovy 6.0. or later">yield return</error> 1
+                       <error descr="Async/await support is available in Groovy 6.0. or later">async</error> (a, b) -> {}
+                       <error descr="Async/await support is available in Groovy 6.0. or later">await</error> <error descr="Async/await support is available in Groovy 6.0. or later">async</error> () -> {}
+                       <error descr="Async/await support is available in Groovy 6.0. or later">async</error> {
+                         for(i in 0..<10) {
+                           <error descr="Async/await support is available in Groovy 6.0. or later">yield return</error> i
+                         }
+                         <error descr="Async/await support is available in Groovy 6.0. or later">defer</error> {}
+                       }
+                       """);
+  }
+
+  @Test
   public void testAnnotatedImport() {
     highlightingTest("""
                        @Deprecated
