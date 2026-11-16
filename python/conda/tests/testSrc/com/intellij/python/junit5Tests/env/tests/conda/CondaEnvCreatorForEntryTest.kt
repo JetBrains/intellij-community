@@ -13,6 +13,9 @@ import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.seconds
@@ -23,6 +26,9 @@ import org.junit.jupiter.api.Test
  * Which gone environments of an interpreter library entry the conda configurator makes again, see
  * `PyProjectSdkConfigurationExtension.prepareSdkCreatorFor`. The creator is asked for, never called, so no tool runs.
  */
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 @RegistryKeyAppLevel(key = "python.interpreter.library.entries", value = "true")
 @TestApplication
 internal class CondaEnvCreatorForEntryTest {

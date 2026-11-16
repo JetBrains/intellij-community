@@ -13,6 +13,9 @@ import com.intellij.python.sdk.backend.removeTestInterpreterFromOpenProjects
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.conda.savePythonCondaPath
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -29,6 +32,9 @@ import org.junit.jupiter.api.Test
  * The conda configurator makes the gone prefix environment of an entry at that prefix, from the `environment.yml` of the
  * project, whatever name the file states.
  */
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 @PyEnvTestCaseWithConda
 internal class CondaRecreateForEntryEnvTest {
   private val modulePathFixture = tempPathFixture(prefix = "conda-recreate")
