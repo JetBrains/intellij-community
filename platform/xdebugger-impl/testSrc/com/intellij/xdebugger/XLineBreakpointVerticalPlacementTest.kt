@@ -6,8 +6,8 @@ import com.intellij.openapi.editor.impl.BreakpointArea
 import com.intellij.openapi.editor.impl.InterLineBreakpointConfiguration
 import com.intellij.openapi.editor.impl.InterLineBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.awt.event.InputEvent
 
 internal class XLineBreakpointVerticalPlacementTest {
@@ -16,13 +16,13 @@ internal class XLineBreakpointVerticalPlacementTest {
     val toPlace = BreakpointArea.OnLine(1).keyModifier
     val toRemove = XLineBreakpointVerticalPlacement.ON_LINE.keyModifier
     assertEquals(
+      toPlace,
+      toRemove,
       """
         On-line placement requires different keys to place and remove breakpoints:
         - to place:  ${InputEvent.getModifiersExText(toPlace)}
         - to remove: ${InputEvent.getModifiersExText(toRemove)}
       """.trimIndent(),
-      toPlace,
-      toRemove
     )
   }
 
@@ -37,13 +37,13 @@ internal class XLineBreakpointVerticalPlacementTest {
     val toPlace = BreakpointArea.InterLine(1, config).keyModifier
     val toRemove = XLineBreakpointVerticalPlacement.INTER_LINE.keyModifier
     assertEquals(
+      toPlace,
+      toRemove,
       """
         Inter-line placement requires different keys to place and remove breakpoints:
         - to place:  ${InputEvent.getModifiersExText(toPlace)}
         - to remove: ${InputEvent.getModifiersExText(toRemove)}
       """.trimIndent(),
-      toPlace,
-      toRemove
     )
   }
 }

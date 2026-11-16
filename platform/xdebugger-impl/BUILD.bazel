@@ -184,7 +184,6 @@ jvm_library(
         "//platform/xdebugger-impl/rpc",
         "//platform/xdebugger-impl/ui",
         "//platform/execution",
-        "//libraries/junit4",
         "//libraries/junit6",
     ],
 )

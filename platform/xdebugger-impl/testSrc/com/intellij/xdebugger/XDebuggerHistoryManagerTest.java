@@ -15,22 +15,37 @@
  */
 package com.intellij.xdebugger;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.lang.Language;
-import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
+
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class XDebuggerHistoryManagerTest extends HeavyPlatformTestCase {
+@TestApplication
+public class XDebuggerHistoryManagerTest {
+  @SuppressWarnings("deprecation")
+  private final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  @Test
   public void testSerialize() {
-    XDebuggerHistoryManager manager = XDebuggerHistoryManager.getInstance(getProject());
+    XDebuggerHistoryManager manager = XDebuggerHistoryManager.getInstance(projectFixture.get());
     assertNotNull(manager);
 
     manager.addRecentExpression("id1", new XExpressionImpl("0", null, "custom info", EvaluationMode.EXPRESSION));

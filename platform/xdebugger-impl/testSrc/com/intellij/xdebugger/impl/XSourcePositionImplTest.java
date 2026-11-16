@@ -1,49 +1,52 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-@RunWith(JUnit4.class)
-public class XSourcePositionImplTest extends HeavyPlatformTestCase {
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-  @Override
-  protected boolean runInDispatchThread() {
-    return false;
-  }
+@TestApplication
+public class XSourcePositionImplTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
-  @Override
-  protected void tearDown() throws Exception {
-    EdtTestUtil.runInEdtAndWait(() -> {
-      super.tearDown();
-    });
-  }
+  @TempDir
+  private Path tempDir;
 
   @Test
   public void testPositionByLine() throws Exception {
-    VirtualFile file = getTempDir().createVirtualFile("test.txt", "some text");
+    VirtualFile file = createTestFile();
     checkLocksOrder(XSourcePositionImpl.create(file, 0), it -> it.getLine());
     checkLocksOrder(XSourcePositionImpl.create(file, 0), it -> it.getOffset());
   }
 
   @Test
   public void testPositionByOffset() throws Exception {
-    VirtualFile file = getTempDir().createVirtualFile("test.txt", "some text");
+    VirtualFile file = createTestFile();
     XSourcePositionImpl position = XSourcePositionImpl.createByOffset(file, 0);
     checkLocksOrder(position, it -> it.getLine());
     checkLocksOrder(position, it -> it.getOffset());
@@ -51,7 +54,7 @@ public class XSourcePositionImplTest extends HeavyPlatformTestCase {
 
   @Test
   public void testPositionByElement() throws Exception {
-    VirtualFile file = getTempDir().createVirtualFile("test.txt", "some text");
+    VirtualFile file = createTestFile();
     checkLocksOrder(createPositionByElement(file), it -> it.getLine());
     checkLocksOrder(createPositionByElement(file), it -> it.getOffset());
   }
@@ -136,9 +139,14 @@ public class XSourcePositionImplTest extends HeavyPlatformTestCase {
     assertTrue(firstCallCompletes);
   }
 
-  private @NotNull XSourcePositionImpl createPositionByElement(@NotNull VirtualFile file) {
+  private @NotNull VirtualFile createTestFile() throws IOException {
+    Path path = Files.writeString(tempDir.resolve("test.txt"), "some text");
+    return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path));
+  }
+
+  private static @NotNull XSourcePositionImpl createPositionByElement(@NotNull VirtualFile file) {
     return ReadAction.compute(() -> {
-      PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
+      PsiFile psiFile = PsiManager.getInstance(projectFixture.get()).findFile(file);
       return XSourcePositionImpl.createByElement(psiFile.findElementAt(0));
     });
   }
