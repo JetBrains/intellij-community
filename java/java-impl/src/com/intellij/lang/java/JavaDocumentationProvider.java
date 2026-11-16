@@ -35,7 +35,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.PersistentOrderRootType;
@@ -47,6 +46,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.impl.http.HttpsFileSystem;
@@ -143,6 +143,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledSignatureFragment;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -1182,18 +1183,19 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
 
     var webFs = HttpsFileSystem.getHttpsInstance();
-    String[] webUrls =
-      roots.stream().filter(it -> it.getFileSystem() == webFs)
-        .map(it -> HttpsFileSystem.HTTPS_PROTOCOL + "://" + it.getPath()).toArray(String[]::new);
-    if (webUrls.length > 0) {
-      List<String> httpRoots = new ArrayList<>();
+    String[] docUrls =
+      Stream.concat(roots.stream().filter(it -> it.getFileSystem() == StandardFileSystems.local()),
+                    roots.stream().filter(it -> it.getFileSystem() == webFs))
+        .map(VirtualFile::getUrl).toArray(String[]::new);
+    if (docUrls.length > 0) {
+      List<String> docRoots = new ArrayList<>();
       // The older java versions have their base class in the RT jar
       if (altRelPath != null && !altRelPath.startsWith("rt/")) {
-        httpRoots.addAll(notNull(PlatformDocumentationUtil.getHttpRoots(webUrls, altRelPath), Collections.emptyList()));
+        docRoots.addAll(notNull(PlatformDocumentationUtil.getHttpRoots(docUrls, altRelPath), Collections.emptyList()));
       }
-      httpRoots.addAll(notNull(PlatformDocumentationUtil.getHttpRoots(webUrls, relPath), Collections.emptyList()));
-      if (!httpRoots.isEmpty()) {
-        return httpRoots;
+      docRoots.addAll(notNull(PlatformDocumentationUtil.getHttpRoots(docUrls, relPath), Collections.emptyList()));
+      if (!docRoots.isEmpty()) {
+        return docRoots;
       }
     }
 
