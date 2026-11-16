@@ -89,9 +89,6 @@ import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_
 
 
 public class PyBlock implements ASTBlock {
-  private static final TokenSet STATEMENT_OR_DECLARATION = PythonDialectsTokenSetProvider.getInstance().getStatementTokens();
-
-
   private static final TokenSet ourListElementTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                       PyElementTypes.LIST_COMP_EXPRESSION,
                                                                       PyElementTypes.DICT_LITERAL_EXPRESSION,
@@ -1186,8 +1183,10 @@ public class PyBlock implements ASTBlock {
         return Spacing.createSpacing(0, 0, 2, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       }
 
-      if ((PyElementTypes.CLASS_OR_FUNCTION.contains(childType1) && STATEMENT_OR_DECLARATION.contains(childType2)) ||
-          STATEMENT_OR_DECLARATION.contains(childType1) && PyElementTypes.CLASS_OR_FUNCTION.contains(childType2)) {
+      // not a static field: a dialect plugin that loads later adds its statement types
+      TokenSet statementTokens = PythonDialectsTokenSetProvider.getInstance().getStatementTokens();
+      if ((PyElementTypes.CLASS_OR_FUNCTION.contains(childType1) && statementTokens.contains(childType2)) ||
+          statementTokens.contains(childType1) && PyElementTypes.CLASS_OR_FUNCTION.contains(childType2)) {
         if (PyUtilCore.isTopLevel(psi1)) {
           return getBlankLinesForOption(pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS);
         }
