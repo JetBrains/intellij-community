@@ -927,10 +927,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
               }
             }
 
-            if (options.project != null) {
-              // a project that this open did not init gets its roots here; `initProject` registers them for the other projects
-              registerProjectRootsOnInit(project, options.projectRootDir)
+            val projectRootDir = options.projectRootDir
+            if (Registry.`is`("ide.create.project.root.entity") && projectRootDir != null) {
+              val root = projectRootDir.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
+              project.serviceAsync<ProjectRootPersistentStateComponent>().addProjectRoot(root.url)
             }
+            ProjectRootsSynchronizer.doRegister(project) // restore ProjectRootEntity if caches are missing
 
             val addedToOpened = span("project add to opened") {
               addToOpened(project)
@@ -1695,11 +1697,6 @@ private suspend fun initProject(
 
     projectInitHelper?.notifyInit(project)
 
-    // the Project View lists the project roots from its first update, as it lists the content root of a module
-    launch {
-      registerProjectRootsOnInit(project, projectRootDir)
-    }
-
     if (preloadServices) {
       schedulePreloadServices(project)
     }
@@ -1707,22 +1704,6 @@ private suspend fun initProject(
     preInitJob?.join()
     project.createComponentsNonBlocking()
   }
-}
-
-/**
- * Registers the persisted project roots of [project] and [projectRootDir] in the workspace model.
- * A reopen from the recent projects passes no [projectRootDir], so the persisted roots are its only source.
- * A second call with the same roots changes nothing.
- */
-private suspend fun registerProjectRootsOnInit(project: Project, projectRootDir: Path?) {
-  if (!Registry.`is`("ide.create.project.root.entity")) {
-    return
-  }
-  if (projectRootDir != null) {
-    val root = projectRootDir.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
-    project.serviceAsync<ProjectRootPersistentStateComponent>().addProjectRoot(root.url)
-  }
-  ProjectRootsSynchronizer.doRegister(project)
 }
 
 /**
