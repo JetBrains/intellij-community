@@ -8,6 +8,7 @@ import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.driver.sdk.ManualWaitForIndicators
 import com.intellij.driver.sdk.getOpenProjects
 import com.intellij.driver.sdk.Project
+import com.intellij.driver.sdk.Registry
 import com.intellij.driver.sdk.isProjectOpened
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.step
@@ -196,20 +197,22 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
       logger<Driver>().info("The IDE frame shows the welcome-screen project, skipping the project frame checks")
       return
     }
-
-    // The list holds only the frame chrome that every product shows. A tool-window stripe and a stripe button are
-    // layout state, not frame readiness: `hideToolStripes` removes the stripe, and a stripe button needs a product
-    // that registers that tool window. A test that needs one waits for it itself.
-    // A required element is a group of alternatives, and the frame is ready when each group has a member present.
-    // The toolbar needs a group: a custom header holds it, a frame that keeps the native window title holds it
-    // directly, and a compact header hides it but keeps the header itself.
-    val requiredComponents = listOf(
-      listOf(mainToolbar, toolbarHeader),
-      listOf(abstractToolbarCombo {
-        and(byType("com.intellij.openapi.wm.impl.AbstractToolbarCombo"), contains(byAccessibleName(currentProject.getName())))
-      }),
-      listOf(ideStatusBar()),
-    )
+    // The frame is ready when each group has one element present. The list holds only the frame parts of every product.
+    // The toolbar is in the main toolbar or in the frame header. Tool-window stripes are layout state, so they are not here.
+    // Distraction-free mode and Zen mode hide all of these parts.
+    val distractionFreeMode = isDistractionFreeMode()
+    if (distractionFreeMode) {
+      logger<Driver>().info("The IDE frame is in distraction-free mode, skipping the toolbar and status bar checks")
+    }
+    val requiredComponents = buildList {
+      if (!distractionFreeMode) {
+        add(listOf(mainToolbar, toolbarHeader))
+        add(listOf(abstractToolbarCombo {
+          and(byType("com.intellij.openapi.wm.impl.AbstractToolbarCombo"), contains(byAccessibleName(currentProject.getName())))
+        }))
+        add(listOf(ideStatusBar()))
+      }
+    }
     fun List<List<UiComponent>>.describe(): String = joinToString { group -> group.joinToString(" or ") }
     waitFor(
       message = "IDE frame elements are rendered",
@@ -227,6 +230,13 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
       checker = { it.isEmpty() },
     )
   }
+
+  private fun isDistractionFreeMode(): Boolean =
+    runCatching {
+      driver.utility(Registry::class).`is`("editor.distraction.free.mode")
+    }.onFailure {
+      logger<Driver>().info("The distraction-free mode state is not available: ${it.message}")
+    }.getOrDefault(false)
 
   /**
    * Returns true when [project] is the welcome-screen project.
