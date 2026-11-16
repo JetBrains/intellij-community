@@ -428,10 +428,15 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
    * only when the workspace model reports the write, and that report arrives later. So without this wait, a caller
    * that reads the snapshot right after such a function still sees the interpreter from before the write.
    *
-   * Returns at once when the current snapshot already agrees. Gives up after [AWAIT_INTERPRETER_TIMEOUT] and reports an
-   * error, so a snapshot that never agrees cannot block the caller forever.
+   * Returns the snapshot that agrees, so the caller reads the interpreters from the snapshot it waited for and not from a
+   * later one. Returns at once when the current snapshot already agrees. Gives up after [AWAIT_INTERPRETER_TIMEOUT],
+   * reports an error and returns `null`, so a snapshot that never agrees cannot block the caller forever.
+   *
+   * An entry names an interpreter that the registry builds from its record, and a record written a moment ago is not in
+   * the registry yet. The expected interpreter of an entry therefore comes from the computation that read the record,
+   * see [PythonInterpreterRegistry.resolveEntryKey], and never from an older list that answers `null`.
    */
-  suspend fun awaitInterpreterOf(pyProjects: Collection<PyProject>) {
+  suspend fun awaitInterpreterOf(pyProjects: Collection<PyProject>): Snapshot? {
     // A test can still write an SDK to a module. Replace it first, so the expected interpreter is the one it names. The
     // read of the storage below waits for the synchronization with the JPS model too.
     if (isInterpreterLibraryFlowEnabled()) {
@@ -442,7 +447,11 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     val (_, storage) = project.getPyProjectsWithStorage()
     val registry = PythonInterpreterRegistry.getInstance(project)
     val expected = pyProjects.associateWith { pyProject ->
-      pyProject.residesOnModule.findModuleEntity(storage)?.let { project.storedInterpreterReferenceOf(it, storage) }?.let { registry.resolve(it) }
+      when (val reference = pyProject.residesOnModule.findModuleEntity(storage)?.let { project.storedInterpreterReferenceOf(it, storage) }) {
+        is StoredInterpreterReference.Library -> registry.resolveEntryKey(reference.key)
+        is StoredInterpreterReference.SdkName -> registry.resolve(reference)
+        null -> null
+      }
     }
     val agreed = withTimeoutOrNull(AWAIT_INTERPRETER_TIMEOUT) {
       snapshotFlow().first { snapshot ->
@@ -451,11 +460,12 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     }
     if (agreed == null) {
       logger.error("The snapshot does not state the interpreters after $AWAIT_INTERPRETER_TIMEOUT: $expected")
-      return
+      return null
     }
     // The snapshot coroutine builds the libraries after it publishes. Build them here too, so a caller that resolves
     // next finds the roots. It runs in the context of the caller, so a modal progress of the caller does not block it.
     PyInterpreterLibrarySync.getInstance(project).sync(agreed.evoPyProjects)
+    return agreed
   }
 
   /** For tests: suspends until the snapshot holds the current SDK of every Python module. Call it before highlighting. */

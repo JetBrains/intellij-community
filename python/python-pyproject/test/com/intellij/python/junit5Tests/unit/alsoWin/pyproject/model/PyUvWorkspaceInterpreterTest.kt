@@ -12,31 +12,18 @@ import com.intellij.python.sdk.backend.pyInterpreterDependency
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.drainUncaughtExceptions
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /** The `[project].name` of the root `pyproject.toml`, which is also the name of the module the sync creates for it. */
 private const val ROOT = "ws"
-
-/**
- * The message of the exception the auto-configurator throws for the root module of the workspace in some runs, see
- * `PyUvWorkspaceInterpreterTest.drainTheKnownConfiguratorFailure`. It is the sanity check of the configurator
- * itself, `sdkConfigImpl.kt:54`. The defect it reports is PY-94148.
- */
-private const val NO_INTERPRETER = "has no interpreter in the snapshot after it was configured"
 
 /**
  * A uv workspace is one interpreter for all of its members: the root and every member of `[tool.uv.workspace]` form a
@@ -128,55 +115,9 @@ internal class PyUvWorkspaceInterpreterTest {
   private fun entryNameOf(module: Module): String? =
     module.findModuleEntity(f.project.workspaceModel.currentSnapshot)?.dependencies?.pyInterpreterDependency?.library?.name
 
-  /**
-   * Takes the one exception the auto-configurator throws for this project, so that a run in which it fires is still
-   * a verdict on the three cases above and not on a defect they do not cover.
-   *
-   * It fires on a coroutine of `python.sdkConfigurator.backend`, for the root module of the workspace, and it fires
-   * rarely: it was thrown in 1 of 7 CI runs of this class (build 1128368029) and in none of the five repeats of
-   * build 1128411011. So nothing here states that it comes, and no tripwire waits for it to stop coming — a claim
-   * about an event of that frequency is a claim this class cannot hold. The coverage is the three cases; this only
-   * keeps them from going red for a reason of their own. The drain goes when PY-94148 is fixed.
-   *
-   * The defect is PY-94148, in `autoConfigureSdk`: it waits with `EvoPyProjectModel.awaitInterpreterOf`
-   * and then reads the snapshot again with `PyProject.getInterpreter`, so what it asserts is not what it waited for.
-   * The wait also returns the same way when it times out, and is satisfied at once when the interpreter it expects is
-   * `null`.
-   *
-   * The predicate names this one failure. Any other uncaught exception is left in place and still fails the test.
-   *
-   * The poll is what makes the drain work at all: the exception reaches the handler after the body of the test is
-   * over, so a drain that only looks once takes nothing and leaves it to the extension, see build 1128368029. It is
-   * short, because a run in which the exception does not come pays for it. An exception later than this is taken by
-   * the drain of the next test, which runs before the extension of that test, or by [drainALateConfiguratorFailure].
-   */
-  @AfterEach
-  fun drainTheKnownConfiguratorFailure(): Unit = timeoutRunBlocking(30.seconds) {
-    drainConfiguratorFailure(5.seconds)
-  }
-
   private fun describeWorkspaces(): String =
     EvoPyProjectModel.getInstance(f.project).snapshotOrNull()
       ?.workspaces
       ?.joinToString { "${it.root.pyProject.residesOnModule.name}: ${it.members.map { member -> member.pyProject.residesOnModule.name }}" }
     ?: "no snapshot"
-
-  companion object {
-    /** The same drain for an exception thrown after the last test, which no [drainTheKnownConfiguratorFailure] follows. */
-    @JvmStatic
-    @AfterAll
-    fun drainALateConfiguratorFailure(): Unit = timeoutRunBlocking(30.seconds) {
-      drainConfiguratorFailure(10.seconds)
-    }
-  }
-}
-
-/** Waits up to [wait] for the exception of the auto-configurator, see `drainTheKnownConfiguratorFailure`, and takes it. */
-private suspend fun drainConfiguratorFailure(wait: Duration) {
-  withTimeoutOrNull(wait) {
-    while (true) {
-      if (drainUncaughtExceptions { it is IllegalStateException && it.message?.contains(NO_INTERPRETER) == true }.isNotEmpty()) break
-      delay(200.milliseconds)
-    }
-  }
 }
