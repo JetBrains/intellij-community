@@ -34,6 +34,7 @@ intellij.vcs.gitlab.ultimate.ci.sh.tests
 intellij.vcs.gitlab.ultimate.features.backend.tests
 intellij.vcs.gitlab.ultimate.features.shared.tests
 intellij.vcs.hg.tests
+intellij.vcs.svn.tests
 intellij.xml.tests.js
 language-server.*
 intellij.agentGuidelines.tests
