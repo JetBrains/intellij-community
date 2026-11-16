@@ -49,7 +49,6 @@
     ["./.teamcity/scripts/dsl-test.cmd"],
     ["./.teamcity/scripts/dsl-generate.cmd"],
     ["./.teamcity/scripts/dsl-diff.cmd"],
-    ["./.teamcity/scripts/tc-xml-browse.cmd"],
     ["bun", "build/jps-module.mjs"],
     ["bun", "community/.ai/skill-profile.mjs"],
     ["node", "plugins/air/scripts/air-mutes.mjs", "list"],

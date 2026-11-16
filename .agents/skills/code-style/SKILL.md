@@ -32,7 +32,7 @@ Follow the IntelliJ Coding Guidelines with these IntelliJ-specific rules.
   - Indentation: 2 spaces (4 for Go files)
   - Line length: 140 characters max
   - Braces: `else`, `catch`, and `finally` on new lines
-- Only in `/rustrover` directory you must always use standard Kotlin formatting rules with 4 spaces indentation.
+- In `/rustrover` directory you must always use standard Kotlin formatting rules with 4 spaces indentation.
 
 ## Threading annotations
 
