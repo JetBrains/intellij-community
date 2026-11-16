@@ -4,6 +4,11 @@ package com.intellij.find;
 import com.intellij.find.editorHeaderActions.AddOccurrenceAction;
 import com.intellij.find.editorHeaderActions.RemoveOccurrenceAction;
 import com.intellij.find.editorHeaderActions.ToggleFindInSelectionAction;
+import com.intellij.find.impl.livePreview.EditorLivePreviewPresentation;
+import com.intellij.find.impl.livePreview.LivePreview;
+import com.intellij.find.impl.livePreview.LivePreviewController;
+import com.intellij.find.impl.livePreview.LivePreviewPresentation;
+import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -20,6 +25,10 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -33,6 +42,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
+import java.awt.Color;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -151,6 +161,56 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     }
     getEditor().getSelectionModel().removeSelection();
     assertEquals(ApplicationBundle.message("editorsearch.in.selection"), ((ComponentWithEmptyText)component.getSearchTextComponent()).getEmptyText().getText());
+  }
+
+  public void testLivePreviewReusesTheCursorHighlighter() {
+    init("foo bar foo");
+    SearchResults searchResults = new SearchResults(getEditor(), getProject());
+    LivePreviewController controller = new LivePreviewController(searchResults, null, getTestRootDisposable());
+    FindModel findModel = new FindModel();
+    findModel.setStringToFind("foo");
+    controller.updateInBackground(findModel, false);
+    EditorColorsScheme scheme = (EditorColorsScheme)EditorColorsManager.getInstance().getGlobalScheme().clone();
+    LivePreviewPresentation presentation = new EditorLivePreviewPresentation(scheme);
+    LivePreview preview = new LivePreview(searchResults, presentation);
+    try {
+      RangeHighlighter cursor = findCursorHighlighter(presentation);
+      assertNotNull(cursor);
+      assertEquals(0, cursor.getStartOffset());
+      preview.searchResultsUpdated(searchResults);
+      assertSame(cursor, findCursorHighlighter(presentation));
+
+      getEditor().getCaretModel().moveToOffset(8);
+      assertFalse(cursor.isValid());
+      cursor = findCursorHighlighter(presentation);
+      assertNotNull(cursor);
+      assertEquals(8, cursor.getStartOffset());
+
+      Color color = Color.RED.equals(scheme.getColor(EditorColors.CARET_COLOR)) ? Color.BLUE : Color.RED;
+      scheme.setColor(EditorColors.CARET_COLOR, color);
+      preview.globalSchemeChange(scheme);
+      assertFalse(cursor.isValid());
+      cursor = findCursorHighlighter(presentation);
+      assertNotNull(cursor);
+      assertEquals(color, cursor.getTextAttributes(getEditor().getColorsScheme()).getEffectColor());
+
+      cursor.dispose();
+      preview.searchResultsUpdated(searchResults);
+      assertNotNull(findCursorHighlighter(presentation));
+
+      findModel.setStringToFind("missing");
+      controller.updateInBackground(findModel, false);
+      assertNull(findCursorHighlighter(presentation));
+    }
+    finally {
+      preview.dispose();
+    }
+  }
+
+  private RangeHighlighter findCursorHighlighter(LivePreviewPresentation presentation) {
+    return ContainerUtil.find(getEditor().getMarkupModel().getAllHighlighters(),
+                              highlighter -> presentation.getCursorAttributes().equals(
+                                highlighter.getTextAttributes(getEditor().getColorsScheme())));
   }
 
   public void testFindToggleInSelection() {

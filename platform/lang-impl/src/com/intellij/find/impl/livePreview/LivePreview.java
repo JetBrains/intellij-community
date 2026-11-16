@@ -280,10 +280,18 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   }
 
   private void updateCursorHighlighting() {
-    clearCursorHighlight();
-
     final FindResult cursor = mySearchResults.getCursor();
     Editor editor = mySearchResults.getEditor();
+    if (myCursorHighlighter != null && cursor != null && myCursorHighlighter.isValid() &&
+        myCursorHighlighter.getStartOffset() == cursor.getStartOffset() &&
+        myCursorHighlighter.getEndOffset() == cursor.getEndOffset() &&
+        myCursorHighlighter.getLayer() == myPresentation.getCursorLayer() &&
+        Objects.equals(myCursorHighlighter.getTextAttributes(editor.getColorsScheme()), myPresentation.getCursorAttributes())) {
+      hideBalloon();
+      editor.getScrollingModel().runActionOnScrollingFinished(() -> showReplacementPreview());
+      return;
+    }
+    clearCursorHighlight();
     if (cursor != null && cursor.getEndOffset() <= editor.getDocument().getTextLength()) {
       myCursorHighlighter = addHighlighter(cursor.getStartOffset(), cursor.getEndOffset(), myPresentation.getCursorAttributes(),
                                            myPresentation.getCursorLayer());
