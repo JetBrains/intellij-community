@@ -7,7 +7,7 @@ The `intellij.gradle.kotlin.tests.main` is a meta-module to aggregate all the K2
 1. Add the new test module dependency to [intellij.gradle.kotlin.tests.main.iml](intellij.gradle.kotlin.tests.main.iml)
 2. Add a new tests pattern into a test group in [testGroups.properties](testResources/tests/testGroups.properties).
    - If the new tests suit any existing TeamCity configuration – reuse the existing group.
-   - Otherwise, create a new test group and configuration for it in the [ultimate-teamcity-config](https://code.jetbrains.team/p/ij/repositories/ultimate-teamcity-config/files/master/README.md) repository. See other Gradle configurations for a reference in [Idea_Tests_BuildToolsTests.kt](https://code.jetbrains.team/p/ij/repositories/ultimate-teamcity-config/files/master/.teamcity/src/idea/tests/buildTypes/buildTools/Idea_Tests_BuildToolsTests.kt)
+   - Otherwise, create a new test group and configuration for it in the [TeamCity DSL](https://jetbrains.team/p/ij/repositories/ultimate/files/master/.teamcity/README.md). See other Gradle configurations for a reference in [Idea_Tests_BuildToolsTests.kt](https://jetbrains.team/p/ij/repositories/ultimate/files/master/.teamcity/src/idea/tests/buildTypes/jvm/buildTools/Idea_Tests_BuildToolsTests.kt)
 
 ### Alternative approach
 Probably, instead of defining test groups meta-module, we should define `testGroups.properties` in each K2-dependent module separately.

@@ -43,7 +43,7 @@ If due to any reasons, new integration / unit tests suit better an existing `int
 
 ## How to find a test group definition for the existing TeamCity Configuration?
 
-- Find the desired TeamCity configuration in the [ultimate-teamcity-config](https://code.jetbrains.team/p/ij/repositories/ultimate-teamcity-config/files/master/README.md) repository by its name. It has the test group and the main module specified in `groups()`. For example:
+- Find the desired TeamCity configuration in the [TeamCity DSL](https://jetbrains.team/p/ij/repositories/ultimate/files/master/.teamcity/README.md) by its name. It has the test group and the main module specified in `groups()`. For example:
   ```
   groups("GRADLE_KTS_CODE_INSIGHT_INTEGRATION_TESTS", GRADLE_KOTLIN_TESTS_MAIN_MODULE)
   ```
@@ -51,4 +51,4 @@ If due to any reasons, new integration / unit tests suit better an existing `int
 
 In the similar way, you can determine in what configuration the test is executed:
 - Find the test group by the test's package name in the ultimate repository.
-- Find the configuration by the test group name in [ultimate-teamcity-config](https://code.jetbrains.team/p/ij/repositories/ultimate-teamcity-config/files/master/README.md) repository.
+- Find the configuration by the test group name in the [TeamCity DSL](https://jetbrains.team/p/ij/repositories/ultimate/files/master/.teamcity/README.md).

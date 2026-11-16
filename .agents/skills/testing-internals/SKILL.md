@@ -256,7 +256,7 @@ Then attach debugger to port 5005.
 
 ### CI-Defined Test Modules
 
-From `intellij-teamcity-config/.teamcity/src/ijplatform/KnownModules.kt`:
+From `.teamcity/src/ijplatform/KnownModules.kt`:
 
 | CI Constant | Module Name                  |
 |-------------|------------------------------|

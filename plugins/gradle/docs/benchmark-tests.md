@@ -71,4 +71,4 @@ Before pushing the changes, it's worth running the tests that usually might fail
 ### 7. TeamCity
 
 All benchmark tests are executed by the single `[GRADLE_BENCHMARK_TESTS]` TeamCity configuration that runs this aggregator module — no new TeamCity configuration is required for a new `*.tests.benchmark` module.
-If a completely separate benchmark suite is needed, create a new test group in [testGroups.properties](../tests.benchmark.main/testResources/tests/testGroups.properties) and a new TeamCity configuration for it in the [ultimate-teamcity-config](https://code.jetbrains.team/p/ij/repositories/ultimate-teamcity-config/files/master/README.md) repository.
+If a completely separate benchmark suite is needed, create a new test group in [testGroups.properties](../tests.benchmark.main/testResources/tests/testGroups.properties) and a new TeamCity configuration for it in the [TeamCity DSL](https://jetbrains.team/p/ij/repositories/ultimate/files/master/.teamcity/README.md).

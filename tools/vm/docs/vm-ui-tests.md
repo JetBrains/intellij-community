@@ -997,7 +997,7 @@ TeamCity without either, a warning says so and every test publishes. A warning c
 empties its output first. Once the archive is published, it removes the bundle directories that the archive holds from
 the testlogs, so `bazel.logs.zip` does not carry them twice. Off TeamCity, only `--remove-packed` asks for that. It
 never turns a build red: each problem is a warning in the build log, and the exit is 0. Only a usage error of the
-command line exits 2. No Air build configuration runs this step yet; it is one more step in `ultimate-teamcity-config`.
+command line exits 2. No Air build configuration runs this step yet; it is one more step in `.teamcity/`.
 
 When the site in `out/air-site` is missing, or older than `plugins/air/docs/src` or the `src`, `scripts` and
 `styles` of the kernel `community/tools/docs-site`, the server builds it once in the background:
