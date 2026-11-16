@@ -8,6 +8,7 @@ import com.intellij.platform.testFramework.junit5.eel.params.api.DockerTest
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelType.Docker
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelType.Local
+import com.intellij.platform.testFramework.junit5.eel.params.api.EelType.Ssh
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelType.Wsl
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
 import com.intellij.python.sdk.backend.getSdkAPI
@@ -40,7 +41,7 @@ class CondaEnvTest(val eelHolder: EelHolder) {
   fun `conda sdk name should not contain nulls`() = timeoutRunBlocking(10.minutes) {
     val target = when (val targetType = eelHolder.type) {
       Docker -> eelHolder.target
-      Local, Wsl -> throw TestAbortedException("target $targetType is not supported")
+      Local, Wsl, Ssh -> throw TestAbortedException("target $targetType is not supported")
     }
     val condaBin = EelPathUtils.getNioPath("/opt/conda/bin/conda", eelHolder.eel.descriptor)
     val condaDir = EelPathUtils.getNioPath("/opt/conda/", eelHolder.eel.descriptor)
