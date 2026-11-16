@@ -62,7 +62,6 @@ final class UpdaterTestCase implements BeforeAllCallback, AfterEachCallback {
       var dir = Path.of("community/updater/testData");
       if (!Files.exists(dir)) dir = Path.of("updater/testData");
       if (!Files.exists(dir)) dir = Path.of("testData");
-      if (!Files.exists(dir)) dir = Path.of("../testData");
       if (!Files.exists(dir)) throw new IllegalStateException("Cannot find test data directory under " + Path.of(".").toAbsolutePath());
       ourDataDir = dir.toAbsolutePath();
     }
