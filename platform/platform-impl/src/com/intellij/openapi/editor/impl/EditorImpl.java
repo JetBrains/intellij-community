@@ -5524,13 +5524,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   /**
    * Says that the editor rounds the corners of the highlighting and of the selection. Without a choice of the user, the
-   * current theme decides, also after a theme switch. Column mode always gives straight corners.
+   * current theme decides, also after a theme switch.
    */
   @ApiStatus.Internal
   public boolean isRoundedHighlighting() {
     Boolean option = getSettingsSnapshot().getRoundedHighlightingOption();
-    boolean rounded = option == null ? IslandsState.Companion.isEnabled() : option;
-    return rounded && !isColumnMode();
+    return option != null ? option : IslandsState.Companion.isEnabled();
   }
 
   /**

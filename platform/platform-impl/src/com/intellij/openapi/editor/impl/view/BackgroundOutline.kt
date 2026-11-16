@@ -11,44 +11,12 @@ import kotlin.math.abs
 import kotlin.math.min
 
 /**
- * Two coordinates that differ by less than this are one coordinate of the grid.
- */
-private const val EPSILON: Double = 1e-2
-
-/**
- * The four directions of an edge, in the clockwise order of the screen.
- */
-private const val RIGHT: Int = 0
-private const val DOWN: Int = 1
-private const val LEFT: Int = 2
-private const val UP: Int = 3
-
-/**
- * The rank of a turn by the direction difference: the right turn wins, then straight, then the left turn, then back.
- */
-private val TURN_RANK: IntArray = intArrayOf(1, 0, 3, 2)
-
-/**
  * The outline of the background of one style.
  *
  * The outline is a pure function of the rows. It holds no editor, no graphics and no state between two calls.
  */
 @ApiStatus.Internal
 object BackgroundOutline {
-  /**
-   * Gives the boundary of the union of the rectangles of [styleId] as closed cycles of corners.
-   *
-   * The interior lies on the right of each edge. An outer cycle therefore turns clockwise on the screen,
-   * and a hole turns counterclockwise. Two shapes that touch at one corner give two cycles.
-   * A cycle holds no collinear corner, and it holds its last corner once.
-   */
-  @JvmStatic
-  @TestOnly
-  fun cycles(rows: BackgroundRows, styleId: Int): List<List<Point2D.Double>> {
-    val grid = OutlineGrid(rows, styleId)
-    return grid.trace().map { cycle -> cycle.map { corner -> grid.point(corner) } }
-  }
-
   /**
    * Gives one path that fills the union of the rectangles of [styleId].
    *
@@ -65,6 +33,20 @@ object BackgroundOutline {
       grid.appendCycle(path, cycle, radius)
     }
     return path
+  }
+
+  /**
+   * Gives the boundary of the union of the rectangles of [styleId] as closed cycles of corners.
+   *
+   * The interior lies on the right of each edge. An outer cycle therefore turns clockwise on the screen,
+   * and a hole turns counterclockwise. Two shapes that touch at one corner give two cycles.
+   * A cycle holds no collinear corner, and it holds its last corner once.
+   */
+  @JvmStatic
+  @TestOnly
+  fun cycles(rows: BackgroundRows, styleId: Int): List<List<Point2D.Double>> {
+    val grid = OutlineGrid(rows, styleId)
+    return grid.trace().map { cycle -> cycle.map { corner -> grid.point(corner) } }
   }
 }
 
@@ -114,7 +96,9 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
     }
   }
 
-  fun point(corner: Int): Point2D.Double = Point2D.Double(xOf(corner), yOf(corner))
+  fun point(corner: Int): Point2D.Double {
+    return Point2D.Double(xOf(corner), yOf(corner))
+  }
 
   /**
    * Gives the cycles of the boundary. Each one holds its corners in the order of the trace.
@@ -140,7 +124,9 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
       radii[index] = cornerRadius(cycle, index, radius)
     }
     val outgoing = directionOf(cycle[0], cycle[1])
-    path.moveTo(xOf(cycle[0]) + radii[0] * dx(outgoing), yOf(cycle[0]) + radii[0] * dy(outgoing))
+    val x = xOf(cycle[0]) + radii[0] * dx(outgoing)
+    val y = yOf(cycle[0]) + radii[0] * dy(outgoing)
+    path.moveTo(x, y)
     for (index in 1 until cycle.size) {
       appendCorner(path, cycle, index, radii[index])
     }
@@ -157,7 +143,12 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
       return
     }
     val outgoing = directionOf(cycle[index], cycle[(index + 1) % cycle.size])
-    path.quadTo(x, y, x + radius * dx(outgoing), y + radius * dy(outgoing))
+    path.quadTo(
+      x,
+      y,
+      x + radius * dx(outgoing),
+      y + radius * dy(outgoing),
+    )
   }
 
   private fun cornerRadius(cycle: IntArray, index: Int, radius: Double): Double {
@@ -255,13 +246,19 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
         continue
       }
       var end = cell + 1
-      while (end < cellCount && isCovered(boundary, end) == below && isCovered(boundary - 1, end) == above) {
+      while (end < cellCount &&
+             isCovered(boundary, end) == below &&
+             isCovered(boundary - 1, end) == above) {
         end++
       }
       if (below) {
-        edges.add(edgeOf(cornerOf(cell, boundary), cornerOf(end, boundary)))
+        val tail = cornerOf(cell, boundary)
+        val head = cornerOf(end, boundary)
+        edges.add(edgeOf(tail, head))
       } else {
-        edges.add(edgeOf(cornerOf(end, boundary), cornerOf(cell, boundary)))
+        val tail = cornerOf(end, boundary)
+        val head = cornerOf(cell, boundary)
+        edges.add(edgeOf(tail, head))
       }
       cell = end
     }
@@ -279,9 +276,13 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
         continue
       }
       if (right) {
-        edges.add(edgeOf(cornerOf(xIndex, band + 1), cornerOf(xIndex, band)))
+        val tail = cornerOf(xIndex, band + 1)
+        val head = cornerOf(xIndex, band)
+        edges.add(edgeOf(tail, head))
       } else {
-        edges.add(edgeOf(cornerOf(xIndex, band), cornerOf(xIndex, band + 1)))
+        val tail = cornerOf(xIndex, band)
+        val head = cornerOf(xIndex, band + 1)
+        edges.add(edgeOf(tail, head))
       }
     }
   }
@@ -327,68 +328,106 @@ private class OutlineGrid(rows: BackgroundRows, styleId: Int) {
     return if (yIndexOf(to) > yIndexOf(from)) DOWN else UP
   }
 
-  private fun cornerOf(xIndex: Int, yIndex: Int): Int = yIndex * xs.size + xIndex
-
-  private fun xOf(corner: Int): Double = xs[xIndexOf(corner)]
-
-  private fun yOf(corner: Int): Double = ys[yIndexOf(corner)]
-
-  private fun xIndexOf(corner: Int): Int = corner % xs.size
-
-  private fun yIndexOf(corner: Int): Int = corner / xs.size
-}
-
-private fun edgeOf(tail: Int, head: Int): Long = (tail.toLong() shl 32) or head.toLong()
-
-private fun tailOf(edge: Long): Int = (edge ushr 32).toInt()
-
-private fun headOf(edge: Long): Int = (edge and 0xFFFFFFFFL).toInt()
-
-private fun dx(direction: Int): Double {
-  if (direction == RIGHT) {
-    return 1.0
+  private fun cornerOf(xIndex: Int, yIndex: Int): Int {
+    return yIndex * xs.size + xIndex
   }
-  if (direction == LEFT) {
-    return -1.0
-  }
-  return 0.0
-}
 
-private fun dy(direction: Int): Double {
-  if (direction == DOWN) {
-    return 1.0
+  private fun xOf(corner: Int): Double {
+    return xs[xIndexOf(corner)]
   }
-  if (direction == UP) {
-    return -1.0
-  }
-  return 0.0
-}
 
-/**
- * Gives the sorted values, with the values that differ by less than [EPSILON] as one value.
- */
-private fun canonicalValues(values: DoubleArray): DoubleArray {
-  if (values.isEmpty()) {
-    return values
+  private fun yOf(corner: Int): Double {
+    return ys[yIndexOf(corner)]
   }
-  val sorted = values.copyOf()
-  Arrays.sort(sorted)
-  var count = 1
-  for (index in 1 until sorted.size) {
-    if (sorted[index] > sorted[count - 1] + EPSILON) {
-      sorted[count] = sorted[index]
-      count++
+
+  private fun xIndexOf(corner: Int): Int {
+    return corner % xs.size
+  }
+
+  private fun yIndexOf(corner: Int): Int {
+    return corner / xs.size
+  }
+
+  private fun gridIndexOf(values: DoubleArray, value: Double): Int {
+    val found = Arrays.binarySearch(values, value)
+    if (found >= 0) {
+      return found
     }
+    val below = -found - 2
+    require(below >= 0 && value - values[below] <= EPSILON) {
+      "the value $value is outside the grid of the style"
+    }
+    return below
   }
-  return sorted.copyOf(count)
-}
 
-private fun gridIndexOf(values: DoubleArray, value: Double): Int {
-  val found = Arrays.binarySearch(values, value)
-  if (found >= 0) {
-    return found
+  private fun headOf(edge: Long): Int {
+    return (edge and 0xFFFFFFFFL).toInt()
   }
-  val below = -found - 2
-  require(below >= 0 && value - values[below] <= EPSILON) { "the value $value is outside the grid of the style" }
-  return below
+
+  private fun tailOf(edge: Long): Int {
+    return (edge ushr 32).toInt()
+  }
+
+  private fun edgeOf(tail: Int, head: Int): Long {
+    return (tail.toLong() shl 32) or head.toLong()
+  }
+
+  private fun dx(direction: Int): Double {
+    if (direction == RIGHT) {
+      return 1.0
+    }
+    if (direction == LEFT) {
+      return -1.0
+    }
+    return 0.0
+  }
+
+  private fun dy(direction: Int): Double {
+    if (direction == DOWN) {
+      return 1.0
+    }
+    if (direction == UP) {
+      return -1.0
+    }
+    return 0.0
+  }
+
+  /**
+   * Gives the sorted values, with the values that differ by less than [EPSILON] as one value.
+   */
+  private fun canonicalValues(values: DoubleArray): DoubleArray {
+    if (values.isEmpty()) {
+      return values
+    }
+    val sorted = values.copyOf()
+    Arrays.sort(sorted)
+    var count = 1
+    for (index in 1 until sorted.size) {
+      if (sorted[index] > sorted[count - 1] + EPSILON) {
+        sorted[count] = sorted[index]
+        count++
+      }
+    }
+    return sorted.copyOf(count)
+  }
+
+  companion object {
+    /**
+     * Two coordinates that differ by less than this are one coordinate of the grid.
+     */
+    private const val EPSILON: Double = 1e-2
+
+    /**
+     * The four directions of an edge, in the clockwise order of the screen.
+     */
+    private const val RIGHT: Int = 0
+    private const val DOWN: Int = 1
+    private const val LEFT: Int = 2
+    private const val UP: Int = 3
+
+    /**
+     * The rank of a turn by the direction difference: the right turn wins, then straight, then the left turn, then back.
+     */
+    private val TURN_RANK: IntArray = intArrayOf(1, 0, 3, 2)
+  }
 }

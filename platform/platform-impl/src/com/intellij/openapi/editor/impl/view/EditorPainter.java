@@ -147,7 +147,7 @@ public final class EditorPainter implements TextDrawingCallback {
   }
 
   @ApiStatus.Internal
-  public static void fillRectExact(final Graphics2D g, final Rectangle2D r, final Color color) {
+  public static void fillRectExact(Graphics2D g, Rectangle2D r, Color color) {
     var transform = g.getTransform();
     Point2D.Double topLeftPoint = new Point2D.Double(r.getX(), r.getY());
     Point2D.Double bottomRightPoint = new Point2D.Double(r.getX() + r.getWidth(), r.getY() + r.getHeight());

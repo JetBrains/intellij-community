@@ -12,11 +12,6 @@ import java.awt.geom.Rectangle2D
 import java.util.TreeMap
 
 /**
- * Two rectangles that share a strip thinner than this do not overlap.
- */
-private const val MIN_OVERLAP: Double = 1e-2
-
-/**
  * The highlighter backgrounds of one paint.
  *
  * The painter creates the model only while the editor rounds the corners of the highlighting.
@@ -35,7 +30,6 @@ internal class HighlighterVisualModel(
   private val yShift: Int,
   private val huggingHighlighting: Boolean,
 ) {
-  private val selectionBg get() = editor.editorModel.selectionModel.textAttributes.backgroundColor
   private val rows = BackgroundRows()
   private val styleIds = TreeMap<BackgroundLayer, Int>(BackgroundLayer.STYLE_ORDER)
   private val styles = ArrayList<BackgroundLayer>()
@@ -52,7 +46,7 @@ internal class HighlighterVisualModel(
   private val rowCountsBeforeExtensions = IntArrayList()
 
   fun paintSelectionBlock(block: Rectangle2D) {
-    val color = selectionBg ?: return
+    val color = editor.editorModel.selectionModel.textAttributes.backgroundColor ?: return
     val layer = BackgroundLayer(
       color,
       HighlighterLayer.SELECTION,
@@ -370,6 +364,18 @@ internal class HighlighterVisualModel(
     return id
   }
 
+  private fun edgeOf(above: Int, below: Int): Long {
+    return (above.toLong() shl 32) or below.toLong()
+  }
+
+  private fun aboveOf(edge: Long): Int {
+    return (edge ushr 32).toInt()
+  }
+
+  private fun belowOf(edge: Long): Int {
+    return edge.toInt()
+  }
+
   companion object {
     /**
      * Gives the radius of a corner of a rounded shape for [lineHeight].
@@ -379,11 +385,10 @@ internal class HighlighterVisualModel(
     fun cornerRadius(lineHeight: Int): Double {
       return lineHeight / 6.0
     }
+
+    /**
+     * Two rectangles that share a strip thinner than this do not overlap.
+     */
+    private const val MIN_OVERLAP: Double = 1e-2
   }
 }
-
-private fun edgeOf(above: Int, below: Int): Long = (above.toLong() shl 32) or below.toLong()
-
-private fun aboveOf(edge: Long): Int = (edge ushr 32).toInt()
-
-private fun belowOf(edge: Long): Int = edge.toInt()

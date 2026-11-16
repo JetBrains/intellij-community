@@ -44,18 +44,30 @@ class BackgroundRows {
     count++
   }
 
-  fun styleId(index: Int): Int = styleIds[checkIndex(index)]
+  fun styleId(index: Int): Int {
+    return styleIds[checkIndex(index)]
+  }
 
-  fun top(index: Int): Double = tops[checkIndex(index)]
+  fun top(index: Int): Double {
+    return tops[checkIndex(index)]
+  }
 
-  fun bottom(index: Int): Double = bottoms[checkIndex(index)]
+  fun bottom(index: Int): Double {
+    return bottoms[checkIndex(index)]
+  }
 
-  fun start(index: Int): Double = starts[checkIndex(index)]
+  fun start(index: Int): Double {
+    return starts[checkIndex(index)]
+  }
 
-  fun end(index: Int): Double = ends[checkIndex(index)]
+  fun end(index: Int): Double {
+    return ends[checkIndex(index)]
+  }
 
   private fun checkIndex(index: Int): Int {
-    require(index in 0 until count) { "the index $index is outside the $count intervals" }
+    require(index in 0 until count) {
+      "the index $index is outside the $count intervals"
+    }
     return index
   }
 
