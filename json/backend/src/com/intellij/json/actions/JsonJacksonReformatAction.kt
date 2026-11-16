@@ -9,11 +9,11 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.vfs.LargeFileWriteRequestor
@@ -63,9 +63,8 @@ internal class JsonJacksonReformatAction : AnAction(), LargeFileWriteRequestor {
       if (!virtualFile.isWritable) {
         val file = LightVirtualFile(virtualFile.nameWithoutExtension + "-formatted.json", JsonFileType.INSTANCE, formatted)
         val descriptor = OpenFileDescriptor(project, file)
-        withContext(Dispatchers.EDT) {
-          FileEditorManager.getInstance(project).openEditor(descriptor, true)
-        }
+        FileEditorManager.getInstanceAsync(project)
+          .openEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(true))
         return@runWithModalProgressBlocking
       }
 
