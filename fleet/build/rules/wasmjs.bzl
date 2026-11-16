@@ -171,6 +171,7 @@ def fleet_wasmjs_module(
             source_maps = binary_source_maps,
             source_map_prefix = binary_source_map_prefix,
             source_map_base_dirs = binary_source_map_base_dirs,
+            tags = ["manual"],
             visibility = visibility,
         )
 
