@@ -1,0 +1,8 @@
+class Foo {
+    <caret>companion object {
+        open class Bar {
+            protected fun nestedFun1() {}
+            protected fun nestedFun2() {}
+        }
+    }
+}

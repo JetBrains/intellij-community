@@ -14643,6 +14643,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/memberExtensionFun.kt");
         }
 
+        @TestMetadata("nestedClassWithCompanionProtectedFunction.kt")
+        public void testNestedClassWithCompanionProtectedFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/nestedClassWithCompanionProtectedFunction.kt");
+        }
+
+        @TestMetadata("nestedOpenClassWithOpenFunction.kt")
+        public void testNestedOpenClassWithOpenFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/nestedOpenClassWithOpenFunction.kt");
+        }
+
+        @TestMetadata("nestedOpenClassWithProtectedFunctions.kt")
+        public void testNestedOpenClassWithProtectedFunctions() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/nestedOpenClassWithProtectedFunctions.kt");
+        }
+
         @TestMetadata("ofOperator.kt")
         public void testOfOperator() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/ofOperator.kt");

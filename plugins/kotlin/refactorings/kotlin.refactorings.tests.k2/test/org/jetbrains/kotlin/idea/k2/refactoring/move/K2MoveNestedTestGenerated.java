@@ -452,4 +452,9 @@ public class K2MoveNestedTestGenerated extends AbstractK2MoveNestedTest {
     public void testKotlin_moveToCompanionBlock_jvmStaticFromCompanionObject_JvmStaticFromCompanionObject() throws Exception {
         runTest("testData/moveNested/kotlin/moveToCompanionBlock/jvmStaticFromCompanionObject/jvmStaticFromCompanionObject.test");
     }
+
+    @TestMetadata("kotlin/moveToCompanionBlock/nestedClassMembers/nestedClassMembers.test")
+    public void testKotlin_moveToCompanionBlock_nestedClassMembers_NestedClassMembers() throws Exception {
+        runTest("testData/moveNested/kotlin/moveToCompanionBlock/nestedClassMembers/nestedClassMembers.test");
+    }
 }

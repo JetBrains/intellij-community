@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.Declaration
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.Declaration.DeclarationTargetType
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.usages.K2MoveRenameUsageInfo.Companion.markInternalUsages
@@ -239,7 +238,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
                     // Reference search for finding and deleting unused companions should be done only after retargeting usages
                     deleteUnusedCompanionObjects(containingDeclarations)
                     oldToNewMap.forEach { original, new ->
-                        postprocessDeclaration(moveDescriptor.target, original, new)
+                        postprocessDeclaration(moveDescriptor, original, new)
 
                         val originalDeclaration = original as? KtNamedDeclaration
                         val newDeclaration = new as? KtNamedDeclaration
@@ -494,14 +493,17 @@ open class K2MoveDeclarationsRefactoringProcessor(
     /**
      * This function is used to postprocess the [newDeclaration] after the move has happened.
      * For example, we can remove modifiers that should be removed after moving.
+     * The postprocessing is not done for secondary moved declarations, e.g. member functions in a moved class.
      */
     private fun postprocessDeclaration(
-        moveTarget: K2MoveTargetDescriptor,
+        moveDescriptor: K2MoveDescriptor.Declarations,
         originalDeclaration: PsiElement,
         newDeclaration: PsiElement
     ) {
+        if (originalDeclaration !in moveDescriptor.source.elements) return
         val outerInstanceParameterName = (originalDeclaration as? KtNamedDeclaration)?.computeOrGetOuterInstanceName()
-        val moveTargetType = (moveTarget as? Declaration<*>)?.getTargetType()
+        val moveTargetType = moveDescriptor.target.getTargetType()
+
         if (moveTargetType == DeclarationTargetType.COMPANION_BLOCK || moveTargetType == DeclarationTargetType.COMPANION_EXTENSION) {
             (newDeclaration as? KtDeclaration)?.let { declaration ->
                 declaration.removeJvmStaticAnnotation()
@@ -510,7 +512,8 @@ open class K2MoveDeclarationsRefactoringProcessor(
             }
         }
         if (moveTargetType == DeclarationTargetType.COMPANION_BLOCK) {
-            ((newDeclaration.parent as? KtClassBody)?.parent as? KtCompanionBlock)?.separateFromPrecedingClassIfNeeded()
+            val parentCompanionBlock = (newDeclaration.parent as? KtClassBody)?.parent as? KtCompanionBlock
+            parentCompanionBlock?.separateFromPrecedingClassIfNeeded()
         }
         if (moveTargetType == DeclarationTargetType.COMPANION_OBJECT && newDeclaration is KtCallableDeclaration) {
             newDeclaration.addJvmStaticIfProtected()

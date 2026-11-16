@@ -1,0 +1,8 @@
+class Foo {
+    <caret>companion object {
+        open class Bar {
+            open fun nestedFun() {}
+            final override fun toString(): String = "Bar"
+        }
+    }
+}
