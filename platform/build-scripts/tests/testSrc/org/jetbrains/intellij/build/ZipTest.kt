@@ -170,6 +170,84 @@ class ZipTest {
   }
 
   @Test
+  fun processResourcesDoesNotMaterializeNames(@TempDir tempDir: Path) {
+    runBlocking {
+      val dir = Files.createDirectories(tempDir.resolve("src"))
+      dir.resolve("inspectionDescriptions/metaInformation.json").write("{\"inspections\":[]}")
+      dir.resolve("inspectionDescriptions/html/Sample.html").write("<html/>")
+      dir.resolve("inspectionDescriptions2/other.txt").write("ignored")
+      dir.resolve("目录/子项.txt").write("utf8-content")
+      dir.resolve("root.txt").write("root")
+
+      val archiveWithDirEntries = tempDir.resolve("with-dir-entries.zip")
+      zipWithPackageIndex(archiveWithDirEntries, dir)
+
+      val archiveNoDirEntries = tempDir.resolve("no-dir-entries.zip")
+      buildJar(archiveNoDirEntries, listOf(DirSource(dir = dir, moduleName = null)))
+
+      val namesField = ImmutableZipFile::class.java.getDeclaredField("names")
+      namesField.isAccessible = true
+
+      for (archiveFile in listOf(archiveWithDirEntries, archiveNoDirEntries)) {
+        ImmutableZipFile.load(archiveFile).use { zipFile ->
+          assertThat(zipFile).isInstanceOf(ImmutableZipFile::class.java)
+          assertThat(namesField.get(zipFile)).isNull()
+
+          val seenByFilter = ArrayList<String>()
+          val uncached = LinkedHashMap<String, String>()
+          zipFile.processResources("inspectionDescriptions", Predicate {
+            seenByFilter.add(it)
+            true
+          }, BiConsumer { name, stream ->
+            uncached.put(name, stream.readAllBytes().decodeToString())
+          })
+          assertThat(namesField.get(zipFile)).isNull()
+          assertThat(seenByFilter).containsExactlyInAnyOrder(
+            "inspectionDescriptions/metaInformation.json",
+            "inspectionDescriptions/html/Sample.html",
+          )
+          assertThat(uncached).containsExactlyInAnyOrderEntriesOf(mapOf(
+            "inspectionDescriptions/metaInformation.json" to "{\"inspections\":[]}",
+            "inspectionDescriptions/html/Sample.html" to "<html/>",
+          ))
+
+          val utf8Uncached = LinkedHashMap<String, String>()
+          zipFile.processResources("目录", Predicate { true }, BiConsumer { name, stream ->
+            utf8Uncached.put(name, stream.readAllBytes().decodeToString())
+          })
+          assertThat(namesField.get(zipFile)).isNull()
+          assertThat(utf8Uncached).containsExactlyEntriesOf(mapOf("目录/子项.txt" to "utf8-content"))
+
+          (zipFile as ImmutableZipFile).getOrComputeNames()
+          assertThat(namesField.get(zipFile)).isNotNull()
+
+          val seenByCachedFilter = ArrayList<String>()
+          val cached = LinkedHashMap<String, String>()
+          zipFile.processResources("inspectionDescriptions", Predicate {
+            seenByCachedFilter.add(it)
+            true
+          }, BiConsumer { name, stream ->
+            cached.put(name, stream.readAllBytes().decodeToString())
+          })
+          assertThat(seenByCachedFilter).isEqualTo(seenByFilter)
+          assertThat(cached).isEqualTo(uncached)
+        }
+
+        checkZip(archiveFile) { zipFile ->
+          val found = LinkedHashMap<String, String>()
+          zipFile.processResources("inspectionDescriptions", Predicate { true }, BiConsumer { name, stream ->
+            found.put(name, stream.readAllBytes().decodeToString())
+          })
+          assertThat(found).containsExactlyInAnyOrderEntriesOf(mapOf(
+            "inspectionDescriptions/metaInformation.json" to "{\"inspections\":[]}",
+            "inspectionDescriptions/html/Sample.html" to "<html/>",
+          ))
+        }
+      }
+    }
+  }
+
+  @Test
   fun excludesInZipSource(@TempDir tempDir: Path) = runBlocking {
     val random = Random(42)
 
