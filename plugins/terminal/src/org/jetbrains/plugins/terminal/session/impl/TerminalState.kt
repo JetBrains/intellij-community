@@ -35,6 +35,5 @@ data class TerminalState(
    *
    * Can be null in case the current directory is unknown.
    */
-  @OsPath
-  val currentDirectory: String?,
+  val currentDirectory: @OsPath String?,
 )

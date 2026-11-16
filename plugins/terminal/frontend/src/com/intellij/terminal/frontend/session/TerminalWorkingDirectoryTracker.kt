@@ -26,9 +26,10 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 internal fun getInitialWorkingDirectory(options: ShellStartupOptions): EelPath? {
   if (options.processType == TerminalProcessType.SHELL) {
-    // Do not use a directory requested for a shell process as an initial directory.
-    // Because shell may actually decide to start in a different directory.
-    // For example, CMD starts in the home directory if the process is started with a WSL path.
+    // Do not use a directory requested for a shell process as an initial directory, because it can be wrong.
+    // The shell can start in another directory. For example, CMD starts in the home directory for a WSL path.
+    // IDE features rely on it and if it is incorrect, they may be broken.
+    // For example, incorrect relative path hyperlinks can be highlighted.
     return null
   }
   // But if it is a NON_SHELL process, it is safe to use the directory where the process started.
