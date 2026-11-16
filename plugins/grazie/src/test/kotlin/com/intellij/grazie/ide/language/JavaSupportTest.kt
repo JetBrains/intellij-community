@@ -116,7 +116,7 @@ class JavaSupportTest {
   fun `test long comment performance`() {
     Benchmark.newBenchmark("highlighting") {
       grazie.runHighlightTestForFile("ide/language/java/LongCommentPerformance.java")
-    }.setup { grazie.dropPsiCaches() }.start()
+    }.setup { grazie.dropPsiCaches() }.runAsStressTest().start()
   }
 
   @PerformanceUnitTest
@@ -126,7 +126,7 @@ class JavaSupportTest {
     grazie.fixture.configureByText("a.java", text)
     Benchmark.newBenchmark("highlighting") {
       grazie.fixture.checkHighlighting()
-    }.setup { grazie.dropPsiCaches() }.start()
+    }.setup { grazie.dropPsiCaches() }.runAsStressTest().start()
   }
 
   @Test
@@ -347,7 +347,7 @@ class JavaSupportTest {
     }.setup {
       grazie.dropPsiCaches()
       GrazieSpellCheckerEngine.getInstance(grazie.project).dropSuggestionCache()
-    }.start()
+    }.runAsStressTest().start()
   }
 
   @Test

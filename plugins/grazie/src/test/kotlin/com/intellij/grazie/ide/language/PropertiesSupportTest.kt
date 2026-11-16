@@ -103,6 +103,6 @@ class PropertiesSupportTest {
     }.setup {
       grazie.dropPsiCaches()
       GrazieSpellCheckerEngine.getInstance(grazie.project).dropSuggestionCache()
-    }.start()
+    }.runAsStressTest().start()
   }
 }
