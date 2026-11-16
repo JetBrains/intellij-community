@@ -117,6 +117,7 @@
     <treeStructureProvider implementation="org.jetbrains.plugins.gradle.projectView.GradleTreeStructureProvider" order="last"/>
     <projectViewNodeDecorator implementation="org.jetbrains.plugins.gradle.projectView.GradleModuleDirectoryDecorator" order="first"/>
     <attachSourcesProviderFilter implementation="org.jetbrains.plugins.gradle.editor.GradleAttachSourcesProviderFilter"/>
+    <implicitUsageProvider implementation="org.jetbrains.plugins.gradle.config.GradleTaskImplicitUsageProvider"/>
 
     <compileServer.plugin classpath="intellij.gradle.jps.jar"/>
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.startup.GradleJvmStartupActivity"/>
