@@ -278,7 +278,7 @@ internal class DefaultProjectViewPaneDnDHandler<T : ProjectViewNodeUserObject>(
       while (validTarget != null) {
         if (isValidTarget(sources, validTarget)) break
         if (!shouldDelegateToParent(sources, validTarget)) return null
-        validTarget = target.parentTarget
+        validTarget = validTarget.parentTarget
       }
       return validTarget
     }
