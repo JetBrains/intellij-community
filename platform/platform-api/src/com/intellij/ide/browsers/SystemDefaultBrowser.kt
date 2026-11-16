@@ -8,6 +8,7 @@ import com.intellij.execution.util.ExecUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileTypes.systemOpenCommand
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.system.LowLevelLocalMachineAccess
@@ -66,6 +67,22 @@ object SystemDefaultBrowser : WebBrowser() {
         openWithDefaultCommand(url, project)
       }
     }
+  }
+
+  /**
+   * Hands [url] to the application that the operating system registers for its scheme, such as the mail application for `mailto:`.
+   * It runs the command of [systemOpenCommand]: `rundll32 url.dll,FileProtocolHandler` on Windows, `open` on macOS or `xdg-open`
+   * elsewhere. On Windows it does not use `cmd /c start`, because `cmd` expands a `%NAME%` in the URL to the value of the environment
+   * variable. [browse] tries `Desktop.browse` first, and on macOS and Windows that opens the default web browser for any scheme.
+   */
+  @ApiStatus.Internal
+  fun openWithSchemeHandler(url: String, project: Project?) {
+    val command = systemOpenCommand(url)
+    if (command == null) {
+      BrowserLauncherAppless.showBrowserError(browserNotFoundMessage, url, browser = null, project)
+      return
+    }
+    BrowserLauncherAppless.runBrowserCommand(GeneralCommandLine(command), url, browser = null, project)
   }
 
   private fun openWithDefaultCommand(url: String, project: Project?) {
