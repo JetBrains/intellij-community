@@ -80,11 +80,11 @@ public class NullGraphics2D extends Graphics2D {
 
   @Override
   public void drawString(String str, int x, int y) {
-    myResult += x;
-    myResult += y;
-    for (int i = 0; i < str.length(); i++) {
-      myResult += str.charAt(i);
+    int result = x + y;
+    for (int i = 0, len = str.length(); i < len; i++) {
+      result += str.charAt(i);
     }
+    myResult += result;
   }
 
   @Override

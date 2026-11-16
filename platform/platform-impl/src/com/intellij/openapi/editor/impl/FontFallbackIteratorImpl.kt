@@ -212,20 +212,20 @@ internal class FontFallbackIteratorImpl private constructor(
   }
 
   private fun charAt(index: Int): Char {
-    val chars = textAsCharSequence
-    if (chars == null) {
-      return textAsArray!![index]
-    } else {
+    val chars = textAsArray
+    if (chars != null) {
       return chars[index]
+    } else {
+      return textAsCharSequence!![index]
     }
   }
 
   private fun getFontAbleToDisplay(breakStart: Int, breakEnd: Int): FontInfo {
-    val chars = textAsCharSequence
-    return if (chars == null) {
-      fontLookup.fontAbleToDisplay(textAsArray!!, breakStart, breakEnd, fontStyle, fontRenderContext)
-    } else {
+    val chars = textAsArray
+    return if (chars != null) {
       fontLookup.fontAbleToDisplay(chars, breakStart, breakEnd, fontStyle, fontRenderContext)
+    } else {
+      fontLookup.fontAbleToDisplay(textAsCharSequence!!, breakStart, breakEnd, fontStyle, fontRenderContext)
     }
   }
 }

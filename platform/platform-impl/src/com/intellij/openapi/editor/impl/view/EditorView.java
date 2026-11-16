@@ -818,10 +818,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return mySnapshot.rtlEnabled();
   }
 
-  TextAttributes getPrefixAttributes() {
-    return mySnapshot.prefixAttributes();
-  }
-
   /**
    * Returns whether the text of other visual lines can reach into the line box of the visual line.
    * The editor fonts reach only with a line spacing below 1.

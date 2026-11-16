@@ -126,7 +126,7 @@ final class LineBidiRun {
     int end = Math.min(getEndOffset(), targetEndOffset);
     List<LineChunk> subChunks = new SmartList<>();
     List<LineChunk> chunks = getChunks(document.chars(), document.lineStartOffset(line));
-    for (int i = (start - getStartOffset()) / CHUNK_CHARACTERS; i < chunks.size(); i++) {
+    for (int i = (start - getStartOffset()) / CHUNK_CHARACTERS, size = chunks.size(); i < size; i++) {
       LineChunk chunk = chunks.get(i);
       if (chunk.getEndOffset() <= start) {
         continue;

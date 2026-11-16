@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
@@ -44,13 +45,21 @@ public final class SimpleTextFragment extends TextFragment {
     char[] text = myText;
     float[] charAlignment = null;
     boolean gridCellAlignmentEnabled = text.length == 0 || isGridCellAlignmentEnabled();
+    FontMetrics fm = fontInfo.fontMetrics();
+    FontLayoutService fontService = FontLayoutService.getInstance();
     for (int i = 0; i < text.length; i++) {
       int codePoint = text[i]; // SimpleTextFragment only handles BMP characters, so no need for codePointAt here
       float charWidth;
       if (myLetterSpacing == 0) {
-        charWidth = fontInfo.charWidth2D(codePoint);
+        // inlined fontInfo.charWidth2D for performance
+        float advance = fontService.charWidth2D(fm, codePoint);
+        if (advance <= 0) {
+          charWidth = advance;
+        } else {
+          charWidth = advance + fontInfo.letterSpacingAfter(codePoint, advance);
+        }
       } else {
-        float advance = fontInfo.charAdvance2D(codePoint);
+        float advance = FontLayoutService.getInstance().charWidth2D(fm, codePoint);
         float spacing = fontInfo.letterSpacingAfter(codePoint, advance);
         charWidth = advance + spacing;
         if (spacing != myLetterSpacing && charSpacing == null) {

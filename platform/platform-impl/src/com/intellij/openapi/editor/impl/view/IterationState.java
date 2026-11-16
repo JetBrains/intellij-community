@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.DocumentText;
-import com.intellij.openapi.editor.ex.DocumentTextUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -109,6 +108,7 @@ public final class IterationState {
   private final Color myDefaultForeground;
   private final Color myReadOnlyColor;
   private final DocumentText myDocument;
+  private final CharSequence myChars;
   private final CaretData myCaretData;
   private final boolean myUseOnlyFullLineHighlighters;
   private final boolean myUseOnlyFontOrForegroundAffectingHighlighters;
@@ -165,8 +165,9 @@ public final class IterationState {
 
     DocumentEx document = getDocument(editor);
     myDocument = document.getDocumentText();
-    assert !DocumentTextUtil.isInsideSurrogatePair(myDocument, start);
-    assert !DocumentTextUtil.isInsideSurrogatePair(myDocument, end);
+    myChars = myDocument.luckyChars();
+    assert !isInsideSurrogatePair(start);
+    assert !isInsideSurrogatePair(end);
 
     myColorsScheme = editor.getColorsScheme();
     myInitialStartOffset = start;
@@ -193,7 +194,7 @@ public final class IterationState {
     myDefaultFontType = defaultAttributes == null ? Font.PLAIN : defaultAttributes.getFontType();
     myEditorHighlighters = createSweep(getEditorMarkupModel(editor));
     myDocumentHighlighters = createSweep(getDocumentMarkupModel(editor));
-    myGuardedBlocks =  useOnlyFullLineHighlighters ? null : buildGuardedBlocks(document.getGuardedBlocks(), start, end);
+    myGuardedBlocks = useOnlyFullLineHighlighters ? null : buildGuardedBlocks(document.getGuardedBlocks(), start, end);
     myEndOffset = myStartOffset;
     advance();
   }
@@ -204,7 +205,7 @@ public final class IterationState {
            myCaretData == CaretData.getNullCaret() &&
            offset >= myInitialStartOffset &&
            offset <= myStartOffset &&
-           !DocumentTextUtil.isInsideSurrogatePair(myDocument, offset);
+           !isInsideSurrogatePair(offset);
     if (offset == myStartOffset) return;
     if (myHighlighterIterator != null) {
       while (myHighlighterIterator.getStart() > offset) {
@@ -228,7 +229,7 @@ public final class IterationState {
            myCaretData == CaretData.getNullCaret() &&
            offset >= myStartOffset &&
            offset <= myEnd &&
-           !DocumentTextUtil.isInsideSurrogatePair(myDocument, offset);
+           !isInsideSurrogatePair(offset);
     if (offset == myStartOffset) return;
     myEndOffset = offset;
     advance();
@@ -249,7 +250,7 @@ public final class IterationState {
     }
     if (myCurrentFold != null) {
       myEndOffset = myReverseIteration ? myCurrentFold.getStartOffset() : myCurrentFold.getEndOffset();
-      assert !DocumentTextUtil.isInsideSurrogatePair(myDocument, myEndOffset);
+      assert !isInsideSurrogatePair(myEndOffset);
     }
     else {
       int highlighterEnd = getHighlighterEnd(myStartOffset);
@@ -268,13 +269,13 @@ public final class IterationState {
 
       myNextIsFoldRegion = myEndOffset == foldRangesEnd && myEndOffset < myEnd;
 
-      assert !DocumentTextUtil.isInsideSurrogatePair(myDocument, myEndOffset) :
-        "caret: " + DocumentTextUtil.isInsideSurrogatePair(myDocument, caretEnd) +
-        ", selection: " + DocumentTextUtil.isInsideSurrogatePair(myDocument, selectionEnd) +
-        ", guarded block: " + DocumentTextUtil.isInsideSurrogatePair(myDocument, guardedBlockEnd) +
-        ", folding: " + DocumentTextUtil.isInsideSurrogatePair(myDocument, foldRangesEnd) +
-        ", lexer: " + DocumentTextUtil.isInsideSurrogatePair(myDocument, highlighterEnd) +
-        ", highlighters: " + DocumentTextUtil.isInsideSurrogatePair(myDocument, minSegmentHighlightersEnd);
+      assert !isInsideSurrogatePair(myEndOffset) :
+        "caret: " + isInsideSurrogatePair(caretEnd) +
+        ", selection: " + isInsideSurrogatePair(selectionEnd) +
+        ", guarded block: " + isInsideSurrogatePair(guardedBlockEnd) +
+        ", folding: " + isInsideSurrogatePair(foldRangesEnd) +
+        ", lexer: " + isInsideSurrogatePair(highlighterEnd) +
+        ", highlighters: " + isInsideSurrogatePair(minSegmentHighlightersEnd);
     }
 
     reinit();
@@ -479,11 +480,19 @@ public final class IterationState {
     return myEnd;
   }
 
+  private boolean isInsideSurrogatePair(int offset) {
+    CharSequence chars = myChars;
+    return 0 < offset &&
+           offset < chars.length() &&
+           Character.isHighSurrogate(chars.charAt(offset - 1)) &&
+           Character.isLowSurrogate(chars.charAt(offset));
+  }
+
   private int getGuardedBlockEnd(int start) {
     int end = myEnd;
     assert myReverseIteration && start >= end || !myReverseIteration && start <= end;
 
-    if (myUseOnlyFullLineHighlighters) {
+    if (myGuardedBlocks == null) {
       return end;
     }
 
@@ -522,7 +531,10 @@ public final class IterationState {
                                : lessThan(myCaretData.selectionStart(myCurrentSelectionIndex, false), myStartOffset, !atBreak));
   }
 
-  private @NotNull GuardedBlocksIndex buildGuardedBlocks(@NotNull List<RangeMarker> guardedBlocks, int start, int end) {
+  private @Nullable GuardedBlocksIndex buildGuardedBlocks(@NotNull List<RangeMarker> guardedBlocks, int start, int end) {
+    if (guardedBlocks.isEmpty()) {
+      return null;
+    }
     var guardedBlocksIndex = new GuardedBlocksIndex.DocumentBuilder(myDocument, guardedBlocks);
     return myReverseIteration
            ? guardedBlocksIndex.build(end, start)
@@ -530,7 +542,7 @@ public final class IterationState {
   }
 
   private boolean isInDocumentGuardedBlock(boolean atBreak, boolean beforeBreak) {
-    if (myUseOnlyFullLineHighlighters || (atBreak && beforeBreak)) {
+    if (myGuardedBlocks == null || (atBreak && beforeBreak)) {
       return false;
     }
     if (myReverseIteration) {
@@ -923,7 +935,7 @@ public final class IterationState {
   }
 
   private int alignOffset(int offset) {
-    return DocumentTextUtil.alignToCodePointBoundary(myDocument, offset);
+    return isInsideSurrogatePair(offset) ? offset - 1 : offset;
   }
 
   private int getAlignedStartOffset(@NotNull RangeHighlighterEx highlighter) {

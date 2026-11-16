@@ -218,7 +218,8 @@ class LineChunk {
     ensureLayout(view, document, line, level);
     LineChunk chunk0 = new SyntheticLineChunk(start, end, new ArrayList<>());
     int offset = getStartOffset();
-    for (LineFragment fragment : fragments) {
+    for (int i = 0, size = fragments.size(); i < size; i++) {
+      LineFragment fragment = fragments.get(i);
       if (end <= offset) {
         break;
       }

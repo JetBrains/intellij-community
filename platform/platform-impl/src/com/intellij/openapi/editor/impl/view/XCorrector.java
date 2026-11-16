@@ -27,25 +27,29 @@ interface XCorrector {
   List<Integer> softMarginsX();
 
   static @NotNull XCorrector create(@NotNull EditorView view,
+                                    @NotNull EditorViewSnapshot viewSnapshot,
                                     @NotNull Insets insets,
                                     @NotNull SettingsSnapshot settings,
                                     @NotNull EditorRegistry registry) {
     return view.getEditor().isRightAligned()
-           ? new RightAligned(view, settings, registry)
-           : new LeftAligned(view, insets, settings, registry);
+           ? new RightAligned(view, viewSnapshot, settings, registry)
+           : new LeftAligned(view, viewSnapshot, insets, settings, registry);
   }
 
   final class LeftAligned implements XCorrector {
     private final EditorView myView;
+    private final EditorViewSnapshot myViewSnapshot;
     private final int myLeftInset;
     private final SettingsSnapshot mySettings;
     private final EditorRegistry myRegistry;
 
     private LeftAligned(@NotNull EditorView view,
+                        @NotNull EditorViewSnapshot viewSnapshot,
                         @NotNull Insets insets,
                         @NotNull SettingsSnapshot settings,
                         @NotNull EditorRegistry registry) {
       myView = view;
+      myViewSnapshot = viewSnapshot;
       myLeftInset = insets.left;
       mySettings = settings;
       myRegistry = registry;
@@ -93,7 +97,7 @@ interface XCorrector {
 
     @Override
     public int lineSeparatorEnd(int maxX) {
-      return isMarginShown() ? Math.min(marginX(EditorPainter.getBaseMarginWidth(myView, mySettings)), maxX) : maxX;
+      return isMarginShown() ? Math.min(marginX(EditorPainter.getBaseMarginWidth(myViewSnapshot, mySettings)), maxX) : maxX;
     }
 
     @Override
@@ -121,11 +125,18 @@ interface XCorrector {
 
   final class RightAligned implements XCorrector {
     private final EditorView myView;
+    private final EditorViewSnapshot myViewSnapshot;
     private final SettingsSnapshot mySettings;
     private final EditorRegistry myRegistry;
 
-    private RightAligned(@NotNull EditorView view, @NotNull SettingsSnapshot settings, @NotNull EditorRegistry registry) {
+    private RightAligned(
+      @NotNull EditorView view,
+      @NotNull EditorViewSnapshot viewSnapshot,
+      @NotNull SettingsSnapshot settings,
+      @NotNull EditorRegistry registry
+    ) {
       myView = view;
+      myViewSnapshot = viewSnapshot;
       mySettings = settings;
       myRegistry = registry;
     }
@@ -167,7 +178,7 @@ interface XCorrector {
 
     @Override
     public int lineSeparatorStart(int minX) {
-      return isMarginShown() ? Math.max(marginX(EditorPainter.getBaseMarginWidth(myView, mySettings)), minX) : minX;
+      return isMarginShown() ? Math.max(marginX(EditorPainter.getBaseMarginWidth(myViewSnapshot, mySettings)), minX) : minX;
     }
 
     @Override

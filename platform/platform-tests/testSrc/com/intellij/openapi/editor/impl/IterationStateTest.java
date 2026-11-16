@@ -427,7 +427,7 @@ public class IterationStateTest {
       init("abc");
       addRangeHighlighter(0, 3, 0, Color.red);
       EditorEx editor = (EditorEx)myFixture.getEditor();
-      CaretData caretData = CaretData.createCaretData(editor.getDocument(), editor.getCaretModel());
+      CaretData caretData = CaretData.createCaretData(editor.getDocument().getDocumentText(), editor.getCaretModel());
       IterationState it = new IterationState(editor, 0, 3, caretData, false, true, true, false);
       assertEquals(CARET_ROW_BACKGROUND, it.getMergedAttributes().getBackgroundColor());
       assertTrue(it.getBackgroundLayers().isEmpty());
@@ -460,7 +460,7 @@ public class IterationStateTest {
 
   private void verifySplitting0(boolean checkForegroundColor, boolean backward, StateSegment... expectedSegments) {
     EditorEx editor = (EditorEx)myFixture.getEditor();
-    CaretData caretData = CaretData.createCaretData(editor.getDocument(), editor.getCaretModel());
+    CaretData caretData = CaretData.createCaretData(editor.getDocument().getDocumentText(), editor.getCaretModel());
     IterationState iterationState = new IterationState(
       editor,
       backward ? editor.getDocument().getTextLength() : 0,
