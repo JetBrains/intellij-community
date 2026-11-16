@@ -1679,6 +1679,7 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     }
     else if (typeDefinition.isInterface()) {
       checkReferenceList(myHolder, extendsClause, IS_INTERFACE, GroovyBundle.message("no.class.expected.here"), null);
+      checkForWildCards(myHolder, extendsClause);
     }
     else if (typeDefinition.isEnum()) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("enums.may.not.have.extends.clause")).create();
@@ -2137,16 +2138,16 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private static void checkForWildCards(AnnotationHolder holder, @Nullable GrReferenceList clause) {
-    if (clause == null) return;
+  private static void checkForWildCards(AnnotationHolder holder, @NotNull GrReferenceList clause) {
     for (GrCodeReferenceElement element : clause.getReferenceElementsGroovy()) {
       final GrTypeArgumentList list = element.getTypeArgumentList();
-      if (list != null) {
-        for (GrTypeElement type : list.getTypeArgumentElements()) {
-          if (type instanceof GrWildcardTypeArgument) {
-            String message = GroovyBundle.message("wildcards.are.not.allowed.in.extends.list");
-            holder.newAnnotation(HighlightSeverity.ERROR, message).range(type).create();
-          }
+      if (list == null) continue;
+      for (GrTypeElement type : list.getTypeArgumentElements()) {
+        if (type instanceof GrWildcardTypeArgument) {
+          PsiElement keyword = clause.getKeyword();
+          assert keyword != null;
+          String message = GroovyBundle.message("wildcards.are.not.allowed.in.extends.list", keyword.getText());
+          holder.newAnnotation(HighlightSeverity.ERROR, message).range(type).create();
         }
       }
     }
