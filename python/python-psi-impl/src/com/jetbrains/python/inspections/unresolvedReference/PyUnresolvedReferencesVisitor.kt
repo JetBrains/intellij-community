@@ -64,6 +64,7 @@ import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.impl.references.PyOperatorReference
 import com.jetbrains.python.psi.impl.references.hasattr.PyHasAttrHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassMembersProvider
 import com.jetbrains.python.psi.types.PyClassType
@@ -71,6 +72,7 @@ import com.jetbrains.python.psi.types.PyCompositeType
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl
 import com.jetbrains.python.psi.types.PyImportedModuleType
 import com.jetbrains.python.psi.types.PyModuleType
+import com.jetbrains.python.psi.types.PyOverloadType
 import com.jetbrains.python.psi.types.PySelfType
 import com.jetbrains.python.psi.types.PyStructuralType
 import com.jetbrains.python.psi.types.PyType
@@ -483,7 +485,8 @@ class PyUnresolvedReferencesVisitor(
       type is PyImportedModuleType && type.importedModule.resolve() == null -> true
       type is PyCustomType && hasUnclearClassParent(type) -> true
       type is PyClassType && isDynamicClass(type, reference, name) -> true
-      type is PyFunctionTypeImpl && hasUnknownAttrsDecorator(type) -> true
+      type is PyFunctionTypeImpl && hasUnknownAttrsDecorator(type.callable) -> true
+      type is PyOverloadType && hasUnknownAttrsDecorator(type) -> true
 
       type is PyModuleType &&
       type.module.languageLevel.isAtLeast(LanguageLevel.PYTHON37) ->
@@ -526,9 +529,16 @@ class PyUnresolvedReferencesVisitor(
            isAwaitOnGeneratorBasedCoroutine(name, reference, cls)
   }
 
-  private fun hasUnknownAttrsDecorator(type: PyFunctionTypeImpl): Boolean {
-    val callable = type.callable
-    return callable is PyFunction && PyKnownDecoratorUtil.hasUnknownOrUpdatingAttributesDecorator(callable, myTypeEvalContext)
+  private fun hasUnknownAttrsDecorator(callable: PyCallable?): Boolean =
+    callable is PyFunction && PyKnownDecoratorUtil.hasUnknownOrUpdatingAttributesDecorator(callable, myTypeEvalContext)
+
+  /**
+   * Checks the object that the overloaded name binds to at runtime: the implementation, or the overloads of a stub.
+   * A substituted overload of a method holds plain callable types, so the function comes from [PyCallableType.getCallable].
+   */
+  private fun hasUnknownAttrsDecorator(type: PyOverloadType): Boolean {
+    val runtimeCandidates = type.impl?.get()?.let(::listOf) ?: type.items
+    return runtimeCandidates.any { it is PyCallableType && hasUnknownAttrsDecorator(it.callable) }
   }
 
   private fun isIgnoredByExtension(type: PyType, name: String): Boolean =
