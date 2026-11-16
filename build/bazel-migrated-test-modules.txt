@@ -325,6 +325,7 @@ intellij.searchEverywhereMl.typos.tests
 intellij.settingsRepository.tests
 intellij.settingsSync.tests
 intellij.sh.tests
+intellij.spring.boot.json.tests.exploratory
 intellij.statsCollector.tests
 intellij.tasks.tests
 intellij.terminal.completion.tests
