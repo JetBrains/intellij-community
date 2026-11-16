@@ -29,6 +29,8 @@ jvm_library(
         "//platform/ide-core",
         "//platform/core-impl",
         "//platform/core-ui",
+        "//platform/util:util-ui",
+        "//libraries/junit4",
         "@lib//:kotlin-stdlib",
     ],
 )

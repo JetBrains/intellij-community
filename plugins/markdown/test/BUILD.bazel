@@ -146,7 +146,7 @@ jvm_library(
         "//plugins/git4idea/backend",
         "//plugins/git4idea:vcs-git-backend-tests_test_lib",
         "//platform/productMode",
-        "//plugins/markdown/test/testFramework:testFramework_test_lib",
+        "//plugins/markdown/test/testFramework",
     ],
 )
 ### auto-generated section `build intellij.markdown.tests` end

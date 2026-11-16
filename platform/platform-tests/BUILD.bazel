@@ -70,6 +70,7 @@ jvm_library(
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
         "//platform/platform-tests/eelLocalApi:eelLocalApi_test_lib",
+        "//platform/platform-tests/jcef:jcef_test_lib",
     ],
     deps = [
         # do not sort,
@@ -263,7 +264,6 @@ jvm_library(
         "//platform/platform-tests/editorStress:editorStress_test_lib",
         "//platform/platform-tests/testFramework",
         "//platform/scratch/plugin",
-        "//platform/platform-tests/jcef:jcef_test_lib",
         "//libraries/kotlinx/coroutines/test",
     ],
 )
