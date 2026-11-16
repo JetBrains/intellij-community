@@ -5,6 +5,7 @@ import os
 import platform
 import sys
 from functools import partial
+from inspect import CO_OPTIMIZED
 
 import pydevd_file_utils
 from _pydev_bundle import pydev_log
@@ -219,6 +220,26 @@ def _parse_break_on_system_exit(args):
             )
 
     return (codes, ranges)
+
+
+def _frame_locals_are_globals(py_db, frame_id):
+    """
+    Whether the suspended frame binds its names in its globals, as a module body does.
+
+    The Globals scope of such a frame repeats its Locals scope.
+    """
+    suspended_frames_manager = py_db.suspended_frames_manager
+    thread_id = suspended_frames_manager.get_thread_id_for_variable_reference(frame_id)
+    if thread_id is None:
+        return False
+    frame = suspended_frames_manager.find_frame(thread_id, frame_id)
+    if frame is None:
+        return False
+    # A function frame always has a namespace of its own. Its f_locals is not read here, because on
+    # Python 3.12 and older that read copies the fast locals of the frame from the reader thread.
+    if frame.f_code.co_flags & CO_OPTIMIZED:
+        return False
+    return frame.f_locals is frame.f_globals
 
 
 class IDMap(object):
@@ -1227,8 +1248,9 @@ class PyDevJsonCommandProcessor(object):
         try:
             scopes = [
                 Scope("Locals", ScopeRequest(int(variables_reference), "locals"), False, presentationHint="locals"),
-                Scope("Globals", ScopeRequest(int(variables_reference), "globals"), False),
             ]
+            if not _frame_locals_are_globals(py_db, int(variables_reference)):
+                scopes.append(Scope("Globals", ScopeRequest(int(variables_reference), "globals"), False))
         except (ValueError, TypeError):
             pydev_log.info("Failed to create scopes for frame id: %s", frame_id)
             scopes = []
