@@ -15,6 +15,24 @@ reviews.
 If you are doing **exec work** — regarding SDK/interpreters/packaging/run/debug/etc — read and follow
 [`../exec-conventions.md`](../exec-conventions.md) before edits or reviews.
 
+## Never use `Sdk`. Use `PythonInterpreter`
+
+This rule is for all teams and all code in this directory, in production code and in tests.
+
+Do not use `com.intellij.openapi.projectRoots.Sdk` to represent a Python interpreter. Use
+`com.intellij.python.sdk.backend.PythonInterpreter`. Do not use `Sdk` as a parameter, a property, a return type or
+a local value. `Sdk` is a legacy API, and it will be removed from PyCharm.
+
+* If platform code gives you an `Sdk`, convert it immediately with `Sdk.pythonInterpreterResult`. Then use only the
+  `PythonInterpreter`.
+* `PythonInterpreter` is a sealed class. To check the kind (`NativePythonInterpreter` or `TargetPythonInterpreter`),
+  use an exhaustive `when`.
+* If you change code that takes an `Sdk`, change it to take a `PythonInterpreter`.
+* Only the module `intellij.python.sdk.backend` can use `Sdk`.
+
+The project inspection "Use PythonInterpreter instead of Sdk in PyCharm" (suppress ID `PySdkUsage`) finds each use
+of `Sdk`. Do not suppress it in new code.
+
 ## Tests
 
 Every code change in this directory needs a test. Write it with the `py-junit5-tests`
