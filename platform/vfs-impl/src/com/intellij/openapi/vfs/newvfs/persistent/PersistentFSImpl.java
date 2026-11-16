@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -1464,56 +1463,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return Cancellation.withNonCancelableSection();
   }
 
-  private static void runSuppressing(@NotNull Runnable r1,
-                              @NotNull Runnable r2,
-                              @NotNull Runnable r3) {
-    runSuppressing(r1, r2, r3, EmptyRunnable.INSTANCE, EmptyRunnable.INSTANCE, EmptyRunnable.INSTANCE);
-  }
-
-  private static void runSuppressing(@NotNull Runnable r1,
-                                     @NotNull Runnable r2,
-                                     @NotNull Runnable r3,
-                                     @NotNull Runnable r4,
-                                     @NotNull Runnable r5,
-                                     @NotNull Runnable r6) {
+  private static void runSuppressing(@NotNull Runnable @NotNull ... runnables) {
     Throwable t = null;
-    try {
-      r1.run();
-    }
-    catch (Throwable e) {
-      t = Suppressions.addSuppressed(t, e);
-    }
-    try {
-      r2.run();
-    }
-    catch (Throwable e) {
-      t = Suppressions.addSuppressed(t, e);
-    }
-    try {
-      r3.run();
-    }
-    catch (Throwable e) {
-      t = Suppressions.addSuppressed(t, e);
-    }
-    if (r4 != EmptyRunnable.INSTANCE) {
+    for (Runnable runnable : runnables) {
       try {
-        r4.run();
-      }
-      catch (Throwable e) {
-        t = Suppressions.addSuppressed(t, e);
-      }
-    }
-    if (r5 != EmptyRunnable.INSTANCE) {
-      try {
-        r5.run();
-      }
-      catch (Throwable e) {
-        t = Suppressions.addSuppressed(t, e);
-      }
-    }
-    if (r6 != EmptyRunnable.INSTANCE) {
-      try {
-        r6.run();
+        runnable.run();
       }
       catch (Throwable e) {
         t = Suppressions.addSuppressed(t, e);
