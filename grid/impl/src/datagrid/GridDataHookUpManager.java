@@ -1,10 +1,6 @@
 package com.intellij.database.datagrid;
 
-import com.intellij.database.csv.CsvFormat;
-import com.intellij.database.vfs.fragment.CsvTableDataFragmentFile;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -47,18 +43,6 @@ public class GridDataHookUpManager implements GridHookUpRegistry, Disposable {
 
   public static GridDataHookUpManager getInstance(@NotNull Project project) {
     return (GridDataHookUpManager)GridHookUpRegistry.getInstance(project);
-  }
-
-  public @NotNull CsvDocumentDataHookUp getHookUp(@NotNull CsvTableDataFragmentFile file, @NotNull Disposable parent) {
-    return getOrCreateHookUp(file, f -> new CsvDocumentDataHookUp(myProject, f.getFormat(), getDocument(f.getOriginalFile()), f.getRange()), parent);
-  }
-
-  public @NotNull CsvDocumentDataHookUp getHookUp(@NotNull VirtualFile file, final @NotNull CsvFormat format, @NotNull Disposable parent) {
-    return getOrCreateHookUp(file, file1 -> new CsvDocumentDataHookUp(myProject, format, getDocument(file1), null), parent);
-  }
-
-  public static @NotNull Document getDocument(@NotNull VirtualFile file) {
-    return Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(file));
   }
 
   public @Nullable GridDataHookUp<GridRow, GridColumn> acquire(@NotNull GridDataHookUpManager.HookUpHandle handle, @NotNull Disposable parent) {
@@ -127,19 +111,6 @@ public class GridDataHookUpManager implements GridHookUpRegistry, Disposable {
       parked.forEach(myHookUps::remove);
     }
     parked.forEach(Disposer::dispose);
-  }
-
-  public <F extends VirtualFile, H extends GridDataHookUp<GridRow, GridColumn>> H getOrCreateHookUp(final @NotNull F file,
-                                                                                                    @NotNull Function<F, H> hookUpFactory,
-                                                                                                    @NotNull Disposable parent) {
-    synchronized (myLock) {
-      H hookUp = hookUpFactory.fun(file);
-      HookUpReference ref = new HookUpReference(hookUp, null);
-      myHookUps.add(ref);
-      Disposer.register(parent, createHookUpReferenceDisposable(ref, null));
-      //noinspection unchecked
-      return (H)ref.myHookUp;
-    }
   }
 
   public <F extends VirtualFile, H extends GridDataHookUp<GridRow, GridColumn>> H getOrReuseHookUp(final @NotNull F file,

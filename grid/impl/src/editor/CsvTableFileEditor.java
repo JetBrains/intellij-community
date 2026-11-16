@@ -7,17 +7,21 @@ import com.intellij.database.csv.CsvFormatter;
 import com.intellij.database.datagrid.CsvDocumentDataHookUp;
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.DataGridAppearance;
-import com.intellij.database.datagrid.GridDataHookUpManager;
+import com.intellij.database.datagrid.GridHookUpRegistry;
 import com.intellij.database.datagrid.GridRequestSource;
 import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.run.ui.DataGridRequestPlace;
 import com.intellij.database.vfs.fragment.CsvTableDataFragmentFile;
 import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author Gregory.Shrago
@@ -27,14 +31,18 @@ public class CsvTableFileEditor extends TableFileEditor implements CsvFormatEdit
 
   public CsvTableFileEditor(@NotNull Project project, @NotNull CsvTableDataFragmentFile file) {
     super(project, file.getOriginalFile());
-    CsvDocumentDataHookUp hookUp = GridDataHookUpManager.getInstance(project).getHookUp(file, this);
+    Document document = Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(file.getOriginalFile()));
+    CsvDocumentDataHookUp hookUp = GridHookUpRegistry.getInstance(project)
+      .registerHookUp(new CsvDocumentDataHookUp(project, file.getFormat(), document, file.getRange()), this);
     myDataGrid = createDataGrid(hookUp);
     GridUtil.addGridHeaderComponent(myDataGrid);
   }
 
   public CsvTableFileEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull CsvFormat format) {
     super(project, file);
-    CsvDocumentDataHookUp hookUp = GridDataHookUpManager.getInstance(project).getHookUp(file, format, this);
+    Document document = Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(file));
+    CsvDocumentDataHookUp hookUp = GridHookUpRegistry.getInstance(project)
+      .registerHookUp(new CsvDocumentDataHookUp(project, format, document, null), this);
     myDataGrid = createDataGrid(hookUp);
     GridUtil.addGridHeaderComponent(myDataGrid);
   }
