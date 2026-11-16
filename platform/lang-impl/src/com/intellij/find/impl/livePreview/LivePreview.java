@@ -54,9 +54,9 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   private static final Key<RangeHighlighter> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
 
   private final Disposable myDisposable = Disposer.newDisposable("livePreview");
-  private boolean mySuppressedUpdate = false;
+  private boolean mySuppressedUpdate;
   /** Set by {@link #cursorMoved} so that the general update it is paired with does not redo the occurrence highlighting. */
-  private boolean myCursorMoveOnly = false;
+  private boolean myCursorMoveOnly;
 
   private static final Key<Boolean> MARKER_USED = Key.create("LivePreview.MARKER_USED");
   private static final Key<Boolean> SEARCH_MARKER = Key.create("LivePreview.SEARCH_MARKER");
@@ -143,7 +143,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
   }
 
   @Override
-  public void searchResultsAppended(@NotNull SearchResults sr, @NotNull List<FindResult> added) {
+  public void searchResultsAppended(@NotNull SearchResults sr, @NotNull List<? extends FindResult> added) {
     if (!isBelowMatchesLimit()) {
       // Same call as a full update would make: past the limit nothing is highlighted at all.
       dropHighlighters();
@@ -270,8 +270,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     dumpState();
   }
 
-  @ApiStatus.Internal
-  public void clearCursorHighlight() {
+  void clearCursorHighlight() {
     hideBalloon();
     if (myCursorHighlighter != null) {
       removeHighlighter(myCursorHighlighter);
@@ -365,7 +364,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     myInSelectionHighlighters.clear();
   }
 
-  private List<RangeHighlighter> addNewHighlighters(@NotNull List<FindResult> occurrences) {
+  private @NotNull List<RangeHighlighter> addNewHighlighters(@NotNull List<? extends FindResult> occurrences) {
     List<RangeHighlighter> newHighlighters = new ArrayList<>(occurrences.size());
     for (FindResult range : occurrences) {
       if (range.getEndOffset() > mySearchResults.getEditor().getDocument().getTextLength()) continue;
@@ -459,7 +458,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
    * selection cannot have changed under a search - it is the occurrences that are new - so the ones already on screen
    * keep whatever they were given.
    */
-  private void updateInSelectionHighlighters(@NotNull List<RangeHighlighter> highlighters) {
+  private void updateInSelectionHighlighters(@NotNull List<? extends RangeHighlighter> highlighters) {
     SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
     int[] starts = selectionModel.getBlockSelectionStarts();
     int[] ends = selectionModel.getBlockSelectionEnds();
@@ -579,8 +578,9 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
 
   private void removeHighlighter(@NotNull RangeHighlighter highlighter) {
     Project project = mySearchResults.getProject();
-    if (project.isDisposed()) return;
-    mySearchResults.getEditor().getMarkupModel().removeHighlighter(highlighter);
+    if (!project.isDisposed()) {
+      mySearchResults.getEditor().getMarkupModel().removeHighlighter(highlighter);
+    }
   }
 
   private final class ReplacementBalloonPositionTracker extends PositionTracker<Balloon> {
@@ -610,7 +610,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
         requestBalloonHiding(balloon);
 
         removeVisibleAreaListener();
-        myVisibleAreaListener = e -> {
+        myVisibleAreaListener = _ -> {
           if (SearchResults.insideVisibleArea(myEditor, cur)) showReplacementPreview();
         };
         myEditor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);

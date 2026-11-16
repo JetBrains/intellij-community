@@ -304,7 +304,7 @@ public class SearchResultsChunkingTest extends LightPlatformCodeInsightTestCase 
     }
 
     @Override
-    public void searchResultsAppended(@NotNull SearchResults sr, @NotNull List<FindResult> added) {
+    public void searchResultsAppended(@NotNull SearchResults sr, @NotNull List<? extends FindResult> added) {
       appended.add(ranges(added));
       record(sr);
     }
