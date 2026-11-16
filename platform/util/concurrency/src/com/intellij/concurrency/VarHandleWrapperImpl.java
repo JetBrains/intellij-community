@@ -38,6 +38,9 @@ public class VarHandleWrapperImpl extends VarHandleWrapper implements VarHandleW
   @Override
   public @NotNull VarHandleWrapper createForArrayElement(@NotNull Class<?> arrayClass) {
     assert arrayClass.isArray();
+    if (Object[].class.isAssignableFrom(arrayClass)) {
+      return new ReferenceArrayVarHandleWrapper(arrayClass);
+    }
     return new VarHandleWrapperImpl(MethodHandles.arrayElementVarHandle(arrayClass), true);
   }
 
@@ -109,5 +112,21 @@ public class VarHandleWrapperImpl extends VarHandleWrapper implements VarHandleW
   public static void useVarHandlesInConcurrentCollections() {
     // use VarHandles in concurrent collections because they are available in the classpath
     FACTORY = new VarHandleWrapperImpl(null, false);
+  }
+
+  private static final class ReferenceArrayVarHandleWrapper extends VarHandleWrapperImpl {
+    private static final VarHandle ARRAY_ELEMENT = MethodHandles.arrayElementVarHandle(Object[].class);
+
+    private final Class<?> myArrayClass;
+
+    private ReferenceArrayVarHandleWrapper(Class<?> arrayClass) {
+      super(MethodHandles.arrayElementVarHandle(arrayClass), true);
+      myArrayClass = arrayClass;
+    }
+
+    @Override
+    public Object getVolatileArrayElement(Object thisObject, int index) {
+      return ARRAY_ELEMENT.getVolatile((Object[])myArrayClass.cast(thisObject), index);
+    }
   }
 }
