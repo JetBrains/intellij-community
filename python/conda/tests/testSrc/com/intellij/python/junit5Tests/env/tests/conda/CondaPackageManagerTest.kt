@@ -13,6 +13,9 @@ import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.conda.CondaPackage
@@ -33,6 +36,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
 
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 @PyEnvTestCaseWithConda
 internal class CondaPackageManagerTest {
   private val projectFixture = projectFixture()

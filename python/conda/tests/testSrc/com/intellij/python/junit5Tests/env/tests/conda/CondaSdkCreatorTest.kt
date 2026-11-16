@@ -7,6 +7,9 @@ import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWi
 import com.intellij.python.community.junit5Tests.framework.conda.createCondaEnv
 import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -17,6 +20,9 @@ import kotlin.time.Duration.Companion.minutes
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.junit5.fixture.projectFixture
 
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 @PyEnvTestCaseWithConda
 class CondaSdkCreatorTest {
   private val projectFixture = projectFixture()

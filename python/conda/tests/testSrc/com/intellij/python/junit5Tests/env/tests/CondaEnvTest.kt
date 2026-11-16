@@ -12,6 +12,9 @@ import com.intellij.platform.testFramework.junit5.eel.params.api.EelType.Wsl
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
@@ -24,6 +27,9 @@ import kotlin.io.path.exists
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlin.time.Duration.Companion.minutes
 
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 @ParameterizedClass
 @TestApplicationWithEel(osesMayNotHaveRemoteEels = [OS.WINDOWS], useLegacyTargets = true)
 @DockerTest(mandatory = false, image = "continuumio/miniconda3")

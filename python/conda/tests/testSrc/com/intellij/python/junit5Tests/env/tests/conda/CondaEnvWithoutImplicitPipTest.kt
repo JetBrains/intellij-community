@@ -13,6 +13,9 @@ import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.conda.CondaPackage
 import com.jetbrains.python.packaging.conda.CondaPackageManager
@@ -48,6 +51,9 @@ import kotlin.time.Duration.Companion.seconds
  * conda/conda#16404). The env PyCharm creates must still contain pip, or PyPI packages cannot be installed and the
  * outdated check fails. The tests set the option to false in the `.condarc` of the base install, as conda 27.9 behaves by default.
  */
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 @PyEnvTestCaseWithConda
 internal class CondaEnvWithoutImplicitPipTest {
   private val projectFixture = projectFixture()

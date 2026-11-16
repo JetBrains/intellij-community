@@ -10,6 +10,9 @@ import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.conda.execution.models.CondaEnvInfo
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -30,6 +33,9 @@ import kotlin.time.Duration.Companion.seconds
 
 private val FAILURE = PyResult.localizedError("Test error")
 
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 @PyEnvTestCaseWithConda
 internal class PyCondaEnvProviderTest {
   private lateinit var conda: BinaryToExec

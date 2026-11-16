@@ -7,6 +7,9 @@ import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.util.io.delete
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.conda.savePythonCondaPath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -16,6 +19,9 @@ import java.nio.file.Files
 import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.seconds
 
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 @PyEnvTestCase
 internal class CondaEnvironmentYmlProjectSdkConfigurationTest {
   private val projectFixture = projectFixture()

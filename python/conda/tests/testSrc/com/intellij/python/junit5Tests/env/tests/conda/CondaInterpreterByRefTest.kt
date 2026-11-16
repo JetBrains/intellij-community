@@ -14,6 +14,9 @@ import com.intellij.python.sdk.common.PyEnvRef
 import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.conda.savePythonCondaPath
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.project.project
@@ -36,6 +39,9 @@ import kotlin.time.Duration.Companion.minutes
  * PY-93079: an interpreter is added by its ref right after its conda env is created. The conda env list is cached, and
  * the cache was filled before the env existed. The ref must still find the new env.
  */
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 @PyEnvTestCaseWithConda
 internal class CondaInterpreterByRefTest {
   private val projectFixture = projectFixture()

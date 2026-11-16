@@ -11,6 +11,9 @@ import com.intellij.python.community.impl.conda.CondaPyTool
 import com.intellij.python.pytools.backend.getCustomExecutablePath
 import com.intellij.python.pytools.backend.setCustomExecutablePath
 import com.intellij.python.sdk.backend.activationEnvironment
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,6 +35,9 @@ import kotlin.time.Duration.Companion.minutes
  * this drives the real pipeline — a freshly created conda env, a real login shell, and
  * the `activationEnvironment` pipeline (`com.intellij.python.sdk.backend.service.ActivatableEnvironmentService`).
  */
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 @PyEnvTestCaseWithConda
 class CondaActivationEnvTest {
 

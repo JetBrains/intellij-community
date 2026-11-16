@@ -13,6 +13,9 @@ import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyPackageNames
 import com.jetbrains.python.packaging.conda.CondaPackageManager
@@ -40,6 +43,9 @@ import kotlin.time.Duration.Companion.seconds
  * PY-93117: in a conda env without pip, outdated conda packages are still reported, so the update quick-fix stays. The env
  * is created by conda directly, as a user does in a terminal, and pip is removed from it.
  */
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 @PyEnvTestCaseWithConda
 internal class CondaOutdatedWithoutPipTest {
   private val projectFixture = projectFixture()

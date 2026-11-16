@@ -2,11 +2,15 @@ package com.intellij.python.junit5Tests.env.tests.conda
 
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.Result
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.packaging.conda.CondaRepoDataStreamParser
 import kotlinx.coroutines.currentCoroutineContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
+@Subsystems.PackagingRequirements
+@Layers.Functional
 class CondaRepoDataStreamParserTest {
   @Test
   fun `parses expected json`(): Unit = timeoutRunBlocking {

@@ -17,6 +17,8 @@ import com.intellij.python.test.env.junit5.pyVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
@@ -40,6 +42,8 @@ import kotlin.time.Duration.Companion.minutes
 import com.intellij.testFramework.junit5.fixture.projectFixture
 
 
+@Subsystems.Interpreters
+@Layers.Functional
 @EnabledOnOs(OS.WINDOWS)
 @ExtendWith(SystemStubsExtension::class)
 @PyEnvTestCaseWithConda

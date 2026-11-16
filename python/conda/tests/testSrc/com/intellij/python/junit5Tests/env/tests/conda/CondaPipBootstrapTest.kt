@@ -12,6 +12,9 @@ import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyPackageNames
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
@@ -37,6 +40,9 @@ import kotlin.time.Duration.Companion.minutes
  * On Windows pip refused to install itself when run as `<wheel>/pip`, so the install failed there. The env is created by conda
  * directly, as a user does in a terminal, and pip is removed from it.
  */
+@Subsystems.Interpreters
+@Components.Conda
+@Layers.Functional
 @PyEnvTestCaseWithConda
 internal class CondaPipBootstrapTest {
   private val projectFixture = projectFixture()
