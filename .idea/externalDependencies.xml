@@ -4,7 +4,7 @@
     <plugin id="DevKit" />
     <plugin id="Git4Idea" />
     <plugin id="JUnit" />
-    <plugin id="com.intellij" min-version="262.8665.258" />
+    <plugin id="com.intellij" min-version="263.7307.200" />
     <plugin id="com.intellij.configurationScript" />
     <plugin id="com.intellij.copyright" />
     <plugin id="com.intellij.java" />
