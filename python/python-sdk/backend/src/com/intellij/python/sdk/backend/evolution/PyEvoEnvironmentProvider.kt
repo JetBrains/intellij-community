@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.python.sdk.common.EvoRowAction
 import com.intellij.python.sdk.common.evolution.EvoAddNewDto
 import com.intellij.python.sdk.common.evolution.EvoAddNewOptionDto
@@ -133,6 +134,12 @@ class EvoPyProject(
    * `Sdk` API calls [com.intellij.python.sdk.backend.getSdkAPI], whose deprecation marks the work left to do.
    */
   val interpreter: PythonInterpreter?,
+  /**
+   * The key that the interpreter library entry of this project names, or `null` when it has none, or the legacy flow
+   * names the interpreter by its SDK. With a `null` [interpreter] the project names an interpreter that is unavailable:
+   * its environment is gone.
+   */
+  val entryKey: PythonInterpreterKey? = null,
 ) {
   /**
    * This project's wire identity. See [keyOf].

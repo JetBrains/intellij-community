@@ -3,6 +3,11 @@
 
 package com.jetbrains.python.sdk.evolution
 
+import com.intellij.python.pyproject.model.api.getModuleSdkState
+import com.intellij.python.pyproject.model.api.SdkForModuleConfigInstruction
+import com.intellij.python.pyproject.model.api.ModuleSdkState
+import com.intellij.python.sdk.backend.asUnavailableItem
+import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Expiry
@@ -524,7 +529,8 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // The snapshot waited for the project model, so a widget refresh during startup reads a configured SDK rather than
     // the `null` a half-loaded SDK table answers with — one of the two ways the widget said "No interpreter" for a
     // project that had one (PY-91871).
-    val interpreter = pyProject.interpreter ?: return null
+    // A project whose entry names an interpreter that is gone shows that interpreter as unavailable.
+    val interpreter = pyProject.interpreter ?: return pyProject.entryKey?.let(::unavailableInterpreterDto)
     // The other way was here: a remote or target SDK (WSL, SSH, Docker) used to be left out, and is now reported like
     // any other. Nothing below reads the interpreter's machine — the presentation is the label the classic widget
     // shows, and the dependency file is resolved from the module.
@@ -540,6 +546,41 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
       // when no node claims its flavor, and the popup then lists them all.
       activeNodeId = providers.nodeIdFor(interpreter),
     )
+  }
+
+  /**
+   * The current interpreter of a project whose interpreter library entry names [key] while its environment is gone. It
+   * carries the problem, so the widget shows it as unavailable and the popup offers what [setupOptionsOf] gives.
+   */
+  private fun unavailableInterpreterDto(key: PythonInterpreterKey): PyInterpreterDto {
+    val item = key.asUnavailableItem()
+    return PyInterpreterDto(
+      title = item.shortName,
+      description = item.problem?.reason ?: item.description,
+      icon = item.icon,
+      action = EvoRowAction.Select(item.ref),
+      problem = item.problem,
+    )
+  }
+
+  /**
+   * The setup options of [workspace], for its root, which has no interpreter. A root whose interpreter library entry
+   * names an unavailable interpreter has one option at most: install the tool of the entry, or make its environment
+   * again, see [ModuleSdkState.Unavailable]. No configurator chooses another interpreter for it. Any other root gets the
+   * option of each configurator, from the cache unless [fresh].
+   */
+  private suspend fun setupOptionsOf(workspace: EvoWorkspace, fresh: Boolean): List<CreateSdkInfoWithTool> {
+    if (workspace.root.entryKey == null) {
+      return if (fresh) PyProjectSdkConfigurationExtension.findAllSorted(workspace.pyProject)
+      else PyProjectSdkConfigurationExtension.findAllSortedCached(workspace.pyProject).options
+    }
+    return when (val state = workspace.pyProject.getModuleSdkState(fresh = fresh)) {
+      is ModuleSdkState.Unavailable -> when (val instruction = state.sdkConfigInstruction) {
+        is SdkForModuleConfigInstruction.CreateSdkInfoWrapper -> listOf(instruction.createSdkInfoWithTool)
+        is SdkForModuleConfigInstruction.SameAs, null -> emptyList()
+      }
+      is ModuleSdkState.HasSdk, is ModuleSdkState.NoSdk -> emptyList()
+    }
   }
 
   override suspend fun listNodes(projectId: ProjectId, pyProjectKey: String): List<EvoNodeDto> {
@@ -588,7 +629,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     // (EvoRowAction.Autoconfigure(toolId) → autoconfigureInterpreter).
     // The cached probe: the widget re-reads this whenever the project model ticks, and each configurator answers by
     // running its tool — one project open used to mean several `poetry check --lock` runs.
-    return PyProjectSdkConfigurationExtension.findAllSortedCached(workspace.pyProject).options.distinctBy { it.createSdkInfo.intentionName }
+    return setupOptionsOf(workspace, fresh = false).distinctBy { it.createSdkInfo.intentionName }
       .mapIndexed { index, option ->
         EvoLeafDto(
           title = option.createSdkInfo.intentionName,
@@ -979,7 +1020,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
         LOG.info("Evo: '$toolId' for '${module.name}' did nothing, because '${it.ref}' was configured meanwhile")
         return@withSdkConfigurationLock EvoSelectResultDto.Ok
       }
-      val option = PyProjectSdkConfigurationExtension.findAllSorted(workspace.pyProject).firstOrNull { it.toolId.id == toolId }
+      val option = setupOptionsOf(workspace, fresh = true).firstOrNull { it.toolId.id == toolId }
                    ?: return@withSdkConfigurationLock optionGoneError(toolId, module)
       when (val info = option.createSdkInfo) {
         is CreateInterpreterInfo.ExistingEnv, is CreateInterpreterInfo.WillCreateEnv -> {
@@ -996,7 +1037,9 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
           // The tool exists now, so every cached answer that was computed without it is wrong — drop this project's,
           // the way `pathPersister` just dropped the executable-detection one.
           PyProjectSdkConfigurationExtension.invalidateCached(workspace.pyProject)
-          PyProjectSdkConfigurationExtension.findAllSorted(workspace.pyProject).firstOrNull { it.toolId.id == toolId }?.let {
+          // An unavailable entry has one option, whose tool id can differ from the id of the installation row.
+          val options = setupOptionsOf(workspace, fresh = true)
+          (options.firstOrNull { it.toolId.id == toolId } ?: options.singleOrNull()?.takeIf { workspace.root.entryKey != null })?.let {
             workspace.applyAutoconfigOption(it)
               .getOr { failure -> return@withSdkConfigurationLock failure.error.toSelectError(workspace.project) }
           }

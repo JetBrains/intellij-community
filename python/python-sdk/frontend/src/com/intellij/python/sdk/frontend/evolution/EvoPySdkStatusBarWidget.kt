@@ -168,6 +168,12 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
      * there is no interpreter, which is when none of them applies.
      */
     val packageManagerActions: List<EvoLeafDto> = emptyList(),
+    /**
+     * The interpreter that the project names while it cannot be used, such as one whose environment is gone, see
+     * [PyInterpreterDto.problem]. [current] is then `null`, so the popup offers the "Shortcuts" rows: the backend gives
+     * the one that installs the tool of the interpreter or makes its environment again.
+     */
+    val unavailable: PyInterpreterDto? = null,
   )
 
   /**
@@ -346,6 +352,12 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
       ).apply { icon = PYTHON_FADING_ICON }
     }
 
+    val unavailable = cached?.unavailable
+    if (interpreter == null && unavailable != null) {
+      // The name the project gives its interpreter, crossed out, and why it cannot be used.
+      return WidgetState(unavailable.description, unavailable.title, true).apply { icon = unavailable.icon.icon() }
+    }
+
     if (interpreter == null) {
       return WidgetState(
         PySdkFrontendBundle.message("evo.sdk.undefined.description"),
@@ -384,10 +396,12 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
 
         // Published as soon as it is known, so the widget shows the interpreter without waiting on the tool probes.
         // Waiting for all of it instead means one slow probe leaves the widget loading for as long as it takes.
-        val interpreter = evoRpcOrNull { requestEvoCurrentInterpreter(projectId, askedProject) }
+        val fetched = evoRpcOrNull { requestEvoCurrentInterpreter(projectId, askedProject) }
+        val interpreter = fetched?.takeIf { it.problem == null }
+        val unavailable = fetched?.takeIf { it.problem != null }
         publish(Cached(stamp, interpreter, prev?.nodes.orEmpty(), prev?.associated.orEmpty(),
                        prev?.nodesAt ?: 0, prev?.shortcuts.orEmpty(), prev?.shortcutsAt ?: 0,
-                       prev?.packageManagerActions.orEmpty()))
+                       prev?.packageManagerActions.orEmpty(), unavailable))
 
         // The "Shortcuts" autoconfigure suggestions are only shown (and only worth computing) when there is no interpreter.
         val shortcuts = if (interpreter == null) evoRpcOrNull { requestEvoShortcuts(projectId, askedProject) }.orEmpty() else emptyList()
@@ -396,7 +410,7 @@ private class EvoPySdkStatusBarWidget(project: Project, scope: CoroutineScope) :
           if (interpreter != null) evoRpcOrNull { requestEvoPackageManagerActions(projectId, askedProject) }.orEmpty() else emptyList()
         val now = System.currentTimeMillis()
         publish(Cached(stamp, interpreter, nodesAsync.await(), prev?.associated.orEmpty(), now, shortcuts, now,
-                       packageManagerActions))
+                       packageManagerActions, unavailable))
         // The associated interpreters fill a submenu, so the widget and the popup never wait for them: reading one
         // costs a look at its interpreter, and a project with several system Pythons among them used to hold up the
         // whole load for as long as that took (PY-91967).
@@ -627,4 +641,4 @@ fun interpreterRowsChanged(shown: List<PyInterpreterDto>, fresh: List<PyInterpre
 
 /** Everything [PyInterpreterDto] renders, less the icon. See [interpreterRowsChanged]. */
 private fun PyInterpreterDto.rowIdentity(): List<Any?> =
-  listOf(action, title, description, dependencyFileUrl, activeNodeId)
+  listOf(action, title, description, dependencyFileUrl, activeNodeId, problem)

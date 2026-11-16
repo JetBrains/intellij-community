@@ -15,6 +15,7 @@ import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.sdk.backend.impl.VERSION_NUMBER_RE
 import com.intellij.python.sdk.backend.impl.associationProblem
 import com.intellij.python.sdk.backend.impl.buildItem
+import com.intellij.python.sdk.backend.impl.buildUnavailableItem
 import com.intellij.python.sdk.backend.impl.recordedPythonInfo
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -117,6 +118,13 @@ fun PythonInterpreter.getPythonInfo(): PyResult<PythonInfo> {
  * that must happen off the EDT.
  */
 fun PythonInterpreter.asItem(): PyInterpreterItem = buildItem()
+
+/**
+ * The row of the interpreter of this key, which an interpreter library entry names while its environment is gone. It is
+ * `[invalid]`, and its reason names the environment and its manager. It reads no file and runs nothing.
+ */
+@Internal
+fun PythonInterpreterKey.asUnavailableItem(): PyInterpreterItem = buildUnavailableItem()
 
 /**
  * Every SDK as a UI list holds it, resolved off the EDT, in order.

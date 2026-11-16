@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration
 
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.asUnavailableItem
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.asItem
@@ -101,7 +103,12 @@ private class PySdkStatusBar(project: Project, scope: CoroutineScope) : EditorBa
   override fun getWidgetState(file: VirtualFile?): WidgetState {
     val (module, interpreter) = resolvePythonWidgetContext(project, file) ?: return WidgetState.HIDDEN
     this.module = module
-    if (interpreter == null) return WidgetState("", noInterpreterMarker, true)
+    if (interpreter == null) {
+      // The project names an interpreter whose environment is gone: say which, and why it cannot be used.
+      val unavailable = module.findEvoPyProjectIfReady()?.entryKey?.asUnavailableItem()
+                        ?: return WidgetState("", noInterpreterMarker, true)
+      return WidgetState(tooltipFor(unavailable), unavailable.shortName, true).also { it.icon = unavailable.icon.icon() }
+    }
 
     val item = lastRead?.takeIf { it.first == interpreter }?.second
     if (item == null) {

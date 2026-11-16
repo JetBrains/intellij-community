@@ -382,7 +382,13 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
 
     // Every project first, indexed by its module: a project states nothing about a workspace, and a workspace is built
     // from the projects it owns, so this pass has to come first.
-    val projectsByModule = sources.associate { it.residesOnModule to EvoPyProject(it, interpreters[it.residesOnModule]) }
+    val projectsByModule = sources.associate { pyProject ->
+      val entryKey = when (val reference = references[pyProject.residesOnModule]) {
+        is StoredInterpreterReference.Library -> reference.key
+        is StoredInterpreterReference.SdkName, null -> null
+      }
+      pyProject.residesOnModule to EvoPyProject(pyProject, interpreters[pyProject.residesOnModule], entryKey)
+    }
 
     /**
      * The module that identifies the workspace [module] belongs to: its workspace root, or itself when it is in no

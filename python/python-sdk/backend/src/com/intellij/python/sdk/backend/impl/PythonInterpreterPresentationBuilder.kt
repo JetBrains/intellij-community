@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.execution.target.getTargetType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelDescriptor
@@ -123,6 +124,25 @@ fun brokenSdkPresentation(sdk: Sdk, reason: @Nls String): PythonInterpreterPrese
   icon = wrapIconWithWarningDecorator(AllIcons.Nodes.Unknown).rpcId(),
   isPathDerivedName = isNameDerivedFromHomePath(sdk.name, sdk.homePath),
 )
+
+/**
+ * What a row draws for the interpreter that an interpreter library entry names while its environment is gone, see
+ * [PythonInterpreterKey]. The row is `[invalid]`. The name is the env ref, as for an interpreter, so the user recognizes
+ * it, and the reason names its manager. Only the manager knows whether the env ref is a path or a name, so the row
+ * places the environment nowhere.
+ */
+internal fun PythonInterpreterKey.buildUnavailableItem(): PyInterpreterItem {
+  val envRef = ref.env.envRef.value
+  return PyInterpreterItem(
+    ref = ref,
+    name = envRef,
+    suffix = null,
+    description = envRef,
+    problem = invalidProblem(message("python.sdk.problem.environment.gone", envRef, ref.manager.value)),
+    icon = wrapIconWithWarningDecorator(AllIcons.Nodes.Unknown).rpcId(),
+    isPathDerivedName = false,
+  )
+}
 
 /** A configuration the user has to fix, which is `[invalid]` like any other. */
 private fun invalidProblem(reason: @Nls String) = PythonInterpreterProblem(message("python.sdk.problem.invalid"), reason)

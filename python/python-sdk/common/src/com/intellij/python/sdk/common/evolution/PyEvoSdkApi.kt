@@ -1,5 +1,6 @@
 package com.intellij.python.sdk.common.evolution
 
+import com.intellij.python.sdk.common.PythonInterpreterProblem
 import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.python.sdk.common.EvoRowAction
@@ -330,6 +331,12 @@ data class PyInterpreterDto(
    * then lists every tool, as it did before, rather than promoting a node it guessed at.
    */
   val activeNodeId: @NonNls String? = null,
+  /**
+   * Why this interpreter cannot be used, or `null` when it can. An interpreter that an interpreter library entry names
+   * while its environment is gone has one: the widget shows it as unavailable, and offers to install its tool or to make
+   * its environment again instead of a current environment.
+   */
+  val problem: PythonInterpreterProblem? = null,
 )
 
 
