@@ -3,19 +3,28 @@ package com.intellij.devkit.uiDsl.sandbox
 
 import com.intellij.devkit.uiDsl.DevkitUiDslBundle
 import com.intellij.devkit.uiDsl.sandbox.components.ActionButtonPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ActionLinkPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ActionToolbarPanel
 import com.intellij.devkit.uiDsl.sandbox.components.BadgePanel
+import com.intellij.devkit.uiDsl.sandbox.components.BrowserLinkPanel
+import com.intellij.devkit.uiDsl.sandbox.components.CheckBoxListPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ColorPanelPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ComboBoxPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ComboBoxWithWidePopupPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ContextHelpLabelPanel
+import com.intellij.devkit.uiDsl.sandbox.components.DropDownLinkPanel
 import com.intellij.devkit.uiDsl.sandbox.components.EditorTextFieldPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ExpandableTextFieldPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ExtendableTextFieldPanel
+import com.intellij.devkit.uiDsl.sandbox.components.FontComboBoxPanel
+import com.intellij.devkit.uiDsl.sandbox.components.HyperlinkLabelPanel
 import com.intellij.devkit.uiDsl.sandbox.components.IconsPanel
 import com.intellij.devkit.uiDsl.sandbox.components.InlineBannerPanel
 import com.intellij.devkit.uiDsl.sandbox.components.IntegerFieldPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JBIntSpinnerPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JBOptionButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JBPasswordFieldPanel
+import com.intellij.devkit.uiDsl.sandbox.components.JBSliderPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JBTextAreaPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JCheckBoxPanel
@@ -24,16 +33,18 @@ import com.intellij.devkit.uiDsl.sandbox.components.JProgressBarPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JRadioButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JSpinnerPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JTextFieldPanel
-import com.intellij.devkit.uiDsl.sandbox.components.LinkPanel
+import com.intellij.devkit.uiDsl.sandbox.components.LinkLabelPanel
+import com.intellij.devkit.uiDsl.sandbox.components.MultiSelectComboBoxPanel
 import com.intellij.devkit.uiDsl.sandbox.components.OnOffButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.PillButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.PortFieldPanel
 import com.intellij.devkit.uiDsl.sandbox.components.RawCommandLineEditorPanel
 import com.intellij.devkit.uiDsl.sandbox.components.SearchTextFieldPanel
+import com.intellij.devkit.uiDsl.sandbox.components.SegmentedButtonComponentPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ShimmerLabelPanel
 import com.intellij.devkit.uiDsl.sandbox.components.TextFieldWithAutoCompletionPanel
 import com.intellij.devkit.uiDsl.sandbox.components.TextFieldWithBrowseButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.TextFieldWithHistoryPanel
-import com.intellij.devkit.uiDsl.sandbox.components.ShimmerLabelPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ThreeStateCheckBoxPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ToolbarComboButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ToolbarDecoratorPanel
@@ -159,28 +170,36 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
 
   private fun createComponentsNode() = Group("Components", children = listOf(
     ActionButtonPanel(),
+    ActionLinkPanel(),
     ActionToolbarPanel(),
     BadgePanel(),
+    BrowserLinkPanel(),
+    CheckBoxListPanel(),
+    ColorPanelPanel(),
     ComboBoxPanel(),
     ComboBoxWithWidePopupPanel(),
+    ContextHelpLabelPanel(),
+    DropDownLinkPanel(),
     EditorTextFieldPanel(),
     ExpandableTextFieldPanel(),
     ExtendableTextFieldPanel(),
+    FontComboBoxPanel(),
     IconsPanel(),
     InlineBannerPanel(),
     JButtonPanel(),
     JBOptionButtonPanel(),
     JBPasswordFieldPanel(),
+    JBSliderPanel(),
     JBTextAreaPanel(),
     JCheckBoxPanel(),
     JProgressBarPanel(),
     JRadioButtonPanel(),
     JTextFieldPanel(),
-    LinkPanel(),
     OnOffButtonPanel(),
     PillButtonPanel(),
     RawCommandLineEditorPanel(),
     SearchTextFieldPanel(),
+    SegmentedButtonComponentPanel(),
     ShimmerLabelPanel(),
     TextFieldWithAutoCompletionPanel(),
     TextFieldWithBrowseButtonPanel(),
@@ -190,10 +209,13 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     ToolbarDecoratorPanel(),
     ToolbarSplitButtonPanel(),
     Group("Obsolete", children = listOf(
+      HyperlinkLabelPanel(),
       IntegerFieldPanel(),
       JBIntSpinnerPanel(),
       JComboBoxPanel(),
       JSpinnerPanel(),
+      LinkLabelPanel(),
+      MultiSelectComboBoxPanel(),
       PortFieldPanel(),
     )),
   ))
