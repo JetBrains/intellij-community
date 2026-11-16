@@ -92,10 +92,12 @@ A locality is defined by where its value travels.
   "Settings: Team-Editing Mode for All Projects" reads and writes it at the application context. The option
   "Settings: Team-Editing Mode for This Project" reads and writes it at the project context.
   See [ADR 0173](../adr/0173-the-team-editing-mode-is-toggled-through-two-go-to-action-options-of-the-backend-baseline-module.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsTeamEditingModeOptionsTest.kt
 - The project option must show the value that the project context resolves, so it is on when only the application
   mode is on. Turning it off must write an explicit `false` at the project and keep the application value.
-- An option must report the requested state at once, before its write ends. After the write ends or fails, it must
-  report the stored value again. Of several quick requests, the last one must win.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsTeamEditingModeOptionsTest.kt
+- An option must report the requested state at once, before its write ends.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsTeamEditingModeOptionsTest.kt
 - A map key has no locality of its own. A slot operation ignores it.
   See [ADR 0077](../adr/0077-a-map-key-has-no-locality.md).
 

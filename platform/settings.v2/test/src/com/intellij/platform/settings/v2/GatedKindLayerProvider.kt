@@ -34,6 +34,16 @@ internal suspend fun maskWithGatedProviders(disposable: Disposable, vararg provi
 }
 
 /**
+ * Registers [provider] after the other providers until [disposable] is disposed. Then waits until the load of
+ * [provider] at its registration has read its values. Unlike [maskWithGatedProviders], the real layers stay, so a
+ * test can hold a reload of the real layers with the [GatedKindLayerProvider.gate] of [provider].
+ */
+internal suspend fun registerGatedProvider(disposable: Disposable, provider: GatedKindLayerProvider) {
+  LayerProvider.EP_NAME.point.registerExtension(provider, disposable)
+  provider.awaitRequests(1)
+}
+
+/**
  * Supplies a layer of [key] at each context of [values], and declares [contextKindRange]. A test holds its loads with
  * [gate], so a reload waits for this provider on demand. It takes a write in the [LayerLocality.LOCAL] layer at every
  * kind of its range. It persists nothing, so the vault model stays the truth.
