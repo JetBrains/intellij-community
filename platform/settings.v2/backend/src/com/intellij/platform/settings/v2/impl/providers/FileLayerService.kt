@@ -291,7 +291,7 @@ internal class FileLayerService(private val project: Project, private val scope:
 
   companion object {
     /** Holds the name of the team config file. [localityFileName] derives the names of the other localities from it. */
-    const val CONFIG_FILE: String = "$JETBRAINS_CONFIG_NAME.json"
+    const val CONFIG_FILE: String = DIRECTORY_CONFIG_FILE_NAME
 
     /**
      * Holds the config file names of all the localities: `.jetbrains.json`, `.jetbrains.local.json` and

@@ -72,7 +72,8 @@ internal class ProjectLayerService(private val project: Project, scope: Coroutin
     /** Holds the name of the directory under the base path of a project that holds the project config files. */
     const val CONFIG_DIR: String = JETBRAINS_CONFIG_NAME
 
-    const val FILE_NAME: String = "project.settings.json"
+    /** Holds the name of the team file of the project layer. */
+    const val FILE_NAME: String = PROJECT_CONFIG_FILE_NAME
 
     fun getInstance(project: Project): ProjectLayerService = project.service()
   }
