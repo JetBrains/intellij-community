@@ -45,7 +45,7 @@
       implementation="com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenProjectFrameCapabilitiesProvider"/>
     <postStartupActivity implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenProjectActivity"/>
 
-    <noProjectStateHandler implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenNoProjectStateHandler" order="first"/>
+    <noProjectStateHandler id="nonModalWelcomeScreen" implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenNoProjectStateHandler" order="first"/>
 
     <projectOpenProcessor implementation="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenCommandLineProjectOpenProcessor" order="first"/>
 
