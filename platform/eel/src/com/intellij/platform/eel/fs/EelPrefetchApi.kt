@@ -22,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus
   "com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemWindowsApiImpl",
   "com.intellij.platform.ijent.fs.IjentFileSystemApi",
   "com.intellij.platform.ijent.functional.IjentApiErrorsTest",
+  "com.intellij.platform.ijent.functional.IjentPacketSizeTest",
   "com.intellij.platform.ijent.functional.TcpLocalBootstrapTest",
   "com.intellij.platform.ijent.functional.fs.IjentFileSystemTest",
   "com.intellij.platform.ijent.impl.base.PrefetchCacheLimitTest",
