@@ -102,6 +102,7 @@ intellij.java.compiler.heavy.tests
 intellij.java.completion.tests
 intellij.idea.tools.launch.tests
 intellij.java.byteCodeViewer.tests
+intellij.java.compiler.tests.exploratory
 intellij.java.coverage.tests
 intellij.java.debugger.agent.bridge.tests
 intellij.java.debugger.impl.tests
