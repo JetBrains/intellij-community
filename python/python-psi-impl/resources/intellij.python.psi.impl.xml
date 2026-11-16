@@ -77,7 +77,8 @@
                     serviceImplementation="com.jetbrains.python.psi.impl.PyPsiFacadeImpl"/>
 
     <applicationService serviceInterface="com.jetbrains.python.PyLanguageFacade"
-                        serviceImplementation="com.jetbrains.python.PyLanguageFacadeImpl"/>
+                        serviceImplementation="com.jetbrains.python.PyLanguageFacadeImpl"
+                        overrides="true"/>
 
     <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
                     serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>

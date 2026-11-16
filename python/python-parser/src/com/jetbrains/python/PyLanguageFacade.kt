@@ -3,7 +3,7 @@ package com.jetbrains.python
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,12 +22,12 @@ abstract class PyLanguageFacade {
 
   companion object {
     /**
-     * The registered facade, or a default facade when no stub-based Python PSI is loaded.
-     * The JetBrains Client frontend and JetBrains Light before the smart mode are such processes.
+     * The facade of the stub-based Python PSI, or the default facade of `intellij.python.parser` when no stub-based Python
+     * PSI is loaded. The JetBrains Client frontend and JetBrains Light before the smart mode are such processes.
      */
     @JvmStatic
     val INSTANCE: PyLanguageFacade
-      get() = ApplicationManager.getApplication().serviceOrNull<PyLanguageFacade>() ?: PyDefaultLanguageFacade
+      get() = ApplicationManager.getApplication().service<PyLanguageFacade>()
 
     /**
      * The file whose language level applies to [virtualFile]: the host file of an injected fragment, and the origin
@@ -42,14 +42,14 @@ abstract class PyLanguageFacade {
   }
 }
 
+private val LANGUAGE_LEVEL_KEY: Key<LanguageLevel> = Key.create("LANGUAGE_LEVEL_KEY")
+
 /**
  * Keeps the language level of a file in its user data. A frontend receives the level of each file from its backend through
  * [setEffectiveLanguageLevel]. A file without a stored level gets [LanguageLevel.getDefault], and a `.pyi` stub file gets
  * [LanguageLevel.getLatest].
  */
-private object PyDefaultLanguageFacade : PyLanguageFacade() {
-  private val LANGUAGE_LEVEL_KEY: Key<LanguageLevel> = Key.create("LANGUAGE_LEVEL_KEY")
-
+internal class PyDefaultLanguageFacade : PyLanguageFacade() {
   override fun getEffectiveLanguageLevel(psiElement: PsiElement): LanguageLevel {
     if (psiElement is PsiDirectory) {
       return getEffectiveLanguageLevel(psiElement.project, psiElement.virtualFile)

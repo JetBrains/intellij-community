@@ -10,6 +10,9 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.jetbrains.python.PyLanguageFacade"
+                        serviceImplementation="com.jetbrains.python.PyDefaultLanguageFacade"
+                        open="true"/>
     <fileType name="Python"
               language="Python"
               extensions="py;pyw"
