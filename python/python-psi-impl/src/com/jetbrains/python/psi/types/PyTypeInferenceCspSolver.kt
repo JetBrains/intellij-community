@@ -45,7 +45,27 @@ class CspBuilder(val context: TypeEvalContext) {
   private val allSubstitutions = HashMap<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions>()
   private val initialConstraints = LinkedHashSet<TypeConstraint>()
   private val inferenceVars = InferenceVariablePool()
+  private val nestedResults = HashMap<PyExpression, Ref<PyType?>>()
   private lateinit var cp: ConstraintProblem
+
+  /**
+   * Builds the nested CSP of [anchor] into this builder at most once, and returns its type to every later caller.
+   *
+   * Once per builder, which is once per problem: the first build adds the inference variables and the constraints of
+   * the subtree to this builder, and a later caller needs only the type back, because those are already here. A cache
+   * shared between builders would be wrong - it would hand out a type whose variables belong to another problem.
+   *
+   * A call site builds its arguments once per candidate of its callee, and an argument that is itself a call does the
+   * same for its own, so the subtree at depth k was rebuilt candidates^k times and each rebuild added a fresh set of
+   * inference variables. The build does not read the parameter that the argument is passed to - the caller adds that
+   * constraint afterwards, per candidate - so every candidate gets the same nested result and one build serves all.
+   */
+  internal fun nestedResult(anchor: PyExpression, build: () -> PyType?): PyType? {
+    nestedResults[anchor]?.let { return it.get() }
+    val result = build()
+    nestedResults[anchor] = Ref.create(result)
+    return result
+  }
 
   fun putSubstitutions(si: SubstitutionsIdentifier, substitutions: PyTypeChecker.GenericSubstitutions) {
     allSubstitutions[si] = substitutions

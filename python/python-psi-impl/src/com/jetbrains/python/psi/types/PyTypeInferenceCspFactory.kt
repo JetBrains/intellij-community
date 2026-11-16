@@ -184,9 +184,14 @@ object PyTypeInferenceCspFactory {
       }
     }
 
+    // Once per anchor, see CspBuilder.nestedResult: the candidates of the callee above this one all get this result
     return when (actualCspAnchor) {
-      is PyCallExpression -> buildCallSiteExpressionCsp(actualCspAnchor, builder, context)
-      is PySequenceExpression -> buildSequenceExpressionCsp(SubstitutionsIdentifier(actualCspAnchor), builder, context)
+      is PyCallExpression -> builder.nestedResult(actualCspAnchor) {
+        buildCallSiteExpressionCsp(actualCspAnchor, builder, context)
+      }
+      is PySequenceExpression -> builder.nestedResult(actualCspAnchor) {
+        buildSequenceExpressionCsp(SubstitutionsIdentifier(actualCspAnchor), builder, context)
+      }
       else -> throw NotSupportedException()
     }
   }
