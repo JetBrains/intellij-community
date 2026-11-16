@@ -44,5 +44,9 @@
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
+    <orderEntry type="module" module-name="intellij.python.community.common" />
+    <orderEntry type="module" module-name="intellij.python.sdk.common" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

@@ -840,8 +840,6 @@
     <projectSdkConfigurationExtension
       implementation="com.jetbrains.python.conda.sdk.configuration.PyEnvironmentYmlSdkConfiguration"
       id="environmentYml"/>
-    <projectSdkConfigurationExtension implementation="com.jetbrains.python.pipenv.sdk.configuration.PyPipfileSdkConfiguration"
-                                      id="pipfile" order="before requirementsTxtOrSetupPy"/>
     <projectSdkConfigurationExtension implementation="com.jetbrains.python.venv.sdk.configuration.PyVenvSdkConfiguration"
                                       id="venv" order="last"/>
 

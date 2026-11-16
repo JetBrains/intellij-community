@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.execService.ZeroCodeStdoutParserTransformer
-import com.jetbrains.python.PyBundle
+import com.intellij.python.community.impl.pipenv.PipEnvBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.project.PyProject
@@ -37,9 +37,9 @@ import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.jetbrains.python.sdk.pipenv.PIP_FILE
 import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData
 import com.intellij.python.community.impl.pipenv.PipEnvPyTool
-import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.sdk.backend.resolveExecutable
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.add.v2.EelOrJustPath.Companion.asEelOrJustPath
 import com.jetbrains.python.sdk.pipenv.runPipEnv
 import com.jetbrains.python.sdk.pipenv.setupPipEnv
@@ -91,18 +91,18 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
       }
     }
     return prepareSdkCreator(
-      { EnvCheckerResult.EnvNotFound(PyBundle.message("sdk.recreate.pipenv.environment")) }
+      { EnvCheckerResult.EnvNotFound(PipEnvBundle.message("sdk.recreate.pipenv.environment")) }
     ) { { createAndAddSdk(pyProject, baseEnv) } }
   }
 
   private suspend fun checkManageableEnv(
     pyProject: PyProject,
-  ): EnvCheckerResult = withBackgroundProgress(pyProject.project, PyBundle.message("python.sdk.validating.environment")) {
+  ): EnvCheckerResult = withBackgroundProgress(pyProject.project, PySdkBundle.message("python.sdk.validating.environment")) {
     val pipfile = pyProject.resolveFile(PIP_FILE)?.fileName ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
-    val pipEnvExecutable = PipEnvPyTool.getInstance().resolveExecutable(EelFileSystem(pyProject.getEel()))?.path
+    val pipEnvExecutable = pyProject.getEel().toFileSystem().resolveExecutable(PipEnvPyTool.getInstance())?.path
                            ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
     val canManage = pipEnvExecutable.isExecutable()
-    val intentionName = PyBundle.message("sdk.create.pipenv.suggestion", pipfile)
+    val intentionName = PipEnvBundle.message("sdk.create.pipenv.suggestion", pipfile)
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
     if (canManage) {
@@ -127,7 +127,7 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
   private suspend fun createAndAddSdk(pyProject: PyProject, baseEnv: List<EnvVar> = emptyList()): PyResult<PythonInterpreter> {
     LOGGER.debug("Creating pipenv environment")
     val project = pyProject.project
-    return withBackgroundProgress(project, PyBundle.message("python.sdk.using.pipenv.sentence")) {
+    return withBackgroundProgress(project, PipEnvBundle.message("python.sdk.using.pipenv.sentence")) {
       val basePath = pyProject.baseDir
       val pipEnv = setupPipEnv(basePath, null, true, baseEnv).getOr {
         PySdkConfigurationCollector.logPipEnv(project, PipEnvResult.CREATION_FAILURE)
