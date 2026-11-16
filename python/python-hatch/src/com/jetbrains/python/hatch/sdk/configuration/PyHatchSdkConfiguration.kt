@@ -18,7 +18,7 @@ import com.intellij.python.hatch.HATCH_TOML
 import com.intellij.python.hatch.HatchExecutableNotFoundHatchError
 import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.HatchVirtualEnvironment
-import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.sdk.backend.resolveExecutable
 import com.jetbrains.python.Result
 import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.cli.HatchEnvironment
@@ -26,7 +26,7 @@ import com.intellij.python.hatch.getHatchService
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.jetbrains.python.PyBundle
+import com.intellij.python.hatch.PyHatchBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.hatch.sdk.createSdk
@@ -73,18 +73,18 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
     }
     val envName = key.ref.env.envRef.value
     return prepareSdkCreator(
-      { EnvCheckerResult.EnvNotFound(PyBundle.message("sdk.recreate.hatch.environment", envName)) },
+      { EnvCheckerResult.EnvNotFound(PyHatchBundle.message("sdk.recreate.hatch.environment", envName)) },
     ) { { createSdk(pyProject, envExists = false, envName = envName) } }
   }
 
   private suspend fun checkManageableEnv(
     pyProject: PyProject, checkToml: CheckToml,
   ): EnvCheckerResult = reportRawProgress {
-    it.text(PyBundle.message("sdk.set.up.hatch.project.analysis"))
+    it.text(PyHatchBundle.message("sdk.set.up.hatch.project.analysis"))
     val eel = pyProject.getEel()
     val hatchService = pyProject.baseDir.getHatchService(eel.toFileSystem()).getOr { return EnvCheckerResult.CannotConfigure }
     val canManage = if (checkToml) hatchService.isHatchManagedProject() else true
-    val intentionName = PyBundle.message("sdk.set.up.hatch.environment")
+    val intentionName = PyHatchBundle.message("sdk.set.up.hatch.environment")
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
     if (canManage) {
@@ -112,10 +112,10 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
    */
   private fun createSdk(pyProject: PyProject, envExists: EnvExists, envName: String? = null): PyResult<PythonInterpreter> = runWithModalBlockingOrInBackground(
     project = pyProject.project,
-    msg = PyBundle.message("sdk.set.up.hatch.environment")
+    msg = PyHatchBundle.message("sdk.set.up.hatch.environment")
   ) {
     val fileSystem = pyProject.getEel().toFileSystem()
-    val hatchExecutablePath = HatchPyTool.getInstance().resolveExecutable(fileSystem)
+    val hatchExecutablePath = fileSystem.resolveExecutable(HatchPyTool.getInstance())
                               ?: return@runWithModalBlockingOrInBackground Result.failure(HatchExecutableNotFoundHatchError(null))
     val hatchService = pyProject.baseDir.getHatchService(fileSystem, hatchExecutablePath).getOr { return@runWithModalBlockingOrInBackground it }
 
@@ -132,7 +132,7 @@ internal class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
       when (defaultEnv) {
         is PythonVirtualEnvironment.Existing -> defaultEnv
         is PythonVirtualEnvironment.NotExisting, null -> return@runWithModalBlockingOrInBackground PyResult.localizedError(
-          PyBundle.message("sdk.could.not.find.valid.hatch.environment")
+          PyHatchBundle.message("sdk.could.not.find.valid.hatch.environment")
         )
       }
     }

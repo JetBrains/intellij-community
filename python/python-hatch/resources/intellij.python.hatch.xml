@@ -10,6 +10,7 @@
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.progress"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.execService"/>
@@ -39,6 +40,8 @@
     <pySdkDataProvider implementation="com.intellij.python.hatch.impl.sdk.HatchSdkDataProvider"/>
     <pythonFlavorProvider implementation="com.intellij.python.hatch.impl.sdk.HatchSdkFlavorProvider"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.hatch.packaging.HatchPackageManagerProvider"/>
+    <projectSdkConfigurationExtension implementation="com.jetbrains.python.hatch.sdk.configuration.PyHatchSdkConfiguration"
+                                      id="hatch" order="after poetry"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <python.pytools.pyTool implementation="com.intellij.python.hatch.HatchPyTool"/>

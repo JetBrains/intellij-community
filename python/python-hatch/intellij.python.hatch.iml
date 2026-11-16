@@ -57,5 +57,6 @@
     <orderEntry type="module" module-name="intellij.python.packaging" />
     <orderEntry type="module" module-name="intellij.python.requirements.backend" />
     <orderEntry type="module" module-name="intellij.python.venv" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" />
   </component>
 </module>
