@@ -138,6 +138,7 @@ intellij.javaFX.community.tests
 intellij.javaFX.tests
 intellij.javaee.appServers.weblogic.jps.tests
 intellij.javascript.tests.ex.exploratory
+intellij.javascript.tests.exploratory
 intellij.json.networknt.wrapper.tests
 intellij.json.tests
 intellij.jsonpath.tests
