@@ -770,6 +770,12 @@ suspend fun removeTestSdkFromOpenProjects(sdk: Sdk) {
   }
 }
 
+/** Removes [interpreter] for a test that holds the interpreter that a flow created, see [removeTestSdkFromOpenProjects]. */
+@TestOnly
+suspend fun removeTestInterpreterFromOpenProjects(interpreter: PythonInterpreter) {
+  removeTestSdkFromOpenProjects(interpreter.sdk)
+}
+
 /**
  * The interpreter of [sdk] in the registry of any open project, or `null`. It does not wait. For a holder of run
  * parameters that has no project, such as the console settings, which still gets an SDK from older code.
