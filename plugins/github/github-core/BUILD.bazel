@@ -112,6 +112,7 @@ jvm_library(
         "//platform/vcs-impl/shared",
         "//platform/lang-api:lang",
         "//platform/util/concurrency",
+        "//platform/observable",
     ],
 )
 ### auto-generated section `build intellij.vcs.github` end

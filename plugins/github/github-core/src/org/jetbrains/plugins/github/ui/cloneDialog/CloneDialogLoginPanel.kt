@@ -3,38 +3,27 @@ package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.VerticalListPanel
-import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ENTER
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.ComponentValidator
-import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes.ERROR_ATTRIBUTES
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI.Borders.empty
-import com.intellij.util.ui.UIUtil.getRegularPanelInsets
 import git4idea.config.GitVcsApplicationSettings
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHAuthType
 import org.jetbrains.plugins.github.authentication.GHLoginCollector
 import org.jetbrains.plugins.github.authentication.GHLoginData
@@ -42,34 +31,44 @@ import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.GHServerOffering
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.ui.GithubTokenLoginPanel
+import org.jetbrains.plugins.github.authentication.ui.GHTokenLoginPanelFactory
+import org.jetbrains.plugins.github.authentication.ui.GHTokenLoginViewModel
 import javax.swing.JButton
-import javax.swing.JComponent
 import javax.swing.SwingConstants
 
 internal class CloneDialogLoginPanel(
-  private val cs: CoroutineScope,
+  parentCs: CoroutineScope,
   private val account: GithubAccount?,
+  server: String = account?.server?.toUrl() ?: GithubServerPath.DEFAULT_HOST,
   needsWarning: Boolean = false,
 ) :
   JBPanel<CloneDialogLoginPanel>(ListLayout.vertical(0)),
   Disposable {
-
+  private val cs = parentCs.childScope(javaClass.name)
   private val accountManager get() = service<GHAccountManager>()
 
-  private val errorPanel = VerticalListPanel(10)
-  private val loginButton = JButton(CollaborationToolsBundle.message("clone.dialog.button.login.mnemonic"))
+  private val tokenLoginVm = GHTokenLoginViewModel(
+    cs,
+    GithubApiRequestExecutor.Factory.getInstance(),
+    server = server,
+    fixedLogin = account?.name,
+    isAccountUnique = { name, serverPath -> if (account == null) accountManager.isAccountUnique(serverPath, name) else true },
+    saveLogin = { serverPath, login, token ->
+      val acc = account ?: GHAccountManager.createAccount(login, serverPath)
+      accountManager.updateAccount(acc, token)
+      logEvent(serverPath)
+    }
+  )
+
+  private val loginButton = JButton(CollaborationToolsBundle.message("clone.dialog.button.login.mnemonic")).apply {
+    bindDisabledIn(cs, tokenLoginVm.isLoggingIn)
+  }
   private val backLink = LinkLabel<Any?>(IdeBundle.message("button.back"), null).apply {
     verticalAlignment = SwingConstants.CENTER
   }
-  private val tokenLoginPanel = GithubTokenLoginPanel(
-    GithubApiRequestExecutor.Factory.getInstance(),
-    isAccountUnique = { name, server -> if (account == null) accountManager.isAccountUnique(server, name) else true },
-    footer = { buttonPanel(needsWarning) }
-  )
-
-  private var errors = emptyList<ValidationInfo>()
-  private var loginJob: Job? = null
+  private val tokenLoginPanel = GHTokenLoginPanelFactory.createIn(cs, tokenLoginVm, footer = { buttonPanel(needsWarning) }).apply {
+    registerValidators(this@CloneDialogLoginPanel)
+  }
 
   var isCancelVisible: Boolean
     get() = backLink.isVisible
@@ -78,12 +77,7 @@ internal class CloneDialogLoginPanel(
     }
 
   init {
-    buildLayout()
-
-    if (account != null) {
-      tokenLoginPanel.setServer(account.server.toUrl(), false)
-      tokenLoginPanel.setLogin(account.name, false)
-    }
+    add(tokenLoginPanel)
 
     loginButton.addActionListener { login() }
     LoginAction().registerCustomShortcutSet(ENTER, tokenLoginPanel)
@@ -98,21 +92,11 @@ internal class CloneDialogLoginPanel(
       null
     )
 
-  fun resetAndFocus() {
-    clearErrors()
-    tokenLoginPanel.getPreferredFocusableComponent().requestFocus()
+  fun focusPanel() {
+    tokenLoginPanel.preferredFocusedComponent?.requestFocus()
   }
 
-  fun setServer(path: String, editable: Boolean) = tokenLoginPanel.setServer(path, editable)
-
-  override fun dispose() {
-    cancelLogin()
-  }
-
-  private fun buildLayout() {
-    add(tokenLoginPanel)
-    add(errorPanel.apply { border = JBEmptyBorder(getRegularPanelInsets().apply { top = 0 }) })
-  }
+  override fun dispose() = cs.cancel()
 
   private fun Panel.buttonPanel(needsWarning: Boolean) =
     row("") {
@@ -129,84 +113,20 @@ internal class CloneDialogLoginPanel(
         .align(AlignX.RIGHT)
     }
 
-  fun cancelLogin() {
-    loginJob?.cancel()
-  }
+  fun cancelLogin() = tokenLoginVm.cancelLogin()
 
-  private fun login() {
-    cancelLogin()
-
-    tokenLoginPanel.setError(null)
-    clearErrors()
-    if (!doValidate()) return
-
-    loginJob = cs.async(Dispatchers.Main.immediate + ModalityState.stateForComponent(this).asContextElement()) {
-      try {
-        val (login, token) = tokenLoginPanel.acquireLoginAndToken()
-        logEvent()
-        val acc = account ?: GHAccountManager.createAccount(login, tokenLoginPanel.getServer())
-        accountManager.updateAccount(acc, token)
-        clearErrors()
-      }
-      catch (e: Exception) {
-        rethrowControlFlowException(e)
-        clearErrors()
-        doValidate()
-      }
+  private fun login() =
+    CollaborationToolsUIUtil.validateAndApplyAction(tokenLoginPanel) {
+      tokenLoginVm.requestLogin()
     }
-  }
 
-  private fun logEvent() {
+  private fun logEvent(server: GithubServerPath) {
     GHLoginCollector.login(GHLoginData(
       loginSource = GHLoginSource.CLONE,
       authType = GHAuthType.TOKEN,
-      serverOffering = GHServerOffering.of(tokenLoginPanel.getServer()),
+      serverOffering = GHServerOffering.of(server),
     ))
   }
-
-  private fun doValidate(): Boolean {
-    errors = tokenLoginPanel.doValidateAll()
-    setErrors(errors)
-
-    val toFocus = errors.firstOrNull()?.component
-    if (toFocus?.isVisible == true) IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true)
-
-    return errors.isEmpty()
-  }
-
-  private fun clearErrors() {
-    for (component in errors.mapNotNull { it.component }) {
-      ComponentValidator.getInstance(component).ifPresent { it.updateInfo(null) }
-    }
-    errorPanel.removeAll()
-    errors = emptyList()
-  }
-
-  private fun setErrors(errors: Collection<ValidationInfo>) {
-    for (error in errors) {
-      val component = error.component
-
-      if (component != null) {
-        ComponentValidator.getInstance(component)
-          .orElseGet { ComponentValidator(this).installOn(component) }
-          .updateInfo(error)
-      }
-      else {
-        errorPanel.add(toErrorComponent(error))
-      }
-    }
-
-    errorPanel.revalidate()
-    errorPanel.repaint()
-  }
-
-  private fun toErrorComponent(info: ValidationInfo): JComponent =
-    SimpleColoredComponent().apply {
-      myBorder = empty()
-      ipad = JBInsets.emptyInsets()
-
-      append(info.message, ERROR_ATTRIBUTES)
-    }
 
   private inner class LoginAction : DumbAwareAction() {
 

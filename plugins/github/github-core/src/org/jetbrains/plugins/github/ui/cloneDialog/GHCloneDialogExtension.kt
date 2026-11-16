@@ -126,9 +126,7 @@ private class GHCloneDialogLoginPanel(
       ).customize(UnscaledGaps(top = 5))
     }
 
-  val loginPanel = CloneDialogLoginPanel(cs, account).apply {
-    setServer(GithubServerPath.DEFAULT_HOST, false)
-  }.also {
+  val loginPanel = CloneDialogLoginPanel(cs, account, server = GithubServerPath.DEFAULT_HOST).also {
     Disposer.register(this, it)
   }
 
@@ -143,7 +141,7 @@ private class GHCloneDialogLoginPanel(
 
   fun setTokenUi() {
     setContent(loginPanel)
-    loginPanel.resetAndFocus() // after `loginPanel` is set as content to ensure correct focus behavior
+    loginPanel.focusPanel() // after `loginPanel` is set as content to ensure correct focus behavior
   }
 
   private fun setContent(content: JComponent) {

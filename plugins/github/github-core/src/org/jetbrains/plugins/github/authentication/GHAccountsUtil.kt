@@ -45,6 +45,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GHLoginModel
 import org.jetbrains.plugins.github.authentication.ui.GHTokenLoginDialog
+import org.jetbrains.plugins.github.authentication.ui.GHTokenLoginViewModel
 import org.jetbrains.plugins.github.authentication.ui.LoginNotUniqueException
 import org.jetbrains.plugins.github.authentication.ui.UniqueLoginPredicate
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
@@ -216,15 +217,13 @@ object GHAccountsUtil {
     model: GHLoginModel, project: Project, parentComponent: JComponent?, loginData: GHLoginData, isEnterprise: Boolean,
   ) {
     scopedDialog(project) {
-      GHTokenLoginDialog(model, project, this, parentComponent, loginData).apply {
+      createTokenLoginDialog(
+        model, project, parentComponent, loginData,
+        server = if (isEnterprise) "" else GithubServerPath.DEFAULT_HOST,
+        isServerEditable = isEnterprise,
+      ).apply {
         title = GithubBundle.message("dialog.title.add.github.account")
         setLoginButtonText(GithubBundle.message("accounts.add.button"))
-        if (isEnterprise) {
-          setServer("", true)
-        }
-        else {
-          setServer(GithubServerPath.DEFAULT_HOST, false)
-        }
       }
     }.showAndGet()
   }
@@ -388,7 +387,6 @@ class GHAccountAuthData(val account: GithubAccount, login: String, token: String
 @ApiStatus.Internal
 class GHLoginRequest(
   val text: @NlsContexts.DialogMessage String? = null,
-  val error: Throwable? = null,
 
   val server: GithubServerPath? = null,
   val isServerEditable: Boolean = server == null,
@@ -399,12 +397,6 @@ class GHLoginRequest(
   val authType: AuthorizationType = AuthorizationType.UNDEFINED,
   val loginData: GHLoginData,
 )
-
-private fun GHLoginRequest.configure(tokenLoginDialog: GHTokenLoginDialog) {
-  error?.let { tokenLoginDialog.setError(it) }
-  server?.let { tokenLoginDialog.setServer(it.toString(), isServerEditable) }
-  login?.let { tokenLoginDialog.setLogin(it, isLoginEditable) }
-}
 
 @OptIn(DelicateCoroutinesApi::class)
 private fun scopedDialog(project: Project?, dialogConstructor: CoroutineScope.() -> GHTokenLoginDialog): GHTokenLoginDialog {
@@ -419,11 +411,36 @@ private fun scopedDialog(project: Project?, dialogConstructor: CoroutineScope.()
   }
 }
 
+private fun CoroutineScope.createTokenLoginDialog(
+  model: GHLoginModel,
+  project: Project?,
+  parentComponent: Component?,
+  loginData: GHLoginData,
+  server: String,
+  isServerEditable: Boolean,
+  fixedLogin: String? = null,
+): GHTokenLoginDialog {
+  val loginVm = GHTokenLoginViewModel(
+    this,
+    GithubApiRequestExecutor.Factory.getInstance(),
+    server = server,
+    fixedLogin = fixedLogin,
+    isAccountUnique = { login, serverPath -> model.isAccountUnique(serverPath, login) },
+  ) { serverPath, login, token ->
+    model.saveLogin(serverPath, login, token)
+    logLoginEvent(serverPath, loginData)
+  }
+  return GHTokenLoginDialog(loginVm, project, this, parentComponent, isServerEditable)
+}
+
 private fun GHLoginRequest.loginWithToken(model: GHLoginModel, project: Project?, parentComponent: Component?) {
   val dialog = scopedDialog(project) {
-    GHTokenLoginDialog(model, project, this, parentComponent, loginData).also {
-      configure(it)
-    }
+    createTokenLoginDialog(
+      model, project, parentComponent, loginData,
+      server = server?.toString() ?: GithubServerPath.DEFAULT_HOST,
+      isServerEditable = server == null || isServerEditable,
+      fixedLogin = login.takeUnless { isLoginEditable },
+    )
   }
   DialogManager.show(dialog)
 }
@@ -497,6 +514,13 @@ private fun promptOAuthLogin(request: GHLoginRequest, project: Project?, parentC
   else {
     return builder.show(project)
   }
+}
+
+private fun logLoginEvent(server: GithubServerPath, loginData: GHLoginData) {
+  GHLoginCollector.login(loginData.copy(
+    authType = GHAuthType.TOKEN,
+    serverOffering = GHServerOffering.of(server))
+  )
 }
 
 private class AccountManagerLoginModel(private val account: GithubAccount? = null) : GHLoginModel {
