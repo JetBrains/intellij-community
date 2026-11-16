@@ -2,21 +2,26 @@
 package org.jetbrains.idea.devkit.kotlin.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.LightJavaProject
+import com.intellij.testFramework.junit5.fixture.TestFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
-import org.jetbrains.idea.devkit.kotlin.inspections.KtCompanionObjectInExtensionInspectionTestBase
+import org.jetbrains.idea.devkit.kotlin.inspections.ktCompanionObjectInExtensionFixture
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/moveProhibitedDeclarationsToTopLevelFix")
-abstract class KtMoveProhibitedDeclarationsToTopLevelFixTest : KtCompanionObjectInExtensionInspectionTestBase() {
+abstract class KtMoveProhibitedDeclarationsToTopLevelFixTest(projectFixture: TestFixture<LightJavaProject>) {
+  protected val companionObject by ktCompanionObjectInExtensionFixture(projectFixture,
+    DevkitKtTestsUtil.TESTDATA_PATH + "inspections/moveProhibitedDeclarationsToTopLevelFix")
 
   protected val fixName = "Move prohibited declarations to top level"
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/moveProhibitedDeclarationsToTopLevelFix"
-
+  @Test
   fun testMoveProhibitedDeclarations() {
-    doTestFixWithReferences(fixName)
+    companionObject.doTestFixWithReferences(fixName)
   }
 
+  @Test
   fun testMoveJvmStaticDeclarations() {
-    doTestFixWithReferences(fixName, refFileExtension = "java")
+    companionObject.doTestFixWithReferences(fixName, refFileExtension = "java")
   }
 }

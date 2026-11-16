@@ -2,18 +2,25 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
-import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
+import org.jetbrains.idea.devkit.inspections.quickfix.lightDevKitInspectionFixture
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/canBeDumbAware")
-class CanBeDumbAwareInspectionTest : LightDevKitInspectionFixTestBase() {
+@TestApplication
+class CanBeDumbAwareInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/canBeDumbAware"
+  private val devKit by lightDevKitInspectionFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/canBeDumbAware")
+  private val myFixture get() = devKit.fixture
 
-  override fun getFileExtension(): String = "java"
-
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
 
     myFixture.enableInspections(CanBeDumbAwareInspection())
 
@@ -34,39 +41,48 @@ class CanBeDumbAwareInspectionTest : LightDevKitInspectionFixTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun testNotImplementingPossiblyDumbAware() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testImplementingDumbAware() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testNotImplementingDumbAware() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testAbstractClassNotImplementingDumbAware() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testNotImplementingDumbAwareByParent() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testImplementingDumbAwareByParent() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testOverridingIsDumbAware() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testOverridingIsDumbAwareByParent() {
-    doTest()
+    devKit.doTest()
   }
 
+  @Test
   fun testOverridingIsDumbAwareByInterface() {
-    doTest()
+    devKit.doTest()
   }
 }

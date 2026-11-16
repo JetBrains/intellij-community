@@ -2,22 +2,29 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.mcp.McpToolInspectionTestBase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.mcp.mcpToolInspectionFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/mcpToolParameterMissingDescription")
-internal class KtMcpToolParameterMissingDescriptionInspectionTest : McpToolInspectionTestBase() {
-
-  override fun setUp() {
-    super.setUp()
-    enableMcpInspection("McpToolParameterMissingDescription")
+@TestApplication
+internal class KtMcpToolParameterMissingDescriptionInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
   }
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/mcpToolParameterMissingDescription/"
+  private val mcpTool by mcpToolInspectionFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/mcpToolParameterMissingDescription/")
 
-  override fun getFileExtension() = "kt"
+  @BeforeEach
+  fun setUp() {
+    mcpTool.enableMcpInspection("McpToolParameterMissingDescription")
+  }
 
+  @Test
   fun testMissingParameterDescription() {
-    doTest()
+    mcpTool.doTest()
   }
 }

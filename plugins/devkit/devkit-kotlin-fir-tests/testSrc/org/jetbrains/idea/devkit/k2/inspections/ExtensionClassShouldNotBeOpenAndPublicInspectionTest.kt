@@ -2,37 +2,50 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.quickfix.ExtensionClassShouldBeFinalAndNonPublicInspectionTestBase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.quickfix.extensionClassShouldBeFinalAndNonPublicFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/extensionClassShouldNotBeOpenAndPublic")
-internal class ExtensionClassShouldNotBeOpenAndPublicInspectionTest : ExtensionClassShouldBeFinalAndNonPublicInspectionTestBase() {
+@TestApplication
+internal class ExtensionClassShouldNotBeOpenAndPublicInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/extensionClassShouldNotBeOpenAndPublic/"
-  override fun getFileExtension(): String = "kt"
+  private val extensionClass by extensionClassShouldBeFinalAndNonPublicFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/extensionClassShouldNotBeOpenAndPublic/")
+  private val myFixture get() = extensionClass.fixture
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myFixture.configureByFile("plugin.xml")
   }
 
+  @Test
   fun testMakeNotOpen() {
-    doTest("Make 'MyInspection' not open")
+    extensionClass.doTest("Make 'MyInspection' not open")
   }
 
+  @Test
   fun testMakeInternal() {
-    doTest("Make 'MyInspection' internal")
+    extensionClass.doTest("Make 'MyInspection' internal")
   }
 
+  @Test
   fun testInternalFinalExtensionClass() {
-    doTest()
+    extensionClass.doTest()
   }
 
+  @Test
   fun testHasInheritor() {
-    doTest()
+    extensionClass.doTest()
   }
 
+  @Test
   fun testVisibleForTestingAnnotation() {
-    doTest()
+    extensionClass.doTest()
   }
 }

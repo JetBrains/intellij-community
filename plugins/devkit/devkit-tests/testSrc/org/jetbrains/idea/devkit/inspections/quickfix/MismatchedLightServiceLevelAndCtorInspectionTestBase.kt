@@ -4,6 +4,11 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.MismatchedLightServiceLevelAndCtorInspection
 
+/**
+ * Use [mismatchedLightServiceLevelAndCtorFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use mismatchedLightServiceLevelAndCtorFixture in a JUnit 5 test")
 abstract class MismatchedLightServiceLevelAndCtorInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   protected val annotateAsServiceFixName: String =

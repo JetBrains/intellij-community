@@ -2,21 +2,25 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.quickfix.UseHtmlChunkToolTipInspectionTestBase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.quickfix.useHtmlChunkToolTipFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/useHtmlChunkToolTip")
-class KtUseHtmlChunkToolTipInspectionTest : UseHtmlChunkToolTipInspectionTestBase() {
-
-    
-
-  override fun getBasePath(): String {
-    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/useHtmlChunkToolTip"
+@TestApplication
+class KtUseHtmlChunkToolTipInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
   }
 
-  override fun getFileExtension(): String = "kt"
+  private val htmlChunk by useHtmlChunkToolTipFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/useHtmlChunkToolTip")
+  private val myFixture get() = htmlChunk.fixture
 
-  override fun addSetToolTipTextExtensionStub() {
+  @BeforeEach
+  fun setUp() {
     myFixture.addFileToProject(
       "src/com/intellij/ide/HelpTooltip.kt",
       """
@@ -28,19 +32,23 @@ class KtUseHtmlChunkToolTipInspectionTest : UseHtmlChunkToolTipInspectionTestBas
     )
   }
 
+  @Test
   fun testSetToolTipTextWithString() {
-    doTest()
+    htmlChunk.doTest()
   }
 
+  @Test
   fun testSetToolTipTextWithStringFix() {
-    doTest("Wrap with 'HtmlChunk.text()'")
+    htmlChunk.doTest("Wrap with 'HtmlChunk.text()'")
   }
 
+  @Test
   fun testSetToolTipTextWithStringFixRaw() {
-    doTest("Wrap with 'HtmlChunk.raw()'")
+    htmlChunk.doTest("Wrap with 'HtmlChunk.raw()'")
   }
 
+  @Test
   fun testSetToolTipTextPropertyStyleFix() {
-    doTest("Wrap with 'HtmlChunk.text()'")
+    htmlChunk.doTest("Wrap with 'HtmlChunk.text()'")
   }
 }

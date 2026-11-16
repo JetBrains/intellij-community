@@ -2,57 +2,72 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/cancellationCheckInLoops")
-class CancellationCheckInLoopsInspectionTest : CancellationCheckInLoopsInspectionTestBase() {
+@TestApplication
+class CancellationCheckInLoopsInspectionTest {
+  companion object {
+    private val projectFixture = cancellationCheckInLoopsProjectFixture()
+  }
 
-  override fun getFileExtension(): String = "java"
+  private val cancellationCheck by cancellationCheckInLoopsFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/cancellationCheckInLoops")
 
-  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/cancellationCheckInLoops"
-
+  @Test
   fun testRunCondition() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testRunConditionOnSuperMethod() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testPresentCancellationCheck() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testCancellationCheckPresentNotInFirstLine() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testForEachLoops() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testForLoops() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testWhileLoops() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testDoWhileLoops() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testNestedLoops() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testLoopMethods() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
+  @Test
   fun testNestedLoopMethods() {
-    doTest()
+    cancellationCheck.doTest()
   }
 
 }

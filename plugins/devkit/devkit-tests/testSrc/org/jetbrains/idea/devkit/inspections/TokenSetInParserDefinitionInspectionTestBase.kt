@@ -3,6 +3,11 @@ package org.jetbrains.idea.devkit.inspections
 
 import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
 
+/**
+ * Use [tokenSetInParserDefinitionFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use tokenSetInParserDefinitionFixture in a JUnit 5 test")
 abstract class TokenSetInParserDefinitionInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   override fun setUp() {

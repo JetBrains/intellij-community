@@ -2,24 +2,32 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/jComponentDataProvider")
-class JComponentDataProviderInspectionTest : JComponentDataProviderInspectionTestBase() {
+@TestApplication
+class JComponentDataProviderInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/jComponentDataProvider/"
+  private val dataProvider by jComponentDataProviderFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/jComponentDataProvider/")
 
-  override fun getFileExtension(): String = "java"
-
+  @Test
   fun testNotJComponent() {
-    doTest()
+    dataProvider.doTest()
   }
 
+  @Test
   fun testMyJComponent() {
-    doTest()
+    dataProvider.doTest()
   }
 
+  @Test
   fun testMyJComponentUiCompatibleDataProvider() {
-    doTest()
+    dataProvider.doTest()
   }
 }

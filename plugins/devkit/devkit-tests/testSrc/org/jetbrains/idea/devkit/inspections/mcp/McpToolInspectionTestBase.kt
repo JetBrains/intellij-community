@@ -9,7 +9,11 @@ import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTe
  * Shared setup for the MCP tool-authoring inspection tests. Stubs the MCP annotation API so test data can
  * reference @McpTool / @McpDescription without a compile dependency on intellij.mcpserver. Concrete
  * subclasses enable the specific inspection under test.
+ *
+ * Use [mcpToolInspectionFixture] in a JUnit 5 test.
  */
+@Suppress("DEPRECATION")
+@Deprecated("Use mcpToolInspectionFixture in a JUnit 5 test")
 abstract class McpToolInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   override fun setUp() {

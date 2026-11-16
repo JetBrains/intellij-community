@@ -3,6 +3,10 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import org.jetbrains.idea.devkit.inspections.internal.UsePrimitiveTypesEqualsInspection;
 
+/**
+ * @deprecated Use {@link UsePsiPrimitiveTypeEqualsFixtureKt#usePsiPrimitiveTypeEqualsFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class UsePsiPrimitiveTypeEqualsFixTestBase extends LightDevKitInspectionFixTestBase {
 
   @Override

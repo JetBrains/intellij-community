@@ -3,6 +3,10 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import org.jetbrains.idea.devkit.inspections.internal.AbstractUseJBColorTestBase;
 
+/**
+ * @deprecated Use {@link org.jetbrains.idea.devkit.inspections.internal.UseJBColorFixtureKt#useJBColorFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class UseJBColorFixTestBase extends AbstractUseJBColorTestBase {
 
   protected static final String CONVERT_TO_JB_COLOR_FIX_NAME = "Convert to 'JBColor'";

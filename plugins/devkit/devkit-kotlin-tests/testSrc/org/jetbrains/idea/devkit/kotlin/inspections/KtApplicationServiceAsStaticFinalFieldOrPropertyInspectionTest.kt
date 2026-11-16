@@ -2,47 +2,55 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase
+import com.intellij.testFramework.fixtures.LightJavaProject
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import org.jetbrains.idea.devkit.inspections.applicationServiceAsStaticFinalFieldOrPropertyFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/applicationServiceAsStaticFinalFieldOrProperty")
-abstract class KtApplicationServiceAsStaticFinalFieldOrPropertyInspectionTest : ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase() {
+abstract class KtApplicationServiceAsStaticFinalFieldOrPropertyInspectionTest(projectFixture: TestFixture<LightJavaProject>) {
+  protected val appService by applicationServiceAsStaticFinalFieldOrPropertyFixture(projectFixture,
+    "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/applicationServiceAsStaticFinalFieldOrProperty")
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/applicationServiceAsStaticFinalFieldOrProperty"
-
-  override fun getFileExtension(): String = "kt"
-
-
+  @Test
   fun testStaticProperties() {
-    doHighlightTest()
+    appService.doHighlightTest()
   }
 
+  @Test
   fun testExplicitConstructorCall() {
-    doHighlightTest()
+    appService.doHighlightTest()
   }
 
+  @Test
   fun testNonServices() {
-    doHighlightTest()
+    appService.doHighlightTest()
   }
 
+  @Test
   fun testRegisteredServices() {
-    doHighlightTest()
+    appService.doHighlightTest()
   }
 
+  @Test
   fun testLightServices() {
-    doHighlightTest()
+    appService.doHighlightTest()
   }
 
+  @Test
   fun testBackingFields() {
-    doHighlightTest()
+    appService.doHighlightTest()
   }
 
+  @Test
   fun testServiceInstances() {
-    doHighlightTest()
+    appService.doHighlightTest()
   }
 
+  @Test
   fun testEagerInitializationDuringClassloading() {
-    doHighlightTest()
+    appService.doHighlightTest()
   }
 
 }

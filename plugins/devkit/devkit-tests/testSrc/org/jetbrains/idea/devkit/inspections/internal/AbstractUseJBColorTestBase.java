@@ -3,6 +3,10 @@ package org.jetbrains.idea.devkit.inspections.internal;
 
 import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase;
 
+/**
+ * @deprecated Use {@link UseJBColorFixtureKt#useJBColorFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class AbstractUseJBColorTestBase extends LightDevKitInspectionFixTestBase {
 
   @Override

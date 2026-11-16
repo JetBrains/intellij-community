@@ -2,18 +2,26 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.quickfix.VirtualFileUrlConversionInspectionTestBase
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.quickfix.virtualFileUrlConversionFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath($$"$CONTENT_ROOT/testData/inspections/virtualFileUrlConversion")
-class KtVirtualFileUrlConversionInspectionTest : VirtualFileUrlConversionInspectionTestBase() {
-  override fun getBasePath(): String {
-    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/virtualFileUrlConversion"
+@TestApplication
+class KtVirtualFileUrlConversionInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
   }
 
-  override fun getFileExtension(): String = "kt"
+  private val urlConversion by virtualFileUrlConversionFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/virtualFileUrlConversion",
+                                                   addVirtualFileUrlStubs = false)
+  private val myFixture get() = urlConversion.fixture
 
-  override fun addVirtualFileUrlStubs() {
+  @BeforeEach
+  fun setUp() {
     myFixture.addFileToProject(
       "src/com/intellij/platform/workspace/storage/url/VirtualFileUrl.kt",
       """
@@ -30,7 +38,8 @@ class KtVirtualFileUrlConversionInspectionTest : VirtualFileUrlConversionInspect
     )
   }
 
+  @Test
   fun testConversions() {
-    doTest()
+    urlConversion.doTest()
   }
 }

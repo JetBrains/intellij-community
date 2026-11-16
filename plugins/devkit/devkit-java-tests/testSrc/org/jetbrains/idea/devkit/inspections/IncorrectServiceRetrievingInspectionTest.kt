@@ -2,24 +2,32 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/incorrectServiceRetrieving")
-internal class IncorrectServiceRetrievingInspectionTest : IncorrectServiceRetrievingInspectionTestBase() {
+@TestApplication
+internal class IncorrectServiceRetrievingInspectionTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/incorrectServiceRetrieving/"
+  private val serviceRetrieving by incorrectServiceRetrievingFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/incorrectServiceRetrieving/")
 
-  override fun getFileExtension() = "java"
-
+  @Test
   fun testAppLevelServiceAsProjectLevel() {
-    doTest(true)
+    serviceRetrieving.doTest(true)
   }
 
+  @Test
   fun testProjectLevelServiceAsAppLevel() {
-    doTest(true)
+    serviceRetrieving.doTest(true)
   }
 
+  @Test
   fun testUnregisteredService() {
-    doTest(true)
+    serviceRetrieving.doTest(true)
   }
 }

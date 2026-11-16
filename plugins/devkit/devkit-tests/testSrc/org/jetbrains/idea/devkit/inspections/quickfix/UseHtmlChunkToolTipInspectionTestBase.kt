@@ -3,6 +3,11 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 
 import org.jetbrains.idea.devkit.inspections.UseHtmlChunkToolTipInspection
 
+/**
+ * Use [useHtmlChunkToolTipFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use useHtmlChunkToolTipFixture in a JUnit 5 test")
 abstract class UseHtmlChunkToolTipInspectionTestBase : LightDevKitInspectionFixTestBase() {
   @Throws(Exception::class)
   override fun setUp() {

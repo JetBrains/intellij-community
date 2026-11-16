@@ -7,6 +7,11 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.relativeTo
 
+/**
+ * Use [applicationServiceAsStaticFinalFieldOrPropertyFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use applicationServiceAsStaticFinalFieldOrPropertyFixture in a JUnit 5 test")
 abstract class ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase : LightDevKitInspectionFixTestBase()  {
 
   override fun setUp() {

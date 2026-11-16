@@ -3,6 +3,11 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 
 import org.jetbrains.idea.devkit.inspections.SimplifiableServiceRetrievingInspection
 
+/**
+ * Use [simplifiableServiceRetrievingFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use simplifiableServiceRetrievingFixture in a JUnit 5 test")
 abstract class SimplifiableServiceRetrievingInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   override fun setUp() {

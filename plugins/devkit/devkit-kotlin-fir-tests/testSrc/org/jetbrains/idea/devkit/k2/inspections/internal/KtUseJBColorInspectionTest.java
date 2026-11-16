@@ -2,34 +2,30 @@
 package org.jetbrains.idea.devkit.k2.inspections.internal;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.inspections.internal.AbstractUseJBColorTestBase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.idea.devkit.inspections.internal.UseJBColorFixture;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.internal.UseJBColorFixtureKt.useJBColorFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/useJBColor")
-public class KtUseJBColorInspectionTest extends AbstractUseJBColorTestBase {
+@TestApplication
+public class KtUseJBColorInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<UseJBColorFixture> jbColor =
+    useJBColorFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/useJBColor");
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
-  @Override
-  protected String getBasePath() {
-    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/useJBColor";
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "kt";
-  }
-
+  @Test
   public void testUseJBColorConstructor() {
-    doTest();
+    jbColor.get().doTest();
   }
 
+  @Test
   public void testUseJBColorConstant() {
-    doTest();
+    jbColor.get().doTest();
   }
 }

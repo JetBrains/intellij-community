@@ -3,6 +3,10 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import org.jetbrains.idea.devkit.inspections.UseGrayInspection;
 
+/**
+ * @deprecated Use {@link ConvertToGrayFixtureKt#convertToGrayFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class ConvertToGrayQuickFixTestBase extends LightDevKitInspectionFixTestBase {
 
   protected static final String CONVERT_TO_GRAY_FIX_NAME_PATTERN = "Convert to 'Gray._%d'";
