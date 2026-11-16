@@ -895,6 +895,9 @@ internal fun applyRootModule(properties: ProductProperties, rootModule: String, 
 
 private val lookup = MethodHandles.lookup()
 
+/** The `build/dev-build.json` keys whose `ProductProperties` constructor takes the community home and not the project home. */
+private val COMMUNITY_HOME_PLATFORM_PREFIXES = setOf("Idea", "PyCharmCore", "AndroidStudio")
+
 private fun doCreateProductProperties(
   classLoader: PathClassLoader,
   className: String,
@@ -921,7 +924,7 @@ private fun doCreateProductProperties(
   catch (_: NoSuchMethodException) {
     lookup
       .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
-      .invoke(if (platformPrefix == "Idea" || platformPrefix == "PyCharmCore") getCommunityHomePath(projectDir) else projectDir)
+      .invoke(if (platformPrefix in COMMUNITY_HOME_PLATFORM_PREFIXES) getCommunityHomePath(projectDir) else projectDir)
   } as ProductProperties
 }
 
