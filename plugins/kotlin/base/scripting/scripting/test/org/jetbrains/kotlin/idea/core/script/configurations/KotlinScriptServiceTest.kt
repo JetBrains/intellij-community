@@ -3,9 +3,12 @@ package org.jetbrains.kotlin.idea.core.script.configurations
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithoutContent
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.registerExtension
 import com.intellij.testFramework.workspaceModel.update
 import kotlinx.coroutines.runBlocking
@@ -17,6 +20,7 @@ import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntityProvider
 import org.jetbrains.kotlin.idea.core.script.definition.moduleSupplier
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
+import org.jetbrains.kotlin.idea.notification.catchNotificationsAsync
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import kotlin.script.experimental.host.ScriptDefinition
 import kotlin.script.experimental.host.ScriptingHostConfiguration
@@ -135,6 +139,16 @@ class KotlinScriptServiceTest : KotlinLightCodeInsightFixtureTestCase() {
             "Circular imported scripts must not create an entity for transitively imported scripts",
             KotlinScriptEntityProvider.findKotlinScriptEntity(project, second)
         )
+    }
+
+    fun `test load skips a file without content`() = runBlocking {
+        val file = object : LightVirtualFile("build.gradle.kts", FileTypes.PLAIN_TEXT, ""), VirtualFileWithoutContent {}
+
+        val notifications = catchNotificationsAsync(project, "KotlinScriptNotificationGroup", testRootDisposable) {
+            KotlinScriptService.getInstance(project).load(file)
+        }
+
+        assertEmpty(notifications)
     }
 
     fun `test load skips file rejected by processing filter`() {

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.relativizeToClosestAncestor
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithoutContent
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.findEntitiesByVirtualFile
@@ -131,6 +132,7 @@ class KotlinScriptService(val project: Project, val coroutineScope: CoroutineSco
      * Skips files rejected by [KotlinScriptProcessingFilter].
      */
     suspend fun load(virtualFile: VirtualFile) {
+        if (virtualFile is VirtualFileWithoutContent) return
         if (!KotlinScriptProcessingFilter.shouldProcessScript(project, virtualFile)) return
         assert(!application.isWriteAccessAllowed)
         update(virtualFile, virtualFile.findScriptDefinition())
