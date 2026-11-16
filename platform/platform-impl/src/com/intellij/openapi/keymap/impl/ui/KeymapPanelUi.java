@@ -468,10 +468,14 @@ final class KeymapPanelUi extends JPanel implements KeymapListener, SystemShortc
   }
 
   void showOption(String option) {
-    currentKeymapChanged();
     myFilterComponent.setFilter(option);
+    if (myActionsTree.getMainGroup() != null && myActionsTree.hasFilter(option)
+        && myFilteringPanel.getShortcut() == null) {
+      return;
+    }
     myFilteringPanel.setShortcut(null);
-    myActionsTree.filter(option, myQuickLists);
+    myActionsTree.setFilter(option);
+    currentKeymapChanged();
   }
 
   private void repaintLists() {

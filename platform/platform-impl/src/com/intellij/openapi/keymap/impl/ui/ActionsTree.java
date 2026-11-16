@@ -81,6 +81,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -238,6 +239,14 @@ public final class ActionsTree {
 
   public JTree getTree() {
     return myTree;
+  }
+
+  void setFilter(@Nullable String filter) {
+    myFilter = filter;
+  }
+
+  boolean hasFilter(@Nullable String filter) {
+    return Objects.equals(StringUtil.nullize(myFilter), StringUtil.nullize(filter));
   }
 
   public void filter(final String filter, final QuickList[] currentQuickListIds) {
@@ -422,11 +431,12 @@ public final class ActionsTree {
 
   private List<DefaultMutableTreeNode> getNodesByPaths(List<String> paths) {
     List<DefaultMutableTreeNode> result = new SmartList<>();
+    Set<String> pathSet = new HashSet<>(paths);
     Enumeration<TreeNode> enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
       final String path = getPath(node, false);
-      if (paths.contains(path)) {
+      if (pathSet.contains(path)) {
         result.add(node);
       }
     }
@@ -440,8 +450,8 @@ public final class ActionsTree {
       final TreeNode parent = node.getParent();
       if (parent instanceof DefaultMutableTreeNode) {
         final Object object = ((DefaultMutableTreeNode)parent).getUserObject();
-        if (object instanceof Group) {
-          return ((Group)object).getActionQualifiedPath(actionId, presentable);
+        if (object instanceof Group group) {
+          return group.getActionPath(actionId, presentable);
         }
       }
 

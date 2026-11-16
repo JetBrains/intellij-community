@@ -30,6 +30,7 @@ public final class Group implements KeymapGroup {
    */
   private final ArrayList<Object> myChildren;
 
+  private final Set<String> myActionIds = new HashSet<>();
   private final Set<String> myIds = new HashSet<>();
 
   private boolean myForceShowAsPopup;
@@ -81,7 +82,7 @@ public final class Group implements KeymapGroup {
 
   @Override
   public void addActionId(String id) {
-    if (myChildren.contains(id)) return;
+    if (!myActionIds.add(id)) return;
     myChildren.add(id);
   }
 
@@ -168,6 +169,20 @@ public final class Group implements KeymapGroup {
     answer.append(suffix);
 
     return answer.toString();
+  }
+
+  /** Returns the path of a direct action child without scanning the group. */
+  String getActionPath(String id, boolean presentable) {
+    String actionPath = id;
+    if (presentable) {
+      AnAction action = ActionManager.getInstance().getActionOrStub(id);
+      String text = action == null ? null : action.getTemplatePresentation().getText();
+      if (!StringUtil.isEmpty(text)) {
+        actionPath = text;
+      }
+    }
+    if (isRoot()) return actionPath;
+    return getQualifiedPath(presentable) + SETTINGS_GROUP_SEPARATOR + actionPath;
   }
 
   private String calcActionQualifiedPath(String id, boolean presentable) {

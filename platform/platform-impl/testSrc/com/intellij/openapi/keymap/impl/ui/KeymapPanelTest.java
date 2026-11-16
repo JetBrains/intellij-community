@@ -10,6 +10,8 @@ import com.intellij.util.ui.UIUtil;
 import org.junit.jupiter.api.Test;
 
 import javax.swing.JComponent;
+import javax.swing.JTree;
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.Component;
 import java.util.concurrent.TimeUnit;
 
@@ -19,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The split mode host creates every settings page on a background thread, see IJPL-259245.
@@ -81,12 +84,46 @@ public class KeymapPanelTest {
 
     panel.reset();
     assertEquals("copy", filter.getFilter());
+    Group copiedActions = getMainGroup(component);
+    assertTrue(copiedActions.containsId(IdeActions.ACTION_EDITOR_COPY));
+    assertFalse(copiedActions.containsId(IdeActions.ACTION_EDITOR_PASTE));
 
     panel.showOption("paste");
     assertEquals("paste", filter.getFilter());
+    Group pastedActions = getMainGroup(component);
+    assertTrue(pastedActions.containsId(IdeActions.ACTION_EDITOR_PASTE));
+    assertFalse(pastedActions.containsId(IdeActions.ACTION_EDITOR_COPY));
 
     panel.reset();
     assertEquals("paste", filter.getFilter());
     panel.disposeUIResources();
+  }
+
+  @Test
+  void showOptionKeepsOrRebuildsTheTreeAsNeeded() {
+    KeymapPanel panel = new KeymapPanel();
+    JComponent component = panel.createComponent();
+    panel.reset();
+    Group initialGroup = getMainGroup(component);
+
+    panel.showOption("");
+    assertSame(initialGroup, getMainGroup(component));
+
+    panel.showOption("copy");
+    Group filteredGroup = getMainGroup(component);
+    assertNotSame(initialGroup, filteredGroup);
+    assertTrue(filteredGroup.containsId(IdeActions.ACTION_EDITOR_COPY));
+    assertFalse(filteredGroup.containsId(IdeActions.ACTION_EDITOR_PASTE));
+
+    panel.showOption("copy");
+    assertSame(filteredGroup, getMainGroup(component));
+    panel.disposeUIResources();
+  }
+
+  private static Group getMainGroup(JComponent component) {
+    JTree tree = UIUtil.findComponentOfType(component, JTree.class);
+    assertNotNull(tree);
+    DefaultMutableTreeNode root = (DefaultMutableTreeNode)tree.getModel().getRoot();
+    return (Group)root.getUserObject();
   }
 }

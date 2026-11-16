@@ -37,6 +37,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import javax.swing.KeyStroke;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -204,6 +206,40 @@ public class ActionsTreeTest {
              ACTION_WITH_FIXED_SHORTCUTS
            )
     );
+  }
+
+  @Test
+  public void testActionPathsUseTheirParentGroup() {
+    Group mainGroup = new Group("root");
+    Group nestedGroup = new Group("Nested", "Nested");
+    nestedGroup.addActionId(ACTION_WITH_TEXT_ONLY);
+    mainGroup.addGroup(nestedGroup);
+    mainGroup.addActionId(ACTION_WITH_TEXT_ONLY);
+
+    DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(mainGroup);
+    DefaultMutableTreeNode nestedNode = new DefaultMutableTreeNode(nestedGroup);
+    DefaultMutableTreeNode nestedActionNode = new DefaultMutableTreeNode(ACTION_WITH_TEXT_ONLY);
+    nestedNode.add(nestedActionNode);
+    rootNode.add(nestedNode);
+    DefaultMutableTreeNode rootActionNode = new DefaultMutableTreeNode(ACTION_WITH_TEXT_ONLY);
+    rootNode.add(rootActionNode);
+    actionTree.getTree().setModel(new DefaultTreeModel(rootNode));
+
+    String nestedPath = actionTree.getTree().convertValueToText(nestedActionNode, false, false, true, 0, false);
+    String rootActionPath = actionTree.getTree().convertValueToText(rootActionNode, false, false, true, 0, false);
+
+    assertEquals(nestedGroup.getActionQualifiedPath(ACTION_WITH_TEXT_ONLY, true), nestedPath);
+    assertEquals("some text", rootActionPath);
+  }
+
+  @Test
+  public void testSelectActionSelectsNestedNode() {
+    actionTree.selectAction(ACTION_WITH_TEXT_ONLY);
+
+    assertEquals(ACTION_WITH_TEXT_ONLY, actionTree.getSelectedActionId());
+    DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode)actionTree.getTree().getSelectionPath().getLastPathComponent();
+    Group parentGroup = (Group)((DefaultMutableTreeNode)selectedNode.getParent()).getUserObject();
+    assertEquals(KeyMapBundle.message("editor.actions.group.title"), parentGroup.getName());
   }
 
   @TestFactory
