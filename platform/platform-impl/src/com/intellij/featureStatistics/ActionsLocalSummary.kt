@@ -22,7 +22,7 @@ import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
@@ -202,11 +202,11 @@ class ActionsTotalSummary(
 
 @Service
 private class ActionsLocalSummaryUpdater(coroutineScope: CoroutineScope) {
-  private val events = MutableSharedFlow<ActionUsage>(replay = 1, extraBufferCapacity = 10, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val events = Channel<ActionUsage>(capacity = 16, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     coroutineScope.launch {
-      events.collect { usage ->
+      for (usage in events) {
         try {
           if (getPluginInfo(usage.actionClass).isSafeToReport()) {
             serviceAsync<ActionsLocalSummary>().updateActionsSummary(usage.actionId ?: usage.actionClass.name, usage.place)
@@ -221,7 +221,7 @@ private class ActionsLocalSummaryUpdater(coroutineScope: CoroutineScope) {
   }
 
   fun incUsage(actionClass: Class<out AnAction>, actionId: String?, place: String) {
-    events.tryEmit(ActionUsage(actionClass, actionId, place))
+    events.trySend(ActionUsage(actionClass, actionId, place))
   }
 }
 
