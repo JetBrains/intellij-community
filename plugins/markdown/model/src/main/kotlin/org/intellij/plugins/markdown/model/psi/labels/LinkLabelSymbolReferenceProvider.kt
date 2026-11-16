@@ -7,16 +7,22 @@ import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceProvider
 import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.parentOfTypes
+import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkText
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTestLink
 import org.intellij.plugins.markdown.model.psi.labels.LinkLabelSymbol.Companion.isDeclaration
 import org.intellij.plugins.markdown.util.isFootnoteLabelText
 
 internal class LinkLabelSymbolReferenceProvider: PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
     if (element !is MarkdownLinkLabel || element.isDeclaration) {
+      return emptyList()
+    }
+    if (element.parent?.siblings(forward = true, withSelf = false)?.firstOrNull { it !is PsiWhiteSpace } is MarkdownTestLink) {
       return emptyList()
     }
     if (element.parentOfTypes(MarkdownLinkText::class, MarkdownImage::class) is MarkdownLinkText) {
