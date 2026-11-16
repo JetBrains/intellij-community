@@ -4,6 +4,7 @@
 owner 'Bazel Migration Team'
 
 /MODULE.bazel.lock
+# review-class: generated
 owner 'Bazel Lockfiles'
 
 /OWNERSHIP
