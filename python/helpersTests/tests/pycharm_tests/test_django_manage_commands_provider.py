@@ -16,7 +16,12 @@ class DjangoManageCommandsProviderTest(HelpersTestCase):
         self.assertEqual(result.exit_code, 0, msg=result.stdout + result.stderr)
         self.assertIn('name="migrate"', result.stdout)
         self.assertNotIn('name="slowcmd"', result.stdout)
-        self.assertIn("Command 'slowcmd' took too long", result.stderr)
+        self.assertIn(
+            "Command 'slowcmd' is not in the command list: it did not load in 1 s.\n"
+            "To skip it without the wait, add it to the comma-separated list "
+            "'python.django.commandsToSkip' in Find Action | Registry.\n",
+            result.stderr,
+        )
 
     def _write_fake_django(self, slow_command, commands):
         self._write("django/__init__.py", """\
