@@ -1,0 +1,7 @@
+- Send the request:
+
+  <spot>```</spot>json
+  {
+    "id": 1
+  }
+  ```
