@@ -470,7 +470,8 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   @Override
   public @NotNull HtmlChunk visitPyNeverType(@NotNull PyNeverType neverType) {
-    return qualifiedNameLink(neverType.getName(), getNeverQualifiedName(neverType));
+    String qualifiedName = getNeverQualifiedName(neverType);
+    return qualifiedNameLink(isRenderingFqn() ? qualifiedName : neverType.getName(), qualifiedName);
   }
 
   private @NotNull String getNeverQualifiedName(@NotNull PyNeverType neverType) {
