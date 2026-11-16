@@ -7,7 +7,6 @@ import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
 
 data class KotlinDslScriptModel(
     val file: String,
-    val inputs: String,
     val classPath: List<String>,
     val sourcePath: List<String>,
     val imports: List<String>,

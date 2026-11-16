@@ -26,8 +26,8 @@ private const val GRADLE_WITH_NEW_SCRIPTING_TEMPLATES = "9.1"
 class GradleDefinitionsParams(
     val workingDir: String,
     val gradleHome: String,
-    val javaHome: String?, // null due to k1
-    val gradleVersion: String?, // null due to k1
+    val javaHome: String,
+    val gradleVersion: String,
     val jvmArguments: List<String>,
     val environment: Map<String, String>,
 )
@@ -37,7 +37,7 @@ fun loadGradleDefinitions(params: GradleDefinitionsParams): List<GradleScriptDef
     val templateClasspath = getFullDefinitionsClasspath(gradleLibDir)
     val kotlinLibsClassPath = kotlinStdlibAndCompiler(gradleLibDir)
 
-    val templateClasses = getGradleTemplatesNames(params.gradleVersion?.let { GradleVersion.version(it) })
+    val templateClasses = getGradleTemplatesNames(GradleVersion.version(params.gradleVersion))
 
     val hostConfiguration = params.toHostConfiguration()
     return loadDefinitionsFromTemplates(

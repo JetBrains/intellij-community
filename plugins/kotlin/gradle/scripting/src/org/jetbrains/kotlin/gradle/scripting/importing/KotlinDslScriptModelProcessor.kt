@@ -7,10 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.util.io.PathPrefixTree
-import com.intellij.openapi.vfs.VfsUtil
 import org.gradle.tooling.model.kotlin.dsl.EditorReportSeverity
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
-import org.jetbrains.kotlin.gradle.scripting.getGradleScriptInputsStamp
 import org.jetbrains.kotlin.gradle.scripting.kotlinDslScriptsModelImportSupported
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
 import org.jetbrains.plugins.gradle.model.GradleLightBuild
@@ -72,13 +70,8 @@ private fun getDslScriptModels(
             )
         }
 
-        val virtualFile = VfsUtil.findFile(file.toPath(), true) ?: return@mapNotNull null
-
-        // todo(KT-34440): take inputs snapshot before starting import
-        val gradleScriptInputsStamp = getGradleScriptInputsStamp(context.project, virtualFile) ?: return@mapNotNull null
         KotlinDslScriptModel(
             toSystemIndependentName(file.path),
-            gradleScriptInputsStamp,
             model.classPath.map { toSystemIndependentName(it.path) },
             model.sourcePath.map { toSystemIndependentName(it.path) },
             model.implicitImports,

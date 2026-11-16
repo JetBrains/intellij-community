@@ -49,7 +49,7 @@ internal class KotlinDslScriptSyncContributor : GradleSyncContributor {
         builder.replaceBySource(gradleKotlinScriptEntitySource(context), ImmutableEntityStorage.empty())
 
         val gradleScripts = models.mapNotNullTo(mutableSetOf()) {
-            val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(it.file)) ?: return@mapNotNullTo null
+            val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Path.of(it.file)) ?: return@mapNotNullTo null
             GradleScriptModel(
                 virtualFile,
                 it.classPath,
