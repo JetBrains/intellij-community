@@ -5,7 +5,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.WriteAction
-import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.impl.ProjectViewSelectInTarget
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -111,5 +111,5 @@ private fun notifyScriptTemplateMarkerFailed(project: Project, module: Module) {
 
 /** A marker file holds no text, so the Project view answers where it lives better than the editor. */
 internal fun revealScriptTemplateMarker(project: Project, markerFile: VirtualFile) {
-    ProjectView.getInstance(project).select(null, markerFile, true)
+    ProjectViewSelectInTarget.select(project, markerFile, null, null, markerFile, true)
 }
