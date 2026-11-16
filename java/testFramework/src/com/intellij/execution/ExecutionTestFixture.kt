@@ -162,12 +162,28 @@ fun executionTestFixture(
   testAppPath: String,
   outputChecker: OutputCheckerFactory,
   options: ExecutionTestOptions = ExecutionTestOptions(),
+): TestFixture<ExecutionTestFixture> = executionTestFixture(testAppPath, outputChecker, options, afterProjectClose = null)
+
+/**
+ * The same as the public [executionTestFixture].
+ * The framework tears down [afterProjectClose] after the project closes. The debugger fixture checks the javac threads there.
+ */
+@TestOnly
+internal fun executionTestFixture(
+  testAppPath: String,
+  outputChecker: OutputCheckerFactory,
+  options: ExecutionTestOptions,
+  afterProjectClose: TestFixture<*>?,
 ): TestFixture<ExecutionTestFixture> = testFixture("executionTestFixture") { context ->
   val methodName = context.extensionContext.testMethod.orElseThrow {
     IllegalStateException("Declare executionTestFixture as an instance field: it needs the test method")
   }.name
   val name = FileUtil.sanitizeFileName(methodName, false)
-  val project = projectFixture(tempPathFixture(), OpenProjectTask { projectName = name }, openAfterCreation = true).init()
+  val projectFixture = projectFixture(tempPathFixture(), OpenProjectTask { projectName = name }, openAfterCreation = true)
+  if (afterProjectClose != null) {
+    projectFixture.dependsOn(afterProjectClose)
+  }
+  val project = projectFixture.init()
   val disposable = Disposer.newCheckedDisposable("ExecutionTestFixture of $methodName")
   val fixture = ExecutionTestFixture(
     project = project,
