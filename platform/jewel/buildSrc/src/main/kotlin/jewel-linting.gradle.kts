@@ -9,7 +9,7 @@ plugins {
 detekt {
     // TODO: JEWEL-1329 standalone analysis API initialises PSI documents as read-only, Detekt tries to open in writing mode.
     //  We are able to circumvent this using JewelBaseRule and JewelRuleSet for now.
-    autoCorrect = System.getenv("CI") == null
+    autoCorrect = true
     config.from(files(rootProject.file("detekt.yml")))
     buildUponDefaultConfig = true
     debug = providers.gradleProperty("detekt.debug").map { it.toBoolean() }.getOrElse(false)

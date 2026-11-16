@@ -46,10 +46,6 @@ public class BadgeStyles(
 
         if (blueSecondary != other.blueSecondary) return false
         if (blue != other.blue) return false
-        if (green != other.green) return false
-        if (greenSecondary != other.greenSecondary) return false
-        if (purpleSecondary != other.purpleSecondary) return false
-        if (graySecondary != other.graySecondary) return false
 
         return true
     }
