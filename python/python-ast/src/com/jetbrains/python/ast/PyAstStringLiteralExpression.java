@@ -213,7 +213,9 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
             final int valueLength = value.length();
             final int intersectionLength = intersection.getLength();
             if (valueLength == 0) {
-              return -1;
+              // A line continuation decodes to nothing
+              endOffset = intersection.getEndOffset();
+              continue;
             }
             // A long unicode escape of form \U01234567 can be decoded into a surrogate pair
             else if (value.codePointCount(0, valueLength) == 1) {

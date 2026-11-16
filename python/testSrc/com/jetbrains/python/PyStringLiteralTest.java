@@ -5,6 +5,7 @@ import com.jetbrains.python.allure.Components;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.LiteralTextEscaper;
@@ -138,6 +139,32 @@ public class PyStringLiteralTest extends PyTestCase {
       assertEquals("A", createLiteralFromText("u'\\u0041'").getStringValue());
       assertEquals("\\u0041", createLiteralFromText("b'\\u0041'").getStringValue());
     });
+  }
+
+  @TestFor(issues = "PY-94130")
+  public void testBytesHaveNoUnicodeEscapes() {
+    assertEquals("\\u0041", createLiteralFromText("b'\\u0041'").getStringValue());
+    assertEquals("\\U00000041", createLiteralFromText("b'\\U00000041'").getStringValue());
+    assertEquals("A", createLiteralFromText("b'\\x41'").getStringValue());
+  }
+
+  @TestFor(issues = "PY-94130")
+  public void testLineContinuation() {
+    assertEquals("ab", createLiteralFromText("'a\\\nb'").getStringValue());
+    assertEquals("a\\\nb", createLiteralFromText("r'a\\\nb'").getStringValue());
+  }
+
+  @TestFor(issues = "PY-94130")
+  public void testEscaperOffsetAfterLineContinuation() {
+    final PyStringLiteralExpression expr = createLiteralFromText("'a\\\nbc'");
+    final LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = expr.createLiteralTextEscaper();
+    final TextRange range = TextRange.create(1, 6);
+    assertEquals("abc", decodeRange(expr, range));
+    assertEquals(1, escaper.getOffsetInHost(0, range));
+    assertEquals(4, escaper.getOffsetInHost(1, range));
+    assertEquals(5, escaper.getOffsetInHost(2, range));
+    assertEquals(6, escaper.getOffsetInHost(3, range));
+    assertEquals(-1, escaper.getOffsetInHost(4, range));
   }
 
   public void testNonUnicodeCodePointValue() {

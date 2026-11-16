@@ -44,7 +44,8 @@ public class PyStringLiteralDecoder {
 
   private static @NotNull Map<String, String> initializeEscapeMap() {
     Map<String, String> map = new HashMap<>();
-    map.put("\n", "\n");
+    // A backslash at the end of a line continues the literal on the next line
+    map.put("\n", "");
     map.put("\\", "\\");
     map.put("'", "'");
     map.put("\"", "\"");
@@ -74,7 +75,8 @@ public class PyStringLiteralDecoder {
 
   private @NotNull List<Pair<TextRange, String>> decodeFragment(@NotNull String encoded, int offset) {
     final boolean raw = myNode.isRaw();
-    final boolean unicode = myNode.isUnicode() || isUnicodeByDefault();
+    // A bytes literal has no Unicode escapes
+    final boolean unicode = !myNode.isBytes() && (myNode.isUnicode() || isUnicodeByDefault());
     final boolean formatted = myNode.isFormatted();
 
     final List<Pair<TextRange, String>> result = new ArrayList<>();
