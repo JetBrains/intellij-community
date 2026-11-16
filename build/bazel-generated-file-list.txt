@@ -1816,6 +1816,7 @@ plugins/maven/src/integrationTest/docker
 plugins/maven/src/test
 plugins/maven/testFramework
 plugins/mcp-server
+plugins/mcp-server/mcpserver.configurables
 plugins/mcp-server/mcpserver.frontend
 plugins/mcp-server/mcpserver.plugin
 plugins/mcp-server/mcpserver.skills

@@ -5,7 +5,7 @@ import com.intellij.ide.ui.search.ComponentHighlightingListener
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.frontend.settings.McpServerSettingsConfigurable
+import com.intellij.mcpserver.configurables.McpServerSettingsConfigurable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.common.timeoutRunBlocking

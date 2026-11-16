@@ -2,9 +2,9 @@
 package com.intellij.mcpserver.settings
 
 import com.intellij.mcpserver.McpServerBundle
-import com.intellij.mcpserver.frontend.settings.McpServerSettingsConfigurable
-import com.intellij.mcpserver.frontend.settings.TerminalPromotionSetting
-import com.intellij.mcpserver.frontend.settings.openFileInEditor
+import com.intellij.mcpserver.configurables.McpServerSettingsConfigurable
+import com.intellij.mcpserver.configurables.TerminalPromotionSetting
+import com.intellij.mcpserver.configurables.openFileInEditor
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.impl.McpServerTerminalPromotionDismissalState

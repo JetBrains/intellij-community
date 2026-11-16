@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("FunctionName")
 
-package com.intellij.mcpserver.frontend.settings
+package com.intellij.mcpserver.configurables
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -19,7 +19,7 @@ import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.createSseServerJsonEntry
 import com.intellij.mcpserver.createStdioMcpServerJsonConfiguration
 import com.intellij.mcpserver.createStreamableServerJsonEntry
-import com.intellij.mcpserver.frontend.util.getConsentDialog
+import com.intellij.mcpserver.util.getConsentDialog
 import com.intellij.mcpserver.icons.McpserverIcons
 import com.intellij.mcpserver.impl.IJ_MCP_AUTH_TOKEN
 import com.intellij.mcpserver.impl.McpClientDetector

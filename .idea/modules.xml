@@ -1489,6 +1489,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/src/test/intellij.maven.tests.iml" filepath="$PROJECT_DIR$/plugins/maven/src/test/intellij.maven.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/src/test/intellij.maven.tests.main.iml" filepath="$PROJECT_DIR$/plugins/maven/src/test/intellij.maven.tests.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/intellij.mcpserver.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/intellij.mcpserver.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.configurables/intellij.mcpserver.configurables.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.configurables/intellij.mcpserver.configurables.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.frontend/intellij.mcpserver.frontend.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.frontend/intellij.mcpserver.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.plugin/intellij.mcpserver.plugin.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.plugin/intellij.mcpserver.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/mcp-server/mcpserver.skills/intellij.mcpserver.skills.iml" filepath="$PROJECT_DIR$/plugins/mcp-server/mcpserver.skills/intellij.mcpserver.skills.iml" />
