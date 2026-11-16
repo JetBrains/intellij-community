@@ -12,6 +12,8 @@ import java.util.concurrent.atomic.LongAdder
  * type matches, type walks, overload checks, control flow builds, the scopes visited for nested `global` names and
  * resolve path cache clears.
  * For the Django template support of the Django plugin, it counts the scans for the calls that get the value of an assignment.
+ * For the constraint solver of the native type inference, it counts the constraint problems built
+ * and the inference variables added to them, which tell a larger problem from a problem built more than once.
  * [Counter] is a closed set, so the counters of a plugin that builds on the Python support are here too.
  *
  * The counting is off by default. Then each hook costs one volatile read. A test turns the counting on with [enable],
@@ -38,6 +40,8 @@ object PyCodeInsightCounters {
     SCOPE_GLOBALS_VISITS("scope.globals.visits"),
     PATH_CACHE_CLEARS("resolve.pathCache.clears"),
     DJANGO_ASSIGNMENT_CALL_SCANS("django.assignment.callScans"),
+    CSP_PROBLEMS_BUILT("csp.problemsBuilt"),
+    CSP_INFERENCE_VARIABLES("csp.inferenceVariables"),
   }
 
   /** The counter values at one moment. */
