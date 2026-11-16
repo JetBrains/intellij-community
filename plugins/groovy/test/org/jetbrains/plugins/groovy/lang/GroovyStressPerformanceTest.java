@@ -8,6 +8,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SyntaxTraverser;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -57,47 +58,49 @@ public class GroovyStressPerformanceTest {
 
   public ThrowableRunnable configureAndHighlight(String text) {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
-    return () -> {
+    return () -> EdtTestUtil.runInEdtAndWait(() -> {
       myFixture.getPsiManager().dropPsiCaches();
       myFixture.configureByText("a.groovy", text);
       myFixture.doHighlighting();
-    };
+    });
   }
 
   @Test
   public void testDontWalkLongInferenceChain() {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     RecursionManager.disableMissedCacheAssertions(myFixture.getTestRootDisposable());
-    Map<Integer, PsiClass> classes = new LinkedHashMap<>();
-    myFixture.addFileToProject("Foo0.groovy", """
-      class Foo0 {
-         def foo() { return 0 }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      Map<Integer, PsiClass> classes = new LinkedHashMap<>();
+      myFixture.addFileToProject("Foo0.groovy", """
+        class Foo0 {
+           def foo() { return 0 }
+        }
+        """);
+      int max = 100;
+      for (int i = 1; i <= 100; i++) {
+        PsiFile file = myFixture.addFileToProject("Foo" + i + ".groovy",
+                                                  "class Foo" + i + " {\n" + "    def foo() { return Foo" + (i - 1) + ".foo() }\n" + " }");
+        classes.put(i, ((GroovyFile)file).getClasses()[0]);
       }
-      """);
-    int max = 100;
-    for (int i = 1; i <= 100; i++) {
-      PsiFile file = myFixture.addFileToProject("Foo" + i + ".groovy",
-                                                "class Foo" + i + " {\n" + "    def foo() { return Foo" + (i - 1) + ".foo() }\n" + " }");
-      classes.put(i, ((GroovyFile)file).getClasses()[0]);
-    }
 
-    GroovyFile deepFile = (GroovyFile)myFixture.addFileToProject("DeepTest.groovy", "def test() { return Foo" + max + ".foo() }");
-    assertEquals(Object.class.getName(), (inferredType(deepFile.getScriptClass(), "test")));
+      GroovyFile deepFile = (GroovyFile)myFixture.addFileToProject("DeepTest.groovy", "def test() { return Foo" + max + ".foo() }");
+      assertEquals(Object.class.getName(), (inferredType(deepFile.getScriptClass(), "test")));
 
-    GroovyFile shallowFile =
-      DefaultGroovyMethods.asType(myFixture.addFileToProject("ShallowTest.groovy", "def test() { return Foo2.foo() }"), GroovyFile.class);
-    assertEquals(Integer.class.getName(), (inferredType(shallowFile.getScriptClass(), "test")));
+      GroovyFile shallowFile =
+        DefaultGroovyMethods.asType(myFixture.addFileToProject("ShallowTest.groovy", "def test() { return Foo2.foo() }"), GroovyFile.class);
+      assertEquals(Integer.class.getName(), (inferredType(shallowFile.getScriptClass(), "test")));
 
-    List<PsiClass> values = classes.values().stream().toList();
+      List<PsiClass> values = classes.values().stream().toList();
 
-    int border = ContainerUtil.indexOf(values, (clazz) -> {
+      int border = ContainerUtil.indexOf(values, (clazz) -> {
+        PsiManager.getInstance(myFixture.getProject()).dropPsiCaches();
+        return inferredType(clazz, "foo").equals(Object.class.getName());
+      }) + 1;
+
       PsiManager.getInstance(myFixture.getProject()).dropPsiCaches();
-      return inferredType(clazz, "foo").equals(Object.class.getName());
-    }) + 1;
-
-    PsiManager.getInstance(myFixture.getProject()).dropPsiCaches();
-    assertEquals(Object.class.getName(), inferredType(classes.get(border), "foo"));
-    assertEquals(Integer.class.getName(), inferredType(classes.get(border - 1), "foo"));
+      assertEquals(Object.class.getName(), inferredType(classes.get(border), "foo"));
+      assertEquals(Integer.class.getName(), inferredType(classes.get(border - 1), "foo"));
+    });
   }
 
   private static String inferredType(PsiClass clazz, String method) {
@@ -121,18 +124,20 @@ public class GroovyStressPerformanceTest {
         }
       }
       """;
-    myFixture.configureByText("a.groovy", StringGroovyMethods.multiply(story, 200) + "<caret>");
-    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.configureByText("a.groovy", StringGroovyMethods.multiply(story, 200) + "<caret>");
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
 
-    myFixture.type("foo {}\n");
-    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+      myFixture.type("foo {}\n");
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+    });
 
-    Benchmark.newBenchmark(myFixture.getTestName(false), () -> {
+    Benchmark.newBenchmark(myFixture.getTestName(false), () -> EdtTestUtil.runInEdtAndWait(() -> {
       for (char c : story.toCharArray()) {
         myFixture.type(c);
         PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
       }
-    }).start();
+    })).start();
   }
 
   @Test
@@ -578,7 +583,7 @@ public class GroovyStressPerformanceTest {
     barBodyBuilder.append("}");
     myFixture.configureByText("a.groovy", "");
     assertInstanceOf(GroovyFile.class, myFixture.getFile());
-    Benchmark.newBenchmark("many siblings", () -> {
+    Benchmark.newBenchmark("many siblings", () -> EdtTestUtil.runInEdtAndWait(() -> {
       // clear caches
       WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
         myFixture.getEditor().getDocument().setText("");
@@ -591,7 +596,7 @@ public class GroovyStressPerformanceTest {
       for (GrReferenceElement ref : refs) {
         assertNotNull(ref.resolve());
       }
-    }).attempts(2).start();
+    })).attempts(2).start();
   }
 
   private void configureTroubleClass(int i) {
@@ -739,9 +744,11 @@ public class GroovyStressPerformanceTest {
       def a = new Node()
       """;
     // a.nn.nn ... .nn
-    GroovyFile file = (GroovyFile)myFixture.configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(".nn", 500) + ".nn");
-    GrReferenceExpression reference = (GrReferenceExpression)DefaultGroovyMethods.last(file.getStatements());
-    assertNotNull(reference.resolve());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      GroovyFile file = (GroovyFile)myFixture.configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(".nn", 500) + ".nn");
+      GrReferenceExpression reference = (GrReferenceExpression)DefaultGroovyMethods.last(file.getStatements());
+      assertNotNull(reference.resolve());
+    });
   }
 
   @Test
@@ -755,10 +762,12 @@ public class GroovyStressPerformanceTest {
       def a = new Node()
       """;
     // a.nn() ... .nn().nn
-    GroovyFile file =
-      (GroovyFile)myFixture.configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(".nn()", 250) + ".nn");
-    GrReferenceExpression reference = (GrReferenceExpression)DefaultGroovyMethods.last(file.getStatements());
-    assertNotNull(reference.resolve());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      GroovyFile file =
+        (GroovyFile)myFixture.configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(".nn()", 250) + ".nn");
+      GrReferenceExpression reference = (GrReferenceExpression)DefaultGroovyMethods.last(file.getStatements());
+      assertNotNull(reference.resolve());
+    });
   }
 
   @Test
@@ -771,10 +780,12 @@ public class GroovyStressPerformanceTest {
       def a = new Node()
       """;
     // a += a ... += a += new Node()
-    GroovyFile file =
-      (GroovyFile)myFixture.configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(" += a", 500) + " += new Node()");
-    GroovyCallReference reference = ((GrAssignmentExpression)DefaultGroovyMethods.last(file.getStatements())).getReference();
-    assertNotNull(reference.resolve());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      GroovyFile file =
+        (GroovyFile)myFixture.configureByText("_.groovy", header + "a" + StringGroovyMethods.multiply(" += a", 500) + " += new Node()");
+      GroovyCallReference reference = ((GrAssignmentExpression)DefaultGroovyMethods.last(file.getStatements())).getReference();
+      assertNotNull(reference.resolve());
+    });
   }
 
   @Test
@@ -787,9 +798,11 @@ public class GroovyStressPerformanceTest {
     }
 
     text.append("a").append(n);
-    GroovyFile file = (GroovyFile)myFixture.configureByText("_.groovy", text.toString());
-    GrReferenceExpression last = (GrReferenceExpression)DefaultGroovyMethods.last(file.getStatements());
-    assertInstanceOf(GrBindingVariable.class, last.resolve());
+    EdtTestUtil.runInEdtAndWait(() -> {
+      GroovyFile file = (GroovyFile)myFixture.configureByText("_.groovy", text.toString());
+      GrReferenceExpression last = (GrReferenceExpression)DefaultGroovyMethods.last(file.getStatements());
+      assertInstanceOf(GrBindingVariable.class, last.resolve());
+    });
   }
 
   @Test
@@ -803,19 +816,19 @@ public class GroovyStressPerformanceTest {
       builder.append("foo").append(n).append("(a) {\n  foo").append(n - 1).append("(1)\n }");
     }
     GroovyFile file = DefaultGroovyMethods.asType(myFixture.configureByText("_.groovy", builder.toString()), GroovyFile.class);
-    Benchmark.newBenchmark(myFixture.getTestName(false), () -> {
+    Benchmark.newBenchmark(myFixture.getTestName(false), () -> EdtTestUtil.runInEdtAndWait(() -> {
       myFixture.getPsiManager().dropPsiCaches();
       ((GrExpression)DefaultGroovyMethods.last(DefaultGroovyMethods.last(file.getMethods()).getBlock().getStatements())).getType();
-    }).attempts(5).start();
+    })).attempts(5).start();
   }
 
   @Test
   public void test_complex_DFA_with_a_lot_of_closures() {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     myFixture.configureByFile("stress/dfa.groovy");
-    Benchmark.newBenchmark(myFixture.getTestName(false), () -> {
+    Benchmark.newBenchmark(myFixture.getTestName(false), () -> EdtTestUtil.runInEdtAndWait(() -> {
       myFixture.getPsiManager().dropPsiCaches();
       myFixture.doHighlighting();
-    }).attempts(10).start();
+    })).attempts(10).start();
   }
 }
