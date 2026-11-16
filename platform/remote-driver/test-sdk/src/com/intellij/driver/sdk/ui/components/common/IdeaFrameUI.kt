@@ -42,6 +42,8 @@ import javax.swing.JFrame
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
+private const val DISTRACTION_FREE_MODE_KEY = "editor.distraction.free.mode"
+
 fun Finder.ideFrame(): IdeaFrameUI = x(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
 
 fun Finder.currentIdeFrame(): IdeaFrameUI = ideFrames().list().let { frames ->
@@ -147,7 +149,7 @@ fun Driver.waitForIdeFrameReady(timeout: Duration = DEFAULT_FIND_TIMEOUT) {
 }
 
 fun Finder.projectIdeFrame(projectName: String, action: IdeaFrameUI.() -> Unit) {
-  x("//div[@class='IdeFrameImpl' and contains(@accessiblename, '${projectName}')]", IdeaFrameUI::class.java).action()
+  x(IdeaFrameUI::class.java) { and(byClass("IdeFrameImpl"), contains(byAccessibleName(projectName))) }.action()
 }
 
 fun Driver.projectIdeFrame(projectName: String, action: IdeaFrameUI.() -> Unit) {
@@ -184,49 +186,19 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
       logger<Driver>().info("The IDE frame shows the Welcome screen, skipping the project readiness checks")
       return
     }
-    // Every other IdeFrameImpl belongs to a project window. In a monolith the Welcome screen is a separate
-    // FlatWelcomeFrame. A null project therefore means that the project is still opening, so wait for it.
-    val currentProject = waitNotNull(
-      message = "The project of the IDE frame is available",
-      timeout = readinessTimeout,
-      getter = { runCatching { project }.getOrNull() },
-    )
-    waitFor("Project is opened", readinessTimeout) {
-      driver.isProjectOpened(currentProject)
-    }
+    val currentProject = waitForOpenProject(readinessTimeout)
     if (isWelcomeScreenProject(currentProject)) {
       logger<Driver>().info("The IDE frame shows the welcome-screen project, skipping the project frame checks")
       return
     }
-    // The frame is ready when each group has one element present. The list holds only the frame parts of every product.
-    // The toolbar is in the main toolbar or in the frame header. Tool-window stripes are layout state, so they are not here.
-    // Distraction-free mode and Zen mode hide the toolbar. The status bar follows its UI setting.
-    val distractionFreeMode = isDistractionFreeMode()
-    if (distractionFreeMode) {
-      logger<Driver>().info("The IDE frame is in distraction-free mode, skipping the toolbar checks")
-    }
-    val statusBarShown = isStatusBarShown()
-    if (!statusBarShown) {
-      logger<Driver>().info("The UI settings hide the status bar, skipping the status bar check")
-    }
-    val requiredComponents = buildList {
-      if (!distractionFreeMode) {
-        add(listOf(mainToolbar, toolbarHeader))
-        add(listOf(abstractToolbarCombo {
-          and(byType("com.intellij.openapi.wm.impl.AbstractToolbarCombo"), contains(byAccessibleName(currentProject.getName())))
-        }))
-      }
-      if (statusBarShown) {
-        add(listOf(ideStatusBar()))
-      }
-    }
+    val requiredParts = requiredFrameParts(currentProject)
     fun List<List<UiComponent>>.describe(): String = joinToString { group -> group.joinToString(" or ") }
     waitFor(
       message = "IDE frame elements are rendered",
       timeout = readinessTimeout,
       errorMessage = { notRendered: List<List<UiComponent>> -> "IDE frame elements were not rendered: ${notRendered.describe()}" },
       getter = {
-        requiredComponents.filterNot { group ->
+        requiredParts.filterNot { group ->
           group.any { component -> runCatching { component.present() }.getOrDefault(false) }
         }.also { notRendered ->
           if (notRendered.isNotEmpty()) {
@@ -238,29 +210,58 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
     )
   }
 
-  private fun isStatusBarShown(): Boolean =
-    runCatching {
-      driver.getCurrentUiSettings().showStatusBar
-    }.onFailure {
-      logger<Driver>().info("The status bar setting is not available: ${it.message}")
-    }.getOrDefault(true)
+  private fun waitForOpenProject(timeout: Duration): Project {
+    val currentProject = waitNotNull(
+      message = "The project of the IDE frame is available",
+      timeout = timeout,
+      getter = { runCatching { project }.getOrNull() },
+    )
+    waitFor("Project is opened", timeout) {
+      driver.isProjectOpened(currentProject)
+    }
+    return currentProject
+  }
 
-  private fun isDistractionFreeMode(): Boolean =
-    runCatching {
-      driver.utility(Registry::class).`is`("editor.distraction.free.mode")
-    }.onFailure {
-      logger<Driver>().info("The distraction-free mode state is not available: ${it.message}")
-    }.getOrDefault(false)
+  /** Distraction-free mode and Zen mode hide the toolbar. The status bar follows its UI setting. */
+  private fun requiredFrameParts(project: Project): List<List<UiComponent>> {
+    val toolbarShown = !readOrDefault("The distraction-free mode state", false) {
+      driver.utility(Registry::class).`is`(DISTRACTION_FREE_MODE_KEY)
+    }
+    val statusBarShown = readOrDefault("The status bar setting", true) {
+      driver.getCurrentUiSettings().showStatusBar
+    }
+    val skipped = listOfNotNull(
+      "toolbar (distraction-free mode)".takeUnless { toolbarShown },
+      "status bar (UI settings)".takeUnless { statusBarShown },
+    )
+    if (skipped.isNotEmpty()) {
+      logger<Driver>().info("Skipping the frame parts: ${skipped.joinToString()}")
+    }
+    return buildList {
+      if (toolbarShown) {
+        add(listOf(mainToolbar, toolbarHeader))
+        add(listOf(abstractToolbarCombo {
+          and(byType("com.intellij.openapi.wm.impl.AbstractToolbarCombo"), contains(byAccessibleName(project.getName())))
+        }))
+      }
+      if (statusBarShown) {
+        add(listOf(ideStatusBar()))
+      }
+    }
+  }
 
   /**
    * Returns true when [project] is the welcome-screen project.
    */
   internal fun isWelcomeScreenProject(project: Project): Boolean =
-    runCatching {
+    readOrDefault("The welcome-screen project check", false) {
       driver.utility(WelcomeUtils::class).isWelcomeProject(project)
-    }.onFailure {
-      logger<Driver>().info("The frame capabilities of the project are not available: ${it.message}")
-    }.getOrDefault(false)
+    }
+
+  private fun readOrDefault(what: String, default: Boolean, read: () -> Boolean): Boolean =
+    runCatching(read)
+      .onFailure { logger<Driver>().info("$what is not available: ${it.message}") }
+      .getOrDefault(default)
 
   @ManualWaitForIndicators
   fun waitForIndicators(timeout: Duration = 5.minutes) {
