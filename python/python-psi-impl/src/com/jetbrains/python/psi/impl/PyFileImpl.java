@@ -25,6 +25,8 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
@@ -105,11 +107,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
   private volatile @NotNull SoftReference<ExportedNameCache> myExportedNameCache = new SoftReference<>(null);
   private volatile @NotNull SoftReference<TopLevelChildren> myTopLevelChildren = new SoftReference<>(null);
   private final @NotNull PsiModificationTracker myModificationTracker;
-
-  /** The effective language level and the stamp it is valid for, see {@link #getEffectiveLanguageLevel()}. */
-  private record EffectiveLanguageLevel(long stamp, @NotNull LanguageLevel level) {}
-
-  private volatile @Nullable EffectiveLanguageLevel myEffectiveLanguageLevel;
 
   private final class ExportedNameCache {
     private final Set<String> myNameDefinerNegativeCache = new HashSet<>();
@@ -255,20 +252,14 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
   /**
    * Returns the effective language level of this file, the level that selects the {@code sys.version_info} branches of its stub.
    * It is not {@link #getLanguageLevel()}: a {@code .pyi} file parses with the latest level.
-   * The level stays until the PSI modification count changes, or until a level changes without a PSI change, see
+   * The level stays until this file changes, or until a level changes without a PSI change, see
    * {@link PythonLanguageLevelPusher#getLevelModificationTracker()}.
    */
   @ApiStatus.Internal
   public final @NotNull LanguageLevel getEffectiveLanguageLevel() {
-    final long stamp = myModificationTracker.getModificationCount() +
-                       PythonLanguageLevelPusher.getLevelModificationTracker().getModificationCount();
-    final EffectiveLanguageLevel cached = myEffectiveLanguageLevel;
-    if (cached != null && cached.stamp() == stamp) {
-      return cached.level();
-    }
-    final LanguageLevel level = PyLanguageFacadeKt.getEffectiveLanguageLevel(this);
-    myEffectiveLanguageLevel = new EffectiveLanguageLevel(stamp, level);
-    return level;
+    return CachedValuesManager.getCachedValue(this, () ->
+      CachedValueProvider.Result.create(PyLanguageFacadeKt.getEffectiveLanguageLevel(this),
+                                        this, PythonLanguageLevelPusher.getLevelModificationTracker()));
   }
 
   @Override
