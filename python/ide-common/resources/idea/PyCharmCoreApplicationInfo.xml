@@ -9,6 +9,7 @@
   <names product="PyCharm" script="pycharm" motto="Python IDE for Professional Developers"/>
 
   <essential-plugin>PythonCore</essential-plugin>
+  <essential-plugin>com.intellij.python.basic</essential-plugin>
   <essential-plugin>com.jetbrains.pycharm.community.customization</essential-plugin>
   <essential-plugin>intellij.pycharm.community.customization.shared</essential-plugin>
 

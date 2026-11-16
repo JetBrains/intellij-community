@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
 import org.jetbrains.intellij.build.productLayout.CommunityProductFragments
 import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.productModules
+import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.intellij.build.windowsCustomizer
 import java.nio.file.Files
 import java.nio.file.Path
@@ -41,7 +42,8 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     )
     productLayout.bundledPluginModules +=
       sequenceOf(
-        "intellij.python.community.plugin", // Python language
+        PythonCommunityPluginModules.BASIC_PLUGIN_MAIN_MODULE_NAME, // the Python parser and the AST-only PSI; PythonCore depends on it
+        PythonCommunityPluginModules.MAIN_MODULE_NAME, // Python language
         "intellij.pycharm.community.customization", // Convert Intellij to PyCharm
         "intellij.pycharm.community.customization.shared",
         "intellij.vcs.github.plugin",
