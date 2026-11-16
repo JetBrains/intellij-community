@@ -57,21 +57,18 @@ internal suspend fun initUi(initAwtToolkitJob: Job, isHeadless: Boolean, asyncSc
 
   initAwtToolkitJob.join()
 
-  val preloadFontJob = if (isHeadless) {
-    null
+  // SwingDispatcher must be used after Toolkit init
+  span("initUi", RawSwingDispatcher) {
+    initLafAndScale(isHeadless = isHeadless)
   }
-  else {
+
+  if (!isHeadless) {
     asyncScope.launch(CoroutineName("system fonts loading") + Dispatchers.IO) {
       // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
       Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
       // caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
       GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
     }
-  }
-
-  // SwingDispatcher must be used after Toolkit init
-  span("initUi", RawSwingDispatcher) {
-    initLafAndScale(isHeadless = isHeadless, preloadFontJob = preloadFontJob)
   }
 }
 
@@ -87,18 +84,13 @@ internal suspend fun configureCssUiDefaults() {
   }
 }
 
-private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job?) {
+private suspend fun initLafAndScale(isHeadless: Boolean) {
   if (!isHeadless) {
     span("graphics environment checking") {
       if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance) {
         StartupErrorReporter.showError(BootstrapBundle.message("bootstrap.error.title.start.failed"), BootstrapBundle.message("bootstrap.error.message.no.graphics"))
         exitProcess(AppExitCodes.NO_GRAPHICS)
       }
-    }
-
-    // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
-    if (OS.CURRENT == OS.Linux) {
-      preloadFontJob?.join()
     }
   }
 
