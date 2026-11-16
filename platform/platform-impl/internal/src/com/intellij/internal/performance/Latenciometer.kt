@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.actionSystem.LatencyListener
 import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileTypes.FileTypeRegistry
 import org.jetbrains.annotations.ApiStatus
 
 internal class LatencyRecorderImpl : LatencyRecorder {
@@ -27,7 +28,8 @@ val latencyRecorderProperties: MutableMap<String, String> = mutableMapOf()
 private class LatenciometerListener : LatencyListener {
   override fun recordTypingLatency(editor: Editor, action: String, latencyInMS: Long) {
     val key = currentLatencyRecordKey ?: run {
-      val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return
+      val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return
+      val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(file.name)
       LatencyDistributionRecordKey(fileType.name)
     }
     val latencyRecord = latencyMap.getOrPut(key) {
