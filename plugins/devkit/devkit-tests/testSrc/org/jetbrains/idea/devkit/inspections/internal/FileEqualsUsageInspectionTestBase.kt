@@ -6,6 +6,11 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase
 
+/**
+ * Use [fileEqualsUsageFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use fileEqualsUsageFixture in a JUnit 5 test")
 abstract class FileEqualsUsageInspectionTestBase : PluginModuleTestCase() {
   @Throws(Exception::class)
   override fun setUp() {

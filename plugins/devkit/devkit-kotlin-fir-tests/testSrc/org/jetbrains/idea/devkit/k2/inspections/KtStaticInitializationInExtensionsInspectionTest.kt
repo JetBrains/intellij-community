@@ -2,28 +2,34 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.StaticInitializationInExtensionsInspectionTestBase
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.pluginModuleProjectFixture
+import org.jetbrains.idea.devkit.inspections.staticInitializationInExtensionsFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/staticInitializationInExtensions")
-class KtStaticInitializationInExtensionsInspectionTest : StaticInitializationInExtensionsInspectionTestBase() {
+@TestApplication
+class KtStaticInitializationInExtensionsInspectionTest {
+  companion object {
+    private val projectFixture = pluginModuleProjectFixture()
+  }
 
-    
+  private val staticInit by staticInitializationInExtensionsFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/staticInitializationInExtensions")
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/staticInitializationInExtensions"
-
-  override fun getFileExtension(): String = "kt"
-
+  @Test
   fun testExtensionWithStaticInitialization() {
-    doTest()
+    staticInit.doTest()
   }
 
+  @Test
   fun testExtensionWithoutStaticInitialization() {
-    doTest()
+    staticInit.doTest()
   }
 
+  @Test
   fun testNonExtension() {
-    doTest()
+    staticInit.doTest()
   }
 
 }

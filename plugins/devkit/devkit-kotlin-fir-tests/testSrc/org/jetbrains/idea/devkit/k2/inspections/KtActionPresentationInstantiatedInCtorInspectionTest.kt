@@ -2,49 +2,64 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.ActionPresentationInstantiatedInCtorInspectionTestBase
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.devkit.inspections.actionPresentationInstantiatedInCtorFixture
+import org.jetbrains.idea.devkit.inspections.pluginModuleProjectFixture
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/actionPresentationInstantiatedInCtor")
-internal class KtActionPresentationInstantiatedInCtorInspectionTest : ActionPresentationInstantiatedInCtorInspectionTestBase() {
-
-  override fun getBasePath(): String = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/actionPresentationInstantiatedInCtor/"
-  override fun getFileExtension(): String = "kt"
-
-  override fun setUp() {
-    super.setUp()
-    setPluginXml("plugin.xml")
+@TestApplication
+internal class KtActionPresentationInstantiatedInCtorInspectionTest {
+  companion object {
+    private val projectFixture = pluginModuleProjectFixture()
   }
 
+  private val actionPresentation by actionPresentationInstantiatedInCtorFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/actionPresentationInstantiatedInCtor/")
+
+  @BeforeEach
+  fun setUp() {
+    actionPresentation.setPluginXml("plugin.xml")
+  }
+
+  @Test
   fun testDefaultCtorNegative() {
-    doTest()
+    actionPresentation.doTest()
   }
 
+  @Test
   fun testDefaultCtorPositive() {
-    doTest()
+    actionPresentation.doTest()
   }
 
+  @Test
   fun testPrimaryCtorNegative() {
-    doTest()
+    actionPresentation.doTest()
   }
 
+  @Test
   fun testPrimaryCtorPositive() {
-    doTest()
+    actionPresentation.doTest()
   }
 
+  @Test
   fun testSecondaryCtors() {
-    doTest()
+    actionPresentation.doTest()
   }
 
+  @Test
   fun testUnregisteredAction() {
-    doTest()
+    actionPresentation.doTest()
   }
 
+  @Test
   fun testCtorCallNegative() {
-    doTest()
+    actionPresentation.doTest()
   }
 
+  @Test
   fun testCtorCallPositive() {
-    doTest()
+    actionPresentation.doTest()
   }
 }

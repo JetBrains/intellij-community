@@ -2,72 +2,86 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.junit.jupiter.api.Test;
+
+import static org.jetbrains.idea.devkit.inspections.PluginModuleFixtureKt.pluginModuleProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.StatefulEpFixtureKt.statefulEpFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/statefulEp")
-public class StatefulEpInspectionTest extends StatefulEpInspectionTestBase {
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/statefulEp";
-  }
+@TestApplication
+public class StatefulEpInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = pluginModuleProjectFixture();
+  private final TestFixture<PluginModuleFixture> statefulEp =
+    statefulEpFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/statefulEp");
 
-  @Override
-  protected String getFileExtension() {
-    return "java";
-  }
-
+  @Test
   public void testFix() {
-    doTest();
+    statefulEp.get().doTest();
   }
 
+  @Test
   public void testNonFix() {
-    setPluginXml("plugin.xml");
-    doTest();
+    statefulEp.get().setPluginXml("plugin.xml");
+    statefulEp.get().doTest();
   }
 
+  @Test
   public void testExt() {
-    setPluginXml("plugin.xml");
-    doTest();
+    statefulEp.get().setPluginXml("plugin.xml");
+    statefulEp.get().doTest();
   }
   
+  @Test
   public void testProjectComp() {
-    setPluginXml("plugin.xml");
-    doTest();
+    statefulEp.get().setPluginXml("plugin.xml");
+    statefulEp.get().doTest();
   }
   
+  @Test
   public void testProjectService() {
-    setPluginXml("plugin.xml");
-    doTest();
+    statefulEp.get().setPluginXml("plugin.xml");
+    statefulEp.get().doTest();
   }
 
+  @Test
   public void testProjectConfigurable() {
-    setPluginXml("plugin.xml");
-    doTest();
+    statefulEp.get().setPluginXml("plugin.xml");
+    statefulEp.get().doTest();
   }
 
+  @Test
   public void testFakeFile() {
-    setPluginXml("plugin.xml");
-    doTest();
+    statefulEp.get().setPluginXml("plugin.xml");
+    statefulEp.get().doTest();
   }
 
+  @Test
   public void testPackagedExt() {
-    setPluginXml("packagedPlugin.xml");
-    doTest();
+    statefulEp.get().setPluginXml("packagedPlugin.xml");
+    statefulEp.get().doTest();
   }
 
+  @Test
   public void testCapturedFromOuterClass() {
-    doTest();
+    statefulEp.get().doTest();
   }
 
+  @Test
   public void testCollectionTests() {
-    doTest();
+    statefulEp.get().doTest();
   }
 
+  @Test
   public void testMapTests() {
-    doTest();
+    statefulEp.get().doTest();
   }
 
+  @Test
   public void testRefTests() {
-    doTest();
+    statefulEp.get().doTest();
   }
 }

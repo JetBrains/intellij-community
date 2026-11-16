@@ -27,6 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
+/**
+ * @deprecated Use {@link PluginModuleFixtureKt#pluginModuleFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class PluginModuleTestCase extends LightJavaCodeInsightFixtureTestCase {
 
   private static final DefaultLightProjectDescriptor ourProjectDescriptor = new DefaultLightProjectDescriptor() {

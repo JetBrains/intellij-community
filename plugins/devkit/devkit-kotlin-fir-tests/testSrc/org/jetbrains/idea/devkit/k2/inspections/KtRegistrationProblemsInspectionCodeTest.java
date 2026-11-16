@@ -2,45 +2,56 @@
 package org.jetbrains.idea.devkit.k2.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspectionCodeTestBase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.idea.devkit.inspections.PluginModuleFixture;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
+import org.junit.jupiter.api.Test;
 
+import static org.jetbrains.idea.devkit.inspections.PluginModuleFixtureKt.pluginModuleProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.RegistrationProblemsInspectionCodeFixtureKt.registrationProblemsInspectionCodeFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registrationProblems/code")
-public class KtRegistrationProblemsInspectionCodeTest extends RegistrationProblemsInspectionCodeTestBase {
+@TestApplication
+public class KtRegistrationProblemsInspectionCodeTest {
+  private static final TestFixture<LightJavaProject> projectFixture = pluginModuleProjectFixture();
+  private final TestFixture<PluginModuleFixture> registrationProblems =
+    registrationProblemsInspectionCodeFixture(projectFixture, DevkitKtTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/code");
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
-  @Override
-  protected String getBasePath() {
-    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/registrationProblems/code";
-  }
-
+  @Test
   public void testComponentAbstractImplementation() {
-    setPluginXml("ComponentAbstractImplementation.xml");
+    LightJavaCodeInsightTestFixture myFixture = registrationProblems.get().getFixture();
+    registrationProblems.get().setPluginXml("ComponentAbstractImplementation.xml");
     myFixture.testHighlighting("AbstractApplicationComponent.kt");
   }
 
+  @Test
   public void testApplicationComponentMustNotInherit() {
-    setPluginXml("ApplicationComponentMustNotInherit.xml");
+    LightJavaCodeInsightTestFixture myFixture = registrationProblems.get().getFixture();
+    registrationProblems.get().setPluginXml("ApplicationComponentMustNotInherit.xml");
     myFixture.testHighlighting("MyApplicationComponentMustNotInherit.kt");
   }
 
+  @Test
   public void testActionAbstractClass() {
-    setPluginXml("ActionAbstractClass.xml");
+    LightJavaCodeInsightTestFixture myFixture = registrationProblems.get().getFixture();
+    registrationProblems.get().setPluginXml("ActionAbstractClass.xml");
     myFixture.testHighlighting("MyAbstractAction.kt");
   }
 
+  @Test
   public void testActionWithoutDefaultCtor() {
-    setPluginXml("ActionWithoutDefaultCtor.xml");
+    LightJavaCodeInsightTestFixture myFixture = registrationProblems.get().getFixture();
+    registrationProblems.get().setPluginXml("ActionWithoutDefaultCtor.xml");
     myFixture.testHighlighting("MyActionWithoutDefaultCtor.kt");
   }
 
+  @Test
   public void testActionWrongClass() {
-    setPluginXml("ActionWrongClass.xml");
+    LightJavaCodeInsightTestFixture myFixture = registrationProblems.get().getFixture();
+    registrationProblems.get().setPluginXml("ActionWrongClass.xml");
     myFixture.testHighlighting("MyActionWrongClass.kt");
   }
 }

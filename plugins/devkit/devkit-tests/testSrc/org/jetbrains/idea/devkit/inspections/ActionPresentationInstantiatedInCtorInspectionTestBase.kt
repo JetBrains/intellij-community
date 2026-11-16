@@ -1,6 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+/**
+ * Use [actionPresentationInstantiatedInCtorFixture] in a JUnit 5 test.
+ */
+@Suppress("DEPRECATION")
+@Deprecated("Use actionPresentationInstantiatedInCtorFixture in a JUnit 5 test")
 abstract class ActionPresentationInstantiatedInCtorInspectionTestBase : PluginModuleTestCase() {
 
   override fun setUp() {

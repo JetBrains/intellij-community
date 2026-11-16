@@ -2,25 +2,32 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
+import org.junit.jupiter.api.Test
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/staticInitializationInExtensions")
-class StaticInitializationInExtensionsInspectionTest : StaticInitializationInExtensionsInspectionTestBase() {
+@TestApplication
+class StaticInitializationInExtensionsInspectionTest {
+  companion object {
+    private val projectFixture = pluginModuleProjectFixture()
+  }
 
-  override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/staticInitializationInExtensions"
+  private val staticInit by staticInitializationInExtensionsFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/staticInitializationInExtensions")
 
-  override fun getFileExtension(): String = "java"
-
+  @Test
   fun testExtensionWithStaticInitialization() {
-    doTest()
+    staticInit.doTest()
   }
 
+  @Test
   fun testExtensionWithoutStaticInitialization() {
-    doTest()
+    staticInit.doTest()
   }
 
+  @Test
   fun testNonExtension() {
-    doTest()
+    staticInit.doTest()
   }
 
 }
