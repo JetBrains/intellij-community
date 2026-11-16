@@ -37,6 +37,8 @@ com.intellij.codeInsight.editorActions.JavaTypingSupport
 com.intellij.execution.configurations.RunConfigurationVcsSupport
 com.intellij.openapi.vcs.actions.VcsContextFactory
 com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider
+com.jetbrains.python.PyLanguageFacade
+com.jetbrains.python.debugger.PySignatureCacheManager
 org.jetbrains.plugins.ruby.ruby.codeInsight.types.RTypeUtilService
 org.jetbrains.plugins.ruby.rdoc.yard.YARDService
 org.jetbrains.plugins.ruby.ruby.lang.psi.RubyPsiPresentationService
