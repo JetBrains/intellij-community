@@ -57,13 +57,13 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
   override fun getDefaultBrowser(): WebBrowser = WebBrowserManager.getInstance().defaultBrowser
 
   /**
-   * Runs a `jetbrains://` [uri] in this IDE when it has the command and the command
-   * [runs where it is clicked][JBProtocolCommand.runsWhereClicked]. Otherwise the link goes to a browser, so the
-   * operating system passes it to the JetBrains daemon or Toolbox, which picks the IDE.
+   * Runs a `jetbrains://` [uri] in this IDE when it [has the command][JBProtocolCommand.hasCommand].
+   * Otherwise the link goes to a browser, so the operating system passes it to the JetBrains daemon or Toolbox,
+   * which picks the IDE.
    */
   override fun processWithProtocolCommand(uri: URI, project: Project?): Boolean {
     if (!JBProtocolCommand.SCHEME.equals(uri.scheme, ignoreCase = true)) return false
-    if (!JBProtocolCommand.runsWhereClicked(uri.toString().substringAfter(URLUtil.SCHEME_SEPARATOR))) return false
+    if (!JBProtocolCommand.hasCommand(uri.toString().substringAfter(URLUtil.SCHEME_SEPARATOR))) return false
     runInBackground(project = null) { CommandLineProcessor.processProtocolCommand(uri.toString()) }
     return true
   }

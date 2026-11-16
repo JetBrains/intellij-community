@@ -16,17 +16,11 @@ import org.junit.jupiter.api.Test
 /**
  * Tests which `jetbrains://` links [BrowserLauncherImpl] runs in this IDE rather than in a browser.
  *
- * A link this IDE runs is checked through [JBProtocolCommand.runsWhereClicked] only: running it needs a non-headless IDE.
+ * A link this IDE runs is checked through [JBProtocolCommand.hasCommand] only: running it needs a non-headless IDE.
  */
 @TestApplication
 class BrowserLauncherProtocolCommandTest {
-  private class DefaultCommand : JBProtocolCommand(DEFAULT_COMMAND) {
-    override suspend fun execute(target: String?, parameters: Map<String, String>, fragment: String?): String? = null
-  }
-
-  private class DaemonRoutedCommand : JBProtocolCommand(DAEMON_ROUTED_COMMAND) {
-    override fun runsWhereClicked(target: String?, parameters: Map<String, String>): Boolean = false
-
+  private class TestCommand : JBProtocolCommand(TEST_COMMAND) {
     override suspend fun execute(target: String?, parameters: Map<String, String>, fragment: String?): String? = null
   }
 
@@ -43,32 +37,20 @@ class BrowserLauncherProtocolCommandTest {
 
   @BeforeEach
   fun registerExtensions(@TestDisposable disposable: Disposable) {
-    val commands = ExtensionPointName<JBProtocolCommand>("com.intellij.jbProtocolCommand").point
-    commands.registerExtension(DefaultCommand(), disposable)
-    commands.registerExtension(DaemonRoutedCommand(), disposable)
+    ExtensionPointName<JBProtocolCommand>("com.intellij.jbProtocolCommand").point.registerExtension(TestCommand(), disposable)
     UrlOpener.EP_NAME.point.registerExtension(opener, disposable)
   }
 
   @Test
-  fun `a link of a command this IDE has runs here by default`() {
-    assertTrue(JBProtocolCommand.runsWhereClicked("open/$DEFAULT_COMMAND/target?id=1"))
-    assertTrue(JBProtocolCommand.runsWhereClicked("idea/$DEFAULT_COMMAND"))
-  }
-
-  @Test
-  fun `a command can leave its link to the daemon`() {
-    val link = "jetbrains://open/$DAEMON_ROUTED_COMMAND/target?id=1"
-    assertFalse(JBProtocolCommand.runsWhereClicked("open/$DAEMON_ROUTED_COMMAND/target?id=1"))
-
-    BrowserLauncherImpl().browse(link, WebBrowserManager.getInstance().browsers.first(), project = null)
-
-    assertEquals(listOf(link), opener.reached)
+  fun `a link of a command this IDE has runs here`() {
+    assertTrue(JBProtocolCommand.hasCommand("open/$TEST_COMMAND/target?id=1"))
+    assertTrue(JBProtocolCommand.hasCommand("idea/$TEST_COMMAND"))
   }
 
   @Test
   fun `a link of a command this IDE lacks reaches the browser`() {
     val link = "jetbrains://open/missing_command/target"
-    assertFalse(JBProtocolCommand.runsWhereClicked("open/missing_command/target"))
+    assertFalse(JBProtocolCommand.hasCommand("open/missing_command/target"))
 
     BrowserLauncherImpl().browse(link, WebBrowserManager.getInstance().browsers.first(), project = null)
 
@@ -77,9 +59,8 @@ class BrowserLauncherProtocolCommandTest {
 
   @Test
   fun `a link without a command name reaches the browser`() {
-    assertFalse(JBProtocolCommand.runsWhereClicked("open"))
+    assertFalse(JBProtocolCommand.hasCommand("open"))
   }
 }
 
-private const val DEFAULT_COMMAND = "browser_launcher_test_default"
-private const val DAEMON_ROUTED_COMMAND = "browser_launcher_test_daemon_routed"
+private const val TEST_COMMAND = "browser_launcher_test"

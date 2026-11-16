@@ -28,15 +28,11 @@ abstract class JBProtocolCommand(private val command: String) {
 
     private val EP_NAME = ExtensionPointName<JBProtocolCommand>("com.intellij.jbProtocolCommand")
 
-    /**
-     * Whether this IDE runs [query], a `jetbrains://` URI without its scheme, itself.
-     * It does when it has the command and the command [runs where it is clicked][runsWhereClicked].
-     */
+    /** Whether this IDE has the command of [query], a `jetbrains://` URI without its scheme. */
     @ApiStatus.Internal
-    fun runsWhereClicked(query: String): Boolean {
+    fun hasCommand(query: String): Boolean {
       val request = parse(query) ?: return false
-      val command = EP_NAME.lazySequence().find { it.command == request.commandName } ?: return false
-      return command.runsWhereClicked(request.target, request.parameters)
+      return EP_NAME.lazySequence().any { it.command == request.commandName }
     }
 
     @ApiStatus.Internal
@@ -87,15 +83,6 @@ abstract class JBProtocolCommand(private val command: String) {
     perform(target, mapOf(FRAGMENT_PARAM_NAME to fragment))
     return CompletableFuture.completedFuture(null)
   }
-
-  /**
-   * Whether a link of this command, clicked inside an IDE, runs in that IDE.
-   *
-   * By default it does, so the link opens where the reader clicked it. Otherwise the IDE passes the link to the
-   * operating system, and the JetBrains daemon or Toolbox picks the IDE. Return `false` when the link needs that
-   * route, for example when it carries a tool constraint or a smart link confirmation that only the daemon handles.
-   */
-  protected open fun runsWhereClicked(target: String?, parameters: Map<String, String>): Boolean = true
 
   protected open suspend fun execute(target: String?, parameters: Map<String, String>, fragment: String?): @DialogMessage String? =
     when (val result = withContext(Dispatchers.EDT) { perform(target, parameters, fragment) }) {
