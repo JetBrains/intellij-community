@@ -102,10 +102,12 @@ crate of BT. `bt-core` is linked by `avl-affected` and by the
 two crates that resolve a lane or a selector, `avl-vm` and `air-trace`.
 `avl-host-sys`, `avl-trace-tools`, `air-trace` and `avl-vm` link `fscopy` of the dev-dist tools for the
 real path. `refusal` of BT's workspace holds the refusal type, and `avl-base`, `avl-affected`, `air-trace` and
-`avl-guest` link it. `avl-affected` also links `distpath` of the dev-dist tools for the slash paths of BT. `avl-guest`
+`avl-guest` link it. `avl-affected` also links `distpath` of the dev-dist tools for the slash paths of BT, and `checkout-files` of the
+dev-dist tools, which `bt-core` links for the file listing of a checkout. rules_rs finds the path of such a crate
+only in a dependency of a member of this workspace, so `avl-affected` names it. `avl-guest`
 links `dev-launch` of the dev-dist tools, which composes the argument file of the lane IDE. Through it the agent links
 `java-properties` and a regex engine.
-`avl.bzl` maps each of these six crates to its label in the community module
+`avl.bzl` maps each of these seven crates to its label in the community module
 (`_CROSS_MODULE_CRATES`), so Bazel builds it once. That build links the community module's `serde` and `regex`, so a value crosses as JSON text, and
 `avl-affected` compiles its patterns with its own `regex!`. `avl-host-testkit` is only ever a
 dev-dependency, and nothing depends on `avl-vm`.

@@ -1,7 +1,7 @@
 # The Air UI-lane tooling: the `vm` controller, `air-trace` and the guest agent. A cargo workspace that
 # Bazel also builds (`avl.MODULE.bazel`, `avl.bzl`). The crates of BT's workspace, `community/tools/bt`, and
-# `dev-launch`, `distpath` and `fscopy` of the dev-dist tools are path dependencies, and `avl.bzl` maps them to their
-# community targets.
+# `checkout-files`, `dev-launch`, `distpath` and `fscopy` of the dev-dist tools are path dependencies, and `avl.bzl`
+# maps them to their community targets.
 [workspace]
 resolver = "3"
 members = [
@@ -162,6 +162,7 @@ avl-wire = { path = "crates/avl-wire" }
 bt-core = { path = "../bt/crates/bt-core" }
 bt-junit = { path = "../bt/crates/bt-junit" }
 refusal = { path = "../bt/crates/refusal" }
+checkout-files = { path = "../../build/dev-dist-tools/crates/checkout-files" }
 dev-launch = { path = "../../build/dev-dist-tools/crates/dev-launch" }
 distpath = { path = "../../build/dev-dist-tools/crates/distpath" }
 fscopy = { path = "../../build/dev-dist-tools/crates/fscopy" }

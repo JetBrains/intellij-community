@@ -640,37 +640,30 @@ impl Runtime for OsRuntime {
             .collect()
     }
 
-    /// Asks git, because git alone knows which files under a directory the checkout ignores.
+    /// Reads the index and the ignore files of the checkout through `checkout_files`, which answers as
+    /// `git ls-files --cached --others --exclude-standard` does, without the git executable. The paths start with `dir`
+    /// as the caller spelled it.
     ///
     /// Not through the injected spawn. That spawn refuses for the lane controller, which must not start bazel from
-    /// inside a held lease. One `git ls-files` over a directory the caller named is a read of the checkout that
-    /// takes milliseconds, the same kind of call as a directory listing. `-z` keeps a name with a space or a quote
-    /// verbatim, and an unmerged file that the index holds three times is listed once.
+    /// inside a held lease. The listing of a directory the caller named is a read of the checkout, the same kind of
+    /// call as a directory listing. An unmerged file that the index holds three times is listed once.
     fn list_files(&self, dir: &Path) -> io::Result<Vec<PathBuf>> {
-        let listed = Command::new("git")
-            .arg("-C")
-            .arg(dir)
-            .args(["ls-files", "-z", "--cached", "--others", "--exclude-standard"])
-            .stdin(Stdio::null())
-            .output();
-        let refused = |said: String| io::Error::other(format!("git cannot list the files under {}: {said}", dir.display()));
-        let listed = listed.map_err(|error| refused(error.to_string()))?;
-        if !listed.status.success() {
-            let stderr = String::from_utf8_lossy(&listed.stderr).trim().to_owned();
-            return Err(refused(if stderr.is_empty() { listed.status.to_string() } else { stderr }));
+        let refused = |said: String| io::Error::other(format!("cannot list the files under {}: {said}", dir.display()));
+        if !dir.is_dir() {
+            return Err(refused("it is not a directory".to_owned()));
         }
-        let stdout = String::from_utf8_lossy(&listed.stdout);
-        let mut names: Vec<&str> = stdout.split('\0').filter(|name| !name.is_empty()).collect();
-        names.sort_unstable();
-        names.dedup();
+        // The real path of the directory, as `git -C` reads it: a link or a `..` in `dir` does not change the answer.
+        let (checkout, root) = checkout_files::locate(dir).map_err(|error| refused(format!("{error:#}")))?;
+        let names = checkout_files::list(&checkout, &[&root]).map_err(|error| refused(format!("{error:#}")))?;
+        let prefix = if root.is_empty() { String::new() } else { format!("{root}/") };
         let mut files: Vec<PathBuf> = names
-            .into_iter()
+            .iter()
+            .filter_map(|name| name.strip_prefix(&prefix))
             .map(|name| {
                 let name = if cfg!(windows) { name.replace('/', "\\") } else { name.to_owned() };
                 dir.join(name)
             })
-            // A tracked file deleted from the disk is still in the index, and a nested checkout is listed as its
-            // directory. Neither is a file a caller can have edited.
+            // A symbolic link is listed as a path of its own. Only one to a file is a file a caller can have edited.
             .filter(|path| path.is_file())
             .collect();
         files.sort();

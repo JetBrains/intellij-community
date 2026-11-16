@@ -344,9 +344,8 @@ fn git_in(repo: &Path, args: &[&str], index: Option<&Path>) -> String {
     String::from_utf8(output.stdout).expect("UTF-8").trim_end().to_owned()
 }
 
-/// The listing is git's, so the case needs a real repository: a tracked file, an untracked one, an ignored one, and
-/// a tracked file that is gone from the disk. Skipped where no git is installed, because nothing here can stand in
-/// for it.
+/// The listing is that of `git ls-files`, so the case needs a repository that git makes: a tracked file, an untracked
+/// one, an ignored one, and a tracked file that is gone from the disk. Skipped where no git is installed.
 #[test]
 fn the_listing_holds_tracked_and_untracked_files_and_nothing_ignored() {
     let Some(dir) = repository_dir() else {
@@ -381,6 +380,34 @@ fn the_listing_holds_tracked_and_untracked_files_and_nothing_ignored() {
         files,
         [module.join("src").join("Tracked.kt"), module.join("src").join("with space.kt"),]
     );
+}
+
+/// A link to the directory and a `..` in it give the files of its real path, with the paths spelled as the caller spelled
+/// the directory. A link from outside the checkout reads the checkout too.
+#[cfg(unix)]
+#[test]
+fn the_listing_follows_the_real_path_of_the_directory() {
+    let Some(dir) = repository_dir() else {
+        return;
+    };
+    let repo = dir.path().join("repo");
+    write_in(&repo, "module/src/Tracked.kt", "tracked");
+    write_in(&repo, "module/src/Untracked.kt", "untracked");
+    git_in(&repo, &["init", "-q"], None);
+    git_in(&repo, &["add", "module/src/Tracked.kt"], None);
+    std::os::unix::fs::symlink("module", repo.join("link")).expect("a link");
+    let outside = dir.path().join("outside");
+    std::os::unix::fs::symlink(repo.join("module"), &outside).expect("a link");
+
+    let runtime = OsRuntime::builder(&repo).build();
+    for listed in [repo.join("link/src"), repo.join("module/src/../src"), outside.join("src")] {
+        assert_eq!(
+            runtime.list_files(&listed).expect("the directory is listed"),
+            [listed.join("Tracked.kt"), listed.join("Untracked.kt")],
+            "{}",
+            listed.display()
+        );
+    }
 }
 
 /// A revision reads a file as the commit holds it, answers no text for a file that the commit does not hold, and is an
@@ -441,14 +468,10 @@ fn a_revision_reads_its_files_and_the_upstream_base_is_the_merge_base() {
     host.upstream_base().expect_err("a detached HEAD without origin has no upstream");
 }
 
-/// A directory git cannot list is an error that names it, never an empty listing: an empty one reads as "this
-/// directory holds no file", which is a different answer.
+/// A directory that cannot be listed is an error that names it, never an empty listing: an empty one reads as "this
+/// directory holds no file", which is a different answer. The listing needs no git.
 #[test]
-fn a_directory_git_cannot_list_is_an_error() {
-    if !git_available() {
-        eprintln!("skipped: no git on this host");
-        return;
-    }
+fn a_directory_that_cannot_be_listed_is_an_error() {
     let dir = tempfile::tempdir().expect("a temporary directory");
     let absent = dir.path().join("gone");
     let error = OsRuntime::builder(&absent)
