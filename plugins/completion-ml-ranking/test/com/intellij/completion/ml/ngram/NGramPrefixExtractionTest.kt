@@ -1,15 +1,30 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.ngram
 
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
+import com.intellij.codeInsight.completion.lightCompletionFixture
+import com.intellij.codeInsight.completion.lightCompletionProjectFixture
 import com.intellij.completion.ml.util.CompletionUtil
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class NgramExtractionTest : LightFixtureCompletionTestCase() {
+@TestApplication
+class NgramExtractionTest {
+  companion object {
+    private val projectFixture = lightCompletionProjectFixture()
+  }
 
-  override fun setUp() {
-    super.setUp()
+  private val completion by lightCompletionFixture(projectFixture)
+  private val myFixture get() = completion.fixture
+
+  @BeforeEach
+  fun setUp() {
     myFixture.addClass("""
 interface XRunnable {
   void man();
@@ -19,7 +34,8 @@ interface XRunnable {
 """)
   }
 
-  fun `test ngram extraction`() {
+  @Test
+  fun `test ngram extraction`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     invokeCompletionWithText("class T { void r() { XRunnable x; x.<caret> }; boolean q() { return true; }}")
     myFixture.completeBasic()
     checkExpectedNGram(".")
@@ -30,17 +46,20 @@ interface XRunnable {
     checkExpectedReversedNGram("return", "{", ")", "(", "q", "boolean", ";", "}")
   }
 
-  fun `test ngram extraction in file beginning`() {
+  @Test
+  fun `test ngram extraction in file beginning`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     invokeCompletionWithText("<caret>class T { void r() { XRunnable x; } }")
     checkExpectedNGram()
   }
 
-  fun `test reversed ngram extraction in file end`() {
+  @Test
+  fun `test reversed ngram extraction in file end`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     invokeCompletionWithText("class T { void r() { XRunnable x; } }<caret>")
     checkExpectedReversedNGram()
   }
 
-  fun `test ngram extraction in empty file`() {
+  @Test
+  fun `test ngram extraction in empty file`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     invokeCompletionWithText("<caret>")
     checkExpectedNGram()
     checkExpectedReversedNGram()
