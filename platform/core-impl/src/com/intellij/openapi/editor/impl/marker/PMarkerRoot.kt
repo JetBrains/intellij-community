@@ -80,7 +80,7 @@ interface PMarkerRoot {
    *
    * A duplicate [handle] should cause [IllegalArgumentException] or a more
    * specific implementation-defined exception.
-   * [spec] controls marker flags, see [MarkerSpec].
+   * [specMask] controls marker flags, see [MarkerSpec].
    * [flavorFlags] is the value obtained from the marker's `RangeMarkerEx.getFlavorFlags()` method at insertion time.
    * [measure] contributes to prefix aggregate queries.
    * [policy] defines how document edits transform the marker.
@@ -89,7 +89,7 @@ interface PMarkerRoot {
     handle: SnapshotMarkerReference<*>,
     startOffset: Int,
     endOffset: Int,
-    spec: Byte,
+    specMask: Byte,
     flavorFlags: Byte,
     measure: Int = 0,
     policy: MarkerPolicy = DefaultMarkerPolicy,
@@ -114,7 +114,7 @@ interface PMarkerRoot {
    *
    * If [handle] is absent or invalid, this method returns the receiver unchanged.
    */
-  fun updateSpec(handle: SnapshotMarkerReference<*>, spec: Byte): PMarkerRoot
+  fun updateSpec(handle: SnapshotMarkerReference<*>, specMask: Byte): PMarkerRoot
 
   /**
    * Replaces the measure of a valid marker, preserving its range and other properties.
@@ -167,7 +167,7 @@ interface PMarkerRoot {
     val nodeEnd: Int,
 
     /** Controls the marker boundaries at insertions. see [MarkerSpec]*/
-    val spec: Byte,
+    val specMask: Byte,
 
     /** Selects query categories that the root uses for subtree pruning. */
     val flavorFlags: Byte,

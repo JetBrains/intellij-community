@@ -62,7 +62,7 @@ internal class PMarkerDirectRootShiftTest {
       for (flags in 0..7) {
         val changedIndex = if (point) 1 else flags % 3
         val root = original.updateSpec(ranges[changedIndex].handle, flags.toByte())
-        val updatedEntries = ranges.mapIndexed { index, entry -> if (index == changedIndex) entry.copy(spec = flags.toByte()) else entry }
+        val updatedEntries = ranges.mapIndexed { index, entry -> if (index == changedIndex) entry.copy(specMask = flags.toByte()) else entry }
         for (patch in listOf(
           DocumentPatch.simple(20, 20, "xx", 1, false),
           DocumentPatch.simple(18, 20, "", 1, false),

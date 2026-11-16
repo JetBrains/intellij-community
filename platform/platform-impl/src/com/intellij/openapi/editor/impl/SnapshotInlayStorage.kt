@@ -46,7 +46,7 @@ internal class SnapshotInlayStorage(
     priority: Int,
     renderer: R,
   ): SnapshotInlineInlayMarker<R> {
-    val spec = MarkerSpec.create(
+    val specMask = MarkerSpec.create(
       isGreedyToLeft = false,
       isGreedyToRight = false,
       isStickingToRight = relatesToPrecedingText,
@@ -54,13 +54,13 @@ internal class SnapshotInlayStorage(
     val marker = SnapshotInlineInlayMarker(
       storage = this,
       editor = editor,
-      spec = spec,
+      specMask = specMask,
       initialRange = TextRangeScalarUtil.toScalarRange(offset, offset),
       relatesToPrecedingText = relatesToPrecedingText,
       priority = priority,
       renderer = renderer,
     )
-    return register(marker, offset, spec, policy = InlineInlayMarkerPolicy)
+    return register(marker, offset, specMask, policy = InlineInlayMarkerPolicy)
   }
 
   fun <R : EditorCustomElementRenderer> createAfterLineEnd(
@@ -70,7 +70,7 @@ internal class SnapshotInlayStorage(
     priority: Int,
     renderer: R,
   ): SnapshotAfterLineEndInlayMarker<R> {
-    val spec = MarkerSpec.create(
+    val specMask = MarkerSpec.create(
       isGreedyToLeft = false,
       isGreedyToRight = false,
       isStickingToRight = relatesToPrecedingText,
@@ -78,14 +78,14 @@ internal class SnapshotInlayStorage(
     val marker = SnapshotAfterLineEndInlayMarker(
       storage = this,
       editor = editor,
-      spec = spec,
+      specMask = specMask,
       initialRange = TextRangeScalarUtil.toScalarRange(offset, offset),
       relatesToPrecedingText = relatesToPrecedingText,
       softWrappable = softWrappable,
       priority = priority,
       renderer = renderer,
     )
-    return register(marker, offset, spec)
+    return register(marker, offset, specMask)
   }
 
   fun <R : EditorCustomElementRenderer> createBlock(
@@ -96,7 +96,7 @@ internal class SnapshotInlayStorage(
     priority: Int,
     renderer: R,
   ): SnapshotBlockInlayMarker<R> {
-    val spec = MarkerSpec.create(
+    val specMask = MarkerSpec.create(
       isGreedyToLeft = false,
       isGreedyToRight = false,
       isStickingToRight = relatesToPrecedingText,
@@ -104,7 +104,7 @@ internal class SnapshotInlayStorage(
     val marker = SnapshotBlockInlayMarker(
       storage = this,
       editor = editor,
-      spec = spec,
+      specMask = specMask,
       initialRange = TextRangeScalarUtil.toScalarRange(offset, offset),
       relatesToPrecedingText = relatesToPrecedingText,
       showAbove = showAbove,
@@ -112,7 +112,7 @@ internal class SnapshotInlayStorage(
       priority = priority,
       renderer = renderer,
     )
-    return register(marker, offset, spec, marker.heightInPixels)
+    return register(marker, offset, specMask, marker.heightInPixels)
   }
 
   fun beforeDocumentChange(event: DocumentEvent) {
@@ -180,13 +180,13 @@ internal class SnapshotInlayStorage(
   private fun <T : SnapshotInlayMarker<*>> register(
     marker: T,
     offset: Int,
-    spec: Byte,
+    specMask: Byte,
     measure: Int = 0,
     policy: MarkerPolicy = DefaultMarkerPolicy,
   ): T {
     check(registeredMarkers.add(marker.markerHandle)) { "Inlay marker ${marker.id} is already registered" }
     rootStore.updateRoot(currentSnapshot()) {
-      it.insert(marker.markerHandle, offset, offset, spec, marker.flavorFlags, measure, policy)
+      it.insert(marker.markerHandle, offset, offset, specMask, marker.flavorFlags, measure, policy)
     }
     return marker
   }
@@ -249,12 +249,12 @@ internal class SnapshotInlayStorage(
 internal abstract class SnapshotInlayMarker<R : EditorCustomElementRenderer>(
   private val storage: SnapshotInlayStorage,
   private val editor: EditorImpl,
-  spec: Byte,
+  specMask: Byte,
   initialRange: Long,
   private val relatesToPrecedingText: Boolean,
   private val renderer: R,
 ) : SnapshotRangeMarkerImpl(
-  storage.document, storage.rootStore, spec, initialRange,
+  storage.document, storage.rootStore, specMask, initialRange,
 ), EditorInlay<R> {
   private var widthInPixels: Int = 0
 
@@ -299,12 +299,12 @@ internal abstract class SnapshotInlayMarker<R : EditorCustomElementRenderer>(
 internal class SnapshotInlineInlayMarker<R : EditorCustomElementRenderer>(
   storage: SnapshotInlayStorage,
   editor: EditorImpl,
-  spec: Byte,
+  specMask: Byte,
   initialRange: Long,
   relatesToPrecedingText: Boolean,
   private val priority: Int,
   renderer: R,
-) : SnapshotInlayMarker<R>(storage, editor, spec, initialRange, relatesToPrecedingText, renderer),
+) : SnapshotInlayMarker<R>(storage, editor, specMask, initialRange, relatesToPrecedingText, renderer),
     InlineInlay<R> {
   init {
     doUpdate()
@@ -331,13 +331,13 @@ internal class SnapshotInlineInlayMarker<R : EditorCustomElementRenderer>(
 internal class SnapshotAfterLineEndInlayMarker<R : EditorCustomElementRenderer>(
   storage: SnapshotInlayStorage,
   editor: EditorImpl,
-  spec: Byte,
+  specMask: Byte,
   initialRange: Long,
   relatesToPrecedingText: Boolean,
   private val softWrappable: Boolean,
   private val priority: Int,
   renderer: R,
-) : SnapshotInlayMarker<R>(storage, editor, spec, initialRange, relatesToPrecedingText, renderer), AfterLineEndInlay<R> {
+) : SnapshotInlayMarker<R>(storage, editor, specMask, initialRange, relatesToPrecedingText, renderer), AfterLineEndInlay<R> {
   private val order: Int = nextOrder()
 
   init {
@@ -367,14 +367,14 @@ internal class SnapshotAfterLineEndInlayMarker<R : EditorCustomElementRenderer>(
 internal class SnapshotBlockInlayMarker<R : EditorCustomElementRenderer>(
   private val storage: SnapshotInlayStorage,
   editor: EditorImpl,
-  spec: Byte,
+  specMask: Byte,
   initialRange: Long,
   relatesToPrecedingText: Boolean,
   private val showAbove: Boolean,
   private val showWhenFolded: Boolean,
   private val priority: Int,
   renderer: R,
-) : SnapshotInlayMarker<R>(storage, editor, spec, initialRange, relatesToPrecedingText, renderer), BlockInlay<R> {
+) : SnapshotInlayMarker<R>(storage, editor, specMask, initialRange, relatesToPrecedingText, renderer), BlockInlay<R> {
   private var height: Int = 0
   private var gutterIconRenderer: GutterIconRenderer? = null
 

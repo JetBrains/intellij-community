@@ -122,12 +122,12 @@ class PMarkerDirectRoot private constructor(
     handle: SnapshotMarkerReference<*>,
     startOffset: Int,
     endOffset: Int,
-    spec: Byte,
+    specMask: Byte,
     flavorFlags: Byte,
     measure: Int,
     policy: MarkerPolicy,
   ): PMarkerDirectRoot = keepingRootAlive {
-    val entry = MarkerEntry(handle, startOffset, endOffset, spec, flavorFlags, measure, policy)
+    val entry = MarkerEntry(handle, startOffset, endOffset, specMask, flavorFlags, measure, policy)
     val editor = Editor()
     editor.finish(editor.insert(root, entry))
   }
@@ -150,8 +150,8 @@ class PMarkerDirectRoot private constructor(
     return purgeMany(entries.map { it.handle }).insertMany(entries)
   }
 
-  override fun updateSpec(handle: SnapshotMarkerReference<*>, spec: Byte): PMarkerDirectRoot =
-    update(handle, updateAggregates = false) { if (it.spec == spec) it else it.copy(spec = spec) }
+  override fun updateSpec(handle: SnapshotMarkerReference<*>, specMask: Byte): PMarkerDirectRoot =
+    update(handle, updateAggregates = false) { if (it.specMask == specMask) it else it.copy(specMask = specMask) }
 
   override fun updateFlavor(handle: SnapshotMarkerReference<*>, flavorFlags: Byte): PMarkerDirectRoot =
     update(handle) { if (it.flavorFlags == flavorFlags) it else it.copy(flavorFlags = flavorFlags) }

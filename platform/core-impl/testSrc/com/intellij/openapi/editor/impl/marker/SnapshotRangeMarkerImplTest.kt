@@ -264,12 +264,12 @@ internal class SnapshotRangeMarkerImplTest {
 
   @Test
   fun `root insertion does not need a live marker for its policy`() {
-    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+    val specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
     val marker = DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
     val handle = SnapshotMarkerReference.create(marker, false)
     (handle as Reference<*>).clear()
     val policy = MarkerPolicy { _, _, _, _ -> error("Insertion must not transform the marker") }
-    val root = PMarkerRoot.empty().insert(handle, 2, 4, spec, flavorFlags = 0, policy = policy)
+    val root = PMarkerRoot.empty().insert(handle, 2, 4, specMask, flavorFlags = 0, policy = policy)
 
     assertEquals(TextRangeScalarUtil.toScalarRange(2, 4), root.resolve(handle))
     assertSame(policy, root.overlappingIterator(2, 4, 0).next().policy)
@@ -280,11 +280,11 @@ internal class SnapshotRangeMarkerImplTest {
     val document = DocumentImpl("x".repeat(512), true)
     val marker = document.createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
     val handles = List(128) { SnapshotMarkerReference.create(marker, true) }
-    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+    val specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
     var original = PMarkerRoot.empty()
     for (index in 63 downTo 0) {
       val start = index * 4 + 1
-      original = original.insert(handles[index], start, start + 1, spec, flavorFlags = 0)
+      original = original.insert(handles[index], start, start + 1, specMask, flavorFlags = 0)
     }
     val before = document.core.snapshot().text()
     val patch = DocumentPatch.simple(0, 0, "xx", newModStamp = 1, clearLineFlags = false)
@@ -292,7 +292,7 @@ internal class SnapshotRangeMarkerImplTest {
     var changed = shifted
     for (index in 64 until handles.size) {
       val start = (index % 64) * 4 + 3
-      changed = changed.insert(handles[index], start, start + 1, spec, flavorFlags = 0)
+      changed = changed.insert(handles[index], start, start + 1, specMask, flavorFlags = 0)
     }
     for (index in handles.indices step 2) changed = changed.remove(handles[index])
     val fork = original.remove(handles[31])
@@ -311,9 +311,9 @@ internal class SnapshotRangeMarkerImplTest {
   @Test
   fun `copied trees inherit unchanged parent records`() {
     val marker = DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
-    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+    val specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
     val entries = List(15) { index ->
-      PMarkerRoot.MarkerEntry(SnapshotMarkerReference.create(marker, true), index * 4 + 1, index * 4 + 2, spec, 0)
+      PMarkerRoot.MarkerEntry(SnapshotMarkerReference.create(marker, true), index * 4 + 1, index * 4 + 2, specMask, 0)
     }
     val root = PMarkerDirectRoot.empty().insertMany(entries)
     val nodeField = PMarkerDirectRoot::class.java.getDeclaredField("root").apply { isAccessible = true }
@@ -323,7 +323,7 @@ internal class SnapshotRangeMarkerImplTest {
     val parentRecord = checkNotNull(latestField.get(child.state.parents))
 
     val added = SnapshotMarkerReference.create(marker, true)
-    val updated = root.insert(added, 61, 62, spec, 0)
+    val updated = root.insert(added, 61, 62, specMask, 0)
     val copied = nodeField.get(updated) as PMarkerNode
 
     assertSame(node.state, copied.state)
@@ -346,7 +346,7 @@ internal class SnapshotRangeMarkerImplTest {
 
     marker.currentRootReference().get().processAllRangeMarkers { entry, _ ->
       assertSame(policy, entry.policy)
-      assertEquals(MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = true, isStickingToRight = true), entry.spec)
+      assertEquals(MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = true, isStickingToRight = true), entry.specMask)
       true
     }
     document.insertString(3, "x")
@@ -403,9 +403,9 @@ internal class SnapshotRangeMarkerImplTest {
     val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
     val root = marker.currentRootReference().get()
     val resolution = root.resolve(marker.markerHandle)
-    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+    val specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
     val otherRoot = if (absent) root.remove(marker.markerHandle)
-    else PMarkerRoot.empty().insert(marker.markerHandle, 4, 6, spec, flavorFlags = 0)
+    else PMarkerRoot.empty().insert(marker.markerHandle, 4, 6, specMask, flavorFlags = 0)
     val otherResolution = otherRoot.resolve(marker.markerHandle)
     val start = CountDownLatch(1)
     val executor = Executors.newFixedThreadPool(3)

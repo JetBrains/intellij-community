@@ -65,10 +65,10 @@ internal class PMarkerDirectRootRemovalTest {
   private fun withEntries(test: (DocumentImpl, List<MarkerEntry>) -> Unit) {
     val document = DocumentImpl("x".repeat(200), true)
     val marker = document.createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
-    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+    val specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
     val entries = List(36) { index ->
       val start = index / 3 * 10 + 5
-      MarkerEntry(SnapshotMarkerReference.create(marker, true), start, start + index % 3, spec, flavorFlags = 0)
+      MarkerEntry(SnapshotMarkerReference.create(marker, true), start, start + index % 3, specMask, flavorFlags = 0)
     }
     test(document, entries)
   }

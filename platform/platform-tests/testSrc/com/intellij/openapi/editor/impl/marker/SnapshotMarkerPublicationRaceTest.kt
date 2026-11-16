@@ -119,7 +119,7 @@ internal class SnapshotMarkerPublicationRaceTest {
     assertTrue(marker.isGreedyToLeft)
     val root = checkNotNull(document.rangeMarkers.rootStore().root(document.core.snapshot()))
     val entry = root.overlappingIterator(0, document.textLength, 0).asSequence().single()
-    assertTrue(MarkerSpec.isGreedyToLeft(entry.spec)) { "The root lost the greediness change" }
+    assertTrue(MarkerSpec.isGreedyToLeft(entry.specMask)) { "The root lost the greediness change" }
   }
 
   @ParameterizedTest

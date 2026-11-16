@@ -61,7 +61,7 @@ class SnapshotRangeHighlighterImplTest {
         override fun resolve(handle: SnapshotMarkerReference<*>): Long = error("The exact range tree must not be queried")
         override fun updateFlavor(handle: SnapshotMarkerReference<*>, flavorFlags: Byte): PMarkerRoot =
           error("The exact range tree must not change")
-        override fun updateSpec(handle: SnapshotMarkerReference<*>, spec: Byte): PMarkerRoot =
+        override fun updateSpec(handle: SnapshotMarkerReference<*>, specMask: Byte): PMarkerRoot =
           error("The exact range tree must not change")
         override fun updateMeasure(handle: SnapshotMarkerReference<*>, measure: Int): PMarkerRoot =
           error("The exact range tree must not change")
@@ -71,8 +71,8 @@ class SnapshotRangeHighlighterImplTest {
       val handle = highlighter.markerHandle
       Assertions.assertThat(root.isValid(handle)).isTrue()
       Assertions.assertThat(root.resolve(handle)).isEqualTo(TextRangeScalarUtil.toScalarRange(5, 5))
-      val spec = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = true)
-      val updated = root.updateFlavor(handle, 0x40).updateSpec(handle, spec).updateMeasure(handle, 7)
+      val specMask = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = true)
+      val updated = root.updateFlavor(handle, 0x40).updateSpec(handle, specMask).updateMeasure(handle, 7)
       Assertions.assertThat(updated.resolve(handle)).isEqualTo(root.resolve(handle))
       Assertions.assertThat(updated.getPrefixAggregate(5)).isEqualTo(7)
       Assertions.assertThat(updated.updateMeasure(handle, 7)).isSameAs(updated)
@@ -91,10 +91,10 @@ class SnapshotRangeHighlighterImplTest {
       val exact = model.addRangeHighlighter(1, 1, 1, null, HighlighterTargetArea.EXACT_RANGE) as SnapshotRangeMarkerImpl
       val line = model.addRangeHighlighter(5, 6, 1, null, HighlighterTargetArea.LINES_IN_RANGE) as SnapshotRangeMarkerImpl
       val root = exact.currentRootReference().get()
-      val spec = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = true)
+      val specMask = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = true)
       var metadata = root
       for (marker in listOf(exact, line)) {
-        metadata = metadata.updateSpec(marker.markerHandle, spec).updateFlavor(marker.markerHandle, 0x40)
+        metadata = metadata.updateSpec(marker.markerHandle, specMask).updateFlavor(marker.markerHandle, 0x40)
         Assertions.assertThat(metadata.resolutionCacheIdentity).isSameAs(root.resolutionCacheIdentity)
         Assertions.assertThat(metadata.resolve(exact.markerHandle)).isEqualTo(root.resolve(exact.markerHandle))
         Assertions.assertThat(metadata.resolve(line.markerHandle)).isEqualTo(root.resolve(line.markerHandle))
@@ -775,7 +775,7 @@ class SnapshotRangeHighlighterImplTest {
 
       val root = checkNotNull(model.rootStore().root(document.core.snapshot()))
       val entry = root.overlappingIterator(0, document.textLength, 0).next()
-      Assertions.assertThat(MarkerSpec.isGreedyToRight(entry.spec)).isTrue()
+      Assertions.assertThat(MarkerSpec.isGreedyToRight(entry.specMask)).isTrue()
     }
     finally {
       model.dispose()
@@ -897,9 +897,9 @@ class SnapshotRangeHighlighterImplTest {
       val transformed = CountDownLatch(1)
       val commit = CountDownLatch(1)
       val pausingRoot = object : PMarkerRoot by root.exactRangeRoot {
-        override fun updateSpec(handle: SnapshotMarkerReference<*>, spec: Byte): PMarkerRoot {
+        override fun updateSpec(handle: SnapshotMarkerReference<*>, specMask: Byte): PMarkerRoot {
           Assertions.assertThat(Thread.holdsLock(document.snapshotMarkerStores)).isFalse()
-          val result = root.exactRangeRoot.updateSpec(handle, spec)
+          val result = root.exactRangeRoot.updateSpec(handle, specMask)
           transformed.countDown()
           check(commit.await(10, TimeUnit.SECONDS)) { "The highlighter change did not resume" }
           return result
@@ -923,7 +923,7 @@ class SnapshotRangeHighlighterImplTest {
 
       assertValidHighlighter(highlighter, 3, 5)
       val entry = marker.currentRootReference().get().overlappingIterator(0, document.textLength, 0).next()
-      Assertions.assertThat(MarkerSpec.isGreedyToRight(entry.spec)).isTrue()
+      Assertions.assertThat(MarkerSpec.isGreedyToRight(entry.specMask)).isTrue()
       Assertions.assertThat(highlighter.isGreedyToRight).isTrue()
     }
     finally {
@@ -1052,7 +1052,7 @@ class SnapshotRangeHighlighterImplTest {
           handle: SnapshotMarkerReference<*>,
           startOffset: Int,
           endOffset: Int,
-          spec: Byte,
+          specMask: Byte,
           flavorFlags: Byte,
           measure: Int,
           policy: MarkerPolicy,

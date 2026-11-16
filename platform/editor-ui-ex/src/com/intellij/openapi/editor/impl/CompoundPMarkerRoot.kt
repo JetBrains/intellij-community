@@ -67,7 +67,7 @@ open class CompoundPMarkerRoot private constructor(
     handle: SnapshotMarkerReference<*>,
     startOffset: Int,
     endOffset: Int,
-    spec: Byte,
+    specMask: Byte,
     flavorFlags: Byte,
     measure: Int,
     policy: MarkerPolicy,
@@ -76,14 +76,14 @@ open class CompoundPMarkerRoot private constructor(
     require(highlighter != null) { "A compound marker root requires a snapshot highlighter" }
     return if (highlighter.getTargetArea() == HighlighterTargetArea.EXACT_RANGE) {
       withRoots(
-        exactRangeRoot.insert(handle, startOffset, endOffset, spec, flavorFlags, measure, policy),
+        exactRangeRoot.insert(handle, startOffset, endOffset, specMask, flavorFlags, measure, policy),
         linesInRangeRoot,
       )
     }
     else {
       withRoots(
         exactRangeRoot,
-        linesInRangeRoot.insert(handle, startOffset, endOffset, spec, flavorFlags, measure, policy),
+        linesInRangeRoot.insert(handle, startOffset, endOffset, specMask, flavorFlags, measure, policy),
       )
     }
   }
@@ -109,8 +109,8 @@ open class CompoundPMarkerRoot private constructor(
     return updateMarker(handle) { it.updateFlavor(handle, flavorFlags) }
   }
 
-  override fun updateSpec(handle: SnapshotMarkerReference<*>, spec: Byte): PMarkerRoot {
-    return updateMarker(handle) { it.updateSpec(handle, spec) }
+  override fun updateSpec(handle: SnapshotMarkerReference<*>, specMask: Byte): PMarkerRoot {
+    return updateMarker(handle) { it.updateSpec(handle, specMask) }
   }
 
   override fun updateMeasure(handle: SnapshotMarkerReference<*>, measure: Int): PMarkerRoot {

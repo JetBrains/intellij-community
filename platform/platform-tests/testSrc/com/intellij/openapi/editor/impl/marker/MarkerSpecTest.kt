@@ -13,12 +13,12 @@ internal class MarkerSpecTest {
       val left = flags and 1 != 0
       val right = flags and 2 != 0
       val sticky = flags and 4 != 0
-      val spec = MarkerSpec.create(left, right, sticky)
+      val specMask = MarkerSpec.create(left, right, sticky)
 
-      assertEquals(flags.toByte(), spec)
-      assertEquals(left, MarkerSpec.isGreedyToLeft(spec))
-      assertEquals(right, MarkerSpec.isGreedyToRight(spec))
-      assertEquals(sticky, MarkerSpec.isStickingToRight(spec))
+      assertEquals(flags.toByte(), specMask)
+      assertEquals(left, MarkerSpec.isGreedyToLeft(specMask))
+      assertEquals(right, MarkerSpec.isGreedyToRight(specMask))
+      assertEquals(sticky, MarkerSpec.isStickingToRight(specMask))
     }
   }
 
@@ -28,12 +28,12 @@ internal class MarkerSpecTest {
       val left = flags and 1 != 0
       val right = flags and 2 != 0
       val sticky = flags and 4 != 0
-      val spec = MarkerSpec.create(left, right, sticky)
+      val specMask = MarkerSpec.create(left, right, sticky)
 
       for (value in listOf(false, true)) {
-        assertEquals(MarkerSpec.create(value, right, sticky), MarkerSpec.withGreedyToLeft(spec, value))
-        assertEquals(MarkerSpec.create(left, value, sticky), MarkerSpec.withGreedyToRight(spec, value))
-        assertEquals(MarkerSpec.create(left, right, value), MarkerSpec.withStickyToRight(spec, value))
+        assertEquals(MarkerSpec.create(value, right, sticky), MarkerSpec.withGreedyToLeft(specMask, value))
+        assertEquals(MarkerSpec.create(left, value, sticky), MarkerSpec.withGreedyToRight(specMask, value))
+        assertEquals(MarkerSpec.create(left, right, value), MarkerSpec.withStickyToRight(specMask, value))
       }
     }
   }

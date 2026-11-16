@@ -44,12 +44,12 @@ class PMarkerRootBatchTest {
   fun `marker changes preserve offsets in old roots`() {
     val root = applyPatch(PMarkerRoot.empty().insertMany(entries()), TEXT, 0, 0, "abcd")
     root.resolve(handle(12))
-    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+    val specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
     val roots = listOf(
       root,
-      root.insert(handle(100), 3, 4, spec, flavorFlags = 0),
+      root.insert(handle(100), 3, 4, specMask, flavorFlags = 0),
       root.insertMany(listOf(entry(101, 1, 2), entry(102, 2, 3))),
-      root.updateSpec(handle(12), spec),
+      root.updateSpec(handle(12), specMask),
       root.updateFlavor(handle(12), 0),
       root.updateMeasure(handle(1), 99),
       root.remove(handle(12)),
@@ -78,8 +78,8 @@ class PMarkerRootBatchTest {
     val shifted = applyPatch(initial, TEXT, 0, 0, "abcd")
     val edited = applyPatch(shifted, "abcd$TEXT", 10, 12, "")
     edited.resolve(handle(12))
-    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false, isStickingToRight = false)
-    val roots = listOf(initial, shifted, edited, edited.updateSpec(handle(12), spec))
+    val specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false, isStickingToRight = false)
+    val roots = listOf(initial, shifted, edited, edited.updateSpec(handle(12), specMask))
 
     for (root in roots) {
       val expected = resolvedEntries(root).associateBy { label(it.handle) }
@@ -174,8 +174,8 @@ class PMarkerRootBatchTest {
       MarkerTransformResult(marker)
     }
     val root = PMarkerRoot.empty().insertMany(listOf(
-      entry(1, 0, 0).copy(spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), policy = countingPolicy),
-      entry(2, 5, 6).copy(spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), policy = PersistentMarkerPolicy),
+      entry(1, 0, 0).copy(specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), policy = countingPolicy),
+      entry(2, 5, 6).copy(specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), policy = PersistentMarkerPolicy),
     ))
 
     applyPatch(root, "0123456789", 1, 9, "")
@@ -262,7 +262,7 @@ class PMarkerRootBatchTest {
   )
 
   private fun insertIndividually(root: PMarkerRoot, entries: List<MarkerEntry>): PMarkerRoot = entries.fold(root) { current, entry ->
-    current.insert(entry.handle, entry.nodeStart, entry.nodeEnd, entry.spec, entry.flavorFlags, entry.measure,
+    current.insert(entry.handle, entry.nodeStart, entry.nodeEnd, entry.specMask, entry.flavorFlags, entry.measure,
                    entry.policy)
   }
 

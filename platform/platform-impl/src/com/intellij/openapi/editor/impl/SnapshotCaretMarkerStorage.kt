@@ -64,9 +64,9 @@ internal class SnapshotCaretMarkerStorage(
 
   fun selectionPolicy(): MarkerPolicy = CaretSelectionMarkerPolicy
 
-  fun add(marker: SnapshotCaretMarker, startOffset: Int, endOffset: Int, spec: Byte, policy: MarkerPolicy) {
+  fun add(marker: SnapshotCaretMarker, startOffset: Int, endOffset: Int, specMask: Byte, policy: MarkerPolicy) {
     rootStore.updateRoot(currentSnapshot()) {
-      it.insert(marker.markerHandle, startOffset, endOffset, spec, marker.flavorFlags, policy = policy)
+      it.insert(marker.markerHandle, startOffset, endOffset, specMask, marker.flavorFlags, policy = policy)
     }
   }
 
@@ -82,14 +82,14 @@ internal abstract class SnapshotCaretMarker(
   storage: SnapshotCaretMarkerStorage,
   startOffset: Int,
   endOffset: Int,
-  spec: Byte,
+  specMask: Byte,
   policy: MarkerPolicy,
 ) : SnapshotRangeMarkerImpl(
-  storage.document, storage.rootStore, spec,
+  storage.document, storage.rootStore, specMask,
   TextRangeScalarUtil.toScalarRange(startOffset, endOffset),
 ) {
   init {
-    storage.add(this, startOffset, endOffset, spec, policy)
+    storage.add(this, startOffset, endOffset, specMask, policy)
   }
 
   abstract fun documentChanged(event: DocumentEvent, oldOffset: Int)

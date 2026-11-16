@@ -36,13 +36,13 @@ internal class SnapshotRangeHighlighterImpl private constructor(
   endOffset: Int,
   private val layer: Int,
   private val targetArea: HighlighterTargetArea,
-  initialSpec: Byte,
+  initialSpecMask: Byte,
   private val persistent: Boolean,
   private var textAttributesKey: TextAttributesKey?,
 ) : SnapshotRangeMarkerImpl(
   storage.document,
   storage.rootStore,
-  initialSpec,
+  initialSpecMask,
   TextRangeScalarUtil.toScalarRange(startOffset, endOffset),
 ), RangeHighlighterEx {
   private var forcedTextAttributes: TextAttributes? = null
@@ -357,8 +357,8 @@ internal class SnapshotRangeHighlighterImpl private constructor(
       greedyToLeft: Boolean,
       greedyToRight: Boolean,
     ): SnapshotRangeHighlighterImpl {
-      val spec = MarkerSpec.create(greedyToLeft, greedyToRight)
-      return create(storage, startOffset, endOffset, layer, targetArea, textAttributesKey, spec, persistent = false)
+      val specMask = MarkerSpec.create(greedyToLeft, greedyToRight)
+      return create(storage, startOffset, endOffset, layer, targetArea, textAttributesKey, specMask, persistent = false)
     }
 
     @JvmStatic
@@ -380,8 +380,8 @@ internal class SnapshotRangeHighlighterImpl private constructor(
       else {
         PersistentHighlighterPolicy.EXACT_RANGE
       }
-      val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
-      return create(storage, startOffset, endOffset, layer, targetArea, textAttributesKey, spec, persistent = true, policy = policy)
+      val specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+      return create(storage, startOffset, endOffset, layer, targetArea, textAttributesKey, specMask, persistent = true, policy = policy)
     }
 
     private fun create(
@@ -391,7 +391,7 @@ internal class SnapshotRangeHighlighterImpl private constructor(
       layer: Int,
       targetArea: HighlighterTargetArea,
       textAttributesKey: TextAttributesKey?,
-      spec: Byte,
+      specMask: Byte,
       persistent: Boolean,
       policy: MarkerPolicy = DefaultMarkerPolicy,
     ): SnapshotRangeHighlighterImpl {
@@ -401,11 +401,11 @@ internal class SnapshotRangeHighlighterImpl private constructor(
         endOffset,
         layer,
         targetArea,
-        spec,
+        specMask,
         persistent,
         textAttributesKey,
       )
-      storage.add(highlighter, startOffset, endOffset, spec, policy)
+      storage.add(highlighter, startOffset, endOffset, specMask, policy)
       return highlighter
     }
 

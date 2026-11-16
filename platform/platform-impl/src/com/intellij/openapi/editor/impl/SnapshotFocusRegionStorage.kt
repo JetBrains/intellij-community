@@ -25,10 +25,10 @@ internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
     require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
     require(endOffset <= snapshot.text().length()) { "Focus region exceeds the snapshot length" }
 
-    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false, isStickingToRight = true)
-    val region = SnapshotFocusRegion(this, spec, TextRangeScalarUtil.toScalarRange(startOffset, endOffset))
+    val specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false, isStickingToRight = true)
+    val region = SnapshotFocusRegion(this, specMask, TextRangeScalarUtil.toScalarRange(startOffset, endOffset))
     rootStore.updateRoot(snapshot) {
-      it.insert(region.markerHandle, startOffset, endOffset, spec, region.flavorFlags)
+      it.insert(region.markerHandle, startOffset, endOffset, specMask, region.flavorFlags)
     }
     return region
   }
@@ -54,6 +54,6 @@ internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
 
 internal class SnapshotFocusRegion(
   internal val storage: SnapshotFocusRegionStorage,
-  spec: Byte,
+  specMask: Byte,
   initialRange: Long,
-) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, spec, initialRange)
+) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, specMask, initialRange)

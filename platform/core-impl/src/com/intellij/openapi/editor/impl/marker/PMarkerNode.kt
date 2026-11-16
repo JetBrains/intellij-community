@@ -96,7 +96,7 @@ internal class PMarkerNode private constructor(
       val minimum = minimumStart(entry, left, delta)
       return left?.canShiftAtStart != false &&
              (entry.nodeStart != minimum || entry.policy === DefaultMarkerPolicy &&
-              entry.nodeStart < entry.nodeEnd && !MarkerSpec.isGreedyToLeft(entry.spec)) &&
+              entry.nodeStart < entry.nodeEnd && !MarkerSpec.isGreedyToLeft(entry.specMask)) &&
              (right == null || right.minimumStart + delta != minimum || right.canShiftAtStart)
     }
 

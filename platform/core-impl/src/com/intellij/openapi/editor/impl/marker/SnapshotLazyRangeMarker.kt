@@ -12,10 +12,10 @@ import com.intellij.util.DocumentUtil
 /** A snapshot range marker created for a file before its document loads. */
 internal class SnapshotLazyRangeMarker(
   fileRoot: VirtualFileMarkerRoot,
-  spec: Byte,
+  specMask: Byte,
   initialRange: Long,
   @Volatile private var initialLineColumns: LineColumns?,
-) : SnapshotRangeMarkerImpl(fileRoot, spec, initialRange) {
+) : SnapshotRangeMarkerImpl(fileRoot, specMask, initialRange) {
 
   override fun getStartOffset(): Int {
     loadDocumentForInitialLineColumns()

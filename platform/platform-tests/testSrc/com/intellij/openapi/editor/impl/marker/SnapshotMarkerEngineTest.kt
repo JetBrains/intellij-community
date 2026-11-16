@@ -1171,9 +1171,9 @@ class SnapshotMarkerEngineTest {
           val markerId = nextMarkerId++
           val offset = random.nextInt(document.textLength + 1)
           val measure = random.nextInt(maxMeasure)
-          val spec = MarkerSpec.withStickyToRight(nonGreedySpec(), random.nextBoolean())
+          val specMask = MarkerSpec.withStickyToRight(nonGreedySpec(), random.nextBoolean())
           rootStore.updateRoot(document.core.snapshot()) {
-            it.insert(handle(markerId), offset, offset, spec, flavorFlags = 0, measure = measure)
+            it.insert(handle(markerId), offset, offset, specMask, flavorFlags = 0, measure = measure)
           }
         }
         1 -> if (markerIds.isNotEmpty()) {
@@ -1221,7 +1221,7 @@ class SnapshotMarkerEngineTest {
       handle = handle(1),
       startOffset = 2,
       endOffset = 4,
-      spec = nonGreedySpec(),
+      specMask = nonGreedySpec(),
       flavorFlags = 0,
       policy = policy,
     )
@@ -1532,7 +1532,7 @@ class SnapshotMarkerEngineTest {
       document = document,
       startOffset = startOffset,
       endOffset = endOffset,
-      spec = nonGreedySpec(),
+      specMask = nonGreedySpec(),
       retainStrong = true,
     )
     return WeakReference(marker)
@@ -1543,7 +1543,7 @@ class SnapshotMarkerEngineTest {
       document = document,
       startOffset = startOffset,
       endOffset = endOffset,
-      spec = nonGreedySpec(),
+      specMask = nonGreedySpec(),
       retainStrong = true,
     )
     val result = WeakReference(marker)
@@ -1575,7 +1575,7 @@ class SnapshotMarkerEngineTest {
       document = document,
       startOffset = 2,
       endOffset = 4,
-      spec = nonGreedySpec(),
+      specMask = nonGreedySpec(),
       retainStrong = true,
     )
     return WeakReference(document)

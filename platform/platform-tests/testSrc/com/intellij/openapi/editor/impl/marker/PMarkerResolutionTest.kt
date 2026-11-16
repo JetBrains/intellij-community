@@ -83,8 +83,8 @@ internal class PMarkerResolutionTest {
 
   @Test
   fun `removed markers stay absent after a merge`() {
-    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
-    val root = PMarkerRoot.empty().insert(handle(1), 2, 4, spec, flavorFlags = 0)
+    val specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+    val root = PMarkerRoot.empty().insert(handle(1), 2, 4, specMask, flavorFlags = 0)
     val removed = root.remove(handle(1))
 
     assertTrue(root.isValid(handle(1)))
@@ -93,18 +93,18 @@ internal class PMarkerResolutionTest {
     assertEquals(TextRangeScalarUtil.toScalarRange(2, 4), root.resolve(handle(1)))
     assertSame(removed, removed.remove(handle(1)))
     assertEquals(PMarkerResolution.ABSENT, removed.mergeValidMarkersFrom(root).resolve(handle(1)))
-    assertThrows(AssertionError::class.java) { removed.insert(handle(1), 3, 6, spec, flavorFlags = 0) }
+    assertThrows(AssertionError::class.java) { removed.insert(handle(1), 3, 6, specMask, flavorFlags = 0) }
   }
 
   @Test
   fun `invalidation reasons remain in their roots`() {
     val document = DocumentImpl("abcdef", true)
     val reason = MarkerTransformError.INVALIDATED_BY_EDIT.message
-    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+    val specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
     val policy = MarkerPolicy { _, _, _, _ ->
       MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
     }
-    val root = PMarkerRoot.empty().insert(handle(1), 2, 4, spec, flavorFlags = 0, policy = policy)
+    val root = PMarkerRoot.empty().insert(handle(1), 2, 4, specMask, flavorFlags = 0, policy = policy)
     val before = document.core.snapshot().text()
     val patch = DocumentPatch.simple(2, 3, "x", newModStamp = 1, clearLineFlags = false)
     val after = before.replace(patch.startOffset(), patch.endOffset(), patch.newFragment())

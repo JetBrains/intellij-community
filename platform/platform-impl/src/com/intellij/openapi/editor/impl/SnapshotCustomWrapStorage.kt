@@ -34,18 +34,18 @@ internal class SnapshotCustomWrapStorage(
 
   fun create(offset: Int, indent: Int, priority: Int): SnapshotCustomWrap {
     val snapshot = currentSnapshot()
-    val spec = MarkerSpec.create(
+    val specMask = MarkerSpec.create(
       isGreedyToLeft = false,
       isGreedyToRight = false,
       isStickingToRight = false,
     )
-    val wrap = SnapshotCustomWrap(this, spec, TextRangeScalarUtil.toScalarRange(offset, offset), indent, priority)
+    val wrap = SnapshotCustomWrap(this, specMask, TextRangeScalarUtil.toScalarRange(offset, offset), indent, priority)
     check(registeredWraps.add(wrap.markerHandle)) { "Custom wrap ${wrap.id} is already registered" }
     rootStore.updateRoot(snapshot) {
       it.insert(wrap.markerHandle,
                 offset,
                 offset,
-                spec,
+                specMask,
                 wrap.flavorFlags,
                 policy = CustomWrapMarkerPolicy)
     }
@@ -102,12 +102,12 @@ internal class SnapshotCustomWrapStorage(
 
 internal class SnapshotCustomWrap(
   internal val storage: SnapshotCustomWrapStorage,
-  spec: Byte,
+  specMask: Byte,
   initialRange: Long,
   override val indent: Int,
   override val priority: Int,
 ) : SnapshotRangeMarkerImpl(
-  storage.document, storage.rootStore, spec, initialRange,
+  storage.document, storage.rootStore, specMask, initialRange,
 ), CustomWrap {
   override val offset: Int
     get() = startOffset

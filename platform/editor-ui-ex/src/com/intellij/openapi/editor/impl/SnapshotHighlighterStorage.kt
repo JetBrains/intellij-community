@@ -43,7 +43,7 @@ internal class SnapshotHighlighterStorage(
     model.invalidateHighlighterCache()
   }
 
-  fun add(highlighter: SnapshotRangeHighlighterImpl, startOffset: Int, endOffset: Int, spec: Byte, policy: MarkerPolicy) {
+  fun add(highlighter: SnapshotRangeHighlighterImpl, startOffset: Int, endOffset: Int, specMask: Byte, policy: MarkerPolicy) {
     assertMayChange()
     require(startOffset >= 0) { "startOffset must be non-negative" }
     require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
@@ -54,7 +54,7 @@ internal class SnapshotHighlighterStorage(
     try {
       inserted = rootStore.updateCurrentRoot {
         require(endOffset <= document.textLength) { "Highlighter range exceeds document length" }
-        it.insert(handle, startOffset, endOffset, spec, flavorFlags, policy = policy)
+        it.insert(handle, startOffset, endOffset, specMask, flavorFlags, policy = policy)
       } != null
     }
     finally {

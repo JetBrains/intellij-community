@@ -57,16 +57,16 @@ internal class SnapshotFoldingRegionStorage(
     group: FoldingGroup?,
     neverExpands: Boolean,
   ): FoldRegionMarker {
-    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+    val specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
     val region = SnapshotFoldRegion(
       storage = this,
-      spec = spec,
+      specMask = specMask,
       initialRange = TextRangeScalarUtil.toScalarRange(startOffset, endOffset),
       placeholder = placeholder,
       group = group,
       neverExpands = neverExpands,
     )
-    register(region, startOffset, endOffset, spec, foldRegionMarkerPolicy)
+    register(region, startOffset, endOffset, specMask, foldRegionMarkerPolicy)
     return region
   }
 
@@ -75,14 +75,14 @@ internal class SnapshotFoldingRegionStorage(
     endOffset: Int,
     renderer: CustomFoldRegionRenderer,
   ): CustomFoldRegionMarker {
-    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+    val specMask = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
     val region = SnapshotCustomFoldRegion(
       storage = this,
-      spec = spec,
+      specMask = specMask,
       initialRange = TextRangeScalarUtil.toScalarRange(startOffset, endOffset),
       renderer = renderer,
     )
-    register(region, startOffset, endOffset, spec, CustomFoldRegionMarkerPolicy)
+    register(region, startOffset, endOffset, specMask, CustomFoldRegionMarkerPolicy)
     return region
   }
 
@@ -219,12 +219,12 @@ internal class SnapshotFoldingRegionStorage(
     region: SnapshotFoldRegion,
     startOffset: Int,
     endOffset: Int,
-    spec: Byte,
+    specMask: Byte,
     policy: MarkerPolicy,
   ) {
     check(registeredRegions.add(region.markerHandle)) { "Fold region ${region.id} is already registered" }
     rootStore.updateRoot(currentSnapshot()) {
-      it.insert(region.markerHandle, startOffset, endOffset, spec, region.flavorFlags, policy = policy)
+      it.insert(region.markerHandle, startOffset, endOffset, specMask, region.flavorFlags, policy = policy)
     }
   }
 
@@ -308,13 +308,13 @@ internal class SnapshotFoldingRegionStorage(
 
 internal open class SnapshotFoldRegion(
   internal val storage: SnapshotFoldingRegionStorage,
-  spec: Byte,
+  specMask: Byte,
   initialRange: Long,
   private var placeholder: String,
   private val group: FoldingGroup?,
   private val neverExpands: Boolean,
 ) : SnapshotRangeMarkerImpl(
-  storage.document, storage.rootStore, spec, initialRange,
+  storage.document, storage.rootStore, specMask, initialRange,
 ), FoldRegionMarker {
   protected val editorImpl: EditorImpl
     get() = storage.editor
@@ -437,10 +437,10 @@ internal open class SnapshotFoldRegion(
 
 internal class SnapshotCustomFoldRegion(
   storage: SnapshotFoldingRegionStorage,
-  spec: Byte,
+  specMask: Byte,
   initialRange: Long,
   private val renderer: CustomFoldRegionRenderer,
-) : SnapshotFoldRegion(storage, spec, initialRange, "", null, true), CustomFoldRegionMarker {
+) : SnapshotFoldRegion(storage, specMask, initialRange, "", null, true), CustomFoldRegionMarker {
   private var width: Int = 0
   private var height: Int = 0
   private var gutterIconRenderer: GutterIconRenderer? = null
