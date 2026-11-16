@@ -131,6 +131,7 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
 
       spec.withProjectLibraryUnpackedIntoJar("kotlinc.kotlin-build-tools-api", spec.mainJarName)
       spec.withProjectLibraryUnpackedIntoJar("kotlinc.kotlin-build-tools-impl", spec.mainJarName)
+      spec.withProjectLibraryUnpackedIntoJar("kotlinc.kotlin-build-tools-cri-impl", spec.mainJarName)
 
       addition?.invoke(spec)
     }
