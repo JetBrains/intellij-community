@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.updateSettings.impl
+package com.intellij.openapi.updateSettings.impl.productMigration
 
-import com.intellij.openapi.application.MigrationState
-import com.intellij.openapi.application.deleteMigrationState
-import com.intellij.openapi.application.migrationStateFile
-import com.intellij.openapi.application.readMigrationState
-import com.intellij.openapi.application.writeMigrationState
+import com.intellij.openapi.application.productMigration.MigrationState
+import com.intellij.openapi.application.productMigration.deleteMigrationState
+import com.intellij.openapi.application.productMigration.migrationStateFile
+import com.intellij.openapi.application.productMigration.readMigrationState
+import com.intellij.openapi.application.productMigration.writeMigrationState
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path

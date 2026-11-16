@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.application
+package com.intellij.openapi.application.productMigration
 
 import tools.jackson.core.JacksonException
 import tools.jackson.core.JsonGenerator

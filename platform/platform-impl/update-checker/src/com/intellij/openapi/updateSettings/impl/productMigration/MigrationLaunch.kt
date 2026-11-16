@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.updateSettings.impl
+package com.intellij.openapi.updateSettings.impl.productMigration
 
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.AppLifecycleListener
@@ -7,17 +7,18 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.MigrationLaunchReason
-import com.intellij.openapi.application.MigrationState
-import com.intellij.openapi.application.MigrationStatus
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.macOpenCommand
-import com.intellij.openapi.application.migrationLaunchArguments
-import com.intellij.openapi.application.startMigrationProcess
-import com.intellij.openapi.application.waitForMigrationOpen
+import com.intellij.openapi.application.productMigration.MigrationLaunchReason
+import com.intellij.openapi.application.productMigration.MigrationState
+import com.intellij.openapi.application.productMigration.MigrationStatus
+import com.intellij.openapi.application.productMigration.macOpenCommand
+import com.intellij.openapi.application.productMigration.migrationLaunchArguments
+import com.intellij.openapi.application.productMigration.startMigrationProcess
+import com.intellij.openapi.application.productMigration.waitForMigrationOpen
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.io.IOException
 import kotlin.io.path.isDirectory

@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.updateSettings.impl
+package com.intellij.openapi.updateSettings.impl.productMigration
 
-import com.intellij.openapi.application.MigrationRedirectTexts
+import com.intellij.openapi.application.productMigration.MigrationRedirectTexts
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json

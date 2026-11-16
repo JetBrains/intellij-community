@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.updateSettings.impl
+package com.intellij.openapi.updateSettings.impl.productMigration
 
-import com.intellij.openapi.application.MigrationImageData
-import com.intellij.openapi.application.MigrationRedirectContent
-import com.intellij.openapi.application.MigrationRedirectTexts
+import com.intellij.openapi.application.productMigration.MigrationImageData
+import com.intellij.openapi.application.productMigration.MigrationRedirectContent
+import com.intellij.openapi.application.productMigration.MigrationRedirectTexts
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
 import kotlin.io.path.createDirectories

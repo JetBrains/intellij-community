@@ -31,6 +31,8 @@ import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.productMigration.MigrationRedirectContentKt;
+import com.intellij.openapi.application.productMigration.MigrationStateKt;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;

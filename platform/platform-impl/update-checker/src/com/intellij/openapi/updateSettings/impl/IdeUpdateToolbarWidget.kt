@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.popup.AlignedPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.updateSettings.impl.productMigration.MIGRATION_RESTART_ACTION
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.impl.headertoolbar.isDarkHeader
 import com.intellij.ui.JBColor

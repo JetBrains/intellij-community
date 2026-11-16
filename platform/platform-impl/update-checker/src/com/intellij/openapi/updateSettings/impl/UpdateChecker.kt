@@ -45,6 +45,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.PluginUpdateCandidateDecision.AcceptUpdateToHigherVersion
 import com.intellij.openapi.updateSettings.impl.PluginUpdateCandidateDecision.KeepExistingPlugin
+import com.intellij.openapi.updateSettings.impl.productMigration.MigrationOfferResult
+import com.intellij.openapi.updateSettings.impl.productMigration.decidePlatformUpdate
+import com.intellij.openapi.updateSettings.impl.productMigration.loadMigrationOffer
+import com.intellij.openapi.updateSettings.impl.productMigration.migrationStateStore
+import com.intellij.openapi.updateSettings.impl.productMigration.showMigrationOffer
+import com.intellij.openapi.updateSettings.impl.productMigration.showMigrationReady
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.JDOMUtil

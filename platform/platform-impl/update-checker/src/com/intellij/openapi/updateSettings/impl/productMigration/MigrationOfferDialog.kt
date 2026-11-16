@@ -1,16 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.updateSettings.impl
+package com.intellij.openapi.updateSettings.impl.productMigration
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
-import com.intellij.openapi.application.MigrationImageData
-import com.intellij.openapi.application.migrationSvgIcon
-import com.intellij.openapi.application.plainTextArea
-import com.intellij.openapi.application.plainTextButton
-import com.intellij.openapi.application.plainTextLink
+import com.intellij.openapi.application.productMigration.MigrationImageData
+import com.intellij.openapi.application.productMigration.migrationSvgIcon
+import com.intellij.openapi.application.productMigration.plainTextArea
+import com.intellij.openapi.application.productMigration.plainTextButton
+import com.intellij.openapi.application.productMigration.plainTextLink
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.updateSettings.impl.IdeUpdateWidgetState
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel

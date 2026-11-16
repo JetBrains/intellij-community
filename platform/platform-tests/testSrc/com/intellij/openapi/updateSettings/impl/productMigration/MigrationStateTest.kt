@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.updateSettings.impl
+package com.intellij.openapi.updateSettings.impl.productMigration
 
-import com.intellij.openapi.application.MigrationState
-import com.intellij.openapi.application.MigrationStatus
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.application.migrationRedirectContentFile
-import com.intellij.openapi.application.migrationStateFile
-import com.intellij.openapi.application.readMigrationState
-import com.intellij.openapi.application.writeMigrationState
+import com.intellij.openapi.application.productMigration.MigrationState
+import com.intellij.openapi.application.productMigration.MigrationStatus
+import com.intellij.openapi.application.productMigration.migrationRedirectContentFile
+import com.intellij.openapi.application.productMigration.migrationStateFile
+import com.intellij.openapi.application.productMigration.readMigrationState
+import com.intellij.openapi.application.productMigration.writeMigrationState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

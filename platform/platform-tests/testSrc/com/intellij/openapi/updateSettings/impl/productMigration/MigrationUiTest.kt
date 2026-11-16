@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.updateSettings.impl
+package com.intellij.openapi.updateSettings.impl.productMigration
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.application.plainTextArea
-import com.intellij.openapi.application.plainTextButton
-import com.intellij.openapi.application.plainTextLink
+import com.intellij.openapi.application.productMigration.plainTextArea
+import com.intellij.openapi.application.productMigration.plainTextButton
+import com.intellij.openapi.application.productMigration.plainTextLink
 import com.intellij.util.ui.JBFont
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

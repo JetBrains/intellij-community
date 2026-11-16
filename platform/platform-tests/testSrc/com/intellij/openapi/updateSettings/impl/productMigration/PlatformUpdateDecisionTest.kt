@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.updateSettings.impl
+package com.intellij.openapi.updateSettings.impl.productMigration
 
-import com.intellij.openapi.application.MigrationStatus
+import com.intellij.openapi.application.productMigration.MigrationStatus
+import com.intellij.openapi.updateSettings.impl.PlatformUpdates
+import com.intellij.openapi.updateSettings.impl.parseUpdateData
 import com.intellij.openapi.util.io.IoTestUtil
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

@@ -38,6 +38,7 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.wm.impl.EarlyProjectFrame
 import com.intellij.openapi.wm.impl.loadFrameClasses
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.bootstrap.productMigration.scheduleMigrationRedirect
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu

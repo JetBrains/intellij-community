@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.updateSettings.impl
+package com.intellij.openapi.updateSettings.impl.productMigration
 
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.BrowserUtil
@@ -8,17 +8,23 @@ import com.intellij.l10n.LocalizationUtil
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.MigrationImageData
-import com.intellij.openapi.application.MigrationRedirectContent
-import com.intellij.openapi.application.MigrationRedirectTexts
-import com.intellij.openapi.application.MigrationState
-import com.intellij.openapi.application.MigrationStatus
-import com.intellij.openapi.application.migrationRedirectContentFile
-import com.intellij.openapi.application.writeMigrationRedirectContent
+import com.intellij.openapi.application.productMigration.MigrationImageData
+import com.intellij.openapi.application.productMigration.MigrationRedirectContent
+import com.intellij.openapi.application.productMigration.MigrationRedirectTexts
+import com.intellij.openapi.application.productMigration.MigrationState
+import com.intellij.openapi.application.productMigration.MigrationStatus
+import com.intellij.openapi.application.productMigration.migrationRedirectContentFile
+import com.intellij.openapi.application.productMigration.writeMigrationRedirectContent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.DistributionInfo
+import com.intellij.openapi.updateSettings.impl.IdeUpdateWidgetState
+import com.intellij.openapi.updateSettings.impl.PlatformUpdateDialog
+import com.intellij.openapi.updateSettings.impl.PlatformUpdates
+import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.openapi.updateSettings.impl.downloadUrl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.svg.getSvgDocumentSize
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread

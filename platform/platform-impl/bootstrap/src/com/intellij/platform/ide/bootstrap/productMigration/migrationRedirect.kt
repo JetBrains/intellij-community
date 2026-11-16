@@ -1,24 +1,27 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(LowLevelLocalMachineAccess::class)
-package com.intellij.platform.ide.bootstrap
+package com.intellij.platform.ide.bootstrap.productMigration
 
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.CliResult
 import com.intellij.idea.AppMode
 import com.intellij.idea.IdeStarter
-import com.intellij.openapi.application.MigrationOpenRequests
-import com.intellij.openapi.application.MigrationRedirect
-import com.intellij.openapi.application.MigrationRedirectChoice
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.application.launchMigrationRedirect
-import com.intellij.openapi.application.loadMigrationRedirect
-import com.intellij.openapi.application.migrationRedirectArguments
-import com.intellij.openapi.application.migrationRedirectStart
-import com.intellij.openapi.application.migrationStateFile
-import com.intellij.openapi.application.showMigrationRedirect
+import com.intellij.openapi.application.productMigration.MigrationOpenRequests
+import com.intellij.openapi.application.productMigration.MigrationRedirect
+import com.intellij.openapi.application.productMigration.MigrationRedirectChoice
+import com.intellij.openapi.application.productMigration.launchMigrationRedirect
+import com.intellij.openapi.application.productMigration.loadMigrationRedirect
+import com.intellij.openapi.application.productMigration.migrationRedirectArguments
+import com.intellij.openapi.application.productMigration.migrationRedirectStart
+import com.intellij.openapi.application.productMigration.migrationStateFile
+import com.intellij.openapi.application.productMigration.showMigrationRedirect
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.bootstrap.hideSplash
+import com.intellij.platform.ide.bootstrap.notInitializedProcessor
+import com.intellij.platform.ide.bootstrap.setActivationListener
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.protocolCommand
 import com.intellij.util.system.LowLevelLocalMachineAccess

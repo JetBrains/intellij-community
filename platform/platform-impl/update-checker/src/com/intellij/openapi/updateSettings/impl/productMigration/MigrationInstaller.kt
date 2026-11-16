@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.updateSettings.impl
+package com.intellij.openapi.updateSettings.impl.productMigration
 
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.execution.ExecutionException
@@ -8,10 +8,11 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.readInstalledProductInfo
+import com.intellij.openapi.application.productMigration.readInstalledProductInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.updateSettings.impl.DistributionInfo
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread

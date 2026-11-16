@@ -3,9 +3,9 @@ package com.intellij.ide.updates
 
 import com.intellij.openapi.updateSettings.impl.ChannelStatus
 import com.intellij.openapi.updateSettings.impl.UpdateChannel
-import com.intellij.openapi.updateSettings.impl.distributionXml
 import com.intellij.openapi.updateSettings.impl.parseDistribution
 import com.intellij.openapi.updateSettings.impl.parseUpdateData
+import com.intellij.openapi.updateSettings.impl.productMigration.distributionXml
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import org.junit.Assert.assertEquals

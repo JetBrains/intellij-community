@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
+import com.intellij.openapi.updateSettings.impl.productMigration.distributionXml
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.IoTestUtil
 import org.assertj.core.api.Assertions.assertThat
