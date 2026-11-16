@@ -19,7 +19,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import org.apache.tuweni.toml.Toml
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.toml.lang.psi.TomlKeyValue
 import java.io.IOException
@@ -31,19 +30,6 @@ import java.util.concurrent.ConcurrentMap
  */
 
 private val LOGGER = Logger.getInstance("#com.jetbrains.python.sdk.poetry")
-
-suspend fun getPyProjectTomlForPoetry(virtualFile: VirtualFile): VirtualFile? =
-  withContext(Dispatchers.IO) {
-    readAction {
-      try {
-        Toml.parse(virtualFile.inputStream).getTable("tool.poetry")?.let { virtualFile }
-      }
-      catch (e: IOException) {
-        LOGGER.info(e)
-        null
-      }
-    }
-  }
 
 /**
  * Finds the Python version string specified in the toml file.
