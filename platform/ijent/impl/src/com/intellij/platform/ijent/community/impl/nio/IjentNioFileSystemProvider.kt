@@ -30,6 +30,7 @@ import com.intellij.platform.eel.impl.base.fs.EelFsResultImpl
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.eel.provider.utils.throwFileSystemException
+import com.intellij.platform.ijent.community.impl.CriticalSection
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
@@ -105,14 +106,6 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
     private const val SCHEME = "ijent"
     private const val KEY_IJENT_FS = "ijentFs"
-  }
-
-  @JvmInline
-  internal value class CriticalSection<D : Any>(val hidden: D) {
-    inline operator fun <T> invoke(body: D.() -> T): T =
-      synchronized(hidden) {
-        hidden.body()
-      }
   }
 
   private val criticalSection = CriticalSection(object {
