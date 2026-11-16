@@ -327,6 +327,7 @@ intellij.settingsSync.tests
 intellij.sh.tests
 intellij.spring.boot.configYaml.tests.exploratory
 intellij.spring.boot.json.tests.exploratory
+intellij.spring.el.tests.exploratory
 intellij.statsCollector.tests
 intellij.tasks.tests
 intellij.terminal.completion.tests
