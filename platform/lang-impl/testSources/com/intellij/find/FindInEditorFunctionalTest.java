@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
@@ -268,6 +269,39 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     }
     finally {
       searchResults.setChunkHook(null);
+      preview.dispose();
+    }
+  }
+
+  public void testLivePreviewReusesMatchingHighlighterWhenRangesCollapse() {
+    init("foo foo");
+    SearchResults searchResults = new SearchResults(getEditor(), getProject());
+    LivePreviewController controller = new LivePreviewController(searchResults, null, getTestRootDisposable());
+    EditorColorsScheme scheme = (EditorColorsScheme)EditorColorsManager.getInstance().getGlobalScheme().clone();
+    LivePreviewPresentation presentation = new EditorLivePreviewPresentation(scheme);
+    LivePreview preview = new LivePreview(searchResults, presentation);
+    try {
+      FindModel findModel = new FindModel();
+      findModel.setStringToFind("(?=foo)");
+      findModel.setRegularExpressions(true);
+      controller.updateInBackground(findModel, false);
+      List<RangeHighlighter> highlighters = findEmptyMatchHighlighters(presentation);
+      assertEquals(2, highlighters.size());
+      RangeHighlighter first = highlighters.get(0);
+      RangeHighlighter second = highlighters.get(1);
+      ((MarkupModelEx)getEditor().getMarkupModel()).setRangeHighlighterAttributes(first, presentation.getExcludedAttributes());
+
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> getEditor().getDocument().deleteString(0, 4));
+      assertTrue(first.isValid());
+      assertTrue(second.isValid());
+      assertEquals(first.getTextRange(), second.getTextRange());
+      controller.updateInBackground(findModel, false);
+
+      assertSameElements(findEmptyMatchHighlighters(presentation), List.of(second));
+      assertFalse(first.isValid());
+      assertTrue(second.isValid());
+    }
+    finally {
       preview.dispose();
     }
   }
