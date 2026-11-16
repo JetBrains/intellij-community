@@ -24,6 +24,7 @@ intellij.python.pyproject.tests
 intellij.python.sdk.tests
 intellij.tasks.tests.vcs
 intellij.vcs.git.backend.split.tests
+intellij.vcs.git.backend.tests
 intellij.vcs.git.coverage.tests
 intellij.vcs.git.terminal.tests
 intellij.vcs.github.ultimate.cron.tests
