@@ -8,3 +8,4 @@ fun main() {
 
 // VARIABLE_PATH: obj.name
 // EVAL_EXPRESSION: obj.name
+// EVAL_RESULT: anon

@@ -1,7 +1,13 @@
-LineBreakpoint created at anonymousObjectInferredType.kt:10
+LineBreakpoint created at anonymousObjectInferredType.kt:22
 Run Java
 Connected to the target VM
-anonymousObjectInferredType.kt:10
+anonymousObjectInferredType.kt:22
+Compile bytecode for obj.name
+Compile bytecode for two.a
+Compile bytecode for two.b
+Compile bytecode for two.own
+Compile bytecode for reversed.a
+Compile bytecode for reversed.b
 Disconnected from the target VM
 
 Process finished with exit code 0

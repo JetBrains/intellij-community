@@ -3,16 +3,20 @@
 // The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger
 
+import com.intellij.debugger.DebuggerContext
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.FieldVisibilityProvider
 import com.intellij.debugger.engine.JVMNameUtil
+import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.instanceOf
 import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.debugger.ui.tree.DebuggerTreeNode
+import com.intellij.debugger.ui.tree.DescriptorWithParentObject
 import com.intellij.debugger.ui.tree.NodeManager
 import com.intellij.debugger.ui.tree.ValueDescriptor
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder
@@ -20,7 +24,15 @@ import com.intellij.debugger.ui.tree.render.ClassRenderer
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.IncorrectOperationException
 import com.sun.jdi.ArrayType
+import com.sun.jdi.ClassType
 import com.sun.jdi.Field
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
@@ -36,6 +48,7 @@ import org.jetbrains.kotlin.idea.debugger.core.KotlinMetadataCacheService
 import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
 import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSourcesAsync
 import org.jetbrains.kotlin.idea.debugger.core.render.GetterDescriptor
+import org.jetbrains.kotlin.load.java.JvmAbi
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
 import kotlin.metadata.KmProperty
@@ -158,6 +171,56 @@ open class KotlinClassRenderer : ClassRenderer() {
     }
 
     override fun isApplicable(type: Type?) = throw IllegalStateException("Should not be called")
+
+    override fun getChildValueExpression(node: DebuggerTreeNode, context: DebuggerContext): PsiElement {
+        val descriptor = node.descriptor as DescriptorWithParentObject
+        val type = descriptor.getObject().referenceType()
+        val project = context.project
+        val scope = context.debugProcess?.searchScope ?: GlobalSearchScope.allScope(project)
+
+        fun findClass(name: String): PsiClass? = DebuggerUtils.findClass(name, project, scope)
+
+        if (findClass(type.name()) != null) {
+            return super.getChildValueExpression(node, context)
+        }
+
+        val propertyName = descriptor.name
+        val declaredType = (node.parent?.descriptor as? ValueDescriptorImpl)?.declaredType
+        var contextClass = declaredType?.let(::findClass)?.takeIf { it.hasProperty(propertyName) }
+        if (contextClass == null && type is ClassType) {
+            // If we cannot find the PSI for the object itself, it might be missing because it is an anonymous object
+            // and Java has no PSI for anonymous Kotlin objects.
+            // Instead, we try to find the first superclass that contains the requested property.
+            val superclass = generateSequence(type.superclass()) {
+                it.superclass()
+            }.firstNotNullOfOrNull { findClass(it.name()) }
+            contextClass = superclass?.takeIf { it.hasProperty(propertyName) }
+
+            if (contextClass == null) {
+                contextClass = type.allInterfaces().asSequence().mapNotNull {
+                    findClass(it.name())
+                }.firstOrNull { it.hasProperty(propertyName) }
+            }
+        }
+        if (contextClass == null) {
+            contextClass = findClass(CommonClassNames.JAVA_LANG_OBJECT)
+        }
+
+        try {
+            return JavaPsiFacade.getElementFactory(project).createExpressionFromText("this.$propertyName", contextClass)
+        } catch (e: IncorrectOperationException) {
+            throw EvaluateException(JavaDebuggerBundle.message("error.invalid.field.name", propertyName), e)
+        }
+    }
+
+    private fun PsiClass.hasProperty(name: String): Boolean {
+        if (findFieldByName(name, true) != null) return true
+        val matchingMethods = findMethodsByName(JvmAbi.getterName(name), true)
+
+        return matchingMethods.any {
+            it.parameterList.isEmpty && !it.hasModifierProperty(PsiModifier.STATIC)
+        }
+    }
 
     override fun shouldDisplay(context: EvaluationContext?, objInstance: ObjectReference, field: Field): Boolean {
         val referenceType = objInstance.referenceType()

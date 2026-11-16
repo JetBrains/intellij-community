@@ -2,6 +2,7 @@ LineBreakpoint created at anonymousObjectWithoutSupertype.kt:6
 Run Java
 Connected to the target VM
 anonymousObjectWithoutSupertype.kt:6
+Compile bytecode for obj.name
 Disconnected from the target VM
 
 Process finished with exit code 0

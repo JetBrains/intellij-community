@@ -1,7 +1,18 @@
-LineBreakpoint created at anonymousObjectField.kt:11
+LineBreakpoint created at anonymousObjectField.kt:44
 Run Java
 Connected to the target VM
-anonymousObjectField.kt:11
+anonymousObjectField.kt:44
+Compile bytecode for iface.name
+Compile bytecode for two.shared
+Compile bytecode for two.b
+Compile bytecode for (two as First).a
+Compile bytecode for (reversed as First).a
+Compile bytecode for reversed.b
+Compile bytecode for (any as First).a
+Compile bytecode for (any as Second).b
+Compile bytecode for (anyReversed as First).a
+Compile bytecode for (anyReversed as Second).b
+Compile bytecode for (viaLocalBase as NamedBase).inherited
 Disconnected from the target VM
 
 Process finished with exit code 0
