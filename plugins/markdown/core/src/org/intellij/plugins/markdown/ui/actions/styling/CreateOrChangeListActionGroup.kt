@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.ui.actions.styling
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -24,6 +25,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAt
 import org.intellij.plugins.markdown.editor.lists.ListUtils.items
 import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
@@ -59,12 +61,13 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
     text = messagePointer("markdown.create.list.popup.ordered.action.text"),
     icon = MarkdownIcons.EditorActions.NumberedList
   ) {
-    override fun isSameMarker(markerElement: PsiElement): Boolean {
-      return !hasCheckbox(markerElement) && obtainMarkerText(markerElement)?.toIntOrNull() != null
+    override fun isSameMarker(markerElement: PsiElement, style: MarkdownCustomCodeStyleSettings): Boolean {
+      return !hasCheckbox(markerElement) && obtainMarkerText(markerElement)?.toIntOrNull() != null &&
+             hasForcedDelimiter(markerElement, style)
     }
 
-    override fun createMarkerText(index: Int): String {
-      return "${index + 1}."
+    override fun createMarkerText(index: Int, style: MarkdownCustomCodeStyleSettings): String {
+      return orderedMarkerText(index, style)
     }
   }
 
@@ -72,12 +75,17 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
     text = messagePointer("markdown.create.list.popup.unordered.action.text"),
     icon = MarkdownIcons.EditorActions.BulletList
   ) {
-    override fun isSameMarker(markerElement: PsiElement): Boolean {
-      return !hasCheckbox(markerElement) && obtainMarkerText(markerElement) == "*"
+    override fun isSameMarker(markerElement: PsiElement, style: MarkdownCustomCodeStyleSettings): Boolean {
+      val bullet = obtainMarkerText(markerElement)?.singleOrNull() ?: return false
+      if (hasCheckbox(markerElement) || bullet !in BULLETS) {
+        return false
+      }
+      val forcedBullet = style.unorderedListMarker.bullet
+      return forcedBullet == null || bullet == forcedBullet
     }
 
-    override fun createMarkerText(index: Int): String {
-      return "*"
+    override fun createMarkerText(index: Int, style: MarkdownCustomCodeStyleSettings): String {
+      return (style.unorderedListMarker.bullet ?: DEFAULT_BULLET).toString()
     }
   }
 
@@ -85,21 +93,26 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
     text = messagePointer("markdown.create.list.popup.checkmark.action.text"),
     icon = MarkdownIcons.EditorActions.CheckmarkList
   ) {
-    override fun isSameMarker(markerElement: PsiElement): Boolean {
-      return hasCheckbox(markerElement)
+    override fun isSameMarker(markerElement: PsiElement, style: MarkdownCustomCodeStyleSettings): Boolean {
+      return hasCheckbox(markerElement) && hasForcedDelimiter(markerElement, style)
     }
 
-    override fun createMarkerText(index: Int): String {
-      return "${index + 1}. [ ]"
+    override fun createMarkerText(index: Int, style: MarkdownCustomCodeStyleSettings): String {
+      return "${orderedMarkerText(index, style)} [ ]"
     }
 
-    override fun processListElement(originalChild: MarkdownListItem, index: Int): PsiElement {
+    override fun processListElement(originalChild: MarkdownListItem, index: Int, style: MarkdownCustomCodeStyleSettings): PsiElement {
+      val originalMarker = originalChild.markerElement ?: return originalChild
+      if (hasCheckbox(originalMarker)) {
+        originalMarker.replace(MarkdownPsiElementFactory.createListMarker(originalChild.project, orderedMarkerText(index, style)))
+        return originalChild
+      }
       val (marker, checkbox) = MarkdownPsiElementFactory.createListMarkerWithCheckbox(
         originalChild.project,
-        "${index + 1}.",
+        orderedMarkerText(index, style),
         true
       )
-      val addedMarker = originalChild.markerElement!!.replace(marker)
+      val addedMarker = originalMarker.replace(marker)
       originalChild.addAfter(checkbox, addedMarker)
       return originalChild
     }
@@ -115,6 +128,7 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
       val editor = event.getData(CommonDataKeys.EDITOR) ?: return
       val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
       val document = editor.document
+      val style = CodeStyle.getCustomSettings(file, MarkdownCustomCodeStyleSettings::class.java)
       WriteCommandAction.writeCommandAction(project, file)
         .withName(templatePresentation.text)
         .run<RuntimeException> {
@@ -122,8 +136,8 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
             PsiDocumentManager.getInstance(project).commitDocument(document)
             val list = findList(file, document, caret.selectionStart)
             when {
-              state && list == null -> createListFromText(project, document, caret)
-              state && list != null -> replaceList(list)
+              state && list == null -> createListFromText(project, document, caret, style)
+              state && list != null -> replaceList(list, style)
               !state && list != null -> replaceListWithText(document, list)
             }
           }
@@ -138,19 +152,20 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
       if (carets.isEmpty()) {
         return false
       }
+      val style = CodeStyle.getCustomSettings(file, MarkdownCustomCodeStyleSettings::class.java)
       return carets.all { caret ->
         val list = findList(file, document, caret.offset) ?: return@all false
         val marker = list.items.firstOrNull()?.markerElement ?: return@all false
-        isSameMarker(marker)
+        isSameMarker(marker, style)
       }
     }
 
-    abstract fun isSameMarker(markerElement: PsiElement): Boolean
+    abstract fun isSameMarker(markerElement: PsiElement, style: MarkdownCustomCodeStyleSettings): Boolean
 
-    abstract fun createMarkerText(index: Int): String
+    abstract fun createMarkerText(index: Int, style: MarkdownCustomCodeStyleSettings): String
 
-    open fun processListElement(originalChild: MarkdownListItem, index: Int): PsiElement {
-      val marker = MarkdownPsiElementFactory.createListMarker(originalChild.project, createMarkerText(index))
+    open fun processListElement(originalChild: MarkdownListItem, index: Int, style: MarkdownCustomCodeStyleSettings): PsiElement {
+      val marker = MarkdownPsiElementFactory.createListMarker(originalChild.project, createMarkerText(index, style))
       val originalMarker = originalChild.markerElement ?: return originalChild
       if (hasCheckbox(originalMarker)) {
         originalMarker.nextSibling?.delete()
@@ -163,30 +178,20 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
       return ActionUpdateThread.BGT
     }
 
-    private fun replaceList(list: MarkdownList): MarkdownList {
-      val resultList = MarkdownPsiElementFactory.createEmptyList(list.project, true)
-      val children = list.firstChild?.siblings(forward = true, withSelf = true) ?: return list
-      var itemIndex = 0
-      for (child in children) {
-        when (child) {
-          is MarkdownListItem -> {
-            resultList.add(processListElement(child, itemIndex))
-            itemIndex += 1
-          }
-          else -> resultList.add(child)
-        }
+    private fun replaceList(list: MarkdownList, style: MarkdownCustomCodeStyleSettings) {
+      list.items.forEachIndexed { index, item ->
+        processListElement(item, index, style)
       }
-      return list.replace(resultList) as MarkdownList
     }
 
-    private fun createListFromText(project: Project, document: Document, caret: Caret) {
+    private fun createListFromText(project: Project, document: Document, caret: Caret, style: MarkdownCustomCodeStyleSettings) {
       val startLine = document.getLineNumber(caret.selectionStart)
       val endLine = document.getLineNumber(caret.selectionEnd)
       val text = document.charsSequence
       val lines = (startLine..endLine).asSequence().map {
         text.substring(document.getLineStartOffset(it), document.getLineEndOffset(it))
       }
-      val list = MarkdownPsiElementFactory.createList(project, lines.asIterable(), ::createMarkerText)
+      val list = MarkdownPsiElementFactory.createList(project, lines.asIterable()) { index -> createMarkerText(index, style) }
       document.replaceString(document.getLineStartOffset(startLine), document.getLineEndOffset(endLine), list.text)
     }
 
@@ -212,8 +217,25 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
   }
 
   companion object {
+    private const val DEFAULT_BULLET = '*'
+    private const val DEFAULT_DELIMITER = '.'
+    private const val BULLETS = "*-+"
+
+    private fun orderedMarkerText(index: Int, style: MarkdownCustomCodeStyleSettings): String {
+      return "${index + 1}${style.orderedListMarker.delimiter ?: DEFAULT_DELIMITER}"
+    }
+
+    /**
+     * Returns `true` for a bullet marker, and for a number marker with the delimiter of the code style.
+     */
+    private fun hasForcedDelimiter(markerElement: PsiElement, style: MarkdownCustomCodeStyleSettings): Boolean {
+      val forcedDelimiter = style.orderedListMarker.delimiter ?: return true
+      val marker = markerElement.text?.trim() ?: return false
+      return marker.dropLast(1).toIntOrNull() == null || marker.last() == forcedDelimiter
+    }
+
     private fun obtainMarkerText(markerElement: PsiElement): String? {
-      return markerElement.text?.trimEnd('.', ')', ' ')
+      return markerElement.text?.trim()?.trimEnd('.', ')')
     }
 
     private fun hasCheckbox(element: PsiElement): Boolean {

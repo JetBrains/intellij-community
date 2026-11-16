@@ -45,6 +45,15 @@ internal object MarkdownSpacingBuilder {
       //LISTS
       //we can't enforce one line between lists since from commonmark perspective
       //one-line break does not break lists, but considered as a space between items
+      //a forced marker merges adjacent lists of one kind, so a new blank line would make the merged list loose
+      .applyIf(markdown.unorderedListMarker.bullet != null) {
+        between(MarkdownElementTypes.UNORDERED_LIST, MarkdownElementTypes.UNORDERED_LIST)
+          .spacing(0, 0, 1, true, markdown.MAX_LINES_AROUND_BLOCK_ELEMENTS)
+      }
+      .applyIf(markdown.orderedListMarker.delimiter != null) {
+        between(MarkdownElementTypes.ORDERED_LIST, MarkdownElementTypes.ORDERED_LIST)
+          .spacing(0, 0, 1, true, markdown.MAX_LINES_AROUND_BLOCK_ELEMENTS)
+      }
       .between(MarkdownTokenTypeSets.LISTS, MarkdownTokenTypeSets.LISTS).blankLines(markdown.MIN_LINES_AROUND_BLOCK_ELEMENTS)
       .aroundInside(MarkdownTokenTypeSets.LISTS, MarkdownElementTypes.LIST_ITEM).blankLines(0)
       //but we can enforce one line around LISTS

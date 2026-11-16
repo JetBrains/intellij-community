@@ -71,4 +71,18 @@ class MarkdownCustomCodeStyleSettings(settings: CodeStyleSettings) : CustomCodeS
   var tableStyle: TableStyle
     get() = TableStyle.entries[TABLE_STYLE]
     set(value) { TABLE_STYLE = value.ordinal }
+
+  @JvmField
+  var UNORDERED_LIST_MARKER: Int = UnorderedListMarker.KEEP.ordinal
+
+  var unorderedListMarker: UnorderedListMarker
+    get() = UnorderedListMarker.entries.getOrElse(UNORDERED_LIST_MARKER) { UnorderedListMarker.KEEP }
+    set(value) { UNORDERED_LIST_MARKER = value.ordinal }
+
+  @JvmField
+  var ORDERED_LIST_MARKER: Int = OrderedListMarker.KEEP.ordinal
+
+  var orderedListMarker: OrderedListMarker
+    get() = OrderedListMarker.entries.getOrElse(ORDERED_LIST_MARKER) { OrderedListMarker.KEEP }
+    set(value) { ORDERED_LIST_MARKER = value.ordinal }
 }

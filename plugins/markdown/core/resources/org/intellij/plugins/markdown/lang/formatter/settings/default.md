@@ -15,6 +15,9 @@ One more sample paragraph with `inline` *elements*.
     * And bullet with more
       than one line
 
+1. Ordered list item
+2. Another ordered list item
+
 Last paragraph that is placed after list
 
 | Column | Meaning       |

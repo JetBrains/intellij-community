@@ -78,6 +78,22 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
           TableStyle.entries.map { MarkdownBundle.message(it.messageKey) }.toTypedArray(),
           TableStyle.entries.map { it.ordinal }.toIntArray()
         )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::UNORDERED_LIST_MARKER.name,
+          MarkdownBundle.message("markdown.style.settings.unordered.list.marker"),
+          MarkdownBundle.message("markdown.style.settings.group.list.markers"),
+          UnorderedListMarker.entries.map { MarkdownBundle.message(it.messageKey) }.toTypedArray(),
+          UnorderedListMarker.entries.map { it.ordinal }.toIntArray()
+        )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::ORDERED_LIST_MARKER.name,
+          MarkdownBundle.message("markdown.style.settings.ordered.list.marker"),
+          MarkdownBundle.message("markdown.style.settings.group.list.markers"),
+          OrderedListMarker.entries.map { MarkdownBundle.message(it.messageKey) }.toTypedArray(),
+          OrderedListMarker.entries.map { it.ordinal }.toIntArray()
+        )
       }
       SettingsType.BLANK_LINES_SETTINGS -> {
         consumer.showCustomOption(
