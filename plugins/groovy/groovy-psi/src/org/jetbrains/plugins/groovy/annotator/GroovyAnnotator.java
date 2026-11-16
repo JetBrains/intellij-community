@@ -84,6 +84,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.ChangeExtendsImplements
 import org.jetbrains.plugins.groovy.annotator.intentions.GrMoveClassToCorrectPlaceFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.GrRemoveExceptionFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.GrReplacePrimitiveTypeWithWrapperFix;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDelimiterFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrRemoveModifierFix;
@@ -2031,17 +2032,11 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
       if (modifier instanceof GrAnnotation) continue;
       //noinspection MagicConstant
       @GrModifier.GrModifierConstant String name = modifier.getText();
-      if (set.contains(name)) {
+      if (!set.add(name)) {
         String message = GroovyBundle.message("duplicate.modifier", name);
-        AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, message).range(modifier);
-        if (member != null) {
-          GrModifierFix fix = new GrRemoveModifierFix(name, GrModifierFix.MODIFIER_LIST);
-          builder = registerLocalFix(builder, fix, list, message, ProblemHighlightType.ERROR, list.getTextRange());
-        }
-        builder.create();
-      }
-      else {
-        set.add(name);
+        holder.newAnnotation(HighlightSeverity.ERROR, message).range(modifier)
+          .withFix(QuickfixUtil.fixToIntention(modifier, new GrRemoveModifierFix(name)))
+          .create();
       }
     }
   }
