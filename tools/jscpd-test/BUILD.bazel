@@ -9,6 +9,7 @@ rust_tool_binary(
     lints = "//build/dev-dist-tools:lints",
     test_deps = ["@ddt//:tempfile"],
     deps = [
+        "//build/dev-dist-tools/crates/checkout-files",
         "//build/dev-dist-tools/crates/fscopy",
         "@ddt//:regex",
         "@ddt//:serde",
