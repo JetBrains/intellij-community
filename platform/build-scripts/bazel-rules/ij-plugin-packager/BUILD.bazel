@@ -32,8 +32,20 @@ string_list_flag(
         # required by the memory-mapped ZIP reader used to read and write JARs
         "--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED",
         "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
-        # packaging needs far less heap than compilation; the last `-Xmx` wins, so this overrides the default from `get_jvm_flags`
-        "-Xmx512m",
+        # The heap is measured: `-Xmx` is twice the peak used heap after a GC of a full build of every `ij_plugin`
+        # target, rounded up to a multiple of 64 MB. `-Xms` is just above the idle heap, which holds the deploy jar
+        # that `MemoryLauncher` keeps in memory. The last `-Xmx` and `-Xms` win over the defaults of `get_jvm_flags`.
+        # `community/common.bazelrc` pins the request count that the measurement rests on. Measure again before a change.
+        "-Xmx192m",
+        "-Xms64m",
+        # The direct cap is measured too: twice the NMT `Other` peak of a full build, rounded up to a multiple of 64 MB.
+        # Without the flag the cap follows `-Xmx`. The peak does not scale with the core count. One inflated entry of
+        # `//contrib/CloudFormation:cloudFormation_plugin` needs a 27 MB direct buffer, which is the floor of the cap.
+        "-XX:MaxDirectMemorySize=128m",
+        "-XX:+HeapDumpOnOutOfMemoryError",
+        # Relative to the execroot, the working directory of the worker. Each later Bazel command deletes the files of the
+        # execroot that have no `bazel-` prefix, and a TeamCity Bazel build runs one more for its report.
+        "-XX:HeapDumpPath=bazel-out",
     ]),
     visibility = ["//visibility:public"],
 )
