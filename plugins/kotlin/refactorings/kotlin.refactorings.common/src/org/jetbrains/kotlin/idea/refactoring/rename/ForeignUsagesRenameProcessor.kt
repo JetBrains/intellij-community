@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.annotations.ApiStatus
 
 abstract class ForeignUsagesRenameProcessor {
     companion object {
@@ -24,6 +25,11 @@ abstract class ForeignUsagesRenameProcessor {
                 languageInfos.forEach(fallbackHandler)
             }
         }
+
+        /** @return whether a processor is registered; it writes the usages it handles itself, which a rename on copies cannot use */
+        @ApiStatus.Internal
+        @JvmStatic
+        fun hasProcessors(): Boolean = EP_NAME.hasAnyExtensions()
 
         @JvmStatic
         fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {

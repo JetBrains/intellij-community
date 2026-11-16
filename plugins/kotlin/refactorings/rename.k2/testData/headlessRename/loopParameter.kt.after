@@ -1,0 +1,6 @@
+// NEW_NAME: item
+fun f(list: List<Int>) {
+    for (item in list) {
+        println(item)
+    }
+}

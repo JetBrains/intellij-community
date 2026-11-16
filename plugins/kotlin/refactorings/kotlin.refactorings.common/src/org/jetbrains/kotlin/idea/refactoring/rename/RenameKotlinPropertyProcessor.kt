@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
+import com.intellij.model.SymbolPointer
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Pass
 import com.intellij.psi.PsiElement
@@ -17,11 +19,14 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.listeners.RefactoringElementListener
-import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
+import com.intellij.refactoring.modplan.ModPlanOption
+import com.intellij.refactoring.modplan.ModPlanOptionValues
+import com.intellij.refactoring.modplan.ModPlanQuestion
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -63,7 +68,7 @@ import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.utils.SmartList
 
-class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
+class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
   override fun canProcessElement(element: PsiElement): Boolean {
     val namedUnwrappedElement = element.namedUnwrappedElement
@@ -123,12 +128,18 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor(), DelegatingHead
     result += collisions
   }
 
-  private fun chooseCallableToRename(callableDeclaration: KtCallableDeclaration, askUser: Boolean): KtCallableDeclaration? {
+  /** @param renameBase the answer to the base-property question when [askUser] is false: false keeps [callableDeclaration] */
+  internal fun chooseCallableToRename(
+    callableDeclaration: KtCallableDeclaration,
+    askUser: Boolean,
+    renameBase: Boolean = true,
+  ): KtCallableDeclaration? {
     val deepestSuperDeclaration = findDeepestOverriddenDeclaration(callableDeclaration)
     if (deepestSuperDeclaration == null || deepestSuperDeclaration == callableDeclaration) {
       return callableDeclaration
     }
 
+    if (!askUser && !renameBase) return callableDeclaration
     if (isUnitTestMode() || !askUser) return deepestSuperDeclaration
 
     val containsText: String? =
@@ -157,21 +168,12 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor(), DelegatingHead
     substituteElementToRename(element, askUser = true)
 
   /**
-   * The base property, when [element] overrides something.
-   *
-   * Kotlin asks the user here whether to rename the base property. This answers that question with
-   * yes, so that the code stays consistent.
-   */
-  override fun substituteElementToRenameHeadless(element: PsiElement): PsiElement? =
-    substituteElementToRename(element, askUser = false)
-
-  /**
    * The element to rename instead of [element].
    *
-   * @param askUser false answers the base-property question with the base property.
-   *                [substituteElementToRenameHeadless] passes false.
+   * @param askUser false answers the base-property question with [renameBase].
+   *                [ModPlanKotlinPropertyRenameProvider] passes false.
    */
-  private fun substituteElementToRename(element: PsiElement, askUser: Boolean): PsiElement? {
+  internal fun substituteElementToRename(element: PsiElement, askUser: Boolean, renameBase: Boolean = true): PsiElement? {
     val namedUnwrappedElement = element.namedUnwrappedElement ?: return null
     // a local property has no overrides, no light-class accessors, and no JvmName
     if (namedUnwrappedElement is KtProperty && namedUnwrappedElement.isLocal) return namedUnwrappedElement
@@ -179,7 +181,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor(), DelegatingHead
     val callableDeclaration = namedUnwrappedElement as? KtCallableDeclaration
                               ?: throw IllegalStateException("Can't be for element $element there because of canProcessElement()")
 
-    val declarationToRename = chooseCallableToRename(callableDeclaration, askUser) ?: return null
+    val declarationToRename = chooseCallableToRename(callableDeclaration, askUser, renameBase) ?: return null
 
     val (getterJvmName, setterJvmName) = getJvmNames(namedUnwrappedElement)
     if (element is KtLightMethod) {
@@ -237,29 +239,18 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor(), DelegatingHead
     }
 
     /**
-     * The second accessor of the property, and every other element the rename must change.
-     *
-     * Kotlin asks the user here whether to rename the second accessor. This answers that question
-     * with yes, so that a getter and a setter keep one name.
-     */
-    override fun prepareRenamingHeadless(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>) {
-        // The scope of the three-parameter prepareRenaming of the base class.
-        val scope = PsiSearchHelper.getInstance(element.project).getUseScope(element)
-        prepareRenaming(element, newName, allRenames, scope, askUser = false)
-    }
-
-    /**
      * Collects the other elements the rename must change.
      *
-     * @param askUser false answers the second-accessor question with yes, so that a getter and a
-     *                setter keep one name. [prepareRenamingHeadless] passes false.
+     * @param askUser false answers the second-accessor question with [renameOtherAccessor].
+     *                [ModPlanKotlinPropertyRenameProvider] passes false.
      */
-    private fun prepareRenaming(
+    internal fun prepareRenaming(
         element: PsiElement,
         newName: String,
         allRenames: MutableMap<PsiElement, String>,
         scope: SearchScope,
         askUser: Boolean,
+        renameOtherAccessor: Boolean = true,
     ) {
         super.prepareRenaming(element, newName, allRenames, scope)
 
@@ -288,11 +279,11 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor(), DelegatingHead
         ) {
             val accessorToRename = if (element == getter) setter else getter
             val newAccessorName = if (element == getter) JvmAbi.setterName(newPropertyName) else JvmAbi.getterName(newPropertyName)
-            if (isUnitTestMode() || !askUser || Messages.showYesNoDialog(
+            if (!askUser && renameOtherAccessor || askUser && (isUnitTestMode() || Messages.showYesNoDialog(
                     KotlinBundle.message("text.do.you.want.to.rename.0.as.well", accessorToRename.name),
                     RefactoringBundle.message("rename.title"),
                     Messages.getQuestionIcon()
-                ) == Messages.YES
+                ) == Messages.YES)
             ) {
                 allRenames[accessorToRename] = newAccessorName
             }
@@ -337,10 +328,32 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor(), DelegatingHead
         ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
     }
 
-  protected enum class UsageKind {
+  internal enum class UsageKind {
     SIMPLE_PROPERTY_USAGE,
     GETTER_USAGE,
     SETTER_USAGE
+  }
+
+  /** @return whether [usage] refers to the getter named [oldGetterName], to the setter named [oldSetterName], or to the property */
+  internal fun usageKindOf(usage: UsageInfo, oldGetterName: String, oldSetterName: String): UsageKind {
+      val refElement = usage.reference?.resolve()
+      return if (refElement is PsiMethod) {
+          val refElementName = refElement.name
+          val refElementNameToCheck = (
+                  if (usage is MangledJavaRefUsageInfo)
+                      renameRefactoringSupport.demangleInternalName(refElementName)
+                  else
+                      null
+                  ) ?: refElementName
+
+          when (refElementNameToCheck) {
+              oldGetterName -> UsageKind.GETTER_USAGE
+              oldSetterName -> UsageKind.SETTER_USAGE
+              else -> UsageKind.SIMPLE_PROPERTY_USAGE
+          }
+      } else {
+          UsageKind.SIMPLE_PROPERTY_USAGE
+      }
   }
 
   private fun addRenameElements(
@@ -389,7 +402,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor(), DelegatingHead
     }
   }
 
-  private fun findDeepestOverriddenDeclaration(declaration: KtCallableDeclaration): KtCallableDeclaration? {
+  internal fun findDeepestOverriddenDeclaration(declaration: KtCallableDeclaration): KtCallableDeclaration? {
     if (declaration.modifierList?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true) {
       val deepestSuperDeclarations = runProcessWithProgressIfOnEdt(
         KotlinBundle.message("rename.searching.for.super.declaration"),
@@ -475,26 +488,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor(), DelegatingHead
               usages.toList()
           }
 
-          val refKindUsages = adjustedUsages.groupBy { usage: UsageInfo ->
-              val refElement = usage.reference?.resolve()
-              if (refElement is PsiMethod) {
-                  val refElementName = refElement.name
-                  val refElementNameToCheck = (
-                          if (usage is MangledJavaRefUsageInfo)
-                              renameRefactoringSupport.demangleInternalName(refElementName)
-                          else
-                              null
-                          ) ?: refElementName
-
-                  when (refElementNameToCheck) {
-                      oldGetterName -> UsageKind.GETTER_USAGE
-                      oldSetterName -> UsageKind.SETTER_USAGE
-                      else -> UsageKind.SIMPLE_PROPERTY_USAGE
-                  }
-              } else {
-                  UsageKind.SIMPLE_PROPERTY_USAGE
-              }
-          }
+          val refKindUsages = adjustedUsages.groupBy { usage: UsageInfo -> usageKindOf(usage, oldGetterName, oldSetterName) }
 
           adjustedUsages to refKindUsages
       }
@@ -526,4 +520,89 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor(), DelegatingHead
       listener?.elementRenamed(element)
   }
 
+}
+
+/**
+ * The rename on the ModPlan engine of the elements that [RenameKotlinPropertyProcessor] renames.
+ *
+ * The processor asks two questions with a dialog: about the base property in `substituteElementToRename`, and about the other accessor
+ * in `prepareRenaming`. The ModPlan path must not show a dialog there. So this provider asks the two questions before, as ModPlan
+ * questions, and calls the processor with `askUser = false` and the answers.
+ */
+@ApiStatus.Internal
+class ModPlanKotlinPropertyRenameProvider :
+  ModPlanKotlinRenameProvider<RenameKotlinPropertyProcessor>(RenameKotlinPropertyProcessor()) {
+  override fun substitute(element: PsiElement, answers: ModPlanOptionValues): PsiElement? =
+    processor.substituteElementToRename(element, askUser = false, answers.get(ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION))
+
+  /**
+   * The question about the base property, which `chooseCallableToRename` of the processor asks:
+   * ```
+   * open class A { open val first: Int = 1 }
+   * class B : A() { override val first: Int = 2 }   // rename B.first: rename A.first instead?
+   * ```
+   */
+  override fun substitutionQuestions(subject: SymbolPointer, element: PsiElement): List<ModPlanQuestion> {
+    val callableDeclaration = element.namedUnwrappedElement as? KtCallableDeclaration ?: return emptyList()
+    if (callableDeclaration is KtProperty && callableDeclaration.isLocal) return emptyList()
+    val deepestSuperDeclaration = processor.findDeepestOverriddenDeclaration(callableDeclaration)
+    if (deepestSuperDeclaration == null || deepestSuperDeclaration == callableDeclaration) return emptyList()
+    return listOf(BasePropertyQuestion(subject))
+  }
+
+  /**
+   * The question about the other accessor, which `prepareRenaming` of the processor asks for the rename of a getter or a setter. The
+   * condition is the one of `prepareRenaming`:
+   * ```
+   * // Kotlin
+   * class AP { var first: Int = 1 }
+   * // Java
+   * new AP().getFirst();   // rename getFirst to getSecond: rename setFirst as well?
+   * ```
+   */
+  override fun prepareQuestions(element: PsiElement, newName: String): List<ModPlanQuestion> {
+    if (element !is KtLightMethod || propertyNameByAccessor(newName, element) == null) return emptyList()
+    val propertyMethods = when (val namedUnwrappedElement = element.namedUnwrappedElement) {
+      is KtProperty -> if (namedUnwrappedElement.isLocal) return emptyList() else LightClassUtil.getLightClassPropertyMethods(namedUnwrappedElement)
+      is KtParameter -> LightClassUtil.getLightClassPropertyMethods(namedUnwrappedElement)
+      else -> return emptyList()
+    }
+    val getter = propertyMethods.getter as? KtLightMethod ?: return emptyList()
+    val setter = propertyMethods.setter as? KtLightMethod ?: return emptyList()
+    if (element != getter && element != setter) return emptyList()
+    if (propertyNameByAccessor(getter.name, getter) != propertyNameByAccessor(setter.name, setter)) return emptyList()
+    return listOf(OtherAccessorQuestion(if (element == getter) { setter.name } else { getter.name }))
+  }
+
+  override fun prepareRenaming(element: PsiElement, newName: String, renamed: MutableMap<PsiElement, String>, answers: ModPlanOptionValues) {
+    // The scope of the three-parameter prepareRenaming of the base class.
+    val scope = PsiSearchHelper.getInstance(element.project).getUseScope(element)
+    processor.prepareRenaming(element, newName, renamed, scope, askUser = false, answers.get(ModPlanKotlinRenameOptions.RENAME_OTHER_ACCESSOR))
+  }
+
+  /** The question "rename the base property instead?". Its answer is [ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION]. */
+  private inner class BasePropertyQuestion(private val subject: SymbolPointer) : ModPlanQuestion.Custom {
+    override fun options(): List<ModPlanOption<*>> = listOf(ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION)
+
+    /** Shows the dialog of `chooseCallableToRename`. A cancel cancels the rename. */
+    override fun ask(project: Project, currentValues: ModPlanOptionValues): ModPlanOptionValues? {
+      val callableDeclaration = subject.element()?.namedUnwrappedElement as? KtCallableDeclaration ?: return currentValues
+      val chosen = processor.chooseCallableToRename(callableDeclaration, askUser = true) ?: return null
+      return currentValues.with(ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION, chosen != callableDeclaration)
+    }
+  }
+
+  /**
+   * The question "rename the other accessor as well?". Its answer is [ModPlanKotlinRenameOptions.RENAME_OTHER_ACCESSOR]. It shows the
+   * dialog of `prepareRenaming`.
+   */
+  private class OtherAccessorQuestion(private val accessorName: String) : ModPlanQuestion.Custom {
+    override fun options(): List<ModPlanOption<*>> = listOf(ModPlanKotlinRenameOptions.RENAME_OTHER_ACCESSOR)
+
+    override fun ask(project: Project, currentValues: ModPlanOptionValues): ModPlanOptionValues {
+      val answer = Messages.showYesNoDialog(project, KotlinBundle.message("text.do.you.want.to.rename.0.as.well", accessorName),
+                                            RefactoringBundle.message("rename.title"), Messages.getQuestionIcon())
+      return currentValues.with(ModPlanKotlinRenameOptions.RENAME_OTHER_ACCESSOR, answer == Messages.YES)
+    }
+  }
 }

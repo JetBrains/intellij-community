@@ -4,13 +4,13 @@ package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.listeners.RefactoringElementListener
-import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.psi.KtTypeParameter
 
-class RenameKotlinTypeParameterProcessor : RenameKotlinPsiProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
+class RenameKotlinTypeParameterProcessor : RenameKotlinPsiProcessor() {
   override fun canProcessElement(element: PsiElement) = element is KtTypeParameter
 
   override fun findCollisions(
@@ -36,3 +36,8 @@ class RenameKotlinTypeParameterProcessor : RenameKotlinPsiProcessor(), Delegatin
         usages.forEach { (it as? KtResolvableCollisionUsageInfo)?.apply() }
     }
 }
+
+/** The rename on the ModPlan engine of the elements that [RenameKotlinTypeParameterProcessor] renames. */
+@ApiStatus.Internal
+class ModPlanKotlinTypeParameterRenameProvider :
+  ModPlanKotlinRenameProvider<RenameKotlinTypeParameterProcessor>(RenameKotlinTypeParameterProcessor())

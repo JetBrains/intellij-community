@@ -1,0 +1,10 @@
+// FILE: Base.kt
+// NEW_NAME: bar
+open class Base {
+    open fun bar() {}
+}
+
+// FILE: Derived.kt
+class Derived : Base() {
+    override fun bar() {}
+}

@@ -1,18 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfTypes
-import com.intellij.refactoring.rename.HeadlessRenameProcessor
-import com.intellij.refactoring.rename.HeadlessRenameResult
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.refactoring.modplan.ModPlanOptionValues
+import com.intellij.testFramework.ModPlanRenameTestSupport
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
@@ -29,7 +26,11 @@ import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.test.util.invalidateCaches
 
-abstract class AbstractK2HeadlessRenameProcessorTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
+/**
+ * The tests of the rename of Kotlin with no user, run on the ModPlan engine: the analysis on a background thread, as the MCP tool runs it,
+ * and the write of one command on copies of the files.
+ */
+abstract class AbstractK2ModPlanRenameTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
 
     override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -61,22 +62,15 @@ abstract class AbstractK2HeadlessRenameProcessorTest : KotlinMultiFileLightCodeI
             ?: InTextDirectivesUtils.findStringWithPrefixes(mainFile.text, "// RENAME: ")
             ?: error("Directive // NEW_NAME: <name> is missing in ${mainFile.name}")
 
-        val target = findTargetElement(mainFile, marker)
-
-        val analysis = PlatformTestUtil.waitForFuture(ApplicationManager.getApplication().executeOnPooledThread<HeadlessRenameResult> {
-            runBlockingMaybeCancellable { readAction { HeadlessRenameProcessor.analyze(project, target, newName) } }
-        })
-        val planned = assertInstanceOf(analysis, HeadlessRenameResult.Planned::class.java)
-        val result = planned.plan.apply()
-        assertInstanceOf(result, HeadlessRenameResult.Applied::class.java)
+        ModPlanRenameTestSupport.renameOnModPlan(project, findTargetElement(mainFile, marker), newName, ModPlanOptionValues.EMPTY)
 
         checkResults(files)
     }
 
     private fun findTargetElement(file: PsiFile, markerOffset: Int): PsiElement {
         val offset = if (markerOffset >= 0) markerOffset else myFixture.caretOffset
-        val element = file.findElementAt(offset)?.takeIf { it !is PsiWhiteSpace }
-            ?: (if (offset > 0) file.findElementAt(offset - 1) else null)
+        val element = PsiUtilCore.getElementAtOffset(file, offset).takeIf { it !is PsiWhiteSpace && it !is PsiFile }
+            ?: (if (offset > 0) PsiUtilCore.getElementAtOffset(file, offset - 1) else null)?.takeIf { it !is PsiFile }
 
         return element?.parentOfTypes(KtNamedDeclaration::class, PsiNamedElement::class, withSelf = true)
             ?: error("Target element to rename not found at caret in ${file.name}")

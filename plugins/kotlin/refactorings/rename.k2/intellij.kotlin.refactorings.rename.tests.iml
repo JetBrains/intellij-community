@@ -39,6 +39,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.common.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.base" scope="TEST" />
@@ -50,5 +51,7 @@
     <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scratch.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.impl.refactorings" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.base" scope="TEST" />
   </component>
 </module>

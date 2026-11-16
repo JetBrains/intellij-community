@@ -14,7 +14,6 @@ import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
-import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -28,14 +27,7 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
 
 class RenameJavaSyntheticPropertyHandler : AbstractReferenceSubstitutionRenameHandler() {
-    /**
-     * Renames the getter and the setter behind a Java property that Kotlin code reads as one property.
-     *
-     * It does not implement [com.intellij.refactoring.rename.HeadlessRenamePsiElementProcessor], because
-     * [substituteElementToRename] asks the user about the base method. [HeadlessProcessor] carries the
-     * headless statement, and answers that question with a default.
-     */
-    open class Processor : RenamePsiElementProcessor() {
+    class Processor : RenamePsiElementProcessor() {
         override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
             val propertyWrapper = element as? SyntheticPropertyWrapper ?: return
 
@@ -55,41 +47,19 @@ class RenameJavaSyntheticPropertyHandler : AbstractReferenceSubstitutionRenameHa
         override fun substituteElementToRename(
             element: PsiElement,
             editor: Editor?
-        ): PsiElement = substituteElementToRename(element, askUser = true)
-
-        /**
-         * The element to rename instead of [element].
-         *
-         * @param askUser false answers the base-method question with the base method, and asks nothing.
-         * A rename with no user passes false. See [HeadlessProcessor.substituteElementToRenameHeadless].
-         */
-        protected fun substituteElementToRename(element: PsiElement, askUser: Boolean): PsiElement {
-            if (element !is SyntheticPropertyWrapper) return element
-            val getter = element.getter
-            val superMethod = if (askUser) {
-                SuperMethodWarningUtil.checkSuperMethod(getter)
-            } else {
-                getter.findDeepestSuperMethods().firstOrNull() ?: getter
-            }
+        ): PsiElement {
+            if (element is SyntheticPropertyWrapper) {
+            val superMethod = SuperMethodWarningUtil.checkSuperMethod(element.getter)
             val setter = element.setter
             return SyntheticPropertyWrapper(element.manager,
                                             superMethod,
                                             setter?.let { it.findSuperMethods(superMethod.containingClass).firstOrNull() } ?: element.setter,
                                             element.name)
+            }
+            return element
         }
 
         override fun canProcessElement(element: PsiElement) = element is SyntheticPropertyWrapper
-    }
-
-    /**
-     * Renames a Java synthetic property for a caller that has no user.
-     *
-     * [Processor] does not carry the headless statement itself, because a subclass of it must not
-     * inherit the statement that it renames with no user.
-     */
-    class HeadlessProcessor : Processor(), DelegatingHeadlessRenamePsiElementProcessor {
-        override fun substituteElementToRenameHeadless(element: PsiElement): PsiElement =
-            substituteElementToRename(element, askUser = false)
     }
 
     class SyntheticPropertyWrapper(

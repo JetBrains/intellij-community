@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
-import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KtLightParameter
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.utils.SmartList
 
-class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
+class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor() {
     override fun canProcessElement(element: PsiElement): Boolean = when (val original = element.originalElement) {
         is KtDestructuringDeclarationEntry -> original.initializer == null
         is KtParameter -> !original.hasValOrVar() && (
@@ -95,3 +95,8 @@ class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor(), DelegatingHea
         ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
     }
 }
+
+/** The rename on the ModPlan engine of the elements that [RenameKotlinParameterProcessor] renames. */
+@ApiStatus.Internal
+class ModPlanKotlinParameterRenameProvider :
+    ModPlanKotlinRenameProvider<RenameKotlinParameterProcessor>(RenameKotlinParameterProcessor())

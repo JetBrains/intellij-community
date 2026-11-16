@@ -80,6 +80,8 @@ class AutomaticOverloadsRenamerFactory : AutomaticRenamerFactory {
 
     override fun getOptionName(): @Nls String = JavaRefactoringBundle.message("rename.overloads")
 
+    override fun getOptionId(): String = "renameOverloads"
+
     override fun isEnabled(): Boolean = KotlinCommonRefactoringSettings.getInstance().renameOverloads
 
     override fun setEnabled(enabled: Boolean) {

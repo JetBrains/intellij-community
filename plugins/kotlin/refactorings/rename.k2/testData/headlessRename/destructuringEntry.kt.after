@@ -1,0 +1,5 @@
+// NEW_NAME: first
+fun f(pair: Pair<Int, Int>) {
+    val (first, b) = pair
+    println(first + b)
+}

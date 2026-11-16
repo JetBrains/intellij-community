@@ -162,6 +162,8 @@ open class AutomaticVariableRenamerFactory : AutomaticRenamerFactory {
     }
 
     override fun getOptionName(): String? = JavaRefactoringBundle.message("rename.variables")
+
+    override fun getOptionId(): String = "renameVariables"
 }
 
 class AutomaticVariableRenamerFactoryForJavaClass : AutomaticVariableRenamerFactory() {

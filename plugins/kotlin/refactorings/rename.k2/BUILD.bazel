@@ -65,6 +65,7 @@ jvm_library(
         "//java/java-indexing-api:indexing",
         "//java/java-impl-refactorings:impl-refactorings",
         "//plugins/kotlin/base/code-insight",
+        "//platform/refactoring",
     ],
 )
 ### auto-generated section `build intellij.kotlin.refactorings.rename` end
@@ -135,6 +136,7 @@ jvm_library(
         "//plugins/kotlin/base/testFramework",
         "//platform/testFramework",
         "//platform/lang-impl",
+        "//platform/refactoring",
         "//plugins/kotlin/tests-common:common-testFramework",
         "//plugins/kotlin/test-framework",
         "//plugins/kotlin/base/fir/code-insight:kotlin-codeInsight-base",
@@ -143,6 +145,8 @@ jvm_library(
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//libraries/junit4",
         "//platform/scratch/plugin",
+        "//java/java-impl-refactorings:impl-refactorings",
+        "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
     ],
 )
 ### auto-generated section `build intellij.kotlin.refactorings.rename.tests` end

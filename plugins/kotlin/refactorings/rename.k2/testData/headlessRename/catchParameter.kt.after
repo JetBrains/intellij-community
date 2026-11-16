@@ -1,0 +1,8 @@
+// NEW_NAME: error
+fun f() {
+    try {
+        println()
+    } catch (error: RuntimeException) {
+        throw error
+    }
+}

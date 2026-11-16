@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/headlessRename")
-public class K2HeadlessRenameProcessorTestGenerated extends AbstractK2HeadlessRenameProcessorTest {
+public class K2ModPlanRenameTestGenerated extends AbstractK2ModPlanRenameTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -33,14 +33,44 @@ public class K2HeadlessRenameProcessorTestGenerated extends AbstractK2HeadlessRe
         runTest("testData/headlessRename/basePropertyAndItsOverride.kt");
     }
 
+    @TestMetadata("catchParameter.kt")
+    public void testCatchParameter() throws Exception {
+        runTest("testData/headlessRename/catchParameter.kt");
+    }
+
+    @TestMetadata("destructuringEntry.kt")
+    public void testDestructuringEntry() throws Exception {
+        runTest("testData/headlessRename/destructuringEntry.kt");
+    }
+
     @TestMetadata("fileOfAClass.kt")
     public void testFileOfAClass() throws Exception {
         runTest("testData/headlessRename/fileOfAClass.kt");
     }
 
+    @TestMetadata("lambdaParameter.kt")
+    public void testLambdaParameter() throws Exception {
+        runTest("testData/headlessRename/lambdaParameter.kt");
+    }
+
+    @TestMetadata("localVariable.kt")
+    public void testLocalVariable() throws Exception {
+        runTest("testData/headlessRename/localVariable.kt");
+    }
+
+    @TestMetadata("loopParameter.kt")
+    public void testLoopParameter() throws Exception {
+        runTest("testData/headlessRename/loopParameter.kt");
+    }
+
     @TestMetadata("overrideFromBackgroundThread.kt")
     public void testOverrideFromBackgroundThread() throws Exception {
         runTest("testData/headlessRename/overrideFromBackgroundThread.kt");
+    }
+
+    @TestMetadata("overrideInAnotherFile.kt")
+    public void testOverrideInAnotherFile() throws Exception {
+        runTest("testData/headlessRename/overrideInAnotherFile.kt");
     }
 
     @TestMetadata("propertyAccessors.kt")

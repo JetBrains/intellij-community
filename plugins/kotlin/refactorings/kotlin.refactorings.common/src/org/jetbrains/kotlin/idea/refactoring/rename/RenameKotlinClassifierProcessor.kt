@@ -7,11 +7,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
-import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
-import com.intellij.refactoring.rename.HeadlessRenamePsiElementProcessor
 import com.intellij.refactoring.rename.RenamePsiElementProcessorBase
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
@@ -26,7 +25,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
-class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
+class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor() {
 
   override fun canProcessElement(element: PsiElement): Boolean {
     return element is KtClassOrObject || element is KtLightClass || element is KtConstructor<*> || element is KtTypeAlias
@@ -48,10 +47,6 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor(), DelegatingHe
 
   override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>) {
     prepareRenaming(element, newName, allRenames) { forElement(it) }
-  }
-
-  override fun prepareRenamingHeadless(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>) {
-    prepareRenaming(element, newName, allRenames) { HeadlessRenamePsiElementProcessor.processorOf(it) }
   }
 
   private fun prepareRenaming(
@@ -153,3 +148,8 @@ class RenameKotlinClassifierProcessor : RenameKotlinPsiProcessor(), DelegatingHe
   }
 
 }
+
+/** The rename on the ModPlan engine of the elements that [RenameKotlinClassifierProcessor] renames. */
+@ApiStatus.Internal
+class ModPlanKotlinClassifierRenameProvider :
+  ModPlanKotlinRenameProvider<RenameKotlinClassifierProcessor>(RenameKotlinClassifierProcessor())

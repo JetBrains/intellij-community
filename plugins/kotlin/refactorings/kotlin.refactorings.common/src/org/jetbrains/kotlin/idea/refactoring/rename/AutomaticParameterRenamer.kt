@@ -59,6 +59,8 @@ open class AutomaticParameterRenamerFactory : AutomaticRenamerFactory {
 
     override fun getOptionName() = RefactoringBundle.message("rename.parameters.hierarchy")
 
+    override fun getOptionId(): String = "renameParametersInHierarchy"
+
     override fun isEnabled() = KotlinCommonRefactoringSettings.getInstance().renameParameterInHierarchy
 
     override fun setEnabled(enabled: Boolean) {

@@ -12,7 +12,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
-import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor
+import com.intellij.refactoring.modplan.ModPlanOptionValues
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameDialog
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor
@@ -20,6 +20,7 @@ import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
@@ -36,7 +37,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 
-open class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor(), DelegatingHeadlessRenamePsiElementProcessor {
+open class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
     private val javaMethodProcessorInstance = RenameJavaMethodProcessor()
 
@@ -102,22 +103,14 @@ open class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor(), Delegatin
         substituteElementToRename(element, editor, askUser = true)
 
     /**
-     * The base declarations, when [element] overrides something.
-     *
-     * Kotlin asks the user here whether to rename the base declaration. This answers that question
-     * with yes, so that the code stays consistent.
-     */
-    override fun substituteElementToRenameHeadless(element: PsiElement): PsiElement? =
-        substituteElementToRename(element, null, askUser = false)
-
-    /**
      * The element to rename instead of [element].
      *
-     * @param askUser false answers the base-declaration question with the base declarations, and
+     * @param askUser false answers the base-declaration question with [renameBase], and
      *                reports an error through the return value instead of a hint.
-     *                [substituteElementToRenameHeadless] passes false.
+     *                [ModPlanKotlinFunctionRenameProvider] passes false.
+     * @param renameBase the answer to the base-declaration question when [askUser] is false: false renames [element] alone
      */
-    private fun substituteElementToRename(element: PsiElement, editor: Editor?, askUser: Boolean): PsiElement? {
+    internal fun substituteElementToRename(element: PsiElement, editor: Editor?, askUser: Boolean, renameBase: Boolean = true): PsiElement? {
         substituteForExpectOrActual(element)?.let { return it }
 
         val deepestSuperMethods = runProcessWithProgressIfOnEdt(
@@ -132,11 +125,15 @@ open class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor(), Delegatin
         val substitutedJavaElement = when {
             deepestSuperMethods.isEmpty() -> return element
             element is PsiMethod -> {
-                javaMethodProcessorInstance.substituteElementToRename(element, editor, askUser)
+                RenameJavaMethodProcessor.substituteElementToRename(element, editor, askUser, renameBase)
             }
             else -> {
                 val declaration = element.unwrapped as? KtNamedFunction ?: return element
-                val chosenElements = selectSuperMethods(declaration, deepestSuperMethods, askUser)
+                val chosenElements = if (askUser || renameBase) {
+                    selectSuperMethods(declaration, deepestSuperMethods, askUser)
+                } else {
+                    listOf(declaration)
+                }
                 if (chosenElements.size > 1) FunctionWithSupersWrapper(declaration, chosenElements) else chosenElements.firstOrNull() ?: element
             }
         }
@@ -304,4 +301,13 @@ open class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor(), Delegatin
         return processFoundReferences(element, references)
     }
 
+}
+
+/** The rename on the ModPlan engine of the elements that [RenameKotlinFunctionProcessor] renames. */
+@ApiStatus.Internal
+class ModPlanKotlinFunctionRenameProvider :
+    ModPlanKotlinRenameProvider<RenameKotlinFunctionProcessor>(RenameKotlinFunctionProcessor()) {
+    /** As `substituteElementToRename` of the processor, with the answer to the base-declaration question instead of its dialog. */
+    override fun substitute(element: PsiElement, answers: ModPlanOptionValues): PsiElement? =
+        processor.substituteElementToRename(element, null, askUser = false, answers.get(ModPlanKotlinRenameOptions.RENAME_BASE_DECLARATION))
 }

@@ -122,7 +122,11 @@ import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTe
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirMultiModuleRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameConflictTest
-import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2HeadlessRenameProcessorTest
+import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameOnModPlanTest
+import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameOnModPlanTest
+import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2ModPlanRenameTest
+import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirMultiModuleRenameOnModPlanTest
+import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameConflictOnModPlanTest
 import org.jetbrains.kotlin.idea.k2.resolve.AbstractLombokReferenceResolveWithCompilerPluginWithoutIdePluginTest
 import org.jetbrains.kotlin.idea.maven.AbstractKotlinMavenInspectionTest
 import org.jetbrains.kotlin.idea.maven.configuration.AbstractMavenConfigureProjectByChangingFileTest
@@ -633,16 +637,28 @@ private fun assembleWorkspace(): TWorkspace = workspace() {
         testClass<AbstractFirRenameTest> {
             model("rename", pattern = TEST, flatten = true)
         }
+        testClass<AbstractFirRenameOnModPlanTest> {
+            model("rename", pattern = TEST, flatten = true)
+        }
         testClass<AbstractInplaceRenameTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.refactoring.rename.K2InplaceRenameTestGenerated") {
+            model("rename/inplace", pattern = Patterns.KT_OR_JAVA, flatten = true)
+        }
+        testClass<AbstractK2InplaceRenameOnModPlanTest> {
             model("rename/inplace", pattern = Patterns.KT_OR_JAVA, flatten = true)
         }
         testClass<AbstractK2InplaceRenameConflictTest> {
             model("rename/companionConflicts", pattern = Patterns.KT_OR_JAVA, flatten = true)
         }
+        testClass<AbstractK2InplaceRenameConflictOnModPlanTest> {
+            model("rename/companionConflicts", pattern = Patterns.KT_OR_JAVA, flatten = true)
+        }
         testClass<AbstractFirMultiModuleRenameTest> {
             model("renameMultiModule", pattern = TEST, flatten = true)
         }
-        testClass<AbstractK2HeadlessRenameProcessorTest> {
+        testClass<AbstractFirMultiModuleRenameOnModPlanTest> {
+            model("renameMultiModule", pattern = TEST, flatten = true)
+        }
+        testClass<AbstractK2ModPlanRenameTest> {
             model("headlessRename")
         }
     }

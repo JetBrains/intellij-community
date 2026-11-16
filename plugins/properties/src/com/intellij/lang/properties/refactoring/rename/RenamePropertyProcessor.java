@@ -11,10 +11,12 @@ import com.intellij.lang.properties.refactoring.PropertiesRefactoringSettings;
 import com.intellij.lang.properties.xml.XmlProperty;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.modplan.rename.ModPlanBridgeRenameProvider;
 import com.intellij.refactoring.rename.DelegatingHeadlessRenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -77,4 +79,12 @@ public class RenamePropertyProcessor extends RenamePsiElementProcessor implement
    public void setToSearchInComments(@NotNull PsiElement element, boolean enabled) {
      PropertiesRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS = enabled;
    }
+
+  /** Renames a property on the ModPlan engine with this processor, see {@link ModPlanBridgeRenameProvider}. */
+  @ApiStatus.Internal
+  public static final class ModPlanRenamePropertyProvider extends ModPlanBridgeRenameProvider {
+    public ModPlanRenamePropertyProvider() {
+      super(RenamePropertyProcessor.class);
+    }
+  }
 }

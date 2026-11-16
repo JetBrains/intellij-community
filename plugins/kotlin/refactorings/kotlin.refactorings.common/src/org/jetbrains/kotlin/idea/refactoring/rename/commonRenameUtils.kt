@@ -22,6 +22,8 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.presentation.java.SymbolPresentationUtil
 import com.intellij.psi.search.SearchScope
+import com.intellij.refactoring.modplan.ModPlanEdit
+import com.intellij.refactoring.modplan.rename.ModPlanWritableUsageInfo
 import com.intellij.refactoring.rename.ResolvableCollisionUsageInfo
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
 import com.intellij.refactoring.util.MoveRenameUsageInfo
@@ -158,9 +160,18 @@ class UnresolvableConventionViolationUsageInfo(
 class LostDefaultValuesInOverridingFunctionUsageInfo(
     function: KtNamedFunction,
     private val baseFunction: KtNamedFunction
-) : ResolvableCollisionUsageInfo(function, function) {
+) : ResolvableCollisionUsageInfo(function, function), ModPlanWritableUsageInfo {
     fun apply() {
-        val function = element as? KtNamedFunction ?: return
+        (element as? KtNamedFunction)?.let { copyDefaultValues(it) }
+    }
+
+    /** The edit of [apply]: the base function is not renamed, so its default values are the ones of the code now. */
+    override fun asModPlanEdits(newName: String, renamed: Map<PsiElement, String>): List<ModPlanEdit>? {
+        val function = element as? KtNamedFunction ?: return null
+        return listOf(ModPlanEdit.update(function) { copy -> copyDefaultValues(copy) })
+    }
+
+    private fun copyDefaultValues(function: KtNamedFunction) {
         for ((subParam, superParam) in (function.valueParameters zip baseFunction.valueParameters)) {
             val defaultValue = superParam.defaultValue ?: continue
             subParam.dropDefaultValue()
