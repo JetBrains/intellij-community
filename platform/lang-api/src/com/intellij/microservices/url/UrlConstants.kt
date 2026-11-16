@@ -25,7 +25,8 @@ val HTTP_METHODS: List<String> = listOf(
   HttpMethods.CONNECT,
   HttpMethods.PATCH,
   HttpMethods.OPTIONS,
-  HttpMethods.TRACE
+  HttpMethods.TRACE,
+  HttpMethods.QUERY
 )
 
 object HttpMethods {
@@ -38,4 +39,5 @@ object HttpMethods {
   const val PATCH: String = "PATCH"
   const val OPTIONS: String = "OPTIONS"
   const val TRACE: String = "TRACE"
+  const val QUERY: String = "QUERY"
 }
