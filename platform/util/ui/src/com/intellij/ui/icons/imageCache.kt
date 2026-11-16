@@ -254,6 +254,7 @@ private fun doLoadByDescriptor(path: String,
   var image: ImageWithShape<BufferedImage>?
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
   if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(path)) && !path.startsWith(FILE_SCHEME_PREFIX)) {
+    ImageDataLoaderStatisticsService.getInstance()?.urlRead()
     val connection = URL(path).openConnection()
     (connection as? HttpURLConnection)?.addRequestProperty("User-Agent", "IntelliJ")
     connection.getInputStream().use { stream ->

@@ -19,6 +19,7 @@ import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.ui.icons.EMPTY_ICON
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.icons.IconReplacer
+import com.intellij.ui.icons.ImageDataLoaderStatisticsService
 import com.intellij.ui.icons.ImageWithShape
 import com.intellij.ui.icons.ReplaceableIcon
 import com.intellij.ui.icons.checkIconSize
@@ -259,6 +260,7 @@ internal inline fun loadAndCacheIfApplicable(path: String?,
 
     if (image != null) {
       val dataForShape = if (withShape) {
+        ImageDataLoaderStatisticsService.getInstance()?.svgParsedForShape()
         data ?: dataProvider()
       }
       else {
@@ -325,6 +327,7 @@ private fun renderAndCache(
 
 private fun renderImage(colorPatcher: SvgAttributePatcher?, data: ByteArray, scale: Float, path: String?, withShape: Boolean): ImageWithShape<BufferedImage> {
   val decodingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+  ImageDataLoaderStatisticsService.getInstance()?.svgParsedForRendering()
   val jsvgDocument = if (colorPatcher == null) {
     createJSvgDocument(data)
   }
@@ -332,6 +335,7 @@ private fun renderImage(colorPatcher: SvgAttributePatcher?, data: ByteArray, sca
     createJSvgDocument(createXmlStreamReader(data), colorPatcher::patchColors)
   }
 
+  ImageDataLoaderStatisticsService.getInstance()?.svgRendered()
   val bufferedImage = renderSvg(scale = scale, path = path, document = jsvgDocument)
   if (decodingStart != -1L) {
     IconLoadMeasurer.svgDecoding.end(decodingStart)

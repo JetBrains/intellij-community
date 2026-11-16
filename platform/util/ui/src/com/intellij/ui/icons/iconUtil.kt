@@ -194,6 +194,12 @@ fun loadPngFromClassResource(path: String, classLoader: ClassLoader?, resourceCl
 
 @Internal
 fun getResourceData(path: String, resourceClass: Class<*>?, classLoader: ClassLoader?): ByteArray? {
+  val data = readResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader)
+  ImageDataLoaderStatisticsService.getInstance()?.resourceRead(path = path, found = data != null)
+  return data
+}
+
+private fun readResourceData(path: String, resourceClass: Class<*>?, classLoader: ClassLoader?): ByteArray? {
   assert(resourceClass != null || classLoader != null || path.startsWith(FILE_SCHEME_PREFIX))
   if (classLoader != null) {
     val isAbsolute = path.startsWith('/')

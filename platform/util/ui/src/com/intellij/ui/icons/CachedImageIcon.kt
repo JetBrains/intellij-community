@@ -382,8 +382,14 @@ open class CachedImageIcon private constructor(
     val loader = loader
     if (loader is EmptyImageDataLoader) return null
 
-    val image = loader.loadImage(parameters = getLoadIconParameters(attributes),
-                                 scaleContext = scaleContext)
+    ImageDataLoaderStatisticsService.getInstance()?.loadImageStarted(loader)
+    val image = try {
+      loader.loadImage(parameters = getLoadIconParameters(attributes),
+                       scaleContext = scaleContext)
+    }
+    finally {
+      ImageDataLoaderStatisticsService.getInstance()?.loadImageFinished()
+    }
     if (start != -1L) {
       IconLoadMeasurer.findIconLoad.end(start)
     }
