@@ -1225,7 +1225,9 @@ open class EditorsSplitters internal constructor(
     emptyStateComponentController.update()
   }
 
-  private fun rebuildEmptyStateComponent() {
+  /** Builds the empty state again, for a provider whose answer to `isAvailable` changes while the state shows. */
+  @Internal
+  fun rebuildEmptyStateComponent() {
     emptyStateComponentController.rebuild()
   }
 

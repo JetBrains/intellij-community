@@ -88,6 +88,14 @@ interface WelcomeRightTabContentProvider {
   fun getFileDragAndDropHandler(): FileDragAndDropHandler = DefaultFileDragAndDropHandler
 
   /**
+   * Tells whether the tab is the empty state of the editors of [project], a project that is not the welcome project. The
+   * welcome project always shows the tab. A product that changes the answer while the project is open rebuilds the
+   * empty state, see `EditorsSplitters.rebuildEmptyStateComponent`.
+   */
+  @ApiStatus.Internal
+  fun isShownIn(project: Project): Boolean = false
+
+  /**
    * A single component placed in the additional-components area returned by [getAdditionalComponents].
    */
   sealed interface WelcomeContent {

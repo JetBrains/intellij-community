@@ -27,11 +27,13 @@ private val TAB_KEY = Key<WelcomeScreenRightTabImpl>("EMPTY_PROVIDER")
 
 internal class WelcomeScreenEmptyStateProvider : EditorEmptyStateComponentProvider {
   override fun isAvailable(splitters: EditorsSplitters): Boolean {
-    val result = (splitters.manager.project.isWelcomeExperienceProjectSync() || PlatformUtils.isDataGrip()) &&
-                 isNonModalWelcomeScreenEnabled && WelcomeRightTabContentProvider.getSingleExtension() != null
-    if (result) {
-      splitters.putClientProperty("WELCOME_EXPERIENCE", true)
-    }
+    val project = splitters.manager.project
+    val provider = WelcomeRightTabContentProvider.getSingleExtension()
+    val result = provider != null && isNonModalWelcomeScreenEnabled &&
+                 (project.isWelcomeExperienceProjectSync() || PlatformUtils.isDataGrip() || provider.isShownIn(project))
+    // The answer of `isShownIn` changes while the project is open, so the property goes when the tab goes. The
+    // providers of plugins, which read the property, come after this provider of the platform.
+    splitters.putClientProperty("WELCOME_EXPERIENCE", if (result) true else null)
     return result
   }
 
