@@ -200,4 +200,44 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
         <warning descr="Cast of type 'A1 | None' to type 'int | str' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(int | str, a1)</warning>
     """.trimIndent())
   }
+
+  @TestFor(issues = ["PY-90323"])
+  fun `test union with the largest number of members`() {
+    val classes = (1..100).joinToString("\n") { "class B$it: ..." }
+    val actual = (1..100).joinToString(" | ") { "B$it" }
+    doTestByText("""
+      |from typing import cast
+      |$classes
+      |
+      |def f(b: $actual):
+      |    <warning descr="Cast of type '$actual' to type 'int' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(int, b)</warning>
+    """.trimMargin())
+  }
+
+  @TestFor(issues = ["PY-90323"])
+  fun `test union with too many members is skipped`() {
+    val classes = (1..101).joinToString("\n") { "class B$it: ..." }
+    val actual = (1..101).joinToString(" | ") { "B$it" }
+    doTestByText("""
+      |from typing import cast
+      |$classes
+      |
+      |def f(b: $actual):
+      |    cast(int, b)
+    """.trimMargin())
+  }
+
+  @TestFor(issues = ["PY-90323"])
+  fun `test unions with too many member pairs are skipped`() {
+    val classes = (1..10).joinToString("\n") { "class A$it: ..." } + "\n" + (1..11).joinToString("\n") { "class B$it: ..." }
+    val target = (1..10).joinToString(" | ") { "A$it" }
+    val actual = (1..11).joinToString(" | ") { "B$it" }
+    doTestByText("""
+      |from typing import cast
+      |$classes
+      |
+      |def f(b: $actual):
+      |    cast($target, b)
+    """.trimMargin())
+  }
 }
