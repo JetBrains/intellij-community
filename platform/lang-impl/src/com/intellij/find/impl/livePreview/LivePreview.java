@@ -404,7 +404,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     @NotNull List<? extends FindResult> occurrences,
     @NotNull Long2ObjectMap<Object> existingHighlighters
   ) {
-    List<RangeHighlighter> newHighlighters = new ArrayList<>(occurrences.size());
+    List<RangeHighlighter> newHighlighters = null;
     for (FindResult range : occurrences) {
       if (range.getEndOffset() > mySearchResults.getEditor().getDocument().getTextLength()) continue;
       TextAttributes attributes = createAttributes(range);
@@ -415,6 +415,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
                                                       attributes, myPresentation.getDefaultLayer());
         if (highlighter != null) {
           highlighter.putUserData(SEARCH_MARKER, Boolean.TRUE);
+          if (newHighlighters == null) newHighlighters = new ArrayList<>(occurrences.size());
           newHighlighters.add(highlighter);
           addHighlighterToIndex(existingHighlighters, rangeKey, highlighter);
         }
@@ -423,7 +424,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
         existingHighlighter.putUserData(MARKER_USED, Boolean.TRUE);
       }
     }
-    return newHighlighters;
+    return newHighlighters == null ? Collections.emptyList() : newHighlighters;
   }
 
   private TextAttributes createAttributes(FindResult range) {
