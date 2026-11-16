@@ -175,13 +175,6 @@ community_build_target(
     runtime_deps = [":build"],
 )
 
-# Temporary alias until TeamCity config is migrated to the new target
-alias(
-    name = "i_build_target",
-    actual = "//build:intellij_community_installers",
-    visibility = ["//visibility:public"],
-)
-
 java_binary(
     name = "run_tests_build_target",
     add_opens = INTELLIJ_ADD_OPENS,

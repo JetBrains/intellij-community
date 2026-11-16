@@ -46,13 +46,6 @@ community_build_target(
     runtime_deps = [":build"],
 )
 
-# Temporary alias until TeamCity config is migrated to the new target
-alias(
-    name = "i_build_target",
-    actual = "//python/build:pycharm_community_installers",
-    visibility = ["//visibility:public"],
-)
-
 ### auto-generated section `build intellij.pycharm.community.build` start
 create_kotlinc_options(
     name = "custom_build",
