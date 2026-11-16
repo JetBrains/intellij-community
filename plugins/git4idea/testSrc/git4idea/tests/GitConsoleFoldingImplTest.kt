@@ -1,15 +1,21 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.testFramework.LightPlatformTestCase
 import git4idea.console.GitConsoleFoldingImpl
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
 
 private const val START_MARKER = "<fold>"
 private const val END_MARKER = "</fold>"
 
-class GitConsoleFoldingImplTest : LightPlatformTestCase() {
+class GitConsoleFoldingImplTest {
 
+  private val project: Project = mock(Project::class.java)
+
+  @Test
   fun testFoldings() {
     doTest("")
     doTest("git status")
