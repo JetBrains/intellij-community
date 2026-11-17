@@ -420,3 +420,4 @@ intellij.kotlin.base.indices.tests
 intellij.kotlin.compilerPlugins.support.tests
 intellij.kotlin.copyright.tests
 intellij.kotlin.grazie.tests
+intellij.kotlin.codeInsight.liveTemplates.tests
