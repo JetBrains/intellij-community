@@ -32,4 +32,13 @@ internal interface FontLookup {
     @FontStyle style: Int,
     context: FontRenderContext?,
   ): FontInfo
+
+  /**
+   * Returns the font that [fontAbleToDisplay] gives for each printable ASCII char in [style] and [context],
+   * or `null` when these chars have no common font or the lookup does not know it.
+   * The printable ASCII chars are the chars from the space to `~`.
+   */
+  fun printableAsciiFont(@FontStyle style: Int, context: FontRenderContext?): FontInfo? {
+    return null
+  }
 }

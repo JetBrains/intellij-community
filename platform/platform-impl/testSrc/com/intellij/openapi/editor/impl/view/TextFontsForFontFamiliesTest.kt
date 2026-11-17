@@ -42,6 +42,16 @@ internal class TextFontsForFontFamiliesTest {
   }
 
   @Test
+  fun `the printable ASCII font is the first font family in each style`() {
+    val fonts = TextFonts.forFontFamilies(listOf(Font.SERIF, Font.SANS_SERIF), preferences, context, null)
+    for (style in FAMILY_STYLES) {
+      assertThat(fonts.printableAsciiFont(style, context)).isSameAs(familyFont(Font.SERIF, style))
+    }
+    val otherContext = FontRenderContext(AffineTransform.getScaleInstance(2.0, 2.0), true, true)
+    assertThat(fonts.printableAsciiFont(Font.PLAIN, otherContext)).isNull()
+  }
+
+  @Test
   fun `an unknown style gets the plain font of the family`() {
     val fonts = TextFonts.forFontFamilies(listOf(Font.SERIF), preferences, context, null)
     assertThat(fonts.fontAbleToDisplay("a", 0, 1, 42, context)).isSameAs(familyFont(Font.SERIF, Font.PLAIN))
