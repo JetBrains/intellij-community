@@ -48,6 +48,16 @@ public class K2IdeK2CodeKotlinEvaluationExpressionTestGenerated extends Abstract
         runTest("../testData/evaluationExpression/castToInnerClass.kt");
     }
 
+    @TestMetadata("castToInnerClassInPackage.kt")
+    public void testCastToInnerClassInPackage() throws Exception {
+        runTest("../testData/evaluationExpression/castToInnerClassInPackage.kt");
+    }
+
+    @TestMetadata("genericCastInPackage.kt")
+    public void testGenericCastInPackage() throws Exception {
+        runTest("../testData/evaluationExpression/genericCastInPackage.kt");
+    }
+
     @TestMetadata("genericCastKeepsStarProjection.kt")
     public void testGenericCastKeepsStarProjection() throws Exception {
         runTest("../testData/evaluationExpression/genericCastKeepsStarProjection.kt");
