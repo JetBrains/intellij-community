@@ -8,10 +8,18 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
    * Register an additional module to be included in the plugin distribution. Module-level libraries from
    * [moduleName] with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
    */
+  @Deprecated("""
+    Register the module as a content module instead; if it's necessary to load the module by the main plugin classloader, use `loading="embedded"`; 
+    if the module should not be loaded by the IDE process at all, use `loading="on-demand""""
+  )
   fun withModule(moduleName: String) {
     layout.withModule(moduleName)
   }
 
+  @Deprecated("""
+    Register additional modules as content modules instead; if it's necessary to load a module by the main plugin classloader, use `loading="embedded"`; 
+    if a module should not be loaded by the IDE process at all, use `loading="on-demand""""
+  )
   fun withModules(names: Iterable<String>) {
     layout.withModules(names)
   }
@@ -24,6 +32,10 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
    * @param relativeJarPath target JAR path relative to the 'lib' directory of the plugin; different modules may be packed into the same JAR,
    * but <strong>don't use this for new plugins</strong>; this parameter is temporarily added to keep the layout of old plugins.
    */
+  @Deprecated("""
+    Register the module as a content module instead; if it's necessary to load the module by the main plugin classloader, use `loading="embedded"`; 
+    if the module should not be loaded by the IDE process at all, use `loading="on-demand""""
+  )
   fun withModule(moduleName: String, relativeJarPath: String) {
     layout.withModule(moduleName, relativeJarPath)
   }
