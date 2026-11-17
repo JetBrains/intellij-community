@@ -1873,6 +1873,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/locking-impl/intellij.platform.locking.impl.iml" filepath="$PROJECT_DIR$/platform/locking-impl/intellij.platform.locking.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/lsp/intellij.platform.lsp.iml" filepath="$PROJECT_DIR$/platform/lsp/intellij.platform.lsp.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/lsp-impl/intellij.platform.lsp.impl.iml" filepath="$PROJECT_DIR$/platform/lsp-impl/intellij.platform.lsp.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/lsp-impl/integrationTests/intellij.platform.lsp.impl.integrationTests.iml" filepath="$PROJECT_DIR$/platform/lsp-impl/integrationTests/intellij.platform.lsp.impl.integrationTests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/lsp-impl/integrationTests/idePlugin/intellij.platform.lsp.impl.integrationTests.idePlugin.iml" filepath="$PROJECT_DIR$/platform/lsp-impl/integrationTests/idePlugin/intellij.platform.lsp.impl.integrationTests.idePlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/lsp-impl/structureView/intellij.platform.lsp.impl.structureView.iml" filepath="$PROJECT_DIR$/platform/lsp-impl/structureView/intellij.platform.lsp.impl.structureView.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/lsp-impl/tests/intellij.platform.lsp.impl.tests.iml" filepath="$PROJECT_DIR$/platform/lsp-impl/tests/intellij.platform.lsp.impl.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/lsp/testFramework/intellij.platform.lsp.testFramework.iml" filepath="$PROJECT_DIR$/platform/lsp/testFramework/intellij.platform.lsp.testFramework.iml" />
