@@ -2122,10 +2122,12 @@ internal class StartupEditorCompositeProvider : EditorCompositeProvider {
     if (hint !is StartupFileEditorOpenOptionsHint) return null
 
     val feManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
-    return feManager.createCompositeInstance(
+    val composite = feManager.createCompositeInstance(
       file = file,
       model = hint.model,
       coroutineScope = hint.compositeScope,
     )
+    composite?.isRestoredOnStartup = true
+    return composite
   }
 }

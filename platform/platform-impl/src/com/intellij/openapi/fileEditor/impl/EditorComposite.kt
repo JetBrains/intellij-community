@@ -221,6 +221,11 @@ open class EditorComposite internal constructor(
   @Internal
   val shownDeferred: CompletableDeferred<Unit> = CompletableDeferred()
 
+  /** `true` for a composite that the startup restore built from a saved tab, see `StartupEditorCompositeProvider`. */
+  @Internal
+  var isRestoredOnStartup: Boolean = false
+    internal set
+
   @JvmField
   @Internal
   val initDeferred: CompletableDeferred<Unit> = CompletableDeferred()

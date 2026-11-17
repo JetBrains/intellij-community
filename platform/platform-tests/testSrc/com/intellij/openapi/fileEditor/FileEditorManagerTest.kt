@@ -825,6 +825,31 @@ class FileEditorManagerTest {
     }
   }
 
+  @Test
+  fun testRestoredCompositeIsMarked(): Unit = timeoutRunBlocking {
+    val selectedFile = LightVirtualFile("selected.txt", PlainTextFileType.INSTANCE, "selected")
+    val other = LightVirtualFile("other.txt", PlainTextFileType.INSTANCE, "other")
+    val opened = LightVirtualFile("opened.txt", PlainTextFileType.INSTANCE, "opened")
+    val state = createRestoreState(selectedFile, other)
+    try {
+      manager.mainSplitters.createTestEditors(state)
+      withContext(Dispatchers.EDT) {
+        assertThat(manager.getComposite(selectedFile)?.isRestoredOnStartup).isTrue()
+      }
+      manager.openFile(file = opened, options = FileEditorOpenOptions())
+      withContext(Dispatchers.EDT) {
+        assertThat(manager.getComposite(opened)?.isRestoredOnStartup).isFalse()
+      }
+    }
+    finally {
+      withContext(Dispatchers.EDT) {
+        manager.closeFile(opened)
+        manager.closeFile(other)
+        manager.closeFile(selectedFile)
+      }
+    }
+  }
+
   private fun createRestoreState(vararg files: VirtualFile): EditorSplitterState {
     val adapter = FileIdAdapter.getInstance()
     ApplicationManager.getApplication().replaceService(FileIdAdapter::class.java, object : FileIdAdapter by adapter {
