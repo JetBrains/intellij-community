@@ -1210,7 +1210,7 @@ private fun collectEmbeddedProductDescriptor(
     ),
     libraryDescriptors = labels.libraryDescriptors,
     separateJar = separateJarContentModules(
-      layout = PluginLayout.pluginAuto(listOf(support.descriptorModule)),
+      layout = PluginLayout.pluginAuto(support.descriptorModule) {},
       closure = closure,
       outputProvider = outputProvider,
       frontendModuleFilter = frontendModuleFilter,

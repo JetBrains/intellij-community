@@ -198,7 +198,7 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
         }
       }
     },
-    pluginAuto(listOf("intellij.textmate.plugin")) { spec ->
+    pluginAuto("intellij.textmate.plugin") { spec ->
       spec.withResourceFromModule("intellij.textmate", "lib/bundles", "lib/bundles")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout { spec ->
@@ -206,13 +206,13 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withBundledPydevdNativeDeps()
     },
     androidDesignPlugin(),
-    pluginAuto(listOf("intellij.completionMlRankingModels")) { spec ->
+    pluginAuto("intellij.completionMlRankingModels") { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
-    pluginAuto(listOf("intellij.statsCollector")) { spec ->
+    pluginAuto("intellij.statsCollector") { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
-    pluginAuto(listOf("intellij.findUsagesMl")) { spec ->
+    pluginAuto("intellij.findUsagesMl") { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
   ).addingAll(allJcefPlugins().toList())

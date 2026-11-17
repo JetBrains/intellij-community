@@ -313,6 +313,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     fun pluginAuto(moduleName: String, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout = pluginAuto(listOf(moduleName), body)
 
+    @Deprecated("Use pluginAuto(moduleName, body) and register additional modules as content modules")
     fun pluginAuto(moduleNames: List<String>, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)
       layout.withModules(moduleNames)
@@ -333,6 +334,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * Direct main module dependencies in the same module group are included automatically.
      * Project-level libraries are not - see the note in [plugin].
      */
+    @Deprecated("Use pluginAuto(moduleName) and register additional modules as content modules")
     fun pluginAuto(moduleNames: List<String>): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)
       layout.withModules(moduleNames)

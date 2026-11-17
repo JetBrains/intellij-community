@@ -43,7 +43,7 @@ class DevModePluginCandidatesTest {
 
   @Test
   fun `a plugin of another operating system is absent without a complaint`() {
-    val macOsOnly = PluginLayout.pluginAuto(listOf(plugin)) {
+    val macOsOnly = PluginLayout.pluginAuto(plugin) {
       it.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.MACOS)
     }
 
@@ -57,7 +57,7 @@ class DevModePluginCandidatesTest {
 
   @Test
   fun `a marketplace variant is absent without a complaint`() {
-    val marketplaceOnly = PluginLayout.pluginAuto(listOf(plugin)) {
+    val marketplaceOnly = PluginLayout.pluginAuto(plugin) {
       it.bundlingRestrictions.marketplace = true
     }
 
@@ -72,8 +72,8 @@ class DevModePluginCandidatesTest {
   @Test
   fun `an update module admits its marketplace layout, and another module keeps the bundled rule`() {
     val other = "intellij.other.plugin"
-    val updateLayout = PluginLayout.pluginAuto(listOf(plugin)) { it.bundlingRestrictions.marketplace = true }
-    val otherLayout = PluginLayout.pluginAuto(listOf(other)) { it.bundlingRestrictions.marketplace = true }
+    val updateLayout = PluginLayout.pluginAuto(plugin) { it.bundlingRestrictions.marketplace = true }
+    val otherLayout = PluginLayout.pluginAuto(other) { it.bundlingRestrictions.marketplace = true }
     fun select(updateModules: Set<String>, demanded: Set<String> = emptySet()): List<PluginLayout> {
       return devModePluginCandidates(
         owned = listOf(updateLayout, otherLayout),
@@ -112,7 +112,7 @@ class DevModePluginCandidatesTest {
   // them by name. The only symptom was 149 Bazel-built jars with no destination, two layers away.
   @Test
   fun `a plugin the release cycle drops fails`() {
-    val notForPublicBuilds = PluginLayout.pluginAuto(listOf(plugin)) {
+    val notForPublicBuilds = PluginLayout.pluginAuto(plugin) {
       it.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     }
 
@@ -130,7 +130,7 @@ class DevModePluginCandidatesTest {
 
   @Test
   fun `a plugin nobody asked for is absent without a complaint`() {
-    val notForPublicBuilds = PluginLayout.pluginAuto(listOf(plugin)) {
+    val notForPublicBuilds = PluginLayout.pluginAuto(plugin) {
       it.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     }
 
@@ -149,7 +149,7 @@ class DevModePluginCandidatesTest {
   @Test
   fun `two variants of one plugin that cover the target fail`() {
     val targetVariant = osSpecificVariant(os = TARGET_OS, arch = TARGET_ARCH)
-    val everyArchOfTwoOperatingSystems = PluginLayout.pluginAuto(listOf(plugin)) {
+    val everyArchOfTwoOperatingSystems = PluginLayout.pluginAuto(plugin) {
       it.bundlingRestrictions.supportedOs = persistentListOf(TARGET_OS, OsFamily.MACOS)
     }
 
@@ -169,7 +169,7 @@ class DevModePluginCandidatesTest {
   }
 
   private fun osSpecificVariant(os: OsFamily, arch: JvmArchitecture): PluginLayout {
-    return PluginLayout.pluginAuto(listOf(plugin)) {
+    return PluginLayout.pluginAuto(plugin) {
       it.bundlingRestrictions.supportedOs = persistentListOf(os)
       it.bundlingRestrictions.supportedArch = persistentListOf(arch)
     }
