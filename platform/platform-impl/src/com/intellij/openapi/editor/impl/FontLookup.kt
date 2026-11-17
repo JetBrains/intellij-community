@@ -38,7 +38,5 @@ internal interface FontLookup {
    * or `null` when these chars have no common font or the lookup does not know it.
    * The printable ASCII chars are the chars from the space to `~`.
    */
-  fun printableAsciiFont(@FontStyle style: Int, context: FontRenderContext?): FontInfo? {
-    return null
-  }
+  fun printableAsciiFont(@FontStyle style: Int, context: FontRenderContext?): FontInfo?
 }
