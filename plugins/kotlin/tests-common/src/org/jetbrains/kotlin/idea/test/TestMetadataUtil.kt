@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
 import java.io.File
 import kotlin.io.path.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 object TestMetadataUtil {
     private val kotlinJvmDebuggerTestDataRoot = Path("jvm-debugger", "test", "testData")
@@ -73,29 +74,7 @@ object TestMetadataUtil {
         getAnnotationValue(testClass, TestMetadata::class.java, lookupEnclosingClass = false)?.let { return it.value }
 
     /**
-     * Resolves a Bazel-specific test data file path for the given [testClass] and [pathToResolve].
-     *
-     * Behavior:
-     * - Requires the presence of a [TestRoot] annotation on [testClass] (or its hierarchy via [getAnnotationValue]).
-     *   The [TestRoot.value] is treated as a base directory. The provided [pathToResolve] is resolved against this
-     *   base and then normalized.
-     * - Currently supports only test data rooted under:
-     *   - "jvm-debugger/test/testData"
-     *   - "../../../plugins/debugger/jvm-advanced/jvm.advanced.kotlin/intellij.debugger.jvm.advanced.kotlin.tests/testData"
-     *   - "jps/graphImplementationTests/testData"
-     *   For supported roots, the method computes the relative path under that subtree and returns a File resolved against
-     *   the matching artifact from [TestKotlinArtifacts].
-     *
-     * Note:
-     * - This limitation is temporary: only explicitly wired test-data roots are supported for now.
-     *
-     * Exceptions:
-     * - Throws [IllegalStateException] if [TestRoot] is not found on [testClass].
-     * - Throws [IllegalStateException] if running the test via Bazel is not supported for the resolved path.
-     *
-     * @param testClass the test class whose @TestRoot determines the base for resolution
-     * @param pathToResolve a path relative to the @TestRoot base that points to the requested test data
-     * @return a File pointing to the test data within the supported Bazel test data artifact location
+     * Resolves [pathToResolve] relative to [TestRoot] using test data declared in the Bazel target.
      */
     @JvmStatic
     fun resolvePathInBazelProvidedTestData(testClass: Class<*>, pathToResolve: String): File {
@@ -104,20 +83,18 @@ object TestMetadataUtil {
             throw IllegalStateException("@TestRoot annotation was not found on " + testClass.name)
         }
         val normalizedPathToResolve = Path(testRoot.value).resolve(pathToResolve).normalize()
-        // Temporary limitation: only explicitly wired test-data roots are supported.
-        // TODO: Generalize to support Bazel-provided test data without a hardcoded root allowlist.
         val supportedRoot = supportedBazelTestDataRoots.firstOrNull { (root, _) -> normalizedPathToResolve.startsWith(root) }
         if (supportedRoot != null) {
             val (root, artifactProvider) = supportedRoot
             val pathToResolveRelativeTestData = root.relativize(normalizedPathToResolve)
             return File(artifactProvider().resolve(pathToResolveRelativeTestData).toString())
         }
-        val resolvedFrom = "TestRoot='${testRoot.value}' + path='${pathToResolve}' => '$normalizedPathToResolve'"
-        val supportedRoots = supportedBazelTestDataRoots.joinToString { (root, _) -> "'$root'" }
-        throw IllegalStateException(
-            "Running tests via Bazel is not yet supported for ${testClass.name}.\n" +
-            "Resolved test data path: $resolvedFrom\n" +
-            "Only paths under $supportedRoots are currently supported."
-        )
+        val testDataIndex = normalizedPathToResolve.indexOfFirst { it.toString() == "testData" }
+        check(testDataIndex >= 0 && !normalizedPathToResolve.startsWith("..") && !normalizedPathToResolve.isAbsolute) {
+            "Cannot resolve test data for ${testClass.name}: $normalizedPathToResolve"
+        }
+        val testDataRoot = normalizedPathToResolve.subpath(0, testDataIndex + 1)
+        val root = BazelTestUtil.getFileFromBazelRuntime("@community//plugins/kotlin:${testDataRoot.invariantSeparatorsPathString}")
+        return root.resolve(testDataRoot.relativize(normalizedPathToResolve)).toFile()
     }
 }

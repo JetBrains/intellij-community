@@ -3,6 +3,12 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `dev intellij.kotlin.searching` start
 content_module_jar(module = ":kotlin.searching")
 ### auto-generated section `dev intellij.kotlin.searching` end

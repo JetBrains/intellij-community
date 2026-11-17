@@ -3,6 +3,12 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `build kotlin.j2k.shared.tests` start
 create_kotlinc_options(
     name = "custom_tests",
