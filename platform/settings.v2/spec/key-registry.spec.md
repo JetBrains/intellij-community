@@ -3,6 +3,8 @@ name: Key Registry
 description: Requirements for the registry that resolves a key identity to its key, and for key promotion.
 style: plain-1
 targets:
+  - ../src/com/intellij/platform/settings/v2/SettingsKeyPromoter.kt
+  - ../resources/intellij.platform.settings.v2.xml
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsKeyRegistry.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsVaultImpl.kt
   - ../shared/resources/intellij.platform.settings.v2.shared.xml
@@ -64,6 +66,9 @@ from outside, such as from another remote-dev side, could resolve to nothing.
 - Discovery must start when the registry is created, in the background. The registry is ready when every
   promoter ran. See [ADR 0109](../adr/0109-promoting-keys-is-the-discovery-and-it-runs-in-the-background.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
+- The promoter interface and its extension point must be part of the API module, so a plugin promotes its keys with
+  no dependency on the shared module. The registry stays in the shared module. See
+  [ADR 0175](../adr/0175-the-promoter-interface-and-its-extension-point-live-in-the-api-module.md).
 - The registry must hold its keys strongly. See [ADR 0112](../adr/0112-the-registry-holds-keys-strongly.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
 

@@ -4,7 +4,8 @@ Date: 2026-09-24
 
 ## Status
 
-Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
+Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)). Amended by
+[ADR 0175](./0175-the-promoter-interface-and-its-extension-point-live-in-the-api-module.md).
 
 ## Context
 

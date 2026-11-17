@@ -22,11 +22,6 @@
     <module name="intellij.platform.settings.v2"/>
   </dependencies>
   <!-- endregion -->
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.settings.v2.keyPromoter"
-                    interface="com.intellij.platform.settings.v2.impl.SettingsKeyPromoter"
-                    dynamic="true"/>
-  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.platform.settings.v2.SettingsVault"
                         serviceImplementation="com.intellij.platform.settings.v2.impl.SettingsVaultImpl"/>
