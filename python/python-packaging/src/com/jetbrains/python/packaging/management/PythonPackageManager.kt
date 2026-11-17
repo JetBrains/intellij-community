@@ -18,7 +18,11 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiFile
@@ -33,6 +37,7 @@ import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.isReadOnly
 import com.intellij.python.sdk.backend.readOnlyErrorMessage
 import com.intellij.python.sdk.backend.refreshPaths
+import com.intellij.python.sdk.backend.requirementsPath
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -709,15 +714,34 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
       watchDependencyFiles()
     }
 
-    /** Asks for a load after each change of a tracked dependency file. A load that finds the same stamps runs nothing. */
+    /**
+     * Asks for a load after each change of a tracked dependency file, and after each new file with the name of a dependency
+     * file. A load that finds the same stamps runs nothing.
+     */
     private fun watchDependencyFiles() {
       project.messageBus.connect(managerScope).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
         override fun after(events: List<VFileEvent>) {
           val tracked = trackedFiles.mapTo(HashSet()) { it.virtualFile }
-          val relevant = events.any { it.file in tracked }
+          val newNames = events.mapNotNullTo(HashSet()) { it.newFileName() }
+          val relevant = events.any { it.file in tracked } || dependencyFileNames().any { it in newNames }
           if (relevant) fileChanges.tryEmit(Unit)
         }
       })
+    }
+
+    /** The names that a dependency file of this manager can have: the [dependenciesFilesRelativePaths] and the stored requirements path. */
+    private fun dependencyFileNames(): Set<String> = buildSet {
+      dependenciesFilesRelativePaths.mapTo(this) { it.fileName.toString() }
+      interpreter.requirementsPath?.let { add(it.fileName.toString()) }
+    }
+
+    /** The name of the file that [this] adds at a path, or `null` when [this] adds no file. */
+    private fun VFileEvent.newFileName(): String? = when (this) {
+      is VFileCreateEvent -> childName
+      is VFileCopyEvent -> newChildName
+      is VFileMoveEvent -> file.name
+      is VFilePropertyChangeEvent -> if (isRename) newValue as String else null
+      else -> null
     }
 
     /**

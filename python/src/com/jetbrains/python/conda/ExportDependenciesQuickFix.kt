@@ -6,11 +6,12 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.packaging.management.DependenciesExporter
 
 internal class ExportDependenciesQuickFix(private val dependenciesExporter: DependenciesExporter) : LocalQuickFix {
   override fun getFamilyName(): @IntentionFamilyName String {
-    return PyBundle.message("QFIX.NAME.export.dependencies")
+    return PyPsiBundle.message("QFIX.add.imported.packages.to.requirements")
   }
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {

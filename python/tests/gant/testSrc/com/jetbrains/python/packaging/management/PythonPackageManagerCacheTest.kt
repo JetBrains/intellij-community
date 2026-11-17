@@ -2,10 +2,13 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.psi.PsiManager
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.sdk.backend.PythonInterpreter
@@ -14,6 +17,7 @@ import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
@@ -33,6 +37,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -105,12 +110,37 @@ internal class PythonPackageManagerCacheTest {
     Disposer.dispose(second)
   }
 
+  @Test
+  fun `a dependency file created after the init is tracked`(@TempDir home: Path): Unit = timeoutRunBlocking(1.minutes) {
+    val project = projectFixture.get()
+    val sitePackages = home.resolve("lib/python3.12/site-packages").createDirectories()
+    val requirements = modulePathFixture.get().resolve("requirements.txt")
+    val interpreter = registerInterpreter(project, home, sitePackages, requirementsPath = requirements)
+    val manager = CountingManager(project, interpreter, AtomicInteger())
+    manager.waitForInit()
+    manager.listDeclaredPackagesCached()
+
+    requirements.createFile()
+    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(requirements)!!
+    val psiFile = readAction { PsiManager.getInstance(project).findFile(virtualFile)!! }
+
+    waitUntil("The manager tracks the new dependency file") { manager.tracksDependencyFile(psiFile) }
+    Disposer.dispose(manager)
+  }
+
   /** A non-mock interpreter of the Python project of the fixture, whose `sys.path` is [sitePackages]. */
-  private suspend fun registerInterpreter(project: Project, home: Path, sitePackages: Path): PythonInterpreter {
+  private suspend fun registerInterpreter(
+    project: Project,
+    home: Path,
+    sitePackages: Path,
+    requirementsPath: Path? = null,
+  ): PythonInterpreter {
     val sdk = ProjectJdkImpl("py-packages-cache ${home.fileName}", PythonSdkType.getInstance())
     val modificator = sdk.sdkModificator
     modificator.homePath = home.resolve("bin").resolve("python").toString()
-    modificator.sdkAdditionalData = PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance()), home)
+    modificator.sdkAdditionalData = PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance()), home).apply {
+      setRequirementsPath(requirementsPath)
+    }
     WriteAction.runAndWait<RuntimeException> { modificator.commitChanges() }
     val interpreter = PythonInterpreterRegistry.getInstance(project).addMockPythonInterpreter(pyProjectFixture.get(), sdk)
     PythonInterpreterDetails.getInstance(project).writeSysPath(interpreter, listOf(sitePackages.toString()))

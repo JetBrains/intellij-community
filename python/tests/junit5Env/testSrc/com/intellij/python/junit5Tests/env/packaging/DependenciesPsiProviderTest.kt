@@ -175,7 +175,7 @@ internal class DependenciesPsiProviderTest {
   @Test
   fun emptyRequirementsFile() = runTest(RequirementsProviderType.REQUIREMENTS_TXT) {
     fixture.checkHighlighting(true, false, true, false)
-    assertTrue(fixture.availableIntentions.any { it.text == "Export packages" })
+    assertTrue(fixture.availableIntentions.any { it.text == "Add imported packages to requirements\u2026" })
   }
 
   @Test

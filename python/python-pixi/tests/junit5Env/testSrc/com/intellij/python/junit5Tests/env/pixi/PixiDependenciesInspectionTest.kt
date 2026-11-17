@@ -34,6 +34,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.getOrThrow
@@ -119,11 +120,11 @@ internal class PixiDependenciesInspectionTest {
         withContext(Dispatchers.EDT) {
           assertThat(DependenciesInspection().isAvailableForFile(fixture.file)).isTrue()
           fixture.doHighlighting()
-          assertThat(fixture.getAllQuickFixes().map { it.text }).contains(PyBundle.message("QFIX.NAME.export.dependencies"))
+          assertThat(fixture.getAllQuickFixes().map { it.text }).contains(PyPsiBundle.message("QFIX.add.imported.packages.to.requirements"))
         }
       }
       withContext(Dispatchers.EDT) {
-        fixture.launchAction(fixture.findSingleIntention(PyBundle.message("QFIX.NAME.export.dependencies")))
+        fixture.launchAction(fixture.findSingleIntention(PyPsiBundle.message("QFIX.add.imported.packages.to.requirements")))
       }
       waitUntilAssertSucceeds("The export quick fix must write native and Python packages.") {
         assertThat(exportFile.readText()).contains("name: default", "python ==3.13.", "six==1.16.0")
