@@ -15,13 +15,7 @@ project_directory = sys.argv.pop()
 #ensure project directory is given priority when looking for settings files
 sys.path.insert(0, project_directory)
 
-#import settings to prevent circular dependencies later on import django.db
-try:
-    from django.conf import settings
-    apps = settings.INSTALLED_APPS
-except:
-    pass
-
+from django.conf import settings
 from django.core import management
 
 try:
@@ -40,20 +34,22 @@ manage_file = os.getenv('PYCHARM_DJANGO_MANAGE_MODULE')
 if not manage_file:
   manage_file = 'manage'
 
+# A manage.py can set DJANGO_SETTINGS_MODULE when it is imported. The settings module that the IDE gives has priority.
+ide_settings_module = os.getenv('DJANGO_SETTINGS_MODULE')
 try:
   __import__(manage_file)
 except ImportError as e:
   print ("Failed to import" + str(manage_file) + " in ["+ ",".join(sys.path) +"] " + str(e))
-
-settings_file = os.getenv('DJANGO_SETTINGS_MODULE')
-if not settings_file:
-  settings_file = 'settings'
+if ide_settings_module:
+  os.environ['DJANGO_SETTINGS_MODULE'] = ide_settings_module
 
 import django
 if django.VERSION >= (1, 7):
-    if not settings.configured:
-        settings.configure()
     django.setup()
+else:
+    # Django 1.5 and earlier read the settings when django.db is imported. Load the settings first,
+    # so that a settings module that imports django.db does not cause a circular import (PY-9499).
+    settings.INSTALLED_APPS
 
 
 def _create_command():
@@ -143,18 +139,6 @@ class PycharmTestManagementUtility(ManagementUtility):
 
 
 if __name__ == "__main__":
-
-  try:
-    custom_settings = __import__(settings_file)
-    splitted_settings = settings_file.split('.')
-    if len(splitted_settings) != 1:
-      settings_name = '.'.join(splitted_settings[:-1])
-      settings_module = __import__(settings_name, globals(), locals(), [splitted_settings[-1]])
-      custom_settings = getattr(settings_module, splitted_settings[-1])
-
-  except ImportError:
-    print ("There is no such settings file " + str(settings_file) + "\n")
-
   try:
     subcommand = sys.argv[1]
   except IndexError:
