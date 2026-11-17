@@ -415,3 +415,4 @@ intellij.kotlin.compilerReferenceIndex.tests
 intellij.kotlin.refactorings.rename.tests
 kotlin.fir.tests
 intellij.kotlin.base.scripting.tests
+intellij.kotlin.codeInsight.inspections.tests
