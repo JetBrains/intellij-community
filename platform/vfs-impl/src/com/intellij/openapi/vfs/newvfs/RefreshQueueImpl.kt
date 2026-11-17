@@ -216,7 +216,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     try {
       readAndBackgroundWriteAction {
         myRefreshIndicator.checkCanceled()
-        val (events, changeAppliers) = collectChangeAppliersInReadAction(session, events, evQueuedAt, evTimeInQueue, evRetries, evListenerTime)
+        val [events, changeAppliers] = collectChangeAppliersInReadAction(session, events, evQueuedAt, evTimeInQueue, evRetries, evListenerTime)
         if (events.isEmpty() && session.myFinishRunnable == null) {
           // someone may be waiting for this refresh synchronously on session's semaphore
           // at the same time, we'd like to avoid issuing a write action if nothing was changed,
@@ -286,6 +286,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     VfsUsageCollector.logEventProcessing(evTimeInQueue.toLong(), TimeUnit.NANOSECONDS.toMillis(evListenerTime.toLong()), evRetries.toInt(), t, events.size)
   }
 
+  @Suppress("ForbiddenInSuspectContextMethod")
   private fun processEvents(session: RefreshSessionImpl, modality: ModalityState, events: Collection<VFileEvent>) {
     if (Registry.`is`("vfs.async.event.processing", true) && !events.isEmpty()) {
       val evQueuedAt = System.nanoTime()
@@ -299,8 +300,8 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
         }
         .expireWith(this)
         .wrapProgress(myRefreshIndicator)
-        .finishOnUiThread(modality) { data ->
-          doFireEvents(session, evTimeInQueue, evListenerTime, evRetries, data.first, data.second, false)
+        .finishOnUiThread(modality) { [val events, val changeAppliers] ->
+          doFireEvents(session, evTimeInQueue, evListenerTime, evRetries, events, changeAppliers, false)
         }
         .submit {
           eventProcessingScope.launch {

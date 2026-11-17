@@ -31,7 +31,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.progress.waitForMaybeCancellable
-import java.util.Objects
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import kotlin.concurrent.Volatile
@@ -49,7 +48,7 @@ internal data class NewChildren internal constructor(
   val children: MutableList<String>,
 )
 
-
+@Suppress("SplitModeApiUsage")
 internal class RefreshSessionImpl internal constructor(
   val isAsynchronous: Boolean,
   private val myIsRecursive: Boolean,
@@ -85,9 +84,7 @@ internal class RefreshSessionImpl internal constructor(
   }
 
   internal constructor(async: Boolean, events: List<VFileEvent>) : this(async, false, false, null, ModalityState.defaultModalityState()) {
-    val filtered: List<VFileEvent> = events.filter { obj: Any? -> Objects.nonNull(obj) }
-    if (filtered.size < events.size) LOG.error("The list of events must not contain null elements")
-    addEvents(filtered)
+    addEvents(events)
   }
 
   override fun addFile(file: VirtualFile) {
@@ -124,7 +121,7 @@ internal class RefreshSessionImpl internal constructor(
     require(file == null || childrenNames.size == 1) { "A copy request must have exactly one child name" }
     if (childrenNames.isEmpty()) return
     if (parent !is NewVirtualFile) {
-      LOG.debug("skipped: $parent / ${parent.javaClass}")
+      LOG.debug("skipped parent: $parent / ${parent.javaClass}")
       return
     }
     val newChildren = myNewFilesCaseSensitive[parent]
