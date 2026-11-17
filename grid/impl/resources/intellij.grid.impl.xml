@@ -90,8 +90,6 @@
                              groupWeight="100"
                              instance="com.intellij.database.settings.DataGridAppearanceConfigurable"/>
 
-    <projectService serviceInterface="com.intellij.database.datagrid.GridHookUpRegistry"
-                    serviceImplementation="com.intellij.database.datagrid.GridDataHookUpManager"/>
     <search.optionContributor implementation="com.intellij.database.settings.DataGridAppearanceOptionContributor"/>
     <customizableActionGroupProvider implementation="com.intellij.database.run.ui.table.TableFloatingToolbar$CustomizableGroupProvider"/>
     <customizableActionGroupProvider implementation="com.intellij.database.run.ui.columns.ColumnsListCustomizableGroupProvider"/>

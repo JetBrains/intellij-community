@@ -10,7 +10,6 @@ The [core-impl module](../core-impl) provides the models, hook interfaces, and i
 | [DataGrid](src/datagrid/DataGrid.java)                           | Extends `CoreGrid` with UI operations, presentation settings, and grid events.                      |
 | [TableResultPanel](src/run/ui/TableResultPanel.java)             | Implements `DataGrid`. Coordinates the hook, active view, column state, and editing.                |
 | [GridDataHookUp](../core-impl/src/datagrid/GridDataHookUp.java)  | Supplies models, loading, paging, sorting, filtering, and an optional mutator.                      |
-| [GridDataHookUpManager](src/datagrid/GridDataHookUpManager.java) | Implements `GridHookUpRegistry`. Shares hooks through handles, and parks those of reopened editors. |
 | [GridModel](../core-impl/src/datagrid/GridModel.java)            | Exposes rows, columns, values, and model events.                                                    |
 | [GridMutator](../core-impl/src/datagrid/GridMutator.java)        | Changes data. Additional interfaces support row, column, and database operations.                   |
 | [ResultView](src/datagrid/ResultView.java)                       | Connects a presentation to the grid through model events, selection, editing, and index conversion. |
@@ -59,7 +58,8 @@ With deferred updates, `DATA_WITH_MUTATIONS` shows the pending value until `subm
 
 Hooks change their models on the EDT, because [GridMutationModel](../core-impl/src/run/ui/grid/GridMutationModel.java) delivers events synchronously.
 Register the grid under the host's disposable, and keep the hook reference until the grid is disposed.
-`GridDataHookUpManager.acquire(handle, parent)` ties a shared hook to the parent's lifetime and disposes it with the last reference.
+[GridHookUpRegistry](../core-impl/src/datagrid/GridHookUpRegistry.kt) shares hooks through handles.
+`acquire(handle, parent)` ties a shared hook to the parent's lifetime and disposes it with the last reference.
 
 ## Tests
 
