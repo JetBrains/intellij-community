@@ -422,3 +422,4 @@ intellij.kotlin.copyright.tests
 intellij.kotlin.grazie.tests
 intellij.kotlin.codeInsight.liveTemplates.tests
 intellij.kotlin.base.scripting.scratch.tests
+intellij.kotlin.refactorings.tests
