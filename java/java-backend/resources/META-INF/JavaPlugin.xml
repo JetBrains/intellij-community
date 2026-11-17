@@ -90,6 +90,8 @@
                         serviceImplementation="com.intellij.psi.impl.file.JavaDirectoryServiceImpl" overrides="true"/>
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.JavaVersionService"
                         serviceImplementation="com.intellij.openapi.projectRoots.JavaVersionServiceImpl" overrides="true"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.editorActions.JavaTypingSupport"
+                        serviceImplementation="com.intellij.codeInsight.editorActions.JavaTypingSupportImpl" overrides="true"/>
     <applicationService
       serviceInterface="com.intellij.codeInsight.generation.OverrideImplementExploreUtil$MemberImplementorExplorersProvider"
       serviceImplementation="com.intellij.codeInsight.generation.MemberImplementorExplorersProviderImpl"/>
@@ -754,7 +756,6 @@
     <editorSmartKeysConfigurable instance="com.intellij.application.options.JavadocOptionsProvider" id="editor.preferences.javadocOptions"/>
     <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaPrevParameterHandler"/>
     <editorActionHandler action="NextParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaNextParameterHandler"/>
-    <typedHandler implementation="com.intellij.codeInsight.editorActions.JavaTypedHandler" id="java"/>
     <constructorBodyGenerator language="JAVA"
                               implementationClass="com.intellij.codeInsight.generation.JavaConstructorBodyWithSuperCallGenerator"/>
     <lang.sliceProvider language="JAVA" implementationClass="com.intellij.slicer.JavaSliceProvider"/>

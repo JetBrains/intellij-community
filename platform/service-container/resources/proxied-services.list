@@ -33,6 +33,7 @@ com.intellij.psi.codeStyle.JavaCodeStyleManager
 com.intellij.openapi.roots.PackageIndex
 com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService
 com.intellij.psi.JavaModuleGraphHelper
+com.intellij.codeInsight.editorActions.JavaTypingSupport
 com.intellij.execution.configurations.RunConfigurationVcsSupport
 com.intellij.openapi.vcs.actions.VcsContextFactory
 com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider

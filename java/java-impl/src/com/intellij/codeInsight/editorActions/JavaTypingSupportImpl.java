@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
+import com.intellij.codeInsight.editorActions.TypedHandlerDelegate.Result;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -42,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public final class JavaTypedHandler extends JavaTypedHandlerBase {
+public final class JavaTypingSupportImpl extends JavaTypingSupport {
   @Override
   public boolean handleEquality(Project project, Editor editor, PsiFile file, int offsetBefore) {
     if (offsetBefore == 0) return false;
@@ -102,7 +103,7 @@ public final class JavaTypedHandler extends JavaTypedHandlerBase {
   }
 
   @Override
-  protected boolean handleQuestionMark(Project project, Editor editor, PsiFile file, int offsetBefore) {
+  public boolean handleQuestionMark(Project project, Editor editor, PsiFile file, int offsetBefore) {
     if (offsetBefore == 0) return false;
     HighlighterIterator it = editor.getHighlighter().createIterator(offsetBefore);
     if (it.atEnd()) return false;
@@ -149,7 +150,7 @@ public final class JavaTypedHandler extends JavaTypedHandlerBase {
   }
 
   @Override
-  protected boolean handleAnnotationParameter(Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public boolean handleAnnotationParameter(Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     int caret = editor.getCaretModel().getOffset();
     if (mightBeInsideDefaultAnnotationAttribute(editor, caret - 2)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -204,17 +205,17 @@ public final class JavaTypedHandler extends JavaTypedHandlerBase {
   }
 
   @Override
-  protected void autoPopupMemberLookup(@NotNull Project project, final @NotNull Editor editor) {
+  public void autoPopupMemberLookup(@NotNull Project project, final @NotNull Editor editor) {
     AutoPopupController.getInstance(project).scheduleAutoPopup(editor, new BackendAutoPopupMemberLookupCondition(editor));
   }
 
   @Override
   public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return doCheckAutoPopup(charTyped, project, editor, file);
+    return JavaTypedHandlerBase.doCheckAutoPopup(charTyped, project, editor, file);
   }
 
   @Override
-  protected void autoPopupJavadocLookup(final @NotNull Project project, final @NotNull Editor editor) {
+  public void autoPopupJavadocLookup(final @NotNull Project project, final @NotNull Editor editor) {
     AutoPopupController.getInstance(project).scheduleAutoPopup(editor, file -> {
       int offset = editor.getCaretModel().getOffset();
 
@@ -228,7 +229,7 @@ public final class JavaTypedHandler extends JavaTypedHandlerBase {
     });
   }
 
-  private static class BackendAutoPopupMemberLookupCondition extends FrontendAutoPopupMemberLookupCondition {
+  private static class BackendAutoPopupMemberLookupCondition extends JavaTypedHandlerBase.FrontendAutoPopupMemberLookupCondition {
     BackendAutoPopupMemberLookupCondition(@NotNull Editor editor) { super(editor); }
 
     @Override
