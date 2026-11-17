@@ -603,20 +603,6 @@ public final class PyUtil {
   }
 
   /**
-   * Calculates and caches value based on param. Think about it as about map with param as key which flushes on each psi modification.
-   * <p>
-   * For nullable function see {@link #getNullableParameterizedCachedValue(PsiElement, Object, NullableFunction)}.
-   * <p>
-   * This function is used instead of {@link CachedValuesManager#createParameterizedCachedValue(ParameterizedCachedValueProvider, boolean)}
-   * because parameter is not used as key there but used only for first calculation. Hence this should have functional dependency on element.
-   *
-   * @param element place to store cache
-   * @param param   param to be used as key
-   * @param f       function to produce value for key
-   * @param <T>     value type
-   * @param <P>     key type
-   */
-  /**
    * Same as {@link #getParameterizedCachedValue(PsiElement, Object, Function)}, but keeps no answer that a recursion
    * guard cut short. The stamp is of the whole stack, so an outer guard counts as well.
    * <p>
@@ -625,6 +611,7 @@ public final class PyUtil {
    * recurses through {@code getMetaClassType} and terminates because its own entry appears, and with this it overflows
    * the recursion guard instead. That is why {@link #getParameterizedCachedValue} keeps every answer.
    */
+  @ApiStatus.Internal
   public static @NotNull <T, P> T getParameterizedCachedValueOutsideRecursion(@NotNull PsiElement element,
                                                                               @Nullable P param,
                                                                               @NotNull Function<P, @NotNull T> f) {
@@ -644,6 +631,20 @@ public final class PyUtil {
     return value;
   }
 
+  /**
+   * Calculates and caches value based on param. Think about it as about map with param as key which flushes on each psi modification.
+   * <p>
+   * For nullable function see {@link #getNullableParameterizedCachedValue(PsiElement, Object, NullableFunction)}.
+   * <p>
+   * This function is used instead of {@link CachedValuesManager#createParameterizedCachedValue(ParameterizedCachedValueProvider, boolean)}
+   * because parameter is not used as key there but used only for first calculation. Hence this should have functional dependency on element.
+   *
+   * @param element place to store cache
+   * @param param   param to be used as key
+   * @param f       function to produce value for key
+   * @param <T>     value type
+   * @param <P>     key type
+   */
   public static @NotNull <T, P> T getParameterizedCachedValue(@NotNull PsiElement element,
                                                               @Nullable P param,
                                                               @NotNull Function<P, @NotNull T> f) {
