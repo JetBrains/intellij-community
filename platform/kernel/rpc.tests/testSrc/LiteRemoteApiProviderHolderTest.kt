@@ -79,6 +79,52 @@ internal class LiteRemoteApiProviderHolderTest {
   }
 
   @Test
+  fun `the same provider installed twice is silent`(): Unit = timeoutRunBlocking {
+    val holder = LiteRemoteApiProviderHolder()
+    val api = LiteTestApi()
+    val provider = LiteTestApiProvider(api)
+    holder.install(provider)
+    holder.install(provider)
+
+    assertThat(holder.isConnected()).isTrue()
+    assertThat(holder.tryResolve(LiteTestApiDescriptor)).isSameAs(api)
+  }
+
+  @Test
+  fun `uninstall drops the provider`(): Unit = timeoutRunBlocking {
+    val holder = LiteRemoteApiProviderHolder()
+    holder.install(LiteTestApiProvider(LiteTestApi()))
+
+    holder.uninstall()
+
+    assertThat(holder.isConnected()).isFalse()
+    assertThat(holder.tryResolve(LiteTestApiDescriptor)).isNull()
+    val request = async(start = CoroutineStart.UNDISPATCHED) {
+      holder.awaitConnectionAndResolve(LiteTestApiDescriptor)
+    }
+    assertThat(request.isCompleted).isFalse()
+    request.cancelAndJoin()
+  }
+
+  @Test
+  fun `a provider installed again releases the callers that waited`(): Unit = timeoutRunBlocking {
+    val holder = LiteRemoteApiProviderHolder()
+    holder.install(LiteTestApiProvider(LiteTestApi()))
+    holder.uninstall()
+    val request = async(start = CoroutineStart.UNDISPATCHED) {
+      holder.awaitConnectionAndResolve(LiteTestApiDescriptor)
+    }
+    assertThat(request.isCompleted).isFalse()
+
+    val api2 = LiteTestApi()
+    holder.install(LiteTestApiProvider(api2))
+
+    assertThat(holder.isConnected()).isTrue()
+    assertThat(request.await()).isSameAs(api2)
+    assertThat(holder.tryResolve(LiteTestApiDescriptor)).isSameAs(api2)
+  }
+
+  @Test
   fun `a missing API stays unavailable after installation`(): Unit = timeoutRunBlocking {
     val holder = LiteRemoteApiProviderHolder()
     holder.install(LiteTestApiProvider(null))
