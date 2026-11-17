@@ -8,7 +8,12 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.createTestOpenProjectOptions
@@ -20,6 +25,7 @@ import com.intellij.vcs.test.assertSuccessfulNotification
 import com.intellij.vcs.test.refresh
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitWorkingTree
+import git4idea.commands.GitCommandResult
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
 import git4idea.test.GitSingleRepoContext
@@ -27,6 +33,13 @@ import git4idea.test.git
 import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.initRepo
 import git4idea.test.registerRepo
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.mockkStatic
+import io.mockk.unmockkObject
+import io.mockk.unmockkStatic
+import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -132,6 +145,65 @@ internal class GitDeleteCurrentProjectWorktreeTest {
           assertThat(notification.title).isEqualTo(GitBundle.message("Git.WorkingTrees.delete.worktrees.failure.notification.title"))
         }
       }
+    }
+  }
+
+  @Test
+  fun `test deletion retries on Windows after a permission-denied failure when no open project owns the main worktree`(): Unit = with(context) {
+    val mainRoot = testNioRoot.resolve("standalone")
+    val worktreeRoot = testNioRoot.resolve("standaloneTree")
+    createStandaloneRepoWithWorktree(mainRoot, worktreeRoot)
+
+    // `git worktree remove` fails as it would right after Windows has not yet released a just-closed project's
+    // file handles on the worktree directory. The path is reported as Windows so the retry path kicks in.
+    git.onDeleteWorkingTreeWithoutProject { _, _ ->
+      GitCommandResult(false, 1, listOf("fatal: unable to remove worktree: Permission denied"), emptyList())
+    }
+
+    val oldTestDialog = TestDialogManager.setTestDialog(TestDialog.YES)
+    try {
+      withRecentPaths(worktreeRoot) { worktreeRecentPaths, _ ->
+        withAppNotifications { notifications ->
+          withWorktreeProject(worktreeRoot) { worktreeProject ->
+            val currentWorktree = currentWorktreeOf(worktreeProject)
+
+            // Mocked only around the deletion itself: the main worktree's path is reported as Windows, every other
+            // path keeps resolving for real, so opening/closing projects and detecting repositories stay unaffected.
+            mockkStatic("com.intellij.platform.eel.provider.EelPathDescriptorKt")
+            val windowsDescriptor = mockk<EelDescriptor> { every { osFamily } returns EelOsFamily.Windows }
+            every { any<Path>().getEelDescriptor() } answers {
+              val path = firstArg<Path>()
+              if (path.startsWith(mainRoot)) windowsDescriptor else callOriginal()
+            }
+            try {
+              GitWorkingTreesService.getInstance(worktreeProject).deleteCurrentProjectWorktree()
+
+              timeoutRunBlocking {
+                waitUntil("the retried deletion removes the worktree directly from disk") {
+                  worktreeProject.isDisposed && notifications.isNotEmpty()
+                }
+              }
+            }
+            finally {
+              unmockkStatic("com.intellij.platform.eel.provider.EelPathDescriptorKt")
+            }
+
+            assertThat(worktreeRoot).describedAs("The retried deletion must remove the worktree directory").doesNotExist()
+            assertThat(RecentProjectsManagerBase.getInstanceEx().getRecentPaths())
+              .describedAs("The deleted worktree must be removed from the recent projects")
+              .doesNotContainAnyElementsOf(worktreeRecentPaths)
+
+            val notification = notifications.single()
+            assertThat(notification.displayId).isEqualTo(GitNotificationIdsHolder.WORKING_TREE_DELETED)
+            assertThat(notification.type).isEqualTo(NotificationType.INFORMATION)
+            assertThat(notification.content)
+              .isEqualTo(GitBundle.message("Git.WorkingTrees.delete.worktree.success.message", currentWorktree.path.name))
+          }
+        }
+      }
+    }
+    finally {
+      TestDialogManager.setTestDialog(oldTestDialog)
     }
   }
 

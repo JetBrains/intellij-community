@@ -335,19 +335,21 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
       Git.getInstance().deleteWorkingTreeWithoutProject(mainWorktreePath, tree)
     }
 
-    if (commandResult.success()) {
+    val deleted = when {
+      commandResult.success() -> true
+      mainWorktreePath.getEelDescriptor().osFamily.isWindows && isPermissionDenied(commandResult) -> retryDeletionOnWindows(null, tree)
+      else -> {
+        notifyDeletionFailure(null, commandResult.errorOutputAsHtmlString)
+        false
+      }
+    }
+
+    if (deleted) {
       removeFromRecentProjects(tree)
       VcsNotifier.standardNotification()
         .createNotification(GitBundle.message("Git.WorkingTrees.delete.worktree.success.message", tree.path.name),
                             NotificationType.INFORMATION)
         .setDisplayId(GitNotificationIdsHolder.WORKING_TREE_DELETED)
-        .notify(null)
-    }
-    else {
-      VcsNotifier.importantNotification()
-        .createNotification(GitBundle.message("Git.WorkingTrees.delete.worktrees.failure.notification.title"),
-                            commandResult.errorOutputAsHtmlString, NotificationType.ERROR)
-        .setDisplayId(GitNotificationIdsHolder.WORKING_TREE_COULD_NOT_DELETE)
         .notify(null)
     }
   }
@@ -537,8 +539,34 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
                                                  true)
   }
 
+  /** Reports [errorOutput] for a failed deletion through [project]'s notifier, or as a standalone notification without one. */
+  private fun notifyDeletionFailure(project: Project?, @NlsSafe errorOutput: String) {
+    if (project != null) {
+      notifyWorkingTreeDeletedError(project, errorOutput)
+      return
+    }
+    VcsNotifier.importantNotification()
+      .createNotification(GitBundle.message("Git.WorkingTrees.delete.worktrees.failure.notification.title"),
+                          errorOutput, NotificationType.ERROR)
+      .setDisplayId(GitNotificationIdsHolder.WORKING_TREE_COULD_NOT_DELETE)
+      .notify(null)
+  }
+
   /** Returns `true` if [tree] was deleted. */
   private suspend fun handleFailedDeletionOnWindows(project: Project, repository: GitRepository, tree: GitWorkingTree): Boolean {
+    if (!retryDeletionOnWindows(project, tree)) return false
+    onWorkingTreeDeleted(repository, tree)
+    return true
+  }
+
+  /**
+   * Asks the user to retry, then deletes [tree]'s directory straight from disk. Windows can refuse `git worktree
+   * remove` with a permission error right after a process that held [tree] open releases it, for example, a project
+   * this call itself just closed, because the OS has not yet let go of the file handles.
+   *
+   * @return `true` if [tree]'s directory was deleted.
+   */
+  private suspend fun retryDeletionOnWindows(project: Project?, tree: GitWorkingTree): Boolean {
     val shouldRetry = withContext(Dispatchers.UiWithModelAccess) {
       MessageDialogBuilder.yesNo(
         GitBundle.message("Git.WorkingTrees.dialog.inuse.title"),
@@ -560,11 +588,10 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
       throw c
     }
     catch (e: Exception) {
-      notifyWorkingTreeDeletedError(project, e.message ?: "Unknown error while deleting working tree")
+      notifyDeletionFailure(project, e.message ?: "Unknown error while deleting working tree")
       return false
     }
 
-    onWorkingTreeDeleted(repository, tree)
     return true
   }
 

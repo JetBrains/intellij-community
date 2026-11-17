@@ -50,6 +50,8 @@ class TestGitImpl : GitImpl() {
   var deleteWorkingTreeListener: ((repository: GitRepository, tree: GitWorkingTree) -> Unit)? = null
   @Volatile
   var deleteWorkingTreeWithoutProjectListener: ((mainWorktreePath: Path, tree: GitWorkingTree) -> Unit)? = null
+  @Volatile
+  private var deleteWorkingTreeWithoutProjectHandler: (Path, GitWorkingTree) -> GitCommandResult? = { _, _ -> null }
 
   /**
    * Called before `git worktree list`. A test can block here to keep the working trees model stale.
@@ -198,7 +200,7 @@ class TestGitImpl : GitImpl() {
 
   override fun deleteWorkingTreeWithoutProject(mainWorktreePath: Path, tree: GitWorkingTree): GitCommandResult {
     deleteWorkingTreeWithoutProjectListener?.invoke(mainWorktreePath, tree)
-    return super.deleteWorkingTreeWithoutProject(mainWorktreePath, tree)
+    return deleteWorkingTreeWithoutProjectHandler(mainWorktreePath, tree) ?: super.deleteWorkingTreeWithoutProject(mainWorktreePath, tree)
   }
 
   @Throws(VcsException::class)
@@ -223,6 +225,10 @@ class TestGitImpl : GitImpl() {
     branchDeleteHandler = handler
   }
 
+  fun onDeleteWorkingTreeWithoutProject(handler: (mainWorktreePath: Path, tree: GitWorkingTree) -> GitCommandResult?) {
+    deleteWorkingTreeWithoutProjectHandler = handler
+  }
+
   fun setInteractiveRebaseEditor(editor: InteractiveRebaseEditor) {
     interactiveRebaseEditor = editor
   }
@@ -241,6 +247,7 @@ class TestGitImpl : GitImpl() {
     runHookListener = null
     deleteWorkingTreeListener = null
     deleteWorkingTreeWithoutProjectListener = null
+    deleteWorkingTreeWithoutProjectHandler = { _, _ -> null }
     listWorktreesListener = null
   }
 
