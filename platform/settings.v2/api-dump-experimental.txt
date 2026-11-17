@@ -73,6 +73,9 @@
 - sf:INSTANCE:com.intellij.platform.settings.v2.LongSerializer
 - deserialize(com.intellij.platform.settings.v2.SettingsValue):java.lang.Long
 - serialize(J):com.intellij.platform.settings.v2.SettingsValue
+*f:com.intellij.platform.settings.v2.PerOsSettingsKt
+- *sf:getOS():com.intellij.platform.settings.v2.SettingsKey
+- *sf:getPER_OS_SETTINGS():com.intellij.platform.settings.v2.SettingsMapKey
 *:com.intellij.platform.settings.v2.ProjectAware
 - a:getProject():com.intellij.openapi.project.Project
 *f:com.intellij.platform.settings.v2.ReadOnlySettingsException
