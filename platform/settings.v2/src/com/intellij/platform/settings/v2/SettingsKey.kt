@@ -237,13 +237,14 @@ open class SettingsKey<T>(
    *
    * The config files are hand-editable, so a value can have the wrong type or shape for its key (a string where a
    * number is expected, a list where a scalar is, …); such a value must not break resolution, and its well-typed
-   * siblings are unaffected. Control-flow exceptions propagate.
+   * siblings are unaffected. A serializer reports such a value with [IllegalArgumentException], which gives a warning.
+   * Any other exception propagates.
    */
   private inline fun deserializeOrElse(value: SettingsValue, onMalformed: () -> T): T =
     try {
       serializer.deserialize(value)
     }
-    catch (e: ClassCastException) {
+    catch (e: IllegalArgumentException) {
       LOG.warn("Ignoring malformed stored value for settings key '$identity'.", e)
       onMalformed()
     }
