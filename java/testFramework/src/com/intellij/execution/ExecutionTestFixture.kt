@@ -9,9 +9,11 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -148,7 +150,8 @@ class ExecutionTestOptions {
  *
  * Only the module setup runs on the EDT. The project opening, the compile and the test body run off the EDT, as in the JUnit 3 base.
  *
- * The teardown disposes [ExecutionTestFixture.disposable]. Then it fails the test when an error was logged during the test,
+ * The teardown disposes [ExecutionTestFixture.disposable] and reloads each unsaved document from the disk, because the tests
+ * of a JVM share the files of the test app. Then it fails the test when an error was logged during the test,
  * unless [ExecutionTestOptions.areLogErrorsIgnored]. It skips this check when the test already failed. Then the project closes.
  *
  * The fixture does not check the output. Call `checker.checkValid(testProjectJdk)` at the end of the test, as a `runTestRunnable`
@@ -203,12 +206,26 @@ internal fun executionTestFixture(
   initialized(fixture) {
     runAll(
       { Disposer.dispose(disposable) },
+      { revertUnsavedDocuments(project) },
       {
         if (context.extensionContext.executionException.isEmpty) {
           fixture.checkNoLoggedErrors()
         }
       },
     )
+  }
+}
+
+/**
+ * Reloads each unsaved document from the disk. All tests of a JVM share the files of the test app, and the application keeps
+ * an unsaved document after the project closes. So an edit of a test app file must not reach the next test.
+ */
+private fun revertUnsavedDocuments(project: Project) {
+  ApplicationManager.getApplication().invokeAndWait {
+    val manager = FileDocumentManager.getInstance()
+    for (document in manager.unsavedDocuments) {
+      manager.reloadFromDisk(document, project)
+    }
   }
 }
 

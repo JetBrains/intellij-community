@@ -622,6 +622,7 @@ class DebuggerTestFixture internal constructor(
   }
 
   /** Prints the index and the method of [frameProxy]. */
+  @Throws(EvaluateException::class)
   fun printFrameProxy(frameProxy: StackFrameProxyImpl) {
     val frameIndex = frameProxy.frameIndex
     val method = frameProxy.location().method()
@@ -800,10 +801,8 @@ class DebuggerTestFixture internal constructor(
     }
   }
 
-  /** Fails the test with the text of [th]. */
-  fun error(th: Throwable) {
-    fail<Unit>(StringUtil.getThrowableText(th))
-  }
+  /** Fails the test with the text of [th]. It always throws. */
+  fun error(th: Throwable): Nothing = fail(StringUtil.getThrowableText(th))
 
   /**
    * Creates the breakpoints of the `Breakpoint!` comments in [file].
@@ -1013,6 +1012,7 @@ class DebuggerTestFixture internal constructor(
   }
 
   /** Evaluates [code] of [kind] in [evaluationContext]. */
+  @Throws(EvaluateException::class)
   fun evaluate(kind: CodeFragmentKind, code: String, evaluationContext: EvaluationContextImpl): Value? {
     val watchItemDescriptor = WatchItemDescriptor(project, TextWithImportsImpl(kind, code))
     watchItemDescriptor.setContext(evaluationContext)
@@ -1024,12 +1024,16 @@ class DebuggerTestFixture internal constructor(
   }
 
   /** Evaluates [code] of [kind] in the frame of [suspendContext]. */
+  @Throws(EvaluateException::class)
   fun evaluate(kind: CodeFragmentKind, code: String, suspendContext: SuspendContextImpl): Value? {
-    return evaluate(kind, code, createEvaluationContext(suspendContext)!!)
+    return evaluate(kind, code, createEvaluationContext(suspendContext))
   }
 
-  /** Creates an evaluation context for the frame and the `this` object of [suspendContext]. */
-  fun createEvaluationContext(suspendContext: SuspendContextImpl): EvaluationContextImpl? {
+  /**
+   * Creates an evaluation context for the frame and the `this` object of [suspendContext].
+   * When the `this` object is not available, it fails the test through [error].
+   */
+  fun createEvaluationContext(suspendContext: SuspendContextImpl): EvaluationContextImpl {
     try {
       val proxy = suspendContext.frameProxy
       assertNotNull(proxy)
@@ -1037,7 +1041,6 @@ class DebuggerTestFixture internal constructor(
     }
     catch (e: EvaluateException) {
       error(e)
-      return null
     }
   }
 
