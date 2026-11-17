@@ -1,8 +1,28 @@
 load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
+jps_test(
+    name = "kotlin-base-scripting-tests_test",
+    data = [
+        "@community//plugins/kotlin/base/scripting/scripting:testData",
+        "@community//plugins/kotlin/idea/tests:testData",
+    ] + all_test_dep_targets,
+    jvm_flags = ["-Didea.mimic.jar.url.connection=true"],
+    tags = ["kotlin-tests"],
+    runtime_deps = [":kotlin-base-scripting-tests_test_lib"],
+)
+
+### skip generation section `test intellij.kotlin.base.scripting.tests`
 
 ### auto-generated section `dev intellij.kotlin.base.scripting` start
 content_module_jar(module = ":scripting")
@@ -233,10 +253,3 @@ jps_module(
     target = "kotlin-base-scripting-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.base.scripting.tests` end
-
-### auto-generated section `test intellij.kotlin.base.scripting.tests` start
-jps_test(
-    name = "kotlin-base-scripting-tests_test",
-    runtime_deps = [":kotlin-base-scripting-tests_test_lib"],
-)
-### auto-generated section `test intellij.kotlin.base.scripting.tests` end
