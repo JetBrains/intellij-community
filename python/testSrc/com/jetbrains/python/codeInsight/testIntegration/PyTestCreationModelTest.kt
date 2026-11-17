@@ -4,10 +4,13 @@ package com.jetbrains.python.codeInsight.testIntegration
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 
+import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.VfsTestUtil
+import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.testing.PyTestFactory
@@ -73,6 +76,16 @@ class PyTestCreationModelTest : PyTestCase() {
     }
     val modelToTestClass = getModel()!!
     assertEquals(dir.findChild(testsFolderName)!!.path, modelToTestClass.targetDir)
+  }
+
+  @TestFor(issues = ["PY-92930"])
+  fun testNoModelForFileWithoutDirectory() {
+    val file = PsiFileFactory.getInstance(myFixture.project).createFileFromText("light.py", PythonLanguage.getInstance(), """
+      class Spam:
+          def eggs(self):
+              pass
+    """.trimIndent()) as PyFile
+    assertNull(PyTestCreationModel.createByElement(file.findTopLevelClass("Spam")!!))
   }
 
   override fun tearDown() {
