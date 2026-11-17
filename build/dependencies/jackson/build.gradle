@@ -135,9 +135,9 @@ tasks.register('buildJar', Zip) {
   group "build"
 
   dependsOn 'disassembleJar', 'copyMarkerBinary'
-  extension 'jar'
-  baseName libraryArtifactId
-  version "$libraryVersion$repackagedVersionSuffix"
+  archiveExtension = 'jar'
+  archiveBaseName = libraryArtifactId
+  archiveVersion = "$libraryVersion$repackagedVersionSuffix"
 
   from binaryRootDir
 }
@@ -146,10 +146,10 @@ tasks.register('buildSourcesJar', Zip) {
   group "build"
 
   dependsOn 'disassembleSourcesJar', 'copyMarkerSources'
-  extension 'jar'
-  classifier 'sources'
-  baseName libraryArtifactId
-  version "$libraryVersion$repackagedVersionSuffix"
+  archiveExtension = 'jar'
+  archiveClassifier = 'sources'
+  archiveBaseName = libraryArtifactId
+  archiveVersion = "$libraryVersion$repackagedVersionSuffix"
 
   from srcRootDir
 }
