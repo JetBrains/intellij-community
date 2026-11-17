@@ -885,7 +885,6 @@ internal class UnifiedPluginsPageView @RequiresEdt constructor(
           SECTION_HEADER_HOVER_BOTTOM_INSET,
           SECTION_HEADER_HOVER_HORIZONTAL_INSET,
         )
-        accessibleContextProvider = toggleButton
         toggleButton.apply {
           layout = BorderLayout()
           isOpaque = false
