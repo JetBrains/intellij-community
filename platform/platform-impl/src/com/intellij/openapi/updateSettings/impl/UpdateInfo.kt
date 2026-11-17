@@ -105,16 +105,23 @@ private const val MIGRATION_OS = "mac"
 private val ARCH_SUFFIX: String = if (CpuArch.isArm64()) "aarch64" else if (CpuArch.isIntel64()) "x64" else "unknown"
 
 /**
- * Returns `null` when the element is not valid, when [os] is not macOS, or when the element has no file for [os] and [arch].
+ * Returns `null` when [isMigrationDisabled] is true, when the element is not valid, when [os] is not macOS,
+ * or when the element has no file for [os] and [arch].
  * The update then works as if the element did not exist.
  */
 @Internal
-fun parseDistribution(node: Element, os: String = PatchInfo.OS_SUFFIX, arch: String = ARCH_SUFFIX): DistributionInfo? {
+fun parseDistribution(
+  node: Element,
+  os: String = PatchInfo.OS_SUFFIX,
+  arch: String = ARCH_SUFFIX,
+  isMigrationDisabled: Boolean = MigrationKillSwitch.isActive(),
+): DistributionInfo? {
   fun invalid(reason: String): DistributionInfo? {
     logger<DistributionInfo>().info("ignored <distribution>: ${reason}")
     return null
   }
 
+  if (isMigrationDisabled) return null
   if (os != MIGRATION_OS) return invalid("the migration works only on macOS")
   val product = node.getAttributeValue("product")?.takeIf { it.isNotBlank() } ?: return invalid("no 'product'")
   val manifestUrl = node.getAttributeValue("manifest")?.takeIf { it.isNotBlank() } ?: return invalid("no 'manifest'")

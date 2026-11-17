@@ -7,6 +7,7 @@ import com.intellij.ide.ui.laf.setEarlyNewUiDarkLaF
 import com.intellij.idea.ApplicationStartArguments
 import com.intellij.idea.WellKnownCommand
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.updateSettings.impl.MigrationKillSwitch
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ComponentUtil
@@ -131,10 +132,15 @@ private fun existingPath(argument: String, currentDir: Path): Path? {
  * Only a valid state with the `moved` status redirects. A `null` [start] reads no file.
  * Only an [MigrationRedirectStart.OPEN] start reads the content copy, and a missing or invalid copy shows no window.
  * A failure is logged and gives `null`, so that the usual start continues.
+ * When [isMigrationDisabled] is true, the result is `null`, and no file is read, checked or deleted.
  */
 @ApiStatus.Internal
-fun loadMigrationRedirect(start: MigrationRedirectStart?, stateFile: Path = migrationStateFile()): MigrationRedirect? {
-  if (start == null) {
+fun loadMigrationRedirect(
+  start: MigrationRedirectStart?,
+  stateFile: Path = migrationStateFile(),
+  isMigrationDisabled: Boolean = MigrationKillSwitch.isActive(),
+): MigrationRedirect? {
+  if (start == null || isMigrationDisabled) {
     return null
   }
   try {

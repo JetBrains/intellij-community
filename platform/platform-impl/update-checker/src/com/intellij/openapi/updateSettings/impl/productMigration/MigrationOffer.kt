@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.DistributionInfo
 import com.intellij.openapi.updateSettings.impl.IdeUpdateWidgetState
+import com.intellij.openapi.updateSettings.impl.MigrationKillSwitch
 import com.intellij.openapi.updateSettings.impl.PlatformUpdateDialog
 import com.intellij.openapi.updateSettings.impl.PlatformUpdates
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
@@ -159,10 +160,13 @@ private var isMigrationInstallRunning = false
 /**
  * The action of the primary button of the migration dialog.
  * It installs the distribution in the background, then shows "Restart to Update".
- * It does nothing while the install runs, or when a valid migration state exists.
+ * It does nothing while the install runs, when a valid migration state exists, or when the [MigrationKillSwitch] is active.
  */
 @RequiresEdt
 internal fun startMigrationUpdate(project: Project?, content: MigrationOfferContent) {
+  if (MigrationKillSwitch.isActive()) {
+    return
+  }
   val state = migrationStateStore().get()
   if (state != null) {
     LOG.info("the migration distribution is already installed: ${state.app}, ${state.status.id}")
