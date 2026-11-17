@@ -5,12 +5,9 @@ description: Count Python code insight work in tests with PyCodeInsightCounters.
 
 # Python code insight counters
 
-`PyCodeInsightCounters` (`python-psi-impl`, package `com.jetbrains.python.codeInsight`) counts the work of the native
-Python type engine. `PyPerfProbe` (`community/python/testFramework`, package `com.intellij.python.community.testFramework.performance`)
+`PyCodeInsightCounters` (`python-psi-impl`, package `com.jetbrains.python.codeInsight`) counts the work of the Python
+code insight. `PyPerfProbe` (`community/python/testFramework`, package `com.intellij.python.community.testFramework.performance`)
 measures a scenario with these counters, the wall time, the allocations and the AST loads.
-
-Use them to show that a change does less work, to show how the work grows with the input, or to pin a performance
-defect in a test. A work count does not flake like a time.
 
 ## Counters
 
@@ -44,10 +41,10 @@ assertEquals(1L, counts.getValue(Counter.GET_TYPE_EVALUATIONS))
 ```
 
 The highlighting passes run on other threads, so `countOnCurrentThread` does not see their work. For all threads, take
-two snapshots:
+two snapshots. `testDisposable` is a `@TestDisposable` field of the test class:
 
 ```kotlin
-PyCodeInsightCounters.enable(testRootDisposable)
+PyCodeInsightCounters.enable(testDisposable)
 val before = PyCodeInsightCounters.snapshot()
 myFixture.doHighlighting()
 val delta = PyCodeInsightCounters.snapshot() - before
@@ -69,9 +66,9 @@ must not depend on the machine.
 2. `perf.probe.work { action }` runs the action once after `cold()`. It returns the counters of the calling thread, the
    counters of all threads and the AST loads.
 3. Check the growth of a counter with `assertGrowth(scenario, sizes, PyGrowth.LINEAR) { size -> ... }`, or a fact
-   with `assertExpectation`. Use small sizes (n, 2n, 4n). The growth is the exponent between the two largest sizes.
+   with `assertExpectation`. Use small sizes (n, 2n, 4n).
 4. When an open issue makes the expectation fail, give `PyKnownDefect(issue, growth)`. The gate then fails when the
-   work is worse than the defect, and also when the expectation holds. So the fix of the issue updates the gate.
+   work is worse than the defect, and also when the expectation holds.
 
 `PyCodeInsightScalingPerformanceTest` and `PyEditorFeaturesPerformanceTest` are examples.
 
@@ -90,8 +87,8 @@ TeamCity run it. `tests.cmd` runs it when you give its fully qualified name.
    the test method, not from another thread. The benchmark publishes the time and the median counters, allocations and
    AST loads (`counter.<id>`, `alloc.*.kb`, `astLoads.firstAttempt.*`). The IJ Perf degradation detector watches the
    time of each benchmark on master.
-3. Call `report(result)`. It prints `PYPERF` lines: the time quantiles, the allocations, the AST loads of the first
-   attempt, and each counter with its median, its range and the value of the first attempt.
+3. Call `report(result)` after `measure` or `measureScaled`. It prints the result as `PYPERF` lines.
+   `measureEditorFile` calls `report` itself.
 
 The system property `pyperf.out` names a file that also gets the `PYPERF` lines. The system property
 `pyperf.astload.stacks=true` prints the stack of the first three AST loads of each file.
@@ -102,12 +99,10 @@ The system property `pyperf.out` names a file that also gets the `PYPERF` lines.
   So the counts of one scenario change between attempts. For a cold highlighting of `pandas_examples.py`, the range of
   `type.getType.evaluations` is about 20 % of the median.
 - Compare medians, and read the `range=` value before you claim a difference.
-- For the complexity of an algorithm, measure the input at several sizes (n, 2n, 4n) and compare the growth of a
-  counter. Do not compare single times.
 
 ## Add a temporary counter
 
 1. Add an entry to `PyCodeInsightCounters.Counter` with a stable dotted id, for example `type.foo.calls`.
-2. At the hook, call `PyCodeInsightCounters.inc(Counter.FOO_CALLS)` or `add(counter, value)`. When the counting is
-   off, a call costs one volatile read. Put other work at the hook behind `PyCodeInsightCounters.isEnabled`.
-3. Keep a counter in the merge request only when a test asserts on it. Remove the others before the merge.
+2. At the hook, call `PyCodeInsightCounters.inc(Counter.FOO_CALLS)` or `add(counter, value)`. Put other work at the
+   hook behind `PyCodeInsightCounters.isEnabled`.
+3. Keep a counter in the merge request only when a test asserts on it.
