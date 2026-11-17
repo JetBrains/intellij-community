@@ -95,10 +95,11 @@ private fun analyzeDestructuringDeclaration(declaration: KtDestructuringDeclarat
 
     // Find all entries with name mismatch
     val entriesWithNameMismatch = declaration.entries.zip(constructorParameters)
-        .filter { [entry, param] ->
-            val entryName = entry.nameAsName
-            entryName != null && entryName != param.name
-        }.map { [entry, param] -> entry to param.name }
+        .mapNotNull { [entry, param] ->
+            entry.nameAsName
+                ?.takeIf { it.asString() != "_" && it != param.name }
+                ?.let { entry to param.name }
+        }
 
     return DestructuringAnalysisResult(
         preferPositionalDestructuring = isPositionalDestructuring,
