@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xray.frontend.impl.action
 
-import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
 import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
@@ -15,6 +14,8 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.text.HtmlChunk
@@ -29,10 +30,11 @@ import javax.swing.JComponent
 
 internal class XRayModeActionProvider : InspectionWidgetActionProvider {
   override fun createAction(editor: Editor): AnAction? {
+    if (editor.editorKind != EditorKind.MAIN_EDITOR) return null
+
     val project = editor.project ?: return null
+
     if (project.isDefault) return null
-    // Don't offer the X-Ray toggle in the inlay-settings preview editor, where hints are driven by the settings panel.
-    if (isInlaySettingsEditor(editor)) return null
 
     PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return null
 
@@ -44,7 +46,7 @@ internal class XRayModeActionProvider : InspectionWidgetActionProvider {
 
         val service = XRayModeService.getInstance()
 
-        if (isInlaySettingsEditor(editor)) {
+        if (!EditorUtil.isRealFileEditor(editor)) {
           e.presentation.isEnabledAndVisible = false
           return
         }
