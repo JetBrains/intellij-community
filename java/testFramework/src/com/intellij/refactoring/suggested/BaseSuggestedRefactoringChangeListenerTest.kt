@@ -11,6 +11,10 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import junit.framework.TestCase
 
+/**
+ * Use [suggestedRefactoringChangeListenerFixture] in a JUnit 5 test. Its members replace the helpers of this class.
+ */
+@Deprecated("Use suggestedRefactoringChangeListenerFixture in a JUnit 5 test")
 abstract class BaseSuggestedRefactoringChangeListenerTest : LightJavaCodeInsightFixtureTestCase() {
   private val watcher = Watcher()
   private lateinit var changeListener: SuggestedRefactoringChangeListener

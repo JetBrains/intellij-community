@@ -3,12 +3,10 @@
 package com.intellij.java.refactoring.suggested
 
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementFactory
@@ -17,25 +15,31 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiTypeElement
-import com.intellij.refactoring.suggested.BaseSuggestedRefactoringChangeCollectorTest
+import com.intellij.refactoring.suggested.suggestedRefactoringChangeCollectorFixture
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-class JavaSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChangeCollectorTest<PsiMethod>() {
-  override val fileType: FileType
-    get() = JavaFileType.INSTANCE
+@TestApplication
+class JavaSuggestedRefactoringChangeCollectorTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override val language: Language
-    get() = JavaLanguage.INSTANCE
+  private val collector by suggestedRefactoringChangeCollectorFixture(
+    projectFixture, JavaLanguage.INSTANCE, JavaFileType.INSTANCE, ::addDeclaration
+  ) { signature, labelForParameterId -> signature.presentation(labelForParameterId) }
 
-  override fun addDeclaration(file: PsiFile, text: String): PsiMethod {
-    val psiFactory = PsiElementFactory.getInstance(project)
+  private fun addDeclaration(file: PsiFile, text: String): PsiMethod {
+    val psiFactory = PsiElementFactory.getInstance(file.project)
     var psiClass = psiFactory.createClassFromText(text, null)
     psiClass = (file as PsiJavaFile).add(psiClass) as PsiClass
     return psiClass.methods.single()
   }
 
-  override fun Signature.presentation(labelForParameterId: (Any) -> String?): String {
+  private fun Signature.presentation(labelForParameterId: (Any) -> String?): String {
     return buildString {
       if (type != null) {
         append(type)
@@ -64,13 +68,14 @@ class JavaSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChan
   }
 
   private fun createParameter(text: String): PsiParameter =
-    PsiElementFactory.getInstance(project).createParameterFromText(text, null)
+    PsiElementFactory.getInstance(collector.project).createParameterFromText(text, null)
 
   private fun createTypeElement(text: String): PsiTypeElement =
-    PsiElementFactory.getInstance(project).createTypeElementFromText(text, null)
+    PsiElementFactory.getInstance(collector.project).createTypeElementFromText(text, null)
 
+  @Test
   fun testAddParameter() {
-    doTest(
+    collector.doTest(
       "void foo(int p1) {}",
       { it.parameterList.add(createParameter("int p2")) },
       expectedOldSignature = "void foo(int p1)",
@@ -78,8 +83,9 @@ class JavaSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChan
     )
   }
 
+  @Test
   fun testRemoveParameter() {
-    doTest(
+    collector.doTest(
       "void foo(int p1, int p2) {}",
       { it.parameterList.parameters.last().delete() },
       expectedOldSignature = "void foo(int p1, int p2)",
@@ -87,8 +93,9 @@ class JavaSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChan
     )
   }
 
+  @Test
   fun testChangeParameterNames() {
-    doTest(
+    collector.doTest(
       "void foo(int p1, int p2) {}",
       { it.parameterList.parameters[0].setName("newP1") },
       { it.parameterList.parameters[1].setName("newP2") },
@@ -97,8 +104,9 @@ class JavaSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChan
     )
   }
 
+  @Test
   fun testReplaceParameter() {
-    doTest(
+    collector.doTest(
       "void foo(int p1, int p2) {}",
       { it.parameterList.parameters[0].replace(createParameter("long newP1")) },
       expectedOldSignature = "void foo(int p1, int p2)",
@@ -106,13 +114,14 @@ class JavaSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChan
     )
   }
 
+  @Test
   fun testReorderParametersChangeTypesAndNames() {
-    doTest(
+    collector.doTest(
       "void foo(int p1, int p2, int p3) {}",
       {
         editor.caretModel.moveToOffset(it.parameterList.parameters[2].textOffset)
-        myFixture.performEditorAction(IdeActions.MOVE_ELEMENT_LEFT)
-        myFixture.performEditorAction(IdeActions.MOVE_ELEMENT_LEFT)
+        fixture.performEditorAction(IdeActions.MOVE_ELEMENT_LEFT)
+        fixture.performEditorAction(IdeActions.MOVE_ELEMENT_LEFT)
       },
       {
         executeCommand {
@@ -136,19 +145,20 @@ class JavaSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChan
     )
   }
 
+  @Test
   fun testReorderParametersByCutPaste() {
-    doTest(
+    collector.doTest(
       "void foo(int p1, String p2, char p3) {}",
       {
         val offset = it.parameterList.parameters[1].textRange.endOffset
         editor.caretModel.moveToOffset(offset)
         editor.selectionModel.setSelection(offset, offset + ", char p3".length)
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_CUT)
+        fixture.performEditorAction(IdeActions.ACTION_EDITOR_CUT)
       },
       {
         val offset = it.parameterList.parameters[0].textRange.endOffset
         editor.caretModel.moveToOffset(offset)
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
+        fixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
       },
       wrapIntoCommandAndWriteAction = false,
       expectedOldSignature = "void foo(int p1, String p2, char p3)",
@@ -156,8 +166,9 @@ class JavaSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChan
     )
   }
 
+  @Test
   fun testReorderParametersByCutPasteAfterChangingName() {
-    doTest(
+    collector.doTest(
       "void foo(int p1, String p2, char p3) {}",
       {
         executeCommand {
@@ -171,12 +182,12 @@ class JavaSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChan
         val offset = it.parameterList.parameters[1].textRange.endOffset
         editor.caretModel.moveToOffset(offset)
         editor.selectionModel.setSelection(offset, offset + ", char p3New".length)
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_CUT)
+        fixture.performEditorAction(IdeActions.ACTION_EDITOR_CUT)
       },
       {
         val offset = it.parameterList.parameters[0].textRange.endOffset
         editor.caretModel.moveToOffset(offset)
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
+        fixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
       },
       wrapIntoCommandAndWriteAction = false,
       expectedOldSignature = "void foo(int p1, String p2, char p3)",
@@ -184,12 +195,13 @@ class JavaSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChan
     )
   }
 
+  @Test
   fun testReorderParametersByCutPasteAfterChangingNameWithSyntaxError() {
-    doTest(
+    collector.doTest(
       "void foo(int p1, String p2, char p3) {}",
       {
         editor.caretModel.moveToOffset(it.parameterList.textRange.endOffset - 1)
-        myFixture.type(",")
+        fixture.type(",")
       },
       {
         executeCommand {
@@ -203,16 +215,16 @@ class JavaSuggestedRefactoringChangeCollectorTest : BaseSuggestedRefactoringChan
         val offset = it.parameterList.parameters[1].textRange.endOffset
         editor.caretModel.moveToOffset(offset)
         editor.selectionModel.setSelection(offset, offset + ", char p3New".length)
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_CUT)
+        fixture.performEditorAction(IdeActions.ACTION_EDITOR_CUT)
       },
       {
         val offset = it.parameterList.parameters[0].textRange.endOffset
         editor.caretModel.moveToOffset(offset)
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
+        fixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
       },
       {
         editor.caretModel.moveToOffset(it.parameterList.textRange.endOffset - 1)
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+        fixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
       },
       wrapIntoCommandAndWriteAction = false,
       expectedOldSignature = "void foo(int p1, String p2, char p3)",

@@ -1,10 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring.suggested
 
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.executeCommand
-import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElementFactory
@@ -12,29 +11,40 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.RefactoringBundle.message
-import com.intellij.refactoring.suggested.BaseSuggestedRefactoringTest
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
 import com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import com.intellij.refactoring.suggested._suggestedChangeSignatureNewParameterValuesForTests
+import com.intellij.refactoring.suggested.suggestedRefactoringFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
-  override val fileType: LanguageFileType
-    get() = JavaFileType.INSTANCE
+@TestApplication
+class JavaSuggestedRefactoringTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture()
+  }
 
-  override fun setUp() {
-    super.setUp()
+  private val suggested by suggestedRefactoringFixture(projectFixture)
+
+  @BeforeEach
+  fun setUpNewParameterValues() {
     var i = 0
     _suggestedChangeSignatureNewParameterValuesForTests = {
       SuggestedRefactoringExecution.NewParameterValue.Expression(
-        PsiElementFactory.getInstance(project).createExpressionFromText("default${i++}", null)
+        PsiElementFactory.getInstance(suggested.project).createExpressionFromText("default${i++}", null)
       )
     }
   }
 
+  @Test
   fun testRenameClass() {
-    doTestRename(
+    suggested.doTestRename(
       """
         class C {
             private class Inner<caret> {
@@ -59,8 +69,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     )
   }
 
+  @Test
   fun testRenameMethod() {
-    doTestRename(
+    suggested.doTestRename(
       """
         class C {
             void foo<caret>(float f) {
@@ -89,8 +100,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     )
   }
 
+  @Test
   fun testRenameField() {
-    doTestRename(
+    suggested.doTestRename(
       """
         class C {
             private int <caret>field;
@@ -125,8 +137,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testRenameLocal() {
-    doTestRename(
+    suggested.doTestRename(
       """
         class C {
             void foo(float f) {
@@ -149,8 +162,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     )
   }
 
+  @Test
   fun testRenameClass2() {
-    doTestRename(
+    suggested.doTestRename(
       """
         class C {
             private class <caret>Inner {
@@ -175,9 +189,10 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     )
   }
 
+  @Test
   fun testChangeReturnType() {
-    ignoreErrorsAfter = true
-    doTestChangeSignature(
+    suggested.ignoreErrorsAfter = true
+    suggested.doTestChangeSignature(
       """
         interface I {
             <caret>void foo(float f);
@@ -204,9 +219,10 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testAddParameter() {
-    ignoreErrorsAfter = true
-    doTestChangeSignature(
+    suggested.ignoreErrorsAfter = true
+    suggested.doTestChangeSignature(
       """
         package ppp;
         
@@ -303,8 +319,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testRemoveParameter() {
-    doTestChangeSignature(
+    suggested.doTestChangeSignature(
       """
         interface I {
             void foo(float f, int i<caret>);
@@ -339,8 +356,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testReorderParameters() {
-    doTestChangeSignature(
+    suggested.doTestChangeSignature(
       """
         interface I {
             void foo(float p1, int p2, boolean p3<caret>);
@@ -376,8 +394,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testChangeParameterType() {
-    doTestChangeSignature(
+    suggested.doTestChangeSignature(
       """
         interface I {
             void foo(float<caret> f);
@@ -414,8 +433,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
 
   }
 
+  @Test
   fun testChangeParameterTypeWithImportInsertion() {
-    myFixture.addFileToProject(
+    suggested.fixture.addFileToProject(
       "X.java",
       """
         package xxx;
@@ -424,7 +444,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
       """.trimIndent()
     )
 
-    val otherFile = myFixture.addFileToProject(
+    val otherFile = suggested.fixture.addFileToProject(
       "Other.java",
       """
         class D implements I {
@@ -434,7 +454,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
       """.trimIndent()
     )
 
-    doTestChangeSignature(
+    suggested.doTestChangeSignature(
       """
         interface I {
             void foo(<caret>float p);
@@ -473,12 +493,13 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             }
         }
       """.trimIndent(),
-      otherFile.text
+      runReadActionBlocking { otherFile.text }
     )
   }
 
+  @Test
   fun testChangeParameterTypeWithImportReplaced() {
-    myFixture.addFileToProject(
+    suggested.fixture.addFileToProject(
       "X.java",
       """
         package xxx;
@@ -486,7 +507,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
       """.trimIndent()
     )
 
-    myFixture.addFileToProject(
+    suggested.fixture.addFileToProject(
       "Y.java",
       """
         package xxx; 
@@ -494,7 +515,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
       """.trimIndent()
     )
 
-    val otherFile = myFixture.addFileToProject(
+    val otherFile = suggested.fixture.addFileToProject(
       "Other.java",
       """
         import xxx.X;
@@ -506,7 +527,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
       """.trimIndent()
     )
 
-    doTestChangeSignature(
+    suggested.doTestChangeSignature(
       """
         import xxx.X;
 
@@ -541,13 +562,14 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             }
         }
       """.trimIndent(),
-      otherFile.text
+      runReadActionBlocking { otherFile.text }
     )
   }
 
+  @Test
   fun testAddConstructorParameter() {
-    ignoreErrorsAfter = true
-    doTestChangeSignature(
+    suggested.ignoreErrorsAfter = true
+    suggested.doTestChangeSignature(
       """
         class C {
             C(float f<caret>) {
@@ -574,10 +596,11 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testAddParameterWithAnnotations() {
     addFileWithAnnotations()
 
-    val otherFile = myFixture.addFileToProject(
+    val otherFile = suggested.fixture.addFileToProject(
       "Other.java",
       """
         class C implements I {
@@ -588,7 +611,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
       """.trimIndent()
     )
 
-    doTestChangeSignature(
+    suggested.doTestChangeSignature(
       """
         interface I {
             void foo(<caret>);
@@ -650,14 +673,15 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             }
         }
       """.trimIndent(),
-      otherFile.text
+      runReadActionBlocking { otherFile.text }
     )
   }
 
+  @Test
   fun testChangeNullableToNotNull() {
     addFileWithAnnotations()
 
-    val otherFile = myFixture.addFileToProject(
+    val otherFile = suggested.fixture.addFileToProject(
       "Other.java",
       """
         import annotations.Nullable;
@@ -670,7 +694,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
       """.trimIndent()
     )
 
-    doTestChangeSignature(
+    suggested.doTestChangeSignature(
       """
         import annotations.Nullable;
 
@@ -735,15 +759,16 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             }
             """.trimIndent(),
-      otherFile.text
+      runReadActionBlocking { otherFile.text }
     )
   }
 
   // TODO: see IDEA-230807
+  @Test
   fun testNotNullAnnotation() {
     addFileWithAnnotations()
 
-    doTestChangeSignature(
+    suggested.doTestChangeSignature(
       """
         interface I {<caret>
             Object foo();
@@ -779,8 +804,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testAddThrowsList() {
-    val otherFile = myFixture.addFileToProject(
+    val otherFile = suggested.fixture.addFileToProject(
       "Other.java",
       """
         class C implements I {
@@ -791,7 +817,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
       """.trimIndent()
     )
 
-    doTestChangeSignature(
+    suggested.doTestChangeSignature(
       """
         interface I {
             void foo()<caret>;
@@ -841,12 +867,13 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             }
         }
       """.trimIndent(),
-      otherFile.text
+      runReadActionBlocking { otherFile.text }
     )
   }
 
+  @Test
   fun testRemoveThrowsList() {
-    doTestChangeSignature(
+    suggested.doTestChangeSignature(
       """
         import java.io.IOException;
         
@@ -898,8 +925,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testAddSecondException() {
-    doTestChangeSignature(
+    suggested.doTestChangeSignature(
       """
         import java.io.IOException;
         
@@ -959,9 +987,10 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testFromUsageSimple() {
-    Registry.get("ide.java.refactoring.suggested.call.site").setValue(true, testRootDisposable)
-    doTestChangeSignature(
+    Registry.get("ide.java.refactoring.suggested.call.site").setValue(true, suggested.fixture.testRootDisposable)
+    suggested.doTestChangeSignature(
       """
         class X {
           void test(int a, int b) {}
@@ -1030,10 +1059,11 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testFromUsageHasOtherUsages() {
-    Registry.get("ide.java.refactoring.suggested.call.site").setValue(true, testRootDisposable)
+    Registry.get("ide.java.refactoring.suggested.call.site").setValue(true, suggested.fixture.testRootDisposable)
     _suggestedChangeSignatureNewParameterValuesForTests = null
-    doTestChangeSignature(
+    suggested.doTestChangeSignature(
       """
         class X {
           void test(int a, int b) {}
@@ -1118,10 +1148,11 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testChangeVisibility1() {
     //TODO: see IDEA-230741
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts<Throwable> {
-      doTestChangeSignature(
+      suggested.doTestChangeSignature(
         """
           abstract class Base {
               <caret>protected abstract void foo();
@@ -1174,10 +1205,11 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testChangeVisibility2() {
     //TODO: see IDEA-230741
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts<Throwable> {
-      doTestChangeSignature(
+      suggested.doTestChangeSignature(
         """
           abstract class Base {
               <caret>abstract void foo();
@@ -1225,9 +1257,10 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testUndoRename() {
-    ignoreErrorsAfter = true
-    doTestRename(
+    suggested.ignoreErrorsAfter = true
+    suggested.doTestRename(
       """
         class C {
             void xxx<caret>() {
@@ -1257,9 +1290,10 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testUndoChangeSignature() {
-    ignoreErrorsAfter = true
-    doTestChangeSignature(
+    suggested.ignoreErrorsAfter = true
+    suggested.doTestChangeSignature(
       """
         class C {
             void xxx(<caret>) {
@@ -1288,9 +1322,10 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testUndoChangeSignature2() {
-    ignoreErrorsAfter = true
-    doTestChangeSignature(
+    suggested.ignoreErrorsAfter = true
+    suggested.doTestChangeSignature(
       """
         class C {
             void xxx(<caret>) {
@@ -1320,8 +1355,9 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     }
   }
 
+  @Test
   fun testBrokenParameters() {
-    doTest(
+    suggested.doTest(
       initialText = """
           interface I {
               void foo(<caret>);
@@ -1355,7 +1391,7 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
   }
 
   private fun addFileWithAnnotations() {
-    myFixture.addFileToProject(
+    suggested.fixture.addFileToProject(
       "Annotations.java",
       """
         package annotations;
@@ -1381,13 +1417,13 @@ class JavaSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
     )
   }
 
-  private fun addImport(fqName: String) = editAction {
-    val psiClass = JavaPsiFacade.getInstance(project).findClass(fqName, GlobalSearchScope.allScope(project))!!
-    val importStatement = PsiElementFactory.getInstance(project).createImportStatement(psiClass)
-    (file as PsiJavaFile).importList!!.add(importStatement)
+  private fun addImport(fqName: String) = suggested.editAction {
+    val psiClass = JavaPsiFacade.getInstance(suggested.project).findClass(fqName, GlobalSearchScope.allScope(suggested.project))!!
+    val importStatement = PsiElementFactory.getInstance(suggested.project).createImportStatement(psiClass)
+    (suggested.file as PsiJavaFile).importList!!.add(importStatement)
   }
 
-  private fun removeImport(fqName: String) = editAction {
-    (file as PsiJavaFile).importList!!.findSingleClassImportStatement(fqName)!!.delete()
+  private fun removeImport(fqName: String) = suggested.editAction {
+    (suggested.file as PsiJavaFile).importList!!.findSingleClassImportStatement(fqName)!!.delete()
   }
 }

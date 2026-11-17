@@ -2,6 +2,7 @@
 package com.intellij.java.codeInsight.daemon.problems
 
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.CommonClassNames
@@ -14,35 +15,81 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiLocalVariable
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiStatement
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-internal class FieldProblemsTest : ProjectProblemsViewTest() {
-
-  fun testRenameField() = doFieldTest { field: PsiField, factory: PsiElementFactory ->
-    field.nameIdentifier.replace(factory.createIdentifier("f"))
+@TestApplication
+internal class FieldProblemsTest {
+  companion object {
+    private val projectFixture = projectProblemsProjectFixture()
   }
 
-  fun testChangeFieldType() = doFieldTest { field: PsiField, factory: PsiElementFactory ->
-    field.typeElement?.replace(factory.createTypeElementFromText(CommonClassNames.JAVA_LANG_INTEGER, null))
+  private val problems by projectProblemsFixture(projectFixture)
+  private val myFixture get() = problems.fixture
+
+  @Test
+  fun testRenameField(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      doFieldTest { field: PsiField, factory: PsiElementFactory ->
+        field.nameIdentifier.replace(factory.createIdentifier("f"))
+      }
+    }
   }
 
-  fun testMakeFieldPackagePrivate() = doFieldTest { psiField, _ ->
-    psiField.modifierList?.setModifierProperty(PsiModifier.PUBLIC, false)
+  @Test
+  fun testChangeFieldType(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      doFieldTest { field: PsiField, factory: PsiElementFactory ->
+        field.typeElement?.replace(factory.createTypeElementFromText(CommonClassNames.JAVA_LANG_INTEGER, null))
+      }
+    }
   }
 
-  fun testMakeFieldPrivate() = doFieldTest { psiField, _ ->
-    psiField.modifierList?.setModifierProperty(PsiModifier.PUBLIC, false)
-    psiField.modifierList?.setModifierProperty(PsiModifier.PRIVATE, true)
+  @Test
+  fun testMakeFieldPackagePrivate(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      doFieldTest { psiField, _ ->
+        psiField.modifierList?.setModifierProperty(PsiModifier.PUBLIC, false)
+      }
+    }
   }
 
-  fun testMakeFieldNonStatic() = doFieldTest { psiField, _ ->
-    psiField.modifierList?.setModifierProperty(PsiModifier.STATIC, false)
+  @Test
+  fun testMakeFieldPrivate(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      doFieldTest { psiField, _ ->
+        psiField.modifierList?.setModifierProperty(PsiModifier.PUBLIC, false)
+        psiField.modifierList?.setModifierProperty(PsiModifier.PRIVATE, true)
+      }
+    }
   }
 
-  fun testMakeFieldFinal() = doFieldTest { psiField, _ ->
-    psiField.modifierList?.setModifierProperty(PsiModifier.FINAL, true)
+  @Test
+  fun testMakeFieldNonStatic(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      doFieldTest { psiField, _ ->
+        psiField.modifierList?.setModifierProperty(PsiModifier.STATIC, false)
+      }
+    }
   }
 
-  fun testRenameFieldAndUndo() {
+  @Test
+  fun testMakeFieldFinal(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      doFieldTest { psiField, _ ->
+        psiField.modifierList?.setModifierProperty(PsiModifier.FINAL, true)
+      }
+    }
+  }
+
+  @Test
+  fun testRenameFieldAndUndo(): Unit = timeoutRunBlocking {
     val targetClass = myFixture.addClass("""
       package foo;
       public class A {
@@ -60,27 +107,30 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    doTest(targetClass) {
+    withContext(Dispatchers.EDT) {
+      problems.doTest(targetClass) {
 
-      val factory = JavaPsiFacade.getInstance(project).elementFactory
+        val factory = JavaPsiFacade.getInstance(myFixture.project).elementFactory
 
-      changeField(targetClass) {
-        val replacement = factory.createFieldFromText("public static String f;", targetClass)
-        it.replace(replacement)
+        changeField(targetClass) {
+          val replacement = factory.createFieldFromText("public static String f;", targetClass)
+          it.replace(replacement)
+        }
+
+        assertTrue(problems.hasReportedProblems<PsiLocalVariable>(refClass))
+
+        changeField(targetClass) {
+          val replacement = factory.createFieldFromText("public static String field;", targetClass)
+          it.replace(replacement)
+        }
+
+        assertThat(problems.getProblems()).isEmpty()
       }
-
-      assertTrue(hasReportedProblems<PsiLocalVariable>(refClass))
-
-      changeField(targetClass) {
-        val replacement = factory.createFieldFromText("public static String field;", targetClass)
-        it.replace(replacement)
-      }
-
-      assertEmpty(getProblems())
     }
   }
 
-  fun testTwoClassesWithSameFieldName() {
+  @Test
+  fun testTwoClassesWithSameFieldName(): Unit = timeoutRunBlocking {
     val aClass = myFixture.addClass("""
       package foo;
       public class A {
@@ -103,21 +153,24 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    doTest(bClass) {
-      val factory = JavaPsiFacade.getInstance(project).elementFactory
-      val field = factory.createFieldFromText("public static String mySpecialField;", bClass)
-      WriteCommandAction.runWriteCommandAction(project) { bClass.add(field) }
-      myFixture.doHighlighting()
-      assertEmpty(getProblems())
+    withContext(Dispatchers.EDT) {
+      problems.doTest(bClass) {
+        val factory = JavaPsiFacade.getInstance(myFixture.project).elementFactory
+        val field = factory.createFieldFromText("public static String mySpecialField;", bClass)
+        WriteCommandAction.runWriteCommandAction(myFixture.project) { bClass.add(field) }
+        myFixture.doHighlighting()
+        assertThat(problems.getProblems()).isEmpty()
 
-      myFixture.openFileInEditor(aClass.containingFile.virtualFile)
-      myFixture.doHighlighting()
-      changeField(aClass) { it.modifierList?.setModifierProperty(PsiModifier.STATIC, false) }
-      assertTrue(hasReportedProblems<PsiLocalVariable>(refClass))
+        myFixture.openFileInEditor(aClass.containingFile.virtualFile)
+        myFixture.doHighlighting()
+        changeField(aClass) { it.modifierList?.setModifierProperty(PsiModifier.STATIC, false) }
+        assertTrue(problems.hasReportedProblems<PsiLocalVariable>(refClass))
+      }
     }
   }
 
-  fun testAmbiguousReference() {
+  @Test
+  fun testAmbiguousReference(): Unit = timeoutRunBlocking {
     myFixture.addClass("""
       package foo;
       public class A {
@@ -142,18 +195,21 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    doTest(bClass) {
-      val factory = JavaPsiFacade.getInstance(project).elementFactory
-      val field = factory.createFieldFromText("public static String field;", bClass)
-      WriteCommandAction.runWriteCommandAction(project) {
-        bClass.add(field)
+    withContext(Dispatchers.EDT) {
+      problems.doTest(bClass) {
+        val factory = JavaPsiFacade.getInstance(myFixture.project).elementFactory
+        val field = factory.createFieldFromText("public static String field;", bClass)
+        WriteCommandAction.runWriteCommandAction(myFixture.project) {
+          bClass.add(field)
+        }
+        myFixture.doHighlighting()
+        assertTrue(problems.hasReportedProblems<PsiLocalVariable>(cClass))
       }
-      myFixture.doHighlighting()
-      assertTrue(hasReportedProblems<PsiLocalVariable>(cClass))
     }
   }
 
-  fun testTooManyUsages() {
+  @Test
+  fun testTooManyUsages(): Unit = timeoutRunBlocking {
     val targetClass = myFixture.addClass("""
       package foo;
       public class A {
@@ -161,42 +217,45 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    val refClassText = """
-      package bar;
-      import foo.A;
-      public class classname {
-        void test() {
-          String field = A.field;
+    withContext(Dispatchers.EDT) {
+      val refClassText = """
+        package bar;
+        import foo.A;
+        public class classname {
+          void test() {
+            String field = A.field;
+          }
         }
+      """.trimIndent()
+
+      val nRefClasses = 3
+      val refClasses = sequenceOf(0, 1, 2)
+        .map { myFixture.addClass(refClassText.replace("classname", "RefClass$it")) }
+        .toList()
+
+
+      Registry.get("ide.unused.symbol.calculation.maxFilesToSearchUsagesIn").setValue(nRefClasses + 1)
+
+      problems.doTest(targetClass) {
+        val factory = JavaPsiFacade.getInstance(myFixture.project).elementFactory
+
+        changeField(targetClass) { it.nameIdentifier.replace(factory.createIdentifier("f")) }
+        assertTrue(problems.hasReportedProblems<PsiLocalVariable>(*refClasses.toTypedArray()))
+
+        changeField(targetClass) { it.nameIdentifier.replace(factory.createIdentifier("field")) }
+        val psiFile = targetClass.containingFile
+        assertThat(problems.getProblems()).isEmpty()
+
+        myFixture.addClass(refClassText.replace("classname", "RefClass$nRefClasses"))
+
+        changeField(targetClass) { it.nameIdentifier.replace(factory.createIdentifier("f")) }
+        assertThat(problems.getProblems()).isEmpty()
       }
-    """.trimIndent()
-
-    val nRefClasses = 3
-    val refClasses = sequenceOf(0, 1, 2)
-      .map { myFixture.addClass(refClassText.replace("classname", "RefClass$it")) }
-      .toList()
-
-
-    Registry.get("ide.unused.symbol.calculation.maxFilesToSearchUsagesIn").setValue(nRefClasses + 1)
-
-    doTest(targetClass) {
-      val factory = JavaPsiFacade.getInstance(project).elementFactory
-
-      changeField(targetClass) { it.nameIdentifier.replace(factory.createIdentifier("f")) }
-      assertTrue(hasReportedProblems<PsiLocalVariable>(*refClasses.toTypedArray()))
-
-      changeField(targetClass) { it.nameIdentifier.replace(factory.createIdentifier("field")) }
-      val psiFile = targetClass.containingFile
-      assertEmpty(getProblems())
-
-      myFixture.addClass(refClassText.replace("classname", "RefClass$nRefClasses"))
-
-      changeField(targetClass) { it.nameIdentifier.replace(factory.createIdentifier("f")) }
-      assertEmpty(getProblems())
     }
   }
 
-  fun testErrorsRemovedAfterScopeChanged() {
+  @Test
+  fun testErrorsRemovedAfterScopeChanged(): Unit = timeoutRunBlocking {
     val targetClass = myFixture.addClass("""
       package foo;
       public class A {
@@ -212,41 +271,44 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    Registry.get("ide.unused.symbol.calculation.maxFilesToSearchUsagesIn").setValue(2)
+    withContext(Dispatchers.EDT) {
+      Registry.get("ide.unused.symbol.calculation.maxFilesToSearchUsagesIn").setValue(2)
 
-    doTest(targetClass) {
+      problems.doTest(targetClass) {
 
-      val outsideRefClass = myFixture.addClass("""
-      package bar;
+        val outsideRefClass = myFixture.addClass("""
+        package bar;
 
-      import foo.A;
+        import foo.A;
 
-      public class RefClass1 {
-        void test() {
-          System.out.println(A.field);
+        public class RefClass1 {
+          void test() {
+            System.out.println(A.field);
+          }
         }
+      """.trimIndent())
+
+        val factory = JavaPsiFacade.getElementFactory(myFixture.project)
+        WriteCommandAction.runWriteCommandAction(myFixture.project) {
+          val psiField = factory.createFieldFromText("static final String field = \"foo\";", null)
+          targetClass.add(psiField)
+        }
+        myFixture.doHighlighting()
+
+        assertFalse(problems.hasReportedProblems<PsiStatement>(outsideRefClass))
+        myFixture.doHighlighting()
+        assertTrue(problems.hasReportedProblems<PsiAssignmentExpression>(packageRefClass))
+
+        changeField(targetClass) { field -> field.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true) }
+        // too many usages now, cannot analyse all of them, so we give up and remove old errors
+        assertFalse(problems.hasReportedProblems<PsiStatement>(outsideRefClass))
+        assertFalse(problems.hasReportedProblems<PsiAssignmentExpression>(packageRefClass))
       }
-    """.trimIndent())
-
-      val factory = JavaPsiFacade.getElementFactory(project)
-      WriteCommandAction.runWriteCommandAction(project) {
-        val psiField = factory.createFieldFromText("static final String field = \"foo\";", null)
-        targetClass.add(psiField)
-      }
-      myFixture.doHighlighting()
-
-      assertFalse(hasReportedProblems<PsiStatement>(outsideRefClass))
-      myFixture.doHighlighting()
-      assertTrue(hasReportedProblems<PsiAssignmentExpression>(packageRefClass))
-
-      changeField(targetClass) { field -> field.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true) }
-      // too many usages now, cannot analyse all of them, so we give up and remove old errors
-      assertFalse(hasReportedProblems<PsiStatement>(outsideRefClass))
-      assertFalse(hasReportedProblems<PsiAssignmentExpression>(packageRefClass))
     }
   }
 
-  fun testReportOnlyOneMemberProblemsOnEachLine() {
+  @Test
+  fun testReportOnlyOneMemberProblemsOnEachLine(): Unit = timeoutRunBlocking {
     val targetClass = myFixture.addClass("""
       package foo;
       public class A {
@@ -265,23 +327,26 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    doTest(targetClass) {
-      val fields = targetClass.fields
-      val field = fields[0]
+    withContext(Dispatchers.EDT) {
+      problems.doTest(targetClass) {
+        val fields = targetClass.fields
+        val field = fields[0]
 
-      WriteCommandAction.runWriteCommandAction(project) {
-        val modifiers = field.modifierList!!
-        modifiers.setModifierProperty(PsiModifier.PUBLIC, true)
-        modifiers.setModifierProperty(PsiModifier.STATIC, false)
+        WriteCommandAction.runWriteCommandAction(myFixture.project) {
+          val modifiers = field.modifierList!!
+          modifiers.setModifierProperty(PsiModifier.PUBLIC, true)
+          modifiers.setModifierProperty(PsiModifier.STATIC, false)
+        }
+        myFixture.doHighlighting()
+        val inlays = ProjectProblemUtils.getReportedProblems(
+          myFixture.editor)
+        assertThat(inlays.entries).hasSize(1)
       }
-      myFixture.doHighlighting()
-      val inlays = ProjectProblemUtils.getReportedProblems(
-        myFixture.editor)
-      assertSize(1, inlays.entries)
     }
   }
 
-  fun testMakeFinalFieldPublic() {
+  @Test
+  fun testMakeFinalFieldPublic(): Unit = timeoutRunBlocking {
     val targetClass = myFixture.addClass("""
       package foo;
       public class A {
@@ -299,22 +364,25 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    doTest(targetClass) {
-      changeField(targetClass) {
-        val modifiers = it.modifierList!!
-        modifiers.setModifierProperty(PsiModifier.PUBLIC, true)
-      }
-      assertTrue(hasReportedProblems<PsiAssignmentExpression>(refClass))
+    withContext(Dispatchers.EDT) {
+      problems.doTest(targetClass) {
+        changeField(targetClass) {
+          val modifiers = it.modifierList!!
+          modifiers.setModifierProperty(PsiModifier.PUBLIC, true)
+        }
+        assertTrue(problems.hasReportedProblems<PsiAssignmentExpression>(refClass))
 
-      changeField(targetClass) {
-        val modifiers = it.modifierList!!
-        modifiers.setModifierProperty(PsiModifier.FINAL, false)
+        changeField(targetClass) {
+          val modifiers = it.modifierList!!
+          modifiers.setModifierProperty(PsiModifier.FINAL, false)
+        }
+        assertThat(problems.getProblems()).isEmpty()
       }
-      assertEmpty(getProblems())
     }
   }
 
-  fun testRenameEnumConstant() {
+  @Test
+  fun testRenameEnumConstant(): Unit = timeoutRunBlocking {
     val targetClass = myFixture.addClass("""
       package foo;
       public enum MyEnum {
@@ -332,17 +400,20 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    doTest(targetClass) {
-      changeField(targetClass) { psiField ->
-        val identifier = psiField.nameIdentifier
-        val factory = JavaPsiFacade.getInstance(project).elementFactory
-        identifier.replace(factory.createIdentifier("BAR"))
+    withContext(Dispatchers.EDT) {
+      problems.doTest(targetClass) {
+        changeField(targetClass) { psiField ->
+          val identifier = psiField.nameIdentifier
+          val factory = JavaPsiFacade.getInstance(myFixture.project).elementFactory
+          identifier.replace(factory.createIdentifier("BAR"))
+        }
+        assertTrue(problems.hasReportedProblems<PsiDeclarationStatement>(refClass))
       }
-      assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
     }
   }
 
-  fun testFieldWithTypeParameter() {
+  @Test
+  fun testFieldWithTypeParameter(): Unit = timeoutRunBlocking {
     myFixture.addClass("""
       public class Id<T> {
         T id(T t) {
@@ -365,20 +436,22 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    doTest(targetClass) {
-      changeField(targetClass) { psiField ->
-        psiField.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true)
+    withContext(Dispatchers.EDT) {
+      problems.doTest(targetClass) {
+        changeField(targetClass) { psiField ->
+          psiField.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true)
+        }
+
+        assertThat(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries).hasSize(1)
+
+        changeField(targetClass) { psiField ->
+          val factory = JavaPsiFacade.getInstance(myFixture.project).elementFactory
+          val typeElement = factory.createTypeElementFromText("Id<String>", targetClass)
+          psiField.typeElement?.replace(typeElement)
+        }
+
+        assertThat(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries).isEmpty()
       }
-
-      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
-
-      changeField(targetClass) { psiField ->
-        val factory = JavaPsiFacade.getInstance(project).elementFactory
-        val typeElement = factory.createTypeElementFromText("Id<String>", targetClass)
-        psiField.typeElement?.replace(typeElement)
-      }
-
-      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
     }
   }
 
@@ -400,21 +473,21 @@ internal class FieldProblemsTest : ProjectProblemsViewTest() {
       }
     """.trimIndent())
 
-    doTest(targetClass) {
+    problems.doTest(targetClass) {
       changeField(targetClass) {
-        val factory = JavaPsiFacade.getInstance(project).elementFactory
+        val factory = JavaPsiFacade.getInstance(myFixture.project).elementFactory
         fieldChangeAction(it, factory)
       }
-      assertTrue(hasReportedProblems<PsiAssignmentExpression>(refClass))
+      assertTrue(problems.hasReportedProblems<PsiAssignmentExpression>(refClass))
     }
   }
 
   private fun changeField(targetClass: PsiClass, changeAction: (PsiField) -> Unit) {
     val fields = targetClass.fields
-    assertSize(1, fields)
+    assertThat(fields).hasSize(1)
     val field = fields[0]
 
-    WriteCommandAction.runWriteCommandAction(project) { changeAction(field) }
+    WriteCommandAction.runWriteCommandAction(myFixture.project) { changeAction(field) }
     myFixture.doHighlighting()
   }
 }

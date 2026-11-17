@@ -6,8 +6,9 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.codeInsight.daemon.indentGuide.IndentGuidesProvider.Guide;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Contract;
@@ -20,31 +21,46 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public abstract class BaseIndentGuideTest extends LightJavaCodeInsightFixtureTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-  protected void doTest(@NotNull String text,
-                        @NotNull Function<JavaCodeInsightTestFixture, IndentGuidesProvider> guidesProviderFactory) {
-    IndentGuideTestData testData = parse(text, myFixture.getProject());
-    myFixture.configureByText(getTestName(false) + ".java", testData.myText);
-    CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtilRt.EMPTY_INT_ARRAY, false);
-    IndentGuidesProvider provider = guidesProviderFactory.apply(myFixture);
-    List<Guide> guides = provider.getGuides();
-    assertEquals("expected to find " + testData.myGuides.size() + " indent guides (" + testData.myGuides + ")" +
-                 "but got " + guides.size() + " (" + guides + ")",
-                 testData.myGuides.size(), guides.size());
-    Map<Pair<Integer, Integer>, Integer> guidesByLines = guides.stream()
-      .collect(Collectors.toMap(i -> new Pair<>(i.getStartLine(), i.getEndLine()), i -> i.getIndent()));
+/**
+ * Checks the indent guides of a Java file. The test text marks each guide with {@code |} characters.
+ */
+final class IndentGuideTestUtil {
+  private IndentGuideTestUtil() {
+  }
 
-    for (Guide expectedGuide : testData.myGuides) {
-      Integer startLine = expectedGuide.getStartLine();
-      Integer endLine = expectedGuide.getEndLine();
-      Integer actualIndent = guidesByLines.get(new Pair<>(startLine, endLine));
-      assertNotNull("expected to find an indent guide at lines " + startLine + "-" + endLine, actualIndent);
-      assertEquals("expected that indent guide descriptor at lines " +
-                   startLine + "-" + endLine + " has indent " + expectedGuide.getIndent() +
-                   " but got " + actualIndent,
-                   expectedGuide.getIndent(), actualIndent);
-    }
+  /**
+   * Configures a file of the text without the {@code |} marks and runs the highlighting.
+   * Then it compares the guides of the provider with the marks. The highlighting and the check run on the EDT.
+   */
+  static void doTest(@NotNull LightJavaCodeInsightTestFixture fixture,
+                     @NotNull String text,
+                     @NotNull Function<JavaCodeInsightTestFixture, IndentGuidesProvider> guidesProviderFactory) {
+    IndentGuideTestData testData = parse(text, fixture.getProject());
+    fixture.configureByText(fixture.getTestName(false) + ".java", testData.myText);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      CodeInsightTestFixtureImpl.instantiateAndRun(fixture.getFile(), fixture.getEditor(), ArrayUtilRt.EMPTY_INT_ARRAY, false);
+      IndentGuidesProvider provider = guidesProviderFactory.apply(fixture);
+      List<Guide> guides = provider.getGuides();
+      assertEquals(testData.myGuides.size(), guides.size(),
+                   "expected to find " + testData.myGuides.size() + " indent guides (" + testData.myGuides + ")" +
+                   "but got " + guides.size() + " (" + guides + ")");
+      Map<Pair<Integer, Integer>, Integer> guidesByLines = guides.stream()
+        .collect(Collectors.toMap(i -> new Pair<>(i.getStartLine(), i.getEndLine()), i -> i.getIndent()));
+
+      for (Guide expectedGuide : testData.myGuides) {
+        Integer startLine = expectedGuide.getStartLine();
+        Integer endLine = expectedGuide.getEndLine();
+        Integer actualIndent = guidesByLines.get(new Pair<>(startLine, endLine));
+        assertNotNull(actualIndent, "expected to find an indent guide at lines " + startLine + "-" + endLine);
+        assertEquals(expectedGuide.getIndent(), actualIndent,
+                     "expected that indent guide descriptor at lines " +
+                     startLine + "-" + endLine + " has indent " + expectedGuide.getIndent() +
+                     " but got " + actualIndent);
+      }
+    });
   }
 
   @NotNull

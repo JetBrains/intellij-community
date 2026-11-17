@@ -35,21 +35,29 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiRecordComponent;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModeArgumentsProvider;
+import com.intellij.platform.testFramework.junit5.codeInsight.indexing.IndexingModes;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.TestFrameworkUtil;
-import com.intellij.testFramework.TestIndexingModeSupporter;
+import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.JavaIndexingModeCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,315 +65,456 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings("NewClassNamingConvention")
-public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaCodeInsightFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-  public static Test suite() {
-    TestSuite suite = new TestSuite();
-    suite.addTestSuite(ChooseByNameTest.class);
-    TestIndexingModeSupporter.addTest(ChooseByNameTest.class, new TestIndexingModeSupporter.FullIndexSuite(), suite);
-    return TestFrameworkUtil.flattenSuite(suite);
-  }
+@TestApplication
+@IndexingModes({IndexingMode.SMART, IndexingMode.DUMB_FULL_INDEX})
+public class ChooseByNameTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaCodeInsightTestFixture> codeInsightFixture = lightJavaCodeInsightFixture(projectFixture);
 
   /** Tells which goto providers the test checks: the coroutine based ones, or the legacy based ones. */
   protected boolean isCoroutineBasedGoto() {
     return true;
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    setRegistryPropertyForTest(SeProvidersTestFixture.COROUTINE_BASED_GOTO_KEY, String.valueOf(isCoroutineBasedGoto()));
+  private JavaCodeInsightTestFixture myFixture;
+
+  @BeforeEach
+  void setUp() {
+    LightJavaCodeInsightTestFixture fixture = codeInsightFixture.get();
+    Registry.get(SeProvidersTestFixture.COROUTINE_BASED_GOTO_KEY).setValue(String.valueOf(isCoroutineBasedGoto()),
+                                                                         fixture.getTestRootDisposable());
     // Some tests check the order of the items with an equal weight. A slow presentation must not change it.
-    SeTargetItemsProvider.setPresentationOrderTimeoutForTests(Duration.ofMinutes(1), getTestRootDisposable());
+    SeTargetItemsProvider.setPresentationOrderTimeoutForTests(Duration.ofMinutes(1), fixture.getTestRootDisposable());
   }
 
-  public void test_goto_class_order_by_matching_degree() {
-    PsiClass startMatch = myFixture.addClass("class UiUtil {}");
-    PsiClass wordSkipMatch = myFixture.addClass("class UiAbstractUtil {}");
-    PsiClass camelMatch = myFixture.addClass("class UberInstructionUxTopicInterface {}");
-    PsiClass middleMatch = myFixture.addClass("class BaseUiUtil {}");
-    List<PsiClass> elements = gotoClass("uiuti");
-    assertOrderedEquals(elements, List.of(startMatch, wordSkipMatch, camelMatch, middleMatch));
+  /**
+   * Runs {@code body} in {@code mode} on the EDT, as the JUnit 3 suite of the indexing modes did.
+   */
+  private void runInMode(IndexingMode mode, ThrowableRunnable<Exception> body) throws Exception {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      LightJavaCodeInsightTestFixture fixture = codeInsightFixture.get();
+      myFixture = JavaIndexingModeCodeInsightTestFixture.Companion.wrapFixture(fixture, mode);
+      IndexingMode.ShutdownToken token = mode.setUpTest(fixture.getProject(), fixture.getTestRootDisposable());
+      try {
+        body.run();
+      }
+      finally {
+        mode.tearDownTest(fixture.getProject(), token);
+      }
+    });
   }
 
-  public void test_goto_file_order_by_matching_degree() {
-    PsiFile camel = addEmptyFile("ServiceAccessor.java");
-    PsiFile startLower = addEmptyFile("sache.txt");
-    assertOrderedEquals(gotoFile("SA"), List.of(camel, startLower));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_goto_class_order_by_matching_degree(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass startMatch = myFixture.addClass("class UiUtil {}");
+      PsiClass wordSkipMatch = myFixture.addClass("class UiAbstractUtil {}");
+      PsiClass camelMatch = myFixture.addClass("class UberInstructionUxTopicInterface {}");
+      PsiClass middleMatch = myFixture.addClass("class BaseUiUtil {}");
+      List<PsiClass> elements = gotoClass("uiuti");
+      assertIterableEquals(List.of(startMatch, wordSkipMatch, camelMatch, middleMatch), elements);
+    });
   }
 
-  public void test_disprefer_start_matches_when_prefix_starts_with_asterisk() {
-    PsiClass startMatch = myFixture.addClass("class ITable {}");
-    PsiClass endMatch = myFixture.addClass("class HappyHippoIT {}");
-    PsiClass camelStartMatch = myFixture.addClass("class IntelligentTesting {}");
-    PsiClass camelMiddleMatch = myFixture.addClass("class VeryIntelligentTesting {}");
-    assertOrderedEquals(gotoClass("*IT"), List.of(endMatch, startMatch, camelStartMatch, camelMiddleMatch));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_goto_file_order_by_matching_degree(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile camel = addEmptyFile("ServiceAccessor.java");
+      PsiFile startLower = addEmptyFile("sache.txt");
+      assertIterableEquals(List.of(camel, startLower), gotoFile("SA"));
+    });
   }
 
-  public void test_annotation_syntax() {
-    PsiClass match = myFixture.addClass("@interface Anno1 {}");
-    myFixture.addClass("class Anno2 {}");
-    assertEquals(match, gotoClass("@Anno").get(0));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_disprefer_start_matches_when_prefix_starts_with_asterisk(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass startMatch = myFixture.addClass("class ITable {}");
+      PsiClass endMatch = myFixture.addClass("class HappyHippoIT {}");
+      PsiClass camelStartMatch = myFixture.addClass("class IntelligentTesting {}");
+      PsiClass camelMiddleMatch = myFixture.addClass("class VeryIntelligentTesting {}");
+      assertIterableEquals(List.of(endMatch, startMatch, camelStartMatch, camelMiddleMatch), gotoClass("*IT"));
+    });
   }
 
-  public void test_class_a_in_same_named_package_and_partially_matching_subpackage() {
-    PsiClass c = myFixture.addClass("package com.intellij.codeInsight.template.impl; class TemplateListPanel {}");
-    assertEquals(c, gotoClass("templistpa").get(0));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_annotation_syntax(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass match = myFixture.addClass("@interface Anno1 {}");
+      myFixture.addClass("class Anno2 {}");
+      assertEquals(match, gotoClass("@Anno").get(0));
+    });
   }
 
-  public void test_no_result_for_empty_patterns() {
-    myFixture.addClass("@interface Anno1 {}");
-    myFixture.addClass("class Anno2 {}");
-    assertEmpty(gotoClass(""));
-    assertEmpty(gotoClass("@"));
-    assertEmpty(gotoFile("foo/"));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_class_a_in_same_named_package_and_partially_matching_subpackage(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass c = myFixture.addClass("package com.intellij.codeInsight.template.impl; class TemplateListPanel {}");
+      assertEquals(c, gotoClass("templistpa").get(0));
+    });
   }
 
-  public void test_filter_overridden_methods_from_goto_symbol() {
-    PsiClass intf = myFixture.addClass("""
-                                         class Intf {
-                                           void xxx1() {}
-                                           void xxx2() {}
-                                         }""");
-    PsiClass impl = myFixture.addClass("""
-                                         class Impl extends Intf {
-                                           void xxx1() {}
-                                           void xxx3() {}
-                                         }""");
-
-    List<PsiElement> elements = gotoSymbol("xxx");
-    assertContainsElements(elements, intf.findMethodsByName("xxx1", false)[0]);
-    assertContainsElements(elements, intf.findMethodsByName("xxx2", false)[0]);
-    assertContainsElements(elements, impl.findMethodsByName("xxx3", false)[0]);
-    if (DumbService.isDumb(myFixture.getProject())) { // in dumb mode overridden are also shown
-      assertOrderedEquals(elements, List.of(impl.getMethods()[0], intf.getMethods()[0], intf.getMethods()[1], impl.getMethods()[1]));
-    } else {
-      assertDoesntContain(elements, impl.findMethodsByName("xxx1", false)[0]);
-    }
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_no_result_for_empty_patterns(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      myFixture.addClass("@interface Anno1 {}");
+      myFixture.addClass("class Anno2 {}");
+      assertThat(gotoClass("")).isNullOrEmpty();
+      assertThat(gotoClass("@")).isNullOrEmpty();
+      assertThat(gotoFile("foo/")).isNullOrEmpty();
+    });
   }
 
-  public void test_goto_symbol_inner_class_dollar_sign() {
-    PsiMethod[] method = myFixture.addClass("""
-                                                package pkg;
-                                                class Cls {
-                                                  class Inner {
-                                                    void paint() {}
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_filter_overridden_methods_from_goto_symbol(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass intf = myFixture.addClass("""
+                                           class Intf {
+                                             void xxx1() {}
+                                             void xxx2() {}
+                                           }""");
+      PsiClass impl = myFixture.addClass("""
+                                           class Impl extends Intf {
+                                             void xxx1() {}
+                                             void xxx3() {}
+                                           }""");
+
+      List<PsiElement> elements = gotoSymbol("xxx");
+      assertThat(elements).contains(intf.findMethodsByName("xxx1", false)[0]);
+      assertThat(elements).contains(intf.findMethodsByName("xxx2", false)[0]);
+      assertThat(elements).contains(impl.findMethodsByName("xxx3", false)[0]);
+      if (DumbService.isDumb(myFixture.getProject())) { // in dumb mode overridden are also shown
+        assertIterableEquals(List.of(impl.getMethods()[0], intf.getMethods()[0], intf.getMethods()[1], impl.getMethods()[1]), elements);
+      } else {
+        assertThat(elements).doesNotContain(impl.findMethodsByName("xxx1", false)[0]);
+      }
+    });
+  }
+
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_goto_symbol_inner_class_dollar_sign(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiMethod[] method = myFixture.addClass("""
+                                                  package pkg;
+                                                  class Cls {
+                                                    class Inner {
+                                                      void paint() {}
+                                                    }
                                                   }
-                                                }
-                                              """).getInnerClasses()[0].getMethods();
-    assertEquals(List.of(method), gotoSymbol("pkg.Cls.Inner.paint"));
-    assertEquals(List.of(method), gotoSymbol("pkg.Cls$Inner.paint"));
-    assertEquals(List.of(method), gotoSymbol("pkg.Cls$Inner#paint"));
+                                                """).getInnerClasses()[0].getMethods();
+      assertEquals(List.of(method), gotoSymbol("pkg.Cls.Inner.paint"));
+      assertEquals(List.of(method), gotoSymbol("pkg.Cls$Inner.paint"));
+      assertEquals(List.of(method), gotoSymbol("pkg.Cls$Inner#paint"));
+    });
   }
 
-  public void test_goto_symbol_by_Copy_Reference_result() {
-    PsiMethod[] methods = myFixture.addClass("""
-                                               package pkg;\s
-                                               import java.util.*;\s
-                                               class Cls {\s
-                                                 void foo(int i) {}\s
-                                                 void bar(int j) {}\s
-                                                 void bar(boolean b) {}\s
-                                                 void bar(List<String> l) {}\s
-                                               }""").getMethods();
-    assertEquals(List.of(methods[0]), gotoSymbol("pkg.Cls.foo"));
-    assertEquals(List.of(methods[0]), gotoSymbol("pkg.Cls#foo"));
-    assertEquals(List.of(methods[0]), gotoSymbol("pkg.Cls#foo(int)"));
-    assertEquals(Set.of(methods[1], methods[2], methods[3]), Set.copyOf(gotoSymbol("pkg.Cls.bar")));
-    assertEquals(Set.of(methods[1], methods[2], methods[3]), Set.copyOf(gotoSymbol("pkg.Cls#bar")));
-    assertEquals(List.of(methods[1]), gotoSymbol("pkg.Cls#bar(int)"));
-    assertEquals(List.of(methods[2]), gotoSymbol("pkg.Cls#bar(boolean)"));
-    assertEquals(List.of(methods[3]), gotoSymbol("pkg.Cls#bar(java.util.List)"));
-    assertEquals(List.of(methods[3]), gotoSymbol("pkg.Cls#bar(java.util.List<java.lang.String>)"));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_goto_symbol_by_Copy_Reference_result(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiMethod[] methods = myFixture.addClass("""
+                                                 package pkg;\s
+                                                 import java.util.*;\s
+                                                 class Cls {\s
+                                                   void foo(int i) {}\s
+                                                   void bar(int j) {}\s
+                                                   void bar(boolean b) {}\s
+                                                   void bar(List<String> l) {}\s
+                                                 }""").getMethods();
+      assertEquals(List.of(methods[0]), gotoSymbol("pkg.Cls.foo"));
+      assertEquals(List.of(methods[0]), gotoSymbol("pkg.Cls#foo"));
+      assertEquals(List.of(methods[0]), gotoSymbol("pkg.Cls#foo(int)"));
+      assertEquals(Set.of(methods[1], methods[2], methods[3]), Set.copyOf(gotoSymbol("pkg.Cls.bar")));
+      assertEquals(Set.of(methods[1], methods[2], methods[3]), Set.copyOf(gotoSymbol("pkg.Cls#bar")));
+      assertEquals(List.of(methods[1]), gotoSymbol("pkg.Cls#bar(int)"));
+      assertEquals(List.of(methods[2]), gotoSymbol("pkg.Cls#bar(boolean)"));
+      assertEquals(List.of(methods[3]), gotoSymbol("pkg.Cls#bar(java.util.List)"));
+      assertEquals(List.of(methods[3]), gotoSymbol("pkg.Cls#bar(java.util.List<java.lang.String>)"));
+    });
   }
 
-  public void test_disprefer_underscore() {
-    PsiClass intf = myFixture.addClass("""
-                                         class Intf {
-                                           void _xxx1() {}
-                                           void xxx2() {}
-                                         }""");
-    List<PsiElement> elements = gotoSymbol("xxx");
-    PsiMethod _xxx1 = intf.findMethodsByName("_xxx1", false)[0];
-    PsiMethod xxx2 = intf.findMethodsByName("xxx2", false)[0];
-    assertOrderedEquals(elements, List.of(xxx2, _xxx1));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_disprefer_underscore(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass intf = myFixture.addClass("""
+                                           class Intf {
+                                             void _xxx1() {}
+                                             void xxx2() {}
+                                           }""");
+      List<PsiElement> elements = gotoSymbol("xxx");
+      PsiMethod _xxx1 = intf.findMethodsByName("_xxx1", false)[0];
+      PsiMethod xxx2 = intf.findMethodsByName("xxx2", false)[0];
+      assertIterableEquals(List.of(xxx2, _xxx1), elements);
+    });
   }
 
-  public void test_prefer_exact_extension_matches() {
-    PsiFile m = addEmptyFile("relaunch.m");
-    PsiFile mod = addEmptyFile("reference.mod");
-    assertOrderedEquals(gotoFile("re*.m"), List.of(m, mod));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_prefer_exact_extension_matches(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile m = addEmptyFile("relaunch.m");
+      PsiFile mod = addEmptyFile("reference.mod");
+      assertIterableEquals(List.of(m, mod), gotoFile("re*.m"));
+    });
   }
 
-  public void test_prefer_exact_filename_match() {
-    PsiFile i = addEmptyFile("foo/i.txt");
-    PsiFile index = addEmptyFile("index.html");
-    assertOrderedEquals(gotoFile("i"), List.of(i, index));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_prefer_exact_filename_match(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile i = addEmptyFile("foo/i.txt");
+      PsiFile index = addEmptyFile("index.html");
+      assertIterableEquals(List.of(i, index), gotoFile("i"));
+    });
   }
 
-  public void test_prefer_shorter_filename_match() {
-    PsiFile shorter = addEmptyFile("foo/cp-users.txt");
-    PsiFile longer = addEmptyFile("cp-users-and-smth.html");
-    assertOrderedEquals(gotoFile("cpusers"), List.of(shorter, longer));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_prefer_shorter_filename_match(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile shorter = addEmptyFile("foo/cp-users.txt");
+      PsiFile longer = addEmptyFile("cp-users-and-smth.html");
+      assertIterableEquals(List.of(shorter, longer), gotoFile("cpusers"));
+    });
   }
 
-  public void test_consider_dot_idea_files_out_of_project() {
-    PsiFile outside = addEmptyFile(".idea/workspace.xml");
-    PsiFile inside = addEmptyFile("workspace.txt");
-    assertOrderedEquals(gotoFile("work", false), List.of(inside));
-    // The everywhere scope also holds the files of the IDE, such as the XHTML modules. Only the files of the test matter here.
-    List<PsiFile> everywhere = ContainerUtil.filter(gotoFile("work", true), file -> file == inside || file == outside);
-    assertOrderedEquals(everywhere, List.of(inside, outside));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_consider_dot_idea_files_out_of_project(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile outside = addEmptyFile(".idea/workspace.xml");
+      PsiFile inside = addEmptyFile("workspace.txt");
+      assertIterableEquals(List.of(inside), gotoFile("work", false));
+      // The everywhere scope also holds the files of the IDE, such as the XHTML modules. Only the files of the test matter here.
+      List<PsiFile> everywhere = ContainerUtil.filter(gotoFile("work", true), file -> file == inside || file == outside);
+      assertIterableEquals(List.of(inside, outside), everywhere);
+    });
   }
 
-  public void test_prefer_better_path_matches() {
-    PsiFile fooIndex = myFixture.addFileToProject("foo/index.html", "foo");
-    PsiFile fooBarIndex = myFixture.addFileToProject("foo/bar/index.html", "foo bar");
-    PsiFile barFooIndex = myFixture.addFileToProject("bar/foo/index.html", "bar foo");
-    assertOrderedEquals(gotoFile("foo/index"), List.of(fooIndex, barFooIndex, fooBarIndex));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_prefer_better_path_matches(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile fooIndex = myFixture.addFileToProject("foo/index.html", "foo");
+      PsiFile fooBarIndex = myFixture.addFileToProject("foo/bar/index.html", "foo bar");
+      PsiFile barFooIndex = myFixture.addFileToProject("bar/foo/index.html", "bar foo");
+      assertIterableEquals(List.of(fooIndex, barFooIndex, fooBarIndex), gotoFile("foo/index"));
+    });
   }
 
-  public void test_sort_same_named_items_by_path() {
-    List<PsiFile> files = new ArrayList<>();
-    for (int i = 30; i >= 10; i--) {
-      files.add(myFixture.addFileToProject("foo" + i + "/index.html", "foo" + i));
-    }
-    Collections.reverse(files);
-    assertOrderedEquals(gotoFile("index"), files);
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_sort_same_named_items_by_path(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      List<PsiFile> files = new ArrayList<>();
+      for (int i = 30; i >= 10; i--) {
+        files.add(myFixture.addFileToProject("foo" + i + "/index.html", "foo" + i));
+      }
+      Collections.reverse(files);
+      assertIterableEquals(files, gotoFile("index"));
+    });
   }
 
-  public void test_middle_matching_for_files_and_directories() {
-    PsiFile fooIndex = myFixture.addFileToProject("foo/index.html", "foo");
-    PsiFile ooIndex = myFixture.addFileToProject("oo/index.html", "oo");
-    PsiFile fooBarIndex = myFixture.addFileToProject("foo/bar/index.html", "foo bar");
-    assertOrderedEquals(gotoFile("oo/index"), List.of(ooIndex, fooIndex, fooBarIndex));
-    assertOrderedEquals(gotoFile("ndex.html"), List.of(fooIndex, ooIndex, fooBarIndex));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_middle_matching_for_files_and_directories(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile fooIndex = myFixture.addFileToProject("foo/index.html", "foo");
+      PsiFile ooIndex = myFixture.addFileToProject("oo/index.html", "oo");
+      PsiFile fooBarIndex = myFixture.addFileToProject("foo/bar/index.html", "foo bar");
+      assertIterableEquals(List.of(ooIndex, fooIndex, fooBarIndex), gotoFile("oo/index"));
+      assertIterableEquals(List.of(fooIndex, ooIndex, fooBarIndex), gotoFile("ndex.html"));
+    });
   }
 
-  public void test_prefer_files_from_current_directory() {
-    PsiFile fooIndex = myFixture.addFileToProject("foo/index.html", "foo");
-    PsiFile barIndex = myFixture.addFileToProject("bar/index.html", "bar");
-    PsiFile fooContext = addEmptyFile("foo/context.html");
-    PsiFile barContext = addEmptyFile("bar/context.html");
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_prefer_files_from_current_directory(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile fooIndex = myFixture.addFileToProject("foo/index.html", "foo");
+      PsiFile barIndex = myFixture.addFileToProject("bar/index.html", "bar");
+      PsiFile fooContext = addEmptyFile("foo/context.html");
+      PsiFile barContext = addEmptyFile("bar/context.html");
 
-    assertOrderedEquals(gotoFile("index", false, fooContext), List.of(fooIndex, barIndex));
-    assertOrderedEquals(gotoFile("index", false, barContext), List.of(barIndex, fooIndex));
+      assertIterableEquals(List.of(fooIndex, barIndex), gotoFile("index", false, fooContext));
+      assertIterableEquals(List.of(barIndex, fooIndex), gotoFile("index", false, barContext));
+    });
   }
 
   private PsiFile addEmptyFile(String relativePath) {
     return myFixture.addFileToProject(relativePath, "");
   }
 
-  public void test_accept_file_paths_starting_with_a_dot() {
-    PsiFile file = addEmptyFile("foo/index.html");
-    assertOrderedEquals(gotoFile("./foo/in"), List.of(file));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_accept_file_paths_starting_with_a_dot(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile file = addEmptyFile("foo/index.html");
+      assertIterableEquals(List.of(file), gotoFile("./foo/in"));
+    });
   }
 
-  public void test_don_t_match_path_to_jdk() {
-    List<PsiFile> objects = gotoFile("Object.java", true);
-    assertNotEmpty(objects);
-    assertTrue((objects.get(0)).getVirtualFile().getPath().contains("mockJDK"));
-    assertEmpty(gotoFile("mockJDK/Object.java", true));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_don_t_match_path_to_jdk(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      List<PsiFile> objects = gotoFile("Object.java", true);
+      assertThat(objects).isNotEmpty();
+      assertTrue((objects.get(0)).getVirtualFile().getPath().contains("mockJDK"));
+      assertThat(gotoFile("mockJDK/Object.java", true)).isNullOrEmpty();
+    });
   }
 
-  public void test_goto_file_can_go_to_dir() {
-    PsiFile fooIndex = addEmptyFile("foo/index.html");
-    PsiFile barIndex = addEmptyFile("bar.txt/bar.txt");
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_goto_file_can_go_to_dir(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile fooIndex = addEmptyFile("foo/index.html");
+      PsiFile barIndex = addEmptyFile("bar.txt/bar.txt");
 
-    SeProvidersTestFixture fixture = createFixture(fooIndex);
+      SeProvidersTestFixture fixture = createFixture(fooIndex);
 
-    PsiDirectory fooDir = fooIndex.getContainingDirectory();
-    PsiDirectory barDir = barIndex.getContainingDirectory();
+      PsiDirectory fooDir = fooIndex.getContainingDirectory();
+      PsiDirectory barDir = barIndex.getContainingDirectory();
 
-    assertOrderedEquals(findFiles(fixture, "foo/"), List.of(fooDir));
-    assertOrderedEquals(findFiles(fixture, "foo\\"), List.of(fooDir));
-    assertOrderedEquals(findFiles(fixture, "/foo"), List.of(fooDir));
-    assertOrderedEquals(findFiles(fixture, "\\foo"), List.of(fooDir));
-    assertOrderedEquals(findFiles(fixture, "foo"), List.of(fooDir));
-    assertOrderedEquals(findFiles(fixture, "/index.html"), List.of(fooIndex));
-    assertOrderedEquals(findFiles(fixture, "\\index.html"), List.of(fooIndex));
-    assertEmpty(findFiles(fixture, "index.html/"));
-    assertEmpty(findFiles(fixture, "index.html\\"));
-    assertOrderedEquals(findFiles(fixture, "bar.txt/"), List.of(barDir));
-    assertOrderedEquals(findFiles(fixture, "bar.txt\\"), List.of(barDir));
-    assertOrderedEquals(findFiles(fixture, "/bar.txt"), List.of(barIndex, barDir));
-    assertOrderedEquals(findFiles(fixture, "\\bar.txt"), List.of(barIndex, barDir));
-    assertOrderedEquals(findFiles(fixture, "bar.txt"), List.of(barIndex, barDir));
-    assertOrderedEquals(findFiles(fixture, "bar"), List.of(barIndex, barDir));
+      assertIterableEquals(List.of(fooDir), findFiles(fixture, "foo/"));
+      assertIterableEquals(List.of(fooDir), findFiles(fixture, "foo\\"));
+      assertIterableEquals(List.of(fooDir), findFiles(fixture, "/foo"));
+      assertIterableEquals(List.of(fooDir), findFiles(fixture, "\\foo"));
+      assertIterableEquals(List.of(fooDir), findFiles(fixture, "foo"));
+      assertIterableEquals(List.of(fooIndex), findFiles(fixture, "/index.html"));
+      assertIterableEquals(List.of(fooIndex), findFiles(fixture, "\\index.html"));
+      assertThat(findFiles(fixture, "index.html/")).isNullOrEmpty();
+      assertThat(findFiles(fixture, "index.html\\")).isNullOrEmpty();
+      assertIterableEquals(List.of(barDir), findFiles(fixture, "bar.txt/"));
+      assertIterableEquals(List.of(barDir), findFiles(fixture, "bar.txt\\"));
+      assertIterableEquals(List.of(barIndex, barDir), findFiles(fixture, "/bar.txt"));
+      assertIterableEquals(List.of(barIndex, barDir), findFiles(fixture, "\\bar.txt"));
+      assertIterableEquals(List.of(barIndex, barDir), findFiles(fixture, "bar.txt"));
+      assertIterableEquals(List.of(barIndex, barDir), findFiles(fixture, "bar"));
+    });
   }
 
-  public void test_prefer_files_to_directories_even_if_longer() {
-    PsiFile fooFile = addEmptyFile("dir/fooFile.txt");
-    PsiDirectory fooDir = addEmptyFile("foo/barFile.txt").getContainingDirectory();
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_prefer_files_to_directories_even_if_longer(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile fooFile = addEmptyFile("dir/fooFile.txt");
+      PsiDirectory fooDir = addEmptyFile("foo/barFile.txt").getContainingDirectory();
 
-    assertOrderedEquals(gotoFile("foo"), List.of(fooFile, fooDir));
+      assertIterableEquals(List.of(fooFile, fooDir), gotoFile("foo"));
+    });
   }
 
-  public void test_find_method_by_qualified_name() {
-    PsiClass clazz = myFixture.addClass("package foo.bar; class Goo { void zzzZzz() {} }");
-    PsiMethod method = clazz.getMethods()[0];
-    assertOrderedEquals(gotoSymbol("zzzZzz"), List.of(method));
-    assertOrderedEquals(gotoSymbol("goo.zzzZzz"), List.of(method));
-    assertOrderedEquals(gotoSymbol("foo.bar.goo.zzzZzz"), List.of(method));
-    assertOrderedEquals(gotoSymbol("foo.zzzZzz"), List.of(method));
-    assertOrderedEquals(gotoSymbol("bar.zzzZzz"), List.of(method));
-    assertOrderedEquals(gotoSymbol("bar.goo.zzzZzz"), List.of(method));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_find_method_by_qualified_name(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass clazz = myFixture.addClass("package foo.bar; class Goo { void zzzZzz() {} }");
+      PsiMethod method = clazz.getMethods()[0];
+      assertIterableEquals(List.of(method), gotoSymbol("zzzZzz"));
+      assertIterableEquals(List.of(method), gotoSymbol("goo.zzzZzz"));
+      assertIterableEquals(List.of(method), gotoSymbol("foo.bar.goo.zzzZzz"));
+      assertIterableEquals(List.of(method), gotoSymbol("foo.zzzZzz"));
+      assertIterableEquals(List.of(method), gotoSymbol("bar.zzzZzz"));
+      assertIterableEquals(List.of(method), gotoSymbol("bar.goo.zzzZzz"));
+    });
   }
 
-  public void testFindRecordComponent() {
-    PsiClass clazz = myFixture.addClass("package x.y.z; record Point(int momentous, int obsequious) {}");
-    PsiRecordComponent[] components = clazz.getRecordComponents();
-    assertOrderedEquals(gotoSymbol("mom"), components[0]);
-    assertOrderedEquals(gotoSymbol("obse"), components[1]);
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void testFindRecordComponent(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass clazz = myFixture.addClass("package x.y.z; record Point(int momentous, int obsequious) {}");
+      PsiRecordComponent[] components = clazz.getRecordComponents();
+      assertIterableEquals(List.of(components[0]), gotoSymbol("mom"));
+      assertIterableEquals(List.of(components[1]), gotoSymbol("obse"));
+    });
   }
 
-  public void test_line_and_column_suffix() {
-    PsiClass c = myFixture.addClass("package foo; class Bar {}");
-    assertOrderedEquals(gotoClass("Bar"), List.of(c));
-    assertOrderedEquals(gotoClass("Bar:2"), List.of(c));
-    assertOrderedEquals(gotoClass("Bar:2:3"), List.of(c));
-    assertOrderedEquals(gotoClass("Bar:[2:3]"), List.of(c));
-    assertOrderedEquals(gotoClass("Bar:[2,3]"), List.of(c));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_line_and_column_suffix(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass c = myFixture.addClass("package foo; class Bar {}");
+      assertIterableEquals(List.of(c), gotoClass("Bar"));
+      assertIterableEquals(List.of(c), gotoClass("Bar:2"));
+      assertIterableEquals(List.of(c), gotoClass("Bar:2:3"));
+      assertIterableEquals(List.of(c), gotoClass("Bar:[2:3]"));
+      assertIterableEquals(List.of(c), gotoClass("Bar:[2,3]"));
+    });
   }
 
-  public void test_custom_line_suffixes() {
-    PsiFile file = addEmptyFile("Bar.txt");
-    assertOrderedEquals(gotoFile("Bar:2"), List.of(file));
-    assertOrderedEquals(gotoFile("Bar(2)"), List.of(file));
-    assertOrderedEquals(gotoFile("Bar on line 2"), List.of(file));
-    assertOrderedEquals(gotoFile("Bar at line 2"), List.of(file));
-    assertOrderedEquals(gotoFile("Bar 2:39"), List.of(file));
-    assertOrderedEquals(gotoFile("Bar#L2"), List.of(file));
-    assertOrderedEquals(gotoFile("Bar?l=2"), List.of(file));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_custom_line_suffixes(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile file = addEmptyFile("Bar.txt");
+      assertIterableEquals(List.of(file), gotoFile("Bar:2"));
+      assertIterableEquals(List.of(file), gotoFile("Bar(2)"));
+      assertIterableEquals(List.of(file), gotoFile("Bar on line 2"));
+      assertIterableEquals(List.of(file), gotoFile("Bar at line 2"));
+      assertIterableEquals(List.of(file), gotoFile("Bar 2:39"));
+      assertIterableEquals(List.of(file), gotoFile("Bar#L2"));
+      assertIterableEquals(List.of(file), gotoFile("Bar?l=2"));
+    });
   }
 
-  public void test_dollar() {
-    PsiClass bar = myFixture.addClass("package foo; class Bar { class Foo {} }");
-    PsiClass foo = bar.getInnerClasses()[0];
-    myFixture.addClass("package goo; class Goo { }");
-    assertOrderedEquals(gotoClass("Bar$Foo"), List.of(foo));
-    assertOrderedEquals(gotoClass("foo.Bar$Foo"), List.of(foo));
-    assertOrderedEquals(gotoClass("foo.B$F"), List.of(foo));
-    assertEmpty(gotoClass("foo$Foo"));
-    assertEmpty(gotoClass("foo$Bar"));
-    assertEmpty(gotoClass("foo$Bar$Foo"));
-    assertEmpty(gotoClass("foo$Goo"));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_dollar(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass bar = myFixture.addClass("package foo; class Bar { class Foo {} }");
+      PsiClass foo = bar.getInnerClasses()[0];
+      myFixture.addClass("package goo; class Goo { }");
+      assertIterableEquals(List.of(foo), gotoClass("Bar$Foo"));
+      assertIterableEquals(List.of(foo), gotoClass("foo.Bar$Foo"));
+      assertIterableEquals(List.of(foo), gotoClass("foo.B$F"));
+      assertThat(gotoClass("foo$Foo")).isNullOrEmpty();
+      assertThat(gotoClass("foo$Bar")).isNullOrEmpty();
+      assertThat(gotoClass("foo$Bar$Foo")).isNullOrEmpty();
+      assertThat(gotoClass("foo$Goo")).isNullOrEmpty();
+    });
   }
 
-  public void test_anonymous_classes() {
-    PsiClass goo = myFixture.addClass("package goo; class Goo { Runnable r = new Runnable() {}; }");
-    assertOrderedEquals(gotoClass("Goo$1"), List.of(goo));
-    assertOrderedEquals(gotoSymbol("Goo$1"), List.of(goo));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_anonymous_classes(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass goo = myFixture.addClass("package goo; class Goo { Runnable r = new Runnable() {}; }");
+      assertIterableEquals(List.of(goo), gotoClass("Goo$1"));
+      assertIterableEquals(List.of(goo), gotoSymbol("Goo$1"));
+    });
   }
 
-  public void test_qualified_name_matching() {
-    PsiClass bar = myFixture.addClass("package foo.bar; class Bar { }");
-    PsiClass bar2 = myFixture.addClass("package goo.baz; class Bar { }");
-    assertOrderedEquals(gotoClass("foo.Bar"), List.of(bar));
-    assertOrderedEquals(gotoClass("foo.bar.Bar"), List.of(bar));
-    assertOrderedEquals(gotoClass("goo.Bar"), List.of(bar2));
-    assertOrderedEquals(gotoClass("goo.baz.Bar"), List.of(bar2));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_qualified_name_matching(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass bar = myFixture.addClass("package foo.bar; class Bar { }");
+      PsiClass bar2 = myFixture.addClass("package goo.baz; class Bar { }");
+      assertIterableEquals(List.of(bar), gotoClass("foo.Bar"));
+      assertIterableEquals(List.of(bar), gotoClass("foo.bar.Bar"));
+      assertIterableEquals(List.of(bar2), gotoClass("goo.Bar"));
+      assertIterableEquals(List.of(bar2), gotoClass("goo.baz.Bar"));
+    });
   }
 
   /**
@@ -377,390 +526,562 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
                                                                elem instanceof PsiMethod method && method.getName().equals("run")));
   }
 
-  public void test_super_method_in_jdk() {
-    PsiClass clazz = myFixture.addClass("""
-                                          package foo.bar;
-                                          class Goo implements Runnable {
-                                            @Override
-                                            public void run() { }
-                                          }""");
-    PsiMethod ourRun = clazz.getMethods()[0];
-    PsiMethod sdkRun = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
-      () -> ourRun.getContainingClass().getInterfaces()[0].getMethods()[0]
-    );
-    PsiMethod sdkRun2 = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
-      () -> myFixture.findClass("java.security.PrivilegedAction").getMethods()[0]
-    );
-    PsiMethod sdkRun3 = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
-      () -> myFixture.findClass("java.security.PrivilegedExceptionAction").getMethods()[0]
-    );
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_super_method_in_jdk(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass clazz = myFixture.addClass("""
+                                            package foo.bar;
+                                            class Goo implements Runnable {
+                                              @Override
+                                              public void run() { }
+                                            }""");
+      PsiMethod ourRun = clazz.getMethods()[0];
+      PsiMethod sdkRun = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
+        () -> ourRun.getContainingClass().getInterfaces()[0].getMethods()[0]
+      );
+      PsiMethod sdkRun2 = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
+        () -> myFixture.findClass("java.security.PrivilegedAction").getMethods()[0]
+      );
+      PsiMethod sdkRun3 = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
+        () -> myFixture.findClass("java.security.PrivilegedExceptionAction").getMethods()[0]
+      );
 
-    List<PsiElement> withLibs = filterJavaRunMethods(gotoSymbol("run ", true));
-    withLibs.remove(sdkRun2);
-    withLibs.remove(sdkRun3);
-    if (!DumbService.isDumb(myFixture.getProject())) { // in dumb mode overridden are also shown
-      assertOrderedEquals(withLibs, List.of(sdkRun));
-    }
-    assertDoesntContain(withLibs, ourRun);
+      List<PsiElement> withLibs = filterJavaRunMethods(gotoSymbol("run ", true));
+      withLibs.remove(sdkRun2);
+      withLibs.remove(sdkRun3);
+      if (!DumbService.isDumb(myFixture.getProject())) { // in dumb mode overridden are also shown
+        assertIterableEquals(List.of(sdkRun), withLibs);
+      }
+      assertThat(withLibs).doesNotContain(ourRun);
 
-    List<PsiElement> noLibs = filterJavaRunMethods(gotoSymbol("run ", false));
-    assertOrderedEquals(noLibs, List.of(ourRun));
-    assertDoesntContain(noLibs, sdkRun);
+      List<PsiElement> noLibs = filterJavaRunMethods(gotoSymbol("run ", false));
+      assertIterableEquals(List.of(ourRun), noLibs);
+      assertThat(noLibs).doesNotContain(sdkRun);
+    });
   }
 
-  public void test_super_method_not_matching_query_qualifier() {
-    PsiClass baseClass = myFixture.addClass("class Base { void xpaint() {} }");
-    PsiClass subClass = myFixture.addClass("class Sub extends Base { void xpaint() {} }");
-    PsiMethod base = baseClass.getMethods()[0];
-    PsiMethod sub = subClass.getMethods()[0];
-    assertOrderedEquals(gotoSymbol("Ba.xpai", false), List.of(base));
-    assertOrderedEquals(gotoSymbol("Su.xpai", false), List.of(sub));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_super_method_not_matching_query_qualifier(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass baseClass = myFixture.addClass("class Base { void xpaint() {} }");
+      PsiClass subClass = myFixture.addClass("class Sub extends Base { void xpaint() {} }");
+      PsiMethod base = baseClass.getMethods()[0];
+      PsiMethod sub = subClass.getMethods()[0];
+      assertIterableEquals(List.of(base), gotoSymbol("Ba.xpai", false));
+      assertIterableEquals(List.of(sub), gotoSymbol("Su.xpai", false));
+    });
   }
 
-  public void test_groovy_script_class_with_non_identifier_name() {
-    GroovyFile file1 = (GroovyFile)addEmptyFile("foo.groovy");
-    GroovyFile file2 = (GroovyFile)addEmptyFile("foo-bar.groovy");
-    List<PsiElement> variants = gotoSymbol("foo", false);
-    assertOrderedEquals(variants, List.of(file1.getScriptClass(), file2.getScriptClass()));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_groovy_script_class_with_non_identifier_name(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      GroovyFile file1 = (GroovyFile)addEmptyFile("foo.groovy");
+      GroovyFile file2 = (GroovyFile)addEmptyFile("foo-bar.groovy");
+      List<PsiElement> variants = gotoSymbol("foo", false);
+      assertIterableEquals(List.of(file1.getScriptClass(), file2.getScriptClass()), variants);
+    });
   }
 
-  public void test_prefer_exact_case_prefix_match_to_case_insensitive_name_match() {
-    PsiClass caseInsensitiveName = myFixture.addClass("class XFile {}");
-    PsiClass camelMatch = myFixture.addClass("class xfilterExprOwner {}");
-    PsiClass exactCasePrefix = myFixture.addClass("class xfile_baton_t {}");
-    assertOrderedEquals(gotoClass("xfile"), List.of(exactCasePrefix, caseInsensitiveName, camelMatch));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_prefer_exact_case_prefix_match_to_case_insensitive_name_match(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass caseInsensitiveName = myFixture.addClass("class XFile {}");
+      PsiClass camelMatch = myFixture.addClass("class xfilterExprOwner {}");
+      PsiClass exactCasePrefix = myFixture.addClass("class xfile_baton_t {}");
+      assertIterableEquals(List.of(exactCasePrefix, caseInsensitiveName, camelMatch), gotoClass("xfile"));
+    });
   }
 
-  public void test_prefer_prefix_match() {
-    PsiClass wanted = myFixture.addClass("class PsiClassImpl {}");
-    PsiClass smth = myFixture.addClass("class DroolsPsiClassImpl {}");
-    assertOrderedEquals(gotoClass("PsiCl"), List.of(wanted, smth));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_prefer_prefix_match(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass wanted = myFixture.addClass("class PsiClassImpl {}");
+      PsiClass smth = myFixture.addClass("class DroolsPsiClassImpl {}");
+      assertIterableEquals(List.of(wanted, smth), gotoClass("PsiCl"));
+    });
   }
 
-  public void test_out_of_project_content_files() {
-    PsiFile file = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
-      () -> myFixture.findClass(CommonClassNames.JAVA_LANG_OBJECT).getContainingFile()
-    );
-    List<PsiFile> elements = gotoFile("Object.class", true);
-    assertContainsElements(elements, file);
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_out_of_project_content_files(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile file = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
+        () -> myFixture.findClass(CommonClassNames.JAVA_LANG_OBJECT).getContainingFile()
+      );
+      List<PsiFile> elements = gotoFile("Object.class", true);
+      assertThat(elements).contains(file);
+    });
   }
 
-  public void test_classes_sorted_by_qualified_name_dispreferring_excluded_from_import_and_completion() {
-    PsiClass foo = myFixture.addClass("package foo; class List {}");
-    PsiClass bar = myFixture.addClass("package bar; class List {}");
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_classes_sorted_by_qualified_name_dispreferring_excluded_from_import_and_completion(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass foo = myFixture.addClass("package foo; class List {}");
+      PsiClass bar = myFixture.addClass("package bar; class List {}");
 
-    SeProvidersTestFixture fixture = createFixture(myFixture.addClass("class Context {}").getContainingFile());
-    assertOrderedEquals(findElements(fixture, SeProviderIdUtils.CLASSES_ID, "List", false), List.of(bar, foo));
+      SeProvidersTestFixture fixture = createFixture(myFixture.addClass("class Context {}").getContainingFile());
+      assertIterableEquals(List.of(bar, foo), findElements(fixture, SeProviderIdUtils.CLASSES_ID, "List", false));
 
-    JavaProjectCodeInsightSettings.setExcludedNames(getProject(), getTestRootDisposable(), "bar");
-    assertOrderedEquals(findElements(fixture, SeProviderIdUtils.CLASSES_ID, "List", false), List.of(foo, bar));
+      JavaProjectCodeInsightSettings.setExcludedNames(myFixture.getProject(), myFixture.getTestRootDisposable(), "bar");
+      assertIterableEquals(List.of(foo, bar), findElements(fixture, SeProviderIdUtils.CLASSES_ID, "List", false));
+    });
   }
 
-  public void test_file_path_matching_without_slashes() {
-    PsiFile fooBarFile = addEmptyFile("foo/bar/index_fooBar.html");
-    PsiFile fbFile = addEmptyFile("fb/index_fb.html");
-    PsiFile fbSomeFile = addEmptyFile("fb/some.dir/index_fbSome.html");
-    PsiFile someFbFile = addEmptyFile("some/fb/index_someFb.html");
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_file_path_matching_without_slashes(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile fooBarFile = addEmptyFile("foo/bar/index_fooBar.html");
+      PsiFile fbFile = addEmptyFile("fb/index_fb.html");
+      PsiFile fbSomeFile = addEmptyFile("fb/some.dir/index_fbSome.html");
+      PsiFile someFbFile = addEmptyFile("some/fb/index_someFb.html");
 
-    assertOrderedEquals(gotoFile("barindex"), List.of(fooBarFile));
-    assertOrderedEquals(gotoFile("fooindex"), List.of(fooBarFile));
-    assertOrderedEquals(gotoFile("fbindex"), List.of(fbFile, someFbFile, fbSomeFile, fooBarFile));
-    assertOrderedEquals(gotoFile("fbhtml"), List.of(fbFile, someFbFile, fbSomeFile, fooBarFile));
+      assertIterableEquals(List.of(fooBarFile), gotoFile("barindex"));
+      assertIterableEquals(List.of(fooBarFile), gotoFile("fooindex"));
+      assertIterableEquals(List.of(fbFile, someFbFile, fbSomeFile, fooBarFile), gotoFile("fbindex"));
+      assertIterableEquals(List.of(fbFile, someFbFile, fbSomeFile, fooBarFile), gotoFile("fbhtml"));
 
-    // partial slashes
-    assertOrderedEquals(gotoFile("somefb/index.html"), List.of(someFbFile));
-    assertOrderedEquals(gotoFile("somefb\\index.html"), List.of(someFbFile));
+      // partial slashes
+      assertIterableEquals(List.of(someFbFile), gotoFile("somefb/index.html"));
+      assertIterableEquals(List.of(someFbFile), gotoFile("somefb\\index.html"));
+    });
   }
 
-  public void test_file_path_matching_with_spaces_instead_of_slashes() {
-    PsiFile good = addEmptyFile("config/app.txt");
-    addEmptyFile("src/Configuration/ManagesApp.txt");
-    assertEquals(good, gotoFile("config app.txt").get(0));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_file_path_matching_with_spaces_instead_of_slashes(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile good = addEmptyFile("config/app.txt");
+      addEmptyFile("src/Configuration/ManagesApp.txt");
+      assertEquals(good, gotoFile("config app.txt").get(0));
+    });
   }
 
-  public void test_multiple_slashes_in_goto_file() {
-    PsiFile file = addEmptyFile("foo/bar/goo/file.txt");
-    for (String path : List.of("foo/goo/file.txt", "foo/bar/file.txt", "bar/goo/file.txt", "foo/bar/goo/file.txt")) {
-      assertOrderedEquals(gotoFile(path), List.of(file));
-      assertOrderedEquals(gotoFile(path.replace("/", "\\")), List.of(file));
-    }
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_multiple_slashes_in_goto_file(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile file = addEmptyFile("foo/bar/goo/file.txt");
+      for (String path : List.of("foo/goo/file.txt", "foo/bar/file.txt", "bar/goo/file.txt", "foo/bar/goo/file.txt")) {
+        assertIterableEquals(List.of(file), gotoFile(path));
+        assertIterableEquals(List.of(file), gotoFile(path.replace("/", "\\")));
+      }
+    });
   }
 
-  public void test_show_matches_from_different_suffixes() {
-    PsiFile enumControl = addEmptyFile("sample/EnumControl.java");
-    PsiFile control = addEmptyFile("sample/ControlSmth.java");
-    assertOrderedEquals(gotoFile("samplecontrol", false), List.of(control, enumControl));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_show_matches_from_different_suffixes(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile enumControl = addEmptyFile("sample/EnumControl.java");
+      PsiFile control = addEmptyFile("sample/ControlSmth.java");
+      assertIterableEquals(List.of(control, enumControl), gotoFile("samplecontrol", false));
+    });
   }
 
-  public void test_show_longer_suffix_matches_from_jdk_and_shorter_from_project() {
-    PsiFile seq = addEmptyFile("langc/Sequence.java");
-    PsiClass charSeq = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
-      () -> myFixture.findClass(CharSequence.class.getName())
-    );
-    assertOrderedEquals(gotoFile("langcsequence", true), List.of(charSeq.getContainingFile(), seq));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_show_longer_suffix_matches_from_jdk_and_shorter_from_project(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile seq = addEmptyFile("langc/Sequence.java");
+      PsiClass charSeq = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
+        () -> myFixture.findClass(CharSequence.class.getName())
+      );
+      assertIterableEquals(List.of(charSeq.getContainingFile(), seq), gotoFile("langcsequence", true));
+    });
   }
 
-  public void test_show_no_matches_from_jdk_when_there_are_in_project() {
-    PsiFile file = addEmptyFile("String.txt");
-    assertOrderedEquals(gotoFile("Str", false), List.of(file));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_show_no_matches_from_jdk_when_there_are_in_project(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile file = addEmptyFile("String.txt");
+      assertIterableEquals(List.of(file), gotoFile("Str", false));
+    });
   }
 
-  public void test_fix_keyboard_layout() {
-    // The everywhere scope also holds the classes of other languages, such as the String interface of TypeScript.
-    PsiClass firstClass = ContainerUtil.findInstance(gotoClass("Ыекштп", true), PsiClass.class);
-    assertNotNull(firstClass);
-    assertEquals("String", firstClass.getName());
-    @Nullable Object symbol =
-      ContainerUtil.find(gotoSymbol("Ыекштп", true), sym -> sym instanceof PsiClass clazz && clazz.getName().equals("String"));
-    assertNotNull(symbol);
-    assertEquals("String.class", gotoFile("Ыекштп", true).get(0).getName());
-    assertEquals("String.class", gotoFile("дфтпЫекштп", true).get(0).getName());
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_fix_keyboard_layout(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      // The everywhere scope also holds the classes of other languages, such as the String interface of TypeScript.
+      PsiClass firstClass = ContainerUtil.findInstance(gotoClass("Ыекштп", true), PsiClass.class);
+      assertNotNull(firstClass);
+      assertEquals("String", firstClass.getName());
+      @Nullable Object symbol =
+        ContainerUtil.find(gotoSymbol("Ыекштп", true), sym -> sym instanceof PsiClass clazz && clazz.getName().equals("String"));
+      assertNotNull(symbol);
+      assertEquals("String.class", gotoFile("Ыекштп", true).get(0).getName());
+      assertEquals("String.class", gotoFile("дфтпЫекштп", true).get(0).getName());
+    });
   }
 
-  public void test_prefer_exact_case_match() {
-    PsiClass upper = myFixture.addClass("package foo; class SOMECLASS {}");
-    PsiClass camel = myFixture.addClass("package bar; class SomeClass {}");
-    assertOrderedEquals(gotoClass("SomeClass"), List.of(camel, upper));
-    assertOrderedEquals(gotoFile("SomeClass.java"), List.of(camel.getContainingFile(), upper.getContainingFile()));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_prefer_exact_case_match(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass upper = myFixture.addClass("package foo; class SOMECLASS {}");
+      PsiClass camel = myFixture.addClass("package bar; class SomeClass {}");
+      assertIterableEquals(List.of(camel, upper), gotoClass("SomeClass"));
+      assertIterableEquals(List.of(camel.getContainingFile(), upper.getContainingFile()), gotoFile("SomeClass.java"));
+    });
   }
 
-  public void test_prefer_closer_path_match() {
-    PsiFile index = addEmptyFile("content/objc/features/index.html");
-    PsiFile i18n = addEmptyFile("content/objc/features/screenshots/i18n.html");
-    assertOrderedEquals(gotoFile("objc/features/i"), List.of(index, i18n));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_prefer_closer_path_match(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile index = addEmptyFile("content/objc/features/index.html");
+      PsiFile i18n = addEmptyFile("content/objc/features/screenshots/i18n.html");
+      assertIterableEquals(List.of(index, i18n), gotoFile("objc/features/i"));
+    });
   }
 
-  public void test_search_for_full_name() {
-    PsiFile file1 = addEmptyFile("Folder/Web/SubFolder/Flow.html");
-    PsiFile file2 = addEmptyFile("Folder/Web/SubFolder/Flow/Helper.html");
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_search_for_full_name(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile file1 = addEmptyFile("Folder/Web/SubFolder/Flow.html");
+      PsiFile file2 = addEmptyFile("Folder/Web/SubFolder/Flow/Helper.html");
 
-    assertOrderedEquals(withoutRepeats(gotoFile("Folder/Web/SubFolder/Flow.html")), List.of(file1, file2));
+      assertIterableEquals(List.of(file1, file2), withoutRepeats(gotoFile("Folder/Web/SubFolder/Flow.html")));
+    });
   }
 
-  public void test_prefer_name_match_over_path_match() {
-    PsiFile nameMatchFile = addEmptyFile("JBCefBrowser.java");
-    PsiFile pathMatchFile = addEmptyFile("com/elements/folder/WebBrowser.java");
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_prefer_name_match_over_path_match(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile nameMatchFile = addEmptyFile("JBCefBrowser.java");
+      PsiFile pathMatchFile = addEmptyFile("com/elements/folder/WebBrowser.java");
 
-    assertOrderedEquals(withoutRepeats(gotoFile("CefBrowser")), List.of(nameMatchFile, pathMatchFile));
+      assertIterableEquals(List.of(nameMatchFile, pathMatchFile), withoutRepeats(gotoFile("CefBrowser")));
+    });
   }
 
-  public void test_matching_file_in_a_matching_directory() {
-    PsiFile file = addEmptyFile("foo/index/index");
-    assertOrderedEquals(gotoFile("in"), List.of(file, file.getParent()));
-    assertOrderedEquals(gotoFile("foin"), List.of(file, file.getParent()));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_matching_file_in_a_matching_directory(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile file = addEmptyFile("foo/index/index");
+      assertIterableEquals(List.of(file, file.getParent()), gotoFile("in"));
+      assertIterableEquals(List.of(file, file.getParent()), gotoFile("foin"));
+    });
   }
 
-  public void test_prefer_fully_matching_module_name() {
-    PsiJavaFile module = (PsiJavaFile)myFixture.addFileToProject("module-info.java", "module foo.bar {}");
-    PsiClass clazz = myFixture.addClass("package foo; class B { void bar() {} void barX() {} }");
-    assertOrderedEquals(gotoSymbol("foo.bar"), List.of(module.getModuleDeclaration(), clazz.getMethods()[0], clazz.getMethods()[1]));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_prefer_fully_matching_module_name(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiJavaFile module = (PsiJavaFile)myFixture.addFileToProject("module-info.java", "module foo.bar {}");
+      PsiClass clazz = myFixture.addClass("package foo; class B { void bar() {} void barX() {} }");
+      assertIterableEquals(List.of(module.getModuleDeclaration(), clazz.getMethods()[0], clazz.getMethods()[1]), gotoSymbol("foo.bar"));
+    });
   }
 
-  public void test_allow_name_separators_inside_wildcard() {
-    PsiClass clazz = myFixture.addClass("package foo; class X { void bar() {} }");
-    assertOrderedEquals(gotoSymbol("foo*bar"), List.of(clazz.getMethods()[0]));
-    assertOrderedEquals(gotoClass("foo*X"), List.of(clazz));
-    assertOrderedEquals(gotoClass("X"), List.of(clazz));
-    assertOrderedEquals(gotoClass("foo.*"), List.of(clazz));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_allow_name_separators_inside_wildcard(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass clazz = myFixture.addClass("package foo; class X { void bar() {} }");
+      assertIterableEquals(List.of(clazz.getMethods()[0]), gotoSymbol("foo*bar"));
+      assertIterableEquals(List.of(clazz), gotoClass("foo*X"));
+      assertIterableEquals(List.of(clazz), gotoClass("X"));
+      assertIterableEquals(List.of(clazz), gotoClass("foo.*"));
+    });
   }
 
-  public void test_prefer_longer_name_vs_qualifier_matches() {
-    PsiClass myInspection = myFixture.addClass("package ss; class MyInspection { }");
-    PsiClass ssBasedInspection = myFixture.addClass("package foo; class SSBasedInspection { }");
-    assertOrderedEquals(gotoClass("ss*inspection"), List.of(ssBasedInspection, myInspection));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_prefer_longer_name_vs_qualifier_matches(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass myInspection = myFixture.addClass("package ss; class MyInspection { }");
+      PsiClass ssBasedInspection = myFixture.addClass("package foo; class SSBasedInspection { }");
+      assertIterableEquals(List.of(ssBasedInspection, myInspection), gotoClass("ss*inspection"));
+    });
   }
 
-  public void test_show_all_same_named_classes_sorted_by_qname() {
-    PsiClass aFoo = myFixture.addClass("package a; class Foo { }");
-    PsiClass bFoo = myFixture.addClass("package b; class Foo { }");
-    PsiClass fooBar = myFixture.addClass("package c; class FooBar { }");
-    assertOrderedEquals(gotoClass("Foo"), List.of(aFoo, bFoo, fooBar));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_show_all_same_named_classes_sorted_by_qname(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass aFoo = myFixture.addClass("package a; class Foo { }");
+      PsiClass bFoo = myFixture.addClass("package b; class Foo { }");
+      PsiClass fooBar = myFixture.addClass("package c; class FooBar { }");
+      assertIterableEquals(List.of(aFoo, bFoo, fooBar), gotoClass("Foo"));
+    });
   }
 
-  public void test_show_prefix_matches_first_when_asterisk_is_in_the_middle() {
-    PsiClass sb = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
-      () -> myFixture.findClass(StringBuilder.class.getName())
-    );
-    PsiClass asb = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
-      () -> myFixture.findClass("java.lang.AbstractStringBuilder")
-    );
-    assertOrderedEquals(gotoClass("Str*Builder", true), List.of(sb, asb));
-    assertOrderedEquals(gotoClass("java.Str*Builder", true), List.of(sb, asb));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_show_prefix_matches_first_when_asterisk_is_in_the_middle(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass sb = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
+        () -> myFixture.findClass(StringBuilder.class.getName())
+      );
+      PsiClass asb = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
+        () -> myFixture.findClass("java.lang.AbstractStringBuilder")
+      );
+      assertIterableEquals(List.of(sb, asb), gotoClass("Str*Builder", true));
+      assertIterableEquals(List.of(sb, asb), gotoClass("java.Str*Builder", true));
+    });
   }
 
-  public void test_include_overridden_qualified_name_method_matches() {
-    PsiMethod m1 = myFixture.addClass("interface HttpRequest { void start() {} }").getMethods()[0];
-    PsiMethod m2 = myFixture.addClass("interface Request extends HttpRequest { void start() {} }").getMethods()[0];
-    // IJPL-220122: "Request.start" names m2 exactly, and names m1 only in part.
-    assertOrderedEquals(gotoSymbol("Request.start"), List.of(m2, m1));
-    if (DumbService.getInstance(myFixture.getProject()).isDumb()) {
-      assertOrderedEquals(gotoSymbol("start"), List.of(m1, m2)); // can't remove overrides in dumb mode
-    }
-    else {
-      assertOrderedEquals(gotoSymbol("start"), List.of(m1));
-    }
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_include_overridden_qualified_name_method_matches(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiMethod m1 = myFixture.addClass("interface HttpRequest { void start() {} }").getMethods()[0];
+      PsiMethod m2 = myFixture.addClass("interface Request extends HttpRequest { void start() {} }").getMethods()[0];
+      // IJPL-220122: "Request.start" names m2 exactly, and names m1 only in part.
+      assertIterableEquals(List.of(m2, m1), gotoSymbol("Request.start"));
+      if (DumbService.getInstance(myFixture.getProject()).isDumb()) {
+        assertIterableEquals(List.of(m1, m2), gotoSymbol("start")); // can't remove overrides in dumb mode
+      }
+      else {
+        assertIterableEquals(List.of(m1), gotoSymbol("start"));
+      }
+    });
   }
 
-  public void test_colon_in_search_end() {
-    PsiClass foo = myFixture.addClass("class Foo { }");
-    assertOrderedEquals(gotoClass("Foo:"), List.of(foo));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_colon_in_search_end(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass foo = myFixture.addClass("class Foo { }");
+      assertIterableEquals(List.of(foo), gotoClass("Foo:"));
+    });
   }
 
-  public void test_multi_word_class_name_with_only_first_letter_of_second_word() {
-    myFixture.addClass("class Foo { }");
-    PsiClass fooBar = myFixture.addClass("class FooBar { }");
-    assertOrderedEquals(gotoClass("Foo B"), List.of(fooBar));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_multi_word_class_name_with_only_first_letter_of_second_word(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      myFixture.addClass("class Foo { }");
+      PsiClass fooBar = myFixture.addClass("class FooBar { }");
+      assertIterableEquals(List.of(fooBar), gotoClass("Foo B"));
+    });
   }
 
-  public void test_prefer_filename_match_regardless_of_package_match() {
-    PsiFile f1 = addEmptyFile("resolve/ResolveCache.java");
-    PsiFile f2 = addEmptyFile("abc/ResolveCacheSettings.xml");
-    assertOrderedEquals(gotoFile("resolvecache"), List.of(f1, f2));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_prefer_filename_match_regardless_of_package_match(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile f1 = addEmptyFile("resolve/ResolveCache.java");
+      PsiFile f2 = addEmptyFile("abc/ResolveCacheSettings.xml");
+      assertIterableEquals(List.of(f1, f2), gotoFile("resolvecache"));
+    });
   }
 
-  public void test_search_for_long_full_name() {
-    PsiFile veryLongNameFile = addEmptyFile("aaaaaaaaaaaaaaaaa/bbbbbbbbbbbbbbbb/cccccccccccccccccc/" +
-                                            "ddddddddddddddddd/eeeeeeeeeeeeeeee/ffffffffffffffffff/" +
-                                            "ggggggggggggggggg/hhhhhhhhhhhhhhhh/ClassName.java");
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_search_for_long_full_name(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile veryLongNameFile = addEmptyFile("aaaaaaaaaaaaaaaaa/bbbbbbbbbbbbbbbb/cccccccccccccccccc/" +
+                                              "ddddddddddddddddd/eeeeeeeeeeeeeeee/ffffffffffffffffff/" +
+                                              "ggggggggggggggggg/hhhhhhhhhhhhhhhh/ClassName.java");
 
-    assertOrderedEquals(gotoFile("bbbbbbbbbbbbbbbb/cccccccccccccccccc/ddddddddddddddddd/eeeeeeeeeeeeeeee/" +
-                                 "ffffffffffffffffff/ggggggggggggggggg/hhhhhhhhhhhhhhhh/ClassName.java"), List.of(veryLongNameFile));
+      assertIterableEquals(List.of(veryLongNameFile), gotoFile("bbbbbbbbbbbbbbbb/cccccccccccccccccc/ddddddddddddddddd/eeeeeeeeeeeeeeee/" +
+                                   "ffffffffffffffffff/ggggggggggggggggg/hhhhhhhhhhhhhhhh/ClassName.java"));
+    });
   }
 
-  public void test_pasted_relative_path_finds_the_file() {
-    PsiFile file = addEmptyFile("foo/bar/goo/index.html");
-    addEmptyFile("foo/index.html");
-    assertOrderedEquals(gotoFile("foo/bar/goo/index.html"), List.of(file));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_pasted_relative_path_finds_the_file(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile file = addEmptyFile("foo/bar/goo/index.html");
+      addEmptyFile("foo/index.html");
+      assertIterableEquals(List.of(file), gotoFile("foo/bar/goo/index.html"));
+    });
   }
 
   /** The literal lookup streams the fast results, and the walk of the project tree must return the same files. */
-  public void test_literal_path_lookup_and_the_walk_return_the_same_files() {
-    addEmptyFile("foo/bar/goo/index.html");
-    addEmptyFile("foo/bar/goo2/index.html");
-    addEmptyFile("moduleA/foo/bar/goo/index.html");
-    addEmptyFile("platform/core-util/foo/a.txt");
-    addEmptyFile("platform/util/foo/a.txt");
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_literal_path_lookup_and_the_walk_return_the_same_files(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      addEmptyFile("foo/bar/goo/index.html");
+      addEmptyFile("foo/bar/goo2/index.html");
+      addEmptyFile("moduleA/foo/bar/goo/index.html");
+      addEmptyFile("platform/core-util/foo/a.txt");
+      addEmptyFile("platform/util/foo/a.txt");
 
-    for (String pattern : List.of("foo/bar/goo/index.html", "platform/util/foo/a.txt", "foo/bar/goo/", "bar/goo/index.html")) {
-      List<PsiFile> withLookup = gotoFile(pattern);
-      withLiteralPathLookupDisabled(() -> assertSameElements(gotoFile(pattern), withLookup));
-    }
+      for (String pattern : List.of("foo/bar/goo/index.html", "platform/util/foo/a.txt", "foo/bar/goo/", "bar/goo/index.html")) {
+        List<PsiFile> withLookup = gotoFile(pattern);
+        withLiteralPathLookupDisabled(() -> assertThat(gotoFile(pattern)).containsExactlyInAnyOrderElementsOf(withLookup));
+      }
+    });
   }
 
-  public void test_pasted_relative_path_finds_the_same_path_under_another_directory() {
-    PsiFile atRoot = addEmptyFile("src/main/java/Foo.java");
-    PsiFile nested = addEmptyFile("moduleA/src/main/java/Foo.java");
-    assertSameElements(gotoFile("src/main/java/Foo.java"), List.of(atRoot, nested));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_pasted_relative_path_finds_the_same_path_under_another_directory(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile atRoot = addEmptyFile("src/main/java/Foo.java");
+      PsiFile nested = addEmptyFile("moduleA/src/main/java/Foo.java");
+      assertThat(gotoFile("src/main/java/Foo.java")).containsExactlyInAnyOrderElementsOf(List.of(atRoot, nested));
+    });
   }
 
-  public void test_pasted_relative_path_keeps_a_loosely_matching_directory() {
-    PsiFile exact = addEmptyFile("main/java/util/Foo.java");
-    PsiFile loose = addEmptyFile("main/javafx/util/Foo.java");
-    assertOrderedEquals(gotoFile("main/java/util/Foo.java"), List.of(exact, loose));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_pasted_relative_path_keeps_a_loosely_matching_directory(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile exact = addEmptyFile("main/java/util/Foo.java");
+      PsiFile loose = addEmptyFile("main/javafx/util/Foo.java");
+      assertIterableEquals(List.of(exact, loose), gotoFile("main/java/util/Foo.java"));
+    });
   }
 
-  public void test_pasted_relative_path_keeps_a_directory_that_only_a_subsequence_matches() {
-    PsiFile exact = addEmptyFile("platform/util/foo/a.txt");
-    PsiFile loose = addEmptyFile("platform/core-util/foo/a.txt");
-    assertOrderedEquals(gotoFile("platform/util/foo/a.txt"), List.of(exact, loose));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_pasted_relative_path_keeps_a_directory_that_only_a_subsequence_matches(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile exact = addEmptyFile("platform/util/foo/a.txt");
+      PsiFile loose = addEmptyFile("platform/core-util/foo/a.txt");
+      assertIterableEquals(List.of(exact, loose), gotoFile("platform/util/foo/a.txt"));
+    });
   }
 
   /** The full name of a file in the popup starts with the name of its root, so a copied path can repeat it. */
-  public void test_pasted_relative_path_reads_the_root_name_both_ways() {
-    PsiFile withoutPrefix = addEmptyFile("main/java/Foo.java");
-    PsiFile withPrefix = addEmptyFile("src/main/java/Foo.java");
-    assertSameElements(gotoFile("src/main/java/Foo.java"), List.of(withoutPrefix, withPrefix));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_pasted_relative_path_reads_the_root_name_both_ways(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile withoutPrefix = addEmptyFile("main/java/Foo.java");
+      PsiFile withPrefix = addEmptyFile("src/main/java/Foo.java");
+      assertThat(gotoFile("src/main/java/Foo.java")).containsExactlyInAnyOrderElementsOf(List.of(withoutPrefix, withPrefix));
+    });
   }
 
   /**
    * The literal lookup resolves the path only to a library directory, so the project-only search finds no file there,
    * and the library offers one. The pass must still run the walk, which finds the file in a loosely matching directory.
    */
-  public void test_pasted_relative_path_in_a_library_keeps_the_walk_results() throws IOException {
-    // the library must be outside the source root, which holds every file of the temp directory fixture
-    VirtualFile tempRoot = ModuleRootManager.getInstance(getModule()).getSourceRoots()[0].getParent();
-    VirtualFile libRoot = VfsTestUtil.createDir(tempRoot, "lib");
-    VfsTestUtil.createFile(libRoot, "foo/bar/goo/index.html");
-    Library library = PsiTestUtil.addProjectLibrary(getModule(), "lib", List.of(libRoot), List.of());
-    PsiFile loose = addEmptyFile("foo/bar/goo2/index.html");
-    try {
-      assertOrderedEquals(gotoFile("foo/bar/goo/index.html"), List.of(loose));
-    }
-    finally {
-      PsiTestUtil.removeLibrary(getModule(), library);
-      WriteAction.run(() -> libRoot.delete(this));
-    }
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_pasted_relative_path_in_a_library_keeps_the_walk_results(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      // the library must be outside the source root, which holds every file of the temp directory fixture
+      VirtualFile tempRoot = ModuleRootManager.getInstance(myFixture.getModule()).getSourceRoots()[0].getParent();
+      VirtualFile libRoot = VfsTestUtil.createDir(tempRoot, "lib");
+      VfsTestUtil.createFile(libRoot, "foo/bar/goo/index.html");
+      Library library = PsiTestUtil.addProjectLibrary(myFixture.getModule(), "lib", List.of(libRoot), List.of());
+      PsiFile loose = addEmptyFile("foo/bar/goo2/index.html");
+      try {
+        assertIterableEquals(List.of(loose), gotoFile("foo/bar/goo/index.html"));
+      }
+      finally {
+        PsiTestUtil.removeLibrary(myFixture.getModule(), library);
+        WriteAction.run(() -> libRoot.delete(this));
+      }
+    });
   }
 
-  public void test_pasted_relative_path_reports_each_file_once() {
-    PsiFile exact = addEmptyFile("foo/bar/goo/index.html");
-    PsiFile loose = addEmptyFile("foo/bar/goo2/index.html");
-    List<PsiFile> result = gotoFile("foo/bar/goo/index.html");
-    assertOrderedEquals(result, List.of(exact, loose));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_pasted_relative_path_reports_each_file_once(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile exact = addEmptyFile("foo/bar/goo/index.html");
+      PsiFile loose = addEmptyFile("foo/bar/goo2/index.html");
+      List<PsiFile> result = gotoFile("foo/bar/goo/index.html");
+      assertIterableEquals(List.of(exact, loose), result);
+    });
   }
 
-  public void test_mis_cased_relative_path_still_finds_the_file() {
-    PsiFile file = addEmptyFile("foo/bar/goo/index.html");
-    assertOrderedEquals(gotoFile("FOO/BAR/goo/index.html"), List.of(file));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_mis_cased_relative_path_still_finds_the_file(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile file = addEmptyFile("foo/bar/goo/index.html");
+      assertIterableEquals(List.of(file), gotoFile("FOO/BAR/goo/index.html"));
+    });
   }
 
-  public void test_pasted_relative_path_with_backslashes_finds_the_file() {
-    PsiFile file = addEmptyFile("foo/bar/goo/index.html");
-    assertOrderedEquals(gotoFile("foo\\bar\\goo\\index.html"), List.of(file));
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_pasted_relative_path_with_backslashes_finds_the_file(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile file = addEmptyFile("foo/bar/goo/index.html");
+      assertIterableEquals(List.of(file), gotoFile("foo\\bar\\goo\\index.html"));
+    });
   }
 
-  public void test_pasted_relative_path_of_a_directory_finds_the_directory() {
-    PsiFile file = addEmptyFile("foo/bar/goo/doo/index.html");
-    PsiDirectory dooDir = file.getContainingDirectory();
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_pasted_relative_path_of_a_directory_finds_the_directory(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiFile file = addEmptyFile("foo/bar/goo/doo/index.html");
+      PsiDirectory dooDir = file.getContainingDirectory();
 
-    assertOrderedEquals(gotoFile("foo/bar/goo/doo/", false, file), List.of(dooDir));
+      assertIterableEquals(List.of(dooDir), gotoFile("foo/bar/goo/doo/", false, file));
+    });
   }
 
-  public void test_exactly_matching_qualified_symbol_gets_the_exact_match_degree() {
-    PsiMethod method = myFixture.addClass("package foo; class Bar { void createBreakpoints() {} }").getMethods()[0];
-    SeProvidersTestFixture fixture = createFixture(null);
-    String symbols = SeProviderIdUtils.SYMBOLS_ID;
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_exactly_matching_qualified_symbol_gets_the_exact_match_degree(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiMethod method = myFixture.addClass("package foo; class Bar { void createBreakpoints() {} }").getMethods()[0];
+      SeProvidersTestFixture fixture = createFixture(null);
+      String symbols = SeProviderIdUtils.SYMBOLS_ID;
 
-    int exactMatchDegree = DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE;
-    assertTrue(weightOf(fixture, symbols, "foo.Bar#createBreakpoints", method) >= exactMatchDegree);
-    // '#' and '.' are both name separators, so both spellings name the method exactly.
-    assertTrue(weightOf(fixture, symbols, "foo.Bar.createBreakpoints", method) >= exactMatchDegree);
-    // The user can leave out a part of the qualifier.
-    assertTrue(weightOf(fixture, symbols, "Bar#createBreakpoints", method) >= exactMatchDegree);
-    // A search text without a separator says nothing about the qualifier.
-    assertTrue(weightOf(fixture, symbols, "createBreakpoints", method) < exactMatchDegree);
-    // A partial name is not an exact match.
-    assertTrue(weightOf(fixture, symbols, "foo.Bar#createBreak", method) < exactMatchDegree);
-    // A Copy Reference result carries a signature. A signature is not a part of a name.
-    assertTrue(weightOf(fixture, symbols, "foo.Bar#createBreakpoints()", method) >= exactMatchDegree);
+      int exactMatchDegree = DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE;
+      assertTrue(weightOf(fixture, symbols, "foo.Bar#createBreakpoints", method) >= exactMatchDegree);
+      // '#' and '.' are both name separators, so both spellings name the method exactly.
+      assertTrue(weightOf(fixture, symbols, "foo.Bar.createBreakpoints", method) >= exactMatchDegree);
+      // The user can leave out a part of the qualifier.
+      assertTrue(weightOf(fixture, symbols, "Bar#createBreakpoints", method) >= exactMatchDegree);
+      // A search text without a separator says nothing about the qualifier.
+      assertTrue(weightOf(fixture, symbols, "createBreakpoints", method) < exactMatchDegree);
+      // A partial name is not an exact match.
+      assertTrue(weightOf(fixture, symbols, "foo.Bar#createBreak", method) < exactMatchDegree);
+      // A Copy Reference result carries a signature. A signature is not a part of a name.
+      assertTrue(weightOf(fixture, symbols, "foo.Bar#createBreakpoints()", method) >= exactMatchDegree);
 
-    // The split Search Everywhere reads the exactness back from the weight, so the weight of a real
-    // exact match must pass isInExactMatchDegreeRange.
-    assertTrue(DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(
-      weightOf(fixture, symbols, "foo.Bar#createBreakpoints", method)));
-    assertFalse(DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(
-      weightOf(fixture, symbols, "createBreakpoints", method)));
+      // The split Search Everywhere reads the exactness back from the weight, so the weight of a real
+      // exact match must pass isInExactMatchDegreeRange.
+      assertTrue(DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(
+        weightOf(fixture, symbols, "foo.Bar#createBreakpoints", method)));
+      assertFalse(DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(
+        weightOf(fixture, symbols, "createBreakpoints", method)));
+    });
   }
 
-  public void test_exactly_matching_qualified_class_gets_the_exact_match_degree() {
-    PsiClass barClass = myFixture.addClass("package foo; class Bar { }");
-    SeProvidersTestFixture fixture = createFixture(null);
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_exactly_matching_qualified_class_gets_the_exact_match_degree(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass barClass = myFixture.addClass("package foo; class Bar { }");
+      SeProvidersTestFixture fixture = createFixture(null);
 
-    int exactMatchDegree = DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE;
-    assertTrue(weightOf(fixture, SeProviderIdUtils.CLASSES_ID, "foo.Bar", barClass) >= exactMatchDegree);
-    assertTrue(weightOf(fixture, SeProviderIdUtils.CLASSES_ID, "foo.Ba", barClass) < exactMatchDegree);
+      int exactMatchDegree = DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE;
+      assertTrue(weightOf(fixture, SeProviderIdUtils.CLASSES_ID, "foo.Bar", barClass) >= exactMatchDegree);
+      assertTrue(weightOf(fixture, SeProviderIdUtils.CLASSES_ID, "foo.Ba", barClass) < exactMatchDegree);
+    });
   }
 
-  public void test_a_class_is_not_an_exact_match_for_a_member_search_text() {
-    PsiClass barClass = myFixture.addClass("package foo; class Bar { String baz; }");
-    SeProvidersTestFixture fixture = createFixture(null);
+  @ParameterizedTest(name = "[{0}]")
+  @ArgumentsSource(IndexingModeArgumentsProvider.class)
+  public void test_a_class_is_not_an_exact_match_for_a_member_search_text(IndexingMode mode) throws Exception {
+    runInMode(mode, () -> {
+      PsiClass barClass = myFixture.addClass("package foo; class Bar { String baz; }");
+      SeProvidersTestFixture fixture = createFixture(null);
 
-    // The Classes tab drops "#baz" from the search text, because it navigates to the member after
-    // it opens the class. The class alone does not answer the whole search text, so it must not
-    // get the exact match degree.
-    assertTrue(weightOf(fixture, SeProviderIdUtils.CLASSES_ID, "foo.Bar#baz", barClass) < DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE);
-    // The same holds for an anonymous class search text.
-    assertTrue(weightOf(fixture, SeProviderIdUtils.CLASSES_ID, "foo.Bar$1", barClass) < DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE);
+      // The Classes tab drops "#baz" from the search text, because it navigates to the member after
+      // it opens the class. The class alone does not answer the whole search text, so it must not
+      // get the exact match degree.
+      assertTrue(weightOf(fixture, SeProviderIdUtils.CLASSES_ID, "foo.Bar#baz", barClass) < DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE);
+      // The same holds for an anonymous class search text.
+      assertTrue(weightOf(fixture, SeProviderIdUtils.CLASSES_ID, "foo.Bar$1", barClass) < DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE);
+    });
   }
 
   private static void withLiteralPathLookupDisabled(Runnable action) {
@@ -785,11 +1106,11 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
   /** Opens a new Search Everywhere session. Its providers go away with the test. */
   private SeProvidersTestFixture createFixture(@Nullable PsiElement context) {
-    return createFixture(getTestRootDisposable(), context);
+    return createFixture(myFixture.getTestRootDisposable(), context);
   }
 
   private SeProvidersTestFixture createFixture(Disposable parentDisposable, @Nullable PsiElement context) {
-    return SeProvidersTestFixture.createBlocking(getProject(), parentDisposable, ObjectUtils.tryCast(context, PsiFile.class));
+    return SeProvidersTestFixture.createBlocking(myFixture.getProject(), parentDisposable, ObjectUtils.tryCast(context, PsiFile.class));
   }
 
   private static List<?> findElements(SeProvidersTestFixture fixture, String providerId, String text, boolean everywhere) {

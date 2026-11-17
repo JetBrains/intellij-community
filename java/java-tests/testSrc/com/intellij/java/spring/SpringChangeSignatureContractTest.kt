@@ -2,12 +2,28 @@
 package com.intellij.java.spring
 
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class SpringChangeSignatureContractTest : SpringJSpecifyLightHighlightingTestCase() {
-  fun `test signature string contains contract annotation`() {
+@TestApplication
+class SpringChangeSignatureContractTest {
+  companion object {
+    private val projectFixture = springJSpecifyProjectFixture()
+  }
+
+  private val myFixture by lightJavaCodeInsightFixture(projectFixture)
+
+  @Test
+  fun `test signature string contains contract annotation`(): Unit = timeoutRunBlocking {
     myFixture.configureByText(JavaFileType.INSTANCE, """
       import org.jspecify.annotations.Nullable;
       import org.springframework.lang.Contract;
@@ -19,10 +35,12 @@ class SpringChangeSignatureContractTest : SpringJSpecifyLightHighlightingTestCas
         }
       }
     """.trimIndent())
-    val psiMethod = myFixture.elementAtCaret as PsiMethod
-    val changeSignatureDialog = JavaChangeSignatureDialog(myFixture.project, psiMethod, false, psiMethod)
-    Disposer.register(testRootDisposable, changeSignatureDialog.disposable)
-    val actualSignature = changeSignatureDialog.calculateSignature()
+    val actualSignature = withContext(Dispatchers.EDT) {
+      val psiMethod = myFixture.elementAtCaret as PsiMethod
+      val changeSignatureDialog = JavaChangeSignatureDialog(myFixture.project, psiMethod, false, psiMethod)
+      Disposer.register(myFixture.testRootDisposable, changeSignatureDialog.disposable)
+      changeSignatureDialog.calculateSignature()
+    }
     assertEquals("""
       @Contract("null -> false")
       boolean foo(@Nullable String name)
