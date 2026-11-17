@@ -19,6 +19,12 @@ internal object BazelExecutionReportOutput {
     reportSources("test actions ($TEST_MNEMONIC)", summary.testActions, summary)
     write("note: the counts leave out the hits of the local action cache, because the execution log does not hold them\n")
 
+    write("actions run locally by action kind: ${summary.localActionsByMnemonic.size} action kinds\n")
+    val countWidth = summary.localActionsByMnemonic.maxOfOrNull { it.second.toString().length } ?: 0
+    for ((mnemonic, count) in summary.localActionsByMnemonic) {
+      write("  ${count.toString().padStart(countWidth)}  $mnemonic\n")
+    }
+
     write("uploadable outputs of the actions run locally: ${blobCount(summary.uploads)}, ${formatSize(summary.uploads.values.sum())}\n")
     for ((mnemonic, blobs) in summary.uploadsByMnemonic) {
       write("  ${formatSize(blobs.values.sum()).padStart(12)}  ${blobCount(blobs)}  $mnemonic\n")

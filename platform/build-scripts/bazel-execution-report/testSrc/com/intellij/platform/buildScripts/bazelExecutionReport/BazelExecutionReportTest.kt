@@ -44,6 +44,10 @@ class BazelExecutionReportTest {
       "<tr class=\"local\"><td>run locally</td><td class=\"number\">2</td><td class=\"number\">1</td></tr>",
       "<tr class=\"total\"><td>total</td><td class=\"number\">4</td><td class=\"number\">2</td></tr>",
       "The table does not count the hits of the local action cache.",
+      // The actions run locally for each action kind. Equal counts sort by the action kind.
+      "<tr><th>Action kind</th><th>Actions</th></tr>\n" +
+      "<tr><td>Javac</td><td class=\"number\">1</td></tr>\n" +
+      "<tr><td>TestRunner</td><td class=\"number\">1</td></tr>\n",
       // The uploadable outputs of the actions run locally.
       "2 blobs, 4 mb",
       "<tr><td>Javac</td><td class=\"number\">1</td><td class=\"number\">3 mb</td></tr>",

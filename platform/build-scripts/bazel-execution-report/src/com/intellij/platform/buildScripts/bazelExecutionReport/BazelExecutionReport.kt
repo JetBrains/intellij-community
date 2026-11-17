@@ -34,6 +34,7 @@ import java.io.IOException
  * The tool does not support the JSON log of `--execution_log_json_file`.
  *
  * The report counts the actions by their source: the remote cache, the disk cache, or a local run.
+ * It counts the actions run locally again for each action kind, such as `JvmCompile` or `Rustc`.
  * It counts the test actions again in a separate section, and lists each of them. It ends with the largest blobs.
  * `--largest-blobs-count` limits the list of largest blobs. See [Summary].
  * `--html-report-path` also writes the report as an HTML page, e.g., for a TeamCity report tab. See [BazelExecutionHtmlReport].
@@ -149,12 +150,21 @@ object BazelExecutionReport {
    * The log holds no entry for an action that starts no spawn, such as a symlink or a runfiles tree.
    *
    * A blob that two action kinds share counts in both rows of [uploadsByMnemonic]. [uploads] counts it once.
-   * [largestBlobsCount] limits [largestBlobs] only. [uploadsByMnemonic] holds every action kind, and [tests] every test action.
+   * [largestBlobsCount] limits [largestBlobs] only. [uploadsByMnemonic] and [localActionsByMnemonic] hold every action kind, and [tests] every test action.
    */
   internal class Summary(spawns: List<Spawn>, largestBlobsCount: Int, blobs: List<Blob>) {
     /** The number of actions for each source. */
     @JvmField
     val actions: Map<Source, Int> = spawns.groupingBy { it.source() }.eachCount()
+
+    /** The number of actions run locally for each action kind, the largest count first. */
+    @JvmField
+    val localActionsByMnemonic: List<Pair<String, Int>> = spawns.asSequence()
+      .filter { it.source() == Source.LOCAL }
+      .groupingBy { it.mnemonic }
+      .eachCount()
+      .toList()
+      .sortedWith(compareByDescending<Pair<String, Int>> { it.second }.thenBy { it.first })
 
     /** The number of test actions for each source. */
     @JvmField

@@ -47,6 +47,7 @@ internal object BazelExecutionHtmlReport {
     write("<p class=\"note\">Logs: ${logs.joinToString(", ") { "<code>${escape(it.fileName.toString())}</code>" }}</p>\n")
 
     writeSources(summary)
+    writeLocalActions(summary)
     writeUploads(summary)
     writeTests(summary)
     writeLargestBlobs(summary)
@@ -68,6 +69,22 @@ internal object BazelExecutionHtmlReport {
     write("</table>\n")
     write("<p class=\"note\">The table does not count the hits of the local action cache. ")
     write("Such a hit starts no spawn, so the execution log does not hold it.</p>\n")
+  }
+
+  /**
+   * Writes the number of actions run locally for each action kind.
+   */
+  private fun BufferedWriter.writeLocalActions(summary: Summary) {
+    write("<h2>Actions run locally by action kind</h2>\n")
+    if (summary.localActionsByMnemonic.isEmpty()) {
+      write("<p class=\"note\">No actions run locally.</p>\n")
+      return
+    }
+    write("<table>\n<tr><th>Action kind</th><th>Actions</th></tr>\n")
+    for ((mnemonic, count) in summary.localActionsByMnemonic) {
+      write("<tr><td>${escape(mnemonic)}</td>${number(count)}</tr>\n")
+    }
+    write("</table>\n")
   }
 
   /**
