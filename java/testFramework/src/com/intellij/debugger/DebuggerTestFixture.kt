@@ -205,6 +205,13 @@ class DebuggerTestOptions {
  * 6. The check that the javac threads of the project stopped.
  * 7. The test fails when it created a debug process and did not call [DebuggerTestFixture.runTest]. This step is skipped when the test already failed.
  *
+ * Known limits:
+ * - One fixture replaces both JUnit 3 bases. So a former [ExecutionWithDebuggerToolsTestCase] subclass also gets the settings of step 3,
+ *   and its teardown stops the debug process.
+ * - The fixture sets no data context provider of the application. [com.intellij.debugger.impl.DescriptorTestHelper] sets one.
+ * - JUnit 6 runs the test methods in another order than JUnit 3. A test that edits a file of the test app or a global setting
+ *   can change a later test. The execution fixture reloads the unsaved documents, but it does not restore the settings.
+ *
  * @param testAppPath the directory of the test app. It holds `src`, and the expected output files in `outs`.
  */
 @JvmOverloads

@@ -40,7 +40,7 @@ fun descriptorTestHelperFixture(debugger: TestFixture<DebuggerTestFixture>): Tes
  * - Each [DebuggerTestFixture.resume] prints the logged descriptors first, on the debugger manager thread after
  *   [DebuggerTestFixture.invokeRatherLater]. Then it resumes.
  * - An [DebuggerTestFixture.atDebuggerTearDown] action prints the descriptors that are still in the log.
- * - Until the end of the test, the data context of the application gives the [XDebugSession] of [DebuggerTestFixture.debuggerSession],
+ * - Until the end of the test, the data context of the application gives the [XDebugSession] of [DebuggerTestFixture.debuggerSession].
  *   The other data comes from the project, as in `HeavyPlatformTestCase`.
  *
  * Create one helper for each test, for example with [descriptorTestHelperFixture].
