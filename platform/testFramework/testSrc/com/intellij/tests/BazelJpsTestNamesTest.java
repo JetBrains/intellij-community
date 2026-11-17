@@ -714,7 +714,7 @@ class BazelJpsTestNamesTest {
   public static class JUnit3SuiteScenario {
     public static junit.framework.Test suite() {
       TestSuite suite = new TestSuite("JUnit 3 suite");
-      suite.addTestSuite(JUnit3Scenario.class);
+      if (ourRunning) suite.addTestSuite(JUnit3Scenario.class);
       return suite;
     }
   }
