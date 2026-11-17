@@ -418,3 +418,4 @@ intellij.kotlin.base.scripting.tests
 intellij.kotlin.codeInsight.inspections.tests
 intellij.kotlin.base.indices.tests
 intellij.kotlin.compilerPlugins.support.tests
+intellij.kotlin.copyright.tests
