@@ -1,5 +1,5 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info">
-  <version suffix="Preview" major="2026" minor="3" eap="false"/>
+  <version suffix="Preview" major="2026" minor="3.1" eap="false"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
   <build number="IC-__BUILD__" date="__BUILD_DATE__" majorReleaseDate="20261105"/> 
   <logo url="/idea_community_logo.png"/>
