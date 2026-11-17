@@ -81,8 +81,13 @@ private fun updateMnemonics(windows: List<SwitcherToolWindow>, mnemonicsRegistry
       }
     }
     else {
-      val toolWindowWithShortcut = addShortcut(keymap, window, indexShortcut) ?: continue
-      toolWindowsWithAlreadyAssignedMnemonics.add(toolWindowWithShortcut)
+      val toolWindowWithShortcut = addShortcut(keymap, window, indexShortcut)
+      if (toolWindowWithShortcut != null) {
+        toolWindowsWithAlreadyAssignedMnemonics.add(toolWindowWithShortcut)
+      }
+      else {
+        toolWindowsToAssignMnemonicsTo.add(window)
+      }
     }
   }
   var i = 0
