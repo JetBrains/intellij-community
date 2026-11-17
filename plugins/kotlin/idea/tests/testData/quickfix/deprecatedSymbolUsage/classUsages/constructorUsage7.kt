@@ -10,6 +10,7 @@ class B : A<caret>(i = 33)
 
 fun a() {
     A(42)
+    A("abc") { 44 }
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageInWholeProjectFix

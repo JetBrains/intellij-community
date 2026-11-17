@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.isDeprecated
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.classId
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory.IntentionBased
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.buildCodeToInlin
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.saveCommentsFromSurroundings
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
+import org.jetbrains.kotlin.idea.util.tryResolveSymbolsCallFirst
 import org.jetbrains.kotlin.idea.util.withCompactClassSignature
 import org.jetbrains.kotlin.idea.util.withCompactConstructorSignature
 import org.jetbrains.kotlin.idea.util.withCompactFunctionSignature
@@ -216,7 +218,7 @@ abstract class DeprecatedSymbolUsageFixBase(
             isUnitType: Boolean?,
         ): UsageReplacementStrategy? {
 
-            val target = element.mainReference.resolve()?.let { it.navigationElement ?: it }
+            val target = targetPsiElement(element, forNavigation = true)
             when (target) {
                 is KtPrimaryConstructor, is KtClassLikeDeclaration -> {
                     val project = element.project
@@ -261,6 +263,14 @@ abstract class DeprecatedSymbolUsageFixBase(
                 }
 
                 else -> return null
+            }
+        }
+
+        fun targetPsiElement(element: KtReferenceExpression?, forNavigation: Boolean): PsiElement? {
+            if (element == null) return null
+            return allowAnalysisFromWriteActionInEdt(element) {
+                val psi = element.tryResolveSymbolsCallFirst().singleOrNull()?.psi
+                psi?.navigationElement?.takeIf { forNavigation } ?: psi
             }
         }
 
