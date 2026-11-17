@@ -404,3 +404,4 @@ intellij.kotlin.coverage.tests
 intellij.kotlin.injection.tests
 intellij.kotlin.lombok.tests
 intellij.kotlin.base.codeInsight.tests
+intellij.kotlin.uast.idea.tests
