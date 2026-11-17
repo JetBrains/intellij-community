@@ -19,13 +19,14 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
 import com.intellij.openapi.util.Disposer
@@ -117,10 +118,11 @@ internal fun createAddInterpreterActionGroup(moduleOrProject: ModuleOrProject, o
 fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onInterpreterSet: Consumer<PythonInterpreter>): List<DialogAction> {
   // If module resides on this target, we can't use any target except same target and target types that explicitly allow that
   // example: on ``\\wsl$`` you can only use wsl target and dockers
-  val targetModuleSitsOn = when (moduleOrProject) {
-    is ModuleAndProject -> PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(moduleOrProject.module)
+  val module = when (moduleOrProject) {
+    is ModuleAndProject -> moduleOrProject.module
     is ProjectOnly -> return emptyList()
   }
+  val targetModuleSitsOn = PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(module)
   return mutableListOf<DialogAction>().apply {
     if (targetModuleSitsOn == null || eelNativeMode) {
       add(createAddLocalInterpreterAction(moduleOrProject, onInterpreterSet::accept))
@@ -128,12 +130,12 @@ fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onInterpreter
         add(createAddLocalInterpreterAction(moduleOrProject, onInterpreterSet::accept, provider))
       }
     }
-    addAll(collectNewInterpreterOnTargetActions(moduleOrProject, targetModuleSitsOn, onInterpreterSet::accept))
+    addAll(collectNewInterpreterOnTargetActions(module, targetModuleSitsOn, onInterpreterSet::accept))
   }
 }
 
 private fun collectNewInterpreterOnTargetActions(
-  moduleOrProject: ModuleOrProject,
+  module: Module,
   targetTypeModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
   onInterpreterSet: (PythonInterpreter) -> Unit,
 ): List<DialogAction> =
@@ -141,8 +143,8 @@ private fun collectNewInterpreterOnTargetActions(
     .filter { it.getTargetType().isSystemCompatible() }
     .filter { targetTypeModuleSitsOn == null || targetTypeModuleSitsOn.allowCreationTargetOfThisType(it.getTargetType()) }
     // filter create new interpreter actions on targets that need to be associated with module like PyDockerComposeTargetEnvironmentFactory
-    .filterNot { moduleOrProject.project.isDefault && it.needAssociateWithModule() }
-    .map { AddInterpreterOnTargetAction(moduleOrProject, it.getTargetType(), onInterpreterSet) }
+    .filterNot { module.project.isDefault && it.needAssociateWithModule() }
+    .map { AddInterpreterOnTargetAction(module, it.getTargetType(), onInterpreterSet) }
 
 internal class AddLocalInterpreterAction(
   private val moduleOrProject: ModuleOrProject,
@@ -170,21 +172,17 @@ internal class AddLocalInterpreterAction(
 }
 
 internal class AddInterpreterOnTargetAction(
-  private val moduleOrProject: ModuleOrProject,
+  private val module: Module,
   private val targetType: TargetEnvironmentType<*>,
   private val onInterpreterSet: (PythonInterpreter) -> Unit,
 ) : DialogAction(
   dynamicText = PyBundle.messagePointer("python.sdk.action.add.interpreter.based.on.target.text", targetType.displayName),
   icon = targetType.icon,
   target = targetType.displayName,
-  project = moduleOrProject.project,
+  project = module.project,
 ), DumbAware {
   override fun createDialog(): TargetEnvironmentWizard? {
-    val runtimeType = PythonLanguageRuntimeType.Helper.getInstance()
-    val wizard = when (moduleOrProject) {
-      is ModuleAndProject -> TargetEnvironmentWizard.createWizard(moduleOrProject.module, targetType, runtimeType)
-      is ProjectOnly -> TargetEnvironmentWizard.createWizard(moduleOrProject.project, targetType, runtimeType)
-    }
+    val wizard = TargetEnvironmentWizard.createWizard(module, targetType, PythonLanguageRuntimeType.Helper.getInstance())
 
     wizard?.let {
       Disposer.register(it.disposable, Disposable {
@@ -204,11 +202,10 @@ internal class AddInterpreterOnTargetAction(
     }
     // The wizard only builds the interpreter, see PythonLanguageRuntimeUI.createCustomTool. It is set here, after the
     // wizard has saved its target, so the entry names a target of the project (PY-94164).
-    val module = when (moduleOrProject) {
-      is ModuleAndProject -> moduleOrProject.module
-      is ProjectOnly -> moduleOrProject.project.modules.firstOrNull()
-    } ?: return
-    module.project.service<TargetInterpreterSetService>().coroutineScope.launch {
+    // A modal dialog, such as the settings, can be open. The set writes on the EDT and the callback updates that dialog,
+    // so both run in its modality.
+    val modality = ModalityState.defaultModalityState()
+    module.project.service<TargetInterpreterSetService>().coroutineScope.launch(modality.asContextElement()) {
       val set = withSdkConfigurationLock(module.project) {
         module.asPyProjectAddingFacet()?.setPythonInterpreter(built, waitForSnapshot = false)
       }?.onFailure { ErrorSink().withProject(module.project).emit(it) }?.successOrNull ?: return@launch
