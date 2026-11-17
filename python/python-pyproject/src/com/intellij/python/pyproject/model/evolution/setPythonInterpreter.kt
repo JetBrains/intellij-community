@@ -107,8 +107,6 @@ private suspend fun PyProject.writeInterpreterLibraryEntry(name: PyInterpreterLi
     val previous = module.dependencies.pyInterpreterDependency
     if (previous == null && name == null) return@update
     logger.info("Set the Python interpreter of ${residesOnModule.name}: ${previous?.library?.name} -> $name")
-    // Names the caller, so a log tells which flow wrote the entry (PY-94164).
-    if (logger.isDebugEnabled) logger.debug("The caller of the interpreter write of ${residesOnModule.name}", Throwable())
     storage.modifyModuleEntity(module) { dependencies.setPyInterpreterDependency(name) }
   }
 }
