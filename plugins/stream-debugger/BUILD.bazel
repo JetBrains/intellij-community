@@ -160,6 +160,8 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/code-style-api:codeStyle",
         "//libraries/junit4",
+        "//libraries/junit6",
+        "//platform/testFramework/junit5",
         "//libraries/asm",
         "//platform/projectModel-api:projectModel",
     ],
