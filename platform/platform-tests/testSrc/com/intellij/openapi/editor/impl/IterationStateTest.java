@@ -6,13 +6,16 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.impl.view.CaretData;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.FontFamilies;
@@ -21,8 +24,13 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.CustomHighlighterTokenType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -52,6 +60,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestApplication
 public class IterationStateTest {
   private static final String OLD_SELECTION_KEY = "editor.old.full.horizontal.selection.enabled";
+  private static final TextAttributesKey BRACE = TextAttributesKey.createTextAttributesKey("ITERATION_STATE_TEST_BRACE");
 
   @SuppressWarnings("deprecation")
   private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
@@ -94,8 +103,7 @@ public class IterationStateTest {
       verifySplitting(true,
                       new StateSegment(0, 3, Color.BLACK),
                       new StateSegment(3, 4, Color.WHITE),
-                      new StateSegment(4, 5, Color.BLACK),
-                      new StateSegment(5, 6, Color.BLACK),
+                      new StateSegment(4, 6, Color.BLACK),
                       new StateSegment(6, 9, Color.BLACK),
                       new StateSegment(9, 10, Color.WHITE),
                       new StateSegment(10, 11, Color.BLACK));
@@ -113,8 +121,7 @@ public class IterationStateTest {
       myFixture.mouse().pressAt(0, 2).dragTo(2, 4).release();
       verifySplitting(false,
                       new StateSegment(0, 1, DEFAULT_BACKGROUND),
-                      new StateSegment(1, 2, DEFAULT_BACKGROUND),
-                      new StateSegment(2, 4, DEFAULT_BACKGROUND),
+                      new StateSegment(1, 4, DEFAULT_BACKGROUND),
                       new StateSegment(4, 5, SELECTION_BACKGROUND),
                       new StateSegment(5, 6, DEFAULT_BACKGROUND),
                       new StateSegment(6, 8, CARET_ROW_BACKGROUND),
@@ -134,8 +141,7 @@ public class IterationStateTest {
       myFixture.mouse().pressAt(0, 2).dragTo(2, 6).release();
       verifySplitting(false,
                       new StateSegment(0, 1, DEFAULT_BACKGROUND),
-                      new StateSegment(1, 2, DEFAULT_BACKGROUND),
-                      new StateSegment(2, 4, DEFAULT_BACKGROUND),
+                      new StateSegment(1, 4, DEFAULT_BACKGROUND),
                       new StateSegment(4, 5, SELECTION_BACKGROUND),
                       new StateSegment(5, 6, DEFAULT_BACKGROUND),
                       new StateSegment(6, 8, CARET_ROW_BACKGROUND),
@@ -150,8 +156,7 @@ public class IterationStateTest {
       setColumnModeOn();
       myFixture.mouse().pressAt(1, 1).dragTo(1, 2).release();
       StateSegment[] expected = {
-        new StateSegment(0, 1, DEFAULT_BACKGROUND),
-        new StateSegment(1, 2, DEFAULT_BACKGROUND),
+        new StateSegment(0, 2, DEFAULT_BACKGROUND),
       };
       // TODO: it looks inconsistent that the verify fails with checkBackward=true
       verifySplitting(false, false, expected);
@@ -206,11 +211,8 @@ public class IterationStateTest {
                                                       new TextAttributes(null, breakpointColor, null, null, Font.PLAIN));
 
       verifySplitting(false,
-                      new StateSegment(0, 5, breakpointColor),
-                      new StateSegment(5, 10, breakpointColor),
-                      new StateSegment(10, 11, breakpointColor),
-                      new StateSegment(11, 16, DEFAULT_BACKGROUND),
-                      new StateSegment(16, 21, DEFAULT_BACKGROUND));
+                      new StateSegment(0, 11, breakpointColor),
+                      new StateSegment(11, 21, DEFAULT_BACKGROUND));
     });
   }
 
@@ -356,8 +358,7 @@ public class IterationStateTest {
       createGuardedBlock(7, 14);
       StateSegment[] expected = {
         new StateSegment(0, 7, CARET_ROW_BACKGROUND), // 0123456
-        new StateSegment(7, 10, READONLY_FRAGMENT_BACKGROUND), // 789
-        new StateSegment(10, 11, READONLY_FRAGMENT_BACKGROUND), // \n
+        new StateSegment(7, 11, READONLY_FRAGMENT_BACKGROUND), // 789\n
         new StateSegment(11, 14, READONLY_FRAGMENT_BACKGROUND), // 123
         new StateSegment(14, 20, DEFAULT_BACKGROUND), // 456789
       };
@@ -432,6 +433,91 @@ public class IterationStateTest {
       assertEquals(CARET_ROW_BACKGROUND, it.getMergedAttributes().getBackgroundColor());
       assertTrue(it.getBackgroundLayers().isEmpty());
     });
+  }
+
+  @Test
+  public void testTokensWithoutAttributesFormOneStep() {
+    myFixture.runTest(() -> {
+      init("ab cd(ef)");
+      verifySplitting(false, new StateSegment(0, 9, CARET_ROW_BACKGROUND));
+    });
+  }
+
+  @Test
+  public void testTokensWithAttributesKeepTheirSteps() {
+    myFixture.runTest(() -> {
+      init("ab()cd ef");
+      setBraceHighlighter(Color.red);
+      Color text = myFixture.getEditor().getColorsScheme().getDefaultForeground();
+      verifySplitting(true,
+                      new StateSegment(0, 2, text),
+                      new StateSegment(2, 3, Color.red),
+                      new StateSegment(3, 4, Color.red),
+                      new StateSegment(4, 9, text));
+    });
+  }
+
+  @Test
+  public void testStepOfTokensWithoutAttributesEndsAtTheIterationEnd() {
+    myFixture.runTest(() -> {
+      init("ab cd ef");
+      EditorEx editor = (EditorEx)myFixture.getEditor();
+      IterationState forward = new IterationState(editor, 0, 4, null, false, false, false, false);
+      assertEquals(4, forward.getEndOffset());
+      forward.advance();
+      assertTrue(forward.atEnd());
+      IterationState backward = new IterationState(editor, 8, 4, null, false, false, false, true);
+      assertEquals(4, backward.getEndOffset());
+      backward.advance();
+      assertTrue(backward.atEnd());
+    });
+  }
+
+  @Test
+  public void testRetreatBeforeStepOfTokensWithoutAttributes() {
+    myFixture.runTest(() -> {
+      init("a(b) cd");
+      setBraceHighlighter(Color.red);
+      IterationState it = new IterationState((EditorEx)myFixture.getEditor(), 0, 7, null, false, false, false, false);
+      for (int i = 0; i < 4; i++) {
+        it.advance();
+      }
+      assertEquals(4, it.getStartOffset());
+      assertEquals(7, it.getEndOffset());
+      it.retreat(2);
+      assertEquals(2, it.getStartOffset());
+      assertEquals(3, it.getEndOffset());
+      it.advance();
+      assertEquals(3, it.getStartOffset());
+      assertEquals(4, it.getEndOffset());
+      assertEquals(Color.red, it.getMergedAttributes().getForegroundColor());
+      it.advance();
+      assertEquals(4, it.getStartOffset());
+      assertEquals(7, it.getEndOffset());
+    });
+  }
+
+  /**
+   * Sets a plain text highlighter that gives the parentheses the foreground color, and no attributes to the other tokens.
+   */
+  private void setBraceHighlighter(Color braceColor) {
+    EditorEx editor = (EditorEx)myFixture.getEditor();
+    EditorColorsScheme scheme = editor.getColorsScheme();
+    scheme.setAttributes(BRACE, new TextAttributes(braceColor, null, null, null, Font.PLAIN));
+    SyntaxHighlighter highlighter = new SyntaxHighlighterBase() {
+      @Override
+      public @NotNull Lexer getHighlightingLexer() {
+        return PlainTextSyntaxHighlighterFactory.createPlainTextLexer();
+      }
+
+      @Override
+      public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+        return tokenType == CustomHighlighterTokenType.L_PARENTH || tokenType == CustomHighlighterTokenType.R_PARENTH
+               ? new TextAttributesKey[]{BRACE}
+               : TextAttributesKey.EMPTY_ARRAY;
+      }
+    };
+    editor.setHighlighter(new LexerEditorHighlighter(highlighter, scheme));
   }
 
   private void addRangeHighlighterOverText(int layer, Color bgColor, FontFamilies fontFamilies) {
