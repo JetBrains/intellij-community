@@ -22,16 +22,22 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.getPyProjectsWithoutJpsSync
 import com.jetbrains.python.project.project
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.add.v2.EelOrTarget
+import com.jetbrains.python.sdk.add.v2.FileSystem
+import com.jetbrains.python.sdk.add.v2.FileSystemFactory
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonBinaryPath
@@ -207,20 +213,42 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
                else SdkConfigurationUtil.createUniqueSdkName(suggestedName, existing)
     @Suppress("SETUP_SDK_DIRECTLY") // The registry is the only place that creates a Python SDK.
     val sdk = ProjectJdkTable.getInstance().createSdkForEnvironment(project, name, sdkType, homePath)
-    // A version that the store saved needs no probe, so a project opens without running its interpreters.
-    val version = knownVersion ?: withContext(Dispatchers.IO) { sdkType.getVersionString(homePath) }
+    val parsedHomePath = Path.of(homePath)
+    val fileSystem = FileSystemFactory.createForPythonSdkAdditionalData(data, parsedHomePath)
+    val version = knownVersion ?: probeVersionString(fileSystem, parsedHomePath)
+    
     sdk.sdkModificator.apply {
       sdkAdditionalData = data
       this.homePath = homePath
       versionString = version
     }.applyChangesWithoutWriteAction()
-    // The version of a target interpreter is not read from its home path, so the target answers for it. A target
-    // interpreter has no detected environment, so this version is the only one it states before it is registered.
-    if (sdk.versionString == null) {
-      val targetVersion = withContext(Dispatchers.IO) { sdkType.getVersionString(sdk) } ?: return sdk
-      sdk.sdkModificator.apply { versionString = targetVersion }.applyChangesWithoutWriteAction()
-    }
+    
     return sdk
+  }
+
+  /**
+   * The version of the interpreter at [homePath] on [fileSystem], or `null` when [fileSystem] cannot tell it. An Eel
+   * machine reads the version from [homePath]. A target runs the interpreter, and the probe keeps the modality of the
+   * caller. A target interpreter has no detected environment, so this version is the only one it states before it is
+   * registered.
+   */
+  private suspend fun probeVersionString(fileSystem: FileSystem<*>, homePath: Path): String? = withContext(Dispatchers.IO) {
+    when (fileSystem.eelOrTarget) {
+      is EelOrTarget.IsEel -> pythonSdkType().getVersionString(homePath.toString())
+      is EelOrTarget.IsTarget -> when (val version = fileSystem.pythonLanguageLevel(homePath.toString())) {
+        is Result.Success -> version.result.toPythonVersion()
+        is Result.Failure -> {
+          // An unreachable target says nothing about the interpreter, so the SDK keeps no version.
+          thisLogger().info("Cannot read the version of python at \"${homePath}\": ${version.error.message}")
+          null
+        }
+      }
+    }
+  }
+
+  private suspend fun <P : PathHolder> FileSystem<P>.pythonLanguageLevel(pythonBinary: String): PyResult<LanguageLevel> {
+    val path = parsePath(pythonBinary).getOr { return it }
+    return getBinaryToExec(path).validatePythonAndGetInfo().mapSuccess { it.languageLevel }
   }
 
   private fun pythonSdkType(): SdkType = SdkType.findByName(PyNames.PYTHON_SDK_ID_NAME) ?: error("The Python SDK type is not registered")
