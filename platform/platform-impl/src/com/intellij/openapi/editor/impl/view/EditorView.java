@@ -138,13 +138,15 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   @RequiresEdt
   public int visualLineToY(int line) {
     assertNotInBulkMode();
-    return myMapper.visualLineToY(line);
+    DocumentText document = myDocument.getDocumentText();
+    return myMapper.visualLineToY(document, line);
   }
 
   @RequiresEdt
   public int @NotNull [] visualLineToYRange(int line) {
     assertNotInBulkMode();
-    return myMapper.visualLineToYRange(line);
+    DocumentText document = myDocument.getDocumentText();
+    return myMapper.visualLineToYRange(document, line);
   }
 
   public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
@@ -163,63 +165,72 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   public @NotNull VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos, boolean beforeSoftWrap) {
     assertNotInBulkMode();
     getSoftWrapModel().prepareToMapping();
-    return myMapper.logicalToVisualPosition(pos, beforeSoftWrap);
+    DocumentText document = myDocument.getDocumentText();
+    return myMapper.logicalToVisualPosition(document, pos, beforeSoftWrap);
   }
 
   @RequiresEdt
   public @NotNull LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos) {
     assertNotInBulkMode();
     getSoftWrapModel().prepareToMapping();
-    return myMapper.visualToLogicalPosition(pos);
+    DocumentText document = myDocument.getDocumentText();
+    return myMapper.visualToLogicalPosition(document, pos);
   }
 
   @RequiresEdt
   public @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     assertNotInBulkMode();
     getSoftWrapModel().prepareToMapping();
-    return myMapper.offsetToVisualPosition(offset, leanTowardsLargerOffsets, beforeSoftWrap);
+    DocumentText document = myDocument.getDocumentText();
+    return myMapper.offsetToVisualPosition(document, offset, leanTowardsLargerOffsets, beforeSoftWrap);
   }
 
   @RequiresEdt
   public int visualPositionToOffset(VisualPosition visualPosition) {
     assertNotInBulkMode();
     getSoftWrapModel().prepareToMapping();
-    return myMapper.visualPositionToOffset(visualPosition);
+    DocumentText document = myDocument.getDocumentText();
+    return myMapper.visualPositionToOffset(document, visualPosition);
   }
 
   @RequiresEdt
   public int offsetToVisualLine(int offset, boolean beforeSoftWrap) {
     assertNotInBulkMode();
     getSoftWrapModel().prepareToMapping();
-    return myMapper.offsetToVisualLine(offset, beforeSoftWrap);
+    DocumentText document = myDocument.getDocumentText();
+    return myMapper.offsetToVisualLine(document, offset, beforeSoftWrap);
   }
 
   @RequiresEdt
   public int visualLineToOffset(int visualLine) {
     assertNotInBulkMode();
     getSoftWrapModel().prepareToMapping();
-    return myMapper.visualLineToOffset(visualLine);
+    DocumentText document = myDocument.getDocumentText();
+    return myMapper.visualLineToOffset(document, visualLine);
   }
 
   @RequiresEdt
   public @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p) {
     assertNotInBulkMode();
     getSoftWrapModel().prepareToMapping();
-    return myMapper.xyToVisualPosition(p);
+    DocumentText document = myDocument.getDocumentText();
+    return myMapper.xyToVisualPosition(document, p);
   }
 
   @RequiresEdt
   public @NotNull Point2D visualPositionToXY(@NotNull VisualPosition pos) {
     assertNotInBulkMode();
     getSoftWrapModel().prepareToMapping();
-    return myMapper.visualPositionToXY(pos);
+    DocumentText document = myDocument.getDocumentText();
+    return myMapper.visualPositionToXY(document, pos);
   }
 
   @RequiresEdt
   public @NotNull Point2D offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     assertNotInBulkMode();
     getSoftWrapModel().prepareToMapping();
-    return myMapper.offsetToXY(offset, leanTowardsLargerOffsets, beforeSoftWrap);
+    DocumentText document = myDocument.getDocumentText();
+    return myMapper.offsetToXY(document, offset, leanTowardsLargerOffsets, beforeSoftWrap);
   }
 
   public float getPrefixTextWidthInPixels() {
@@ -375,7 +386,12 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   public int getVisibleLineCount() {
-    return myMapper.getVisibleLineCount();
+    DocumentText document = myDocument.getDocumentText();
+    return myMapper.getVisibleLineCount(document);
+  }
+
+  public int getVisibleLineCount(DocumentText document) {
+    return myMapper.getVisibleLineCount(document);
   }
 
   public @NotNull LogicalPosition xyToLogicalPosition(@NotNull Point p) {
@@ -529,7 +545,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   int getMaxTextWidthInLineRange(int startVisualLine, int endVisualLine) {
     getSoftWrapModel().prepareToMapping();
     int maxWidth = 0;
-    VisualLinesIterator iterator = new VisualLinesIterator(this, startVisualLine);
+    DocumentText document = myDocument.getDocumentText();
+    VisualLinesIterator iterator = new VisualLinesIterator(document, this, startVisualLine);
     while (!iterator.atEnd() && iterator.getVisualLine() <= endVisualLine) {
       int width = mySizeManager.getVisualLineWidth(iterator, false);
       maxWidth = Math.max(maxWidth, width);
@@ -832,11 +849,13 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     if (topOverhang == 0 && bottomOverhang == 0) {
       return false; // no resolved font family is taller than the line box
     }
-    int[] lineRange = visualLineToYRange(visualLine);
+    assertNotInBulkMode();
+    DocumentText document = myDocument.getDocumentText();
+    int[] lineRange = myMapper.visualLineToYRange(document, visualLine);
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
     int top = Math.max(visibleArea.y, lineRange[0] - bottomOverhang);
     int bottom = Math.min(visibleArea.y + visibleArea.height, lineRange[1] + topOverhang);
-    VisualLinesIterator iterator = new VisualLinesIterator(this, yToVisualLine(top));
+    VisualLinesIterator iterator = new VisualLinesIterator(document, this, yToVisualLine(top));
     while (!iterator.atEnd() && iterator.getY() < bottom) {
       int line = iterator.getVisualLine();
       if (line != visualLine && !iterator.isCustomFoldRegionLine()) {
