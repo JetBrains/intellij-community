@@ -1,6 +1,31 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
+
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
+jps_test(
+    name = "kotlin-compilerReferenceIndex-tests_test",
+    data = [
+        BAZEL_TARGETS_JSON,
+        "@community//plugins/kotlin/compiler-reference-index/tests.k2:testData",
+        "@community//plugins/kotlin/compiler-reference-index/tests:testData",
+        "@community//plugins/kotlin/idea/tests:testData",
+    ] + all_test_dep_targets,
+    jvm_flags = ["-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON],
+    tags = ["kotlin-tests"],
+    runtime_deps = [":kotlin-compilerReferenceIndex-tests_test_lib"],
+)
+
+### skip generation section `test intellij.kotlin.compilerReferenceIndex.tests`
 
 ### auto-generated section `build intellij.kotlin.compilerReferenceIndex.tests` start
 jvm_library(
@@ -63,10 +88,3 @@ jps_module(
     target = "kotlin-compilerReferenceIndex-tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.compilerReferenceIndex.tests` end
-
-### auto-generated section `test intellij.kotlin.compilerReferenceIndex.tests` start
-jps_test(
-    name = "kotlin-compilerReferenceIndex-tests_test",
-    runtime_deps = [":kotlin-compilerReferenceIndex-tests_test_lib"],
-)
-### auto-generated section `test intellij.kotlin.compilerReferenceIndex.tests` end

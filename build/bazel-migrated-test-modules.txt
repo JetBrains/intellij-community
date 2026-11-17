@@ -411,3 +411,4 @@ kotlin.project-wizard.tests
 intellij.kotlin.navigation.tests
 kotlin.util.test-generator-fir
 intellij.kotlin.highlighting.tests
+intellij.kotlin.compilerReferenceIndex.tests
