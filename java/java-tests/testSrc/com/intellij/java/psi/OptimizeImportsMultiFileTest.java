@@ -18,7 +18,7 @@ import com.intellij.testFramework.PsiTestUtil;
 @HeavyPlatformTestCase.WrapInCommand
 public class OptimizeImportsMultiFileTest extends JavaPsiTestCase {
   public void testOptimizeImportInPackageIgnoresFilesOutsideSourceRootsForExampleTestData() throws Exception {
-    VirtualFile root = createTestProjectStructure(OptimizeImportsTest.BASE_PATH + "/testData", false);
+    VirtualFile root = createTestProjectStructure(OptimizeImportsFixture.BASE_PATH + "/testData", false);
     ModuleRootModificationUtil.addContentRoot(getModule(), root);
     VirtualFile x = root.findChild("X.java");
     String textBefore = VfsUtilCore.loadText(x);
@@ -37,7 +37,7 @@ public class OptimizeImportsMultiFileTest extends JavaPsiTestCase {
   public void testOptimizeImportsMustAddUnambiguousImportsIfTheCorrespondingSettingIsOn() throws Exception {
     CodeInsightSettings.runWithTemporarySettings(settings -> {
       settings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-      VirtualFile root = createTestProjectStructure(OptimizeImportsTest.BASE_PATH + "/src1", false);
+      VirtualFile root = createTestProjectStructure(OptimizeImportsFixture.BASE_PATH + "/src1", false);
       PsiTestUtil.addSourceRoot(getModule(), root);
       PsiDirectory directory = myPsiManager.findDirectory(root);
       assertNotNull(directory);
@@ -58,7 +58,7 @@ public class OptimizeImportsMultiFileTest extends JavaPsiTestCase {
   public void testOptimizeImportsMustNotAddUnambiguousImportsIfTheCorrespondingSettingIsOff() throws Exception {
     CodeInsightSettings.runWithTemporarySettings(settings -> {
       settings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
-      VirtualFile root = createTestProjectStructure(OptimizeImportsTest.BASE_PATH + "/src1", false);
+      VirtualFile root = createTestProjectStructure(OptimizeImportsFixture.BASE_PATH + "/src1", false);
       PsiTestUtil.addSourceRoot(getModule(), root);
       PsiDirectory directory = myPsiManager.findDirectory(root);
       assertNotNull(directory);
