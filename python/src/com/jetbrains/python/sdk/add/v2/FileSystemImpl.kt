@@ -29,6 +29,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.fs.getRoots
+import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
@@ -284,6 +285,10 @@ data class EelFileSystem(
         return PyResult.success(PathHolder.Eel(Path(raw, eelDescriptor)))
       }
       catch (_: InvalidPathException) {
+        return PyResult.localizedError(PySdkBundle.message("path.validation.invalid", raw))
+      }
+      // The parse of a path of the machine of the eel declares it, for a string that is no path there.
+      catch (_: EelPathException) {
         return PyResult.localizedError(PySdkBundle.message("path.validation.invalid", raw))
       }
     }
