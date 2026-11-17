@@ -225,9 +225,29 @@ open class ConsoleViewImpl protected constructor(
     usePredefinedMessageFilter: Boolean,
   ) : this(
     project = project, searchScope = searchScope, viewer = viewer,
+    usePredefinedMessageFilter = usePredefinedMessageFilter,
+    attachToProcessOutput = true,
+    attachToProcessInput = true,
+  )
+
+  /**
+   * @param attachToProcessOutput whether [attachToProcess] prints the process output into this console.
+   * If `false`, the process output is printed into this console by its owner.
+   * @param attachToProcessInput whether [attachToProcess] sends the user input of this console into the process input.
+   */
+  @ApiStatus.Internal
+  constructor(
+    project: Project,
+    searchScope: GlobalSearchScope,
+    viewer: Boolean,
+    usePredefinedMessageFilter: Boolean,
+    attachToProcessOutput: Boolean,
+    attachToProcessInput: Boolean,
+  ) : this(
+    project = project, searchScope = searchScope, viewer = viewer,
     initialState = object : NotStartedStated() {
       override fun attachTo(console: ConsoleViewImpl, processHandler: ProcessHandler): ConsoleState {
-        return ConsoleViewRunningState(console, processHandler, this, true, true)
+        return ConsoleViewRunningState(console, processHandler, this, attachToProcessOutput, attachToProcessInput)
       }
     },
     usePredefinedMessageFilter = usePredefinedMessageFilter,

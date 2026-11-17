@@ -18,6 +18,8 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
   private boolean myViewer;
   private boolean myUsePredefinedMessageFilter = true;
   private boolean useOwnModalityStateForUpdates = false;
+  private boolean myAttachToProcessOutput = true;
+  private boolean myAttachToProcessInput = true;
 
   public TextConsoleBuilderImpl(@NotNull Project project) {
     this(project, GlobalSearchScope.allScope(project));
@@ -43,8 +45,23 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
     this.useOwnModalityStateForUpdates = useOwnModalityStateForUpdates;
   }
 
+  @ApiStatus.Internal
+  @Override
+  public @NotNull TextConsoleBuilder setAttachToProcessOutput(boolean attachToProcessOutput) {
+    myAttachToProcessOutput = attachToProcessOutput;
+    return this;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull TextConsoleBuilder setAttachToProcessInput(boolean attachToProcessInput) {
+    myAttachToProcessInput = attachToProcessInput;
+    return this;
+  }
+
   protected @NotNull ConsoleView createConsole() {
-    var result = new ConsoleViewImpl(myProject, myScope, myViewer, myUsePredefinedMessageFilter);
+    var result = new ConsoleViewImpl(myProject, myScope, myViewer, myUsePredefinedMessageFilter,
+                                     myAttachToProcessOutput, myAttachToProcessInput);
     result.setUseOwnModalityForUpdates(useOwnModalityStateForUpdates);
     return result;
   }
