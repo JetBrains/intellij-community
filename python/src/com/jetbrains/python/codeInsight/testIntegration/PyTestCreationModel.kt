@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight.testIntegration
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.FilenameIndex
@@ -39,6 +40,7 @@ class PyTestCreationModel(var fileName: String,
     fun createByElement(element: PsiElement): PyTestCreationModel? {
       if (PythonUnitTestDetectorsBasedOnSettings.isTestElement(element, null)) return null //Can't create tests for tests
       val fileUnderTest = element.containingFile as? PyFile ?: return null
+      val directoryUnderTest = fileUnderTest.containingDirectory ?: return null
       val classUnderTest = PsiTreeUtil.getParentOfType(element, PyClass::class.java, false)
       val functionUnderTest = PsiTreeUtil.getParentOfType(element, PyFunction::class.java, false)
       val elementsUnderTest: Sequence<PsiNamedElement> = when {
@@ -71,20 +73,20 @@ class PyTestCreationModel(var fileName: String,
         }
       }
       return PyTestCreationModel(fileName = "test_${fileUnderTest.name}",
-                                 targetDir = getTestFolder(element).path,
+                                 targetDir = getTestFolder(element, directoryUnderTest).path,
                                  className = if (testCaseClassRequired) "Test${nameOfClassUnderTest ?: ""}" else "",
                                  methods = testFunctionNames)
 
     }
 
-    private fun getTestFolder(element: PsiElement): VirtualFile =
+    private fun getTestFolder(element: PsiElement, directoryUnderTest: PsiDirectory): VirtualFile =
       ModuleUtil.findModuleForPsiElement(element)?.let { module ->
         // No need to create tests in site-packages (aka classes root)
         val fileIndex = ProjectFileIndex.getInstance(element.project)
         return@let FilenameIndex.getVirtualFilesByName("tests", module.moduleContentScope).firstOrNull { possibleRoot ->
           possibleRoot.isDirectory && !fileIndex.isInLibrary(possibleRoot)
         }
-      } ?: element.containingFile.containingDirectory.virtualFile
+      } ?: directoryUnderTest.virtualFile
   }
 
 }
