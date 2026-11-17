@@ -12,7 +12,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [commits](commits/SKILL.md) | Read before each commit, amend or reword: the subject SafePush accepts and the body. |
 | [compare-python-typecheckers](compare-python-typecheckers/SKILL.md) | Compare Python type inference with ty, pyrefly, and basedpyright. |
 | [compose-ui](compose-ui/SKILL.md) | Write or audit Compose Desktop UI state, effects, and boundaries. |
-| [conda-env-tests](conda-env-tests/SKILL.md) | Bump the pinned Miniconda version for the Python conda env tests. |
+| [conda-env-tests](conda-env-tests/SKILL.md) | Bump the Miniconda version of the Python conda env tests. |
 | [content-module](content-module/SKILL.md) | Create, convert or extract an IntelliJ plugin content module. |
 | [debugging](debugging/SKILL.md) | Debug IntelliJ IDE failures with repository-specific techniques. |
 | [driver-ui-tests](driver-ui-tests/SKILL.md) | Write IntelliJ UI tests with IDE Starter or UI Driver, or run one off-screen to verify a change. |
