@@ -130,7 +130,9 @@ jvm_library(
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/test-framework",
-        "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
+        "//libraries/assertj-core",
     ],
 )
 ### auto-generated section `build intellij.python.devkit.tests` end
