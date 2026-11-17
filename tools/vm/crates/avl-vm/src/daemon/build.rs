@@ -102,7 +102,7 @@ pub(crate) struct PluginFile {
     pub host: PathDigest,
 }
 
-/// One lane input of the descriptor: its key in the `ide` section, such as `fakeAgentJar`, and its bytes on the host by
+/// One lane input of the descriptor: its key in the `ide` section, such as `fakeAgent`, and its bytes on the host by
 /// path and content digest, as `/jars` is asked about them.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct LaneInput {

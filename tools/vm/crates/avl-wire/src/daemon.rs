@@ -304,11 +304,12 @@ pub fn plugin_directory_digests<'a>(files: impl IntoIterator<Item = (&'a str, &'
         .collect()
 }
 
-/// The digests of the three lane inputs of the runtime descriptor, as the push stored them.
+/// The digests of the four lane inputs of the runtime descriptor, as the push stored them.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LaneInputs {
-    pub fake_agent_jar: String,
+    pub fake_agent: String,
+    pub genui_fixture_jar: String,
     pub lane_documents: String,
     pub suite_documents: String,
 }

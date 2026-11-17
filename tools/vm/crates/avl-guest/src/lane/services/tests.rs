@@ -54,7 +54,7 @@ const SCRIPT: &[(&str, Side, &str, &str, &str)] = &[
         "/_lane/registry/fault",
         r#"{"fault":"package-http-error"}"#,
     ),
-    ("registry", Side::Ide, "GET", "/packages/acp-scenario-agent-linux-x86_64.zip", ""),
+    ("registry", Side::Ide, "GET", "/packages/acp-fake-agent-linux-x86_64.zip", ""),
     ("registry", Side::Control, "GET", "/_lane/registry/mark", ""),
     ("registry", Side::Control, "GET", "/_lane/registry/events?since=0&prefix=", ""),
     (

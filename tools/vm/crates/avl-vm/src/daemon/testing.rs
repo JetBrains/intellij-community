@@ -458,9 +458,10 @@ pub(crate) fn failing_run(iteration_id: &str) -> Vec<String> {
 // --- the runtime-descriptor fixture ------------------------------------------------------------------------------
 
 /// The runfiles every fixture descriptor declares, with their contents.
-pub(crate) const FIXTURE_RUNFILES: [(&str, &str); 8] = [
+pub(crate) const FIXTURE_RUNFILES: [(&str, &str); 9] = [
     (FIXTURE_DOCUMENTS_JAR, "documents"),
-    (FIXTURE_FAKE_AGENT_JAR, "fake-agent"),
+    (FIXTURE_FAKE_AGENT, "fake-agent"),
+    (FIXTURE_GENUI_FIXTURE_JAR, "genui-fixture"),
     ("_main/data/project.zip", "data-a"),
     ("_main/dist/x.ide.config", "config"),
     ("_main/dist/fingerprint.txt", "fingerprint"),
@@ -469,8 +470,11 @@ pub(crate) const FIXTURE_RUNFILES: [(&str, &str); 8] = [
     ("_main/plugins/bridge/lib/bridge.jar", "bridge-plugin"),
 ];
 
-/// The fake agent jar of the fixture descriptor, a lane input.
-pub(crate) const FIXTURE_FAKE_AGENT_JAR: &str = "_main/agent/fake-agent.jar";
+/// The fake agent binary of the fixture descriptor, a lane input.
+pub(crate) const FIXTURE_FAKE_AGENT: &str = "_main/agent/acp-fake-agent";
+
+/// The jar of the GenUI fixture app server of the fixture descriptor, a lane input.
+pub(crate) const FIXTURE_GENUI_FIXTURE_JAR: &str = "_main/agent/genui-fixture-app.jar";
 
 /// The jar of the documents of the fixture descriptor. The two jars of the documents are this one file, as both are the
 /// flow-profiles resource jar of the real descriptor.
@@ -503,8 +507,9 @@ pub(crate) fn fixture_descriptor_for(jbr_platform: &str) -> Value {
             "platform": jbr_platform,
         },
         "ide": {
-            "fakeAgentJar": file(FIXTURE_FAKE_AGENT_JAR),
+            "fakeAgent": file(FIXTURE_FAKE_AGENT),
             "flagsFile": file("_main/ide/ide.jvm-flags.txt"),
+            "genuiFixtureJar": file(FIXTURE_GENUI_FIXTURE_JAR),
             "laneDocuments": file(FIXTURE_DOCUMENTS_JAR),
             "plugins": [{"destination": "bridge/lib/bridge.jar", "file": file("_main/plugins/bridge/lib/bridge.jar")}],
             "projectArchive": file("_main/ide/project.zip"),

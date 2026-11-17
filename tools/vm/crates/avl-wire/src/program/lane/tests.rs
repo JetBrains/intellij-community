@@ -16,7 +16,7 @@ fn document() -> Value {
         "agents": [
             {"key": "run", "delivery": "local", "configName": "air-scenario-run", "displayName": "air-scenario-run", "controlled": false,
              "deterministic": {"responsePrefix": "Done", "responseDelayMs": 0, "asksPermission": false, "loadsSessions": false},
-             "acpJson": {"command": "${java}", "args": ["-jar", "${fakeAgentJar}"], "env": {"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Done"}}},
+             "acpJson": {"command": "${fakeAgent}", "args": [], "env": {"ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Done"}}},
             {"key": "steer", "delivery": "registry", "registryId": "air-scenario-steer", "displayName": "Air Controlled steer",
              "controlled": true, "controlOwner": "IDE", "env": {}},
         ],
@@ -193,7 +193,7 @@ fn a_document_that_does_not_fit_itself_names_each_mismatch() {
     assert_eq!(
         parse(&broken).unwrap_err().split("; ").collect::<Vec<_>>(),
         vec![
-            "the acp.json entry of 'run' runs ${java} [\"-cp\", \"classes\"], not ${java} -jar ${fakeAgentJar}",
+            "the acp.json entry of 'run' runs ${fakeAgent} [\"-cp\", \"classes\"], not ${fakeAgent} with no argument",
             "the agent 'steer' must state an answer exactly when it is not controlled",
             "the registry agents [] are not the registry agents [\"steer\"] of the agents",
         ]

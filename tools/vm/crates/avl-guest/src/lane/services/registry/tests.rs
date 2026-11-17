@@ -55,7 +55,15 @@ fn the_registry_and_the_packages_answer_with_the_archives_of_the_document() {
     assert_eq!((package.status, package.header("Content-Type")), (200, Some("application/zip")));
     assert_eq!(package.body(), fixture_packages().archive("linux-x86_64").unwrap());
     assert_eq!(linux["sha256"], package::sha256_hex(&package.body()));
-    assert_eq!(testing::get(address, "/packages/acp-scenario-agent-solaris-sparc.zip").status, 404);
+    assert_eq!(testing::get(address, "/packages/acp-fake-agent-solaris-sparc.zip").status, 404);
+    // The registry lists the platform of the guest alone, so an IDE of another platform finds no package.
+    let platforms: Vec<&String> = document["agents"][0]["distribution"]["binary"]
+        .as_object()
+        .unwrap()
+        .keys()
+        .collect();
+    assert_eq!(platforms, ["linux-x86_64"]);
+    assert_eq!(testing::get(address, "/packages/acp-fake-agent-linux-aarch64.zip").status, 404);
     assert_eq!(testing::get(address, "/elsewhere").status, 404);
 }
 
@@ -63,7 +71,7 @@ fn the_registry_and_the_packages_answer_with_the_archives_of_the_document() {
 fn the_manifest_environment_puts_the_package_variables_first_and_an_agent_value_replaces_one_in_place() {
     let text = registry_json("http://127.0.0.1:1/", &fixture_packages(), &agents(), None);
     let document: Value = serde_json::from_str(&text).unwrap();
-    let env = |agent: usize| document["agents"][agent]["distribution"]["binary"]["darwin-aarch64"]["env"].to_string();
+    let env = |agent: usize| document["agents"][agent]["distribution"]["binary"]["linux-x86_64"]["env"].to_string();
     assert_eq!(
         env(0),
         r#"{"ACP_FAKE_AGENT_CONTROL_KEY":"codex","ACP_FAKE_AGENT_CONTROL_URL":"ws://127.0.0.1:30042/acp","ACP_FAKE_AGENT_PACKAGE_TOKEN":"air-scenario-package-v1","ACP_FAKE_AGENT_STARTUP_TOKEN":"registry-installed"}"#
@@ -83,8 +91,8 @@ fn arm(address: SocketAddr, body: &Value) -> Value {
 fn each_fault_shapes_the_answer_that_the_ide_reads() {
     let service = start_registry();
     let address = service.address();
-    let package = "/packages/acp-scenario-agent-linux-aarch64.zip";
-    let archive = fixture_packages().archive("linux-aarch64").unwrap().to_vec();
+    let package = "/packages/acp-fake-agent-linux-x86_64.zip";
+    let archive = fixture_packages().archive("linux-x86_64").unwrap().to_vec();
 
     arm(address, &json!({ "fault": "registry-http-error" }));
     assert_eq!(testing::get(address, "/registry.json").status, 503);
@@ -101,7 +109,7 @@ fn each_fault_shapes_the_answer_that_the_ide_reads() {
     arm(address, &json!({ "fault": "checksum-mismatch" }));
     let document = testing::get(address, "/registry.json").json();
     assert_eq!(
-        document["agents"][1]["distribution"]["binary"]["windows-aarch64"]["sha256"],
+        document["agents"][1]["distribution"]["binary"]["linux-x86_64"]["sha256"],
         "0".repeat(64)
     );
     assert_eq!(testing::get(address, package).body(), archive);
@@ -111,7 +119,7 @@ fn each_fault_shapes_the_answer_that_the_ide_reads() {
     assert_eq!(invalid, b"not-a-zip-archive");
     let document = testing::get(address, "/registry.json").json();
     assert_eq!(
-        document["agents"][0]["distribution"]["binary"]["linux-aarch64"]["sha256"],
+        document["agents"][0]["distribution"]["binary"]["linux-x86_64"]["sha256"],
         package::sha256_hex(&invalid)
     );
 
@@ -141,7 +149,7 @@ fn a_held_package_answers_on_the_clear_and_enters_the_log_only_then() {
     // The index answers at once under this fault.
     assert_eq!(testing::get(address, "/registry.json").status, 200);
     let started = Instant::now();
-    let held = thread::spawn(move || testing::get(address, "/packages/acp-scenario-agent-darwin-x86_64.zip"));
+    let held = thread::spawn(move || testing::get(address, "/packages/acp-fake-agent-linux-x86_64.zip"));
     thread::sleep(Duration::from_millis(300));
     let events = testing::control(
         address,
@@ -170,7 +178,7 @@ fn a_held_package_answers_on_the_clear_and_enters_the_log_only_then() {
     .json();
     let events = events["events"].as_array().unwrap();
     assert_eq!(events.len(), 1);
-    assert_eq!(events[0]["path"], "/packages/acp-scenario-agent-darwin-x86_64.zip");
+    assert_eq!(events[0]["path"], "/packages/acp-fake-agent-linux-x86_64.zip");
     assert_eq!(events[0]["fault"], "slow-package-response");
     assert_eq!(events[0]["sequence"], mark + 2);
 }
@@ -207,7 +215,7 @@ fn the_log_lists_every_answer_after_the_mark_and_no_control_request() {
         .as_u64()
         .unwrap();
     assert_eq!(mark, 1);
-    testing::get(address, "/packages/acp-scenario-agent-linux-x86_64.zip");
+    testing::get(address, "/packages/acp-fake-agent-linux-x86_64.zip");
     testing::get(address, "/nothing");
     let all = testing::control(address, "GET", "/_lane/registry/events", "").json();
     assert_eq!(all["mark"], 3);
@@ -230,7 +238,7 @@ fn the_log_lists_every_answer_after_the_mark_and_no_control_request() {
         [
             (
                 json!(2),
-                json!("/packages/acp-scenario-agent-linux-x86_64.zip"),
+                json!("/packages/acp-fake-agent-linux-x86_64.zip"),
                 json!(200),
                 json!(false)
             ),

@@ -4,8 +4,8 @@
 //! The config key of a lane hashes the bytes of this document, so a runner reads the launch inputs here and nowhere
 //! else. The digest of the flow vocabulary is not a launch input: [`crate::program::read_vocabulary_digest`] reads it
 //! from the resource root. This side reads every field and refuses an unknown one: a field that a runner does not know is a launch input
-//! that it would not apply. A local agent has an `acp.json` entry with the tokens [`JAVA_TOKEN`] and
-//! [`FAKE_AGENT_JAR_TOKEN`], which the runner resolves. A controlled agent also gets the address and the credential of
+//! that it would not apply. A local agent has an `acp.json` entry that runs [`FAKE_AGENT_TOKEN`] with no argument,
+//! and the runner resolves the token. A controlled agent also gets the address and the credential of
 //! the control channel, which derive from the config key and so are not in the document.
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -18,11 +18,8 @@ mod tests;
 /// The version of the lane document that this reader reads, `LANE_DOCUMENT_SCHEMA_VERSION` of the generator.
 pub const LANE_DOCUMENT_SCHEMA_VERSION: u32 = 2;
 
-/// The token for the `java` that runs the fake agent, in an `acp.json` entry.
-pub const JAVA_TOKEN: &str = "${java}";
-
-/// The token for the fake agent jar in the home of a context, in an `acp.json` entry.
-pub const FAKE_AGENT_JAR_TOKEN: &str = "${fakeAgentJar}";
+/// The token for the fake agent binary in the home of a context, the command of an `acp.json` entry.
+pub const FAKE_AGENT_TOKEN: &str = "${fakeAgent}";
 
 /// The lane of the live agents, the one lane that states a [`LiveContext`].
 pub const LIVE_LANE: &str = "UI_LIVE";
@@ -415,10 +412,10 @@ impl LaneAgent {
             refusals.push(format!("the Cloud agent '{key}' is controlled"));
         }
         if let Some(entry) = &self.acp_json
-            && (entry.command != JAVA_TOKEN || entry.args != ["-jar", FAKE_AGENT_JAR_TOKEN])
+            && (entry.command != FAKE_AGENT_TOKEN || !entry.args.is_empty())
         {
             refusals.push(format!(
-                "the acp.json entry of '{key}' runs {} {:?}, not {JAVA_TOKEN} -jar {FAKE_AGENT_JAR_TOKEN}",
+                "the acp.json entry of '{key}' runs {} {:?}, not {FAKE_AGENT_TOKEN} with no argument",
                 entry.command, entry.args
             ));
         }
