@@ -108,6 +108,7 @@ import java.awt.CardLayout
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Dimension
+import java.awt.GraphicsEnvironment
 import java.awt.GridBagLayout
 import java.awt.Toolkit
 import java.awt.event.FocusAdapter
@@ -367,11 +368,14 @@ object UniversalFileChooser {
       topToolbar = toolbar
       toolbarActionGroup = group
       popupActionGroup = DefaultActionGroup(toolbarActionGroup, Separator.getInstance(), extraPopupActions)
-      val screenSize = Toolkit.getDefaultToolkit().screenSize
-      preferredSize = Dimension(
-        minOf(screenSize.width / 2, JBUI.scale(defaultWidth)),
-        minOf(screenSize.height / 2, JBUI.scale(defaultHeight)),
-      )
+      val defaultSize = Dimension(JBUI.scale(defaultWidth), JBUI.scale(defaultHeight))
+      preferredSize = if (GraphicsEnvironment.isHeadless()) {
+        defaultSize
+      }
+      else {
+        val screenSize = Toolkit.getDefaultToolkit().screenSize
+        Dimension(minOf(screenSize.width / 2, defaultSize.width), minOf(screenSize.height / 2, defaultSize.height))
+      }
       tabbedPane = JBTabbedPane()
       val projectContrib = projectContributor(project, contributors)
       val localContrib = localContributor(contributors)
@@ -634,9 +638,15 @@ object UniversalFileChooser {
       }
     }
 
-    fun preselect(toSelect: (suspend () -> Path?)?) {
+    /**
+     * Navigates to the path from [toSelect], or to the default path when [toSelect] gives null.
+     * A later call or a navigation cancels this request.
+     *
+     * Call it on the EDT. The returned job completes after the request schedules its navigation on the EDT.
+     */
+    fun preselect(toSelect: (suspend () -> Path?)?): Job {
       val requestId = ++preselectRequestId
-      scope.launch {
+      return scope.launch {
         withContext(Dispatchers.IO) {
           val requested = try {
             toSelect?.invoke()
