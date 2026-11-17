@@ -70,6 +70,12 @@ internal class RefreshSessionImpl internal constructor(
   @Volatile private var myLaunched = false
   @Volatile private var myEventCount = 0
 
+  /**
+   * Files are kept in this batch from the moment this session's scan detected on-disk changes, and until the change events
+   * are applied to VFS; I.e. these are files in 'actualizing' state.
+   */
+  @Volatile private var actualizingFiles: InFlightScans.Batch? = null
+
   init {
     TransactionGuard.getInstance().assertWriteSafeContext(this.modality)
     val app = ApplicationManager.getApplication()
@@ -187,6 +193,11 @@ internal class RefreshSessionImpl internal constructor(
     val newFilesCaseSensitive = myNewFilesCaseSensitive
     myNewFilesCaseSensitive = LinkedHashMap()
     if (workQueue.isEmpty() && newFilesCaseSensitive.isEmpty()) return myEvents
+
+    // scan cleans the 'dirty' mark from the files, but adds the files to the 'actualizing (=in-flight) batch until the
+    // events are applied, see [terminate]
+    val scanBatch = (RefreshQueue.getInstance() as RefreshQueueImpl).inFlightScans.begin()
+    actualizingFiles = scanBatch
     val forceRefresh = !myIsRecursive && !this.isAsynchronous // shallow sync refresh (e.g., project config files on open)
 
     val fs = LocalFileSystem.getInstance()
@@ -232,7 +243,7 @@ internal class RefreshSessionImpl internal constructor(
         if (myCanceled) break
         if (LOG.isTraceEnabled) LOG.trace("try=${count}")
 
-        val worker = RefreshWorker(refreshRoots, myIsRecursive)
+        val worker = RefreshWorker(refreshRoots, myIsRecursive, scanBatch)
         myWorker = worker
         events.addAll(worker.scanNewFiles(newFilesCaseSensitive))
         if (refreshRoots.isNotEmpty()) {
@@ -364,7 +375,13 @@ internal class RefreshSessionImpl internal constructor(
   }
 
   fun terminate() {
+    releaseScannedFiles()
     mySemaphore.up()
+  }
+
+  /** The events are applied, or the scan has failed: the scanned files are no longer in flight */
+  fun releaseScannedFiles() {
+    actualizingFiles?.release()
   }
 
   @RequiresWriteLock

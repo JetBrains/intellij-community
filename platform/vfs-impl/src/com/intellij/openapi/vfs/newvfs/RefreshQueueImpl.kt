@@ -76,6 +76,14 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
 
   private val myRefreshIndicator = RefreshProgress.create()
   private val mySessions: MutableSet<RefreshSessionImpl> = Collections.synchronizedSet(HashSet())
+
+  /**
+   * Files in 'actualizing' state: they were scanned, and changes against VFS were detected -- but the changes are not yet applied to
+   * VFS state
+   */
+  @VisibleForTesting
+  val inFlightScans: InFlightScans = InFlightScans()
+
   private val myEventCounter = FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN)
   private var myActivityCounter = 0
   private val parallelizationCache = ConcurrentHashMap<ModalityState, Pair<Semaphore, Int>>()
@@ -343,6 +351,11 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
       mySessions.add(session)
       return session.scan(timeInQueue)
     }
+    catch (e: Throwable) {
+      // The events of a failed scan are never applied, so its files must not stay in flight
+      session.releaseScannedFiles()
+      throw e
+    }
     finally {
       mySessions.remove(session)
     }
@@ -363,6 +376,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     }
     eventScanningScope.children().forEach { it.cancel() }
     eventProcessingScope.children().forEach { it.cancel() }
+    inFlightScans.releaseAll()
   }
 
   companion object {
@@ -412,6 +426,18 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
     fun setTestListener(testListener: Consumer<in VirtualFile?>?) {
       assert(ApplicationManager.getApplication().isUnitTestMode())
       RefreshWorker.ourTestListener = testListener
+    }
+
+    @TestOnly
+    @JvmStatic
+    fun scanForTest(session: RefreshSession): Collection<VFileEvent> =
+      (session as RefreshSessionImpl).scan(-1)
+
+    /** Ends the 'actualizing' state of the files that [scanForTest] has scanned, as if their events were applied */
+    @TestOnly
+    @JvmStatic
+    fun releaseScannedFilesForTest(session: RefreshSession) {
+      (session as RefreshSessionImpl).releaseScannedFiles()
     }
 
     /**

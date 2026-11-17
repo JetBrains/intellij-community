@@ -97,6 +97,8 @@ final class RefreshWorker {
   private final Set<NewVirtualFile> roots;
   private final Queue<NewVirtualFile> refreshQueue;
   private final Semaphore semaphore;
+  /** Receives each file this scan cleans: the file is 'actualizing' until the session applies its events */
+  private final InFlightScans.Batch scanned;
 
   private final PersistentFS persistentFS = PersistentFS.getInstance();
   private final FSRecordsImpl vfsPeer = ((PersistentFSImpl)persistentFS).peer();
@@ -120,7 +122,12 @@ final class RefreshWorker {
   private final AtomicLong ioTime = new AtomicLong();
 
   RefreshWorker(Collection<NewVirtualFile> refreshRoots, boolean isRecursive) {
+    this(refreshRoots, isRecursive, new InFlightScans().begin());
+  }
+
+  RefreshWorker(Collection<NewVirtualFile> refreshRoots, boolean isRecursive, InFlightScans.Batch scanned) {
     this.isRecursive = isRecursive;
+    this.scanned = scanned;
     parallel = isRecursive
                && (PARALLELISM > 1 && !ApplicationManager.getApplication().isWriteIntentLockAcquired());
     roots = new HashSet<>(refreshRoots);
@@ -282,7 +289,7 @@ final class RefreshWorker {
           var attributes = computeAttributesForFile(fs, file);
           if (attributes == null) {
             scheduleDeletion(events, file);
-            file.markClean();
+            markScanned(file);
             continue;
           }
 
@@ -322,7 +329,7 @@ final class RefreshWorker {
         queryItemsProcessed.incrementAndGet();
 
         if (isRecursive) {
-          dir.markClean();
+          markScanned(dir);
         }
       }
       catch (FileStateUnknownException e) {
@@ -717,6 +724,12 @@ final class RefreshWorker {
     }
   }
 
+  /** The file is added to the batch first, so it doesn't look 'clean' while some its changes (events) are still in flight */
+  private void markScanned(NewVirtualFile file) {
+    scanned.add(file.getId());
+    file.markClean();
+  }
+
   private static void forceMarkDirty(NewVirtualFile file) {
     file.markClean();  // otherwise, consequent markDirty() won't have any effect
     file.markDirty();
@@ -775,7 +788,7 @@ final class RefreshWorker {
     }
 
     if (checkAndScheduleFileTypeChange(events, fs, parent, child, childAttributes)) {
-      child.markClean();
+      markScanned(child);
       return;
     }
 
@@ -806,7 +819,7 @@ final class RefreshWorker {
                                                VFileContentChangeEvent.UNDEFINED_TIMESTAMP_OR_LENGTH, oldTimestamp, newTimestamp,
                                                oldLength, newLength));
       }
-      child.markClean();
+      markScanned(child);
     }
     else if (enqueue && isRecursive) {
       if (child instanceof VirtualDirectoryImpl) {
