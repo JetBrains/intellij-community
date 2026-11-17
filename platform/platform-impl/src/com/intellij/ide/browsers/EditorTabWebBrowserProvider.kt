@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
  * Provides an [EditorTabWebBrowser] that a plugin implements, such as the IDE Browser.
  *
  * The browser is not in the list of [WebBrowserManager]. The "Default Browser" dropdown offers it after "System default".
- * When it is the default browser, every link without a browser opens in it with [WebBrowser.browse].
+ * When it is the default browser, every link without a browser opens in it with [BrowserLauncher.browse].
  */
 @ApiStatus.Internal
 interface EditorTabWebBrowserProvider {

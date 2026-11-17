@@ -6,9 +6,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * A browser that shows pages in editor tabs, such as the IDE Browser. A plugin gives it with [EditorTabWebBrowserProvider].
+ * A browser that shows pages in editor tabs, such as the IDE Browser.
  *
- * The browser has no path, no family and no specific settings. It opens a page only with [browse].
+ * The browser has no path, no family and no specific settings. The launcher delegates opening to [browse].
  */
 @ApiStatus.Internal
 abstract class EditorTabWebBrowser : WebBrowser() {
@@ -18,12 +18,16 @@ abstract class EditorTabWebBrowser : WebBrowser() {
 
   final override fun getSpecificSettings(): BrowserSpecificSettings? = null
 
-  abstract override fun browse(url: String, project: Project?)
+  /**
+   * Opens [url] after the launcher checks and prepares it.
+   * To open a link, call [BrowserLauncher.browse].
+   */
+  abstract fun browse(url: String, project: Project?)
 
   /**
    * Creates the file of a new editor tab that shows [url] in [project].
    * Each call creates a new file, so each opened file is a new tab.
-   * The caller opens the file where it wants the tab, see [createWebPageTabFile].
+   * The caller opens the file where it wants the tab.
    */
   abstract fun createEditorTabFile(project: Project, url: String): VirtualFile
 }
