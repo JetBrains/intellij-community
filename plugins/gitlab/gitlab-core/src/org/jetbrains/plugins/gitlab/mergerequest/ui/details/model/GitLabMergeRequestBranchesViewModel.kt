@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.async.childScope
@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.dvcs.DvcsUtil
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.GitRemoteBranchesUtil
@@ -37,6 +38,9 @@ internal class GitLabMergeRequestBranchesViewModel(
 ) : CodeReviewBranchesViewModel {
 
   private val cs: CoroutineScope = parentCs.childScope(this::class)
+  private val checkoutLauncher = SingleCoroutineLauncher(cs)
+
+  override val isCheckoutInProgress: StateFlow<Boolean> = checkoutLauncher.busy
 
   override val sourceBranch: StateFlow<String> = mergeRequest.details.mapState(cs, ::getSourceBranchName)
   override val targetBranch: StateFlow<String> = mergeRequest.details.mapState(cs) { it.targetBranch }
@@ -68,7 +72,7 @@ internal class GitLabMergeRequestBranchesViewModel(
 
   override fun fetchAndCheckoutRemoteBranch() {
     GitLabStatistics.logMrActionExecuted(gitRemote.repository.project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
-    cs.launch {
+    checkoutLauncher.launch {
       val details = mergeRequest.details.first()
       GitLabMergeRequestBranchUtil.fetchAndCheckoutBranch(gitRemote, details)
     }
@@ -80,7 +84,7 @@ internal class GitLabMergeRequestBranchesViewModel(
 
   override fun checkoutInNewWorktree() {
     GitLabStatistics.logMrActionExecuted(gitRemote.repository.project, GitLabStatistics.MergeRequestAction.BRANCH_CHECKOUT)
-    cs.launch {
+    checkoutLauncher.launch {
       val details = mergeRequest.details.first()
       GitLabMergeRequestBranchUtil.fetchAndCheckoutBranchInNewWorktree(gitRemote,
                                                                        details,

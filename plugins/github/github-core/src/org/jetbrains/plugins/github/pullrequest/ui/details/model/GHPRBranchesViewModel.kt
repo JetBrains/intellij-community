@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
 import com.intellij.collaboration.async.childScope
@@ -7,6 +7,7 @@ import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -48,6 +49,9 @@ class GHPRBranchesViewModel internal constructor(
   private val detailsState: StateFlow<GHPullRequest>,
 ) : CodeReviewBranchesViewModel {
   private val cs = parentCs.childScope(this::class)
+  private val checkoutLauncher = SingleCoroutineLauncher(cs)
+
+  override val isCheckoutInProgress: StateFlow<Boolean> = checkoutLauncher.busy
 
   private val gitRepository = mapping.remote.repository
 
@@ -76,7 +80,7 @@ class GHPRBranchesViewModel internal constructor(
 
   override fun fetchAndCheckoutRemoteBranch() {
     val details = detailsState.value
-    cs.launch {
+    checkoutLauncher.launch {
       fetchAndCheckoutBranch(mapping.remote, details)
       GHPRStatisticsCollector.logDetailsBranchCheckedOut(project)
     }
@@ -88,7 +92,7 @@ class GHPRBranchesViewModel internal constructor(
 
   override fun checkoutInNewWorktree() {
     val details = detailsState.value
-    cs.launch {
+    checkoutLauncher.launch {
       fetchAndCheckoutBranchInNewWorktree(
         remoteUrlCoordinates = mapping.remote,
         details = details,

@@ -21,7 +21,9 @@ internal class CodeReviewCheckoutBranchAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val branches = e.getData(CodeReviewBranchActionDataKeys.BRANCHES)
-    e.presentation.isEnabledAndVisible = branches != null && e.getData(CodeReviewBranchActionDataKeys.VIEW_MODEL) != null
+    val viewModel = e.getData(CodeReviewBranchActionDataKeys.VIEW_MODEL)
+    e.presentation.isEnabledAndVisible = branches != null && viewModel != null
+    e.presentation.isEnabled = viewModel?.isCheckoutInProgress?.value != true
     e.presentation.text = if (branches?.hasRemoteBranch == false) {
       CollaborationToolsBundle.message("review.details.branch.checkout.remote.as.detached.head")
     }
@@ -39,7 +41,9 @@ internal class CodeReviewCheckoutBranchInNewWorktreeAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.getData(CodeReviewBranchActionDataKeys.VIEW_MODEL)?.canCheckoutInNewWorktree == true
+    val viewModel = e.getData(CodeReviewBranchActionDataKeys.VIEW_MODEL)
+    e.presentation.isEnabledAndVisible = viewModel?.canCheckoutInNewWorktree == true
+    e.presentation.isEnabled = viewModel?.isCheckoutInProgress?.value != true
   }
 
   override fun actionPerformed(e: AnActionEvent) {

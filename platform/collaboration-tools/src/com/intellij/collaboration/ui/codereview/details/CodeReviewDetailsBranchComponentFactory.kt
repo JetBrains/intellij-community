@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.collaboration.ui.codereview.list.search.ShowDirection
+import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindTooltipTextIn
 import com.intellij.collaboration.ui.util.popup.showAndAwait
@@ -66,8 +67,13 @@ object CodeReviewDetailsBranchComponentFactory {
     branchesVm: CodeReviewBranchesViewModel,
     timelineLink: JComponent,
   ): JComponent {
-    val checkoutLink = AnActionLink("CodeReview.Branch.Checkout", ACTION_LINKS_PLACE)
+    val checkoutLink = AnActionLink("CodeReview.Branch.Checkout", ACTION_LINKS_PLACE).apply {
+      autoHideOnDisable = false
+      bindEnabledIn(scope, branchesVm.isCheckoutInProgress.map { !it })
+    }
     val worktreeLink = AnActionLink("CodeReview.Branch.CheckoutInNewWorktree", ACTION_LINKS_PLACE).apply {
+      autoHideOnDisable = false
+      bindEnabledIn(scope, branchesVm.isCheckoutInProgress.map { !it })
       isVisible = branchesVm.canCheckoutInNewWorktree
     }
     scope.launch {

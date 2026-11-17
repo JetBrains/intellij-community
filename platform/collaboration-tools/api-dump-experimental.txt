@@ -461,6 +461,7 @@
 - a:getSourceBranch():kotlinx.coroutines.flow.StateFlow
 - a:getTargetBranch():kotlinx.coroutines.flow.StateFlow
 - a:isCheckedOut():kotlinx.coroutines.flow.SharedFlow
+- a:isCheckoutInProgress():kotlinx.coroutines.flow.StateFlow
 - a:showBranches():V
 *f:com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeDetails
 - <init>(Z,I):V
