@@ -13,5 +13,6 @@ interface PyVersionSpecificStub {
    * Returns whether the element of this stub exists on [version]. Prefer it to `versions.contains(version)`, which
    * allocates on each call.
    */
+  @ApiStatus.Internal
   fun containsVersion(version: Version): Boolean = versions.contains(version)
 }
