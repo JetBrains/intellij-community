@@ -499,8 +499,28 @@ class DebuggerTestFixture internal constructor(
     DebuggerInvocationUtil.invokeLater(project, action)
   }
 
-  /** Resumes [context] with the lowest priority. It prints the location first when [logAllCommands] is `true`. */
+  /**
+   * Replaces [resume] with the resume of [com.intellij.debugger.impl.DescriptorTestHelper], as `DescriptorTestCase.resume` overrode it.
+   * The fixture and the test call [resume], so each resume goes through the handler.
+   */
+  internal var resumeHandler: Consumer<SuspendContextImpl>? = null
+
+  /**
+   * Resumes [context] with the lowest priority. It prints the location first when [logAllCommands] is `true`.
+   * With a [com.intellij.debugger.impl.DescriptorTestHelper], it first prints the logged descriptors, as `DescriptorTestCase` did.
+   */
   fun resume(context: SuspendContextImpl) {
+    val handler = resumeHandler
+    if (handler != null) {
+      handler.accept(context)
+    }
+    else {
+      resumeNow(context)
+    }
+  }
+
+  /** The resume of [resume] without the [resumeHandler]. */
+  internal fun resumeNow(context: SuspendContextImpl) {
     performDebuggerCommand("Resuming ", context) {
       createdDebugProcess!!.session.resumeSuspendContext(context, PrioritizedTask.Priority.LOWEST)
     }
