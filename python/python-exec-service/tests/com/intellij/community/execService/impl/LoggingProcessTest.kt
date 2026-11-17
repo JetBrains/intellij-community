@@ -98,6 +98,22 @@ class LoggingProcessTest {
   }
 
   @Test
+  fun `pid is read from the backing process that does not support toHandle`() {
+    val pid = 100_000L
+    val (_, _, process) = createLoggingProcess(pid = { pid }, handle = null)
+
+    assertEquals(pid, process.pid())
+  }
+
+  @Test
+  fun `pid is read from the handle of the backing process that does not support pid`() {
+    val handle = ProcessHandle.current()
+    val (_, _, process) = createLoggingProcess(pid = { throw UnsupportedOperationException() }, handle = handle)
+
+    assertEquals(handle.pid(), process.pid())
+  }
+
+  @Test
   fun `other process fields get assigned correctly`() {
     val startedAt = Instant.fromEpochMilliseconds(100_000_000)
     val cwd = "/some/path"
@@ -205,6 +221,7 @@ class LoggingProcessTest {
     val outInputStream: InputStream,
     val errInputStream: InputStream,
     val pidGenerator: () -> Long,
+    val handle: ProcessHandle?,
   ) : Process() {
     val exitFuture: CompletableFuture<Int> = CompletableFuture()
     val inOutputStream: OutputStream = ByteArrayOutputStream()
@@ -236,6 +253,9 @@ class LoggingProcessTest {
 
     override fun pid(): Long =
       this.pidGenerator()
+
+    override fun toHandle(): ProcessHandle =
+      handle ?: throw UnsupportedOperationException("${this::class.java}.toHandle() not supported")
   }
 
   private data class CreationResult(
@@ -250,6 +270,7 @@ class LoggingProcessTest {
       stdout: String = "",
       stderr: String = "",
       pid: () -> Long = { 0 },
+      handle: ProcessHandle? = null,
       weight: ConcurrentProcessWeight? = null,
       traceContext: TraceContext? = null,
       startedAt: Instant = Instant.fromEpochMilliseconds(0),
@@ -265,6 +286,7 @@ class LoggingProcessTest {
           stdout.byteInputStream(),
           stderr.byteInputStream(),
           pid,
+          handle,
         )
       val loggingProcess =
         LoggingProcess(
