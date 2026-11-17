@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.facets
 
 import com.intellij.facet.FacetManager
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -15,7 +14,6 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetBridgeFactory
 import org.junit.Assume
-import java.io.File
 
 abstract class KotlinFacetTestCase : BasePlatformTestCase() {
 
@@ -25,11 +23,6 @@ abstract class KotlinFacetTestCase : BasePlatformTestCase() {
 
     val myModule: Module
         get() = myTestFixture.module
-
-    override fun getTestDataPath(): String {
-        return PathManagerEx.getTestDataPath().replace(File.separatorChar, '/') /*+ getBasePath()*/
-    }
-
 
     override fun setUp() {
         super.setUp()

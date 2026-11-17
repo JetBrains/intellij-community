@@ -396,3 +396,4 @@ kotlin.gradle.gradle-java.tests.shared
 kotlin.jps.graphImplementationTests
 intellij.kotlin.j2k.tests
 intellij.kotlin.i18n.tests
+intellij.kotlin.base.facet.tests
