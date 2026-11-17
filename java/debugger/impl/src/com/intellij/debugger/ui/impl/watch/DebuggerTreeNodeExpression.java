@@ -22,6 +22,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.ObjectReference;
@@ -86,7 +87,14 @@ public final class DebuggerTreeNodeExpression {
     }
 
     if (castNeeded) {
-      howToEvaluateThis = castToRuntimeType(howToEvaluateThis, howToEvaluateThisValue);
+      if (thisClass != null && isObjectWithoutPsiClass(howToEvaluateThisValue, howToEvaluateThis.getProject())) {
+        // If the object does not have a PSI class, we cannot cast it to the runtime type.
+        // Instead, we cast to `thisClass`.
+        howToEvaluateThis = castToType(howToEvaluateThis, PsiTypesUtil.getClassType(thisClass));
+      }
+      else {
+        howToEvaluateThis = castToRuntimeType(howToEvaluateThis, howToEvaluateThisValue);
+      }
     }
 
     ChangeContextUtil.encodeContextInfo(result, false);
@@ -110,6 +118,15 @@ public final class DebuggerTreeNodeExpression {
     }
   }
 
+  /**
+   * Returns {@code true} if {@code value} is an object whose runtime class has no PSI class.
+   * An example is a Kotlin anonymous object.
+   */
+  private static boolean isObjectWithoutPsiClass(Value value, Project project) {
+    return value instanceof ObjectReference reference &&
+           DebuggerUtils.findClass(reference.referenceType().name(), project, GlobalSearchScope.allScope(project)) == null;
+  }
+
   public static final Key<Set<String>> ADDITIONAL_IMPORTS_KEY = Key.create("ADDITIONAL_IMPORTS");
 
   public static PsiExpression castToRuntimeType(PsiExpression expression, Value value) throws EvaluateException {
@@ -129,7 +146,11 @@ public final class DebuggerTreeNodeExpression {
       return expression;
     }
 
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    return castToType(expression, type);
+  }
+
+  private static PsiExpression castToType(PsiExpression expression, PsiType type) throws EvaluateException {
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
     String typeName = type.getCanonicalText();
     try {
       PsiParenthesizedExpression parenthExpression = (PsiParenthesizedExpression)elementFactory.createExpressionFromText(
