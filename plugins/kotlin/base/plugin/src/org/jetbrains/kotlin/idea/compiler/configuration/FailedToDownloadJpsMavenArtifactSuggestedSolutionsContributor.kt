@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Internal
 interface FailedToDownloadJpsMavenArtifactSuggestedSolutionsContributor {
     companion object {
-        private val EP_NAME: ExtensionPointName<FailedToDownloadJpsMavenArtifactSuggestedSolutionsContributor> =
+        val EP_NAME: ExtensionPointName<FailedToDownloadJpsMavenArtifactSuggestedSolutionsContributor> =
             ExtensionPointName.create("org.jetbrains.kotlin.failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor")
 
         fun getAllContributors(project: Project): List<FailedToDownloadJpsMavenArtifactSuggestedSolutionsContributor> =
