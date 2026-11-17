@@ -132,7 +132,8 @@ class PythonInterpreterRoots(private val project: Project, scope: CoroutineScope
    * request stays: it holds its interpreter, and a recompute can drop a key for a moment.
    */
   internal fun retain(keys: Set<PythonInterpreterKey>) {
-    roots.keys.retainAll(keys)
+    // A reader derives dropped roots again, maybe other ones, so a drop is a change, see [changes].
+    if (roots.keys.retainAll(keys)) changeCount.update { it + 1 }
   }
 
   /**
@@ -180,8 +181,18 @@ class PythonInterpreterRoots(private val project: Project, scope: CoroutineScope
     return (factRoots + derived.classRoots).filter { it !in transferred }.distinct()
   }
 
-  private fun rootsOf(interpreter: PythonInterpreter): PythonInterpreterRootFiles =
-    roots[interpreter.key] ?: derive(interpreter).also { roots.putIfAbsent(interpreter.key, it) }
+  /**
+   * The roots of [interpreter]. A reader that comes before the writer derives them. Those roots can differ from the ones
+   * that [changes] reported for this key before a [retain] dropped them, so the first store of a key is a change too.
+   */
+  private fun rootsOf(interpreter: PythonInterpreter): PythonInterpreterRootFiles {
+    roots[interpreter.key]?.let { return it }
+    val derived = derive(interpreter)
+    val stored = roots.putIfAbsent(interpreter.key, derived)
+    if (stored != null) return stored
+    changeCount.update { it + 1 }
+    return derived
+  }
 
   /** Asks for a derive of every interpreter that has roots, after a change of the facts that names no interpreter. */
   private fun requestDeriveForAll() {
