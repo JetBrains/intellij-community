@@ -36,7 +36,7 @@ jvm_library(
         "//platform/core-ui",
         "//platform/indexing-api:indexing",
         "//platform/projectModel-api:projectModel",
-        "//plugins/kotlin/test-framework:test-framework_test_lib",
+        "//plugins/kotlin/test-framework",
         "//platform/testFramework",
         "//platform/ide-core",
         "//plugins/kotlin/base/testFramework",

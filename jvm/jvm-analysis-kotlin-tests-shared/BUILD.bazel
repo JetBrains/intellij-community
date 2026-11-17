@@ -51,7 +51,7 @@ jvm_library(
         "//java/testFramework",
         "//jvm/jvm-analysis-impl:analysis-impl",
         "//platform/testFramework",
-        "//plugins/kotlin/test-framework:test-framework_test_lib",
+        "//plugins/kotlin/test-framework",
         "//java/java-syntax:syntax",
         "//libraries/junit4",
         "//libraries/junit6",

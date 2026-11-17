@@ -1,15 +1,13 @@
-load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.common.testFramework` start
 jvm_library(
-    name = "common-testFramework_test_lib",
-    testonly = True,
+    name = "common-testFramework",
     srcs = glob(
         [
-            "test/**/*.kt",
-            "test/**/*.java",
-            "test/**/*.form",
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
         ],
         allow_empty = True,
     ),
@@ -67,10 +65,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.kotlin.common.testFramework` end
-
-### auto-generated section `test intellij.kotlin.common.testFramework` start
-jps_test(
-    name = "common-testFramework_test",
-    runtime_deps = [":common-testFramework_test_lib"],
-)
-### auto-generated section `test intellij.kotlin.common.testFramework` end

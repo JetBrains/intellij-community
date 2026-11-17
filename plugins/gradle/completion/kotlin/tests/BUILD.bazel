@@ -63,7 +63,7 @@ jvm_library(
         "//plugins/groovy",
         "//plugins/kotlin/base/testFramework",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework",
         "//platform/eel-provider",
         "//platform/ide-core",
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",

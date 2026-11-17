@@ -105,7 +105,7 @@ jvm_library(
         "//plugins/gradle/testFramework",
         "//libraries/junit6",
         "//libraries/junit6-params",
-        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework",
         "//android/android-common:common",
     ],
 )
