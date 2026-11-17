@@ -57,7 +57,11 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       val moduleRepository = RuntimeModuleIntrospection.moduleRepository ?: return null
       val moduleRepositoryPath = RuntimeModuleIntrospection.moduleRepositoryPath ?: return null
       try {
-        moduleRepository.computeModuleClasspath(getRootFrontendModule())
+        val moduleId = getRootFrontendModule()
+        if (moduleRepository.findModuleHeader(moduleId) == null) {
+          LOG.warn("Failed to load embedded client: $moduleId is not found in $moduleRepositoryPath")
+          return null
+        }
       }
       catch (e: Exception) {
         LOG.warn("Failed to load embedded client: " + e.message, e)
