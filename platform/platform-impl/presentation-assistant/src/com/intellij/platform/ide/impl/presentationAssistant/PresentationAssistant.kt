@@ -36,6 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
 import java.awt.Color
 
 internal enum class PresentationAssistantPopupSize(val value: Int, @Nls val displayName: String) {
@@ -213,6 +214,11 @@ class PresentationAssistant(private val coroutineScope: CoroutineScope) : Persis
    */
   internal fun launchInServiceScope(action: suspend () -> Unit): Job =
     coroutineScope.launch(ModalityState.defaultModalityState().asContextElement()) { action() }
+
+  /** Tells whether the presenter exists, that is whether the popup shows the actions. Call it on the EDT. */
+  @get:TestOnly
+  internal val hasPresenter: Boolean
+    get() = presenter != null
 
   internal fun checkIfMacKeymapIsAvailable() {
     val alternativeKeymap = PresentationAssistantSettings.alternativeKeymapKind()
