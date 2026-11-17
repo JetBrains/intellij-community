@@ -546,7 +546,6 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
        * (with stripped `intellij` prefix and `plugin` suffix, and dots replaced by dashes).
        * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
        */
-      @Deprecated("Plugins shouldn't specify custom directory names to simplify build scripts and migration to Bazel")
       set(value) {
         field = value
         directoryNameSetExplicitly = true
