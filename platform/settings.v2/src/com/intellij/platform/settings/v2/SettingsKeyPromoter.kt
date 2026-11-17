@@ -19,6 +19,11 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * The registry knows a key only after a promoter or a write registers it. An identity that nobody promoted or wrote
  * resolves to nothing. A mutation from another side can carry such an identity, so a promoter makes the key known
  * before that mutation arrives.
+ *
+ * A write in a unit test does not prove a promotion, because the write check is off in the unit test mode (ADR 0113).
+ * A unit test proves it with `SettingsKeyRegistry.holds` of the shared module after `awaitReady`, when the test
+ * application loads the descriptor of this promoter. An integration test reports a missing promotion as an error on the
+ * first write.
  */
 @Experimental
 interface SettingsKeyPromoter {
