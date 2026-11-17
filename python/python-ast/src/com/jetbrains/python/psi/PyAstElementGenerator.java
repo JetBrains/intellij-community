@@ -4,7 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
@@ -99,16 +99,17 @@ public class PyAstElementGenerator {
     return "dummy." + PythonFileType.INSTANCE.getDefaultExtension();
   }
 
-  /**
-   * TODO: Use {@link PsiFileFactory} instead?
-   */
   private PsiFile createDummyFile(LanguageLevel langLevel, String contents, boolean physical) {
-    final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
-    final String name = getDummyFileName();
-    final LightVirtualFile virtualFile = new LightVirtualFile(name, PythonFileType.INSTANCE, contents);
+    final LightVirtualFile virtualFile = LightVirtualFile.builder()
+      .name(getDummyFileName())
+      .fileType(PythonFileType.INSTANCE)
+      .content(contents)
+      .skipEventSystem(!physical)
+      .build();
     PyLanguageFacade.getINSTANCE().setEffectiveLanguageLevel(virtualFile, langLevel);
-    final PsiFile psiFile = ((PsiFileFactoryImpl)factory).trySetupPsiForFile(virtualFile, PythonLanguage.getInstance(), physical, true);
+    final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
     assert psiFile != null;
+    PsiFileFactoryImpl.markGenerated(psiFile);
     return psiFile;
   }
 
