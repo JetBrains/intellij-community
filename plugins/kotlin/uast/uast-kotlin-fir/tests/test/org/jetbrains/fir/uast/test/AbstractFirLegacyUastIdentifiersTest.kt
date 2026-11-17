@@ -2,21 +2,22 @@
 
 package org.jetbrains.fir.uast.test
 
-import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.LegacyUastIdentifiersTestBase
 import kotlin.io.path.absolute
 
 abstract class AbstractFirLegacyUastIdentifiersTest : AbstractFirUastIdentifiersTest(), LegacyUastIdentifiersTestBase {
-    private val whitelist : Set<String> = setOf(
-        // TODO: Also failed with FE1.0 UAST
-        "uast-kotlin/tests/testData/DestructuringDeclaration.kt",
-        "uast-kotlin/tests/testData/LambdaReturn.kt",
-        "uast-kotlin/tests/testData/WhenAndDestructing.kt",
+    private val whitelist: Set<String> by lazy {
+        setOf(
+            // TODO: Also failed with FE1.0 UAST
+            "DestructuringDeclaration.kt",
+            "LambdaReturn.kt",
+            "WhenAndDestructing.kt",
 
-        // TODO: this file fails 'testIdentifiersParents' check
-        "uast-kotlin/tests/testData/DataClassInheritsAbstractClassWithEquals.kt",
-    ).mapTo(mutableSetOf()) { KotlinRoot.PATH.resolve("uast").resolve(it).absolute().normalize().toString() }
+            // TODO: this file fails 'testIdentifiersParents' check
+            "DataClassInheritsAbstractClassWithEquals.kt",
+        ).mapTo(mutableSetOf()) { testDataDirectory.toPath().resolve(it).absolute().normalize().toString() }
+    }
 
     override fun isExpectedToFail(filePath: String): Boolean {
         return filePath in whitelist

@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
 @TestRoot("uast/uast-kotlin-fir/tests")
-@TestMetadata("uast-kotlin-fir/tests/testData/declaration")
+@TestMetadata("testData/declaration")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 public class FirUastCommentsTest extends AbstractFirUastCommentsTest {

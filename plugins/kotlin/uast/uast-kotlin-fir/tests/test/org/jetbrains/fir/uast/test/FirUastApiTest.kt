@@ -3,7 +3,7 @@ package org.jetbrains.fir.uast.test
 
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.fir.uast.test.env.kotlin.AbstractFirUastTest
-import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.uast.UFile
@@ -12,9 +12,11 @@ import org.junit.runner.RunWith
 import java.nio.file.Path
 
 @RunWith(JUnit3RunnerWithInners::class)
+@TestRoot("uast")
 abstract class FirUastApiTest : AbstractFirUastTest() {
 
-    override val testBasePath: Path = KotlinRoot.PATH.resolve("uast")
+    override val testBasePath: Path
+        get() = testDataDirectory.toPath()
     override fun check(filePath: String, file: UFile) {
         // Bogus
     }
@@ -26,185 +28,185 @@ abstract class FirUastApiTest : AbstractFirUastTest() {
         return filePath in whitelist || super.isExpectedToFail(filePath, fileContent)
     }
 
-    @TestMetadata("plugins/uast-kotlin-fir/tests/testData/declaration")
+    @TestMetadata("uast-kotlin-fir/tests/testData/declaration")
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
     class Declaration : FirUastApiTest(), UastApiTestBase {
         @TestMetadata("retention.kt")
         fun testRetention() {
-            doCheck("uast-kotlin-fir/tests/testData/declaration/retention.kt", ::checkCallbackForRetention)
+            doCheck("retention.kt", ::checkCallbackForRetention)
         }
 
         @TestMetadata("returns.kt")
         fun testReturnJumpTargets() {
-            doCheck("uast-kotlin-fir/tests/testData/declaration/returns.kt", ::checkReturnJumpTargets)
+            doCheck("returns.kt", ::checkReturnJumpTargets)
         }
 
         @TestMetadata("breakAndContinue.kt")
         fun testBreakAndContinueJumpTargets() {
-            doCheck("uast-kotlin-fir/tests/testData/declaration/breakAndContinue.kt", ::checkBreakAndContinueJumpTargets)
+            doCheck("breakAndContinue.kt", ::checkBreakAndContinueJumpTargets)
         }
     }
 
-    @TestMetadata("../uast-kotlin/tests/testData")
+    @TestMetadata("uast-kotlin/tests/testData")
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
     class Legacy : FirUastApiTest(), UastApiTestBase {
         @TestMetadata("AnnotationParameters.kt")
         fun testAnnotationParameters() {
-            doCheck("uast-kotlin/tests/testData/AnnotationParameters.kt", ::checkCallbackForAnnotationParameters)
+            doCheck("AnnotationParameters.kt", ::checkCallbackForAnnotationParameters)
         }
 
         @TestMetadata("StringTemplateInClass.kt")
         fun testStringTemplateInClass() {
-            doCheck("uast-kotlin/tests/testData/StringTemplateInClass.kt", ::checkCallbackForStringTemplateInClass)
+            doCheck("StringTemplateInClass.kt", ::checkCallbackForStringTemplateInClass)
         }
 
         @TestMetadata("StringTemplateWithVar.kt")
         fun testStringTemplateWithVar() {
-            doCheck("uast-kotlin/tests/testData/StringTemplateWithVar.kt", ::checkCallbackForStringTemplateWithVar)
+            doCheck("StringTemplateWithVar.kt", ::checkCallbackForStringTemplateWithVar)
         }
 
         @TestMetadata("NameContainingFile.kt")
         fun testNameContainingFile() {
-            doCheck("uast-kotlin/tests/testData/NameContainingFile.kt", ::checkCallbackForNameContainingFile)
+            doCheck("NameContainingFile.kt", ::checkCallbackForNameContainingFile)
         }
 
         @TestMetadata("DefaultImpls.kt")
         fun testDefaultImpls() {
-            doCheck("uast-kotlin/tests/testData/DefaultImpls.kt", ::checkCallbackForDefaultImpls)
+            doCheck("DefaultImpls.kt", ::checkCallbackForDefaultImpls)
         }
 
         @TestMetadata("ParameterPropertyWithAnnotation.kt")
         fun testParameterPropertyWithAnnotation() {
-            doCheck("uast-kotlin/tests/testData/ParameterPropertyWithAnnotation.kt", ::checkCallbackForParameterPropertyWithAnnotation)
+            doCheck("ParameterPropertyWithAnnotation.kt", ::checkCallbackForParameterPropertyWithAnnotation)
         }
 
         @TestMetadata("TypeInAnnotation.kt")
         fun testTypeInAnnotation() {
-            doCheck("uast-kotlin/tests/testData/TypeInAnnotation.kt", ::checkCallbackForTypeInAnnotation)
+            doCheck("TypeInAnnotation.kt", ::checkCallbackForTypeInAnnotation)
         }
 
         @TestMetadata("ElvisType.kt")
         fun testElvisType() {
-            doCheck("uast-kotlin/tests/testData/ElvisType.kt", ::checkCallbackForElvisType)
+            doCheck("ElvisType.kt", ::checkCallbackForElvisType)
         }
 
         @TestMetadata("IfStatement.kt")
         fun testIfStatement() {
-            doCheck("uast-kotlin/tests/testData/IfStatement.kt", ::checkCallbackForIfStatement)
+            doCheck("IfStatement.kt", ::checkCallbackForIfStatement)
         }
 
         @TestMetadata("WhenStringLiteral.kt")
         fun testWhenStringLiteral() {
-            doCheck("uast-kotlin/tests/testData/WhenStringLiteral.kt", ::checkCallbackForWhenStringLiteral)
+            doCheck("WhenStringLiteral.kt", ::checkCallbackForWhenStringLiteral)
         }
 
         @TestMetadata("WhenAndDestructing.kt")
         fun testWhenAndDestructing() {
-            doCheck("uast-kotlin/tests/testData/WhenAndDestructing.kt", ::checkCallbackForWhenAndDestructing)
+            doCheck("WhenAndDestructing.kt", ::checkCallbackForWhenAndDestructing)
         }
 
         @TestMetadata("BrokenMethod.kt")
         fun testBrokenMethod() {
-            doCheck("uast-kotlin/tests/testData/BrokenMethod.kt", ::checkCallbackForBrokenMethod)
+            doCheck("BrokenMethod.kt", ::checkCallbackForBrokenMethod)
         }
 
         @TestMetadata("EnumValuesConstructors.kt")
         fun testEnumValuesConstructors() {
-            doCheck("uast-kotlin/tests/testData/EnumValuesConstructors.kt", ::checkCallbackForEnumValuesConstructors)
+            doCheck("EnumValuesConstructors.kt", ::checkCallbackForEnumValuesConstructors)
         }
 
         @TestMetadata("EnumValueMembers.kt")
         fun testEnumValueMembers() {
-            doCheck("uast-kotlin/tests/testData/EnumValueMembers.kt", ::checkCallbackForEnumValueMembers)
+            doCheck("EnumValueMembers.kt", ::checkCallbackForEnumValueMembers)
         }
 
         @TestMetadata("SuperCalls.kt")
         fun testSuperCalls() {
-            doCheck("uast-kotlin/tests/testData/SuperCalls.kt", ::checkCallbackForSuperCalls)
+            doCheck("SuperCalls.kt", ::checkCallbackForSuperCalls)
         }
 
         @TestMetadata("Anonymous.kt")
         fun testAnonymous() {
-            doCheck("uast-kotlin/tests/testData/Anonymous.kt", ::checkCallbackForAnonymous)
+            doCheck("Anonymous.kt", ::checkCallbackForAnonymous)
         }
 
         @TestMetadata("TypeAliases.kt")
         fun testTypeAliases() {
-            doCheck("uast-kotlin/tests/testData/TypeAliases.kt", ::checkCallbackForTypeAliases)
+            doCheck("TypeAliases.kt", ::checkCallbackForTypeAliases)
         }
 
         @TestMetadata("AnnotationComplex.kt")
         fun testAnnotationComplex() {
-            doCheck("uast-kotlin/tests/testData/AnnotationComplex.kt", ::checkCallbackForAnnotationComplex)
+            doCheck("AnnotationComplex.kt", ::checkCallbackForAnnotationComplex)
         }
 
         @TestMetadata("ParametersDisorder.kt")
         fun testParametersDisorder() {
-            doCheck("uast-kotlin/tests/testData/ParametersDisorder.kt", ::checkCallbackForParametersDisorder)
+            doCheck("ParametersDisorder.kt", ::checkCallbackForParametersDisorder)
         }
 
         @TestMetadata("Lambdas.kt")
         fun testLambdas() {
-            doCheck("uast-kotlin/tests/testData/Lambdas.kt", ::checkCallbackForLambdas)
+            doCheck("Lambdas.kt", ::checkCallbackForLambdas)
         }
 
         @TestMetadata("LocalDeclarations.kt")
         fun testLocalDeclarations() {
-            doCheck("uast-kotlin/tests/testData/LocalDeclarations.kt", ::checkCallbackForLocalDeclarations)
+            doCheck("LocalDeclarations.kt", ::checkCallbackForLocalDeclarations)
         }
 
         @TestMetadata("Elvis.kt")
         fun testElvis() {
-            doCheck("uast-kotlin/tests/testData/Elvis.kt", ::checkCallbackForElvis)
+            doCheck("Elvis.kt", ::checkCallbackForElvis)
         }
 
         @TestMetadata("TypeReferences.kt")
         fun testTypeReferences() {
-            doCheck("uast-kotlin/tests/testData/TypeReferences.kt", ::checkCallbackForTypeReferences)
+            doCheck("TypeReferences.kt", ::checkCallbackForTypeReferences)
         }
 
         @TestMetadata("ReifiedReturnType.kt")
         fun testReifiedReturnType() {
-            doCheck("uast-kotlin/tests/testData/ReifiedReturnType.kt", ::checkCallbackForReifiedReturnType)
+            doCheck("ReifiedReturnType.kt", ::checkCallbackForReifiedReturnType)
         }
 
         @TestMetadata("ReifiedParameters.kt")
         fun testReifiedParameters() {
-          doCheck("uast-kotlin/tests/testData/ReifiedParameters.kt", ::checkCallbackForReifiedParameters)
+          doCheck("ReifiedParameters.kt", ::checkCallbackForReifiedParameters)
         }
 
         @TestMetadata("LambdaParameters.kt")
         fun testLambdaParameters() {
-            doCheck("uast-kotlin/tests/testData/LambdaParameters.kt", ::checkCallbackForLambdaParameters)
+            doCheck("LambdaParameters.kt", ::checkCallbackForLambdaParameters)
         }
 
         @TestMetadata("ComplicatedTypes.kt")
         fun testComplicatedTypes() {
-            doCheck("uast-kotlin/tests/testData/ComplicatedTypes.kt", ::checkCallbackForComplicatedTypes)
+            doCheck("ComplicatedTypes.kt", ::checkCallbackForComplicatedTypes)
         }
 
         @TestMetadata("SAM.kt")
         fun testSAM() {
-            doCheck("uast-kotlin/tests/testData/SAM.kt") { uFilePath, uFile ->
+            doCheck("SAM.kt") { uFilePath, uFile ->
                 checkCallbackForSAM(uFilePath, uFile, "java.lang.String", "java.lang.String")
             }
         }
 
         @TestMetadata("Simple.kt")
         fun testSimple() {
-            doCheck("uast-kotlin/tests/testData/Simple.kt", ::checkCallbackForSimple)
+            doCheck("Simple.kt", ::checkCallbackForSimple)
         }
 
         @TestMetadata("StringTemplateComplexForUInjectionHost.kt")
         fun testStringTemplateComplexForUInjectionHost() {
-            doCheck("uast-kotlin/tests/testData/StringTemplateComplexForUInjectionHost.kt", ::checkCallbackForComplexStrings)
+            doCheck("StringTemplateComplexForUInjectionHost.kt", ::checkCallbackForComplexStrings)
         }
 
         @TestMetadata("WhenIs.kt")
         fun testWhenIs() {
-            doCheck("uast-kotlin/tests/testData/WhenIs.kt", ::checkSwitchYieldTargets)
+            doCheck("WhenIs.kt", ::checkSwitchYieldTargets)
         }
     }
 }
