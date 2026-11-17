@@ -88,6 +88,7 @@ intellij.gradle.java.tests.benchmark
 intellij.gradle.java.toml.tests
 intellij.gradle.tests
 intellij.gradle.tests.benchmark
+intellij.gradle.tests.integration.service
 intellij.gradle.toolingExtension.tests.compatibility
 intellij.gradle.toolingExtension.tests.util
 intellij.grazie.markdown.specification.tests
