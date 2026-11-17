@@ -1,6 +1,19 @@
 load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "test_test",
+    data = [
+        "@community//plugins/kotlin/idea/tests:testData",
+        "@community//plugins/kotlin/kotlin.searching:testData",
+    ] + all_test_dep_targets,
+    tags = ["kotlin-tests"],
+    runtime_deps = [":test_test_lib"],
+)
+
+### skip generation section `test intellij.kotlin.searching.test`
 
 ### auto-generated section `build intellij.kotlin.searching.test` start
 jvm_library(
@@ -68,10 +81,3 @@ jps_module(
     target = "test_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.searching.test` end
-
-### auto-generated section `test intellij.kotlin.searching.test` start
-jps_test(
-    name = "test_test",
-    runtime_deps = [":test_test_lib"],
-)
-### auto-generated section `test intellij.kotlin.searching.test` end
