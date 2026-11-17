@@ -383,8 +383,9 @@ internal fun collectDataclassInitFields(
   return acc
 }
 
-/** All per-framework resolvers, built-in plus extension-point-contributed. Used by lookups that don't have parsed
- *  parameters yet (e.g. resolving a `dataclasses.replace` call whose target class is not known in advance). The generic
- *  third-party fallback is omitted because its copy functions duplicate the stdlib ones. */
-internal val allRegisteredDataclassResolvers: List<PyDataclassResolver> =
+/**
+ * The resolvers of all registered [PyDataclassParametersProvider] extensions. Used by lookups that do not have parsed
+ * parameters yet, such as a `dataclasses.replace` call whose target class is not known in advance.
+ */
+internal fun allRegisteredDataclassResolvers(): List<PyDataclassResolver> =
   PyDataclassParametersProvider.EP_NAME.extensionList.mapNotNull { it.getType().resolver }
