@@ -1,7 +1,7 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS", "dev_dist_plugin")
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load(":stream_debugger_test_dependencies.bzl", "MAVEN_REPOSITORY_RUNFILES_PATH", "all_test_dep_targets")
 
@@ -15,7 +15,7 @@ filegroup(
 jps_test(
     name = "java-debugger-streams-tests_test",
     timeout = "long",
-    data = ALL_COMMUNITY_TARGETS + all_test_dep_targets + [
+    data = all_test_dep_targets + [
         "@community//plugins/stream-debugger:testData",
         BAZEL_TARGETS_JSON,
     ],

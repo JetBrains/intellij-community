@@ -1,6 +1,5 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
-load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_TARGETS")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -9,7 +8,7 @@ BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
 jps_test(
     name = "devkit-workspaceModel-k2-tests_test",
-    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON],
+    data = [BAZEL_TARGETS_JSON],
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
     ],
