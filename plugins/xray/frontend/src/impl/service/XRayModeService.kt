@@ -24,7 +24,8 @@ private const val REFRESH_REASON = "X-Ray mode"
 /**
  * The main service for X-Ray Mode feature.
  *
- * The service is the parent disposable for the peek gestures. Therefore, we need to make it implement [Disposable].
+ * The service is the parent disposable for the peek gestures and the mouse wheel patcher.
+ * Therefore, we need to make it implement [Disposable].
  */
 @Service(Service.Level.APP)
 internal class XRayModeService : Disposable {

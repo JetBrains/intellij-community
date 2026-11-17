@@ -18,11 +18,13 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.ui.JBUI
 import com.intellij.xray.frontend.api.XRayBundle
 import com.intellij.xray.frontend.api.XRayMode
+import com.intellij.xray.frontend.api.editorTracking.XRAY_EDITOR_TRACKING_REGISTRY_KEY
 import com.intellij.xray.frontend.api.editorTracking.XRAY_EDITOR_USE_MODE
 import com.intellij.xray.frontend.api.editorTracking.XRayEditorUseMode
 import com.intellij.xray.frontend.impl.service.XRayModeService
@@ -91,17 +93,25 @@ internal class XRayModeActionProvider : InspectionWidgetActionProvider {
                 XRayMode.BASIC -> "xray.config.next.extended"
                 XRayMode.EXTENDED -> "xray.config.next.off"
               }
-              val description = when (val editorUseMode = editor.getUserData(XRAY_EDITOR_USE_MODE)) {
-                is XRayEditorUseMode ->  XRayBundle.message("xray.config.description_template.full",
-                                                            XRayBundle.message("xray.config.mode", editorUseMode.title)
-                )
-                null -> XRayBundle.message("xray.config.description_template.short")
+              if (Registry.`is`(XRAY_EDITOR_TRACKING_REGISTRY_KEY)) {
+                val description = when (val editorUseMode = editor.getUserData(XRAY_EDITOR_USE_MODE)) {
+                  is XRayEditorUseMode -> XRayBundle.message("xray.config.description_template.full",
+                                                             XRayBundle.message("xray.config.mode", editorUseMode.title)
+                  )
+                  null -> XRayBundle.message("xray.config.description_template.short")
+                }
+                HelpTooltip().setTitle(HtmlChunk.text(XRayBundle.message(tooltipTitleKey)))
+                  .setDescription(HtmlChunk.text(description))
+                  .setLink(XRayBundle.message("xray.config.configure")) {
+                    showInlaySettings(project = project, Language.ANY, null)
+                  }.installOn(this)
               }
-              HelpTooltip().setTitle(HtmlChunk.text(XRayBundle.message(tooltipTitleKey)))
-                .setDescription(HtmlChunk.text(description))
-                .setLink(XRayBundle.message("xray.config.configure")) {
-                  showInlaySettings(project = project, Language.ANY, null)
-                }.installOn(this)
+              else {
+                HelpTooltip().setTitle(HtmlChunk.text(XRayBundle.message(tooltipTitleKey)))
+                  .setLink(XRayBundle.message("xray.config.configure")) {
+                    showInlaySettings(project = project, Language.ANY, null)
+                  }.installOn(this)
+              }
             }
           }
         }
