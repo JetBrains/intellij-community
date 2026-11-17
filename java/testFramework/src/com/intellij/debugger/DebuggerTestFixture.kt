@@ -118,6 +118,7 @@ import java.nio.file.Path
 import java.text.MessageFormat
 import java.util.ArrayDeque
 import java.util.MissingResourceException
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
@@ -634,6 +635,22 @@ class DebuggerTestFixture internal constructor(
    */
   fun onEveryBreakpoint(runnable: SuspendContextRunnable) {
     getBreakpointProvider().onEveryBreakpoint(runnable)
+  }
+
+  /**
+   * Collects each stop of the VM, as [onEveryBreakpoint] reports it, in a [PauseMonitor].
+   * Call it before the debuggee starts, for example before [runProcess].
+   */
+  fun createPauseMonitor(): PauseMonitor {
+    val pauses = LinkedBlockingQueue<SuspendContextImpl>()
+    onEveryBreakpoint { suspendContext -> pauses.add(suspendContext) }
+    return PauseMonitor(pauses)
+  }
+
+  /** The stops of the VM that [createPauseMonitor] collects, in their order. */
+  class PauseMonitor internal constructor(private val pauses: LinkedBlockingQueue<SuspendContextImpl>) {
+    /** Takes the next stop. It waits up to 1 minute and returns `null` after the timeout. */
+    fun waitForPause(): SuspendContextImpl? = pauses.poll(1, TimeUnit.MINUTES)
   }
 
   /** Queues two actions to run a single time, one after the other. See [onBreakpoint]. */
