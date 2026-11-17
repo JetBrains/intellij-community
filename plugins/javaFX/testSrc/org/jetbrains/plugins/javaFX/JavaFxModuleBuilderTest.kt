@@ -8,11 +8,19 @@ import com.intellij.ide.starters.shared.JAVA_STARTER_LANGUAGE
 import com.intellij.ide.starters.shared.JUNIT_TEST_RUNNER
 import com.intellij.ide.starters.shared.MAVEN_PROJECT
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.plugins.javaFX.wizard.JavaFxModuleBuilder
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
-class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
+@TestApplication
+class JavaFxModuleBuilderTest {
+  companion object {
+    private val projectFixture = lightJavaProjectFixture(JAVA_11)
+  }
+
+  private val fixture by lightJavaCodeInsightFixture(projectFixture)
   @Test
   fun emptyJavaMavenProject() {
     JavaFxModuleBuilder().setupTestModule(fixture.module) {

@@ -5,13 +5,20 @@ import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestM
 import com.intellij.ide.starters.shared.KOTLIN_STARTER_LANGUAGE
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.Verifier
+import com.intellij.testFramework.fixtures.lightJavaCodeInsightFixture
+import com.intellij.testFramework.fixtures.lightJavaProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Test
 
 //JAVA 11 is used since it is the oldest JDK supported by IDEA
-class ComposeModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
+@TestApplication
+class ComposeModuleBuilderTest {
+    companion object {
+        private val projectFixture = lightJavaProjectFixture(JAVA_11)
+    }
+
+    private val fixture by lightJavaCodeInsightFixture(projectFixture)
     @Test
     fun testDesktopProject() {
         init()
@@ -38,11 +45,9 @@ class ComposeModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
         checkResultByFile(path, path, true)
     }
 
-    //this check is called as a part of each test rule (in the end)
-    @get:Rule
-    val verifier = object: Verifier() {
-        override fun verify() {
-            commonTestPart()
-        }
+    //this check is called after each test
+    @AfterEach
+    fun verify() {
+        commonTestPart()
     }
 }
