@@ -402,3 +402,4 @@ intellij.kotlin.projectWizard.core.tests
 intellij.kotlin.base.plugin.tests
 intellij.kotlin.coverage.tests
 intellij.kotlin.injection.tests
+intellij.kotlin.lombok.tests
