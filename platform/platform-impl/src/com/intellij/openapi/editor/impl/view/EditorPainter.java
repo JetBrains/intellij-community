@@ -730,7 +730,7 @@ public final class EditorPainter implements TextDrawingCallback {
             }
             paintLayeredBackground(layers, x, y, endX - x);
             int offset = it.getEndOffset();
-            SoftWrapEx softWrap = mySoftWrapModel.getSoftWrapEx(offset);
+            SoftWrapEx softWrap = visLinesIterator.getEndSoftWrap();
             if (softWrap == null) {
               if (dryRun) {
                 paintHuggingBlockPastLineEnd(it, x, y);
@@ -1823,7 +1823,7 @@ public final class EditorPainter implements TextDrawingCallback {
         x = fragment.getStartX();
         if (firstFragment) {
           firstFragment = false;
-          SoftWrapEx softWrap = mySoftWrapModel.getSoftWrapEx(offset);
+          SoftWrapEx softWrap = visLineIterator.getStartSoftWrap();
           if (softWrap != null || myEditor.isRightAligned()) {
             prevEndOffset = offset;
             it = new IterationState(myEditor, offset == 0 ? 0 : DocumentTextUtil.getPreviousCodePointOffset(myDocument, offset),

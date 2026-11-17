@@ -6,11 +6,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
-import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ public final class VisualLinesIterator {
   private boolean myInlaysSet;
 
   private final SoftWrapModelEx mySoftWrapModel;
-  private final List<? extends SoftWrap> mySoftWraps;
+  private final List<? extends SoftWrapEx> mySoftWraps;
 
   private @NotNull Location myLocation;
   private Location myNextLocation;
@@ -59,7 +59,7 @@ public final class VisualLinesIterator {
     mySoftWrapModel = myView.getSoftWrapModel();
     FoldRegion[] regions = myFoldingModel.fetchTopLevel();
     myFoldRegions = regions == null ? FoldRegion.EMPTY_ARRAY : regions;
-    mySoftWraps = mySoftWrapModel.getRegisteredSoftWraps();
+    mySoftWraps = myView.getSoftWrapModel().getRegisteredSoftWrapsEx();
     myLineHeight = view.getLineHeight();
     myLocation = new Location(startVisualLine);
   }
@@ -156,6 +156,22 @@ public final class VisualLinesIterator {
   public boolean endsWithSoftWrap() {
     checkEnd();
     return myLocation.softWrap < mySoftWraps.size() && mySoftWraps.get(myLocation.softWrap).getStart() == getVisualLineEndOffset();
+  }
+
+  /**
+   * Gives the soft wrap at the start of the visual line, or null when the visual line does not start with a soft wrap.
+   */
+  @ApiStatus.Internal
+  public @Nullable SoftWrapEx getStartSoftWrap() {
+    return startsWithSoftWrap() ? mySoftWraps.get(myLocation.softWrap - 1) : null;
+  }
+
+  /**
+   * Gives the soft wrap at the end of the visual line, or null when the visual line does not end with a soft wrap.
+   */
+  @ApiStatus.Internal
+  public @Nullable SoftWrapEx getEndSoftWrap() {
+    return endsWithSoftWrap() ? mySoftWraps.get(myLocation.softWrap) : null;
   }
 
   public List<Inlay<?>> getBlockInlaysAbove() {

@@ -147,6 +147,11 @@ public final class IterationState {
   private boolean myBreakComputed;
   private boolean myBreakComputedBeforeBreak;
   /**
+   * Says that {@link #myHasSoftWrap} holds the answer of {@link #hasSoftWrap()} for the current step. {@link #advance()} clears it.
+   */
+  private boolean mySoftWrapComputed;
+  private boolean myHasSoftWrap;
+  /**
    * The start of the syntax run that holds the current step, see {@link #getHighlighterEnd(int)}.
    */
   private int mySyntaxRunStart;
@@ -252,6 +257,7 @@ public final class IterationState {
   public void advance() {
     myNextIsFoldRegion = false;
     myBreakComputed = false;
+    mySoftWrapComputed = false;
     myStartOffset = myEndOffset;
     advanceSegmentHighlighters();
     advanceCurrentSelectionIndex();
@@ -1003,7 +1009,11 @@ public final class IterationState {
   }
 
   private boolean hasSoftWrap() {
-    return mySoftWrapModel.getSoftWrap(myStartOffset) != null;
+    if (!mySoftWrapComputed) {
+      myHasSoftWrap = mySoftWrapModel.getSoftWrap(myStartOffset) != null;
+      mySoftWrapComputed = true;
+    }
+    return myHasSoftWrap;
   }
 
   private int alignOffset(int offset) {
