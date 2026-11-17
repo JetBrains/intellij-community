@@ -36,6 +36,18 @@ internal class LexerEditorHighlighterAttributesTest {
     assertThat(attributes(highlighter).foregroundColor).isEqualTo(Color.BLUE)
   }
 
+  @Test
+  fun `a storage that does not know the token index gives the attributes of the token type`() {
+    val highlighter = object : LexerEditorHighlighter(OneKeySyntaxHighlighter(), scheme(Color.RED)) {
+      override fun createStorage(): DataStorage {
+        return object : ShortBasedStorage() {}
+      }
+    }
+    highlighter.setText("text")
+    assertThat(attributes(highlighter).foregroundColor).isEqualTo(Color.RED)
+    assertThat(attributes(highlighter)).isSameAs(attributes(highlighter))
+  }
+
   private fun scheme(foreground: Color): EditorColorsScheme {
     val scheme = EditorColorsManager.getInstance().globalScheme.clone() as EditorColorsScheme
     scheme.setAttributes(KEY, TextAttributes(foreground, null, null, null, Font.PLAIN))

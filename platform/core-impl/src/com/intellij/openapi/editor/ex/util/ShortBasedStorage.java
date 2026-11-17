@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.editor.ex.util.SegmentArray.INITIAL_SIZE;
@@ -75,6 +76,18 @@ public class ShortBasedStorage implements DataStorage {
   @Override
   public @NotNull IElementType unpackTokenFromData(int data) {
     return IElementType.find((short)Math.abs(data));
+  }
+
+  /**
+   * Returns {@code -1} for a subclass.
+   */
+  @ApiStatus.Internal
+  @Override
+  public int unpackTokenIndexFromData(int data) {
+    if (getClass() != ShortBasedStorage.class) {
+      return -1;
+    }
+    return (short)Math.abs(data);
   }
 
   @Override

@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,6 +13,21 @@ import org.jetbrains.annotations.NotNull;
  * Not thread-safe.
  */
 public class SegmentArrayWithData extends SegmentArray {
+  /**
+   * Tells whether a class keeps the {@link #unpackTokenFromData} of {@code SegmentArrayWithData}, which asks the storage.
+   */
+  private static final ClassValue<Boolean> UNPACKS_WITH_STORAGE = new ClassValue<Boolean>() {
+    @Override
+    protected Boolean computeValue(Class<?> type) {
+      try {
+        return type.getMethod("unpackTokenFromData", int.class).getDeclaringClass() == SegmentArrayWithData.class;
+      } catch (NoSuchMethodException e) {
+        throw new IllegalStateException(e);
+      }
+    }
+  };
+
+  private final boolean myUnpacksWithStorage = UNPACKS_WITH_STORAGE.get(getClass());
   private DataStorage myStorage;
 
   public SegmentArrayWithData(@NotNull DataStorage storage) {
@@ -106,6 +122,18 @@ public class SegmentArrayWithData extends SegmentArray {
    */
   public @NotNull IElementType unpackTokenFromData(int data) {
     return myStorage.unpackTokenFromData(data);
+  }
+
+  /**
+   * Returns the index of the token type in {@code data}, see {@link DataStorage#unpackTokenIndexFromData}.
+   * Returns {@code -1} for a subclass that overrides {@link #unpackTokenFromData}.
+   */
+  @ApiStatus.Internal
+  public int unpackTokenIndexFromData(int data) {
+    if (!myUnpacksWithStorage) {
+      return -1;
+    }
+    return myStorage.unpackTokenIndexFromData(data);
   }
 
   /**

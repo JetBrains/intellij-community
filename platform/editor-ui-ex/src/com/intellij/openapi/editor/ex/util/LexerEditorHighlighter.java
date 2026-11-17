@@ -742,6 +742,13 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
     @Override
     public TextAttributes getTextAttributes() {
+      int index = mySegments.unpackTokenIndexFromData(mySegments.getSegmentData(mySegmentIndex));
+      if (index >= 0) {
+        TextAttributes attributes = myAttributesState.attributes().getByIndex(index);
+        if (attributes != null) {
+          return attributes;
+        }
+      }
       return getAttributes(getTokenType());
     }
 

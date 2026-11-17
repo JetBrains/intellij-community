@@ -41,6 +41,15 @@ final class TokenTypeTable<T> {
     if (index < 0) {
       return (T)valuesOfTypesWithoutIndex.get(tokenType);
     }
+    return getByIndex(index);
+  }
+
+  /**
+   * Returns the value of the token type with {@code index}, or {@code null} when the table has no value for it.
+   * The {@code index} is not negative, see {@link IElementType#getIndex()}.
+   */
+  @SuppressWarnings("unchecked")
+  @Nullable T getByIndex(int index) {
     Object[] page = pages[index >> PAGE_SHIFT];
     if (page == null) {
       return null;
