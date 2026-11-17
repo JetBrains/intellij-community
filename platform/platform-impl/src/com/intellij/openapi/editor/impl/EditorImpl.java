@@ -128,7 +128,6 @@ import com.intellij.openapi.editor.impl.view.CharacterGrid;
 import com.intellij.openapi.editor.impl.view.CharacterGridImpl;
 import com.intellij.openapi.editor.impl.view.CharacterGridSpec;
 import com.intellij.openapi.editor.impl.view.EditorLineExtensions;
-import com.intellij.openapi.editor.impl.view.CharacterGridSpec;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache;
