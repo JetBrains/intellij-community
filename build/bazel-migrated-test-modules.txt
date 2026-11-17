@@ -424,3 +424,4 @@ intellij.kotlin.codeInsight.liveTemplates.tests
 intellij.kotlin.base.scripting.scratch.tests
 intellij.kotlin.refactorings.tests
 intellij.kotlin.projectStructure.tests
+intellij.kotlin.codeInsight.intentions.tests
