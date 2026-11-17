@@ -1468,8 +1468,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myTraceableDisposable.throwDisposalError(msg);
   }
 
-  @ApiStatus.Internal
-  public String getDisposalStackTrace() {
+  @NotNull
+  String getDisposalStackTrace() {
     return myTraceableDisposable.getStackTrace();
   }
 
