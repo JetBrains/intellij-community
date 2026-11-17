@@ -43,8 +43,8 @@ from outside, such as from another remote-dev side, could resolve to nothing.
 - A different key with a taken identity must be refused and logged.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
 - The platform must promote the keys that the API module declares: `EDIT_TEAM_LAYER`, `LANGUAGE`, `OS` and
-  `PER_OS_SETTINGS`. A missing promotion shows only on a write outside the unit test mode, so only an integration
-  test covers it.
+  `PER_OS_SETTINGS`. An integration test covers them, because a write reports a missing promotion only outside the
+  unit test mode.
   [@test] ../../../../platform/unified/integrationTests/testSrc/com/intellij/platform/unified/integrationTests/JetBrainsLightSettingsTest.kt
 - A promoter must register the keys of its own plugin only. A platform key has no plugin of its own, and the core
   plugin promotes it.
@@ -88,6 +88,10 @@ from outside, such as from another remote-dev side, could resolve to nothing.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
 - In a unit test the write check must be off. `withRegistryChecks` turns it on for a block.
   See [ADR 0113](../adr/0113-a-test-opts-into-registry-checks.md).
+- A write in a unit test must prove no promotion, because the write check is off there. A unit test of a plugin
+  proves its promotion with `SettingsKeyRegistry.holds` after `awaitReady`, when the test application loads the
+  descriptor of the promoter. An integration test reports a missing promotion on the first write.
+  [@test] ../../platform-impl/presentation-assistant/tests/src/com/intellij/platform/ide/impl/presentationAssistant/PresentationAssistantSettingsChangeTest.kt
 
 ## Open Questions / Risks
 
