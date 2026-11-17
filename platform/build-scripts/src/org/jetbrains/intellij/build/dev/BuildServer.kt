@@ -9,7 +9,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.classPath.launchBootClassPathJarNames
 import org.jetbrains.intellij.build.classPath.splitDistributionCoreClassPathJarNames
 import org.jetbrains.intellij.build.impl.MAC_APP_TEMPLATE_PATH
@@ -200,6 +202,17 @@ internal fun getProductPropertiesPath(homePath: Path): Path {
   // handle a custom product properties path
   return System.getProperty(CUSTOM_PRODUCT_PROPERTIES_PATH)?.let { homePath.resolve(it) }?.takeIf { Files.exists(it) }
          ?: homePath.resolve(PRODUCT_REGISTRY_PATH)
+}
+
+/** Creates the `ProductProperties` that a dev build of [platformPrefix] uses. */
+@ApiStatus.Internal
+fun createProductProperties(projectDir: Path, platformPrefix: String, outputProvider: ModuleOutputProvider): ProductProperties {
+  return createProductProperties(
+    productConfiguration = getProductConfiguration(createConfiguration(projectDir), platformPrefix, baseIdePlatformPrefixForFrontend = null),
+    outputProvider = outputProvider,
+    projectDir = projectDir,
+    platformPrefix = platformPrefix,
+  )
 }
 
 private fun getProductConfiguration(configuration: ProductConfigurationRegistry, platformPrefix: String, baseIdePlatformPrefixForFrontend: String?): ProductConfiguration {
