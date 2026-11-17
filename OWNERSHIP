@@ -5,7 +5,7 @@ owner 'Bazel Migration Team'
 
 /MODULE.bazel.lock
 # review-class: generated
-owner 'Bazel Lockfiles'
+owner 'Bazel Migration Team'
 
 /OWNERSHIP
 owner 'IJ Build Scripts Maintainers'
