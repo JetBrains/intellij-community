@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.tests.hatch
 
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
 import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.PyHatchBundle
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
@@ -14,7 +17,6 @@ import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import kotlin.time.Duration.Companion.seconds
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -22,6 +24,9 @@ import org.junit.jupiter.api.Test
  * Which gone environments of an interpreter library entry the hatch configurator makes again, see
  * `PyProjectSdkConfigurationExtension.prepareSdkCreatorFor`. The creator is asked for, never called, so no tool runs.
  */
+@Subsystems.Interpreters
+@Components.Hatch
+@Layers.Functional
 @RegistryKeyAppLevel(key = "python.interpreter.library.entries", value = "true")
 @TestApplication
 internal class HatchEnvCreatorForEntryTest {
@@ -33,7 +38,7 @@ internal class HatchEnvCreatorForEntryTest {
   private val hatch: FusId get() = HatchPyTool.getInstance().fusId
 
   @Test
-  fun `hatch makes the environment of the entry by its name`(): Unit = timeoutRunBlocking(30.seconds) {
+  fun `hatch makes the environment of the entry by its name`(): Unit = timeoutRunBlocking {
     assertThat(intentionOf(hatch, "test")).isEqualTo(PyHatchBundle.message("sdk.recreate.hatch.environment", "test"))
   }
 

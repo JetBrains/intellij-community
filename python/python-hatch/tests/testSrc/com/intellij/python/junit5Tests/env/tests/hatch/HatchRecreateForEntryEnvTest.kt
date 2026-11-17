@@ -1,8 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.tests.hatch
 
+import com.intellij.python.sdk.backend.PythonInterpreterKey
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.pytools.backend.getCustomExecutablePath
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.python.junit5Tests.framework.entryKeyOf
@@ -13,8 +19,6 @@ import com.intellij.python.junit5Tests.framework.recreateEnvironmentFor
 import com.intellij.python.junit5Tests.framework.resolvePythonTool
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pytools.backend.setCustomExecutablePath
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.python.sdk.backend.removeTestInterpreterFromOpenProjects
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -32,6 +36,9 @@ import org.junit.jupiter.api.Test
  * The hatch configurator makes the gone environment of an entry by its name. The project places that environment in
  * itself with the `path` option, so the test leaves nothing in the data directory of hatch.
  */
+@Subsystems.Interpreters
+@Components.Hatch
+@Layers.Functional
 @PyEnvTestCase
 internal class HatchRecreateForEntryEnvTest {
   private val modulePathFixture = tempPathFixture(prefix = "hatch-recreate")
@@ -40,7 +47,10 @@ internal class HatchRecreateForEntryEnvTest {
   @Test
   fun `a gone hatch environment is made again by its name`(@PythonBinaryPath python: PythonBinary): Unit = timeoutRunBlocking(5.minutes) {
     val hatch = VirtualEnvReader().resolvePythonHomeFromPythonBinary(python).resolvePythonTool("hatch")
-    HatchPyTool.getInstance().setCustomExecutablePath(localEel.descriptor, hatch)
+    val hatchTool = HatchPyTool.getInstance()
+    val eelDescriptor = hatch.getEelDescriptor()
+    val previousHatch = hatchTool.getCustomExecutablePath(eelDescriptor)
+    hatchTool.setCustomExecutablePath(eelDescriptor, hatch)
     val toml = pyProject.baseDir.resolve(PY_PROJECT_TOML)
     withContext(Dispatchers.IO) {
       toml.writeText("""
@@ -55,13 +65,18 @@ internal class HatchRecreateForEntryEnvTest {
     }
     val key = entryKeyOf(pyProject, HatchPyTool.getInstance().fusId, "test")
 
-    val interpreter = recreateEnvironmentFor(HATCH_TOOL_ID, pyProject, key)
     try {
-      assertNamedByEntry(interpreter, key)
-      assertThat(pyProject.baseDir.resolve(".hatch").resolve("test")).isDirectory()
+      val interpreter = recreateEnvironmentFor(HATCH_TOOL_ID, pyProject, key)
+      try {
+        assertNamedByEntry(interpreter, key)
+        assertThat(pyProject.baseDir.resolve(".hatch").resolve("test")).isDirectory()
+      }
+      finally {
+        removeTestInterpreterFromOpenProjects(interpreter)
+      }
     }
     finally {
-      removeTestInterpreterFromOpenProjects(interpreter)
+      hatchTool.setCustomExecutablePath(eelDescriptor, previousHatch)
     }
   }
 

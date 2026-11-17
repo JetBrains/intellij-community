@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.tests.poetry
 
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
 import com.intellij.idea.TestFor
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -37,6 +40,9 @@ import kotlin.time.Duration.Companion.seconds
  *
  * A fake Poetry is pinned as the custom executable. It records its arguments in a log and fails.
  */
+@Subsystems.Interpreters
+@Components.Poetry
+@Layers.Functional
 @TestApplication
 @TestFor(classes = [PyPoetrySdkConfiguration::class], issues = ["PY-93974"])
 internal class PyPoetrySdkConfigurationNoLockTest {

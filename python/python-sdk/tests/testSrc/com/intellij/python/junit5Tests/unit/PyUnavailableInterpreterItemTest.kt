@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit
 
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
 import com.intellij.python.pytools.common.FusId
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreterKey
@@ -18,6 +20,8 @@ import java.nio.file.Path
  * interpreter, flagged `[invalid]`, and its reason names the environment and its manager. An env ref is a path for some
  * managers and a name for others, so the row reads it as neither.
  */
+@Subsystems.Interpreters
+@Layers.Functional
 @TestApplication
 class PyUnavailableInterpreterItemTest {
   @Test

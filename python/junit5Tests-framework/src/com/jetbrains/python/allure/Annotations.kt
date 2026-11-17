@@ -200,6 +200,14 @@ object Components {
   @Inherited
   annotation class Hatch
 
+  @Component("Pipenv")
+  @Inherited
+  annotation class Pipenv
+
+  @Component("Poetry")
+  @Inherited
+  annotation class Poetry
+
   @Component("Target")
   @Inherited
   annotation class RemoteTarget

@@ -1,6 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit
 
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration.Companion.seconds
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.intellij.pycharm.community.ide.impl.configuration.interpreter.isInUse
 import com.intellij.python.junit5Tests.framework.env.pyMockInterpreterFixture
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
@@ -11,17 +16,16 @@ import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * All Interpreters is a history of environments. The interpreter that a project uses is in use there and cannot be
  * removed, and one that no project uses any more can be.
  */
+@Subsystems.Interpreters
+@Layers.Functional
 @RegistryKeyAppLevel(key = "python.interpreter.library.entries", value = "true")
 @TestApplication
 internal class PyAllInterpretersInUseTest {
@@ -36,7 +40,7 @@ internal class PyAllInterpretersInUseTest {
 
   @Test
   fun `the interpreter of a project is in use, and the one it left is not`(): Unit = runBlocking {
-    withTimeout(30.seconds) {
+    withTimeout(10.seconds) {
       val model = EvoPyProjectModel.getInstance(projectFixture.get())
 
       val used = checkNotNull(pyProject.get().setPythonInterpreter(first.get()).orThrow())

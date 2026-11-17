@@ -1,6 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.tests.poetry
 
+import com.intellij.python.sdk.backend.PythonInterpreterKey
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
@@ -11,8 +16,6 @@ import com.intellij.python.junit5Tests.framework.env.RequiresPoetry
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.junit5Tests.framework.recreateEnvironmentFor
 import com.intellij.python.pyproject.PY_PROJECT_TOML
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.python.sdk.backend.removeTestInterpreterFromOpenProjects
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -26,6 +29,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 /** The poetry configurator makes the gone in-project environment of an entry in the `.venv` of the project. */
+@Subsystems.Interpreters
+@Components.Poetry
+@Layers.Functional
 @PyEnvTestCase
 @RequiresPoetry
 internal class PoetryRecreateForEntryEnvTest {

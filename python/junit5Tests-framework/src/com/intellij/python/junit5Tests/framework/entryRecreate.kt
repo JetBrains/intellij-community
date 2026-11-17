@@ -18,9 +18,7 @@ fun entryKeyOf(pyProject: PyProject, manager: FusId, envRef: String): PythonInte
 
 /**
  * The intention of the creator that the configurator of [toolId] gives for the gone environment of [key], or `null`
- * when it gives none, see [PyProjectSdkConfigurationExtension.prepareSdkCreatorFor]. The creator is asked for, never
- * called, so no tool runs. Fails when no configurator of [toolId] is registered, or when the creator would not make the
- * environment.
+ * when it gives none, see [PyProjectSdkConfigurationExtension.prepareSdkCreatorFor]. No tool runs.
  */
 suspend fun recreateIntentionOf(toolId: ToolId, pyProject: PyProject, key: PythonInterpreterKey): String? {
   val configurator = PyProjectSdkConfigurationExtension.EP_NAME.extensionList.firstOrNull { it.toolId == toolId }

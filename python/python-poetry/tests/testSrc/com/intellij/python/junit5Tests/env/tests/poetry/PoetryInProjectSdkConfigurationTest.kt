@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.tests.poetry
 
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
 import com.intellij.idea.TestFor
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -41,6 +44,9 @@ import kotlin.time.Duration.Companion.minutes
  * its `poetry.toml` gets an SDK on the in-project `.venv`, and poetry creates no environment in its cache. Without the
  * setting, a new environment goes to the cache of poetry.
  */
+@Subsystems.Interpreters
+@Components.Poetry
+@Layers.Functional
 @TestFor(classes = [PyPoetrySdkConfiguration::class], issues = ["PY-90389"])
 @PyEnvTestCase
 @RequiresPoetry

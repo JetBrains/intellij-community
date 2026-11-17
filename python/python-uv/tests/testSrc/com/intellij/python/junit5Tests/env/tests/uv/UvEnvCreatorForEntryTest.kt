@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.tests.uv
 
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.allure.Layers
 import com.intellij.python.junit5Tests.framework.entryKeyOf
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
@@ -15,7 +18,6 @@ import com.intellij.testFramework.junit5.RegistryKeyAppLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import kotlin.time.Duration.Companion.seconds
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -23,6 +25,9 @@ import org.junit.jupiter.api.Test
  * Which gone environments of an interpreter library entry the uv configurator makes again, see
  * `PyProjectSdkConfigurationExtension.prepareSdkCreatorFor`. The creator is asked for, never called, so no tool runs.
  */
+@Subsystems.Interpreters
+@Components.Uv
+@Layers.Functional
 @RegistryKeyAppLevel(key = "python.interpreter.library.entries", value = "true")
 @TestApplication
 internal class UvEnvCreatorForEntryTest {
@@ -34,12 +39,12 @@ internal class UvEnvCreatorForEntryTest {
   private val uv: FusId get() = UvPyTool.getInstance().fusId
 
   @Test
-  fun `uv makes the environment at the home of the entry`(): Unit = timeoutRunBlocking(30.seconds) {
+  fun `uv makes the environment at the home of the entry`(): Unit = timeoutRunBlocking {
     assertThat(intentionOf(uv, ".my_env")).isEqualTo(PyUvBundle.message("sdk.recreate.uv.environment", ".my_env"))
   }
 
   @Test
-  fun `uv does not make an environment of another manager`(): Unit = timeoutRunBlocking(30.seconds) {
+  fun `uv does not make an environment of another manager`(): Unit = timeoutRunBlocking {
     assertThat(intentionOf(PIP_MANAGER, ".my_env")).isNull()
   }
 

@@ -18,7 +18,6 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
 import kotlin.io.path.pathString
-import kotlin.time.Duration.Companion.seconds
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -40,24 +39,24 @@ internal class CondaEnvCreatorForEntryTest {
   private val conda: FusId get() = CondaPyTool.getInstance().fusId
 
   @Test
-  fun `conda makes the named environment of the entry`(): Unit = timeoutRunBlocking(30.seconds) {
+  fun `conda makes the named environment of the entry`(): Unit = timeoutRunBlocking {
     assertThat(intentionOf(conda, "myenv")).isEqualTo(PyCondaBundle.message("sdk.recreate.conda.environment", "myenv"))
   }
 
   @Test
-  fun `conda makes the prefix environment in the form of the entry`(): Unit = timeoutRunBlocking(30.seconds) {
+  fun `conda makes the prefix environment in the form of the entry`(): Unit = timeoutRunBlocking {
     assertThat(intentionOf(conda, "~/no-such-dir/.conda"))
       .describedAs("the prefix keeps the form of the entry, so the interpreter that comes out has the ref of the entry")
       .isEqualTo(PyCondaBundle.message("sdk.recreate.conda.environment", "~/no-such-dir/.conda"))
   }
 
   @Test
-  fun `conda does not make a prefix that is there`(): Unit = timeoutRunBlocking(30.seconds) {
+  fun `conda does not make a prefix that is there`(): Unit = timeoutRunBlocking {
     assertThat(intentionOf(conda, projectPath.get().pathString)).isNull()
   }
 
   @Test
-  fun `conda makes no prefix that is not a path of the machine`(): Unit = timeoutRunBlocking(30.seconds) {
+  fun `conda makes no prefix that is not a path of the machine`(): Unit = timeoutRunBlocking {
     assertThat(intentionOf(conda, "/no-such-dir\u0000/.conda"))
       .describedAs("nobody can tell whether such a prefix is there, so conda is not asked to create an environment over it")
       .isNull()

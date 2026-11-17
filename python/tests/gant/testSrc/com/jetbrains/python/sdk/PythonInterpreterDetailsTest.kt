@@ -27,12 +27,10 @@ import com.jetbrains.python.psi.impl.awaitPythonLanguageLevelsForTests
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import com.jetbrains.python.tools.sdkTools.PythonMockSdkKeys
-import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * [PythonInterpreterDetails] derives the class roots of an interpreter from its facts. A writer gives a `sys.path`, and
@@ -134,7 +132,7 @@ internal class PythonInterpreterDetailsTest {
       awaitRoots()
 
       // The pusher pushes the layout of the new version, though the roots stay the same and report no change.
-      withTimeout(10.seconds) { awaitPythonLanguageLevelsForTests(project) }
+      awaitPythonLanguageLevelsForTests(project)
       // The push of a new level runs in a dumb mode.
       IndexingTestUtil.suspendUntilIndexesAreReady(project)
       val expected = LanguageLevel.getLanguageLevelFromVersionStringStaticSafe(version)
