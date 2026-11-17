@@ -13,6 +13,13 @@ if (window.__IntelliJTools === undefined) {
   const MIN_OPACITY = 0.9;
   const MAX_CONTROL_GROWTH = 4;
   const MAX_CONTROL_SLACK = 40;
+  const MAX_ICON_SLACK = 1;
+  const MASK_PROPERTIES = ['mask-image', '-webkit-mask-image', 'mask-border-source', '-webkit-mask-box-image-source'];
+
+  const hasMask = (style) => MASK_PROPERTIES.some((property) => {
+    const value = style.getPropertyValue(property);
+    return value !== '' && value !== 'none';
+  });
 
   const isVisiblySolid = (element) => {
     let node = element;
@@ -25,8 +32,11 @@ if (window.__IntelliJTools === undefined) {
       if (!Number.isNaN(opacity) && opacity < MIN_OPACITY) {
         return false;
       }
-      // A filter can hide an element while it stays clickable; the opacity check above does not see that.
+      // A filter or a mask can hide an element while it stays clickable; the opacity check above does not see that.
       if (style.filter && style.filter !== 'none') {
+        return false;
+      }
+      if (hasMask(style)) {
         return false;
       }
       node = node.parentElement;
@@ -92,12 +102,26 @@ if (window.__IntelliJTools === undefined) {
   };
 
   /**
+   * The IDE styles can make an icon smaller than its image, but never larger. An image that did not load
+   * has no natural size, so it fails this check.
+   */
+  const keepsNaturalSize = (icon) => {
+    if (!(icon.naturalWidth > 0 && icon.naturalHeight > 0)) {
+      return false;
+    }
+    const rect = icon.getBoundingClientRect();
+    return rect.width <= icon.naturalWidth + MAX_ICON_SLACK &&
+           rect.height <= icon.naturalHeight + MAX_ICON_SLACK;
+  };
+
+  /**
    * For a control the IDE injects around an icon. Reads no click coordinate: in JCEF those disagree
    * with layout, which raised the confirmation on ordinary clicks (IJPL-247801).
    */
   const isGenuineControl = (event, container, icon) =>
     isKeyboardActivation(event) ||
-    (container !== null && icon !== null && isVisiblySolid(icon) && isProportionate(container, icon));
+    (container !== null && icon !== null && isVisiblySolid(icon) && keepsNaturalSize(icon) &&
+     isProportionate(container, icon));
 
   window.__IntelliJTools.clickGuard = {
     isKeyboardActivation: isKeyboardActivation,
