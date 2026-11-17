@@ -16,6 +16,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +81,7 @@ public class YourkitFilter implements Filter{
     public void navigate(@NotNull Project project) {
       final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
       if (editor != null) {
-        new PsiTargetNavigator<>(myPsiFiles)
+        new PsiTargetNavigator<>(ContainerUtil.filter(myPsiFiles, PsiFile::isValid))
           .presentationProvider(file -> PsiElementRenderingInfo.targetPresentation(file, new PsiElementRenderingInfo<>() {
             @Override
             public @NotNull String getPresentableText(@NotNull PsiFile element) {
