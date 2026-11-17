@@ -48,7 +48,8 @@ internal class MarkdownListItemUnindentHandler(baseHandler: EditorActionHandler?
     val outerInfo = ListItemInfo(outerItem, document)
 
     // without a selection, an item indented deeper than the standard sub-item indent is first aligned to that indent
-    val subItemIndent = outerInfo.indentInfo.subItemIndent()
+    // The sub-item indent follows the fixed-indent setting or the marker width, just like Tab
+    val subItemIndent = outerInfo.indentInfo.subItemIndent(file = item.containingFile)
     val newIndent = if (!caret.hasSelection() && itemInfo.indentInfo.indent > subItemIndent) subItemIndent else outerInfo.indentInfo.indent
 
     itemInfo.changeIndent(newIndent).replaceSafelyIn(document)

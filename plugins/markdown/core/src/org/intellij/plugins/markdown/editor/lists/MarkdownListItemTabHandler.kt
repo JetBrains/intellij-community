@@ -18,12 +18,13 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
  * This handler increases nesting of the current/selected list item(s) by a single level.
  * When the caret is inside the indent before the item marker (and there is no selection),
  * only the item's own line is indented; otherwise the children (paragraphs and lists) are indented as well.
+ * The indentation width follows the fixed sublist indent setting, but is never smaller than the item's marker width.
  */
 internal class MarkdownListItemTabHandler(baseHandler: EditorActionHandler?) : ListItemIndentUnindentHandlerBase(baseHandler) {
 
   override fun doIndentUnindent(item: MarkdownListItem, file: PsiFile, document: Document, caret: Caret): Boolean {
     val itemInfo = ListItemInfo(item, document)
-    val newIndent = itemInfo.indentInfo.subItemIndent()
+    val newIndent = itemInfo.indentInfo.subItemIndent(file)
 
     if (!caret.hasSelection() && caret.offset <= item.startOffset) {
       itemInfo.indentInfo.changeLineIndent(itemInfo.lines.first, newIndent, document, file)?.apply(document)
