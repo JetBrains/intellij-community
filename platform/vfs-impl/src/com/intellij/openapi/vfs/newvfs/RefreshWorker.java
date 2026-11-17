@@ -64,6 +64,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
 import static com.intellij.util.containers.CollectionFactory.createFilePathSet;
@@ -99,6 +100,8 @@ final class RefreshWorker {
   private final Semaphore semaphore;
   /** Receives each file this scan cleans: the file is 'actualizing' until the session applies its events */
   private final InFlightScans.Batch scanned;
+  /** Tells, if a file must be scanned: a session decides that files it trusts (e.g. whether it trusts the 'actualizing' files) */
+  private final Predicate<NewVirtualFile> fileNeedsScan;
 
   private final PersistentFS persistentFS = PersistentFS.getInstance();
   private final FSRecordsImpl vfsPeer = ((PersistentFSImpl)persistentFS).peer();
@@ -122,12 +125,16 @@ final class RefreshWorker {
   private final AtomicLong ioTime = new AtomicLong();
 
   RefreshWorker(Collection<NewVirtualFile> refreshRoots, boolean isRecursive) {
-    this(refreshRoots, isRecursive, new InFlightScans().begin());
+    this(refreshRoots, isRecursive, new InFlightScans().begin(), NewVirtualFile::isDirty);
   }
 
-  RefreshWorker(Collection<NewVirtualFile> refreshRoots, boolean isRecursive, InFlightScans.Batch scanned) {
+  RefreshWorker(Collection<NewVirtualFile> refreshRoots,
+                boolean isRecursive,
+                InFlightScans.Batch scanned,
+                Predicate<NewVirtualFile> fileNeedsScan) {
     this.isRecursive = isRecursive;
     this.scanned = scanned;
+    this.fileNeedsScan = fileNeedsScan;
     parallel = isRecursive
                && (PARALLELISM > 1 && !ApplicationManager.getApplication().isWriteIntentLockAcquired());
     roots = new HashSet<>(refreshRoots);
@@ -295,7 +302,7 @@ final class RefreshWorker {
 
           checkAndScheduleChildRefresh(events, fs, file.getParent(), file, attributes, false);
 
-          if (!file.isDirty() || !file.isDirectory()) {
+          if (!fileNeedsScan.test(file) || !file.isDirectory()) {
             continue;
           }
         }
@@ -781,9 +788,9 @@ final class RefreshWorker {
                                             NewVirtualFile child,
                                             FileAttributes childAttributes,
                                             boolean enqueue) {
-    boolean fileDirty = child.isDirty();
-    if (LOG.isTraceEnabled()) LOG.trace("file=" + child + " dirty=" + fileDirty);
-    if (!fileDirty) {
+    boolean fileNeedsScan = this.fileNeedsScan.test(child);
+    if (LOG.isTraceEnabled()) LOG.trace("file=" + child + " needsScan=" + fileNeedsScan);
+    if (!fileNeedsScan) {
       return;
     }
 
