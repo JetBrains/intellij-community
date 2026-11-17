@@ -273,14 +273,22 @@ internal class PyModuleDetailsPane(
   /**
    * Reads the interpreter of the module again, and rebuilds only the SDK combo. For a change outside this page, such as
    * a pick in the widget. A selection that the user made here and has not applied stays when the combo still holds it.
+   * Without such a selection the combo follows the module, so the change does not look like an edit of the user.
    */
   fun refreshModuleSdk() {
     moduleScope.launch {
       val sdk = findModuleSdk(pyProject)
       withContext(Dispatchers.EDT) {
+        val hasPendingSelection = model.isSdkChanged(selectedExistingSdk()?.name)
         moduleSdkSnapshot = sdk
         model.markSdkApplied(sdk?.name)
-        refreshSdkCombo()
+        if (hasPendingSelection) {
+          refreshSdkCombo()
+        }
+        else {
+          reloadSdkComboItems()
+          resetSdkComboSelection()
+        }
       }
     }
   }
@@ -489,10 +497,6 @@ internal class PyModuleDetailsPane(
     null -> null
   }
 
-  /**
-   * Returns the `Existing` row whose SDK name matches [name], or `null`. Uses an exhaustive `when`
-   * so a new [SdkComboItem] variant forces a compile error here instead of a silent skip.
-   */
   /** The row of the interpreter with [ref], or `null` when the combo has none. */
   private fun findExistingByRef(ref: PyInterpreterRef): SdkComboItem.Existing? {
     for (row in sdkComboModel.items) {
@@ -504,6 +508,10 @@ internal class PyModuleDetailsPane(
     return null
   }
 
+  /**
+   * Returns the `Existing` row whose SDK name matches [name], or `null`. Uses an exhaustive `when`
+   * so a new [SdkComboItem] variant forces a compile error here instead of a silent skip.
+   */
   private fun findExistingByName(name: String): SdkComboItem.Existing? {
     for (row in sdkComboModel.items) {
       when (row) {
