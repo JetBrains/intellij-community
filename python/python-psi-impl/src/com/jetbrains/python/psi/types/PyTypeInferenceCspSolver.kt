@@ -44,37 +44,24 @@ import java.util.TreeMap
 
 @ApiStatus.Experimental
 class CspBuilder(val context: TypeEvalContext) {
-  private val allSubstitutions = HashMap<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions>()
+  private val nestedCsps = HashMap<SubstitutionsIdentifier, NestedCsp>()
   private val initialConstraints = LinkedHashSet<TypeConstraint>()
   private val inferenceVars = InferenceVariablePool()
-  private val nestedResults = HashMap<PyExpression, Ref<PyType?>>()
   private lateinit var cp: ConstraintProblem
 
   /**
-   * Builds the nested CSP of [anchor] into this builder at most once, and returns its type to every later caller.
-   *
-   * Once per builder, which is once per problem: the first build adds the inference variables and the constraints of
-   * the subtree to this builder, and a later caller needs only the type back, because those are already here. A cache
-   * shared between builders would be wrong - it would hand out a type whose variables belong to another problem.
-   *
-   * A call site builds its arguments once per candidate of its callee, and an argument that is itself a call does the
-   * same for its own, so the subtree at depth k was rebuilt candidates^k times and each rebuild added a fresh set of
-   * inference variables. The build does not read the parameter that the argument is passed to - the caller adds that
-   * constraint afterwards, per candidate - so every candidate gets the same nested result and one build serves all.
+   * Builds the nested CSP identified by [si] and caches its result.
+   * Returns the return type of the nested CSP.
    */
-  internal fun nestedResult(anchor: PyExpression, build: () -> PyType?): PyType? {
-    nestedResults[anchor]?.let { return it.get() }
+  internal fun cacheNestedCsp(si: SubstitutionsIdentifier, build: () -> NestedCsp): PyType? {
+    nestedCsps[si]?.let { return it.returnType }
     val result = build()
-    nestedResults[anchor] = Ref.create(result)
-    return result
+    nestedCsps[si] = result
+    return result.returnType
   }
 
-  fun putSubstitutions(si: SubstitutionsIdentifier, substitutions: PyTypeChecker.GenericSubstitutions) {
-    allSubstitutions[si] = substitutions
-  }
-
-  fun getAllSubstitutions() : Set<MutableMap.MutableEntry<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions>> {
-    return allSubstitutions.entries
+  fun getAllSubstitutions(): Map<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions> {
+    return nestedCsps.mapValues { it.value.substitutions }
   }
 
   fun addConstraint(left: PyType?, right: PyType?, variance: PyVariance, priority: ConstraintPriority, isBinding: Boolean = true) {
@@ -246,6 +233,13 @@ class CspBuilder(val context: TypeEvalContext) {
     return PyCspSolution(cp.failed, complete, typeVars2TypeRefs)
   }
 }
+
+
+/**
+ * The result of a nested CSP build: the [substitutions] of its anchor and its [returnType].
+ */
+internal data class NestedCsp(val substitutions: PyTypeChecker.GenericSubstitutions, val returnType: PyType?)
+
 
 enum class ConstraintPriority {
   HIGH,
