@@ -528,6 +528,8 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 - f:forkTimeline():com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion
 - f:freezePsiVersion(kotlin.jvm.functions.Function0):java.lang.Object
 *:com.intellij.psi.util.PsiVersioningService$OpaquePsiVersion
+f:com.intellij.testFramework.LightVirtualFile$Builder
+- *:skipEventSystem(Z):com.intellij.testFramework.LightVirtualFile$Builder
 f:com.intellij.util.CoroutinesKt
 - *sf:awaitCancellationAndInvoke(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):V
 - *bs:awaitCancellationAndInvoke$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):V

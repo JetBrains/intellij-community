@@ -122,6 +122,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolderEx {
    * @see PsiTreeChangeListener
    * @see PsiFileFactory#createFileFromText(String, FileType, CharSequence, long, boolean)
    * @see PsiFile#isPhysical()
+   * @see com.intellij.testFramework.LightVirtualFile#shouldSkipEventSystem()
    */
   default boolean supportsSendingPsiEvents() {
     return isEventSystemEnabled();
