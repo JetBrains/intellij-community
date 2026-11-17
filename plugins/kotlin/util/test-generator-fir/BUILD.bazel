@@ -1,6 +1,19 @@
 load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "test-generator-fir_test",
+    data = [
+        "@community//plugins/kotlin/idea/tests:testData",
+        "@community//plugins/kotlin/jps/builder/tests:test-gen",
+    ] + all_test_dep_targets,
+    tags = ["kotlin-tests"],
+    runtime_deps = [":test-generator-fir_test_lib"],
+)
+
+### skip generation section `test kotlin.util.test-generator-fir`
 
 ### auto-generated section `build kotlin.util.test-generator-fir` start
 jvm_library(
@@ -91,10 +104,3 @@ jps_module(
     target = "test-generator-fir_test_lib",
 )
 ### auto-generated section `iml kotlin.util.test-generator-fir` end
-
-### auto-generated section `test kotlin.util.test-generator-fir` start
-jps_test(
-    name = "test-generator-fir_test",
-    runtime_deps = [":test-generator-fir_test_lib"],
-)
-### auto-generated section `test kotlin.util.test-generator-fir` end

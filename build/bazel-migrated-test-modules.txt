@@ -409,3 +409,4 @@ intellij.kotlin.completion.ml.tests
 intellij.kotlin.codeInsight.tests
 kotlin.project-wizard.tests
 intellij.kotlin.navigation.tests
+kotlin.util.test-generator-fir
