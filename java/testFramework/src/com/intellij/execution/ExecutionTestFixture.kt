@@ -109,6 +109,14 @@ class ExecutionTestOptions {
     private set
 
   /**
+   * Runs before the fixture creates the main module, in the same write action on the EDT.
+   * It replaces the code of a `setUpModule` override of [ExecutionTestCase] before the `super` call, for example a module that must come
+   * before the main module in [ModuleManager.getModules]. It does not run with [projectFileName].
+   */
+  var setUpProject: Consumer<Project> = Consumer { }
+    private set
+
+  /**
    * Changes the parameters that [ExecutionTestFixture.createJavaParameters] makes.
    * It replaces an override of [ExecutionTestCase.createJavaParameters] that calls `super` first.
    */
@@ -158,6 +166,8 @@ class ExecutionTestOptions {
 
   fun withSetUpModule(action: Consumer<Module>): ExecutionTestOptions = apply { setUpModule = action }
 
+  fun withSetUpProject(action: Consumer<Project>): ExecutionTestOptions = apply { setUpProject = action }
+
   fun withUpdateJavaParameters(action: Consumer<JavaParameters>): ExecutionTestOptions = apply { updateJavaParameters = action }
 
   fun withOutputName(name: String?): ExecutionTestOptions = apply { outputName = name }
@@ -180,7 +190,7 @@ class ExecutionTestOptions {
  * Declare it as an instance field of a `@TestApplication` class, because each test needs its own project and test name.
  * The fixture does this setup, in this order:
  * 1. It opens a new project. The project name is the name of the test method, as in JUnit 3.
- * 2. It creates the main Java module with the same name in the project directory.
+ * 2. It runs [ExecutionTestOptions.setUpProject]. Then it creates the main Java module with the same name in the project directory.
  *    The content root is [testAppPath], and the source root is its `src` directory.
  *    The module language level is 1.8, and the compiler output is [ExecutionTestFixture.appOutputPath].
  *    Then it runs [ExecutionTestOptions.setUpModule]. Then it sets the JDK of each module and registers the JDK.
@@ -376,6 +386,7 @@ class ExecutionTestFixture internal constructor(
     val moduleFile = Path.of(requireNotNull(project.basePath)).resolve("$moduleName.iml")
     edtWriteAction {
       ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
+        options.setUpProject.accept(project)
         val newModule = ModuleManager.getInstance(project).newModule(moduleFile, JavaModuleType.getModuleType().id)
         module = newModule
         setUpModuleRoots(newModule)
