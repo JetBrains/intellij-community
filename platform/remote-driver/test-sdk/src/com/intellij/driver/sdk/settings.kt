@@ -9,6 +9,7 @@ import com.intellij.driver.sdk.ui.components.common.waitForIdeFrameReady
 
 @Remote("com.intellij.ide.GeneralSettings")
 interface GeneralSettingsRef {
+  fun getConfirmOpenNewProject(): Int
   fun setConfirmOpenNewProject(mode: Int)
   fun setConfirmExit(value: Boolean)
   fun setProcessCloseConfirmation(value: ProcessCloseConfirmationRef)
