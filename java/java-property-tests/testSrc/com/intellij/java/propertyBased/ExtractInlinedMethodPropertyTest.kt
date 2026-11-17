@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -22,11 +22,12 @@ import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodService
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.inline.InlineMethodHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.propertyBased.MadTestingUtil
 import com.intellij.testFramework.propertyBased.RandomActivityInterceptor
-import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import com.intellij.ui.UiInterceptors
+import kotlinx.coroutines.job
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
@@ -53,7 +54,7 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
   }
 
   private fun inlineExtractMethodCompilation(javaFiles: Generator<PsiJavaFile>) = ImperativeCommand { env ->
-    var disposable = Disposer.newDisposable()
+    val disposable = Disposer.newDisposable()
     try {
       UiInterceptors.register(RandomActivityInterceptor(env, disposable))
       val file = env.generateValue(javaFiles, null)
@@ -87,7 +88,13 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
           val range = rangeToExtract.textRange
           env.logMessage("Extract inlined lines: ${editor.document.getText(range)}")
           MethodExtractor().doExtract(file, range)
-          waitCoroutinesBlocking(ExtractMethodService.getInstance(file.project).scope, SECONDS.toMillis(10))
+          val extractJob = ExtractMethodService.getInstance(file.project).scope.coroutineContext.job
+          val deadline = System.currentTimeMillis() + SECONDS.toMillis(10)
+          while (extractJob.children.any() && System.currentTimeMillis() < deadline) {
+            // The extractor waits for committed documents, and setUp disables the background commit.
+            PsiDocumentManager.getInstance(myProject).commitAllDocuments()
+            PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+          }
           require(numberOfMethods == countMethodsInsideFile(file)) { "Method is not extracted" }
           PsiDocumentManager.getInstance(myProject).commitAllDocuments()
 
