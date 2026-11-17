@@ -12,6 +12,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingManagerImpl
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.EMPTY_RESULT
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult.Companion.WRONG_DOCUMENT_VERSION
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
+import com.intellij.codeInsight.highlighting.BackgroundHighlighter.Companion.waitForIdentifierHighlighting
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
@@ -31,6 +32,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -69,6 +71,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.util.Alarm
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -324,7 +327,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
   }
 
   @RequiresEdt
-  private suspend fun isEditorUpToDate(
+  private fun isEditorUpToDate(
     hostEditor: Editor,
     offsetBefore: Int,
     newEditor: Editor,
@@ -337,7 +340,7 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
            && hostEditor.caretModel.offset == offsetBefore
            && (newEditor == hostEditor || BackgroundHighlightingUtil.isValidEditor(newEditor))
            && hostEditor.document.modificationStamp == documentModStampBefore
-           && readAction { newPsiFile.isValid() }
+           && isValid(newPsiFile)
            && hostEditor.getUserData(BACKGROUND_TASK_KEY) == job
   }
 
@@ -359,6 +362,14 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
       val fileType = PsiUtilBase.getPsiFileAtOffset(newPsiFile, maybeMatch.first.startOffset).fileType
       BraceHighlightingHandler.clearBraceHighlighters(newEditor)
       handler.highlightBraces(maybeMatch.first, maybeMatch.second, matched = true, scopeHighlighting = false, fileType = fileType)
+    }
+  }
+
+  private fun isValid(file: PsiFile): Boolean {
+    return SlowOperations.knownIssue("IJPL-162400").use {
+      runReadActionBlocking {
+        file.isValid
+      }
     }
   }
 
