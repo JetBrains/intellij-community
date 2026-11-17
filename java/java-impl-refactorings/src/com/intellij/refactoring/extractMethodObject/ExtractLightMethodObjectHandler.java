@@ -42,6 +42,8 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiReturnStatement;
 import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
+import com.intellij.psi.PsiThrowStatement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.PsiVariable;
@@ -68,6 +70,7 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -182,6 +185,33 @@ public final class ExtractLightMethodObjectHandler {
       anchor = codeBlock.getStatements()[0];
       originalAnchor = anchor;
       container = codeBlock;
+    }
+
+    // Add a code block for a single-statement switch rule body if needed.
+    // This case is different from the one above because a single expression
+    // as the body of a switch rule is not a valid statement elsewhere
+    // and so it should be used with `yield`.
+    // For example, the line below
+    //
+    // case PsiExpressionStatement statement -> statement.getExpression();
+    //
+    // should become
+    //
+    // case PsiExpressionStatement statement -> { yield statement.getExpression(); }
+    //
+    // CodeBlockSurrounder takes care of a proper transformation.
+    if (container instanceof PsiSwitchLabeledRuleStatement) {
+      PsiExpression bodyExpression = switch (anchor) {
+        case PsiExpressionStatement statement -> statement.getExpression();
+        case PsiThrowStatement statement -> statement.getException();
+        default -> null;
+      };
+      CodeBlockSurrounder surrounder = bodyExpression == null ? null : CodeBlockSurrounder.forExpression(bodyExpression);
+      if (surrounder != null) {
+        anchor = surrounder.surround().getAnchor();
+        originalAnchor = anchor;
+        container = anchor.getParent();
+      }
     }
 
     for (PsiVariable variable : contextVariables) {

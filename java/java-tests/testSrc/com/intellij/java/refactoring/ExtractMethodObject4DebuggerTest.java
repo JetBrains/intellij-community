@@ -358,4 +358,55 @@ public class ExtractMethodObject4DebuggerTest extends LightJavaCodeInsightTestCa
                      }
                  }""");
   }
+
+  @TestFor(issues = "IDEA-396115")
+  public void testInSwitchRuleBody() throws Exception {
+    doTest("i", "Integer result = new Test(i).invoke();",
+           """
+             static class Test {
+                     private Integer i;
+
+                     public Test(Integer i) {
+                         this.i = i;
+                     }
+
+                     public Integer invoke() {
+                         return i;
+                     }
+                 }""", false);
+  }
+
+  @TestFor(issues = "IDEA-396115")
+  public void testInSwitchRuleThrowBody() throws Exception {
+    doTest("i", "Integer result = new Test(i).invoke();",
+           """
+             static class Test {
+                     private Integer i;
+             
+                     public Test(Integer i) {
+                         this.i = i;
+                     }
+             
+                     public Integer invoke() {
+                         return i;
+                     }
+                 }""", false);
+  }
+
+  @TestFor(issues = "IDEA-396115")
+  public void testInSwitchExpressionRuleBody() throws Exception {
+    doTest("i", "Integer result = new Test(i).invoke();",
+           """
+             static class Test {
+                     private Integer i;
+
+                     public Test(Integer i) {
+                         this.i = i;
+                     }
+
+                     public Integer invoke() {
+                         return i;
+                     }
+                 }""", false);
+  }
 }
