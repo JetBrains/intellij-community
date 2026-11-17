@@ -221,19 +221,30 @@ public class PyBlock implements ASTBlock {
 
   @Override
   public @NotNull List<Block> getSubBlocks() {
+    ensureSubBlocks();
+    return Collections.unmodifiableList(mySubBlocks);
+  }
+
+  private void ensureSubBlocks() {
     if (mySubBlocks == null) {
       mySubBlockByNode = buildSubBlocks();
       mySubBlocks = new ArrayList<>(mySubBlockByNode.values());
     }
-    return Collections.unmodifiableList(mySubBlocks);
   }
 
   private @Nullable PyBlock getSubBlockByNode(@NotNull ASTNode node) {
+    ensureSubBlocks();
     return mySubBlockByNode.get(node);
   }
 
-  private @Nullable PyBlock getSubBlockByIndex(int index) {
+  private @NotNull PyBlock getSubBlockByIndex(int index) {
+    ensureSubBlocks();
     return mySubBlocks.get(index);
+  }
+
+  private int getSubBlockCount() {
+    ensureSubBlocks();
+    return mySubBlocks.size();
   }
 
   private @NotNull Map<ASTNode, PyBlock> buildSubBlocks() {
@@ -1228,7 +1239,7 @@ public class PyBlock implements ASTBlock {
       if (myNode.getElementType() == PyElementTypes.WITH_STATEMENT && isInsideWithStatementParentheses(myNode, prevNode)) {
         ASTNode openingParenthesis = myNode.findChildByType(PyTokenTypes.LPAR);
         for (int i = newChildIndex - 1; i >= 0 ; i--) {
-          PyBlock prevBlock = mySubBlocks.get(i);
+          PyBlock prevBlock = getSubBlockByIndex(i);
           if (prevBlock.myNode == openingParenthesis) {
             break;
           }
@@ -1361,7 +1372,8 @@ public class PyBlock implements ASTBlock {
     final IElementType parentType = myNode.getElementType();
     final ASTNode afterNode = getAfterNode(newChildIndex);
     final ASTNode lastChild = getLastNonSpaceChild(myNode, false);
-    if (lastChild != null && lastChild.getElementType() == PyElementTypes.STATEMENT_LIST && mySubBlocks.size() >= newChildIndex) {
+    if (lastChild != null && lastChild.getElementType() == PyElementTypes.STATEMENT_LIST &&
+        (newChildIndex == 0 || getSubBlockCount() >= newChildIndex)) {
       if (afterNode == null) {
         return Indent.getNoneIndent();
       }
