@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.injection
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.idea.TestFor
 import com.intellij.lang.InjectableLanguage
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
@@ -82,6 +83,46 @@ internal class CodeFenceLanguageGuesserTest {
     for (infoString in listOf("c++", "cpp")) {
       assertSame(expected, CodeFenceLanguageGuesser.findLanguage(infoString), infoString)
       assertSame(expected, CodeFenceLanguageGuesser.guessLanguageForInjection(infoString), infoString)
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["IJPL-229380"])
+  fun `GitHub Linguist names resolve to the installed language`(@TestDisposable disposable: Disposable) {
+    val infoStrings = mapOf(
+      "Gradle Kotlin DSL" to "kotlin",
+      "gradle kotlin dsl title=demo" to "kotlin",
+      "Gradle" to "Groovy",
+      "Java Properties" to "Properties",
+      "jsonl" to "JSON Lines",
+      "jsonc" to "JSON5",
+      "proto" to "protobuf",
+      "pug" to "Jade",
+      "rst" to "ReST",
+      "bazel" to "Starlark",
+    )
+    // Language allows one instance per class, so each language needs its own class.
+    registerLanguageIfAbsent("kotlin", disposable) { object : Language("kotlin"), InjectableLanguage {} }
+    registerLanguageIfAbsent("Groovy", disposable) { object : Language("Groovy"), InjectableLanguage {} }
+    registerLanguageIfAbsent("Properties", disposable) { object : Language("Properties"), InjectableLanguage {} }
+    registerLanguageIfAbsent("JSON Lines", disposable) { object : Language("JSON Lines"), InjectableLanguage {} }
+    registerLanguageIfAbsent("JSON5", disposable) { object : Language("JSON5"), InjectableLanguage {} }
+    registerLanguageIfAbsent("protobuf", disposable) { object : Language("protobuf"), InjectableLanguage {} }
+    registerLanguageIfAbsent("Jade", disposable) { object : Language("Jade"), InjectableLanguage {} }
+    registerLanguageIfAbsent("ReST", disposable) { object : Language("ReST"), InjectableLanguage {} }
+    registerLanguageIfAbsent("Starlark", disposable) { object : Language("Starlark"), InjectableLanguage {} }
+
+    for ((infoString, id) in infoStrings) {
+      assertEquals(id, CodeFenceLanguageGuesser.findLanguage(infoString)?.id, infoString)
+      assertEquals(id, CodeFenceLanguageGuesser.guessLanguageForInjection(infoString)?.id, infoString)
+    }
+  }
+
+  private fun registerLanguageIfAbsent(id: String, disposable: Disposable, create: () -> Language) {
+    if (Language.findLanguageByID(id) != null) return
+    val language = create()
+    Disposer.register(disposable) {
+      language.unregisterLanguage(DefaultPluginDescriptor("org.intellij.plugins.markdown"))
     }
   }
 
