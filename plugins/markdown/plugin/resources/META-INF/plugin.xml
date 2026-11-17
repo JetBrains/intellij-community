@@ -5,7 +5,6 @@
   <name>Markdown</name>
   <vendor>JetBrains</vendor>
   <category>Languages</category>
-  <resource-bundle>messages.MarkdownBundle</resource-bundle>
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
