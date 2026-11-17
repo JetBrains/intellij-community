@@ -823,9 +823,10 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
       textRenderer.appendHTML(name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
 
       if (ui.stage != null && row == TreeHoverListener.getHoveredRow(tree)) {
-        textRenderer.append(" ${if (ui.isInconsistent) XRayBundle.message("xray.inlay.stage.settings.tree.mixed") + " " else ""}${
+        textRenderer.append(" ${
           stageName(ui.stage!!)
-        }", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+        }${if (ui.isInconsistent) " (" + XRayBundle.message("xray.inlay.stage.settings.tree.mixed") + ")" else ""}",
+                            SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
       }
     }
 
