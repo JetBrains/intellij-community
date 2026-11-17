@@ -53,7 +53,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.Default();
 
   private @NotNull Object myId = new Object();
-  private volatile @Nullable Object myBuildId;
+  private final @Nullable Object myBuildId;
 
   private final List<ExecutionNode> myChildrenList = new ArrayList<>(); // Accessed from the async model thread only.
   private final AtomicInteger myErrors = new AtomicInteger();
@@ -73,10 +73,23 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private boolean myAlwaysLeaf;
   private boolean myAlwaysVisible;
 
+  public ExecutionNode(Project aProject, @Nullable Object buildId, boolean isAutoExpandNode, @NotNull Supplier<Boolean> isCorrectThread) {
+    this(aProject, null, buildId, isAutoExpandNode, isCorrectThread);
+  }
+
   public ExecutionNode(Project aProject, ExecutionNode parentNode, boolean isAutoExpandNode, @NotNull Supplier<Boolean> isCorrectThread) {
+    this(aProject, parentNode, parentNode != null ? parentNode.myBuildId : null, isAutoExpandNode, isCorrectThread);
+  }
+
+  private ExecutionNode(Project aProject,
+                        @Nullable ExecutionNode parentNode,
+                        @Nullable Object buildId,
+                        boolean isAutoExpandNode,
+                        @NotNull Supplier<Boolean> isCorrectThread) {
     super(aProject, parentNode);
     myName = "";
     myParentNode = parentNode;
+    myBuildId = buildId;
     myAutoExpandNode = isAutoExpandNode;
     myIsCorrectThread = isCorrectThread;
     myHintData = new HintData();
@@ -128,16 +141,8 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return myId;
   }
 
-  void setBuildId(@NotNull Object buildId) {
-    myBuildId = buildId;
-  }
-
   private @Nullable Object getBuildId() {
-    ExecutionNode node = this;
-    while (node.myParentNode != null) {
-      node = node.myParentNode;
-    }
-    return node.myBuildId;
+    return myBuildId;
   }
 
   public void setId(@NotNull Object id) {
@@ -351,16 +356,17 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   Icon getCurrentIcon() {
-    var customIcon = getCustomIcon();
-    if (customIcon != null) {
-      return customIcon;
-    }
     var preferredIconValue = myPreferredIconValue;
     if (preferredIconValue != null) {
       return preferredIconValue.getValue();
     }
-    else if (myResult instanceof MessageEventResult result) {
+    if (myResult instanceof MessageEventResult result) {
       return getIcon(result.getKind());
+    }
+
+    var customIcon = getCustomIcon();
+    if (customIcon != null) {
+      return customIcon;
     }
     else {
       return switch (getStatus()) {
@@ -378,13 +384,9 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     if (buildId == null) {
       return null;
     }
-    for (ExecutionNodePresentationCustomizer customizer : ExecutionNodePresentationCustomizer.EP_NAME.getExtensionList()) {
-      var icon = customizer.getIcon(buildId, this);
-      if (icon != null) {
-        return icon;
-      }
-    }
-    return null;
+    return ExecutionNodePresentationCustomizer.EP_NAME.computeSafeIfAny(
+      customizer -> customizer.getIcon(buildId, this)
+    );
   }
 
   public static boolean isFailed(@Nullable EventResult result) {

@@ -63,6 +63,7 @@ c:com.intellij.build.DefaultBuildDescriptor
 - withNavigateToError(com.intellij.util.ThreeState):com.intellij.build.DefaultBuildDescriptor
 c:com.intellij.build.ExecutionNode
 - com.intellij.ide.util.treeView.PresentableNodeDescriptor
+- <init>(com.intellij.openapi.project.Project,java.lang.Object,Z,java.util.function.Supplier):V
 - add(com.intellij.build.ExecutionNode):V
 - getChildList():java.util.List
 - getDuration():java.lang.String

@@ -172,8 +172,7 @@ public final class BuildTreeConsoleView
     myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
     myNavigateToTheFirstErrorLocation = isNavigateToTheFirstErrorLocation(project, buildDescriptor);
 
-    myRootNode = new ExecutionNode(myProject, null, true, this::isCorrectThread);
-    myRootNode.setBuildId(myBuildDescriptor.getId());
+    myRootNode = new ExecutionNode(myProject, myBuildDescriptor.getId(), true, this::isCorrectThread);
     myBuildProgressRootNode = new ExecutionNode(myProject, myRootNode, true, this::isCorrectThread);
     myRootNode.add(myBuildProgressRootNode);
 
