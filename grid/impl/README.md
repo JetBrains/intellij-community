@@ -58,8 +58,8 @@ With deferred updates, `DATA_WITH_MUTATIONS` shows the pending value until `subm
 
 Hooks change their models on the EDT, because [GridMutationModel](../core-impl/src/run/ui/grid/GridMutationModel.java) delivers events synchronously.
 Register the grid under the host's disposable, and keep the hook reference until the grid is disposed.
-[GridHookUpRegistry](../core-impl/src/datagrid/GridHookUpRegistry.kt) shares hooks through handles.
-`acquire(handle, parent)` ties a shared hook to the parent's lifetime and disposes it with the last reference.
+[GridHookUpRegistry](../core-impl/src/datagrid/GridHookUpRegistry.kt) shares hooks through [ids](../core-impl/src/datagrid/GridHookUpId.kt).
+`acquire(id, parent)` ties a shared hook to the parent's lifetime and disposes it with the last reference.
 
 ## Tests
 
