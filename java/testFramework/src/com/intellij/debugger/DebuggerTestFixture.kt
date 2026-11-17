@@ -422,7 +422,12 @@ class DebuggerTestFixture internal constructor(
     }
   }
 
-  private fun runProcess() {
+  /**
+   * Starts the debuggee of [debugProcess] and does not wait for it. A second call does nothing.
+   * Call it in the body when the test talks to the running session.
+   * [runTest] then waits for the end of the debuggee in [runProcessAndAwaitCompleted].
+   */
+  fun runProcess() {
     val process = debugProcess
     if (process != null && processStarted.compareAndSet(false, true)) {
       process.processHandler.startNotify()
