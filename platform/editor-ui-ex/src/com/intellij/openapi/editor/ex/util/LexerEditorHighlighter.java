@@ -42,12 +42,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.UnaryOperator;
 
 import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 
@@ -69,19 +69,19 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   private static final Logger LOG = Logger.getInstance(LexerEditorHighlighter.class);
   private static final int LEXER_INCREMENTALITY_THRESHOLD = 200;
   private static final Set<Class<?>> NON_INCREMENTAL_LEXERS = new HashSet<>();
+  private static final AtomicReferenceFieldUpdater<LexerEditorHighlighter, AttributesState> ATTRIBUTES_STATE_UPDATER =
+    AtomicReferenceFieldUpdater.newUpdater(LexerEditorHighlighter.class, AttributesState.class, "myAttributesState");
 
   private final Lexer myLexer;
   private final SyntaxHighlighter myHighlighter;
   private final int myInitialState;
-  private final Map<IElementType, TextAttributes> myAttributesMap = new HashMap<>();
-  private final Map<IElementType, TextAttributesKey[]> myKeysMap = new HashMap<>();
   private HighlighterClient myEditor;
   private SegmentArrayWithData mySegments;
-  private @NotNull EditorColorsScheme myScheme;
+  private volatile AttributesState myAttributesState;
   private CharSequence myText;
 
   public LexerEditorHighlighter(@NotNull SyntaxHighlighter highlighter, @NotNull EditorColorsScheme scheme) {
-    myScheme = scheme;
+    myAttributesState = new AttributesState(scheme, TokenTypeTable.empty(), TokenTypeTable.empty());
     myLexer = highlighter.getHighlightingLexer();
     myLexer.start(Strings.EMPTY_CHAR_SEQUENCE);
     myInitialState = myLexer.getState();
@@ -98,7 +98,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   public @NotNull EditorColorsScheme getScheme() {
-    return myScheme;
+    return myAttributesState.scheme();
   }
 
   public @NotNull SyntaxHighlighter getSyntaxHighlighter() {
@@ -142,8 +142,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   @Override
   public void setColorScheme(@NotNull EditorColorsScheme scheme) {
-    myScheme = scheme;
-    myAttributesMap.clear();
+    updateAttributesState(state -> state.withScheme(scheme));
   }
 
   @Override
@@ -468,7 +467,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   @NotNull
   TextAttributes convertAttributes(TextAttributesKey @NotNull [] keys) {
-    return LayeredTextAttributes.create(myScheme, keys);
+    return LayeredTextAttributes.create(getScheme(), keys);
   }
 
   private void doSetText(@NotNull CharSequence text) {
@@ -516,22 +515,55 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   private @NotNull TextAttributes getAttributes(@NotNull IElementType tokenType) {
-    TextAttributes attrs = myAttributesMap.get(tokenType);
-    if (attrs == null) {
-      // let's fetch syntax highlighter attributes for token and merge them with "TEXT" attribute of current color scheme
-      attrs = convertAttributes(getAttributesKeys(tokenType));
-      myAttributesMap.put(tokenType, attrs);
+    TextAttributes attributes = myAttributesState.attributes().get(tokenType);
+    if (attributes != null) {
+      return attributes;
     }
-    return attrs;
+    return addAttributes(tokenType);
+  }
+
+  private TextAttributes addAttributes(IElementType tokenType) {
+    TextAttributesKey[] keys = getAttributesKeys(tokenType);
+    AttributesState state = updateAttributesState(current -> {
+      if (current.attributes().get(tokenType) != null) {
+        return current;
+      }
+      // let's fetch syntax highlighter attributes for token and merge them with "TEXT" attribute of current color scheme
+      return current.withAttributes(tokenType, LayeredTextAttributes.create(current.scheme(), keys));
+    });
+    return state.attributes().get(tokenType);
   }
 
   private TextAttributesKey @NotNull [] getAttributesKeys(@NotNull IElementType tokenType) {
-    TextAttributesKey[] attributesKeys = myKeysMap.get(tokenType);
-    if (attributesKeys == null) {
-      attributesKeys = myHighlighter.getTokenHighlights(tokenType);
-      myKeysMap.put(tokenType, attributesKeys);
+    TextAttributesKey[] keys = myAttributesState.keys().get(tokenType);
+    if (keys != null) {
+      return keys;
     }
-    return attributesKeys;
+    return addAttributesKeys(tokenType);
+  }
+
+  private TextAttributesKey[] addAttributesKeys(IElementType tokenType) {
+    TextAttributesKey[] keys = myHighlighter.getTokenHighlights(tokenType);
+    AttributesState state = updateAttributesState(current -> {
+      if (current.keys().get(tokenType) != null) {
+        return current;
+      }
+      return current.withKeys(tokenType, keys);
+    });
+    return state.keys().get(tokenType);
+  }
+
+  /**
+   * Applies {@code operation} to the current attributes state and publishes the result, and returns the published state.
+   */
+  private AttributesState updateAttributesState(UnaryOperator<AttributesState> operation) {
+    while (true) {
+      AttributesState prev = myAttributesState;
+      AttributesState next = operation.apply(prev);
+      if (next == prev || ATTRIBUTES_STATE_UPDATER.compareAndSet(this, prev, next)) {
+        return next;
+      }
+    }
   }
 
   private @NotNull List<IElementType> getTokenType(@NotNull CharSequence text, int offset) {
@@ -789,6 +821,36 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
                          ? highlighter.myLexer.toString()
                          : highlighter.myLexer.getClass().getName();
       return "%s(%s): %s".formatted(highlighter.getClass().getName(), lexerType, message);
+    }
+  }
+
+  /**
+   * The color scheme, the text attributes of the token types in it, and the attribute keys of the token types.
+   */
+  private record AttributesState(
+    EditorColorsScheme scheme,
+    TokenTypeTable<TextAttributes> attributes,
+    TokenTypeTable<TextAttributesKey[]> keys
+  ) {
+    /**
+     * Returns the state of {@code newScheme} with the attribute keys of this state and no text attributes.
+     */
+    AttributesState withScheme(EditorColorsScheme newScheme) {
+      return new AttributesState(newScheme, TokenTypeTable.empty(), keys);
+    }
+
+    /**
+     * Returns this state with {@code tokenAttributes} for {@code tokenType}.
+     */
+    AttributesState withAttributes(IElementType tokenType, TextAttributes tokenAttributes) {
+      return new AttributesState(scheme, attributes.with(tokenType, tokenAttributes), keys);
+    }
+
+    /**
+     * Returns this state with {@code tokenKeys} for {@code tokenType}.
+     */
+    AttributesState withKeys(IElementType tokenType, TextAttributesKey[] tokenKeys) {
+      return new AttributesState(scheme, attributes, keys.with(tokenType, tokenKeys));
     }
   }
 }
