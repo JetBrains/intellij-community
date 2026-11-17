@@ -90,6 +90,7 @@
 - a:deserialize(com.intellij.platform.settings.v2.SettingsValue):java.lang.Object
 - a:serialize(java.lang.Object):com.intellij.platform.settings.v2.SettingsValue
 *f:com.intellij.platform.settings.v2.SerializerKt
+- *sf:enumSerializer(java.lang.Class):com.intellij.platform.settings.v2.Serializer
 - *sf:listOf(com.intellij.platform.settings.v2.Serializer):com.intellij.platform.settings.v2.Serializer
 - *sf:mapOf(com.intellij.platform.settings.v2.Serializer):com.intellij.platform.settings.v2.Serializer
 - *sf:nullable(com.intellij.platform.settings.v2.Serializer):com.intellij.platform.settings.v2.Serializer
