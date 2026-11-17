@@ -8,7 +8,11 @@ enum class IdeTheme(val searchName: String) {
   DARK("Dark"),
 }
 
+/**
+ * Selects [theme] in the theme popup. The new UI can hide the legacy Light and Dark themes, so the function shows them first.
+ */
 fun Driver.changeTheme(theme: IdeTheme) {
+  setRegistry("ide.show.legacy.themes", true)
   invokeAction("ChangeLaf")
   ideFrame {
     keyboard {

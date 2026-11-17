@@ -73,6 +73,8 @@ internal class ThemeListProviderImpl : ThemeListProvider {
         newUiThemes.add(darcula)
         classicUiThemes.remove(darcula)
       }
+
+      newUiThemes.removeAll { LegacyThemes.isHidden(it) }
     }
 
     val groupInfos = mutableListOf<Groups.GroupInfo<UIThemeLookAndFeelInfo>>()

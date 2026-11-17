@@ -25,6 +25,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.ui.laf.darcula.ui.installNewUiOnOffButtonUI
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -37,6 +38,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.CoroutineSupport
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.ui
@@ -68,6 +70,9 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -189,7 +194,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   private val storedDefaults = HashMap<String?, MutableMap<String, Any?>>()
   private val lafComboBoxModel = SynchronizedClearableLazy {
-    LafComboBoxModel(ThemeListProvider.getInstance().getShownThemes())
+    val model = LafComboBoxModel(ThemeListProvider.getInstance().getShownThemes())
+    currentTheme?.let { model.selectedItem = LafReference(it.name, it.id) }
+    model
   }
 
   // SystemDarkThemeDetector must be created as part of LafManagerImpl initialization and not on demand because system listeners are added
@@ -273,10 +280,20 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
     updateUI(isFirstSetup = true)
     detectAndSyncLaf()
+    showLegacyThemesIfUsed()
   }
 
   private fun addListeners() {
     UIThemeProvider.EP_NAME.addExtensionPointListener(coroutineScope, service<LafDynamicPluginManager>().createUiThemeEpListener(manager = this))
+    RegistryManager.getInstance().get(LegacyThemes.SHOW_LEGACY_THEMES_KEY).addListener(object : RegistryValueListener {
+      override fun afterValueChanged(value: RegistryValue) {
+        coroutineScope.launch(Dispatchers.EDT) {
+          showLegacyThemesIfUsed()
+          updateLafComboboxModel()
+        }
+      }
+    }, coroutineScope)
+
     @Suppress("ObjectLiteralToLambda")
     ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(UISettingsListener.TOPIC, object : UISettingsListener {
       override fun uiSettingsChanged(uiSettings: UISettings) {
@@ -434,6 +451,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
                                                     /* force = */ true,
                                                     /* lockEditorScheme = */ true)
       }
+      showLegacyThemesIfUsed()
     }
   }
 
@@ -661,6 +679,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     currentTheme = lookAndFeelInfo
+    showLegacyThemesIfUsed()
     selectComboboxModel()
     if (!isFirstSetup && installEditorScheme) {
       updateEditorSchemeIfNecessary(oldLaf = oldLaf)
@@ -947,6 +966,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     autodetect = value
+    showLegacyThemesIfUsed()
 
     // Notify autodetect is changed
     notifyLookAndFeelChanged()
@@ -973,12 +993,33 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     return preferredDarkThemeId
   }
 
+  /**
+   * Returns the IDs of the used themes. They are the current theme and, with the OS sync, the preferred themes.
+   */
+  private fun usedThemeIds(): List<String> =
+    listOfNotNull(currentTheme?.id) + if (getAutodetect()) listOfNotNull(preferredDarkThemeId, preferredLightThemeId) else emptyList()
+
+  /**
+   * Sets the [LegacyThemes.SHOW_LEGACY_THEMES_KEY] registry key to `true` if the user uses a legacy theme. See [usedThemeIds].
+   * The check occurs at the IDE start, at each change of the used themes, and at each change of the registry key.
+   */
+  private fun showLegacyThemesIfUsed() {
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
+      return
+    }
+
+    LegacyThemes.showIfUsed(usedThemeIds())
+  }
+
   override fun setPreferredDarkLaf(value: UIThemeLookAndFeelInfo) {
     preferredDarkThemeId = value.id
+    showLegacyThemesIfUsed()
   }
 
   override fun setPreferredLightLaf(value: UIThemeLookAndFeelInfo) {
     preferredLightThemeId = value.id
+    showLegacyThemesIfUsed()
   }
 
   override fun resetPreferredEditorColorScheme() {

@@ -1016,6 +1016,8 @@
     <themeProvider id="Islands Dark" path="/themes/islands/ManyIslandsDark.theme.json" targetUi="islands"/>
     <themeProvider id="Islands Light" path="/themes/islands/ManyIslandsLight.theme.json" targetUi="islands"/>
     <themeProvider id="Islands Darcula" path="/themes/islands/ManyIslandsDarcula.theme.json" targetUi="islands"/>
+    <registryKey key="ide.show.legacy.themes" defaultValue="true"
+                 description="Show the legacy Dark, Light, Light with Light Header, and Darcula themes in the new UI"/>
     <themeMetadataProvider path="/themes/metadata/IntelliJPlatform.themeMetadata.json"/>
     <themeMetadataProvider path="/themes/metadata/JDK.themeMetadata.json"/>
     <themeRemapper implementation="com.intellij.openapi.application.impl.islands.IslandsThemeRemapper"/>
