@@ -19,16 +19,6 @@ import java.util.UUID
  *
  * [Deployed] means that the machine has a cached session. Use [IjentSession.isRunning] to check if the session is running.
  */
-@VisibleToClasses(
-  "com.intellij.docker.ijent.DockerEelMachine",
-  "com.intellij.execution.wsl.WSLDistributionTest",
-  "com.intellij.execution.wsl.WslIjentManager",
-  "com.intellij.platform.ide.impl.wsl.ProductionWslIjentManager",
-  "com.intellij.platform.ide.impl.wsl.WslEelMachine",
-  "com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler",
-  "com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogKt",
-  "com.intellij.platform.ijent.testFramework.functional.fixture.EelFixtureWslIjentManager",
-)
 sealed interface IjentSessionState {
   data object NotDeployed : IjentSessionState
   data object Deploying : IjentSessionState
@@ -98,17 +88,6 @@ interface IjentSession {
   )
   suspend fun setParentProcessToWatch(pid: Long)
 
-  @VisibleToClasses(
-    "com.intellij.docker.ijent.DockerEelMachine",
-    "com.intellij.platform.ide.impl.wsl.ProductionWslIjentManager",
-    "com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler",
-    "com.intellij.platform.ijent.impl.base.GrpcIjentApiPosix",
-    "com.intellij.platform.ijent.impl.base.GrpcIjentApiWindows",
-    "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategyUnitTest",
-    "com.intellij.platform.ijent.ssh.AbstractIjentSshManagerTest",
-    "com.intellij.platform.ijent.ssh.daemon.IjentOverJetBrainsDaemonManager",
-    "com.intellij.platform.ijent.ssh.impl.AbstractIjentSshManager",
-  )
   fun close()
 
   fun getIjentInstance(descriptor: EelDescriptor): IjentApi
@@ -138,10 +117,6 @@ interface IjentSession {
  */
 @ApiStatus.Internal
 @OptIn(DelicateCoroutinesApi::class)
-@VisibleToClasses(
-  "com.intellij.platform.frontend.split.baseline.light.LightModeConnectionStatusService",
-  "com.intellij.platform.ijent.IjentSessionExitReasonTest",
-)
 suspend fun IjentSession.awaitEnd(): EelUnavailableException? {
   val ijentScope = sessionCoroutineScope
   ijentScope.s.coroutineContext.job.join()
