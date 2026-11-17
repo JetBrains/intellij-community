@@ -1,10 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.test
 
+import com.intellij.debugger.engine.JavaValue
 import com.intellij.xdebugger.XDebuggerTestUtil
+import com.intellij.xdebugger.XTestEvaluationCallback
 import com.intellij.xdebugger.frame.XNamedValue
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueContainer
+import com.sun.jdi.StringReference
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
@@ -29,6 +32,7 @@ import org.jetbrains.kotlin.idea.debugger.test.util.iterator
  *
  * `VARIABLE_PATH` is a dot-separated chain of variable / field names rooted in the current stack frame
  * (e.g. `foo` or `foo.bar`). `EVAL_EXPRESSION` is the text the IDE is expected to fill the Evaluate Expression dialog with.
+ * If `EVAL_RESULT` is present for each path, the test also evaluates each expression and checks its value.
  */
 abstract class AbstractKotlinEvaluationExpressionTest : KotlinDescriptorTestCaseWithStepping() {
     private val capturedFailures = mutableListOf<Throwable>()
@@ -55,17 +59,31 @@ abstract class AbstractKotlinEvaluationExpressionTest : KotlinDescriptorTestCase
                 processStackFramesOnPooledThread {
                     try {
                         val rootValues = XDebuggerTestUtil.collectChildren(first())
-                        for ((path, expected) in expectations) {
+                        for ((path, expected, expectedResult) in expectations) {
                             val target = resolvePath(rootValues, path)
                                 ?: error("Could not resolve variable path `$path` from frame children: " +
                                          rootValues.mapNotNull { (it as? XNamedValue)?.name })
-                            val actual = target.calculateEvaluationExpression()
-                                .blockingGet(XDebuggerTestUtil.TIMEOUT_MS)?.expression
+                            val expression = checkNotNull(target.calculateEvaluationExpression().blockingGet(XDebuggerTestUtil.TIMEOUT_MS))
+                            val actual = expression.expression
                             assertEquals(
                                 "Expected evaluation expression for variable path `$path` to look like: `$expected`, " +
                                         "and got: `$actual`",
                                 expected, actual
                             )
+                            if (expectedResult != null) {
+                                var actualResult: String? = null
+                                val callback = object : XTestEvaluationCallback() {
+                                    override fun evaluated(result: XValue) {
+                                        val value = (result as JavaValue).descriptor.value
+                                        actualResult = if (value is StringReference) value.value() else value.toString()
+                                        super.evaluated(result)
+                                    }
+                                }
+                                checkNotNull(first().evaluator).evaluate(expression, callback, first().sourcePosition)
+                                val result = callback.waitFor(XDebuggerTestUtil.TIMEOUT_MS.toLong())
+                                assertNull("Cannot evaluate `$actual`: ${result.second}", result.second)
+                                assertEquals("Wrong value for `$actual`", expectedResult, actualResult)
+                            }
                         }
                     } catch (t: Throwable) {
                         capturedFailures.add(t)
@@ -88,13 +106,19 @@ abstract class AbstractKotlinEvaluationExpressionTest : KotlinDescriptorTestCase
         return current
     }
 
-    private fun parseExpectations(content: String): List<Pair<String, String>> {
+    private data class Expectation(val path: String, val expression: String, val result: String?)
+
+    private fun parseExpectations(content: String): List<Expectation> {
         val paths = findLinesWithPrefixesRemoved(content, "// VARIABLE_PATH: ")
         val expressions = findLinesWithPrefixesRemoved(content, "// EVAL_EXPRESSION: ")
+        val results = findLinesWithPrefixesRemoved(content, "// EVAL_RESULT: ")
         check(paths.size == expressions.size) {
             "Mismatched directive counts: ${paths.size} `// VARIABLE_PATH:` vs " +
             "${expressions.size} `// EVAL_EXPRESSION:` (each path needs its expression on the next line)"
         }
-        return paths.zip(expressions)
+        check(results.isEmpty() || results.size == paths.size) {
+            "An `EVAL_RESULT` directive must exist for each variable path"
+        }
+        return paths.indices.map { Expectation(paths[it], expressions[it], results.getOrNull(it)) }
     }
 }
