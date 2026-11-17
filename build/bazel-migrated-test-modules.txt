@@ -406,3 +406,4 @@ intellij.kotlin.lombok.tests
 intellij.kotlin.base.codeInsight.tests
 intellij.kotlin.uast.idea.tests
 intellij.kotlin.completion.ml.tests
+intellij.kotlin.codeInsight.tests
