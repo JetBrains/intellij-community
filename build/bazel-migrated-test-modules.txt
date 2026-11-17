@@ -85,6 +85,7 @@ intellij.gradle.completion.tests
 intellij.gradle.java.maven.tests
 intellij.gradle.java.tests
 intellij.gradle.java.tests.benchmark
+intellij.gradle.java.tests.integration.service
 intellij.gradle.java.toml.tests
 intellij.gradle.tests
 intellij.gradle.tests.benchmark
