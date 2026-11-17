@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unusedSymbol;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -242,7 +242,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
         }
         else if (!UnusedSymbolUtil.isFieldUsed(project, file, field, helper)) {
           if (UnusedSymbolUtil.isImplicitWrite(project, field) && !UnusedSymbolUtil.isImplicitRead(project, field)) {
-            registerProblem(field, getNotUsedForReadingMessage(field), List.of(fixFactory.createSafeDeleteFix(field)));
+            registerProblem(field, getNotUsedForReadingMessage(field), List.of(fixFactory.createSafeDeleteFix(field).asIntention()));
           }
           else if (!UnusedSymbolUtil.isImplicitUsage(project, field)) {
             formatUnusedSymbolHighlightInfo("field.is.not.used", field);
@@ -253,7 +253,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
       private void formatUnusedSymbolHighlightInfo(@NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String pattern,
                                                    @NotNull PsiMember member) {
         List<IntentionAction> fixes = new ArrayList<>();
-        fixes.add(QuickFixFactory.getInstance().createSafeDeleteFix(member));
+        fixes.add(QuickFixFactory.getInstance().createSafeDeleteFix(member).asIntention());
         SpecialAnnotationsUtilBase.processUnknownAnnotations(member, annoName ->
           fixes.add(QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName)));
         registerProblem(member, JavaErrorBundle.message(pattern, member.getName()), fixes);
@@ -286,7 +286,7 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
         String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY, options);
         QuickFixFactory factory = QuickFixFactory.getInstance();
         List<IntentionAction> fixes = new ArrayList<>();
-        fixes.add(factory.createSafeDeleteFix(method));
+        fixes.add(factory.createSafeDeleteFix(method).asIntention());
         if (ApplicationManager.getApplication().isHeadlessEnvironment() && method.hasModifierProperty(PsiModifier.PRIVATE)) {
           fixes.add(factory.createDeletePrivateMethodFix(method).asIntention());
         }

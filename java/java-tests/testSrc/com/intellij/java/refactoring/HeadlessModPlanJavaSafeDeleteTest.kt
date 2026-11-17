@@ -377,8 +377,7 @@ class HeadlessModPlanJavaSafeDeleteTest : LightJavaCodeInsightFixtureTestCase() 
 
   /** @return the command of the safe delete fix for the parameter of `Worker.bar` */
   private fun parameterFixCommand(file: PsiFile): ModCommand = inBackground {
-    QuickFixFactory.getInstance().createSafeDeleteFix(method("Worker", "bar").parameterList.parameters[0])
-      .asModCommandAction()!!.perform(ActionContext.from(null, file))
+    QuickFixFactory.getInstance().createSafeDeleteFix(method("Worker", "bar").parameterList.parameters[0]).perform(ActionContext.from(null, file))
   }
 
   private fun addCallersThatPassOnTheParameter() {

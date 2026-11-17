@@ -862,7 +862,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
         JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false).asIntention();
     }
     else {
-      return createSafeDeleteFix(parameter);
+      return createSafeDeleteFix(parameter).asIntention();
     }
   }
 
@@ -917,8 +917,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull LocalQuickFixAndIntentionActionOnPsiElement createSafeDeleteFix(@NotNull PsiElement element) {
-    return LocalQuickFixAndIntentionActionOnPsiElement.from(new JavaModPlanSafeDeleteFix(element), element);
+  public @NotNull ModCommandAction createSafeDeleteFix(@NotNull PsiElement element) {
+    return new JavaModPlanSafeDeleteFix(element);
   }
 
   @Override

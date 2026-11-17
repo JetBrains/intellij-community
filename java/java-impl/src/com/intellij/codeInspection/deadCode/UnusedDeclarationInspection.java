@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
@@ -290,7 +290,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
       PsiElement toHighlight = ObjectUtils.notNull(psiVariable.getNameIdentifier(), psiVariable);
       return myInspectionManager.createProblemDescriptor(
         toHighlight, JavaBundle.message("inspection.unused.assignment.problem.descriptor1"), 
-        psiVariable instanceof PsiLocalVariable ? LocalQuickFix.from(new RemoveUnusedVariableFix(psiVariable)) : QuickFixFactory.getInstance().createSafeDeleteFix(psiVariable),
+        psiVariable instanceof PsiLocalVariable ? LocalQuickFix.from(new RemoveUnusedVariableFix(psiVariable)) : LocalQuickFix.from(QuickFixFactory.getInstance().createSafeDeleteFix(psiVariable)),
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
     }
   }
