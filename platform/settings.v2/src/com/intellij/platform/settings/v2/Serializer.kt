@@ -20,6 +20,10 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * and written. The platform owns the key of a setting, and the serializer handles only the *value*.
  *
  * A serializer has no `copy` method. Each read deserializes a fresh instance, so no mutable state is shared.
+ *
+ * A stored value can be incorrect, because a user edits the config by hand. A deserializer does its best to restore the
+ * value. When it cannot, it throws [IllegalArgumentException] with a message that says what is wrong, and the read
+ * falls back to the default of the key. It throws no other exception for an incorrect value.
  */
 @Experimental
 interface Serializer<T> {
@@ -29,18 +33,27 @@ interface Serializer<T> {
   /**
    * Returns the typed value of the [value] tree.
    *
-   * @throws ClassCastException when [value] has the wrong shape for [T]. A read then logs it and falls back to the
-   *   default.
+   * @throws IllegalArgumentException when [value] is incorrect for [T] in any way, for example a value of an unexpected
+   *   type or shape, or an unknown name. A read then logs a warning and falls back to the default.
    */
+  @Throws(IllegalArgumentException::class)
   fun deserialize(value: SettingsValue): T
 }
+
+/**
+ * Returns this stored value as a [V], for a deserializer that expects that type of value.
+ *
+ * @throws IllegalArgumentException when this value is not a [V]
+ */
+internal inline fun <reified V : SettingsValue> SettingsValue.requireValue(): V =
+  this as? V ?: throw IllegalArgumentException("Expected a stored ${V::class.java.simpleName}, but found a ${javaClass.simpleName}")
 
 /** Serializes an [Int] as an [IntValue]. The scalar shortcut form of [SettingsKey] picks it automatically. */
 @Experimental
 object IntSerializer : Serializer<Int> {
   override fun serialize(value: Int): SettingsValue = IntValue(value)
 
-  override fun deserialize(value: SettingsValue): Int = (value as IntValue).value
+  override fun deserialize(value: SettingsValue): Int = value.requireValue<IntValue>().value
 }
 
 /** Serializes a [Long] as a [LongValue]. The scalar shortcut form of [SettingsKey] picks it automatically. */
@@ -48,7 +61,7 @@ object IntSerializer : Serializer<Int> {
 object LongSerializer : Serializer<Long> {
   override fun serialize(value: Long): SettingsValue = LongValue(value)
 
-  override fun deserialize(value: SettingsValue): Long = (value as LongValue).value
+  override fun deserialize(value: SettingsValue): Long = value.requireValue<LongValue>().value
 }
 
 /** Serializes a [Double] as a [DoubleValue]. The scalar shortcut form of [SettingsKey] picks it automatically. */
@@ -56,7 +69,7 @@ object LongSerializer : Serializer<Long> {
 object DoubleSerializer : Serializer<Double> {
   override fun serialize(value: Double): SettingsValue = DoubleValue(value)
 
-  override fun deserialize(value: SettingsValue): Double = (value as DoubleValue).value
+  override fun deserialize(value: SettingsValue): Double = value.requireValue<DoubleValue>().value
 }
 
 /** Serializes a [Boolean] as a [BooleanValue]. The scalar shortcut form of [SettingsKey] picks it automatically. */
@@ -64,7 +77,7 @@ object DoubleSerializer : Serializer<Double> {
 object BooleanSerializer : Serializer<Boolean> {
   override fun serialize(value: Boolean): SettingsValue = BooleanValue(value)
 
-  override fun deserialize(value: SettingsValue): Boolean = (value as BooleanValue).value
+  override fun deserialize(value: SettingsValue): Boolean = value.requireValue<BooleanValue>().value
 }
 
 /** Serializes a [String] as a [StringValue]. The scalar shortcut form of [SettingsKey] picks it automatically. */
@@ -72,7 +85,7 @@ object BooleanSerializer : Serializer<Boolean> {
 object StringSerializer : Serializer<String> {
   override fun serialize(value: String): SettingsValue = StringValue(value)
 
-  override fun deserialize(value: SettingsValue): String = (value as StringValue).value
+  override fun deserialize(value: SettingsValue): String = value.requireValue<StringValue>().value
 }
 
 /**
@@ -100,7 +113,7 @@ fun <T> Serializer<T>.listOf(): Serializer<List<T>> = ListSerializer(this)
 private class ListSerializer<T>(private val element: Serializer<T>) : Serializer<List<T>> {
   override fun serialize(value: List<T>): SettingsValue = ListValue.wrapOwned(value.map(element::serialize))
 
-  override fun deserialize(value: SettingsValue): List<T> = (value as ListValue).items.map(element::deserialize)
+  override fun deserialize(value: SettingsValue): List<T> = value.requireValue<ListValue>().items.map(element::deserialize)
 }
 
 /**
@@ -114,14 +127,14 @@ fun <V> Serializer<V>.mapOf(): Serializer<Map<String, V>> = MapEntrySerializer(t
 private class MapEntrySerializer<V>(private val valueSerializer: Serializer<V>) : Serializer<Map<String, V>> {
   override fun serialize(value: Map<String, V>): SettingsValue = MapValue.wrapOwned(value.mapValues { valueSerializer.serialize(it.value) })
 
-  override fun deserialize(value: SettingsValue): Map<String, V> = (value as MapValue).values.mapValues { valueSerializer.deserialize(it.value) }
+  override fun deserialize(value: SettingsValue): Map<String, V> = value.requireValue<MapValue>().values.mapValues { valueSerializer.deserialize(it.value) }
 }
 
 /** Passes a [MapValue] through unchanged. A [SettingsMapKey] uses it, because its value is already a [MapValue]. */
 @Experimental
 object DumbMapValueSerializer : Serializer<MapValue> {
   override fun serialize(value: MapValue): SettingsValue = value
-  override fun deserialize(value: SettingsValue): MapValue = value as MapValue
+  override fun deserialize(value: SettingsValue): MapValue = value.requireValue<MapValue>()
 }
 
 /**

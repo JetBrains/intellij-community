@@ -79,11 +79,22 @@ its own format, so neither the key nor the serializer knows the format.
 - The other keys of the same layer must still resolve their stored values.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsJsonRobustnessTest.kt
 - The engine must log a warning for a malformed value.
+- A deserializer must do its best to restore a stored value. When it cannot, it must throw `IllegalArgumentException`
+  with a message that says what is wrong. This applies to every kind of incorrect value: an unexpected type or shape,
+  an unknown name, or anything else.
+- Every built-in serializer must check the type of the stored value. A wrong scalar, a wrong element of a list, a
+  wrong value of a map, and a wrong value of a nullable serializer must each give `IllegalArgumentException`, so the
+  key resolves to its default with a warning.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMalformedValueTest.kt
+- A custom serializer that throws `IllegalArgumentException` must make its key resolve to the default with a warning.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMalformedValueTest.kt
 
 ## Error Handling
 
-- A serializer signals a type mismatch with `ClassCastException`. The engine catches only that exception.
-- The kotlinx bridge rethrows a decode failure of kotlinx as `ClassCastException`.
+- A serializer signals an incorrect stored value with `IllegalArgumentException`. The engine catches only that
+  exception and treats it as a malformed value.
+- The kotlinx bridge lets a decode failure of kotlinx propagate. Its `SerializationException` is an
+  `IllegalArgumentException`.
 
 ## Open Questions / Risks
 
