@@ -289,14 +289,11 @@ private fun PyDataclassResolver.isAssignedOmittedDefault(
  * The field's custom stub, framework-agnostic: field stubs are built context-free by the
  * [com.jetbrains.python.codeInsight.PyDataclassParametersProvider] extensions.
  */
-private fun retrieveFieldStub(field: PyTargetExpression): PyDataclassFieldStub? =
-  if (field.stub != null) {
-    // Reuse the already-built PSI stub when the field is stubbed; otherwise build the field stub from AST.
-    field.stub.getCustomStub(PyDataclassFieldStub::class.java)
-  }
-  else {
-    PyDataclassFieldStubImpl.create(field)
-  }
+private fun retrieveFieldStub(field: PyTargetExpression): PyDataclassFieldStub? {
+  // Read the stub once. The file can switch from the stub to the AST between two reads.
+  val stub = field.stub
+  return if (stub != null) stub.getCustomStub(PyDataclassFieldStub::class.java) else PyDataclassFieldStubImpl.create(field)
+}
 
 @ApiStatus.Internal
 fun isKwOnlyMarkerField(parameter: PyCallableParameter, context: TypeEvalContext): Boolean {
