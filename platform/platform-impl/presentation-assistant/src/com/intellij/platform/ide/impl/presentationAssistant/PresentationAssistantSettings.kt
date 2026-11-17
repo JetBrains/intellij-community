@@ -17,6 +17,7 @@ import com.intellij.platform.settings.v2.enumSerializer
 import com.intellij.platform.settings.v2.getValue
 import com.intellij.platform.settings.v2.mutate
 import com.intellij.platform.settings.v2.nullable
+import kotlinx.coroutines.Job
 
 /**
  * Holds the settings keys of the Presentation Assistant. Each key resolves only at the application context, and each
@@ -109,6 +110,14 @@ internal object PresentationAssistantSettings {
    * context of the batch pins the slot of the current OS, so a write of a key of [PER_OS_SETTINGS] lands there.
    */
   fun startChange(): SettingsMutationBuilder = SettingsContext.app().access(OS).mutate()
+
+  /**
+   * Launches an asynchronous update of the settings, for a caller that cannot suspend, such as an action on the EDT.
+   * [update] writes the keys, for example `KEY.setValue(value)`.
+   *
+   * @return the job of the update
+   */
+  fun updateAsync(update: suspend () -> Unit): Job = service<PresentationAssistant>().launchInServiceScope(update)
 }
 
 /**

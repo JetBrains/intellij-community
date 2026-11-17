@@ -4,8 +4,9 @@ package com.intellij.platform.ide.impl.presentationAssistant
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.platform.settings.v2.getValue
+import com.intellij.platform.settings.v2.setValue
 
 internal class TogglePresentationAssistantAction : DumbAwareToggleAction() {
   init {
@@ -14,11 +15,11 @@ internal class TogglePresentationAssistantAction : DumbAwareToggleAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  override fun isSelected(e: AnActionEvent) = service<PresentationAssistant>().configuration.showActionDescriptions
+  override fun isSelected(e: AnActionEvent): Boolean = PresentationAssistantSettings.SHOW_ACTION_DESCRIPTIONS.getValue()
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val presentationAssistant = service<PresentationAssistant>()
-    presentationAssistant.configuration.showActionDescriptions = state
-    presentationAssistant.updatePresenter(e.project, true)
+    PresentationAssistantSettings.updateAsync {
+      PresentationAssistantSettings.SHOW_ACTION_DESCRIPTIONS.setValue(state)
+    }
   }
 }

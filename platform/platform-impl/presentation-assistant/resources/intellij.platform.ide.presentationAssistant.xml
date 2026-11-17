@@ -23,6 +23,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistant"/>
     <applicationSettings service="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistant"/>
+    <applicationService serviceImplementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantLegacySettings"/>
+    <applicationSettings service="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantLegacySettings"/>
     <applicationConfigurable id="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantConfigurable"
                              groupId="appearance"
                              key="presentation.assistant.settings"

@@ -16,6 +16,9 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.settings.v2.SettingsContext
+import com.intellij.platform.settings.v2.getValue
+import com.intellij.platform.settings.v2.setValue
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScreenUtil
@@ -44,9 +47,17 @@ internal class ActionInfoPopupGroup(private val project: Project, textFragments:
     val isDisposed: Boolean get() = popup.isDisposed
   }
 
+  private val appearance = appearanceFromSize(PresentationAssistantSettings.POPUP_SIZE.getValue(), PresentationAssistantSettings.popupTheme)
+
   private val configuration = service<PresentationAssistant>().configuration
-  private val appearance = appearanceFromSize(PresentationAssistantPopupSize.from(configuration.popupSize),
-                                              PresentationAssistantTheme.fromValueOrDefault(configuration.theme))
+
+  /**
+   * Holds the alignment of the popups. A drag changes it at once and saves it at its end, so the popups move with the
+   * mouse before the write lands. A change of [PresentationAssistantSettings.POPUP_ALIGNMENT] from elsewhere moves the
+   * popups to the new alignment, with no close (see [followAlignment]).
+   */
+  private var popupAlignment = PresentationAssistantSettings.POPUP_ALIGNMENT.getValue()
+
   private val actionBlocks = textFragments.map { fragment ->
     val panel = ActionInfoPanel(fragment, appearance)
     val popup = createPopup(panel, showAnimated)
@@ -104,6 +115,10 @@ internal class ActionInfoPopupGroup(private val project: Project, textFragments:
   init {
     val connect = ApplicationManager.getApplication().getMessageBus().connect(this)
     connect.subscribe<LafManagerListener>(LafManagerListener.TOPIC, LafManagerListener { updatePopupsBounds(project) })
+    PresentationAssistantSettings.POPUP_ALIGNMENT.addListener(this, SettingsContext.app()) { _, _ ->
+      // A listener has no thread contract. Any modality, because a modal dialog such as Settings can write the key.
+      ApplicationManager.getApplication().invokeLater({ followAlignment() }, ModalityState.any())
+    }
 
     addWindowListener(project, object : WindowAdapter() {
       override fun windowDeactivated(ev: WindowEvent) {
@@ -139,7 +154,7 @@ internal class ActionInfoPopupGroup(private val project: Project, textFragments:
   private fun createPopup(panel: ActionInfoPanel, hiddenInitially: Boolean): JBPopup {
     val popup = with(JBPopupFactory.getInstance().createComponentPopupBuilder(panel, panel)) {
       if (hiddenInitially) setAlpha(1.0.toFloat())
-      setBorderColorIfNeeded(PresentationAssistantTheme.fromValueOrDefault(configuration.theme))
+      setBorderColorIfNeeded(appearance.theme)
       setFocusable(false)
       setBelongsToGlobalPopupStack(false)
       setCancelKeyEnabled(false)
@@ -147,7 +162,7 @@ internal class ActionInfoPopupGroup(private val project: Project, textFragments:
       createPopup()
     }
 
-    popup.content.background = PresentationAssistantTheme.fromValueOrDefault(configuration.theme).background
+    popup.content.background = appearance.theme.background
 
     popup.addListener(object : JBPopupListener {
       override fun beforeShown(lightweightWindowEvent: LightweightWindowEvent) {}
@@ -194,6 +209,7 @@ internal class ActionInfoPopupGroup(private val project: Project, textFragments:
         if (isFinal) {
           validateAndFixLocationDelta(project)
           updatePopupsBounds(project, null)
+          savePlacement()
         }
         else {
           updatePopupsBounds(project, actionInfoPanel)
@@ -242,12 +258,29 @@ internal class ActionInfoPopupGroup(private val project: Project, textFragments:
 
     val window = getPopupWindow(actionBlocks[index].popup) ?: return
 
-    val newAlignment = calculateNewAlignmentAfterDrag(window)
-    configuration.horizontalAlignment = newAlignment.x
-    configuration.verticalAlignment = newAlignment.y
+    popupAlignment = calculateNewAlignmentAfterDrag(window)
 
     val originalLocation = computeLocation(project, index, true).popupLocation.screenPoint
     applyDeltaToConfiguration(originalLocation, window.location)
+  }
+
+  /**
+   * Moves the popups to the alignment that [PresentationAssistantSettings.POPUP_ALIGNMENT] holds now, with the offsets
+   * of the state. The end of a drag writes the alignment that the group already has, so the dropped popups stay.
+   */
+  private fun followAlignment() {
+    val alignment = PresentationAssistantSettings.POPUP_ALIGNMENT.getValue()
+    if (alignment == popupAlignment || actionBlocks.any { it.isDisposed }) return
+    popupAlignment = alignment
+    updatePopupsBounds(project)
+  }
+
+  /** Saves the alignment that a drag gave to the popups. The presenter stays as it is, so the popups stay shown. */
+  private fun savePlacement() {
+    val alignment = popupAlignment
+    PresentationAssistantSettings.updateAsync {
+      PresentationAssistantSettings.POPUP_ALIGNMENT.setValue(alignment)
+    }
   }
 
   private fun validateAndFixLocationDelta(project: Project) {
@@ -333,7 +366,7 @@ internal class ActionInfoPopupGroup(private val project: Project, textFragments:
 
   private fun resetHideAlarm() {
     hideAlarm.cancelAllRequests()
-    hideAlarm.addRequest({ fadeOut() }, configuration.popupDuration, ModalityState.any())
+    hideAlarm.addRequest({ fadeOut() }, PresentationAssistantSettings.POPUP_DURATION_MILLIS.getValue(), ModalityState.any())
   }
 
   private fun showFinalAnimationFrame() {
@@ -373,7 +406,7 @@ internal class ActionInfoPopupGroup(private val project: Project, textFragments:
     val deltaX = if (ignoreDelta) 0 else configuration.deltaX?.let { JBUIScale.scale(it) } ?: 0
     val deltaY = if (ignoreDelta) 0 else configuration.deltaY?.let { JBUIScale.scale(it) } ?: 0
 
-    val x = when (configuration.horizontalAlignment) {
+    val x = when (popupAlignment.x) {
       0 -> visibleRect.x + margin
       1 -> visibleRect.x + (visibleRect.width - popupGroupSize.width) / 2
       else -> visibleRect.x + visibleRect.width - popupGroupSize.width - margin
@@ -386,7 +419,7 @@ internal class ActionInfoPopupGroup(private val project: Project, textFragments:
       } + gap * index
     } ?: 0) + deltaX
 
-    val y = when (configuration.verticalAlignment) {
+    val y = when (popupAlignment.y) {
       0 -> visibleRect.y + margin
       else -> visibleRect.y + visibleRect.height - popupGroupSize.height - margin
     } + deltaY
