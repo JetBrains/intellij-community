@@ -172,7 +172,7 @@ jvm_library(
         "@lib//:kotlinc-kotlin-compiler-tests",
         "//libraries/kotlinx/coroutines/test",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/compose/intellij.compose.ide.plugin.resources.android:ide-plugin-resources-android",
         "//platform/ide-core",
         "//plugins/kotlin/base/plugin",

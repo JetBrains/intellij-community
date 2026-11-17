@@ -37,7 +37,7 @@ jvm_library(
         "//plugins/kotlin/project-wizard/tests:tests_test_lib",
         "//plugins/kotlin/j2k/k2/tests:tests_test_lib",
         "//plugins/kotlin/uast/uast-kotlin-fir/tests:tests_test_lib",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//jps/jps-builders:build",
         "//plugins/kotlin/coverage/tests:tests_test_lib",

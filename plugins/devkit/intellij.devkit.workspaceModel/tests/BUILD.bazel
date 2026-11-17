@@ -57,7 +57,7 @@ jvm_library(
         "//platform/testFramework/junit5",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//libraries/rd/core",
         "//libraries/rd/framework",
         "//platform/util/jdom",

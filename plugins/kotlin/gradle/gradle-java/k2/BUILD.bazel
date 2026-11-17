@@ -94,7 +94,7 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
         "//plugins/kotlin/jps/util/runtime",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//libraries/junit4",
         "//libraries/kotlin/test:libraries-kotlinTest",
         "//plugins/kotlin/base/plugin",

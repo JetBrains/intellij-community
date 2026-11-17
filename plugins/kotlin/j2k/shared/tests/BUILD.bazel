@@ -56,7 +56,7 @@ jvm_library(
         "//platform/ide-core",
         "//platform/progress/shared:ide-progress",
         "//platform/util:util-ui",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/base/analysis",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/base/plugin",

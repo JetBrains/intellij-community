@@ -194,7 +194,7 @@ jvm_library(
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//plugins/kotlin/base/project-structure",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/frontend-independent",
         "//platform/lang-impl",
         "//platform/lang-core",

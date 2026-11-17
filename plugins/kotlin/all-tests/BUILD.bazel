@@ -35,7 +35,7 @@ jvm_library(
         "//plugins/kotlin/tests-from-compiler:tests-from-compiler_test_lib",
         "//plugins/kotlin/i18n/tests:tests_test_lib",
         "//plugins/kotlin/util/test-generator-api:test-generator-api_test_lib",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/code-insight/inspections-k2/tests:tests_test_lib",
         "//plugins/kotlin/code-insight/intentions-k2/tests:tests_test_lib",
         "//plugins/kotlin/code-insight/structural-search-k2/tests:tests_test_lib",

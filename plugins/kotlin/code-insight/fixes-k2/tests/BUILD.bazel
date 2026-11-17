@@ -34,7 +34,7 @@ jvm_library(
         "//plugins/kotlin/code-insight/api",
         "//platform/testFramework",
         "//plugins/kotlin/base/plugin",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
         "//plugins/kotlin/fir/tests:tests_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",

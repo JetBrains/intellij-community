@@ -211,7 +211,7 @@ jvm_library(
         "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-tests_test_lib",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
         "//plugins/kotlin/scripting",
         "//platform/statistics",

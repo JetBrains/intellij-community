@@ -23,7 +23,7 @@ jvm_library(
         "//java/openapi:java",
         "//java/testFramework",
         "//plugins/kotlin/base/plugin",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/jvm-debugger/test/k2/testFramework:testFramework_test_lib",
         "//platform/core-ui",
         "//platform/testFramework",

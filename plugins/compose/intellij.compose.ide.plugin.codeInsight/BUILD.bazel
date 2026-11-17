@@ -170,7 +170,7 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/base/plugin",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
         "//platform/testFramework",

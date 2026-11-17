@@ -55,7 +55,7 @@ jvm_library(
         "//platform/testFramework",
         "//platform/lang-core",
         "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/base/plugin",
         "//java/openapi:java",
         "//java/testFramework",

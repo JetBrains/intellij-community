@@ -137,7 +137,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//java/java-psi-api:psi",
         "//platform/external-system-api:externalSystem",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//libraries/kotlinx/coroutines/core",
         "@lib//:kotlin-stdlib",

@@ -30,7 +30,7 @@ jvm_library(
         "//plugins/kotlin/compiler-plugins/parcelize/k2:kotlin-compilerPlugins-parcelize",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//plugins/kotlin/base/testFramework",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//java/testFramework",
         "//java/java-psi-api:psi",
         "//plugins/kotlin/base/plugin",

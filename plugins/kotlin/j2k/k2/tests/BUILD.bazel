@@ -57,7 +57,7 @@ jvm_library(
         "//plugins/kotlin/j2k/shared/tests:tests_test_lib",
         "//plugins/kotlin/j2k/k2:kotlin-j2k",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//platform/core-ui",
         "//platform/editor-ui-api:editor-ui",
         "//libraries/junit4",

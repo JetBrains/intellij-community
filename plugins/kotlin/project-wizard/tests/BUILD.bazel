@@ -51,7 +51,7 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle",
         "//platform/execution",
         "//plugins/kotlin/gradle/gradle-java",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//plugins/gradle:gradle-common",
         "//plugins/kotlin/base/plugin",

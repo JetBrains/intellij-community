@@ -135,7 +135,7 @@ jvm_library(
         "//plugins/kotlin/base/testFramework",
         "//platform/testFramework",
         "//platform/lang-impl",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//plugins/kotlin/base/fir/code-insight:kotlin-codeInsight-base",
         "//java/testFramework",

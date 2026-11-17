@@ -151,7 +151,7 @@ jvm_library(
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/project-structure",
         "//plugins/kotlin/base/analysis",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//platform/testFramework",

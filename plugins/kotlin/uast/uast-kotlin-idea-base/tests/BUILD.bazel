@@ -25,7 +25,7 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//uast/uast-common:uast",
         "//uast/testFramework",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//platform/testFramework",

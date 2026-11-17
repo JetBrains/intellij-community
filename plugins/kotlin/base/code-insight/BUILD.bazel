@@ -188,7 +188,7 @@ jvm_library(
         "//libraries/junit4",
         "//platform/testFramework",
         "//plugins/kotlin/base/testFramework",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/base/code-insight/minimal",
         "//libraries/kotlin/test:libraries-kotlinTest",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",

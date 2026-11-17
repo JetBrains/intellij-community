@@ -61,7 +61,7 @@ jvm_library(
         "//plugins/kotlin/jvm/shared",
         "//plugins/kotlin/formatter",
         "//plugins/kotlin/maven",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//plugins/maven",
         "//plugins/maven/testFramework",

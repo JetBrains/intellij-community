@@ -40,7 +40,7 @@ jvm_library(
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/psi",
         "//plugins/kotlin/base/util",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/jvm-debugger/base/util",
         "//plugins/kotlin/jvm-debugger/core",
         "//plugins/kotlin/jvm-debugger/coroutines",

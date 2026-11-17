@@ -92,7 +92,7 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
         "//plugins/kotlin/formatter/minimal",
         "//plugins/kotlin/base/code-insight/minimal",
-        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//plugins/kotlin/tests-common:common-testFramework_test_lib",
         "//plugins/kotlin/jvm-debugger/core",
         "//plugins/kotlin/jvm-debugger/evaluation",
         "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform",
