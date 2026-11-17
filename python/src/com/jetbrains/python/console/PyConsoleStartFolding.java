@@ -61,6 +61,10 @@ class PyConsoleStartFolding implements ConsoleCommunicationListener, FoldingList
       document.removeDocumentListener(this);
       return;
     }
+    // A carriage return or a backspace in the output removes text before the next text arrives.
+    if (myStartLineOffset > document.getTextLength()) {
+      return;
+    }
     FoldingModel foldingModel = myConsoleView.getEditor().getFoldingModel();
     foldingModel.runBatchFoldingOperation(() -> {
       int start = getStartDefaultValue();
