@@ -5,11 +5,9 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.ast.PyAstStringLiteralExpression;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
@@ -27,27 +25,18 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Internal
 public class DocstringQuickFix extends PsiUpdateModCommandQuickFix {
-  private final SmartPsiElementPointer<PyNamedParameter> myMissingParam;
-  private final String myUnexpectedParamName;
+  private final @Nullable String myMissingParamName;
+  private final @Nullable String myUnexpectedParamName;
 
   public DocstringQuickFix(@Nullable PyNamedParameter missing, @Nullable String unexpectedParamName) {
-    if (missing != null) {
-      myMissingParam = SmartPointerManager.getInstance(missing.getProject()).createSmartPsiElementPointer(missing);
-    }
-    else {
-      myMissingParam = null;
-    }
+    myMissingParamName = missing != null ? StringUtil.notNullize(missing.getName()) : null;
     myUnexpectedParamName = unexpectedParamName;
   }
 
   @Override
   public @NotNull String getName() {
-    if (myMissingParam != null) {
-      final PyNamedParameter param = myMissingParam.getElement();
-      if (param == null) {
-        throw new IncorrectOperationException("Parameter was invalidates before quickfix is called");
-      }
-      return PyPsiBundle.message("QFIX.docstring.add.parameter", param.getName());
+    if (myMissingParamName != null) {
+      return PyPsiBundle.message("QFIX.docstring.add.parameter", myMissingParamName);
     }
     else if (myUnexpectedParamName != null) {
       return PyPsiBundle.message("QFIX.docstring.remove.parameter", myUnexpectedParamName);
@@ -67,17 +56,16 @@ public class DocstringQuickFix extends PsiUpdateModCommandQuickFix {
     PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
     if (docStringOwner == null) return;
     PyStringLiteralExpression docStringExpression = docStringOwner.getDocStringExpression();
-    if (docStringExpression == null && myMissingParam == null && myUnexpectedParamName == null) {
+    if (docStringExpression == null && myMissingParamName == null && myUnexpectedParamName == null) {
       addEmptyDocstring(docStringOwner);
       return;
     }
     if (docStringExpression != null) {
       final PyDocstringGenerator generator = PyDocstringGenerator.forDocStringOwner(docStringOwner);
-      if (myMissingParam != null) {
-        final PyNamedParameter param = myMissingParam.getElement();
-        if (param != null) {
-          generator.withParam(param);
-        }
+      if (myMissingParamName != null) {
+        final PyNamedParameter param = PsiTreeUtil.getParentOfType(element, PyNamedParameter.class, false);
+        if (param == null) return;
+        generator.withParam(param);
       }
       else if (myUnexpectedParamName != null) {
         generator.withoutParam(myUnexpectedParamName.trim());
