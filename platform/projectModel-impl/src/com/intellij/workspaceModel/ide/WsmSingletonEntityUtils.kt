@@ -16,7 +16,7 @@ object WsmSingletonEntityUtils {
   private val LOG: Logger = thisLogger()
 
   fun <E : WorkspaceEntity> getSingleEntity(storage: EntityStorage, entityClass: Class<E>): E? {
-    if (SingletonWorkspaceEntity::class.java.isAssignableFrom(entityClass)) {
+    if (!SingletonWorkspaceEntity::class.java.isAssignableFrom(entityClass)) {
       LOG.warn("Consider marking $entityClass as SingletonWorkspaceEntity")
     }
     val entities = storage.entities(entityClass).toList()
