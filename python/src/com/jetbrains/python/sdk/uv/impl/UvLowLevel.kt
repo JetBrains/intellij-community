@@ -41,7 +41,6 @@ import kotlin.io.path.pathString
 private const val NO_METADATA_MESSAGE = "does not contain a PEP 723 metadata tag"
 private const val OUTDATED_ENV_MESSAGE = "The environment is outdated"
 private const val SUPPORTED_SYNC_SCHEMA_VERSION = "preview"
-private val versionRegex = Regex("(\\d+\\.\\d+)\\.\\d+-.+\\s")
 
 private class UvLowLevelImpl<P : PathHolder>(
   private val cwd: Path?,
@@ -131,23 +130,16 @@ private class UvLowLevelImpl<P : PathHolder>(
   }
 
   override suspend fun listSupportedPythonVersions(versionRequest: String?): PyResult<List<Version>> {
-    val args = mutableListOf("python", "list")
+    val args = mutableListOf("python", "list", "--output-format", "json")
 
     if (versionRequest != null) {
       args += versionRequest
     }
 
     val out = uvCli.runUv(cwd, venvPath, false, *args.toTypedArray()).getOr { return it }
-    val matches = versionRegex.findAll(out)
 
     return PyResult.success(
-      matches.map {
-        Version.parse(
-          it.groupValues[1],
-          strict = false
-        )
-      }
-        .toSet()
+      PipParseUtils.parsePythonListResult(out)
         .toList()
         .sortedDescending()
     )
