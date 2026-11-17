@@ -36,7 +36,7 @@ A test uses JUnit 5 with the IDE Starter framework and the UI Driver framework:
 | UI test examples | `tests/remote-driver-tests` |
 | Runnable examples of each rule here | `tests/intellij.ide.starter.extended/tests/com/intellij/ide/starter/extended/docexamples` |
 | The test case of a project, a `com.intellij.ide.starter.models.TestCase` | a `*Cases.kt` or a `*CachedProjects.kt` of the product, such as `tests/intellij.ide.starter.extended.idea.ultimate/src/com/intellij/ide/starter/extended/idea/ultimate/CachedProjects.kt` |
-| The IDE a test runs against | `community/tools/intellij.tools.ide.starter/src/com/intellij/ide/starter/ide/IdeProductProvider.kt` |
+| The IDE a test runs against | the `*ProductInit.kt` of the product, such as `community/tools/intellij.tools.ide.starter.product.idea.ultimate/src/com/intellij/tools/ide/starter/product/idea/ultimate/IdeaUltimateProductInit.kt` |
 | The annotations of a test | `tests/intellij.ide.starter.allure.annotations/src/com/intellij/ide/starter/extended/allure/Annotations.kt` |
 
 ## Required Annotations
