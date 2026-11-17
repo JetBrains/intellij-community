@@ -161,6 +161,7 @@ public abstract class GenerateToStringActionHandlerBase implements GenerateToStr
     else {
       chooser.show();
     }
+    //noinspection SplitModeApiUsage
     if (DialogWrapper.OK_EXIT_CODE == chooser.getExitCode()) {
       Collection<PsiMember> selectedMembers = GenerationUtil.convertClassMembersToPsiMembers(sortedSelection(dialogMembers, chooser));
 
