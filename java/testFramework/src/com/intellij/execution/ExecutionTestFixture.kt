@@ -379,7 +379,12 @@ class ExecutionTestFixture internal constructor(
     }
   }
 
-  private fun compileProject() {
+  /**
+   * Rebuilds all modules of the project into [moduleOutputDir], and fails on a compile error.
+   * The setup compiles the test app once per JVM, so the tests of the same test app share the output.
+   * A test that changes a source and calls it must restore the source and call it again after the test.
+   */
+  fun compileProject() {
     // CompilerTester adds a JDK that the run uses after the compile, so the fixture disposes it only with the test.
     val compilerTester = CompilerTester(project, ModuleManager.getInstance(project).modules.toList(), disposable,
                                         options.overrideCompileJdkAndOutput)
