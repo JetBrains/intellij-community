@@ -726,9 +726,14 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   public class HighlighterIteratorImpl implements HighlighterIterator {
     private int mySegmentIndex;
+    /**
+     * The text attributes of the token types with an index, from the creation of this iterator or from its last miss in this table.
+     */
+    private TokenTypeTable<TextAttributes> myAttributesTable;
 
     HighlighterIteratorImpl(int startOffset) {
       mySegmentIndex = getSegmentIndex(mySegments, startOffset);
+      myAttributesTable = myAttributesState.attributes();
     }
 
     public int currentIndex() {
@@ -747,13 +752,16 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     @Override
     public TextAttributes getTextAttributes() {
       int index = mySegments.unpackTokenIndexFromData(mySegments.getSegmentData(mySegmentIndex));
-      if (index >= 0) {
-        TextAttributes attributes = myAttributesState.attributes().getByIndex(index);
-        if (attributes != null) {
-          return attributes;
-        }
+      if (index < 0) {
+        return getAttributes(getTokenType());
       }
-      return getAttributes(getTokenType());
+      TextAttributes attributes = myAttributesTable.getByIndex(index);
+      if (attributes != null) {
+        return attributes;
+      }
+      attributes = getAttributes(getTokenType());
+      myAttributesTable = myAttributesState.attributes();
+      return attributes;
     }
 
     @Override
