@@ -10,7 +10,7 @@ import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescripto
 import com.intellij.java.testFramework.fixtures.lightJava9ModulesFixture
 import com.intellij.java.testFramework.fixtures.lightJava9ModulesProjectFixture
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.JavaInspectionTestCase
+import com.intellij.testFramework.JavaInspectionFixture
 import com.intellij.testFramework.junit5.TestApplication
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -119,7 +119,7 @@ class Java9UnusedServiceImplementationsTest {
 
     try {
       moduleEntryPoint?.isSelected = withModuleEntryPoints
-      java9.doGlobalInspectionTest(testPath, JavaInspectionTestCase.getUnusedDeclarationWrapper())
+      java9.doGlobalInspectionTest(testPath, JavaInspectionFixture.getUnusedDeclarationWrapper())
     }
     finally {
       moduleEntryPoint?.isSelected = wasSelected

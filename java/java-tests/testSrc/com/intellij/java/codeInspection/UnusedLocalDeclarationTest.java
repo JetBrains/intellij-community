@@ -15,14 +15,26 @@
  */
 package com.intellij.java.codeInspection;
 
-public class UnusedLocalDeclarationTest extends AbstractUnusedDeclarationTest {
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-  @Override
-  protected void doTest() {
-    myTool.getSharedLocalInspectionTool().PARAMETER = false;
-    doTest("deadCode/" + getTestName(true), myToolWrapper);
+import static com.intellij.java.codeInspection.UnusedDeclarationFixtureKt.unusedDeclarationFixture;
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionProjectFixture;
+
+@TestApplication
+public class UnusedLocalDeclarationTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaInspectionProjectFixture();
+  private final TestFixture<UnusedDeclarationFixture> unusedDeclaration = unusedDeclarationFixture(projectFixture);
+
+
+  private void doTest() {
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().PARAMETER = false;
+    unusedDeclaration.get().doTest("deadCode/" + unusedDeclaration.get().getTestName(true), unusedDeclaration.get().getToolWrapper());
   }
 
+  @Test
   public void testLocalVariables() {
     doTest();
   }

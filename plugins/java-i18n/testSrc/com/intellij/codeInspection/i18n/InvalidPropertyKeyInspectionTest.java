@@ -17,40 +17,55 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.testFramework.JavaInspectionTestCase;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.testFramework.JavaInspectionFixture;
+import com.intellij.testFramework.JavaInspectionProjectDescriptor;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class InvalidPropertyKeyInspectionTest extends JavaInspectionTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations);
-  }
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionFixture;
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+
+@TestApplication
+public class InvalidPropertyKeyInspectionTest {
+  private static final LightProjectDescriptor DESCRIPTOR = new JavaInspectionProjectDescriptor() {
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      super.configureModule(module, model, contentEntry);
+      addJetBrainsAnnotations(model);
+    }
+  };
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(DESCRIPTOR);
+  private final TestFixture<JavaInspectionFixture> javaInspection = javaInspectionFixture(projectFixture, PluginPathManager.getPluginHomePath("java-i18n") + "/testData/inspections");
 
   private void doTest() {
     LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(new InvalidPropertyKeyInspection());
-    doTest("invalidPropertyKey/" + getTestName(true), tool);
+    javaInspection.get().doTest("invalidPropertyKey/" + javaInspection.get().getTestName(true), tool);
   }
 
+  @Test
   public void testSimple() {
     doTest();
   }
 
+  @Test
   public void testImplicit() {
     doTest();
   }
 
+  @Test
   public void testImplicit2() {
     doTest();
   }
 
+  @Test
   public void testImplicit3() {
     doTest();
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("java-i18n") + "/testData/inspections";
   }
 }

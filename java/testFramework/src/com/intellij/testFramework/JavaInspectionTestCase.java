@@ -4,12 +4,8 @@ package com.intellij.testFramework;
 import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionTool;
-import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationPresentation;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
@@ -18,18 +14,12 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.openapi.extensions.DefaultPluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,26 +32,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * @deprecated Use {@link JavaInspectionFixtureKt#javaInspectionFixture} with {@link JavaInspectionFixtureKt#javaInspectionProjectFixture} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixtureTestCase {
   private static final boolean MIGRATE_TEST = false;
-  private static final DefaultLightProjectDescriptor ourDescriptor = new DefaultLightProjectDescriptor() {
-    @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      super.configureModule(module, model, contentEntry);
-      contentEntry.addSourceFolder(contentEntry.getUrl() + "/ext_src", false);
-      contentEntry.addSourceFolder(contentEntry.getUrl() + "/test_src", true);
-    }
-  };
+  private static final LightProjectDescriptor ourDescriptor = JavaInspectionProjectDescriptor.INSTANCE;
   private EntryPoint myUnusedCodeExtension;
   private VirtualFile ext_src;
   private LightTestMigration myMigration;
 
   public static @NotNull GlobalInspectionToolWrapper getUnusedDeclarationWrapper() {
-    InspectionEP ep = new InspectionEP(UnusedDeclarationInspection.class.getName(), new DefaultPluginDescriptor(PluginId.getId("JavaInspectionTestCase.getUnusedDeclarationWrapper"), JavaInspectionTestCase.class.getClassLoader()));
-    ep.presentation = UnusedDeclarationPresentation.class.getName();
-    ep.shortName = UnusedDeclarationInspectionBase.SHORT_NAME;
-    ep.displayName = UnusedDeclarationInspectionBase.getDisplayNameText();
-    return new GlobalInspectionToolWrapper(ep);
+    return JavaInspectionFixture.getUnusedDeclarationWrapper();
   }
 
   public InspectionManagerEx getManager() {

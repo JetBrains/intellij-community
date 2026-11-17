@@ -5,309 +5,387 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTest {
+import static com.intellij.java.codeInspection.UnusedDeclarationFixtureKt.unusedDeclarationFixture;
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionProjectFixture;
 
+@TestApplication
+public class UnusedDeclarationInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaInspectionProjectFixture();
+  private final TestFixture<UnusedDeclarationFixture> unusedDeclaration = unusedDeclarationFixture(projectFixture);
+
+
+  @Test
   public void testSCR6067() {
-    myTool.ADD_NONJAVA_TO_ENTRIES = false;
-    doTest();
+    unusedDeclaration.get().getTool().ADD_NONJAVA_TO_ENTRIES = false;
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testSingleton() {
-    myTool.ADD_NONJAVA_TO_ENTRIES = false;
-    doTest();
+    unusedDeclaration.get().getTool().ADD_NONJAVA_TO_ENTRIES = false;
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testSCR9690() {
-    myTool.ADD_NONJAVA_TO_ENTRIES = false;
-    doTest();
+    unusedDeclaration.get().getTool().ADD_NONJAVA_TO_ENTRIES = false;
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testFormUsage() {
-    myTool.ADD_NONJAVA_TO_ENTRIES = false;
-    doTest();
+    unusedDeclaration.get().getTool().ADD_NONJAVA_TO_ENTRIES = false;
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testSerializable() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testPackageLocal() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testDefaultConstructor() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testReachableFromMain() {
-    myTool.ADD_MAINS_TO_ENTRIES = true;
-    doTest();
+    unusedDeclaration.get().getTool().ADD_MAINS_TO_ENTRIES = true;
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testPrivateMain() {
-    myTool.ADD_MAINS_TO_ENTRIES = true;
-    doTest();
+    unusedDeclaration.get().getTool().ADD_MAINS_TO_ENTRIES = true;
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testMutableCalls() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testStaticMethods() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testAnnotationUsedInPackageInfo() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testSuppress() {
     doTest5();
   }
 
+  @Test
   public void testSuppress1() {
     doTest5();
   }
 
+  @Test
   public void testSuppress2() {
     doTest5();
   }
 
+  @Test
   public void testChainOfSuppressions() {
     doTest5();
   }
 
+  @Test
   public void testSuppressionIsNotAnEntryPoint() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testSuppressByNoinspectionTag() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testSuppressOverriddenMethod() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testSuppressReachableOverriddenMethod() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testReachableFromXml() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testChainOfCalls() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testReachableFromFieldInitializer() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testReachableFromFieldArrayInitializer() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testConstructorReachableFromFieldInitializer() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testAdditionalAnnotations() {
     final List<String> testAnnotations = List.of("Annotated", "RequestMapping", "Ann1");
-    EntryPointsManagerBase.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.addAll(testAnnotations);
+    EntryPointsManagerBase.getInstance(unusedDeclaration.get().getInspection().getFixture().getProject()).ADDITIONAL_ANNOTATIONS.addAll(testAnnotations);
     try {
-      doTest();
+      unusedDeclaration.get().doTest();
     }
     finally {
-      EntryPointsManagerBase.getInstance(getProject()).ADDITIONAL_ANNOTATIONS.removeAll(testAnnotations);
+      EntryPointsManagerBase.getInstance(unusedDeclaration.get().getInspection().getFixture().getProject()).ADDITIONAL_ANNOTATIONS.removeAll(testAnnotations);
     }
   }
 
+  @Test
   public void testAccessibleFromEntryPoint() {
     EntryPointsManagerBase.ClassPattern pattern = new EntryPointsManagerBase.ClassPattern();
     pattern.pattern = "Foo";
     pattern.method = "entry";
-    EntryPointsManagerBase.getInstance(getProject()).getPatterns().add(pattern);
+    EntryPointsManagerBase.getInstance(unusedDeclaration.get().getInspection().getFixture().getProject()).getPatterns().add(pattern);
     try {
-      doTest();
+      unusedDeclaration.get().doTest();
     }
     finally {
-      EntryPointsManagerBase.getInstance(getProject()).getPatterns().clear();
+      EntryPointsManagerBase.getInstance(unusedDeclaration.get().getInspection().getFixture().getProject()).getPatterns().clear();
     }
   }
 
+  @Test
   public void testAnnotation() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testAnnotationInitializedByInheritedClassReference() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testUnusedEnum() {
     doTest5();
   }
 
+  @Test
   public void testNonUtility() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testJunitEntryPoint() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testJunitAbstractClassWithInheritor() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testJunitAbstractClassWithoutInheritor() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testJunitEntryPointCustomRunWith() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testConstructorCalls() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testConstructorCalls1() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testNonJavaReferences() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testEnumInstantiation() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testEnumValues() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
   
+  @Test
   public void testEnumValueOf() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testUsagesInAnonymous() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testAbstractClassWithSerializableSubclasses() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testClassLiteralRef() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testClassLiteralRef2() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testFunctionalExpressions() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testClassUsedInMethodParameter() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testDeprecatedAsEntryPoint() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testReferenceFromReflection() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testReferenceFromGroovy() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testStaticMethodReferenceFromGroovy() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testStaticFieldReferenceFromExternalGroovy() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testFieldReferenceFromExternalGroovy() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testStaticImport() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testInstanceOf() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testReferenceParameterList() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testEnumConstructor() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testTypeParameterUsed() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testMethodCallQualifiedWithSuper() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testMethodParametersIfMethodReferenceUsed() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testRecords() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testUtilityClass() {
-    doTest();
+    unusedDeclaration.get().doTest();
   }
 
-  public void testJunitMethodSource() {doTest();}
+  @Test
+  public void testJunitMethodSource() {unusedDeclaration.get().doTest();}
 
+  @Test
   public void testImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
-      doTest();
+    IdeaTestUtil.withLevel(unusedDeclaration.get().getInspection().getFixture().getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      unusedDeclaration.get().doTest();
     });
   }
 
+  @Test
   public void testUnusedGuardStatement() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.getMinimumLevel(), () -> {
-      doTest();
+    IdeaTestUtil.withLevel(unusedDeclaration.get().getInspection().getFixture().getModule(), JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.getMinimumLevel(), () -> {
+      unusedDeclaration.get().doTest();
     });
   }
 
+  @Test
   public void testBrokenClassToImplicitClass() {
-    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> {
-      doTest();
+    IdeaTestUtil.withLevel(unusedDeclaration.get().getInspection().getFixture().getModule(), JavaFeature.IMPLICIT_CLASSES.getStandardLevel(), () -> {
+      unusedDeclaration.get().doTest();
     });
   }
 
+  @Test
   public void testSeveralMainMethods() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_25, () -> {
-      myTool.ADD_MAINS_TO_ENTRIES = true;
-      doTest();
+    IdeaTestUtil.withLevel(unusedDeclaration.get().getInspection().getFixture().getModule(), LanguageLevel.JDK_25, () -> {
+      unusedDeclaration.get().getTool().ADD_MAINS_TO_ENTRIES = true;
+      unusedDeclaration.get().doTest();
     });
   }
 
   private void doTest5() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_5, () -> doTest());
+    IdeaTestUtil.withLevel(unusedDeclaration.get().getInspection().getFixture().getModule(), LanguageLevel.JDK_1_5, () -> unusedDeclaration.get().doTest());
   }
 }

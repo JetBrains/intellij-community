@@ -15,30 +15,38 @@
  */
 package com.intellij.java.codeInspection;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class UnusedDeclarationInProjectTest extends AbstractUnusedDeclarationTest {
+import static com.intellij.java.codeInspection.UnusedDeclarationFixtureKt.unusedDeclarationFixture;
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionProjectFixture;
 
-  @NotNull
-  @Override
-  protected AnalysisScope createAnalysisScope(VirtualFile sourceDir) {
-    return new AnalysisScope(getProject());
-  }
+@TestApplication
+public class UnusedDeclarationInProjectTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaInspectionProjectFixture();
+  private final TestFixture<UnusedDeclarationFixture> unusedDeclaration =
+    unusedDeclarationFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection", (project, ignored) -> new AnalysisScope(project));
 
+
+  @Test
   public void testInstantiatedInTestOnly() {
-    myTool.setTestEntryPoints(false);
-    doTest();
+    unusedDeclaration.get().getTool().setTestEntryPoints(false);
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testInstantiatedInTestOnlyStatic() {
-    myTool.setTestEntryPoints(false);
-    doTest();
+    unusedDeclaration.get().getTool().setTestEntryPoints(false);
+    unusedDeclaration.get().doTest();
   }
 
+  @Test
   public void testIgnoreUnusedFields() {
-    myTool.getSharedLocalInspectionTool().FIELD = false;
-    doTest();
+    unusedDeclaration.get().getTool().getSharedLocalInspectionTool().FIELD = false;
+    unusedDeclaration.get().doTest();
   }
 }

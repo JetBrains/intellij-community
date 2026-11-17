@@ -14,29 +14,30 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.JavaInspectionTestCase;
+import com.intellij.testFramework.JavaInspectionFixture;
 import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class VisibilityInspectionTest extends JavaInspectionTestCase {
-  private VisibilityInspection myTool = new VisibilityInspection();
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionFixture;
+import static com.intellij.testFramework.JavaInspectionFixtureKt.javaInspectionProjectFixture;
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/visibility";
-  }
+@TestApplication
+public class VisibilityInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = javaInspectionProjectFixture();
+  private final TestFixture<JavaInspectionFixture> javaInspection = javaInspectionFixture(projectFixture, JavaTestUtil.getJavaTestDataPath() + "/inspection/visibility");
+
+  private final VisibilityInspection myTool = new VisibilityInspection();
 
   private void doTest() {
-    doTest(getTestName(false), myTool);
+    javaInspection.get().doTest(javaInspection.get().getTestName(false), myTool);
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myTool = null;
-    super.tearDown();
-  }
-
+  @Test
   public void testinnerConstructor() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
@@ -44,6 +45,7 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     doTest();
   }
 
+  @Test
   public void testpackageLevelTops() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
@@ -51,6 +53,7 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     doTest();
   }
 
+  @Test
   public void testSCR5008() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
@@ -58,6 +61,7 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     doTest();
   }
 
+  @Test
   public void testSCR6856() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
@@ -65,6 +69,7 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     doTest();
   }
 
+  @Test
   public void testSCR11792() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
@@ -72,110 +77,127 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
     doTest();
   }
 
+  @Test
   public void testIDEADEV10312() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
     doTest();
   }
 
+  @Test
   public void testIDEADEV10883() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
     doTest();
   }
 
+  @Test
   public void testDefaultConstructor() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
-    doTest(getTestName(true), myTool, false, true);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool, false, true);
   }
 
+  @Test
   public void testImplicitConstructor() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
-    doTest(getTestName(true), myTool, false, true);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool, false, true);
   }
 
+  @Test
   public void testEnumConstantsVisibility() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
-    doTest(getTestName(true), myTool, false, true);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool, false, true);
   }
 
+  @Test
   public void testAnnotationUsages() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
-    doTest(getTestName(true), myTool, false, true);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool, false, true);
   }
 
+  @Test
   public void testTypeArguments() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = false;
-    doTest(getTestName(true), myTool, false, true);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool, false, true);
   }
 
+  @Test
   public void testUsedFromAnnotationsExtendsList() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-    doTest(getTestName(true), myTool, false, true);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool, false, true);
   }
 
+  @Test
   public void testUsedFromAnnotationsExtendsList2() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
-    doTest(getTestName(true), myTool, false, true);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool, false, true);
   }
 
+  @Test
   public void testOverrideInInnerClass() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-    doTest(getTestName(true), myTool, false, true);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool, false, true);
   }
 
+  @Test
   public void testUsedFromAnotherPackage() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-    doTest(getTestName(true), myTool, false, true);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool, false, true);
   }
 
   // IDEA-175921
+  @Test
   public void testInnerClassMethodUsedInsideOtherInnerClassInheritor() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-    doTest(getTestName(true), myTool, false, true);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool, false, true);
   }
 
+  @Test
   public void testMethodUsedInInheritorInnerClass() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-    doTest(getTestName(true), myTool, false, true);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool, false, true);
   }
 
+  @Test
   public void testInnerClassMethodUsedInsideInheritor() {
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-    doTest(getTestName(true), myTool, false, true);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool, false, true);
   }
 
+  @Test
   public void testSameFileInheritance() {
-    doTest(getTestName(true), myTool);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool);
   }
 
+  @Test
   public void testRecords() {
-    doTest(getTestName(true), myTool);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool);
   }
 
+  @Test
   public void testEntryPointWithPredefinedVisibility() {
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), EntryPointsManagerBase.DEAD_CODE_EP_NAME, new EntryPointWithVisibilityLevel() {
       @Override
@@ -222,10 +244,10 @@ public class VisibilityInspectionTest extends JavaInspectionTestCase {
       public String getId() {
         return getDisplayName();
       }
-    }, getTestRootDisposable());
+    }, javaInspection.get().getFixture().getTestRootDisposable());
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
     myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
-    doTest(getTestName(true), myTool, false, true);
+    javaInspection.get().doTest(javaInspection.get().getTestName(true), myTool, false, true);
   }
 }
