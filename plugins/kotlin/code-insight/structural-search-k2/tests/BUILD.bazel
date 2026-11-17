@@ -1,6 +1,19 @@
 load("@community//build:jps_module.bzl", "jps_module")
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//plugins/kotlin:kotlin_test_dependencies.bzl", "all_test_dep_targets")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "tests_test",
+    data = [
+        "@community//plugins/kotlin/code-insight:testData",
+        "@community//plugins/kotlin/idea/tests:testData",
+    ] + all_test_dep_targets,
+    tags = ["kotlin-tests"],
+    runtime_deps = [":tests_test_lib"],
+)
+
+### skip generation section `test intellij.kotlin.codeInsight.structuralSearch.tests`
 
 ### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch.tests` start
 jvm_library(
@@ -61,10 +74,3 @@ jps_module(
     target = "tests_test_lib",
 )
 ### auto-generated section `iml intellij.kotlin.codeInsight.structuralSearch.tests` end
-
-### auto-generated section `test intellij.kotlin.codeInsight.structuralSearch.tests` start
-jps_test(
-    name = "tests_test",
-    runtime_deps = [":tests_test_lib"],
-)
-### auto-generated section `test intellij.kotlin.codeInsight.structuralSearch.tests` end
