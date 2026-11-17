@@ -3,30 +3,10 @@ package org.intellij.plugins.intelliLang
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.testFramework.fixtures.InjectionTestFixture
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Processor
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
-
-abstract class AbstractLanguageInjectionTestCase : LightJavaCodeInsightFixtureTestCase() {
-  val injectionTestFixture: InjectionTestFixture get() = InjectionTestFixture(myFixture)
-
-  fun assertInjectedLangAtCaret(lang: String?) {
-    injectionTestFixture.assertInjectedLangAtCaret(lang)
-  }
-
-  val topLevelEditor: Editor
-    get() = injectionTestFixture.topLevelEditor
-
-  val topLevelCaretPosition
-    get() = injectionTestFixture.topLevelCaretPosition
-
-  val topLevelFile: PsiFile
-    get() = injectionTestFixture.topLevelFile
-}
 
 class StoringFixPresenter : InjectLanguageAction.FixPresenter {
   private lateinit var processor: Processor<in PsiLanguageInjectionHost>
