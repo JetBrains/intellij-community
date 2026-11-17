@@ -5,7 +5,10 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 jps_test(
     name = "toolingExtension-tests_test",
     timeout = "long",
-    tags = ["community-aggregator"],
+    tags = [
+        "community-aggregator",
+        "gradle-tests",
+    ],
     runtime_deps = [":toolingExtension-tests_test_lib"],
 )
 ### skip generation section `test intellij.gradle.toolingExtension.tests`
