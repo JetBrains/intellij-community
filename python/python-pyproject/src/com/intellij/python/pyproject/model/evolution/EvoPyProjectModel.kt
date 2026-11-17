@@ -2,6 +2,7 @@
 package com.intellij.python.pyproject.model.evolution
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -47,6 +48,7 @@ import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
 import com.jetbrains.python.project.project
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -60,6 +62,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -313,7 +316,9 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
    */
   val interpreter: StateFlow<PythonInterpreter?> get() = interpreterState.asStateFlow()
 
-  private fun selectedFile(): VirtualFile? = FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
+  private suspend fun selectedFile(): VirtualFile? = withContext(Dispatchers.UI) {
+    FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
+  }
 
   /**
    * An event for each change of [PythonInterpreterRegistry] that adds or removes an interpreter in
