@@ -11,7 +11,6 @@ import com.intellij.database.datagrid.request
 import com.intellij.database.run.ui.DataAccessType
 import com.intellij.database.run.ui.EDIT_MAXIMIZED_GRID_KEY
 import com.intellij.database.run.ui.GridTableCellEditor
-import com.intellij.database.run.ui.ValueTabInfoProvider
 import com.intellij.database.run.ui.grid.editors.GridCellEditorFactoryProvider
 import javax.swing.table.TableCellEditor
 
@@ -61,5 +60,5 @@ internal class ViewCellEditors(private val grid: DataGrid, private val editedVal
    * a selected cell. It is read on each call, since the editor opens and switches tabs without telling the view.
    */
   fun valueEditorShowsSelectedValue(): Boolean =
-    grid.getUserData(EDIT_MAXIMIZED_GRID_KEY)?.getCurrentTabInfoProvider() is ValueTabInfoProvider
+    grid.getUserData(EDIT_MAXIMIZED_GRID_KEY)?.isValueTabSelected() == true
 }
