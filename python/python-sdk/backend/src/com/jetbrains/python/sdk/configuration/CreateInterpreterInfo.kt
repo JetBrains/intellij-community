@@ -134,9 +134,15 @@ fun CreateInterpreterInfoWithInterpreterCreator.getInterpreterCreator(module: Mo
  * The suggestion to install the tool that manages the environment of [ref], when the machine of [pyProject] does not
  * have it, or `null`. The tool is the one of the manager of [ref], see [PyInterpreterRef.manager]. The pip manager
  * stands for an environment that no tool manages, so it gives `null`, and so does a manager whose plugin is not loaded.
+ * A ref on a target gives `null` too: this function looks only at the machine of [pyProject].
  */
 @ApiStatus.Internal
 suspend fun suggestToolInstallationFor(pyProject: PyProject, ref: PyInterpreterRef): CreateInterpreterInfo.WillInstallTool? {
+  when (ref.mode) {
+    PyInterpreterRef.Mode.Native -> Unit
+    // The tool of a target interpreter runs on the target, so a tool on the machine of the project does not help.
+    is PyInterpreterRef.Mode.Target -> return null
+  }
   if (ref.manager == PIP_MANAGER) return null
   val tool = ref.manager.tool() ?: return null
   val cache = PyExecutableCache.getInstance()
