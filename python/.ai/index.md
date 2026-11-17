@@ -33,6 +33,10 @@ a local value. `Sdk` is a legacy API, and it will be removed from PyCharm.
 The project inspection "Use PythonInterpreter instead of Sdk in PyCharm" (suppress ID `PySdkUsage`) finds each use
 of `Sdk`. Do not suppress it in new code.
 
+Before you plan, edit or review code that reads, sets, stores or tests a Python interpreter, read
+[`python-sdk/AGENTS.md`](../python-sdk/AGENTS.md). The guide explains the interpreter library flow: how a module
+names its interpreter, where the facts live, and which API to use.
+
 ## Tests
 
 Every code change in this directory needs a test. Write it with the `py-junit5-tests`
