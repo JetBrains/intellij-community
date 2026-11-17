@@ -602,6 +602,7 @@ public final class JBCefApp {
       if (config != null) {
         try {
           app = new JBCefApp(config);
+          JcefHwFacadeState.setStarted(true);
         }
         catch (IllegalStateException ignore) {
         }
