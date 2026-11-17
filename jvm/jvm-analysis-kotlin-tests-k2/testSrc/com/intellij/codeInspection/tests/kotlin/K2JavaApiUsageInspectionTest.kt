@@ -2,9 +2,13 @@ package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
+@TestApplication
 class K2JavaApiUsageInspectionTest : KotlinJavaApiUsageInspectionTest() {
 
+  @Test
   fun `test method that will be overridden in a future Java version`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_7)
 

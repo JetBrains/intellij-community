@@ -1,11 +1,20 @@
 package com.intellij.logging.highlighting
 
-import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingPlaceholderAnnotatorTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.loggingPlaceholderAnnotatorFixture
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotatorTestBase() {
-  override val fileName: String = "Logging.kt"
+@TestApplication
+abstract class KotlinLoggingPlaceholderAnnotatorTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
 
-  fun `test log4j2 default log`() = doTest(
+  protected val myFixture by loggingPlaceholderAnnotatorFixture(projectFixture, "Logging.kt")
+
+  @Test
+  fun `test log4j2 default log`() = myFixture.doTest(
     """
        import org.apache.logging.log4j.*
        class Logging {
@@ -21,7 +30,8 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
            }
        }""")
 
-  fun `test log4j2 formatter log`() = doTest("""
+  @Test
+  fun `test log4j2 formatter log`() = myFixture.doTest("""
       import org.apache.logging.log4j.*
       class Logging {
           val LOG: Logger = LogManager.getFormatterLogger()
@@ -37,7 +47,8 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
       }
     """.trimIndent())
 
-  fun `test log4j2 default log builder`() = doTest("""
+  @Test
+  fun `test log4j2 default log builder`() = myFixture.doTest("""
       import org.apache.logging.log4j.*
       class Logging {
           val LOG: Logger = LogManager.getLogger()
@@ -53,7 +64,8 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
       }
     """.trimIndent())
 
-  fun `test log4j2 formatter log builder`() = doTest("""
+  @Test
+  fun `test log4j2 formatter log builder`() = myFixture.doTest("""
       import org.apache.logging.log4j.*
       class Logging {
           val LOG: Logger = LogManager.getFormatterLogger()
@@ -70,7 +82,8 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
     """.trimIndent())
 
 
-  fun `test log4j2 formatter log with previous placeholder`() = doTest("""
+  @Test
+  fun `test log4j2 formatter log with previous placeholder`() = myFixture.doTest("""
     import org.apache.logging.log4j.*
       class Logging {
           val LOG: Logger = LogManager.getFormatterLogger()
@@ -82,7 +95,8 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
     ""${'"'}.trimIndent())
   """.trimIndent())
 
-  fun `test log4j2 respects exception`() = doTest("""
+  @Test
+  fun `test log4j2 respects exception`() = myFixture.doTest("""
       import org.apache.logging.log4j.*
       class Logging {
         val LOG: Logger = LogManager.getLogger()
@@ -93,7 +107,8 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
      }
     """.trimIndent())
 
-  fun `test log4j2 builder respects exception`() = doTest("""
+  @Test
+  fun `test log4j2 builder respects exception`() = myFixture.doTest("""
       import org.apache.logging.log4j.*
       class Logging {
         val LOG: Logger = LogManager.getLogger()
@@ -106,7 +121,8 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
       """.trimIndent())
 
 
-  fun `test slf4j default log`() = doTest("""
+  @Test
+  fun `test slf4j default log`() = myFixture.doTest("""
       import org.slf4j.*
 
       class Logging {
@@ -121,7 +137,8 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
       }
     """.trimIndent())
 
-  fun `test slf4j default log builder`() = doTest("""
+  @Test
+  fun `test slf4j default log builder`() = myFixture.doTest("""
       import org.slf4j.*
       
       class Logging {
@@ -136,7 +153,8 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
       }
     """.trimIndent())
 
-  fun `test slf4j default log builder with setMessage and addArgument`() = doTest("""
+  @Test
+  fun `test slf4j default log builder with setMessage and addArgument`() = myFixture.doTest("""
       import org.slf4j.*
 
       class Logging {
@@ -151,7 +169,8 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
     """.trimIndent())
 
 
-  fun `test slf4j respects exception`() = doTest("""
+  @Test
+  fun `test slf4j respects exception`() = myFixture.doTest("""
       import org.slf4j.*
 
       class Logging {
@@ -164,7 +183,8 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
     """.trimIndent())
 
 
-  fun `test slf4j builder respects exception`() = doTest(
+  @Test
+  fun `test slf4j builder respects exception`() = myFixture.doTest(
     """
       import org.slf4j.*
 
@@ -181,12 +201,13 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
     """.trimIndent()
   )
 
+  @Test
   fun `test support multiline string`() {
     val multilineString = "\"\"\"       \n" +
                           "    <placeholder>{}</placeholder> <placeholder>{}</placeholder> {}\n  \n" +
                           "      \n \n  \"\"\""
 
-    doTest("""
+    myFixture.doTest("""
     import org.slf4j.*
 
     class Logging {
@@ -198,7 +219,8 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
   """.trimIndent())
   }
 
-  fun `test does not support string concatenation`() = doTest("""
+  @Test
+  fun `test does not support string concatenation`() = myFixture.doTest("""
     import org.slf4j.*
 
     class Logging {
@@ -209,9 +231,10 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
     }
   """.trimIndent())
 
+  @Test
   fun `test does not support string interpolation`() {
     val dollar = "$"
-    doTest("""
+    myFixture.doTest("""
     import org.slf4j.*
 
     class Logging {
@@ -223,7 +246,8 @@ abstract class KotlinLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotat
   """.trimIndent())
   }
 
-  fun `test lazy init`() = doTest("""
+  @Test
+  fun `test lazy init`() = myFixture.doTest("""
       import org.apache.logging.log4j.LogBuilder
       import org.apache.logging.log4j.LogManager
       import org.apache.logging.log4j.Logger

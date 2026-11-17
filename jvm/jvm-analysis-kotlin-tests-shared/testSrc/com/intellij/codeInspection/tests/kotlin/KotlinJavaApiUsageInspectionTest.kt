@@ -1,11 +1,21 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.javaApiUsageInspectionFixture
+import com.intellij.jvm.analysis.internal.testFramework.jvmSdkProjectFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase() {
+@TestApplication
+abstract class KotlinJavaApiUsageInspectionTest {
+  companion object {
+    private val projectFixture = jvmSdkProjectFixture()
+  }
 
+  protected val myFixture by javaApiUsageInspectionFixture(projectFixture)
+
+  @Test
   fun `test constructor`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_4)
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
@@ -15,6 +25,7 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
     """.trimIndent())
   }
 
+  @Test
   fun `test ignored`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.addClass("""
@@ -34,6 +45,7 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
     """.trimIndent())
   }
 
+  @Test
   fun `test qualified reference`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
@@ -45,6 +57,7 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
     """.trimIndent())
   }
 
+  @Test
   fun `test reference in callable reference`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     val withErrorMessage = "\"default charset \${<error descr=\"Usage of API documented as @since 1.7+\">StandardCharsets</error>.<error descr=\"Usage of API documented as @since 1.7+\">UTF_8</error>}\"::toString"
@@ -57,6 +70,7 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
     """.trimIndent())
   }
 
+  @Test
   fun `test annotation`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
@@ -69,6 +83,7 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
     """.trimIndent())
   }
 
+  @Test
   fun `test override annotation`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
@@ -83,6 +98,7 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
     """.trimIndent())
   }
 
+  @Test
   fun `test default methods`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
@@ -125,6 +141,7 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
     """.trimIndent())
   }
 
+  @Test
   fun `test single method multiple overrides`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
@@ -139,6 +156,7 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
     """.trimIndent())
   }
 
+  @Test
   fun `test raw inherit from newly generified`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.addClass("""
@@ -155,6 +173,7 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
     """.trimIndent())
   }
 
+  @Test
   fun `test generified`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_6)
     myFixture.addClass("""
@@ -174,6 +193,7 @@ abstract class KotlinJavaApiUsageInspectionTest : JavaApiUsageInspectionTestBase
     """.trimIndent())
   }
 
+  @Test
   fun `test no highlighting in kdoc`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_1_7)
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """

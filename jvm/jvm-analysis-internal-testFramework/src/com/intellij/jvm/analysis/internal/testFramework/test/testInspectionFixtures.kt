@@ -43,14 +43,17 @@ private class TestLibrariesDescriptor(private val addLibraries: ModifiableRootMo
 
 /**
  * Creates the project of an [AssertBetweenInconvertibleTypesInspection] test class. It has JUnit 3, the JUnit 5 API and AssertJ,
- * as [AssertEqualsBetweenInconvertibleTypesInspectionTestBase] has.
+ * as [AssertEqualsBetweenInconvertibleTypesInspectionTestBase] has. [moreLibraries] adds more libraries to the module.
  */
 @TestOnly
-fun assertEqualsBetweenInconvertibleTypesProjectFixture(): TestFixture<LightJavaProject> = lightJavaProjectFixture(TestLibrariesDescriptor {
-  addJUnit3Library()
-  addJUnit5Library()
-  addAssertJLibrary()
-})
+@JvmOverloads
+fun assertEqualsBetweenInconvertibleTypesProjectFixture(moreLibraries: ModifiableRootModel.() -> Unit = {}): TestFixture<LightJavaProject> =
+  lightJavaProjectFixture(TestLibrariesDescriptor {
+    addJUnit3Library()
+    addJUnit5Library()
+    addAssertJLibrary()
+    moreLibraries()
+  })
 
 /**
  * Creates the fixture of an [AssertBetweenInconvertibleTypesInspection] test. It replaces [AssertEqualsBetweenInconvertibleTypesInspectionTestBase].
@@ -64,13 +67,16 @@ fun assertEqualsBetweenInconvertibleTypesInspectionFixture(
 
 /**
  * Creates the project of a [TestCaseWithConstructorInspection] test class. It has JUnit 3 and JUnit 4,
- * as [TestCaseWithConstructorInspectionTestBase] has.
+ * as [TestCaseWithConstructorInspectionTestBase] has. [moreLibraries] adds more libraries to the module.
  */
 @TestOnly
-fun testCaseWithConstructorProjectFixture(): TestFixture<LightJavaProject> = lightJavaProjectFixture(TestLibrariesDescriptor {
-  addJUnit3Library()
-  addJUnit4Library()
-})
+@JvmOverloads
+fun testCaseWithConstructorProjectFixture(moreLibraries: ModifiableRootModel.() -> Unit = {}): TestFixture<LightJavaProject> =
+  lightJavaProjectFixture(TestLibrariesDescriptor {
+    addJUnit3Library()
+    addJUnit4Library()
+    moreLibraries()
+  })
 
 /**
  * Creates the fixture of a [TestCaseWithConstructorInspection] test. It replaces [TestCaseWithConstructorInspectionTestBase].
@@ -163,16 +169,20 @@ fun testFailedLineInspectionFixture(
 /**
  * Creates the project of a [TestMethodWithoutAssertionInspection] test class.
  * It has JUnit 3, JUnit 4, the JUnit 5 API, the JUnit suite API, MockK and AssertJ, as [TestMethodWithoutAssertionInspectionTestBase] has.
+ * [moreLibraries] adds more libraries to the module.
  */
 @TestOnly
-fun testMethodWithoutAssertionProjectFixture(): TestFixture<LightJavaProject> = lightJavaProjectFixture(TestLibrariesDescriptor {
-  addJUnit3Library()
-  addJUnit4Library()
-  addJUnit5Library()
-  addJUnitSuiteLibrary()
-  addMockKLibrary()
-  addAssertJLibrary()
-})
+@JvmOverloads
+fun testMethodWithoutAssertionProjectFixture(moreLibraries: ModifiableRootModel.() -> Unit = {}): TestFixture<LightJavaProject> =
+  lightJavaProjectFixture(TestLibrariesDescriptor {
+    addJUnit3Library()
+    addJUnit4Library()
+    addJUnit5Library()
+    addJUnitSuiteLibrary()
+    addMockKLibrary()
+    addAssertJLibrary()
+    moreLibraries()
+  })
 
 /**
  * Creates the fixture of a [TestMethodWithoutAssertionInspection] test. It replaces [TestMethodWithoutAssertionInspectionTestBase].

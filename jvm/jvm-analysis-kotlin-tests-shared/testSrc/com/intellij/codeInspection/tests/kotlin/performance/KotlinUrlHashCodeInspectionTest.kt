@@ -1,11 +1,22 @@
 package com.intellij.codeInspection.tests.kotlin.performance
 
-import com.intellij.jvm.analysis.internal.testFramework.performance.UrlHashCodeInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.performance.urlHashCodeInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.jvm.analysis.testFramework.jvmProjectFixture
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
+@TestApplication
+abstract class KotlinUrlHashCodeInspectionTest {
+  companion object {
+    private val projectFixture = jvmProjectFixture()
+  }
+
+  protected val myFixture by urlHashCodeInspectionFixture(projectFixture)
+
   
 
+  @Test
   fun `test url hashcode call`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.net.URL
@@ -20,6 +31,7 @@ abstract class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase()
     """.trimIndent())
   }
 
+  @Test
   fun `test url equals call`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.net.URL
@@ -36,6 +48,7 @@ abstract class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase()
     """.trimIndent())
   }
 
+  @Test
   fun `test url variable with URL maps or sets`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.net.URL
@@ -51,6 +64,7 @@ abstract class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase()
     """.trimIndent())
   }
 
+  @Test
   fun `test url URL map operations`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.net.URL
@@ -67,6 +81,7 @@ abstract class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase()
     """.trimIndent())
   }
 
+  @Test
   fun `test url URL set operations`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.net.URL
@@ -83,6 +98,7 @@ abstract class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase()
     """.trimIndent())
   }
 
+  @Test
   fun `test URL doesn't highlight when comparing with null`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.net.URL

@@ -1,13 +1,24 @@
 package com.intellij.codeInspection.tests.kotlin.test
 
-import com.intellij.jvm.analysis.internal.testFramework.test.TestFailedLineInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.testFailedLineInspectionFixture
+import com.intellij.jvm.analysis.internal.testFramework.test.testFailedLineProjectFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinTestFailedLineInspectionTest : TestFailedLineInspectionTestBase() {
+@TestApplication
+abstract class KotlinTestFailedLineInspectionTest {
+  companion object {
+    private val projectFixture = testFailedLineProjectFixture()
+  }
+
+  protected val myFixture by testFailedLineInspectionFixture(projectFixture)
+
   
 
+  @Test
   fun `test non qualified call`() {
-    doTest(
+    myFixture.doTest(
       lang = JvmLanguage.KOTLIN,
       text = """
         class MainTest : junit.framework.TestCase() {
@@ -29,8 +40,9 @@ abstract class KotlinTestFailedLineInspectionTest : TestFailedLineInspectionTest
     )
   }
 
+  @Test
   fun `test qualified call`() {
-    doTest(
+    myFixture.doTest(
       lang = JvmLanguage.KOTLIN,
       text = """
         class QualifiedTest : junit.framework.TestCase() {
@@ -53,8 +65,9 @@ abstract class KotlinTestFailedLineInspectionTest : TestFailedLineInspectionTest
     )
   }
 
+  @Test
   fun `test local method call`() {
-    doTest(
+    myFixture.doTest(
       lang = JvmLanguage.KOTLIN,
       text = """
         class LocalFunctionTest {

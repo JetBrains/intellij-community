@@ -1,10 +1,14 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
+@TestApplication
 class K2LoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2Test :
   KotlinLoggingPlaceholderCountMatchesArgumentCountInspectionLog4J2Test() {
 
+  @Test
   fun `test error type`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
         import org.apache.logging.log4j.LogManager

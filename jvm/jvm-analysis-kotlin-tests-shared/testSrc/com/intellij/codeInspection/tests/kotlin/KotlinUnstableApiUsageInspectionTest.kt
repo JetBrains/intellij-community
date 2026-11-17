@@ -1,14 +1,25 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.jvm.analysis.internal.testFramework.UnstableApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.jvmAnnotationsProjectFixture
+import com.intellij.jvm.analysis.internal.testFramework.unstableApiUsageInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinUnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() {
+@TestApplication
+abstract class KotlinUnstableApiUsageInspectionTest {
+  companion object {
+    private val projectFixture = jvmAnnotationsProjectFixture()
+  }
+
+  protected val myFixture by unstableApiUsageInspectionFixture(projectFixture)
+
   
 
+  @Test
   fun `test kotlin unstable api usages`() {
-    inspection.myIgnoreInsideImports = false
+    myFixture.inspection.myIgnoreInsideImports = false
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       @file:Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "UNUSED_VALUE", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
 
@@ -132,6 +143,7 @@ abstract class KotlinUnstableApiUsageInspectionTest : UnstableApiUsageInspection
     """.trimIndent())
   }
 
+  @Test
   fun `test kotlin no warnings on access to members of the same file`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       @file:Suppress("UNUSED_PARAMETER")
@@ -173,8 +185,9 @@ abstract class KotlinUnstableApiUsageInspectionTest : UnstableApiUsageInspection
     """.trimIndent())
   }
 
+  @Test
   fun `test kotlin do not report unstable api usages inside import statements`() {
-    inspection.myIgnoreInsideImports = true
+    myFixture.inspection.myIgnoreInsideImports = true
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import experimental.pkg.AnnotatedClass
       import experimental.pkg.AnnotatedClass.NON_ANNOTATED_CONSTANT_IN_ANNOTATED_CLASS
@@ -202,8 +215,9 @@ abstract class KotlinUnstableApiUsageInspectionTest : UnstableApiUsageInspection
     """.trimIndent())
   }
 
+  @Test
   fun `test Kotlin scheduled for removal`() {
-    inspection.myIgnoreInsideImports = false
+    myFixture.inspection.myIgnoreInsideImports = false
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       @file:Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "UNUSED_VALUE", "UNUSED_PARAMETER", "UNUSED_VARIABLE")
 

@@ -1,15 +1,26 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.jvm.analysis.internal.testFramework.SerializableHasSerialVersionUidFieldInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.jvmSdkProjectFixture
+import com.intellij.jvm.analysis.internal.testFramework.serializableHasSerialVersionUidFieldInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 
-abstract class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSerialVersionUidFieldInspectionTestBase() {
+@TestApplication
+abstract class KotlinSerializableHasSerialVersionUidFieldInspectionTest {
+  companion object {
+    private val projectFixture = jvmSdkProjectFixture()
+  }
+
+  protected val myFixture by serializableHasSerialVersionUidFieldInspectionFixture(projectFixture)
+
   
 
   abstract fun getHint(): String
 
+  @Test
   fun `test highlighting`() {
     myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       import java.io.Serializable
@@ -18,6 +29,7 @@ abstract class KotlinSerializableHasSerialVersionUidFieldInspectionTest : Serial
     """.trimIndent())
   }
 
+  @Test
   fun `test quickfix`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_11)
     myFixture.testQuickFix(JvmLanguage.KOTLIN, """
@@ -35,6 +47,7 @@ abstract class KotlinSerializableHasSerialVersionUidFieldInspectionTest : Serial
     """.trimIndent(), getHint())
   }
 
+  @Test
   fun `test quickfix companion exists`() {
     myFixture.setLanguageLevel(LanguageLevel.JDK_11)
     myFixture.testQuickFix(JvmLanguage.KOTLIN, """
@@ -57,8 +70,9 @@ abstract class KotlinSerializableHasSerialVersionUidFieldInspectionTest : Serial
     """.trimIndent(), getHint())
   }
 
+  @Test
   fun `test quickfix @Serial annotation`() {
-    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_14) {
+    IdeaTestUtil.withLevel(myFixture.module, LanguageLevel.JDK_14) {
       myFixture.testQuickFix(JvmLanguage.KOTLIN, """
         import java.io.Serializable
         

@@ -1,17 +1,27 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
-import com.intellij.junit.testFramework.JUnit4ConverterInspectionTestBase
+import com.intellij.execution.junit.kotlin.kotlinJUnitProjectFixture
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT3
+import com.intellij.junit.testFramework.MavenTestLib.JUNIT4
+import com.intellij.junit.testFramework.junit4ConverterInspectionFixture
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.refactoring.BaseRefactoringProcessor
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import com.intellij.testFramework.junit5.TestApplication
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 
-abstract class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() {
-  override fun setUp() {
-    super.setUp()
-    ConfigLibraryUtil.configureKotlinRuntime(myFixture.module)
+@TestApplication
+abstract class KotlinJUnit4ConverterInspectionTest {
+  companion object {
+    private val projectFixture = kotlinJUnitProjectFixture(JUNIT3, JUNIT4)
   }
 
+  protected val myFixture by junit4ConverterInspectionFixture(projectFixture)
+
+  @Test
   fun `test highlighting`() {
     myFixture.testHighlighting(
       JvmLanguage.KOTLIN, """
@@ -24,6 +34,7 @@ abstract class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTe
       }""".trimIndent())
   }
 
+  @Test
   fun `test quickfix lifecycle method name conflict`() {
     myFixture.addFileToProject("AbstractJUnit3Test.kt", """
         import junit.framework.TestCase
@@ -71,14 +82,12 @@ abstract class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTe
     }
     catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
       assertEquals(e.messages.size, 2)
-      assertContainsElements(
-        e.messages,
-        "Method setUp will have a name collision with its super method",
-        "Method tearDown will have a name collision with its super method"
-      )
+      assertThat(e.messages).contains("Method setUp will have a name collision with its super method",
+        "Method tearDown will have a name collision with its super method")
     }
   }
 
+  @Test
   fun `test quickfix semantic change`() {
     myFixture.testQuickFixException<BaseRefactoringProcessor.ConflictsInTestsException>(
       JvmLanguage.KOTLIN, """
@@ -91,13 +100,11 @@ abstract class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTe
         }  
     """.trimIndent(), "Convert to JUnit 4 test case") { e ->
       assertEquals(e.messages.size, 1)
-      assertContainsElements(
-        e.messages,
-        "Method call toString() may change semantics when class JUnit3Test is converted to JUnit 4"
-      )
+      assertThat(e.messages).contains("Method call toString() may change semantics when class JUnit3Test is converted to JUnit 4")
     }
   }
 
+  @Test
   fun `test quickfix removed method`() {
     myFixture.testQuickFixException<BaseRefactoringProcessor.ConflictsInTestsException>(
       JvmLanguage.KOTLIN, """
@@ -110,13 +117,11 @@ abstract class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTe
         }      
     """.trimIndent(), "Convert to JUnit 4 test case") { e ->
       assertEquals(e.messages.size, 1)
-      assertContainsElements(
-        e.messages,
-        "Method call countTestCases() will not compile when class JUnit3Test is converted to JUnit 4"
-      )
+      assertThat(e.messages).contains("Method call countTestCases() will not compile when class JUnit3Test is converted to JUnit 4")
     }
   }
 
+  @Test
   fun `test quickfix non convertable suite`() {
     myFixture.testQuickFixException<BaseRefactoringProcessor.ConflictsInTestsException>(
       JvmLanguage.KOTLIN, """
@@ -138,13 +143,11 @@ abstract class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTe
         }
     """.trimIndent(), "Convert to JUnit 4 test case") { e ->
       assertEquals(e.messages.size, 1)
-      assertContainsElements(
-        e.messages,
-        "Migration of suite method for class JUnit3Test has side effects which will be deleted"
-      )
+      assertThat(e.messages).contains("Migration of suite method for class JUnit3Test has side effects which will be deleted")
     }
   }
 
+  @Test
   fun `test quickfix class expression suite converter`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """
@@ -185,6 +188,7 @@ abstract class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTe
       """.trimIndent(), "Convert to JUnit 4 test case", testPreview = true)
   }
 
+  @Test
   fun `test quickfix nested suite converter`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """
@@ -244,6 +248,7 @@ abstract class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTe
       """.trimIndent(), "Convert to JUnit 4 test case", testPreview = true)
   }
 
+  @Test
   fun `test quickfix assertion converter`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """
@@ -268,6 +273,7 @@ abstract class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTe
       """.trimIndent(), "Convert to JUnit 4 test case", testPreview = true)
   }
 
+  @Test
   fun `test quickfix setup and teardown converter`() {
     myFixture.testQuickFix(
       JvmLanguage.KOTLIN, """

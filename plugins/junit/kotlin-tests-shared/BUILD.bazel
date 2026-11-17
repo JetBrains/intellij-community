@@ -47,6 +47,7 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi",
         "//libraries/junit4",
         "//libraries/junit6",
+        "//libraries/assertj-core",
         "//platform/scratch/plugin",
     ],
 )
