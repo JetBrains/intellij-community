@@ -1,7 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### skip generation section `test intellij.vcs.git.testFramework`
-
 ### auto-generated section `build intellij.vcs.git.testFramework` start
 jvm_library(
     name = "testFramework",
