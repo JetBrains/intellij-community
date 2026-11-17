@@ -56,6 +56,13 @@ internal class CondaEnvCreatorForEntryTest {
     assertThat(intentionOf(conda, projectPath.get().pathString)).isNull()
   }
 
+  @Test
+  fun `conda makes no prefix that is not a path of the machine`(): Unit = timeoutRunBlocking(30.seconds) {
+    assertThat(intentionOf(conda, "/no-such-dir\u0000/.conda"))
+      .describedAs("nobody can tell whether such a prefix is there, so conda is not asked to create an environment over it")
+      .isNull()
+  }
+
   private suspend fun intentionOf(manager: FusId, envRef: String): String? =
     recreateIntentionOf(CONDA_TOOL_ID, pyProject.get(), entryKeyOf(pyProject.get(), manager, envRef))
 }

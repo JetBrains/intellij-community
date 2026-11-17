@@ -12,8 +12,6 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.intellij.python.community.execService.python.getLanguageLevelFromVersionStringSafe
 import com.intellij.python.sdk.backend.PythonInterpreterRecords
 import com.intellij.python.sdk.backend.resolveExecutable
-import kotlin.io.path.exists
-import com.intellij.openapi.util.io.FileUtil
 import com.jetbrains.python.sdk.conda.condaIdentityOf
 import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.sdk.backend.PythonInterpreterKey
@@ -157,12 +155,26 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     val identity = condaIdentityOf(key.ref.env.envRef)
     when (identity) {
       is PyCondaEnvIdentity.NamedEnv -> Unit
-      // The prefix can be written relative to the user home, such as `~/app/.conda`. conda reads that form itself.
-      is PyCondaEnvIdentity.UnnamedEnv -> if (withContext(Dispatchers.IO) { Path.of(FileUtil.expandUserHome(identity.envPath)).exists() }) return null
+      // An unknown answer offers nothing: conda must not create an environment over one that can be there.
+      is PyCondaEnvIdentity.UnnamedEnv -> if (prefixExists(pyProject, identity.envPath) != false) return null
     }
     return prepareSdkCreator(
       { EnvCheckerResult.EnvNotFound(PyCondaBundle.message("sdk.recreate.conda.environment", identity.userReadableName)) }
     ) { { recreateCondaEnv(pyProject, key, identity) } }
+  }
+
+  /**
+   * Whether the conda prefix [envPath] is a directory on the machine of [pyProject], or `null` when [envPath] is no
+   * path of that machine. The prefix can be written relative to the user home, such as `~/app/.conda`, which conda reads
+   * itself. The home is the one of the user on that machine.
+   */
+  private suspend fun prefixExists(pyProject: PyProject, envPath: String): Boolean? {
+    val eel = pyProject.getEel()
+    val inUserHome = envPath == "~" || envPath.startsWith("~/") || envPath.startsWith("~\\")
+    val expanded = if (inUserHome) "${eel.fs.user.home}${envPath.substring(1)}" else envPath
+    val fileSystem = eel.toFileSystem()
+    val prefix = fileSystem.parsePath(expanded).successOrNull ?: return null
+    return fileSystem.directoryExists(prefix)
   }
 
   /** Makes the conda environment with [identity], which [key] names, and its interpreter. */
