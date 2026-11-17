@@ -398,3 +398,4 @@ intellij.kotlin.j2k.tests
 intellij.kotlin.i18n.tests
 intellij.kotlin.base.facet.tests
 intellij.kotlin.uast.tests
+intellij.kotlin.projectWizard.core.tests
