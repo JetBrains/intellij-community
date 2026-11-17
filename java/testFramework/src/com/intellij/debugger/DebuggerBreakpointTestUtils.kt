@@ -1,10 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger
 
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.SuspendContextRunnable
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.util.ConcurrencyUtil
+import org.jetbrains.annotations.TestOnly
 
 @JvmField
 val USE_XSESSION_PAUSE_LISTENER_KEY: KeyWithDefaultValue<Boolean?> = KeyWithDefaultValue.create("USE_XSESSION_PAUSE_LISTENER_KEY", false)
@@ -60,6 +64,21 @@ val USE_XSESSION_PAUSE_LISTENER_KEY: KeyWithDefaultValue<Boolean?> = KeyWithDefa
  * ```
  */
 fun ExecutionWithDebuggerToolsTestCase.processBreakpoints(test: suspend SequenceScope<Nothing?>.() -> Unit) {
+  processBreakpoints(debugProcess, { onEveryBreakpoint(it) }, { resume(it) }, test)
+}
+
+/** The [processBreakpoints] of [DebuggerTestFixture]. Call it after [DebuggerTestFixture.createLocalProcess]. */
+@TestOnly
+fun DebuggerTestFixture.processBreakpoints(test: suspend SequenceScope<Nothing?>.() -> Unit) {
+  processBreakpoints(requireNotNull(debugProcess), { onEveryBreakpoint(it) }, { resume(it) }, test)
+}
+
+private fun processBreakpoints(
+  debugProcess: DebugProcessImpl,
+  onEveryBreakpoint: (SuspendContextRunnable) -> Unit,
+  resume: (SuspendContextImpl) -> Unit,
+  test: suspend SequenceScope<Nothing?>.() -> Unit,
+) {
   val executor = ConcurrencyUtil.newSingleThreadExecutor("DebuggerTestExecutor")
 
   debugProcess.addProcessListener(object : ProcessListener {
