@@ -51,7 +51,7 @@ public final class MethodExistsDialog {
      */
     public static ConflictResolutionPolicy showDialog(String targetMethodName) {
         int exit = Messages.showYesNoCancelDialog(
-          JavaBundle.message("generate.tostring.method.already.exists.dialog.me=ssage", targetMethodName),
+          JavaBundle.message("generate.tostring.method.already.exists.dialog.message", targetMethodName),
           JavaBundle.message("generate.tostring.method.already.exists.dialog.title"), Messages.getQuestionIcon());
         if (exit == Messages.CANCEL) {
             return CancelPolicy.getInstance();
