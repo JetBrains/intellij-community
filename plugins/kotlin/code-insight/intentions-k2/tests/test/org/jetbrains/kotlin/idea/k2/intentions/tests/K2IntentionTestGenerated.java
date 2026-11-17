@@ -14057,6 +14057,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/companionObjectUsedAsItsSupertype.kt");
         }
 
+        @TestMetadata("companionObjectWithSuperInit.kt")
+        public void testCompanionObjectWithSuperInit() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/companionObjectWithSuperInit.kt");
+        }
+
         @TestMetadata("disabledFeatureFlag.kt")
         public void testDisabledFeatureFlag() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/disabledFeatureFlag.kt");
