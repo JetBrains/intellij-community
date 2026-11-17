@@ -6,20 +6,13 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="kotlinc.kotlin-main-kts" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-main-kts:2.5.20-dev-4873">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.5.20-dev-4873/kotlin-main-kts-2.5.20-dev-4873.jar">
-              <sha256sum>d78ddc5b27a3cf6f9f60258b4ab39f1bbfa17e029ce939c21b7374839b594cab</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
+      <library name="kotlinc.kotlin-main-kts">
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.5.20-dev-4873/kotlin-main-kts-2.5.20-dev-4873.jar!/" />
+          <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-main-kts/2.5.255-dev-255/kotlin-main-kts-2.5.255-dev-255.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.5.20-dev-4873/kotlin-main-kts-2.5.20-dev-4873-sources.jar!/" />
+          <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-main-kts/2.5.255-dev-255/kotlin-main-kts-2.5.255-dev-255-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
