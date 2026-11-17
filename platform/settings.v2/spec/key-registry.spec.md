@@ -40,8 +40,9 @@ from outside, such as from another remote-dev side, could resolve to nothing.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
 - A different key with a taken identity must be refused and logged.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
-- The platform must promote the keys that the API module declares, `EDIT_TEAM_LAYER` and `LANGUAGE`. A missing
-  promotion shows only on a write outside the unit test mode, so only an integration test covers it.
+- The platform must promote the keys that the API module declares: `EDIT_TEAM_LAYER`, `LANGUAGE`, `OS` and
+  `PER_OS_SETTINGS`. A missing promotion shows only on a write outside the unit test mode, so only an integration
+  test covers it.
   [@test] ../../../../platform/unified/integrationTests/testSrc/com/intellij/platform/unified/integrationTests/JetBrainsLightSettingsTest.kt
 - A promoter must register the keys of its own plugin only. A platform key has no plugin of its own, and the core
   plugin promotes it.
