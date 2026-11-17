@@ -173,6 +173,15 @@ internal sealed class LoggingProcessImpl(private val cfg: LoggingConfig) : Proce
   override fun toHandle(): ProcessHandle? =
     cfg.backingProcess.toHandle()
 
+  // pty4j supports `pid()` but not `toHandle()`. An ijent process supports `toHandle()` but not `pid()`.
+  override fun pid(): Long =
+    try {
+      cfg.backingProcess.pid()
+    }
+    catch (_: UnsupportedOperationException) {
+      cfg.backingProcess.toHandle().pid()
+    }
+
   // PY-89717: delegate to backingProcess.onExit() (which on JDK ProcessImpl uses
   // ProcessHandleImpl.completion / the whitelisted "process reaper" daemon).
   // Default java.lang.Process.onExit() would do CompletableFuture.supplyAsync(this::waitForInternal),

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.community.execService.impl
 
+import com.intellij.idea.TestFor
 import com.intellij.python.community.execService.ConcurrentProcessWeight
 import com.intellij.python.community.execService.impl.LoggingInputStream
 import com.intellij.python.community.execService.impl.LoggingProcessImpl
@@ -95,6 +96,24 @@ internal class LoggingProcessTest {
 
     assertEquals(null, processThrowing.loggedProcess.pid)
     assertEquals(pid, processSet.loggedProcess.pid)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-92900"])
+  fun `pid is read from the backing process that does not support toHandle`() {
+    val pid = 100_000L
+    val (_, _, process) = createLoggingProcess(pid = { pid }, handle = null)
+
+    assertEquals(pid, process.pid())
+  }
+
+  @Test
+  @TestFor(issues = ["PY-92900"])
+  fun `pid is read from the handle of the backing process that does not support pid`() {
+    val handle = ProcessHandle.current()
+    val (_, _, process) = createLoggingProcess(pid = { throw UnsupportedOperationException() }, handle = handle)
+
+    assertEquals(handle.pid(), process.pid())
   }
 
   @Test
@@ -205,6 +224,7 @@ internal class LoggingProcessTest {
     val outInputStream: InputStream,
     val errInputStream: InputStream,
     val pidGenerator: () -> Long,
+    val handle: ProcessHandle?,
   ) : Process() {
     val exitFuture: CompletableFuture<Int> = CompletableFuture()
     val inOutputStream: OutputStream = ByteArrayOutputStream()
@@ -236,6 +256,9 @@ internal class LoggingProcessTest {
 
     override fun pid(): Long =
       this.pidGenerator()
+
+    override fun toHandle(): ProcessHandle =
+      handle ?: throw UnsupportedOperationException("${this::class.java}.toHandle() not supported")
   }
 
   private data class CreationResult(
@@ -250,6 +273,7 @@ internal class LoggingProcessTest {
       stdout: String = "",
       stderr: String = "",
       pid: () -> Long = { 0 },
+      handle: ProcessHandle? = null,
       weight: ConcurrentProcessWeight? = null,
       traceContext: TraceContext? = null,
       startedAt: Instant = Instant.fromEpochMilliseconds(0),
@@ -265,6 +289,7 @@ internal class LoggingProcessTest {
           stdout.byteInputStream(),
           stderr.byteInputStream(),
           pid,
+          handle,
         )
       val loggingProcess =
         LoggingProcessImpl(
