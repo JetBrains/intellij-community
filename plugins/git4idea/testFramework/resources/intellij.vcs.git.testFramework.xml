@@ -63,7 +63,8 @@
     <module name="intellij.vcs.git.shared"/>
   </dependencies>
   <!-- endregion -->
-  <!-- The same overrides as META-INF/plugin.xml, for a run where this module is a content module of a test plugin. -->
+  <!-- The overrides for a run where this module is a content module of a test plugin. -->
+  <!-- META-INF/plugin.xml of the module intellij.vcs.git.testFramework.plugin has the same overrides. Keep both in sync. -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
                         serviceImplementation="git4idea.test.GitHttpAuthTestService"

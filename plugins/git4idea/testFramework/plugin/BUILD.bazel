@@ -1,0 +1,27 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.vcs.git.testFramework.plugin` start
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.vcs.git.testFramework.plugin",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.vcs.git.testFramework.plugin` end
+
+### auto-generated section `iml intellij.vcs.git.testFramework.plugin` start
+exports_files(
+    [
+        "intellij.vcs.git.testFramework.plugin.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.vcs.git.testFramework.plugin` end

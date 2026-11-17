@@ -79,7 +79,7 @@ jvm_library(
         "//platform/code-style-api:codeStyle",
         "//platform/util/concurrency",
         "//platform/lang-core",
-        "//plugins/git4idea/testFramework:testFramework_test_lib",
+        "//plugins/git4idea/testFramework",
         "//plugins/hg4idea:vcs-hg-tests_test_lib",
     ],
 )

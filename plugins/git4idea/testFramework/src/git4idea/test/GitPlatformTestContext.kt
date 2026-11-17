@@ -4,7 +4,6 @@ package git4idea.test
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -32,7 +31,6 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.test.VcsPlatformTestContext
 import com.intellij.vcs.test.updateChangeListManager
-import git4idea.DialogManager
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
@@ -66,7 +64,7 @@ fun TestFixture<VcsPlatformTestContext>.gitPlatformFixture(
 ): TestFixture<GitPlatformTestContext> = testFixture { context ->
   with(init()) {
     registryKeyFixture("git.use.env.from.project.context") { setValue(false) }.init()
-    val dialogManager = service<DialogManager>() as TestDialogManager
+    val dialogManager = testDialogManager()
     val vcsHelper = projectFixture.replacedServiceFixture(AbstractVcsHelper::class.java) {
       MockVcsHelper(project)
     }.init()

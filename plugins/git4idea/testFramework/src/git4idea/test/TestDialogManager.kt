@@ -16,6 +16,7 @@
 package git4idea.test
 
 import com.intellij.idea.AppMode
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DoNotAskOption
@@ -115,4 +116,16 @@ class TestDialogManager : DialogManager() {
     myHandlers.clear()
     myOnMessage = DEFAULT_MESSAGE_HANDLER
   }
+}
+
+/**
+ * Returns the [DialogManager] service as a [TestDialogManager].
+ * In a run from the module classpath, the plugin `Git4Idea-Tests` registers the test service.
+ * The module `intellij.vcs.git.testFramework.plugin` holds the descriptor of this plugin.
+ */
+internal fun testDialogManager(): TestDialogManager {
+  val dialogManager = service<DialogManager>()
+  return dialogManager as? TestDialogManager
+         ?: error("DialogManager is ${dialogManager.javaClass.name}, not TestDialogManager. " +
+                  "Add a RUNTIME dependency on the module intellij.vcs.git.testFramework.plugin to the test module.")
 }

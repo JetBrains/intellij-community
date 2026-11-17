@@ -8,6 +8,8 @@
     <module name="intellij.vcs.git.shared"/>
   </dependencies>
 
+  <!-- The overrides for a test run from the module classpath. -->
+  <!-- intellij.vcs.git.testFramework.xml of the module intellij.vcs.git.testFramework has the same overrides. Keep both in sync. -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="git4idea.commands.GitHttpAuthService"
                         serviceImplementation="git4idea.test.GitHttpAuthTestService"

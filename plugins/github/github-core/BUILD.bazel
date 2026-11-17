@@ -148,6 +148,7 @@ jvm_library(
         "//plugins/github/plugin",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
+        "//plugins/git4idea/testFramework/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
@@ -191,7 +192,7 @@ jvm_library(
         "//platform/ide-core",
         "//platform/testFramework/junit5",
         "//platform/lang-api:lang",
-        "//plugins/git4idea/testFramework:testFramework_test_lib",
+        "//plugins/git4idea/testFramework",
         "//platform/collaboration-tools:collaborationTools-tests_test_lib",
         "//platform/testFramework/junit5/codeInsight",
         "@lib//:app-cash-turbine-jvm",

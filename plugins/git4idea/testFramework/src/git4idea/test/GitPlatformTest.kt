@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -32,7 +31,6 @@ import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.test.VcsPlatformTest
 import com.intellij.vcs.test.VcsPlatformTestContext
-import git4idea.DialogManager
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
@@ -68,7 +66,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    dialogManager = service<DialogManager>() as TestDialogManager
+    dialogManager = testDialogManager()
     vcsHelper = MockVcsHelper(myProject)
     project.replaceService(AbstractVcsHelper::class.java, vcsHelper, testRootDisposable)
 
