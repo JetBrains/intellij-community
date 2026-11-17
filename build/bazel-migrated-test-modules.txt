@@ -400,3 +400,4 @@ intellij.kotlin.base.facet.tests
 intellij.kotlin.uast.tests
 intellij.kotlin.projectWizard.core.tests
 intellij.kotlin.base.plugin.tests
+intellij.kotlin.coverage.tests
