@@ -4,19 +4,28 @@ package com.intellij.java.psi.impl
 import com.intellij.JavaTestUtil
 import com.intellij.psi.impl.cache.impl.idCache.ConstantPoolParser
 import com.intellij.psi.impl.cache.impl.idCache.JvmIdentifierUtil.collectJvmIdentifiers
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInfo
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.readBytes
 
-class ConstantPoolParserTest : LightJavaCodeInsightFixtureTestCase5() {
-  override fun getTestDataPath(): String = JavaTestUtil.getJavaTestDataPath()
+@TestApplication
+class ConstantPoolParserTest {
+  private val constantPoolPath: Path by lazy { Paths.get(JavaTestUtil.getJavaTestDataPath()).resolve("psi").resolve("constantPool") }
 
-  private val constantPoolPath: Path by lazy { Paths.get(fixture.testDataPath).resolve("psi").resolve("constantPool") }
+  private lateinit var testName: String
+
+  @BeforeEach
+  fun setUpTestName(testInfo: TestInfo) {
+    testName = PlatformTestUtil.getTestName(testInfo.testMethod.get().name, false)
+  }
 
   /**
    * Source:
@@ -528,7 +537,7 @@ class ConstantPoolParserTest : LightJavaCodeInsightFixtureTestCase5() {
   }
 
   private fun doTest(text: String) {
-    val filePath = constantPoolPath.resolve(getTestName(false) + ".class")
+    val filePath = constantPoolPath.resolve("$testName.class")
     val bytes = filePath.readBytes()
     val ids = extractIdsFromClassFile(bytes)
     Assertions.assertEquals(text.trim(), ids.joinToString("\n").trim())
