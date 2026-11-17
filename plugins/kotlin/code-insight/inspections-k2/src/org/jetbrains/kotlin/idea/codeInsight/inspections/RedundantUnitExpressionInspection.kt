@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.base.analysis.isNotInjectedOrShouldBeAnalyzed
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.referenceExpressionVisitor
 
 class RedundantUnitExpressionInspection : KotlinApplicableInspectionBase.Simple<KtReferenceExpression, Unit>(), CleanupLocalInspectionTool {
     override fun isAvailableForFile(file: PsiFile): Boolean =
-        file.isNotInjectedOrShouldBeAnalyzed
+        !InjectedLanguageManager.getInstance(file.project).isInjectedViewProvider(file.viewProvider)
 
     override fun isApplicableByPsi(element: KtReferenceExpression): Boolean =
         element.isUnitLiteral()
