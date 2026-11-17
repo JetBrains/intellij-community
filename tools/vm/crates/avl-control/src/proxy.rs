@@ -1,5 +1,5 @@
 //! The proxy side of the fake-agent control protocol: one agent process on the control server in the IDE, as
-//! `AcpFakeAgentControlClient` of the agent jar is one.
+//! `AcpFakeAgentControlClient` of the test process is one.
 //!
 //! The proxy says `hello` and waits for the `helloAck`, which binds its identity: the connection id, the generation,
 //! the process id and the agent key. Every later envelope carries that identity, and every command must carry it too.
@@ -72,7 +72,7 @@ impl ControlEndpoint {
     }
 }
 
-/// Bounds the connection and the `hello`, as the control client of the agent jar does.
+/// Bounds the connection and the `hello`, as `AcpFakeAgentControlClient` does.
 const HELLO_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// One `kind` of a `lifecycle` envelope.

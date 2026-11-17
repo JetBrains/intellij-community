@@ -31,7 +31,7 @@ mod tests;
 const PROTOCOL_VERSION: &str = "2025-11-25";
 
 /// The name that the client gives in `initialize`.
-const CLIENT_NAME: &str = "acp-scenario-agent";
+const CLIENT_NAME: &str = "acp-fake-agent";
 
 /// Bounds each request to a server.
 const TIMEOUT: Duration = Duration::from_secs(30);

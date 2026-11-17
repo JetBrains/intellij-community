@@ -40,11 +40,6 @@ fn agent_binary() -> PathBuf {
     std::path::absolute(path).unwrap()
 }
 
-/// Serializes the starts of the agent. On macOS the standard library marks a new pipe close-on-exec only after it made
-/// the pipe, so a process that another test thread starts at that moment can inherit an end of the pipe. A pipe end
-/// in a sibling keeps a closed output of a test open.
-static SPAWN: Mutex<()> = Mutex::new(());
-
 /// Starts the agent with `args` and the control variables of `control`, or none, plus `env`.
 fn start(args: &[&str], control: Option<&Control>, env: &[(&str, &str)]) -> Child {
     let mut command = Command::new(agent_binary());
@@ -62,7 +57,6 @@ fn start(args: &[&str], control: Option<&Control>, env: &[(&str, &str)]) -> Chil
             .env("ACP_FAKE_AGENT_CONTROL_URL", control.url())
             .env("ACP_FAKE_AGENT_CONTROL_KEY", AGENT);
     }
-    let _spawn = SPAWN.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
     command.spawn().unwrap()
 }
 
@@ -404,7 +398,7 @@ fn the_proxy_forwards_each_line_and_writes_each_command() {
 }
 
 /// A `closeStdout` ends the pipe of the output while the process runs. A later write fails the proxy: it reports one
-/// `control_failure` and exits with 1.
+/// `control_failure` with no detail of the output, and exits with 1.
 #[test]
 fn a_closed_stdout_ends_the_pipe_and_a_later_write_fails_the_proxy() {
     let control = Control::start();
@@ -433,18 +427,6 @@ fn a_closed_stdout_ends_the_pipe_and_a_later_write_fails_the_proxy() {
     let (exit, _, stderr) = finish(child);
     assert_eq!(exit, Some(1));
     assert!(stderr.contains("Cannot write after stdout closed"), "{stderr}");
-}
-
-/// A write to an output that nobody reads fails, and the failure report names no detail of the output.
-#[test]
-fn a_failed_write_reports_one_sanitized_control_failure() {
-    let control = Control::start();
-    let mut child = start(&[], Some(&control), &[]);
-    let session = control.session();
-    drop(child.stdout.take());
-    session.command("write", r#"{"rawLine":"response"}"#);
-    session.expect_control_failure();
-    assert_eq!(wait_output(child).0, Some(1));
 }
 
 /// A control connection that ends before an exit command ends the process with 1.

@@ -377,13 +377,13 @@ The rest of the scenario matrix is in
   [@test] ../crates/avl-wire/src/runtime/tests.rs
   [@test] ../crates/avl-vm/src/daemon/build/tests.rs
 
-- The runtime descriptor names three lane inputs: the fake agent jar, the jar of the suite documents and the jar of
-  the lane documents. The controller pushes them by digest with the context plugin files. No identity reads them, so
+- The runtime descriptor names four lane inputs. Two are the fake agent of the guest and the jar of the GenUI fixture
+  app server. The others are the jars of the suite documents and of the lane documents. The controller pushes them by digest with the context plugin files. No identity reads them, so
   an edit of the fake agent refreshes no share, keeps the IDE and keeps the daemon. The descriptor refuses a lane input
   that the data or another field of the descriptor also names. Each iteration names the digest of each lane input in
   the journal.
   [@test] ../crates/avl-wire/src/runtime/tests.rs (`every_way_the_descriptor_can_be_wrong_is_its_own_refusal`)
-  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_fake_agent_jar_changes_no_identity_and_only_its_pushed_digest`)
+  [@test] ../crates/avl-vm/src/daemon/build/tests.rs (`a_changed_fake_agent_changes_no_identity_and_only_its_pushed_digest`)
   [@test] ../crates/avl-vm/src/daemon/run/tests.rs (`push_jars_uploads_only_missing_digests`)
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`an_iteration_names_the_digests_of_the_lane_inputs`)
 
@@ -545,7 +545,8 @@ Before a launch, the lane daemon writes these files into the context:
 | `config/air-ui-test/token` | the token of the UI-test bridge |
 | `config/air-ui-test/lane-services.json` | the lane-service token and the URL of each lane service |
 | `config/air-ui-test/control.json` | the control server in the IDE and its credentials |
-| `home/.air-lane/acp-scenario-agent.jar` | the copy of the fake agent jar |
+| `home/.air-lane/acp-fake-agent` | the copy of the fake agent of the guest, executable by the owner |
+| `home/.air-lane/genui-fixture-app.jar` | the copy of the jar of the GenUI fixture app server |
 | `home/.jetbrains/acp.json` | one entry for each local agent |
 | `bin/<runtime>` | one launcher for each CLI runtime |
 | `home/.codex/config.toml` | the Codex mock model and the trusted project |
