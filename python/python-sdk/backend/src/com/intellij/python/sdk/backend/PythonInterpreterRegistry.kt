@@ -126,7 +126,7 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
         .onStart { emit(Unit) }
         .conflate()
         .collect {
-          val recordsVersion = PythonInterpreterRecords.getInstance(project).changeCount
+          val recordsVersion = PythonInterpreterRecords.getInstance(project).versions.value
           val interpreters = compute()
           state.value = Computed(interpreters, recordsVersion)
           // The roots of an interpreter that the registry no longer holds are of no use, see PythonInterpreterDetails.
@@ -599,11 +599,18 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
    * gone. A key without a record gets one first, see [adoptEntryKey], and the call waits for the computation that reads
    * it. For a caller that needs a true answer at this instant, such as the configuration lock. It writes the store, so the
    * computation of a snapshot does not call it.
+   *
+   * A computation that does not read the record after [RESOLVE_TIMEOUT] is a bug. The wait then logs an error and answers
+   * from the last computation, so a caller that holds a lock does not hang.
    */
   suspend fun resolveEntryKey(key: PythonInterpreterKey): PythonInterpreter? {
     adoptEntryKey(key)
-    val needed = PythonInterpreterRecords.getInstance(project).changeCount
-    return state.filterNotNull().first { it.recordsVersion >= needed }.interpreters.firstOrNull { it.key == key }
+    val needed = PythonInterpreterRecords.getInstance(project).versions.value
+    val computed = withTimeoutOrNull(RESOLVE_TIMEOUT) { state.filterNotNull().first { it.recordsVersion >= needed } }
+    if (computed == null) {
+      thisLogger().error("No computation read the records at version $needed after $RESOLVE_TIMEOUT, the last one read ${state.value?.recordsVersion}")
+    }
+    return (computed ?: state.value)?.interpreters?.firstOrNull { it.key == key }
   }
 
   /**
@@ -678,6 +685,7 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
 
   companion object {
     private val REMOVE_TIMEOUT = 30.seconds
+    private val RESOLVE_TIMEOUT = 30.seconds
 
     fun getInstance(project: Project): PythonInterpreterRegistry = project.service()
   }
