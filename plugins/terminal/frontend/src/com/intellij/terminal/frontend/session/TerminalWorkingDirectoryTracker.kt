@@ -39,6 +39,7 @@ internal fun getInitialWorkingDirectory(options: ShellStartupOptions): EelPath? 
 
 /**
  * Reports the working directory of the process to [listener] as a path in the Eel environment of the process.
+ * Reports null if we fail to parse the directory path, so that no feature uses a stale directory.
  * Reports nothing if [ttyConnector] does not wrap a [LocalTerminalTtyConnector],
  * because only this connector knows the Eel environment of the process.
  */
@@ -46,24 +47,22 @@ internal fun addWorkingDirectoryListener(
   ttyConnector: ObservableTtyConnector,
   shellIntegrationController: TerminalShellIntegrationController,
   coroutineScope: CoroutineScope,
-  listener: (EelPath) -> Unit,
+  listener: (EelPath?) -> Unit,
 ) {
   val localTtyConnector = ttyConnector.original as? LocalTerminalTtyConnector ?: run {
     LOG.info("Failed to get local TTY connector: $ttyConnector. Working directory won't be updated.")
     return
   }
   val eelDescriptor = localTtyConnector.eelDescriptor
-  val reportDirectory = { directory: String ->
+  val reportDirectory = { directory: String? ->
     val path = try {
-      EelPath.parse(directory, eelDescriptor)
+      directory?.let { EelPath.parse(it, eelDescriptor) }
     }
     catch (e: EelPathException) {
       LOG.warn("Failed to parse working directory '$directory' on $eelDescriptor: ${e.message}")
       null
     }
-    if (path != null) {
-      listener(path)
-    }
+    listener(path)
   }
 
   val heuristicBasedTrackerScope = coroutineScope.childScope("Heuristic based working directory tracker")
@@ -74,16 +73,11 @@ internal fun addWorkingDirectoryListener(
       // Stop heuristic-based working directory tracking if there is a shell integration.
       // We will receive the current directory from the shell integration.
       heuristicBasedTrackerScope.cancel()
-
-      if (currentDirectory != null) {
-        reportDirectory(currentDirectory)
-      }
+      reportDirectory(currentDirectory)
     }
 
     override fun commandFinished(command: String, exitCode: Int, currentDirectory: String?) {
-      if (currentDirectory != null) {
-        reportDirectory(currentDirectory)
-      }
+      reportDirectory(currentDirectory)
     }
   })
 }
@@ -98,7 +92,7 @@ private fun addHeuristicBasedCwdListener(
   ttyConnector: ObservableTtyConnector,
   localTtyConnector: LocalTerminalTtyConnector,
   coroutineScope: CoroutineScope,
-  listener: (String) -> Unit,
+  listener: (String?) -> Unit,
 ) {
   val workingDirectoryUpdateRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -115,8 +109,7 @@ private fun addHeuristicBasedCwdListener(
     workingDirectoryUpdateRequests
       .debounce(500.milliseconds)
       .collect {
-        val cwd = doCalculateCurrentDirectory(localTtyConnector) ?: return@collect
-        listener(cwd)
+        listener(doCalculateCurrentDirectory(localTtyConnector))
       }
   }
 
