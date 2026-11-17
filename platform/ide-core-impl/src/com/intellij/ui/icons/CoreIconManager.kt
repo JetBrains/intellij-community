@@ -136,6 +136,26 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
                               toolTip = IconDescriptionLoader(path))
   }
 
+  override fun loadRasterizedIcon(
+    path: String,
+    expUIPath: String,
+    classLoader: ClassLoader,
+    cacheKey: Int,
+    flags: Int,
+    expUICacheKey: Int,
+    expUIFlags: Int,
+  ): Icon {
+    assert(!path.startsWith('/'))
+    return loadRasterizedIcon(path = path,
+                              expUIPath = expUIPath,
+                              classLoader = classLoader,
+                              cacheKey = cacheKey,
+                              flags = flags,
+                              expUICacheKey = expUICacheKey,
+                              expUIFlags = expUIFlags,
+                              toolTip = IconDescriptionLoader(path))
+  }
+
   override fun createEmptyIcon(icon: Icon): Icon = EmptyIcon.create(icon)
 
   override fun <T : Any> createDeferredIcon(base: Icon?, param: T, iconProducer: (T) -> Icon?): Icon {

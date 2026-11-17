@@ -70,6 +70,20 @@ interface IconManager {
   @Internal
   fun loadRasterizedIcon(path: String, expUIPath: String?, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon
 
+  /**
+   * [expUICacheKey] and [expUIFlags] describe the [expUIPath] file in the same way as [cacheKey] and [flags] describe the [path] file.
+   */
+  @Internal
+  fun loadRasterizedIcon(
+    path: String,
+    expUIPath: String,
+    classLoader: ClassLoader,
+    cacheKey: Int,
+    flags: Int,
+    expUICacheKey: Int,
+    expUIFlags: Int,
+  ): Icon = loadRasterizedIcon(path = path, expUIPath = expUIPath, classLoader = classLoader, cacheKey = cacheKey, flags = flags)
+
   fun createEmptyIcon(icon: Icon): Icon = icon
 
   fun createOffsetIcon(icon: Icon): Icon = icon

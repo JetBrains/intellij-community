@@ -436,8 +436,14 @@ open class CachedImageIcon private constructor(
     return ProtoBuf.encodeToByteArray(descriptor)
   }
 
+  /**
+   * The flags of the image that the icon loads. The path patch can change them.
+   */
   val imageFlags: Int
-    get() = loader.flags
+    get() = synchronized(iconCache) {
+      checkPathTransform()
+      loader.flags
+    }
 
   override fun equals(other: Any?): Boolean = when {
     this === other -> true

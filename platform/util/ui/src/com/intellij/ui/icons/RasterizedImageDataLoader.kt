@@ -24,14 +24,29 @@ import java.util.function.Supplier
 import javax.swing.Icon
 
 // a reflective path is not supported, a result is not cached
+/**
+ * [expUICacheKey] and [expUIFlags] describe the [expUIPath] file in the same way as [cacheKey] and [flags] describe the [path] file.
+ * [expUICacheKey] is 0 if the icon class has no data for the [expUIPath] file.
+ */
 @ApiStatus.Internal
-fun loadRasterizedIcon(path: String, expUIPath: String?, classLoader: ClassLoader, cacheKey: Int, flags: Int, toolTip: Supplier<String?>?): Icon {
+fun loadRasterizedIcon(
+  path: String,
+  expUIPath: String?,
+  classLoader: ClassLoader,
+  cacheKey: Int,
+  flags: Int,
+  expUICacheKey: Int = 0,
+  expUIFlags: Int = 0,
+  toolTip: Supplier<String?>?,
+): Icon {
   assert(!path.startsWith('/'))
   return CachedImageIcon(loader = RasterizedImageDataLoader(path = path,
                                                             expUIPath = expUIPath,
                                                             classLoaderRef = WeakReference(classLoader),
                                                             cacheKey = cacheKey,
-                                                            flags = flags),
+                                                            flags = flags,
+                                                            expUICacheKey = expUICacheKey,
+                                                            expUIFlags = expUIFlags),
                          toolTip = toolTip)
 }
 
@@ -43,19 +58,34 @@ private data class RasterizedImageDataLoaderDescriptor(
   @JvmField val moduleId: String?,
   @JvmField val cacheKey: Int,
   @JvmField val flags: Int,
+  // the defaults let older data decode
+  @JvmField val expUICacheKey: Int = 0,
+  @JvmField val expUIFlags: Int = 0,
 ) : ImageDataLoaderDescriptor {
   override fun createIcon(): ImageDataLoader? {
     ImageDataLoaderStatisticsService.getInstance()?.iconDecoded(expUIPath = expUIPath, expUICacheKey = 0)
     val classLoader = IconManager.getInstance().getClassLoader(pluginId, moduleId) ?: return null
-    return RasterizedImageDataLoader(path = path, expUIPath = expUIPath, classLoaderRef = WeakReference(classLoader), cacheKey = cacheKey, flags = flags)
+    return RasterizedImageDataLoader(path = path,
+                                     expUIPath = expUIPath,
+                                     classLoaderRef = WeakReference(classLoader),
+                                     cacheKey = cacheKey,
+                                     flags = flags,
+                                     expUICacheKey = expUICacheKey,
+                                     expUIFlags = expUIFlags)
   }
 }
 
+/**
+ * [expUICacheKey] and [expUIFlags] describe the [expUIPath] file in the same way as [cacheKey] and [flags] describe the [path] file.
+ * [expUICacheKey] is 0 if the icon class has no data for the [expUIPath] file.
+ */
 private class RasterizedImageDataLoader(override val path: String,
                                         override val expUIPath: String?,
                                         private val classLoaderRef: WeakReference<ClassLoader>,
                                         private val cacheKey: Int,
-                                        override val flags: Int) : ImageDataLoader {
+                                        override val flags: Int,
+                                        private val expUICacheKey: Int,
+                                        private val expUIFlags: Int) : ImageDataLoader {
   private val isSvg: Boolean
     get() = cacheKey != 0
   
@@ -71,6 +101,8 @@ private class RasterizedImageDataLoader(override val path: String,
       moduleId = pluginInfo.second,
       flags = flags,
       cacheKey = cacheKey,
+      expUICacheKey = expUICacheKey,
+      expUIFlags = expUIFlags,
     )
   }
 
@@ -107,7 +139,10 @@ private class RasterizedImageDataLoader(override val path: String,
     val patched = transform.patchPath(path = path, classLoader = classLoader)
     if (patched == null) {
       if (expUIPath != null && NewUiValue.isEnabled()) {
-        return PatchedRasterizedImageDataLoader(path = expUIPath, classLoaderRef = classLoaderRef, flags = flags)
+        if (expUICacheKey == 0) {
+          return PatchedRasterizedImageDataLoader(path = expUIPath, classLoaderRef = classLoaderRef, flags = flags)
+        }
+        return PatchedRasterizedImageDataLoader(path = expUIPath, classLoaderRef = classLoaderRef, flags = expUIFlags, cacheKey = expUICacheKey)
       }
       return null
     }
@@ -122,7 +157,10 @@ private class RasterizedImageDataLoader(override val path: String,
         (getReflectiveIcon(patched.first, patched.second!!) as? CachedImageIcon)?.let {
           val loader = it.loader
           if (loader is RasterizedImageDataLoader) {
-            return PatchedRasterizedImageDataLoader(path = loader.path, classLoaderRef = effectiveClassLoaderRef, flags = loader.flags)
+            return PatchedRasterizedImageDataLoader(path = loader.path,
+                                                    classLoaderRef = effectiveClassLoaderRef,
+                                                    flags = loader.flags,
+                                                    cacheKey = loader.cacheKey)
           }
           return loader
         }
@@ -136,9 +174,16 @@ private class RasterizedImageDataLoader(override val path: String,
   override fun toString() = "RasterizedImageDataLoader(classLoader=${classLoaderRef.get()}, path=$path)"
 }
 
+/**
+ * Loads the [path] that [RasterizedImageDataLoader.patch] selects instead of the original path.
+ *
+ * If [cacheKey] is not 0, [cacheKey] and [flags] describe the [path] file, and the loader selects the variant by [flags].
+ * Otherwise, [flags] belong to the original path, and the loader tries the variants of the [path] file one by one.
+ */
 private class PatchedRasterizedImageDataLoader(override val path: String,
                                                private val classLoaderRef: WeakReference<ClassLoader>,
-                                               override val flags: Int) : ImageDataLoader {
+                                               override val flags: Int,
+                                               private val cacheKey: Int = 0) : ImageDataLoader {
   override fun getCoords(): Pair<String, ClassLoader>? = classLoaderRef.get()?.let { path to it }
 
   private val isSvg: Boolean
@@ -150,21 +195,32 @@ private class PatchedRasterizedImageDataLoader(override val path: String,
     try {
       val start = StartUpMeasurer.getCurrentTimeIfEnabled()
 
-      val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-      val dotIndex = path.lastIndexOf('.')
-      val name = if (dotIndex < 0) path else path.substring(0, dotIndex)
-      // prefer retina images for HiDPI scale, because downscaling retina images provide a better result than up-scaling non-retina images
-      val ext = if (isSvg) "svg" else if (dotIndex < 0 || dotIndex == path.length - 1) "" else path.substring(dotIndex + 1)
-      val image = loadPatched(name = name,
-                              ext = ext,
-                              isSvg = isSvg,
-                              scale = scale,
-                              scaleContext = scaleContext,
-                              parameters = parameters,
-                              path = path,
-                              classLoader = classLoader,
-                              isEffectiveDark = parameters.isDark,
-                              withShape = flags and ImageDescriptor.IS_MODIFIER_ICON == ImageDescriptor.IS_MODIFIER_ICON)
+      val image = if (cacheKey == 0) {
+        val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+        val dotIndex = path.lastIndexOf('.')
+        val name = if (dotIndex < 0) path else path.substring(0, dotIndex)
+        // prefer retina images for HiDPI scale, because downscaling retina images provide a better result than up-scaling non-retina images
+        val ext = if (isSvg) "svg" else if (dotIndex < 0 || dotIndex == path.length - 1) "" else path.substring(dotIndex + 1)
+        loadPatched(name = name,
+                    ext = ext,
+                    isSvg = isSvg,
+                    scale = scale,
+                    scaleContext = scaleContext,
+                    parameters = parameters,
+                    path = path,
+                    classLoader = classLoader,
+                    isEffectiveDark = parameters.isDark,
+                    withShape = flags and ImageDescriptor.IS_MODIFIER_ICON == ImageDescriptor.IS_MODIFIER_ICON)
+      }
+      else {
+        loadRasterized(path = path,
+                       scaleContext = scaleContext,
+                       parameters = parameters,
+                       classLoader = classLoader,
+                       isSvg = isSvg,
+                       rasterizedCacheKey = cacheKey,
+                       imageFlags = flags)
+      }
 
       if (start != -1L) {
         IconLoadMeasurer.loadFromResources.end(start)
