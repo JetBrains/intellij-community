@@ -263,19 +263,21 @@ final class RefreshWorker {
         continue;
       }
 
-      var fs = file.getFileSystem();
-
-      if (fs instanceof AsyncableFileSystem afs) {
-        //can't refresh file that has async ops still in flight => flush them:
-        try {
-          afs.fsync(file);
-        }
-        catch (IOException e) {
-          continue;
-        }
-      }
-
       try {
+        var fs = file.getFileSystem();
+
+        if (fs instanceof AsyncableFileSystem afs) {
+          //can't refresh file that has async ops still in flight => flush them:
+          try {
+            afs.fsync(file);
+          }
+          catch (IOException e) {
+            THROTTLED_LOG.info("refresh skipped, fsync failed: " + file + ": " + e.getMessage());
+            skipped.add(file);
+            continue;
+          }
+        }
+
         if (roots.contains(file)) {
           var attributes = computeAttributesForFile(fs, file);
           if (attributes == null) {
