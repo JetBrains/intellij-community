@@ -2,27 +2,30 @@
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
+import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.internal.UnsafeVfsRecursionInspectionFixtureKt.unsafeVfsRecursionInspectionFixture;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/unsafeVfsRecursion")
-public class UnsafeVfsRecursionInspectionTest extends UnsafeVfsRecursionInspectionTestBase {
+@TestApplication
+public class UnsafeVfsRecursionInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightDevKitInspectionFixture> vfsRecursion =
+    unsafeVfsRecursionInspectionFixture(projectFixture, "java", DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/unsafeVfsRecursion");
 
-  @Override
-  protected String getBasePath() {
-    return DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/unsafeVfsRecursion";
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "java";
-  }
-
+  @Test
   public void testUnsafeVfsRecursion() {
-    doTest();
+    vfsRecursion.get().doTest();
   }
 
+  @Test
   public void testUnsafeVfsRecursionCorrectCases() {
-    doTest();
+    vfsRecursion.get().doTest();
   }
 }

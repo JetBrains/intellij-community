@@ -2,33 +2,28 @@
 package org.jetbrains.idea.devkit.k2.inspections;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.inspections.UnspecifiedActionsPlaceInspectionTestBase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixture;
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static org.jetbrains.idea.devkit.inspections.UnspecifiedActionsPlaceInspectionFixtureKt.unspecifiedActionsPlaceInspectionFixture;
 
 /**
  * @author Konstantin Bulenkov
  */
 @TestDataPath("$CONTENT_ROOT/testData/inspections/unspecifiedActionsPlace")
-public class KtUnspecifiedActionsPlaceInspectionTest extends UnspecifiedActionsPlaceInspectionTestBase {
+@TestApplication
+public class KtUnspecifiedActionsPlaceInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightDevKitInspectionFixture> actionsPlace =
+    unspecifiedActionsPlaceInspectionFixture(projectFixture, "kt", DevkitKtTestsUtil.TESTDATA_PATH + "inspections/unspecifiedActionsPlace");
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
-
-  @Override
-  protected String getBasePath() {
-    return DevkitKtTestsUtil.TESTDATA_PATH + "inspections/unspecifiedActionsPlace";
-  }
-
-  @Override
-  protected @NotNull String getFileExtension() {
-    return "kt";
-  }
-
+  @Test
   public void testUnspecifiedActionPlaces() {
-    doTest();
+    actionsPlace.get().doTest();
   }
 }

@@ -93,7 +93,7 @@ jvm_library(
         "//plugins/devkit/devkit-core:core",
         "//java/testFramework",
         "//plugins/devkit/intellij.devkit.themes:themes",
-        "//libraries/junit4",
+        "//platform/testFramework/junit5",
     ],
 )
 ### auto-generated section `build intellij.devkit.themes.tests` end
